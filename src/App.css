@@ -1,38 +1,112 @@
 .App {
-  text-align: center;
+  background-color: var(--primary);
+  color: var(--primary-text);
+  height: 100vh;
+  /* overflow-y: hidden; */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.preview {
+
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.slides {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  border: 2px solid red;
+}
+/* .slides div {
+  margin: 50px;
+} */
+
+.editable span, .editable div {
+  width: inherit;
+}
+
+
+hr {
+  border: 0;
+  border-bottom: 2px solid var(--secondary);
+  margin: 15px 0;
+}
+h1, h2, h3, h4, h5, h6 {
+  color: var(--secondary);
+}
+
+
+
+/* options */
+input, button, select, .fakeInput {
+  /* background-color: transparent;
+  border: 2px solid var(--primary-text); */
+  border: none;
+  background-color: rgb(0 0 0 / .2);
+  color: var(--primary-text);
+  padding: 4px;
+  transition: opacity .5s;
+  /* font-family: sans-serif; */
+}
+select option {
+  background-color: var(--primary);
+}
+input:disabled:not(.hide), .fakeInput.disabled, button:disabled {
+  opacity: .5;
+  /* user-select: none; */
+}
+
+input[type="color"] {
+	/* -webkit-appearance: none;
+	border: none;
+	width: 32px;
+	height: 32px; */
+  padding: 0;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+	border: none;
+}
+
+
+.options button {
+  width: 100%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+}
+button:hover:not(:disabled) {
+  background-color: transparent;
+}
+svg {
+  transition: fill .2s;
+  fill: var(--primary-text);
+}
+button.active > svg {
+  fill: var(--secondary);
 }
 
-.App-link {
-  color: #61dafb;
+
+.fakeInput {
+  width: 100%;
+  display: flex;
+  padding: 4px 6px;
+}
+.fakeInput label {
+  color: var(--secondary);
+  width: 20px;
+  text-align: center;
+}
+input.hide {
+  width: 100%;
+  border: none;
+  background: transparent;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.options .flex {
+  display: flex;
+  align-self: center;
+  margin: 5px 0;
+}
+.options .flex p {
+  width: 50%;
 }
