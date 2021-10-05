@@ -1,0 +1,16 @@
+{
+  "themes": {
+    "dark": "Mørkt",
+    "light": "Lyst"
+  },
+  "buttons": {
+    "changeTheme": "Endre Tema"
+  },
+  "menus": {
+    "settings": "Innstillinger"
+  },
+  "languages": {
+    "en": "Engelsk",
+    "no": "Norsk"
+  }
+}

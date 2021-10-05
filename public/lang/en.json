@@ -1,0 +1,16 @@
+{
+  "themes": {
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "buttons": {
+    "changeTheme": "Change Theme"
+  },
+  "menus": {
+    "settings": "Settings"
+  },
+  "languages": {
+    "en": "English",
+    "no": "Norwegian"
+  }
+}
