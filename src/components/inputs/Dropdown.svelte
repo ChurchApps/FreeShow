@@ -1,39 +1,49 @@
-<script>
-  import { slide } from "svelte/transition";
-  import { createEventDispatcher } from "svelte";
-  import T from "../helpers/T.svelte";
-  import { translate } from "../../services/language";
-  import { language } from "../../stores";
-  const dispatch = createEventDispatcher();
-  export let options;
-  let active = false;
-  export let value;
-  if (!value) value = options[0] || 'Select';
-  $: updater = [value, $language];
+<script lang="ts">
+  import { slide } from "svelte/transition"
+  import { createEventDispatcher } from "svelte"
+  import T from "../helpers/T.svelte"
+  import { translate } from "../../services/language"
+  import { language } from "../../stores"
+  import type { Option } from "../../../types/Other"
+
+  const dispatch = createEventDispatcher()
+  export let options: Option[]
+  let active: boolean = false
+  export let value: string
+  if (!value) value = options[0].name || "Select"
+  $: updater = [value, $language]
   // TODO: disable active on click anywhere
 
-  let self;
+  let self
 </script>
 
-<svelte:window on:mousedown={e => {
-  if (e.target.closest('.dropdownElem') !== self && active) {
-    active = false;
-  }
-}} />
+<svelte:window
+  on:mousedown={(e) => {
+    if (e.target.closest(".dropdownElem") !== self && active) {
+      active = false
+    }
+  }}
+/>
 
 <div bind:this={self} class="dropdownElem">
-  <button on:click={() => active = !active}>
-    {translate(updater[0], {parts: true})}
-    <!-- <T id={value} /> -->
+  <button on:click={() => (active = !active)}>
+    {translate(updater[0], { parts: true })}
+    <T id={value} />
   </button>
   {#if active}
-    <div class="dropdown" transition:slide="{{duration: 200}}">
+    <div class="dropdown" transition:slide={{ duration: 200 }}>
       {#each options as option}
         <!-- {#if option.name !== value} -->
-          <span on:click={e => {dispatch('click', option); active = false}} class="{option.name === value ? 'active' : ''}">
-            {translate(option.name, {parts: true})}
-            <!-- <T id={option.name} /> -->
-          </span>
+        <span
+          on:click={(e) => {
+            dispatch("click", option)
+            active = false
+          }}
+          class={option.name === value ? "active" : ""}
+        >
+          {translate(option.name, { parts: true })}
+          <!-- <T id={option.name} /> -->
+        </span>
         <!-- {/if} -->
       {/each}
     </div>
@@ -67,7 +77,8 @@
     text-align: left;
   }
 
-  button, span {
+  button,
+  span {
     padding: 8px 12px;
     background-color: transparent;
     /* text-transform: uppercase; */
@@ -77,7 +88,8 @@
     text-overflow: ellipsis;
   }
 
-  button:hover, span:hover {
+  button:hover,
+  span:hover {
     background-color: var(--hover);
   }
   span.active {

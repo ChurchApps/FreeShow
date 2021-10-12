@@ -1,6 +1,6 @@
 <script>
   // import marked from "marked";
-  export let markdown = "";
+  export let markdown = ""
 </script>
 
 <section>

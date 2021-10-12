@@ -29,167 +29,144 @@
 //   console.log('opened server on', netServer.address());
 // });
 
+const REMOTE_PORT = 5510
+const STAGE_PORT = 5511
 
-
-const REMOTE_PORT = 5510;
-const STAGE_PORT = 5511;
-
-const express = require('express');
-const remoteExpressApp = express();
-const stageExpressApp = express();
-const http = require('http');
-const remoteServer = http.createServer(remoteExpressApp);
-const stageServer = http.createServer(stageExpressApp);
-const { Server } = require("socket.io");
-const { ipcMain } = require('electron');
-const { toApp } = require('..');
+const express = require("express")
+const remoteExpressApp = express()
+const stageExpressApp = express()
+const http = require("http")
+const remoteServer = http.createServer(remoteExpressApp)
+const stageServer = http.createServer(stageExpressApp)
+const { Server } = require("socket.io")
+const { ipcMain } = require("electron")
+const { toApp } = require("..")
 // const { BrowserWindow } = require('electron');
-const ioRemote = new Server(remoteServer);
-const ioStage = new Server(stageServer);
+const ioRemote = new Server(remoteServer)
+const ioStage = new Server(stageServer)
 
-remoteExpressApp.get('/', (req, res) => {
-  res.sendFile(__dirname + '/remote.html');
+remoteExpressApp.get("/", (req, res) => {
+  res.sendFile(__dirname + "/remote.html")
   // res.sendFile(__dirname + '/main.js');
   // res.sendFile('../src/App.svelte');
-});
+})
 
 remoteServer.listen(REMOTE_PORT, () => {
-  console.log('Remote on *:' + REMOTE_PORT);
-});
+  console.log("Remote on *:" + REMOTE_PORT)
+})
 
-stageExpressApp.get('/', (req, res) => {
-  res.sendFile(__dirname + '/stage.html');
-});
+stageExpressApp.get("/", (req, res) => {
+  res.sendFile(__dirname + "/stage.html")
+})
 stageServer.listen(STAGE_PORT, () => {
-  console.log('Stage on *:' + STAGE_PORT);
-});
-
-
-
-
+  console.log("Stage on *:" + STAGE_PORT)
+})
 
 // REMOTE
 
-var connections = {};
-const maxConnections = 10; // get
-const password = 'show'; // get
+var connections = {}
+const maxConnections = 10 // get
+const password = "show" // get
 
-
-ioRemote.on('connection', (socket) => {
+ioRemote.on("connection", (socket) => {
   // console.log(socket);
-  let id = socket.id;
-  let platform = socket.handshake.headers['user-agent'];
-  let connected = false;
+  let id = socket.id
+  let platform = socket.handshake.headers["user-agent"]
+  let connected = false
 
-  const broadcast = msg => {
-    console.log(msg);
-    toApp('lan', {id, data: msg});
+  const broadcast = (msg) => {
+    console.log(msg)
+    toApp("lan", { id, data: msg })
   }
 
-  broadcast('Client connected! Platform: ' + getOS(platform) + '. [' + id + ']');
+  broadcast("Client connected! Platform: " + getOS(platform) + ". [" + id + "]")
   // let clients = await ioRemote.sockets.allSockets();
   // console.log(clients);
   // ioRemote.sockets.socket.forEach(socket, s => console.log(s.id));
   if (Object.keys(connections).length > maxConnections) {
-    ioRemote.emit('error', {id: 'maxConn', text: 'Cannot connect! There are more than ' + maxConnections + ' devices connected!'});
-    socket.disconnect();
+    ioRemote.emit("error", { id: "maxConn", text: "Cannot connect! There are more than " + maxConnections + " devices connected!" })
+    socket.disconnect()
   } else {
-    ioRemote.emit('connected');
-    socket.on('name', name => connections[id].name = name);
+    ioRemote.emit("connected")
+    socket.on("name", (name) => (connections[id].name = name))
 
-    socket.on('password', data => {
+    socket.on("password", (data) => {
       // https://stackoverflow.com/questions/18279141/javascript-string-encryption-and-decryption
       // if (CryptoJS.AES.decrypt(data, id) === password) { // TODO: encryption
-      if (data === password) { // correct password
+      if (data === password) {
+        // correct password
 
         // REQUEST DATA
-        connected = true;
-        toApp('lan', {id, action: 'request'}); // request, update, change
+        connected = true
+        toApp("lan", { id, action: "request" }) // request, update, change
+      } else ioRemote.emit("error", { id: "wrongPass", text: "Wrong password" })
+    })
 
-      } else ioRemote.emit('error', {id: 'wrongPass', text: 'Wrong password'});
-    });
-
-    socket.on('getShow', data => {
+    socket.on("getShow", (data) => {
       // if (connected) toApp('lan', {action: 'setShow', projectID: data.projectID, id: data.id, type: null});
-      if (connected) toApp('lan', {action: 'getShow', id: data.socket, data: {id: data.id, type: data.type}});
-    });
+      if (connected) toApp("lan", { action: "getShow", id: data.socket, data: { id: data.id, type: data.type } })
+    })
 
     // SEND DATA FROM APP TO CLIENT
-    ipcMain.on('lan', (e, data) => {
-      if (data.id === id) ioRemote.to(data.id).emit(data.channel, data.data);
-    });
-
-
+    ipcMain.on("lan", (e, data) => {
+      if (data.id === id) ioRemote.to(data.id).emit(data.channel, data.data)
+    })
 
     // main
     // socket.on('currentShow', show => {
-      // if (connected)
+    // if (connected)
     // })
-
-
   }
-        
 
-  socket.on('disconnect', () => {
-    broadcast('Device ' + id + ' disconnected');
-    delete connections[id];
-  });
-});
-
+  socket.on("disconnect", () => {
+    broadcast("Device " + id + " disconnected")
+    delete connections[id]
+  })
+})
 
 function getOS(ua) {
   // https://stackoverflow.com/a/59706252
-  let os = "Unknown";
+  let os = "Unknown"
   const device = {
-      "Generic Linux": /Linux/i,
-      "Android": /Android/i,
-      "BlackBerry": /BlackBerry/i,
-      "Bluebird": /EF500/i,
-      "Chrome OS": /CrOS/i,
-      "Datalogic": /DL-AXIS/i,
-      "Honeywell": /CT50/i,
-      "iPad": /iPad/i,
-      "iPhone": /iPhone/i,
-      "iPod": /iPod/i,
-      "macOS": /Macintosh/i,
-      "Windows": /IEMobile|Windows/i,
-      "Zebra": /TC70|TC55/i,
+    "Generic Linux": /Linux/i,
+    Android: /Android/i,
+    BlackBerry: /BlackBerry/i,
+    Bluebird: /EF500/i,
+    "Chrome OS": /CrOS/i,
+    Datalogic: /DL-AXIS/i,
+    Honeywell: /CT50/i,
+    iPad: /iPad/i,
+    iPhone: /iPhone/i,
+    iPod: /iPod/i,
+    macOS: /Macintosh/i,
+    Windows: /IEMobile|Windows/i,
+    Zebra: /TC70|TC55/i,
   }
-  Object.keys(device).map(v => ua.match(device[v]) && (os = v));
-  return os;
+  Object.keys(device).map((v) => ua.match(device[v]) && (os = v))
+  return os
 }
 
-
-
-
 // STAGE
-let stageConnections = 0;
-ioStage.on('connection', (socket) => {
-  stageConnections++;
-  toApp('lan', 'Stage: +1 (' + stageConnections + ')');
+let stageConnections = 0
+ioStage.on("connection", (socket) => {
+  stageConnections++
+  toApp("LAN", "Stage: +1 (" + stageConnections + ")")
   // request stage
-  toApp('stage', 'request');
+  toApp("STAGE", "request")
 
-  socket.on('disconnect', () => {
-    stageConnections--;
-    toApp('lan', 'Stage: -1 (' + stageConnections + ')');
-  });
-});
-
+  socket.on("disconnect", () => {
+    stageConnections--
+    toApp("LAN", "Stage: -1 (" + stageConnections + ")")
+  })
+})
 
 // SEND DATA FROM APP TO CLIENT
-ipcMain.on('stage', (e, data) => {
-  console.log('Stage data: ' + data);
-  ioStage.emit('stage', data);
-});
-
-
-
-
-
+ipcMain.on("STAGE", (e, data) => {
+  console.log("Stage data: " + data)
+  ioStage.emit("STAGE", data)
+})
 
 // https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?&page=94
-
 
 // var net = require('net');
 // var netServer = net.createServer(function(socket) {
@@ -214,8 +191,6 @@ ipcMain.on('stage', (e, data) => {
 
 // FREE = 6 18 5 5: 61855
 // 5510
-
-
 
 // CLIENT
 // var client = new net.Socket();

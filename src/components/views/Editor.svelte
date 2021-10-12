@@ -1,20 +1,20 @@
-<script>
-  import { activeShow, activeSlide } from "../../stores";
-  import ShowSlides from "./ShowSlides.svelte";
-  import SlideEditor from "./SlideEditor.svelte";
+<script lang="ts">
+  import { activeShow, output } from "../../stores"
+  import ShowPreview from "../slide/ShowPreview.svelte"
+  import SlideEditor from "../slide/SlideEditor.svelte"
 
-  let seIndex = $activeSlide?.index || 0;
+  let seIndex = $output?.slide.index || 0
 </script>
 
 {#if $activeShow}
-  {#if $activeShow.type === 'video'}
+  {#if $activeShow.type === "video"}
     <!--  -->
-  {:else if $activeShow.type === 'image'}
+  {:else if $activeShow.type === "image"}
     <!--  -->
-  {:else if $activeShow.type === 'audio'}
+  {:else if $activeShow.type === "audio"}
     <!--  -->
   {:else}
-    <ShowSlides editor={true} />
+    <ShowPreview editor={true} />
     <SlideEditor {seIndex} />
   {/if}
 {:else}
@@ -22,5 +22,4 @@
 {/if}
 
 <style>
-
 </style>

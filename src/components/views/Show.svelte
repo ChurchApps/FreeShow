@@ -1,6 +1,6 @@
-<script>
-  import { activeShow } from "../../stores";
-  import ShowSlides from "./ShowSlides.svelte";
+<script lang="ts">
+  import { activeShow } from "../../stores"
+  import ShowPreview from "../slide/ShowPreview.svelte"
 
   // $: show = $activeShow?.type ? false : true;
   // $: console.log($activeShow, show);
@@ -8,15 +8,14 @@
 
 <div>
   {#if $activeShow}
-  
-    {#if $activeShow.type === 'video'}
+    {#if $activeShow.type === "video"}
       <!--  -->
-    {:else if $activeShow.type === 'image'}
+    {:else if $activeShow.type === "image"}
       <!--  -->
-    {:else if $activeShow.type === 'audio'}
+    {:else if $activeShow.type === "audio"}
       <!--  -->
     {:else}
-      <ShowSlides />
+      <ShowPreview />
     {/if}
   {:else}
     No active show

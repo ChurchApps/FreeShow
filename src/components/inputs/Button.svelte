@@ -1,9 +1,9 @@
-<script>
-  export let active;
+<script lang="ts">
+  export let active: boolean = false
 </script>
 
-<button style={$$props.style} class:active on:click disabled={$$props.disabled} tabindex={active ? -1 : 0}>
-  <slot></slot>
+<button style={$$props.style} class:active on:click disabled={$$props.disabled} tabindex={active ? -1 : 0} title={$$props.title}>
+  <slot />
 </button>
 
 <style>
@@ -21,7 +21,8 @@
   button:hover:not(:disabled):not(.active) {
     background-color: var(--hover);
   }
-  button:active:not(:disabled):not(.active), button:focus:not(.active) {
+  button:active:not(:disabled):not(.active),
+  button:focus:not(.active) {
     background-color: var(--focus);
   }
   button.active {
@@ -33,6 +34,6 @@
   }
 
   button:disabled {
-    opacity: .5;
+    opacity: 0.5;
   }
 </style>

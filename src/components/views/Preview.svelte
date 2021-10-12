@@ -1,20 +1,24 @@
-<script>
-import { activeSlide } from "../../stores";
+<script lang="ts">
+  // import { OutputObject } from "../../classes/OutputObject";
 
-  import Output from "./Output.svelte";
+  import { output } from "../../stores"
 
-  export let mode;
+  import Output from "./Output.svelte"
+
+  export let mode
 </script>
 
-<svelte:window on:keydown={e => {
-  if (e.key === 'c' && (e.ctrlKey || e.altKey)) {
-    activeSlide.set(null);
-  }
-}} />
+<svelte:window
+  on:keydown={(e) => {
+    if (e.key === "c" && (e.ctrlKey || e.altKey)) {
+      output.set({ background: null, slide: null, overlay: null, audio: null })
+    }
+  }}
+/>
 
-<Output hidden={mode === 'live' ? false : true} />
+<Output hidden={mode === "live" ? false : true} />
 <!-- {#if mode === 'live'}
 {/if} -->
 
-
-<button on:click={() => activeSlide.set(null)}>Clear All</button>
+<!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
+<button on:click={() => output.set({ background: null, slide: null, overlay: null, audio: null })}>Clear All</button>

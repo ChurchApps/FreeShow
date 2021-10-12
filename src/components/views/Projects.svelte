@@ -1,14 +1,12 @@
-<script>
-  import { each, onMount } from "svelte/internal";
-  import { writable } from "svelte/store";
-  import { activeProject, activeShow, folders, projects, projectView, shows } from "../../stores";
-  import Icon from "../helpers/Icon.svelte";
-import Button from "../inputs/Button.svelte";
-  import Folder from "../inputs/Folder.svelte";
-  import Item from "../inputs/Item.svelte";
-  import ShowItem from "../inputs/ShowItem.svelte";
+<script lang="ts">
+  import type { Tree } from "../../../types/Projects"
 
-  // if ($activeProject) showAll = false;
+  import { activeProject, activeShow, folders, projects, projectView, shows } from "../../stores"
+  import { GetProjects } from "../helpers/get"
+  import Icon from "../helpers/Icon.svelte"
+  import Button from "../inputs/Button.svelte"
+  import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
+  import ShowButton from "../inputs/ShowButton.svelte"
 
   // let containsProject;
   // activeProject.subscribe(ap => {
@@ -24,62 +22,72 @@ import Button from "../inputs/Button.svelte";
   //   console.log(containsProject);
   // });
 
-  let tree = [];
-  Object.entries($folders).forEach(folder => {
-    folder[1].id = folder[0];
-    folder[1].type = 'folder';
-    tree.push(folder[1]);
-  });
-  Object.entries($projects).forEach(project => {
-    let p = {...project[1]};
-    p.id = project[0];
-    delete p.shows;
-    tree.push(p);
-  });
-</script>
+  let tree: Tree[] = [] // TODO: Folder...
+  Object.entries($folders).forEach((folder) => {
+    folder[1].id = folder[0]
+    folder[1].type = "folder"
+    tree.push(folder[1])
+  })
+  Object.entries($projects).forEach((project) => {
+    let p = { ...project[1] }
+    p.id = project[0]
+    delete p.shows
+    tree.push(p)
+  })
 
-<svelte:window on:keydown={e => {
-  if ($activeProject !== null) {
-    if (e.key === 'ArrowDown' && $projects[$activeProject].shows.length) {
-      let newShow = null;
-      if ($activeShow) {
-        let found = false;
-        $projects[$activeProject].shows.forEach((show, i) => {
-          if (show.id === $activeShow.id) {
-            found = true;
-            if ($projects[$activeProject].shows[i + 1]) newShow = i + 1;
-          }
-        });
-        if (!found) newShow = 0;
-      } else newShow = 0;
-      if (newShow !== null) activeShow.set($projects[$activeProject].shows[newShow]);
+  function keyDown(e: KeyboardEvent) {
+    if ($activeProject !== null) {
+      let shows = GetProjects().active.shows // $projects[$activeProject].shows
 
-    } else if (e.key === 'ArrowUp' && $projects[$activeProject].shows.length) {
-      let newShow = null;
-      if ($activeShow) {
-        let found = false;
-        $projects[$activeProject].shows.forEach((show, i) => {
-          if (show.id === $activeShow.id) {
-            if (!found && i - 1 >= 0) newShow = i - 1;
-            found = true;
-          }
-        });
-        if (!found) newShow = $projects[$activeProject].shows.length - 1;
-      } else newShow = $projects[$activeProject].shows.length - 1;
-      if (newShow !== null) activeShow.set($projects[$activeProject].shows[newShow]);
+      if (shows.length) {
+        let newShow = null
+        if (e.key === "ArrowDown") {
+          // Arrow Down = change active show in project
+          if ($activeShow) {
+            // REMOVE let found = false
+            shows.forEach((show, i) => {
+              if (show.id === $activeShow.id) {
+                // found = true
+                if (shows[i + 1]) newShow = i + 1
+              }
+            })
+            // if (!found) newShow = 0
+          } else newShow = 0
+        } else if (e.key === "ArrowUp") {
+          // Arrow Up = change active show in project
+          if ($activeShow) {
+            // let found = false
+            shows.forEach((show, i) => {
+              if (show.id === $activeShow.id && newShow === null) {
+                if (i - 1 >= 0) newShow = i - 1
+                else newShow = 0
+                // if (!found && i - 1 >= 0) newShow = i - 1
+                // found = true
+              }
+            })
+            // if (!found) newShow = shows.length - 1
+          } else newShow = shows.length - 1
+        }
+        // Set active show in project list
+        if (newShow !== null) activeShow.set(shows[newShow])
+      }
     }
   }
-}} />
+</script>
 
-
+<svelte:window on:keydown={keyDown} />
 
 <div>
   <span class="top">
+    <!-- TODO: set different project system folders.... -->
+    <!-- TODO: right click change... -->
     <Button on:click={() => projectView.set(true)} active={$projectView}>
       <Icon name="home" />
     </Button>
-    <Button on:click={() => projectView.set(false)} active={!$projectView} disabled={$activeProject === null}>
+    <!-- TODO: right click go to recent -->
+    <Button on:click={() => projectView.set(false)} active={!$projectView} disabled={$activeProject === null} title={$projects[$activeProject].name}>
       <Icon name="file" />
+      <p style="color: white; overflow: hidden;">{$projects[$activeProject].name}</p>
     </Button>
     <!-- <button on:click={() => projectView.set(true)}>
       <Icon name="home" />
@@ -94,7 +102,7 @@ import Button from "../inputs/Button.svelte";
     <div class="list">
       <!-- All Projects: -->
 
-      <Folder id="/" name="All Projects" {tree} opened />
+      <ProjectsFolder id="/" name="All Projects" {tree} opened />
 
       <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->
     </div>
@@ -105,9 +113,10 @@ import Button from "../inputs/Button.svelte";
         <span class="listItem">
           <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
           {#if !show.type}
-            <ShowItem {...show} name={$shows[show.id]?.show.name} category={[$shows[show.id]?.show.category, true]} />
+            <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
+            <ShowButton {...show} name={$shows[show.id]?.name} icon={$shows[show.id]?.category} />
           {:else}
-            <ShowItem {...show} name={$shows[show.id]?.show.name + ' [' + show.type + ']'} category={[show.type, false]} />
+            <ShowButton {...show} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
           {/if}
         </span>
         <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
@@ -135,58 +144,4 @@ import Button from "../inputs/Button.svelte";
     display: flex;
     flex-direction: column;
   }
-
-  /* .allProjects :global(.listItem) {
-    width: 100%;
-    padding: 10px;
-    font-size: .9em;
-    text-align: left;
-    background-color: var(--primary);
-    color: var(--text);
-    border: 0;
-  }
-  .allProjects :global(.listItem:hover) {
-    background-color: var(--hover);
-  }
-  .allProjects :global(.listItem:focus), .allProjects :global(.listItem:active) {
-    background-color: var(--focus);
-  }
-  .allProjects :global(.listItem.active) {
-    background-color: var(--secondary);
-  }
-
-  .allProjects :global(.listItem.folder) {
-    background-color: rgb(255 255 255 / .05);
-    /* border: 2px solid var(--secondary); * /
-    display: flex;
-    flex-direction: column;
-    padding: 5px;
-  }
-  .allProjects :global(.listItem.folder:hover) {
-    /* background-color: var(--hover); * /
-    background-color: rgb(255 255 255 / .08);
-  }
-  .allProjects :global(.listItem .text) {
-    display: flex;
-    align-items: center;
-    pointer-events: none;
-  }
-  .allProjects :global(.listItem svg) {
-    fill: var(--secondary);
-    padding: 0 10px;
-    /* height: 20px; * /
-    width: auto;
-
-    inline-size: 2ch;
-    box-sizing: content-box;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 2px;
-  }
-  .allProjects :global(.listItem p) {
-    margin: 5px;
-  }
-  .allProjects :global(.listItem.folder .folderContent:not(.open)) {
-    display: none;
-  } */
 </style>

@@ -1,10 +1,10 @@
 <script>
-  export let markdown = "";
+  export let markdown = ""
 </script>
 
 <section>
   <!-- svelte-ignore a11y-autofocus -->
-  <textarea bind:value="{markdown}" autofocus />
+  <textarea bind:value={markdown} autofocus />
 </section>
 
 <style>

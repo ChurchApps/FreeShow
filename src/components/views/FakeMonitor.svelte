@@ -1,26 +1,27 @@
-<script>
-import Output from "./Output.svelte";
-import { screen } from "../../stores";
+<script lang="ts">
+  import Output from "./Output.svelte"
+  import { screen } from "../../stores"
 
+  let active = false
 
-  let active = false;
-
-  let maxHeight = Math.max($screen.resolution.height, window.innerHeight);
-  let minHeight = Math.min($screen.resolution.height, window.innerHeight);
-  let maxWidth = Math.max($screen.resolution.width, window.innerWidth);
-  let minWidth = Math.min($screen.resolution.width, window.innerWidth);
-  let height = $screen.resolution.height > window.innerHeight ? minHeight / maxHeight : 1;
-  let width = $screen.resolution.width > window.innerWidth ? minWidth / maxWidth : 1;
-  $: zoom = Math.min(height, width) - .05;
+  let maxHeight = Math.max($screen.resolution.height, window.innerHeight)
+  let minHeight = Math.min($screen.resolution.height, window.innerHeight)
+  let maxWidth = Math.max($screen.resolution.width, window.innerWidth)
+  let minWidth = Math.min($screen.resolution.width, window.innerWidth)
+  let height = $screen.resolution.height > window.innerHeight ? minHeight / maxHeight : 1
+  let width = $screen.resolution.width > window.innerWidth ? minWidth / maxWidth : 1
+  $: zoom = Math.min(height, width) - 0.05
 </script>
 
-<svelte:window on:keydown={e => {
-  if (e.key === '1' && (e.ctrlKey || e.altKey)) {
-    active = !active;
-  }
-}} />
+<svelte:window
+  on:keydown={(e) => {
+    if (e.key === "1" && (e.ctrlKey || e.altKey)) {
+      active = !active
+    }
+  }}
+/>
 
-<button on:click={() => active = !active}>
+<button on:click={() => (active = !active)}>
   {#if active}
     Hide
   {:else}
@@ -44,7 +45,7 @@ import { screen } from "../../stores";
     right: 10px;
     bottom: 10px;
     padding: 20px;
-    z-index: 100;
+    /* z-index: 1; */
   }
 
   div {
@@ -62,7 +63,7 @@ import { screen } from "../../stores";
     display: flex;
     flex-direction: column;
     gap: 5px;
-    z-index: 1;
+    z-index: 30;
     color: var(--secondary-text);
     padding: 10px 12px;
     border-bottom-right-radius: 5px;

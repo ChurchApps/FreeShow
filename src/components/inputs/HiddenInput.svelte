@@ -1,24 +1,24 @@
-<script>
-import { tick } from "svelte";
-
-
-  export let value;
-  let nameElem, inputElem;
-  let edit = false;
-  const click = e => {
+<script lang="ts">
+  export let value: string
+  let nameElem, inputElem
+  let edit = false
+  const click = (e) => {
     if (e.target === nameElem) {
-      edit = true;
-      setTimeout(() => inputElem?.focus(), 10);
-    } else if (e.target !== inputElem) edit = false;
+      edit = true
+      setTimeout(() => inputElem?.focus(), 10)
+    } else if (e.target !== inputElem) edit = false
   }
 </script>
 
-<svelte:window on:mousedown={click} on:keydown={e => {
-  if (e.key === 'Enter' || e.key === 'Tab') edit = false;
-}} />
+<svelte:window
+  on:mousedown={click}
+  on:keydown={(e) => {
+    if (e.key === "Enter" || e.key === "Tab") edit = false
+  }}
+/>
 
 {#if edit}
-  <input bind:this={inputElem} class="name" bind:value={value} />
+  <input bind:this={inputElem} class="name" bind:value />
 {:else}
   <p bind:this={nameElem} class="name">{value}</p>
 {/if}
