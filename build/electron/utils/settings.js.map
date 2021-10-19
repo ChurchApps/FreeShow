@@ -1,1 +1,0 @@
-{"version":3,"file":"settings.js","sourceRoot":"","sources":["../../../src/electron/utils/settings.ts"],"names":[],"mappings":";;AAAA,wCAAwC;AASxC,MAAM,gBAAgB,GAAG,IAAI,KAAK,CAAmB;IACnD,QAAQ,EAAE;QACR,MAAM,EAAE,KAAK;QACb,KAAK,EAAE,GAAG;QACV,MAAM,EAAE,GAAG;QACX,SAAS,EAAE,KAAK;KACjB;CACF,CAAC,CAAA;AAEF,kBAAe,gBAAgB,CAAA"}
