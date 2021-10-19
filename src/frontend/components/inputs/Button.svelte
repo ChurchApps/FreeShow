@@ -2,18 +2,22 @@
   export let active: boolean = false
 </script>
 
-<button style={$$props.style} class:active on:click disabled={$$props.disabled} tabindex={active ? -1 : 0} title={$$props.title}>
+<button style={$$props.style} class:active class={$$props.class} on:click disabled={$$props.disabled} tabindex={active ? -1 : 0} title={$$props.title}>
   <slot />
 </button>
 
 <style>
   button {
     background-color: inherit;
+    color: inherit;
+    font-weight: bold;
+    /* text-transform: uppercase; */
+    letter-spacing: 0.5px;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 5px;
+    padding: 5px 15px;
   }
   button:not(:disabled):not(.active) {
     cursor: pointer;

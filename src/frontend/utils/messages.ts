@@ -1,16 +1,10 @@
+import { OPEN_FILE, REMOTE, STAGE } from "./../../types/Channels"
 import { shows } from "../stores"
 import { activeFilePath } from "../stores"
 import { get } from "svelte/store"
 import { output, name, activeShow, language, activeProject, projects, folders } from "../stores"
 import { getOutput } from "../components/helpers/get"
-import type { OpenFile, Remote, Stage } from "../../types/Channels"
 import type { RemoteData, RemoteInitialize, RemoteShow } from "../../types/Socket"
-
-// const MAIN: Main = "MAIN"
-const OPEN_FILE: OpenFile = "OPEN_FILE"
-// const GET_SCREENS: GetScreens = "GET_SCREENS"
-const REMOTE: Remote = "REMOTE"
-const STAGE: Stage = "STAGE"
 
 export function listen() {
   window.api.receive(OPEN_FILE, (data: any) => {

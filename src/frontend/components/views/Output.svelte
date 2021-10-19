@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { shows, activeShow, output, screen } from "../../stores"
+  import { shows, output, screen } from "../../stores"
   import Textbox from "../slide/Textbox.svelte"
-  import { fade, slide } from "svelte/transition"
-  import { GetShows, getSlide } from "../helpers/get"
-  import { identity } from "svelte/internal"
+  import { fade } from "svelte/transition"
+  import { getSlide } from "../helpers/get"
+  import type { Resolution } from "../../../types/Settings"
   // import { getSlide } from "../helpers/get"
 
   $: Background = $output.background
@@ -11,16 +11,21 @@
   $: Overlay = $output.overlay
   $: Audio = $output.audio
 
+  let slidewidth: number = 300
+
   export let hidden: boolean = false
-  export let zoom: number = 0.3
-  let resolution = Slide ? $shows[$output.slide.id].settings.resolution : $screen.resolution
+  // export let zoom: number = 0.3
+  let resolution: Resolution = Slide ? $shows[$output.slide!.id].settings.resolution! : $screen.resolution
+  export let zoom: number = slidewidth / resolution.width
+  // TODO: precentages instead of pixels for text???
 
   let transition = { duration: 500 } // text (not background)
   // TODO: showing slide upon clear fade out will show black output (Transition bug!)
   // TODO: dont show transition upon no change!s
 </script>
 
-<div class="slide" class:hidden style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;">
+<!-- <div class="slide" class:hidden style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;"> -->
+<div bind:offsetWidth={slidewidth} class="slide" class:hidden>
   {#if Background !== null}
     <!--  -->
   {/if}
@@ -37,6 +42,12 @@
       </span>
     {/key}
   {/if}
+  {#if Overlay !== null}
+    <!--  -->
+  {/if}
+  {#if Audio !== null}
+    <!--  -->
+  {/if}
 </div>
 
 <style>
@@ -46,6 +57,10 @@
     width: 1920px;
     height: 1080px;
     font-size: 5em;
+
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
   }
 
   .hidden {

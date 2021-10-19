@@ -70,3 +70,5 @@ export const languages: Languages = {
   en: "English",
   no: "Norsk",
 }
+
+// font family

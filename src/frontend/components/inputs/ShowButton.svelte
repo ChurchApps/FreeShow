@@ -1,9 +1,10 @@
 <script lang="ts">
   import type { ID, ShowType } from "../../../types/Show"
 
-  import { activeShow, output, projects, projectView, shows } from "../../stores"
+  import { activeShow, output, shows } from "../../stores"
 
   import Icon from "../helpers/Icon.svelte"
+  import HiddenInput from "./HiddenInput.svelte"
 
   export let name: string
   export let id: ID
@@ -22,15 +23,13 @@
   // }
   // $: icon = check()
   $: active = $activeShow?.id === id
-</script>
 
-<!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
-<button
-  on:click={() => {
-    if (!active) activeShow.set({ id, type })
-  }}
-  on:dblclick={() => {
-    if ($shows[id]) {
+  function click() {
+    if (!active) activeShow.set({ id, type }) //  && !e.target.classList.contains("name")
+  }
+
+  function doubleClick(e: any) {
+    if ($shows[id] && !e.target.classList.contains("name")) {
       output.update((o) => {
         o.slide = {
           id,
@@ -39,11 +38,14 @@
         return o
       })
     }
-  }}
-  class:active
->
+  }
+</script>
+
+<!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
+<button on:click={click} on:dblclick={doubleClick} class:active class="context_show_button">
   <Icon name={icon} />
-  <p style="margin: 5px;">{name}</p>
+  <!-- <p style="margin: 5px;">{name}</p> -->
+  <HiddenInput value={name} />
 </button>
 
 <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->

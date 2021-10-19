@@ -1,32 +1,52 @@
 <script lang="ts">
   export let value: string
-  let nameElem, inputElem
+  $: value = edit ? (value.endsWith(" ") ? removeWhitespace(value) + " " : removeWhitespace(value)) : value.trim()
+
+  const removeWhitespace = (v: string) =>
+    v
+      .split(" ")
+      .filter((n) => n)
+      .join(" ")
+
+  let nameElem: HTMLParagraphElement, inputElem: HTMLInputElement
   let edit = false
-  const click = (e) => {
+  const click = (e: any) => {
     if (e.target === nameElem) {
+      //  || e.target.closest(".contextMenu")
       edit = true
       setTimeout(() => inputElem?.focus(), 10)
+    } else if (e.target !== inputElem) edit = false
+  }
+
+  let timeout: any
+  function mousedown(e: any) {
+    if (e.target === nameElem) {
+      timeout = setTimeout(() => {
+        click(e)
+      }, 500)
     } else if (e.target !== inputElem) edit = false
   }
 </script>
 
 <svelte:window
-  on:mousedown={click}
+  on:mousedown={mousedown}
+  on:mouseup={() => clearTimeout(timeout)}
+  on:contextmenu={click}
   on:keydown={(e) => {
     if (e.key === "Enter" || e.key === "Tab") edit = false
   }}
 />
 
 {#if edit}
-  <input bind:this={inputElem} class="name" bind:value />
+  <input bind:this={inputElem} class="name _context_rename" bind:value />
 {:else}
-  <p bind:this={nameElem} class="name">{value}</p>
+  <p bind:this={nameElem} class="name _context_rename">{value}</p>
 {/if}
 
 <style>
   p {
     margin: 5px;
-    cursor: text;
+    /* cursor: text; */
   }
   input {
     padding: 5px;

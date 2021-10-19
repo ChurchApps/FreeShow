@@ -1,3 +1,4 @@
+import type { Category } from "./../types/Tabs"
 import { Writable, writable } from "svelte/store"
 import type { ShowRef, Folders, Projects } from "../types/Projects"
 import type { Dictionary, LanguageKey } from "../types/Settings"
@@ -21,7 +22,7 @@ export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
 export const activeProject: Writable<null | ID> = writable("feskof")
 export const activeShow: Writable<null | ShowRef> = writable(null)
 // Layers: background, text, overlay, audio
-export const output: Writable<null | Output> = writable({
+export const output: Writable<Output> = writable({
   // activeSlides
   background: null, // video/image
   slide: null, // text
@@ -103,12 +104,30 @@ export const shows: Writable<Shows> = writable({
           },
         ],
       },
+      blank: {
+        label: "Blank",
+        color: null,
+        notes: "",
+        items: [],
+      },
     },
     layouts: {
       fesfsef: {
         name: "",
         notes: "",
-        slides: [{ id: "feowo" }, { id: "fesfo" }, { id: "feowo" }],
+        slides: [
+          { id: "feowo" },
+          { id: "fesfo" },
+          { id: "feowo" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "fesfo" },
+          { id: "blank" },
+        ],
       },
     },
   },
@@ -196,7 +215,7 @@ export const folders: Writable<Folders> = writable({
   fes: { name: "Test", parent: "esf" },
   esf2: { name: "Ayy2", parent: "fese" },
 })
-export const categories = writable({
+export const categories: Writable<Category> = writable({
   terd: { name: "Song", icon: "song" },
   fese: { name: "Info", icon: "info" },
   teerd: { name: "Presentation", icon: "presentation" },
@@ -215,6 +234,19 @@ export const audio = writable({
 // export const stage = writable([type: "text", pos: ])
 // message...
 // layout
+
+// TABS
+interface EnabledDrawerTabs {
+  [key: string]: boolean
+}
+export const enabledDrawerTabs: Writable<EnabledDrawerTabs> = writable({
+  shows: true,
+  backgrounds: true,
+  overlays: true,
+  audio: true,
+  scripture: true,
+  live: true,
+})
 
 // SETTINGS
 // lan

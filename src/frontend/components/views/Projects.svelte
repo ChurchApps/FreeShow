@@ -31,7 +31,7 @@
   Object.entries($projects).forEach((project) => {
     let p = { ...project[1] }
     p.id = project[0]
-    delete p.shows
+    p.shows = []
     tree.push(p)
   })
 
@@ -40,13 +40,13 @@
       let shows = GetProjects().active.shows // $projects[$activeProject].shows
 
       if (shows.length) {
-        let newShow = null
+        let newShow: null | number = null
         if (e.key === "ArrowDown") {
           // Arrow Down = change active show in project
-          if ($activeShow) {
+          if ($activeShow !== null) {
             // REMOVE let found = false
             shows.forEach((show, i) => {
-              if (show.id === $activeShow.id) {
+              if (show.id === $activeShow!.id) {
                 // found = true
                 if (shows[i + 1]) newShow = i + 1
               }
@@ -55,10 +55,10 @@
           } else newShow = 0
         } else if (e.key === "ArrowUp") {
           // Arrow Up = change active show in project
-          if ($activeShow) {
+          if ($activeShow !== null) {
             // let found = false
             shows.forEach((show, i) => {
-              if (show.id === $activeShow.id && newShow === null) {
+              if (show.id === $activeShow!.id && newShow === null) {
                 if (i - 1 >= 0) newShow = i - 1
                 else newShow = 0
                 // if (!found && i - 1 >= 0) newShow = i - 1
@@ -77,7 +77,7 @@
 
 <svelte:window on:keydown={keyDown} />
 
-<div>
+<div style="max-height: 50%; display: flex; flex-direction: column;">
   <span class="top">
     <!-- TODO: set different project system folders.... -->
     <!-- TODO: right click change... -->
@@ -85,9 +85,9 @@
       <Icon name="home" />
     </Button>
     <!-- TODO: right click go to recent -->
-    <Button on:click={() => projectView.set(false)} active={!$projectView} disabled={$activeProject === null} title={$projects[$activeProject].name}>
+    <Button on:click={() => projectView.set(false)} active={!$projectView} disabled={$activeProject === null} title={$activeProject ? $projects[$activeProject].name : null}>
       <Icon name="file" />
-      <p style="color: white; overflow: hidden;">{$projects[$activeProject].name}</p>
+      <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject].name : ""}</p>
     </Button>
     <!-- <button on:click={() => projectView.set(true)}>
       <Icon name="home" />
@@ -106,7 +106,7 @@
 
       <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->
     </div>
-  {:else}
+  {:else if $activeProject !== null}
     <div class="list">
       <!-- {/* WIP: live on double click?? */} -->
       {#each $projects[$activeProject].shows as show}
@@ -114,7 +114,7 @@
           <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
           {#if !show.type}
             <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-            <ShowButton {...show} name={$shows[show.id]?.name} icon={$shows[show.id]?.category} />
+            <ShowButton {...show} name={$shows[show.id]?.name} icon={$shows[show.id]?.category || "unknown"} />
           {:else}
             <ShowButton {...show} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
           {/if}
@@ -127,8 +127,8 @@
 
 <style>
   div {
-    width: 300px;
-    height: 100%;
+    width: var(--navigation-width);
+    /* height: 100%; */
   }
 
   .top {
@@ -143,5 +143,6 @@
   .list {
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
   }
 </style>

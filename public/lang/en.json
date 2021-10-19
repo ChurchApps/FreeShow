@@ -12,5 +12,20 @@
   "languages": {
     "en": "English",
     "no": "Norwegian"
+  },
+  "actions": {
+    "rename": "Rename"
+  },
+  "context": {
+    "test": "Test",
+    "enabledTabs": "Show/Hide Tabs"
+  },
+  "tabs": {
+    "shows": "Shows",
+    "backgrounds": "Backgrounds",
+    "overlays": "Overlays",
+    "audio": "Audio",
+    "scripture": "Scripture",
+    "live": "Live"
   }
 }

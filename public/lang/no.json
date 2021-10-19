@@ -12,5 +12,20 @@
   "languages": {
     "en": "Engelsk",
     "no": "Norsk"
+  },
+  "actions": {
+    "rename": "Gi nytt navn"
+  },
+  "context": {
+    "test": "Test Norsk",
+    "enabledTabs": "Vis/Skjul Faner"
+  },
+  "tabs": {
+    "shows": "Show",
+    "backgrounds": "Bakgrunner",
+    "overlays": "Overlegg",
+    "audio": "Lyd",
+    "scripture": "Bibelen",
+    "live": "Direkte"
   }
 }

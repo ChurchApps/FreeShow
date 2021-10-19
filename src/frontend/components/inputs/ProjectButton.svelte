@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ID, ShowType } from "../../../types/Show"
+  import type { ID } from "../../../types/Show"
 
   import { activeProject, activeShow, projects, projectView } from "../../stores"
 

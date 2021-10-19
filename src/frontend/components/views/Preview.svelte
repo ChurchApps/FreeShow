@@ -18,9 +18,11 @@
   }}
 />
 
-<Output hidden={mode === "live" ? false : true} />
-<!-- {#if mode === 'live'}
-{/if} -->
+<div>
+  <Output hidden={mode === "live" ? false : true} />
+  <!-- {#if mode === 'live'}
+  {/if} -->
 
-<!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
-<button on:click={() => output.set({ background: null, slide: null, overlay: null, audio: null })}>Clear All</button>
+  <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
+  <button on:click={() => output.set({ background: null, slide: null, overlay: null, audio: null })}>Clear All</button>
+</div>

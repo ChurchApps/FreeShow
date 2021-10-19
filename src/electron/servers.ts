@@ -1,34 +1,5 @@
+import { STAGE, REMOTE } from "./../types/Channels"
 import { join } from "path"
-// const http = require('http');
-
-// // Create an instance of the http server to handle HTTP requests
-// let httpServer = http.createServer((req, res) => {
-//     // Set a response type of plain text for the response
-//     res.writeHead(200, {'Content-Type': 'text/plain'});
-
-//     // Send back a response and end the connection
-//     res.end('Hello World!\n');
-// });
-
-// // Start the server on port 3000
-// httpServer.listen(3000, '127.0.0.1');
-// httpServer.listen(3000, '192.168.10.104');
-// httpServer.listen(8080, '192.168.10.104');
-// console.log('Node server running on port 3000');
-
-// const net = require('net');
-
-// const netServer = net.createServer((socket) => {
-//   socket.end('goodbye\n');
-// }).on('error', (err) => {
-//   // Handle errors here.
-//   throw err;
-// });
-
-// // Grab an arbitrary unused port.
-// netServer.listen(() => {
-//   console.log('opened server on', netServer.address());
-// });
 
 const REMOTE_PORT: number = 5510
 const STAGE_PORT: number = 5511
@@ -69,16 +40,7 @@ remoteServer.listen(REMOTE_PORT, () => {
 })
 
 stageExpressApp.get("/", (_req: any, res: Response) => {
-  // console.log(_req)
-  // res.sendFile(__dirname + "/public/server/stage.html")
-  // res.sendFile(join(__dirname, "..", "public", "server", "stage.html"))
-  // res.sendFile(join(__dirname, "public", "server", "stage.html"))
-  // res.sendFile(__dirname + "/server/remote/remote.html")
-  // res.sendFile(join(__dirname, "public", "index.html"))
   res.sendFile(join(__dirname, "/stage/index.html"))
-  // res.sendFile(process.env.PUBLIC_URL + "/server/remote/remote.html")
-  // res.sendFile("./public/server/index.html")
-  // app.use(express.static(__dirname +'/public'));
 })
 stageExpressApp.use(express.static(__dirname + "/stage"))
 stageServer.listen(STAGE_PORT, () => {
@@ -93,13 +55,13 @@ const password = "show" // get
 
 ioRemote.on("connection", (socket) => {
   // console.log(socket);
-  let id = socket.id
+  let id: string = socket.id
   let platform: string = socket.handshake.headers["user-agent"]!
-  let connected = false
+  let connected: boolean = false
 
   const broadcast = (msg: string) => {
     console.log(msg)
-    toApp("lan", { id, data: msg })
+    toApp(REMOTE, { id, data: msg })
   }
 
   broadcast("Client connected! Platform: " + getOS(platform) + ". [" + id + "]")
@@ -121,17 +83,17 @@ ioRemote.on("connection", (socket) => {
 
         // REQUEST DATA
         connected = true
-        toApp("lan", { id, action: "request" }) // request, update, change
+        toApp(REMOTE, { id, action: "request" }) // request, update, change
       } else ioRemote.emit("error", { id: "wrongPass", text: "Wrong password" })
     })
 
     socket.on("getShow", (data) => {
       // if (connected) toApp('lan', {action: 'setShow', projectID: data.projectID, id: data.id, type: null});
-      if (connected) toApp("lan", { action: "getShow", id: data.socket, data: { id: data.id, type: data.type } })
+      if (connected) toApp(REMOTE, { action: "getShow", id: data.socket, data: { id: data.id, type: data.type } })
     })
 
     // SEND DATA FROM APP TO CLIENT
-    ipcMain.on("lan", (_e, data) => {
+    ipcMain.on(REMOTE, (_e, data) => {
       if (data.id === id) ioRemote.to(data.id).emit(data.channel, data.data)
     })
 
@@ -170,24 +132,92 @@ function getOS(ua: string) {
 }
 
 // STAGE
-let stageConnections = 0
+
+var stageConnections: { [key: string]: { name: string } } = {}
+const maxStageConnections = 10 // get
 ioStage.on("connection", (socket) => {
-  stageConnections++
-  toApp("LAN", "Stage: +1 (" + stageConnections + ")")
-  // request stage
-  toApp("STAGE", "request")
+  let id: string = socket.id
+  // let platform: string = socket.handshake.headers["user-agent"]!
+  // let connected: boolean = false
+
+  // toApp(STAGE, "Stage: +1 (" + stageConnections + ")")
+  // // request stage
+  // toApp(STAGE, "REQUEST")
+
+  if (Object.keys(connections).length > maxStageConnections) {
+    ioRemote.emit("error", { id: "maxConn", text: "Cannot connect! There are more than " + maxStageConnections + " devices connected!" })
+    socket.disconnect()
+  } else {
+    // ioRemote.emit("connected")
+    // socket.on("name", (name) => (connections[id].name = name))
+
+    socket.on("password", (data) => {
+      // https://stackoverflow.com/questions/18279141/javascript-string-encryption-and-decryption
+      // if (CryptoJS.AES.decrypt(data, id) === password) { // TODO: encryption
+      if (data === password) {
+        // if has password.....
+        // correct password
+
+        // REQUEST DATA
+        // connected = true
+        toApp(STAGE, { id, action: "request" })
+      } else ioRemote.emit("error", { id: "wrongPass", text: "Wrong password" })
+    })
+
+    // socket.on("getShow", (data) => {
+    //   // if (connected) toApp('lan', {action: 'setShow', projectID: data.projectID, id: data.id, type: null});
+    //   if (connected) toApp(STAGE, { action: "getShow", id: data.socket, data: { id: data.id, type: data.type } })
+    // })
+
+    // SEND DATA FROM APP TO CLIENT
+    ipcMain.on(STAGE, (_e, data) => {
+      if (data.id === id) ioRemote.to(data.id).emit(data.channel, data.data)
+    })
+  }
 
   socket.on("disconnect", () => {
-    stageConnections--
-    toApp("LAN", "Stage: -1 (" + stageConnections + ")")
+    toApp(STAGE, { connection: stageConnections[id] })
+    // broadcast("Device " + id + " disconnected")
+    delete connections[id]
   })
 })
 
 // SEND DATA FROM APP TO CLIENT
-ipcMain.on("STAGE", (_e, data) => {
+ipcMain.on(STAGE, (_e, data) => {
   console.log("Stage data: " + data)
-  ioStage.emit("STAGE", data)
+  ioStage.emit(STAGE, data)
 })
+
+///////////////////////////////////////////////////////////
+
+// // Create an instance of the http server to handle HTTP requests
+// let httpServer = http.createServer((req, res) => {
+//     // Set a response type of plain text for the response
+//     res.writeHead(200, {'Content-Type': 'text/plain'});
+
+//     // Send back a response and end the connection
+//     res.end('Hello World!\n');
+// });
+
+// // Start the server on port 3000
+// httpServer.listen(3000, '127.0.0.1');
+// httpServer.listen(3000, '192.168.10.104');
+// httpServer.listen(8080, '192.168.10.104');
+// console.log('Node server running on port 3000');
+
+// const net = require('net');
+
+// const netServer = net.createServer((socket) => {
+//   socket.end('goodbye\n');
+// }).on('error', (err) => {
+//   // Handle errors here.
+//   throw err;
+// });
+
+// // Grab an arbitrary unused port.
+// netServer.listen(() => {
+//   console.log('opened server on', netServer.address());
+// });
 
 // https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?&page=94
 
