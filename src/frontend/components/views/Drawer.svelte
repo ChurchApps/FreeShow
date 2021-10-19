@@ -29,7 +29,6 @@
   function mouseMove(e: any) {
     if (mouse) {
       let newHeight: number = window.innerHeight - e.clientY - mouse.offsetY
-      console.log(newHeight)
       if (newHeight < minHeight) newHeight = minHeight
       else if (newHeight > maxHeight) newHeight = maxHeight
       height = newHeight
@@ -108,10 +107,5 @@
   .content {
     display: flex;
     /* height: calc(100% - 30px); */
-  }
-
-  .content nav {
-    width: var(--navigation-width);
-    background-color: red;
   }
 </style>

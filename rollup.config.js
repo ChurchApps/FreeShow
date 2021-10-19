@@ -117,6 +117,7 @@ export default [
       name: "remote",
       file: "build/electron/remote/client.js",
     },
+    external: ["svelte/internal"], // <-- suppresses the warning
     plugins: [
       svelte({
         preprocess: sveltePreprocess({
@@ -142,10 +143,10 @@ export default [
       // some cases you'll need additional configuration -
       // consult the documentation for details:
       // https://github.com/rollup/plugins/tree/master/packages/commonjs
-      resolve({
-        browser: true,
-        dedupe: ["svelte"],
-      }),
+      // resolve({
+      //   browser: true,
+      //   dedupe: ["svelte"],
+      // }),
       commonjs(),
       typescript({
         tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
@@ -186,7 +187,7 @@ export default [
         title: "RemoteShow",
         fileName: "index.html",
         // publicPath: "remote",
-        minify: true,
+        minify: production,
       }),
     ],
   },
@@ -196,9 +197,10 @@ export default [
     output: {
       sourcemap: !production,
       format: "iife",
-      name: "remote",
+      name: "stage",
       file: "build/electron/stage/client.js",
     },
+    external: ["svelte/internal", "socket.io-client"], // <-- suppresses the warning
     plugins: [
       svelte({
         preprocess: sveltePreprocess({
@@ -219,10 +221,10 @@ export default [
         compress: production ? true : false,
       }),
 
-      resolve({
-        browser: true,
-        dedupe: ["svelte"],
-      }),
+      // resolve({
+      //   browser: true,
+      //   dedupe: ["svelte"],
+      // }),
       commonjs(),
       typescript({
         tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
@@ -233,7 +235,7 @@ export default [
       html({
         title: "StageShow",
         fileName: "index.html",
-        minify: true,
+        minify: production,
       }),
     ],
   },
