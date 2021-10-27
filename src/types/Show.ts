@@ -52,6 +52,17 @@ export interface Layout {
   slides: SlideData[]
 }
 
+export interface LayoutSlideData {
+  id: string
+  transition: {
+    type: "none" | "fade"
+    duration: number
+  }
+  background: {}
+  overlay: {}
+  actions: {}
+}
+
 export interface SlideData {
   id: ID
   transition?: Transition
@@ -70,6 +81,7 @@ export interface Output {
   slide: null | {
     id: ID
     index: number
+    private?: boolean
   }
   overlay: null | ID
   audio: null | ID

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { activeShow } from "../../stores"
+  import Layouts from "../slide/Layouts.svelte"
   import ShowPreview from "../slide/ShowPreview.svelte"
 
   // $: show = $activeShow?.type ? false : true;
@@ -14,10 +15,23 @@
       <!--  -->
     {:else if $activeShow.type === "audio"}
       <!--  -->
+    {:else if $activeShow.type === "private"}
+      Private
     {:else}
       <ShowPreview />
+      <Layouts />
     {/if}
   {:else}
     No active show
   {/if}
 </div>
+
+<style>
+  div {
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+</style>

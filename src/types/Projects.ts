@@ -14,6 +14,7 @@ export interface Project {
 export interface ShowRef {
   id: string
   type?: ShowType
+  private?: boolean
   // location?: string;
 }
 

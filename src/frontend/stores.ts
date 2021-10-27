@@ -216,9 +216,9 @@ export const folders: Writable<Folders> = writable({
   esf2: { name: "Ayy2", parent: "fese" },
 })
 export const categories: Writable<Category> = writable({
-  terd: { name: "Song", icon: "song" },
-  fese: { name: "Info", icon: "info" },
-  teerd: { name: "Presentation", icon: "presentation" },
+  terd: { name: "category.song", default: true, icon: "song" },
+  fese: { name: "category.info", default: true, icon: "info" },
+  teerd: { name: "category.presentation", default: true, icon: "presentation" },
 })
 export const media = writable({
   terd: { type: "video", name: "Song", location: "song" },

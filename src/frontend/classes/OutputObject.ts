@@ -1,4 +1,4 @@
-import type { ID } from "../types/Show"
+import type { ID } from "../../types/Show"
 
 export class OutputObject {
   background: null | ID = null

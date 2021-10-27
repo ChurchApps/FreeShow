@@ -13,6 +13,10 @@
   import Drawer from "./components/views/Drawer.svelte"
   import type { TopViews } from "../types/Views"
   import ContextMenu from "./components/system/ContextMenu.svelte"
+  import Actions from "./components/slide/Actions.svelte"
+  import Settings from "./components/views/Settings.svelte"
+  import ShowPreview from "./components/slide/ShowPreview.svelte"
+  import Navigation from "./components/edit/Navigation.svelte"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -41,32 +45,36 @@
   <Top bind:mode />
   <div class="grid">
     <!-- <div class="row"> -->
-    {#if mode === "live"}
-      <!-- All / Current/active -->
+    <!-- All / Current/active -->
 
-      <div class="left">
+    <div class="left">
+      {#if mode === "live"}
         <Projects />
-      </div>
-      <div class="center">
+      {:else if mode === "edit"}
+        <Navigation />
+      {/if}
+    </div>
+    <div class="center">
+      {#if mode === "live"}
         <Show />
-      </div>
-      <div class="right">
-        <Preview {mode} />
-        <div>actions</div>
-      </div>
-      <!-- <Slides live={live} setLive={setLive} />
+      {:else if mode === "edit"}
+        <Editor />
+      {:else if mode === "settings"}
+        <Settings />
+      {/if}
+    </div>
+    <div class="right">
+      <Preview {mode} />
+      {#if mode === "live"}
+        <Actions />
+      {/if}
+    </div>
+    <!-- <Slides live={live} setLive={setLive} />
               <Preview live={live} setLive={setLive} /> -->
-    {:else if mode === "edit"}
-      <Editor />
-      <Preview {mode} />
-    {:else if mode === "stage"}
-      stage
-      <Preview {mode} />
+    {#if mode === "live" || mode === "edit"}
+      <Drawer />
     {/if}
     <!-- </div> -->
-
-    <!-- <Explorer mouse={mouse} request={request} /> -->
-    <Drawer />
   </div>
 
   <FakeMonitor />
@@ -100,7 +108,7 @@
     justify-content: space-between;
   } */
   .grid {
-    height: calc(100vh - 77px); /* top height */
+    height: calc(100vh - 57px); /* top height */
     display: grid;
     grid-template-columns: var(--navigation-width) auto var(--navigation-width);
     /* grid-template-rows: auto 1fr; */
@@ -120,6 +128,8 @@
   .center {
     /* grid-area: center; */
     overflow-y: auto;
+    height: 100%;
+    background-color: var(--primary-darker);
   }
   :global(.drawer) {
     grid-area: drawer;

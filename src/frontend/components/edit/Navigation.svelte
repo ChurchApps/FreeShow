@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { activeShow, output } from "../../stores"
-  import SlideEditor from "../slide/SlideEditor.svelte"
+  import { activeShow } from "../../stores"
 
-  let seIndex = $output?.slide?.index || 0
+  import ShowPreview from "../slide/ShowPreview.svelte"
 </script>
 
 {#if $activeShow}
@@ -13,11 +12,8 @@
   {:else if $activeShow.type === "audio"}
     <!--  -->
   {:else}
-    <SlideEditor {seIndex} />
+    <ShowPreview editor={true} />
   {/if}
 {:else}
   No active show
 {/if}
-
-<style>
-</style>

@@ -1,5 +1,6 @@
 :root {
   --primary: #2d313b;
+  --primary-darker: #202129;
   --text: #f0f0ff;
   --textInvert: #131313;
   --secondary: #e6349c;
@@ -57,6 +58,16 @@ h5,
 h6 {
   color: var(--secondary);
   transition: color 0.5s;
+
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+  white-space: nowrap;
+}
+
+p {
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+  white-space: nowrap;
 }
 
 * {

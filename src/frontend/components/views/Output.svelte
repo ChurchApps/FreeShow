@@ -25,7 +25,7 @@
 </script>
 
 <!-- <div class="slide" class:hidden style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;"> -->
-<div bind:offsetWidth={slidewidth} class="slide" class:hidden>
+<div bind:offsetWidth={slidewidth} class="slide" class:hidden style={$$props.style}>
   {#if Background !== null}
     <!--  -->
   {/if}

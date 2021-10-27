@@ -16,6 +16,9 @@
   "actions": {
     "rename": "Gi nytt navn"
   },
+  "clear": {
+    "all": "Fjern alt"
+  },
   "context": {
     "test": "Test Norsk",
     "enabledTabs": "Vis/Skjul Faner"
@@ -27,5 +30,40 @@
     "audio": "Lyd",
     "scripture": "Bibelen",
     "live": "Direkte"
+  },
+  "category": {
+    "all": "Alt",
+    "unlabeled": "Umerket",
+    "song": "Sang",
+    "info": "Info",
+    "presentation": "Presentasjon"
+  },
+  "month": {
+    "1": "januar",
+    "2": "februar",
+    "3": "mars",
+    "4": "april",
+    "5": "mai",
+    "6": "juni",
+    "7": "juli",
+    "8": "august",
+    "9": "september",
+    "10": "oktober",
+    "11": "november",
+    "12": "desember"
+  },
+  "weekday": {
+    "1": "mandag",
+    "2": "tirsdag",
+    "3": "onsdag",
+    "4": "torsdag",
+    "5": "fredag",
+    "6": "lørdag",
+    "7": "søndag"
+  },
+  "info": {
+    "created": "Opprettet",
+    "modified": "Endret",
+    "used": "Brukt"
   }
 }
