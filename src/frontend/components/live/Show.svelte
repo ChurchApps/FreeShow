@@ -1,7 +1,7 @@
 <script lang="ts">
   import { activeShow } from "../../stores"
   import Layouts from "../slide/Layouts.svelte"
-  import ShowPreview from "../slide/ShowPreview.svelte"
+  import ShowPreview from "../live/Slides.svelte"
 
   // $: show = $activeShow?.type ? false : true;
   // $: console.log($activeShow, show);

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import LocaleSwitcher from "../settings/LocaleSwitcher.svelte"
-  import ThemeSwitcher from "../settings/ThemeSwitcher.svelte"
+  import LocaleSwitcher from "./LocaleSwitcher.svelte"
+  import ThemeSwitcher from "./ThemeSwitcher.svelte"
 </script>
 
 <div>

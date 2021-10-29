@@ -1,6 +1,6 @@
 <script lang="ts">
   import { activeShow, output } from "../../stores"
-  import SlideEditor from "../slide/SlideEditor.svelte"
+  import SlideEditor from "../edit/SlideEditor.svelte"
 
   let seIndex = $output?.slide?.index || 0
 </script>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { activeShow } from "../../stores"
 
-  import ShowPreview from "../slide/ShowPreview.svelte"
+  import Slides from "./Slides.svelte"
 </script>
 
 {#if $activeShow}
@@ -12,7 +12,7 @@
   {:else if $activeShow.type === "audio"}
     <!--  -->
   {:else}
-    <ShowPreview editor={true} />
+    <Slides />
   {/if}
 {:else}
   No active show
