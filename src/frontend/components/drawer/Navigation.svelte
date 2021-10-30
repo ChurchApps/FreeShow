@@ -24,7 +24,7 @@
 <div class="main">
   {#each Object.entries(buttons) as category}
     <Button active={category[0] === active} on:click={() => (active = category[0])} style="justify-content: inherit">
-      <Icon name={category[1].icon || "unknown"} />
+      <Icon id={category[1].icon || "unknown"} />
       <div id={category[0]}>
         <T id={category[1].name} />
       </div>

@@ -60,13 +60,13 @@ h6 {
   transition: color 0.5s;
 
   text-overflow: ellipsis;
-  overflow-x: hidden;
+  overflow: hidden;
   white-space: nowrap;
 }
 
 p {
   text-overflow: ellipsis;
-  overflow-x: hidden;
+  overflow: hidden;
   white-space: nowrap;
 }
 

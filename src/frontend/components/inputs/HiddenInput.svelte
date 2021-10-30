@@ -9,11 +9,16 @@
       .join(" ")
 
   let nameElem: HTMLParagraphElement, inputElem: HTMLInputElement
-  let edit = false
+  let edit: boolean = false
+  let prevVal: string = ""
+  $: {
+    if (!edit && !value.length && prevVal.length) value = prevVal
+  }
   const click = (e: any) => {
     if (e.target === nameElem) {
       //  || e.target.closest(".contextMenu")
       edit = true
+      prevVal = value
       setTimeout(() => inputElem?.focus(), 10)
     } else if (e.target !== inputElem) edit = false
   }

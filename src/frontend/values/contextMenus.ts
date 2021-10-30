@@ -11,6 +11,7 @@ export interface ContextMenuLayout {
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   test: { label: "context.test", shortcuts: ["Alt+CommandOrControl+I"] },
   rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
+  disable: { label: "actions.disable", icon: "disable" },
 }
 
 export const contextMenuLayouts: { [key: string]: ContextMenuLayout } = {
@@ -18,6 +19,7 @@ export const contextMenuLayouts: { [key: string]: ContextMenuLayout } = {
   show_button: { rename: null, SEPERATOR: null, "actions.rename": ["rename", "rename", "test"], "languages.no": ["test", "test", "SEPERATOR", "rename", "rename", "test"] },
   drawer_top: { "context.enabledTabs": ["LOAD_enabled_drawer_tabs"] },
   drawer_top_button: { rename: null, "context.enabledTabs": ["LOAD_enabled_drawer_tabs"] },
+  slide: { disable: null, rename: null, "context.changeLabel": ["LOAD_labels"] },
 }
 
 // accelerator: process.platform === 'darwin' ? 'Alt+Cmd+I' : 'Alt+Shift+I',

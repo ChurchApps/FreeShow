@@ -1,10 +1,5 @@
 <script type="ts">
-  import T from "../helpers/T.svelte"
-  import type { TopViews } from "../../../types/Views"
-
-  export let mode: TopViews
-
-  // let settings = false
+  import TopButton from "../inputs/TopButton.svelte"
 </script>
 
 <!-- <button on:click={() => (settings = !settings)}>
@@ -13,13 +8,26 @@
   {translate(d.menus?.settings)}
 </button> -->
 
-<div>
+<div class="top">
   <span>
-    <button title="Switch to live view" on:click={() => (mode = "live")}>Live</button>
-    <button title="Go to editor" on:click={() => (mode = "edit")}>Edit</button>
-    <button title="Go to stage" on:click={() => (mode = "stage")}>Stage</button>
+    <TopButton id="show" />
+    <TopButton id="edit" />
+    <TopButton id="stage" />
   </span>
   <span>
-    <button title="Settings" on:click={() => (mode = "settings")}><T id="menus.settings" /></button>
+    <TopButton id="settings" />
+    <!-- Output -->
   </span>
 </div>
+
+<style>
+  .top {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    box-shadow: 0px 2px 4px rgb(0 0 0 / 30%);
+  }
+  .top span {
+    display: flex;
+  }
+</style>

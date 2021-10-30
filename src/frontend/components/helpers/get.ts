@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Project, Projects } from "../../../types/Projects"
-import type { ID, Layout, OutputValues, Show, Shows, Slide } from "../../../types/Show"
+import type { ID, OutputValues, Show, Shows, Slide, SlideData } from "../../../types/Show"
 import { activeProject, activeShow, projects, shows } from "../../stores"
 
 // export const getProject = (id: ID): Project => get(projects)[id]
@@ -22,8 +22,9 @@ export const getOutput = (): OutputValues => {
   }
 }
 
-export const GetLayout = (showID: ID): null | Layout => {
+export const GetLayout = (showID: ID): SlideData[] => {
   let currentShow: Show = get(shows)[showID]
+  let layoutSlides: SlideData[] = []
   if (currentShow) {
     if (currentShow.settings.activeLayout === null) {
       shows.update((s) => {
@@ -31,9 +32,19 @@ export const GetLayout = (showID: ID): null | Layout => {
         return s
       })
     }
-    return currentShow.layouts[currentShow.settings.activeLayout]
+
+    currentShow.layouts[currentShow.settings.activeLayout].slides.forEach((ls) => {
+      let slide: Slide = currentShow.slides[ls.id]
+      layoutSlides.push({ ...ls, color: slide.color })
+      if (slide.children) {
+        slide.children.forEach((sc) => {
+          layoutSlides.push({ ...sc, color: slide.color })
+        })
+        // layoutSlides = [...layoutSlides, ...slide.children]
+      }
+    })
   }
-  return null
+  return layoutSlides
 }
 
 export function GetShows() {
@@ -50,7 +61,7 @@ export function GetShows() {
 }
 
 export const getSlide = (showID: ID, slideIndex: number): Slide => {
-  return get(shows)[showID].slides[GetLayout(showID)!.slides[slideIndex].id]
+  return get(shows)[showID].slides[GetLayout(showID)[slideIndex]?.id]
 }
 
 export function GetProjects() {

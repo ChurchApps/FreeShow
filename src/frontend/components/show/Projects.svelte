@@ -82,18 +82,18 @@
     <!-- TODO: set different project system folders.... -->
     <!-- TODO: right click change... -->
     <Button on:click={() => projectView.set(true)} active={$projectView}>
-      <Icon name="home" />
+      <Icon id="home" />
     </Button>
     <!-- TODO: right click go to recent -->
     <Button on:click={() => projectView.set(false)} active={!$projectView} disabled={$activeProject === null} title={$activeProject ? $projects[$activeProject].name : null}>
-      <Icon name="file" />
+      <Icon id="file" />
       <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject].name : ""}</p>
     </Button>
     <!-- <button on:click={() => projectView.set(true)}>
-      <Icon name="home" />
+      <Icon id="home" />
     </button>
     <button on:click={() => projectView.set(false)}>
-      <Icon name="file" />
+      <Icon id="file" />
     </button> -->
     <!-- <button onClick={() => setProject(true)} style={{width: '50%', backgroundColor: (project ? 'transparent' : ''), color: (project ? 'var(--secondary)' : '')}}>Projects</button>
     <button onClick={() => setProject(false)} style={{width: '50%', backgroundColor: (project ? '' : 'transparent'), color: (project ? '' : 'var(--secondary)')}}>Timeline</button> -->
@@ -114,9 +114,9 @@
           <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
           {#if !show.type}
             <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-            <ShowButton {...show} name={$shows[show.id]?.name} icon={$shows[show.id]?.category || "unknown"} />
+            <ShowButton id={show.id} type={show.type} name={$shows[show.id]?.name} icon={$shows[show.id]?.category || "unknown"} />
           {:else}
-            <ShowButton {...show} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
+            <ShowButton id={show.id} type={show.type} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
           {/if}
         </span>
         <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->

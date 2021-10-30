@@ -48,7 +48,7 @@
 <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
 <button on:click={click} on:dblclick={doubleClick} class:active class="context_show_button" {style}>
   {#if icon}
-    <Icon name={icon} />
+    <Icon id={icon} />
   {/if}
   <!-- <p style="margin: 5px;">{name}</p> -->
   <HiddenInput value={name} />

@@ -1,8 +1,8 @@
-import type { LayoutSlideData } from "../../types/Show"
+import type { SlideData } from "../../types/Show"
 
 export default class Layout {
   notes: string
-  slides: LayoutSlideData[]
+  slides: SlideData[]
   constructor(public name: string) {
     this.name = name
     this.notes = ""

@@ -34,7 +34,7 @@
     outline: none;
   }
   button.active :global(svg) {
-    fill: var(--secondary-text);
+    fill: var(--text);
   }
 
   button:disabled {

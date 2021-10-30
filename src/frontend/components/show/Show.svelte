@@ -1,7 +1,8 @@
 <script lang="ts">
   import { activeShow } from "../../stores"
   import Layouts from "../slide/Layouts.svelte"
-  import ShowPreview from "../live/Slides.svelte"
+  import ShowPreview from "./Slides.svelte"
+  import Splash from "../main/Splash.svelte"
 
   // $: show = $activeShow?.type ? false : true;
   // $: console.log($activeShow, show);
@@ -22,7 +23,7 @@
       <Layouts />
     {/if}
   {:else}
-    No active show
+    <Splash />
   {/if}
 </div>
 

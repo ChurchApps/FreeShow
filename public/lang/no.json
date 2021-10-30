@@ -1,13 +1,17 @@
 {
+  "menu": {
+    "show": "Presenter",
+    "_title_show": "Gå til visning",
+    "edit": "Rediger",
+    "stage": "Scene",
+    "settings": "Innstillinger"
+  },
   "themes": {
     "dark": "Mørkt",
     "light": "Lyst"
   },
   "buttons": {
     "changeTheme": "Endre Tema"
-  },
-  "menus": {
-    "settings": "Innstillinger"
   },
   "languages": {
     "en": "Engelsk",
@@ -29,7 +33,8 @@
     "overlays": "Overlegg",
     "audio": "Lyd",
     "scripture": "Bibelen",
-    "live": "Direkte"
+    "live": "Direkte",
+    "web": "Nett"
   },
   "category": {
     "all": "Alt",

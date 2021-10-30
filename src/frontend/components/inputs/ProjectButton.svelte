@@ -24,7 +24,7 @@
   }}
   class:active
 >
-  <Icon name="file" />
+  <Icon id="file" />
   <HiddenInput value={name} />
 </button>
 

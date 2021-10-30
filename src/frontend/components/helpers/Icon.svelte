@@ -1,10 +1,11 @@
 <script lang="ts">
   import icons from "./icons"
 
-  export let name: string
-  export let width: string = "1rem"
-  export let height: string = "1rem"
-  export let box: number = 24
+  export let id: string
+  export let size: number = 1
+  $: width = size + "rem"
+  $: height = size + "rem"
+  let box: number = 24
 
   // {
   //   box: 24,
@@ -16,10 +17,10 @@
   //   name: 'trash',
   //   svg: `<path d="M12 12h2v12h-2z" /><path d="M18 12h2v12h-2z" /><path d="M4 6v2h2v20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8h2V6zm4 22V8h16v20z" /><path d="M12 2h8v2h-8z" />`
   // }
-  // let displayIcon = icons.find((e) => e.name === name);
+  // let displayIcon = icons.find((e) => e.name === id);
 </script>
 
-<svg class={$$props.class} style="{$$props.style || ''} min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">{@html icons[name]}</svg>
+<svg class={$$props.class} style="{$$props.style || ''} min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">{@html icons[id]}</svg>
 
 <style>
   svg {

@@ -1,1 +1,1 @@
-export type TopViews = "live" | "edit" | "stage" | "settings"
+export type TopViews = "show" | "edit" | "stage" | "settings"

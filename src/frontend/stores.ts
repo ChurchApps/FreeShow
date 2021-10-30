@@ -1,3 +1,4 @@
+import type { TopViews } from "./../types/Views"
 import type { Category } from "./../types/Tabs"
 import { Writable, writable } from "svelte/store"
 import type { ShowRef, Folders, Projects } from "../types/Projects"
@@ -16,6 +17,8 @@ import type { Output, ID, Shows } from "../types/Show"
 // global
 export const projectView: Writable<boolean> = writable(false) // WIP
 export const activeFilePath: Writable<null | string> = writable(null) // WIP
+export const editIndex: Writable<number> = writable(0)
+export const activePage: Writable<TopViews> = writable("show")
 
 // project
 export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
@@ -73,6 +76,7 @@ export const shows: Writable<Shows> = writable({
       template: null,
     },
     timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
+    // stats: {timesUsed: 100}
     meta: { title: "Syng det ut", artist: "test", license: "CC" },
     slides: {
       feowo: {
@@ -95,12 +99,24 @@ export const shows: Writable<Shows> = writable({
       },
       fesfo: {
         label: "Chorus",
-        color: null,
+        color: "red",
+        children: [{ id: "fesfofes" }],
         notes: "",
         items: [
           {
             style: "",
             text: [{ value: "Andre linje", tag: "p", style: "color: red; text-align: center;" }],
+          },
+        ],
+      },
+      fesfofes: {
+        label: null,
+        color: null,
+        notes: "",
+        items: [
+          {
+            style: "",
+            text: [{ value: "Andre linje", tag: "p", style: "color: orange; text-align: center;" }],
           },
         ],
       },
@@ -245,7 +261,8 @@ export const enabledDrawerTabs: Writable<EnabledDrawerTabs> = writable({
   overlays: true,
   audio: true,
   scripture: true,
-  live: true,
+  live: false,
+  web: false,
 })
 
 // SETTINGS
@@ -255,6 +272,7 @@ export const password: Writable<string> = writable("show")
 
 // general
 export const language: Writable<LanguageKey> = writable("en")
+export const lablesDisabled: Writable<boolean> = writable(false)
 
 // text
 export const theme = writable(0)

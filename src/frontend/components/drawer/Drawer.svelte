@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { enabledDrawerTabs } from "../../stores"
+  import { enabledDrawerTabs, lablesDisabled } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
   import Info from "../drawer/Info.svelte"
   import Navigation from "../drawer/Navigation.svelte"
+  import Icon from "../helpers/Icon.svelte"
 
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
-  const minHeight = 30
+  const minHeight = 40
   const maxHeight = window.innerHeight * 0.75
   let height: number = maxHeight / 2
 
@@ -77,7 +78,10 @@
       {#each Object.entries(drawerTabs) as tab}
         {#if $enabledDrawerTabs[tab[0]]}
           <Button on:click={() => (activeTab = tab[0])} active={activeTab === tab[0]} class="context_drawer_top_button">
-            <T id={tab[1].name} />
+            <Icon id={tab[1].icon} size={1.3} />
+            {#if !$lablesDisabled}
+              <span><T id={tab[1].name} /></span>
+            {/if}
           </Button>
         {/if}
       {/each}
@@ -120,7 +124,7 @@
 
   .top {
     /* cursor: ns-resize; */
-    height: 30px;
+    min-height: 40px;
     display: flex;
     justify-content: space-between;
     border-top: 5px solid var(--secondary);
@@ -128,6 +132,10 @@
 
   .top .tabs {
     display: flex;
+  }
+  .top .tabs span {
+    /* font-size: 1.1em; */
+    padding-left: 8px;
   }
 
   .search {
@@ -144,13 +152,14 @@
     /* background-color: var(--secondary-opacity); */
   }
   .search::placeholder {
-    color: rgb(255 255 255 / 0.2);
+    color: inherit;
+    opacity: 0.4;
   }
 
   .content {
     display: flex;
     /* height: 100%; */
-    height: calc(100% - 30px);
+    height: calc(100% - 40px);
     justify-content: space-between;
     /* height: calc(100% - 30px); */
   }

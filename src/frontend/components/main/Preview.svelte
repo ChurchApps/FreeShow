@@ -1,16 +1,17 @@
 <script lang="ts">
-  import type { TopViews } from "../../../types/Views"
+  import type { Resolution } from "../../../types/Settings"
+
   import type { SlideData } from "../../../types/Show"
 
   // import { OutputObject } from "../../classes/OutputObject";
 
-  import { activeShow, output, shows } from "../../stores"
+  import { activePage, activeShow, output, screen, shows } from "../../stores"
+  import { GetLayout } from "../helpers/get"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
   import Output from "./Output.svelte"
 
-  export let mode: TopViews
   let out = false
   output.subscribe((o) => {
     let set = new Set(Object.values(o))
@@ -32,11 +33,12 @@
 
     let slide = $output.slide
     let layout: SlideData[] = []
-    if (slide) layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
+    // if (slide) layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
+    if (slide) layout = GetLayout($output.slide!.id)
     let endOfShow = slide?.index === layout.length - 1
     // TODO: active show slide index on delete......
     // go to beginning if live mode & ctrl | no output | last slide active
-    if (mode === "live" && $activeShow && (!out || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
+    if ($activePage === "show" && $activeShow && (!out || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
       output.update((o) => {
         o.slide = { id: $activeShow!.id, index: 0, private: $activeShow!.private || false }
         return o
@@ -85,6 +87,7 @@
   function keydown(e: any) {
     if (e.ctrlKey || e.altKey) {
       if (e.key === "c") output.set({ background: null, slide: null, overlay: null, audio: null })
+      else if (e.key === "f") fullscreen = !fullscreen
     }
     if (!(e.target instanceof window.HTMLInputElement)) {
       if (e.key === "ArrowRight" || (e.key === " " && !e.shiftKey)) {
@@ -99,15 +102,33 @@
     }
   }
 
-  $: name = $output.slide ? ($output.slide.private ? "private" : "SHOW: " + $shows[$output.slide.id].name) : "nothing"
+  $: name = $output.slide ? ($output.slide.private ? "- [private]" : $shows[$output.slide.id].name) : "-"
+  $: index = $output.slide ? $output.slide.index + 1 : "-"
+
+  let fullscreen: boolean = false
+  let resolution: Resolution = $screen.resolution
+
+  $: size =
+    Math.min(resolution.width / window.innerWidth, window.innerWidth / resolution.width) > Math.min(resolution.height / window.innerHeight, window.innerHeight / resolution.height)
+      ? "height: 90vh"
+      : "width: 80vw"
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <div>
-  <!-- hidden={mode === "live" ? false : true} -->
-  <Output style="max-width: var(--navigation-width);" />
-  <!-- {#if mode === 'live'}
+  <!-- hidden={$activePage === "live" ? false : true} -->
+  <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen>
+    {#if fullscreen}
+      <span class="resolution">
+        <!-- TODO: get actual resultion ... -->
+        <p><b>Width:</b> {resolution.width}px</p>
+        <p><b>Height:</b> {resolution.height}px</p>
+      </span>
+    {/if}
+    <Output style={fullscreen ? size : "max-width: var(--navigation-width);"} />
+  </div>
+  <!-- {#if $activePage === 'live'}
   {/if} -->
 
   <!-- TODO: enable stage output -->
@@ -127,9 +148,8 @@
     </span>
   </div>
 
-  <span>
-    {name}
-  </span>
+  <span>Name: {name}</span>
+  <span>Index: {index}</span>
   <span class="group">
     <Button on:click={goBack} disabled={!$output.slide}>{"<-"}</Button>
     <Button>Play/Pause</Button>
@@ -166,5 +186,30 @@
   .group :global(button) {
     flex-grow: 1;
     /* height: 40px; */
+  }
+
+  .fullscreen {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 4px solid var(--secondary);
+    z-index: 80;
+  }
+  .resolution {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 30;
+    color: var(--secondary-text);
+    padding: 10px 12px;
+    border-bottom-right-radius: 5px;
+    background-color: var(--secondary-opacity);
+  }
+  .resolution p {
+    display: flex;
+    gap: 5px;
+    justify-content: space-between;
   }
 </style>

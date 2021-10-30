@@ -10,7 +10,7 @@ contextBridge.exposeInMainWorld("api", {
     // whitelist channels
     // console.log("received" + channel, ValidChannels.includes(channel))
     // if (ValidChannels.includes(channel)) {
-    console.log("received" + channel)
+    console.log("TO ELECTRON [" + channel + "]: ", data)
     ipcRenderer.send(channel, data)
     // }
   },
@@ -19,7 +19,7 @@ contextBridge.exposeInMainWorld("api", {
     // console.log(ValidChannels.includes(channel))
     // if (ValidChannels.includes(channel)) {
     ipcRenderer.on(channel, (_e, ...args) => {
-      console.log("EFE", ...args)
+      console.log("TO CLIENT [" + channel + "]: ", ...args)
       func(...args)
     })
     // }

@@ -11,12 +11,12 @@
   $: Overlay = $output.overlay
   $: Audio = $output.audio
 
-  let slidewidth: number = 300
+  let slideWidth: number = 300
 
   export let hidden: boolean = false
   // export let zoom: number = 0.3
   let resolution: Resolution = Slide ? $shows[$output.slide!.id].settings.resolution! : $screen.resolution
-  export let zoom: number = slidewidth / resolution.width
+  $: zoom = slideWidth / resolution.width
   // TODO: precentages instead of pixels for text???
 
   let transition = { duration: 500 } // text (not background)
@@ -25,11 +25,11 @@
 </script>
 
 <!-- <div class="slide" class:hidden style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;"> -->
-<div bind:offsetWidth={slidewidth} class="slide" class:hidden style={$$props.style}>
+<div bind:offsetWidth={slideWidth} class="slide" class:hidden style={$$props.style}>
   {#if Background !== null}
     <!--  -->
   {/if}
-  {#if Slide !== null}
+  {#if Slide}
     {#key Slide}
       <span style="zoom: {zoom};" transition:fade={transition}>
         <!-- {#each Object.values($shows[$activeShow.id].slides[Slide.id]) as item} -->

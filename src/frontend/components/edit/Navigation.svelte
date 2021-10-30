@@ -15,5 +15,15 @@
     <Slides />
   {/if}
 {:else}
-  No active show
+  <div class="center">Select a slide to edit</div>
 {/if}
+
+<style>
+  .center {
+    display: flex;
+    height: 100%;
+    opacity: 0.7;
+    justify-content: center;
+    align-items: center;
+  }
+</style>

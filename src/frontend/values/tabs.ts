@@ -12,4 +12,5 @@ export const drawerTabs: Tab = {
   audio: { name: "tabs.audio", icon: "audio" },
   scripture: { name: "tabs.scripture", icon: "scripture" },
   live: { name: "tabs.live", icon: "live" },
+  web: { name: "tabs.web", icon: "web" },
 }

@@ -2,6 +2,7 @@
 import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from "electron"
 import { join } from "path"
 import { URL } from "url"
+import { GET_SCREENS, MAIN, OPEN_FILE } from "../types/Channels"
 // import path from "path"
 // import fs from "fs"
 import electronSettings from "./utils/settings"
@@ -280,10 +281,11 @@ export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContent
 // ipcMain.handle("displayMessage", text => dialog.showMessageBox(text))
 
 const os = require("os")
-ipcMain.on("main", (e, args) => {
-  if (args === "getOS") e.reply("main", { id: "os", data: os.hostname() })
+ipcMain.on(MAIN, (e, args) => {
+  if (args.channel === "GET_OS") e.reply(MAIN, { channel: "GET_OS", data: os.hostname() })
+  else if (args.channel === "GET_VERSION") e.reply(MAIN, { channel: "GET_VERSION", data: app.getVersion() })
   else {
-    toApp("main", args)
+    toApp(MAIN, args)
     // fs.readFile("path/to/file", (error, data) => {
     //   // Do something with file contents
 
@@ -293,13 +295,13 @@ ipcMain.on("main", (e, args) => {
   }
 })
 
-ipcMain.on("getScreens", () => {
+ipcMain.on(GET_SCREENS, () => {
   // e, args
   desktopCapturer.getSources({ types: ["window", "screen"] }).then(async (sources) => {
     try {
       const screens: any[] = []
       sources.map((source) => screens.push({ name: source.name, id: source.id }))
-      toApp("getScreens", screens)
+      toApp(GET_SCREENS, screens)
 
       // const videoOptionsMenu = Menu.buildFromTemplate(
       //   sources.map(source => {
@@ -317,7 +319,8 @@ ipcMain.on("getScreens", () => {
   })
 })
 
-ipcMain.on("openFile", (_e, args) => {
+// WIP https://github.com/electron/electron/issues/1948
+ipcMain.on(OPEN_FILE, (_e, args) => {
   // toApp('main', args);
 
   if (!args.filters) args.filters = [{ name: "All", extensions: ["*"] }]
@@ -331,14 +334,14 @@ ipcMain.on("openFile", (_e, args) => {
   })
 
   if (file) {
-    toApp("main", file)
+    toApp(MAIN, file)
     // server(file);
     // toApp("openFile", {
     //   path: chunk(file),
     //   // content: data,
     // });
     // toApp('openFile', "./video");
-    toApp("openFile", file)
+    toApp(OPEN_FILE, file)
     // fs.readFile(file[0], "utf8", (err, data) => {
     //   toApp('main', err);
     //   toApp('main', data);

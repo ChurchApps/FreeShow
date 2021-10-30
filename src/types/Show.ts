@@ -30,6 +30,7 @@ export interface Show {
 export interface Slide {
   label: null | string
   color: null | string
+  children?: SlideData[]
   notes: string
   items: Item[]
   stageItems?: Item[]
@@ -52,19 +53,20 @@ export interface Layout {
   slides: SlideData[]
 }
 
-export interface LayoutSlideData {
-  id: string
-  transition: {
-    type: "none" | "fade"
-    duration: number
-  }
-  background: {}
-  overlay: {}
-  actions: {}
-}
+// export interface LayoutSlideData {
+//   id: string
+//   transition: {
+//     type: "none" | "fade"
+//     duration: number
+//   }
+//   background: {}
+//   overlay: {}
+//   actions: {}
+// }
 
 export interface SlideData {
   id: ID
+  color?: null | string
   transition?: Transition
   timer?: number
   background?: {} // set backgorund action?

@@ -10,7 +10,7 @@
   export let tree: Tree[]
   export let id: ID
   export let opened = $openedFolders.includes(id) ? true : false
-  const toggle = (e: MouseEvent) => {
+  const toggle = (e: any) => {
     if (!e.target.classList.contains("name")) {
       // console.log(1);
       // console.log($openedFolders.splice($openedFolders.indexOf(id), 1));
@@ -33,9 +33,9 @@
     <span {id} class:opened class="folder" on:click={toggle}>
       <span>
         {#if opened}
-          <Icon name="folder_open" />
+          <Icon id="folder_open" />
         {:else}
-          <Icon name="folder" />
+          <Icon id="folder" />
         {/if}
         <HiddenInput value={name} />
       </span>
@@ -50,7 +50,7 @@
           <li>
             {#if file.type === "folder"}
               <svelte:self {tree} id={file.id} name={file.name} />
-            {:else}
+            {:else if file.id}
               <ProjectButton name={file.name} id={file.id} />
             {/if}
           </li>

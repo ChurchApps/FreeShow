@@ -1,13 +1,17 @@
 {
+  "menu": {
+    "show": "Show",
+    "_title_show": "Go to show view",
+    "edit": "Edit",
+    "stage": "Stage",
+    "settings": "Settings"
+  },
   "themes": {
     "dark": "Dark",
     "light": "Light"
   },
   "buttons": {
     "changeTheme": "Change Theme"
-  },
-  "menus": {
-    "settings": "Settings"
   },
   "languages": {
     "en": "English",
@@ -29,7 +33,8 @@
     "overlays": "Overlays",
     "audio": "Audio",
     "scripture": "Scripture",
-    "live": "Live"
+    "live": "Live",
+    "web": "Web"
   },
   "category": {
     "all": "All",

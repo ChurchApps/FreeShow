@@ -32,7 +32,7 @@
 </script>
 
 <div on:click={contextItemClick} title={menu.shortcuts?.join(", ")} class:enabled {disabled}>
-  {#if menu.icon}<Icon name={menu.icon} />{/if}
+  {#if menu.icon}<Icon id={menu.icon} />{/if}
   {#key menu}
     <T id={menu.label} />
   {/key}
