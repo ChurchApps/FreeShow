@@ -11,7 +11,8 @@
   --focus: rgb(255 255 255 / 0.1);
   /* --active: rgb(230 52 156 / .8); */
 
-  --navigation-width: 18vw;
+  /* --navigation-width: 18vw; */
+  --navigation-width: 300px;
 }
 
 html,

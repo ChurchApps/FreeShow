@@ -33,8 +33,9 @@
     "overlays": "Overlegg",
     "audio": "Lyd",
     "scripture": "Bibelen",
-    "live": "Direkte",
-    "web": "Nett"
+    "timers": "Nedtellinger",
+    "web": "Nett",
+    "live": "Direkte"
   },
   "category": {
     "all": "Alt",

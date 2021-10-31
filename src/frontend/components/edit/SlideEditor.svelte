@@ -3,12 +3,14 @@
 
   import { activeShow, shows, screen, editIndex, output } from "../../stores"
   import { GetLayout } from "../helpers/get"
-  import Textbox from "../slide/Textbox.svelte"
+  import Textedit from "./Textedit.svelte"
 
   let slideWidth: number = 300
   $: currentShow = $activeShow!.id
   $: layoutSlides = GetLayout(currentShow)
   $: Slide = $shows[currentShow].slides[layoutSlides[$editIndex].id]
+
+  let helperLines: string[] = []
 
   let resolution: Resolution = Slide ? $shows[$output.slide!.id].settings.resolution! : $screen.resolution
   $: zoom = slideWidth / resolution.width
@@ -24,8 +26,13 @@
   <div bind:offsetWidth={slideWidth} class="slide" style="{size}: 100%">
     {#if Slide}
       <span style="zoom: {zoom};">
-        {#each Slide.items as item}
-          <Textbox {item} />
+        {#key helperLines}
+          {#each helperLines as helperLine}
+            <div class="helperLine {helperLine[0]}" style="{helperLine[0] === 'x' ? 'left' : 'top'}: {helperLine.slice(1, helperLine.length)}px;" />
+          {/each}
+        {/key}
+        {#each Slide.items as item, index}
+          <Textedit {item} {index} {zoom} bind:helperLines />
         {/each}
       </span>
     {/if}
@@ -48,5 +55,20 @@
     /* width: 1920px;
     height: 1080px; */
     font-size: 5em;
+  }
+
+  .helperLine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: var(--secondary);
+  }
+  .helperLine.x {
+    width: 2px;
+    height: 100%;
+  }
+  .helperLine.y {
+    width: 100%;
+    height: 2px;
   }
 </style>

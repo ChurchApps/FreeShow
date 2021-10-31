@@ -12,6 +12,8 @@
   <span>
     <TopButton id="show" />
     <TopButton id="edit" />
+    <TopButton id="reflow" />
+    <TopButton id="draw" />
     <TopButton id="stage" />
   </span>
   <span>
@@ -25,7 +27,8 @@
     position: relative;
     display: flex;
     justify-content: space-between;
-    box-shadow: 0px 2px 4px rgb(0 0 0 / 30%);
+    z-index: 30;
+    /* box-shadow: 0px 2px 4px rgb(0 0 0 / 30%); */
   }
   .top span {
     display: flex;

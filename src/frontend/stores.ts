@@ -261,8 +261,9 @@ export const enabledDrawerTabs: Writable<EnabledDrawerTabs> = writable({
   overlays: true,
   audio: true,
   scripture: true,
-  live: false,
+  timers: true,
   web: false,
+  live: false,
 })
 
 // SETTINGS

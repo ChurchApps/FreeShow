@@ -14,14 +14,16 @@
 
 <style>
   .item {
-    border: 1px dashed var(--secondary-opacity); /* DEBUG */
+    /* border: 1px dashed var(--secondary-opacity); */
 
-    position: absolute;
     /* display: inline-flex; */
+    position: absolute;
+    overflow: hidden;
   }
 
   p {
     display: inline;
+    white-space: initial;
     color: white;
   }
 </style>

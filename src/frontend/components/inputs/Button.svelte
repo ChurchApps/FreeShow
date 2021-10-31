@@ -39,5 +39,7 @@
 
   button:disabled {
     opacity: 0.5;
+    /* this is to prevent interfearing with mouse event listeners */
+    pointer-events: none;
   }
 </style>

@@ -38,7 +38,7 @@
   // }
 
   function keydown(e: any) {
-    if (!(e.target instanceof HTMLTextAreaElement)) {
+    if (!(e.target instanceof HTMLTextAreaElement) && !e.target.closest(".edit")) {
       if (e.key === "ArrowDown") {
         // Arrow Down
         e.preventDefault()

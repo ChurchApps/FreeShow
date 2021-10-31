@@ -77,8 +77,8 @@
 
 <svelte:window on:keydown={keyDown} />
 
-<div style="max-height: 50%; display: flex; flex-direction: column;">
-  <span class="top">
+<div class="main">
+  <span class="tabs">
     <!-- TODO: set different project system folders.... -->
     <!-- TODO: right click change... -->
     <Button on:click={() => projectView.set(true)} active={$projectView}>
@@ -126,17 +126,22 @@
 </div>
 
 <style>
-  div {
-    width: var(--navigation-width);
-    /* height: 100%; */
+  .main {
+    max-height: 50%;
+    /* width: 100%; */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    border-bottom: 3px solid var(--secondary);
   }
 
-  .top {
+  .tabs {
     display: flex;
+    background-color: var(--primary-darker);
     /* width: 100%;
     justify-content: space-between; */
   }
-  .top :global(button) {
+  .tabs :global(button) {
     width: 50%;
   }
 

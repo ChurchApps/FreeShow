@@ -5,3 +5,10 @@ export interface Category {
     icon: string
   }
 }
+
+export interface TabsObj {
+  [key: string]: {
+    name: string
+    icon: string
+  }
+}

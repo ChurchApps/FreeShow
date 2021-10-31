@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { enabledDrawerTabs, lablesDisabled } from "../../stores"
+  import { dictionary, enabledDrawerTabs, lablesDisabled } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
@@ -11,14 +11,15 @@
   import Button from "../inputs/Button.svelte"
 
   const minHeight = 40
-  const maxHeight = window.innerHeight * 0.75
+  // const maxHeight = window.innerHeight * 0.75
+  const maxHeight = window.innerHeight - 68
   let height: number = maxHeight / 2
 
   let activeTab: string = "shows"
 
   let move: boolean = false
   let mouse: null | { x: number; y: number; offsetY: number } = null
-  function mouseDown(e: any) {
+  function mousedown(e: any) {
     if (e.target.classList.contains("top")) {
       mouse = {
         x: e.clientX,
@@ -28,7 +29,7 @@
     }
     // console.log(e.clientY, e.target.offsetTop)
   }
-  function mouseMove(e: any) {
+  function mousemove(e: any) {
     if (mouse) {
       let newHeight: number = window.innerHeight - e.clientY - mouse.offsetY
       if (newHeight < minHeight * 2) newHeight = minHeight
@@ -69,15 +70,21 @@
   }
 </script>
 
-<svelte:window on:mouseup={mouseup} on:mousemove={mouseMove} />
+<svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />
 
 <section class="drawer" style="height: {height}px">
   <!-- <div class="dragger" on:mousedown={mouseDown} on:click={click} /> -->
-  <div class="top context_drawer_top" on:mousedown={mouseDown} on:click={click}>
+  <div class="top context_drawer_top" on:mousedown={mousedown} on:click={click}>
     <span class="tabs">
       {#each Object.entries(drawerTabs) as tab}
         {#if $enabledDrawerTabs[tab[0]]}
-          <Button on:click={() => (activeTab = tab[0])} active={activeTab === tab[0]} class="context_drawer_top_button">
+          <!-- translate(tab[1].name) -->
+          <Button
+            on:click={() => (activeTab = tab[0])}
+            active={activeTab === tab[0]}
+            class="context_drawer_top_button"
+            title={$lablesDisabled ? $dictionary[tab[1].name.split(".")[0]]?.[tab[1].name.split(".")[1]] : ""}
+          >
             <Icon id={tab[1].icon} size={1.3} />
             {#if !$lablesDisabled}
               <span><T id={tab[1].name} /></span>
@@ -107,27 +114,25 @@
     z-index: 20;
 
     background-color: var(--primary);
-    box-shadow: 0px -2px 4px rgb(0 0 0 / 30%);
+    /* box-shadow: 0px -2px 4px rgb(0 0 0 / 30%); */
   }
 
-  /* .dragger {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    cursor: ns-resize;
-
-    background: transparent;
-    border-top: 5px solid var(--secondary);
-  } */
-
   .top {
-    /* cursor: ns-resize; */
+    position: relative;
     min-height: 40px;
     display: flex;
     justify-content: space-between;
-    border-top: 5px solid var(--secondary);
+    /* border-top: 4px solid var(--secondary); */
+    padding-top: 4px;
+  }
+  .top::after {
+    content: "";
+    background-color: var(--secondary);
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 4px;
+    cursor: ns-resize;
   }
 
   .top .tabs {
@@ -161,6 +166,5 @@
     /* height: 100%; */
     height: calc(100% - 40px);
     justify-content: space-between;
-    /* height: calc(100% - 30px); */
   }
 </style>

@@ -89,7 +89,7 @@
       if (e.key === "c") output.set({ background: null, slide: null, overlay: null, audio: null })
       else if (e.key === "f") fullscreen = !fullscreen
     }
-    if (!(e.target instanceof window.HTMLInputElement)) {
+    if (!(e.target instanceof window.HTMLInputElement) && !e.target.closest(".edit")) {
       if (e.key === "ArrowRight" || (e.key === " " && !e.shiftKey)) {
         // Arrow Right | Space Bar
         e.preventDefault()
@@ -116,7 +116,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<div>
+<div class="main">
   <!-- hidden={$activePage === "live" ? false : true} -->
   <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen>
     {#if fullscreen}
@@ -126,7 +126,7 @@
         <p><b>Height:</b> {resolution.height}px</p>
       </span>
     {/if}
-    <Output style={fullscreen ? size : "max-width: var(--navigation-width);"} />
+    <Output style={fullscreen ? size : ""} />
   </div>
   <!-- {#if $activePage === 'live'}
   {/if} -->
@@ -158,6 +158,11 @@
 </div>
 
 <style>
+  .main {
+    border-bottom: 3px solid var(--secondary);
+    /* max-height: 50%; */
+    flex: 1;
+  }
   /* button {
     background-color: inherit;
     color: inherit;
