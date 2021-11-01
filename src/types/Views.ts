@@ -1,1 +1,1 @@
-export type TopViews = "show" | "edit" | "reflow" | "draw" | "stage" | "settings"
+export type TopViews = "show" | "edit" | "reflow" | "draw" | "stage" | "calendar" | "settings"

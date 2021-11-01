@@ -12,6 +12,8 @@
   export let zoom: number = 1
   export let active: boolean = false
 
+  let noGrid: boolean = false
+
   let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
 
   const dispatch = createEventDispatcher()
@@ -21,37 +23,48 @@
 </script>
 
 <!-- TODO: disabled -->
-<div class="slide context_slide" class:active style="background-color: {color};" tabindex={0} on:click={click}>
-  <!-- TODO: tab select on enter -->
-  <div class="slideContent" style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;">
-    <span style="zoom: {zoom};">
-      <!-- TODO: check if showid exists in shows -->
+<div style="display: flex; {noGrid ? 'width: 100%' : ''}">
+  <div class="slide context_slide" class:active style="background-color: {color};" tabindex={0} on:click={click}>
+    <!-- TODO: tab select on enter -->
+    <div class="slideContent" style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;">
+      <span style="zoom: {zoom};">
+        <!-- TODO: check if showid exists in shows -->
+        {#each slide.items as item}
+          <Textbox {item} />
+        {/each}
+      </span>
+    </div>
+    <!-- TODO: BG: white, color: black -->
+    <div class="label" style="width: {resolution.width * zoom}px;" title={slide.label || ""}>
+      <!-- font-size: 0.8em; -->
+      <span style="position: absolute;display: contents;">{index + 1}</span>
+      <span class="text">{slide.label || ""}</span>
+    </div>
+  </div>
+  {#if noGrid}
+    <hr />
+    <div class="noGrid" tabindex={0} contenteditable={true}>
       {#each slide.items as item}
-        <Textbox {item} />
+        {#if item.text}
+          {#each item.text as text}
+            <p>{text.value}</p>
+          {/each}
+        {/if}
       {/each}
-    </span>
-  </div>
-  <!-- TODO: BG: white, color: black -->
-  <div class="label" style="width: {resolution.width * zoom}px;" title={slide.label || ""}>
-    <!-- font-size: 0.8em; -->
-    <span style="position: absolute;display: contents;">{index + 1}</span>
-    <span class="text">{slide.label || ""}</span>
-  </div>
+    </div>
+  {/if}
 </div>
 
 <style>
   .slide {
-    padding: 5px;
-    /* width: 100%; */ /* WIP */
-    /* position: relative;
-    background-color: black; */
-    /* width: 1920px;
-    height: 1080px; */
+    padding: 3px;
     /* font-size: 5em; */
   }
   .slide.active {
-    outline: 2px solid var(--secondary);
-    outline-offset: 0px;
+    /* outline: 2px solid var(--secondary);
+    outline-offset: 4px; */
+    outline: 3px solid var(--secondary);
+    outline-offset: 4px;
   }
 
   .slideContent {
@@ -64,7 +77,8 @@
 
   .label {
     display: flex;
-    padding-top: 5px;
+    padding: 5px;
+    padding-bottom: 3px;
     font-size: 0.8em;
     font-weight: bold;
     align-items: center;
@@ -78,5 +92,21 @@
     overflow-x: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  hr {
+    height: 100%;
+    width: 3px;
+    border: none;
+    margin: 0 10px;
+    background-color: var(--primary-lighter);
+  }
+
+  .noGrid {
+    display: flex;
+    background-color: rgb(0 0 0 / 0.8);
+    color: white;
+    padding: 3px;
+    flex: 1;
   }
 </style>

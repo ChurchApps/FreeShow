@@ -10,12 +10,13 @@
 
   let buttons: Category = {}
   $: {
-    if (id === "shows")
+    if (id === "shows") {
       buttons = {
         all: { name: "category.all", default: true, icon: "all" },
         ...$categories,
         unlabeled: { name: "category.unlabeled", default: true, icon: "unknown" },
       }
+    } else buttons = {}
   }
 
   let active = "all"
@@ -37,7 +38,7 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    width: var(--navigation-width);
+    flex: 1;
   }
 
   /* button {

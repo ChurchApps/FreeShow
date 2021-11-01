@@ -36,7 +36,7 @@
   })
 
   function keyDown(e: KeyboardEvent) {
-    if ($activeProject !== null) {
+    if (!e.target?.closest(".edit") && $activeProject !== null) {
       let shows = GetProjects().active.shows // $projects[$activeProject].shows
 
       if (shows.length) {
@@ -127,12 +127,11 @@
 
 <style>
   .main {
-    max-height: 50%;
+    /* max-height: 50%; */
     /* width: 100%; */
     display: flex;
     flex-direction: column;
     flex: 1;
-    border-bottom: 3px solid var(--secondary);
   }
 
   .tabs {

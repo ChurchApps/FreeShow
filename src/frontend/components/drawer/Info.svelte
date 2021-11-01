@@ -40,8 +40,10 @@
 
 <style>
   .main {
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
-    width: var(--navigation-width);
+    flex: 1;
   }
 
   .padding {

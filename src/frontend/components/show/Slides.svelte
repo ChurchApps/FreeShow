@@ -12,8 +12,8 @@
   // let zoom = 0.15
   // console.log(elem)
 
-  // = width / main padding - slide padding - extra - gaps?? / columns / resolution
-  $: zoom = (viewWidth - 20 - 10 - 1 - (columns - 1) * 10) / columns / resolution.width
+  // = width / main padding - slide padding - extra - columns*gaps/padding / columns / resolution
+  $: zoom = (viewWidth - 20 - 10 - 0 - (columns - 1) * (10 + 6)) / columns / resolution.width
 
   $: id = $activeShow!.id
 
@@ -100,7 +100,7 @@
   .grid {
     display: flex;
     flex-wrap: wrap;
-    /* gap: 10px; */
+    gap: 10px;
     padding: 10px;
   }
 </style>

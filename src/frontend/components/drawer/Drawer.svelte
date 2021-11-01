@@ -9,6 +9,7 @@
 
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
+  import Resizeable from "../system/Resizeable.svelte"
 
   const minHeight = 40
   // const maxHeight = window.innerHeight * 0.75
@@ -97,9 +98,13 @@
     <input class="search" type="text" placeholder="Search keywords... (Seperated by comma)" bind:value={searchValue} on:input={search} />
   </div>
   <div class="content">
-    <Navigation id={activeTab} />
+    <Resizeable id={"drawerNavigation"}>
+      <Navigation id={activeTab} />
+    </Resizeable>
     <Content id={activeTab} {searchValue} />
-    <Info />
+    <Resizeable id={"drawerInfo"} side="right">
+      <Info />
+    </Resizeable>
   </div>
 </section>
 
@@ -119,7 +124,7 @@
 
   .top {
     position: relative;
-    min-height: 40px;
+    height: 40px;
     display: flex;
     justify-content: space-between;
     /* border-top: 4px solid var(--secondary); */
@@ -127,7 +132,8 @@
   }
   .top::after {
     content: "";
-    background-color: var(--secondary);
+    /* background-color: var(--secondary); */
+    background-color: var(--primary-lighter);
     position: absolute;
     top: 0;
     width: 100%;

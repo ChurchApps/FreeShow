@@ -4,6 +4,8 @@
     "_title_show": "Go to show view",
     "edit": "Edit",
     "stage": "Stage",
+    "draw": "Draw",
+    "calendar": "Calendar",
     "settings": "Settings"
   },
   "themes": {
@@ -43,6 +45,15 @@
     "song": "Song",
     "info": "Info",
     "presentation": "Presentation"
+  },
+  "tools": {
+    "notes": "Notes",
+    "schedule": "Schedule",
+    "timers": "Timers",
+    "actions": "Actions",
+    "slides": "Slides",
+    "transitions": "Transitions",
+    "backgrounds": "Backgrounds"
   },
   "month": {
     "1": "January",

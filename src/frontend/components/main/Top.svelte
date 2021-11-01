@@ -17,6 +17,7 @@
     <TopButton id="stage" />
   </span>
   <span>
+    <TopButton id="calendar" />
     <TopButton id="settings" />
     <!-- Output -->
   </span>
@@ -29,6 +30,7 @@
     justify-content: space-between;
     z-index: 30;
     /* box-shadow: 0px 2px 4px rgb(0 0 0 / 30%); */
+    /* border-bottom: 4px solid var(--primary-lighter); */
   }
   .top span {
     display: flex;

@@ -4,6 +4,8 @@
     "_title_show": "Gå til visning",
     "edit": "Rediger",
     "stage": "Scene",
+    "draw": "Tegne",
+    "calendar": "Kalender",
     "settings": "Innstillinger"
   },
   "themes": {
@@ -43,6 +45,15 @@
     "song": "Sang",
     "info": "Info",
     "presentation": "Presentasjon"
+  },
+  "tools": {
+    "notes": "Notater",
+    "schedule": "Schedule",
+    "timers": "Timers",
+    "actions": "Actions",
+    "slides": "Slides",
+    "transitions": "Transitions",
+    "backgrounds": "Backgrounds"
   },
   "month": {
     "1": "januar",

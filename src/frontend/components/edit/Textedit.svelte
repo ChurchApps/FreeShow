@@ -135,10 +135,12 @@
       } else if (mouse.e.target.closest(".square")) {
         // TODO: shiftkey
         // TODO: snap to resize...
+        let store = null
         let square = mouse.e.target.closest(".square")
         if (square.classList[1].includes("n")) {
           styles.top = (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y + "px"
           styles.height = e.clientY / zoom - mouse.offset.height + "px"
+          if (e.shiftKey) store = e.clientY / zoom - mouse.offset.height + "px"
           // styles.height = e.clientY / zoom - mouse.offset.height + "px"
           // styles.height = e.clientY / zoom - mouse.offset.height - (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y + "px"
           // styles.height = mouse.offset.y - itemElem.offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom + "px"
@@ -148,17 +150,28 @@
         }
         if (square.classList[1].includes("e")) {
           // styles.width = (e.clientX - e.target.closest(".slide").offsetLeft) / zoom - mouse.offset.x + "px"
-          styles.width = e.clientX / zoom - mouse.offset.width + "px"
+          if (!e.shiftKey || store === null) {
+            styles.width = e.clientX / zoom - mouse.offset.width + "px"
+            store = e.clientX / zoom - mouse.offset.width + "px"
+          } else styles.width = store
         }
         if (square.classList[1].includes("s")) {
           // styles.height = e.clientY / zoom - mouse.offset.y + itemElem.offsetHeight + "px"
-          styles.height = e.clientY / zoom - mouse.offset.height + "px"
+
+          if (!e.shiftKey || store === null) {
+            styles.height = e.clientY / zoom - mouse.offset.height + "px"
+            store = e.clientY / zoom - mouse.offset.height + "px"
+          } else styles.height = store
         }
         if (square.classList[1].includes("w")) {
           styles.left = (e.clientX - itemElem.closest(".slide").offsetLeft) / zoom - mouse.offset.x + "px"
           // styles.width = e.clientX / zoom - mouse.offsetWidth + "px"
           // styles.width = mouse.offset.x - itemElem.offsetWidth - (e.clientX - e.target.closest(".slide").offsetLeft) / zoom + "px"
-          styles.width = e.clientX / zoom - mouse.offset.width + "px"
+
+          if (!e.shiftKey || store === null) {
+            styles.width = e.clientX / zoom - mouse.offset.width + "px"
+            store = e.clientX / zoom - mouse.offset.width + "px"
+          }
         }
       }
 
@@ -199,7 +212,7 @@
       <div class="line {line}l" style="{line === 'n' || line === 's' ? 'height' : 'width'}: 10px;" />
     {/each}
     {#each squares as square}
-      <div class="square {square}" style="cursor: {square}-resize;" />
+      <div class="square {square}" style="width: {8 / zoom}px; cursor: {square}-resize;" />
     {/each}
   </section>
   <div class="edit" style="height: 100%" contenteditable={true}>
@@ -244,8 +257,9 @@
   .square {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 25px;
-    height: 25px;
+    /* width: 15px;
+    height: 15px; */
+    aspect-ratio: 1/1;
     background-color: transparent;
     /* border: 5px solid transparent; */
     /* outline: 1px solid white; */

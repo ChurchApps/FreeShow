@@ -159,7 +159,6 @@
 
 <style>
   .main {
-    border-bottom: 3px solid var(--secondary);
     /* max-height: 50%; */
     flex: 1;
   }

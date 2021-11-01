@@ -3,9 +3,9 @@
   import Tabs from "../main/Tabs.svelte"
 
   const tabs: TabsObj = {
-    slides: { name: "actions.slides", icon: "slides" },
-    transitions: { name: "actions.transitions", icon: "transition" },
-    backgrounds: { name: "actions.backgrounds", icon: "backgrounds" },
+    slides: { name: "tools.slides", icon: "slides" },
+    transitions: { name: "tools.transitions", icon: "transition" },
+    backgrounds: { name: "tools.backgrounds", icon: "backgrounds" },
   }
   let active: string = Object.keys(tabs)[0]
 </script>
@@ -24,5 +24,6 @@
     height: 50%;
     overflow-y: auto;
     overflow-x: hidden;
+    border-top: 3px solid var(--primary-lighter);
   }
 </style>

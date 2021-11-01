@@ -54,7 +54,7 @@
     width: 100%;
     /* height: 50px; */
     background-color: var(--primary);
-    border-top: 2px solid var(--secondary);
-    box-shadow: 0px -2px 2px rgb(0 0 0 / 40%);
+    border-top: 3px solid var(--primary-lighter);
+    /* box-shadow: 0px -2px 2px rgb(0 0 0 / 40%); */
   }
 </style>

@@ -23,15 +23,18 @@
 <style>
   h1 {
     font-size: 4em;
+    overflow: initial;
   }
 
   p {
     opacity: 0.8;
+    overflow: initial;
   }
 
   .center {
     display: flex;
     height: 100%;
+    overflow-y: auto;
     flex-direction: column;
     justify-content: center;
     align-items: center;
