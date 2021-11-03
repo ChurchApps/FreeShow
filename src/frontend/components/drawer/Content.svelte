@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { Show } from "../../../types/Show"
 
-  import { shows } from "../../stores"
+  import { drawerTabsData, shows } from "../../stores"
   import ShowButton from "../inputs/ShowButton.svelte"
 
   export let id: string
   export let searchValue: string
+  $: active = $drawerTabsData[id].activeSubTab
 
   $: sva = searchValue
     .toLowerCase()
@@ -67,11 +68,12 @@
     {#if Object.entries($shows).length}
       {#each Object.entries($shows) as show}
         <!-- {#key searchValue} -->
-        {#if searchValue.length <= 1 || search(show[1])}
+        {#if (active === "all" || active === show[1].category || (active === "unlabeled" && show[1].category === null)) && (searchValue.length <= 1 || search(show[1]))}
           <ShowButton id={show[0]} name={show[1].name} match={[search(show[1]), searchValue]} />
         {/if}
         <!-- {/key} -->
       {/each}
+      <!-- TODO: not updating values on activeSubTab change -->
       {#if searchValue.length > 1 && totalMatch === 0}
         No match
       {/if}

@@ -136,15 +136,15 @@
   <div class="clear">
     <span>
       <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
-      <Button class="clearAll" disabled={!out} on:click={() => output.set({ background: null, slide: null, overlay: null, audio: null })}>
+      <Button class="clearAll" disabled={!out} on:click={() => output.set({ background: null, slide: null, overlay: null, audio: null })} center>
         <T id={"clear.all"} />
       </Button>
     </span>
     <span class="group">
-      <Button disabled={!$output.background} on:click={() => clearOutput("background")}>BG</Button>
-      <Button disabled={!$output.slide} on:click={() => clearOutput("slide")}>TXT</Button>
-      <Button disabled={!$output.overlay} on:click={() => clearOutput("overlay")}>OL</Button>
-      <Button disabled={!$output.audio} on:click={() => clearOutput("audio")}>AUDIO</Button>
+      <Button disabled={!$output.background} on:click={() => clearOutput("background")} center>BG</Button>
+      <Button disabled={!$output.slide} on:click={() => clearOutput("slide")} center>TXT</Button>
+      <Button disabled={!$output.overlay} on:click={() => clearOutput("overlay")} center>OL</Button>
+      <Button disabled={!$output.audio} on:click={() => clearOutput("audio")} center>AUDIO</Button>
     </span>
   </div>
 

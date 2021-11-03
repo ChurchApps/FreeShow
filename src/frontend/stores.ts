@@ -1,3 +1,4 @@
+import type { NumberObject } from "./../types/Main"
 import type { TopViews } from "./../types/Views"
 import type { Category } from "./../types/Tabs"
 import { Writable, writable } from "svelte/store"
@@ -81,7 +82,7 @@ export const shows: Writable<Shows> = writable({
     slides: {
       feowo: {
         label: "Verse 1",
-        color: "green",
+        color: "orange",
         notes: "",
         items: [
           {
@@ -251,19 +252,43 @@ export const audio = writable({
 // message...
 // layout
 
-// TABS
-interface EnabledDrawerTabs {
-  [key: string]: boolean
+// SLIDE VIEW
+interface SlidesOptions {
+  columns: number
+  grid: boolean
 }
-export const enabledDrawerTabs: Writable<EnabledDrawerTabs> = writable({
-  shows: true,
-  backgrounds: true,
-  overlays: true,
-  audio: true,
-  scripture: true,
-  timers: true,
-  web: false,
-  live: false,
+export const slidesOptions: Writable<SlidesOptions> = writable({
+  columns: 4,
+  grid: true,
+})
+
+// IU STATE
+export const resized: Writable<NumberObject> = writable({
+  leftPanel: 300,
+  rightPanel: 300,
+  leftPanelDrawer: 300,
+  rightPanelDrawer: 300,
+  drawer: 200,
+})
+// export const tabs: Writable<StringObject> = writable({
+//   shows:
+// })
+// TABS
+interface DrawerTabs {
+  [key: string]: {
+    enabled: boolean
+    activeSubTab: null | string
+  }
+}
+export const drawerTabsData: Writable<DrawerTabs> = writable({
+  shows: { enabled: true, activeSubTab: null },
+  backgrounds: { enabled: true, activeSubTab: null },
+  overlays: { enabled: true, activeSubTab: null },
+  audio: { enabled: true, activeSubTab: null },
+  scripture: { enabled: true, activeSubTab: null },
+  timers: { enabled: true, activeSubTab: null },
+  web: { enabled: false, activeSubTab: null },
+  live: { enabled: false, activeSubTab: null },
 })
 
 // SETTINGS

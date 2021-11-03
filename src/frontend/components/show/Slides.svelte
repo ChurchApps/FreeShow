@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, output, screen } from "../../stores"
+  import { shows, activeShow, output, screen, slidesOptions } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
   // import { GetLayout } from "../helpers/get"
 
   let viewWidth: number = window.innerWidth / 3
-  let columns: number = 4
+  let columns: number = $slidesOptions.columns
   let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
   // let zoom = 0.15
   // console.log(elem)
@@ -80,10 +80,12 @@
         <!-- Add slides button -->
       {/if}
 
-      <div style="position: absolute;">
-        <button on:click={() => (columns = Math.max(2, columns - 1))}>-</button>
+      <div style="position: fixed;">
+        <button on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, columns - 1) })}>-</button>
         {columns}
-        <button on:click={() => (columns = Math.min(10, columns + 1))}>+</button>
+        <button on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, columns + 1) })}>+</button>
+        ---
+        <button on:click={() => slidesOptions.set({ ...$slidesOptions, grid: !$slidesOptions.grid })}>GRID</button>
       </div>
       <!-- TODO: snap to width! (Select columns instead of manual zoom size) -->
     {:else}

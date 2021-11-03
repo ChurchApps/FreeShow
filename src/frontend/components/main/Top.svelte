@@ -12,7 +12,7 @@
   <span>
     <TopButton id="show" />
     <TopButton id="edit" />
-    <TopButton id="reflow" />
+    <!-- <TopButton id="reflow" /> -->
     <TopButton id="draw" />
     <TopButton id="stage" />
   </span>
@@ -29,6 +29,7 @@
     display: flex;
     justify-content: space-between;
     z-index: 30;
+    height: 50px;
     /* box-shadow: 0px 2px 4px rgb(0 0 0 / 30%); */
     /* border-bottom: 4px solid var(--primary-lighter); */
   }

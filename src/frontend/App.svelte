@@ -14,10 +14,10 @@
   import ContextMenu from "./components/system/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import { activePage } from "./stores"
+  import { activePage, activeProject, activeShow } from "./stores"
   import ProjectTools from "./components/show/ProjectTools.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
-  import ShowTools from "./components/slide/ShowTools.svelte"
+  import ShowTools from "./components/show/ShowTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
 
   // CHECK IF FIRST TIME USER
@@ -42,7 +42,7 @@
     // ctrl + number
     if (e.ctrlKey) {
       // WIP reflow: flow / ...
-      let menus: TopViews[] = ["show", "edit", "reflow", "draw", "stage", "settings"]
+      let menus: TopViews[] = ["show", "edit", "draw", "stage", "settings"]
       if (Object.keys(menus).includes((e.key - 1).toString())) {
         activePage.set(menus[e.key - 1])
       }
@@ -69,7 +69,9 @@
         <div class="left">
           {#if page === "show"}
             <Projects />
-            <ProjectTools />
+            {#if $activeProject}
+              <ProjectTools />
+            {/if}
           {:else if page === "edit"}
             <Navigation />
           {/if}
@@ -87,7 +89,7 @@
       <Resizeable id={"mainRight"} side="right">
         <div class="right">
           <Preview />
-          {#if page === "show"}
+          {#if page === "show" && $activeShow}
             <ShowTools />
           {:else if page === "edit"}
             <EditTools />

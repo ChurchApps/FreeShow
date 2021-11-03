@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Tree } from "../../../types/Projects"
 
-  import { activeProject, activeShow, folders, projects, projectView, shows } from "../../stores"
+  import { activeProject, activeShow, categories, folders, projects, projectView, shows } from "../../stores"
   import { GetProjects } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
@@ -81,11 +81,11 @@
   <span class="tabs">
     <!-- TODO: set different project system folders.... -->
     <!-- TODO: right click change... -->
-    <Button on:click={() => projectView.set(true)} active={$projectView}>
+    <Button on:click={() => projectView.set(true)} active={$projectView} center>
       <Icon id="home" />
     </Button>
     <!-- TODO: right click go to recent -->
-    <Button on:click={() => projectView.set(false)} active={!$projectView} disabled={$activeProject === null} title={$activeProject ? $projects[$activeProject].name : null}>
+    <Button on:click={() => projectView.set(false)} active={!$projectView} center disabled={$activeProject === null} title={$activeProject ? $projects[$activeProject].name : null}>
       <Icon id="file" />
       <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject].name : ""}</p>
     </Button>
@@ -110,15 +110,13 @@
     <div class="list">
       <!-- {/* WIP: live on double click?? */} -->
       {#each $projects[$activeProject].shows as show}
-        <span class="listItem">
-          <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
-          {#if !show.type}
-            <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-            <ShowButton id={show.id} type={show.type} name={$shows[show.id]?.name} icon={$shows[show.id]?.category || "unknown"} />
-          {:else}
-            <ShowButton id={show.id} type={show.type} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
-          {/if}
-        </span>
+        <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
+        {#if !show.type}
+          <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
+          <ShowButton id={show.id} type={show.type} name={$shows[show.id]?.name} icon={$shows[show.id].category ? $categories[$shows[show.id].category || ""].icon : "unlabeled"} />
+        {:else}
+          <ShowButton id={show.id} type={show.type} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
+        {/if}
         <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
       {/each}
     </div>
@@ -132,6 +130,7 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    overflow-y: auto;
   }
 
   .tabs {

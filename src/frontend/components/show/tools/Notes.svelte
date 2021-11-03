@@ -6,7 +6,7 @@
   .paper {
     /* background-color: white;
     color: black; */
-    overflow-y: auto;
+    /* overflow-y: auto; */
     /* display: flex; */
     flex: 1;
   }

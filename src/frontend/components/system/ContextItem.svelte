@@ -3,7 +3,7 @@
 
   import T from "../helpers/T.svelte"
   import { ContextMenuItem, contextMenuItems } from "../../values/contextMenus"
-  import { enabledDrawerTabs } from "../../stores"
+  import { drawerTabsData } from "../../stores"
 
   export let contextElem: any
   export let id: string
@@ -26,7 +26,7 @@
     } else if (id.includes("enabled_drawer_tabs")) {
       let tabID = id.split("_")[3]
       enabled = !enabled
-      $enabledDrawerTabs[tabID] = enabled
+      $drawerTabsData[tabID].enabled = enabled
     } else console.log(id)
   }
 </script>

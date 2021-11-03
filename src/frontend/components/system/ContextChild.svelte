@@ -4,7 +4,7 @@
   import T from "../helpers/T.svelte"
   import ContextItem from "./ContextItem.svelte"
   import type { ContextMenuItem } from "../../values/contextMenus"
-  import { enabledDrawerTabs } from "../../stores"
+  import { drawerTabsData } from "../../stores"
 
   export let contextElem: any
   export let label: string
@@ -50,7 +50,7 @@
     switch (id) {
       case "enabled_drawer_tabs":
         Object.entries(drawerTabs).forEach((tab, i) => {
-          if (i >= 3) items.push([id + "_" + tab[0], { label: tab[1].name, icon: tab[1].icon, enabled: $enabledDrawerTabs[tab[0]] }])
+          if (i >= 3) items.push([id + "_" + tab[0], { label: tab[1].name, icon: tab[1].icon, enabled: $drawerTabsData[tab[0]].enabled }])
         })
         console.log(items)
 

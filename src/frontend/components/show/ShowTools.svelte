@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
   import Tabs from "../main/Tabs.svelte"
+  import SlidesList from "./tools/SlidesList.svelte"
 
   const tabs: TabsObj = {
     slides: { name: "tools.slides", icon: "slides" },
@@ -15,15 +16,29 @@
   <Tabs {tabs} bind:active />
 
   <div class="content">
-    {active}
+    {#if active === "slides"}
+      <SlidesList />
+    {:else}
+      {active}
+    {/if}
   </div>
 </div>
 
 <style>
   .main {
     height: 50%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
     border-top: 3px solid var(--primary-lighter);
+  }
+
+  .content {
+    /* display: flex; */
+    overflow-y: auto;
+    /* flex: 1; */
+    height: 100%;
   }
 </style>

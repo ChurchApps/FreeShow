@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dictionary, enabledDrawerTabs, lablesDisabled } from "../../stores"
+  import { dictionary, drawerTabsData, lablesDisabled } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
@@ -13,8 +13,8 @@
 
   const minHeight = 40
   // const maxHeight = window.innerHeight * 0.75
-  const maxHeight = window.innerHeight - 68
-  let height: number = maxHeight / 2
+  const maxHeight = window.innerHeight - 50
+  let height: number = 300 // maxHeight / 2
 
   let activeTab: string = "shows"
 
@@ -78,7 +78,7 @@
   <div class="top context_drawer_top" on:mousedown={mousedown} on:click={click}>
     <span class="tabs">
       {#each Object.entries(drawerTabs) as tab}
-        {#if $enabledDrawerTabs[tab[0]]}
+        {#if $drawerTabsData[tab[0]].enabled}
           <!-- translate(tab[1].name) -->
           <Button
             on:click={() => (activeTab = tab[0])}

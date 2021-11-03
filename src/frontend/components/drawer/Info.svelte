@@ -42,14 +42,14 @@
   .main {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
     flex: 1;
+    overflow-y: auto;
   }
 
   .padding {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
     padding: 10px;
   }
 
@@ -62,8 +62,7 @@
     display: flex;
     flex-direction: column;
     text-align: center;
-
-    height: 100%;
+    flex: 1;
     justify-content: center;
   }
 </style>

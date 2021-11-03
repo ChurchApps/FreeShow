@@ -16,7 +16,10 @@
   let move: boolean = false
   let mouse: null | { x: number; y: number; offset: number; target: any } = null
   function mousedown(e: any) {
-    if ((side === "left" && e.target.offsetWidth - e.offsetX < 5) || (side === "right" && e.offsetX < 4)) {
+    if (
+      (side === "left" && e.target.closest(".panel").offsetWidth - e.offsetX <= 4) ||
+      (side === "right" && e.clientX < e.target.closest(".panel").offsetLeft + 4 && e.offsetX <= 4 && e.offsetX >= 0)
+    ) {
       mouse = {
         x: e.clientX,
         y: e.clientY,
@@ -38,14 +41,17 @@
       else if (newWidth > maxWidth) newWidth = maxWidth
       else move = true
       width = newWidth
-      // storeRightWidth = null
+      // storeWidth = null
     }
   }
 
   let storeWidth: null | number = null
   function click(e: any) {
     if (!move) {
-      if ((side === "left" && e.target.offsetWidth - e.offset < 5) || (side === "right" && e.offset < 4)) {
+      if (
+        (side === "left" && e.target.closest(".panel").offsetWidth - e.offsetX <= 4) ||
+        (side === "right" && e.clientX < e.target.closest(".panel").offsetLeft + 4 && e.offsetX >= 0)
+      ) {
         if (width > minWidth) {
           storeWidth = width
           width = minWidth

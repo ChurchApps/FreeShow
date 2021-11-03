@@ -35,7 +35,6 @@
     "overlays": "Overlegg",
     "audio": "Lyd",
     "scripture": "Bibelen",
-    "timers": "Nedtellinger",
     "web": "Nett",
     "live": "Direkte"
   },
@@ -48,12 +47,12 @@
   },
   "tools": {
     "notes": "Notater",
-    "schedule": "Schedule",
-    "timers": "Timers",
-    "actions": "Actions",
+    "schedule": "Plan",
+    "timers": "Nedtellinger",
+    "actions": "Handlinger",
     "slides": "Slides",
-    "transitions": "Transitions",
-    "backgrounds": "Backgrounds"
+    "transitions": "Overganger",
+    "backgrounds": "Bakgrunner"
   },
   "month": {
     "1": "januar",

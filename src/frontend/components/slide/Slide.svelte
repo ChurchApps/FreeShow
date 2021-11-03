@@ -3,7 +3,7 @@
   import type { Resolution } from "../../../types/Settings"
 
   import type { Slide } from "../../../types/Show"
-  import { activeShow, screen, shows } from "../../stores"
+  import { activeShow, screen, shows, slidesOptions } from "../../stores"
   import Textbox from "./Textbox.svelte"
 
   export let slide: Slide
@@ -11,8 +11,6 @@
   export let index: number
   export let zoom: number = 1
   export let active: boolean = false
-
-  let noGrid: boolean = false
 
   let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
 
@@ -23,10 +21,10 @@
 </script>
 
 <!-- TODO: disabled -->
-<div style="display: flex; {noGrid ? 'width: 100%' : ''}">
+<div style="display: flex; {$slidesOptions.grid ? '' : 'width: 100%'}">
   <div class="slide context_slide" class:active style="background-color: {color};" tabindex={0} on:click={click}>
     <!-- TODO: tab select on enter -->
-    <div class="slideContent" style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;">
+    <div class="slideContent" style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px; {!slide.items.length ? 'background-color: transparent;' : ''}">
       <span style="zoom: {zoom};">
         <!-- TODO: check if showid exists in shows -->
         {#each slide.items as item}
@@ -41,9 +39,9 @@
       <span class="text">{slide.label || ""}</span>
     </div>
   </div>
-  {#if noGrid}
+  {#if !$slidesOptions.grid}
     <hr />
-    <div class="noGrid" tabindex={0} contenteditable={true}>
+    <div class="quickEdit edit" tabindex={0} contenteditable={true}>
       {#each slide.items as item}
         {#if item.text}
           {#each item.text as text}
@@ -58,6 +56,8 @@
 <style>
   .slide {
     padding: 3px;
+    background-color: var(--primary);
+    /* border: 2px solid var(--primary-lighter); */
     /* font-size: 5em; */
   }
   .slide.active {
@@ -102,7 +102,7 @@
     background-color: var(--primary-lighter);
   }
 
-  .noGrid {
+  .quickEdit {
     display: flex;
     background-color: rgb(0 0 0 / 0.8);
     color: white;

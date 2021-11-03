@@ -32,13 +32,10 @@
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
-    overflow-x: hidden;
-    /* overflow: hidden; */
     border-top: 3px solid var(--primary-lighter);
   }
 
   .content {
-    display: flex;
     overflow-y: auto;
     /* flex: 1; */
     height: 100%;

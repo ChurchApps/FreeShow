@@ -1,7 +1,7 @@
 <script lang="ts">
   import { activeShow } from "../../stores"
   import Layouts from "../slide/Layouts.svelte"
-  import ShowPreview from "./Slides.svelte"
+  import Slides from "./Slides.svelte"
   import Splash from "../main/Splash.svelte"
 
   // $: show = $activeShow?.type ? false : true;
@@ -19,7 +19,7 @@
     {:else if $activeShow.type === "private"}
       Private
     {:else}
-      <ShowPreview />
+      <Slides />
       <Layouts />
     {/if}
   {:else}

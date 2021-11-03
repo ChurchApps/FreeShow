@@ -83,6 +83,7 @@ export interface Output {
   slide: null | {
     id: ID
     index: number
+    // layout: ID ?
     private?: boolean
   }
   overlay: null | ID

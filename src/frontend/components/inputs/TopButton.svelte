@@ -14,19 +14,24 @@
 
 <div>
   <Button title={translate("menu._title_" + id)} active={$activePage === id} on:click={() => activePage.set(id)}>
-    <Icon {id} size={2} />
+    <Icon {id} size={1.8} />
     {#if !$lablesDisabled}
-      <T id={"menu." + id} />
+      <span><T id={"menu." + id} /></span>
     {/if}
   </Button>
 </div>
 
 <style>
   div :global(button) {
-    padding: 10px;
+    /* padding: 10px; */
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
+    justify-content: center;
     min-width: 100px;
-    /* height: 70px; */
+    height: 100%;
+  }
+  div :global(button) :global(svg) {
+    padding: 0 0.8em;
+    padding-left: 0;
   }
 </style>
