@@ -9,7 +9,7 @@
   let columns: number = 1
   let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
 
-  $: zoom = (viewWidth - 20 - 10 - 1 - (columns - 1) * 10) / columns / resolution.width
+  $: zoom = (viewWidth - 20 - 1 - (columns - 1) * 10) / columns / resolution.width
 
   editIndex.set($output.slide?.index || 0)
   activeShow.subscribe((a) => {
@@ -20,7 +20,8 @@
   $: currentShow = $shows[$activeShow!.id]
 
   // let layoutSlides: SlideData[] = []
-  $: layoutSlides = GetLayout($activeShow!.id)
+  // $: layoutSlides = GetLayout($activeShow!.id)
+  $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
   // console.log(currentShow)
 
   // $: {
@@ -54,11 +55,34 @@
       }
     }
   }
+
+  let hovering: null | number = null
+  let selected: number[] = []
+  let mouseDown: boolean = false
+  function mousedown() {
+    mouseDown = true
+  }
+  function mousemove(e: any) {
+    if (mouseDown && e.target.closest(".slide") && !selected.includes(Number(e.target.closest(".slide")?.getAttribute("data-index")))) {
+      selected = [...selected, Number(e.target.closest(".slide")?.getAttribute("data-index"))]
+    }
+  }
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window
+  on:keydown={keydown}
+  on:mousedown={(e) => {
+    if (!e.ctrlKey && !selected.includes(Number(e.target?.closest(".slide")?.getAttribute("data-index")))) selected = []
+  }}
+  on:mouseup={() => {
+    mouseDown = false
+  }}
+  on:dragover={() => {
+    mouseDown = false
+  }}
+/>
 
-<div class="scroll">
+<div class="scroll" on:mousedown={mousedown} on:mousemove={mousemove}>
   <div class="grid" bind:offsetWidth={viewWidth}>
     {#each layoutSlides as slide, i}
       <Slide
@@ -66,9 +90,18 @@
         index={i}
         color={slide.color}
         active={$editIndex === i}
+        list={true}
+        bind:hovering
+        bind:selected
         {zoom}
-        on:click={() => {
-          editIndex.set(i)
+        on:click={(e) => {
+          if (!e.ctrlKey) editIndex.set(i)
+        }}
+        on:mousedown={(e) => {
+          if (!selected.includes(i)) {
+            if (e.ctrlKey) selected = [...selected, i]
+            else selected = [i]
+          }
         }}
       />
     {/each}
@@ -78,6 +111,8 @@
 <style>
   .scroll {
     overflow-y: auto;
+    flex: 1;
+    background-color: var(--primary-darker);
   }
 
   .grid {

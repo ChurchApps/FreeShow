@@ -22,23 +22,17 @@ export const getOutput = (): OutputValues => {
   }
 }
 
-export const GetLayout = (showID: ID): SlideData[] => {
+export const GetLayout = (showID: null | ID = null): SlideData[] => {
+  if (!showID) showID = get(activeShow)!.id
   let currentShow: Show = get(shows)[showID]
   let layoutSlides: SlideData[] = []
   if (currentShow) {
-    if (currentShow.settings.activeLayout === null) {
-      shows.update((s) => {
-        s[showID].settings.activeLayout = Object.keys(currentShow.layouts)[0]
-        return s
-      })
-    }
-
     currentShow.layouts[currentShow.settings.activeLayout].slides.forEach((ls) => {
       let slide: Slide = currentShow.slides[ls.id]
       layoutSlides.push({ ...ls, color: slide.color })
       if (slide.children) {
         slide.children.forEach((sc) => {
-          layoutSlides.push({ ...sc, color: slide.color })
+          layoutSlides.push({ ...sc, color: slide.color, childOf: ls.id })
         })
         // layoutSlides = [...layoutSlides, ...slide.children]
       }

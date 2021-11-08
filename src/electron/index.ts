@@ -1,8 +1,9 @@
 // const { ValidChannels, Data } = require("./src/types/Channels")
-import { app, BrowserWindow, ipcMain, dialog, desktopCapturer } from "electron"
+import { app, BrowserWindow, ipcMain, dialog, desktopCapturer, screen } from "electron"
+import { Display } from "electron/main"
 import { join } from "path"
 import { URL } from "url"
-import { GET_SCREENS, MAIN, OPEN_FILE } from "../types/Channels"
+import { GET_SCREENS, MAIN, OPEN_FILE, OUTPUT } from "../types/Channels"
 // import path from "path"
 // import fs from "fs"
 import electronSettings from "./utils/settings"
@@ -23,7 +24,15 @@ if (!electronSettings.get("loaded")) console.log("Error! Could not get stored da
 let mainWindow: BrowserWindow | null
 
 app.on("ready", () => {
+  // createSplash()
   createWindow()
+
+  displays = screen.getAllDisplays()
+  // TODO: get this from settings...
+  externalDisplay =
+    displays.find((display) => {
+      return display.bounds.x !== 0 || display.bounds.y !== 0
+    }) || null
 
   // https://gist.github.com/maximilian-lindsey/a446a7ee87838a62099d
   // const LANserver =
@@ -32,6 +41,12 @@ app.on("ready", () => {
   // check for uodates
   if (isProd) checkForUpdates()
 })
+
+// let splash: BrowserWindow | null = null
+// const createSplash = () => {
+//   splash = new BrowserWindow({ width: 810, height: 610, transparent: true, frame: false, alwaysOnTop: true })
+//   splash.loadURL(`file://${join(__dirname, "public", "index.html")}`)
+// }
 
 const createWindow = () => {
   let width: number = electronSettings.get("width")
@@ -86,6 +101,12 @@ const createWindow = () => {
 
   mainWindow.on("closed", () => {
     mainWindow = null
+  })
+
+  mainWindow.once("ready-to-show", () => {
+    // splash?.destroy()
+    mainWindow?.show()
+    createOutputWindow()
   })
 }
 
@@ -284,7 +305,11 @@ const os = require("os")
 ipcMain.on(MAIN, (e, args) => {
   if (args.channel === "GET_OS") e.reply(MAIN, { channel: "GET_OS", data: os.hostname() })
   else if (args.channel === "GET_VERSION") e.reply(MAIN, { channel: "GET_VERSION", data: app.getVersion() })
-  else {
+  else if (args.channel === "OUTPUT") {
+    console.log(e.sender.id, outputWindow?.id, outputWindow?.webContents.id)
+    // e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
+    e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
+  } else {
     toApp(MAIN, args)
     // fs.readFile("path/to/file", (error, data) => {
     //   // Do something with file contents
@@ -295,13 +320,120 @@ ipcMain.on(MAIN, (e, args) => {
   }
 })
 
-ipcMain.on(GET_SCREENS, () => {
+let displays: Display[] = []
+// TODO: get this from settings...
+let externalDisplay: Display | null = null
+
+// create output
+ipcMain.on(OUTPUT, (_e, msg: any) => {
+  if (msg.channel === "DISPLAY") {
+    if (msg.data === true) {
+      if (externalDisplay && JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(externalDisplay.bounds)) {
+        outputWindow?.setBounds(externalDisplay.bounds)
+        // outputWindow?.setSize(externalDisplay.bounds.width, externalDisplay.bounds.height)
+        // outputWindow?.setPosition(externalDisplay.bounds.x + 50, externalDisplay.bounds.y + 50)
+      }
+      outputWindow?.show()
+    } else outputWindow?.hide()
+  } else {
+    outputWindow?.webContents.send(OUTPUT, msg)
+  }
+})
+// https://stackoverflow.com/questions/51808712/electronjs-multiple-monitors
+// export const toOutput = (channel: string, ...args: any[]) => outputWindow?.webContents.send(channel, args)
+// app.whenReady().then(() => {
+//   displays = screen.getAllDisplays()
+//   // TODO: get this from settings...
+//   externalDisplay =
+//     displays.find((display) => {
+//       return display.bounds.x !== 0 || display.bounds.y !== 0
+//     }) || null
+
+//   createOutputWindow()
+// })
+let outputWindow: BrowserWindow | null = null
+function createOutputWindow() {
+  // https://www.electronjs.org/docs/latest/api/browser-window
+  outputWindow = new BrowserWindow({
+    width: externalDisplay?.bounds.width || 810,
+    height: externalDisplay?.bounds.height || 610,
+    x: externalDisplay?.bounds.x || 0,
+    y: externalDisplay?.bounds.y || 0,
+    transparent: true, // disable interaction (resize)
+    alwaysOnTop: true, // keep window on top of other windows
+    resizable: false, // disable resizing on mac and windows
+    frame: false, // hide title/buttons
+    type: "toolbar", // hide from taskbar
+    fullscreen: true,
+    skipTaskbar: true, // hide taskbar
+    focusable: false, // makes non focusable
+    roundedCorners: false, // disable rounded corners on mac
+    backgroundColor: "#000",
+    show: false,
+    webPreferences: {
+      devTools: true,
+      preload: join(__dirname, "preload"), // use a preload script
+      contextIsolation: true,
+      enableRemoteModule: false,
+    },
+  })
+  // show: false, // hide window
+  // titleBarStyle: "hidden", // hide titlebar
+  // kiosk: true,
+
+  // Menu.setApplicationMenu(null) // hide menubar (all windows)
+  outputWindow.removeMenu() // hide menubar
+  // outputWindow.setMenuBarVisibility(false)
+
+  // outputWindow.setIgnoreMouseEvents(true) // hide window on click
+
+  const url =
+    // process.env.NODE_ENV === "production"
+    isProd
+      ? // in production, use the statically build version of our application
+        `file://${join(__dirname, "public", "index.html")}`
+      : // in dev, target the host and port of the local rollup web server
+        "http://localhost:3000"
+
+  outputWindow.loadURL(url).catch((err) => {
+    console.error(JSON.stringify(err))
+    app.quit()
+  })
+
+  if (externalDisplay) {
+    // outputWindow?.setBounds(externalDisplay.bounds)
+    // console.log(externalDisplay)
+    // console.log(externalDisplay.bounds)
+
+    // outputWindow.setSize(externalDisplay.bounds.width, externalDisplay.bounds.height)
+    // outputWindow.setPosition(externalDisplay.bounds.x + 50, externalDisplay.bounds.y + 50)
+    outputWindow?.show()
+    mainWindow?.webContents.send(OUTPUT, { channel: "DISPLAY", data: true })
+  }
+
+  // outputWindow.webContents.openDevTools()
+  // outputWindow.maximize()
+  // outputWindow.show()
+
+  // toOutput("MAIN", { channel: "OUTPUT", data: "true" })
+  // outputWindow.webContents.send("MAIN", { channel: "OUTPUT" })
+}
+
+// interface ScreenObj {
+//   name: string
+//   id: string
+// }
+ipcMain.on(GET_SCREENS, (_e, args: string[] = ["screen"]) => {
+  // ["window", "screen"]
   // e, args
-  desktopCapturer.getSources({ types: ["window", "screen"] }).then(async (sources) => {
+  desktopCapturer.getSources({ types: args }).then(async (sources) => {
     try {
+      // const screens: ScreenObj[] = []
       const screens: any[] = []
       sources.map((source) => screens.push({ name: source.name, id: source.id }))
+      // sources.map((source) => screens.push(source))
       toApp(GET_SCREENS, screens)
+      // toApp(GET_SCREENS, sources)
 
       // const videoOptionsMenu = Menu.buildFromTemplate(
       //   sources.map(source => {

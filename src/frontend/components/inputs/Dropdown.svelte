@@ -4,7 +4,7 @@
   import T from "../helpers/T.svelte"
   import { translate } from "../../utils/language"
   import { language } from "../../stores"
-  import type { Option } from "../../../types/Other"
+  import type { Option } from "../../../types/Main"
 
   const dispatch = createEventDispatcher()
   export let options: Option[]
@@ -14,12 +14,12 @@
   $: updater = [value, $language]
   // TODO: disable active on click anywhere
 
-  let self
+  let self: HTMLDivElement
 </script>
 
 <svelte:window
   on:mousedown={(e) => {
-    if (e.target.closest(".dropdownElem") !== self && active) {
+    if (e.target?.closest(".dropdownElem") !== self && active) {
       active = false
     }
   }}
@@ -35,7 +35,7 @@
       {#each options as option}
         <!-- {#if option.name !== value} -->
         <span
-          on:click={(e) => {
+          on:click={() => {
             dispatch("click", option)
             active = false
           }}

@@ -1,4 +1,4 @@
-import type { NumberObject } from "./../types/Main"
+import type { NumberObject } from "../types/Main"
 import type { TopViews } from "./../types/Views"
 import type { Category } from "./../types/Tabs"
 import { Writable, writable } from "svelte/store"
@@ -20,6 +20,8 @@ export const projectView: Writable<boolean> = writable(false) // WIP
 export const activeFilePath: Writable<null | string> = writable(null) // WIP
 export const editIndex: Writable<number> = writable(0)
 export const activePage: Writable<TopViews> = writable("show")
+export const outputWindow: Writable<boolean> = writable(false)
+export const outputDisplay: Writable<boolean> = writable(false)
 
 // project
 export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
@@ -324,3 +326,13 @@ export const theme_css = writable({})
 //   textPrimary: '#f0f0ff',
 //   textInvert: '#131313',
 // });
+
+// HISTORY
+export const undoHistory = writable([
+  {
+    action: "moveSlide",
+    fromState: 2,
+    page: "shows",
+  },
+])
+export const redoHistory = writable([])

@@ -4,7 +4,7 @@
   import SlidesList from "./tools/SlidesList.svelte"
 
   const tabs: TabsObj = {
-    slides: { name: "tools.slides", icon: "slides" },
+    groups: { name: "tools.groups", icon: "groups" },
     transitions: { name: "tools.transitions", icon: "transition" },
     backgrounds: { name: "tools.backgrounds", icon: "backgrounds" },
   }
@@ -16,7 +16,7 @@
   <Tabs {tabs} bind:active />
 
   <div class="content">
-    {#if active === "slides"}
+    {#if active === "groups"}
       <SlidesList />
     {:else}
       {active}

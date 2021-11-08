@@ -1,4 +1,5 @@
 <script lang="ts">
+  // import {flip} from 'svelte/animate';
   import type { Resolution } from "../../../types/Settings"
 
   import { shows, activeShow, output, screen, slidesOptions } from "../../stores"
@@ -13,13 +14,14 @@
   // console.log(elem)
 
   // = width / main padding - slide padding - extra - columns*gaps/padding / columns / resolution
-  $: zoom = (viewWidth - 20 - 10 - 0 - (columns - 1) * (10 + 6)) / columns / resolution.width
+  $: zoom = (viewWidth - 20 - 0 - 0 - (columns - 1) * (10 + 0)) / columns / resolution.width
 
   $: id = $activeShow!.id
 
   $: currentShow = $shows[$activeShow!.id]
 
-  $: layoutSlides = GetLayout($activeShow!.id)
+  // $: layoutSlides = GetLayout($activeShow!.id)
+  $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
   // // $: ShowSlides = GetLayout(id)?.slides || []
   // let layoutSlides: SlideData[] = []
   // console.log(currentShow)
@@ -54,9 +56,36 @@
   // }
 
   // $: ShowSlides = $shows[id].layouts[$shows[id].settings.activeLayout].slides
+
+  let hovering: null | number = null
+  let selected: number[] = []
+
+  let mouseDown: boolean = false
+  function mousedown() {
+    mouseDown = true
+  }
+  function mousemove(e: any) {
+    if (mouseDown && e.target.closest(".slide") && !selected.includes(Number(e.target.closest(".slide")?.getAttribute("data-index")))) {
+      selected = [...selected, Number(e.target.closest(".slide")?.getAttribute("data-index"))]
+    }
+  }
 </script>
 
-<div class="scroll">
+<svelte:window
+  on:mousedown={(e) => {
+    if (!e.ctrlKey && !selected.includes(Number(e.target?.closest(".slide")?.getAttribute("data-index")))) selected = []
+  }}
+  on:mouseup={() => {
+    mouseDown = false
+  }}
+  on:dragover={() => {
+    mouseDown = false
+  }}
+/>
+
+<!-- TODO: tab enter not woring -->
+
+<div class="scroll" on:mousedown={mousedown} on:mousemove={mousemove}>
   <div class="grid" bind:offsetWidth={viewWidth}>
     {#if $shows[id] !== undefined}
       <!-- {#each Object.values($shows[id].slides) as slide, i} -->
@@ -67,12 +96,24 @@
             index={i}
             color={slide.color}
             active={$output.slide?.index === i && $output.slide?.id === id}
+            list={!$slidesOptions.grid}
+            bind:hovering
+            bind:selected
             {zoom}
-            on:click={() =>
-              output.update((o) => {
-                o.slide = { id, index: i }
-                return o
-              })}
+            on:click={(e) => {
+              if (!e.ctrlKey) {
+                output.update((o) => {
+                  o.slide = { id, index: i }
+                  return o
+                })
+              }
+            }}
+            on:mousedown={(e) => {
+              if (!selected.includes(i)) {
+                if (e.ctrlKey) selected = [...selected, i]
+                else selected = [i]
+              }
+            }}
           />
         {/each}
       {:else}
@@ -97,6 +138,7 @@
 <style>
   .scroll {
     overflow-y: auto;
+    flex: 1;
   }
 
   .grid {

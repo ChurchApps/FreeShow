@@ -1,4 +1,5 @@
-import { OPEN_FILE, REMOTE, STAGE } from "./../../types/Channels"
+import { outputDisplay } from "./../stores"
+import { OPEN_FILE, OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
 import { shows } from "../stores"
 import { activeFilePath } from "../stores"
 import { get } from "svelte/store"
@@ -7,20 +8,26 @@ import { getOutput } from "../components/helpers/get"
 import type { RemoteData, RemoteInitialize, RemoteShow } from "../../types/Socket"
 
 export function listen() {
-  window.api.receive(OPEN_FILE, (data: any) => {
-    console.log(data)
-    // activeFilePath = data.path;
-    activeFilePath.set(data)
+  window.api.receive(OUTPUT, (message: any) => {
+    // window.api.send(MAIN, {message: message})
+    if (message.channel === "OUTPUT") output.set(message.data)
+    if (message.channel === "DISPLAY") outputDisplay.set(message.data)
+    else if (message.channel === "SHOWS") shows.set(message.data)
+  })
+  window.api.receive(OPEN_FILE, (message: any) => {
+    console.log(message)
+    // activeFilePath = message.path;
+    activeFilePath.set(message)
   })
   // window.api.send("OPEN_FILE", {path: 'C:/Users/Kristoffer/Coding/FreeShow/sources.txt'});
   // window.api.send("OPEN_FILE", 'C:/Users/Kristoffer/Coding/FreeShow/sources.txt');
   // window.api.send("OPEN_FILE", {});
 
   // REMOTE
-  window.api.receive(REMOTE, (data: RemoteData) => {
-    if (data.channel === "REQUEST") {
+  window.api.receive(REMOTE, (message: RemoteData) => {
+    if (message.channel === "REQUEST") {
       let initialize: RemoteInitialize = {
-        id: data.id,
+        id: message.id,
         channel: "DATA",
         data: {
           name: get(name) || "Computer",
@@ -32,26 +39,26 @@ export function listen() {
         },
       }
       window.api.send(REMOTE, initialize)
-    } else if (data.channel === "GET_SHOW") {
-      console.log(data)
-      let remoteShow: RemoteShow = { id: data.id, channel: "GET_SHOW", data: get(shows)[data.data.id] }
+    } else if (message.channel === "GET_SHOW") {
+      console.log(message)
+      let remoteShow: RemoteShow = { id: message.id, channel: "GET_SHOW", data: get(shows)[message.data.id] }
       window.api.send(REMOTE, remoteShow)
     } else {
-      console.log("Remote: ", data.id ? data.id + ": " + data.data : data)
+      console.log("Remote: ", message.id ? message.id + ": " + message.data : message)
     }
   })
 
   // REQUEST FROM STAGE
-  window.api.receive(STAGE, (data: any) => {
-    console.log(STAGE, data)
-    if (data === "REQUEST") {
+  window.api.receive(STAGE, (message: any) => {
+    console.log(STAGE, message)
+    if (message === "REQUEST") {
       window.api.send(STAGE, { output: getOutput() })
     }
   })
 
   // TO STAGE
-  output.subscribe((data) => {
-    if (data !== get(output)) {
+  output.subscribe((message) => {
+    if (message !== get(output)) {
       window.api.send(STAGE, { output: getOutput() })
     }
     // TODO: send next slide + countdown + others... / messages

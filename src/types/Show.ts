@@ -66,6 +66,7 @@ export interface Layout {
 
 export interface SlideData {
   id: ID
+  childOf?: ID
   color?: null | string
   transition?: Transition
   timer?: number

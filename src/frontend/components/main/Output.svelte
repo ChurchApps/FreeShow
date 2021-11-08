@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { shows, output, screen } from "../../stores"
+  import { shows, output, screen, outputWindow } from "../../stores"
   import Textbox from "../slide/Textbox.svelte"
   import { fade } from "svelte/transition"
   import { getSlide } from "../helpers/get"
@@ -25,7 +25,7 @@
 </script>
 
 <!-- <div class="slide" class:hidden style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;"> -->
-<div bind:offsetWidth={slideWidth} class="slide" class:hidden style={$$props.style}>
+<div bind:offsetWidth={slideWidth} class="slide" class:hidden style={$$props.style} class:noCursor={$outputWindow}>
   {#if Background !== null}
     <!--  -->
   {/if}
@@ -54,13 +54,16 @@
   .slide {
     position: relative;
     background-color: black;
-    width: 1920px;
-    height: 1080px;
+    /* width: 1920px;
+    height: 1080px; */
     font-size: 5em;
 
     width: 100%;
-    height: auto;
+    height: 100%;
     aspect-ratio: 16/9;
+  }
+  .slide.noCursor {
+    cursor: none;
   }
 
   .hidden {

@@ -14,11 +14,13 @@
   import ContextMenu from "./components/system/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import { activePage, activeProject, activeShow } from "./stores"
+  import { activePage, activeProject, activeShow, output, outputWindow, shows } from "./stores"
   import ProjectTools from "./components/show/ProjectTools.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
+  import Output from "./components/main/Output.svelte"
+  import { OUTPUT } from "../types/Channels"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -32,6 +34,14 @@
 
   // import VideoStream from "./components/controllers/VideoStream.svelte"
   // import type { activeFilePath } from "./stores";
+
+  output.subscribe((o) => {
+    if (!$outputWindow) window.api.send(OUTPUT, { channel: "OUTPUT", data: o })
+  })
+  // TODO: a better way of doing this!!!
+  shows.subscribe((s) => {
+    if (!$outputWindow) window.api.send(OUTPUT, { channel: "SHOWS", data: s })
+  })
 
   let page: TopViews = "show"
   activePage.subscribe((p) => (page = p))
@@ -53,68 +63,71 @@
 <svelte:window on:keydown={keydown} />
 
 <main>
-  <!-- <h1>FreeShow</h1> -->
+  {#if $outputWindow}
+    <Output />
+  {:else}
+    <!-- <h1>FreeShow</h1> -->
 
-  <ContextMenu />
-  <!-- {contextMenu && <ContextMenu event={contextMenu} setAction={setAction} />} -->
+    <ContextMenu />
+    <!-- {contextMenu && <ContextMenu event={contextMenu} setAction={setAction} />} -->
 
-  <div class="column">
-    <Top />
-    <!-- <div class="row"> -->
-    <!-- All / Current/active -->
+    <div class="column">
+      <Top />
+      <!-- <div class="row"> -->
+      <!-- All / Current/active -->
 
-    <div class="row">
-      <!-- maxWidth={window.innerWidth / 3} -->
-      <Resizeable id={"mainLeft"}>
-        <div class="left">
-          {#if page === "show"}
-            <Projects />
-            {#if $activeProject}
-              <ProjectTools />
+      <div class="row">
+        <!-- maxWidth={window.innerWidth / 3} -->
+        <Resizeable id={"mainLeft"}>
+          <div class="left">
+            {#if page === "show"}
+              <Projects />
+              {#if $activeProject}
+                <ProjectTools />
+              {/if}
+            {:else if page === "edit"}
+              <Navigation />
             {/if}
+          </div>
+        </Resizeable>
+        <div class="center">
+          {#if page === "show"}
+            <Show />
           {:else if page === "edit"}
-            <Navigation />
+            <Editor />
+          {:else if page === "settings"}
+            <Settings />
           {/if}
         </div>
-      </Resizeable>
-      <div class="center">
-        {#if page === "show"}
-          <Show />
-        {:else if page === "edit"}
-          <Editor />
-        {:else if page === "settings"}
-          <Settings />
-        {/if}
+        <Resizeable id={"mainRight"} side="right">
+          <div class="right">
+            <Preview />
+            {#if page === "show" && $activeShow}
+              <ShowTools />
+            {:else if page === "edit"}
+              <EditTools />
+            {/if}
+          </div>
+        </Resizeable>
       </div>
-      <Resizeable id={"mainRight"} side="right">
-        <div class="right">
-          <Preview />
-          {#if page === "show" && $activeShow}
-            <ShowTools />
-          {:else if page === "edit"}
-            <EditTools />
-          {/if}
-        </div>
-      </Resizeable>
+
+      <!-- <Slides live={live} setLive={setLive} />
+              <Preview live={live} setLive={setLive} /> -->
+      {#if page === "show" || page === "edit"}
+        <Drawer />
+      {/if}
+      <!-- </div> -->
     </div>
 
-    <!-- <Slides live={live} setLive={setLive} />
-              <Preview live={live} setLive={setLive} /> -->
-    {#if page === "show" || page === "edit"}
-      <Drawer />
-    {/if}
-    <!-- </div> -->
-  </div>
+    <!-- <VideoPlayer {$activeFilePath} /> -->
 
-  <!-- <VideoPlayer {$activeFilePath} /> -->
-
-  <!-- <video>
+    <!-- <video>
 		<track kind="captions">
 	</video> -->
 
-  <!-- <VideoStream /> -->
+    <!-- <VideoStream /> -->
 
-  <!-- <p class="file-path">
+    <!-- <p class="file-path">
     {$activeFilePath ? $activeFilePath : "Press 'Save' or hit 'CTRL + S' to save"}
   </p>
 
@@ -122,6 +135,7 @@
     <Editor bind:markdown />
     <Preview {markdown} />
   </div> -->
+  {/if}
 </main>
 
 <style>

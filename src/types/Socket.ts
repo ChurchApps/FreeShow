@@ -34,4 +34,4 @@ export interface MainData {
   channel: MainChannels
   data?: string
 }
-type MainChannels = "GET_OS"
+type MainChannels = "GET_OS" | "OUTPUT"
