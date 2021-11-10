@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { selectTextOnFocus, blurOnEscape } from "../helpers/inputActions"
   import { dictionary, drawerTabsData, lablesDisabled } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
@@ -95,7 +96,7 @@
       {/each}
     </span>
     <!-- TODO: expand drawer on input: -->
-    <input class="search" type="text" placeholder="Search keywords... (Seperated by comma)" bind:value={searchValue} on:input={search} />
+    <input class="search" type="text" placeholder="Search keywords... (Seperated by comma)" bind:value={searchValue} on:input={search} use:selectTextOnFocus use:blurOnEscape />
   </div>
   <div class="content">
     <Resizeable id={"drawerNavigation"}>

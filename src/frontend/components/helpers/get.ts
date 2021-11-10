@@ -1,3 +1,4 @@
+import type { ShowRef } from "./../../../types/Projects"
 import { get } from "svelte/store"
 import type { Project, Projects } from "../../../types/Projects"
 import type { ID, OutputValues, Show, Shows, Slide, SlideData } from "../../../types/Show"
@@ -39,6 +40,16 @@ export const GetLayout = (showID: null | ID = null): SlideData[] => {
     })
   }
   return layoutSlides
+}
+
+export const GetShow = (ref: ShowRef): Show => {
+  let s: Show
+  if (ref.private) {
+  } else if (ref.type === "video") {
+  } else {
+    s = get(shows)[ref.id]
+  }
+  return s!
 }
 
 export function GetShows() {

@@ -1,14 +1,16 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
 
-  import { activeShow, shows, screen, editIndex, output } from "../../stores"
+  import { activeShow, shows, screen, activeEdit, output } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Textedit from "./Textedit.svelte"
 
   let slideWidth: number = 300
   $: currentShow = $activeShow!.id
   $: layoutSlides = GetLayout(currentShow)
-  $: Slide = $shows[currentShow].slides[layoutSlides[$editIndex].id]
+  $: Slide = $activeEdit.slide !== null ? $shows[currentShow].slides[layoutSlides[$activeEdit.slide].id] : null
+
+  console.log(Slide)
 
   let helperLines: string[] = []
 

@@ -1,3 +1,4 @@
+import type { History } from "./components/helpers/history"
 import type { NumberObject } from "../types/Main"
 import type { TopViews } from "./../types/Views"
 import type { Category } from "./../types/Tabs"
@@ -18,7 +19,11 @@ import type { Output, ID, Shows } from "../types/Show"
 // global
 export const projectView: Writable<boolean> = writable(false) // WIP
 export const activeFilePath: Writable<null | string> = writable(null) // WIP
-export const editIndex: Writable<number> = writable(0)
+interface ActiveEdit {
+  slide: null | number
+  item: null | number
+}
+export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, item: null })
 export const activePage: Writable<TopViews> = writable("show")
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
@@ -328,11 +333,5 @@ export const theme_css = writable({})
 // });
 
 // HISTORY
-export const undoHistory = writable([
-  {
-    action: "moveSlide",
-    fromState: 2,
-    page: "shows",
-  },
-])
-export const redoHistory = writable([])
+export const undoHistory: Writable<History[]> = writable([])
+export const redoHistory: Writable<History[]> = writable([])

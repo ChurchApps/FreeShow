@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, output, screen, editIndex } from "../../stores"
+  import { shows, activeShow, output, screen, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
 
@@ -11,13 +11,14 @@
 
   $: zoom = (viewWidth - 20 - 1 - (columns - 1) * 10) / columns / resolution.width
 
-  editIndex.set($output.slide?.index || 0)
-  activeShow.subscribe((a) => {
-    if (a?.id !== $output.slide?.id) editIndex.set(0)
-  })
-
   // $: editIndex = $output.slide?.index || 0
   $: currentShow = $shows[$activeShow!.id]
+
+  let activeShowLayout = $shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides.length
+  activeEdit.set({ slide: $output.slide?.index || activeShowLayout ? 0 : null, item: null })
+  activeShow.subscribe((a) => {
+    if (a?.id !== $output.slide?.id) activeEdit.set({ slide: activeShowLayout ? 0 : null, item: null })
+  })
 
   // let layoutSlides: SlideData[] = []
   // $: layoutSlides = GetLayout($activeShow!.id)
@@ -43,14 +44,18 @@
       if (e.key === "ArrowDown") {
         // Arrow Down
         e.preventDefault()
-        if ($editIndex < layoutSlides.length - 1) {
-          editIndex.set($editIndex + 1)
+        if ($activeEdit.slide === null) {
+          activeEdit.set({ slide: 0, item: null })
+        } else if ($activeEdit.slide < layoutSlides.length - 1) {
+          activeEdit.set({ slide: $activeEdit.slide + 1, item: null })
         }
       } else if (e.key === "ArrowUp") {
         // Arrow Up
         e.preventDefault()
-        if ($editIndex > 0) {
-          editIndex.set($editIndex - 1)
+        if ($activeEdit.slide === null) {
+          activeEdit.set({ slide: layoutSlides.length - 1, item: null })
+        } else if ($activeEdit.slide > 0) {
+          activeEdit.set({ slide: $activeEdit.slide - 1, item: null })
         }
       }
     }
@@ -89,13 +94,13 @@
         slide={currentShow.slides[slide.id]}
         index={i}
         color={slide.color}
-        active={$editIndex === i}
+        active={$activeEdit.slide === i}
         list={true}
         bind:hovering
         bind:selected
         {zoom}
         on:click={(e) => {
-          if (!e.ctrlKey) editIndex.set(i)
+          if (!e.ctrlKey) activeEdit.set({ slide: i, item: null })
         }}
         on:mousedown={(e) => {
           if (!selected.includes(i)) {

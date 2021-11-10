@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
-  import { activeShow, editIndex, shows } from "../../stores"
+  import { activeShow, activeEdit, shows } from "../../stores"
   import { GetLayout } from "../helpers/get"
 
   export let item: Item
@@ -15,7 +15,7 @@
   // $: style = item.style
 
   $: layoutSlides = GetLayout($activeShow!.id)
-  // $: itemStore = $shows[$activeShow!.id].slides[layoutSlides[$editIndex].id].items[index]
+  // $: itemStore = $shows[$activeShow!.id].slides[layoutSlides[$activeEdit].id].items[index]
 
   let squares = ["nw", "n", "ne", "e", "se", "s", "sw", "w"]
   let lines = ["n", "e", "s", "w"]
@@ -37,6 +37,10 @@
   let mouse: null | Mouse = null
   function mousedown(e: any) {
     selected = true
+    activeEdit.update((ae) => {
+      ae.item = index
+      return ae
+    })
     if (e.target.closest(".line") || e.target.closest(".square") || e.ctrlKey || e.altKey) {
       mouse = {
         x: e.clientX,
@@ -66,8 +70,6 @@
     return styles
   }
   function mousemove(e: any) {
-    console.log(mouse)
-
     if (mouse) {
       let styles: any = getStyles(item.style)
       // let styles: any = {}
@@ -98,7 +100,7 @@
           // TODO: gravit, snap to gaps++
 
           // get other items pos
-          $shows[$activeShow!.id].slides[layoutSlides[$editIndex].id].items.forEach((itm, i) => {
+          $shows[$activeShow!.id].slides[layoutSlides[$activeEdit.slide!].id].items.forEach((itm, i) => {
             if (i !== index) {
               let style = getStyles(itm.style)
               Object.entries(style).map((s: any) => (style[s[0]] = Number(s[1].replace(/\D.+/g, ""))))
@@ -180,7 +182,7 @@
         textStyles += obj[0] + ":" + obj[1] + ";"
       })
       shows.update((s) => {
-        s[$activeShow!.id].slides[layoutSlides[$editIndex].id].items[index].style = textStyles
+        s[$activeShow!.id].slides[layoutSlides[$activeEdit.slide!].id].items[index].style = textStyles
         return s
       })
     }
@@ -195,8 +197,18 @@
   }
 
   function deselect(e: any) {
-    if (!e.ctrlKey && e.target.closest(".item") !== itemElem) selected = false
-    if (window.getSelection) {
+    if (!e.ctrlKey && e.target.closest(".item") !== itemElem && !e.target.closest(".editTools")) {
+      if (selected) {
+        if (!e.target.closest(".item")) {
+          activeEdit.update((ae) => {
+            ae.item = null
+            return ae
+          })
+        }
+      }
+      selected = false
+    }
+    if (window.getSelection && !e.target.closest(".editTools")) {
       window.getSelection()?.removeAllRanges()
       // } else if (document.selection) {
       //   document.selection.empty()
