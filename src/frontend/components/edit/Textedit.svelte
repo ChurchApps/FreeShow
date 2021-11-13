@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
   import { activeShow, activeEdit, shows } from "../../stores"
-  import { GetLayout } from "../helpers/get"
+  import { GetLayout, GetShow } from "../helpers/get"
+  import { history } from "../helpers/history"
 
   export let item: Item
   export let index: number
@@ -19,6 +20,7 @@
 
   let squares = ["nw", "n", "ne", "e", "se", "s", "sw", "w"]
   let lines = ["n", "e", "s", "w"]
+  let snap = 8
   export let helperLines: any
 
   interface Mouse {
@@ -95,7 +97,7 @@
           let xItems = [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
           let yItems = [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
           // snap margin
-          let margin = 8 / zoom
+          let margin = snap / zoom
 
           // TODO: gravit, snap to gaps++
 
@@ -192,13 +194,31 @@
     helperLines = []
   }
 
-  function keydown() {
+  function keydown(e: any) {
+    // TODO:
     // if (e.altKey) helperLines = []
+    // if ctrlkey = select multiple
+
+    if (e.key === "Backspace" && selected === true && !document.activeElement?.closest(".item")) {
+      let active = $activeShow!.id
+      let layout: string = $shows[active].settings.activeLayout
+      let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
+      let items: Item[] = $shows[active].slides[slide].items
+      let newItems = [...items]
+
+      newItems.splice(index, 1)
+
+      // TODO: not working properly
+
+      history({ id: "deleteItem", oldData: items, newData: newItems, location: { page: "edit", show: $activeShow!, layout: layout, slide: slide } })
+    }
   }
 
   function deselect(e: any) {
     if (!e.ctrlKey && e.target.closest(".item") !== itemElem && !e.target.closest(".editTools")) {
       if (selected) {
+        // TODO: clicking another item will add text to that!
+        updateText()
         if (!e.target.closest(".item")) {
           activeEdit.update((ae) => {
             ae.item = null
@@ -208,12 +228,55 @@
       }
       selected = false
     }
-    if (window.getSelection && !e.target.closest(".editTools")) {
+
+    //  && e.target.tagName !== "INPUT"
+    if (window.getSelection() && !e.target.closest(".editTools")) {
       window.getSelection()?.removeAllRanges()
       // } else if (document.selection) {
       //   document.selection.empty()
     }
   }
+
+  // update text on item blur or text cursor move
+  let textElem: any
+  function updateText() {
+    let text: string = textElem.innerText
+
+    let sel: null | Selection = window.getSelection()
+    if (sel?.anchorNode?.parentElement) {
+      let parent: Element = sel.anchorNode.parentElement.closest(".edit")!
+      let index = 0
+      ;[...parent.children].forEach((childElem: any, i: number) => {
+        if (childElem === sel!.anchorNode!.parentElement) index = i
+      })
+
+      let active = $activeShow!.id
+      let layout: string = $shows[active].settings.activeLayout
+      let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
+      // let pos = sel!.anchorOffset!
+
+      // TODO: breaks dont work
+      // get lengths
+      let textIndex = 0
+      let itemTextLength = 0
+      let oldItemsLength = 0
+      $shows[active].slides[slide].items[$activeEdit.item!].text?.forEach((itemText, i) => {
+        if (i < index) textIndex += itemText.value.length
+        if (i === index) itemTextLength = itemText.value.length
+        oldItemsLength += itemText.value.length
+      })
+      let newTextLength = text.length - oldItemsLength
+      let newItemText = text.slice(textIndex, textIndex + itemTextLength + newTextLength)
+
+      shows.update((s) => {
+        let item = GetShow({ id: active }).slides[slide].items[$activeEdit.item!]
+        if (item.text) item.text[index].value = newItemText
+        return s
+      })
+    }
+  }
+
+  // TODO: sometimes huge font
 </script>
 
 <svelte:window on:mousemove={mousemove} on:mouseup={mouseup} on:keydown={keydown} on:mousedown={deselect} />
@@ -227,7 +290,8 @@
       <div class="square {square}" style="width: {8 / zoom}px; cursor: {square}-resize;" />
     {/each}
   </section>
-  <div class="edit" style="height: 100%" contenteditable={true}>
+  <!-- on:input={updateText} -->
+  <div bind:this={textElem} class="edit" style="height: 100%" contenteditable={true}>
     {#if item.text}
       {#each item.text as text}
         <span style={text.style}>{text.value}</span>

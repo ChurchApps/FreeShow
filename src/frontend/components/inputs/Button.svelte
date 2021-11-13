@@ -61,9 +61,13 @@
     outline: 2px solid var(--secondary);
   }
 
+  button :global(div) {
+    padding-left: 0.8em;
+  }
+
   button :global(svg) {
-    padding: 0 0.5em;
-    padding-left: 0.2em;
+    /* padding: 0 0.5em; */
+    /* padding-left: 0.2em; */
     box-sizing: content-box;
   }
   button.active :global(svg) {

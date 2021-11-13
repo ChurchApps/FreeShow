@@ -15,6 +15,7 @@ export const getOutput = (): OutputValues => {
     slide: {
       label: null,
       color: null,
+      style: "",
       notes: "",
       items: [],
     }, // getSlide(activeOutput.slide.id, activeOutput.slide.index)

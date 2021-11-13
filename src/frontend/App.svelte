@@ -21,6 +21,7 @@
   import Resizeable from "./components/system/Resizeable.svelte"
   import Output from "./components/main/Output.svelte"
   import { OUTPUT } from "../types/Channels"
+  import { redo, undo } from "./components/helpers/history"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -55,6 +56,12 @@
       let menus: TopViews[] = ["show", "edit", "draw", "stage", "settings"]
       if (Object.keys(menus).includes((e.key - 1).toString())) {
         activePage.set(menus[e.key - 1])
+      }
+
+      if (e.key === "z" && !e.shiftKey) {
+        undo()
+      } else if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
+        redo()
       }
     }
   }

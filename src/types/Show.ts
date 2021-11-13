@@ -30,6 +30,7 @@ export interface Show {
 export interface Slide {
   label: null | string
   color: null | string
+  style: string
   children?: SlideData[]
   notes: string
   items: Item[]

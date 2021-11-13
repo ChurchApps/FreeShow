@@ -55,6 +55,7 @@ export const shows: Writable<Shows> = writable({
       fjeiosjfiose: {
         label: "Verse 1",
         color: "green",
+        style: "",
         notes: "",
         items: [
           {
@@ -90,6 +91,7 @@ export const shows: Writable<Shows> = writable({
       feowo: {
         label: "Verse 1",
         color: "orange",
+        style: "",
         notes: "",
         items: [
           {
@@ -108,6 +110,7 @@ export const shows: Writable<Shows> = writable({
       fesfo: {
         label: "Chorus",
         color: "red",
+        style: "",
         children: [{ id: "fesfofes" }],
         notes: "",
         items: [
@@ -120,6 +123,7 @@ export const shows: Writable<Shows> = writable({
       fesfofes: {
         label: null,
         color: null,
+        style: "",
         notes: "",
         items: [
           {
@@ -131,6 +135,7 @@ export const shows: Writable<Shows> = writable({
       blank: {
         label: "Blank",
         color: null,
+        style: "",
         notes: "",
         items: [],
       },
@@ -169,6 +174,7 @@ export const shows: Writable<Shows> = writable({
       fsioøføjesi: {
         label: null,
         color: null,
+        style: "",
         notes: "",
         items: [
           {
@@ -184,6 +190,7 @@ export const shows: Writable<Shows> = writable({
       fesfo: {
         label: "Chorus",
         color: null,
+        style: "",
         notes: "",
         items: [
           {
@@ -305,7 +312,7 @@ export const password: Writable<string> = writable("show")
 
 // general
 export const language: Writable<LanguageKey> = writable("en")
-export const lablesDisabled: Writable<boolean> = writable(false)
+export const labelsDisabled: Writable<boolean> = writable(false)
 
 // text
 export const theme = writable(0)

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { selectTextOnFocus, blurOnEscape } from "../helpers/inputActions"
-  import { dictionary, drawerTabsData, lablesDisabled } from "../../stores"
+  import { dictionary, drawerTabsData, labelsDisabled } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
@@ -85,10 +85,10 @@
             on:click={() => (activeTab = tab[0])}
             active={activeTab === tab[0]}
             class="context_drawer_top_button"
-            title={$lablesDisabled ? $dictionary[tab[1].name.split(".")[0]]?.[tab[1].name.split(".")[1]] : ""}
+            title={$labelsDisabled ? $dictionary[tab[1].name.split(".")[0]]?.[tab[1].name.split(".")[1]] : ""}
           >
             <Icon id={tab[1].icon} size={1.3} />
-            {#if !$lablesDisabled}
+            {#if !$labelsDisabled}
               <span><T id={tab[1].name} /></span>
             {/if}
           </Button>
