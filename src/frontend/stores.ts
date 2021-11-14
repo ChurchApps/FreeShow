@@ -18,7 +18,7 @@ import type { Output, ID, Shows } from "../types/Show"
 
 // global
 export const projectView: Writable<boolean> = writable(false) // WIP
-export const activeFilePath: Writable<null | string> = writable(null) // WIP
+export const activeFilePath: Writable<undefined | string> = writable() // WIP
 interface ActiveEdit {
   slide: null | number
   item: null | number
@@ -44,7 +44,7 @@ export const output: Writable<Output> = writable({
 export const shows: Writable<Shows> = writable({
   nåde: {
     name: "Nådepuls",
-    category: "terd", // song/private/notes/presentation
+    category: "song", // song/private/notes/presentation
     settings: {
       activeLayout: "sooffes",
       template: null,
@@ -163,7 +163,7 @@ export const shows: Writable<Shows> = writable({
   Info: {
     // TODO: how to tdo info/kunngjeringer... in a better way
     name: "Info",
-    category: "fese",
+    category: "info",
     settings: {
       activeLayout: "fesfsef",
       template: null,
@@ -247,15 +247,19 @@ export const folders: Writable<Folders> = writable({
   esf2: { name: "Ayy2", parent: "fese" },
 })
 export const categories: Writable<Category> = writable({
-  terd: { name: "category.song", default: true, icon: "song" },
-  fese: { name: "category.info", default: true, icon: "info" },
-  teerd: { name: "category.presentation", default: true, icon: "presentation" },
+  song: { name: "category.song", icon: "song", default: true },
+  info: { name: "category.info", icon: "info", default: true },
+  presentation: { name: "category.presentation", icon: "presentation", default: true },
 })
-export const media = writable({
-  terd: { type: "video", name: "Song", location: "song" },
-  fese: { type: "image", name: "Info", location: "info" },
-  teerd: { type: "...", name: "Presentation", location: "presentation" },
+export const mediaFolders: Writable<Category> = writable({
+  pictures: { name: "category.pictures", icon: "folder", url: "C:/Users/Kristoffer/Pictures", default: true },
+  videos: { name: "category.videos", icon: "folder", url: "C:/Users/Kristoffer/Videos", default: true },
 })
+// export const media = writable({
+//   pictures: [
+
+//   ]
+// })
 export const audio = writable({
   terd: { type: "music", name: "Song", location: "song" },
   fese: { type: "audio", name: "Info", location: "info" },

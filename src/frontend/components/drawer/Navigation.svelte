@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { Category } from "../../../types/Tabs"
 
-  import { categories, drawerTabsData } from "../../stores"
+  import { categories, drawerTabsData, mediaFolders } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
+  import FilePicker from "../inputs/FilePicker.svelte"
+  import FolderPicker from "../inputs/FolderPicker.svelte"
 
   export let id: string
 
@@ -16,13 +18,20 @@
         ...$categories,
         unlabeled: { name: "category.unlabeled", default: true, icon: "unlabeled" },
       }
+    } else if (id === "backgrounds") {
+      buttons = {
+        all: { name: "category.all", default: true, icon: "all" },
+        ...$mediaFolders,
+      }
     } else buttons = {}
   }
 
   console.log(buttons)
-  if ($drawerTabsData[id].activeSubTab === null) {
-    // setTab(Object.keys(buttons)[0])
-    setTab("all")
+  $: {
+    if ($drawerTabsData[id].activeSubTab === null) {
+      // setTab(Object.keys(buttons)[0])
+      setTab("all")
+    }
   }
 
   function setTab(tabID: string) {
@@ -35,13 +44,21 @@
 
 <div class="main">
   {#each Object.entries(buttons) as category}
-    <Button active={category[0] === $drawerTabsData[id].activeSubTab} on:click={() => setTab(category[0])} bold={false}>
+    <Button active={category[0] === $drawerTabsData[id].activeSubTab} on:click={() => setTab(category[0])} bold={false} title={category[1].url ? category[1].url : ""}>
       <Icon id={category[1].icon || "unknown"} />
       <div id={category[0]}>
-        <T id={category[1].name} />
+        {#if category[1].default}
+          <T id={category[1].name} />
+        {:else}
+          {category[1].name}
+        {/if}
       </div>
     </Button>
   {/each}
+  {#if id === "backgrounds"}
+    <FilePicker />
+    <FolderPicker />
+  {/if}
 </div>
 
 <style>

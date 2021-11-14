@@ -7,8 +7,10 @@
 
   import { activePage, activeShow, output, screen, shows } from "../../stores"
   import { GetLayout } from "../helpers/get"
+  import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
+  import AudioMeter from "./AudioMeter.svelte"
 
   import Output from "./Output.svelte"
 
@@ -27,7 +29,7 @@
     })
   }
 
-  function goForward(e: any) {
+  function nextSlide(e: any) {
     // TODO: go down automaticly
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
@@ -64,7 +66,7 @@
     }
   }
 
-  function goBack() {
+  function previousSlide() {
     let slide = $output.slide
     if (slide && !slide.private) {
       // let layout: Layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
@@ -84,6 +86,9 @@
     }
   }
 
+  function nextShow() {}
+  function previousShow() {}
+
   function keydown(e: any) {
     if (e.ctrlKey || e.altKey) {
       if (e.key === "c") output.set({ background: null, slide: null, overlay: null, audio: null })
@@ -93,11 +98,11 @@
       if (e.key === "ArrowRight" || (e.key === " " && !e.shiftKey)) {
         // Arrow Right | Space Bar
         e.preventDefault()
-        goForward(e)
+        nextSlide(e)
       } else if (e.key === "ArrowLeft" || (e.key === " " && e.shiftKey)) {
         // Arrow Left | Shift + Space Bar
         e.preventDefault()
-        goBack()
+        previousSlide()
       }
     }
   }
@@ -118,18 +123,21 @@
 
 <div class="main">
   <!-- hidden={$activePage === "live" ? false : true} -->
-  <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen>
-    {#if fullscreen}
-      <span class="resolution">
-        <!-- TODO: get actual resultion ... -->
-        <p><b>Width:</b> {resolution.width}px</p>
-        <p><b>Height:</b> {resolution.height}px</p>
-      </span>
-    {/if}
-    <Output style={fullscreen ? size : ""} />
+  <div class="top">
+    <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style="width: 100%">
+      {#if fullscreen}
+        <span class="resolution">
+          <!-- TODO: get actual resultion ... -->
+          <p><b>Width:</b> {resolution.width}px</p>
+          <p><b>Height:</b> {resolution.height}px</p>
+        </span>
+      {/if}
+      <Output style={fullscreen ? size : ""} />
+    </div>
+    <AudioMeter />
+    <!-- {#if $activePage === 'live'}
+    {/if} -->
   </div>
-  <!-- {#if $activePage === 'live'}
-  {/if} -->
 
   <!-- TODO: enable stage output -->
 
@@ -151,9 +159,21 @@
   <span>Name: {name}</span>
   <span>Index: {index}</span>
   <span class="group">
-    <Button on:click={goBack} disabled={!$output.slide}>{"<-"}</Button>
-    <Button>Play/Pause</Button>
-    <Button on:click={goForward}>{"->"}</Button>
+    <Button on:click={previousShow} disabled={!$output.slide} center>
+      <Icon id={"previousFull"} size={1.2} />
+    </Button>
+    <Button on:click={previousSlide} disabled={!$output.slide} center>
+      <Icon id={"previous"} size={1.2} />
+    </Button>
+    <Button center title="Lock">
+      <Icon id={"unlocked"} size={1.2} />
+    </Button>
+    <Button on:click={nextSlide} center>
+      <Icon id={"next"} size={1.2} />
+    </Button>
+    <Button on:click={nextShow} center>
+      <Icon id={"nextFull"} size={1.2} />
+    </Button>
   </span>
 </div>
 
@@ -161,6 +181,10 @@
   .main {
     /* max-height: 50%; */
     flex: 1;
+  }
+
+  .top {
+    display: flex;
   }
   /* button {
     background-color: inherit;

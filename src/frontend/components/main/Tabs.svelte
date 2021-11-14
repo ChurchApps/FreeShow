@@ -13,7 +13,7 @@
 
 <div class="tabs">
   {#each Object.entries(tabs) as tab}
-    <Button on:click={() => (active = tab[0])} active={active === tab[0]} title={!labels ? translate(tab[1].name) : ""}>
+    <Button on:click={() => (active = tab[0])} active={active === tab[0]} title={!labels ? translate(tab[1].name) : ""} center>
       <Icon id={tab[1].icon} />
       {#if labels}
         <T id={tab[1].name} />
@@ -31,6 +31,5 @@
 
   .tabs :global(button) {
     flex: auto;
-    justify-content: center;
   }
 </style>

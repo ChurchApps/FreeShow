@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { FOLDER_READ } from "../../../types/Channels"
+
   import type { Show } from "../../../types/Show"
 
-  import { drawerTabsData, shows } from "../../stores"
+  import { drawerTabsData, mediaFolders, shows } from "../../stores"
   import ShowButton from "../inputs/ShowButton.svelte"
+  import Media from "./Media.svelte"
 
   export let id: string
   export let searchValue: string
@@ -58,6 +61,21 @@
     totalMatch += sum
     return Math.min(sum, 100)
   }
+
+  // get list of files
+  interface Files {
+    [key: string]: string
+  }
+  let files: Files = {}
+  mediaFolders.subscribe((mf) => {
+    Object.entries(mf).forEach((folder) => {
+      window.api.send(FOLDER_READ, { id: folder[0], url: folder[1].url, filters: ["png", "jpg", "jpeg", "mp4", "mov"] })
+    })
+  })
+  window.api.receive(FOLDER_READ, (message: any) => {
+    files[message.id] = message.data || []
+  })
+  $: console.log(files)
 </script>
 
 <!-- TODO: sort by percentage -->
@@ -66,32 +84,68 @@
 <div>
   {#if id === "shows"}
     {#if Object.entries($shows).length}
-      {#each Object.entries($shows) as show}
-        <!-- {#key searchValue} -->
-        {#if (active === "all" || active === show[1].category || (active === "unlabeled" && show[1].category === null)) && (searchValue.length <= 1 || search(show[1]))}
-          <ShowButton id={show[0]} name={show[1].name} match={[search(show[1]), searchValue]} />
+      <div class="column">
+        {#each Object.entries($shows) as show}
+          <!-- {#key searchValue} -->
+          {#if (active === "all" || active === show[1].category || (active === "unlabeled" && show[1].category === null)) && (searchValue.length <= 1 || search(show[1]))}
+            <ShowButton id={show[0]} name={show[1].name} match={[search(show[1]), searchValue]} />
+          {/if}
+          <!-- {/key} -->
+        {/each}
+        <!-- TODO: not updating values on activeSubTab change -->
+        {#if searchValue.length > 1 && totalMatch === 0}
+          No match
         {/if}
-        <!-- {/key} -->
-      {/each}
-      <!-- TODO: not updating values on activeSubTab change -->
-      {#if searchValue.length > 1 && totalMatch === 0}
-        No match
-      {/if}
+      </div>
     {:else}
-      No shows
+      <div class="center">No shows</div>
     {/if}
+  {:else if id === "backgrounds"}
+    <div class="grid">
+      {#if active === "all"}
+        {#each Object.entries(files) as fileList}
+          {#each fileList[1] as name}
+            <Media {name} id={fileList[0]} />
+          {/each}
+        {/each}
+      {:else if active && files[active].length}
+        {#key active}
+          {#each files[active] as name}
+            <Media {name} id={active} />
+          {/each}
+        {/key}
+      {:else}
+        <div class="center">No media! Add media folder</div>
+      {/if}
+    </div>
+  {:else if id === "live"}
+    live
   {/if}
 </div>
 
 <style>
   div {
     display: flex;
-    flex-direction: column;
-    /* width: 100%; */
-    flex-grow: 1;
-    /* height: 50%; */
+    /* flex-direction: column; */
+    flex: 1;
     overflow-y: auto;
     background-color: var(--primary-darker);
-    /* height: 100%; */
+  }
+
+  .column {
+    flex-direction: column;
+  }
+
+  .center {
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+  }
+
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
   }
 </style>

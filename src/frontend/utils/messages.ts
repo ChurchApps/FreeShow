@@ -1,7 +1,6 @@
 import { outputDisplay } from "./../stores"
-import { OPEN_FILE, OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
+import { OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
 import { shows } from "../stores"
-import { activeFilePath } from "../stores"
 import { get } from "svelte/store"
 import { output, name, activeShow, language, activeProject, projects, folders } from "../stores"
 import { getOutput } from "../components/helpers/get"
@@ -14,11 +13,11 @@ export function listen() {
     if (message.channel === "DISPLAY") outputDisplay.set(message.data)
     else if (message.channel === "SHOWS") shows.set(message.data)
   })
-  window.api.receive(OPEN_FILE, (message: any) => {
-    console.log(message)
-    // activeFilePath = message.path;
-    activeFilePath.set(message)
-  })
+  // window.api.receive(OPEN_FILE, (message: any) => {
+  //   console.log(message)
+  //   // activeFilePath = message.path;
+  //   activeFilePath.set(message)
+  // })
   // window.api.send("OPEN_FILE", {path: 'C:/Users/Kristoffer/Coding/FreeShow/sources.txt'});
   // window.api.send("OPEN_FILE", 'C:/Users/Kristoffer/Coding/FreeShow/sources.txt');
   // window.api.send("OPEN_FILE", {});

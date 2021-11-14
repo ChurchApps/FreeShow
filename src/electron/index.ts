@@ -3,7 +3,7 @@ import { app, BrowserWindow, ipcMain, dialog, desktopCapturer, screen } from "el
 import { Display } from "electron/main"
 import { join } from "path"
 import { URL } from "url"
-import { GET_SCREENS, MAIN, OPEN_FILE, OUTPUT } from "../types/Channels"
+import { GET_SCREENS, MAIN, OPEN_FILE, OUTPUT, OPEN_FOLDER, FOLDER_READ } from "../types/Channels"
 // import path from "path"
 // import fs from "fs"
 import electronSettings from "./utils/settings"
@@ -62,6 +62,7 @@ const createWindow = () => {
       devTools: isProd ? false : true,
       // preload: join(__dirname, "preload.js"), // use a preload script
       preload: join(__dirname, "preload"), // use a preload script
+      webSecurity: false, // load local files
       // preload: "./preload",
       contextIsolation: true,
       enableRemoteModule: false,
@@ -297,7 +298,7 @@ app.on("web-contents-created", (e, contents) => {
 
 // const toApp = (channel, args): void => mainWindow.webContents.send(channel, args)
 // module.exports = toApp
-export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContents.send(channel, args)
+export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContents.send(channel, ...args)
 
 // ipcMain.handle("displayMessage", text => dialog.showMessageBox(text))
 
@@ -496,6 +497,39 @@ ipcMain.on(OPEN_FILE, (_e, args) => {
   //   // Send result back to renderer process
   //   toApp("openedFile", {data, error});
   // });
+})
+
+ipcMain.on(OPEN_FOLDER, (_e, title: string) => {
+  let folder: any
+  folder = dialog.showOpenDialogSync(mainWindow!, {
+    properties: ["openDirectory"],
+    title: title,
+  })
+
+  console.info(folder)
+
+  if (folder) toApp(OPEN_FOLDER, folder[0])
+})
+
+ipcMain.on(FOLDER_READ, (_e, args: any) => {
+  let getEnd: RegExp = new RegExp(/\.[0-9a-z]+$/i)
+
+  const fs = require("fs")
+  fs.readdir(args.url, (_e: any, files: any) => {
+    let filteredFiles: string[] = []
+    if (args.filters?.length) {
+      files.forEach((file: string) => {
+        let matched: boolean = false
+        args.filters.forEach((end: string) => {
+          if (!matched && file.match(getEnd)?.[0] === "." + end) {
+            matched = true
+            filteredFiles.push(file)
+          }
+        })
+      })
+    } else filteredFiles = files
+    toApp(FOLDER_READ, { id: args.id, data: filteredFiles })
+  })
 })
 
 // server

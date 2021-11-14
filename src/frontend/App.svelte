@@ -76,11 +76,9 @@
     <!-- <h1>FreeShow</h1> -->
 
     <ContextMenu />
-    <!-- {contextMenu && <ContextMenu event={contextMenu} setAction={setAction} />} -->
 
     <div class="column">
       <Top />
-      <!-- <div class="row"> -->
       <!-- All / Current/active -->
 
       <div class="row">
@@ -100,6 +98,7 @@
         <div class="center">
           {#if page === "show"}
             <Show />
+            <!-- <VideoPlayer /> -->
           {:else if page === "edit"}
             <Editor />
           {:else if page === "settings"}
@@ -123,25 +122,12 @@
       {#if page === "show" || page === "edit"}
         <Drawer />
       {/if}
-      <!-- </div> -->
     </div>
 
-    <!-- <VideoPlayer {$activeFilePath} /> -->
-
-    <!-- <video>
-		<track kind="captions">
-	</video> -->
-
     <!-- <VideoStream /> -->
-
     <!-- <p class="file-path">
     {$activeFilePath ? $activeFilePath : "Press 'Save' or hit 'CTRL + S' to save"}
-  </p>
-
-	<div class="editor-and-preview">
-    <Editor bind:markdown />
-    <Preview {markdown} />
-  </div> -->
+  </p> -->
   {/if}
 </main>
 

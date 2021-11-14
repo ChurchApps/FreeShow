@@ -1,6 +1,9 @@
 <!-- https://betterprogramming.pub/video-stream-with-node-js-and-html5-320b3191a6b6 -->
 <script lang="ts">
-  export let activeFilePath
+  import { OPEN_FILE } from "../../../types/Channels"
+
+  import { activeFilePath } from "../../stores"
+  export let path: undefined | string = $activeFilePath
 
   // These values are bound to properties of the video
   let time: number = 0
@@ -8,12 +11,13 @@
   let paused: boolean = true
 
   let showControls: boolean = true
-  let showControlsTimeout
+  let showControlsTimeout: any
 
   // Used to track time of last mouse down event
-  let lastMouseDown
+  let lastMouseDown: any
 
-  function handleMove(e) {
+  let player: any
+  function handleMove(e: any) {
     // Make the controls visible, but fade out after
     // 2.5 seconds of inactivity
     clearTimeout(showControlsTimeout)
@@ -24,24 +28,24 @@
     if (e.type !== "touchmove" && !(e.buttons & 1)) return // mouse not down
 
     const clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX
-    const { left, right } = this.getBoundingClientRect()
+    const { left, right } = player.getBoundingClientRect()
     time = (duration * (clientX - left)) / (right - left)
   }
 
   // we can't rely on the built-in click event, because it fires
   // after a drag — we have to listen for clicks ourselves
-  function handleMousedown(e) {
+  function handleMousedown() {
     lastMouseDown = new Date()
   }
 
-  function handleMouseup(e) {
+  function handleMouseup(e: any) {
     if (+new Date() - lastMouseDown < 300) {
       if (paused) e.target.play()
       else e.target.pause()
     }
   }
 
-  function format(seconds) {
+  function format(seconds: any) {
     if (isNaN(seconds)) return "..."
 
     const minutes = Math.floor(seconds / 60)
@@ -50,18 +54,30 @@
 
     return `${minutes}:${seconds}`
   }
+
+  function pickFile() {
+    window.api.send(OPEN_FILE, { title: "Pick a video", filters: [{ name: "Videos", extensions: ["mp4", "mov"] }] })
+  }
+  window.api.receive(OPEN_FILE, (message: any) => {
+    console.log(message)
+    activeFilePath.set(message)
+    path = message
+  })
+  $: console.log(path)
 </script>
 
 <!-- https://stackoverflow.com/questions/52615536/stream-file-to-html-video-player-as-its-being-downloaded-in-electron-using-fs -->
 
 <div>
   <video
+    bind:this={player}
     poster="https://sveltejs.github.io/assets/caminandes-llamigos.jpg"
-    src={activeFilePath}
+    src={path}
     on:mousemove={handleMove}
     on:touchmove|preventDefault={handleMove}
     on:mousedown={handleMousedown}
     on:mouseup={handleMouseup}
+    on:click={pickFile}
     bind:currentTime={time}
     bind:duration
     bind:paused
@@ -82,7 +98,9 @@
 
 <style>
   div {
-    position: relative;
+    /* position: relative; */
+    position: absolute;
+    top: 50px;
   }
 
   .controls {

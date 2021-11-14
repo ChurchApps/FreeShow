@@ -189,26 +189,28 @@ export function addStyleString(oldStyle: string, style: any[]): string {
 
 // convert node pos to parent pos
 export function getParentPos(elem: any, pos: number, movePos: "right" | "left" = "right"): number[] {
-  let parent: Element = window.getSelection()!.anchorNode!.parentElement!.closest(".edit")!
   let p: number[] = [pos, 0]
+  if (window.getSelection()?.anchorNode) {
+    let parent: Element = window.getSelection()!.anchorNode!.parentElement!.closest(".edit")!
 
-  let found: boolean = false
-  let textLength: number = 0
-  ;[...parent.children].forEach((childElem: any) => {
-    textLength += childElem.innerText.length
-    if (elem.parentElement === childElem) {
-      if (movePos === "right" && pos === elem.length && p[1] < parent.children.length - 1) p[1]++
-      else if (movePos === "left" && pos === 1 && p[1] > 0) p[1]--
-      found = true
-    } else if (!found) {
-      p[0] += childElem.innerText.length
-      p[1]++
-    }
-  })
+    let found: boolean = false
+    let textLength: number = 0
+    ;[...parent.children].forEach((childElem: any) => {
+      textLength += childElem.innerText.length
+      if (elem.parentElement === childElem) {
+        if (movePos === "right" && pos === elem.length && p[1] < parent.children.length - 1) p[1]++
+        else if (movePos === "left" && pos === 1 && p[1] > 0) p[1]--
+        found = true
+      } else if (!found) {
+        p[0] += childElem.innerText.length
+        p[1]++
+      }
+    })
 
-  if (movePos === "right") {
-    if (p[0] < textLength) p[0]++
-  } else if (p[0] > 0) p[0]--
+    if (movePos === "right") {
+      if (p[0] < textLength) p[0]++
+    } else if (p[0] > 0) p[0]--
+  }
 
   return p
 }
