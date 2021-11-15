@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
 
-  import { activeShow, shows, screen, activeEdit, output } from "../../stores"
+  import { activeShow, shows, screen, activeEdit, outSlide } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Textedit from "./Textedit.svelte"
 
@@ -14,7 +14,7 @@
 
   let helperLines: string[] = []
 
-  let resolution: Resolution = Slide ? $shows[$output.slide!.id].settings.resolution! : $screen.resolution
+  let resolution: Resolution = Slide ? $shows[$outSlide!.id].settings.resolution! : $screen.resolution
   $: zoom = slideWidth / resolution.width
 
   let elemWidth: number = 500

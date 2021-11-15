@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, output, screen, activeEdit } from "../../stores"
+  import { shows, activeShow, screen, activeEdit, outSlide } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
 
@@ -15,9 +15,9 @@
   $: currentShow = $shows[$activeShow!.id]
 
   let activeShowLayout = $shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides.length
-  activeEdit.set({ slide: $output.slide?.index || activeShowLayout ? 0 : null, item: null })
+  activeEdit.set({ slide: $outSlide?.index || activeShowLayout ? 0 : null, item: null })
   activeShow.subscribe((a) => {
-    if (a?.id !== $output.slide?.id) activeEdit.set({ slide: activeShowLayout ? 0 : null, item: null })
+    if (a?.id !== $outSlide?.id) activeEdit.set({ slide: activeShowLayout ? 0 : null, item: null })
   })
 
   // let layoutSlides: SlideData[] = []

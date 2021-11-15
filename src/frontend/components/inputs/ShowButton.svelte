@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ID, ShowType } from "../../../types/Show"
 
-  import { activeShow, output, shows } from "../../stores"
+  import { activeShow, outSlide, shows } from "../../stores"
 
   import Icon from "../helpers/Icon.svelte"
   import Button from "./Button.svelte"
@@ -35,13 +35,7 @@
 
   function doubleClick(e: any) {
     if ($shows[id] && !e.target.classList.contains("name")) {
-      output.update((o) => {
-        o.slide = {
-          id,
-          index: 0,
-        }
-        return o
-      })
+      outSlide.set({ id, index: 0 })
     }
   }
 </script>

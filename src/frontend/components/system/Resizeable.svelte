@@ -17,8 +17,8 @@
   let mouse: null | { x: number; y: number; offset: number; target: any } = null
   function mousedown(e: any) {
     if (
-      (side === "left" && e.target.closest(".panel").offsetWidth - e.offsetX <= 4) ||
-      (side === "right" && e.clientX < e.target.closest(".panel").offsetLeft + 4 && e.offsetX <= 4 && e.offsetX >= 0)
+      (side === "left" && e.target.closest(".panel")?.offsetWidth - e.offsetX <= 4) ||
+      (side === "right" && e.clientX < e.target.closest(".panel")?.offsetLeft + 4 && e.offsetX <= 4 && e.offsetX >= 0)
     ) {
       mouse = {
         x: e.clientX,
@@ -49,8 +49,8 @@
   function click(e: any) {
     if (!move) {
       if (
-        (side === "left" && e.target.closest(".panel").offsetWidth - e.offsetX <= 4) ||
-        (side === "right" && e.clientX < e.target.closest(".panel").offsetLeft + 4 && e.offsetX >= 0)
+        (side === "left" && e.target.closest(".panel")?.offsetWidth - e.offsetX <= 4) ||
+        (side === "right" && e.clientX < e.target.closest(".panel")?.offsetLeft + 4 && e.offsetX >= 0)
       ) {
         if (width > minWidth) {
           storeWidth = width

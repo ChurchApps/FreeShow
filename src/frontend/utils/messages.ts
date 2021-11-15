@@ -1,17 +1,21 @@
-import { outputDisplay } from "./../stores"
+import { outBackground, outOverlays, outputDisplay, outputWindow, outSlide, mediaFolders } from "./../stores"
 import { OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
 import { shows } from "../stores"
 import { get } from "svelte/store"
-import { output, name, activeShow, language, activeProject, projects, folders } from "../stores"
-import { getOutput } from "../components/helpers/get"
+import { name, activeShow, language, activeProject, projects, folders } from "../stores"
+import { getOutBackground, getOutOverlays, getOutSlide } from "../components/helpers/get"
 import type { RemoteData, RemoteInitialize, RemoteShow } from "../../types/Socket"
 
 export function listen() {
+  // FROM MAIN TO OUTPUT
   window.api.receive(OUTPUT, (message: any) => {
     // window.api.send(MAIN, {message: message})
-    if (message.channel === "OUTPUT") output.set(message.data)
-    if (message.channel === "DISPLAY") outputDisplay.set(message.data)
+    if (message.channel === "BACKGROUND") outBackground.set(message.data)
+    else if (message.channel === "SLIDE") outSlide.set(message.data)
+    else if (message.channel === "OVERLAY") outOverlays.set(message.data)
     else if (message.channel === "SHOWS") shows.set(message.data)
+    else if (message.channel === "MEDIA") mediaFolders.set(message.data)
+    else if (message.channel === "DISPLAY") outputDisplay.set(message.data)
   })
   // window.api.receive(OPEN_FILE, (message: any) => {
   //   console.log(message)
@@ -49,17 +53,57 @@ export function listen() {
 
   // REQUEST FROM STAGE
   window.api.receive(STAGE, (message: any) => {
-    console.log(STAGE, message)
-    if (message === "REQUEST") {
-      window.api.send(STAGE, { output: getOutput() })
+    if (message.channel === "REQUEST") {
+      window.api.send(STAGE, stageData(message.data))
     }
   })
 
-  // TO STAGE
-  output.subscribe((message) => {
-    if (message !== get(output)) {
-      window.api.send(STAGE, { output: getOutput() })
+  const stageData = (id: string) => {
+    let data: any = null
+    switch (id) {
+      case "BACKGROUND":
+        data = getOutBackground()
+        break
+      case "SLIDE":
+        data = getOutSlide()
+        break
+      case "OVERLAYS":
+        data = getOutOverlays()
+        break
     }
-    // TODO: send next slide + countdown + others... / messages
+    return { channel: id, data }
+  }
+
+  // // TO STAGE
+  // output.subscribe((message) => {
+  //   if (message !== get(output)) {
+  //     window.api.send(STAGE, { output: getOutput() })
+  //   }
+  //   // TODO: send next slide + countdown + others... / messages
+  // })
+
+  // TO OUTPUT & STAGE
+  outBackground.subscribe((o) => {
+    if (!get(outputWindow)) {
+      window.api.send(OUTPUT, { channel: "BACKGROUND", data: o })
+      window.api.send(STAGE, stageData("BACKGROUND"))
+    }
+  })
+  outSlide.subscribe((o) => {
+    if (!get(outputWindow)) {
+      window.api.send(OUTPUT, { channel: "SLIDE", data: o })
+      window.api.send(STAGE, stageData("SLIDE"))
+    }
+  })
+  outOverlays.subscribe((o) => {
+    if (!get(outputWindow)) {
+      window.api.send(OUTPUT, { channel: "OVERLAYS", data: o })
+      window.api.send(STAGE, stageData("OVERLAYS"))
+    }
+  })
+
+  // TO OUTPUT
+  mediaFolders.subscribe((mf) => {
+    if (!get(outputWindow)) window.api.send(OUTPUT, { channel: "MEDIA", data: mf })
   })
 }

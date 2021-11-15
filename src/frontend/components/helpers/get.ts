@@ -1,28 +1,28 @@
 import type { ShowRef } from "./../../../types/Projects"
 import { get } from "svelte/store"
 import type { Project, Projects } from "../../../types/Projects"
-import type { ID, OutputValues, Show, Shows, Slide, SlideData } from "../../../types/Show"
+import type { ID, Show, Shows, Slide, SlideData } from "../../../types/Show"
 import { activeProject, activeShow, projects, shows } from "../../stores"
 
 // export const getProject = (id: ID): Project => get(projects)[id]
 // export const getProjectShows = (id: ID): Project => getProject(id)[get(activeProject)].shows
 // export const getShow = (showID: ID): Show => get(shows)[showID]
 // export const getSlide = (showID: ID, slideIndex: number): Slide => getShow(showID).slides[slideID] // TODO: get layout...
-export const getOutput = (): OutputValues => {
+
+export const getOutBackground = () => {
+  "base64://"
+}
+export const getOutSlide = (): null | Slide => {
   // let activeOutput: Output = get(output)
   return {
-    background: "base64://",
-    slide: {
-      label: null,
-      color: null,
-      style: "",
-      notes: "",
-      items: [],
-    }, // getSlide(activeOutput.slide.id, activeOutput.slide.index)
-    overlay: "",
-    audio: "",
-  }
+    label: null,
+    color: null,
+    style: "",
+    notes: "",
+    items: [],
+  } // getSlide(activeOutput.slide.id, activeOutput.slide.index)
 }
+export const getOutOverlays = () => []
 
 export const GetLayout = (showID: null | ID = null): SlideData[] => {
   if (!showID) showID = get(activeShow)!.id

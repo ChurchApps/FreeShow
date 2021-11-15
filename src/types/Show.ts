@@ -80,23 +80,42 @@ export interface Transition {
   duration: number
 }
 
-export interface Output {
-  background: null | ID
-  slide: null | {
-    id: ID
-    index: number
-    // layout: ID ?
-    private?: boolean
-  }
-  overlay: null | ID
-  audio: null | ID
+export interface OutBackground {
+  id: ID
+  name: string
 }
-export interface OutputValues {
-  background: null | string
-  slide: null | Slide
-  overlay: null | string
-  audio: null | string
+export interface OutSlide {
+  id: ID
+  index: number
+  // layout: ID ?
+  private?: boolean
 }
+// export interface OutOverlay {
+//   id: ID
+// }
+export interface OutAudio {
+  id: ID
+  name: string
+}
+// export interface Output {
+//   background: null | {
+//     id: ID
+//     name: string
+//   }
+//   slide: null | {
+//     id: ID
+//     index: number
+//     // layout: ID ?
+//     private?: boolean
+//   }
+//   overlay: {
+//     id: ID
+//   }[]
+//   audio: {
+//     id: ID
+//     name: string
+//   }[]
+// }
 
 export type ID = string
 export type Style = string

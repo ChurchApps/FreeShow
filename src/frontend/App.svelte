@@ -14,7 +14,7 @@
   import ContextMenu from "./components/system/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import { activePage, activeProject, activeShow, output, outputWindow, shows } from "./stores"
+  import { activePage, activeProject, activeShow, outputWindow, shows } from "./stores"
   import ProjectTools from "./components/show/ProjectTools.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
@@ -36,9 +36,6 @@
   // import VideoStream from "./components/controllers/VideoStream.svelte"
   // import type { activeFilePath } from "./stores";
 
-  output.subscribe((o) => {
-    if (!$outputWindow) window.api.send(OUTPUT, { channel: "OUTPUT", data: o })
-  })
   // TODO: a better way of doing this!!!
   shows.subscribe((s) => {
     if (!$outputWindow) window.api.send(OUTPUT, { channel: "SHOWS", data: s })
@@ -58,9 +55,9 @@
         activePage.set(menus[e.key - 1])
       }
 
-      if (e.key === "z" && !e.shiftKey) {
+      if (e.key.toLowerCase() === "z" && !e.shiftKey) {
         undo()
-      } else if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
+      } else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) {
         redo()
       }
     }

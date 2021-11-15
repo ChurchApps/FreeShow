@@ -5,7 +5,7 @@ import type { Category } from "./../types/Tabs"
 import { Writable, writable } from "svelte/store"
 import type { ShowRef, Folders, Projects } from "../types/Projects"
 import type { Dictionary, LanguageKey } from "../types/Settings"
-import type { Output, ID, Shows } from "../types/Show"
+import type { ID, Shows, OutBackground, OutSlide, OutAudio } from "../types/Show"
 
 // global events
 // export const click = writable(null);
@@ -33,13 +33,17 @@ export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
 export const activeProject: Writable<null | ID> = writable("feskof")
 export const activeShow: Writable<null | ShowRef> = writable(null)
 // Layers: background, text, overlay, audio
-export const output: Writable<Output> = writable({
-  // activeSlides
-  background: null, // video/image
-  slide: null, // text
-  overlay: null,
-  audio: null,
-})
+export const outBackground: Writable<null | OutBackground> = writable(null)
+export const outSlide: Writable<null | OutSlide> = writable(null)
+export const outOverlays: Writable<string[]> = writable([])
+export const outAudio: Writable<OutAudio[]> = writable([])
+// export const output: Writable<Output> = writable({
+//   // activeSlides
+//   background: null, // video/image
+//   slide: null, // text
+//   overlay: [],
+//   audio: [],
+// })
 
 export const shows: Writable<Shows> = writable({
   nåde: {

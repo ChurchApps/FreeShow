@@ -2,7 +2,7 @@
   // import {flip} from 'svelte/animate';
   import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, output, screen, slidesOptions } from "../../stores"
+  import { shows, activeShow, screen, slidesOptions, outSlide } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
   // import { GetLayout } from "../helpers/get"
@@ -95,17 +95,14 @@
             slide={currentShow.slides[slide.id]}
             index={i}
             color={slide.color}
-            active={$output.slide?.index === i && $output.slide?.id === id}
+            active={$outSlide?.index === i && $outSlide?.id === id}
             list={!$slidesOptions.grid}
             bind:hovering
             bind:selected
             {zoom}
             on:click={(e) => {
               if (!e.ctrlKey) {
-                output.update((o) => {
-                  o.slide = { id, index: i }
-                  return o
-                })
+                outSlide.set({ id, index: i })
               }
             }}
             on:mousedown={(e) => {

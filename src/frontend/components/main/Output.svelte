@@ -1,51 +1,62 @@
 <script lang="ts">
-  import { shows, output, screen, outputWindow } from "../../stores"
+  import { shows, screen, outputWindow, outBackground, outSlide, outOverlays, outAudio } from "../../stores"
   import Textbox from "../slide/Textbox.svelte"
   import { fade } from "svelte/transition"
   import { getSlide } from "../helpers/get"
   import type { Resolution } from "../../../types/Settings"
+  import MediaOutput from "./MediaOutput.svelte"
+  import type { Transition } from "../../../types/Show"
+  import { OUTPUT } from "../../../types/Channels"
   // import { getSlide } from "../helpers/get"
 
-  $: Background = $output.background
-  $: Slide = $output.slide
-  $: Overlay = $output.overlay
-  $: Audio = $output.audio
+  export let video: any = null
+  export let videoData: any = { time: 0, duration: 0, paused: true }
+
+  if ($outputWindow) {
+    window.api.receive(OUTPUT, (msg: any) => {
+      if (msg.channel === "VIDEO_DATA") videoData = msg.data
+    })
+  }
 
   let slideWidth: number = 300
 
   export let hidden: boolean = false
   // export let zoom: number = 0.3
-  let resolution: Resolution = Slide ? $shows[$output.slide!.id].settings.resolution! : $screen.resolution
+  let resolution: Resolution = $outSlide ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
   $: zoom = slideWidth / resolution.width
   // TODO: precentages instead of pixels for text???
 
-  let transition = { duration: 500 } // text (not background)
+  let transition: Transition = { type: "fade", duration: 500 } // text (not background)
   // TODO: showing slide upon clear fade out will show black output (Transition bug!)
   // TODO: dont show transition upon no change!s
 </script>
 
+<!-- TODO: output aspect ratio / width/height -->
+
 <!-- <div class="slide" class:hidden style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px;"> -->
 <div bind:offsetWidth={slideWidth} class="slide" class:hidden style={$$props.style} class:noCursor={$outputWindow}>
-  {#if Background !== null}
-    <!--  -->
+  {#if $outBackground !== null}
+    <!-- {#key $outBackground} -->
+    <MediaOutput {...$outBackground} {transition} bind:video bind:videoData />
+    <!-- {/key} -->
   {/if}
-  {#if Slide}
-    {#key Slide}
+  {#if $outSlide}
+    {#key $outSlide}
       <span style="zoom: {zoom};" transition:fade={transition}>
         <!-- {#each Object.values($shows[$activeShow.id].slides[Slide.id]) as item} -->
         <!-- {#each Object.values(GetShows().active().slides) as item} -->
         <!-- {#each Object.values(getSlide($activeShow.id, Slide.id)) as item} -->
         <!-- {#each GetShows().active.slides[GetActiveLayout().slides[Slide.index].id].items as item} -->
-        {#each getSlide(Slide.id, Slide.index).items as item}
+        {#each getSlide($outSlide.id, $outSlide.index).items as item}
           <Textbox {item} />
         {/each}
       </span>
     {/key}
   {/if}
-  {#if Overlay !== null}
+  {#if $outOverlays !== null}
     <!--  -->
   {/if}
-  {#if Audio !== null}
+  {#if $outAudio !== null}
     <!--  -->
   {/if}
 </div>
@@ -65,6 +76,10 @@
   .slide.noCursor {
     cursor: none;
   }
+
+  /* .slide span {
+    position: absolute;
+  } */
 
   .hidden {
     display: none;

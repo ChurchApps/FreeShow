@@ -1,5 +1,5 @@
 import { GetShow } from "./get"
-import { shows, redoHistory } from "./../../stores"
+import { shows, redoHistory, mediaFolders } from "./../../stores"
 import type { ShowRef } from "./../../../types/Projects"
 import { undoHistory } from "../../stores"
 import { get } from "svelte/store"
@@ -49,8 +49,18 @@ export function history(obj: History, undo: null | boolean = null) {
         return s
       })
       break
+    case "newMediaFolder":
+      mediaFolders.update((mf) => {
+        if (obj.newData.data === null) {
+          // remove folder
+          delete mf[obj.newData.id]
+        } else mf[obj.newData.id] = obj.newData.data
+        return mf
+      })
+      break
 
     default:
+      console.log(obj)
       break
   }
 

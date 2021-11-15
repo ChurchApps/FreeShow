@@ -376,6 +376,7 @@ function createOutputWindow() {
       preload: join(__dirname, "preload"), // use a preload script
       contextIsolation: true,
       enableRemoteModule: false,
+      webSecurity: false, // get local files
     },
   })
   // show: false, // hide window
@@ -418,6 +419,8 @@ function createOutputWindow() {
 
   // toOutput("MAIN", { channel: "OUTPUT", data: "true" })
   // outputWindow.webContents.send("MAIN", { channel: "OUTPUT" })
+
+  // if (!isProd) outputWindow.webContents.openDevTools()
 }
 
 // interface ScreenObj {

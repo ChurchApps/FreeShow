@@ -4,6 +4,7 @@
   import type { Show } from "../../../types/Show"
 
   import { drawerTabsData, mediaFolders, shows } from "../../stores"
+  import Icon from "../helpers/Icon.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
   import Media from "./Media.svelte"
 
@@ -103,11 +104,13 @@
   {:else if id === "backgrounds"}
     <div class="grid">
       {#if active === "all"}
-        {#each Object.entries(files) as fileList}
-          {#each fileList[1] as name}
-            <Media {name} id={fileList[0]} />
+        {#key $mediaFolders}
+          {#each Object.entries(files) as fileList}
+            {#each fileList[1] as name}
+              <Media {name} id={fileList[0]} />
+            {/each}
           {/each}
-        {/each}
+        {/key}
       {:else if active && files[active].length}
         {#key active}
           {#each files[active] as name}
@@ -115,7 +118,9 @@
           {/each}
         {/key}
       {:else}
-        <div class="center">No media! Add media folder</div>
+        <div class="center">
+          <Icon id="noImage" size={5} />
+        </div>
       {/if}
     </div>
   {:else if id === "live"}

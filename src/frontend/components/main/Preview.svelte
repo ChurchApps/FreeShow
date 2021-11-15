@@ -1,11 +1,13 @@
 <script lang="ts">
+  import { OUTPUT } from "../../../types/Channels"
+
   import type { Resolution } from "../../../types/Settings"
 
   import type { SlideData } from "../../../types/Show"
 
   // import { OutputObject } from "../../classes/OutputObject";
 
-  import { activePage, activeShow, output, screen, shows } from "../../stores"
+  import { activePage, activeShow, outAudio, outBackground, outOverlays, outSlide, screen, shows } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -13,38 +15,23 @@
   import AudioMeter from "./AudioMeter.svelte"
 
   import Output from "./Output.svelte"
+  import VideoSlider from "./VideoSlider.svelte"
 
-  let out = false
-  output.subscribe((o) => {
-    let set = new Set(Object.values(o))
-    if ([...set].length > 1) out = true
-    else out = false
-    console.log(out)
-  })
-
-  function clearOutput(key: string) {
-    output.update((o: any) => {
-      o[key] = null
-      return o
-    })
-  }
+  $: out = $outBackground === null && $outSlide === null && !$outOverlays.length && !$outAudio.length ? false : true
 
   function nextSlide(e: any) {
     // TODO: go down automaticly
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let slide = $output.slide
+    let slide = $outSlide
     let layout: SlideData[] = []
     // if (slide) layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
-    if (slide) layout = GetLayout($output.slide!.id)
+    if (slide) layout = GetLayout(slide.id)
     let endOfShow = slide?.index === layout.length - 1
     // TODO: active show slide index on delete......
     // go to beginning if live mode & ctrl | no output | last slide active
     if ($activePage === "show" && $activeShow && (!out || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
-      output.update((o) => {
-        o.slide = { id: $activeShow!.id, index: 0, private: $activeShow!.private || false }
-        return o
-      })
+      outSlide.set({ id: $activeShow!.id, index: 0, private: $activeShow!.private || false })
     } else {
       // Check for loop to beginning slide...
       // Go to next show?
@@ -52,8 +39,8 @@
 
       if (slide && !slide.private) {
         if (slide.index < layout.length - 1) {
-          output.update((o) => {
-            if (o.slide && slide) o.slide.index = slide.index + 1
+          outSlide.update((o) => {
+            if (o) o.index = slide!.index + 1
             return o
           })
         }
@@ -67,13 +54,12 @@
   }
 
   function previousSlide() {
-    let slide = $output.slide
+    let slide = $outSlide
     if (slide && !slide.private) {
       // let layout: Layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
       if (slide.index > 0) {
-        output.update((o) => {
-          // ! no need for null check
-          if (o.slide && slide) o.slide.index = slide.index - 1
+        outSlide.update((o) => {
+          if (o) o.index = slide!.index - 1
           return o
         })
       }
@@ -86,12 +72,20 @@
     }
   }
 
+  const clearAll = () => {
+    outBackground.set(null)
+    outSlide.set(null)
+    outOverlays.set([])
+    outAudio.set([])
+    clearVideo()
+  }
+
   function nextShow() {}
   function previousShow() {}
 
   function keydown(e: any) {
     if (e.ctrlKey || e.altKey) {
-      if (e.key === "c") output.set({ background: null, slide: null, overlay: null, audio: null })
+      if (e.key === "c") clearAll()
       else if (e.key === "f") fullscreen = !fullscreen
     }
     if (!(e.target instanceof window.HTMLInputElement) && !e.target.closest(".edit")) {
@@ -107,8 +101,8 @@
     }
   }
 
-  $: name = $output.slide ? ($output.slide.private ? "- [private]" : $shows[$output.slide.id].name) : "-"
-  $: index = $output.slide ? $output.slide.index + 1 : "-"
+  $: name = $outSlide ? ($outSlide.private ? "- [private]" : $shows[$outSlide.id].name) : "-"
+  $: index = $outSlide ? $outSlide.index + 1 : "-"
 
   let fullscreen: boolean = false
   let resolution: Resolution = $screen.resolution
@@ -117,6 +111,26 @@
     Math.min(resolution.width / window.innerWidth, window.innerWidth / resolution.width) > Math.min(resolution.height / window.innerHeight, window.innerHeight / resolution.height)
       ? "height: 90vh"
       : "width: 80vw"
+
+  let video: any = null
+  let videoData: any = {
+    time: 0,
+    duration: 0,
+    paused: true,
+  }
+  function clearVideo() {
+    // TODO: clear after fade out.....
+    setTimeout(() => {
+      video = null
+      videoData = {
+        time: 0,
+        duration: 0,
+        paused: true,
+      }
+      window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+    }, 600)
+  }
+  $: console.log(videoData)
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -124,7 +138,7 @@
 <div class="main">
   <!-- hidden={$activePage === "live" ? false : true} -->
   <div class="top">
-    <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style="width: 100%">
+    <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "" : "width: 100%"}>
       {#if fullscreen}
         <span class="resolution">
           <!-- TODO: get actual resultion ... -->
@@ -132,9 +146,9 @@
           <p><b>Height:</b> {resolution.height}px</p>
         </span>
       {/if}
-      <Output style={fullscreen ? size : ""} />
+      <Output style={fullscreen ? size : ""} bind:video bind:videoData />
     </div>
-    <AudioMeter />
+    <AudioMeter {video} />
     <!-- {#if $activePage === 'live'}
     {/if} -->
   </div>
@@ -144,35 +158,57 @@
   <div class="clear">
     <span>
       <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
-      <Button class="clearAll" disabled={!out} on:click={() => output.set({ background: null, slide: null, overlay: null, audio: null })} center>
+      <Button class="clearAll" disabled={!out} on:click={clearAll} center>
         <T id={"clear.all"} />
       </Button>
     </span>
     <span class="group">
-      <Button disabled={!$output.background} on:click={() => clearOutput("background")} center>BG</Button>
-      <Button disabled={!$output.slide} on:click={() => clearOutput("slide")} center>TXT</Button>
-      <Button disabled={!$output.overlay} on:click={() => clearOutput("overlay")} center>OL</Button>
-      <Button disabled={!$output.audio} on:click={() => clearOutput("audio")} center>AUDIO</Button>
+      <Button
+        disabled={!$outBackground}
+        on:click={() => {
+          outBackground.set(null)
+          clearVideo()
+        }}
+        center>BG</Button
+      >
+      <Button disabled={!$outSlide} on:click={() => outSlide.set(null)} center>TXT</Button>
+      <Button disabled={!$outOverlays.length} on:click={() => outOverlays.set([])} center>OL</Button>
+      <Button disabled={!$outAudio.length} on:click={() => outAudio.set([])} center>AUDIO</Button>
     </span>
   </div>
+
+  <!-- video -->
+  {#if video}
+    {$outBackground?.name}
+    <span class="group">
+      <Button style="flex: 0" center title={videoData.paused ? "Play" : "Paused"} on:click={() => (videoData.paused = !videoData.paused)}>
+        <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
+      </Button>
+      <VideoSlider bind:videoData />
+    </span>
+  {/if}
+
+  <!-- audio -->
+
+  <!-- transition -->
 
   <span>Name: {name}</span>
   <span>Index: {index}</span>
   <span class="group">
-    <Button on:click={previousShow} disabled={!$output.slide} center>
-      <Icon id={"previousFull"} size={1.2} />
+    <Button on:click={previousShow} disabled={!$outSlide} center>
+      <Icon id="previousFull" size={1.2} />
     </Button>
-    <Button on:click={previousSlide} disabled={!$output.slide} center>
-      <Icon id={"previous"} size={1.2} />
+    <Button on:click={previousSlide} disabled={!$outSlide} center>
+      <Icon id="previous" size={1.2} />
     </Button>
     <Button center title="Lock">
-      <Icon id={"unlocked"} size={1.2} />
+      <Icon id="unlocked" size={1.2} />
     </Button>
     <Button on:click={nextSlide} center>
-      <Icon id={"next"} size={1.2} />
+      <Icon id="next" size={1.2} />
     </Button>
     <Button on:click={nextShow} center>
-      <Icon id={"nextFull"} size={1.2} />
+      <Icon id="nextFull" size={1.2} />
     </Button>
   </span>
 </div>
@@ -204,7 +240,9 @@
   .clear :global(button) {
     background-color: rgb(255 0 0 / 0.3);
   }
-  .clear :global(button):hover:not(:disabled):not(.active) {
+  .clear :global(button):hover:not(:disabled):not(.active),
+  .clear :global(button):active:not(:disabled):not(.active),
+  .clear :global(button):focus:not(:disabled) {
     background-color: rgb(255 0 0 / 0.4);
   }
 
