@@ -23,14 +23,24 @@
         all: { name: "category.all", default: true, icon: "all" },
         ...$mediaFolders,
       }
+    } else if (id === "live") {
+      buttons = {
+        // all: { name: "category.all", default: true, icon: "all" },
+        // ...$mediaFolders,
+        // id:
+        windows: { name: "windows", default: true, icon: "screen" },
+        // screen2: {name: "second screen", icon: "screen"},
+        cameras: { name: "cameras", default: true, icon: "camera" },
+        microphones: { name: "microphones", default: true, icon: "microphone" },
+      }
     } else buttons = {}
   }
 
-  console.log(buttons)
+  $: console.log(buttons)
   $: {
     if ($drawerTabsData[id].activeSubTab === null) {
       // setTab(Object.keys(buttons)[0])
-      setTab("all")
+      setTab(Object.keys(buttons)[0])
     }
   }
 
@@ -43,18 +53,20 @@
 </script>
 
 <div class="main">
-  {#each Object.entries(buttons) as category}
-    <Button active={category[0] === $drawerTabsData[id].activeSubTab} on:click={() => setTab(category[0])} bold={false} title={category[1].url ? category[1].url : ""}>
-      <Icon id={category[1].icon || "unknown"} />
-      <div id={category[0]}>
-        {#if category[1].default}
-          <T id={category[1].name} />
-        {:else}
-          {category[1].name}
-        {/if}
-      </div>
-    </Button>
-  {/each}
+  {#key buttons}
+    {#each Object.entries(buttons) as category}
+      <Button active={category[0] === $drawerTabsData[id].activeSubTab} on:click={() => setTab(category[0])} bold={false} title={category[1].url ? category[1].url : ""}>
+        <Icon id={category[1].icon || "unknown"} />
+        <div id={category[0]}>
+          {#if category[1].default}
+            <T id={category[1].name} />
+          {:else}
+            {category[1].name}
+          {/if}
+        </div>
+      </Button>
+    {/each}
+  {/key}
   {#if id === "backgrounds"}
     <FilePicker />
     <FolderPicker />

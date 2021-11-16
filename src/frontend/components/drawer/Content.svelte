@@ -6,7 +6,10 @@
   import { drawerTabsData, mediaFolders, shows } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
+  import Cameras from "./Cameras.svelte"
   import Media from "./Media.svelte"
+  import Microphones from "./Microphones.svelte"
+  import Windows from "./Windows.svelte"
 
   export let id: string
   export let searchValue: string
@@ -124,7 +127,17 @@
       {/if}
     </div>
   {:else if id === "live"}
-    live
+    <div class="grid">
+      <!-- live -->
+      <!-- screens -->
+      {#if active === "windows"}
+        <Windows />
+      {:else if active === "cameras"}
+        <Cameras />
+      {:else if active === "microphones"}
+        <Microphones />
+      {/if}
+    </div>
   {/if}
 </div>
 

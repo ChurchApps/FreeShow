@@ -82,7 +82,8 @@ export interface Transition {
 
 export interface OutBackground {
   id: ID
-  name: string
+  name?: string
+  type?: "media" | "screen" | "camera"
 }
 export interface OutSlide {
   id: ID

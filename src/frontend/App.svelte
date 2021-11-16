@@ -5,7 +5,7 @@
   import Projects from "./components/show/Projects.svelte"
   import Show from "./components/show/Show.svelte"
   import Editor from "./components/edit/Editor.svelte"
-  import Preview from "./components/main/Preview.svelte"
+  import Preview from "./components/output/Preview.svelte"
   import { setLanguage } from "./utils/language"
   import { listen } from "./utils/messages"
   import { startup } from "./utils/startup"
@@ -19,7 +19,7 @@
   import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
-  import Output from "./components/main/Output.svelte"
+  import Output from "./components/output/Output.svelte"
   import { OUTPUT } from "../types/Channels"
   import { redo, undo } from "./components/helpers/history"
 

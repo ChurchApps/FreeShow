@@ -1,20 +1,19 @@
 <script lang="ts">
   import { fade } from "svelte/transition"
-
   import type { Transition } from "../../../types/Show"
-
   import { mediaFolders, outputWindow } from "../../stores"
+  import Camera from "./Camera.svelte"
+  import Window from "./Window.svelte"
 
   export let transition: Transition
   export let id: string
-  export let name: string
+  export let name: string = ""
+  export let type: string = "media"
   export let video: any
   export let videoData: any
 
-  $: console.log($mediaFolders, id, name)
-
-  $: url = $mediaFolders[id].url + "/" + name || ""
-  $: extension = url.match(/\.[0-9a-z]+$/i)?.[0]!
+  $: url = type === "media" ? $mediaFolders[id].url + "/" + name || "" : ""
+  $: extension = url.match(/\.[0-9a-z]+$/i)?.[0]! || ""
   $: isVideo = extension.includes("mp4") || extension.includes("mov")
 
   let muted = $outputWindow ? true : false
@@ -24,13 +23,19 @@
 
 <!-- TODO: display image stretch / scale -->
 <div transition:fade={transition}>
-  {#if isVideo}
-    <!-- TODO: autoplay.... -->
-    <video bind:this={video} bind:currentTime={videoData.time} bind:paused={videoData.paused} bind:duration={videoData.duration} src={url} autoplay {loop} {muted}>
-      <track kind="captions" />
-    </video>
-  {:else}
-    <img src={url} {alt} />
+  {#if type === "media"}
+    {#if isVideo}
+      <!-- TODO: autoplay.... -->
+      <video class="media" bind:this={video} bind:currentTime={videoData.time} bind:paused={videoData.paused} bind:duration={videoData.duration} src={url} autoplay {loop} {muted}>
+        <track kind="captions" />
+      </video>
+    {:else}
+      <img class="media" src={url} {alt} />
+    {/if}
+  {:else if type === "screen"}
+    <Window {id} class="media" />
+  {:else if type === "camera"}
+    <Camera {id} class="media" />
   {/if}
 </div>
 
@@ -52,8 +57,7 @@
     align-items: center;
   }
 
-  img,
-  video {
+  div :global(.media) {
     max-width: 100%;
     max-height: 100%;
   }

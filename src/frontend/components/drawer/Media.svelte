@@ -35,13 +35,6 @@
     }
   }
 
-  // videoElem.preload = "metadata"
-  // videoElem.src = url
-  // // Load video in Safari / IE11
-  // videoElem.muted = true
-  // videoElem.playsInline = true
-  // videoElem.play()
-
   function setBackground() {
     outBackground.set({ id, name })
   }
