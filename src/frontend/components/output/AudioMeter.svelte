@@ -3,6 +3,9 @@
   let l = 0
   let r = 0
 
+  // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API
+  // https://ui.dev/web-audio-api/
+
   $: {
     if (video !== null) {
       // if ($output.audio.length) {

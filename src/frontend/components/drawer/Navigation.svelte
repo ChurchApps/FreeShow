@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Category } from "../../../types/Tabs"
 
-  import { categories, drawerTabsData, mediaFolders } from "../../stores"
+  import { categories, drawerTabsData, mediaFolders, overlayCategories } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
@@ -22,6 +22,11 @@
       buttons = {
         all: { name: "category.all", default: true, icon: "all" },
         ...$mediaFolders,
+      }
+    } else if (id === "overlays") {
+      buttons = {
+        all: { name: "category.all", default: true, icon: "all" },
+        ...$overlayCategories,
       }
     } else if (id === "live") {
       buttons = {

@@ -6,10 +6,11 @@
   import { drawerTabsData, mediaFolders, shows } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
-  import Cameras from "./Cameras.svelte"
   import Media from "./Media.svelte"
-  import Microphones from "./Microphones.svelte"
-  import Windows from "./Windows.svelte"
+  import Cameras from "./live/Cameras.svelte"
+  import Microphones from "./live/Microphones.svelte"
+  import Windows from "./live/Windows.svelte"
+  import Overlays from "./Overlays.svelte"
 
   export let id: string
   export let searchValue: string
@@ -125,6 +126,10 @@
           <Icon id="noImage" size={5} />
         </div>
       {/if}
+    </div>
+  {:else if id === "overlays"}
+    <div class="grid">
+      <Overlays />
     </div>
   {:else if id === "live"}
     <div class="grid">

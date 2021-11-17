@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { GET_SCREENS } from "../../../types/Channels"
-  import { outBackground } from "../../stores"
+  import { GET_SCREENS } from "../../../../types/Channels"
+  import { outBackground } from "../../../stores"
   import Capture from "./Capture.svelte"
 
   let screens: any[] = []

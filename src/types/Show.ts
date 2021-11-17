@@ -80,6 +80,16 @@ export interface Transition {
   duration: number
 }
 
+export interface Overlays {
+  [key: ID]: Overlay
+}
+export interface Overlay {
+  label: string
+  color: null | string
+  style: string
+  items: Item[]
+}
+
 export interface OutBackground {
   id: ID
   name?: string

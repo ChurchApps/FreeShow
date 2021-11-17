@@ -5,7 +5,7 @@ import type { Category } from "./../types/Tabs"
 import { Writable, writable } from "svelte/store"
 import type { ShowRef, Folders, Projects } from "../types/Projects"
 import type { Dictionary, LanguageKey } from "../types/Settings"
-import type { ID, Shows, OutBackground, OutSlide, OutAudio } from "../types/Show"
+import type { ID, Shows, Overlays, OutBackground, OutSlide, OutAudio } from "../types/Show"
 
 // global events
 // export const click = writable(null);
@@ -254,6 +254,38 @@ export const categories: Writable<Category> = writable({
   song: { name: "category.song", icon: "song", default: true },
   info: { name: "category.info", icon: "info", default: true },
   presentation: { name: "category.presentation", icon: "presentation", default: true },
+})
+export const overlayCategories: Writable<Category> = writable({})
+export const overlays: Writable<Overlays> = writable({
+  tiesl: {
+    label: "Verse 1",
+    color: "green",
+    style: "",
+    items: [
+      {
+        style: "",
+        text: [{ value: "Her er jeg Gud,\nmed mine byrder", style: "color: red; text-align: center;" }],
+      },
+      {
+        style: "color: blue; top: 50px; left: 100px; height: 100px; width: 40px;",
+      },
+    ],
+  },
+  fsioøføjesi: {
+    label: "",
+    color: null,
+    style: "",
+    items: [
+      {
+        style: "top: 400px; left: 180px; height: 220px; width: 1500px; text-align: center;",
+        text: [{ value: "Velkommen!", style: "font-size: 180px; font-weight: bold; font-family: Tahoma;" }],
+      },
+      {
+        style: "top: 0px; left: 10px; height: 80px; width: 300px;",
+        text: [{ value: "Impuls", style: "" }],
+      },
+    ],
+  },
 })
 export const mediaFolders: Writable<Category> = writable({
   pictures: { name: "category.pictures", icon: "folder", url: "C:/Users/Kristoffer/Pictures", default: true },

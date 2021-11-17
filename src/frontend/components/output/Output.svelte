@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { shows, screen, outputWindow, outBackground, outSlide, outOverlays, outAudio } from "../../stores"
+  import { shows, screen, outputWindow, outBackground, outSlide, outOverlays, outAudio, overlays } from "../../stores"
   import Textbox from "../slide/Textbox.svelte"
   import { fade } from "svelte/transition"
   import { getSlide } from "../helpers/get"
@@ -53,10 +53,16 @@
       </span>
     {/key}
   {/if}
-  {#if $outOverlays !== null}
-    <!--  -->
+  {#if $outOverlays.length}
+    {#each $outOverlays as id}
+      <div style="zoom: {zoom}; {$overlays[id].style}" transition:fade={transition}>
+        {#each $overlays[id].items as item}
+          <Textbox {item} />
+        {/each}
+      </div>
+    {/each}
   {/if}
-  {#if $outAudio !== null}
+  {#if $outAudio.length}
     <!--  -->
   {/if}
 </div>

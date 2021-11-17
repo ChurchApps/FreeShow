@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { outBackground } from "../../stores"
+  import { outBackground } from "../../../stores"
 
   import Cam from "./Cam.svelte"
 

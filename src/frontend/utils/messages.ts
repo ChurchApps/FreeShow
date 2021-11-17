@@ -12,7 +12,7 @@ export function listen() {
     // window.api.send(MAIN, {message: message})
     if (message.channel === "BACKGROUND") outBackground.set(message.data)
     else if (message.channel === "SLIDE") outSlide.set(message.data)
-    else if (message.channel === "OVERLAY") outOverlays.set(message.data)
+    else if (message.channel === "OVERLAYS") outOverlays.set(message.data)
     else if (message.channel === "SHOWS") shows.set(message.data)
     else if (message.channel === "MEDIA") mediaFolders.set(message.data)
     else if (message.channel === "DISPLAY") outputDisplay.set(message.data)
