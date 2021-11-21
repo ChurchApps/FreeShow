@@ -6,9 +6,11 @@
 
 <div class="item" style={item.style}>
   {#if item.text}
-    {#each item.text as text}
-      <p style={text.style}>{text.value}</p>
-    {/each}
+    <div>
+      {#each item.text as text}
+        <p style={text.style}>{text.value}</p>
+      {/each}
+    </div>
   {/if}
 </div>
 
@@ -19,6 +21,7 @@
     /* display: inline-flex; */
     position: absolute;
     overflow: hidden;
+    display: flex;
   }
 
   p {

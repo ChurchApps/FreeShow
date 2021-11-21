@@ -4,6 +4,7 @@ export interface Category {
     icon: string
     url?: string
     default?: boolean
+    description?: string
   }
 }
 

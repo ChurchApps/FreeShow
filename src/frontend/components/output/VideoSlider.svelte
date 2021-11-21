@@ -33,23 +33,24 @@
     else if (percentage > 1) percentage = 1
 
     time = joinTime(secondsToTime(videoData.duration * percentage))
+    sendToOutput()
   }
 
-  function sendToOutput() {
-    window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
-  }
+  const sendToOutput = () => window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
 </script>
 
 <!-- {#key time} -->
 <!-- on:change={(e) => (videoData.time = e.target.value)} -->
 <div class="main">
-  <span style="color: var(--secondary)">
-    {#if hover}
+  {#if hover}
+    <span>
       {time}
-    {:else}
+    </span>
+  {:else}
+    <span style="color: var(--secondary)">
       {joinTime(secondsToTime(videoData.time))}
-    {/if}
-  </span>
+    </span>
+  {/if}
   <div class="slider" on:mouseenter={() => (hover = true)} on:mouseleave={() => (hover = false)}>
     <Slider bind:value={videoData.time} max={videoData.duration} on:mousemove={move} on:change={sendToOutput} />
   </div>

@@ -63,6 +63,10 @@
 
   button :global(div) {
     padding-left: 0.8em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-x: hidden;
+    line-height: 150%;
   }
 
   button :global(svg) {

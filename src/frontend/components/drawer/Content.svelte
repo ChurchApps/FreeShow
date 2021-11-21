@@ -11,8 +11,10 @@
   import Microphones from "./live/Microphones.svelte"
   import Windows from "./live/Windows.svelte"
   import Overlays from "./Overlays.svelte"
+  import Scripture from "./bible/Scripture.svelte"
 
   export let id: string
+  export let bible: any
   export let searchValue: string
   $: active = $drawerTabsData[id].activeSubTab
 
@@ -131,6 +133,8 @@
     <div class="grid">
       <Overlays />
     </div>
+  {:else if id === "scripture"}
+    <Scripture {active} bind:bible />
   {:else if id === "live"}
     <div class="grid">
       <!-- live -->

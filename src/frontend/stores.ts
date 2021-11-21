@@ -339,7 +339,7 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({
   backgrounds: { enabled: true, activeSubTab: null },
   overlays: { enabled: true, activeSubTab: null },
   audio: { enabled: true, activeSubTab: null },
-  scripture: { enabled: true, activeSubTab: null },
+  scripture: { enabled: true, activeSubTab: "de4e12af7f28f599-02" },
   timers: { enabled: true, activeSubTab: null },
   web: { enabled: false, activeSubTab: null },
   live: { enabled: false, activeSubTab: null },

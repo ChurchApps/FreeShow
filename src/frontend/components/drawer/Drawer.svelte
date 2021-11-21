@@ -4,17 +4,18 @@
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
-  import Info from "../drawer/Info.svelte"
+  import Info from "./info/Info.svelte"
   import Navigation from "../drawer/Navigation.svelte"
   import Icon from "../helpers/Icon.svelte"
 
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Resizeable from "../system/Resizeable.svelte"
+  import type { Bible } from "../../../types/Scripture"
 
   const minHeight = 40
   // const maxHeight = window.innerHeight * 0.75
-  const maxHeight = window.innerHeight - 50
+  let maxHeight = window.innerHeight - 50
   let height: number = 300 // maxHeight / 2
 
   let activeTab: string = "shows"
@@ -23,6 +24,7 @@
   let mouse: null | { x: number; y: number; offsetY: number } = null
   function mousedown(e: any) {
     if (e.target.classList.contains("top")) {
+      maxHeight = window.innerHeight - 50
       mouse = {
         x: e.clientX,
         y: e.clientY,
@@ -70,6 +72,14 @@
     // if (activeTab === "shows") {
     // }
   }
+
+  let bible: Bible = {
+    version: null,
+    book: null,
+    chapter: null,
+    verses: [],
+    activeVerses: [],
+  }
 </script>
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />
@@ -102,9 +112,9 @@
     <Resizeable id={"drawerNavigation"}>
       <Navigation id={activeTab} />
     </Resizeable>
-    <Content id={activeTab} {searchValue} />
+    <Content id={activeTab} {searchValue} bind:bible />
     <Resizeable id={"drawerInfo"} side="right">
-      <Info />
+      <Info id={activeTab} {bible} />
     </Resizeable>
   </div>
 </section>

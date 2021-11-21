@@ -131,6 +131,8 @@
     }, 600)
   }
   $: console.log(videoData)
+
+  const sendToOutput = () => window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -181,7 +183,15 @@
   {#if video}
     {$outBackground?.name}
     <span class="group">
-      <Button style="flex: 0" center title={videoData.paused ? "Play" : "Paused"} on:click={() => (videoData.paused = !videoData.paused)}>
+      <Button
+        style="flex: 0"
+        center
+        title={videoData.paused ? "Play" : "Paused"}
+        on:click={() => {
+          videoData.paused = !videoData.paused
+          sendToOutput()
+        }}
+      >
         <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
       </Button>
       <VideoSlider bind:videoData />

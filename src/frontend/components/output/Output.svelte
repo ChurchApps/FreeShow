@@ -56,9 +56,11 @@
   {#if $outOverlays.length}
     {#each $outOverlays as id}
       <div style="zoom: {zoom}; {$overlays[id].style}" transition:fade={transition}>
-        {#each $overlays[id].items as item}
-          <Textbox {item} />
-        {/each}
+        <div>
+          {#each $overlays[id].items as item}
+            <Textbox {item} />
+          {/each}
+        </div>
       </div>
     {/each}
   {/if}
@@ -77,6 +79,7 @@
 
     width: 100%;
     height: 100%;
+    /* TODO: aspect = resolution.width / height */
     aspect-ratio: 16/9;
   }
   .slide.noCursor {

@@ -7,6 +7,7 @@
   import Button from "../inputs/Button.svelte"
   import FilePicker from "../inputs/FilePicker.svelte"
   import FolderPicker from "../inputs/FolderPicker.svelte"
+  import { getBibleVersions } from "./bible/getBible"
 
   export let id: string
 
@@ -28,6 +29,10 @@
         all: { name: "category.all", default: true, icon: "all" },
         ...$overlayCategories,
       }
+    } else if (id === "scripture") {
+      buttons = {
+        ...getBibleVersions(),
+      }
     } else if (id === "live") {
       buttons = {
         // all: { name: "category.all", default: true, icon: "all" },
@@ -42,6 +47,7 @@
   }
 
   $: console.log(buttons)
+  // TODO: scroll down to selected
   $: {
     if ($drawerTabsData[id].activeSubTab === null) {
       // setTab(Object.keys(buttons)[0])
@@ -60,7 +66,13 @@
 <div class="main">
   {#key buttons}
     {#each Object.entries(buttons) as category}
-      <Button active={category[0] === $drawerTabsData[id].activeSubTab} on:click={() => setTab(category[0])} bold={false} title={category[1].url ? category[1].url : ""}>
+      <!-- TODO: titles -->
+      <Button
+        active={category[0] === $drawerTabsData[id].activeSubTab}
+        on:click={() => setTab(category[0])}
+        bold={false}
+        title={category[1].description ? category[1].description : category[1].url ? category[1].url : ""}
+      >
         <Icon id={category[1].icon || "unknown"} />
         <div id={category[0]}>
           {#if category[1].default}

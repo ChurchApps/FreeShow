@@ -10,7 +10,9 @@
   let box: number = 24
 </script>
 
-<svg class={$$props.class} class:white style="{$$props.style || ''} min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">{@html icons[id]}</svg>
+{#if icons[id]}
+  <svg class={$$props.class} class:white style="{$$props.style || ''} min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">{@html icons[id]}</svg>
+{/if}
 
 <style>
   svg {
