@@ -1,5 +1,10 @@
+<script lang="ts">
+  export let value: string
+  // let updated: string = value
+</script>
+
 <div class="paper">
-  <div class="edit" contenteditable={true} />
+  <div class="edit" contenteditable="true" on:keydown bind:innerHTML={value} />
 </div>
 
 <style>
@@ -9,6 +14,7 @@
     /* overflow-y: auto; */
     /* display: flex; */
     flex: 1;
+    height: 100%;
   }
 
   .edit {

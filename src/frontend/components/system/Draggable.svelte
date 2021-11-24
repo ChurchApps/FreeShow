@@ -1,25 +1,18 @@
 <script lang="ts">
-  export let hovering: null | number
-  export let index: number
+  import { dragged } from "../../stores"
 
-  const dragstart = (event: any, _i: number) => {
-    event.dataTransfer.effectAllowed = "move"
-    event.dataTransfer.dropEffect = "move"
-    // event.dataTransfer.setData("text/plain", i)
-    // console.log(event)
+  export let id: string
+  export let data: string = ""
+  export let type: "copy" | "move" | "link" = "move"
+
+  const dragstart = (e: any) => {
+    e.dataTransfer.effectAllowed = type
+    e.dataTransfer.dropEffect = type
+    e.dataTransfer.setData("text", data)
+    dragged.set(id)
   }
-  // $: console.log(hovering, index)
 </script>
 
-<div
-  draggable={true}
-  on:dragstart={(event) => dragstart(event, index)}
-  on:drop|preventDefault
-  on:dragover|preventDefault
-  on:dragenter={(e) => {
-    hovering = index
-    console.log(e)
-  }}
->
+<div {id} draggable={true} on:dragstart={dragstart} on:drop|preventDefault on:dragover|preventDefault on:dragenter>
   <slot />
 </div>

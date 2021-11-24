@@ -2,7 +2,8 @@
   // import {flip} from 'svelte/animate';
   import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, screen, slidesOptions, outSlide } from "../../stores"
+  import { shows, activeShow, screen, slidesOptions, outSlide, dragged } from "../../stores"
+  import { drop } from "../helpers/dropSlide"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
   // import { GetLayout } from "../helpers/get"
@@ -57,7 +58,7 @@
 
   // $: ShowSlides = $shows[id].layouts[$shows[id].settings.activeLayout].slides
 
-  let hovering: null | number = null
+  let overIndex: null | number
   let selected: number[] = []
 
   let mouseDown: boolean = false
@@ -85,9 +86,19 @@
 
 <!-- TODO: tab enter not woring -->
 
-<div class="scroll" on:mousedown={mousedown} on:mousemove={mousemove}>
-  <div class="grid" bind:offsetWidth={viewWidth}>
-    {#if $shows[id] !== undefined}
+<div
+  class="scroll"
+  on:mousedown={mousedown}
+  on:mousemove={mousemove}
+  on:drop={(e) => {
+    if (e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
+  }}
+  on:dragover|preventDefault
+>
+  {#if $shows[id] === undefined}
+    <div class="center">Error! Could not find show!</div>
+  {:else}
+    <div class="grid" bind:offsetWidth={viewWidth}>
       <!-- {#each Object.values($shows[id].slides) as slide, i} -->
       {#if layoutSlides.length}
         {#each layoutSlides as slide, i}
@@ -97,7 +108,7 @@
             color={slide.color}
             active={$outSlide?.index === i && $outSlide?.id === id}
             list={!$slidesOptions.grid}
-            bind:hovering
+            bind:overIndex
             bind:selected
             {zoom}
             on:click={(e) => {
@@ -114,8 +125,10 @@
           />
         {/each}
       {:else}
-        No slides
-        <!-- Add slides button -->
+        <div class="center">
+          No slides
+          <!-- Add slides button -->
+        </div>
       {/if}
 
       <div style="position: fixed;">
@@ -126,16 +139,15 @@
         <button on:click={() => slidesOptions.set({ ...$slidesOptions, grid: !$slidesOptions.grid })}>GRID</button>
       </div>
       <!-- TODO: snap to width! (Select columns instead of manual zoom size) -->
-    {:else}
-      Error! Could not find show!
-    {/if}
-  </div>
+    </div>
+  {/if}
 </div>
 
 <style>
   .scroll {
     overflow-y: auto;
     flex: 1;
+    /* padding-bottom: 10px; */
   }
 
   .grid {
@@ -143,5 +155,15 @@
     flex-wrap: wrap;
     gap: 10px;
     padding: 10px;
+    height: 100%;
+    align-content: flex-start;
+  }
+
+  .center {
+    display: flex;
+    height: 100%;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
   }
 </style>

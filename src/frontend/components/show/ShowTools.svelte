@@ -1,14 +1,25 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
+  import { shows, activeShow } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
+  import Notes from "./tools/Notes.svelte"
   import SlidesList from "./tools/SlidesList.svelte"
 
   const tabs: TabsObj = {
     groups: { name: "tools.groups", icon: "groups" },
     transitions: { name: "tools.transitions", icon: "transition" },
     backgrounds: { name: "tools.backgrounds", icon: "backgrounds" },
+    notes: { name: "tools.notes", icon: "notes" },
   }
   let active: string = Object.keys(tabs)[0]
+
+  $: showId = $activeShow!.id
+  let note: string = $shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].notes
+  $: {
+    if (note.length) {
+      $shows[showId].layouts[$shows[showId].settings.activeLayout].notes = note
+    }
+  }
 </script>
 
 <div class="main">
@@ -18,6 +29,8 @@
   <div class="content">
     {#if active === "groups"}
       <SlidesList />
+    {:else if active === "notes"}
+      <Notes bind:value={note} />
     {:else}
       {active}
     {/if}
@@ -36,9 +49,7 @@
   }
 
   .content {
-    /* display: flex; */
     overflow-y: auto;
-    /* flex: 1; */
     height: 100%;
   }
 </style>

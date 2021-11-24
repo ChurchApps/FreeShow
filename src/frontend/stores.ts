@@ -27,6 +27,7 @@ export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, item: nu
 export const activePage: Writable<TopViews> = writable("show")
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
+export const dragged: Writable<null | string> = writable(null)
 
 // project
 export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
@@ -147,7 +148,7 @@ export const shows: Writable<Shows> = writable({
     layouts: {
       fesfsef: {
         name: "",
-        notes: "",
+        notes: "test",
         slides: [
           { id: "feowo" },
           { id: "fesfo" },
@@ -182,7 +183,7 @@ export const shows: Writable<Shows> = writable({
         notes: "",
         items: [
           {
-            style: "top: 400px; left: 180px; height: 220px; width: 1500px; text-align: center;",
+            style: "top: 400px; left: 180px; height: 220px; width: 1500px; justify-content: center;",
             text: [{ value: "Velkommen!", style: "font-size: 180px; font-weight: bold; font-family: Tahoma;" }],
           },
           {

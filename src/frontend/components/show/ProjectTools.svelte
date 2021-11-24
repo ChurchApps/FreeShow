@@ -20,7 +20,7 @@
   <Tabs {tabs} bind:active />
   <div class="content">
     {#if active === "notes"}
-      <Notes />
+      <Notes value="" />
     {/if}
   </div>
 </div>

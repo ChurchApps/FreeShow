@@ -32,6 +32,8 @@
     <Button
       on:click={() => {
         shows.update((s) => {
+          // TODO: copy active layout
+          // TODO: ctrl click = create empty
           let newLayout = new Layout("unnamed")
           let id = uid(16)
           s[$activeShow.id].layouts[id] = newLayout
