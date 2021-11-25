@@ -28,6 +28,7 @@ export const activePage: Writable<TopViews> = writable("show")
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
 export const dragged: Writable<null | string> = writable(null)
+export const dragSelected: Writable<number[]> = writable([])
 
 // project
 export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])

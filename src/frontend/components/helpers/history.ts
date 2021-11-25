@@ -1,9 +1,9 @@
 import { GetShow } from "./get"
-import { shows, redoHistory, mediaFolders } from "./../../stores"
+import { shows, activeProject, projects, redoHistory, mediaFolders } from "./../../stores"
 import type { ShowRef } from "./../../../types/Projects"
 import { undoHistory } from "../../stores"
 import { get } from "svelte/store"
-import type { Item } from "../../../types/Show"
+import type { Slide, Item } from "../../../types/Show"
 
 export interface History {
   id: string
@@ -27,11 +27,12 @@ export function history(obj: History, undo: null | boolean = null) {
   // console.log(obj)
 
   switch (obj.id) {
+    // style
     case "textStyle":
     case "deleteItem":
     case "itemStyle":
       shows.update((s) => {
-        let items = GetShow(obj.location.show!).slides[obj.location.slide!].items
+        let items: Item[] = GetShow(obj.location.show!).slides[obj.location.slide!].items
         obj.newData.forEach((item: Item, i: number) => {
           items[i] = item
         })
@@ -44,11 +45,19 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "slideStyle":
       shows.update((s) => {
-        let slide = GetShow(obj.location.show!).slides[obj.location.slide!]
+        let slide: Slide = GetShow(obj.location.show!).slides[obj.location.slide!]
         slide.style = obj.newData
         return s
       })
       break
+    // move
+    case "projectList":
+      projects.update((p) => {
+        p[get(activeProject)!].shows = obj.newData
+        return p
+      })
+      break
+    // new
     case "newMediaFolder":
       mediaFolders.update((mf) => {
         if (obj.newData.data === null) {

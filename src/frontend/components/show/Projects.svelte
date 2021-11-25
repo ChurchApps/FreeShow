@@ -1,8 +1,10 @@
 <script lang="ts">
-  import type { Tree } from "../../../types/Projects"
+  import type { ShowRef, Tree } from "../../../types/Projects"
 
-  import { activeProject, activeShow, categories, folders, projects, projectView, shows } from "../../stores"
+  import { activeProject, activeShow, categories, dragSelected, folders, projects, projectView, shows } from "../../stores"
+  import { dataToPos, groupToPos } from "../helpers/array"
   import { GetProjects } from "../helpers/get"
+  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
   import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
@@ -73,6 +75,25 @@
       }
     }
   }
+
+  let overIndex: null | number = null
+
+  function ondrop(e: any) {
+    // TODO: select multiple
+    let data: ShowRef = JSON.parse(e.dataTransfer.getData("text"))
+    console.log(data)
+    let newData: ShowRef[] = []
+    let shows = $projects[$activeProject!].shows
+    if ($dragSelected.length) {
+      newData = [...groupToPos([...shows], $dragSelected, overIndex || shows.length)]
+    } else if (data) {
+      newData = [...dataToPos([...shows], [data], overIndex || shows.length)]
+    }
+    // $dragged ...
+    history({ id: "projectList", oldData: [...shows], newData, location: { page: "shows" } })
+    overIndex = null
+    dragSelected.set([])
+  }
 </script>
 
 <svelte:window on:keydown={keyDown} />
@@ -107,15 +128,23 @@
       <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->
     </div>
   {:else if $activeProject !== null}
-    <div class="list">
+    <div class="list" on:drop={ondrop} on:dragover|preventDefault>
       <!-- {/* WIP: live on double click?? */} -->
-      {#each $projects[$activeProject].shows as show}
+      {#each $projects[$activeProject].shows as show, index}
         <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
         {#if !show.type}
           <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-          <ShowButton id={show.id} type={show.type} name={$shows[show.id]?.name} icon={$shows[show.id].category ? $categories[$shows[show.id].category || ""].icon : "unlabeled"} />
+          <ShowButton
+            id={show.id}
+            bind:overIndex
+            {index}
+            type={show.type}
+            name={$shows[show.id]?.name}
+            page="side"
+            icon={$shows[show.id].category ? $categories[$shows[show.id].category || ""].icon : "unlabeled"}
+          />
         {:else}
-          <ShowButton id={show.id} type={show.type} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
+          <ShowButton id={show.id} bind:overIndex {index} type={show.type} name={$shows[show.id]?.name + " [" + show.type + "]"} page="side" icon={show.type} />
         {/if}
         <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
       {/each}
@@ -147,5 +176,6 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    flex: 1;
   }
 </style>

@@ -33,6 +33,7 @@
       let data: string = e.dataTransfer.getData("text")
       // let i = index
       // if (side === "right") i++
+
       drop(data, selected, index, side)
       overIndex = null
       selected = []
@@ -49,21 +50,8 @@
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:list>
-  <div
-    class="slide context_slide"
-    class:active
-    class:contrast={selected.includes(index) || overIndex === index}
-    class:hovering={overIndex === index}
-    class:left={overIndex === index && side === "left"}
-    class:right={overIndex === index && side === "right"}
-    class:selected={selected.includes(index)}
-    style="background-color: {color};"
-    tabindex={0}
-    data-index={index}
-    on:click
-    on:mousedown
-  >
-    <Draggable id="slide" on:drop={ondrop} on:dragenter={dragenter}>
+  <div class="slide context_slide" class:active class:selected={selected.includes(index)} style="background-color: {color};" tabindex={0} data-index={index} on:click on:mousedown>
+    <Draggable id="slide" on:drop={ondrop} on:dragenter={dragenter} hover={overIndex === index} {side} direction={list ? "column" : "row"}>
       <!-- TODO: tab select on enter -->
       <div class="slideContent" style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px; {!slide.items.length ? 'background-color: transparent;' : ''}">
         <span style="zoom: {zoom};">
@@ -120,43 +108,10 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     outline-offset: 4px;
   }
 
-  /* .slide.selected {
-    outline: 2px solid red;
-    outline-offset: 2px;
-  } */
-
-  .slide.contrast {
+  .slide.selected {
+    /* outline: 2px solid red;
+    outline-offset: 2px; */
     filter: contrast(0.8);
-  }
-  .slide.hovering::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    margin: 0 3px;
-    pointer-events: none;
-    background-color: var(--secondary);
-  }
-  .slide.hovering.right::after {
-    right: -10px;
-  }
-  .slide.hovering.left::after {
-    left: -10px;
-  }
-  /* TODO: no line on selected slide hover */
-  .list .slide.hovering::after {
-    left: 0;
-    width: 100%;
-    height: 4px;
-    margin: 3px 0;
-  }
-  .list .slide.hovering.right::after {
-    top: -10px;
-  }
-  .list .slide.hovering.left::after {
-    top: unset;
-    bottom: -10px;
   }
 
   .slideContent {

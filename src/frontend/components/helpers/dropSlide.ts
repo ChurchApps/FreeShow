@@ -10,19 +10,18 @@ export function drop(data: string, selected: number[] = [], index: null | number
   let slides: SlideData[] = [] // new slides
   let newChildren: { [key: string]: SlideData[] } = {}
 
-  console.log(side)
-
   if (side === "right" && selected[0] !== index) {
     index++
   }
   let insertIndex: number = index
 
   if (get(dragged) === "slide") {
+    // logic:
     // main moved = move group
     // moved before main
     // moved after main = add after main + change children
     // child moved = move child
-    //
+    // -
     // moving multiple:
     // main & childs = create new group
     // only mains = move groups
@@ -30,17 +29,12 @@ export function drop(data: string, selected: number[] = [], index: null | number
 
     // check if first selected slide is a child
     let parent: string
-    // if (!layout[index - 1].childOf) isChild = true
-
-    console.log(selected[0], index)
 
     if (index === 0) {
       parent = layout[0].id
       if (layout[0].childOf) delete layout[0].childOf
-    } else if (!layout[selected[0]].childOf) parent = layout[selected[0]].id
+    } else if (selected[0] && !layout[selected[0]].childOf) parent = layout[selected[0]].id
     else parent = layout[index - 1].childOf || layout[index - 1].id
-
-    // console.log(index)
 
     // remove selected
     selected

@@ -91,7 +91,7 @@
   on:mousedown={mousedown}
   on:mousemove={mousemove}
   on:drop={(e) => {
-    if (e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
+    if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
   }}
   on:dragover|preventDefault
 >
