@@ -1,21 +1,24 @@
 import { get } from "svelte/store"
-import { shows, activeShow, dragged } from "./../../stores"
+import { shows, activeShow, drag, selected } from "./../../stores"
 import { GetLayout } from "./get"
-import type { SlideData, Slide } from "./../../../types/Show"
+import type { SlideData } from "./../../../types/Show"
 import { uid } from "uid"
 
-export function drop(data: string, selected: number[] = [], index: null | number = null, side: "left" | "right" = "left") {
+export function drop() {
   let layout: SlideData[] = GetLayout() // new layout
-  if (index === null) index = layout.length
+
+  let index: number = get(drag).index === null ? layout.length : get(drag).index!
+
+  let side: "left" | "right" = get(drag).side
+  let sel: number[] = get(selected).elems
+
   let slides: SlideData[] = [] // new slides
   let newChildren: { [key: string]: SlideData[] } = {}
 
-  if (side === "right" && selected[0] !== index) {
-    index++
-  }
+  if (side === "right" && sel[0] !== index) index++
   let insertIndex: number = index
 
-  if (get(dragged) === "slide") {
+  if (get(selected).id === "slide") {
     // logic:
     // main moved = move group
     // moved before main
@@ -33,11 +36,11 @@ export function drop(data: string, selected: number[] = [], index: null | number
     if (index === 0) {
       parent = layout[0].id
       if (layout[0].childOf) delete layout[0].childOf
-    } else if (selected[0] && !layout[selected[0]].childOf) parent = layout[selected[0]].id
+    } else if (sel[0] && !layout[sel[0]].childOf) parent = layout[sel[0]].id
     else parent = layout[index - 1].childOf || layout[index - 1].id
 
     // remove selected
-    selected
+    sel
       .sort((a, b) => a - b)
       .forEach((i) => {
         console.log(i, insertIndex)
@@ -110,10 +113,11 @@ export function drop(data: string, selected: number[] = [], index: null | number
       if (!newChildren[parent]) newChildren[parent] = []
       newChildren[parent].push(data)
     }
-  } else if (get(dragged) === "slideGroup") {
-    let group: Slide = get(shows)[get(activeShow)!.id].slides[data]
+  } else if (get(selected).id === "slide_group") {
+    // let group: Slide = get(shows)[get(activeShow)!.id].slides[data]
     // group.children.forEach((child: SlideData) => {});
-    slides = [{ id: data, color: group.color }]
+    // slides = [{ id: data, color: group.color }]
+    slides = [...get(selected).elems]
 
     // TODO: add children to group!
 

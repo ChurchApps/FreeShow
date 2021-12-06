@@ -5,12 +5,13 @@ import { undoHistory } from "../../stores"
 import { get } from "svelte/store"
 import type { Slide, Item } from "../../../types/Show"
 
+export type HistoryPages = "drawer" | "shows" | "edit"
 export interface History {
   id: string
   oldData: any
   newData: any
   location: {
-    page: string
+    page: HistoryPages
     show?: ShowRef
     layout?: string
     slide?: string
@@ -51,7 +52,7 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     // move
-    case "projectList":
+    case "project": // projecList
       projects.update((p) => {
         p[get(activeProject)!].shows = obj.newData
         return p
@@ -83,7 +84,13 @@ export function history(obj: History, undo: null | boolean = null) {
   } else {
     undoHistory.update((uh: History[]) => {
       // if id and location is equal push new data to previous stored
-      if (undo === null && uh[uh.length - 1]?.id === obj.id && JSON.stringify(Object.values(uh[uh.length - 1]?.location)) === JSON.stringify(Object.values(obj.location))) {
+      // not: project
+      if (
+        undo === null &&
+        uh[uh.length - 1]?.id === obj.id &&
+        JSON.stringify(Object.values(uh[uh.length - 1]?.location)) === JSON.stringify(Object.values(obj.location)) &&
+        obj.id !== "project"
+      ) {
         uh[uh.length - 1].newData = obj.newData
       } else uh.push(obj)
       return uh
@@ -91,6 +98,8 @@ export function history(obj: History, undo: null | boolean = null) {
   }
   console.log("UNDO: ", [...get(undoHistory)])
   console.log("REDO: ", [...get(redoHistory)])
+
+  // TODO: go to location
 }
 
 export const undo = () => {

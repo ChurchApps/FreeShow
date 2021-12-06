@@ -3,7 +3,7 @@
   import { shows, activeShow } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
   import Notes from "./tools/Notes.svelte"
-  import SlidesList from "./tools/SlidesList.svelte"
+  import SlideGroups from "./tools/SlideGroups.svelte"
 
   const tabs: TabsObj = {
     groups: { name: "tools.groups", icon: "groups" },
@@ -28,7 +28,7 @@
 
   <div class="content">
     {#if active === "groups"}
-      <SlidesList />
+      <SlideGroups />
     {:else if active === "notes"}
       <Notes bind:value={note} />
     {:else}

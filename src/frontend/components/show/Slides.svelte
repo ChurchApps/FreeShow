@@ -2,10 +2,11 @@
   // import {flip} from 'svelte/animate';
   import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, screen, slidesOptions, outSlide, dragged } from "../../stores"
-  import { drop } from "../helpers/dropSlide"
+  import { shows, activeShow, screen, slidesOptions, outSlide } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
+  import DropArea from "../system/DropArea.svelte"
+  import SelectElem from "../system/SelectElem.svelte"
   // import { GetLayout } from "../helpers/get"
 
   let viewWidth: number = window.innerWidth / 3
@@ -16,131 +17,60 @@
 
   // = width / main padding - slide padding - extra - columns*gaps/padding / columns / resolution
   $: zoom = (viewWidth - 20 - 0 - 0 - (columns - 1) * (10 + 0)) / columns / resolution.width
-
   $: id = $activeShow!.id
-
   $: currentShow = $shows[$activeShow!.id]
-
-  // $: layoutSlides = GetLayout($activeShow!.id)
   $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
-  // // $: ShowSlides = GetLayout(id)?.slides || []
-  // let layoutSlides: SlideData[] = []
-  // console.log(currentShow)
-
-  // $: {
-  //   layoutSlides = []
-  //   currentShow.layouts[currentShow.settings.activeLayout].slides.forEach((ls) => {
-  //     let slide = currentShow.slides[ls.id]
-  //     layoutSlides.push({ ...ls, color: slide.color })
-  //     if (slide.children) {
-  //       slide.children.forEach((sc) => {
-  //         layoutSlides.push({ ...sc, color: slide.color })
-  //       })
-  //       // layoutSlides = [...layoutSlides, ...slide.children]
-  //     }
-  //   })
-  // }
-
-  $: console.log(layoutSlides)
-  $: console.log(currentShow.settings.activeLayout)
-
-  // let groups: string[] = []
-  // $: {
-  //   groups = []
-  //   let prevLabel: null | string = null
-  //   layoutSlides.forEach((ls) => {
-  //     let slide = currentShow.slides[ls.id]
-  //     if (prevLabel !== null && slide.label === null) groups.push(prevLabel)
-  //     else groups.push(slide.label || "")
-  //     prevLabel = slide.label
-  //   })
-  // }
-
-  // $: ShowSlides = $shows[id].layouts[$shows[id].settings.activeLayout].slides
-
-  let overIndex: null | number
-  let selected: number[] = []
-
-  let mouseDown: boolean = false
-  function mousedown() {
-    mouseDown = true
-  }
-  function mousemove(e: any) {
-    if (mouseDown && e.target.closest(".slide") && !selected.includes(Number(e.target.closest(".slide")?.getAttribute("data-index")))) {
-      selected = [...selected, Number(e.target.closest(".slide")?.getAttribute("data-index"))]
-    }
-  }
 </script>
-
-<svelte:window
-  on:mousedown={(e) => {
-    if (!e.ctrlKey && !selected.includes(Number(e.target?.closest(".slide")?.getAttribute("data-index")))) selected = []
-  }}
-  on:mouseup={() => {
-    mouseDown = false
-  }}
-  on:dragover={() => {
-    mouseDown = false
-  }}
-/>
 
 <!-- TODO: tab enter not woring -->
 
-<div
-  class="scroll"
-  on:mousedown={mousedown}
-  on:mousemove={mousemove}
-  on:drop={(e) => {
+<div class="scroll">
+  <!-- on:drop={(e) => {
     if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
   }}
-  on:dragover|preventDefault
->
-  {#if $shows[id] === undefined}
-    <div class="center">Error! Could not find show!</div>
-  {:else}
-    <div class="grid" bind:offsetWidth={viewWidth}>
-      <!-- {#each Object.values($shows[id].slides) as slide, i} -->
-      {#if layoutSlides.length}
-        {#each layoutSlides as slide, i}
-          <Slide
-            slide={currentShow.slides[slide.id]}
-            index={i}
-            color={slide.color}
-            active={$outSlide?.index === i && $outSlide?.id === id}
-            list={!$slidesOptions.grid}
-            bind:overIndex
-            bind:selected
-            {zoom}
-            on:click={(e) => {
-              if (!e.ctrlKey) {
-                outSlide.set({ id, index: i })
-              }
-            }}
-            on:mousedown={(e) => {
-              if (!selected.includes(i)) {
-                if (e.ctrlKey) selected = [...selected, i]
-                else selected = [i]
-              }
-            }}
-          />
-        {/each}
-      {:else}
-        <div class="center">
-          No slides
-          <!-- Add slides button -->
-        </div>
-      {/if}
+  on:dragover|preventDefault -->
+  <DropArea id="slides">
+    {#if $shows[id] === undefined}
+      <div class="center">Error! Could not find show!</div>
+    {:else}
+      <div class="grid" bind:offsetWidth={viewWidth}>
+        <!-- {#each Object.values($shows[id].slides) as slide, i} -->
+        {#if layoutSlides.length}
+          {#each layoutSlides as slide, i}
+            <SelectElem id="slide" data={i}>
+              <Slide
+                slide={currentShow.slides[slide.id]}
+                index={i}
+                color={slide.color}
+                active={$outSlide?.index === i && $outSlide?.id === id}
+                list={!$slidesOptions.grid}
+                {zoom}
+                on:click={(e) => {
+                  if (!e.ctrlKey) {
+                    outSlide.set({ id, index: i })
+                  }
+                }}
+              />
+            </SelectElem>
+          {/each}
+        {:else}
+          <div class="center">
+            No slides
+            <!-- Add slides button -->
+          </div>
+        {/if}
 
-      <div style="position: fixed;">
-        <button on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, columns - 1) })}>-</button>
-        {columns}
-        <button on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, columns + 1) })}>+</button>
-        ---
-        <button on:click={() => slidesOptions.set({ ...$slidesOptions, grid: !$slidesOptions.grid })}>GRID</button>
+        <div style="position: fixed;">
+          <button on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, columns - 1) })}>-</button>
+          {columns}
+          <button on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, columns + 1) })}>+</button>
+          ---
+          <button on:click={() => slidesOptions.set({ ...$slidesOptions, grid: !$slidesOptions.grid })}>GRID</button>
+        </div>
+        <!-- TODO: snap to width! (Select columns instead of manual zoom size) -->
       </div>
-      <!-- TODO: snap to width! (Select columns instead of manual zoom size) -->
-    </div>
-  {/if}
+    {/if}
+  </DropArea>
 </div>
 
 <style>

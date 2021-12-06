@@ -45,8 +45,7 @@ export const GetLayout = (showID: null | ID = null): SlideData[] => {
 
 export const GetShow = (ref: ShowRef): Show => {
   let s: Show
-  if (ref.private) {
-  } else if (ref.type === "video") {
+  if (ref.type === "video") {
   } else {
     s = get(shows)[ref.id]
   }

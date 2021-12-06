@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
   import type { Slide } from "../../../types/Show"
-  import { activeShow, dragged, screen, shows, slidesOptions } from "../../stores"
-  import { drop } from "../helpers/dropSlide"
+  import { activeShow, screen, shows, slidesOptions } from "../../stores"
   import Draggable from "../system/Draggable.svelte"
   import Textbox from "./Textbox.svelte"
 
@@ -13,35 +12,7 @@
   export let active: boolean = false
   export let list: boolean = false
 
-  export let overIndex: null | number = null
-  export let selected: number[]
-
   let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
-
-  const dragenter = (e: any) => {
-    if (e.offsetX < e.target.offsetWidth / 2) side = "right"
-    else side = "left"
-
-    if ($dragged === "slide" || $dragged === "slideGroup") overIndex = index
-    // TODO: get media (files)
-    // https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
-  }
-
-  const ondrop = (e: any) => {
-    if ($dragged === "slide" || $dragged === "slideGroup") {
-      // e.dataTransfer.dropEffect = "move"
-      let data: string = e.dataTransfer.getData("text")
-      // let i = index
-      // if (side === "right") i++
-
-      drop(data, selected, index, side)
-      overIndex = null
-      selected = []
-    }
-  }
-
-  let side: "left" | "right" = "left"
-  // TODO: change based on current side onmousemove
 </script>
 
 <!-- TODO: disabled -->
@@ -50,8 +21,8 @@
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:list>
-  <div class="slide context_slide" class:active class:selected={selected.includes(index)} style="background-color: {color};" tabindex={0} data-index={index} on:click on:mousedown>
-    <Draggable id="slide" on:drop={ondrop} on:dragenter={dragenter} hover={overIndex === index} {side} direction={list ? "column" : "row"}>
+  <div class="slide context_slide" class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
+    <Draggable id="slide" {index} direction={list ? "column" : "row"}>
       <!-- TODO: tab select on enter -->
       <div class="slideContent" style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px; {!slide.items.length ? 'background-color: transparent;' : ''}">
         <span style="zoom: {zoom};">
@@ -106,12 +77,6 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     outline-offset: 4px; */
     outline: 3px solid var(--secondary);
     outline-offset: 4px;
-  }
-
-  .slide.selected {
-    /* outline: 2px solid red;
-    outline-offset: 2px; */
-    filter: contrast(0.8);
   }
 
   .slideContent {

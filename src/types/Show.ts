@@ -6,6 +6,7 @@ export interface Shows {
 
 export interface Show {
   name: string
+  private?: boolean
   category: null | ID
   settings: {
     activeLayout: ID
@@ -132,4 +133,4 @@ export type ID = string
 export type Style = string
 export type TransitionType = "none" | "fade"
 
-export type ShowType = null | "image" | "video" | "audio" | "private" // TODO: types
+export type ShowType = null | "image" | "video" | "audio" // TODO: types

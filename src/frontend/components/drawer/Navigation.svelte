@@ -7,6 +7,7 @@
   import Button from "../inputs/Button.svelte"
   import FilePicker from "../inputs/FilePicker.svelte"
   import FolderPicker from "../inputs/FolderPicker.svelte"
+  import SelectElem from "../system/SelectElem.svelte"
   import { getBibleVersions } from "./bible/getBible"
 
   export let id: string
@@ -66,22 +67,26 @@
 <div class="main">
   {#key buttons}
     {#each Object.entries(buttons) as category}
-      <!-- TODO: titles -->
-      <Button
-        active={category[0] === $drawerTabsData[id].activeSubTab}
-        on:click={() => setTab(category[0])}
-        bold={false}
-        title={category[1].description ? category[1].description : category[1].url ? category[1].url : ""}
-      >
-        <Icon id={category[1].icon || "unknown"} />
-        <div id={category[0]}>
-          {#if category[1].default}
-            <T id={category[1].name} />
-          {:else}
-            {category[1].name}
-          {/if}
-        </div>
-      </Button>
+      <SelectElem id="navigation" data={category[0]}>
+        <!-- TODO: titles -->
+        <Button
+          active={category[0] === $drawerTabsData[id].activeSubTab}
+          on:click={(e) => {
+            if (!e.ctrlKey) setTab(category[0])
+          }}
+          bold={false}
+          title={category[1].description ? category[1].description : category[1].url ? category[1].url : ""}
+        >
+          <Icon id={category[1].icon || "unknown"} />
+          <div id={category[0]}>
+            {#if category[1].default}
+              <T id={category[1].name} />
+            {:else}
+              {category[1].name}
+            {/if}
+          </div>
+        </Button>
+      </SelectElem>
     {/each}
   {/key}
   {#if id === "backgrounds"}
@@ -96,6 +101,10 @@
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
+  }
+
+  .main :global(button) {
+    width: 100%;
   }
 
   /* button {

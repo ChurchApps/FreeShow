@@ -11,3 +11,48 @@ export function groupToPos(array: any[], group: number[], pos: number): any[] {
 export function dataToPos(array: any[], data: any[], pos: number): any[] {
   return [...array.slice(0, pos), ...data, ...array.slice(pos, array.length)]
 }
+
+// remove the given value from array
+export function removeData(array: any[], data: any): any[] {
+  let temp: any[] = []
+  array.forEach((a) => {
+    if (a !== data) temp.push(a)
+  })
+  return temp
+}
+
+// check if array has any data
+export function arrayHasData(array: any[], data: any): boolean {
+  let hasData: boolean = false
+  array.forEach((a) => {
+    if (JSON.stringify(a) === JSON.stringify(data)) hasData = true
+  })
+  return hasData
+}
+
+// OBJETS
+
+// sort object alphabeticly
+export function sortObject(object: {}[], key: string, casesensitive: boolean = false): {}[] {
+  return object.sort((a: any, b: any) => {
+    let textA: string = a[key]
+    let textB: string = b[key]
+    if (!casesensitive) {
+      textA = textA.toUpperCase()
+      textB = textB.toUpperCase()
+    }
+    return textA < textB ? -1 : textA > textB ? 1 : 0
+  })
+}
+
+// move keys to IDs in object
+export function keysToID(object: { [key: string]: {} }): any {
+  let newObjects: {}[] = []
+  Object.entries(object).forEach((obj) => newObjects.push({ id: obj[0], ...obj[1] }))
+  return newObjects
+}
+
+// remove values in array object where key is value
+export function removeValues(object: {}[], key: string, value: any): {}[] {
+  return object.filter((o: any) => o[key] !== value)
+}

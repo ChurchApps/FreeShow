@@ -5,6 +5,7 @@
   import HiddenInput from "./HiddenInput.svelte"
   import type { ID } from "../../../types/Show"
   import type { Tree } from "../../../types/Projects"
+  import SelectElem from "../system/SelectElem.svelte"
 
   export let name: string
   export let tree: Tree[]
@@ -48,11 +49,13 @@
       {#each tree as file}
         {#if file.parent === id}
           <li>
-            {#if file.type === "folder"}
-              <svelte:self {tree} id={file.id} name={file.name} />
-            {:else if file.id}
-              <ProjectButton name={file.name} id={file.id} />
-            {/if}
+            <SelectElem id="folder" data={file.id}>
+              {#if file.type === "folder"}
+                <svelte:self {tree} id={file.id} name={file.name} />
+              {:else if file.id}
+                <ProjectButton name={file.name} id={file.id} />
+              {/if}
+            </SelectElem>
           </li>
         {/if}
       {/each}

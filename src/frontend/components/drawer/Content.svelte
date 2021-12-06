@@ -12,6 +12,9 @@
   import Windows from "./live/Windows.svelte"
   import Overlays from "./Overlays.svelte"
   import Scripture from "./bible/Scripture.svelte"
+  import Draggable from "../system/Draggable.svelte"
+  import SelectElem from "../system/SelectElem.svelte"
+  import { keysToID, sortObject, removeValues } from "../helpers/array"
 
   export let id: string
   export let bible: any
@@ -83,6 +86,12 @@
     files[message.id] = message.data || []
   })
   $: console.log(files)
+
+  // sort shows in alphabeticly order
+  let showsSorted: any
+  shows.subscribe((s) => {
+    showsSorted = removeValues(sortObject(keysToID(s), "name"), "private", true)
+  })
 </script>
 
 <!-- TODO: sort by percentage -->
@@ -92,12 +101,16 @@
   {#if id === "shows"}
     {#if Object.entries($shows).length}
       <div class="column">
-        {#each Object.entries($shows) as show}
-          <!-- {#key searchValue} -->
-          {#if (active === "all" || active === show[1].category || (active === "unlabeled" && show[1].category === null)) && (searchValue.length <= 1 || search(show[1]))}
-            <ShowButton id={show[0]} name={show[1].name} match={[search(show[1]), searchValue]} />
-          {/if}
-          <!-- {/key} -->
+        {#each showsSorted as show, index}
+          <Draggable id="show_drawer" {index}>
+            <SelectElem id="show_drawer" data={{ id: show.id, index }}>
+              <!-- {#key searchValue} -->
+              {#if (active === "all" || active === show.category || (active === "unlabeled" && show.category === null)) && (searchValue.length <= 1 || search(show))}
+                <ShowButton id={show.id} name={show.name} match={[search(show), searchValue]} />
+              {/if}
+              <!-- {/key} -->
+            </SelectElem>
+          </Draggable>
         {/each}
         <!-- TODO: not updating values on activeSubTab change -->
         {#if searchValue.length > 1 && totalMatch === 0}

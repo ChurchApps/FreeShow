@@ -16,8 +16,6 @@
       <!--  -->
     {:else if $activeShow.type === "audio"}
       <!--  -->
-    {:else if $activeShow.type === "private"}
-      Private
     {:else}
       <Slides />
       <Layouts />

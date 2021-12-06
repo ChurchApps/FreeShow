@@ -1,5 +1,5 @@
 import type { History } from "./components/helpers/history"
-import type { NumberObject } from "../types/Main"
+import type { NumberObject, Selected, Drag } from "../types/Main"
 import type { TopViews } from "./../types/Views"
 import type { Category } from "./../types/Tabs"
 import { Writable, writable } from "svelte/store"
@@ -27,8 +27,9 @@ export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, item: nu
 export const activePage: Writable<TopViews> = writable("show")
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
-export const dragged: Writable<null | string> = writable(null)
-export const dragSelected: Writable<number[]> = writable([])
+// export const dragged: Writable<"slide" | "slideGroup" | "show" | "project" | "folder" | null> = writable(null)
+export const drag: Writable<Drag> = writable({ id: null, index: null, side: "left" })
+export const selected: Writable<Selected> = writable({ id: null, elems: [] })
 
 // project
 export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
@@ -214,6 +215,91 @@ export const shows: Writable<Shows> = writable({
       },
     },
   },
+
+  gere: {
+    name: "Test",
+    private: true,
+    category: null,
+    settings: {
+      activeLayout: "fesfsef",
+      template: null,
+    },
+    timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
+    // stats: {timesUsed: 100}
+    meta: { title: "Syng det ut", artist: "test", license: "CC" },
+    slides: {
+      feowo: {
+        label: "Verse 1",
+        color: "orange",
+        style: "",
+        notes: "",
+        items: [
+          {
+            style: "top: 0px; left: 200px; height: 220px; width: 900px; text-align: center;",
+            text: [
+              { value: "Privat! ", style: "font-family: Tahoma;" },
+              { value: "kan", style: "color: red;" },
+            ],
+          },
+          {
+            style: "top: 0px; left: 10px; height: 80px; width: 300px;",
+            text: [{ value: "Impuls", style: "" }],
+          },
+        ],
+      },
+      fesfo: {
+        label: "Chorus",
+        color: "red",
+        style: "",
+        children: [{ id: "fesfofes" }],
+        notes: "",
+        items: [
+          {
+            style: "",
+            text: [{ value: "Andre linje", tag: "p", style: "color: red; text-align: center;" }],
+          },
+        ],
+      },
+      fesfofes: {
+        label: null,
+        color: null,
+        style: "",
+        notes: "",
+        items: [
+          {
+            style: "",
+            text: [{ value: "Andre linje", tag: "p", style: "color: orange; text-align: center;" }],
+          },
+        ],
+      },
+      blank: {
+        label: "Blank",
+        color: null,
+        style: "",
+        notes: "",
+        items: [],
+      },
+    },
+    layouts: {
+      fesfsef: {
+        name: "",
+        notes: "test",
+        slides: [
+          { id: "feowo" },
+          { id: "fesfo" },
+          { id: "feowo" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "blank" },
+          { id: "fesfo" },
+          { id: "blank" },
+        ],
+      },
+    },
+  },
 })
 
 export const projects: Writable<Projects> = writable({
@@ -227,7 +313,7 @@ export const projects: Writable<Projects> = writable({
     name: "Meeting",
     created: new Date("2021-08-06"),
     parent: "feriwp",
-    shows: [{ id: "ertfgggf" }, { id: "nåde" }, { type: "private", access: "Private", id: "gere" }],
+    shows: [{ id: "ertfgggf" }, { id: "nåde" }, { id: "gere" }], // , access: "Private"
   },
 })
 // export const projects = writable([
