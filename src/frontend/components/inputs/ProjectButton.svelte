@@ -20,7 +20,7 @@
   on:click={() => activeProject.set(id)}
   on:dblclick={() => {
     projectView.set(false)
-    activeShow.set({ id: $projects[id].shows[0].id, type: $projects[id].shows[0].type })
+    if ($projects[id].shows.length) activeShow.set($projects[id].shows[0])
   }}
   class:active
 >
@@ -32,10 +32,10 @@
 <style>
   button {
     width: 100%;
-    padding: 0.3em;
+    padding: 0 0.3em;
     background-color: inherit;
     color: inherit;
-    font-size: inherit;
+    font-size: 0.9em;
     border: 2px solid var(--secondary);
 
     display: flex;

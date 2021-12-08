@@ -1,6 +1,7 @@
+import { uid } from "uid"
 import { GetShow } from "./get"
-import { shows, activeProject, projects, redoHistory, mediaFolders } from "./../../stores"
-import type { ShowRef } from "./../../../types/Projects"
+import { shows, activeProject, projects, redoHistory, mediaFolders, projectView, folders, openedFolders } from "./../../stores"
+import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory } from "../../stores"
 import { get } from "svelte/store"
 import type { Slide, Item } from "../../../types/Show"
@@ -8,9 +9,9 @@ import type { Slide, Item } from "../../../types/Show"
 export type HistoryPages = "drawer" | "shows" | "edit"
 export interface History {
   id: string
-  oldData: any
-  newData: any
-  location: {
+  oldData?: any
+  newData?: any
+  location?: {
     page: HistoryPages
     show?: ShowRef
     layout?: string
@@ -25,6 +26,11 @@ export function history(obj: History, undo: null | boolean = null) {
   //   obj.oldData = tempObj.newData
   // }
 
+  // let page: HistoryPages = obj.location?.page || "shows"
+  if (!obj.location) obj.location = { page: "shows" }
+  if (!obj.oldData) obj.oldData = null
+  if (!obj.newData) obj.newData = null
+
   // console.log(obj)
 
   switch (obj.id) {
@@ -33,7 +39,7 @@ export function history(obj: History, undo: null | boolean = null) {
     case "deleteItem":
     case "itemStyle":
       shows.update((s) => {
-        let items: Item[] = GetShow(obj.location.show!).slides[obj.location.slide!].items
+        let items: Item[] = GetShow(obj.location?.show!).slides[obj.location?.slide!].items
         obj.newData.forEach((item: Item, i: number) => {
           items[i] = item
         })
@@ -46,7 +52,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "slideStyle":
       shows.update((s) => {
-        let slide: Slide = GetShow(obj.location.show!).slides[obj.location.slide!]
+        let slide: Slide = GetShow(obj.location?.show!).slides[obj.location?.slide!]
         slide.style = obj.newData
         return s
       })
@@ -68,6 +74,66 @@ export function history(obj: History, undo: null | boolean = null) {
         return mf
       })
       break
+    case "newProject":
+      if (typeof obj.newData === "string") {
+        projects.update((p) => {
+          delete p[obj.newData]
+          return p
+        })
+        if (get(activeProject) === obj.newData) {
+          activeProject.set(null)
+          projectView.set(true)
+        }
+      } else {
+        let project: Project = obj.newData
+        let id: string = obj.oldData
+        if (obj.newData === null) {
+          project = { name: "unnamed", created: new Date(), parent: get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
+          id = uid()
+          obj.newData = project
+          obj.oldData = id
+          // TODO: edit name...
+        }
+        projects.update((p) => {
+          p[id] = project
+          return p
+        })
+        activeProject.set(id)
+      }
+      break
+    case "newFolder":
+      if (typeof obj.newData === "string") {
+        folders.update((p) => {
+          delete p[obj.newData]
+          return p
+        })
+        if (get(openedFolders).includes(obj.newData)) {
+          openedFolders.update((of) => {
+            return of.filter((id) => id !== obj.newData)
+          })
+        }
+      } else {
+        let folder: Folder = obj.newData
+        let id: string = obj.oldData
+        if (obj.newData === null) {
+          folder = { name: "unnamed", parent: id || get(folders)[get(projects)[get(activeProject)!]?.parent]?.parent || "/" }
+          id = uid()
+          obj.newData = folder
+          obj.oldData = id
+          // TODO: edit name...
+        }
+        openedFolders.update((f) => {
+          if (!f.includes(folder.parent)) f.push(folder.parent)
+          f.push(id)
+          console.log(f)
+          return f
+        })
+        folders.update((p) => {
+          p[id] = folder
+          return p
+        })
+      }
+      break
 
     default:
       console.log(obj)
@@ -84,12 +150,14 @@ export function history(obj: History, undo: null | boolean = null) {
   } else {
     undoHistory.update((uh: History[]) => {
       // if id and location is equal push new data to previous stored
-      // not: project
+      // not: project | newProject | newFolder
       if (
         undo === null &&
         uh[uh.length - 1]?.id === obj.id &&
-        JSON.stringify(Object.values(uh[uh.length - 1]?.location)) === JSON.stringify(Object.values(obj.location)) &&
-        obj.id !== "project"
+        JSON.stringify(Object.values(uh[uh.length - 1]?.location!)) === JSON.stringify(Object.values(obj.location!)) &&
+        obj.id !== "project" &&
+        obj.id !== "newProject" &&
+        obj.id !== "newFolder"
       ) {
         uh[uh.length - 1].newData = obj.newData
       } else uh.push(obj)

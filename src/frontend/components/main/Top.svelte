@@ -1,9 +1,8 @@
 <script type="ts">
   import { OUTPUT } from "../../../types/Channels"
 
-  import { outputDisplay } from "../../stores"
+  import { dictionary, outputDisplay } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
-  import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
   import TopButton from "../inputs/TopButton.svelte"
@@ -12,6 +11,9 @@
     outputDisplay.set(!$outputDisplay)
     window.api.send(OUTPUT, { channel: "DISPLAY", data: $outputDisplay })
   }
+
+  $: titleShow = $dictionary.menu?._title_display
+  $: titleShowStop = $dictionary.menu?._title_display_stop
 </script>
 
 <!-- <button on:click={() => (settings = !settings)}>
@@ -31,9 +33,13 @@
   <span>
     <TopButton id="calendar" />
     <TopButton id="settings" />
-    <Button title="" active={$outputDisplay} on:click={display} class="display">
-      <Icon id="display" size={1.8} />
-      <span><T id={"menu.display"} /></span>
+    <Button title={$outputDisplay ? titleShowStop : titleShow} active={$outputDisplay} on:click={display} class="display">
+      {#if $outputDisplay}
+        <Icon id="cancelDisplay" size={1.8} white />
+      {:else}
+        <Icon id="display" size={1.8} white />
+      {/if}
+      <!-- <span><T id={"menu.display"} /></span> -->
     </Button>
     <!-- Output -->
   </span>

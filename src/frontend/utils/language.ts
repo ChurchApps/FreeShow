@@ -1,4 +1,5 @@
-import type { Dictionary, LanguageKey } from "../../types/Settings"
+import { get } from "svelte/store"
+import type { LanguageKey } from "../../types/Settings"
 import { derived } from "svelte/store"
 import { dictionary, language } from "../stores"
 // import { dictionary, locale, _} from 'svelte-i18n';
@@ -39,10 +40,10 @@ function setLanguage(locale: null | LanguageKey = null) {
     })
 }
 
-let d: Dictionary = {}
-// let lang = 'en';
-dictionary.subscribe((dictionary) => (d = dictionary))
-// language.subscribe(language => lang = language);
+// let d: Dictionary = {}
+// // let lang = 'en';
+// dictionary.subscribe((dictionary) => (d = dictionary))
+// // language.subscribe(language => lang = language);
 
 // https://medium.com/i18n-and-l10n-resources-for-developers/a-step-by-step-guide-to-svelte-localization-with-svelte-i18n-v3-2c3ff0d645b8
 // https://github.com/kaisermann/svelte-i18n/blob/70725828bd3aa2ba77fe37dccb2890c57b27f6e4/src/cli/includes/deepSet.ts#L5
@@ -53,6 +54,7 @@ dictionary.subscribe((dictionary) => (d = dictionary))
 // svelte reactive functions...
 const translate = (id: string, { data = {}, parts = false } = {}) => {
   console.log(data)
+  let d = get(dictionary)
 
   let string
   if (parts) {
@@ -70,6 +72,7 @@ const translate = (id: string, { data = {}, parts = false } = {}) => {
     } else string = id
   } else {
     let key = id.split(".")
+
     string = d[key[0]]?.[key[1]]
     // let category = id.slice(0, id.indexOf('.'));
     // let key = id.slice(id.indexOf('.') + 1, id.length);

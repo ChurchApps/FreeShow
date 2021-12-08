@@ -5,13 +5,13 @@
   let screens: any[] = []
   window.api.send(GET_SCREENS)
   window.api.receive(GET_SCREENS, (data: any) => {
-    screens = data[0]
+    screens = data
   })
 
   let activeScreen: null | string = null
   $: console.log(activeScreen)
 
-  $: console.log(...screens)
+  $: console.log(screens)
 </script>
 
 <!-- {screens} -->

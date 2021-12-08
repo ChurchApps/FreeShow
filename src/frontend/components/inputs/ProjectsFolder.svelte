@@ -1,18 +1,22 @@
 <script lang="ts">
   import Icon from "../helpers/Icon.svelte"
   import ProjectButton from "./ProjectButton.svelte"
-  import { openedFolders } from "../../stores"
+  import { dictionary, openedFolders } from "../../stores"
   import HiddenInput from "./HiddenInput.svelte"
   import type { ID } from "../../../types/Show"
   import type { Tree } from "../../../types/Projects"
   import SelectElem from "../system/SelectElem.svelte"
+  import { history } from "../helpers/history"
 
   export let name: string
   export let tree: Tree[]
   export let id: ID
-  export let opened = $openedFolders.includes(id) ? true : false
+  export let opened = false
+  $: {
+    if (id !== "/") opened = $openedFolders.includes(id)
+  }
   const toggle = (e: any) => {
-    if (!e.target.classList.contains("name")) {
+    if (!e.ctrlKey && !e.target.classList.contains("name") && !e.target.classList.contains("add")) {
       // console.log(1);
       // console.log($openedFolders.splice($openedFolders.indexOf(id), 1));
       console.log(id, opened)
@@ -31,37 +35,35 @@
 
 <div class="surround">
   {#if id !== "/"}
-    <span {id} class:opened class="folder" on:click={toggle}>
+    <button {id} class:opened class="folder" on:click={toggle}>
       <span>
         {#if opened}
-          <Icon id="folder_open" />
+          <Icon id="folderOpen" />
         {:else}
           <Icon id="folder" />
         {/if}
         <HiddenInput value={name} />
       </span>
-      <button class="add">+</button>
-    </span>
+      <button class="add" on:click={() => history({ id: "newFolder", oldData: id })} title={$dictionary.new?._folder}>+</button>
+    </button>
   {/if}
 
   {#if opened}
     <ul>
-      {#each tree as file}
-        {#if file.parent === id}
+      {#each tree as project}
+        {#if project.parent === id}
           <li>
-            <SelectElem id="folder" data={file.id}>
-              {#if file.type === "folder"}
-                <svelte:self {tree} id={file.id} name={file.name} />
-              {:else if file.id}
-                <ProjectButton name={file.name} id={file.id} />
+            <SelectElem id="folder" data={project.id}>
+              {#if project.type === "folder"}
+                <svelte:self {tree} id={project.id} name={project.name} />
+              {:else if project.id}
+                <ProjectButton name={project.name} id={project.id} />
               {/if}
             </SelectElem>
           </li>
         {/if}
       {/each}
     </ul>
-
-    <!-- <div class="addShow">+</div> -->
   {/if}
 </div>
 
@@ -72,9 +74,16 @@
 
   .folder {
     display: flex;
+
+    width: 100%;
+    border: none;
+    color: inherit;
+    background-color: inherit;
+
     align-items: center;
     background-color: rgb(255 255 255 / 0.03);
     /* pointer-events: none; */
+    font-size: 0.9em;
     /* cursor: pointer; */
     font-weight: bold;
 
@@ -90,7 +99,7 @@
   }
 
   .folder span {
-    padding: 0.3em;
+    /* padding: 0.3em; */
     display: flex;
     align-items: center;
     width: 100%;
@@ -106,18 +115,15 @@
   }
 
   .add {
-    /* , .addShow */
-    justify-self: end;
+    /* justify-self: end; */
     background-color: inherit;
     border: none;
     /* height: 100%; */
-    font-size: inherit;
-    padding: 0.6em 5px;
-    color: transparent;
+    /* font-size: inherit; */
+    padding: 0.2em 3px;
+    /* color: transparent; */
+    color: rgb(255 255 255 / 0.1);
+    font-size: 1.3em;
     cursor: pointer;
   }
-  /* .addShow {
-    color: inherit;
-    text-align: center;
-  } */
 </style>

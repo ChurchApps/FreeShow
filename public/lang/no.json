@@ -2,6 +2,8 @@
   "menu": {
     "show": "Presenter",
     "_title_show": "Gå til visning",
+    "_title_display": "Presenter",
+    "_title_display_stop": "Stopp presentatsjon",
     "edit": "Rediger",
     "stage": "Scene",
     "draw": "Tegne",
@@ -44,6 +46,13 @@
     "song": "Sang",
     "info": "Info",
     "presentation": "Presentasjon"
+  },
+  "new": {
+    "show": "Nytt show",
+    "project": "Nytt prosjekt",
+    "category": "Ny kategori",
+    "_private": "Nytt privat show",
+    "_folder": "Ny mappe"
   },
   "tools": {
     "notes": "Notater",

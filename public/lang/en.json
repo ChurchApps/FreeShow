@@ -3,10 +3,17 @@
     "show": "Show",
     "_title_show": "Go to show view",
     "edit": "Edit",
+    "_title_edit": "Go to edit view",
     "stage": "Stage",
+    "_title_stage": "Go to stage view",
     "draw": "Draw",
+    "_title_draw": "Go to draw view",
     "calendar": "Calendar",
-    "settings": "Settings"
+    "_title_calendar": "Go to calendar",
+    "settings": "Settings",
+    "_title_settings": "Go to settings",
+    "_title_display": "Present",
+    "_title_display_stop": "Stop presentation"
   },
   "themes": {
     "dark": "Dark",
@@ -44,6 +51,13 @@
     "song": "Song",
     "info": "Info",
     "presentation": "Presentation"
+  },
+  "new": {
+    "show": "New show",
+    "project": "New project",
+    "category": "New category",
+    "_private": "New private show",
+    "_folder": "New folder"
   },
   "tools": {
     "notes": "Notes",

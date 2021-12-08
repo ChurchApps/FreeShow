@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Category } from "../../../types/Tabs"
 
-  import { categories, drawerTabsData, mediaFolders, overlayCategories } from "../../stores"
+  import { categories, dictionary, drawerTabsData, mediaFolders, overlayCategories } from "../../stores"
+  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
@@ -65,38 +66,50 @@
 </script>
 
 <div class="main">
-  {#key buttons}
-    {#each Object.entries(buttons) as category}
-      <SelectElem id="navigation" data={category[0]}>
-        <!-- TODO: titles -->
-        <Button
-          active={category[0] === $drawerTabsData[id].activeSubTab}
-          on:click={(e) => {
-            if (!e.ctrlKey) setTab(category[0])
-          }}
-          bold={false}
-          title={category[1].description ? category[1].description : category[1].url ? category[1].url : ""}
-        >
-          <Icon id={category[1].icon || "unknown"} />
-          <div id={category[0]}>
-            {#if category[1].default}
-              <T id={category[1].name} />
-            {:else}
-              {category[1].name}
-            {/if}
-          </div>
-        </Button>
-      </SelectElem>
-    {/each}
-  {/key}
-  {#if id === "backgrounds"}
+  <div class="categories">
+    {#key buttons}
+      {#each Object.entries(buttons) as category}
+        <SelectElem id="navigation" data={category[0]}>
+          <!-- TODO: titles -->
+          <Button
+            active={category[0] === $drawerTabsData[id].activeSubTab}
+            on:click={(e) => {
+              if (!e.ctrlKey) setTab(category[0])
+            }}
+            bold={false}
+            title={category[1].description ? category[1].description : category[1].url ? category[1].url : ""}
+          >
+            <Icon id={category[1].icon || "unknown"} />
+            <div id={category[0]}>
+              {#if category[1].default}
+                <T id={category[1].name} />
+              {:else}
+                {category[1].name}
+              {/if}
+            </div>
+          </Button>
+        </SelectElem>
+      {/each}
+    {/key}
+  </div>
+  {#if id === "shows"}
+    <div class="tabs">
+      <Button on:click={() => history({ id: "newShowsCategory" })} center title={$dictionary.new?.category}>
+        <Icon id="unlabeled" style="padding-right: 10px;" />
+        <span style="color: var(--secondary);">
+          <T id="new.category" />
+        </span>
+      </Button>
+    </div>
+  {:else if id === "backgrounds"}
     <FilePicker />
     <FolderPicker />
   {/if}
 </div>
 
 <style>
-  .main {
+  .main,
+  .categories {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -105,6 +118,11 @@
 
   .main :global(button) {
     width: 100%;
+  }
+
+  .tabs {
+    display: flex;
+    background-color: var(--primary-darker);
   }
 
   /* button {

@@ -1,11 +1,13 @@
 <script lang="ts">
   import type { Tree } from "../../../types/Projects"
-  import { activeProject, activeShow, categories, folders, projects, projectView, shows } from "../../stores"
+  import { activeProject, activeShow, categories, dictionary, folders, projects, projectView, shows } from "../../stores"
   import { GetProjects } from "../helpers/get"
+  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
   import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
+  import Center from "../system/Center.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
 
@@ -24,17 +26,20 @@
   // });
 
   let tree: Tree[] = [] // TODO: Folder...
-  Object.entries($folders).forEach((folder) => {
-    folder[1].id = folder[0]
-    folder[1].type = "folder"
-    tree.push(folder[1])
-  })
-  Object.entries($projects).forEach((project) => {
-    let p = { ...project[1] }
-    p.id = project[0]
-    p.shows = []
-    tree.push(p)
-  })
+  $: {
+    tree = []
+    Object.entries($folders).forEach((folder) => {
+      folder[1].id = folder[0]
+      folder[1].type = "folder"
+      tree.push(folder[1])
+    })
+    Object.entries($projects).forEach((project) => {
+      let p = { ...project[1] }
+      p.id = project[0]
+      p.shows = []
+      tree.push(p)
+    })
+  }
 
   function keyDown(e: KeyboardEvent) {
     if (!e.target?.closest(".edit") && $activeProject !== null) {
@@ -82,51 +87,80 @@
   <span class="tabs">
     <!-- TODO: set different project system folders.... -->
     <!-- TODO: right click change... -->
-    <Button on:click={() => projectView.set(true)} active={$projectView} center>
+    <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center title={"Projects"}>
       <Icon id="home" />
     </Button>
     <!-- TODO: right click go to recent -->
-    <Button on:click={() => projectView.set(false)} active={!$projectView} center disabled={$activeProject === null} title={$activeProject ? $projects[$activeProject].name : null}>
-      <Icon id="file" />
+    <Button
+      style="flex: 5;"
+      on:click={() => projectView.set(false)}
+      active={!$projectView}
+      center
+      disabled={$activeProject === null}
+      title={$activeProject ? "Project: " + $projects[$activeProject].name : null}
+    >
+      <Icon id="project" style="padding-right: 10px;" />
       <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject].name : ""}</p>
     </Button>
     <!-- <button onClick={() => setProject(true)} style={{width: '50%', backgroundColor: (project ? 'transparent' : ''), color: (project ? 'var(--secondary)' : '')}}>Projects</button>
     <button onClick={() => setProject(false)} style={{width: '50%', backgroundColor: (project ? '' : 'transparent'), color: (project ? '' : 'var(--secondary)')}}>Timeline</button> -->
   </span>
-  {#if $projectView && $activeProject !== null}
-    <DropArea id="projects">
-      <div class="list">
+  {#if $projectView}
+    <div class="list">
+      <DropArea id="projects">
         <!-- All Projects: -->
 
         <ProjectsFolder id="/" name="All Projects" {tree} opened />
 
         <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->
-      </div>
-    </DropArea>
+      </DropArea>
+    </div>
+    <div class="tabs">
+      <Button on:click={() => history({ id: "newProject" })} center title={$dictionary.new?.project}>
+        <Icon id="project" />
+      </Button>
+      <Button on:click={() => history({ id: "newFolder" })} center title={$dictionary.new?._folder}>
+        <Icon id="addFolder" />
+      </Button>
+    </div>
   {:else if $activeProject !== null}
-    <DropArea id="project">
-      <div class="list">
+    <div class="list">
+      <DropArea id="project">
         <!-- {/* WIP: live on double click?? */} -->
-        {#each $projects[$activeProject].shows as show, index}
-          <SelectElem id="show" data={index}>
-            <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
-            {#if !show.type}
-              <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-              <ShowButton
-                id={show.id}
-                {index}
-                type={show.type}
-                name={$shows[show.id]?.name}
-                icon={$shows[show.id]?.private ? "private" : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "unlabeled"}
-              />
-            {:else}
-              <ShowButton id={show.id} {index} type={show.type} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
-            {/if}
-            <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
-          </SelectElem>
-        {/each}
-      </div>
-    </DropArea>
+        {#if $projects[$activeProject].shows.length}
+          {#each $projects[$activeProject].shows as show, index}
+            <SelectElem id="show" data={index}>
+              <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
+              {#if !show.type}
+                <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
+                <ShowButton
+                  id={show.id}
+                  {index}
+                  type={show.type}
+                  name={$shows[show.id]?.name}
+                  icon={$shows[show.id]?.private ? "private" : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "unlabeled"}
+                />
+              {:else}
+                <ShowButton id={show.id} {index} type={show.type} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
+              {/if}
+              <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
+            </SelectElem>
+          {/each}
+        {:else}
+          <Center faded>[[[No shows]]]</Center>
+        {/if}
+      </DropArea>
+    </div>
+    <div class="tabs">
+      <Button on:click={() => console.log("new show")} center title={$dictionary.new?.show}>
+        <Icon id="showIcon" />
+      </Button>
+      <Button on:click={() => console.log("new private show")} center title={$dictionary.new?._private}>
+        <Icon id="private" />
+      </Button>
+    </div>
+  {:else}
+    <Center faded>[[[Select a project]]]</Center>
   {/if}
 </div>
 

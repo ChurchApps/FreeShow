@@ -1,5 +1,6 @@
 <script lang="ts">
   import { activeShow, shows } from "../../../stores"
+  import Center from "../../system/Center.svelte"
   import Clock from "../../system/Clock.svelte"
   import Date from "../../system/Date.svelte"
   import ScriptureInfo from "./ScriptureInfo.svelte"
@@ -23,10 +24,10 @@
     {:else if id === "scripture"}
       <ScriptureInfo {bible} />
     {:else}
-      <div class="center">
+      <Center>
         <Clock />
         <Date />
-      </div>
+      </Center>
     {/if}
   </div>
 </div>
@@ -44,13 +45,5 @@
     flex-direction: column;
     flex: 1;
     padding: 10px;
-  }
-
-  .center {
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    flex: 1;
-    justify-content: center;
   }
 </style>

@@ -3,7 +3,7 @@
 
   import type { Show } from "../../../types/Show"
 
-  import { drawerTabsData, mediaFolders, shows } from "../../stores"
+  import { dictionary, drawerTabsData, mediaFolders, shows } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
   import Media from "./Media.svelte"
@@ -15,6 +15,10 @@
   import Draggable from "../system/Draggable.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import { keysToID, sortObject, removeValues } from "../helpers/array"
+  import Center from "../system/Center.svelte"
+  import { history } from "../helpers/history"
+  import Button from "../inputs/Button.svelte"
+  import T from "../helpers/T.svelte"
 
   export let id: string
   export let bible: any
@@ -92,20 +96,26 @@
   shows.subscribe((s) => {
     showsSorted = removeValues(sortObject(keysToID(s), "name"), "private", true)
   })
+  let filteredShows: any
+  $: {
+    filteredShows = showsSorted.filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
+  }
+  $: console.log(filteredShows)
+  $: console.log(active)
 </script>
 
 <!-- TODO: sort by percentage -->
 <!-- TODO: go to first on input enter -->
 
-<div>
+<div class="main">
   {#if id === "shows"}
-    {#if Object.entries($shows).length}
-      <div class="column">
-        {#each showsSorted as show, index}
+    <div class="column">
+      {#if filteredShows.length}
+        {#each filteredShows as show, index}
           <Draggable id="show_drawer" {index}>
             <SelectElem id="show_drawer" data={{ id: show.id, index }}>
               <!-- {#key searchValue} -->
-              {#if (active === "all" || active === show.category || (active === "unlabeled" && show.category === null)) && (searchValue.length <= 1 || search(show))}
+              {#if searchValue.length <= 1 || search(show)}
                 <ShowButton id={show.id} name={show.name} match={[search(show), searchValue]} />
               {/if}
               <!-- {/key} -->
@@ -114,12 +124,20 @@
         {/each}
         <!-- TODO: not updating values on activeSubTab change -->
         {#if searchValue.length > 1 && totalMatch === 0}
-          No match
+          <Center size={1.5} faded>[[[No match]]]</Center>
         {/if}
-      </div>
-    {:else}
-      <div class="center">No shows</div>
-    {/if}
+      {:else}
+        <Center size={1.5} faded>[[[No shows]]]</Center>
+      {/if}
+    </div>
+    <div class="tabs">
+      <Button style="flex: 1;" on:click={() => history({ id: "newShow" })} center title={$dictionary.new?.show}>
+        <Icon id="showIcon" style="padding-right: 10px;" />
+        <span style="color: var(--secondary);">
+          <T id="new.show" />
+        </span>
+      </Button>
+    </div>
   {:else if id === "backgrounds"}
     <div class="grid">
       {#if active === "all"}
@@ -137,9 +155,9 @@
           {/each}
         {/key}
       {:else}
-        <div class="center">
+        <Center>
           <Icon id="noImage" size={5} />
-        </div>
+        </Center>
       {/if}
     </div>
   {:else if id === "overlays"}
@@ -164,27 +182,24 @@
 </div>
 
 <style>
-  div {
+  .main,
+  .column {
     display: flex;
-    /* flex-direction: column; */
+    flex-direction: column;
     flex: 1;
     overflow-y: auto;
     background-color: var(--primary-darker);
   }
 
-  .column {
-    flex-direction: column;
-  }
-
-  .center {
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5em;
+  .tabs {
+    display: flex;
+    background-color: var(--primary-darkest);
   }
 
   .grid {
     display: flex;
     flex-wrap: wrap;
+    flex: 1;
     gap: 10px;
     padding: 10px;
   }

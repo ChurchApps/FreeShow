@@ -1,5 +1,6 @@
 <script lang="ts">
   import { activeShow } from "../../stores"
+  import Center from "../system/Center.svelte"
 
   import Slides from "./Slides.svelte"
 </script>
@@ -15,15 +16,5 @@
     <Slides />
   {/if}
 {:else}
-  <div class="center">Select a slide to edit</div>
+  <Center faded>[[[Select a show to edit]]]</Center>
 {/if}
-
-<style>
-  .center {
-    display: flex;
-    height: 100%;
-    opacity: 0.7;
-    justify-content: center;
-    align-items: center;
-  }
-</style>

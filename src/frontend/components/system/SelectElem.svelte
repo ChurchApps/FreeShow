@@ -44,7 +44,7 @@
   function deselect(e: any) {
     // console.log(e.target.closest(".selectElem"))
 
-    if ($selected.id === id && e.target.closest(".selectElem") === null) {
+    if (!e.ctrlKey && $selected.id === id && e.target.closest(".selectElem") === null) {
       selected.set({ id: null, elems: [] })
     }
   }
