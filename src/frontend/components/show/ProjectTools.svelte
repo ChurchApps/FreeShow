@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
   import Tabs from "../main/Tabs.svelte"
+  import Resizeable from "../system/Resizeable.svelte"
   import Notes from "./tools/Notes.svelte"
 
   const tabs: TabsObj = {
@@ -16,23 +17,26 @@
   // // bind:this={elem} style="height: {height}px;"
 </script>
 
-<div class="main">
-  <Tabs {tabs} bind:active />
-  <div class="content">
-    {#if active === "notes"}
-      <Notes value="" />
-    {/if}
+<Resizeable id="projectTools" side="bottom" maxWidth={window.innerHeight / 2}>
+  <!-- minWidth={80} -->
+  <div class="main">
+    <Tabs {tabs} bind:active />
+    <div class="content">
+      {#if active === "notes"}
+        <Notes value="" />
+      {/if}
+    </div>
   </div>
-</div>
+</Resizeable>
 
 <style>
   .main {
-    height: 50%;
+    /* height: 50%; */
     display: flex;
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
-    border-top: 3px solid var(--primary-lighter);
+    /* border-top: 3px solid var(--primary-lighter); */
   }
 
   .content {

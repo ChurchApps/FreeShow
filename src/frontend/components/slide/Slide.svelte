@@ -3,6 +3,7 @@
   import type { Slide } from "../../../types/Show"
   import { activeShow, screen, shows, slidesOptions } from "../../stores"
   import Draggable from "../system/Draggable.svelte"
+  import SelectElem from "../system/SelectElem.svelte"
   import Textbox from "./Textbox.svelte"
 
   export let slide: Slide
@@ -13,6 +14,20 @@
   export let list: boolean = false
 
   let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
+
+  let longestText: string = ""
+  $: {
+    longestText = ""
+    slide.items.forEach((item) => {
+      if (item.text) {
+        let t = ""
+        item.text.forEach((text) => {
+          t += text.value
+        })
+        if (t.length > longestText.length) longestText = t
+      }
+    })
+  }
 </script>
 
 <!-- TODO: disabled -->
@@ -22,34 +37,30 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:list>
   <div class="slide context_slide" class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
-    <Draggable id="slide" {index} direction={list ? "column" : "row"}>
-      <!-- TODO: tab select on enter -->
-      <div class="slideContent" style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px; {!slide.items.length ? 'background-color: transparent;' : ''}">
-        <span style="zoom: {zoom};">
-          <!-- TODO: check if showid exists in shows -->
-          {#each slide.items as item}
-            <Textbox {item} />
-          {/each}
-        </span>
-      </div>
-      <!-- TODO: BG: white, color: black -->
-      <div class="label" style="width: {resolution.width * zoom}px;" title={slide.label || ""}>
-        <!-- font-size: 0.8em; -->
-        <span style="position: absolute;display: contents;">{index + 1}</span>
-        <span class="text">{slide.label || ""}</span>
-      </div>
-    </Draggable>
+    <SelectElem id="slide" data={index}>
+      <Draggable id="slide" {index} direction={list ? "column" : "row"}>
+        <!-- TODO: tab select on enter -->
+        <div class="slideContent" style="width: {resolution.width * zoom}px; height: {resolution.height * zoom}px; {!slide.items.length ? 'background-color: transparent;' : ''}">
+          <span style="zoom: {zoom};">
+            <!-- TODO: check if showid exists in shows -->
+            {#each slide.items as item}
+              <Textbox {item} />
+            {/each}
+          </span>
+        </div>
+        <!-- TODO: BG: white, color: black -->
+        <div class="label" style="width: {resolution.width * zoom}px;" title={slide.label || ""}>
+          <!-- font-size: 0.8em; -->
+          <span style="position: absolute;display: contents;">{index + 1}</span>
+          <span class="text">{slide.label || ""}</span>
+        </div>
+      </Draggable>
+    </SelectElem>
   </div>
   {#if !$slidesOptions.grid}
     <hr />
     <div class="quickEdit edit" tabindex={0} contenteditable={true}>
-      {#each slide.items as item}
-        {#if item.text}
-          {#each item.text as text}
-            <p>{text.value}</p>
-          {/each}
-        {/if}
-      {/each}
+      <p>{longestText}</p>
     </div>
   {/if}
 </div>

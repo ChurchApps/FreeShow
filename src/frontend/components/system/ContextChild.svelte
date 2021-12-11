@@ -7,6 +7,7 @@
   import { drawerTabsData } from "../../stores"
 
   export let contextElem: any
+  export let contextActive: boolean
   export let label: string
   export let submenus: string[]
   export let side: "right" | "left" = "right"
@@ -50,7 +51,7 @@
     switch (id) {
       case "enabled_drawer_tabs":
         Object.entries(drawerTabs).forEach((tab, i) => {
-          if (i >= 3) items.push([id + "_" + tab[0], { label: tab[1].name, icon: tab[1].icon, enabled: $drawerTabsData[tab[0]].enabled }])
+          if (i >= 3) items.push([id, { id: tab[0], label: tab[1].name, icon: tab[1].icon, enabled: $drawerTabsData[tab[0]].enabled }])
         })
         console.log(items)
 
@@ -73,10 +74,10 @@
           <hr />
         {:else if id.includes("LOAD_")}
           {#each loadItems(id.slice(5, id.length)) as [id, menu]}
-            <ContextItem {id} {contextElem} {menu} />
+            <ContextItem {id} {contextElem} {menu} bind:contextActive />
           {/each}
         {:else}
-          <ContextItem {id} {contextElem} />
+          <ContextItem {id} {contextElem} bind:contextActive />
         {/if}
       {/each}
     </div>

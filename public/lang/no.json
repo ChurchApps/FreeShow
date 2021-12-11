@@ -1,4 +1,8 @@
 {
+  "main": {
+    "quit": "Avslutt",
+    "unnamed": "uten navn"
+  },
   "menu": {
     "show": "Presenter",
     "_title_show": "Gå til visning",
@@ -28,7 +32,6 @@
     "all": "Fjern alt"
   },
   "context": {
-    "test": "Test Norsk",
     "enabledTabs": "Vis/Skjul Faner"
   },
   "tabs": {

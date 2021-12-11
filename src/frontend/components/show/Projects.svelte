@@ -106,7 +106,7 @@
     <button onClick={() => setProject(false)} style={{width: '50%', backgroundColor: (project ? '' : 'transparent'), color: (project ? '' : 'var(--secondary)')}}>Timeline</button> -->
   </span>
   {#if $projectView}
-    <div class="list">
+    <div class="list context #projects" id="/">
       <DropArea id="projects">
         <!-- All Projects: -->
 
@@ -120,29 +120,26 @@
         <Icon id="project" />
       </Button>
       <Button on:click={() => history({ id: "newFolder" })} center title={$dictionary.new?._folder}>
-        <Icon id="addFolder" />
+        <Icon id="folder" />
       </Button>
     </div>
   {:else if $activeProject !== null}
-    <div class="list">
+    <div class="list context #project">
       <DropArea id="project">
         <!-- {/* WIP: live on double click?? */} -->
         {#if $projects[$activeProject].shows.length}
           {#each $projects[$activeProject].shows as show, index}
             <SelectElem id="show" data={index}>
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
-              {#if !show.type}
-                <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-                <ShowButton
-                  id={show.id}
-                  {index}
-                  type={show.type}
-                  name={$shows[show.id]?.name}
-                  icon={$shows[show.id]?.private ? "private" : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "unlabeled"}
-                />
-              {:else}
-                <ShowButton id={show.id} {index} type={show.type} name={$shows[show.id]?.name + " [" + show.type + "]"} icon={show.type} />
-              {/if}
+              <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
+              <ShowButton
+                id={show.id}
+                {index}
+                type={show.type}
+                name={$shows[show.id]?.name}
+                icon={$shows[show.id]?.private ? "private" : show.type ? show.type : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "unlabeled"}
+                class="context #rename__{show.type ? '' : 'show'}__project"
+              />
               <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
             </SelectElem>
           {/each}
@@ -152,10 +149,10 @@
       </DropArea>
     </div>
     <div class="tabs">
-      <Button on:click={() => console.log("new show")} center title={$dictionary.new?.show}>
+      <Button on:click={() => history({ id: "newShow", newData: { project: $activeProject } })} center title={$dictionary.new?.show}>
         <Icon id="showIcon" />
       </Button>
-      <Button on:click={() => console.log("new private show")} center title={$dictionary.new?._private}>
+      <Button on:click={() => history({ id: "newPrivateShow", newData: { project: $activeProject, type: "private" } })} center title={$dictionary.new?._private}>
         <Icon id="private" />
       </Button>
     </div>

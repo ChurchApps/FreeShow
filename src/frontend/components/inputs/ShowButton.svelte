@@ -8,6 +8,7 @@
 
   export let name: string
   export let id: ID
+  export let data: null | string = null
   export let index: null | number = null
   export let type: ShowType = null
   // export let page: "side" | "drawer" = "drawer"
@@ -32,7 +33,7 @@
   $: active = $activeShow?.id === id
 
   function click(e: any) {
-    if (!e.ctrlKey && !active) activeShow.set({ id, type }) //  && !e.target.classList.contains("name")
+    if (!e.ctrlKey && !active && !e.target.closest("input")) activeShow.set({ id, type })
   }
 
   function doubleClick(e: any) {
@@ -40,21 +41,37 @@
       outSlide.set({ id, index: 0 })
     }
   }
+
+  function edit(event: any) {
+    shows.update((s: any) => {
+      s[id].name = event.detail.value
+      return s
+    })
+  }
 </script>
 
 <div class="main">
   <!-- <SelectElem id="show" data={{ id, type }}> -->
   <Draggable id="show" {index} direction="column">
     <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
-    <Button on:click={click} on:dblclick={doubleClick} {active} class="context_show_button" {style} bold={false} border>
-      {#if icon}
-        <Icon id={icon} />
-      {/if}
-      <!-- <p style="margin: 5px;">{name}</p> -->
-      <HiddenInput value={name} />
+    <!-- WIP padding-left: 0.8em; -->
+    <Button on:click={click} on:dblclick={doubleClick} {active} class="context {$$props.class}" {style} bold={false} border>
+      <span style="display: flex;align-items: center;flex: 1;">
+        {#if icon}
+          <Icon id={icon} />
+        {/if}
+        <!-- <p style="margin: 5px;">{name}</p> -->
+        <HiddenInput value={name} on:edit={edit} />
+      </span>
 
       {#if m}
-        {m}
+        <span style="opacity: 0.8;padding-left: 10px;">
+          {m}%
+        </span>
+      {/if}
+
+      {#if data}
+        <span style="opacity: 0.5;padding-left: 10px;">{data}</span>
       {/if}
     </Button>
   </Draggable>
@@ -64,5 +81,6 @@
 <style>
   .main :global(button) {
     width: 100%;
+    justify-content: space-between;
   }
 </style>

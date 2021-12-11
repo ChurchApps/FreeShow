@@ -7,6 +7,7 @@
   import HiddenInput from "./HiddenInput.svelte"
 
   export let name: string
+  export let parent: ID
   export let id: ID
   // export let type: ShowType
   // export let created;
@@ -22,6 +23,8 @@
     projectView.set(false)
     if ($projects[id].shows.length) activeShow.set($projects[id].shows[0])
   }}
+  data-parent={parent}
+  class="context #rename__projects"
   class:active
 >
   <Icon id="file" />

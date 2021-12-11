@@ -20,11 +20,11 @@
   <p style="padding: 30px">v{version} (Beta)</p>
 
   <span class="buttons">
-    <Button on:click={() => history({ id: "newProject", oldData: null, newData: null, location: { page: "shows" } })} title={$dictionary.new?.project}>
+    <Button on:click={() => history({ id: "newProject" })} title={$dictionary.new?.project}>
       <Icon id="project" white style="padding-right: 10px;" />
       <T id="new.project" />
     </Button>
-    <Button title={$dictionary.new?.show}>
+    <Button on:click={(e) => history({ id: e.ctrlKey ? "newShowDrawer" : "newShow" })} title={$dictionary.new?.show}>
       <Icon id="showIcon" white style="padding-right: 10px;" />
       <T id="new.show" />
     </Button>

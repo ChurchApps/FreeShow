@@ -16,7 +16,8 @@
   const minHeight = 40
   // const maxHeight = window.innerHeight * 0.75
   let maxHeight = window.innerHeight - 50
-  let height: number = 300 // maxHeight / 2
+  let defaultHeight: number = 300
+  let height: number = defaultHeight // maxHeight / 2
 
   let activeTab: string = "shows"
 
@@ -54,7 +55,7 @@
           height = minHeight
         }
       } else {
-        if (storeHeight === null || storeHeight < minHeight * 2) height = maxHeight / 2
+        if (storeHeight === null || storeHeight < defaultHeight) height = defaultHeight
         else height = storeHeight
         storeHeight = null
       }
@@ -84,9 +85,10 @@
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />
 
+<!-- <Resizeable id="drawer" side="bottom" minWidth={50}> -->
 <section class="drawer" style="height: {height}px">
   <!-- <div class="dragger" on:mousedown={mouseDown} on:click={click} /> -->
-  <div class="top context_drawer_top" on:mousedown={mousedown} on:click={click}>
+  <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click}>
     <span class="tabs">
       {#each Object.entries(drawerTabs) as tab}
         {#if $drawerTabsData[tab[0]].enabled}
@@ -94,7 +96,7 @@
           <Button
             on:click={() => (activeTab = tab[0])}
             active={activeTab === tab[0]}
-            class="context_drawer_top_button"
+            class="context #rename__drawer_top"
             title={$labelsDisabled ? $dictionary[tab[1].name.split(".")[0]]?.[tab[1].name.split(".")[1]] : ""}
           >
             <Icon id={tab[1].icon} size={1.3} />
@@ -119,6 +121,7 @@
   </div>
 </section>
 
+<!-- </Resizeable> -->
 <style>
   section {
     display: flex;

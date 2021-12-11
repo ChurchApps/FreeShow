@@ -1,4 +1,8 @@
 {
+  "main": {
+    "quit": "Quit",
+    "unnamed": "unnamed"
+  },
   "menu": {
     "show": "Show",
     "_title_show": "Go to show view",
@@ -33,7 +37,6 @@
     "all": "Clear all"
   },
   "context": {
-    "test": "Test",
     "enabledTabs": "Show/Hide Tabs"
   },
   "tabs": {

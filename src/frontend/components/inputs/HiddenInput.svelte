@@ -1,5 +1,8 @@
 <script lang="ts">
-  export let value: string
+  import { createEventDispatcher } from "svelte"
+  import { dictionary } from "../../stores"
+
+  export let value: string = ""
   $: value = edit ? (value.endsWith(" ") ? removeWhitespace(value) + " " : removeWhitespace(value)) : value.trim()
 
   const removeWhitespace = (v: string) =>
@@ -31,6 +34,14 @@
       }, 500)
     } else if (e.target !== inputElem) edit = false
   }
+
+  const dispatch = createEventDispatcher()
+  function change(e: any) {
+    let value = e.target.value
+    if (value.length) {
+      dispatch("edit", { value })
+    }
+  }
 </script>
 
 <svelte:window
@@ -43,9 +54,15 @@
 />
 
 {#if edit}
-  <input bind:this={inputElem} class="name _context_rename" bind:value />
+  <input bind:this={inputElem} on:change={change} class="nocontext _rename name" bind:value />
 {:else}
-  <p bind:this={nameElem} class="name _context_rename">{value}</p>
+  <p bind:this={nameElem} class="nocontext _rename name">
+    {#if value.length}
+      {value}
+    {:else}
+      <span style="opacity: 0.5; pointer-events: none;">{$dictionary.main.unnamed}</span>
+    {/if}
+  </p>
 {/if}
 
 <style>

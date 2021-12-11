@@ -31,13 +31,16 @@
     // TODO: active show slide index on delete......
     // go to beginning if live mode & ctrl | no output | last slide active
     if ($activePage === "show" && $activeShow && (!out || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
-      outSlide.set({ id: $activeShow!.id, index: 0, private: $activeShow!.private || false })
+      outSlide.set({ id: $activeShow!.id, index: 0 })
     } else {
       // Check for loop to beginning slide...
       // Go to next show?
       // if (e.ctrlKey && ) { // TODO: if ctrl key, go to next show
 
-      if (slide && !slide.private) {
+      // TODO: slide disabled!!!!!
+      if (slide) {
+        //  && !slide.private
+        // WIP: why private??????
         if (slide.index < layout.length - 1) {
           outSlide.update((o) => {
             if (o) o.index = slide!.index + 1
@@ -55,7 +58,8 @@
 
   function previousSlide() {
     let slide = $outSlide
-    if (slide && !slide.private) {
+    if (slide) {
+      //  && !slide.private
       // let layout: Layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
       if (slide.index > 0) {
         outSlide.update((o) => {
@@ -88,7 +92,8 @@
       if (e.key === "c") clearAll()
       else if (e.key === "f") fullscreen = !fullscreen
     }
-    if (!(e.target instanceof window.HTMLInputElement) && !e.target.closest(".edit")) {
+
+    if (!e.target.closest("input") && !e.target.closest(".edit")) {
       if (e.key === "ArrowRight" || (e.key === " " && !e.shiftKey)) {
         // Arrow Right | Space Bar
         e.preventDefault()
@@ -101,7 +106,7 @@
     }
   }
 
-  $: name = $outSlide ? ($outSlide.private ? "- [private]" : $shows[$outSlide.id].name) : "-"
+  $: name = $outSlide ? ($shows[$outSlide.id].private ? `${$shows[$outSlide.id].name} [[[[private]]]]` : $shows[$outSlide.id].name) : "-"
   $: index = $outSlide ? $outSlide.index + 1 : "-"
 
   let fullscreen: boolean = false

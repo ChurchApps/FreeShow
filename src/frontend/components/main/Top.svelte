@@ -11,9 +11,6 @@
     outputDisplay.set(!$outputDisplay)
     window.api.send(OUTPUT, { channel: "DISPLAY", data: $outputDisplay })
   }
-
-  $: titleShow = $dictionary.menu?._title_display
-  $: titleShowStop = $dictionary.menu?._title_display_stop
 </script>
 
 <!-- <button on:click={() => (settings = !settings)}>
@@ -33,7 +30,7 @@
   <span>
     <TopButton id="calendar" />
     <TopButton id="settings" />
-    <Button title={$outputDisplay ? titleShowStop : titleShow} active={$outputDisplay} on:click={display} class="display">
+    <Button title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display} on:click={display} class="display {$outputDisplay ? 'on' : 'off'}">
       {#if $outputDisplay}
         <Icon id="cancelDisplay" size={1.8} white />
       {:else}
@@ -59,12 +56,11 @@
     display: flex;
   }
 
-  div :global(button.display) {
-    background-color: rgb(150 0 0 / 30%) !important;
-    cursor: pointer;
-  }
-  div :global(button.display.active) {
+  div :global(button.display.on) {
     background-color: rgb(0 150 0 / 30%) !important;
+  }
+  div :global(button.display.off) {
+    background-color: rgb(150 0 0 / 30%) !important;
   }
 
   /* div :global(button) {

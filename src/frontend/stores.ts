@@ -456,6 +456,10 @@ export const screen = writable({
   // format 16:9
 })
 
+// project
+// TODO: today / closest sunday / week number / custom string / nothing....
+export const defaultName: Writable<null | "date" | string> = writable("date")
+
 // empty
 export const dictionary: Writable<Dictionary> = writable({})
 export const theme_css = writable({})

@@ -74,7 +74,7 @@
   }}
 />
 
-<div style="flex: 1;" class:hover on:drop={ondrop} on:dragover|preventDefault>
+<div style="flex: 1; height: 100%;" class:hover on:drop={ondrop} on:dragover|preventDefault>
   <slot />
 </div>
 {#if hover}

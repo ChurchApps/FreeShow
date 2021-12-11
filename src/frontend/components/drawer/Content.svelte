@@ -19,6 +19,7 @@
   import { history } from "../helpers/history"
   import Button from "../inputs/Button.svelte"
   import T from "../helpers/T.svelte"
+  import { dateToString } from "../helpers/time"
 
   export let id: string
   export let bible: any
@@ -96,7 +97,10 @@
   shows.subscribe((s) => {
     showsSorted = removeValues(sortObject(keysToID(s), "name"), "private", true)
   })
-  let filteredShows: any
+  interface ShowId extends Show {
+    id: string
+  }
+  let filteredShows: ShowId[]
   $: {
     filteredShows = showsSorted.filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
   }
@@ -109,14 +113,20 @@
 
 <div class="main">
   {#if id === "shows"}
-    <div class="column">
+    <div class="column context #drawer_show">
       {#if filteredShows.length}
         {#each filteredShows as show, index}
           <Draggable id="show_drawer" {index}>
             <SelectElem id="show_drawer" data={{ id: show.id, index }}>
               <!-- {#key searchValue} -->
               {#if searchValue.length <= 1 || search(show)}
-                <ShowButton id={show.id} name={show.name} match={[search(show), searchValue]} />
+                <ShowButton
+                  id={show.id}
+                  name={show.name}
+                  data={dateToString(show.timestamps.created, true)}
+                  class="#drawer_show_button__drawer_show"
+                  match={[search(show), searchValue]}
+                />
               {/if}
               <!-- {/key} -->
             </SelectElem>
@@ -131,7 +141,7 @@
       {/if}
     </div>
     <div class="tabs">
-      <Button style="flex: 1;" on:click={() => history({ id: "newShow" })} center title={$dictionary.new?.show}>
+      <Button style="flex: 1;" on:click={() => history({ id: "newShowDrawer" })} center title={$dictionary.new?.show}>
         <Icon id="showIcon" style="padding-right: 10px;" />
         <span style="color: var(--secondary);">
           <T id="new.show" />

@@ -100,7 +100,8 @@ export interface OutSlide {
   id: ID
   index: number
   // layout: ID ?
-  private?: boolean
+  // type?: ShowType
+  // private?: boolean
 }
 // export interface OutOverlay {
 //   id: ID
@@ -133,4 +134,4 @@ export type ID = string
 export type Style = string
 export type TransitionType = "none" | "fade"
 
-export type ShowType = null | "image" | "video" | "audio" // TODO: types
+export type ShowType = null | "image" | "video" | "audio" | "private" // TODO: types

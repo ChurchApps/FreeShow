@@ -1,10 +1,16 @@
 <script lang="ts">
   export let id: string
-  export let side: "left" | "right" = "left"
+  export let side: "left" | "right" | "top" | "bottom" = "left"
   export let width: number = 300
   let defaultWidth: number = Number(width.toString())
   export let maxWidth: number = defaultWidth * 2
-  export let minWidth: number = 4
+  let handleWidth: number = 4
+  export let minWidth: number = handleWidth
+
+  $: {
+    if (width <= 8) handleWidth = 8
+    else handleWidth = 4
+  }
 
   if (id) {
     // width = // get stored values ... stores
@@ -17,13 +23,20 @@
   let mouse: null | { x: number; y: number; offset: number; target: any } = null
   function mousedown(e: any) {
     if (
-      (side === "left" && e.target.closest(".panel")?.offsetWidth - e.offsetX <= 4) ||
-      (side === "right" && e.clientX < e.target.closest(".panel")?.offsetLeft + 4 && e.offsetX <= 4 && e.offsetX >= 0)
+      (side === "left" && e.target.closest(".panel")?.offsetWidth - e.offsetX <= handleWidth) ||
+      (side === "right" && e.clientX < e.target.closest(".panel")?.offsetLeft + handleWidth && e.offsetX <= handleWidth && e.offsetX >= 0) ||
+      (side === "top" && e.target.closest(".panel")?.offsetHeight - e.offsetY <= handleWidth) ||
+      (side === "bottom" &&
+        e.clientY < e.target.closest(".panel")?.offsetTop + e.target.closest(".panel")?.offsetParent.offsetTop + handleWidth &&
+        e.offsetY <= handleWidth &&
+        e.offsetY >= 0)
     ) {
+      let offset = window.innerWidth - width - e.clientX
+      if (side === "top" || side === "bottom") offset = window.innerHeight - width - e.clientY
       mouse = {
         x: e.clientX,
         y: e.clientY,
-        offset: window.innerWidth - width - e.clientX,
+        offset,
         target: e.target,
       }
     }
@@ -33,7 +46,10 @@
     if (mouse) {
       let newWidth: number = window.innerWidth - e.clientX - mouse.offset
       if (side === "left") newWidth = e.clientX
+      else if (side === "top") newWidth = e.clientY
+      else if (side === "bottom") newWidth = window.innerHeight - e.clientY - mouse.offset
       // console.log(window.innerWidth, e.clientX, mouse.offsetX)
+      console.log(newWidth)
 
       if (newWidth < (defaultWidth * 0.6) / 2) newWidth = minWidth
       else if (newWidth < defaultWidth * 0.6) newWidth = defaultWidth * 0.6
@@ -49,8 +65,13 @@
   function click(e: any) {
     if (!move) {
       if (
-        (side === "left" && e.target.closest(".panel")?.offsetWidth - e.offsetX <= 4) ||
-        (side === "right" && e.clientX < e.target.closest(".panel")?.offsetLeft + 4 && e.offsetX >= 0)
+        (side === "left" && e.target.closest(".panel")?.offsetWidth - e.offsetX <= handleWidth) ||
+        (side === "right" && e.clientX < e.target.closest(".panel")?.offsetLeft + handleWidth && e.offsetX <= handleWidth && e.offsetX >= 0) ||
+        (side === "top" && e.clientY < e.target.closest(".panel")?.offsetTop + handleWidth && e.offsetY <= handleWidth && e.offsetY >= 0) ||
+        (side === "bottom" &&
+          e.clientY < e.target.closest(".panel")?.offsetTop + e.target.closest(".panel")?.offsetParent.offsetTop + handleWidth &&
+          e.offsetY <= handleWidth &&
+          e.offsetY >= 0)
       ) {
         if (width > minWidth) {
           storeWidth = width
@@ -72,7 +93,13 @@
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />
 
-<div class="panel bar_{side}" style="width: {width}px" on:mousedown={mousedown} on:click={click}>
+<div
+  class="panel bar_{side}"
+  style="{side === 'left' || side === 'right' ? 'width' : 'height'}: {width}px; --handle-width: {handleWidth}px"
+  class:zero={width <= handleWidth}
+  on:mousedown={mousedown}
+  on:click={click}
+>
   <slot />
 </div>
 
@@ -85,23 +112,45 @@
     position: relative;
   }
   :global(.bar_left) {
-    padding-right: 4px;
+    padding-right: var(--handle-width);
   }
   :global(.bar_right) {
-    padding-left: 4px;
+    padding-left: var(--handle-width);
+  }
+  :global(.bar_top) {
+    padding-bottom: var(--handle-width);
+  }
+  :global(.bar_bottom) {
+    padding-top: var(--handle-width);
   }
   div::after {
     content: "";
     background-color: var(--primary-lighter);
     position: absolute;
-    width: 4px;
+    width: 100%;
     height: 100%;
+  }
+  .zero::after {
+    background-color: var(--secondary);
+  }
+  div:global(.bar_left)::after {
+    right: 0;
+    width: var(--handle-width);
     cursor: ew-resize;
   }
-  :global(.bar_left)::after {
-    right: 0;
-  }
-  :global(.bar_right)::after {
+  div:global(.bar_right)::after {
     left: 0;
+    width: var(--handle-width);
+    cursor: ew-resize;
+  }
+  div:global(.bar_top)::after {
+    bottom: 0;
+    height: var(--handle-width);
+    cursor: ns-resize;
+  }
+  div:global(.bar_bottom)::after {
+    top: 0;
+    height: var(--handle-width);
+    cursor: ns-resize;
   }
 </style>

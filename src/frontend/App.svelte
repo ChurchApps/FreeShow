@@ -50,7 +50,7 @@
     // ctrl + number
     if (e.ctrlKey) {
       // WIP reflow: flow / ...
-      let menus: TopViews[] = ["show", "edit", "draw", "stage", "settings"]
+      let menus: TopViews[] = ["show", "edit", "draw", "stage", "calendar", "settings"]
       if (Object.keys(menus).includes((e.key - 1).toString())) {
         activePage.set(menus[e.key - 1])
       }
@@ -80,7 +80,7 @@
 
       <div class="row">
         <!-- maxWidth={window.innerWidth / 3} -->
-        <Resizeable id={"mainLeft"}>
+        <Resizeable id="mainLeft">
           <div class="left">
             {#if page === "show"}
               <Projects />
@@ -102,7 +102,7 @@
             <Settings />
           {/if}
         </div>
-        <Resizeable id={"mainRight"} side="right">
+        <Resizeable id="mainRight" side="right">
           <div class="right">
             <Preview />
             {#if page === "show" && $activeShow}

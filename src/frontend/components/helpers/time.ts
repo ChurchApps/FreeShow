@@ -22,3 +22,21 @@ export function joinTime(time: Time, ms: boolean = false): string {
   if (ms) arr.push(time.ms)
   return arr.join(":")
 }
+
+export function dateToString(date: Date, full: boolean = false): string {
+  let year: any = date.getFullYear()
+  let month: any = date.getMonth() + 1
+  let day: any = date.getDate()
+
+  if (full) {
+    // .......
+    // February: Monday 6th 2021
+  } else {
+    if (month < 10) month = "0" + month
+    if (day < 10) day = "0" + day
+  }
+
+  year = year.toString().slice(-2)
+  // TODO: get format (DD.MM.YY) | YYYY-MM-DD | MM/DD/YYYY
+  return [day, month, year].join(".")
+}

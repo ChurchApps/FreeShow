@@ -35,7 +35,7 @@
 
 <div class="surround">
   {#if id !== "/"}
-    <button {id} class:opened class="folder" on:click={toggle}>
+    <button {id} class:opened class="folder context #rename__projects" on:click={toggle}>
       <span>
         {#if opened}
           <Icon id="folderOpen" />
@@ -57,7 +57,7 @@
               {#if project.type === "folder"}
                 <svelte:self {tree} id={project.id} name={project.name} />
               {:else if project.id}
-                <ProjectButton name={project.name} id={project.id} />
+                <ProjectButton name={project.name} parent={id} id={project.id} />
               {/if}
             </SelectElem>
           </li>
