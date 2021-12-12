@@ -2,7 +2,7 @@ import { ShowObj } from "../../classes/Show"
 import { uid } from "uid"
 import { GetShow } from "./get"
 import { dateToString } from "../helpers/time"
-import { shows, activeProject, projects, redoHistory, mediaFolders, projectView, folders, openedFolders, defaultName, drawerTabsData } from "./../../stores"
+import { shows, activeProject, projects, redoHistory, mediaFolders, projectView, folders, openedFolders, defaultName, drawerTabsData, activeShow, categories } from "./../../stores"
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory } from "../../stores"
 import { get } from "svelte/store"
@@ -20,6 +20,8 @@ export type HistoryIDs =
   | "newShowDrawer"
   | "newShow"
   | "newPrivateShow"
+  | "newShowsCategory"
+  | "addShow"
   | "slides"
   | "shows"
   | "project"
@@ -123,6 +125,14 @@ export function history(obj: History, undo: null | boolean = null) {
         })
         activeProject.set(id)
       }
+      // remove active show index
+      if (get(activeShow) !== null) {
+        activeShow.update((as: any) => {
+          as.index = null
+          return as
+        })
+      }
+      // open parent folder if closed
       if (!get(openedFolders).includes(obj.newData.parent)) {
         openedFolders.update((f) => {
           f.push(obj.newData.parent)
@@ -180,11 +190,46 @@ export function history(obj: History, undo: null | boolean = null) {
         s[id] = obj.newData
         return s
       })
+      // history addShow...
       if (obj.id !== "newShowDrawer" && activeProject !== null) {
         projects.update((p) => {
           p[get(activeProject)!].shows.push({ id })
           return p
         })
+      }
+      // TODO: remove search filter
+      break
+    case "newShowsCategory":
+      categories.update((c) => {
+        if (undo) c = obj.oldData
+        else {
+          if (!obj.newData) {
+            let id = uid()
+            let icon: null | string = null
+            let tab = get(drawerTabsData).shows.activeSubTab
+            if (tab !== "all" && tab !== "unlabeled") icon = get(drawerTabsData).shows.activeSubTab
+            obj.newData = { id, data: { name: "", icon } }
+            obj.oldData = { ...c }
+          }
+          c[obj.newData.id] = obj.newData.data
+        }
+        return c
+      })
+      break
+    // ADD
+    case "addShow":
+      if (activeProject !== null) {
+        console.log(undo)
+
+        if (obj.oldData === null) obj.oldData = [get(activeProject), [...get(projects)[get(activeProject)!].shows]]
+        console.log(obj.oldData)
+        projects.update((p) => {
+          if (typeof obj.newData === "string") p[obj.oldData[0]].shows = [...p[obj.oldData[0]].shows, { id: obj.newData }]
+          else p[obj.newData[0]].shows = obj.newData[1]
+          console.log(p)
+          return p
+        })
+        console.log([...obj.newData], [...obj.oldData])
       }
       break
 
@@ -203,14 +248,15 @@ export function history(obj: History, undo: null | boolean = null) {
   } else {
     undoHistory.update((uh: History[]) => {
       // if id and location is equal push new data to previous stored
-      // not: project | newProject | newFolder
+      // not: project | newProject | newFolder | addShow
       if (
         undo === null &&
         uh[uh.length - 1]?.id === obj.id &&
         JSON.stringify(Object.values(uh[uh.length - 1]?.location!)) === JSON.stringify(Object.values(obj.location!)) &&
         obj.id !== "project" &&
         obj.id !== "newProject" &&
-        obj.id !== "newFolder"
+        obj.id !== "newFolder" &&
+        obj.id !== "addShow"
       ) {
         uh[uh.length - 1].newData = obj.newData
       } else uh.push(obj)

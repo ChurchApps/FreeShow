@@ -14,7 +14,7 @@
   import ContextMenu from "./components/system/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import { activePage, activeProject, activeShow, outputWindow, shows } from "./stores"
+  import { activePage, activeProject, activeShow, drawer, outputWindow, shows } from "./stores"
   import ProjectTools from "./components/show/ProjectTools.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
@@ -59,6 +59,17 @@
         undo()
       } else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) {
         redo()
+      }
+    } else {
+      if (e.key === "Escape") {
+        if (document.activeElement !== document.body) {
+          ;(document.activeElement as HTMLElement).blur()
+        } else {
+          // hide / show drawer
+
+          if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+          else drawer.set({ height: 40, stored: $drawer.height })
+        }
       }
     }
   }

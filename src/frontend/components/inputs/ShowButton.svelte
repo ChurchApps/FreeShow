@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ID, ShowType } from "../../../types/Show"
-  import { activeShow, outSlide, shows } from "../../stores"
+  import { activeProject, activeShow, outSlide, projects, shows } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import Draggable from "../system/Draggable.svelte"
   import Button from "./Button.svelte"
@@ -12,11 +12,10 @@
   export let index: null | number = null
   export let type: ShowType = null
   // export let page: "side" | "drawer" = "drawer"
-  export let match: [null] | [number, string] = [null]
-  $: m = match[0]
+  export let match: null | number = null
   // TODO: svelte animate
   // search
-  $: style = match[0] ? `background: linear-gradient(to right, var(--secondary-opacity) ${m}%, transparent ${m}%);` : ""
+  $: style = match !== null ? `background: linear-gradient(to right, var(--secondary-opacity) ${match}%, transparent ${match}%);` : ""
 
   // export let location;
   // export let access;
@@ -30,10 +29,17 @@
   //   else return "song"
   // }
   // $: icon = check()
-  $: active = $activeShow?.id === id
+  $: active = index !== null ? $activeShow?.index === index : $activeShow?.id === id
+  $: console.log(index, $activeShow?.index)
 
   function click(e: any) {
-    if (!e.ctrlKey && !active && !e.target.closest("input")) activeShow.set({ id, type })
+    // get pos if clicked in drawer show
+    let pos = index
+    if (pos === null && $activeProject !== null && JSON.stringify($projects[$activeProject].shows).includes(id)) {
+      pos = $projects[$activeProject].shows.findIndex((p) => p.id === id)
+    }
+    // set active show
+    if (!e.ctrlKey && !active && !e.target.closest("input")) activeShow.set({ id, index: pos, type })
   }
 
   function doubleClick(e: any) {
@@ -64,9 +70,9 @@
         <HiddenInput value={name} on:edit={edit} />
       </span>
 
-      {#if m}
+      {#if match}
         <span style="opacity: 0.8;padding-left: 10px;">
-          {m}%
+          {match}%
         </span>
       {/if}
 

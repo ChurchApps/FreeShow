@@ -2,50 +2,47 @@
   import type { Category } from "../../../types/Tabs"
 
   import { categories, dictionary, drawerTabsData, mediaFolders, overlayCategories } from "../../stores"
+  import { keysToID, sortObject } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import FilePicker from "../inputs/FilePicker.svelte"
   import FolderPicker from "../inputs/FolderPicker.svelte"
+  import HiddenInput from "../inputs/HiddenInput.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import { getBibleVersions } from "./bible/getBible"
 
   export let id: string
 
-  let buttons: Category = {}
+  interface Button extends Category {
+    id: string
+  }
+  let buttons: Button[] = []
   $: {
     if (id === "shows") {
-      buttons = {
-        all: { name: "category.all", default: true, icon: "all" },
-        ...$categories,
-        unlabeled: { name: "category.unlabeled", default: true, icon: "unlabeled" },
-      }
+      buttons = [
+        { id: "all", name: "category.all", default: true, icon: "all" },
+        ...(sortObject(keysToID($categories), "name") as Button[]),
+        { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
+      ]
     } else if (id === "backgrounds") {
-      buttons = {
-        all: { name: "category.all", default: true, icon: "all" },
-        ...$mediaFolders,
-      }
+      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($mediaFolders), "name") as Button[])]
     } else if (id === "overlays") {
-      buttons = {
-        all: { name: "category.all", default: true, icon: "all" },
-        ...$overlayCategories,
-      }
+      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($overlayCategories), "name") as Button[])]
     } else if (id === "scripture") {
-      buttons = {
-        ...getBibleVersions(),
-      }
+      buttons = [...keysToID(getBibleVersions())]
     } else if (id === "live") {
-      buttons = {
+      buttons = [
         // all: { name: "category.all", default: true, icon: "all" },
         // ...$mediaFolders,
         // id:
-        windows: { name: "windows", default: true, icon: "screen" },
-        // screen2: {name: "second screen", icon: "screen"},
-        cameras: { name: "cameras", default: true, icon: "camera" },
-        microphones: { name: "microphones", default: true, icon: "microphone" },
-      }
-    } else buttons = {}
+        { id: "windows", name: "windows", default: true, icon: "screen" },
+        // {id: "screen2", name: "second screen", icon: "screen"},
+        { id: "cameras", name: "cameras", default: true, icon: "camera" },
+        { id: "microphones", name: "microphones", default: true, icon: "microphone" },
+      ]
+    } else buttons = []
   }
 
   $: console.log(buttons)
@@ -53,7 +50,7 @@
   $: {
     if ($drawerTabsData[id].activeSubTab === null) {
       // setTab(Object.keys(buttons)[0])
-      setTab(Object.keys(buttons)[0])
+      setTab(buttons[0].id)
     }
   }
 
@@ -66,27 +63,30 @@
 </script>
 
 <div class="main">
-  <div class="categories">
+  <div class="categories context #category_{id}">
     {#key buttons}
-      {#each Object.entries(buttons) as category}
-        <SelectElem id="navigation" data={category[0]}>
+      {#each buttons as category}
+        <SelectElem id="navigation" data={category.id}>
           <!-- TODO: titles -->
           <Button
-            active={category[0] === $drawerTabsData[id].activeSubTab}
+            class="context #category_{id}_button__category_{id}"
+            active={category.id === $drawerTabsData[id].activeSubTab}
             on:click={(e) => {
-              if (!e.ctrlKey) setTab(category[0])
+              if (!e.ctrlKey) setTab(category.id)
             }}
             bold={false}
-            title={category[1].description ? category[1].description : category[1].url ? category[1].url : ""}
+            title={category.description ? category.description : category.url ? category.url : ""}
           >
-            <Icon id={category[1].icon || "unknown"} />
-            <div id={category[0]}>
-              {#if category[1].default}
-                <T id={category[1].name} />
+            <Icon id={category.icon || "noIcon"} />
+            <span id={category.id}>
+              {#if category.default}
+                <p style="margin: 5px;">
+                  <T id={category.name} />
+                </p>
               {:else}
-                {category[1].name}
+                <HiddenInput value={category.name} />
               {/if}
-            </div>
+            </span>
           </Button>
         </SelectElem>
       {/each}
@@ -95,7 +95,7 @@
   {#if id === "shows"}
     <div class="tabs">
       <Button on:click={() => history({ id: "newShowsCategory" })} center title={$dictionary.new?.category}>
-        <Icon id="unlabeled" style="padding-right: 10px;" />
+        <Icon id="all" style="padding-right: 10px;" />
         <span style="color: var(--secondary);">
           <T id="new.category" />
         </span>
@@ -118,6 +118,10 @@
 
   .main :global(button) {
     width: 100%;
+    padding: 0.2em 0.8em;
+  }
+  .main :global(svg) {
+    margin-right: calc(0.8em - 5px);
   }
 
   .tabs {

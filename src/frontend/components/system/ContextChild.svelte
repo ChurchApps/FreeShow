@@ -3,13 +3,16 @@
 
   import T from "../helpers/T.svelte"
   import ContextItem from "./ContextItem.svelte"
-  import type { ContextMenuItem } from "../../values/contextMenus"
+  import { ContextMenuItem, contextMenuItems } from "../../values/contextMenus"
   import { drawerTabsData } from "../../stores"
+  import Icon from "../helpers/Icon.svelte"
 
   export let contextElem: any
   export let contextActive: boolean
-  export let label: string
-  export let submenus: string[]
+  export let id: string
+  export let menu: ContextMenuItem = contextMenuItems[id]
+  // export let label: string
+  // export let submenus: string[]
   export let side: "right" | "left" = "right"
   $: transform = side === "right" ? "100%" : "-100%"
 
@@ -64,22 +67,28 @@
 <svelte:window on:mouseover={hover} />
 
 <div bind:this={elem} class="item" on:click={click}>
-  {#key label}
+  <!-- {#key label}
     <T id={label} />
+  {/key} -->
+  {#if menu?.icon}<Icon id={menu.icon} />{/if}
+  {#key menu}
+    <T id={menu?.label || id} />
   {/key}
   {#if open}
     <div class="submenu" style="{side}: 0; transform: translate({transform}, -10px);">
-      {#each submenus as id}
-        {#if id === "SEPERATOR"}
-          <hr />
-        {:else if id.includes("LOAD_")}
-          {#each loadItems(id.slice(5, id.length)) as [id, menu]}
-            <ContextItem {id} {contextElem} {menu} bind:contextActive />
-          {/each}
-        {:else}
-          <ContextItem {id} {contextElem} bind:contextActive />
-        {/if}
-      {/each}
+      {#if menu.items?.length}
+        {#each menu.items as id}
+          {#if id === "SEPERATOR"}
+            <hr />
+          {:else if id.includes("LOAD_")}
+            {#each loadItems(id.slice(5, id.length)) as [id, menu]}
+              <ContextItem {id} {contextElem} {menu} bind:contextActive />
+            {/each}
+          {:else}
+            <ContextItem {id} {contextElem} bind:contextActive />
+          {/if}
+        {/each}
+      {/if}
     </div>
   {/if}
 </div>

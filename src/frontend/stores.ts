@@ -1,7 +1,7 @@
 import type { History } from "./components/helpers/history"
 import type { NumberObject, Selected, Drag } from "../types/Main"
 import type { TopViews } from "./../types/Views"
-import type { Category } from "./../types/Tabs"
+import type { Categories } from "./../types/Tabs"
 import { Writable, writable } from "svelte/store"
 import type { ShowRef, Folders, Projects } from "../types/Projects"
 import type { Dictionary, LanguageKey } from "../types/Settings"
@@ -338,12 +338,12 @@ export const folders: Writable<Folders> = writable({
   fes: { name: "Test", parent: "esf" },
   esf2: { name: "Ayy2", parent: "fese" },
 })
-export const categories: Writable<Category> = writable({
+export const categories: Writable<Categories> = writable({
   song: { name: "category.song", icon: "song", default: true },
   info: { name: "category.info", icon: "info", default: true },
   presentation: { name: "category.presentation", icon: "presentation", default: true },
 })
-export const overlayCategories: Writable<Category> = writable({})
+export const overlayCategories: Writable<Categories> = writable({})
 export const overlays: Writable<Overlays> = writable({
   tiesl: {
     label: "Verse 1",
@@ -375,7 +375,7 @@ export const overlays: Writable<Overlays> = writable({
     ],
   },
 })
-export const mediaFolders: Writable<Category> = writable({
+export const mediaFolders: Writable<Categories> = writable({
   pictures: { name: "category.pictures", icon: "folder", url: "C:/Users/Kristoffer/Pictures", default: true },
   videos: { name: "category.videos", icon: "folder", url: "C:/Users/Kristoffer/Videos", default: true },
 })
@@ -416,6 +416,7 @@ export const resized: Writable<NumberObject> = writable({
 //   shows:
 // })
 // TABS
+// Drawer
 interface DrawerTabs {
   [key: string]: {
     enabled: boolean
@@ -432,6 +433,7 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({
   web: { enabled: false, activeSubTab: null },
   live: { enabled: false, activeSubTab: null },
 })
+export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null })
 
 // SETTINGS
 // lan

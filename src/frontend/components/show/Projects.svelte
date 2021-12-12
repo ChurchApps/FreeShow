@@ -46,36 +46,18 @@
       let shows = GetProjects().active.shows // $projects[$activeProject].shows
 
       if (shows.length) {
-        let newShow: null | number = null
+        let newIndex: null | number = null
         if (e.key === "ArrowDown") {
           // Arrow Down = change active show in project
-          if ($activeShow !== null) {
-            // REMOVE let found = false
-            shows.forEach((show, i) => {
-              if (show.id === $activeShow!.id) {
-                // found = true
-                if (shows[i + 1]) newShow = i + 1
-              }
-            })
-            // if (!found) newShow = 0
-          } else newShow = 0
+          newIndex = 0
+          if ($activeShow && $activeShow?.index !== null) newIndex = shows.findIndex((_s, i) => i - 1 === $activeShow!.index)
         } else if (e.key === "ArrowUp") {
           // Arrow Up = change active show in project
-          if ($activeShow !== null) {
-            // let found = false
-            shows.forEach((show, i) => {
-              if (show.id === $activeShow!.id && newShow === null) {
-                if (i - 1 >= 0) newShow = i - 1
-                else newShow = 0
-                // if (!found && i - 1 >= 0) newShow = i - 1
-                // found = true
-              }
-            })
-            // if (!found) newShow = shows.length - 1
-          } else newShow = shows.length - 1
+          newIndex = shows.length - 1
+          if ($activeShow && $activeShow?.index !== null) newIndex = shows.findIndex((_s, i) => i + 1 === $activeShow!.index)
         }
         // Set active show in project list
-        if (newShow !== null) activeShow.set(shows[newShow])
+        if (newIndex !== null && newIndex !== $activeShow?.index && newIndex >= 0 && newIndex < shows.length) activeShow.set({ ...shows[newIndex], index: newIndex })
       }
     }
   }
@@ -137,8 +119,8 @@
                 {index}
                 type={show.type}
                 name={$shows[show.id]?.name}
-                icon={$shows[show.id]?.private ? "private" : show.type ? show.type : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "unlabeled"}
-                class="context #rename__{show.type ? '' : 'show'}__project"
+                icon={$shows[show.id]?.private ? "private" : show.type ? show.type : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "noIcon"}
+                class="context #{show.type ? '' : 'show'}__project"
               />
               <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
             </SelectElem>

@@ -14,14 +14,31 @@
   // export let parent; // path
   // $: type = name.slice(name.lastIndexOf(".") + 1)
   $: active = $activeProject === id
+
+  function click() {
+    // set new project
+    activeProject.set(id)
+
+    // get active show pos
+    if ($activeShow !== null) {
+      let pos: number = -1
+      if ($activeProject !== null) pos = $projects[$activeProject].shows.findIndex((p) => p.id === $activeShow!.id)
+      console.log(pos)
+
+      activeShow.update((as: any) => {
+        as.index = pos >= 0 ? pos : null
+        return as
+      })
+    }
+  }
 </script>
 
 <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
 <button
-  on:click={() => activeProject.set(id)}
+  on:click={click}
   on:dblclick={() => {
     projectView.set(false)
-    if ($projects[id].shows.length) activeShow.set($projects[id].shows[0])
+    if ($projects[id].shows.length) activeShow.set({ ...$projects[id].shows[0], index: 0 })
   }}
   data-parent={parent}
   class="context #rename__projects"

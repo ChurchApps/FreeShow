@@ -32,7 +32,7 @@ export function arrayHasData(array: any[], data: any): boolean {
 
 // OBJETS
 
-// sort object alphabeticly
+// sort objects in array alphabeticly
 export function sortObject(object: {}[], key: string, casesensitive: boolean = false): {}[] {
   return object.sort((a: any, b: any) => {
     let textA: string = a[key]
@@ -42,6 +42,13 @@ export function sortObject(object: {}[], key: string, casesensitive: boolean = f
       textB = textB.toUpperCase()
     }
     return textA < textB ? -1 : textA > textB ? 1 : 0
+  })
+}
+
+// sort objects in array numerically
+export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = false): {}[] {
+  return object.sort((a: any, b: any) => {
+    return reverse ? b[key] - a[key] : a[key] - b[key]
   })
 }
 

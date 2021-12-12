@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { selectTextOnFocus, blurOnEscape } from "../helpers/inputActions"
-  import { dictionary, drawerTabsData, labelsDisabled } from "../../stores"
+  import { selectTextOnFocus } from "../helpers/inputActions"
+  import { dictionary, drawer, drawerTabsData, labelsDisabled } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
@@ -12,12 +12,14 @@
   import Button from "../inputs/Button.svelte"
   import Resizeable from "../system/Resizeable.svelte"
   import type { Bible } from "../../../types/Scripture"
+  import { history } from "../helpers/history"
 
   const minHeight = 40
   // const maxHeight = window.innerHeight * 0.75
   let maxHeight = window.innerHeight - 50
   let defaultHeight: number = 300
-  let height: number = defaultHeight // maxHeight / 2
+  // let height: number = defaultHeight // maxHeight / 2
+  $: height = $drawer.height
 
   let activeTab: string = "shows"
 
@@ -40,24 +42,22 @@
       if (newHeight < minHeight * 2) newHeight = minHeight
       else if (newHeight > maxHeight) newHeight = maxHeight
       else move = true
-      height = newHeight
-      storeHeight = null
+      drawer.set({ height: newHeight, stored: null })
       // if (newHeight >= 50 && newHeight < 500) height = newHeight
     }
   }
 
-  let storeHeight: null | number = null
+  $: storeHeight = $drawer.stored
   function click(e: any) {
     if (!move && !(e?.target instanceof HTMLInputElement)) {
       if (height > minHeight) {
         if (e?.target.classList.contains("top")) {
-          storeHeight = height
-          height = minHeight
+          drawer.set({ height: minHeight, stored: height })
         }
       } else {
         if (storeHeight === null || storeHeight < defaultHeight) height = defaultHeight
         else height = storeHeight
-        storeHeight = null
+        drawer.set({ height, stored: null })
       }
     } else move = false
   }
@@ -68,6 +68,12 @@
   }
 
   let searchValue = ""
+  $: searchValue = searchValue.endsWith(" ") ? removeWhitespace(searchValue) + " " : removeWhitespace(searchValue)
+  const removeWhitespace = (v: string) =>
+    v
+      .split(" ")
+      .filter((n) => n)
+      .join(" ")
   function search() {
     if (storeHeight !== null) click(null)
     // if (activeTab === "shows") {
@@ -81,9 +87,24 @@
     verses: [],
     activeVerses: [],
   }
+
+  let firstMatch: null | string = null
+  let searchElem: any
+  function keydown(e: any) {
+    if (document.activeElement === document.body && !e.ctrlKey) {
+      // Alphabet upper case | Alphabet lower case
+      if (/^[A-Z]{1}$/i.test(e.key)) searchElem.focus()
+    } else if (e.key === "Enter") {
+      if (document.activeElement === searchElem && searchValue.length && firstMatch) {
+        searchElem.select()
+        history({ id: "addShow", newData: firstMatch })
+        console.log(firstMatch)
+      }
+    }
+  }
 </script>
 
-<svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />
+<svelte:window on:mouseup={mouseup} on:mousemove={mousemove} on:keydown={keydown} />
 
 <!-- <Resizeable id="drawer" side="bottom" minWidth={50}> -->
 <section class="drawer" style="height: {height}px">
@@ -108,13 +129,22 @@
       {/each}
     </span>
     <!-- TODO: expand drawer on input: -->
-    <input class="search" type="text" placeholder="Search keywords... (Seperated by comma)" bind:value={searchValue} on:input={search} use:selectTextOnFocus use:blurOnEscape />
+    <input
+      bind:this={searchElem}
+      class="search"
+      type="text"
+      placeholder="Search keywords... (Seperated by comma)"
+      bind:value={searchValue}
+      on:input={search}
+      use:selectTextOnFocus
+    />
+    <!-- use:blurOnEscape -->
   </div>
   <div class="content">
     <Resizeable id={"drawerNavigation"}>
       <Navigation id={activeTab} />
     </Resizeable>
-    <Content id={activeTab} {searchValue} bind:bible />
+    <Content id={activeTab} {searchValue} bind:firstMatch bind:bible />
     <Resizeable id={"drawerInfo"} side="right">
       <Info id={activeTab} {bible} />
     </Resizeable>

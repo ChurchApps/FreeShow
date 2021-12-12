@@ -2,11 +2,11 @@
   import ContextChild from "./ContextChild.svelte"
 
   import ContextItem from "./ContextItem.svelte"
-  import { ContextMenuLayout, contextMenuLayouts } from "../../values/contextMenus"
+  import { contextMenuItems, contextMenuLayouts } from "../../values/contextMenus"
 
   let contextElem: any = null
   let contextActive: boolean = false
-  let activeMenu: ContextMenuLayout
+  let activeMenu: string[]
   let x: number = 0
   let y: number = 0
   let side: "right" | "left" = "right"
@@ -17,18 +17,15 @@
       x = e.clientX
       y = e.clientY
       activeMenu = contextMenuLayouts.default
-      let found = false
-      contextElem?.classList.forEach((c: string) => {
-        if (!found && c.includes("#")) {
-          found = true
-          if (c.includes("__")) {
-            activeMenu = {}
-            c.slice(1, c.length)
-              .split("__")
-              .forEach((c2: string) => (activeMenu = { ...activeMenu, ...contextMenuLayouts[c2] }))
-          } else activeMenu = contextMenuLayouts[c.slice(1, c.length)]
-        }
-      })
+      let c = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
+      if (c?.includes("__")) {
+        activeMenu = []
+        let menus = c.slice(1, c.length).split("__")
+        menus.forEach((c2: string, i: number) => {
+          activeMenu.push(...contextMenuLayouts[c2])
+          if (i < menus.length - 1) activeMenu.push("SEPERATOR")
+        })
+      } else if (c) activeMenu = contextMenuLayouts[c.slice(1, c.length)]
       console.log(activeMenu)
 
       let contextHeight = Object.keys(activeMenu).length * 30 + 10
@@ -51,13 +48,13 @@
 {#if contextActive}
   <div class="contextMenu" style="left: {x}px; top: {y}px;">
     {#key activeMenu}
-      {#each Object.entries(activeMenu) as menu}
-        {#if menu[0] === "SEPERATOR"}
+      {#each activeMenu as id}
+        {#if id === "SEPERATOR"}
           <hr />
-        {:else if menu[1] !== null}
-          <ContextChild label={menu[0]} submenus={menu[1]} {contextElem} bind:contextActive {side} />
+        {:else if contextMenuItems[id]?.items}
+          <ContextChild {id} {contextElem} bind:contextActive {side} />
         {:else}
-          <ContextItem id={menu[0]} {contextElem} bind:contextActive />
+          <ContextItem {id} {contextElem} bind:contextActive />
         {/if}
       {/each}
     {/key}
@@ -78,6 +75,6 @@
     margin: 5px 10px;
     height: 2px;
     border: none;
-    background-color: var(--secondary);
+    background-color: var(--primary-lighter);
   }
 </style>

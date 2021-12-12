@@ -1,11 +1,12 @@
+export interface Categories {
+  [key: string]: Category
+}
 export interface Category {
-  [key: string]: {
-    name: string
-    icon: string
-    url?: string
-    default?: boolean
-    description?: string
-  }
+  name: string
+  icon?: null | string
+  url?: string
+  default?: boolean
+  description?: string
 }
 
 export interface TabsObj {

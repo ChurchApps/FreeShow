@@ -138,6 +138,17 @@
   $: console.log(videoData)
 
   const sendToOutput = () => window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+
+  let length: number = 0
+  $: {
+    if ($outSlide?.id) {
+      length = 0
+      $shows[$outSlide.id].layouts[$shows[$outSlide.id].settings.activeLayout].slides.forEach((s: any) => {
+        length++
+        if ($shows[$outSlide!.id].slides[s.id].children) length += $shows[$outSlide!.id].slides[s.id].children!.length
+      })
+    }
+  }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -210,19 +221,19 @@
   <span>Name: {name}</span>
   <span>Index: {index}</span>
   <span class="group">
-    <Button on:click={previousShow} disabled={!$outSlide} center>
+    <Button on:click={previousShow} title="[[[PreviousShow]]]" disabled={!$outSlide} center>
       <Icon id="previousFull" size={1.2} />
     </Button>
-    <Button on:click={previousSlide} disabled={!$outSlide} center>
+    <Button on:click={previousSlide} title="[[[PreviousSlide]]]" disabled={!$outSlide || $outSlide.index < 1} center>
       <Icon id="previous" size={1.2} />
     </Button>
-    <Button center title="Lock">
+    <Button title="[[[Lock]]]" center>
       <Icon id="unlocked" size={1.2} />
     </Button>
-    <Button on:click={nextSlide} center>
+    <Button on:click={nextSlide} title="[[[NextSlide]]]" disabled={!$outSlide || $outSlide.index + 1 >= length} center>
       <Icon id="next" size={1.2} />
     </Button>
-    <Button on:click={nextShow} center>
+    <Button on:click={nextShow} title="[[[NextShow]]]" disabled={!$outSlide} center>
       <Icon id="nextFull" size={1.2} />
     </Button>
   </span>

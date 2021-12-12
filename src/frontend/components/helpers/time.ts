@@ -1,3 +1,4 @@
+import { dictionary } from "./../../stores"
 import type { Time } from "./../../../types/Main"
 
 export function secondsToTime(seconds: number): Time {
@@ -28,15 +29,24 @@ export function dateToString(date: Date, full: boolean = false): string {
   let month: any = date.getMonth() + 1
   let day: any = date.getDate()
 
+  let string: string = ""
   if (full) {
-    // .......
-    // February: Monday 6th 2021
+    let d: any = dictionary
+    // TODO: get dictionary...
+    let weekday = d.weekday ? d.weekday[date.getDay()] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()]
+    month = d.month
+      ? d.month[date.getMonth()]
+      : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][date.getMonth()]
+
+    // Monday 6. February, 2021
+    string = weekday + " " + day + ". " + month + ", " + year
   } else {
     if (month < 10) month = "0" + month
     if (day < 10) day = "0" + day
+    year = year.toString().slice(-2)
+    string = [day, month, year].join(".")
   }
 
-  year = year.toString().slice(-2)
   // TODO: get format (DD.MM.YY) | YYYY-MM-DD | MM/DD/YYYY
-  return [day, month, year].join(".")
+  return string
 }
