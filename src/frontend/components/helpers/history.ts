@@ -21,6 +21,7 @@ export type HistoryIDs =
   | "newShow"
   | "newPrivateShow"
   | "newShowsCategory"
+  | "newSlide"
   | "addShow"
   | "slides"
   | "shows"
@@ -216,6 +217,17 @@ export function history(obj: History, undo: null | boolean = null) {
         return c
       })
       break
+    case "newSlide":
+      shows.update((s) => {
+        // TODO: add after activeEdit.index (+ children slides...)
+        let id = uid()
+        if (obj.newData) id = obj.newData[0]
+        s[get(activeShow)!.id].slides[id] = { label: "", color: null, style: "", notes: "", items: [] }
+        s[get(activeShow)!.id].layouts[s[get(activeShow)!.id].settings.activeLayout].slides.push({ id })
+        return s
+      })
+      break
+
     // ADD
     case "addShow":
       if (activeProject !== null) {

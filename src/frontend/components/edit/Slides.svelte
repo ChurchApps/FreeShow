@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, screen, activeEdit, outSlide } from "../../stores"
+  import { shows, activeShow, screen, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
 
@@ -14,30 +14,25 @@
   // $: editIndex = $output.slide?.index || 0
   $: currentShow = $shows[$activeShow!.id]
 
-  let activeShowLayout = $shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides.length
-  activeEdit.set({ slide: $outSlide?.index || activeShowLayout ? 0 : null, item: null })
-  activeShow.subscribe((a) => {
-    if (a?.id !== $outSlide?.id) activeEdit.set({ slide: activeShowLayout ? 0 : null, item: null })
-  })
+  // TODO: change on show change...
+  if ($activeEdit.slide === null || $activeEdit.slide >= GetLayout().length) {
+    let slide = null
+    if ($activeShow && GetLayout().length) {
+      if (typeof $activeShow.index === "number") {
+        slide = $activeShow.index
+        if (slide >= GetLayout().length) slide = 0
+      } else slide = 0
+    }
+    activeEdit.set({ slide, item: null })
+  }
+  // activeShow.subscribe(() => {
+  //   activeEdit.set({ slide: $activeShow?.index || 0, item: null })
+  // })
+  $: console.log($activeEdit)
 
   // let layoutSlides: SlideData[] = []
   // $: layoutSlides = GetLayout($activeShow!.id)
   $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
-  // console.log(currentShow)
-
-  // $: {
-  //   layoutSlides = []
-  //   currentShow.layouts[currentShow.settings.activeLayout].slides.forEach((ls) => {
-  //     let slide = currentShow.slides[ls.id]
-  //     layoutSlides.push({ ...ls, color: slide.color })
-  //     if (slide.children) {
-  //       slide.children.forEach((sc) => {
-  //         layoutSlides.push({ ...sc, color: slide.color })
-  //       })
-  //       // layoutSlides = [...layoutSlides, ...slide.children]
-  //     }
-  //   })
-  // }
 
   function keydown(e: any) {
     if (!(e.target instanceof HTMLTextAreaElement) && !e.target.closest(".edit")) {
@@ -60,34 +55,11 @@
       }
     }
   }
-
-  let hovering: null | number = null
-  let selected: number[] = []
-  let mouseDown: boolean = false
-  function mousedown() {
-    mouseDown = true
-  }
-  function mousemove(e: any) {
-    if (mouseDown && e.target.closest(".slide") && !selected.includes(Number(e.target.closest(".slide")?.getAttribute("data-index")))) {
-      selected = [...selected, Number(e.target.closest(".slide")?.getAttribute("data-index"))]
-    }
-  }
 </script>
 
-<svelte:window
-  on:keydown={keydown}
-  on:mousedown={(e) => {
-    if (!e.ctrlKey && !selected.includes(Number(e.target?.closest(".slide")?.getAttribute("data-index")))) selected = []
-  }}
-  on:mouseup={() => {
-    mouseDown = false
-  }}
-  on:dragover={() => {
-    mouseDown = false
-  }}
-/>
+<svelte:window on:keydown={keydown} />
 
-<div class="scroll" on:mousedown={mousedown} on:mousemove={mousemove}>
+<div class="scroll">
   <div class="grid" bind:offsetWidth={viewWidth}>
     {#each layoutSlides as slide, i}
       <Slide
@@ -96,17 +68,9 @@
         color={slide.color}
         active={$activeEdit.slide === i}
         list={true}
-        bind:hovering
-        bind:selected
         {zoom}
         on:click={(e) => {
           if (!e.ctrlKey) activeEdit.set({ slide: i, item: null })
-        }}
-        on:mousedown={(e) => {
-          if (!selected.includes(i)) {
-            if (e.ctrlKey) selected = [...selected, i]
-            else selected = [i]
-          }
         }}
       />
     {/each}

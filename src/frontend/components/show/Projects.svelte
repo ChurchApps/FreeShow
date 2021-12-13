@@ -45,6 +45,7 @@
     if (!e.target?.closest(".edit") && $activeProject !== null) {
       let shows = GetProjects().active.shows // $projects[$activeProject].shows
 
+      // TODO: duplicate of preview next / previousShow()
       if (shows.length) {
         let newIndex: null | number = null
         if (e.key === "ArrowDown") {

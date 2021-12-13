@@ -36,7 +36,7 @@
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:list>
-  <div class="slide context_slide" class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
+  <div class="slide context #slide" class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
     <SelectElem id="slide" data={index}>
       <Draggable id="slide" {index} direction={list ? "column" : "row"}>
         <!-- TODO: tab select on enter -->
@@ -93,6 +93,9 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
   .slideContent {
     position: relative;
     background-color: black;
+    /* background-color: var(--primary-darker); */
+    /* border: 1px solid var(--primary-lighter); */
+
     z-index: -1;
     /* width: 1920px;
     height: 1080px; */

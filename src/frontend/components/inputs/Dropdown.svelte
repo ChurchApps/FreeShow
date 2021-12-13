@@ -1,7 +1,6 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
   import { createEventDispatcher } from "svelte"
-  import T from "../helpers/T.svelte"
   import { translate } from "../../utils/language"
   import { language } from "../../stores"
   import type { Option } from "../../../types/Main"
@@ -25,10 +24,10 @@
   }}
 />
 
-<div bind:this={self} class="dropdownElem">
+<div bind:this={self} class="dropdownElem" style="position: relative;">
   <button on:click={() => (active = !active)}>
     {translate(updater[0], { parts: true })}
-    <T id={value} />
+    <!-- <T id={value} /> -->
   </button>
   {#if active}
     <div class="dropdown" transition:slide={{ duration: 200 }}>
@@ -39,7 +38,7 @@
             dispatch("click", option)
             active = false
           }}
-          class={option.name === value ? "active" : ""}
+          class:active={option.name === value}
         >
           {translate(option.name, { parts: true })}
           <!-- <T id={option.name} /> -->
@@ -52,33 +51,35 @@
 
 <style>
   div {
-    width: fit-content;
-    min-width: 200px;
-    background-color: var(--primary);
+    /* width: fit-content;
+    min-width: 200px; */
+    background-color: var(--primary-darker);
     color: var(--text);
+    /* position: relative; */
   }
 
   .dropdown {
     position: absolute;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    border: 2px solid var(--secondary);
-    max-width: 400px;
+    border: 2px solid var(--primary-lighter);
     transform: translateY(-1px);
     /* transform: translateX(-25%); */
     z-index: 10;
   }
 
   button {
-    width: 200px;
-    color: var(--secondary);
-    border: 2px solid var(--secondary);
-    font-weight: bold;
+    /* width: 200px; */
+    color: var(--text);
+    border: 2px solid var(--primary-lighter);
+    /* font-weight: bold; */
     text-align: left;
   }
 
   button,
   span {
+    width: 100%;
     padding: 8px 12px;
     background-color: transparent;
     /* text-transform: uppercase; */
@@ -93,6 +94,7 @@
     background-color: var(--hover);
   }
   span.active {
-    background-color: var(--active);
+    background-color: var(--focus);
+    color: var(--secondary);
   }
 </style>

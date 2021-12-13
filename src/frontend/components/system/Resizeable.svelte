@@ -49,7 +49,6 @@
       else if (side === "top") newWidth = e.clientY
       else if (side === "bottom") newWidth = window.innerHeight - e.clientY - mouse.offset
       // console.log(window.innerWidth, e.clientX, mouse.offsetX)
-      console.log(newWidth)
 
       if (newWidth < (defaultWidth * 0.6) / 2) newWidth = minWidth
       else if (newWidth < defaultWidth * 0.6) newWidth = defaultWidth * 0.6

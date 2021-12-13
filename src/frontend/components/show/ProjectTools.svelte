@@ -17,7 +17,7 @@
   // // bind:this={elem} style="height: {height}px;"
 </script>
 
-<Resizeable id="projectTools" side="bottom" maxWidth={window.innerHeight / 2}>
+<Resizeable id="projectTools" side="bottom" maxWidth={window.innerHeight * 0.75}>
   <!-- minWidth={80} -->
   <div class="main">
     <Tabs {tabs} bind:active />

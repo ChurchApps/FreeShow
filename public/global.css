@@ -1,3 +1,24 @@
+@font-face {
+  font-family: "CMGSans";
+  src: url("./fonts/CMGSans-Regular.ttf");
+}
+@font-face {
+  font-family: "CMGSans";
+  src: url("./fonts/CMGSans-Bold.ttf");
+  font-weight: bold;
+}
+@font-face {
+  font-family: "CMGSans";
+  src: url("./fonts/CMGSans-Italic.ttf");
+  font-style: italic;
+}
+@font-face {
+  font-family: "CMGSans";
+  src: url("./fonts/CMGSans-BoldItalic.ttf");
+  font-weight: bold;
+  font-style: italic;
+}
+
 :root {
   --primary: #2d313b;
   --primary-lighter: #41444c;

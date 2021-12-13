@@ -7,7 +7,7 @@
 
   // import { OutputObject } from "../../classes/OutputObject";
 
-  import { activePage, activeShow, outAudio, outBackground, outOverlays, outSlide, screen, shows } from "../../stores"
+  import { activeEdit, activePage, activeProject, activeShow, outAudio, outBackground, outOverlays, outSlide, projects, screen, shows } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -42,10 +42,12 @@
         //  && !slide.private
         // WIP: why private??????
         if (slide.index < layout.length - 1) {
+          let index = slide!.index + 1
           outSlide.update((o) => {
-            if (o) o.index = slide!.index + 1
+            if (o) o.index = index
             return o
           })
+          activeEdit.set({ slide: index, item: null })
         }
         // } else {
         //   output.update((o) => {
@@ -56,24 +58,29 @@
     }
   }
 
+  $: console.log($activeEdit)
+
   function previousSlide() {
     let slide = $outSlide
-    if (slide) {
-      //  && !slide.private
-      // let layout: Layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
-      if (slide.index > 0) {
+    let index = typeof slide?.index === "number" ? slide.index - 1 : GetLayout().length - 1
+    //  && !slide.private
+    // let layout: Layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
+
+    if (index > -1) {
+      if ($outSlide) {
         outSlide.update((o) => {
-          if (o) o.index = slide!.index - 1
+          o!.index = index
           return o
         })
-      }
-      // } else {
-      //   output.update((o) => {
-      //     // o.slide?.index = layout.length - 1
-      //     o.slide = { id, index: layout.length - 1 }
-      //     return o
-      //   })
+      } else if ($activeShow) outSlide.set({ id: $activeShow.id, index })
+      activeEdit.set({ slide: index, item: null })
     }
+    // } else {
+    //   output.update((o) => {
+    //     // o.slide?.index = layout.length - 1
+    //     o.slide = { id, index: layout.length - 1 }
+    //     return o
+    //   })
   }
 
   const clearAll = () => {
@@ -84,8 +91,20 @@
     clearVideo()
   }
 
-  function nextShow() {}
-  function previousShow() {}
+  function previousShow() {
+    if ($activeProject) {
+      let index = typeof $activeShow?.index === "number" ? $activeShow?.index : $projects[$activeProject].shows.length
+      if (index > 0) index--
+      if (index !== $activeShow?.index) activeShow.set({ ...$projects[$activeProject].shows[index], index })
+    }
+  }
+  function nextShow() {
+    if ($activeProject) {
+      let index = typeof $activeShow?.index === "number" ? $activeShow?.index : -1
+      if (index + 1 < $projects[$activeProject].shows.length) index++
+      if (index > -1 && index !== $activeShow?.index) activeShow.set({ ...$projects[$activeProject].shows[index], index })
+    }
+  }
 
   function keydown(e: any) {
     if (e.ctrlKey || e.altKey) {
@@ -221,19 +240,39 @@
   <span>Name: {name}</span>
   <span>Index: {index}</span>
   <span class="group">
-    <Button on:click={previousShow} title="[[[PreviousShow]]]" disabled={!$outSlide} center>
+    <Button
+      on:click={previousShow}
+      title="[[[PreviousShow [ArrowUp]]]]"
+      disabled={!Object.keys($projects).length ||
+        !$activeProject ||
+        !$projects[$activeProject].shows.length ||
+        (typeof $activeShow?.index === "number" ? $activeShow.index < 1 : false)}
+      center
+    >
       <Icon id="previousFull" size={1.2} />
     </Button>
-    <Button on:click={previousSlide} title="[[[PreviousSlide]]]" disabled={!$outSlide || $outSlide.index < 1} center>
+    <!-- TODO: check type... -->
+    <Button on:click={previousSlide} title="[[[PreviousSlide [ArrowLeft]]]]" disabled={!$activeShow || !GetLayout().length || ($outSlide && $outSlide.index < 1)} center>
       <Icon id="previous" size={1.2} />
     </Button>
     <Button title="[[[Lock]]]" center>
       <Icon id="unlocked" size={1.2} />
     </Button>
-    <Button on:click={nextSlide} title="[[[NextSlide]]]" disabled={!$outSlide || $outSlide.index + 1 >= length} center>
+    <Button title="[[[Refresh/Update Output Show]]]" center>
+      <Icon id="refresh" size={1.2} />
+    </Button>
+    <Button on:click={nextSlide} title="[[[NextSlide [ArrowRight]]]]" disabled={!$activeShow || !GetLayout().length || ($outSlide && $outSlide.index + 1 >= length)} center>
       <Icon id="next" size={1.2} />
     </Button>
-    <Button on:click={nextShow} title="[[[NextShow]]]" disabled={!$outSlide} center>
+    <Button
+      on:click={nextShow}
+      title="[[[NextShow [ArrowDown]]]]"
+      disabled={!Object.keys($projects).length ||
+        !$activeProject ||
+        !$projects[$activeProject].shows.length ||
+        ($activeShow?.index && $activeShow.index + 1 >= $projects[$activeProject].shows.length)}
+      center
+    >
       <Icon id="nextFull" size={1.2} />
     </Button>
   </span>

@@ -2,7 +2,7 @@
   // import {flip} from 'svelte/animate';
   import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, screen, slidesOptions, outSlide } from "../../stores"
+  import { shows, activeShow, screen, slidesOptions, outSlide, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
   import DropArea from "../system/DropArea.svelte"
@@ -46,6 +46,7 @@
               on:click={(e) => {
                 if (!e.ctrlKey) {
                   outSlide.set({ id, index: i })
+                  activeEdit.set({ slide: i, item: null })
                 }
               }}
             />

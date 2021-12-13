@@ -6,7 +6,15 @@
   $: show = $shows[$activeShow.id]
 </script>
 
-<h2 style="text-align: center">{show.name}</h2>
+<h2 style="text-align: center">
+  {#if show.name.length}
+    {show.name}
+  {:else}
+    <span style="opacity: 0.5">
+      <T id={"main.unnamed"} />
+    </span>
+  {/if}
+</h2>
 <p><T id={"info.created"} />: <Date d={show.timestamps.created} /></p>
 <p>
   <T id={"info.modified"} />:

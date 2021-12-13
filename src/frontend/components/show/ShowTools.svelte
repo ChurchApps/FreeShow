@@ -2,6 +2,7 @@
   import type { TabsObj } from "../../../types/Tabs"
   import { shows, activeShow } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
+  import Resizeable from "../system/Resizeable.svelte"
   import Notes from "./tools/Notes.svelte"
   import SlideGroups from "./tools/SlideGroups.svelte"
 
@@ -22,30 +23,30 @@
   }
 </script>
 
-<div class="main">
-  <!-- TODO: if type !== "video" -->
-  <Tabs {tabs} bind:active />
+<Resizeable id="showTools" side="bottom" maxWidth={window.innerHeight / 2}>
+  <div class="main">
+    <!-- TODO: if type !== "video" -->
+    <Tabs {tabs} bind:active />
 
-  <div class="content">
-    {#if active === "groups"}
-      <SlideGroups />
-    {:else if active === "notes"}
-      <Notes bind:value={note} />
-    {:else}
-      {active}
-    {/if}
+    <div class="content">
+      {#if active === "groups"}
+        <SlideGroups />
+      {:else if active === "notes"}
+        <Notes bind:value={note} />
+      {:else}
+        {active}
+      {/if}
+    </div>
   </div>
-</div>
+</Resizeable>
 
 <style>
   .main {
-    height: 50%;
     display: flex;
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
-    overflow-x: hidden;
-    border-top: 3px solid var(--primary-lighter);
+    /* overflow-x: hidden; */
   }
 
   .content {

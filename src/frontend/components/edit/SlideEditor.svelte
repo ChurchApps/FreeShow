@@ -7,8 +7,8 @@
 
   let slideWidth: number = 300
   $: currentShow = $activeShow!.id
-  $: layoutSlides = GetLayout(currentShow)
-  $: Slide = $activeEdit.slide !== null ? $shows[currentShow].slides[layoutSlides[$activeEdit.slide].id] : null
+  // $: layoutSlides = GetLayout(currentShow)
+  $: Slide = $activeEdit.slide !== null ? $shows[currentShow].slides[GetLayout(currentShow)[$activeEdit.slide]?.id] : null
 
   console.log(Slide)
 
@@ -22,6 +22,8 @@
   $: size = Math.min(resolution.width / elemWidth, elemWidth / resolution.width) > Math.min(resolution.height / elemHeight, elemHeight / resolution.height) ? "height" : "width"
   console.log(Math.min(resolution.width / elemWidth, elemWidth / resolution.width), Math.min(resolution.height / elemHeight, elemHeight / resolution.height))
   // TODO: width: 100% ......, fixed height!
+
+  // TODO: zoom more in...
 </script>
 
 <div class="parent" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
@@ -47,6 +49,7 @@
     height: 100%;
     display: flex;
     justify-content: center;
+    align-items: center;
     padding: 10px;
   }
 
@@ -56,7 +59,7 @@
     background-color: black;
     /* width: 1920px;
     height: 1080px; */
-    font-size: 5em;
+    font-size: 40pt;
   }
 
   .helperLine {

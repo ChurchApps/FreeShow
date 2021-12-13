@@ -2,6 +2,7 @@
   export let active: boolean = false
   export let center: boolean = false
   export let border: boolean = false
+  export let dark: boolean = false
   export let bold: boolean = true
 </script>
 
@@ -11,6 +12,7 @@
   class:center
   class:border
   class:bold
+  class:dark
   class={$$props.class}
   on:click
   on:dblclick
@@ -32,6 +34,9 @@
     align-items: center;
     padding: 0.2em 0.8em;
   }
+  button.dark {
+    background-color: var(--primary-darker);
+  }
   button.center {
     justify-content: center;
   }
@@ -52,13 +57,16 @@
     background-color: var(--focus);
   }
   button.active {
-    background-color: var(--secondary-opacity);
+    /* background-color: var(--secondary-opacity); */
+    /* background-color: var(--primary-darkest); */
+    background-color: var(--primary-darker);
     color: var(--secondary-text);
     outline: none;
   }
   button.active.border {
     outline-offset: -2px;
-    outline: 2px solid var(--secondary);
+    /* outline: 2px solid var(--secondary); */
+    outline: 2px solid var(--primary-lighter);
   }
 
   button :global(div) {

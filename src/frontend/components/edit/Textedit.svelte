@@ -291,7 +291,8 @@
     {/each}
   </section>
   <!-- on:input={updateText} -->
-  <div bind:this={textElem} class="edit" style="height: 100%" contenteditable={true}>
+  <!-- TODO: zoom.... -->
+  <div bind:this={textElem} class="edit" style="height: 100%; zoom: {1 / zoom};" contenteditable={true}>
     {#if item.text}
       {#each item.text as text}
         <span style={text.style}>{text.value}</span>
