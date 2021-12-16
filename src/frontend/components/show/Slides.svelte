@@ -1,21 +1,21 @@
 <script lang="ts">
   // import {flip} from 'svelte/animate';
-  import type { Resolution } from "../../../types/Settings"
+  // import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, screen, slidesOptions, outSlide, activeEdit } from "../../stores"
+  import { shows, activeShow, slidesOptions, outSlide, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
   import DropArea from "../system/DropArea.svelte"
   import Center from "../system/Center.svelte"
   // import { GetLayout } from "../helpers/get"
 
-  let viewWidth: number = window.innerWidth / 3
-  let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
+  // let viewWidth: number = window.innerWidth / 3
+  // let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
   // let zoom = 0.15
   // console.log(elem)
 
   // = width / main padding - slide padding - extra - columns*gaps/padding / columns / resolution
-  $: zoom = (viewWidth - 20 - 0 - 0 - ($slidesOptions.columns - 1) * (10 + 0)) / $slidesOptions.columns / resolution.width
+  // $: zoom = (viewWidth - 20 - 0 - 0 - ($slidesOptions.columns - 1) * (10 + 0)) / $slidesOptions.columns / resolution.width
   $: id = $activeShow!.id
   $: currentShow = $shows[$activeShow!.id]
   $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
@@ -32,7 +32,7 @@
     {#if $shows[id] === undefined}
       <Center faded>Error! Could not find show!</Center>
     {:else}
-      <div class="grid" bind:offsetWidth={viewWidth}>
+      <div class="grid">
         <!-- {#each Object.values($shows[id].slides) as slide, i} -->
         {#if layoutSlides.length}
           {#each layoutSlides as slide, i}
@@ -42,7 +42,7 @@
               color={slide.color}
               active={$outSlide?.index === i && $outSlide?.id === id}
               list={!$slidesOptions.grid}
-              {zoom}
+              columns={$slidesOptions.columns}
               on:click={(e) => {
                 if (!e.ctrlKey) {
                   outSlide.set({ id, index: i })
@@ -74,8 +74,8 @@
   .grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px;
+    /* gap: 10px; */
+    padding: 5px;
     height: 100%;
     align-content: flex-start;
   }

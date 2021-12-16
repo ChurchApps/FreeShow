@@ -12,6 +12,7 @@
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
+  import { getStyleResolution } from "../slide/getStyleResolution"
   import AudioMeter from "./AudioMeter.svelte"
 
   import Output from "./Output.svelte"
@@ -121,6 +122,9 @@
         // Arrow Left | Shift + Space Bar
         e.preventDefault()
         previousSlide()
+      } else if (e.key === "Escape" && fullscreen) {
+        // TODO: dont toggle drawer
+        fullscreen = false
       }
     }
   }
@@ -131,10 +135,10 @@
   let fullscreen: boolean = false
   let resolution: Resolution = $screen.resolution
 
-  $: size =
-    Math.min(resolution.width / window.innerWidth, window.innerWidth / resolution.width) > Math.min(resolution.height / window.innerHeight, window.innerHeight / resolution.height)
-      ? "height: 90vh"
-      : "width: 80vw"
+  // $: size =
+  //   Math.min(resolution.width / window.innerWidth, window.innerWidth / resolution.width) > Math.min(resolution.height / window.innerHeight, window.innerHeight / resolution.height)
+  //     ? "height: 90vh"
+  //     : "width: 80vw"
 
   let video: any = null
   let videoData: any = {
@@ -175,15 +179,15 @@
 <div class="main">
   <!-- hidden={$activePage === "live" ? false : true} -->
   <div class="top">
-    <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "" : "width: 100%"}>
+    <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: 100%"}>
       {#if fullscreen}
         <span class="resolution">
           <!-- TODO: get actual resultion ... -->
-          <p><b>Width:</b> {resolution.width}px</p>
-          <p><b>Height:</b> {resolution.height}px</p>
+          <p><b>[[[Width]]]:</b> {resolution.width} [[[pixels]]]</p>
+          <p><b>[[[Height]]]:</b> {resolution.height} [[[pixels]]]</p>
         </span>
       {/if}
-      <Output style={fullscreen ? size : ""} bind:video bind:videoData />
+      <Output center={fullscreen} style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerWidth, "fit") : ""} bind:video bind:videoData />
     </div>
     <AudioMeter {video} />
     <!-- {#if $activePage === 'live'}
@@ -321,6 +325,7 @@
 
   .fullscreen {
     position: fixed;
+    background-color: var(--primary);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -329,14 +334,24 @@
   }
   .resolution {
     position: absolute;
+    bottom: 0;
+    right: 0;
+
+    color: var(--secondary-text);
+    /* background-color: var(--primary);
+    background-color: black; */
+    text-align: right;
     display: flex;
     flex-direction: column;
     gap: 5px;
-    z-index: 30;
-    color: var(--secondary-text);
     padding: 10px 12px;
-    border-bottom-right-radius: 5px;
-    background-color: var(--secondary-opacity);
+    opacity: 0.8;
+    transition: opacity ease-in-out 0.2s;
+
+    z-index: 30;
+  }
+  .resolution:hover {
+    opacity: 0;
   }
   .resolution p {
     display: flex;

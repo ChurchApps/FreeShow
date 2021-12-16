@@ -6,7 +6,8 @@
 
   export let item: Item
   export let index: number
-  export let zoom: number
+  export let ratio: number
+  $: zoom = ratio
 
   // export let slideElem: any
   let itemElem: any
@@ -291,8 +292,7 @@
     {/each}
   </section>
   <!-- on:input={updateText} -->
-  <!-- TODO: zoom.... -->
-  <div bind:this={textElem} class="edit" style="height: 100%; zoom: {1 / zoom};" contenteditable={true}>
+  <div bind:this={textElem} class="edit" style="height: 100%;" contenteditable={true}>
     {#if item.text}
       {#each item.text as text}
         <span style={text.style}>{text.value}</span>

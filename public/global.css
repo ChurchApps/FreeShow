@@ -62,7 +62,8 @@ body {
   height: 10px;
 }
 
-::-webkit-scrollbar-track {
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
   background: rgb(255 255 255 / 0.05);
 }
 

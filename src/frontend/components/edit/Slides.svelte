@@ -1,15 +1,8 @@
 <script lang="ts">
-  import type { Resolution } from "../../../types/Settings"
-
-  import { shows, activeShow, screen, activeEdit } from "../../stores"
+  import { shows, activeShow, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
-
-  let viewWidth: number = window.innerWidth / 3
-  let columns: number = 1
-  let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
-
-  $: zoom = (viewWidth - 20 - 1 - (columns - 1) * 10) / columns / resolution.width
+  import Center from "../system/Center.svelte"
 
   // $: editIndex = $output.slide?.index || 0
   $: currentShow = $shows[$activeShow!.id]
@@ -60,21 +53,24 @@
 <svelte:window on:keydown={keydown} />
 
 <div class="scroll">
-  <div class="grid" bind:offsetWidth={viewWidth}>
-    {#each layoutSlides as slide, i}
-      <Slide
-        slide={currentShow.slides[slide.id]}
-        index={i}
-        color={slide.color}
-        active={$activeEdit.slide === i}
-        list={true}
-        {zoom}
-        on:click={(e) => {
-          if (!e.ctrlKey) activeEdit.set({ slide: i, item: null })
-        }}
-      />
-    {/each}
-  </div>
+  {#if layoutSlides.length}
+    <div class="grid">
+      {#each layoutSlides as slide, i}
+        <Slide
+          slide={currentShow.slides[slide.id]}
+          index={i}
+          color={slide.color}
+          active={$activeEdit.slide === i}
+          list={true}
+          on:click={(e) => {
+            if (!e.ctrlKey) activeEdit.set({ slide: i, item: null })
+          }}
+        />
+      {/each}
+    </div>
+  {:else}
+    <Center faded>[[[No slides]]]</Center>
+  {/if}
 </div>
 
 <style>
@@ -87,7 +83,6 @@
   .grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px;
+    padding: 5px;
   }
 </style>

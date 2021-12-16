@@ -91,7 +91,7 @@
   let firstMatch: null | string = null
   let searchElem: any
   function keydown(e: any) {
-    if (document.activeElement === document.body && !e.ctrlKey) {
+    if (document.activeElement === document.body && !e.ctrlKey && !e.altKey) {
       // Alphabet upper case | Alphabet lower case
       if (/^[A-Z]{1}$/i.test(e.key)) searchElem.focus()
     } else if (e.key === "Enter") {

@@ -14,7 +14,7 @@
   import ContextMenu from "./components/system/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import { activePage, activeProject, activeShow, drawer, outputWindow, shows } from "./stores"
+  import { activePage, activeProject, activeShow, drawer, outputWindow, outSlide, screen, shows } from "./stores"
   import ProjectTools from "./components/show/ProjectTools.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
@@ -22,6 +22,8 @@
   import Output from "./components/output/Output.svelte"
   import { OUTPUT } from "../types/Channels"
   import { redo, undo } from "./components/helpers/history"
+  import { getStyleResolution } from "./components/slide/getStyleResolution"
+  import type { Resolution } from "../types/Settings"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -73,13 +75,19 @@
       }
     }
   }
+
+  let width: number = 0
+  let height: number = 0
+  let resolution: Resolution = $outSlide ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <main>
   {#if $outputWindow}
-    <Output />
+    <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height}>
+      <Output style={getStyleResolution(resolution, width, height, "fit")} center />
+    </div>
   {:else}
     <!-- <h1>FreeShow</h1> -->
 
@@ -175,4 +183,12 @@
 			max-width: none;
 		}
 	} */
+
+  .fill {
+    cursor: none;
+    height: 100%;
+    width: 100%;
+    /* TODO: change electron window resolution...?? */
+    /* background-color: black; */
+  }
 </style>
