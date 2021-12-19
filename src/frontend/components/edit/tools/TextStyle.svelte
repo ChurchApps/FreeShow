@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Item } from "../../../../types/Show"
   import { activeShow, activeEdit, shows } from "../../../stores"
+  import { getSlide } from "../../helpers/get"
   import { History, history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -12,13 +13,16 @@
   let active = $activeShow?.id!
 
   console.log($activeEdit)
-  let editSlideItems = $activeEdit.slide !== null ? $shows[active].slides[$shows[active].layouts[$shows[active].settings.activeLayout].slides[$activeEdit.slide].id].items : []
+  // [$activeEdit.slide]
+  let editSlideItems: Item[] = $activeEdit.slide !== null ? getSlide(active, $activeEdit.slide).items : []
+  // let editSlideItems = $activeEdit.slide !== null ? $shows[active].slides[$shows[active].layouts[$shows[active].settings.activeLayout].slides[$activeEdit.slide].id].items : []
 
   // console.log(editSlideItems)
   // console.log($activeEdit)
-  $: editSlideItems
+  // $: editSlideItems
 
-  $: item = $activeEdit.item !== null ? $activeEdit.item : null
+  // TODO: sort....
+  $: item = $activeEdit.items.length ? $activeEdit.items[0] : 0
   // $: console.log(item)
 
   const defaults: { [key: string]: string } = {
@@ -28,22 +32,24 @@
   function getStyle(id: string, _c: any = null) {
     // select active item or first item
     // TODO: check if item 0 exists...
-    let styles: any = editSlideItems[item || 0]
-    if (styles.text) {
-      console.log(selectedTextItem)
-      // TODO: fix bug...
-      styles = styles.text![selectedTextItem].style.split(";")
-    } else styles = styles.style.split(";")
-    console.log(styles)
-
+    let styles: any = editSlideItems[item]
     let style = null
-    styles.forEach((s: string) => {
-      console.log(s, id)
+    if (styles) {
+      if (styles.text) {
+        console.log(selectedTextItem)
+        // TODO: fix bug...
+        styles = styles.text![selectedTextItem].style.split(";")
+      } else styles = styles.style.split(";")
+      console.log(styles)
 
-      if (s.includes(id)) style = s.split(":")[1]
-      if (s.includes(id)) console.log(s.split(":")[1])
-    })
-    console.log(style)
+      styles.forEach((s: string) => {
+        console.log(s, id)
+
+        if (s.includes(id)) style = s.split(":")[1]
+        if (s.includes(id)) console.log(s.split(":")[1])
+      })
+      console.log(style)
+    }
 
     return style || defaults[id]
   }

@@ -2,11 +2,26 @@ import { ShowObj } from "../../classes/Show"
 import { uid } from "uid"
 import { GetShow } from "./get"
 import { dateToString } from "../helpers/time"
-import { shows, activeProject, projects, redoHistory, mediaFolders, projectView, folders, openedFolders, defaultName, drawerTabsData, activeShow, categories } from "./../../stores"
+import {
+  shows,
+  activeProject,
+  activeEdit,
+  projects,
+  redoHistory,
+  mediaFolders,
+  projectView,
+  folders,
+  openedFolders,
+  defaultName,
+  drawerTabsData,
+  activeShow,
+  categories,
+} from "./../../stores"
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory } from "../../stores"
 import { get } from "svelte/store"
 import type { Slide, Item } from "../../../types/Show"
+import { GetLayout } from "../helpers/get"
 
 export type HistoryPages = "drawer" | "shows" | "edit"
 export type HistoryIDs =
@@ -177,6 +192,7 @@ export function history(obj: History, undo: null | boolean = null) {
     case "newShowDrawer":
     case "newShow":
     case "newPrivateShow":
+      // TODO: undo
       // show dialog
       // new Show()
       let category: null | string = null
@@ -202,6 +218,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "newShowsCategory":
       categories.update((c) => {
+        // TODO: undo
         if (undo) c = obj.oldData
         else {
           if (!obj.newData) {
@@ -218,14 +235,26 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     case "newSlide":
+      // TODO: undo
       shows.update((s) => {
         // TODO: add after activeEdit.index (+ children slides...)
         let id = uid()
         if (obj.newData) id = obj.newData[0]
+        // TODO: add by template
+        // TODO: add as child to previous
         s[get(activeShow)!.id].slides[id] = { label: "", color: null, style: "", notes: "", items: [] }
         s[get(activeShow)!.id].layouts[s[get(activeShow)!.id].settings.activeLayout].slides.push({ id })
         return s
       })
+      if (undo) {
+        // TODO: undo
+        // decrement active edit slide index if removed slide(s) is active
+      } else {
+        activeEdit.update((ae) => {
+          ae.slide = GetLayout().length - 1
+          return ae
+        })
+      }
       break
 
     // ADD

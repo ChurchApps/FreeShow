@@ -4,6 +4,7 @@
   export let border: boolean = false
   export let dark: boolean = false
   export let bold: boolean = true
+  export let red: boolean = false
 </script>
 
 <button
@@ -13,6 +14,7 @@
   class:border
   class:bold
   class:dark
+  class:red
   class={$$props.class}
   on:click
   on:dblclick
@@ -33,6 +35,8 @@
     display: flex;
     align-items: center;
     padding: 0.2em 0.8em;
+
+    transition: background-color 0.2s;
   }
   button.dark {
     background-color: var(--primary-darker);
@@ -46,6 +50,19 @@
     padding: 0.3em 0.8em;
     /* text-transform: uppercase; */
   }
+
+  /* red */
+  button.red {
+    background-color: rgb(255 0 0 / 0.25);
+  }
+  button.red:hover:not(:disabled):not(.active) {
+    background-color: rgb(255 0 0 / 0.35);
+  }
+  button.red:active:not(:disabled):not(.active),
+  button.red:focus:not(.active) {
+    background-color: rgb(255 0 0 / 0.3);
+  }
+
   button:not(:disabled):not(.active) {
     cursor: pointer;
   }

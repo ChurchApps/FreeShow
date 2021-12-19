@@ -21,9 +21,9 @@ export const projectView: Writable<boolean> = writable(false) // WIP
 export const activeFilePath: Writable<undefined | string> = writable() // WIP
 interface ActiveEdit {
   slide: null | number
-  item: null | number
+  items: number[]
 }
-export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, item: null })
+export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, items: [] })
 export const activePage: Writable<TopViews> = writable("show")
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
@@ -36,6 +36,7 @@ export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
 export const activeProject: Writable<null | ID> = writable("feskof")
 export const activeShow: Writable<null | ShowRef> = writable(null)
 // Layers: background, text, overlay, audio
+export const outLocked: Writable<boolean> = writable(false)
 export const outBackground: Writable<null | OutBackground> = writable(null)
 export const outSlide: Writable<null | OutSlide> = writable(null)
 export const outOverlays: Writable<string[]> = writable([])

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ID, ShowType } from "../../../types/Show"
-  import { activeProject, activeShow, outSlide, projects, shows } from "../../stores"
+  import { activeProject, activeShow, outLocked, outSlide, projects, shows } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import Draggable from "../system/Draggable.svelte"
   import Button from "./Button.svelte"
@@ -43,7 +43,7 @@
   }
 
   function doubleClick(e: any) {
-    if ($shows[id] && !e.target.classList.contains("name")) {
+    if (!$outLocked && $shows[id] && !e.target.classList.contains("name")) {
       outSlide.set({ id, index: 0 })
     }
   }
@@ -56,7 +56,7 @@
   }
 </script>
 
-<div class="main">
+<div {id} class="main">
   <!-- <SelectElem id="show" data={{ id, type }}> -->
   <Draggable id="show" {index} direction="column">
     <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->

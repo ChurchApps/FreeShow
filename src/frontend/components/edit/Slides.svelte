@@ -2,6 +2,7 @@
   import { shows, activeShow, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
+  import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
 
   // $: editIndex = $output.slide?.index || 0
@@ -16,7 +17,7 @@
         if (slide >= GetLayout().length) slide = 0
       } else slide = 0
     }
-    activeEdit.set({ slide, item: null })
+    activeEdit.set({ slide, items: [] })
   }
   // activeShow.subscribe(() => {
   //   activeEdit.set({ slide: $activeShow?.index || 0, item: null })
@@ -33,26 +34,37 @@
         // Arrow Down
         e.preventDefault()
         if ($activeEdit.slide === null) {
-          activeEdit.set({ slide: 0, item: null })
+          activeEdit.set({ slide: 0, items: [] })
         } else if ($activeEdit.slide < layoutSlides.length - 1) {
-          activeEdit.set({ slide: $activeEdit.slide + 1, item: null })
+          activeEdit.set({ slide: $activeEdit.slide + 1, items: [] })
         }
       } else if (e.key === "ArrowUp") {
         // Arrow Up
         e.preventDefault()
         if ($activeEdit.slide === null) {
-          activeEdit.set({ slide: layoutSlides.length - 1, item: null })
+          activeEdit.set({ slide: layoutSlides.length - 1, items: [] })
         } else if ($activeEdit.slide > 0) {
-          activeEdit.set({ slide: $activeEdit.slide - 1, item: null })
+          activeEdit.set({ slide: $activeEdit.slide - 1, items: [] })
         }
       }
+    }
+  }
+
+  let scrollElem: any
+  let offset: number = -1
+  $: {
+    if ($activeEdit.slide !== null) {
+      let index = $activeEdit.slide - 1
+      setTimeout(() => {
+        if (index >= 0) offset = scrollElem.querySelector(".grid").children[index].offsetTop - 5
+      }, 10)
     }
   }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<div class="scroll">
+<Autoscroll {offset} bind:scrollElem style={"background-color: var(--primary-darker);"}>
   {#if layoutSlides.length}
     <div class="grid">
       {#each layoutSlides as slide, i}
@@ -63,7 +75,7 @@
           active={$activeEdit.slide === i}
           list={true}
           on:click={(e) => {
-            if (!e.ctrlKey) activeEdit.set({ slide: i, item: null })
+            if (!e.ctrlKey) activeEdit.set({ slide: i, items: [] })
           }}
         />
       {/each}
@@ -71,15 +83,9 @@
   {:else}
     <Center faded>[[[No slides]]]</Center>
   {/if}
-</div>
+</Autoscroll>
 
 <style>
-  .scroll {
-    overflow-y: auto;
-    flex: 1;
-    background-color: var(--primary-darker);
-  }
-
   .grid {
     display: flex;
     flex-wrap: wrap;

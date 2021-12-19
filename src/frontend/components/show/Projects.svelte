@@ -7,6 +7,7 @@
   import Button from "../inputs/Button.svelte"
   import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
+  import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
@@ -62,6 +63,13 @@
       }
     }
   }
+
+  let scrollElem: any
+  let offset: number = -1
+  $: {
+    if (scrollElem && $activeShow && $activeShow.index !== null)
+      offset = scrollElem.querySelector(".list").querySelector("div").children[$activeShow.index!].offsetTop - scrollElem.offsetTop
+  }
 </script>
 
 <svelte:window on:keydown={keyDown} />
@@ -107,30 +115,32 @@
       </Button>
     </div>
   {:else if $activeProject !== null}
-    <div class="list context #project">
-      <DropArea id="project">
-        <!-- {/* WIP: live on double click?? */} -->
-        {#if $projects[$activeProject].shows.length}
-          {#each $projects[$activeProject].shows as show, index}
-            <SelectElem id="show" data={index}>
-              <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
-              <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-              <ShowButton
-                id={show.id}
-                {index}
-                type={show.type}
-                name={$shows[show.id]?.name}
-                icon={$shows[show.id]?.private ? "private" : show.type ? show.type : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "noIcon"}
-                class="context #{show.type ? '' : 'show'}__project"
-              />
-              <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
-            </SelectElem>
-          {/each}
-        {:else}
-          <Center faded>[[[No shows]]]</Center>
-        {/if}
-      </DropArea>
-    </div>
+    <Autoscroll {offset} bind:scrollElem>
+      <div class="list context #project">
+        <DropArea id="project">
+          <!-- {/* WIP: live on double click?? */} -->
+          {#if $projects[$activeProject].shows.length}
+            {#each $projects[$activeProject].shows as show, index}
+              <SelectElem id="show" data={index}>
+                <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
+                <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
+                <ShowButton
+                  id={show.id}
+                  {index}
+                  type={show.type}
+                  name={$shows[show.id]?.name}
+                  icon={$shows[show.id]?.private ? "private" : show.type ? show.type : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "noIcon"}
+                  class="context #{show.type ? '' : 'show'}__project"
+                />
+                <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
+              </SelectElem>
+            {/each}
+          {:else}
+            <Center faded>[[[No shows]]]</Center>
+          {/if}
+        </DropArea>
+      </div>
+    </Autoscroll>
     <div class="tabs">
       <Button on:click={() => history({ id: "newShow", newData: { project: $activeProject } })} center title={$dictionary.new?.show}>
         <Icon id="showIcon" />

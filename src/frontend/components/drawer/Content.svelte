@@ -1,7 +1,7 @@
 <script lang="ts">
   import { FOLDER_READ } from "../../../types/Channels"
   import type { Show } from "../../../types/Show"
-  import { dictionary, drawerTabsData, mediaFolders, shows } from "../../stores"
+  import { activeShow, dictionary, drawerTabsData, mediaFolders, shows } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
   import Media from "./Media.svelte"
@@ -18,6 +18,7 @@
   import Button from "../inputs/Button.svelte"
   import T from "../helpers/T.svelte"
   import { dateToString } from "../helpers/time"
+  import Autoscroll from "../system/Autoscroll.svelte"
 
   export let id: string
   export let bible: any
@@ -123,32 +124,47 @@
       firstMatch = null
     }
   }
+
+  let scrollElem: any
+  let offset: number = -1
+  $: {
+    if (id && $activeShow !== null) {
+      if (id === "shows" && $activeShow.type === null) offset = scrollElem.querySelector("#" + $activeShow.id)?.offsetTop - scrollElem.offsetTop
+    }
+  }
 </script>
 
 <!-- TODO: sort by percentage -->
 <!-- TODO: go to first on input enter -->
-
 <div class="main">
   {#if id === "shows"}
-    <div class="column context #drawer_show">
-      {#if filteredShows.length}
-        {#each filteredShows as show, index}
-          <Draggable id="show_drawer" {index}>
-            <SelectElem id="show_drawer" data={{ id: show.id, index }}>
-              {#if searchValue.length <= 1 || show.match}
-                <ShowButton id={show.id} name={show.name} data={dateToString(show.timestamps.created, true)} class="#drawer_show_button__drawer_show" match={show.match || null} />
-              {/if}
-            </SelectElem>
-          </Draggable>
-        {/each}
-        <!-- TODO: not updating values on activeSubTab change -->
-        {#if searchValue.length > 1 && totalMatch === 0}
-          <Center size={1.5} faded>[[[No match]]]</Center>
+    <Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
+      <div class="column context #drawer_show">
+        {#if filteredShows.length}
+          {#each filteredShows as show, index}
+            <Draggable id="show_drawer" {index}>
+              <SelectElem id="show_drawer" data={{ id: show.id, index }}>
+                {#if searchValue.length <= 1 || show.match}
+                  <ShowButton
+                    id={show.id}
+                    name={show.name}
+                    data={dateToString(show.timestamps.created, true)}
+                    class="#drawer_show_button__drawer_show"
+                    match={show.match || null}
+                  />
+                {/if}
+              </SelectElem>
+            </Draggable>
+          {/each}
+          <!-- TODO: not updating values on activeSubTab change -->
+          {#if searchValue.length > 1 && totalMatch === 0}
+            <Center size={1.5} faded>[[[No match]]]</Center>
+          {/if}
+        {:else}
+          <Center size={1.5} faded>[[[No shows]]]</Center>
         {/if}
-      {:else}
-        <Center size={1.5} faded>[[[No shows]]]</Center>
-      {/if}
-    </div>
+      </div>
+    </Autoscroll>
     <div class="tabs">
       <Button style="flex: 1;" on:click={() => history({ id: "newShowDrawer" })} center title={$dictionary.new?.show}>
         <Icon id="showIcon" style="padding-right: 10px;" />
@@ -205,9 +221,8 @@
   .column {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    overflow-y: auto;
     background-color: var(--primary-darker);
+    flex: 1;
   }
 
   .tabs {

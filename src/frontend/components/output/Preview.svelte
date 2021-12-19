@@ -7,7 +7,7 @@
 
   // import { OutputObject } from "../../classes/OutputObject";
 
-  import { activeEdit, activePage, activeProject, activeShow, outAudio, outBackground, outOverlays, outSlide, projects, screen, shows } from "../../stores"
+  import { activeEdit, activePage, activeProject, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, projects, screen, shows } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -21,40 +21,42 @@
   $: out = $outBackground === null && $outSlide === null && !$outOverlays.length && !$outAudio.length ? false : true
 
   function nextSlide(e: any) {
-    // TODO: go down automaticly
-    if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
+    if (!$outLocked) {
+      // TODO: go down automaticly
+      if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let slide = $outSlide
-    let layout: SlideData[] = []
-    // if (slide) layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
-    if (slide) layout = GetLayout(slide.id)
-    let endOfShow = slide?.index === layout.length - 1
-    // TODO: active show slide index on delete......
-    // go to beginning if live mode & ctrl | no output | last slide active
-    if ($activePage === "show" && $activeShow && (!out || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
-      outSlide.set({ id: $activeShow!.id, index: 0 })
-    } else {
-      // Check for loop to beginning slide...
-      // Go to next show?
-      // if (e.ctrlKey && ) { // TODO: if ctrl key, go to next show
+      let slide = $outSlide
+      let layout: SlideData[] = []
+      // if (slide) layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
+      if (slide) layout = GetLayout(slide.id)
+      let endOfShow = slide?.index === layout.length - 1
+      // TODO: active show slide index on delete......
+      // go to beginning if live mode & ctrl | no output | last slide active
+      if ($activePage === "show" && $activeShow && (!out || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
+        outSlide.set({ id: $activeShow!.id, index: 0 })
+      } else {
+        // Check for loop to beginning slide...
+        // Go to next show?
+        // if (e.ctrlKey && ) { // TODO: if ctrl key, go to next show
 
-      // TODO: slide disabled!!!!!
-      if (slide) {
-        //  && !slide.private
-        // WIP: why private??????
-        if (slide.index < layout.length - 1) {
-          let index = slide!.index + 1
-          outSlide.update((o) => {
-            if (o) o.index = index
-            return o
-          })
-          activeEdit.set({ slide: index, item: null })
+        // TODO: slide disabled!!!!!
+        if (slide) {
+          //  && !slide.private
+          // WIP: why private??????
+          if (slide.index < layout.length - 1) {
+            let index = slide!.index + 1
+            outSlide.update((o) => {
+              if (o) o.index = index
+              return o
+            })
+            activeEdit.set({ slide: index, items: [] })
+          }
+          // } else {
+          //   output.update((o) => {
+          //     o.slide = { id, index: 0 }
+          //     return o
+          //   })
         }
-        // } else {
-        //   output.update((o) => {
-        //     o.slide = { id, index: 0 }
-        //     return o
-        //   })
       }
     }
   }
@@ -62,34 +64,38 @@
   $: console.log($activeEdit)
 
   function previousSlide() {
-    let slide = $outSlide
-    let index = typeof slide?.index === "number" ? slide.index - 1 : GetLayout().length - 1
-    //  && !slide.private
-    // let layout: Layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
+    if (!$outLocked) {
+      let slide = $outSlide
+      let index = typeof slide?.index === "number" ? slide.index - 1 : GetLayout().length - 1
+      //  && !slide.private
+      // let layout: Layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
 
-    if (index > -1) {
-      if ($outSlide) {
-        outSlide.update((o) => {
-          o!.index = index
-          return o
-        })
-      } else if ($activeShow) outSlide.set({ id: $activeShow.id, index })
-      activeEdit.set({ slide: index, item: null })
+      if (index > -1) {
+        if ($outSlide) {
+          outSlide.update((o) => {
+            o!.index = index
+            return o
+          })
+        } else if ($activeShow) outSlide.set({ id: $activeShow.id, index })
+        activeEdit.set({ slide: index, items: [] })
+      }
+      // } else {
+      //   output.update((o) => {
+      //     // o.slide?.index = layout.length - 1
+      //     o.slide = { id, index: layout.length - 1 }
+      //     return o
+      //   })
     }
-    // } else {
-    //   output.update((o) => {
-    //     // o.slide?.index = layout.length - 1
-    //     o.slide = { id, index: layout.length - 1 }
-    //     return o
-    //   })
   }
 
   const clearAll = () => {
-    outBackground.set(null)
-    outSlide.set(null)
-    outOverlays.set([])
-    outAudio.set([])
-    clearVideo()
+    if (!$outLocked) {
+      outBackground.set(null)
+      outSlide.set(null)
+      outOverlays.set([])
+      outAudio.set([])
+      clearVideo()
+    }
   }
 
   function previousShow() {
@@ -111,14 +117,16 @@
     if (e.ctrlKey || e.altKey) {
       if (e.key === "c") clearAll()
       else if (e.key === "f") fullscreen = !fullscreen
+      else if (e.key === "l") outLocked.set(!$outLocked)
+      else if (e.key === "r") outSlide.set($outSlide)
     }
 
     if (!e.target.closest("input") && !e.target.closest(".edit")) {
-      if (e.key === "ArrowRight" || (e.key === " " && !e.shiftKey)) {
+      if (!$outLocked && (e.key === "ArrowRight" || (e.key === " " && !e.shiftKey))) {
         // Arrow Right | Space Bar
         e.preventDefault()
         nextSlide(e)
-      } else if (e.key === "ArrowLeft" || (e.key === " " && e.shiftKey)) {
+      } else if (!$outLocked && (e.key === "ArrowLeft" || (e.key === " " && e.shiftKey))) {
         // Arrow Left | Shift + Space Bar
         e.preventDefault()
         previousSlide()
@@ -130,7 +138,6 @@
   }
 
   $: name = $outSlide ? ($shows[$outSlide.id].private ? `${$shows[$outSlide.id].name} [[[[private]]]]` : $shows[$outSlide.id].name) : "-"
-  $: index = $outSlide ? $outSlide.index + 1 : "-"
 
   let fullscreen: boolean = false
   let resolution: Resolution = $screen.resolution
@@ -199,28 +206,66 @@
   <div class="clear">
     <span>
       <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
-      <Button class="clearAll" disabled={!out} on:click={clearAll} center>
+      <Button class="clearAll" disabled={$outLocked || !out} on:click={clearAll} red center>
         <T id={"clear.all"} />
       </Button>
     </span>
     <span class="group">
       <Button
-        disabled={!$outBackground}
+        disabled={$outLocked || !$outBackground}
         on:click={() => {
-          outBackground.set(null)
-          clearVideo()
+          if (!$outLocked) {
+            outBackground.set(null)
+            clearVideo()
+          }
         }}
-        center>BG</Button
+        red
+        center
       >
-      <Button disabled={!$outSlide} on:click={() => outSlide.set(null)} center>TXT</Button>
-      <Button disabled={!$outOverlays.length} on:click={() => outOverlays.set([])} center>OL</Button>
-      <Button disabled={!$outAudio.length} on:click={() => outAudio.set([])} center>AUDIO</Button>
+        BG
+      </Button>
+      <Button
+        disabled={$outLocked || !$outSlide}
+        on:click={() => {
+          if (!$outLocked) {
+            outSlide.set(null)
+          }
+        }}
+        red
+        center
+      >
+        TXT
+      </Button>
+      <Button
+        disabled={$outLocked || !$outOverlays.length}
+        on:click={() => {
+          if (!$outLocked) {
+            outOverlays.set([])
+          }
+        }}
+        red
+        center
+      >
+        OL
+      </Button>
+      <Button
+        disabled={$outLocked || !$outAudio.length}
+        on:click={() => {
+          if (!$outLocked) {
+            outAudio.set([])
+          }
+        }}
+        red
+        center
+      >
+        AUDIO
+      </Button>
     </span>
   </div>
 
   <!-- video -->
   {#if video}
-    {$outBackground?.name}
+    <span style="display: flex;padding: 10px;opacity: 0.8;">{$outBackground?.name}</span>
     <span class="group">
       <Button
         style="flex: 0"
@@ -241,8 +286,20 @@
 
   <!-- transition -->
 
-  <span>Name: {name}</span>
-  <span>Index: {index}</span>
+  <!-- show -->
+  {#if $outSlide}
+    <span style="display: flex;padding: 10px;justify-content: space-between;opacity: 0.8;">
+      <span>
+        {#if name.length}
+          {name}
+        {:else}
+          <T id="main.unnamed" />
+        {/if}
+      </span>
+      <span style="opacity: 0.6;">{$outSlide.index + 1}</span>
+    </span>
+  {/if}
+
   <span class="group">
     <Button
       on:click={previousShow}
@@ -256,16 +313,26 @@
       <Icon id="previousFull" size={1.2} />
     </Button>
     <!-- TODO: check type... -->
-    <Button on:click={previousSlide} title="[[[PreviousSlide [ArrowLeft]]]]" disabled={!$activeShow || !GetLayout().length || ($outSlide && $outSlide.index < 1)} center>
+    <Button
+      on:click={previousSlide}
+      title="[[[PreviousSlide [ArrowLeft]]]]"
+      disabled={$outLocked || !$activeShow || !GetLayout().length || ($outSlide && $outSlide.index < 1)}
+      center
+    >
       <Icon id="previous" size={1.2} />
     </Button>
-    <Button title="[[[Lock]]]" center>
-      <Icon id="unlocked" size={1.2} />
+    <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? "[[[Unlock Output]]]" : "[[[Lock Output]]]"} center>
+      <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
     </Button>
-    <Button title="[[[Refresh/Update Output Show]]]" center>
+    <Button on:click={() => outSlide.set($outSlide)} title="[[[Refresh/Update Output Show]]]" disabled={$outLocked || !$outSlide} center>
       <Icon id="refresh" size={1.2} />
     </Button>
-    <Button on:click={nextSlide} title="[[[NextSlide [ArrowRight]]]]" disabled={!$activeShow || !GetLayout().length || ($outSlide && $outSlide.index + 1 >= length)} center>
+    <Button
+      on:click={nextSlide}
+      title="[[[NextSlide [ArrowRight]]]]"
+      disabled={$outLocked || !$activeShow || !GetLayout().length || ($outSlide && $outSlide.index + 1 >= length)}
+      center
+    >
       <Icon id="next" size={1.2} />
     </Button>
     <Button
@@ -304,15 +371,6 @@
 
   :global(.clearAll) {
     width: 100%;
-  }
-
-  .clear :global(button) {
-    background-color: rgb(255 0 0 / 0.3);
-  }
-  .clear :global(button):hover:not(:disabled):not(.active),
-  .clear :global(button):active:not(:disabled):not(.active),
-  .clear :global(button):focus:not(:disabled) {
-    background-color: rgb(255 0 0 / 0.4);
   }
 
   .group {
