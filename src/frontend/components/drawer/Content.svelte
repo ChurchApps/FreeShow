@@ -219,6 +219,7 @@
 <style>
   .main,
   .column {
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     background-color: var(--primary-darker);

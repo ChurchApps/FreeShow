@@ -20,7 +20,7 @@ import {
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory } from "../../stores"
 import { get } from "svelte/store"
-import type { Slide, Item } from "../../../types/Show"
+import type { Slide } from "../../../types/Show"
 import { GetLayout } from "../helpers/get"
 
 export type HistoryPages = "drawer" | "shows" | "edit"
@@ -28,6 +28,7 @@ export type HistoryIDs =
   | "textStyle"
   | "deleteItem"
   | "itemStyle"
+  | "itemAlign"
   | "slideStyle"
   | "newMediaFolder"
   | "newProject"
@@ -52,7 +53,7 @@ export interface History {
     show?: ShowRef
     layout?: string
     slide?: string
-    item?: number
+    items?: number[]
   }
 }
 export function history(obj: History, undo: null | boolean = null) {
@@ -74,16 +75,29 @@ export function history(obj: History, undo: null | boolean = null) {
     // style
     case "textStyle":
     case "deleteItem":
-    case "itemStyle":
       shows.update((s) => {
-        let items: Item[] = GetShow(obj.location?.show!).slides[obj.location?.slide!].items
-        obj.newData.forEach((item: Item, i: number) => {
-          items[i] = item
+        console.log(obj.location!.items)
+
+        obj.location!.items!.forEach((item, index) => {
+          s[obj.location!.show!.id!].slides[obj.location!.slide!].items[item] = obj.newData[index]
         })
+        // let items: Item[] = GetShow(obj.location?.show!).slides[obj.location?.slide!].items
+        // obj.newData.forEach((item: Item, i: number) => {
+        //   items[i] = item
+        // })
         // items.forEach(item => {
         //   item = obj.newData
         // });
         // GetShow(obj.location.show!).slides[obj.location.slide!].items[obj.location.item!] = obj.newData
+        return s
+      })
+      break
+    case "itemStyle":
+    case "itemAlign":
+      shows.update((s) => {
+        obj.location!.items!.forEach((item, index) => {
+          s[obj.location!.show!.id!].slides[obj.location!.slide!].items[item][obj.id === "itemStyle" ? "style" : "align"] = obj.newData[index]
+        })
         return s
       })
       break
@@ -318,14 +332,15 @@ export const undo = () => {
       return uh
     })
 
-    let oldData: any = lastUndo!.oldData
-    lastUndo!.oldData = lastUndo!.newData
+    let oldData: any = { ...lastUndo!.oldData }
+    lastUndo!.oldData = { ...lastUndo!.newData }
     lastUndo!.newData = oldData
 
     history(lastUndo!, true)
   }
 }
 
+// TODO: redo not working in same order as undo...
 export const redo = () => {
   if (get(redoHistory).length) {
     let lastRedo: History
@@ -334,8 +349,8 @@ export const redo = () => {
       return rh
     })
 
-    let oldData: any = lastRedo!.oldData
-    lastRedo!.oldData = lastRedo!.newData
+    let oldData: any = { ...lastRedo!.oldData }
+    lastRedo!.oldData = { ...lastRedo!.newData }
     lastRedo!.newData = oldData
 
     history(lastRedo!, false)

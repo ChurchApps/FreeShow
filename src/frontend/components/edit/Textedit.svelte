@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
   import { activeShow, activeEdit, shows } from "../../stores"
-  import { GetLayout, GetShow } from "../helpers/get"
+  import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
 
   export let item: Item
@@ -11,8 +11,6 @@
 
   // export let slideElem: any
   let itemElem: any
-
-  let selected: boolean = false
 
   // $: style = item.style
 
@@ -39,12 +37,15 @@
   }
   let mouse: null | Mouse = null
   function mousedown(e: any) {
-    selected = true
     activeEdit.update((ae) => {
-      ae.item = index
+      if (e.ctrlKey) {
+        if (ae.items.includes(index)) {
+          if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
+        } else ae.items.push(index)
+      } else ae.items = [index]
       return ae
     })
-    if (e.target.closest(".line") || e.target.closest(".square") || e.ctrlKey || e.altKey) {
+    if ((e.target.closest(".line") && !e.ctrlKey) || e.target.closest(".square") || (e.ctrlKey && !e.target.closest(".line")) || e.altKey) {
       mouse = {
         x: e.clientX,
         y: e.clientY,
@@ -73,6 +74,7 @@
     return styles
   }
   function mousemove(e: any) {
+    // TODO: center lines thicker and easier to snap to
     if (mouse) {
       let styles: any = getStyles(item.style)
       // let styles: any = {}
@@ -135,59 +137,68 @@
             else if (!match && helperLines.includes("y" + yl)) helperLines = helperLines.filter((m: any) => m !== "y" + yl)
           })
         } else helperLines = []
-        styles.left += "px"
-        styles.top += "px"
+        styles.left = styles.left.toFixed(2) + "px"
+        styles.top = styles.top.toFixed(2) + "px"
       } else if (mouse.e.target.closest(".square")) {
         // TODO: shiftkey
         // TODO: snap to resize...
         let store = null
         let square = mouse.e.target.closest(".square")
         if (square.classList[1].includes("n")) {
-          styles.top = (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y + "px"
-          styles.height = e.clientY / zoom - mouse.offset.height + "px"
-          if (e.shiftKey) store = e.clientY / zoom - mouse.offset.height + "px"
-          // styles.height = e.clientY / zoom - mouse.offset.height + "px"
-          // styles.height = e.clientY / zoom - mouse.offset.height - (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y + "px"
-          // styles.height = mouse.offset.y - itemElem.offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom + "px"
-          // styles.height = mouse.offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom + "px"
-          // styles.height = mouse.offsetHeight + itemElem.closest(".item").offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom + "px"
-          // styles.height = mouse.offsetHeight + itemElem.closest(".item").offsetTop - (e.clientY - itemElem.closest(".slide").offsetTop) / zoom + "px"
+          styles.top = (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y
+          styles.height = e.clientY / zoom - mouse.offset.height
+          if (e.shiftKey) store = e.clientY / zoom - mouse.offset.height
+          // styles.height = e.clientY / zoom - mouse.offset.height
+          // styles.height = e.clientY / zoom - mouse.offset.height - (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y
+          // styles.height = mouse.offset.y - itemElem.offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom
+          // styles.height = mouse.offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom
+          // styles.height = mouse.offsetHeight + itemElem.closest(".item").offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom
+          // styles.height = mouse.offsetHeight + itemElem.closest(".item").offsetTop - (e.clientY - itemElem.closest(".slide").offsetTop) / zoom
         }
         if (square.classList[1].includes("e")) {
-          // styles.width = (e.clientX - e.target.closest(".slide").offsetLeft) / zoom - mouse.offset.x + "px"
+          // styles.width = (e.clientX - e.target.closest(".slide").offsetLeft) / zoom - mouse.offset.x
           if (!e.shiftKey || store === null) {
-            styles.width = e.clientX / zoom - mouse.offset.width + "px"
-            store = e.clientX / zoom - mouse.offset.width + "px"
+            styles.width = e.clientX / zoom - mouse.offset.width
+            store = e.clientX / zoom - mouse.offset.width
           } else styles.width = store
         }
         if (square.classList[1].includes("s")) {
-          // styles.height = e.clientY / zoom - mouse.offset.y + itemElem.offsetHeight + "px"
+          // styles.height = e.clientY / zoom - mouse.offset.y + itemElem.offsetHeight
 
           if (!e.shiftKey || store === null) {
-            styles.height = e.clientY / zoom - mouse.offset.height + "px"
-            store = e.clientY / zoom - mouse.offset.height + "px"
+            styles.height = e.clientY / zoom - mouse.offset.height
+            store = e.clientY / zoom - mouse.offset.height
           } else styles.height = store
         }
         if (square.classList[1].includes("w")) {
-          styles.left = (e.clientX - itemElem.closest(".slide").offsetLeft) / zoom - mouse.offset.x + "px"
-          // styles.width = e.clientX / zoom - mouse.offsetWidth + "px"
-          // styles.width = mouse.offset.x - itemElem.offsetWidth - (e.clientX - e.target.closest(".slide").offsetLeft) / zoom + "px"
+          styles.left = (e.clientX - itemElem.closest(".slide").offsetLeft) / zoom - mouse.offset.x
+          // styles.width = e.clientX / zoom - mouse.offsetWidth
+          // styles.width = mouse.offset.x - itemElem.offsetWidth - (e.clientX - e.target.closest(".slide").offsetLeft) / zoom
 
           if (!e.shiftKey || store === null) {
-            styles.width = e.clientX / zoom - mouse.offset.width + "px"
-            store = e.clientX / zoom - mouse.offset.width + "px"
+            styles.width = e.clientX / zoom - mouse.offset.width
+            store = e.clientX / zoom - mouse.offset.width
           }
         }
+
+        ;["top", "left", "width", "height"].forEach((value) => {
+          if (!styles[value].toString().includes("px")) styles[value] = styles[value].toFixed(2) + "px"
+        })
       }
 
       let textStyles: string = ""
       Object.entries(styles).forEach((obj) => {
         textStyles += obj[0] + ":" + obj[1] + ";"
       })
-      shows.update((s) => {
-        s[$activeShow!.id].slides[layoutSlides[$activeEdit.slide!].id].items[index].style = textStyles
-        return s
-      })
+
+      // TODO: move multiple!
+      let newData = [textStyles]
+      let oldData = [$shows[$activeShow!.id].slides[layoutSlides[$activeEdit.slide!].id].items[index].style]
+      history({ id: "itemStyle", oldData, newData, location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: [index] } })
+      // shows.update((s) => {
+      //   s[$activeShow!.id].slides[layoutSlides[$activeEdit.slide!].id].items[index].style = textStyles
+      //   return s
+      // })
     }
   }
   function mouseup() {
@@ -200,7 +211,8 @@
     // if (e.altKey) helperLines = []
     // if ctrlkey = select multiple
 
-    if (e.key === "Backspace" && selected === true && !document.activeElement?.closest(".item")) {
+    // TODO: exlude.....
+    if (e.key === "Backspace" && $activeEdit.items.includes(index) && !document.activeElement?.closest(".item") && !document.activeElement?.closest("input")) {
       let active = $activeShow!.id
       let layout: string = $shows[active].settings.activeLayout
       let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
@@ -217,17 +229,16 @@
 
   function deselect(e: any) {
     if (!e.ctrlKey && e.target.closest(".item") !== itemElem && !e.target.closest(".editTools")) {
-      if (selected) {
+      if ($activeEdit.items.includes(index)) {
         // TODO: clicking another item will add text to that!
         updateText()
         if (!e.target.closest(".item")) {
           activeEdit.update((ae) => {
-            ae.item = null
+            ae.items = []
             return ae
           })
         }
       }
-      selected = false
     }
 
     //  && e.target.tagName !== "INPUT"
@@ -242,39 +253,41 @@
   let textElem: any
   function updateText() {
     let text: string = textElem.innerText
+    console.log(text)
 
-    let sel: null | Selection = window.getSelection()
-    if (sel?.anchorNode?.parentElement) {
-      let parent: Element = sel.anchorNode.parentElement.closest(".edit")!
-      let index = 0
-      ;[...parent.children].forEach((childElem: any, i: number) => {
-        if (childElem === sel!.anchorNode!.parentElement) index = i
-      })
+    // let sel: null | Selection = window.getSelection()
+    // if (sel?.anchorNode?.parentElement) {
+    //   let parent: Element = sel.anchorNode.parentElement.closest(".edit")!
+    //   let index = 0
+    //   ;[...parent.children].forEach((childElem: any, i: number) => {
+    //     if (childElem === sel!.anchorNode!.parentElement) index = i
+    //   })
 
-      let active = $activeShow!.id
-      let layout: string = $shows[active].settings.activeLayout
-      let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
-      // let pos = sel!.anchorOffset!
+    //   let active = $activeShow!.id
+    //   let layout: string = $shows[active].settings.activeLayout
+    //   let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
+    //   // let pos = sel!.anchorOffset!
 
-      // TODO: breaks dont work
-      // get lengths
-      let textIndex = 0
-      let itemTextLength = 0
-      let oldItemsLength = 0
-      $shows[active].slides[slide].items[$activeEdit.item!].text?.forEach((itemText, i) => {
-        if (i < index) textIndex += itemText.value.length
-        if (i === index) itemTextLength = itemText.value.length
-        oldItemsLength += itemText.value.length
-      })
-      let newTextLength = text.length - oldItemsLength
-      let newItemText = text.slice(textIndex, textIndex + itemTextLength + newTextLength)
+    //   // TODO: breaks dont work
+    //   // get lengths
+    //   let textIndex = 0
+    //   let itemTextLength = 0
+    //   let oldItemsLength = 0
+    //   $shows[active].slides[slide].items[$activeEdit.items!].text?.forEach((itemText, i) => {
+    //     if (i < index) textIndex += itemText.value.length
+    //     if (i === index) itemTextLength = itemText.value.length
+    //     oldItemsLength += itemText.value.length
+    //   })
+    //   let newTextLength = text.length - oldItemsLength
+    //   let newItemText = text.slice(textIndex, textIndex + itemTextLength + newTextLength)
 
-      shows.update((s) => {
-        let item = GetShow({ id: active }).slides[slide].items[$activeEdit.item!]
-        if (item.text) item.text[index].value = newItemText
-        return s
-      })
-    }
+    //   // WIP
+    //   shows.update((s) => {
+    //     let item = GetShow({ id: active }).slides[slide].items[$activeEdit.item!]
+    //     if (item.text) item.text[index].value = newItemText
+    //     return s
+    //   })
+    // }
   }
 
   // TODO: sometimes huge font
@@ -282,7 +295,13 @@
 
 <svelte:window on:mousemove={mousemove} on:mouseup={mouseup} on:keydown={keydown} on:mousedown={deselect} />
 
-<div bind:this={itemElem} class="item" class:selected style="{item.style}; outline: {3 / zoom}px solid rgb(255 255 255 / 0.2);" on:mousedown={mousedown}>
+<div
+  bind:this={itemElem}
+  class="item"
+  class:selected={$activeEdit.items.includes(index)}
+  style="{item.style}; outline: {3 / zoom}px solid rgb(255 255 255 / 0.2);"
+  on:mousedown={mousedown}
+>
   <section>
     {#each lines as line}
       <div class="line {line}l" style="{line === 'n' || line === 's' ? 'height' : 'width'}: 10px;" />
@@ -292,13 +311,15 @@
     {/each}
   </section>
   <!-- on:input={updateText} -->
-  <div bind:this={textElem} class="edit" style="height: 100%;" contenteditable={true}>
-    {#if item.text}
-      {#each item.text as text}
-        <span style={text.style}>{text.value}</span>
-      {/each}
-    {/if}
-  </div>
+  {#if item.text}
+    <div class="align" style={item.align}>
+      <div bind:this={textElem} class="edit" contenteditable={true}>
+        {#each item.text as text}
+          <span style={text.style}>{text.value}</span>
+        {/each}
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -309,6 +330,11 @@
     /* display: inline-flex; */
     outline: 5px solid rgb(255 255 255 / 0.2);
     overflow: hidden;
+
+    font-family: "CMGSans";
+    line-height: 1;
+    -webkit-text-stroke-color: #000000;
+    text-shadow: 2px 2px 10px #000000;
   }
   .item.selected {
     outline: 5px solid var(--secondary);
@@ -325,8 +351,16 @@
     pointer-events: none;
   } */
 
+  .align {
+    height: 100%;
+    display: flex;
+    text-align: center;
+    align-items: center;
+  }
+
   .edit {
     outline: none;
+    width: 100%;
     /* white-space: initial;
     color: white; */
   }

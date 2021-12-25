@@ -20,7 +20,6 @@
   import ShowTools from "./components/show/ShowTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
   import Output from "./components/output/Output.svelte"
-  import { OUTPUT } from "../types/Channels"
   import { redo, undo } from "./components/helpers/history"
   import { getStyleResolution } from "./components/slide/getStyleResolution"
   import type { Resolution } from "../types/Settings"
@@ -39,9 +38,9 @@
   // import type { activeFilePath } from "./stores";
 
   // TODO: a better way of doing this!!!
-  shows.subscribe((s) => {
-    if (!$outputWindow) window.api.send(OUTPUT, { channel: "SHOWS", data: s })
-  })
+  // shows.subscribe((s) => {
+  //   if (!$outputWindow) window.api.send(OUTPUT, { channel: "SHOWS", data: s })
+  // })
 
   let page: TopViews = "show"
   activePage.subscribe((p) => (page = p))
@@ -57,10 +56,13 @@
         activePage.set(menus[e.key - 1])
       }
 
-      if (e.key.toLowerCase() === "z" && !e.shiftKey) {
-        undo()
-      } else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) {
-        redo()
+      // prevent undo
+      if (!e.target.closest(".search")) {
+        if (e.key.toLowerCase() === "z" && !e.shiftKey) {
+          undo()
+        } else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) {
+          redo()
+        }
       }
     } else {
       if (e.key === "Escape") {

@@ -91,6 +91,9 @@ export function listen() {
   })
   outSlide.subscribe((o) => {
     if (!get(outputWindow)) {
+      // TODO: send only current show!
+      // TODO: dont send if it already has data...?
+      if (o !== null) window.api.send(OUTPUT, { channel: "SHOWS", data: get(shows) })
       window.api.send(OUTPUT, { channel: "SLIDE", data: o })
       window.api.send(STAGE, stageData("SLIDE"))
     }

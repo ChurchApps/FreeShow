@@ -67,11 +67,15 @@ export const shows: Writable<Shows> = writable({
         notes: "",
         items: [
           {
-            style: "",
-            text: [{ value: "Her er jeg Gud,\nmed mine byrder", style: "color: red; text-align: center;" }],
+            style: "top: 50px; left: 100px; height: 100px; width: 40px;",
           },
           {
-            style: "color: blue; top: 50px; left: 100px; height: 100px; width: 40px;",
+            style: "top: 50px; left: 500px; height: 100px; width: 40px;",
+            text: [{ value: "", style: "color: blue;" }],
+          },
+          {
+            style: "",
+            text: [{ value: "Her er jeg Gud,\nmed mine byrder", style: "color: red; text-align: center;" }],
           },
         ],
         stageItems: [{ style: "", text: [{ value: "  #E     C       D   Cm", style: "" }] }], // chords...
@@ -103,7 +107,8 @@ export const shows: Writable<Shows> = writable({
         notes: "",
         items: [
           {
-            style: "top: 0px; left: 200px; height: 220px; width: 900px; text-align: center;",
+            style: "top: 0px; left: 200px; height: 220px; width: 900px;",
+            align: "",
             text: [
               { value: "Jesus det evige navn\nSom ingen utslette ", style: "font-family: Tahoma;" },
               { value: "kan", style: "color: red;" },

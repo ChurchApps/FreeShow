@@ -203,101 +203,103 @@
 
   <!-- TODO: enable stage output -->
 
-  <div class="clear">
-    <span>
-      <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
-      <Button class="clearAll" disabled={$outLocked || !out} on:click={clearAll} red center>
-        <T id={"clear.all"} />
-      </Button>
-    </span>
-    <span class="group">
-      <Button
-        disabled={$outLocked || !$outBackground}
-        on:click={() => {
-          if (!$outLocked) {
-            outBackground.set(null)
-            clearVideo()
-          }
-        }}
-        red
-        center
-      >
-        BG
-      </Button>
-      <Button
-        disabled={$outLocked || !$outSlide}
-        on:click={() => {
-          if (!$outLocked) {
-            outSlide.set(null)
-          }
-        }}
-        red
-        center
-      >
-        TXT
-      </Button>
-      <Button
-        disabled={$outLocked || !$outOverlays.length}
-        on:click={() => {
-          if (!$outLocked) {
-            outOverlays.set([])
-          }
-        }}
-        red
-        center
-      >
-        OL
-      </Button>
-      <Button
-        disabled={$outLocked || !$outAudio.length}
-        on:click={() => {
-          if (!$outLocked) {
-            outAudio.set([])
-          }
-        }}
-        red
-        center
-      >
-        AUDIO
-      </Button>
-    </span>
-  </div>
-
-  <!-- video -->
-  {#if video}
-    <span style="display: flex;padding: 10px;opacity: 0.8;">{$outBackground?.name}</span>
-    <span class="group">
-      <Button
-        style="flex: 0"
-        center
-        title={videoData.paused ? "Play" : "Paused"}
-        on:click={() => {
-          videoData.paused = !videoData.paused
-          sendToOutput()
-        }}
-      >
-        <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
-      </Button>
-      <VideoSlider bind:videoData />
-    </span>
-  {/if}
-
-  <!-- audio -->
-
-  <!-- transition -->
-
-  <!-- show -->
-  {#if $outSlide}
-    <span style="display: flex;padding: 10px;justify-content: space-between;opacity: 0.8;">
+  {#if $activePage !== "edit"}
+    <div class="clear">
       <span>
-        {#if name.length}
-          {name}
-        {:else}
-          <T id="main.unnamed" />
-        {/if}
+        <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
+        <Button class="clearAll" disabled={$outLocked || !out} on:click={clearAll} red center>
+          <T id={"clear.all"} />
+        </Button>
       </span>
-      <span style="opacity: 0.6;">{$outSlide.index + 1}</span>
-    </span>
+      <span class="group">
+        <Button
+          disabled={$outLocked || !$outBackground}
+          on:click={() => {
+            if (!$outLocked) {
+              outBackground.set(null)
+              clearVideo()
+            }
+          }}
+          red
+          center
+        >
+          BG
+        </Button>
+        <Button
+          disabled={$outLocked || !$outSlide}
+          on:click={() => {
+            if (!$outLocked) {
+              outSlide.set(null)
+            }
+          }}
+          red
+          center
+        >
+          TXT
+        </Button>
+        <Button
+          disabled={$outLocked || !$outOverlays.length}
+          on:click={() => {
+            if (!$outLocked) {
+              outOverlays.set([])
+            }
+          }}
+          red
+          center
+        >
+          OL
+        </Button>
+        <Button
+          disabled={$outLocked || !$outAudio.length}
+          on:click={() => {
+            if (!$outLocked) {
+              outAudio.set([])
+            }
+          }}
+          red
+          center
+        >
+          AUDIO
+        </Button>
+      </span>
+    </div>
+
+    <!-- video -->
+    {#if video}
+      <span style="display: flex;padding: 10px;opacity: 0.8;">{$outBackground?.name}</span>
+      <span class="group">
+        <Button
+          style="flex: 0"
+          center
+          title={videoData.paused ? "Play" : "Paused"}
+          on:click={() => {
+            videoData.paused = !videoData.paused
+            sendToOutput()
+          }}
+        >
+          <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
+        </Button>
+        <VideoSlider bind:videoData />
+      </span>
+    {/if}
+
+    <!-- audio -->
+
+    <!-- transition -->
+
+    <!-- show -->
+    {#if $outSlide}
+      <span style="display: flex;padding: 10px;justify-content: space-between;opacity: 0.8;">
+        <span>
+          {#if name.length}
+            {name}
+          {:else}
+            <T id="main.unnamed" />
+          {/if}
+        </span>
+        <span style="opacity: 0.6;">{$outSlide.index + 1}</span>
+      </span>
+    {/if}
   {/if}
 
   <span class="group">
@@ -324,9 +326,23 @@
     <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? "[[[Unlock Output]]]" : "[[[Lock Output]]]"} center>
       <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
     </Button>
-    <Button on:click={() => outSlide.set($outSlide)} title="[[[Refresh/Update Output Show]]]" disabled={$outLocked || !$outSlide} center>
-      <Icon id="refresh" size={1.2} />
-    </Button>
+    {#if ($activePage === "edit" && $outSlide?.index !== $activeEdit.slide) || !$outSlide || $outSlide.id !== $activeShow?.id}
+      <Button
+        on:click={() => {
+          if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null) outSlide.set({ id: $activeShow.id, index: $activeEdit.slide })
+          else if ($activeShow && GetLayout().length) outSlide.set({ id: $activeShow.id, index: 0 })
+        }}
+        title="[[[Show Current Show/Slide]]]"
+        disabled={$outLocked || !$activeShow || !GetLayout().length}
+        center
+      >
+        <Icon id="play" size={1.2} />
+      </Button>
+    {:else}
+      <Button on:click={() => outSlide.set($outSlide)} title="[[[Update Output Slide]]]" disabled={!$outSlide || $outLocked} center>
+        <Icon id="refresh" size={1.2} />
+      </Button>
+    {/if}
     <Button
       on:click={nextSlide}
       title="[[[NextSlide [ArrowRight]]]]"
@@ -375,6 +391,7 @@
 
   .group {
     display: flex;
+    flex-wrap: wrap;
   }
   .group :global(button) {
     flex-grow: 1;

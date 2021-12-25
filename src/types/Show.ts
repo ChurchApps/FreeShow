@@ -44,6 +44,7 @@ export interface Item {
     style: Style
   }[]
   style: Style
+  align?: string
   media?: {}
   // tag?: string; // p, div????
   // type: // text, shape, image, video++
