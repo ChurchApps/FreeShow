@@ -1,196 +1,279 @@
 <script lang="ts">
   import type { Item } from "../../../../types/Show"
-  import { activeEdit, activeShow, shows } from "../../../stores"
-  import { history, History } from "../../helpers/history"
-  import Icon from "../../helpers/Icon.svelte"
-  import Button from "../../inputs/Button.svelte"
+  import { activeEdit, activeShow } from "../../../stores"
+  import { GetLayout } from "../../helpers/get"
+  import { history } from "../../helpers/history"
+  import T from "../../helpers/T.svelte"
 
   import Color from "../../inputs/Color.svelte"
-  import TextInput from "../../inputs/TextInput.svelte"
+  import Dropdown from "../../inputs/Dropdown.svelte"
+  import NumberInput from "../../inputs/NumberInput.svelte"
   import { addStyleString } from "./TextStyle"
 
-  let active = $activeShow?.id!
-  let editSlideItems = $activeEdit.slide !== null ? $shows[active].slides[$shows[active].layouts[$shows[active].settings.activeLayout].slides[$activeEdit.slide].id].items : []
-  $: console.log(editSlideItems)
-  // TODO: not updating in child(layout) slides
+  export let allSlideItems: Item[]
+  export let item: Item | null
 
-  let item = $activeEdit.item !== null ? $activeEdit.item : null
-
-  const defaults: { [key: string]: string } = {
+  const defaults: { [key: string]: any } = {
     "background-color": "rgb(0 0 0 / 0)",
+    opacity: 1,
+    "border-radius": 0,
+    left: 0,
+    top: 0,
+    width: 300,
+    height: 150,
+    transform: null,
+    // border
+    "border-color": "#FFFFFF",
+    "border-width": 0,
+    "border-style": "solid",
+    // shadow
+    "box-shadow": null,
+  }
+  const shadows: { [key: string]: any } = {
+    "shadow-x": 0,
+    "shadow-y": 0,
+    "shadow-blur": 0,
+    "shadow-spread": 0,
+    "shadow-color": "#000000",
+  }
+  const shadowsInset: { [key: string]: any } = {
+    "ishadow-x": 0,
+    "ishadow-y": 0,
+    "ishadow-blur": 0,
+    "ishadow-spread": 0,
+    "ishadow-color": "#000000",
   }
 
-  function getStyle(id: string) {
-    // select active item or first item
-    // TODO: check if item 0 exists...
-    let styles: any = editSlideItems[item || 0].style.split(";")
+  let data: { [key: string]: any } = {}
 
-    let style = null
-    styles.forEach((s: string) => {
-      if (s.includes(id)) style = s.split(":")[1]
-    })
-
-    return style || defaults[id]
+  $: {
+    if (item?.style || item === null) setText() //  || selection === null
   }
 
-  function setStyle(style: any[]) {
-    let layout: string = $shows[active].settings.activeLayout
-    let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
+  setText()
+  function setText() {
+    Object.entries(defaults).forEach(([key, value]) => {
+      let styles = getStyle(key, item?.style || null)
+      console.log(styles)
 
-    let oldData = JSON.parse(JSON.stringify($shows[active].slides[slide].items))
-    let items: Item[] = [...$shows[active].slides[slide].items]
-    if (item !== null) items = [items[item]]
-
-    let newItems = [...items]
-    console.log(oldData[0].style)
-    newItems.forEach((i) => {
-      i.style = addStyleString(i.style, style)
+      data[key] = styles === null ? value : styles
     })
-    console.log(oldData[0].style)
-    if (item !== null) {
-      let changed = newItems[0]
-      newItems = [...$shows[active].slides[slide].items]
-      newItems[item] = changed
+  }
+
+  function getStyle(key: string, style: string | null) {
+    let newStyle: any = null
+    if (style?.includes(key)) {
+      style.split(";").forEach((s: string) => {
+        if (s.includes(key)) newStyle = s.split(":")[1]
+      })
+
+      if (newStyle?.includes("px") || newStyle?.includes("%")) newStyle = newStyle.replace(/\D.+/g, "")
     }
 
-    console.log(newItems)
+    return newStyle
+  }
 
-    // let newItem = items[item!].style
+  // function setStyle(style: any[]) {
+  //   let layout: string = $shows[active].settings.activeLayout
+  //   let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
 
-    // items[item!].style += style
+  //   let oldData = JSON.parse(JSON.stringify($shows[active].slides[slide].items))
+  //   let items: Item[] = [...$shows[active].slides[slide].items]
+  //   if (item !== null) items = [items[item]]
 
-    let obj: History = {
+  //   let newItems = [...items]
+  //   console.log(oldData[0].style)
+  //   newItems.forEach((i) => {
+  //     i.style = addStyleString(i.style, style)
+  //   })
+  //   console.log(oldData[0].style)
+  //   if (item !== null) {
+  //     let changed = newItems[0]
+  //     newItems = [...$shows[active].slides[slide].items]
+  //     newItems[item] = changed
+  //   }
+
+  //   console.log(newItems)
+
+  //   // let newItem = items[item!].style
+
+  //   // items[item!].style += style
+
+  //   let obj: History = {
+  //     id: "itemStyle",
+  //     oldData: oldData, // TODO: minimize this
+  //     newData: newItems,
+  //     location: {
+  //       page: "edit",
+  //       show: { id: active },
+  //       layout: layout,
+  //       slide: slide,
+  //     },
+  //   }
+  //   // push to history
+  //   history(obj)
+  // }
+
+  const inputChange = (e: any, key: string) => update(key, e.target.value)
+
+  function update(key: string, style: any) {
+    if (key.includes("shadow")) {
+      let v: string[] = []
+      let vi: string[] = []
+      Object.entries(shadows).forEach(([shadowKey, shadowStyle]) => {
+        if (shadowKey === key) v.push(style)
+        else v.push(shadowStyle)
+      })
+      Object.entries(shadowsInset).forEach(([shadowKey, shadowStyle]) => {
+        if (shadowKey === key) vi.push(style)
+        else vi.push(shadowStyle)
+      })
+
+      if (key.includes("ishadow")) shadowsInset[key] = style
+      else shadows[key] = style
+      style = v.join("px ") + ", inset " + vi.join("px ")
+      key = "box-shadow"
+      data[key] = style
+    } else {
+      if (data[key] === undefined || style === undefined || style === null || !style.toString().length) style = defaults[key]
+      data[key] = style
+    }
+
+    if (key === "left" || key === "top" || key === "width" || key === "height" || key === "border-width") style += "px"
+    else if (key === "border-radius") style += "%"
+
+    let allItems: number[] = $activeEdit.items
+    // update all items if nothing is selected
+    if (!allItems.length) {
+      allItems = []
+      allSlideItems.forEach((_item, i) => allItems.push(i))
+    }
+    let newData: any = []
+    let oldData: any = []
+    // loop through all items
+    allItems.forEach((itemIndex) => {
+      oldData.push({ ...allSlideItems[itemIndex] })
+      newData.push(addStyleString(allSlideItems[itemIndex].style, [key, style]))
+    })
+
+    history({
       id: "itemStyle",
-      oldData: oldData, // TODO: minimize this
-      newData: newItems,
-      location: {
-        page: "edit",
-        show: { id: active },
-        layout: layout,
-        slide: slide,
-      },
-    }
-    // push to history
-    history(obj)
+      oldData,
+      newData,
+      location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
+    })
   }
-
-  const colorChange = () => {
-    setStyle(["background-color", bgColor])
-  }
-
-  $: bgColor = getStyle("background-color")
-
-  let colorVal = "#FF00FF"
 </script>
 
 <section>
-  {#key item}
-    <h6>[[[Position]]]</h6>
-    <div style="display: flex;gap: 10px;">
-      <span class="titles">
-        <p>Family</p>
-        <p>Style</p>
-      </span>
-      <!-- overflow-x: hidden; -->
-      <span style="flex: 1;">
-        <span> XY </span>
-        <span> WH </span>
-        <span> rotation </span>
-      </span>
-    </div>
-    <hr />
-    <h6>[[[Box]]]</h6>
-    <div style="display: flex;">
-      <span class="titles">
-        <p>Background</p>
-        <p>Opacity</p>
-        <p>Corner Radius</p>
-      </span>
-      <span>
-        <Color bind:value={bgColor} on:input={colorChange} />
-        <input type="range" />
-        <input type="range" />
-      </span>
-    </div>
-    <hr />
-    <span>
-      <input type="checkbox" />
-      <h6>[[[Outline]]]</h6>
+  <!-- position // dimension / align -->
+  <h6><T id="edit.item" /></h6>
+  <div style="display: flex;gap: 10px;">
+    <span class="titles">
+      <p><T id="edit.x" /></p>
+      <p><T id="edit.y" /></p>
+      <p><T id="edit.width" /></p>
+      <p><T id="edit.height" /></p>
+      <p><T id="edit.rotation" /></p>
     </span>
-    <!-- color, distance -->
-    <div style="display: flex;gap: 10px;">
-      <span class="titles">
-        <p>Color</p>
-        <p>Length</p>
-      </span>
-      <span>
-        <Color bind:value={colorVal} on:input={() => console.log("color")} />
-        <span class="line">
-          <Button center>
-            <Icon id="remove" size={1.2} white />
-          </Button>
-          <span class="input">
-            <TextInput value={1} center />
-          </span>
-          <Button center>
-            <Icon id="add" size={1.2} white />
-          </Button>
-        </span>
-      </span>
-    </div>
-    <hr />
-    <span>
-      <input type="checkbox" />
-      <!-- duplicate... ???? -->
-      <h6>[[[Box Shadow...]]]</h6>
+    <!-- overflow-x: hidden; -->
+    <span style="flex: 1;">
+      <NumberInput value={data["left"]} on:change={(e) => update("left", e.detail)} />
+      <NumberInput value={data["top"]} on:change={(e) => update("top", e.detail)} />
+      <NumberInput value={data["width"]} on:change={(e) => update("width", e.detail)} />
+      <NumberInput value={data["height"]} on:change={(e) => update("height", e.detail)} />
+      <NumberInput value={data["transform"]} on:change={(e) => update("transform", e.detail)} />
     </span>
-    <!-- color, blur, distance, density -->
-    <div style="display: flex;gap: 10px;">
-      <span class="titles">
-        <p>Color</p>
-        <p>Angle</p>
-        <p>Length</p>
-        <p>Radius</p>
-        <!-- <p>Density</p> -->
-      </span>
-      <span>
-        <Color bind:value={colorVal} on:input={() => console.log("shadowColor")} />
-        <span class="line">
-          <Button center>
-            <Icon id="remove" size={1.2} white />
-          </Button>
-          <span class="input">
-            <TextInput value={1} center />
-          </span>
-          <Button center>
-            <Icon id="add" size={1.2} white />
-          </Button>
-        </span>
-        <span class="line">
-          <Button center>
-            <Icon id="remove" size={1.2} white />
-          </Button>
-          <span class="input">
-            <TextInput value={1} center />
-          </span>
-          <Button center>
-            <Icon id="add" size={1.2} white />
-          </Button>
-        </span>
-        <span class="line">
-          <Button center>
-            <Icon id="remove" size={1.2} white />
-          </Button>
-          <span class="input">
-            <TextInput value={1} center />
-          </span>
-          <Button center>
-            <Icon id="add" size={1.2} white />
-          </Button>
-        </span>
-      </span>
-    </div>
-  {/key}
+  </div>
+  <hr />
+  <h6><T id="edit.style" /></h6>
+  <div style="display: flex;gap: 10px;">
+    <span class="titles">
+      <p><T id="edit.color" /></p>
+      <p><T id="edit.opacity" /></p>
+      <p><T id="edit.corner_radius" /></p>
+    </span>
+    <span>
+      <Color bind:value={data["background-color"]} on:input={(e) => inputChange(e, "background-color")} />
+      <NumberInput value={data.opacity} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => update("opacity", e.detail)} />
+      <!-- <NumberInput value={data["border-radius"]} step={2} max={50} inputMultiplier={0.5} on:change={(e) => update("border-radius", e.detail)} /> -->
+      <NumberInput value={data["border-radius"]} step={0.5} decimals={1} max={50} inputMultiplier={2} on:change={(e) => update("border-radius", e.detail)} />
+    </span>
+  </div>
+  <hr />
+  <span>
+    <!-- <input type="checkbox" /> -->
+    <h6><T id="edit.border" /></h6>
+  </span>
+  <!-- color, distance -->
+  <div style="display: flex;gap: 10px;">
+    <span class="titles">
+      <p><T id="edit.color" /></p>
+      <p><T id="edit.width" /></p>
+      <p><T id="edit.style" /></p>
+    </span>
+    <span>
+      <Color bind:value={data["border-color"]} on:input={(e) => inputChange(e, "border-color")} />
+      <NumberInput value={data["border-width"]} max={500} on:change={(e) => update("border-width", e.detail)} />
+      <Dropdown
+        options={[
+          { name: "$:borders.solid:$", id: "solid" },
+          { name: "$:borders.dashed:$", id: "dashed" },
+          { name: "$:borders.dotted:$", id: "dotted" },
+          { name: "$:borders.double:$", id: "double" },
+          { name: "$:borders.inset:$", id: "inset" },
+          { name: "$:borders.outset:$", id: "outset" },
+          { name: "$:borders.groove:$", id: "groove" },
+          { name: "$:borders.ridge:$", id: "ridge" },
+        ]}
+        value="$:borders.{data['border-style']}:$"
+        on:click={(e) => update("border-style", e.detail.id)}
+      />
+    </span>
+  </div>
+  <hr />
+  <span>
+    <!-- <input type="checkbox" /> -->
+    <h6><T id="edit.shadow" /></h6>
+  </span>
+  <!-- color, blur, distance, density -->
+  <div style="display: flex;gap: 10px;">
+    <span class="titles">
+      <p><T id="edit.color" /></p>
+      <p><T id="edit.offsetX" /></p>
+      <p><T id="edit.offsetY" /></p>
+      <p><T id="edit.blur" /></p>
+      <p><T id="edit.length" /></p>
+    </span>
+    <span>
+      <Color value={shadows["shadow-color"]} on:input={(e) => inputChange(e, "shadow-color")} />
+      <NumberInput value={shadows["shadow-x"]} min={-1000} on:change={(e) => update("shadow-x", e.detail)} />
+      <NumberInput value={shadows["shadow-y"]} min={-1000} on:change={(e) => update("shadow-y", e.detail)} />
+      <NumberInput value={shadows["shadow-blur"]} on:change={(e) => update("shadow-blur", e.detail)} />
+      <NumberInput value={shadows["shadow-spread"]} min={-100} on:change={(e) => update("shadow-spread", e.detail)} />
+    </span>
+  </div>
+  <hr />
+  <span>
+    <!-- <input type="checkbox" /> -->
+    <h6><T id="edit.shadow_inset" /></h6>
+  </span>
+  <div style="display: flex;gap: 10px;">
+    <span class="titles">
+      <p><T id="edit.color" /></p>
+      <p><T id="edit.offsetX" /></p>
+      <p><T id="edit.offsetY" /></p>
+      <p><T id="edit.blur" /></p>
+      <p><T id="edit.length" /></p>
+    </span>
+    <span>
+      <Color value={shadowsInset["ishadow-color"]} on:input={(e) => inputChange(e, "ishadow-color")} />
+      <NumberInput value={shadowsInset["ishadow-x"]} min={-1000} on:change={(e) => update("ishadow-x", e.detail)} />
+      <NumberInput value={shadowsInset["ishadow-y"]} min={-1000} on:change={(e) => update("ishadow-y", e.detail)} />
+      <NumberInput value={shadowsInset["ishadow-blur"]} on:change={(e) => update("ishadow-blur", e.detail)} />
+      <NumberInput value={shadowsInset["ishadow-spread"]} min={-100} on:change={(e) => update("ishadow-spread", e.detail)} />
+    </span>
+  </div>
 </section>
 
 <style>
@@ -215,32 +298,6 @@
     /* font-weight: bold; */
     /* text-transform: uppercase; */
     font-size: 0.9em;
-  }
-
-  /* span {
-    margin: 10px 0;
-  } */
-
-  .line {
-    display: flex;
-    align-items: center;
-    background-color: var(--primary-darker);
-    flex-flow: wrap;
-  }
-  .line :global(button) {
-    flex: 1;
-  }
-
-  .input {
-    flex: 2;
-    color: var(--secondary);
-    font-weight: bold;
-    height: 100%;
-    font-size: 1.5em;
-  }
-  .input :global(input) {
-    color: var(--secondary);
-    font-weight: bold;
   }
 
   hr {

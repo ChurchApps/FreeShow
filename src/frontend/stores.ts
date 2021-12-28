@@ -1,8 +1,9 @@
+import { Writable, writable } from "svelte/store"
+import type { DrawTools, Draw, DrawSettings } from "./../types/Draw"
 import type { History } from "./components/helpers/history"
 import type { NumberObject, Selected, Drag } from "../types/Main"
 import type { TopViews } from "./../types/Views"
 import type { Categories } from "./../types/Tabs"
-import { Writable, writable } from "svelte/store"
 import type { ShowRef, Folders, Projects } from "../types/Projects"
 import type { Dictionary, LanguageKey } from "../types/Settings"
 import type { ID, Shows, Overlays, OutBackground, OutSlide, OutAudio } from "../types/Show"
@@ -48,6 +49,32 @@ export const outAudio: Writable<OutAudio[]> = writable([])
 //   overlay: [],
 //   audio: [],
 // })
+// draw
+export const drawTool: Writable<DrawTools> = writable("focus")
+export const draw: Writable<null | Draw> = writable(null)
+export const drawSettings: Writable<DrawSettings> = writable({
+  focus: {
+    color: "#000000",
+    opacity: 0.8,
+    size: 300,
+    glow: true,
+    hold: false,
+  },
+  pointer: {
+    color: "#FF0000",
+    opacity: 0.8,
+    size: 50,
+    // type: "circle",
+    glow: true,
+    hold: false,
+  },
+  fill: {
+    color: "#000000",
+    opacity: 0.8,
+    rainbow: false,
+  },
+  paint: {},
+})
 
 export const shows: Writable<Shows> = writable({
   nåde: {
@@ -63,7 +90,12 @@ export const shows: Writable<Shows> = writable({
       fjeiosjfiose: {
         label: "Verse 1",
         color: "green",
-        style: "",
+        settings: {
+          background: false,
+          color: "#000000",
+          // resolution: []
+          // transition: {},
+        },
         notes: "",
         items: [
           {
@@ -103,7 +135,7 @@ export const shows: Writable<Shows> = writable({
       feowo: {
         label: "Verse 1",
         color: "orange",
-        style: "",
+        settings: {},
         notes: "",
         items: [
           {
@@ -123,7 +155,7 @@ export const shows: Writable<Shows> = writable({
       fesfo: {
         label: "Chorus",
         color: "red",
-        style: "",
+        settings: {},
         children: [{ id: "fesfofes" }],
         notes: "",
         items: [
@@ -136,7 +168,7 @@ export const shows: Writable<Shows> = writable({
       fesfofes: {
         label: null,
         color: null,
-        style: "",
+        settings: {},
         notes: "",
         items: [
           {
@@ -148,7 +180,7 @@ export const shows: Writable<Shows> = writable({
       blank: {
         label: "Blank",
         color: null,
-        style: "",
+        settings: {},
         notes: "",
         items: [],
       },
@@ -187,7 +219,7 @@ export const shows: Writable<Shows> = writable({
       fsioøføjesi: {
         label: null,
         color: null,
-        style: "",
+        settings: {},
         notes: "",
         items: [
           {
@@ -203,7 +235,7 @@ export const shows: Writable<Shows> = writable({
       fesfo: {
         label: "Chorus",
         color: null,
-        style: "",
+        settings: {},
         notes: "",
         items: [
           {
@@ -237,7 +269,7 @@ export const shows: Writable<Shows> = writable({
       feowo: {
         label: "Verse 1",
         color: "orange",
-        style: "",
+        settings: {},
         notes: "",
         items: [
           {
@@ -256,7 +288,7 @@ export const shows: Writable<Shows> = writable({
       fesfo: {
         label: "Chorus",
         color: "red",
-        style: "",
+        settings: {},
         children: [{ id: "fesfofes" }],
         notes: "",
         items: [
@@ -269,7 +301,7 @@ export const shows: Writable<Shows> = writable({
       fesfofes: {
         label: null,
         color: null,
-        style: "",
+        settings: {},
         notes: "",
         items: [
           {
@@ -281,7 +313,7 @@ export const shows: Writable<Shows> = writable({
       blank: {
         label: "Blank",
         color: null,
-        style: "",
+        settings: {},
         notes: "",
         items: [],
       },

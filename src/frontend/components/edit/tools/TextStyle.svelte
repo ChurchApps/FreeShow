@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Item } from "../../../../types/Show"
   import { activeShow, activeEdit, dictionary } from "../../../stores"
-  import { GetLayout, getSlide } from "../../helpers/get"
+  import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import T from "../../helpers/T.svelte"
   import Color from "../../inputs/Color.svelte"
@@ -10,13 +10,9 @@
   import NumberInput from "../../inputs/NumberInput.svelte"
   import { addStyle, addStyleString, getItemStyleAtPos, getItemText, getSelectionRange } from "./TextStyle"
 
-  $: active = $activeShow?.id!
-  $: allSlideItems = $activeEdit.slide !== null ? getSlide(active, $activeEdit.slide).items : []
-  const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
-  // select active items or all items
-  $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
-  // select last item
-  $: item = items.length ? items[items.length - 1] : null
+  export let allSlideItems: Item[]
+  export let item: Item | null
+
   // get style of last text or at caret pos
   $: style = item?.text ? (selection !== null && selection[1] - selection[0] >= 0 ? getItemStyleAtPos(item.text, selection[1]) : item.text[item.text.length - 1].style) : null
   $: alignStyle = item?.align ? item.align : null
@@ -59,7 +55,6 @@
     "shadow-blur": 10,
     "shadow-color": "#000000",
   }
-  // align
   const defaultAligns: { [key: string]: any } = {
     "text-align": "center",
     "align-items": "center",
@@ -117,7 +112,6 @@
   }
 
   function update(key: string, style: any, aligns: boolean = false) {
-    console.log(style)
     if (aligns) {
       if (align[key] === undefined || style === undefined || style === null || !style.toString().length) style = defaults[key]
       align[key] = style
@@ -128,7 +122,6 @@
           if (shadowKey === key) v.push(style)
           else v.push(shadowStyle)
         })
-        // if () style = shadows[key]
         shadows[key] = style
         style = v.join("px ")
         key = "text-shadow"
@@ -141,7 +134,6 @@
 
     if (key === "font-size" || key === "letter-spacing" || key === "word-spacing" || key === "-webkit-text-stroke-width") style += "px"
     else if (key === "line-height") style += "em"
-    console.log(style)
 
     let allItems: number[] = $activeEdit.items
     // update all items if nothing is selected
@@ -237,7 +229,7 @@
   </div>
   <hr />
   <span>
-    <input type="checkbox" />
+    <!-- <input type="checkbox" /> -->
     <h6><T id="edit.outline" /></h6>
   </span>
   <!-- color, distance -->
@@ -253,7 +245,7 @@
   </div>
   <hr />
   <span>
-    <input type="checkbox" />
+    <!-- <input type="checkbox" /> -->
     <h6><T id="edit.shadow" /></h6>
   </span>
   <!-- color, blur, distance, density -->
@@ -268,8 +260,8 @@
     </span>
     <span>
       <Color value={shadows["shadow-color"]} on:input={(e) => inputChange(e, "shadow-color")} />
-      <NumberInput value={shadows["shadow-x"]} min={-10} on:change={(e) => update("shadow-x", e.detail)} />
-      <NumberInput value={shadows["shadow-y"]} min={-10} on:change={(e) => update("shadow-y", e.detail)} />
+      <NumberInput value={shadows["shadow-x"]} min={-1000} on:change={(e) => update("shadow-x", e.detail)} />
+      <NumberInput value={shadows["shadow-y"]} min={-1000} on:change={(e) => update("shadow-y", e.detail)} />
       <NumberInput value={shadows["shadow-blur"]} on:change={(e) => update("shadow-blur", e.detail)} />
     </span>
   </div>

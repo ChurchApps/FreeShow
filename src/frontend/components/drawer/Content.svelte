@@ -129,7 +129,7 @@
   let offset: number = -1
   $: {
     if (id && $activeShow !== null) {
-      if (id === "shows" && $activeShow.type === null) offset = scrollElem.querySelector("#" + $activeShow.id)?.offsetTop - scrollElem.offsetTop
+      if (id === "shows" && $activeShow.type === null && scrollElem !== undefined) offset = scrollElem.querySelector("#" + $activeShow.id)?.offsetTop - scrollElem.offsetTop
     }
   }
 </script>

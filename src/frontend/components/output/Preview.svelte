@@ -203,7 +203,7 @@
 
   <!-- TODO: enable stage output -->
 
-  {#if $activePage !== "edit"}
+  {#if $activePage === "show"}
     <div class="clear">
       <span>
         <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->

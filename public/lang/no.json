@@ -93,8 +93,37 @@
     "offsetX": "Forskyvning X",
     "offsetY": "Forskyvning Y",
     "blur": "Uklarhet",
+    "item": "Element",
+    "height": "Høyde",
+    "rotation": "Rotasjon",
+    "opacity": "Gjennomsiktighet",
+    "corner_radius": "Hjørneradius",
+    "border": "Ramme",
+    "length": "Lengde",
     "reset": "Nullstill",
     "apply_to_all": "Legg til alle"
+  },
+  "borders": {
+    "solid": "Hel",
+    "dashed": "Stiplet",
+    "dotted": "Prikkete",
+    "double": "Dobbel",
+    "inset": "Innover",
+    "outset": "Utover",
+    "groove": "Riller",
+    "ridge": "Rygg"
+  },
+  "draw": {
+    "focus": "Fokus",
+    "pointer": "Peker",
+    "fill": "Fyll",
+    "paint": "Maling",
+    "color": "Farge",
+    "opacity": "Gjennomsiktighet",
+    "size": "Størrelse",
+    "glow": "Glød",
+    "hold": "Hold",
+    "rainbow": "Regnbue"
   },
   "month": {
     "1": "januar",

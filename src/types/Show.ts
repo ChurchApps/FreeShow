@@ -31,7 +31,12 @@ export interface Show {
 export interface Slide {
   label: null | string
   color: null | string
-  style: string
+  settings: {
+    background?: boolean
+    color?: string
+    resolution?: Resolution
+    transition?: Transition
+  }
   children?: SlideData[]
   notes: string
   items: Item[]
@@ -46,8 +51,8 @@ export interface Item {
   style: Style
   align?: string
   media?: {}
+  type?: "text" | "shape" | "image" | "video" | "music"
   // tag?: string; // p, div????
-  // type: // text, shape, image, video++
 }
 
 export interface Layout {

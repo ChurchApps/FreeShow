@@ -1,4 +1,4 @@
-import { outBackground, outOverlays, outputDisplay, outputWindow, outSlide, mediaFolders } from "./../stores"
+import { outBackground, outOverlays, outputDisplay, outputWindow, outSlide, mediaFolders, draw, drawTool, drawSettings } from "./../stores"
 import { OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
 import { shows } from "../stores"
 import { get } from "svelte/store"
@@ -14,6 +14,9 @@ export function listen() {
     else if (message.channel === "SLIDE") outSlide.set(message.data)
     else if (message.channel === "OVERLAYS") outOverlays.set(message.data)
     else if (message.channel === "SHOWS") shows.set(message.data)
+    else if (message.channel === "DRAW") draw.set(message.data)
+    else if (message.channel === "DRAW_TOOL") drawTool.set(message.data)
+    else if (message.channel === "DRAW_SETTINGS") drawSettings.set(message.data)
     else if (message.channel === "MEDIA") mediaFolders.set(message.data)
     else if (message.channel === "DISPLAY") outputDisplay.set(message.data)
   })
@@ -83,30 +86,39 @@ export function listen() {
   // })
 
   // TO OUTPUT & STAGE
-  outBackground.subscribe((o) => {
+  outBackground.subscribe((data) => {
     if (!get(outputWindow)) {
-      window.api.send(OUTPUT, { channel: "BACKGROUND", data: o })
+      window.api.send(OUTPUT, { channel: "BACKGROUND", data })
       window.api.send(STAGE, stageData("BACKGROUND"))
     }
   })
-  outSlide.subscribe((o) => {
+  outSlide.subscribe((data) => {
     if (!get(outputWindow)) {
       // TODO: send only current show!
       // TODO: dont send if it already has data...?
-      if (o !== null) window.api.send(OUTPUT, { channel: "SHOWS", data: get(shows) })
-      window.api.send(OUTPUT, { channel: "SLIDE", data: o })
+      if (data !== null) window.api.send(OUTPUT, { channel: "SHOWS", data: get(shows) })
+      window.api.send(OUTPUT, { channel: "SLIDE", data })
       window.api.send(STAGE, stageData("SLIDE"))
     }
   })
-  outOverlays.subscribe((o) => {
+  outOverlays.subscribe((data) => {
     if (!get(outputWindow)) {
-      window.api.send(OUTPUT, { channel: "OVERLAYS", data: o })
+      window.api.send(OUTPUT, { channel: "OVERLAYS", data })
       window.api.send(STAGE, stageData("OVERLAYS"))
     }
   })
 
   // TO OUTPUT
-  mediaFolders.subscribe((mf) => {
-    if (!get(outputWindow)) window.api.send(OUTPUT, { channel: "MEDIA", data: mf })
+  mediaFolders.subscribe((data) => {
+    if (!get(outputWindow)) window.api.send(OUTPUT, { channel: "MEDIA", data })
+  })
+  draw.subscribe((data) => {
+    if (!get(outputWindow)) window.api.send(OUTPUT, { channel: "DRAW", data })
+  })
+  drawTool.subscribe((data) => {
+    if (!get(outputWindow)) window.api.send(OUTPUT, { channel: "DRAW_TOOL", data })
+  })
+  drawSettings.subscribe((data) => {
+    if (!get(outputWindow)) window.api.send(OUTPUT, { channel: "DRAW_SETTINGS", data })
   })
 }

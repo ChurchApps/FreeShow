@@ -40,6 +40,7 @@
 />
 
 <div bind:this={self} class="dropdownElem" style="position: relative;">
+  <!-- style="font-family: {value};" -->
   <button on:click={() => (active = !active)}>
     {value}
   </button>

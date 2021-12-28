@@ -23,12 +23,19 @@
     /* display: inline-flex; */
     position: absolute;
     overflow: hidden;
-    display: flex;
+    /* display: flex; */
 
     font-family: "CMGSans";
     line-height: 1;
     -webkit-text-stroke-color: #000000;
     text-shadow: 2px 2px 10px #000000;
+
+    border-style: solid;
+    border-width: 0px;
+    border-color: #ffffff;
+
+    height: 150px;
+    width: 400px;
   }
 
   .align {

@@ -3,6 +3,7 @@
   import { activeShow, activeEdit, shows } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
+  import T from "../helpers/T.svelte"
 
   export let item: Item
   export let index: number
@@ -290,7 +291,10 @@
     // }
   }
 
-  // TODO: sometimes huge font
+  function type(e: any) {
+    console.log(e)
+    // TODO: update text
+  }
 </script>
 
 <svelte:window on:mousemove={mousemove} on:mouseup={mouseup} on:keydown={keydown} on:mousedown={deselect} />
@@ -313,7 +317,12 @@
   <!-- on:input={updateText} -->
   {#if item.text}
     <div class="align" style={item.align}>
-      <div bind:this={textElem} class="edit" contenteditable={true}>
+      {#if item.text.length < 2 && !item.text?.[0].value.length}
+        <span class="placeholder">
+          <T id="Type..." />
+        </span>
+      {/if}
+      <div bind:this={textElem} class="edit" contenteditable={true} on:keydown={type}>
         {#each item.text as text}
           <span style={text.style}>{text.value}</span>
         {/each}
@@ -335,6 +344,13 @@
     line-height: 1;
     -webkit-text-stroke-color: #000000;
     text-shadow: 2px 2px 10px #000000;
+
+    border-style: solid;
+    border-width: 0px;
+    border-color: #ffffff;
+
+    height: 150px;
+    width: 400px;
   }
   .item.selected {
     outline: 5px solid var(--secondary);
@@ -350,6 +366,12 @@
     border: 10px dashed var(--secondary);
     pointer-events: none;
   } */
+  .item .placeholder {
+    opacity: 0.5;
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+  }
 
   .align {
     height: 100%;

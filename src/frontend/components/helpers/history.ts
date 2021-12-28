@@ -38,6 +38,7 @@ export type HistoryIDs =
   | "newPrivateShow"
   | "newShowsCategory"
   | "newSlide"
+  | "newItem"
   | "addShow"
   | "slides"
   | "shows"
@@ -104,7 +105,7 @@ export function history(obj: History, undo: null | boolean = null) {
     case "slideStyle":
       shows.update((s) => {
         let slide: Slide = GetShow(obj.location?.show!).slides[obj.location?.slide!]
-        slide.style = obj.newData
+        slide.settings = obj.newData
         return s
       })
       break
@@ -256,7 +257,7 @@ export function history(obj: History, undo: null | boolean = null) {
         if (obj.newData) id = obj.newData[0]
         // TODO: add by template
         // TODO: add as child to previous
-        s[get(activeShow)!.id].slides[id] = { label: "", color: null, style: "", notes: "", items: [] }
+        s[get(activeShow)!.id].slides[id] = { label: "", color: null, settings: {}, notes: "", items: [] }
         s[get(activeShow)!.id].layouts[s[get(activeShow)!.id].settings.activeLayout].slides.push({ id })
         return s
       })
@@ -269,6 +270,19 @@ export function history(obj: History, undo: null | boolean = null) {
           return ae
         })
       }
+      break
+    case "newItem":
+      // TODO: undo
+      shows.update((s) => {
+        let slide: Slide = s[obj.location!.show!.id].slides[obj.location!.slide!]
+        if (undo) {
+          slide.items = slide.items.splice(slide.items.indexOf(obj.oldData, 1))
+        } else {
+          obj.oldData = slide.items.length
+          slide.items.push(obj.newData)
+        }
+        return s
+      })
       break
 
     // ADD

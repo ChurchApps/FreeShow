@@ -62,6 +62,7 @@
 
   let storeWidth: null | number = null
   function click(e: any) {
+    // TODO: pressing button with keyboard will close panel
     if (!move) {
       if (
         (side === "left" && e.target.closest(".panel")?.offsetWidth - e.offsetX <= handleWidth) ||

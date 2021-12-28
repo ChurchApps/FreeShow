@@ -8,6 +8,7 @@
 </script>
 
 <button
+  id={$$props.id}
   style={$$props.style}
   class:active
   class:center

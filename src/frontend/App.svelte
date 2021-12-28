@@ -23,6 +23,9 @@
   import { redo, undo } from "./components/helpers/history"
   import { getStyleResolution } from "./components/slide/getStyleResolution"
   import type { Resolution } from "../types/Settings"
+  import Slide from "./components/draw/Slide.svelte"
+  import DrawTools from "./components/draw/DrawTools.svelte"
+  import DrawSettings from "./components/draw/DrawSettings.svelte"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -110,6 +113,8 @@
               {/if}
             {:else if page === "edit"}
               <Navigation />
+            {:else if page === "draw"}
+              <DrawTools />
             {/if}
           </div>
         </Resizeable>
@@ -119,6 +124,8 @@
             <!-- <VideoPlayer /> -->
           {:else if page === "edit"}
             <Editor />
+          {:else if page === "draw"}
+            <Slide />
           {:else if page === "settings"}
             <Settings />
           {/if}
@@ -130,6 +137,8 @@
               <ShowTools />
             {:else if page === "edit"}
               <EditTools />
+            {:else if page === "draw"}
+              <DrawSettings />
             {/if}
           </div>
         </Resizeable>

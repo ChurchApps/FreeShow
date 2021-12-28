@@ -15,17 +15,45 @@
   const increment = () => dispatch("change", Math.min(Number(value) + step, max).toFixed(decimals))
   const decrement = () => dispatch("change", Math.max(Number(value) - step, min).toFixed(decimals))
   // TODO: reset if not number....
-  const input = (e: any) => dispatch("change", Math.max(Math.min(e.target.value, max), min) / inputMultiplier || value)
+  const input = (e: any) => {
+    let newVaule = Math.max(Math.min(e.target.value, max * inputMultiplier), min * inputMultiplier) / inputMultiplier
+    dispatch("change", newVaule !== null ? newVaule.toFixed(decimals) : value)
+  }
+
+  let timeout: any = null
+  let interval: any = null
+  function mousedown(e: any) {
+    if (e.target.closest("button")) {
+      timeout = setTimeout(() => {
+        let increase = true
+        if (e.target.closest("button").id === "decrement") increase = false
+        interval = setInterval(() => {
+          if (increase) increment()
+          else decrement()
+        }, 50)
+        // timeout = null
+      }, 500)
+    }
+  }
 </script>
 
-<span class="main">
-  <Button on:click={decrement} center style={"flex: 1;"}>
+<svelte:window
+  on:mouseup={() => {
+    clearTimeout(timeout)
+    clearInterval(interval)
+    timeout = null
+    interval = null
+  }}
+/>
+
+<span class="main" on:mousedown={mousedown}>
+  <Button id="decrement" on:click={decrement} center style={"flex: 1;"} disabled={Number(value) - step < min}>
     <Icon id="remove" size={1.2} white />
   </Button>
   <span class="input">
-    <TextInput value={(value * inputMultiplier).toFixed(decimals)} on:change={input} center />
+    <TextInput value={(value * inputMultiplier).toFixed()} on:change={input} center />
   </span>
-  <Button on:click={increment} center style={"flex: 1;"}>
+  <Button id="increment" on:click={increment} center style={"flex: 1;"} disabled={Number(value) + step > max}>
     <Icon id="add" size={1.2} white />
   </Button>
 </span>

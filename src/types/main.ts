@@ -1,5 +1,6 @@
 export interface Option {
   name: string
+  id?: string
 }
 
 export interface NumberObject {

@@ -8,6 +8,7 @@
   import { OUTPUT } from "../../../types/Channels"
   import Zoomed from "../slide/Zoomed.svelte"
   import type { Resolution } from "../../../types/Settings"
+  import Draw from "../draw/Draw.svelte"
 
   export let video: any = null
   export let videoData: any = { time: 0, duration: 0, paused: true }
@@ -20,15 +21,17 @@
     })
   }
 
-  let transition: Transition = { type: "fade", duration: 500 } // text (not background)
+  export let transition: Transition = { type: "fade", duration: 500 } // text (not background)
   // TODO: showing slide upon clear fade out will show black output (Transition bug!)
   // TODO: dont show transition upon no change!s
 
   export let style = ""
   export let center: boolean = false
+
+  export let ratio: number = 0
 </script>
 
-<Zoomed {center} {style} {resolution} zoom={$outBackground === null}>
+<Zoomed {center} {style} {resolution} bind:ratio zoom={$outBackground === null}>
   {#if $outBackground !== null}
     <!-- {#key $outBackground} -->
     <MediaOutput {...$outBackground} {transition} bind:video bind:videoData />
@@ -36,7 +39,7 @@
   {/if}
   {#if $outSlide}
     {#key $outSlide}
-      <span transition:fade={transition}>
+      <span transition:fade={transition} style="pointer-events: none;">
         <!-- {#each Object.values($shows[$activeShow.id].slides[Slide.id]) as item} -->
         <!-- {#each Object.values(GetShows().active().slides) as item} -->
         <!-- {#each Object.values(getSlide($activeShow.id, Slide.id)) as item} -->
@@ -60,6 +63,7 @@
       </div>
     {/each}
   {/if}
+  <Draw />
 </Zoomed>
 {#if $outAudio.length}
   <!--  -->

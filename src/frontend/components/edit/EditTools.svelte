@@ -1,6 +1,10 @@
 <script lang="ts">
+  import type { Item } from "../../../types/Show"
   import type { TabsObj } from "../../../types/Tabs"
-  import { activeEdit, activeShow } from "../../stores"
+  import { activeEdit, activeShow, shows } from "../../stores"
+  import { GetLayout } from "../helpers/get"
+  import Icon from "../helpers/Icon.svelte"
+  import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Tabs from "../main/Tabs.svelte"
   import Items from "./tools/Items.svelte"
@@ -15,6 +19,14 @@
     slide: { name: "tools.slide", icon: "options" }, // slide
   }
   let active: string = Object.keys(tabs)[0]
+
+  // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
+  $: allSlideItems = $activeEdit.slide !== null ? $shows[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items : []
+  const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
+  // select active items or all items
+  $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
+  // select last item
+  $: item = items.length ? items[items.length - 1] : null
 </script>
 
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
@@ -23,25 +35,37 @@
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
-        <TextStyle />
+        <TextStyle bind:allSlideItems bind:item />
       </div>
       <span style="display: flex;">
-        <Button style="flex: 1;" dark center>[[[Apply to all]]]</Button>
-        <Button style="flex: 1;" dark center>[[[Reset]]]</Button>
+        <Button style="flex: 1;" dark center>
+          <Icon id="apply" />
+          <T id={"edit.apply_to_all"} />
+        </Button>
+        <Button style="flex: 1;" dark center>
+          <Icon id="reset" />
+          <T id={"edit.reset"} />
+        </Button>
       </span>
     {/if}
     {#if active === "item"}
       <div class="content">
-        <ItemStyle />
+        <ItemStyle bind:allSlideItems bind:item />
       </div>
       <span style="display: flex;">
-        <Button style="flex: 1;" dark center>[[[Apply to all]]]</Button>
-        <Button style="flex: 1;" dark center>[[[Reset]]]</Button>
+        <Button style="flex: 1;" dark center>
+          <Icon id="apply" />
+          <T id={"edit.apply_to_all"} />
+        </Button>
+        <Button style="flex: 1;" dark center>
+          <Icon id="reset" />
+          <T id={"edit.reset"} />
+        </Button>
       </span>
     {/if}
     {#if active === "items"}
       <div class="content">
-        <Items />
+        <Items bind:allSlideItems />
       </div>
     {/if}
     {#if active === "slide"}

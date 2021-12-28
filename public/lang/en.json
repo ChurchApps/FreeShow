@@ -98,8 +98,37 @@
     "offsetX": "Offset X",
     "offsetY": "Offset Y",
     "blur": "Blur",
+    "item": "Item",
+    "height": "Height",
+    "rotation": "Rotation",
+    "opacity": "Opacity",
+    "corner_radius": "Corner Radius",
+    "border": "Border",
+    "length": "Length",
     "reset": "Reset",
     "apply_to_all": "Apply to all"
+  },
+  "borders": {
+    "solid": "Solid",
+    "dashed": "Dashed",
+    "dotted": "Dotted",
+    "double": "Double",
+    "inset": "Inset",
+    "outset": "Outset",
+    "groove": "Groove",
+    "ridge": "Ridge"
+  },
+  "draw": {
+    "focus": "Focus",
+    "pointer": "Pointer",
+    "fill": "Fill",
+    "paint": "Paint",
+    "color": "Color",
+    "opacity": "Opacity",
+    "size": "Size",
+    "glow": "Glow",
+    "hold": "Hold",
+    "rainbow": "Rainbow"
   },
   "month": {
     "1": "January",
