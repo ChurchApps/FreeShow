@@ -7,6 +7,7 @@
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import IconButton from "../../inputs/IconButton.svelte"
+  import Panel from "../../system/Panel.svelte"
 
   export let allSlideItems: Item[]
   $: console.log(allSlideItems)
@@ -28,7 +29,7 @@
   }
 </script>
 
-<section>
+<Panel>
   <h6><T id="edit.add_items" /></h6>
   <div class="grid">
     <!-- text, image, video, audio, ... -->
@@ -68,7 +69,7 @@
       </Button>
     {/each}
   </div>
-</section>
+</Panel>
 
 <!-- <section>Items order layers / add new items (text/shapes/image?/video/music...)</section> -->
 
@@ -77,14 +78,6 @@
 
 <!-- TODO: select item / bring to center / delete ...  -->
 <style>
-  h6 {
-    color: var(--text);
-    text-transform: uppercase;
-    text-align: center;
-    font-size: 0.9em;
-    margin: 20px 0;
-  }
-
   .items :global(button) {
     width: 100%;
   }
@@ -98,13 +91,5 @@
     flex: 1;
     background-color: var(--primary-darker);
     padding: 20px;
-  }
-
-  hr {
-    width: 100%;
-    height: 2px;
-    background-color: var(--primary-lighter);
-    border: none;
-    margin: 20px 0;
   }
 </style>

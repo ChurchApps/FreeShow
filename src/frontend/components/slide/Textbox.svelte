@@ -7,9 +7,9 @@
 <div class="item" style={item.style}>
   {#if item.text}
     <div class="align" style={item.align}>
-      <div style="width: 100%;">
+      <div class="text">
         {#each item.text as text}
-          <p style={text.style}>{text.value}</p>
+          <span style={text.style}>{text.value}</span>
         {/each}
       </div>
     </div>
@@ -17,27 +17,6 @@
 </div>
 
 <style>
-  .item {
-    /* border: 1px dashed var(--secondary-opacity); */
-
-    /* display: inline-flex; */
-    position: absolute;
-    overflow: hidden;
-    /* display: flex; */
-
-    font-family: "CMGSans";
-    line-height: 1;
-    -webkit-text-stroke-color: #000000;
-    text-shadow: 2px 2px 10px #000000;
-
-    border-style: solid;
-    border-width: 0px;
-    border-color: #ffffff;
-
-    height: 150px;
-    width: 400px;
-  }
-
   .align {
     height: 100%;
     display: flex;
@@ -45,9 +24,18 @@
     align-items: center;
   }
 
-  p {
+  /* span {
     display: inline;
     white-space: initial;
     color: white;
+  } */
+
+  .text {
+    width: 100%;
+    /* height: 100%; */
+
+    overflow-wrap: break-word;
+    /* line-break: after-white-space;
+    -webkit-line-break: after-white-space; */
   }
 </style>

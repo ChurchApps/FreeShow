@@ -1,42 +1,17 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
   import { activeShow, activeEdit, shows } from "../../stores"
-  import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
   import T from "../helpers/T.svelte"
+  import Movebox from "../system/Movebox.svelte"
 
   export let item: Item
   export let index: number
   export let ratio: number
-  $: zoom = ratio
 
-  // export let slideElem: any
   let itemElem: any
 
-  // $: style = item.style
-
-  $: layoutSlides = GetLayout($activeShow!.id)
-  // $: itemStore = $shows[$activeShow!.id].slides[layoutSlides[$activeEdit].id].items[index]
-
-  let squares = ["nw", "n", "ne", "e", "se", "s", "sw", "w"]
-  let lines = ["n", "e", "s", "w"]
-  let snap = 8
-  export let helperLines: any
-
-  interface Mouse {
-    x: number
-    y: number
-    offset: {
-      x: number
-      y: number
-      width: number
-      height: number
-    }
-    // offsetWidth: number
-    // offsetHeight: number
-    e: any
-  }
-  let mouse: null | Mouse = null
+  export let mouse: any
   function mousedown(e: any) {
     activeEdit.update((ae) => {
       if (e.ctrlKey) {
@@ -51,15 +26,15 @@
         x: e.clientX,
         y: e.clientY,
         offset: {
-          x: (e.clientX - e.target.closest(".slide").offsetLeft) / zoom - e.target.closest(".item").offsetLeft,
-          y: (e.clientY - e.target.closest(".slide").offsetTop) / zoom - e.target.closest(".item").offsetTop,
-          width: e.clientX / zoom - e.target.closest(".item").offsetWidth,
-          height: e.clientY / zoom - e.target.closest(".item").offsetHeight,
+          x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - e.target.closest(".item").offsetLeft,
+          y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetTop,
+          width: e.clientX / ratio - e.target.closest(".item").offsetWidth,
+          height: e.clientY / ratio - e.target.closest(".item").offsetHeight,
         },
-        // offsetX: (e.clientX - e.target.closest(".slide").offsetLeft) / zoom - e.target.closest(".item").offsetLeft,
-        // offsetY: (e.clientY - e.target.closest(".slide").offsetTop) / zoom - e.target.closest(".item").offsetTop,
-        // offsetWidth: (e.clientX - e.target.closest(".slide").offsetLeft + 125) / zoom - e.target.closest(".item").offsetWidth + e.target.offsetWidth,
-        // offsetHeight: (e.clientY - e.target.closest(".slide").offsetTop) / zoom - e.target.closest(".item").offsetHeight + e.target.offsetHeight,
+        // offsetX: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - e.target.closest(".item").offsetLeft,
+        // offsetY: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetTop,
+        // offsetWidth: (e.clientX - e.target.closest(".slide").offsetLeft + 125) / ratio - e.target.closest(".item").offsetWidth + e.target.offsetWidth,
+        // offsetHeight: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetHeight + e.target.offsetHeight,
         // offsetWidth: e.target.offsetParent.offsetWidth - e.clientX,
         // offsetHeight: e.target.offsetParent.offsetHeight - e.clientY,
         e: e,
@@ -67,149 +42,9 @@
     }
   }
 
-  const getStyles = (str: string) => {
-    let styles: any = {}
-    str.split(";").forEach((s) => {
-      if (s.length) styles[s.slice(0, s.indexOf(":")).trim()] = s.slice(s.indexOf(":") + 1, s.length).trim()
-    })
-    return styles
-  }
-  function mousemove(e: any) {
-    // TODO: center lines thicker and easier to snap to
-    if (mouse) {
-      let styles: any = getStyles(item.style)
-      // let styles: any = {}
-      // item.style.split(";").forEach((s) => {
-      //   if (s.length) styles[s.slice(0, s.indexOf(":")).trim()] = s.slice(s.indexOf(":") + 1, s.length).trim()
-      // })
-
-      if (mouse.e.target.closest(".line") || mouse.e.ctrlKey || mouse.e.altKey) {
-        e.preventDefault()
-        styles.left = (e.clientX - itemElem.closest(".slide").offsetLeft) / zoom - mouse.offset.x
-        styles.top = (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y
-        // styles.left = (itemElem.closest(".slide").offsetLeft) - mouse.offset.x / zoom
-        // styles.top = (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y
-
-        if (!e.altKey) {
-          let slideWidth = Math.round(itemElem.closest(".slide").offsetWidth / zoom)
-          let slideHeight = Math.round(itemElem.closest(".slide").offsetHeight / zoom)
-
-          // slide snap
-          let xLines = [0, slideWidth / 2, slideWidth]
-          let yLines = [0, slideHeight / 2, slideHeight]
-          // item snap
-          let xItems = [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
-          let yItems = [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
-          // snap margin
-          let margin = snap / zoom
-
-          // TODO: gravit, snap to gaps++
-
-          // get other items pos
-          $shows[$activeShow!.id].slides[layoutSlides[$activeEdit.slide!].id].items.forEach((itm, i) => {
-            if (i !== index) {
-              let style = getStyles(itm.style)
-              Object.entries(style).map((s: any) => (style[s[0]] = Number(s[1].replace(/\D.+/g, ""))))
-              xLines.push(style.left, style.left + style.width / 2, style.left + style.width)
-              yLines.push(style.top, style.top + style.height / 2, style.top + style.height)
-            }
-          })
-
-          xLines.forEach((xl) => {
-            let match = false
-            xItems.forEach((xi) => {
-              if (styles.left > xl - xi - margin && styles.left < xl - xi + margin) {
-                styles.left = xl - xi
-                match = true
-              }
-            })
-            if (match && !helperLines.includes("x" + xl)) helperLines = [...helperLines, "x" + xl]
-            else if (!match && helperLines.includes("x" + xl)) helperLines = helperLines.filter((m: any) => m !== "x" + xl)
-          })
-          yLines.forEach((yl) => {
-            let match = false
-            yItems.forEach((yi) => {
-              if (styles.top > yl - yi - margin && styles.top < yl - yi + margin) {
-                styles.top = yl - yi
-                match = true
-              }
-            })
-            if (match && !helperLines.includes("y" + yl)) helperLines = [...helperLines, "y" + yl]
-            else if (!match && helperLines.includes("y" + yl)) helperLines = helperLines.filter((m: any) => m !== "y" + yl)
-          })
-        } else helperLines = []
-        styles.left = styles.left.toFixed(2) + "px"
-        styles.top = styles.top.toFixed(2) + "px"
-      } else if (mouse.e.target.closest(".square")) {
-        // TODO: shiftkey
-        // TODO: snap to resize...
-        let store = null
-        let square = mouse.e.target.closest(".square")
-        if (square.classList[1].includes("n")) {
-          styles.top = (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y
-          styles.height = e.clientY / zoom - mouse.offset.height
-          if (e.shiftKey) store = e.clientY / zoom - mouse.offset.height
-          // styles.height = e.clientY / zoom - mouse.offset.height
-          // styles.height = e.clientY / zoom - mouse.offset.height - (e.clientY - itemElem.closest(".slide").offsetTop) / zoom - mouse.offset.y
-          // styles.height = mouse.offset.y - itemElem.offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom
-          // styles.height = mouse.offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom
-          // styles.height = mouse.offsetHeight + itemElem.closest(".item").offsetHeight - (e.clientY - e.target.closest(".slide").offsetTop) / zoom
-          // styles.height = mouse.offsetHeight + itemElem.closest(".item").offsetTop - (e.clientY - itemElem.closest(".slide").offsetTop) / zoom
-        }
-        if (square.classList[1].includes("e")) {
-          // styles.width = (e.clientX - e.target.closest(".slide").offsetLeft) / zoom - mouse.offset.x
-          if (!e.shiftKey || store === null) {
-            styles.width = e.clientX / zoom - mouse.offset.width
-            store = e.clientX / zoom - mouse.offset.width
-          } else styles.width = store
-        }
-        if (square.classList[1].includes("s")) {
-          // styles.height = e.clientY / zoom - mouse.offset.y + itemElem.offsetHeight
-
-          if (!e.shiftKey || store === null) {
-            styles.height = e.clientY / zoom - mouse.offset.height
-            store = e.clientY / zoom - mouse.offset.height
-          } else styles.height = store
-        }
-        if (square.classList[1].includes("w")) {
-          styles.left = (e.clientX - itemElem.closest(".slide").offsetLeft) / zoom - mouse.offset.x
-          // styles.width = e.clientX / zoom - mouse.offsetWidth
-          // styles.width = mouse.offset.x - itemElem.offsetWidth - (e.clientX - e.target.closest(".slide").offsetLeft) / zoom
-
-          if (!e.shiftKey || store === null) {
-            styles.width = e.clientX / zoom - mouse.offset.width
-            store = e.clientX / zoom - mouse.offset.width
-          }
-        }
-
-        ;["top", "left", "width", "height"].forEach((value) => {
-          if (!styles[value].toString().includes("px")) styles[value] = styles[value].toFixed(2) + "px"
-        })
-      }
-
-      let textStyles: string = ""
-      Object.entries(styles).forEach((obj) => {
-        textStyles += obj[0] + ":" + obj[1] + ";"
-      })
-
-      // TODO: move multiple!
-      let newData = [textStyles]
-      let oldData = [$shows[$activeShow!.id].slides[layoutSlides[$activeEdit.slide!].id].items[index].style]
-      history({ id: "itemStyle", oldData, newData, location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: [index] } })
-      // shows.update((s) => {
-      //   s[$activeShow!.id].slides[layoutSlides[$activeEdit.slide!].id].items[index].style = textStyles
-      //   return s
-      // })
-    }
-  }
-  function mouseup() {
-    mouse = null
-    helperLines = []
-  }
-
   function keydown(e: any) {
     // TODO:
-    // if (e.altKey) helperLines = []
+    // if (e.altKey) lines = []
     // if ctrlkey = select multiple
 
     // TODO: exlude.....
@@ -297,23 +132,16 @@
   }
 </script>
 
-<svelte:window on:mousemove={mousemove} on:mouseup={mouseup} on:keydown={keydown} on:mousedown={deselect} />
+<svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <div
   bind:this={itemElem}
   class="item"
   class:selected={$activeEdit.items.includes(index)}
-  style="{item.style}; outline: {3 / zoom}px solid rgb(255 255 255 / 0.2);"
+  style="{item.style}; outline: {3 / ratio}px solid rgb(255 255 255 / 0.2);"
   on:mousedown={mousedown}
 >
-  <section>
-    {#each lines as line}
-      <div class="line {line}l" style="{line === 'n' || line === 's' ? 'height' : 'width'}: 10px;" />
-    {/each}
-    {#each squares as square}
-      <div class="square {square}" style="width: {8 / zoom}px; cursor: {square}-resize;" />
-    {/each}
-  </section>
+  <Movebox {ratio} active={$activeEdit.items.includes(index)} />
   <!-- on:input={updateText} -->
   {#if item.text}
     <div class="align" style={item.align}>
@@ -333,39 +161,12 @@
 
 <style>
   .item {
-    /* border: 1px dashed var(--secondary-opacity); */
-
-    position: absolute;
-    /* display: inline-flex; */
     outline: 5px solid rgb(255 255 255 / 0.2);
-    overflow: hidden;
-
-    font-family: "CMGSans";
-    line-height: 1;
-    -webkit-text-stroke-color: #000000;
-    text-shadow: 2px 2px 10px #000000;
-
-    border-style: solid;
-    border-width: 0px;
-    border-color: #ffffff;
-
-    height: 150px;
-    width: 400px;
   }
   .item.selected {
     outline: 5px solid var(--secondary);
     overflow: visible;
   }
-  /* .item.selected::after {
-    content: "";
-    position: absolute;
-    top: -20px;
-    left: -20px;
-    width: inherit;
-    height: inherit;
-    border: 10px dashed var(--secondary);
-    pointer-events: none;
-  } */
   .item .placeholder {
     opacity: 0.5;
     pointer-events: none;
@@ -383,98 +184,9 @@
   .edit {
     outline: none;
     width: 100%;
+    overflow-wrap: break-word;
+    /* height: 100%; */
     /* white-space: initial;
     color: white; */
-  }
-
-  .square {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    /* width: 15px;
-    height: 15px; */
-    aspect-ratio: 1/1;
-    background-color: transparent;
-    /* border: 5px solid transparent; */
-    /* outline: 1px solid white; */
-    /* border-radius: 50%; */
-  }
-  .item.selected .square {
-    background-color: rgb(255 255 255 / 0.8);
-  }
-  .nw,
-  .n,
-  .ne {
-    top: 0;
-  }
-  .e,
-  .w {
-    top: 50%;
-  }
-  .se,
-  .s,
-  .sw {
-    top: 100%;
-  }
-  .nw,
-  .sw,
-  .w {
-    left: 0;
-  }
-  .n,
-  .s {
-    left: 50%;
-  }
-  .ne,
-  .e,
-  .se {
-    left: 100%;
-  }
-
-  .line {
-    position: absolute;
-    background-color: transparent;
-    cursor: move;
-  }
-  /* .line.invisible {
-    background-color: transparent;
-    cursor: move;
-  } */
-  /* .line::after {
-    content: "";
-    background-color: red;
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    cursor: move;
-  } */
-
-  .nl {
-    top: 0;
-    left: 0;
-    width: 100%;
-    /* height: lineWidth; */
-    transform: translateY(-50%);
-  }
-  .el {
-    top: 0;
-    left: 100%;
-    /* width: lineWidth; */
-    height: 100%;
-    transform: translateX(-50%);
-  }
-  .sl {
-    top: 100%;
-    left: 0;
-    /* height: lineWidth; */
-    width: 100%;
-    transform: translateY(-50%);
-  }
-  .wl {
-    top: 0;
-    left: 0;
-    /* width: lineWidth; */
-    height: 100%;
-    transform: translateX(-50%);
   }
 </style>

@@ -9,7 +9,6 @@
   export let hideOverflow: boolean = true
   export let resolution: Resolution = $activeShow?.id && $shows[$activeShow.id].settings.resolution ? $shows[$activeShow.id].settings.resolution! : $screen.resolution // 1920, 1080
   // let resolution = { width: 1600, height: 1200 }
-  let fontSize: number = 100
   let slideWidth: number = 0
   export let ratio: number = 1
   $: ratio = slideWidth / resolution.width
@@ -20,7 +19,7 @@
     bind:offsetWidth={slideWidth}
     class="slide"
     class:hideOverflow
-    style="{$$props.style || ''}background-color: {background};font-size: {fontSize}px;aspect-ratio: {resolution.width}/{resolution.height};"
+    style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};"
   >
     {#if zoom}
       <span style="zoom: {ratio};">
@@ -37,6 +36,26 @@
     position: relative;
     /* TODO: not edit */
     /* z-index: -1; */
+  }
+
+  .slide :global(.item) {
+    position: absolute;
+    /* display: inline-flex; */
+    overflow: hidden;
+
+    color: white;
+    font-size: 100px;
+    font-family: "CMGSans";
+    line-height: 1;
+    -webkit-text-stroke-color: #000000;
+    text-shadow: 2px 2px 10px #000000;
+
+    border-style: solid;
+    border-width: 0px;
+    border-color: #ffffff;
+
+    height: 150px;
+    width: 400px;
   }
 
   .hideOverflow {

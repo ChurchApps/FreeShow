@@ -16,6 +16,7 @@ import {
   drawerTabsData,
   activeShow,
   categories,
+  stageShows,
 } from "./../../stores"
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory } from "../../stores"
@@ -23,12 +24,14 @@ import { get } from "svelte/store"
 import type { Slide } from "../../../types/Show"
 import { GetLayout } from "../helpers/get"
 
-export type HistoryPages = "drawer" | "shows" | "edit"
+export type HistoryPages = "drawer" | "shows" | "edit" | "stage"
 export type HistoryIDs =
   | "textStyle"
   | "deleteItem"
   | "itemStyle"
   | "itemAlign"
+  | "stageItemAlign"
+  | "stageItemStyle"
   | "slideStyle"
   | "newMediaFolder"
   | "newProject"
@@ -54,7 +57,7 @@ export interface History {
     show?: ShowRef
     layout?: string
     slide?: string
-    items?: number[]
+    items?: any[]
   }
 }
 export function history(obj: History, undo: null | boolean = null) {
@@ -98,6 +101,15 @@ export function history(obj: History, undo: null | boolean = null) {
       shows.update((s) => {
         obj.location!.items!.forEach((item, index) => {
           s[obj.location!.show!.id!].slides[obj.location!.slide!].items[item][obj.id === "itemStyle" ? "style" : "align"] = obj.newData[index]
+        })
+        return s
+      })
+      break
+    case "stageItemStyle":
+    case "stageItemAlign":
+      stageShows.update((s) => {
+        obj.location!.items!.forEach((item, index) => {
+          s[obj.location!.slide!].items[item][obj.id === "stageItemStyle" ? "style" : "align"] = obj.newData[index]
         })
         return s
       })

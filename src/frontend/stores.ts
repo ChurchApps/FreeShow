@@ -1,4 +1,5 @@
 import { Writable, writable } from "svelte/store"
+import type { StageShows } from "./../types/Stage"
 import type { DrawTools, Draw, DrawSettings } from "./../types/Draw"
 import type { History } from "./components/helpers/history"
 import type { NumberObject, Selected, Drag } from "../types/Main"
@@ -74,6 +75,44 @@ export const drawSettings: Writable<DrawSettings> = writable({
     rainbow: false,
   },
   paint: {},
+})
+// stage
+interface ActiveStage {
+  id: null | string
+  items: string[]
+}
+export const activeStage: Writable<ActiveStage> = writable({ id: "eopsjofes", items: [] })
+export const stageShows: Writable<StageShows> = writable({
+  eopsjofes: {
+    name: "test",
+    enabled: true,
+    settings: {
+      background: false,
+      color: "#000000",
+      resolution: false,
+      size: { width: 10, height: 20 },
+      labels: false,
+    },
+    items: {
+      "slide#current_slide_text": {
+        enabled: true,
+        style: "top: 0px;left: 100px;color: red;",
+        align: "",
+      },
+    },
+  },
+  eopsjofese: {
+    name: "test2",
+    enabled: false,
+    settings: {
+      background: false,
+      color: "#000000",
+      resolution: false,
+      size: { width: 10, height: 20 },
+      labels: true,
+    },
+    items: {},
+  },
 })
 
 export const shows: Writable<Shows> = writable({

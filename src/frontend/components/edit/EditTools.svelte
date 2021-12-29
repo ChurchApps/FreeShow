@@ -37,43 +37,35 @@
       <div class="content">
         <TextStyle bind:allSlideItems bind:item />
       </div>
-      <span style="display: flex;">
-        <Button style="flex: 1;" dark center>
-          <Icon id="apply" />
-          <T id={"edit.apply_to_all"} />
-        </Button>
-        <Button style="flex: 1;" dark center>
-          <Icon id="reset" />
-          <T id={"edit.reset"} />
-        </Button>
-      </span>
-    {/if}
-    {#if active === "item"}
+    {:else if active === "item"}
       <div class="content">
         <ItemStyle bind:allSlideItems bind:item />
       </div>
-      <span style="display: flex;">
-        <Button style="flex: 1;" dark center>
-          <Icon id="apply" />
-          <T id={"edit.apply_to_all"} />
-        </Button>
-        <Button style="flex: 1;" dark center>
-          <Icon id="reset" />
-          <T id={"edit.reset"} />
-        </Button>
-      </span>
-    {/if}
-    {#if active === "items"}
+    {:else if active === "items"}
       <div class="content">
         <Items bind:allSlideItems />
       </div>
-    {/if}
-    {#if active === "slide"}
+    {:else if active === "slide"}
       <div class="content">
         <SlideStyle />
       </div>
     {/if}
     <!-- add shapes, text edit, arrange layers, transitions... -->
+
+    <span style="display: flex;">
+      {#if active === "text" || active === "item"}
+        <Button style="flex: 1;" dark center>
+          <Icon id="apply" />
+          <T id={"edit.apply_to_all"} />
+        </Button>
+      {/if}
+      {#if active !== "items"}
+        <Button style="flex: 1;" dark center>
+          <Icon id="reset" />
+          <T id={"edit.reset"} />
+        </Button>
+      {/if}
+    </span>
   {/if}
 </div>
 
@@ -94,7 +86,8 @@
   }
   .content :global(section) {
     padding: 10px;
-    flex: 1;
+    /* flex: 1; */
+    /* height: 100%; */
   }
   .content :global(section div) {
     display: flex;

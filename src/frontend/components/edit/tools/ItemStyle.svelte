@@ -3,11 +3,13 @@
   import { activeEdit, activeShow } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
+  import { getStyles } from "../../helpers/style"
   import T from "../../helpers/T.svelte"
 
   import Color from "../../inputs/Color.svelte"
   import Dropdown from "../../inputs/Dropdown.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
+  import Panel from "../../system/Panel.svelte"
   import { addStyleString } from "./TextStyle"
 
   export let allSlideItems: Item[]
@@ -52,67 +54,9 @@
 
   setText()
   function setText() {
-    Object.entries(defaults).forEach(([key, value]) => {
-      let styles = getStyle(key, item?.style || null)
-      console.log(styles)
-
-      data[key] = styles === null ? value : styles
-    })
+    let styles = getStyles(item?.style, true)
+    Object.entries(defaults).forEach(([key, value]) => (data[key] = styles[key]?.length ? styles[key] : value))
   }
-
-  function getStyle(key: string, style: string | null) {
-    let newStyle: any = null
-    if (style?.includes(key)) {
-      style.split(";").forEach((s: string) => {
-        if (s.includes(key)) newStyle = s.split(":")[1]
-      })
-
-      if (newStyle?.includes("px") || newStyle?.includes("%")) newStyle = newStyle.replace(/\D.+/g, "")
-    }
-
-    return newStyle
-  }
-
-  // function setStyle(style: any[]) {
-  //   let layout: string = $shows[active].settings.activeLayout
-  //   let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
-
-  //   let oldData = JSON.parse(JSON.stringify($shows[active].slides[slide].items))
-  //   let items: Item[] = [...$shows[active].slides[slide].items]
-  //   if (item !== null) items = [items[item]]
-
-  //   let newItems = [...items]
-  //   console.log(oldData[0].style)
-  //   newItems.forEach((i) => {
-  //     i.style = addStyleString(i.style, style)
-  //   })
-  //   console.log(oldData[0].style)
-  //   if (item !== null) {
-  //     let changed = newItems[0]
-  //     newItems = [...$shows[active].slides[slide].items]
-  //     newItems[item] = changed
-  //   }
-
-  //   console.log(newItems)
-
-  //   // let newItem = items[item!].style
-
-  //   // items[item!].style += style
-
-  //   let obj: History = {
-  //     id: "itemStyle",
-  //     oldData: oldData, // TODO: minimize this
-  //     newData: newItems,
-  //     location: {
-  //       page: "edit",
-  //       show: { id: active },
-  //       layout: layout,
-  //       slide: slide,
-  //     },
-  //   }
-  //   // push to history
-  //   history(obj)
-  // }
 
   const inputChange = (e: any, key: string) => update(key, e.target.value)
 
@@ -165,10 +109,10 @@
   }
 </script>
 
-<section>
+<Panel>
   <!-- position // dimension / align -->
   <h6><T id="edit.item" /></h6>
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.x" /></p>
       <p><T id="edit.y" /></p>
@@ -187,7 +131,7 @@
   </div>
   <hr />
   <h6><T id="edit.style" /></h6>
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.color" /></p>
       <p><T id="edit.opacity" /></p>
@@ -206,7 +150,7 @@
     <h6><T id="edit.border" /></h6>
   </span>
   <!-- color, distance -->
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.color" /></p>
       <p><T id="edit.width" /></p>
@@ -237,7 +181,7 @@
     <h6><T id="edit.shadow" /></h6>
   </span>
   <!-- color, blur, distance, density -->
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.color" /></p>
       <p><T id="edit.offsetX" /></p>
@@ -258,7 +202,7 @@
     <!-- <input type="checkbox" /> -->
     <h6><T id="edit.shadow_inset" /></h6>
   </span>
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.color" /></p>
       <p><T id="edit.offsetX" /></p>
@@ -274,37 +218,4 @@
       <NumberInput value={shadowsInset["ishadow-spread"]} min={-100} on:change={(e) => update("ishadow-spread", e.detail)} />
     </span>
   </div>
-</section>
-
-<style>
-  h6 {
-    color: var(--text);
-    text-transform: uppercase;
-    text-align: center;
-    font-size: 0.9em;
-    margin: 20px 0;
-  }
-
-  .titles {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-  }
-
-  p {
-    width: 100%;
-    opacity: 0.8;
-    align-self: center;
-    /* font-weight: bold; */
-    /* text-transform: uppercase; */
-    font-size: 0.9em;
-  }
-
-  hr {
-    width: 100%;
-    height: 2px;
-    background-color: var(--primary-lighter);
-    border: none;
-    margin: 20px 0;
-  }
-</style>
+</Panel>

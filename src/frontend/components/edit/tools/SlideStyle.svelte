@@ -4,6 +4,7 @@
   import { history } from "../../helpers/history"
   import T from "../../helpers/T.svelte"
   import Color from "../../inputs/Color.svelte"
+  import Panel from "../../system/Panel.svelte"
 
   $: editSlide = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide) : null
 
@@ -27,9 +28,9 @@
   }
 </script>
 
-<section>
+<Panel>
   <h6><T id="edit.style" /></h6>
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.background" /></p>
       <p><T id="edit.color" /></p>
@@ -41,7 +42,7 @@
   </div>
   <hr />
   <h6><T id="edit.options" /></h6>
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.resolution" /></p>
       <p><T id="edit.transition" /></p>
@@ -51,37 +52,4 @@
       <Color bind:value={color} on:input={colorChange} /> -->
     </span>
   </div>
-</section>
-
-<style>
-  h6 {
-    color: var(--text);
-    text-transform: uppercase;
-    text-align: center;
-    font-size: 0.9em;
-    margin: 20px 0;
-  }
-
-  .titles {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-  }
-
-  p {
-    width: 100%;
-    opacity: 0.8;
-    align-self: center;
-    /* font-weight: bold; */
-    /* text-transform: uppercase; */
-    font-size: 0.9em;
-  }
-
-  hr {
-    width: 100%;
-    height: 2px;
-    background-color: var(--primary-lighter);
-    border: none;
-    margin: 20px 0;
-  }
-</style>
+</Panel>

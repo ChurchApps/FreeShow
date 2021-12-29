@@ -3,18 +3,20 @@
   import { activeShow, activeEdit, dictionary } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
+  import { getStyles } from "../../helpers/style"
   import T from "../../helpers/T.svelte"
   import Color from "../../inputs/Color.svelte"
   import FontDropdown from "../../inputs/FontDropdown.svelte"
   import IconButton from "../../inputs/IconButton.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
+  import Panel from "../../system/Panel.svelte"
   import { addStyle, addStyleString, getItemStyleAtPos, getItemText, getSelectionRange } from "./TextStyle"
 
   export let allSlideItems: Item[]
   export let item: Item | null
 
   // get style of last text or at caret pos
-  $: style = item?.text ? (selection !== null && selection[1] - selection[0] >= 0 ? getItemStyleAtPos(item.text, selection[1]) : item.text[item.text.length - 1].style) : null
+  $: style = item?.text ? (selection !== null && selection[1] - selection[0] >= 0 ? getItemStyleAtPos(item.text, selection[1]) : item.text[item.text.length - 1].style) : ""
   $: alignStyle = item?.align ? item.align : null
 
   let selection: null | [number, number] = null
@@ -69,32 +71,19 @@
 
   setText()
   function setText() {
+    let styles = getStyles(style)
     Object.entries(defaults).forEach(([key, value]) => {
-      let styles = getStyle(key, style)
       if (key === "text-shadow" && value !== null) {
         let v = value.split(" ")
         Object.keys(shadows).forEach((shadowKey, i) => {
           text[shadowKey] = v[i]
         })
-      } else text[key] = styles === null ? value : styles
+      } else text[key] = styles[key]?.length ? styles[key] : value
     })
+    let aligns = getStyles(alignStyle)
     Object.entries(defaultAligns).forEach(([key, value]) => {
-      let style = getStyle(key, alignStyle)
-      align[key] = style === null ? value : style
+      align[key] = aligns[key]?.length ? aligns[key] : value
     })
-  }
-
-  function getStyle(key: string, style: string | null) {
-    let newStyle: any = null
-    if (style?.includes(key)) {
-      style.split(";").forEach((s: string) => {
-        if (s.includes(key)) newStyle = s.split(":")[1]
-      })
-
-      if (newStyle?.includes("px") || newStyle?.includes("em")) newStyle = newStyle.replace(/\D+/g, "")
-    }
-
-    return newStyle
   }
 
   const inputChange = (e: any, key: string) => update(key, e.target.value)
@@ -166,13 +155,9 @@
 
 <svelte:window on:keyup={keyup} on:mouseup={getTextSelection} />
 
-<section>
-  <!-- TODO: update values based of cursor position.... -->
-  <!-- {#key item}
-    {#key selectedTextItem} -->
-  <!-- {#key $activeShow?.id} -->
+<Panel>
   <h6><T id="edit.font" /></h6>
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.family" /></p>
       <p><T id="edit.color" /></p>
@@ -202,7 +187,7 @@
       active={text["text-decoration"]?.includes("line-through")}
     />
   </div>
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.line_spacing" /></p>
       <p><T id="edit.letter_spacing" /></p>
@@ -233,7 +218,7 @@
     <h6><T id="edit.outline" /></h6>
   </span>
   <!-- color, distance -->
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.color" /></p>
       <p><T id="edit.width" /></p>
@@ -249,7 +234,7 @@
     <h6><T id="edit.shadow" /></h6>
   </span>
   <!-- color, blur, distance, density -->
-  <div style="display: flex;gap: 10px;">
+  <div class="gap">
     <span class="titles">
       <p><T id="edit.color" /></p>
       <p><T id="edit.offsetX" /></p>
@@ -265,51 +250,4 @@
       <NumberInput value={shadows["shadow-blur"]} on:change={(e) => update("shadow-blur", e.detail)} />
     </span>
   </div>
-  <!-- {/key} -->
-  <!-- {/key}
-  {/key} -->
-</section>
-
-<style>
-  h6 {
-    color: var(--text);
-    text-transform: uppercase;
-    text-align: center;
-    font-size: 0.9em;
-    margin: 20px 0;
-  }
-
-  .titles {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-  }
-
-  p {
-    width: 100%;
-    opacity: 0.8;
-    align-self: center;
-    /* font-weight: bold; */
-    /* text-transform: uppercase; */
-    font-size: 0.9em;
-  }
-
-  /* span {
-    margin: 10px 0;
-  } */
-
-  .line {
-    display: flex;
-    align-items: center;
-    background-color: var(--primary-darker);
-    flex-flow: wrap;
-  }
-
-  hr {
-    width: 100%;
-    height: 2px;
-    background-color: var(--primary-lighter);
-    border: none;
-    margin: 20px 0;
-  }
-</style>
+</Panel>

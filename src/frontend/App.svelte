@@ -14,7 +14,7 @@
   import ContextMenu from "./components/system/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import { activePage, activeProject, activeShow, drawer, outputWindow, outSlide, screen, shows } from "./stores"
+  import { activePage, activeProject, activeShow, activeStage, drawer, outputWindow, outSlide, screen, shows } from "./stores"
   import ProjectTools from "./components/show/ProjectTools.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
@@ -26,6 +26,9 @@
   import Slide from "./components/draw/Slide.svelte"
   import DrawTools from "./components/draw/DrawTools.svelte"
   import DrawSettings from "./components/draw/DrawSettings.svelte"
+  import Shows from "./components/stage/Shows.svelte"
+  import StageTools from "./components/stage/StageTools.svelte"
+  import StageShow from "./components/stage/StageShow.svelte"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -115,6 +118,8 @@
               <Navigation />
             {:else if page === "draw"}
               <DrawTools />
+            {:else if page === "stage"}
+              <Shows />
             {/if}
           </div>
         </Resizeable>
@@ -128,6 +133,8 @@
             <Slide />
           {:else if page === "settings"}
             <Settings />
+          {:else if page === "stage"}
+            <StageShow />
           {/if}
         </div>
         <Resizeable id="mainRight" side="right">
@@ -139,6 +146,8 @@
               <EditTools />
             {:else if page === "draw"}
               <DrawSettings />
+            {:else if page === "stage" && $activeStage.id}
+              <StageTools />
             {/if}
           </div>
         </Resizeable>
