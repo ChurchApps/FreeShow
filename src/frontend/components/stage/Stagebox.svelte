@@ -1,17 +1,21 @@
 <script lang="ts">
-  import { activeShow, activeStage, stageShows } from "../../stores"
+  import { activeStage, stageShows } from "../../stores"
   import T from "../helpers/T.svelte"
+  import Clock from "../system/Clock.svelte"
   import Movebox from "../system/Movebox.svelte"
+  import SlideText from "./items/SlideText.svelte"
 
   export let id: string
   export let item: any
-  export let show: any = $activeShow?.id ? $stageShows[$activeShow.id] : null
+  export let show: any = null
   export let ratio: number
   export let edit: boolean = false
+  $: currentShow = show === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : show
 
   export let mouse: any = null
   function mousedown(e: any) {
     if (edit) {
+      console.log(e)
       activeStage.update((ae) => {
         if (e.ctrlKey) {
           // if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
@@ -20,20 +24,21 @@
         } else ae.items = [id]
         return ae
       })
+      let item = e.target.closest(".item")
       // if ((e.target.closest(".line") && !e.ctrlKey) || e.target.closest(".square") || (e.ctrlKey && !e.target.closest(".line")) || !e.target.closest(".edit") || e.altKey) {
       mouse = {
         x: e.clientX,
         y: e.clientY,
         offset: {
-          x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - e.target.closest(".item").offsetLeft,
-          y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetTop,
-          width: e.clientX / ratio - e.target.closest(".item").offsetWidth,
-          height: e.clientY / ratio - e.target.closest(".item").offsetHeight,
+          x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
+          y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
+          width: e.clientX / ratio - item.offsetWidth,
+          height: e.clientY / ratio - item.offsetHeight,
         },
-        // offsetX: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - e.target.closest(".item").offsetLeft,
-        // offsetY: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetTop,
-        // offsetWidth: (e.clientX - e.target.closest(".slide").offsetLeft + 125) / ratio - e.target.closest(".item").offsetWidth + e.target.offsetWidth,
-        // offsetHeight: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetHeight + e.target.offsetHeight,
+        // offsetX: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
+        // offsetY: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
+        // offsetWidth: (e.clientX - e.target.closest(".slide").offsetLeft + 125) / ratio - item.offsetWidth + e.target.offsetWidth,
+        // offsetHeight: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetHeight + e.target.offsetHeight,
         // offsetWidth: e.target.offsetParent.offsetWidth - e.clientX,
         // offsetHeight: e.target.offsetParent.offsetHeight - e.clientY,
         e: e,
@@ -52,14 +57,12 @@
   }
 
   function deselect(e: any) {
-    if (edit && !e.ctrlKey && e.target.closest(".item")?.id !== id && !e.target.closest(".stageTools")) {
-      if ($activeStage.items.includes(id)) {
-        if (!e.target.closest(".item")) {
-          activeStage.update((ae) => {
-            ae.items = []
-            return ae
-          })
-        }
+    if (!e.target.closest(".stageTools")) {
+      if ((edit && !e.ctrlKey && e.target.closest(".item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".item")) || e.target.closest(".panel")) {
+        activeStage.update((ae) => {
+          ae.items = []
+          return ae
+        })
       }
     }
   }
@@ -75,9 +78,11 @@
   style="{item.style};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}"
   on:mousedown={mousedown}
 >
-  {#if $activeStage.id && show?.settings.labels}
+  {#if currentShow?.settings.labels}
     <div class="label">
-      <T id="stage.{id.split('#')[1]}" />
+      {#key id}
+        <T id="stage.{id.split('#')[1]}" />
+      {/key}
     </div>
   {/if}
   {#if edit}
@@ -85,8 +90,16 @@
   {/if}
   <div class="align" style={item.align}>
     <div>
-      {#if id === "slide#current_slide_text"}
-        <span>text</span>
+      {#if id.split("#")[0] === "countdowns"}
+        <!--  -->
+      {:else if id.includes("slide_text")}
+        <SlideText next={id.includes("next")} />
+      {:else if id.includes("slide")}
+        <span style="pointer-events: none;">
+          <SlideText next={id.includes("next")} style />
+        </span>
+      {:else if id.includes("clock")}
+        <Clock />
       {:else}
         {id}
       {/if}

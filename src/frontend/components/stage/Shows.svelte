@@ -1,5 +1,7 @@
 <script lang="ts">
   import { activeStage, stageShows } from "../../stores"
+  import { sendStage } from "../../utils/messages"
+  import { getStageShows } from "../helpers/get"
   import Checkbox from "../inputs/Checkbox.svelte"
   import Center from "../system/Center.svelte"
   import StageSlide from "./StageSlide.svelte"
@@ -10,7 +12,16 @@
     <div class="grid">
       {#each Object.entries($stageShows) as [id, show], index}
         <div style="display: flex;">
-          <Checkbox checked={show.enabled} />
+          <Checkbox
+            on:change={() => {
+              stageShows.update((s) => {
+                s[id].enabled = !s[id].enabled
+                sendStage("SHOWS", getStageShows())
+                return s
+              })
+            }}
+            checked={show.enabled}
+          />
           <StageSlide
             {show}
             {index}

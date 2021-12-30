@@ -130,6 +130,27 @@
     "hold": "Hold",
     "rainbow": "Rainbow"
   },
+  "stage": {
+    "slide": "Slide",
+    "current_slide_text": "Current slide text",
+    "current_slide": "Current slide",
+    "current_slide_notes": "Current slide notes",
+    "next_slide_text": "Next slide text",
+    "next_slide": "Next slide",
+    "next_slide_notes": "Next slide notes",
+    "timers": "Timers",
+    "system_clock": "System clock",
+    "video_time": "Video time",
+    "video_countdown": "Video countdowns",
+    "countdowns": "Countdowns",
+    "other": "Other",
+    "chords": "Chords",
+    "message": "Message",
+    "color": "Color",
+    "font-size": "Font Size",
+    "zeros": "Zeros",
+    "overrun": "Overrun Color"
+  },
   "month": {
     "1": "January",
     "2": "February",

@@ -1,5 +1,9 @@
 import type { Resolution } from "./../../../types/Settings"
 
+// contain = width & height
+// fill = stretch
+// fit = zoom out
+// cover = zoom in
 export function getStyleResolution(resolution: Resolution, width: any, height: any, fill: "contain" | "fit" | "fill" | "cover" = "contain"): string {
   let style: any = { width: null, height: null }
 

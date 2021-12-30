@@ -9,7 +9,7 @@
   import Zoomed from "../slide/Zoomed.svelte"
   import Center from "../system/Center.svelte"
   import Snaplines from "../system/Snaplines.svelte"
-  import Textedit from "./Textedit.svelte"
+  import Editbox from "./Editbox.svelte"
 
   $: currentShow = $activeShow!.id
   // $: layoutSlides = GetLayout(currentShow)
@@ -68,7 +68,7 @@
     <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
       <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
       {#each Slide.items as item, index}
-        <Textedit {item} {index} {ratio} bind:mouse />
+        <Editbox {item} {index} {ratio} bind:mouse />
       {/each}
     </Zoomed>
   {:else}

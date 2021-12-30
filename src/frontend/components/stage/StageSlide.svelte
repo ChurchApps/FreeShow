@@ -2,7 +2,15 @@
   import Zoomed from "../slide/Zoomed.svelte"
   import Stagebox from "./Stagebox.svelte"
 
-  export let show: any
+  // WIP
+  interface Show {
+    settings: any
+    name: string
+    items: {
+      [key: string]: any
+    }
+  }
+  export let show: Show
   // export let title: string
   export let index: number
   export let columns: number = 1

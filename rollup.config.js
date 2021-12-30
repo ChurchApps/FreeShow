@@ -58,8 +58,8 @@ export default [
       // a separate file - better for performance
       css({
         output: "bundle.css",
-        mangle: production ? true : false,
-        compress: production ? true : false,
+        mangle: production,
+        compress: production,
       }),
 
       // If you have external dependencies installed from
@@ -117,7 +117,7 @@ export default [
       name: "remote",
       file: "build/electron/remote/client.js",
     },
-    external: ["svelte/internal"], // <-- suppresses the warning
+    // external: ["svelte/internal"], // <-- suppresses the warning
     plugins: [
       svelte({
         preprocess: sveltePreprocess({
@@ -134,8 +134,8 @@ export default [
       // a separate file - better for performance
       css({
         output: "styles.css",
-        mangle: production ? true : false,
-        compress: production ? true : false,
+        mangle: production,
+        compress: production,
       }),
 
       // If you have external dependencies installed from
@@ -143,10 +143,10 @@ export default [
       // some cases you'll need additional configuration -
       // consult the documentation for details:
       // https://github.com/rollup/plugins/tree/master/packages/commonjs
-      // resolve({
-      //   browser: true,
-      //   dedupe: ["svelte"],
-      // }),
+      resolve({
+        browser: true,
+        dedupe: ["svelte"],
+      }),
       commonjs(),
       typescript({
         tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
@@ -200,13 +200,13 @@ export default [
       name: "stage",
       file: "build/electron/stage/client.js",
     },
-    external: ["svelte/internal", "socket.io-client"], // <-- suppresses the warning
+    // external: ["svelte/internal", "socket.io-client"], // <-- suppresses the warning
     plugins: [
       svelte({
         preprocess: sveltePreprocess({
-          typescript: {
-            tsconfigFile: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
-          },
+          // typescript: {
+          //   tsconfigFile: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+          // },
         }),
         compilerOptions: {
           // enable run-time checks when not in production
@@ -217,19 +217,19 @@ export default [
       // a separate file - better for performance
       css({
         output: "styles.css",
-        mangle: production ? true : false,
-        compress: production ? true : false,
+        mangle: production,
+        compress: production,
       }),
 
-      // resolve({
-      //   browser: true,
-      //   dedupe: ["svelte"],
-      // }),
+      resolve({
+        browser: true,
+        dedupe: ["svelte"],
+      }),
       commonjs(),
       typescript({
         tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
         sourceMap: !production,
-        inlineSources: !production,
+        // inlineSources: !production,
       }),
 
       html({

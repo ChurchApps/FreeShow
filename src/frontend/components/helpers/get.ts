@@ -1,3 +1,4 @@
+import { stageShows } from "./../../stores"
 import type { ShowRef } from "./../../../types/Projects"
 import { get } from "svelte/store"
 import type { Project, Projects } from "../../../types/Projects"
@@ -9,6 +10,11 @@ import { activeProject, activeShow, projects, shows } from "../../stores"
 // export const getShow = (showID: ID): Show => get(shows)[showID]
 // export const getSlide = (showID: ID, slideIndex: number): Slide => getShow(showID).slides[slideID] // TODO: get layout...
 
+export const getStageShows = () => {
+  return Object.entries(get(stageShows))
+    .map(([id, a]) => ({ id, enabled: a.enabled, name: a.name, password: a.password }))
+    .filter((a) => a.enabled)
+}
 export const getOutBackground = () => {
   "base64://"
 }

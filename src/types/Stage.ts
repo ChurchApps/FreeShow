@@ -4,12 +4,14 @@ export interface StageShows {
   [key: string]: {
     name: string
     enabled: boolean
+    password: string
     settings: {
       background: boolean
       color: string
       resolution: boolean
       size: Resolution
       labels: boolean
+      showLabelIfEmptySlide: boolean
     }
     items: {
       [key: string]: {

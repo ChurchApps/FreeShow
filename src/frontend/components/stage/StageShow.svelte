@@ -1,17 +1,15 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-
-  import { activeStage, screen, stageShows } from "../../stores"
+  import { activeStage, screen, stageConnections, stageShows } from "../../stores"
   import { history } from "../helpers/history"
   import { getStyles } from "../helpers/style"
   import { getStyleResolution } from "../slide/getStyleResolution"
-
   import Zoomed from "../slide/Zoomed.svelte"
   import Center from "../system/Center.svelte"
   import Snaplines from "../system/Snaplines.svelte"
   import Stagebox from "./Stagebox.svelte"
 
-  $: Slide = $activeStage.id !== null ? $stageShows[$activeStage.id] : null
+  $: Slide = $activeStage.id ? $stageShows[$activeStage.id] : null
 
   let width: number = 0
   let height: number = 0
@@ -48,21 +46,24 @@
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
   <div class="parent">
-    {#if Slide}
+    {#if $activeStage.id}
       <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
-        {#each Object.entries(Slide.items) as [id, item]}
+        <!-- {#key Slide} -->
+        {#each Object.entries($stageShows[$activeStage.id].items) as [id, item]}
           {#if item.enabled}
             <Stagebox edit {id} {item} {ratio} bind:mouse />
           {/if}
         {/each}
+        <!-- {/key} -->
       </Zoomed>
     {:else}
       <Center size={2} faded>[[[No stage show]]]</Center>
     {/if}
   </div>
   <div class="bar">
-    Connections: {0}
+    <!-- TODO: get already connected... -->
+    Connections: {$stageConnections.length}
   </div>
 </div>
 

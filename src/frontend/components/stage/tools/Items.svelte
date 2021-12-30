@@ -35,7 +35,7 @@
         {#each countdowns as item}
           <Button on:click={() => click(title + "#" + item)} active={enabledItems[title + "#" + item]?.enabled} style="width: 100%;">
             <Icon id="countdown" />
-            <span class="overflow"><T id="stage.{item}" /></span>
+            <span class="overflow">{item}</span>
           </Button>
         {/each}
       {:else}

@@ -38,6 +38,9 @@ remoteServer.listen(REMOTE_PORT, () => {
   console.log("Remote on *:" + REMOTE_PORT)
   // console.log(remoteServer.listeners)
 })
+remoteServer.once("error", function (err: any) {
+  if (err.code === "EADDRINUSE") remoteServer.close()
+})
 
 stageExpressApp.get("/", (_req: any, res: Response) => {
   res.sendFile(join(__dirname, "/stage/index.html"))
@@ -45,6 +48,9 @@ stageExpressApp.get("/", (_req: any, res: Response) => {
 stageExpressApp.use(express.static(__dirname + "/stage"))
 stageServer.listen(STAGE_PORT, () => {
   console.log("Stage on *:" + STAGE_PORT)
+})
+stageServer.once("error", function (err: any) {
+  if (err.code === "EADDRINUSE") stageServer.close()
 })
 
 // REMOTE
@@ -60,7 +66,6 @@ ioRemote.on("connection", (socket) => {
   let connected: boolean = false
 
   const broadcast = (msg: string) => {
-    console.log(msg)
     toApp(REMOTE, { id, data: msg })
   }
 
@@ -141,51 +146,40 @@ ioStage.on("connection", (socket) => {
   // let connected: boolean = false
 
   // toApp(STAGE, "Stage: +1 (" + stageConnections + ")")
+  toApp(STAGE, { channel: "CONNECTION", id })
+  socket.on("name", (name) => (connections[id].name = name))
   // // request stage
   // toApp(STAGE, "REQUEST")
 
   if (Object.keys(connections).length > maxStageConnections) {
-    ioRemote.emit("error", { id: "maxConn", text: "Cannot connect! There are more than " + maxStageConnections + " devices connected!" })
+    ioStage.emit("ERROR", { id: "maxConn", data: "Cannot connect! There are more than " + maxStageConnections + " devices connected!" })
     socket.disconnect()
   } else {
-    // ioRemote.emit("connected")
-    // socket.on("name", (name) => (connections[id].name = name))
-
-    socket.on("password", (data) => {
-      // https://stackoverflow.com/questions/18279141/javascript-string-encryption-and-decryption
-      // if (CryptoJS.AES.decrypt(data, id) === password) { // TODO: encryption
-      if (data === password) {
-        // if has password.....
-        // correct password
-
-        // REQUEST DATA
-        // connected = true
-        toApp(STAGE, { id, action: "request" })
-      } else ioRemote.emit("error", { id: "wrongPass", text: "Wrong password" })
-    })
-
-    // socket.on("getShow", (data) => {
-    //   // if (connected) toApp('lan', {action: 'setShow', projectID: data.projectID, id: data.id, type: null});
-    //   if (connected) toApp(STAGE, { action: "getShow", id: data.socket, data: { id: data.id, type: data.type } })
+    // SEND DATA FROM CLIENT TO APP
+    socket.on(STAGE, (msg) => toApp(STAGE, msg))
+    // SEND DATA FROM APP TO CLIENT
+    // ipcMain.on(STAGE, (_e, msg) => {
+    //   console.log(msg.id, msg.channel)
+    //   if (msg.id === id) ioStage.to(msg.id).emit(msg.channel, msg.data)
     // })
 
-    // SEND DATA FROM APP TO CLIENT
-    ipcMain.on(STAGE, (_e, data) => {
-      if (data.id === id) ioRemote.to(data.id).emit(data.channel, data.data)
-    })
+    // INITIALIZE
+    stageConnections[id] = { name: "" }
   }
 
   socket.on("disconnect", () => {
-    toApp(STAGE, { connection: stageConnections[id] })
-    // broadcast("Device " + id + " disconnected")
-    delete connections[id]
+    if (stageConnections[id]) {
+      toApp(STAGE, { channel: "DISCONNECT", id, data: stageConnections[id] })
+      // broadcast("Device " + id + " disconnected")
+      delete connections[id]
+    }
   })
 })
 
 // SEND DATA FROM APP TO CLIENT
-ipcMain.on(STAGE, (_e, data) => {
-  console.log("Stage data: " + data)
-  ioStage.emit(STAGE, data)
+ipcMain.on(STAGE, (_e, msg) => {
+  if (msg.id) ioStage.to(msg.id).emit(STAGE, msg)
+  else ioStage.emit(STAGE, msg)
 })
 
 ///////////////////////////////////////////////////////////

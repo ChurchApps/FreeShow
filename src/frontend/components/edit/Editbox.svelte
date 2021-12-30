@@ -22,21 +22,23 @@
       return ae
     })
     if ((e.target.closest(".line") && !e.ctrlKey) || e.target.closest(".square") || (e.ctrlKey && !e.target.closest(".line")) || e.altKey) {
+      let item = e.target.closest(".item")
       mouse = {
         x: e.clientX,
         y: e.clientY,
         offset: {
-          x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - e.target.closest(".item").offsetLeft,
-          y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetTop,
-          width: e.clientX / ratio - e.target.closest(".item").offsetWidth,
-          height: e.clientY / ratio - e.target.closest(".item").offsetHeight,
+          x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
+          y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
+          width: e.clientX / ratio - item.offsetWidth,
+          height: e.clientY / ratio - item.offsetHeight,
         },
-        // offsetX: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - e.target.closest(".item").offsetLeft,
-        // offsetY: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetTop,
-        // offsetWidth: (e.clientX - e.target.closest(".slide").offsetLeft + 125) / ratio - e.target.closest(".item").offsetWidth + e.target.offsetWidth,
-        // offsetHeight: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - e.target.closest(".item").offsetHeight + e.target.offsetHeight,
+        // offsetX: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
+        // offsetY: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
+        // offsetWidth: (e.clientX - e.target.closest(".slide").offsetLeft + 125) / ratio - item.offsetWidth + e.target.offsetWidth,
+        // offsetHeight: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetHeight + e.target.offsetHeight,
         // offsetWidth: e.target.offsetParent.offsetWidth - e.clientX,
         // offsetHeight: e.target.offsetParent.offsetHeight - e.clientY,
+        item,
         e: e,
       }
     }

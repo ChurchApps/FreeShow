@@ -1,9 +1,10 @@
-import { outBackground, outOverlays, outputDisplay, outputWindow, outSlide, mediaFolders, draw, drawTool, drawSettings } from "./../stores"
+import { GetLayout } from "./../components/helpers/get"
+import { outBackground, outOverlays, outputDisplay, outputWindow, outSlide, mediaFolders, draw, drawTool, drawSettings, stageShows, stageConnections } from "./../stores"
 import { OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
 import { shows } from "../stores"
 import { get } from "svelte/store"
 import { name, activeShow, language, activeProject, projects, folders } from "../stores"
-import { getOutBackground, getOutOverlays, getOutSlide } from "../components/helpers/get"
+import { getStageShows } from "../components/helpers/get"
 import type { RemoteData, RemoteInitialize, RemoteShow } from "../../types/Socket"
 
 export function listen() {
@@ -56,25 +57,57 @@ export function listen() {
 
   // REQUEST FROM STAGE
   window.api.receive(STAGE, (message: any) => {
-    if (message.channel === "REQUEST") {
-      window.api.send(STAGE, stageData(message.data))
-    }
+    if (message.channel === "CONNECTION") {
+      stageConnections.update((c: any[]) => (c = [...c, { id: message.id, name: "", stage: null }]))
+      console.log(get(stageConnections))
+
+      console.log(message.id + " connected")
+    } else if (message.channel === "DISCONNECT") {
+      stageConnections.update((c: any[]) => c.filter((a: any) => a.id !== message.id))
+      console.log(get(stageConnections))
+
+      console.log(message.id + " disconnected")
+    } else window.api.send(STAGE, stageData(message))
   })
 
-  const stageData = (id: string) => {
+  const stageData = (message: any) => {
     let data: any = null
-    switch (id) {
-      case "BACKGROUND":
-        data = getOutBackground()
+    switch (message.channel) {
+      case "SHOWS":
+        data = getStageShows()
         break
-      case "SLIDE":
-        data = getOutSlide()
+      case "SHOW":
+        let show = get(stageShows)[message.data.id]
+        if (!show.password.length || show.password === message.data.password) {
+          // connection successfull
+          stageConnections.update((sc) => {
+            sc.forEach((c) => {
+              if (c.id === message.id) c.stage = message.data.id
+              return c
+            })
+            return sc
+          })
+          data = show
+          sendSlide()
+        } else {
+          message = { id: message.id, channel: "ERROR" }
+          data = "Wrong password"
+        }
         break
-      case "OVERLAYS":
-        data = getOutOverlays()
-        break
+      // case "SHOW":
+      //   data = getStageShow(message.data)
+      //   break
+      // case "BACKGROUND":
+      //   data = getOutBackground()
+      //   break
+      // case "SLIDE":
+      //   data = getOutSlide()
+      //   break
+      // case "OVERLAYS":
+      //   data = getOutOverlays()
+      //   break
     }
-    return { channel: id, data }
+    return { id: message.id || null, channel: message.channel, data }
   }
 
   // // TO STAGE
@@ -89,7 +122,7 @@ export function listen() {
   outBackground.subscribe((data) => {
     if (!get(outputWindow)) {
       window.api.send(OUTPUT, { channel: "BACKGROUND", data })
-      window.api.send(STAGE, stageData("BACKGROUND"))
+      // window.api.send(STAGE, stageData("BACKGROUND"))
     }
   })
   outSlide.subscribe((data) => {
@@ -98,14 +131,46 @@ export function listen() {
       // TODO: dont send if it already has data...?
       if (data !== null) window.api.send(OUTPUT, { channel: "SHOWS", data: get(shows) })
       window.api.send(OUTPUT, { channel: "SLIDE", data })
-      window.api.send(STAGE, stageData("SLIDE"))
+      // window.api.send(STAGE, stageData("SLIDE"))
     }
   })
   outOverlays.subscribe((data) => {
     if (!get(outputWindow)) {
       window.api.send(OUTPUT, { channel: "OVERLAYS", data })
-      window.api.send(STAGE, stageData("OVERLAYS"))
+      // window.api.send(STAGE, stageData("OVERLAYS"))
     }
+  })
+
+  // TO STAGE
+  let timeout = false
+  stageShows.subscribe((s: any) => {
+    if (!get(outputWindow) && !timeout) {
+      timeout = true
+      let first = JSON.stringify(s)
+      sendStageId(s)
+      setTimeout(() => {
+        if (JSON.stringify(s) !== first) sendStageId(s)
+        timeout = false
+      }, 1000)
+    }
+  })
+  function sendStageId(s: any) {
+    get(stageConnections).forEach((conn) => {
+      if (conn.stage) {
+        // TODO: check if stage still exists and is enabled
+        if (s[conn.stage].enabled) {
+          window.api.send(STAGE, { channel: "SHOW", id: conn.id, data: s[conn.stage] })
+        }
+        // if (!s[conn.stage].enabled) // disable...
+      }
+    })
+  }
+
+  outSlide.subscribe(() => {
+    if (!get(outputWindow)) sendSlide(true)
+  })
+  shows.subscribe(() => {
+    if (!get(outputWindow)) sendSlide()
   })
 
   // TO OUTPUT
@@ -121,4 +186,29 @@ export function listen() {
   drawSettings.subscribe((data) => {
     if (!get(outputWindow)) window.api.send(OUTPUT, { channel: "DRAW_SETTINGS", data })
   })
+}
+
+export function sendStage(channel: string, data: any) {
+  get(stageConnections).forEach((conn) => {
+    window.api.send(STAGE, { channel, id: conn.id, data })
+    // if (get(stageShows)[conn.stage].enabled)
+    // else update stageconnections...
+  })
+}
+
+let oldOut: string = ""
+function sendSlide(check: boolean = false) {
+  let out = get(outSlide)
+  if (out && (!check || oldOut !== JSON.stringify(out))) {
+    let slides: any[] = []
+    if (out) {
+      let layout = GetLayout(out.id)
+      slides = [get(shows)[out.id].slides[layout[out.index].id]]
+      if (out.index + 1 < layout.length) slides.push(get(shows)[out.id].slides[layout[out.index + 1].id])
+      else slides.push(null)
+    }
+    console.log(slides)
+    window.api.send(STAGE, { channel: "SLIDES", data: slides })
+    if (check) oldOut = JSON.stringify(out)
+  }
 }

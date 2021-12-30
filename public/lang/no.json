@@ -125,6 +125,27 @@
     "hold": "Hold",
     "rainbow": "Regnbue"
   },
+  "stage": {
+    "slide": "Lysbilde",
+    "current_slide": "Gjeldende lysbilde",
+    "current_slide_text": "Gjeldende lysbilde tekst",
+    "current_slide_notes": "Gjeldende lysbilde notater",
+    "next_slide": "Neste lysbilde",
+    "next_slide_text": "Neste lysbilde tekst",
+    "next_slide_notes": "Neste lysbilde notater",
+    "timers": "Tid",
+    "system_clock": "Systemklokke",
+    "video_time": "Videotid",
+    "video_countdown": "Video nedtelling",
+    "countdowns": "Nedtellinger",
+    "other": "Andre",
+    "chords": "Akkorder",
+    "message": "Melding",
+    "color": "Farge",
+    "font-size": "Tekststørrelse",
+    "zeros": "Null",
+    "overrun": "Utløpt Farge"
+  },
   "month": {
     "1": "januar",
     "2": "februar",

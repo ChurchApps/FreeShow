@@ -84,36 +84,74 @@ interface ActiveStage {
 export const activeStage: Writable<ActiveStage> = writable({ id: "eopsjofes", items: [] })
 export const stageShows: Writable<StageShows> = writable({
   eopsjofes: {
-    name: "test",
+    name: "Text",
     enabled: true,
+    password: "",
     settings: {
       background: false,
       color: "#000000",
       resolution: false,
       size: { width: 10, height: 20 },
       labels: false,
+      showLabelIfEmptySlide: true,
     },
     items: {
       "slide#current_slide_text": {
         enabled: true,
-        style: "top: 0px;left: 100px;color: red;",
+        style: "top:75px;left:140px;color:red;width:1639px;height:929px;",
+        align: "",
+      },
+    },
+  },
+  eopsjofes3: {
+    name: "Next",
+    enabled: true,
+    password: "",
+    settings: {
+      background: false,
+      color: "#000000",
+      resolution: false,
+      size: { width: 10, height: 20 },
+      labels: false,
+      showLabelIfEmptySlide: true,
+    },
+    items: {
+      "slide#current_slide_text": {
+        enabled: true,
+        style: "top:0.00px;left:38.50px;color:white;width:1842.69px;height:685.21px;",
+        align: "",
+      },
+      "slide#next_slide_text": {
+        enabled: true,
+        style: "color:grey;left:37.50px;top:685.00px;width:1844.49px;height:371.50px;",
         align: "",
       },
     },
   },
   eopsjofese: {
-    name: "test2",
+    name: "Timer",
     enabled: false,
+    password: "test",
     settings: {
       background: false,
       color: "#000000",
       resolution: false,
       size: { width: 10, height: 20 },
       labels: true,
+      showLabelIfEmptySlide: true,
     },
-    items: {},
+    items: {
+      "timers#system_clock": {
+        enabled: true,
+        style: "left:307.00px;top:271.50px;width:1307.76px;height:536.59px;",
+        align: "",
+      },
+    },
   },
 })
+
+// connections
+export const stageConnections: Writable<{ id: string; name: string; stage: string }[]> = writable([])
 
 export const shows: Writable<Shows> = writable({
   nåde: {
