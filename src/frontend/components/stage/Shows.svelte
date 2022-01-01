@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { STAGE } from "../../../types/Channels"
   import { activeStage, stageShows } from "../../stores"
-  import { sendStage } from "../../utils/messages"
-  import { getStageShows } from "../helpers/get"
+  import { sendData } from "../../utils/sendData"
   import Checkbox from "../inputs/Checkbox.svelte"
   import Center from "../system/Center.svelte"
   import StageSlide from "./StageSlide.svelte"
@@ -16,7 +16,7 @@
             on:change={() => {
               stageShows.update((s) => {
                 s[id].enabled = !s[id].enabled
-                sendStage("SHOWS", getStageShows())
+                sendData(STAGE, { channel: "SHOWS" })
                 return s
               })
             }}

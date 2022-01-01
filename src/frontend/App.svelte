@@ -7,7 +7,6 @@
   import Editor from "./components/edit/Editor.svelte"
   import Preview from "./components/output/Preview.svelte"
   import { setLanguage } from "./utils/language"
-  import { listen } from "./utils/messages"
   import { startup } from "./utils/startup"
   import Drawer from "./components/drawer/Drawer.svelte"
   import type { TopViews } from "../types/Views"
@@ -36,9 +35,6 @@
   // SET LANGUAGE
   // https://lokalise.com/blog/svelte-i18n/
   setLanguage()
-
-  // LISTEN TO MESSAGES FROM CLIENT/ELECTRON
-  listen()
 
   // import VideoStream from "./components/controllers/VideoStream.svelte"
   // import type { activeFilePath } from "./stores";

@@ -1,14 +1,23 @@
 <script lang="ts">
-  export let show: any
+  import type { Resolution } from "../../../../types/Settings"
 
-  let resolution: any = show && show.settings.resolution ? show.settings.size : { width: 1920, height: 1080 } // $screen.resolution
+  export let background: string = "black"
+  export let center: boolean = false
+  export let hideOverflow: boolean = true
+  export let resolution: Resolution
+  // let resolution = { width: 1600, height: 1200 }
   let slideWidth: number = 0
-  let ratio: number = 1
+  export let ratio: number = 1
   $: ratio = slideWidth / resolution.width
 </script>
 
-<div class="center">
-  <div bind:offsetWidth={slideWidth} class="slide" style="{$$props.style || ''}aspect-ratio: {resolution.width}/{resolution.height};">
+<div class:center>
+  <div
+    bind:offsetWidth={slideWidth}
+    class="slide"
+    class:hideOverflow
+    style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};"
+  >
     <span style="zoom: {ratio};">
       <slot />
     </span>
@@ -18,7 +27,6 @@
 <style>
   .slide {
     position: relative;
-    background-color: black;
     /* TODO: not edit */
     /* z-index: -1; */
   }
@@ -30,8 +38,7 @@
 
     color: white;
     font-size: 100px;
-    /* font-family: "CMGSans"; */
-    font-family: system-ui;
+    font-family: "CMGSans";
     line-height: 1;
     -webkit-text-stroke-color: #000000;
     text-shadow: 2px 2px 10px #000000;
@@ -42,6 +49,10 @@
 
     height: 150px;
     width: 400px;
+  }
+
+  .hideOverflow {
+    overflow: hidden;
   }
 
   .center {

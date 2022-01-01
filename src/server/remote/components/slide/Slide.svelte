@@ -1,0 +1,56 @@
+<script lang="ts">
+  import Textbox from "./Textbox.svelte"
+  import { fade } from "svelte/transition"
+  import Zoomed from "./Zoomed.svelte"
+  import type { Resolution } from "../../../../types/Settings"
+  import type { Transition } from "../../../../types/Show"
+  import { getStyleResolution } from "../getStyleResolution"
+  import { getSlide } from "./get"
+
+  export let outShow: any
+  export let outSlide: any
+
+  let width: number = 0
+  let height: number = 0
+  let resolution: Resolution = outShow?.settings.resolution ? outShow.settings.resolution : { width: 1920, height: 1080 }
+
+  export let transition: Transition = { type: "fade", duration: 500 } // text (not background)
+</script>
+
+<div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
+  <Zoomed center style={getStyleResolution(resolution, width, height)} {resolution}>
+    <!-- {#if $outBackground !== null}
+    <MediaOutput {...$outBackground} {transition} bind:video bind:videoData />
+  {/if} -->
+    {#if outShow}
+      {#key outSlide}
+        <span transition:fade={transition} style="pointer-events: none;">
+          {#if getSlide(outShow, outSlide)}
+            {#each getSlide(outShow, outSlide)?.items as item}
+              <Textbox {item} />
+            {/each}
+          {/if}
+        </span>
+      {/key}
+    {/if}
+    <!-- {#if $outOverlays.length}
+    {#each $outOverlays as id}
+      <div style={$overlays[id].style} transition:fade={transition}>
+        <div>
+          {#each $overlays[id].items as item}
+            <Textbox {item} />
+          {/each}
+        </div>
+      </div>
+    {/each}
+  {/if} -->
+  </Zoomed>
+</div>
+
+<style>
+  .main {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+</style>

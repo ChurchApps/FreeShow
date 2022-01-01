@@ -33,8 +33,15 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div class="main" style="width: {100 / columns}%" class:list>
-  <div class="slide context #slide" class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
+<div class="main" style="width: {$slidesOptions.grid ? 100 / columns : 100}%">
+  <div
+    class="slide context #slide"
+    class:active
+    style="background-color: {color};{$slidesOptions.grid ? '' : `width: calc(${100 / columns}% - 6px)`}"
+    tabindex={0}
+    data-index={index}
+    on:click
+  >
     <SelectElem id="slide" data={index}>
       <Draggable id="slide" {index} direction={list ? "column" : "row"}>
         <!-- TODO: tab select on enter -->
@@ -58,7 +65,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
   {#if !$slidesOptions.grid}
     <hr />
     <div class="quickEdit edit" tabindex={0} contenteditable={true}>
-      <p>{longestText}</p>
+      <span>{longestText}</span>
     </div>
   {/if}
 </div>
@@ -68,9 +75,6 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     display: flex;
     position: relative;
     padding: 5px;
-  }
-  .main.list {
-    width: 100%;
   }
 
   .slide {

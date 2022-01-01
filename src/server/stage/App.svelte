@@ -3,6 +3,14 @@
   import Button from "./components/Button.svelte"
   import Slide from "./components/Slide.svelte"
 
+  const lang: any = {
+    error: {
+      wrongPass: "Wrong password!",
+      missingID: "Something went wrong, try again!",
+      noShow: "Could not find active show!",
+    },
+  }
+
   let socket = io()
 
   socket.on("connect", () => {
@@ -17,63 +25,136 @@
   let show: any = null
   let slides: any[] = []
 
+  let input: any = null
+  let password: string = ""
+  const submit = () => (showRef = { id: input.id, password })
+
+  // local storage
+  let remember: boolean = false
+  if (localStorage.show) {
+    let password = undefined
+    if (localStorage.password) {
+      remember = true
+      password = localStorage.password
+    }
+    showRef = { id: localStorage.show, password }
+  }
+
+  // error
+  let errors: string[] = []
+  const setError = (err: string) => {
+    if (!errors.includes(err)) {
+      errors = [...errors, err]
+      setTimeout(() => (errors = errors.slice(1, errors.length)), 2000)
+    }
+  }
+
   socket.on("STAGE", (msg) => {
     console.log(msg)
-    if (msg.channel === "SHOWS") {
-      input = null
-      if (msg.data.length === 1) {
-        if (msg.data[0].password?.length) {
-          input = msg.data[0]
+    switch (msg.channel) {
+      case "ERROR":
+        setError(lang.error[msg.data])
+        input = null
+        showRef = null
+        delete localStorage.password
+        delete localStorage.show
+        break
+      case "SHOWS":
+        input = null
+        if (msg.data.length === 1) {
+          if (msg.data[0].password) {
+            input = msg.data[0]
+            shows = msg.data
+            showRef = null
+          } else showRef = { id: msg.data[0].id }
+        } else {
           shows = msg.data
-          showRef = null
-        } else showRef = { id: msg.data[0].id }
-      } else {
-        shows = msg.data
-        if (showRef) {
-          let index = shows.findIndex((s: any) => s.id === showRef.id)
-          if (index < 0 || shows[index].enabled === false) showRef = null
+          if (showRef) {
+            let index = shows.findIndex((s: any) => s.id === showRef.id)
+            if (index < 0 || shows[index].enabled === false) showRef = null
+          }
         }
-      }
-    } else if (msg.channel === "SHOW") {
-      if (msg.data === null) showRef = null
-      else if (msg.data.enabled === false) {
-        if (showRef.id === msg.data.id) showRef = null
-        shows = shows.filter((s: any) => s.id === msg.data.id)
-      } else show = msg.data
+        break
+      case "SHOW":
+        console.log(msg.data)
 
-      // localStorage.show = showRef
-    } else if (msg.channel === "SLIDES") {
-      slides = msg.data
-    } else if (msg.channel === "ERROR") {
-      console.error(msg.data)
-      showRef = null
+        if (msg.data === null) showRef = null
+        else if (msg.data.enabled === false) {
+          if (showRef.id === msg.data.id) showRef = null
+          shows = shows.filter((s: any) => s.id === msg.data.id)
+        } else {
+          show = msg.data
+          if (remember || !password.length) localStorage.show = showRef.id
+          if (remember && password.length) localStorage.password = password
+        }
+
+        // localStorage.show = showRef
+        break
+      case "SLIDES":
+        slides = msg.data
+        break
+
+      default:
+        break
     }
   })
 
   $: {
-    if (showRef !== null) socket.emit("STAGE", { id, channel: "SHOW", data: showRef })
+    if (id && showRef !== null) socket.emit("STAGE", { id, channel: "SHOW", data: showRef })
   }
 
-  let input: any = null
-  let password: string = ""
+  let clicked: boolean = false
+  const click = (e: any) => {
+    if (show && !e.target.closest(".clicked")) clicked = !clicked
+  }
+  let timeout: any = null
+  $: {
+    if (clicked) {
+      if (timeout !== null) clearTimeout(timeout)
+      timeout = setTimeout(() => {
+        clicked = false
+        timeout = null
+      }, 3000)
+    }
+  }
 </script>
+
+<svelte:window on:click={click} />
+
+{#if errors.length}
+  <div style="color: red;position: absolute;">
+    {#each errors as error}
+      {error}
+    {/each}
+  </div>
+{/if}
 
 {#if showRef === null && shows !== null}
   <div class="center">
     <div class="card">
       {#if input !== null}
         <h3>{input.name}</h3>
-        <input bind:value={password} type="password" />
-        <button on:click={() => (showRef = { id: input.id, password })}>Submit</button>
+        <input
+          on:keydown={(e) => {
+            if (e.key === "Enter") submit()
+          }}
+          bind:value={password}
+          type="password"
+        />
+        <span>
+          <input type="checkbox" bind:checked={remember} />
+          Remember me
+        </span>
+        <button on:click={submit}>Submit</button>
       {:else if shows.length}
         {#each shows as show}
           <Button
             on:click={() => {
-              show.password?.length ? (input = show) : (showRef = { id: show.id })
+              show.password ? (input = show) : (showRef = { id: show.id })
             }}
           >
             {show.name}
-            {#if show.password.length}
+            {#if show.password}
               "locked"
             {/if}
           </Button>
@@ -90,6 +171,21 @@
     home
   </div> -->
   <Slide {show} {slides} />
+  {#if clicked}
+    <div class="clicked">
+      <h5>{show.name}</h5>
+      <Button
+        on:click={() => {
+          delete localStorage.password
+          delete localStorage.show
+          input = null
+          showRef = null
+        }}
+      >
+        Home
+      </Button>
+    </div>
+  {/if}
 {:else}
   <div class="center">
     <h3>Loading...</h3>
@@ -125,12 +221,11 @@
   }
 
   :global(body) {
-    background-color: black;
-    color: white;
-    font-family: sans-serif;
-    /* font-size: 25.5vw; */
+    background-color: var(--primary-darker);
+    color: var(--text);
+    font-family: system-ui;
+    /* font-family: sans-serif; */
     font-size: 3em;
-    /* font-size: 20vh; */
 
     width: 100vw;
     height: 100vh;
@@ -171,5 +266,12 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+  }
+
+  .clicked {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: var(--primary);
   }
 </style>

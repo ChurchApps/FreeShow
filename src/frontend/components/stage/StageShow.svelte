@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { activeStage, screen, stageConnections, stageShows } from "../../stores"
+  import { activeStage, screen, connections, stageShows } from "../../stores"
   import { history } from "../helpers/history"
   import { getStyles } from "../helpers/style"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -63,7 +63,7 @@
   </div>
   <div class="bar">
     <!-- TODO: get already connected... -->
-    Connections: {$stageConnections.length}
+    Connections: {Object.keys($connections.STAGE).length}
   </div>
 </div>
 

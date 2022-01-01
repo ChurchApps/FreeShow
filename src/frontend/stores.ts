@@ -151,7 +151,8 @@ export const stageShows: Writable<StageShows> = writable({
 })
 
 // connections
-export const stageConnections: Writable<{ id: string; name: string; stage: string }[]> = writable([])
+export const connections: Writable<{ [key: string]: any }> = writable({ REMOTE: {}, STAGE: {} })
+export const remotePassword: Writable<string> = writable("test")
 
 export const shows: Writable<Shows> = writable({
   nåde: {
