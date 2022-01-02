@@ -1,4 +1,4 @@
-import type { SlideData, Slide } from "../../../../types/Show"
+import type { SlideData, Slide } from "../../../types/Show"
 
 export const getSlide = (show: any, slideIndex: number): Slide => {
   return show.slides[GetLayout(show)[slideIndex]?.id]

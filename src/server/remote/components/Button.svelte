@@ -53,15 +53,18 @@
   }
 
   /* red */
-  button.red {
+  button.red:not(:disabled) {
     background-color: rgb(255 0 0 / 0.25);
   }
   button.red:hover:not(:disabled):not(.active) {
     background-color: rgb(255 0 0 / 0.35);
   }
   button.red:active:not(:disabled):not(.active),
-  button.red:focus:not(.active) {
+  button.red:focus:not(:disabled):not(.active) {
     background-color: rgb(255 0 0 / 0.3);
+  }
+  button.red:not(:disabled) :global(svg) {
+    fill: white;
   }
 
   button:not(:disabled):not(.active) {

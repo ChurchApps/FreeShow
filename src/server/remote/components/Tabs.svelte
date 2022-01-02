@@ -24,7 +24,7 @@
   .tabs {
     display: flex;
     flex-wrap: wrap;
-    background-color: var(--primary-darker);
+    background-color: var(--primary-darkest);
   }
 
   .tabs :global(button) {
@@ -33,7 +33,11 @@
     padding-right: 0 !important;
   }
 
-  @media screen and (max-width: 1500px) {
+  .label {
+    padding-left: 10px;
+  }
+
+  /* @media screen and (max-width: 1500px) {
     .label {
       font-size: 0.8em;
     }
@@ -42,7 +46,7 @@
     .label {
       font-size: 0.5em;
     }
-  }
+  } */
   @media screen and (max-width: 800px) {
     .label {
       display: none;

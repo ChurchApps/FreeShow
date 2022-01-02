@@ -4,8 +4,8 @@
 
   export let projects: any
   export let activeProject: string
+  // export let activeShow: any
   export let activeShow: any
-  export let projectView: boolean
 
   export let name: string
   export let parent: string
@@ -23,25 +23,20 @@
     // get active show pos
     if (activeShow !== null) {
       let pos: number = -1
-      if (activeProject !== null) pos = projects[activeProject].shows.findIndex((p: any) => p.id === activeShow!.id)
+      if (activeProject !== null) pos = projects[activeProject].shows.findIndex((p: any) => p.id === activeShow.id)
       console.log(pos)
 
-      activeShow.index = pos >= 0 ? pos : null
+      // activeShow.index = pos >= 0 ? pos : null
     }
   }
 </script>
 
 <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
-<button
-  on:click={click}
-  on:dblclick={() => {
-    projectView = false
+<!-- on:dblclick={() => {
+    activeTab = "project"
     if (projects[id].shows.length) activeShow.set({ ...projects[id].shows[0], index: 0 })
-  }}
-  data-parent={parent}
-  class="context #rename__projects"
-  class:active
->
+  }} -->
+<button on:click={click} data-parent={parent} class="context #rename__projects" class:active>
   <!-- <Icon id="file" />
   <HiddenInput value={name} /> -->
   <span>{name}</span>

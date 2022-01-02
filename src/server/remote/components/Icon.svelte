@@ -1,5 +1,5 @@
 <script lang="ts">
-  import icons from "./icons"
+  import icons from "../helpers/icons"
 
   export let id: string
   export let size: number = 1

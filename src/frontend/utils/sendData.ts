@@ -66,16 +66,30 @@ function getRemote(msg: ClientMessage) {
     //   break
     case "SHOW":
       // msg.data = filterObjectArray(get(shows)[msg.data], [""])
-      msg.data = get(shows)[msg.data]
-      connections.update((sc) => {
-        sc.REMOTE[msg.id!].active = msg.data
-        return sc
-      })
+      let showID: string = msg.data
+      msg.data = get(shows)[showID]
+      msg.data.id = showID
+      if (msg.id) {
+        if (!get(connections).REMOTE[msg.id]) get(connections).REMOTE[msg.id] = {}
+        connections.update((sc) => {
+          sc.REMOTE[msg.id!].active = showID
+          return sc
+        })
+      }
       break
     case "OUT":
       let out = get(outSlide)
-      if (msg.data !== null && msg.data !== undefined && out) {
-        let layout = GetLayout(out.id)
+      let id: string = ""
+      if (msg.data === "clear") {
+        outSlide.set(null)
+      } else if (msg.data?.id) {
+        id = msg.data.id
+        let layout = GetLayout(id)
+        if (msg.data.index < layout.length && msg.data.index >= 0) outSlide.update(() => msg.data)
+        msg.data = null
+      } else if (msg.data !== null && msg.data !== undefined && out) {
+        id = out.id
+        let layout = GetLayout(id)
         if (msg.data < layout.length && msg.data >= 0) {
           outSlide.update((o) => {
             o!.index = msg.data
@@ -86,9 +100,18 @@ function getRemote(msg: ClientMessage) {
       } else {
         msg.data = { slide: out ? out.index : null }
         if (out && out.id !== oldOutSlide) {
-          oldOutSlide = out.id
-          msg.data.show = get(shows)[out.id]
+          id = out.id
+          oldOutSlide = id
+          msg.data.show = get(shows)[id]
+          msg.data.show.id = id
         }
+      }
+      if (id.length && msg.id) {
+        if (!get(connections).REMOTE[msg.id]) get(connections).REMOTE[msg.id] = {}
+        connections.update((sc) => {
+          sc.REMOTE[msg.id!].active = id
+          return sc
+        })
       }
       break
     case "PROJECTS":

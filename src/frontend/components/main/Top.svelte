@@ -1,10 +1,8 @@
 <script type="ts">
   import { OUTPUT } from "../../../types/Channels"
-
   import { dictionary, outputDisplay } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
-
   import TopButton from "../inputs/TopButton.svelte"
 
   function display() {
@@ -13,17 +11,10 @@
   }
 </script>
 
-<!-- <button on:click={() => (settings = !settings)}>
-  <T id="menus.settings" />
-  {translate('menus.settings', $language)}
-  {translate(d.menus?.settings)}
-</button> -->
-
 <div class="top">
   <span>
     <TopButton id="show" />
     <TopButton id="edit" />
-    <!-- <TopButton id="reflow" /> -->
     <TopButton id="draw" />
     <TopButton id="stage" />
   </span>
@@ -36,9 +27,7 @@
       {:else}
         <Icon id="display" size={1.8} white />
       {/if}
-      <!-- <span><T id={"menu.display"} /></span> -->
     </Button>
-    <!-- Output -->
   </span>
 </div>
 

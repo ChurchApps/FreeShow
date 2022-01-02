@@ -1,18 +1,19 @@
 <script lang="ts">
+  import { createEventDispatcher } from "svelte"
+
   // import Icon from "../helpers/Icon.svelte"
   import Button from "./Button.svelte"
   // import HiddenInput from "./HiddenInput.svelte"
 
   export let activeShow: any
-  export let activeProject: string
-  export let projects: any
+  export let show: any
+  // export let project: null | string
+  // export let projects: any
   // export let shows: any
 
-  export let name: string
-  export let id: string
   export let data: null | string = null
-  export let index: null | number = null
-  export let type: null | string = null
+  console.log(show)
+
   // export let page: "side" | "drawer" = "drawer"
   export let match: null | number = null
   // TODO: svelte animate
@@ -31,35 +32,40 @@
   //   else return "song"
   // }
   // $: icon = check()
-  $: active = index !== null ? activeShow?.index === index : activeShow?.id === id
-  $: console.log(index, activeShow?.index)
+  // $: active = index !== null ? activeShow?.index === index : activeShow?.id === id
 
-  function click(e: any) {
-    // get pos if clicked in drawer show
-    let pos = index
-    if (pos === null && activeProject !== null && JSON.stringify(projects[activeProject].shows).includes(id)) {
-      pos = projects[activeProject].shows.findIndex((p: any) => p.id === id)
-    }
-    // set active show
-    if (!e.ctrlKey && !active && !e.target.closest("input")) activeShow.set({ id, index: pos, type })
-  }
+  // function click(e: any) {
+  //   // get pos if clicked in drawer show
+  //   let pos = index
+  //   if (pos === null && project !== null && JSON.stringify(projects[project].shows).includes(id)) {
+  //     pos = projects[project].shows.findIndex((p: any) => p.id === id)
+  //   }
+  //   // set active show
+  //   if (!e.ctrlKey && !active && !e.target.closest("input")) activeShow.set({ id, index: pos, type })
+  // }
 
-  function doubleClick(e: any) {
-    console.log(e)
+  // function doubleClick(e: any) {
+  //   console.log(e)
 
-    // if (!$outLocked && $shows[id] && !e.target.classList.contains("name")) {
-    //   outSlide.set({ id, index: 0 })
-    // }
+  //   // if (!$outLocked && $shows[id] && !e.target.classList.contains("name")) {
+  //   //   outSlide.set({ id, index: 0 })
+  //   // }
+  // }
+
+  let dispatch = createEventDispatcher()
+  function click() {
+    dispatch("click", show.id)
   }
 </script>
 
-<div {id} class="main">
-  <Button on:click={click} on:dblclick={doubleClick} {active} class="context {$$props.class}" {style} bold={false} border>
+<div id={show.id} class="main">
+  <!-- on:click={click} on:dblclick={doubleClick} -->
+  <Button on:click={click} active={activeShow?.id === show.id} class="context {$$props.class}" {style} bold={false} border>
     <span style="display: flex;align-items: center;flex: 1;">
       <!-- {#if icon}
           <Icon id={icon} />
         {/if} -->
-      <p style="margin: 5px;">{name}</p>
+      <p style="margin: 5px;">{show.name}</p>
       <!-- <HiddenInput value={name} on:edit={edit} /> -->
     </span>
 
@@ -70,7 +76,7 @@
     {/if}
 
     {#if data}
-      <span style="opacity: 0.5;padding-left: 10px;">{data}</span>
+      <span style="opacity: 0.5;padding-left: 10px;font-size: 0.8em;">{data}</span>
     {/if}
   </Button>
 </div>

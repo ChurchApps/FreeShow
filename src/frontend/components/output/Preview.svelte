@@ -207,8 +207,9 @@
     <div class="clear">
       <span>
         <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
-        <Button class="clearAll" disabled={$outLocked || !out} on:click={clearAll} red center>
-          <T id={"clear.all"} />
+        <Button class="clearAll" disabled={$outLocked || !out} on:click={clearAll} title="[[[Clear all]]]" red dark center>
+          <Icon id="clear" size={1.2} />
+          <span style="padding-left: 10px;"><T id={"clear.all"} /></span>
         </Button>
       </span>
       <span class="group">
@@ -220,10 +221,12 @@
               clearVideo()
             }
           }}
+          title="[[[Clear background]]]"
           red
+          dark
           center
         >
-          BG
+          <Icon id="background" size={1.2} />
         </Button>
         <Button
           disabled={$outLocked || !$outSlide}
@@ -232,10 +235,12 @@
               outSlide.set(null)
             }
           }}
+          title="[[[Clear slide]]]"
           red
+          dark
           center
         >
-          TXT
+          <Icon id="slide" size={1.2} />
         </Button>
         <Button
           disabled={$outLocked || !$outOverlays.length}
@@ -244,10 +249,12 @@
               outOverlays.set([])
             }
           }}
+          title="[[[Clear overlays]]]"
           red
+          dark
           center
         >
-          OL
+          <Icon id="overlays" size={1.2} />
         </Button>
         <Button
           disabled={$outLocked || !$outAudio.length}
@@ -256,10 +263,12 @@
               outAudio.set([])
             }
           }}
+          title="[[[Clear all audio]]]"
           red
+          dark
           center
         >
-          AUDIO
+          <Icon id="audio" size={1.2} />
         </Button>
       </span>
     </div>

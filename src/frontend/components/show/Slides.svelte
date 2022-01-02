@@ -27,8 +27,8 @@
   // setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)
   $: {
     if (scrollElem && $outSlide !== null && $activeShow?.id === $outSlide?.id) {
-      let index = $outSlide.index - ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0)
-      if (index >= 0) offset = scrollElem.querySelector(".grid").children[index].offsetTop - 5
+      let index = Math.max(0, $outSlide.index - ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0))
+      offset = scrollElem.querySelector(".grid").children[index].offsetTop - 5
 
       // TODO: always show active slide....
       // console.log(offset, scrollElem.scrollTop, scrollElem.scrollTop + scrollElem.offsetHeight)

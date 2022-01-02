@@ -1,13 +1,30 @@
-import { outBackground, outOverlays, outputDisplay, outputWindow, outSlide, mediaFolders, draw, drawTool, drawSettings, stageShows } from "./../stores"
+import {
+  outBackground,
+  outOverlays,
+  outputDisplay,
+  outputWindow,
+  outSlide,
+  mediaFolders,
+  draw,
+  drawTool,
+  drawSettings,
+  stageShows,
+  openedFolders,
+  activeProject,
+  projects,
+  folders,
+} from "../stores"
 import { OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
 import { client, sendData, sendClientAll, timedout, arrayToObject, filterObjectArray } from "./sendData"
 import { shows } from "../stores"
 import { get } from "svelte/store"
-import { activeProject, projects, folders } from "../stores"
 import type { ClientMessage } from "../../types/Socket"
 
 export function listen() {
   if (get(outputWindow)) {
+    // outBackground.set(null)
+    // outSlide.set(null)
+    // outOverlays.set([])
     // FROM MAIN TO OUTPUT
     window.api.receive(OUTPUT, (msg: any) => {
       if (msg.channel === "BACKGROUND") outBackground.set(msg.data)
@@ -74,7 +91,7 @@ export function listen() {
       sendData(REMOTE, { channel: "PROJECTS" }, true)
     })
     folders.subscribe((data) => {
-      window.api.send(REMOTE, { channel: "FOLDERS", data })
+      window.api.send(REMOTE, { channel: "FOLDERS", data: { folders: data, opened: get(openedFolders) } })
     })
     activeProject.subscribe((data) => {
       window.api.send(REMOTE, { channel: "PROJECT", data })

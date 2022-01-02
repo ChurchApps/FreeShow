@@ -4,11 +4,11 @@
   import Zoomed from "./Zoomed.svelte"
   import type { Resolution } from "../../../../types/Settings"
   import type { Transition } from "../../../../types/Show"
-  import { getStyleResolution } from "../getStyleResolution"
-  import { getSlide } from "./get"
+  import { getStyleResolution } from "../../helpers/getStyleResolution"
+  import { getSlide } from "../../helpers/get"
 
   export let outShow: any
-  export let outSlide: any
+  export let outSlide: number
 
   let width: number = 0
   let height: number = 0
@@ -24,7 +24,7 @@
   {/if} -->
     {#if outShow}
       {#key outSlide}
-        <span transition:fade={transition} style="pointer-events: none;">
+        <span transition:fade|local={transition} style="pointer-events: none;">
           {#if getSlide(outShow, outSlide)}
             {#each getSlide(outShow, outSlide)?.items as item}
               <Textbox {item} />

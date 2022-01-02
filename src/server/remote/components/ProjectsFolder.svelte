@@ -5,8 +5,8 @@
   export let openedFolders: any
   export let projects: any
   export let activeProject: string
+  // export let activeShow: any
   export let activeShow: any
-  export let projectView: boolean
 
   export let name: string
   export let tree: any[]
@@ -57,7 +57,7 @@
             {#if project.type === "folder"}
               <svelte:self {tree} id={project.id} name={project.name} />
             {:else if project.id}
-              <ProjectButton {projects} {activeProject} {activeShow} {projectView} name={project.name} parent={id} id={project.id} />
+              <ProjectButton {projects} {activeProject} {activeShow} name={project.name} parent={id} id={project.id} />
             {/if}
           </li>
         {/if}
