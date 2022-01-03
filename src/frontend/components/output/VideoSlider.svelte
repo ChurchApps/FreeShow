@@ -5,6 +5,7 @@
   import Slider from "../inputs/Slider.svelte"
 
   export let videoData: any
+  export let videoTime: any
 
   // $: duration = video.duration || 0
   // let ac = new AudioContext()
@@ -23,24 +24,34 @@
   let hover = false
   let time: string = "00:00"
   function move(e: any) {
-    console.log(e.target)
-
     let percentage: number = e.offsetX / e.target.offsetWidth
     // console.log(e.offsetX, e.target.offsetWidth)
-    console.log(percentage)
+    // console.log(percentage)
 
     if (percentage < 0) percentage = 0
     else if (percentage > 1) percentage = 1
 
     time = joinTime(secondsToTime(videoData.duration * percentage))
-    sendToOutput()
+    if (e.buttons) sendToOutput()
   }
 
-  const sendToOutput = () => window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+  // TODO: send this....
+  let timeout: any = null
+  const sendToOutput = () => {
+    if (!timeout) {
+      let time = videoTime
+      videoData.paused = true
+      window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+      timeout = setTimeout(() => {
+        timeout = null
+        if (videoTime !== time) window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+      }, 200)
+    }
+  }
 </script>
 
 <!-- {#key time} -->
-<!-- on:change={(e) => (videoData.time = e.target.value)} -->
+<!-- on:change={(e) => (videoTime = e.target.value)} -->
 <div class="main">
   {#if hover}
     <span>
@@ -48,11 +59,11 @@
     </span>
   {:else}
     <span style="color: var(--secondary)">
-      {joinTime(secondsToTime(videoData.time))}
+      {joinTime(secondsToTime(videoTime))}
     </span>
   {/if}
   <div class="slider" on:mouseenter={() => (hover = true)} on:mouseleave={() => (hover = false)}>
-    <Slider bind:value={videoData.time} max={videoData.duration} on:mousemove={move} on:change={sendToOutput} />
+    <Slider bind:value={videoTime} max={videoData.duration} on:mousemove={move} on:change={sendToOutput} />
   </div>
   {joinTime(secondsToTime(videoData.duration))}
 </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { outSlide, shows } from "../../../stores"
+  import { activeShow, outSlide, shows } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import Textbox from "../../slide/Textbox.svelte"
 
@@ -8,7 +8,7 @@
   let text: string = ""
 
   $: index = $outSlide ? $outSlide.index + (next ? 1 : 0) : null
-  $: slideId = index !== null && index < GetLayout().length ? GetLayout()[index].id : null
+  $: slideId = index !== null && $activeShow && index < GetLayout().length ? GetLayout()[index].id : null
   $: slide = $outSlide?.id && slideId ? $shows[$outSlide.id].slides[slideId] : null
 
   $: {

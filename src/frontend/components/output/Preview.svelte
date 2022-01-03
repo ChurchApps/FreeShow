@@ -149,14 +149,15 @@
 
   let video: any = null
   let videoData: any = {
-    time: 0,
     duration: 0,
     paused: true,
   }
+  let videoTime: number = 0
   function clearVideo() {
     // TODO: clear after fade out.....
     setTimeout(() => {
       video = null
+      videoTime = 0
       videoData = {
         time: 0,
         duration: 0,
@@ -165,9 +166,8 @@
       window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
     }, 600)
   }
-  $: console.log(videoData)
 
-  const sendToOutput = () => window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+  const sendToOutput = () => window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { ...videoData, time: videoTime } })
 
   let length: number = 0
   $: {
@@ -194,7 +194,7 @@
           <p><b>[[[Height]]]:</b> {resolution.height} [[[pixels]]]</p>
         </span>
       {/if}
-      <Output center={fullscreen} style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerWidth, "fit") : ""} bind:video bind:videoData />
+      <Output center={fullscreen} style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerWidth, "fit") : ""} bind:video bind:videoData bind:videoTime />
     </div>
     <AudioMeter {video} />
     <!-- {#if $activePage === 'live'}
@@ -288,7 +288,7 @@
         >
           <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
         </Button>
-        <VideoSlider bind:videoData />
+        <VideoSlider bind:videoData bind:videoTime />
       </span>
     {/if}
 

@@ -7,7 +7,8 @@
 </script>
 
 <!-- TODO: use global resolution .... -->
-<div class="card" style="width: calc({100 / columns}% - 8px); display: table;" class:active on:click on:mouseenter on:mouseleave on:mousemove>
+<!-- display: table; -->
+<div class="card" style="width: calc({100 / columns}% - 8px);" class:active on:click on:mouseenter on:mouseleave on:mousemove>
   {#if !loaded}
     <div class="loader">
       <Loader />

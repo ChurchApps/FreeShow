@@ -2,19 +2,28 @@
   import { fade } from "svelte/transition"
   import type { Transition } from "../../../types/Show"
   import { mediaFolders, outputWindow } from "../../stores"
+  import { getStyleResolution } from "../slide/getStyleResolution"
   import Camera from "./Camera.svelte"
   import Window from "./Window.svelte"
 
   export let transition: Transition
-  export let id: string
+  export let url: string = ""
+  export let id: string = ""
   export let name: string = ""
   export let type: string = "media"
   export let video: any
   export let videoData: any
+  export let videoTime: any
 
-  $: url = type === "media" ? $mediaFolders[id].url + "/" + name || "" : ""
+  $: {
+    if (!url.length && type === "media") url = $mediaFolders[id].url + "/" + name || ""
+  }
   $: extension = url.match(/\.[0-9a-z]+$/i)?.[0]! || ""
   $: isVideo = extension.includes("mp4") || extension.includes("mov")
+
+  let image: any
+  $: console.log(image?.width, image?.height)
+  $: console.log(image?.naturalWidth, image?.naturalHeight)
 
   let muted = $outputWindow ? true : false
   let loop = true
@@ -26,11 +35,28 @@
   {#if type === "media"}
     {#if isVideo}
       <!-- TODO: autoplay.... -->
-      <video class="media" bind:this={video} bind:currentTime={videoData.time} bind:paused={videoData.paused} bind:duration={videoData.duration} src={url} autoplay {loop} {muted}>
+      <video
+        class="media"
+        style={getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, window.innerWidth, window.innerHeight, "cover")}
+        bind:this={video}
+        bind:currentTime={videoTime}
+        bind:paused={videoData.paused}
+        bind:duration={videoData.duration}
+        src={url}
+        autoplay
+        {loop}
+        {muted}
+      >
         <track kind="captions" />
       </video>
     {:else}
-      <img class="media" src={url} {alt} />
+      <img
+        class="media"
+        style={getStyleResolution({ width: image?.naturalWidth || 0, height: image?.naturalHeight || 0 }, window.innerWidth, window.innerHeight, "cover")}
+        bind:this={image}
+        src={url}
+        {alt}
+      />
     {/if}
   {:else if type === "screen"}
     <Window {id} class="media" />

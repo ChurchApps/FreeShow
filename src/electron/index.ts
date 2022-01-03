@@ -336,6 +336,8 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       }
       outputWindow?.show()
     } else outputWindow?.hide()
+  } else if (msg.channel.includes("MAIN")) {
+    mainWindow?.webContents.send(OUTPUT, msg)
   } else {
     outputWindow?.webContents.send(OUTPUT, msg)
   }
@@ -367,7 +369,7 @@ function createOutputWindow() {
     type: "toolbar", // hide from taskbar
     fullscreen: true,
     skipTaskbar: true, // hide taskbar
-    focusable: false, // makes non focusable
+    // focusable: false, // makes non focusable
     roundedCorners: false, // disable rounded corners on mac
     backgroundColor: "#000",
     show: false,
@@ -420,7 +422,7 @@ function createOutputWindow() {
   // toOutput("MAIN", { channel: "OUTPUT", data: "true" })
   // outputWindow.webContents.send("MAIN", { channel: "OUTPUT" })
 
-  // if (!isProd) outputWindow.webContents.openDevTools()
+  if (!isProd) outputWindow.webContents.openDevTools()
 }
 
 // interface ScreenObj {
@@ -518,20 +520,13 @@ ipcMain.on(FOLDER_READ, (_e, args: any) => {
   let getEnd: RegExp = new RegExp(/\.[0-9a-z]+$/i)
 
   const fs = require("fs")
-  fs.readdir(args.url, (_e: any, files: any) => {
-    let filteredFiles: string[] = []
+  fs.readdir(args.url, (_e: any, files: string[]) => {
+    let length: number = files.length
+    let folders: string[] = files.filter((f: string) => !f.includes("."))
     if (args.filters?.length) {
-      files.forEach((file: string) => {
-        let matched: boolean = false
-        args.filters.forEach((end: string) => {
-          if (!matched && file.match(getEnd)?.[0] === "." + end) {
-            matched = true
-            filteredFiles.push(file)
-          }
-        })
-      })
-    } else filteredFiles = files
-    toApp(FOLDER_READ, { id: args.id, data: filteredFiles })
+      files = files.filter((f: string) => args.filters.includes(f.match(getEnd)?.[0].substring(1)))
+    } else files = files.filter((f: string) => f.includes("."))
+    toApp(FOLDER_READ, { id: args.id, data: { folders, files, length } })
   })
 })
 

@@ -13,7 +13,7 @@
   import ContextMenu from "./components/system/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import { activePage, activeProject, activeShow, activeStage, drawer, outputWindow, outSlide, screen, shows } from "./stores"
+  import { activePage, activeProject, activeShow, activeStage, drawer, outputWindow, outSlide, projectView, screen, shows } from "./stores"
   import ProjectTools from "./components/show/ProjectTools.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
@@ -107,15 +107,15 @@
           <div class="left">
             {#if page === "show"}
               <Projects />
-              {#if $activeProject}
+              {#if $activeProject && !$projectView}
                 <ProjectTools />
               {/if}
             {:else if page === "edit"}
               <Navigation />
-            {:else if page === "draw"}
-              <DrawTools />
             {:else if page === "stage"}
               <Shows />
+            {:else if page === "draw"}
+              <DrawTools />
             {/if}
           </div>
         </Resizeable>

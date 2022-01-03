@@ -261,9 +261,9 @@
 </script>
 
 {#if errors.length}
-  <div style="color: red;position: absolute;">
+  <div class="error">
     {#each errors as error}
-      {error}
+      <span>{error}</span>
     {/each}
   </div>
 {/if}
@@ -347,6 +347,14 @@
               {outSlide}
             />
           </div>
+          <div class="buttons" style="display: flex;width: 100%;">
+            <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
+            <Button style="flex: 1;" on:click={previous} disabled={outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
+            <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outSlide + 1}/{totalSlides}</span>
+            <Button style="flex: 1;" on:click={next} disabled={outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
+            <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
+          </div>
+          <!-- TODO: change layout -->
         {:else}
           <Center faded>[[[No show selected]]]</Center>
         {/if}
@@ -366,9 +374,9 @@
           </div>
           <div class="buttons" style="display: flex;width: 100%;">
             <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-            <Button style="flex: 1;" on:click={previous} disabled={outSlide <= 0} center><Icon id="previous" /></Button>
-            <span style="flex: 3;text-align: center;opacity: 0.8;font-size: 0.8em;">{outSlide + 1}/{totalSlides}</span>
-            <Button style="flex: 1;" on:click={next} disabled={outSlide + 1 >= totalSlides} center><Icon id="next" /></Button>
+            <Button style="flex: 1;" on:click={previous} disabled={outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
+            <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outSlide + 1}/{totalSlides}</span>
+            <Button style="flex: 1;" on:click={next} disabled={outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
             <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
           </div>
         {:else}
@@ -398,9 +406,9 @@
           </div>
           <div class="buttons" style="display: flex;width: 100%;">
             <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-            <Button style="flex: 1;" on:click={previous} disabled={outSlide <= 0} center><Icon id="previous" /></Button>
-            <span style="flex: 3;text-align: center;opacity: 0.8;font-size: 0.8em;">{outSlide + 1}/{totalSlides}</span>
-            <Button style="flex: 1;" on:click={next} disabled={outSlide + 1 >= totalSlides} center><Icon id="next" /></Button>
+            <Button style="flex: 1;" on:click={previous} disabled={outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
+            <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outSlide + 1}/{totalSlides}</span>
+            <Button style="flex: 1;" on:click={next} disabled={outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
             <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
           </div>
         {:else}
@@ -414,7 +422,16 @@
   <div class="center">
     <div class="card">
       <h1>RemoteShow</h1>
-      <input class="input" style="text-align: center;" type="password" placeholder="Password" bind:value={password} />
+      <input
+        class="input"
+        style="text-align: center;"
+        type="password"
+        placeholder="Password"
+        on:keydown={(e) => {
+          if (e.key === "Enter") submit()
+        }}
+        bind:value={password}
+      />
       <Button on:click={submit} style="color: var(--secondary);" bold dark center>Submit</Button>
       <span style="text-align: center;"><input type="checkbox" bind:checked={remember} /><span style="opacity: 0.6;padding-left: 10px;">Remember me</span></span>
     </div>
@@ -463,11 +480,23 @@
     /* transition: background-color 0.5s; */
 
     font-family: system-ui;
-    font-size: 1.3em;
+    font-size: 1.5em;
 
     height: 100%;
     /* width: 100vw;
     height: 100vh; */
+  }
+
+  .error {
+    color: red;
+    position: absolute;
+    margin: 10px;
+    padding: 10px;
+    width: calc(100% - 20px);
+    text-align: center;
+    background-color: var(--primary-darker);
+    display: flex;
+    flex-direction: column;
   }
 
   .center {
@@ -504,6 +533,7 @@
     /* font-family: inherit; */
     padding: 10px 18px;
     border: none;
+    font-size: inherit;
   }
   .input:active,
   .input:focus {
@@ -541,7 +571,6 @@
     height: 100%;
     flex: 1;
     display: flex;
-    padding: 10px 0;
     gap: 10px;
     overflow: hidden;
   }
@@ -552,7 +581,6 @@
   @media screen and (max-width: 550px) {
     .outSlides {
       flex-direction: column;
-      padding: 0;
     }
     .outSlides :global(.main) {
       height: 50%;

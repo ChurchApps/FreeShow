@@ -1,18 +1,22 @@
 <script lang="ts">
-  import { mediaFolders, outBackground } from "../../stores"
-  import Card from "./Card.svelte"
-  import Label from "./Label.svelte"
+  import { mediaFolders, outBackground } from "../../../stores"
+  import Card from "../Card.svelte"
+  import Label from "../Label.svelte"
 
-  export let id: string
+  export let id: string = ""
   export let name: string
-  let url: string = $mediaFolders[id].url + "/" + name
-  let extension: string = url.match(/\.[0-9a-z]+$/i)?.[0]!
+  export let url: string = $mediaFolders[id].url || ""
+  $: url = url + "/" + name
+
+  let extension: string = name.match(/\.[0-9a-z]+$/i)?.[0]!
+  console.log(name, extension)
+
   $: video = extension.includes("mp4") || extension.includes("mov")
   $: {
     if (video) loaded = false
   }
 
-  $: active = $outBackground?.id === id && $outBackground?.name === name
+  $: active = id ? $outBackground?.id === id && $outBackground?.name === name : $outBackground?.url === url
 
   let hover: boolean = false
 
@@ -38,7 +42,10 @@
   }
 
   function setBackground() {
-    outBackground.set({ id, name })
+    let obj: any = { name }
+    if (id.length) obj.id = id
+    else obj.url = url
+    outBackground.set(obj)
   }
 
   function move(e: any) {
@@ -48,9 +55,11 @@
 
       // let time = duration * percentage
       let time = duration * ((Math.floor(percentage * steps) * steps + steps) / 100)
-      videoElem.currentTime = time
+      if (Number(time) === time) videoElem.currentTime = time
     }
   }
+
+  $: console.log(video, canvas)
 </script>
 
 <Card {loaded} {active} on:click={setBackground} on:mouseenter={() => (hover = true)} on:mouseleave={() => (hover = false)} on:mousemove={move}>

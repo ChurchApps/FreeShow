@@ -1,7 +1,7 @@
 <script lang="ts">
   import Zoomed from "./Zoomed.svelte"
   import Stagebox from "./Stagebox.svelte"
-  import { getStyleResolution } from "./getStyleResolution"
+  import { getStyleResolution } from "../helpers/getStyleResolution"
 
   interface Show {
     settings: any
@@ -36,6 +36,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    background: var(--primary-darkest);
   }
 
   .slide {

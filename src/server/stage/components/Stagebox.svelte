@@ -23,7 +23,7 @@
       {:else if id.includes("slide_text")}
         <SlideText {slides} next={id.includes("next")} />
       {:else if id.includes("slide")}
-        <span style="pointer-events: none;">
+        <span>
           <SlideText {slides} next={id.includes("next")} style />
         </span>
       {:else if id.includes("clock")}

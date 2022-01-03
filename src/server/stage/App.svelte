@@ -1,6 +1,8 @@
 <script lang="ts">
   import { io } from "socket.io-client"
+  import Center from "../remote/components/Center.svelte"
   import Button from "./components/Button.svelte"
+  import Icon from "./components/Icon.svelte"
   import Slide from "./components/Slide.svelte"
 
   const lang: any = {
@@ -105,7 +107,7 @@
 
   let clicked: boolean = false
   const click = (e: any) => {
-    if (show && !e.target.closest(".clicked")) clicked = !clicked
+    if (showRef !== null && show && !e.target.closest(".clicked")) clicked = !clicked
   }
   let timeout: any = null
   $: {
@@ -122,48 +124,66 @@
 <svelte:window on:click={click} />
 
 {#if errors.length}
-  <div style="color: red;position: absolute;">
+  <div class="error">
     {#each errors as error}
-      {error}
+      <span>{error}</span>
     {/each}
   </div>
 {/if}
 
 {#if showRef === null && shows !== null}
-  <div class="center">
-    <div class="card">
-      {#if input !== null}
-        <h3>{input.name}</h3>
+  {#if input !== null}
+    <div class="center">
+      <div class="card">
+        <h3 style="text-align: center;">{input.name}</h3>
         <input
+          class="input"
+          style="text-align: center;"
+          type="password"
+          placeholder="Password"
           on:keydown={(e) => {
             if (e.key === "Enter") submit()
           }}
           bind:value={password}
-          type="password"
         />
-        <span>
-          <input type="checkbox" bind:checked={remember} />
-          Remember me
-        </span>
-        <button on:click={submit}>Submit</button>
-      {:else if shows.length}
+        <Button on:click={submit} style="color: var(--secondary);" bold dark center>Submit</Button>
+        <span style="text-align: center;"><input type="checkbox" bind:checked={remember} /><span style="opacity: 0.6;padding-left: 10px;">Remember me</span></span>
+      </div>
+    </div>
+    <div class="clicked" style="background-color: var(--primary-darker);">
+      <Button
+        on:click={() => {
+          input = null
+          showRef = null
+        }}
+        style="width: 100%;"
+        center
+      >
+        <Icon id="home" />
+      </Button>
+    </div>
+  {:else if shows.length}
+    <div class="center" style="padding: 20px;flex-direction: column;">
+      <h1>StageShow</h1>
+      <span style="overflow: auto;width: 100%;">
         {#each shows as show}
           <Button
+            style="width: 100%;justify-content: center;"
             on:click={() => {
               show.password ? (input = show) : (showRef = { id: show.id })
             }}
           >
             {show.name}
             {#if show.password}
-              "locked"
+              <Icon id="locked" style="padding-left: 10px;" />
             {/if}
           </Button>
         {/each}
-      {:else}
-        No shows
-      {/if}
+      </span>
     </div>
-  </div>
+  {:else}
+    <Center faded>[[[No shows]]]</Center>
+  {/if}
 {:else if show}
   <!-- on click -->
   <!-- <div class="main">
@@ -173,7 +193,7 @@
   <Slide {show} {slides} />
   {#if clicked}
     <div class="clicked">
-      <h5>{show.name}</h5>
+      <h5 style="text-align: center;">{show.name}</h5>
       <Button
         on:click={() => {
           delete localStorage.password
@@ -181,15 +201,15 @@
           input = null
           showRef = null
         }}
+        style="width: 100%;"
+        center
       >
-        Home
+        <Icon id="home" />
       </Button>
     </div>
   {/if}
 {:else}
-  <div class="center">
-    <h3>Loading...</h3>
-  </div>
+  <Center>Loading...</Center>
 {/if}
 
 <style>
@@ -218,17 +238,27 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    user-select: none;
+
+    outline-offset: -4px;
+    outline-color: var(--secondary);
+  }
+
+  :global(html) {
+    height: 100%;
   }
 
   :global(body) {
-    background-color: var(--primary-darker);
+    background-color: var(--primary);
     color: var(--text);
-    font-family: system-ui;
-    /* font-family: sans-serif; */
-    font-size: 3em;
+    /* transition: background-color 0.5s; */
 
-    width: 100vw;
-    height: 100vh;
+    font-family: system-ui;
+    font-size: 1.5em;
+
+    height: 100%;
+    /* width: 100vw;
+  height: 100vh; */
   }
 
   :root {
@@ -250,28 +280,67 @@
     --navigation-width: 300px;
   }
 
+  .error {
+    color: red;
+    position: absolute;
+    margin: 10px;
+    padding: 10px;
+    width: calc(100% - 20px);
+    text-align: center;
+    background-color: var(--primary-darker);
+    display: flex;
+    flex-direction: column;
+  }
+
   .center {
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--primary-darker);
   }
 
   .card {
-    background-color: var(--primary);
-    box-shadow: 2px 2px 4px rgb(0 0 0 / 0.3);
-    border: 2px solid var(--primary-lighter);
-    padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    padding: 20px;
+    width: 100%;
+  }
+
+  h1 {
+    color: var(--secondary);
+    text-align: center;
+    padding-bottom: 20px;
+  }
+
+  .input {
+    background-color: rgb(0 0 0 / 0.2);
+    color: var(--text);
+    /* font-family: inherit; */
+    padding: 10px 18px;
+    border: none;
+    font-size: inherit;
+  }
+  .input:active,
+  .input:focus {
+    outline: 2px solid var(--secondary);
+    /* background-color: var(--secondary-opacity); */
+  }
+  .input::placeholder {
+    color: inherit;
+    opacity: 0.4;
   }
 
   .clicked {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    bottom: 0;
+    left: 0;
+    width: calc(100% - 20px);
+    margin: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     background-color: var(--primary);
   }
 </style>

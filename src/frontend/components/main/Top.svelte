@@ -15,11 +15,11 @@
   <span>
     <TopButton id="show" />
     <TopButton id="edit" />
-    <TopButton id="draw" />
     <TopButton id="stage" />
+    <TopButton id="draw" />
+    <TopButton id="calendar" />
   </span>
   <span>
-    <TopButton id="calendar" />
     <TopButton id="settings" />
     <Button title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display} on:click={display} class="display {$outputDisplay ? 'on' : 'off'}">
       {#if $outputDisplay}
