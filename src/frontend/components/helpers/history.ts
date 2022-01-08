@@ -44,6 +44,7 @@ export type HistoryIDs =
   | "newItem"
   | "addShow"
   | "slides"
+  | "slide"
   | "shows"
   | "project"
   | "projects"

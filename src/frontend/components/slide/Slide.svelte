@@ -2,6 +2,7 @@
   import type { Slide } from "../../../types/Show"
   import { slidesOptions } from "../../stores"
   import Draggable from "../system/Draggable.svelte"
+  import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import Textbox from "./Textbox.svelte"
   import Zoomed from "./Zoomed.svelte"
@@ -42,25 +43,27 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     data-index={index}
     on:click
   >
-    <SelectElem id="slide" data={index}>
-      <Draggable id="slide" {index} direction={list ? "column" : "row"}>
-        <!-- TODO: tab select on enter -->
-        <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
-        <Zoomed background={slide.items.length ? "black" : "transparent"}>
-          <!-- TODO: check if showid exists in shows -->
-          {#each slide.items as item}
-            <Textbox {item} />
-          {/each}
-        </Zoomed>
-        <!-- TODO: BG: white, color: black -->
-        <!-- style="width: {resolution.width * zoom}px;" -->
-        <div class="label" title={slide.label || ""}>
-          <!-- font-size: 0.8em; -->
-          <span style="position: absolute;display: contents;">{index + 1}</span>
-          <span class="text">{slide.label || ""}</span>
-        </div>
-      </Draggable>
-    </SelectElem>
+    <DropArea id="slide">
+      <SelectElem id="slide" data={index}>
+        <Draggable id="slide" {index} direction={list ? "column" : "row"}>
+          <!-- TODO: tab select on enter -->
+          <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
+          <Zoomed background={slide.items.length ? "black" : "transparent"}>
+            <!-- TODO: check if showid exists in shows -->
+            {#each slide.items as item}
+              <Textbox {item} />
+            {/each}
+          </Zoomed>
+          <!-- TODO: BG: white, color: black -->
+          <!-- style="width: {resolution.width * zoom}px;" -->
+          <div class="label" title={slide.label || ""}>
+            <!-- font-size: 0.8em; -->
+            <span style="position: absolute;display: contents;">{index + 1}</span>
+            <span class="text">{slide.label || ""}</span>
+          </div>
+        </Draggable>
+      </SelectElem>
+    </DropArea>
   </div>
   {#if !$slidesOptions.grid}
     <hr />

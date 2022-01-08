@@ -1,6 +1,6 @@
 <script lang="ts">
   import { selectTextOnFocus } from "../helpers/inputActions"
-  import { dictionary, drawer, drawerTabsData, labelsDisabled } from "../../stores"
+  import { activeShow, dictionary, drawer, drawerTabsData, labelsDisabled } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
@@ -95,11 +95,23 @@
       // Alphabet upper case | Alphabet lower case
       if (/^[A-Z]{1}$/i.test(e.key)) searchElem.focus()
     } else if (e.key === "Enter") {
+      // TODO: first match
       if (document.activeElement === searchElem && searchValue.length && firstMatch) {
         searchElem.select()
-        history({ id: "addShow", newData: firstMatch })
+        history({ id: activeTab === "shows" ? "addShow" : "addShow", newData: firstMatch })
         console.log(firstMatch)
       }
+    }
+  }
+
+  // TODO: on show get activeshow, store n bakcground
+  let stored: any = null
+
+  $: {
+    if (activeTab === "backgrounds" && ($activeShow?.type === null || $activeShow?.type === "private")) stored = JSON.stringify($activeShow)
+    else if (activeTab === "shows" && stored !== null) {
+      activeShow.set(JSON.parse(stored))
+      stored = null
     }
   }
 </script>

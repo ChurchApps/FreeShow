@@ -39,7 +39,7 @@
 
 <!-- TODO: tab enter not woring -->
 
-<Autoscroll {offset} bind:scrollElem>
+<Autoscroll {offset} bind:scrollElem style="display: flex;">
   <!-- on:drop={(e) => {
       if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
     }}
@@ -90,7 +90,7 @@
     flex-wrap: wrap;
     /* gap: 10px; */
     padding: 5px;
-    height: 100%;
-    align-content: flex-start;
+    /* height: 100%; */
+    /* align-content: flex-start; */
   }
 </style>

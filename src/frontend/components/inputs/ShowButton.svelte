@@ -39,7 +39,11 @@
       pos = $projects[$activeProject].shows.findIndex((p) => p.id === id)
     }
     // set active show
-    if (!e.ctrlKey && !active && !e.target.closest("input")) activeShow.set({ id, index: pos, type })
+    if (!e.ctrlKey && !active && !e.target.closest("input")) {
+      let show: any = { id, type }
+      if (pos !== null) show.index = pos
+      activeShow.set(show)
+    }
   }
 
   function doubleClick(e: any) {

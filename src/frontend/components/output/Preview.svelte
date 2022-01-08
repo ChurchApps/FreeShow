@@ -151,6 +151,7 @@
   let videoData: any = {
     duration: 0,
     paused: true,
+    muted: false,
   }
   let videoTime: number = 0
   function clearVideo() {
@@ -162,10 +163,15 @@
         time: 0,
         duration: 0,
         paused: true,
+        muted: false,
       }
       window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
     }, 600)
   }
+
+  let videoName: string = ""
+  $: outName = $outBackground?.path ? $outBackground.path.substring($outBackground.path.lastIndexOf("\\") + 1) : ""
+  $: videoName = outName.slice(0, outName.lastIndexOf("."))
 
   const sendToOutput = () => window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { ...videoData, time: videoTime } })
 
@@ -275,7 +281,7 @@
 
     <!-- video -->
     {#if video}
-      <span style="display: flex;padding: 10px;opacity: 0.8;">{$outBackground?.name}</span>
+      <span style="display: flex;justify-content: center;padding: 5px;padding-top: 10px;opacity: 0.8;">{videoName}</span>
       <span class="group">
         <Button
           style="flex: 0"
@@ -288,7 +294,10 @@
         >
           <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
         </Button>
-        <VideoSlider bind:videoData bind:videoTime />
+        <VideoSlider bind:videoData bind:videoTime toOutput />
+        <Button style="flex: 0" center title={videoData.muted ? "Unmute" : "Mute"} on:click={() => (videoData.muted = !videoData.muted)}>
+          <Icon id={videoData.muted ? "muted" : "volume"} size={1.2} />
+        </Button>
       </span>
     {/if}
 

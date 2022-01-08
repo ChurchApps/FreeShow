@@ -13,7 +13,8 @@ export interface Project {
 
 export interface ShowRef {
   id: string
-  index?: null | number
+  index?: number
+  name?: string
   type?: ShowType
   // private?: boolean
   // location?: string;

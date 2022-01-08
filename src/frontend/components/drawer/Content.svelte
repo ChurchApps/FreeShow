@@ -11,6 +11,8 @@
   export let id: string
   export let bible: any
   export let searchValue: string
+  export let firstMatch: null | string
+  console.log(firstMatch)
   $: active = $drawerTabsData[id].activeSubTab
 </script>
 

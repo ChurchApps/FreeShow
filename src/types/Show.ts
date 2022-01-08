@@ -99,8 +99,9 @@ export interface Overlay {
 
 export interface OutBackground {
   id?: ID
-  url?: string
-  name?: string
+  path?: string
+  startAt?: number
+  // name?: string
   type?: "media" | "screen" | "camera"
 }
 export interface OutSlide {

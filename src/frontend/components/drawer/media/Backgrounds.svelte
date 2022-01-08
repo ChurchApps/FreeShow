@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { FOLDER_READ } from "../../../../types/Channels"
-  import { mediaFolders } from "../../../stores"
+  import { READ_FOLDER } from "../../../../types/Channels"
+  import { activeShow, mediaFolders } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -10,106 +10,111 @@
 
   export let active: string | null
 
-  // get list of files
-  interface Files {
-    [key: string]: { folders: string[]; files: string[] }
-  }
-  let files: Files = {}
-  let folders: any = { folders: [], files: [] }
-  let folder: null | string = null
+  let files: any[] = []
+
+  $: rootPath = active === "all" ? "" : active !== null ? $mediaFolders[active].path! : ""
+  $: path = active === "all" ? "" : rootPath
+  $: name = rootPath === path ? (active !== "all" && active !== null ? $mediaFolders[active].name : "category.all") : path.substring(path.lastIndexOf("\\") + 1)
+
+  // get list of files & folders
   $: {
-    if (folder !== null) window.api.send(FOLDER_READ, { id: "___folder", url: folder, filters: ["png", "jpg", "jpeg", "mp4", "mov"] })
+    if (active === "all") {
+      files = []
+      Object.values($mediaFolders).forEach((data) => {
+        window.api.send(READ_FOLDER, data.path)
+      })
+    } else if (path.length) window.api.send(READ_FOLDER, path)
   }
-  $: if (active) folder = null
-  mediaFolders.subscribe((mf) => {
-    Object.entries(mf).forEach((folder) => {
-      window.api.send(FOLDER_READ, { id: folder[0], url: folder[1].url, filters: ["png", "jpg", "jpeg", "mp4", "mov"] })
-    })
-  })
-  window.api.receive(FOLDER_READ, (msg: any) => {
-    if (msg.id !== "___files") {
-      if (msg.id === "___folder") {
-        msg.data.url = folder
-        folders = msg.data
-      } else files[msg.id] = msg.data || { folders: [], files: [] }
+
+  let videoExtensions: string[] = ["mp4", "mov"]
+  let imageExtensions: string[] = ["png", "jpg", "jpeg"]
+  let extensions: string[] = [...videoExtensions, ...imageExtensions]
+  // receive files
+  window.api.receive(READ_FOLDER, (msg: any) => {
+    if (active === "all" || msg.path === path) {
+      console.log(msg)
+      files = msg.files
+        .filter((file: any) => extensions.includes(file.extension) || file.folder)
+        // .sort((a: any, b: any) => a.name < b.name)
+        .sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+
+      allFiles = [...files.filter((a) => !a.folder).map((a) => a.path)]
+      if ($activeShow !== null && allFiles.includes($activeShow.id) && activeFile === null) activeFile = allFiles.findIndex((a) => a === $activeShow!.id)
+
+      // testing
+      // files = [...files, ...files, ...files, ...files]
+
+      scrollElem?.scrollTo(0, 0)
     }
   })
-  $: console.log(files)
+
+  let scrollElem: any
+
+  let activeFile: null | number = null
+  let allFiles: string[] = []
+  // TODO: update on path change!
+  $: if (active) activeFile = null
+  $: content = allFiles.length
+
+  activeShow.subscribe((a) => {
+    if (a?.type !== "video" && $activeShow?.type !== "image") activeFile = null
+  })
 </script>
 
 <!-- TODO: fix: big images & many files -->
-{#key folder}
-  {#key active}
-    <div class="scroll" style="flex: 1;overflow-y: auto;">
-      <div class="grid" style="height: 100%;">
-        {#if folder !== null}
-          {#if active && folders.folders.length + folders.files.length > 0}
-            {#each folders.folders as name}
-              <Folder bind:folder {name} url={folders.url} />
-            {/each}
-            {#key folder}
-              {#each folders.files as name}
-                <Media {name} url={folders.url} />
-              {/each}
-            {/key}
-          {:else}
-            <Center>
-              <Icon id="noImage" size={5} />
-            </Center>
-          {/if}
-        {:else if active === "all"}
-          {#key $mediaFolders}
-            <!-- {#key folder} -->
-            {#each Object.entries(files) as [url, fileList]}
-              <!-- {#each fileList.folders as name}
-          <Folder {name} id={url} />
-        {/each} -->
-              {#each fileList.files as name}
-                <Media {name} id={url} />
-              {/each}
-            {/each}
-            <!-- {/key} -->
-          {/key}
-        {:else if active && files[active].files.length + files[active].folders.length > 0}
-          {#if active}
-            {#each files[active].folders as name}
-              <Folder bind:folder {name} id={active} />
-            {/each}
-            {#each files[active].files as name}
-              <Media {name} id={active} />
-            {/each}
-          {/if}
-        {:else}
-          <Center>
-            <Icon id="noImage" size={5} />
-          </Center>
-        {/if}
-      </div>
-    </div>
-  {/key}
-{/key}
-<div class="tabs" style="display: flex;justify-content: space-evenly;align-items: center;">
-  {#if folder}
-    <Button
-      size={1.3}
-      on:click={() => {
-        let arr = folder?.split("/") || []
-        arr.pop()
-        if (arr.join("/").length > (active?.length || 0)) folder = arr.join("/")
-        else folder = null
-      }}
-    >
-      <Icon id="previous" />
-    </Button>
-    {folder.split("/").pop()}
-    <Button size={1.3} on:click={() => (folder = null)}>
-      <Icon id="home" />
-    </Button>
-  {:else if active && $mediaFolders[active]}
-    <T id={$mediaFolders[active].name} />
-  {:else}
-    {active}
-  {/if}
+<!-- {#key files} -->
+<!-- TODO: autoscroll -->
+<!-- TODO: droparea for files????????? -->
+<!-- TODO: ctrl scroll wheel zoom! -->
+<div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
+  <div class="grid" style="height: 100%;">
+    {#if files.length}
+      {#key rootPath}
+        {#key path}
+          {#each files as file}
+            {#if !file.folder}
+              <!-- size={file.stat.size} -->
+              <Media name={file.name} path={file.path} type={videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} />
+            {:else if active !== "all"}
+              <Folder bind:rootPath={path} name={file.name} path={file.path} />
+            {/if}
+          {/each}
+        {/key}
+      {/key}
+    {:else}
+      <Center>
+        <Icon id="noImage" size={5} />
+      </Center>
+    {/if}
+  </div>
+</div>
+<!-- {/key} -->
+
+<div class="tabs" style="display: flex;align-items: center;">
+  <Button
+    disabled={rootPath === path}
+    title="[[[Go back]]]"
+    on:click={() => {
+      const folder = path.slice(0, path.lastIndexOf("\\"))
+      if (folder.length > rootPath.length) path = folder
+      else path = rootPath
+    }}
+  >
+    <Icon size={1.3} id="back" />
+  </Button>
+  <Button disabled={rootPath === path} title="[[[Home]]]" on:click={() => (path = rootPath)}>
+    <Icon size={1.3} id="home" />
+  </Button>
+  <span style="flex: 1;text-align: center;">
+    {#key name}<T id={name} />{/key}
+  </span>
+  <Button disabled={!allFiles.length || activeFile === 0} on:click={() => (activeFile = activeFile === null ? content - 1 : activeFile - 1)}>
+    <Icon size={1.3} id="previous" />
+  </Button>
+  {activeFile === null ? "" : activeFile + 1 + "/"}{content}
+  <Button disabled={!allFiles.length || activeFile === content - 1} on:click={() => (activeFile = activeFile === null ? 0 : activeFile + 1)}>
+    <Icon size={1.3} id="next" />
+  </Button>
 </div>
 
 <style>

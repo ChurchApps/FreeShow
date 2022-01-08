@@ -1,26 +1,24 @@
 <script lang="ts">
-  import { activeShow, shows } from "../../../stores"
+  import { activeShow } from "../../../stores"
   import Center from "../../system/Center.svelte"
   import Clock from "../../system/Clock.svelte"
   import Date from "../../system/Date.svelte"
+  import MediaInfo from "./MediaInfo.svelte"
   import ScriptureInfo from "./ScriptureInfo.svelte"
   import ShowInfo from "./ShowInfo.svelte"
 
   export let id: string
   export let bible: any
-
-  // ! IF show is show and not video.........
-  $: show = $activeShow ? $shows[$activeShow.id] : null // type !== private.....
-
-  $: console.log(id)
 </script>
 
 <!-- TODO: info tabs: clock, quick settings (master volume), local info -->
 
 <div class="main">
   <div class="padding">
-    {#if id === "shows" && show !== null}
+    {#if id === "shows" && ($activeShow?.type === null || $activeShow?.type === "private")}
       <ShowInfo />
+    {:else if id === "backgrounds" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
+      <MediaInfo />
     {:else if id === "scripture"}
       <ScriptureInfo {bible} />
     {:else}

@@ -1,11 +1,12 @@
+import { READ_FOLDER } from "./../types/Channels"
 // const { ValidChannels, Data } = require("./src/types/Channels")
 import { app, BrowserWindow, ipcMain, dialog, desktopCapturer, screen } from "electron"
 import { Display } from "electron/main"
 import { join } from "path"
 import { URL } from "url"
-import { GET_SCREENS, MAIN, OPEN_FILE, OUTPUT, OPEN_FOLDER, FOLDER_READ } from "../types/Channels"
-// import path from "path"
-// import fs from "fs"
+import { GET_SCREENS, MAIN, OPEN_FILE, OUTPUT, OPEN_FOLDER, FILE_INFO } from "../types/Channels"
+import path from "path"
+import fs from "fs"
 import electronSettings from "./utils/settings"
 import checkForUpdates from "./utils/updater"
 // import express from express();
@@ -296,6 +297,8 @@ app.on("web-contents-created", (e, contents) => {
 //   app.quit()
 // })
 
+// DISPLAY WINDOW
+
 // const toApp = (channel, args): void => mainWindow.webContents.send(channel, args)
 // module.exports = toApp
 export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContents.send(channel, ...args)
@@ -425,21 +428,16 @@ function createOutputWindow() {
   if (!isProd) outputWindow.webContents.openDevTools()
 }
 
-// interface ScreenObj {
-//   name: string
-//   id: string
-// }
+// LISTENERS
+
 ipcMain.on(GET_SCREENS, (_e, args: string[] = ["screen"]) => {
   // ["window", "screen"]
-  // e, args
   desktopCapturer.getSources({ types: args }).then(async (sources) => {
     try {
-      // const screens: ScreenObj[] = []
       const screens: any[] = []
       sources.map((source) => screens.push({ name: source.name, id: source.id }))
       // sources.map((source) => screens.push(source))
       toApp(GET_SCREENS, screens)
-      // toApp(GET_SCREENS, sources)
 
       // const videoOptionsMenu = Menu.buildFromTemplate(
       //   sources.map(source => {
@@ -451,21 +449,18 @@ ipcMain.on(GET_SCREENS, (_e, args: string[] = ["screen"]) => {
       // );
 
       // videoOptionsMenu.popup();
-    } catch (e) {
-      console.error("Error:", e)
+    } catch (err) {
+      console.error("Error:", err)
     }
   })
 })
 
 // WIP https://github.com/electron/electron/issues/1948
 ipcMain.on(OPEN_FILE, (_e, args) => {
-  // toApp('main', args);
-
   if (!args.filters) args.filters = [{ name: "All", extensions: ["*"] }]
   if (!args.title) args.title = "Test"
 
-  let file
-  file = dialog.showOpenDialogSync(mainWindow!, {
+  let file = dialog.showOpenDialogSync(mainWindow!, {
     properties: ["openFile"],
     filters: args.filters,
     title: args.title,
@@ -505,29 +500,34 @@ ipcMain.on(OPEN_FILE, (_e, args) => {
 })
 
 ipcMain.on(OPEN_FOLDER, (_e, title: string) => {
-  let folder: any
-  folder = dialog.showOpenDialogSync(mainWindow!, {
+  let folder: any = dialog.showOpenDialogSync(mainWindow!, {
     properties: ["openDirectory"],
     title: title,
   })
 
-  console.info(folder)
-
   if (folder) toApp(OPEN_FOLDER, folder[0])
 })
 
-ipcMain.on(FOLDER_READ, (_e, args: any) => {
-  let getEnd: RegExp = new RegExp(/\.[0-9a-z]+$/i)
+ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {
+  const fileList: string[] = fs.readdirSync(folderPath)
+  let files: any[] = []
 
-  const fs = require("fs")
-  fs.readdir(args.url, (_e: any, files: string[]) => {
-    let length: number = files.length
-    let folders: string[] = files.filter((f: string) => !f.includes("."))
-    if (args.filters?.length) {
-      files = files.filter((f: string) => args.filters.includes(f.match(getEnd)?.[0].substring(1)))
-    } else files = files.filter((f: string) => f.includes("."))
-    toApp(FOLDER_READ, { id: args.id, data: { folders, files, length } })
-  })
+  for (const name of fileList) {
+    const pathToFile: string = path.join(folderPath, name)
+    const stat = fs.statSync(pathToFile)
+    const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
+    files.push({ path: pathToFile, name, folder: stat.isDirectory(), extension: extension.substring(1), stat })
+  }
+
+  toApp(READ_FOLDER, { path: folderPath, files })
+})
+
+ipcMain.on(FILE_INFO, (_e, filePath: string) => {
+  // const pathToFile: string = path.join(filePath)
+  const stat = fs.statSync(filePath)
+  const [extension] = filePath.substring(filePath.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]
+
+  toApp(FILE_INFO, { path: filePath, stat, extension: extension.substring(1) })
 })
 
 // server

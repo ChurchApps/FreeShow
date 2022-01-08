@@ -25,7 +25,7 @@ export const getOutSlide = (): null | Slide => {
 export const getOutOverlays = () => []
 
 export const GetLayout = (showID: null | ID = null): SlideData[] => {
-  console.trace(showID)
+  // console.trace(showID)
   if (!showID) showID = get(activeShow)!.id
   let currentShow: Show = get(shows)[showID]
   let layoutSlides: SlideData[] = []

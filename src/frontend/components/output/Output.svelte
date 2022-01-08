@@ -11,7 +11,7 @@
   import Draw from "../draw/Draw.svelte"
 
   export let video: any = null
-  export let videoData: any = { duration: 0, paused: true }
+  export let videoData: any = { duration: 0, paused: true, muted: true }
   export let videoTime: number = 0
 
   let resolution: Resolution = $outSlide && $shows[$outSlide.id].settings.resolution ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
@@ -21,13 +21,16 @@
       if (msg.channel === "VIDEO_DATA") {
         videoData = msg.data
         if (videoData.paused && videoData.time) videoTime = videoData.time
+        videoData.muted = true
       } else if (msg.channel === "VIDEO_TIME") {
-        if (!videoData.paused) {
-          videoData.paused = true
-          videoTime = msg.data
-          window.api.send(OUTPUT, { channel: "MAIN_CHANGED" })
-          videoData.paused = false
-        } else videoTime = msg.data
+        // if (!videoData.paused) {
+        //   videoData.paused = true
+        //   videoTime = msg.data
+        //   window.api.send(OUTPUT, { channel: "MAIN_CHANGED" })
+        //   videoData.paused = false
+        // } else {
+        videoTime = msg.data
+        // }
       }
       // else if (msg.channel === "CHANGED") videoData.paused = false
     })
@@ -35,7 +38,7 @@
     window.api.receive(OUTPUT, (msg: any) => {
       if (msg.channel === "MAIN_CHANGED") {
         // window.api.send(OUTPUT, { channel: "CHANGED" })
-        videoData.paused = false
+        // videoData.paused = false
       }
     })
   }
@@ -52,9 +55,11 @@
 
 <Zoomed {center} {style} {resolution} bind:ratio>
   {#if $outBackground !== null}
+    <!-- {#key $outBackground} -->
     <div style="zoom: {1 / ratio}">
       <MediaOutput {...$outBackground} {transition} bind:video bind:videoData bind:videoTime />
     </div>
+    <!-- {/key} -->
   {/if}
   {#if $outSlide}
     {#key $outSlide}

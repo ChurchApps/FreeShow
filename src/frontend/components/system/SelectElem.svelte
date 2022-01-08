@@ -6,6 +6,7 @@
 
   export let id: any // WIP SelectIds
   export let data: any
+  export let fill: boolean = false
   // let isSelected: boolean = false
   function enter(e: any) {
     if (e.buttons) {
@@ -57,6 +58,8 @@
 
 <div
   class:isSelected={$selected.id === id && arrayHasData($selected.elems, data)}
+  style={$$props.style}
+  class:fill
   class="selectElem"
   on:mouseenter={enter}
   on:mousedown={mousedown}
@@ -71,5 +74,10 @@
     outline-offset: 2px; */
     filter: contrast(0.8);
     background-color: var(--focus);
+  }
+
+  .fill {
+    width: 100%;
+    height: 100%;
   }
 </style>

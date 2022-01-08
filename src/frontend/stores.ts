@@ -492,9 +492,9 @@ export const overlays: Writable<Overlays> = writable({
   },
 })
 export const mediaFolders: Writable<Categories> = writable({
-  pictures: { name: "category.pictures", icon: "folder", url: "C:/Users/Kristoffer/Pictures", default: true },
-  videos: { name: "category.videos", icon: "folder", url: "C:/Users/Kristoffer/Videos", default: true },
-  1234: { name: "Varden", icon: "folder", url: "C:/Users/Kristoffer/Varden" },
+  pictures: { name: "category.pictures", icon: "folder", path: "C:\\Users\\Kristoffer\\Pictures", default: true },
+  videos: { name: "category.videos", icon: "folder", path: "C:\\Users\\Kristoffer\\Videos", default: true },
+  1234: { name: "Varden", icon: "folder", path: "C:\\Users\\Kristoffer\\Varden" },
 })
 // export const media = writable({
 //   pictures: [

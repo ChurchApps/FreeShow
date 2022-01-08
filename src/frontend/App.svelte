@@ -28,6 +28,7 @@
   import Shows from "./components/stage/Shows.svelte"
   import StageTools from "./components/stage/StageTools.svelte"
   import StageShow from "./components/stage/StageShow.svelte"
+  import MediaTools from "./components/drawer/media/MediaTools.svelte"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -137,7 +138,11 @@
           <div class="right">
             <Preview />
             {#if page === "show" && $activeShow}
-              <ShowTools />
+              {#if $activeShow.type === "private" || $activeShow.type === null || $activeShow.type === undefined}
+                <ShowTools />
+              {:else if $activeShow.type === "image" || $activeShow.type === "video"}
+                <MediaTools />
+              {/if}
             {:else if page === "edit"}
               <EditTools />
             {:else if page === "draw"}

@@ -67,8 +67,8 @@
   let scrollElem: any
   let offset: number = -1
   $: {
-    if (scrollElem && $activeShow && $activeShow.index !== null)
-      offset = scrollElem.querySelector(".list").querySelector("div").children[$activeShow.index!].offsetTop - scrollElem.offsetTop
+    if (scrollElem && $activeShow?.index !== undefined && $activeShow.index !== null)
+      offset = scrollElem.querySelector(".list").querySelector("div").children[$activeShow.index].offsetTop - scrollElem.offsetTop
   }
 </script>
 
@@ -179,6 +179,6 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    flex: 1;
+    height: 100%;
   }
 </style>

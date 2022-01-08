@@ -8,6 +8,7 @@
   // export let data: string = ""
   export let type: "copy" | "move" | "link" = "move"
   export let direction: "row" | "column" = "row"
+  export let fill: boolean = false
   // export let side: "left" | "right" = "left" // "top" | "bottom"
   $: side = $drag.side
   $: hover = $drag.index === null ? false : $selected.id === id && $drag.index === index
@@ -85,11 +86,13 @@
 
 <div
   {id}
+  style={$$props.style}
   class="draggable"
   data-index={index}
   draggable={true}
   on:dragstart={dragstart}
   on:dragenter={dragenter}
+  class:fill
   class:hovering={hover}
   class:left={hover && side === "left"}
   class:right={hover && side === "right"}
@@ -136,5 +139,10 @@
   .column.hovering.left::after {
     top: unset;
     bottom: -10px;
+  }
+
+  .fill {
+    width: 100%;
+    height: 100%;
   }
 </style>

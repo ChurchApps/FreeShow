@@ -29,9 +29,9 @@
     text-overflow: ellipsis;
     overflow: hidden;
 
-    position: absolute;
+    /* position: absolute;
     bottom: 25px;
-    transform: translateY(100%);
+    transform: translateY(100%); */
     width: 100%;
     text-align: center;
   }

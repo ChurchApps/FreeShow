@@ -1,57 +1,60 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-
   import { joinTime, secondsToTime } from "../helpers/time"
   import Slider from "../inputs/Slider.svelte"
 
   export let videoData: any
   export let videoTime: any
-
-  // $: duration = video.duration || 0
-  // let ac = new AudioContext()
-  // let source = ac.createMediaElementSource(video)
-  // let value = new
-  // $: time = video.currentTime || 0
-  // $: console.log(time)
-
-  // $: console.log(videoTime)
-
-  // function change() {
-  //   console.log(duration, videoTime / 100)
-  //   videoTime = duration * (videoTime / 100)
-  // }
+  export let toOutput: boolean = false
 
   let hover = false
   let time: string = "00:00"
+
   function move(e: any) {
+    // TODO: time
+    // let ratio: number = e.target.offsetWidth / videoData.duration
+    // let percentage: number = (e.offsetX / e.target.offsetWidth) % ratio
     let percentage: number = e.offsetX / e.target.offsetWidth
-    // console.log(e.offsetX, e.target.offsetWidth)
     // console.log(percentage)
+    // let test = (e.offsetX / e.target.clientWidth) * parseInt(videoData.duration, 10)
+    // console.log(test.toFixed(2))
 
     if (percentage < 0) percentage = 0
     else if (percentage > 1) percentage = 1
 
+    // let parsed: number = parseInt((videoData.duration * percentage).toString(), 10)
+
     time = joinTime(secondsToTime(videoData.duration * percentage))
-    if (e.buttons) sendToOutput()
+    if (e.buttons && toOutput) sendToOutput()
   }
 
-  // TODO: send this....
   let timeout: any = null
   const sendToOutput = () => {
     if (!timeout) {
       let time = videoTime
-      videoData.paused = true
+      // videoData.paused = true
       window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+      window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
       timeout = setTimeout(() => {
         timeout = null
         if (videoTime !== time) window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
-      }, 200)
+      }, 100)
     }
+  }
+
+  let movePause: boolean = false
+  function pauseAtMove(boolean: boolean = true) {
+    movePause = videoData.paused = boolean
+    if (toOutput) window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
   }
 </script>
 
-<!-- {#key time} -->
-<!-- on:change={(e) => (videoTime = e.target.value)} -->
+<svelte:window
+  on:mouseup={() => {
+    if (movePause) pauseAtMove(false)
+  }}
+/>
+
 <div class="main">
   {#if hover}
     <span>
@@ -62,13 +65,26 @@
       {joinTime(secondsToTime(videoTime))}
     </span>
   {/if}
-  <div class="slider" on:mouseenter={() => (hover = true)} on:mouseleave={() => (hover = false)}>
-    <Slider bind:value={videoTime} max={videoData.duration} on:mousemove={move} on:change={sendToOutput} />
+  <div class="slider">
+    <Slider
+      on:mouseenter={() => (hover = true)}
+      on:mouseleave={() => (hover = false)}
+      bind:value={videoTime}
+      step={1}
+      max={videoData.duration}
+      on:mousedown={() => {
+        if (!videoData.paused) pauseAtMove()
+        if (toOutput) sendToOutput()
+      }}
+      on:mousemove={move}
+      on:change={() => {
+        if (toOutput) sendToOutput()
+      }}
+    />
   </div>
   {joinTime(secondsToTime(videoData.duration))}
 </div>
 
-<!-- {/key} -->
 <style>
   .main {
     display: flex;
@@ -80,5 +96,8 @@
   .slider {
     flex: 1;
     margin: 0 10px;
+    height: 100%;
+    display: flex;
+    align-items: center;
   }
 </style>

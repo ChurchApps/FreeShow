@@ -7,7 +7,6 @@
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
-  import FilePicker from "../inputs/FilePicker.svelte"
   import FolderPicker from "../inputs/FolderPicker.svelte"
   import HiddenInput from "../inputs/HiddenInput.svelte"
   import SelectElem from "../system/SelectElem.svelte"
@@ -75,7 +74,7 @@
               if (!e.ctrlKey) setTab(category.id)
             }}
             bold={false}
-            title={category.description ? category.description : category.url ? category.url : ""}
+            title={category.description ? category.description : category.path ? category.path : ""}
           >
             <Icon id={category.icon || "noIcon"} />
             <span id={category.id}>
@@ -102,8 +101,13 @@
       </Button>
     </div>
   {:else if id === "backgrounds"}
-    <FilePicker />
-    <FolderPicker />
+    <!-- <FilePicker /> -->
+    <FolderPicker title={$dictionary.new?.category}>
+      <Icon id="folder" style="padding-right: 10px;" />
+      <span style="color: var(--secondary);">
+        <T id="new.folder" />
+      </span>
+    </FolderPicker>
   {/if}
 </div>
 

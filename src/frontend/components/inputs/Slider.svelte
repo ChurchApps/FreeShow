@@ -11,6 +11,9 @@
   step={$$props.step}
   title={$$props.title}
   disabled={$$props.disabled}
+  on:mouseenter
+  on:mouseleave
+  on:mousedown
   on:mousemove
   on:change
 />

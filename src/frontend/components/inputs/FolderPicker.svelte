@@ -1,36 +1,31 @@
 <script lang="ts">
   import { uid } from "uid"
-
   import { OPEN_FOLDER } from "../../../types/Channels"
   import { mediaFolders } from "../../stores"
   import { history } from "../helpers/history"
+  import Button from "./Button.svelte"
 
   function pickFolder() {
     window.api.send(OPEN_FOLDER, "Pick Folder")
   }
-  window.api.receive(OPEN_FOLDER, (message: any) => {
-    message = message.replaceAll("\\", "/")
+
+  window.api.receive(OPEN_FOLDER, (msg: any) => {
     // check if folder already exists
-    let exists = false
-    Object.values($mediaFolders).forEach((mf) => {
-      if (mf.url === message) exists = true
-    })
+    let exists = Object.values($mediaFolders).find((a) => a.path === msg)
+    // TODO: alert exists
     if (!exists) {
       let id = uid()
       history({
         id: "newMediaFolder",
         oldData: { id: id, data: null },
-        newData: { id: id, data: { name: message.split("/").pop(), icon: "folder", url: message } },
+        newData: { id: id, data: { name: msg.substring(msg.lastIndexOf("\\") + 1), icon: "folder", path: msg } },
         location: { page: "drawer" },
       })
     }
-    // TODO: respond!
-    // activeFilePath = message.path;
-    // mediaFolders.update((mf) => {
-    //   mf[uid()] = { name: message.split("/").pop(), icon: "folder", url: message }
-    //   return mf
-    // })
   })
 </script>
 
-<input type="folder" on:click|preventDefault={pickFolder} />
+<Button on:click={pickFolder} title={$$props.title} center dark>
+  <slot />
+  <!-- <input style="display: none;" type="folder" on:click|preventDefault={pickFolder} /> -->
+</Button>

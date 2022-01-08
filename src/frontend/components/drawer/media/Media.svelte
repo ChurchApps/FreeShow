@@ -1,52 +1,25 @@
 <script lang="ts">
-  import { mediaFolders, outBackground } from "../../../stores"
+  import { activeShow, outBackground } from "../../../stores"
+  import Draggable from "../../system/Draggable.svelte"
+  import SelectElem from "../../system/SelectElem.svelte"
   import Card from "../Card.svelte"
   import Label from "../Label.svelte"
+  import IntersectionObserver from "./IntersectionObserver.svelte"
+  import MediaLoader from "./MediaLoader.svelte"
 
-  export let id: string = ""
   export let name: string
-  export let url: string = $mediaFolders[id].url || ""
-  $: url = url + "/" + name
+  export let path: string
+  export let type: any
+  // export let size: number
+  $: name = name.slice(0, name.lastIndexOf("."))
 
-  let extension: string = name.match(/\.[0-9a-z]+$/i)?.[0]!
-  console.log(name, extension)
+  export let activeFile: null | number
+  export let allFiles: string[]
 
-  $: video = extension.includes("mp4") || extension.includes("mov")
-  $: {
-    if (video) loaded = false
-  }
-
-  $: active = id ? $outBackground?.id === id && $outBackground?.name === name : $outBackground?.url === url
-
-  let hover: boolean = false
-
-  let canvas: any
+  let loaded: boolean = type === "image"
   let videoElem: any
+  let hover: boolean = false
   let duration: number = 0
-
-  let loaded = true
-  let time = false
-  function ready() {
-    if (!loaded && videoElem) {
-      if (!time) {
-        duration = videoElem.duration
-        videoElem.currentTime = duration / 2
-        time = true
-      } else {
-        canvas.width = videoElem.offsetWidth
-        canvas.height = videoElem.offsetHeight
-        canvas.getContext("2d").drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
-        loaded = true
-      }
-    }
-  }
-
-  function setBackground() {
-    let obj: any = { name }
-    if (id.length) obj.id = id
-    else obj.url = url
-    outBackground.set(obj)
-  }
 
   function move(e: any) {
     if (loaded && videoElem) {
@@ -59,26 +32,61 @@
     }
   }
 
-  $: console.log(video, canvas)
+  let index: number = allFiles.findIndex((a) => a === path)
+
+  // let clicked: boolean = false
+  // let doubleClick: boolean = false
+  function click() {
+    // if (!clicked) {
+    //   clicked = true
+    //   setTimeout(() => {
+    // if (!doubleClick)
+    // activeShow.set({ id: path, name, type })
+    activeFile = index
+    //   else doubleClick = false
+    //   clicked = false
+    // }, 501)
+    // }
+  }
+  $: if (activeFile !== null && allFiles[activeFile] === path) activeShow.set({ id: path, name, type })
+
+  function dblclick() {
+    outBackground.set({ path: path })
+    // doubleClick = true
+  }
 </script>
 
-<Card {loaded} {active} on:click={setBackground} on:mouseenter={() => (hover = true)} on:mouseleave={() => (hover = false)} on:mousemove={move}>
-  {#if video}
-    <canvas bind:this={canvas} />
-    {#if !loaded || hover}
-      <video bind:this={videoElem} src={url} on:canplaythrough={ready}>
-        <track kind="captions" />
-      </video>
-    {/if}
-  {:else}
-    <img src={url} alt={name} />
-  {/if}
-  <Label label={name} icon={video ? "movie" : "image"} white={!video} />
-</Card>
+<div class="main" style="display: contents;">
+  <!-- TODO: drag images!!! -->
+  <Card
+    {loaded}
+    preview={$activeShow?.id === path}
+    active={$outBackground?.path === path}
+    on:click={click}
+    on:dblclick={dblclick}
+    on:mouseenter={() => (hover = true)}
+    on:mouseleave={() => (hover = false)}
+    on:mousemove={move}
+  >
+    <SelectElem id="media" data={index} fill>
+      <Draggable id="media" {index} fill>
+        <IntersectionObserver class="observer" once let:intersecting>
+          {#if intersecting}
+            <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} />
+            <Label label={name} icon={type === "video" ? "movie" : "image"} white={type === "image"} />
+          {/if}
+          <!-- ({formatBytes(size)}) -->
+        </IntersectionObserver>
+      </Draggable>
+    </SelectElem>
+  </Card>
+</div>
 
 <style>
-  video {
-    /* TODO: fix positioning */
-    position: absolute;
+  .main :global(.observer) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
   }
 </style>

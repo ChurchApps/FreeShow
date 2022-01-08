@@ -17,7 +17,7 @@ export interface Time {
   h: string
 }
 
-export type SelectIds = "slide" | "slide_group" | "show" | "show_drawer" | "project" | "folder" | "file" | "navigation"
+export type SelectIds = "slide" | "slide_group" | "show" | "show_drawer" | "project" | "folder" | "file" | "navigation" | "media"
 export interface Selected {
   id: null | SelectIds
   elems: any[]

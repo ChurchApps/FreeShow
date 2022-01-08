@@ -18,6 +18,8 @@
   // }
 </script>
 
+<!-- TODO: ctrl scroll wheel zoom! -->
+
 <div>
   {#if layouts}
     <span style="display: flex;">

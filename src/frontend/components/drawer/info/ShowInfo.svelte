@@ -4,9 +4,13 @@
   import Date from "../../system/Date.svelte"
 
   $: show = $shows[$activeShow.id]
+
+  $: created = show.timestamps.created || null
+  $: modified = show.timestamps.modified || null
+  $: used = show.timestamps.used || null
 </script>
 
-<h2 style="text-align: center">
+<h2 style="text-align: center" title={show.name}>
   {#if show.name.length}
     {show.name}
   {:else}
@@ -15,19 +19,26 @@
     </span>
   {/if}
 </h2>
-<p><T id={"info.created"} />: <Date d={show.timestamps.created} /></p>
 <p>
-  <T id={"info.modified"} />:
-  {#if show.timestamps.modified}
-    <Date d={show.timestamps.modified} />
+  <T id={"info.created"} />
+  {#if created}
+    <Date d={created} />
   {:else}
     <span>-</span>
   {/if}
 </p>
 <p>
-  <T id={"info.used"} />:
-  {#if show.timestamps.used}
-    <Date d={show.timestamps.used} />
+  <T id={"info.modified"} />
+  {#if modified}
+    <Date d={modified} />
+  {:else}
+    <span>-</span>
+  {/if}
+</p>
+<p>
+  <T id={"info.used"} />
+  {#if used}
+    <Date d={used} />
   {:else}
     <span>-</span>
   {/if}

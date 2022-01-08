@@ -4,7 +4,7 @@ export interface Categories {
 export interface Category {
   name: string
   icon?: null | string
-  url?: string
+  path?: string
   default?: boolean
   description?: string
 }

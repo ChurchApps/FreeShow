@@ -5,60 +5,89 @@
   import { history, HistoryPages } from "../helpers/history"
 
   // export let id: "slide" | "slidesList" | "projectList"
-  export let id: "slides" | "shows" | "project" | "projects" | "drawer"
-  let hover = false
+  export let id: "slides" | "slide" | "shows" | "project" | "projects" | "drawer"
+  let active = false
+  $: hover = active
+
+  const areas: any = {
+    slides: ["slide_group", "media"],
+    slide: ["slide_group", "media", "overlay", "sound"],
+    project: ["show_drawer"],
+    drawer: ["file"],
+  }
   $: {
     // TODO: file...
     // TODO: timeout
-    if ((id === "slides" && $drag.id === "slide_group") || (id === "project" && $drag.id === "show_drawer") || (id === "drawer" && $drag.id === "file")) hover = true
-    else hover = false
+    if (areas[id].includes($drag.id)) active = true
+    else active = false
+  }
+
+  let count: number = 0
+  function enter(_e: any) {
+    if (active) {
+      count++
+      setTimeout(() => {
+        if (count > 0) hover = false
+      }, 800)
+    }
+  }
+
+  function leave(_e: any) {
+    if (active) {
+      count--
+      setTimeout(() => {
+        if (count === 0) hover = true
+      }, 10)
+    }
   }
 
   function ondrop() {
-    // let data: string = e.dataTransfer.getData("text")
-    let oldData: any
-    let newData: any
-    let page: HistoryPages = "drawer"
+    if (active) {
+      // let data: string = e.dataTransfer.getData("text")
+      let oldData: any
+      let newData: any
+      let page: HistoryPages = "drawer"
 
-    console.log(id)
+      console.log(id)
 
-    if (id === "project") {
-      console.log($drag.index)
-      // TODO: dragging multiple
-      page = "shows"
-      newData = []
-      let shows = $projects[$activeProject!].shows
-      console.log($selected.elems)
+      if (id === "project") {
+        console.log($drag.index)
+        // TODO: dragging multiple
+        page = "shows"
+        newData = []
+        let shows = $projects[$activeProject!].shows
+        console.log($selected.elems)
 
-      if ($selected.elems.length) {
-        let showData: any[] = []
-        console.log($drag.id)
+        if ($selected.elems.length) {
+          let showData: any[] = []
+          console.log($drag.id)
 
-        if ($drag.id === "show") {
-          $selected.elems.forEach((i: number) => {
-            shows = [...shows.slice(0, i), ...shows.slice(i + 1, shows.length)]
-            console.log(shows)
-            showData.push($projects[$activeProject!].shows[i])
-          })
-        } else showData = $selected.elems // show_drawer
-        // TODO: get index from project!
-        console.log(showData)
-        showData = sortObject(showData, "index", true)
+          if ($drag.id === "show") {
+            $selected.elems.forEach((i: number) => {
+              shows = [...shows.slice(0, i), ...shows.slice(i + 1, shows.length)]
+              console.log(shows)
+              showData.push($projects[$activeProject!].shows[i])
+            })
+          } else showData = $selected.elems // show_drawer
+          // TODO: get index from project!
+          console.log(showData)
+          showData = sortObject(showData, "index", true)
 
-        newData = [...dataToPos([...shows], showData, $drag.index || shows.length)]
-        console.log(newData)
+          newData = [...dataToPos([...shows], showData, $drag.index || shows.length)]
+          console.log(newData)
+        }
+        oldData = [...shows]
+      } else if (id === "slides") {
+        if ($selected.id === "slide" || $selected.id === "slide_group") {
+          drop()
+        }
       }
-      oldData = [...shows]
-    } else if (id === "slides") {
-      if ($selected.id === "slide" || $selected.id === "slide_group") {
-        drop()
-      }
+      console.log(newData)
+
+      history({ id, oldData, newData, location: { page } })
+      selected.set({ id: null, elems: [] })
+      drag.set({ id: null, index: null, side: "left" })
     }
-    console.log(newData)
-
-    history({ id, oldData, newData, location: { page } })
-    selected.set({ id: null, elems: [] })
-    drag.set({ id: null, index: null, side: "left" })
   }
 </script>
 
@@ -74,7 +103,7 @@
   }}
 />
 
-<div style="flex: 1; height: 100%;" class:hover on:drop={ondrop} on:dragover|preventDefault>
+<div class="droparea" class:hover on:drop={ondrop} on:dragover|preventDefault on:dragenter={enter} on:dragleave={leave}>
   <slot />
 </div>
 {#if hover}
@@ -82,7 +111,14 @@
 {/if}
 
 <style>
-  .hover {
+  .droparea {
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    align-self: flex-start;
+    transition: 0.3s opacity;
+  }
+  .droparea.hover {
     opacity: 0.3;
     background-color: rgb(0 0 0 / 0.4);
   }
