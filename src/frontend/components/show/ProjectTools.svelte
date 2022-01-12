@@ -7,7 +7,7 @@
   const tabs: TabsObj = {
     notes: { name: "tools.notes", icon: "notes" },
     schedule: { name: "tools.schedule", icon: "schedule" }, // program
-    timers: { name: "tools.timers", icon: "timers" },
+    timers: { name: "tools.timers", icon: "timer" },
     actions: { name: "tools.actions", icon: "actions" }, // ... (start video at 10:00)
   }
   let active: string = Object.keys(tabs)[0]

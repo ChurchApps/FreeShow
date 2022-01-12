@@ -19,12 +19,12 @@ import {
   stageShows,
 } from "./../../stores"
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
-import { undoHistory } from "../../stores"
+import { undoHistory, activePage } from "../../stores"
 import { get } from "svelte/store"
 import type { Slide } from "../../../types/Show"
-import { GetLayout } from "../helpers/get"
+import { GetLayout, GetLayoutRef } from "../helpers/get"
 
-export type HistoryPages = "drawer" | "shows" | "edit" | "stage"
+export type HistoryPages = "drawer" | "show" | "edit" | "stage"
 export type HistoryIDs =
   | "textStyle"
   | "deleteItem"
@@ -43,12 +43,13 @@ export type HistoryIDs =
   | "newSlide"
   | "newItem"
   | "addShow"
-  | "slides"
   | "slide"
   | "shows"
   | "project"
   | "projects"
   | "drawer"
+  | "showMedia"
+
 export interface History {
   id: HistoryIDs
   oldData?: any
@@ -57,10 +58,15 @@ export interface History {
     page: HistoryPages
     show?: ShowRef
     layout?: string
+    layoutSlide?: number
     slide?: string
     items?: any[]
   }
 }
+
+// dont override history
+const repeat = ["project", "newProject", "newFolder", "addShow", "slide"]
+
 export function history(obj: History, undo: null | boolean = null) {
   // if (undo) {
   //   let tempObj = obj
@@ -69,7 +75,7 @@ export function history(obj: History, undo: null | boolean = null) {
   // }
 
   // let page: HistoryPages = obj.location?.page || "shows"
-  if (!obj.location) obj.location = { page: "shows" }
+  if (!obj.location) obj.location = { page: "show" }
   if (!obj.oldData) obj.oldData = null
   if (!obj.newData) obj.newData = null
 
@@ -126,7 +132,15 @@ export function history(obj: History, undo: null | boolean = null) {
     case "project": // projecList
       projects.update((p) => {
         p[get(activeProject)!].shows = obj.newData
+        // TODO: p[obj.location!.project].shows = obj.newData
         return p
+      })
+      break
+    case "slide":
+      shows.update((a) => {
+        a[obj.location!.show!.id].slides = obj.newData.slides
+        a[obj.location!.show!.id].layouts[obj.location!.layout!].slides = obj.newData.layout
+        return a
       })
       break
     // NEW
@@ -315,10 +329,42 @@ export function history(obj: History, undo: null | boolean = null) {
       }
       break
 
+    case "showMedia":
+      shows.update((a) => {
+        let id: null | string = null
+        Object.entries(a[obj.location!.show!.id].backgrounds).forEach(([id, a]: any) => {
+          if (a.path === obj.newData.path) id = id
+        })
+        if (undo) {
+          delete a[obj.location!.show!.id].backgrounds[id!]
+          delete a[obj.location!.show!.id].layouts[obj.location!.layout!].slides[obj.location!.layoutSlide!].background
+        } else {
+          if (!id) {
+            id = uid()
+            a[obj.location!.show!.id].backgrounds[id] = { ...obj.newData }
+          }
+
+          let ref = GetLayoutRef(obj.location!.show!.id, obj.location!.layout!)[obj.location!.layoutSlide!]
+          let layoutSlide = a[obj.location!.show!.id].layouts[obj.location!.layout!].slides[ref.index]
+          if (ref.type === "parent") layoutSlide.background = id
+          else {
+            if (!layoutSlide.children) layoutSlide.children = []
+            layoutSlide.children[ref.index].background = id
+          }
+          // a[obj.location!.show!.id].layouts[obj.location!.layout!].slides[obj.location!.layoutSlide!].background = id
+        }
+        return a
+      })
+      break
+
     default:
       console.log(obj)
       break
   }
+
+  if (obj.location.page === "drawer") {
+    // TODO: open drawer
+  } else activePage.set(obj.location.page)
 
   if (undo === null) redoHistory.set([])
 
@@ -330,15 +376,12 @@ export function history(obj: History, undo: null | boolean = null) {
   } else {
     undoHistory.update((uh: History[]) => {
       // if id and location is equal push new data to previous stored
-      // not: project | newProject | newFolder | addShow
+      // not: project | newProject | newFolder | addShow | slide
       if (
         undo === null &&
         uh[uh.length - 1]?.id === obj.id &&
         JSON.stringify(Object.values(uh[uh.length - 1]?.location!)) === JSON.stringify(Object.values(obj.location!)) &&
-        obj.id !== "project" &&
-        obj.id !== "newProject" &&
-        obj.id !== "newFolder" &&
-        obj.id !== "addShow"
+        !repeat.includes(obj.id)
       ) {
         uh[uh.length - 1].newData = obj.newData
       } else uh.push(obj)

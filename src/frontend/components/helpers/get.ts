@@ -24,22 +24,69 @@ export const getOutSlide = (): null | Slide => {
 }
 export const getOutOverlays = () => []
 
-export const GetLayout = (showID: null | ID = null): SlideData[] => {
+export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null): SlideData[] => {
   // console.trace(showID)
   if (!showID) showID = get(activeShow)!.id
   let currentShow: Show = get(shows)[showID]
+  if (!layoutID) layoutID = currentShow.settings.activeLayout
   let layoutSlides: SlideData[] = []
   if (currentShow) {
-    currentShow.layouts[currentShow.settings.activeLayout].slides.forEach((ls) => {
+    currentShow.layouts[layoutID].slides.forEach((ls) => {
       let slide: Slide = currentShow.slides[ls.id]
-      layoutSlides.push({ ...ls, color: slide.color })
+      let newLS = { ...ls }
+      delete newLS.children
+      layoutSlides.push({ ...newLS, color: slide.color })
+
       if (slide.children) {
-        slide.children.forEach((sc) => {
-          layoutSlides.push({ ...sc, color: slide.color, childOf: ls.id })
+        slide.children.forEach((id: string) => {
+          if (ls.children?.[id]) {
+            let slideData: any = ls.children[id]
+            if (slideData) layoutSlides.push({ id, ...slideData, color: slide.color, parent: ls.id })
+          } else layoutSlides.push({ id, color: slide.color, parent: ls.id })
         })
-        // layoutSlides = [...layoutSlides, ...slide.children]
       }
     })
+  }
+  return layoutSlides
+}
+
+export const GetLayoutRef = (showID: null | ID = null, layoutID: null | ID = null): any[] => {
+  if (!showID) showID = get(activeShow)!.id
+  let currentShow: Show = get(shows)[showID]
+  if (!layoutID) layoutID = currentShow.settings.activeLayout
+  let layoutSlides: any[] = []
+  if (currentShow) {
+    currentShow.layouts[layoutID].slides.forEach((ls, i) => {
+      let slide: Slide = currentShow.slides[ls.id]
+      layoutSlides.push({ type: "parent", id: ls.id, index: i })
+      if (slide.children) {
+        slide.children.forEach((id: string, j) => {
+          layoutSlides.push({ type: "child", id, parent: ls.id, layoutIndex: i, slideIndex: j })
+        })
+      }
+    })
+  }
+  return layoutSlides
+}
+
+// only for groups
+export const GetSlideLayout = (slideID: ID): any[] => {
+  let currentShow: Show = get(shows)[get(activeShow)!.id]
+  let layoutSlides: any[] = []
+  if (currentShow) {
+    let slide: Slide = currentShow.slides[slideID]
+    layoutSlides.push({ id: slideID })
+    slide.children?.forEach((id: string) => layoutSlides.push({ id: id, color: slide.color, parent: slideID }))
+  }
+  return layoutSlides
+}
+export const GetSlideLayoutRef = (slideID: ID): any[] => {
+  let currentShow: Show = get(shows)[get(activeShow)!.id]
+  let layoutSlides: any[] = []
+  if (currentShow) {
+    let slide: Slide = currentShow.slides[slideID]
+    layoutSlides.push({ type: "parent", id: slideID, index: null })
+    slide.children?.forEach((id: string, j) => layoutSlides.push({ type: "child", id, parent: slideID, layoutIndex: null, slideIndex: j }))
   }
   return layoutSlides
 }

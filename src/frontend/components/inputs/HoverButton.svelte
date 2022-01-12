@@ -5,7 +5,7 @@
   export let size: number = 5
 </script>
 
-<div on:click title={$$props.title}>
+<div style={$$props.style} on:click title={$$props.title}>
   <slot />
   <div class="overlay">
     <Icon id={icon} {size} white />

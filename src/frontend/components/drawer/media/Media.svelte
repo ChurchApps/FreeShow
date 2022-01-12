@@ -36,13 +36,13 @@
 
   // let clicked: boolean = false
   // let doubleClick: boolean = false
-  function click() {
+  function click(e: any) {
     // if (!clicked) {
     //   clicked = true
     //   setTimeout(() => {
     // if (!doubleClick)
     // activeShow.set({ id: path, name, type })
-    activeFile = index
+    if (!e.ctrlKey) activeFile = index
     //   else doubleClick = false
     //   clicked = false
     // }, 501)
@@ -50,8 +50,8 @@
   }
   $: if (activeFile !== null && allFiles[activeFile] === path) activeShow.set({ id: path, name, type })
 
-  function dblclick() {
-    outBackground.set({ path: path })
+  function dblclick(e: any) {
+    if (!e.ctrlKey) outBackground.set({ path: path })
     // doubleClick = true
   }
 </script>
@@ -68,8 +68,8 @@
     on:mouseleave={() => (hover = false)}
     on:mousemove={move}
   >
-    <SelectElem id="media" data={index} fill>
-      <Draggable id="media" {index} fill>
+    <SelectElem id="media" data={{ name, path }} fill>
+      <Draggable fill>
         <IntersectionObserver class="observer" once let:intersecting>
           {#if intersecting}
             <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} />

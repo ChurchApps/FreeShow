@@ -1,6 +1,6 @@
 <script lang="ts">
   import { READ_FOLDER } from "../../../../types/Channels"
-  import { activeShow, mediaFolders } from "../../../stores"
+  import { activeShow, imageExtensions, mediaFolders, videoExtensions } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -26,9 +26,7 @@
     } else if (path.length) window.api.send(READ_FOLDER, path)
   }
 
-  let videoExtensions: string[] = ["mp4", "mov"]
-  let imageExtensions: string[] = ["png", "jpg", "jpeg"]
-  let extensions: string[] = [...videoExtensions, ...imageExtensions]
+  let extensions: string[] = [...$videoExtensions, ...$imageExtensions]
   // receive files
   window.api.receive(READ_FOLDER, (msg: any) => {
     if (active === "all" || msg.path === path) {
@@ -74,7 +72,7 @@
           {#each files as file}
             {#if !file.folder}
               <!-- size={file.stat.size} -->
-              <Media name={file.name} path={file.path} type={videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} />
+              <Media name={file.name} path={file.path} type={$videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} />
             {:else if active !== "all"}
               <Folder bind:rootPath={path} name={file.name} path={file.path} />
             {/if}

@@ -2,7 +2,7 @@ import { Writable, writable } from "svelte/store"
 import type { StageShows } from "./../types/Stage"
 import type { DrawTools, Draw, DrawSettings } from "./../types/Draw"
 import type { History } from "./components/helpers/history"
-import type { NumberObject, Selected, Drag } from "../types/Main"
+import type { NumberObject, Selected } from "../types/Main"
 import type { TopViews } from "./../types/Views"
 import type { Categories } from "./../types/Tabs"
 import type { ShowRef, Folders, Projects } from "../types/Projects"
@@ -29,8 +29,6 @@ export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, items: [
 export const activePage: Writable<TopViews> = writable("show")
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
-// export const dragged: Writable<"slide" | "slideGroup" | "show" | "project" | "folder" | null> = writable(null)
-export const drag: Writable<Drag> = writable({ id: null, index: null, side: "left" })
 export const selected: Writable<Selected> = writable({ id: null, elems: [] })
 
 // project
@@ -195,8 +193,11 @@ export const shows: Writable<Shows> = writable({
       sooffes: {
         name: "Standard",
         notes: "",
-        slides: [{ id: "fjeiosjfiose", transition: { type: "none", duration: 200 }, background: {}, overlay: {}, actions: [] }],
+        slides: [{ id: "fjeiosjfiose", transition: { type: "none", duration: 200 }, background: "randomID", overlays: [], actions: [] }],
       },
+    },
+    backgrounds: {
+      randomID: { path: "path", filters: "hue(100deg)" },
     },
   },
   ertfgggf: {
@@ -234,7 +235,7 @@ export const shows: Writable<Shows> = writable({
         label: "Chorus",
         color: "red",
         settings: {},
-        children: [{ id: "fesfofes" }],
+        children: ["fesfofes"],
         notes: "",
         items: [
           {
@@ -269,19 +270,20 @@ export const shows: Writable<Shows> = writable({
         notes: "test",
         slides: [
           { id: "feowo" },
-          { id: "fesfo" },
+          { id: "fesfo", children: { fesfofes: { disabled: true } } },
           { id: "feowo" },
           { id: "blank" },
+          { id: "blank", disabled: true },
           { id: "blank" },
           { id: "blank" },
           { id: "blank" },
           { id: "blank" },
-          { id: "blank" },
-          { id: "fesfo" },
+          { id: "fesfo", children: { fesfofes: {} } },
           { id: "blank" },
         ],
       },
     },
+    backgrounds: {},
   },
   Info: {
     // TODO: how to tdo info/kunngjeringer... in a better way
@@ -330,6 +332,7 @@ export const shows: Writable<Shows> = writable({
         slides: [{ id: "fsioøføjesi" }, { id: "fesfo" }],
       },
     },
+    backgrounds: {},
   },
 
   gere: {
@@ -367,7 +370,7 @@ export const shows: Writable<Shows> = writable({
         label: "Chorus",
         color: "red",
         settings: {},
-        children: [{ id: "fesfofes" }],
+        children: ["fesfofes"],
         notes: "",
         items: [
           {
@@ -415,6 +418,7 @@ export const shows: Writable<Shows> = writable({
         ],
       },
     },
+    backgrounds: {},
   },
 })
 
@@ -578,6 +582,10 @@ export const screen = writable({
 // project
 // TODO: today / closest sunday / week number / custom string / nothing....
 export const defaultName: Writable<null | "date" | string> = writable("date")
+
+// extensions
+export const videoExtensions: Writable<string[]> = writable(["mp4", "mov"])
+export const imageExtensions: Writable<string[]> = writable(["png", "jpg", "jpeg"])
 
 // empty
 export const dictionary: Writable<Dictionary> = writable({})

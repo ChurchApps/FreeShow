@@ -1,12 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-
   import type { Resolution } from "../../../types/Settings"
-
-  import type { SlideData } from "../../../types/Show"
-
-  // import { OutputObject } from "../../classes/OutputObject";
-
+  import type { OutSlide, SlideData } from "../../../types/Show"
   import { activeEdit, activePage, activeProject, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, projects, screen, shows } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
@@ -14,7 +9,6 @@
   import Button from "../inputs/Button.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import AudioMeter from "./AudioMeter.svelte"
-
   import Output from "./Output.svelte"
   import VideoSlider from "./VideoSlider.svelte"
 
@@ -22,40 +16,41 @@
 
   function nextSlide(e: any) {
     if (!$outLocked) {
-      // TODO: go down automaticly
       if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-      let slide = $outSlide
-      let layout: SlideData[] = []
-      // if (slide) layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
-      if (slide) layout = GetLayout(slide.id)
-      let endOfShow = slide?.index === layout.length - 1
-      // TODO: active show slide index on delete......
-      // go to beginning if live mode & ctrl | no output | last slide active
-      if ($activePage === "show" && $activeShow && (!out || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
-        outSlide.set({ id: $activeShow!.id, index: 0 })
-      } else {
-        // Check for loop to beginning slide...
-        // Go to next show?
-        // if (e.ctrlKey && ) { // TODO: if ctrl key, go to next show
+      let slide: null | OutSlide = $outSlide
+      let layout: SlideData[] = GetLayout(slide ? slide.id : null)
+      let endOfShow: boolean = slide ? slide.index === layout.length - 1 : false
+      let index: null | number = null
 
-        // TODO: slide disabled!!!!!
-        if (slide) {
-          //  && !slide.private
-          // WIP: why private??????
-          if (slide.index < layout.length - 1) {
-            let index = slide!.index + 1
-            outSlide.update((o) => {
-              if (o) o.index = index
-              return o
-            })
-            activeEdit.set({ slide: index, items: [] })
-          }
-          // } else {
-          //   output.update((o) => {
-          //     o.slide = { id, index: 0 }
-          //     return o
-          //   })
+      // TODO: active show slide index on delete......
+
+      // go to beginning if live mode & ctrl | no output | last slide active
+      if ($activePage === "show" && $activeShow && (!slide || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
+        let layout = GetLayout()
+        if (layout.filter((a) => !a.disabled).length) {
+          index = 0
+          while (layout[index].disabled) index++
+          outSlide.set({ id: $activeShow!.id, index })
+        }
+      } else if (slide) {
+        // TODO: Check for loop to beginning slide...
+
+        if (slide.index < layout.length - 1 && layout.slice(slide.index + 1, layout.length).filter((a) => !a.disabled).length) {
+          index = slide!.index + 1
+          while (layout[index].disabled) index++
+          outSlide.update((a) => {
+            a!.index = index!
+            return a
+          })
+        }
+      }
+      if (index !== null) {
+        activeEdit.set({ slide: index, items: [] })
+        // !Cannot read property 'background' of undefined
+        if (layout[index].background) {
+          let bg = $shows[$activeShow!.id].backgrounds[layout[index].background!]
+          outBackground.set({ path: bg.path, muted: bg.muted !== false })
         }
       }
     }
@@ -65,26 +60,27 @@
 
   function previousSlide() {
     if (!$outLocked) {
-      let slide = $outSlide
-      let index = typeof slide?.index === "number" ? slide.index - 1 : GetLayout().length - 1
-      //  && !slide.private
-      // let layout: Layout = $shows[slide.id].layouts[$shows[slide.id].settings.activeLayout].slides
+      if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-      if (index > -1) {
+      let slide: null | OutSlide = $outSlide
+      let layout: SlideData[] = GetLayout(slide ? slide.id : null)
+      let index: number = slide?.index !== undefined ? slide.index - 1 : layout.length - 1
+
+      if (index > -1 && layout.slice(0, index + 1).filter((a) => !a.disabled).length) {
+        while (layout[index].disabled) index--
         if ($outSlide) {
           outSlide.update((o) => {
             o!.index = index
             return o
           })
         } else if ($activeShow) outSlide.set({ id: $activeShow.id, index })
+
         activeEdit.set({ slide: index, items: [] })
+        if (layout[index].background) {
+          let bg = $shows[$activeShow!.id].backgrounds[layout[index].background!]
+          outBackground.set({ path: bg.path, muted: bg.muted !== false })
+        }
       }
-      // } else {
-      //   output.update((o) => {
-      //     // o.slide?.index = layout.length - 1
-      //     o.slide = { id, index: layout.length - 1 }
-      //     return o
-      //   })
     }
   }
 
@@ -315,7 +311,8 @@
             <T id="main.unnamed" />
           {/if}
         </span>
-        <span style="opacity: 0.6;">{$outSlide.index + 1}</span>
+        <!-- TODO: update -->
+        <span style="opacity: 0.6;">{$outSlide.index + 1}/{GetLayout($outSlide.id).length}</span>
       </span>
     {/if}
   {/if}
@@ -349,6 +346,7 @@
         on:click={() => {
           if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null) outSlide.set({ id: $activeShow.id, index: $activeEdit.slide })
           else if ($activeShow && GetLayout().length) outSlide.set({ id: $activeShow.id, index: 0 })
+          // TODO: activeEdit && play media
         }}
         title="[[[Show Current Show/Slide]]]"
         disabled={$outLocked || !$activeShow || !GetLayout().length}
@@ -357,7 +355,15 @@
         <Icon id="play" size={1.2} />
       </Button>
     {:else}
-      <Button on:click={() => outSlide.set($outSlide)} title="[[[Update Output Slide]]]" disabled={!$outSlide || $outLocked} center>
+      <Button
+        on:click={() => {
+          outBackground.set($outBackground)
+          outSlide.set($outSlide)
+        }}
+        title="[[[Update Output Slide]]]"
+        disabled={!$outSlide || $outLocked}
+        center
+      >
         <Icon id="refresh" size={1.2} />
       </Button>
     {/if}

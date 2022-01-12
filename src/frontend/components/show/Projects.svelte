@@ -64,11 +64,11 @@
     }
   }
 
+  // autoscroll
   let scrollElem: any
   let offset: number = -1
   $: {
-    if (scrollElem && $activeShow?.index !== undefined && $activeShow.index !== null)
-      offset = scrollElem.querySelector(".list").querySelector("div").children[$activeShow.index].offsetTop - scrollElem.offsetTop
+    if (scrollElem && $activeShow?.index !== undefined) offset = scrollElem.querySelector(".ParentBlock").children[$activeShow.index].offsetTop - scrollElem.offsetTop
   }
 </script>
 
@@ -79,7 +79,7 @@
     <!-- TODO: set different project system folders.... -->
     <!-- TODO: right click change... -->
     <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center title={"Projects"}>
-      <Icon id="home" />
+      <Icon id="folder" />
     </Button>
     <!-- TODO: right click go to recent -->
     <Button
@@ -107,23 +107,23 @@
       </DropArea>
     </div>
     <div class="tabs">
-      <Button on:click={() => history({ id: "newProject" })} center title={$dictionary.new?.project}>
-        <Icon id="project" />
-      </Button>
       <Button on:click={() => history({ id: "newFolder" })} center title={$dictionary.new?._folder}>
         <Icon id="folder" />
+      </Button>
+      <Button on:click={() => history({ id: "newProject" })} center title={$dictionary.new?.project}>
+        <Icon id="project" />
       </Button>
     </div>
   {:else if $activeProject !== null}
     <Autoscroll {offset} bind:scrollElem>
       <div class="list context #project">
-        <DropArea id="project">
+        <DropArea id="project" selectChildren>
           <!-- {/* WIP: live on double click?? */} -->
           {#if $projects[$activeProject].shows.length}
             {#each $projects[$activeProject].shows as show, index}
-              <SelectElem id="show" data={index}>
-                <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
-                <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
+              <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
+              <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
+              <SelectElem id="show" data={{ id: show.id, index }} trigger="column" draggable>
                 <ShowButton
                   id={show.id}
                   {index}
@@ -132,8 +132,8 @@
                   icon={$shows[show.id]?.private ? "private" : show.type ? show.type : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "noIcon"}
                   class="context #{show.type ? '' : 'show'}__project"
                 />
-                <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
               </SelectElem>
+              <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
             {/each}
           {:else}
             <Center faded>[[[No shows]]]</Center>
@@ -176,6 +176,7 @@
   }
 
   .list {
+    position: relative;
     display: flex;
     flex-direction: column;
     overflow-y: auto;

@@ -138,7 +138,7 @@
           <div class="right">
             <Preview />
             {#if page === "show" && $activeShow}
-              {#if $activeShow.type === "private" || $activeShow.type === null || $activeShow.type === undefined}
+              {#if ["show", "private", undefined].includes($activeShow.type)}
                 <ShowTools />
               {:else if $activeShow.type === "image" || $activeShow.type === "video"}
                 <MediaTools />

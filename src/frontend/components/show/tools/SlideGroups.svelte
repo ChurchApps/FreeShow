@@ -2,8 +2,8 @@
   import { activeShow, selected, shows } from "../../../stores"
   import type { Slide } from "../../../../types/Show"
   import Draggable from "../../system/Draggable.svelte"
-  import { drop } from "../../helpers/dropSlide"
   import SelectElem from "../../system/SelectElem.svelte"
+  import { ondrop } from "../../helpers/drop"
 
   $: active = $activeShow!.id
   let children: string[] = []
@@ -22,25 +22,25 @@
       })
     }
   })
-  $: sortedSlides = slides.sort((a, b) => (a.label !== null && b.label !== null && a.label > b.label ? 1 : a.label === null || b.label === null || b.label > a.label ? -1 : 0))
-  // $: sortedSlides = sortObject(slides, "label")
+  $: sortedSlides = slides.filter((a) => a.label !== null).sort((a, b) => a.label!.localeCompare(b.label!))
 </script>
 
 <!-- TODO: tooltips... (Click or drag to add groups) -->
 
 <div class="main">
-  {#each sortedSlides as slide, index}
+  {#each sortedSlides as slide}
     {#if !children.includes(slide.id)}
-      <SelectElem id="slide_group" data={{ id: slide.id, color: slide.color, index }}>
-        <Draggable id="slide_group" {index} type="copy">
+      <SelectElem id="slide_group" data={{ id: slide.id }}>
+        <Draggable type="copy">
           <div
             id={slide.id}
             class="slide"
             style="background-color: {slide.color};"
             on:click={(e) => {
               if (!e.ctrlKey) {
-                selected.set({ id: "slide_group", elems: [{ id: slide.id, color: slide.color, index }] })
-                drop()
+                selected.set({ id: "slide_group", elems: [{ id: slide.id }] })
+                // drop(index)
+                ondrop(null, "slide")
                 selected.set({ id: null, elems: [] })
               }
             }}

@@ -10,6 +10,7 @@ export class ShowObj implements Show {
   meta: any
   slides: any
   layouts: any
+  backgrounds: any
   constructor(isPrivate: boolean = false, category: null | string = null, layoutID: string = uid(), created: Date = new Date()) {
     // private?: boolean,
     this.name = ""
@@ -28,5 +29,6 @@ export class ShowObj implements Show {
       (this.meta = {})
     this.slides = {}
     this.layouts = { [layoutID]: { name: "", notes: "", slides: [] } }
+    this.backgrounds = {}
   }
 }

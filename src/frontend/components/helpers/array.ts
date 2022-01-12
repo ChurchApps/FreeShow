@@ -8,9 +8,9 @@ export function groupToPos(array: any[], group: number[], pos: number): any[] {
 }
 
 // add data to array at new pos
-export function dataToPos(array: any[], data: any[], pos: number): any[] {
-  return [...array.slice(0, pos), ...data, ...array.slice(pos, array.length)]
-}
+// export function dataToPos(array: any[], data: any[], pos: number): any[] {
+//   return [...array.slice(0, pos), ...data, ...array.slice(pos, array.length)]
+// }
 
 // remove the given value from array
 export function removeData(array: any[], data: any): any[] {
@@ -23,11 +23,7 @@ export function removeData(array: any[], data: any): any[] {
 
 // check if array has any data
 export function arrayHasData(array: any[], data: any): boolean {
-  let hasData: boolean = false
-  array.forEach((a) => {
-    if (JSON.stringify(a) === JSON.stringify(data)) hasData = true
-  })
-  return hasData
+  return array.find((a) => JSON.stringify(a) === JSON.stringify(data)) !== undefined
 }
 
 // OBJETS

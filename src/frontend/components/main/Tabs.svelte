@@ -16,7 +16,9 @@
     <Button on:click={() => (active = tab[0])} active={active === tab[0]} title={!labels ? translate(tab[1].name) : ""} center>
       <Icon id={tab[1].icon} />
       {#if labels}
-        <T id={tab[1].name} />
+        <span style="padding-left: 10px;">
+          <T id={tab[1].name} />
+        </span>
       {/if}
     </Button>
   {/each}

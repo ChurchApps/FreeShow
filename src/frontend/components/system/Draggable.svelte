@@ -1,17 +1,18 @@
 <script lang="ts">
-  import type { SelectIds } from "../../../types/Main"
+  // import type { SelectIds } from "../../../types/Main"
+  // import { selected } from "../../stores"
 
-  import { drag, selected } from "../../stores"
-
-  export let id: SelectIds
-  export let index: null | number = null
+  // export let id: SelectIds
+  // export let index: null | number = null
   // export let data: string = ""
   export let type: "copy" | "move" | "link" = "move"
   export let direction: "row" | "column" = "row"
+  console.log(direction)
+
   export let fill: boolean = false
   // export let side: "left" | "right" = "left" // "top" | "bottom"
-  $: side = $drag.side
-  $: hover = $drag.index === null ? false : $selected.id === id && $drag.index === index
+  // $: side = $drag.side
+  // $: hover = $drag.index === null ? false : $selected.id === id && $drag.index === index
 
   // TODO: acting weird without ctrlKey
 
@@ -27,28 +28,51 @@
     // } else drag.set({ id: $selected.id, index: null, side: "left" })
   }
 
-  // TODO: change side based on current side onmousemove
-  const dragenter = (e: any) => {
-    if (direction === "row") {
-      if (e.offsetX < e.target.offsetWidth / 2) side = "right"
-      else side = "left"
-    } else {
-      if (e.offsetY < e.target.offsetHeight / 2) side = "right"
-      else side = "left"
-    }
+  // const dragEvent = (e: any) => {
+  //   if (direction === "row") {
+  //     if (e.offsetX < e.target.offsetWidth / 2) side = "left"
+  //     else side = "right"
+  //   } else {
+  //     if (e.offsetY < e.target.offsetHeight / 2) side = "left"
+  //     else side = "right"
+  //   }
 
-    // TODO: ONLY projects not drawer for show, not slide groups
-    // AND slides
-    // if ($drag.id === "slide" || $drag.id === "slideGroup")
-    if ($selected.id === "slide" || $selected.id === "show") {
-      // project
-      drag.update((d) => {
-        d.id = id
-        d.index = index
-        return d
-      })
-    }
-  }
+  //   drag.update((a) => {
+  //     // a.id = id
+  //     a.side = side
+  //     return a
+  //   })
+  // }
+
+  // TODO: change side based on current side onmousemove
+  // const dragenter = () => {
+  //   // if (direction === "row") {
+  //   //   if (e.offsetX < e.target.offsetWidth / 2) side = "left"
+  //   //   else side = "right"
+  //   // } else {
+  //   //   if (e.offsetY < e.target.offsetHeight / 2) side = "left"
+  //   //   else side = "right"
+  //   // }
+
+  //   // TODO: ONLY projects not drawer for show, not slide groups
+  //   // AND slides
+  //   // if ($drag.id === "slide" || $drag.id === "slideGroup")
+  //   // if ($selected.id === "slide" || $selected.id === "show") {
+  //   //   // project
+  //   //   drag.update((d) => {
+  //   //     d.id = id
+  //   //     d.index = index
+  //   //     return d
+  //   //   })
+  //   // }
+
+  //   // drag.update((a) => {
+  //   //   // a.id = id
+  //   //   a.index = index
+  //   //   a.side = side
+  //   //   return a
+  //   // })
+  // }
 
   // TODO: get media (files)
   // https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
@@ -84,13 +108,14 @@
   // $: console.log($selected.id, id, $selected.elems, index)
 </script>
 
-<div
+<!-- <div
   {id}
   style={$$props.style}
   class="draggable"
   data-index={index}
   draggable={true}
   on:dragstart={dragstart}
+  on:drag={dragEvent}
   on:dragenter={dragenter}
   class:fill
   class:hovering={hover}
@@ -98,12 +123,13 @@
   class:right={hover && side === "right"}
   class:column={direction === "column"}
   class:selected={index === null ? false : $selected.id === id && $selected.elems?.includes(index)}
->
+> -->
+<div class="draggable" draggable={true} on:dragstart={dragstart} class:fill>
   <slot />
 </div>
 
 <style>
-  .hovering {
+  /* .hovering {
     filter: contrast(0.8);
   }
 
@@ -125,7 +151,6 @@
     left: -10px;
   }
 
-  /* TODO: no line on selected slide hover */
   .column.hovering::after {
     left: 0;
     width: 100%;
@@ -139,7 +164,7 @@
   .column.hovering.left::after {
     top: unset;
     bottom: -10px;
-  }
+  } */
 
   .fill {
     width: 100%;

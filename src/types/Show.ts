@@ -26,6 +26,7 @@ export interface Show {
   }
   slides: { [key: ID]: Slide }
   layouts: { [key: ID]: Layout }
+  backgrounds: { [key: ID]: Backgrounds }
 }
 
 export interface Slide {
@@ -37,7 +38,7 @@ export interface Slide {
     resolution?: Resolution
     transition?: Transition
   }
-  children?: SlideData[]
+  children?: string[]
   notes: string
   items: Item[]
   stageItems?: Item[]
@@ -61,24 +62,23 @@ export interface Layout {
   slides: SlideData[]
 }
 
-// export interface LayoutSlideData {
-//   id: string
-//   transition: {
-//     type: "none" | "fade"
-//     duration: number
-//   }
-//   background: {}
-//   overlay: {}
-//   actions: {}
-// }
+export interface Backgrounds {
+  // name?: string
+  path: string
+  muted?: boolean
+  filters?: string
+}
 
 export interface SlideData {
   id: ID
-  childOf?: ID
+  disabled?: boolean
+  parent?: ID // layout ref
+  children?: any // layout slide
   color?: null | string
   transition?: Transition
   timer?: number
-  background?: {} // set backgorund action?
+  background?: string // set backgorund action?
+  overlays?: {}
   actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
 }
 
@@ -101,6 +101,7 @@ export interface OutBackground {
   id?: ID
   path?: string
   startAt?: number
+  muted?: boolean
   // name?: string
   type?: "media" | "screen" | "camera"
 }
@@ -142,4 +143,4 @@ export type ID = string
 export type Style = string
 export type TransitionType = "none" | "fade"
 
-export type ShowType = null | "image" | "video" | "audio" | "private" // TODO: types
+export type ShowType = "show" | "private" | "image" | "video" | "audio" // TODO: types

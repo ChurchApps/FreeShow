@@ -2,7 +2,7 @@
   // import {flip} from 'svelte/animate';
   // import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, slidesOptions, outSlide, activeEdit, outLocked } from "../../stores"
+  import { shows, activeShow, slidesOptions, outSlide, activeEdit, outLocked, outBackground } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
   import DropArea from "../system/DropArea.svelte"
@@ -20,6 +20,7 @@
   $: id = $activeShow!.id
   $: currentShow = $shows[$activeShow!.id]
   $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
+  $: console.log(layoutSlides)
 
   let scrollElem: any
   let offset: number = -1
@@ -44,7 +45,7 @@
       if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
     }}
     on:dragover|preventDefault -->
-  <DropArea id="slides">
+  <DropArea id="slides" selectChildren>
     {#if $shows[id] === undefined}
       <Center faded>Error! Could not find show!</Center>
     {:else}
@@ -54,6 +55,8 @@
           {#each layoutSlides as slide, i}
             <Slide
               slide={currentShow.slides[slide.id]}
+              show={currentShow}
+              layoutSlide={slide}
               index={i}
               color={slide.color}
               active={$outSlide?.index === i && $outSlide?.id === id}
@@ -63,6 +66,10 @@
                 if (!$outLocked && !e.ctrlKey) {
                   outSlide.set({ id, index: i })
                   activeEdit.set({ slide: i, items: [] })
+                  if (slide.background) {
+                    let bg = currentShow.backgrounds[slide.background]
+                    outBackground.set({ path: bg.path, muted: bg.muted !== false })
+                  }
                 }
               }}
             />

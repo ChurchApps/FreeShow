@@ -1,22 +1,22 @@
 import { get } from "svelte/store"
-import { shows, activeShow, drag, selected } from "./../../stores"
+import { shows, activeShow, selected } from "./../../stores"
 import { GetLayout } from "./get"
 import type { SlideData } from "./../../../types/Show"
 import { uid } from "uid"
 
-export function drop() {
+export function drop(data: number, side: "start" | "end") {
   let layout: SlideData[] = GetLayout() // new layout
 
-  let index: number = get(drag).index === null ? layout.length : get(drag).index!
+  // let index: number = get(drag).index === null ? layout.length : get(drag).index!
 
-  let side: "left" | "right" = get(drag).side
-  let sel: number[] = get(selected).elems
+  let sel: any[] = get(selected).elems
 
-  let slides: SlideData[] = [] // new slides
+  // let slides: SlideData[] = [] // new slides
+  let slides: any[] = [] // new slides
   let newChildren: { [key: string]: SlideData[] } = {}
 
-  if (side === "right" && sel[0] !== index) index++
-  let insertIndex: number = index
+  if (side === "end" && sel[0] !== data) data++
+  let insertIndex: number = data
 
   if (get(selected).id === "slide") {
     // logic:
@@ -33,11 +33,11 @@ export function drop() {
     // check if first selected slide is a child
     let parent: string
 
-    if (index === 0) {
+    if (data === 0) {
       parent = layout[0].id
-      if (layout[0].childOf) delete layout[0].childOf
-    } else if (sel[0] && !layout[sel[0]].childOf) parent = layout[sel[0]].id
-    else parent = layout[index - 1].childOf || layout[index - 1].id
+      if (layout[0].parent) delete layout[0].parent
+    } else if (sel[0] && !layout[sel[0]].parent) parent = layout[sel[0]].id
+    else parent = layout[data - 1].parent || layout[data - 1].id
 
     // remove selected
     sel
@@ -46,7 +46,7 @@ export function drop() {
         console.log(i, insertIndex)
 
         if (i < insertIndex) insertIndex--
-        if (layout[i - slides.length].childOf) {
+        if (layout[i - slides.length].parent) {
           // ! only if not same parent is selected
           // newChild(layout[i - slides.length])
         }
@@ -57,14 +57,14 @@ export function drop() {
     let pos = 0
     console.log({ ...layout })
     console.log({ ...layout[insertIndex + pos] })
-    while (layout[insertIndex + pos]?.childOf) {
+    while (layout[insertIndex + pos]?.parent) {
       newChild(layout[insertIndex + pos])
       pos++
     }
 
     // remove all children slides
     layout.forEach((slideData: SlideData, i: number) => {
-      if (slideData.childOf) {
+      if (slideData.parent) {
         layout.splice(i, 1)
         if (i < insertIndex) insertIndex--
       }
@@ -75,7 +75,7 @@ export function drop() {
     let children: number = 0
     let parents: number = 0
     slides.forEach((slide: SlideData, i: number) => {
-      if (slide.childOf) children++
+      if (slide.parent) children++
       else if (i > 0) parents++
     })
     if (children > 0 && parents > 0) both = true
@@ -93,7 +93,7 @@ export function drop() {
       // TODO: group remove parents....
       slides[0].id = id
       parent = id
-      if (slides[0].childOf) delete slides[0].childOf
+      if (slides[0].parent) delete slides[0].parent
     }
 
     console.log(parent)
@@ -103,8 +103,8 @@ export function drop() {
     slides.forEach((slide: SlideData, i: number) => {
       console.log(slide)
 
-      if (slide.childOf && (!both || i > 0)) newChild(slide)
-      if (slide.childOf) slides.splice(i, 1)
+      if (slide.parent && (!both || i > 0)) newChild(slide)
+      if (slide.parent) slides.splice(i, 1)
     })
     console.log({ ...newChildren })
 
@@ -123,9 +123,9 @@ export function drop() {
 
     // remove all children slides
     layout.forEach((slideData: SlideData, i: number) => {
-      if (slideData.childOf) {
+      if (slideData.parent) {
         layout.splice(i, 1)
-        if (i < index!) insertIndex--
+        if (i < data!) insertIndex--
       }
     })
   }
@@ -136,27 +136,27 @@ export function drop() {
   console.log([...layout])
 
   // update children
-  Object.entries(newChildren).forEach((childArr) => {
-    shows.update((s) => {
-      childArr[1].forEach((slide: SlideData) => {
-        let found: boolean = false
-        let childs: SlideData[] = []
-        s[get(activeShow)!.id].slides[slide.childOf!].children!.forEach((child: SlideData) => {
-          if (!found && child.id !== slide.id) {
-            delete child.childOf
-            childs.push(child)
-          } else found = true
-        })
-        s[get(activeShow)!.id].slides[slide.childOf!].children = childs
-      })
-      s[get(activeShow)!.id].slides[childArr[0]].children = childArr[1]
-      // childArr[1].forEach((obj: SlideData) => {
-      //   slide.children = obj
-      // });
-      // TODO: history
-      return s
-    })
-  })
+  // Object.entries(newChildren).forEach((childArr) => {
+  //   shows.update((s) => {
+  //     childArr[1].forEach((slide: SlideData) => {
+  //       let found: boolean = false
+  //       let childs: SlideData[] = []
+  //       s[get(activeShow)!.id].slides[slide.parent!].children!.forEach((child: SlideData) => {
+  //         if (!found && child.id !== slide.id) {
+  //           delete child.parent
+  //           childs.push(child)
+  //         } else found = true
+  //       })
+  //       s[get(activeShow)!.id].slides[slide.parent!].children = childs
+  //     })
+  //     s[get(activeShow)!.id].slides[childArr[0]].children = childArr[1]
+  //     // childArr[1].forEach((obj: SlideData) => {
+  //     //   slide.children = obj
+  //     // });
+  //     // TODO: history
+  //     return s
+  //   })
+  // })
 
   // update layout
   shows.update((s) => {

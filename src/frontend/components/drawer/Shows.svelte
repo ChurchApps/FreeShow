@@ -10,7 +10,6 @@
   import type { Show } from "../../../types/Show"
   import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
-  import Draggable from "../system/Draggable.svelte"
   import SelectElem from "../system/SelectElem.svelte"
 
   export let id: string
@@ -116,14 +115,12 @@
 <Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
   <div class="column context #drawer_show">
     {#if filteredShows.length}
-      {#each filteredShows as show, index}
-        <Draggable id="show_drawer" {index}>
-          <SelectElem id="show_drawer" data={{ id: show.id, index }}>
-            {#if searchValue.length <= 1 || show.match}
-              <ShowButton id={show.id} name={show.name} data={dateToString(show.timestamps.created, true)} class="#drawer_show_button__drawer_show" match={show.match || null} />
-            {/if}
-          </SelectElem>
-        </Draggable>
+      {#each filteredShows as show}
+        <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
+          {#if searchValue.length <= 1 || show.match}
+            <ShowButton id={show.id} name={show.name} data={dateToString(show.timestamps.created, true)} class="#drawer_show_button__drawer_show" match={show.match || null} />
+          {/if}
+        </SelectElem>
       {/each}
       <!-- TODO: not updating values on activeSubTab change -->
       {#if searchValue.length > 1 && totalMatch === 0}

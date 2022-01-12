@@ -23,10 +23,10 @@
   >
     {#if zoom}
       <span style="zoom: {ratio};">
-        <slot />
+        <slot {ratio} />
       </span>
     {:else}
-      <slot />
+      <slot ratio={1} />
     {/if}
   </div>
 </div>

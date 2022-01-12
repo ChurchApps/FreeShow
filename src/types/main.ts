@@ -23,11 +23,8 @@ export interface Selected {
   elems: any[]
 }
 
-export type DragIds = "slide" | "slide_group" | "show" | "show_drawer" | "project" | "folder" | "file"
-export interface Drag {
-  id: null | SelectIds
-  // to
-  index: null | number
-  // selected: number[]
-  side: "left" | "right"
-}
+// export type DropIds = "slide" | "slide_group" | "show" | "show_drawer" | "project" | "folder" | "file"
+// export interface Drop {
+//   id: null | SelectIds
+//   data: null | number
+// }

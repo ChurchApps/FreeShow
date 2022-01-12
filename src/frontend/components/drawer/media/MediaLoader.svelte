@@ -1,14 +1,25 @@
 <script lang="ts">
+  import { videoExtensions } from "../../../stores"
   import { getStyleResolution } from "../../slide/getStyleResolution"
   import Image from "./Image.svelte"
 
-  export let name: any
+  export let name: any = ""
   export let path: string
-  export let type: any
+  export let type: null | "image" | "video" = null
   export let hover: boolean = false
   export let loaded: boolean = type === "image"
   export let duration: number = 0
   export let videoElem: any = null
+
+  // type
+  $: {
+    if (type === null) {
+      const [extension] = path.substring(path.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]
+      if ($videoExtensions.includes(extension.substring(1))) type = "video"
+    }
+  }
+
+  $: if (path && type === "video") loaded = false
 
   let canvas: any
 
@@ -32,18 +43,39 @@
   let height: number = 0
 </script>
 
-<div style="width: 100%;height: 100%;position: relative;display: flex;justify-content: center;align-items: center;" bind:offsetWidth={width} bind:offsetHeight={height}>
-  {#if type === "video"}
-    <div style="position: relative;width: 100%;height: 100%;display: flex;justify-content: center;align-items: center;">
-      <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
-      {#if !loaded || hover}
-        <video style="position: absolute;" bind:this={videoElem} src={path} on:canplaythrough={ready}>
-          <track kind="captions" />
-        </video>
-      {/if}
-    </div>
-  {:else}
-    <!-- <img loading="lazy" src={path} alt={name} /> -->
-    <Image src={path} alt={name} />
-  {/if}
+<div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
+  {#key path}
+    {#if type === "video"}
+      <div class="video">
+        <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
+        {#if !loaded || hover}
+          <video style="position: absolute;" bind:this={videoElem} src={path} on:canplaythrough={ready}>
+            <track kind="captions" />
+          </video>
+        {/if}
+      </div>
+    {:else}
+      <!-- <img loading="lazy" src={path} alt={name} /> -->
+      <Image src={path} alt={name} />
+    {/if}
+  {/key}
 </div>
+
+<style>
+  .main,
+  .video {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* canvas,
+  .main :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  } */
+</style>

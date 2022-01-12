@@ -21,7 +21,7 @@
   $: extension = path.match(/\.[0-9a-z]+$/i)?.[0]! || ""
   $: isVideo = extension.includes("mp4") || extension.includes("mov")
 
-  $: if ($outputWindow) videoData.muted = $outputWindow
+  // $: if ($outputWindow && !videoData.muted) videoData.muted = $outputWindow
   let loop = true
   let alt = "Could not find image!"
 
@@ -34,23 +34,34 @@
   // })
 
   let hasLoaded: boolean = false
+  let autoMute: boolean = false
   function loaded() {
     if (!$outputWindow) {
       console.log("LOADED")
-
       hasLoaded = true
-      videoData.muted = true
-      // videoData.paused = true
+
+      if ($outBackground?.muted !== undefined) videoData.muted = $outBackground.muted
+      else videoData.muted = false
+
+      if (!videoData.muted) {
+        autoMute = true
+        videoData.muted = true
+      }
     }
   }
   function playing() {
     if (hasLoaded && !$outputWindow) {
+      console.log("PLAYING")
       videoData.paused = true
       setTimeout(() => {
         videoTime = startAt || 0
         window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
         setTimeout(() => window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime }), 100)
-        videoData.muted = false
+
+        if (autoMute) {
+          autoMute = false
+          videoData.muted = false
+        }
         videoData.paused = false
         startAt = 0
       }, 50)
