@@ -55,6 +55,15 @@
     "info": "Info",
     "presentation": "Presentation"
   },
+  "groups": {
+    "intro": "Intro",
+    "verse": "Verse",
+    "pre_chorus": "Pre Chorus",
+    "chorus": "Chorus",
+    "break": "Break",
+    "bridge": "Bridge",
+    "outro": "Outro"
+  },
   "new": {
     "show": "New show",
     "project": "New project",

@@ -1,25 +1,45 @@
 <script lang="ts">
-  import type { ID, ShowType } from "../../../types/Show"
-  import { activeProject, activeShow, outLocked, outSlide, projects, shows } from "../../stores"
+  import { activeProject, activeShow, categories, outBackground, outLocked, outSlide, projects, shows } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import Button from "./Button.svelte"
   import HiddenInput from "./HiddenInput.svelte"
 
-  export let name: string
-  export let id: ID
+  export let id: string
+  export let show: any = {}
   export let data: null | string = null
   export let index: null | number = null
-  export let type: ShowType = "show"
+  $: type = show.type || "show"
+  $: name = type === "show" || type === "private" ? $shows[show.id].name : show.name
   // export let page: "side" | "drawer" = "drawer"
   export let match: null | number = null
   // TODO: svelte animate
   // search
   $: style = match !== null ? `background: linear-gradient(to right, var(--secondary-opacity) ${match}%, transparent ${match}%);` : ""
 
+  $: newName = name === null && (type === "image" || type === "video") ? getPathName(id) : name
+  $: console.log(type, id, newName)
+
+  const getPathName = (path: string) => {
+    let name = path.substring(path.lastIndexOf("\\") + 1)
+    console.log(name.slice(0, name.lastIndexOf(".")) || path)
+
+    return name.slice(0, name.lastIndexOf(".")) || path
+  }
+
   // export let location;
   // export let access;
 
-  export let icon: null | string = null
+  export let icon: boolean = false
+  let iconID: null | string = null
+  $: {
+    if (icon) {
+      if (type === "show" || type === "private") {
+        if ($shows[show.id]?.private) iconID = "private"
+        else if ($shows[show.id].category) iconID = $categories[$shows[show.id].category || ""].icon || null
+        else iconID = "noIcon"
+      } else iconID = type
+    }
+  }
   // export let category: string
   // const check = () => {
   //   if (!category[1]) return category[0]
@@ -32,12 +52,13 @@
   $: console.log(index, $activeShow?.index)
 
   function click(e: any) {
-    // get pos if clicked in drawer show
-    let pos = index
-    if (pos === null && $activeProject !== null && JSON.stringify($projects[$activeProject].shows).includes(id)) {
-      pos = $projects[$activeProject].shows.findIndex((p) => p.id === id)
-    }
     // set active show
+    let pos = index
+    if (index === null && $activeProject !== null) {
+      let i = $projects[$activeProject].shows.findIndex((p) => p.id === id)
+      if (i > -1) pos = i
+    }
+
     if (!e.ctrlKey && !active && !e.target.closest("input")) {
       let show: any = { id, type }
       if (pos !== null) show.index = pos
@@ -47,7 +68,9 @@
 
   function doubleClick(e: any) {
     if (!$outLocked && $shows[id] && !e.target.classList.contains("name")) {
-      outSlide.set({ id, index: 0 })
+      if (type === "show" || type === "private") outSlide.set({ id, layout: $shows[id].settings.activeLayout, index: 0 })
+      else if (type === "image" || type === "video")
+        outBackground.set({ path: id, muted: show.muted || true, loop: show.loop || false, filters: show.filters || "", type: "media" })
     }
   }
 
@@ -60,15 +83,15 @@
 </script>
 
 <div {id} class="main">
-  <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
+  <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{newName}</span> -->
   <!-- WIP padding-left: 0.8em; -->
   <Button on:click={click} on:dblclick={doubleClick} {active} class="context {$$props.class}" {style} bold={false} border>
-    <span style="display: flex;align-items: center;flex: 1;">
-      {#if icon}
-        <Icon id={icon} />
+    <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
+      {#if iconID}
+        <Icon id={iconID} />
       {/if}
-      <!-- <p style="margin: 5px;">{name}</p> -->
-      <HiddenInput value={name} on:edit={edit} />
+      <!-- <p style="margin: 5px;">{newName}</p> -->
+      <HiddenInput value={newName} on:edit={edit} />
     </span>
 
     {#if match}

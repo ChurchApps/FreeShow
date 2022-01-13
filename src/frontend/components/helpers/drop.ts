@@ -1,12 +1,12 @@
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
-import { projects, activeProject, selected, activeShow, shows } from "./../../stores"
+import { projects, activeProject, selected, activeShow, shows, videoExtensions } from "./../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
 import { HistoryIDs, history } from "./history"
 import { get } from "svelte/store"
 
 // TODO: file...
 const areas: any = {
-  slides: ["slide_group"], // , "media"
+  // slides: ["group"], // , "media"
   slide: ["media", "overlay", "sound"],
   projects: [],
   project: ["show_drawer", "media"],
@@ -14,7 +14,7 @@ const areas: any = {
 }
 const areaChildren: any = {
   project: ["show", "media", "show_drawer"],
-  slide: ["slide_group", "slide"],
+  slide: ["slide", "group", "global_group"],
 }
 
 export function validateDrop(id: string, selected: any, children: boolean = false): boolean {
@@ -33,7 +33,7 @@ export function ondrop(e: any, id: string) {
   // TODO: get index!
   let elem = null
   if (e !== null) {
-    if (id === "project" || sel.id === "slide" || sel.id === "slide_group") elem = e.target.closest(".selectElem")
+    if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group") elem = e.target.closest(".selectElem")
     else if (id === "slide") elem = e.target.querySelector(".selectElem")
     console.log(elem)
   }
@@ -52,20 +52,31 @@ export function ondrop(e: any, id: string) {
       let projectShows = get(projects)[get(activeProject)!].shows
       if (index === undefined) index = projectShows.length
 
+      let data: any[] = sel.elems
+      if (sel.id === "media")
+        data = data.map((a) => {
+          let name: string = a.path.substring(a.path.lastIndexOf("\\") + 1)
+          const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
+          let type = "image"
+          if (get(videoExtensions).includes(extension.substring(1))) type = "video"
+          // name.slice(0, name.lastIndexOf("."))
+          return { name: null, id: a.path, type }
+        })
+
       oldData = [...projectShows]
-      if (sel.id === "show") newData = mover(projectShows, getIndexes(sel.elems), index)
-      else newData = addToPos(projectShows, sel.elems, index)
+      if (sel.id === "show") newData = mover(projectShows, getIndexes(data), index)
+      else newData = addToPos(projectShows, data, index)
       break
     case "slide":
     case "slides":
+      location = { page: "show", show: get(activeShow), layout: get(shows)[get(activeShow)!.id].settings.activeLayout }
       if (sel.id === "media") {
         // TODO: move multiple add to possible slides
         historyID = "showMedia"
-        location = { page: "show", show: get(activeShow), layout: get(shows)[get(activeShow)!.id].settings.activeLayout, layoutSlide: index }
+        location.layoutSlide = index
         newData = sel.elems[0]
-      } else if (sel.id === "slide" || sel.id === "slide_group") {
+      } else if (sel.id === "slide" || sel.id === "group") {
         historyID = "slide"
-        location = { page: "show", show: get(activeShow), layout: get(shows)[get(activeShow)!.id].settings.activeLayout }
         let ref: any[] = GetLayoutRef()
         let layout: any[] = GetLayout()
 
@@ -78,7 +89,7 @@ export function ondrop(e: any, id: string) {
         let moved: any[] = []
 
         // create a sorted layout
-        let sortedLayout: any[]
+        let sortedLayout: any[] = []
 
         if (sel.id === "slide") {
           let selected: number[] = getIndexes(sel.elems)
@@ -93,7 +104,7 @@ export function ondrop(e: any, id: string) {
           })
 
           sortedLayout = mover(layout, selected, index)
-        } else {
+        } else if (sel.id === "group") {
           let movedLayout: any[] = []
 
           sel.elems.forEach((a) => {
@@ -114,6 +125,9 @@ export function ondrop(e: any, id: string) {
         if (newLayoutRef[0].type === "child") newLayoutRef[0].newType = "parent"
 
         newData = changeLayout(sortedLayout, slides, newLayoutRef, moved, newIndex)
+      } else if (sel.id === "global_group") {
+        historyID = "newSlide"
+        newData = { slides: sel.elems, index }
       }
       break
 

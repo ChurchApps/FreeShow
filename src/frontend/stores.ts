@@ -164,7 +164,7 @@ export const shows: Writable<Shows> = writable({
     meta: { title: "Nådepuls", artist: "test", license: "CC" },
     slides: {
       fjeiosjfiose: {
-        label: "Verse 1",
+        group: "Verse 1",
         color: "green",
         settings: {
           background: false,
@@ -212,7 +212,7 @@ export const shows: Writable<Shows> = writable({
     meta: { title: "Syng det ut", artist: "test", license: "CC" },
     slides: {
       feowo: {
-        label: "Verse 1",
+        group: "Verse 1",
         color: "orange",
         settings: {},
         notes: "",
@@ -232,8 +232,9 @@ export const shows: Writable<Shows> = writable({
         ],
       },
       fesfo: {
-        label: "Chorus",
+        group: "Chorus",
         color: "red",
+        globalGroup: "chorus",
         settings: {},
         children: ["fesfofes"],
         notes: "",
@@ -245,7 +246,7 @@ export const shows: Writable<Shows> = writable({
         ],
       },
       fesfofes: {
-        label: null,
+        group: null,
         color: null,
         settings: {},
         notes: "",
@@ -257,7 +258,7 @@ export const shows: Writable<Shows> = writable({
         ],
       },
       blank: {
-        label: "Blank",
+        group: "Blank",
         color: null,
         settings: {},
         notes: "",
@@ -297,7 +298,7 @@ export const shows: Writable<Shows> = writable({
     meta: {},
     slides: {
       fsioøføjesi: {
-        label: null,
+        group: "",
         color: null,
         settings: {},
         notes: "",
@@ -313,7 +314,7 @@ export const shows: Writable<Shows> = writable({
         ],
       },
       fesfo: {
-        label: "Chorus",
+        group: "Chorus",
         color: null,
         settings: {},
         notes: "",
@@ -348,7 +349,7 @@ export const shows: Writable<Shows> = writable({
     meta: { title: "Syng det ut", artist: "test", license: "CC" },
     slides: {
       feowo: {
-        label: "Verse 1",
+        group: "Verse 1",
         color: "orange",
         settings: {},
         notes: "",
@@ -367,7 +368,7 @@ export const shows: Writable<Shows> = writable({
         ],
       },
       fesfo: {
-        label: "Chorus",
+        group: "Chorus",
         color: "red",
         settings: {},
         children: ["fesfofes"],
@@ -380,7 +381,7 @@ export const shows: Writable<Shows> = writable({
         ],
       },
       fesfofes: {
-        label: null,
+        group: null,
         color: null,
         settings: {},
         notes: "",
@@ -392,7 +393,7 @@ export const shows: Writable<Shows> = writable({
         ],
       },
       blank: {
-        label: "Blank",
+        group: "Blank",
         color: null,
         settings: {},
         notes: "",
@@ -427,7 +428,7 @@ export const projects: Writable<Projects> = writable({
     name: "First",
     created: new Date("2021-07-25"),
     parent: "/",
-    shows: [{ id: "nåde" }, { id: "ertfgggf" }, { id: "Info", location: "/" }, { id: "nåde" }, { type: "video", id: "Truth", location: "C:/movies/" }],
+    shows: [{ id: "nåde" }, { id: "ertfgggf" }, { id: "Info" }, { id: "nåde" }, { type: "video", name: "Truth", id: "C:/movies/" }],
   },
   feskof: {
     name: "Meeting",
@@ -524,6 +525,10 @@ export const slidesOptions: Writable<SlidesOptions> = writable({
   columns: 4,
   grid: true,
 })
+export const mediaOptions: Writable<SlidesOptions> = writable({
+  columns: 4,
+  grid: true,
+})
 
 // IU STATE
 export const resized: Writable<NumberObject> = writable({
@@ -577,6 +582,24 @@ export const font = writable({
 export const screen = writable({
   resolution: { width: 1920, height: 1080 },
   // format 16:9
+})
+
+// show
+export const groupCount: Writable<boolean> = writable(true)
+// export const selectedPattern = writable("default")
+// export const patterns = writable({
+//   default: [
+
+//   ]
+// })
+export const groups: Writable<any> = writable({
+  intro: { name: "intro", default: true, color: "#f5255e" },
+  verse: { name: "verse", default: true, color: "#f525a2" },
+  pre_chorus: { name: "pre_chorus", default: true, color: "#df25f5" },
+  chorus: { name: "chorus", default: true, color: "#af25f5" },
+  break: { name: "break", default: true, color: "#8825f5" },
+  bridge: { name: "bridge", default: true, color: "#6225f5" },
+  outro: { name: "outro", default: true, color: "#3225f5" },
 })
 
 // project

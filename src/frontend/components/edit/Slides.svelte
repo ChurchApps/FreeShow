@@ -26,7 +26,8 @@
 
   // let layoutSlides: SlideData[] = []
   // $: layoutSlides = GetLayout($activeShow!.id)
-  $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
+  $: activeLayout = $shows[$activeShow!.id].settings.activeLayout
+  $: layoutSlides = [$shows[$activeShow!.id].layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   function keydown(e: any) {
     if (!(e.target instanceof HTMLTextAreaElement) && !e.target.closest(".edit")) {
@@ -60,20 +61,33 @@
       }, 10)
     }
   }
+
+  let columns: number = 1
+  // function mousemove() {
+  //   if (scrollElem?.closest(".panel").offsetWidth > 300) columns = 2
+  //   else columns = 1
+  // }
+
+  function wheel(e: any) {
+    if (e.ctrlKey) columns = Math.max(1, Math.min(10, columns + e.deltaY / 100))
+    // if (e.ctrlKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
+  }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<Autoscroll {offset} bind:scrollElem style={"background-color: var(--primary-darker);"}>
+<Autoscroll {offset} bind:scrollElem style="display: flex;background-color: var(--primary-darker);">
   {#if layoutSlides.length}
-    <div class="grid">
+    <div class="grid" on:wheel={wheel}>
       {#each layoutSlides as slide, i}
         <Slide
           slide={currentShow.slides[slide.id]}
+          show={currentShow}
+          layoutSlide={slide}
           index={i}
           color={slide.color}
           active={$activeEdit.slide === i}
-          list={true}
+          {columns}
           on:click={(e) => {
             if (!e.ctrlKey) activeEdit.set({ slide: i, items: [] })
           }}
@@ -90,5 +104,6 @@
     display: flex;
     flex-wrap: wrap;
     padding: 5px;
+    align-content: flex-start;
   }
 </style>

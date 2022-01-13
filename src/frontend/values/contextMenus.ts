@@ -44,6 +44,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   category_shows_button: ["rename", "changeIcon", "delete"],
   // SHOWS
   slide: ["disable", "rename", "slideLabels", "edit", "SEPERATOR", "delete", "duplicate", "copy", "paste"],
+  slide_group: ["disable all", "enable all", "rename", "delete", "select all?", "duplicate"],
   // PROJECT
   projects: ["newProject", "newFolder"],
   project: ["newShow", "newPrivateShow"],

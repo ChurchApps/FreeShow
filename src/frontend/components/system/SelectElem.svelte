@@ -32,7 +32,7 @@
     if (dragged && ($selected.id !== id || !arrayHasData($selected.elems, data))) {
       elems = [data]
     } else if (!dragged && e.ctrlKey) {
-      if ($selected.id === id && arrayHasData($selected.elems, data)) elems = elems.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
+      if ($selected.id === id && arrayHasData($selected.elems, data)) elems = $selected.elems.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
       else if ($selected.id === id) elems = [...$selected.elems, data]
       else elems = [data]
     }
@@ -89,7 +89,7 @@
   .isSelected {
     /* outline: 2px solid red;
     outline-offset: 2px; */
-    filter: contrast(0.8);
+    filter: contrast(0.7);
     background-color: var(--focus);
   }
 

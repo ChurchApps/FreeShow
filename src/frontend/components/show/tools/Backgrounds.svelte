@@ -5,12 +5,18 @@
   import Button from "../../inputs/Button.svelte"
   import HoverButton from "../../inputs/HoverButton.svelte"
   import Center from "../../system/Center.svelte"
-  import Draggable from "../../system/Draggable.svelte"
   import SelectElem from "../../system/SelectElem.svelte"
 
   $: show = $shows[$activeShow!.id]
-  $: layout = show.layouts[show.settings.activeLayout].slides
-  $: layoutBackgrounds = layout ? layout.map((a) => a.background).filter((a) => a !== undefined) : []
+  let layoutBackgrounds: any[] = []
+  $: {
+    if (show) {
+      layoutBackgrounds = []
+      Object.values(show.layouts).forEach((a: any) => {
+        layoutBackgrounds.push(...a.slides.map((a: any) => a.background).filter((a: any) => a !== undefined))
+      })
+    }
+  }
 
   let backgrounds: any = {}
   let bgs: any = []
@@ -34,8 +40,6 @@
   }
 
   function setBG(id: string, key: string, value: boolean) {
-    console.log(value)
-
     shows.update((a: any) => {
       let bgs = a[$activeShow!.id].backgrounds
       if (value) delete bgs[id][key]
@@ -44,38 +48,36 @@
     })
   }
 
-  // TODO: check if exists!!!
+  // TODO: check if file exists!!!
 </script>
 
 <div class="main">
   {#if bgs.length}
     {#each bgs as background}
-      <SelectElem id="media" data={{ path: background.path }}>
-        <Draggable>
-          <div class="item" title={background.path} class:active={$outBackground?.path === background.path}>
-            <HoverButton
-              style="flex: 2;height: 50px;"
-              icon="play"
-              size={3}
-              on:click={() => outBackground.set({ path: background.path, muted: background.muted !== false })}
-              title="[[[Play video output...]]]"
-            >
-              <!-- <div style="flex: 2;height: 50px;"> -->
-              <MediaLoader name={background.name} path={background.path} type={background.type} />
-              <!-- </div> -->
-            </HoverButton>
-            <p style="flex: 3;">{background.name}</p>
-            <span style="color: var(--secondary);">{background.count}</span>
-            {#if background.type === "video"}
-              <Button style="flex: 0" center title={background.muted !== false ? "Unmute" : "Mute"} on:click={() => setBG(background.id, "muted", background.muted === false)}>
-                <Icon id={background.muted !== false ? "muted" : "volume"} size={1.2} />
-              </Button>
-              <Button style="flex: 0" center title="[[[Loop video]]]" on:click={() => setBG(background.id, "loop", background.loop === false)}>
-                <Icon id="loop" white={background.loop === false} size={1.2} />
-              </Button>
-            {/if}
-          </div>
-        </Draggable>
+      <SelectElem id="media" data={{ path: background.path }} draggable>
+        <div class="item" title={background.path} class:active={$outBackground?.path === background.path}>
+          <HoverButton
+            style="flex: 2;height: 50px;"
+            icon="play"
+            size={3}
+            on:click={() => outBackground.set({ path: background.path, muted: background.muted !== false })}
+            title="[[[Play video output...]]]"
+          >
+            <!-- <div style="flex: 2;height: 50px;"> -->
+            <MediaLoader name={background.name} path={background.path} type={background.type} />
+            <!-- </div> -->
+          </HoverButton>
+          <p style="flex: 3;">{background.name}</p>
+          <span style="color: var(--secondary);">{background.count}</span>
+          {#if background.type === "video"}
+            <Button style="flex: 0" center title={background.muted !== false ? "Unmute" : "Mute"} on:click={() => setBG(background.id, "muted", background.muted === false)}>
+              <Icon id={background.muted !== false ? "muted" : "volume"} size={1.2} />
+            </Button>
+            <Button style="flex: 0" center title="[[[Loop video]]]" on:click={() => setBG(background.id, "loop", background.loop === false)}>
+              <Icon id="loop" white={background.loop === false} size={1.2} />
+            </Button>
+          {/if}
+        </div>
       </SelectElem>
     {/each}
   {:else}

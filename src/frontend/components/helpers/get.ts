@@ -12,23 +12,23 @@ import { activeProject, activeShow, projects, shows } from "../../stores"
 export const getOutBackground = () => {
   "base64://"
 }
-export const getOutSlide = (): null | Slide => {
-  // let activeOutput: Output = get(output)
-  return {
-    label: null,
-    color: null,
-    settings: {},
-    notes: "",
-    items: [],
-  } // getSlide(activeOutput.slide.id, activeOutput.slide.index)
-}
+// export const getOutSlide = (): null | Slide => {
+//   // let activeOutput: Output = get(output)
+//   return {
+//     group: null,
+//     color: null,
+//     settings: {},
+//     notes: "",
+//     items: [],
+//   } // getSlide(activeOutput.slide.id, activeOutput.slide.index)
+// }
 export const getOutOverlays = () => []
 
 export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null): SlideData[] => {
   // console.trace(showID)
   if (!showID) showID = get(activeShow)!.id
   let currentShow: Show = get(shows)[showID]
-  if (!layoutID) layoutID = currentShow.settings.activeLayout
+  if (!layoutID) layoutID = currentShow?.settings.activeLayout
   let layoutSlides: SlideData[] = []
   if (currentShow) {
     currentShow.layouts[layoutID].slides.forEach((ls) => {
@@ -113,8 +113,8 @@ export function GetShows() {
   return { list, active }
 }
 
-export const getSlide = (showID: ID, slideIndex: number): Slide => {
-  return get(shows)[showID].slides[GetLayout(showID)[slideIndex]?.id]
+export const getSlide = (out: any): Slide => {
+  return get(shows)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]
 }
 
 export function GetProjects() {

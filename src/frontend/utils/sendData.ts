@@ -155,7 +155,7 @@ function getStage(msg: ClientMessage) {
       msg.data = []
       console.log(out)
       if (out) {
-        let layout = GetLayout(out.id)
+        let layout = GetLayout(out.id, out.layout)
         console.log(layout)
         msg.data = [get(shows)[out.id].slides[layout[out.index].id]]
         if (out.index + 1 < layout.length) msg.data.push(get(shows)[out.id].slides[layout[out.index + 1].id])

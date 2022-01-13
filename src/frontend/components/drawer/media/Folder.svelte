@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { mediaOptions } from "../../../stores"
+
   // import { READ_FOLDER } from "../../../../types/Channels"
   import Icon from "../../helpers/Icon.svelte"
   import Card from "../Card.svelte"
-  import Label from "../Label.svelte"
   import Image from "./Image.svelte"
   import IntersectionObserver from "./IntersectionObserver.svelte"
 
@@ -30,8 +31,8 @@
   // })
 </script>
 
-<Card on:click={() => (rootPath = path)} style="display: flex;flex-direction: column;">
-  <div style="width: 100%;height: 100%;">
+<Card on:click={() => (rootPath = path)} label="{name}{items ? { items } : ''}" icon={$mediaOptions.grid ? "folder" : null} color={$mediaOptions.grid ? "var(--secondary);" : ""}>
+  <div class="flex" style="width: 100%;height: 100%;">
     <div class="grid">
       {#key path}
         {#if files.length}
@@ -50,7 +51,6 @@
         {/if}
       {/key}
     </div>
-    <Label label="{name}{items ? { items } : ''}" icon={"folder"} white color={"var(--secondary);"} />
   </div>
 </Card>
 
@@ -60,7 +60,7 @@
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    overflow: hidden;
+    /* overflow: hidden; */
     height: 100%;
   }
   .grid :global(.observer) {
@@ -68,5 +68,8 @@
   }
   .grid :global(img) {
     object-fit: contain;
+  }
+  .grid :global(svg) {
+    height: 100%;
   }
 </style>

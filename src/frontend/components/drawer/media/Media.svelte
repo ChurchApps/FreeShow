@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { activeShow, outBackground } from "../../../stores"
-  import Draggable from "../../system/Draggable.svelte"
+  import { activeShow, outBackground, mediaOptions, outLocked } from "../../../stores"
   import SelectElem from "../../system/SelectElem.svelte"
   import Card from "../Card.svelte"
-  import Label from "../Label.svelte"
   import IntersectionObserver from "./IntersectionObserver.svelte"
   import MediaLoader from "./MediaLoader.svelte"
 
@@ -51,42 +49,31 @@
   $: if (activeFile !== null && allFiles[activeFile] === path) activeShow.set({ id: path, name, type })
 
   function dblclick(e: any) {
-    if (!e.ctrlKey) outBackground.set({ path: path })
+    if (!e.ctrlKey && !$outLocked) outBackground.set({ path: path })
     // doubleClick = true
   }
 </script>
 
-<div class="main" style="display: contents;">
-  <!-- TODO: drag images!!! -->
-  <Card
-    {loaded}
-    preview={$activeShow?.id === path}
-    active={$outBackground?.path === path}
-    on:click={click}
-    on:dblclick={dblclick}
-    on:mouseenter={() => (hover = true)}
-    on:mouseleave={() => (hover = false)}
-    on:mousemove={move}
-  >
-    <SelectElem id="media" data={{ name, path }} fill>
-      <Draggable fill>
-        <IntersectionObserver class="observer" once let:intersecting>
-          {#if intersecting}
-            <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} />
-            <Label label={name} icon={type === "video" ? "movie" : "image"} white={type === "image"} />
-          {/if}
-          <!-- ({formatBytes(size)}) -->
-        </IntersectionObserver>
-      </Draggable>
-    </SelectElem>
-  </Card>
-</div>
-
-<style>
-  .main :global(.observer) {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-  }
-</style>
+<Card
+  {loaded}
+  style="width: {$mediaOptions.grid ? 100 : 100 / $mediaOptions.columns}%;"
+  preview={$activeShow?.id === path}
+  active={$outBackground?.path === path}
+  label={name}
+  icon={type === "video" ? "movie" : "image"}
+  white={type === "image"}
+  on:click={click}
+  on:dblclick={dblclick}
+  on:mouseenter={() => (hover = true)}
+  on:mouseleave={() => (hover = false)}
+  on:mousemove={move}
+>
+  <SelectElem id="media" data={{ name, path }} draggable fill>
+    <IntersectionObserver class="observer" once let:intersecting>
+      {#if intersecting}
+        <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} />
+      {/if}
+      <!-- ({formatBytes(size)}) -->
+    </IntersectionObserver>
+  </SelectElem>
+</Card>

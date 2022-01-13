@@ -261,25 +261,27 @@ export function getSelectionRange(): [number, number] {
 
     let count = 0
 
-    new Array(...parent.children).forEach((child: any) => {
-      if (selection!.containsNode(child, true)) {
-        // if start not set & child is start & (child is not end or end is bigger than start)
-        if (start === null && child === startNode && (child !== endNode || endOffset > startOffset)) {
-          start = count + startOffset
-        } else if ((start === null && child === endNode) || (child === startNode && startOffset > endOffset)) {
-          start = count + endOffset
-          endNode = startNode
-          endOffset = startOffset
+    if (parent) {
+      new Array(...parent.children).forEach((child: any) => {
+        if (selection!.containsNode(child, true)) {
+          // if start not set & child is start & (child is not end or end is bigger than start)
+          if (start === null && child === startNode && (child !== endNode || endOffset > startOffset)) {
+            start = count + startOffset
+          } else if ((start === null && child === endNode) || (child === startNode && startOffset > endOffset)) {
+            start = count + endOffset
+            endNode = startNode
+            endOffset = startOffset
+          }
+          if (start !== null) {
+            if (selection!.containsNode(child)) {
+              if (!end) end = count
+              end += child.innerText.length
+            } else end = count + endOffset
+          }
         }
-        if (start !== null) {
-          if (selection!.containsNode(child)) {
-            if (!end) end = count
-            end += child.innerText.length
-          } else end = count + endOffset
-        }
-      }
-      count += child.innerText.length
-    })
+        count += child.innerText.length
+      })
+    }
   }
 
   return [start || 0, end || 0]

@@ -1,50 +1,70 @@
 <script lang="ts">
+  import type { Resolution } from "../../../types/Settings"
+
+  import { mediaOptions, screen } from "../../stores"
+
   import Loader from "../main/Loader.svelte"
+  import Label from "./Label.svelte"
 
   export let loaded: boolean = true
   export let preview: boolean = false
   export let active: boolean = false
-  export let columns: number = 4
+  export let label: string
+  export let icon: null | string = null
+  export let color: null | string = null
+  export let white: boolean = true
+
+  let resolution: Resolution = $screen.resolution
 </script>
 
 <!-- TODO: use global resolution .... -->
 <!-- display: table; -->
-<div class="card" style="{$$props.style || ''};width: calc({100 / columns}% - 8px);" class:preview class:active on:click on:dblclick on:mouseenter on:mouseleave on:mousemove>
+<div
+  class="main"
+  style="flex-direction: {$mediaOptions.grid ? 'column' : 'row'};width: {$mediaOptions.grid ? 100 / $mediaOptions.columns : 100}%;"
+  class:preview
+  class:active
+  on:click
+  on:dblclick
+>
   {#if preview}
     <div class="overlay" />
   {:else}
     <div class="hover overlay" />
   {/if}
-  {#if !loaded}
-    <div class="loader">
-      <Loader />
-    </div>
-  {/if}
-  <slot />
+  <div class="card" style="{$$props.style || ''};aspect-ratio: {resolution.width}/{resolution.height};" on:mouseenter on:mouseleave on:mousemove>
+    {#if !loaded}
+      <div class="loader">
+        <Loader />
+      </div>
+    {/if}
+    <slot />
+  </div>
+  <Label {label} {icon} {white} {color} />
 </div>
 
 <style>
-  .card {
+  .main {
     display: flex;
+    padding: 5px;
     position: relative;
-    /* flex-direction: column; */
-    justify-content: center;
-    /* aspect-ratio: 16/9; */
-    aspect-ratio: 16/10.3;
-    background-color: var(--primary);
-    padding-bottom: 25px;
   }
-  .card:hover > .hover {
+
+  .main:hover > .hover {
     /* background-color: var(--primary-lighter); */
     /* filter: brightness(1.1); */
     opacity: 1;
   }
   .hover.overlay {
     opacity: 0;
+    /* transition: 0.1s opacity; */
     background-color: rgb(255 255 255 / 0.1);
+    position: absolute;
+    top: 0;
+    left: 0;
   }
 
-  .card.preview {
+  .main.preview {
     outline: 2px solid var(--primary-lighter);
     outline-offset: 0px;
     /* filter: brightness(1.3); */
@@ -53,23 +73,39 @@
     pointer-events: none;
     position: absolute;
     top: 0;
+    left: 0;
     background-color: rgb(0 0 0 / 0.5);
     height: 100%;
     width: 100%;
     z-index: 1;
   }
-  .card.active {
+  .main.active {
     outline: 2px solid var(--secondary);
     outline-offset: 0px;
   }
 
-  .card :global(video),
-  .card :global(canvas),
-  .card :global(img) {
+  .main :global(video),
+  .main :global(canvas),
+  .main :global(img) {
     max-width: 100%;
     max-height: 100%;
     align-self: center;
     pointer-events: none;
+  }
+  .main :global(.observer) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .card {
+    display: flex;
+    position: relative;
+    /* flex-direction: column; */
+    justify-content: center;
+    /* aspect-ratio: 16/9; */
+    background-color: var(--primary);
   }
 
   .loader {

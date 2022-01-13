@@ -54,13 +54,14 @@
     // ctrl + number
     if (e.ctrlKey) {
       // WIP reflow: flow / ...
-      let menus: TopViews[] = ["show", "edit", "draw", "stage", "calendar", "settings"]
+      let menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
       if (Object.keys(menus).includes((e.key - 1).toString())) {
         activePage.set(menus[e.key - 1])
       }
 
       // prevent undo
-      if (!e.target.closest(".search")) {
+      if (!e.target.closest(".edit")) {
+        e.preventDefault()
         if (e.key.toLowerCase() === "z" && !e.shiftKey) {
           undo()
         } else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) {

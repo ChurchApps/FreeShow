@@ -7,9 +7,15 @@
   $: {
     if (offset >= 0) scrollElem?.scrollTo(0, offset)
   }
+
+  // function keydown(e: any) {
+  //   if (e.key.includes("Arrow")) e.preventDefault()
+  // }
 </script>
 
-<div class="scroll" bind:this={scrollElem} style={($$props.style || "") + behaviour}>
+<!-- <svelte:window on:keydown={keydown} /> -->
+
+<div class="scroll" on:wheel bind:this={scrollElem} style={($$props.style || "") + behaviour}>
   <slot />
 </div>
 

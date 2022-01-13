@@ -85,7 +85,7 @@
   }
 
   let filteredStored: any
-  export let firstMatch: null | string = null
+  export let firstMatch: null | any = null
   $: {
     if (searchValue.length > 1) {
       filteredShows = []
@@ -94,7 +94,7 @@
         if (match) filteredShows.push({ ...s, match })
       })
       filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowId[]
-      firstMatch = filteredShows[0]?.id || null
+      firstMatch = filteredShows[0] || null
     } else {
       filteredShows = filteredStored
       firstMatch = null
@@ -118,7 +118,7 @@
       {#each filteredShows as show}
         <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
           {#if searchValue.length <= 1 || show.match}
-            <ShowButton id={show.id} name={show.name} data={dateToString(show.timestamps.created, true)} class="#drawer_show_button__drawer_show" match={show.match || null} />
+            <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true)} class="#drawer_show_button__drawer_show" match={show.match || null} />
           {/if}
         </SelectElem>
       {/each}
@@ -146,7 +146,8 @@
     display: flex;
     flex-direction: column;
     background-color: var(--primary-darker);
-    flex: 1;
+    /* flex: 1; */
+    height: 100%;
   }
 
   .tabs {

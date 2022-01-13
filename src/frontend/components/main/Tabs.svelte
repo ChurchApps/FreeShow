@@ -13,7 +13,7 @@
 
 <div class="tabs">
   {#each Object.entries(tabs) as tab}
-    <Button on:click={() => (active = tab[0])} active={active === tab[0]} title={!labels ? translate(tab[1].name) : ""} center>
+    <Button on:click={() => (active = tab[0])} active={active === tab[0]} title={!labels ? translate(tab[1].name) : ""} dark center>
       <Icon id={tab[1].icon} />
       {#if labels}
         <span style="padding-left: 10px;">

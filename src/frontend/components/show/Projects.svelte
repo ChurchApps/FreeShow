@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Tree } from "../../../types/Projects"
-  import { activeProject, activeShow, categories, dictionary, folders, projects, projectView, shows } from "../../stores"
+  import { activeProject, activeShow, dictionary, folders, projects, projectView } from "../../stores"
   import { GetProjects } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -42,8 +42,9 @@
     })
   }
 
-  function keyDown(e: KeyboardEvent) {
+  function keydown(e: KeyboardEvent) {
     if (!e.target?.closest(".edit") && $activeProject !== null) {
+      if (e.key.includes("Arrow")) e.preventDefault()
       let shows = GetProjects().active.shows // $projects[$activeProject].shows
 
       // TODO: duplicate of preview next / previousShow()
@@ -68,17 +69,36 @@
   let scrollElem: any
   let offset: number = -1
   $: {
-    if (scrollElem && $activeShow?.index !== undefined) offset = scrollElem.querySelector(".ParentBlock").children[$activeShow.index].offsetTop - scrollElem.offsetTop
+    if (scrollElem && $activeShow?.index !== undefined)
+      offset = scrollElem.querySelector(".ParentBlock").children[Math.max(0, $activeShow.index - 1)].offsetTop - scrollElem.offsetTop
+  }
+
+  let debug = 0
+  $: {
+    // get pos if clicked in drawer show
+    let pos: null | number = $activeShow?.index || null
+    if ($activeShow && $activeProject) {
+      let i = $projects[$activeProject].shows.findIndex((p) => p.id === $activeShow?.id)
+      if (i > -1) pos = i
+
+      if (($activeShow?.type === "video" || $activeShow?.type === "image") && pos !== null && $activeShow.index !== pos && debug < 50) {
+        debug++
+        activeShow.update((a) => {
+          a!.index = pos!
+          return a
+        })
+      }
+    }
   }
 </script>
 
-<svelte:window on:keydown={keyDown} />
+<svelte:window on:keydown={keydown} />
 
 <div class="main">
   <span class="tabs">
     <!-- TODO: set different project system folders.... -->
     <!-- TODO: right click change... -->
-    <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center title={"Projects"}>
+    <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={"Projects"}>
       <Icon id="folder" />
     </Button>
     <!-- TODO: right click go to recent -->
@@ -86,6 +106,7 @@
       style="flex: 5;"
       on:click={() => projectView.set(false)}
       active={!$projectView}
+      dark
       center
       disabled={$activeProject === null}
       title={$activeProject ? "Project: " + $projects[$activeProject].name : null}
@@ -115,8 +136,8 @@
       </Button>
     </div>
   {:else if $activeProject !== null}
-    <Autoscroll {offset} bind:scrollElem>
-      <div class="list context #project">
+    <div class="list context #project">
+      <Autoscroll {offset} bind:scrollElem>
         <DropArea id="project" selectChildren>
           <!-- {/* WIP: live on double click?? */} -->
           {#if $projects[$activeProject].shows.length}
@@ -124,14 +145,7 @@
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
               <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
               <SelectElem id="show" data={{ id: show.id, index }} trigger="column" draggable>
-                <ShowButton
-                  id={show.id}
-                  {index}
-                  type={show.type}
-                  name={$shows[show.id]?.name}
-                  icon={$shows[show.id]?.private ? "private" : show.type ? show.type : $shows[show.id]?.category ? $categories[$shows[show.id].category || ""].icon : "noIcon"}
-                  class="context #{show.type ? '' : 'show'}__project"
-                />
+                <ShowButton id={show.id} {show} {index} class="context #{show.type ? '' : 'show'}__project" icon />
               </SelectElem>
               <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
             {/each}
@@ -139,8 +153,8 @@
             <Center faded>[[[No shows]]]</Center>
           {/if}
         </DropArea>
-      </div>
-    </Autoscroll>
+      </Autoscroll>
+    </div>
     <div class="tabs">
       <Button on:click={() => history({ id: "newShow", newData: { project: $activeProject } })} center title={$dictionary.new?.show}>
         <Icon id="showIcon" />
@@ -179,7 +193,9 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    /* overflow-y: auto;
+    overflow-x: hidden; */
+    overflow: hidden;
     height: 100%;
   }
 </style>

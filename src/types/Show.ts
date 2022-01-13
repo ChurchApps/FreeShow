@@ -30,8 +30,9 @@ export interface Show {
 }
 
 export interface Slide {
-  label: null | string
+  group: null | string
   color: null | string
+  globalGroup?: string
   settings: {
     background?: boolean
     color?: string
@@ -102,11 +103,14 @@ export interface OutBackground {
   path?: string
   startAt?: number
   muted?: boolean
+  loop?: boolean
+  filters?: string
   // name?: string
   type?: "media" | "screen" | "camera"
 }
 export interface OutSlide {
   id: ID
+  layout: ID
   index: number
   // layout: ID ?
   // type?: ShowType

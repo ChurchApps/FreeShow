@@ -9,8 +9,8 @@
 
   const tabs: TabsObj = {
     groups: { name: "tools.groups", icon: "groups" },
-    transitions: { name: "tools.transitions", icon: "transition" },
     backgrounds: { name: "tools.backgrounds", icon: "backgrounds" },
+    transitions: { name: "tools.transitions", icon: "transition" },
     notes: { name: "tools.notes", icon: "notes" },
   }
   let active: string = Object.keys(tabs)[0]
@@ -18,6 +18,7 @@
   $: showId = $activeShow!.id
   let note: string = $shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].notes
   $: {
+    if ($shows[showId]?.settings.activeLayout) note = $shows[showId].layouts[$shows[showId].settings.activeLayout].notes
     if (note.length && $shows[showId]) {
       $shows[showId].layouts[$shows[showId].settings.activeLayout].notes = note
     }
@@ -33,10 +34,10 @@
     <div class="content">
       {#if active === "groups"}
         <SlideGroups />
-      {:else if active === "transitions"}
-        <Transitions />
       {:else if active === "backgrounds"}
         <Backgrounds />
+      {:else if active === "transitions"}
+        <Transitions />
       {:else if active === "notes"}
         <Notes bind:value={note} />
       {:else}

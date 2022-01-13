@@ -50,6 +50,15 @@
     "info": "Info",
     "presentation": "Presentasjon"
   },
+  "groups": {
+    "intro": "Intro",
+    "verse": "Vers",
+    "pre_chorus": "Stikk",
+    "chorus": "Refreng",
+    "break": "Mellomspill",
+    "bridge": "Bro",
+    "outro": "Outro"
+  },
   "new": {
     "show": "Nytt show",
     "project": "Nytt prosjekt",

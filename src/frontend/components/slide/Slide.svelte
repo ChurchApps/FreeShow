@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { slidesOptions } from "../../stores"
+  import { dictionary, groupCount, groups, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
+  import { GetLayoutRef } from "../helpers/get"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import Textbox from "./Textbox.svelte"
@@ -30,9 +31,49 @@
     })
   }
 
+  console.log(layoutSlide, show)
+
   $: background = layoutSlide.background ? show.backgrounds[layoutSlide.background] : null
-  $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
-  $: name = full_name.slice(0, full_name.lastIndexOf("."))
+  // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
+  // $: name = full_name.slice(0, full_name.lastIndexOf("."))
+
+  $: group = slide.group
+  $: {
+    if (slide.globalGroup && $groups[slide.globalGroup]) {
+      if ($groups[slide.globalGroup].default) group = $dictionary.groups[$groups[slide.globalGroup].name]
+      else group = $groups[slide.globalGroup].name
+      color = $groups[slide.globalGroup].color
+    }
+  }
+
+  $: name = getGroupName(layoutSlide.id)
+  function getGroupName(slideID: string) {
+    let name = group
+    if (name) {
+      // different slides with same name
+      let added: any = {}
+      Object.entries(show.slides).forEach(([id, a]: any) => {
+        if (added[a.group]) {
+          added[a.group]++
+          if (id === slideID) name += " #" + added[a.group]
+        } else added[a.group] = 1
+      })
+
+      // same group count
+      if ($groupCount) {
+        added = {}
+        GetLayoutRef().forEach((a: any, i: number) => {
+          if (a.type === "parent") {
+            if (added[a.id]) {
+              added[a.id]++
+              if (i === index) name += " " + added[a.id]
+            } else added[a.id] = 1
+          }
+        })
+      }
+    }
+    return name
+  }
 </script>
 
 <!-- TODO: disabled -->
@@ -57,7 +98,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <Zoomed background={slide.items.length ? "black" : "transparent"} let:ratio>
           {#if background}
             <div class="background" style="zoom: {1 / ratio}">
-              <MediaLoader {name} path={background.path} />
+              <MediaLoader name="[[[Could not load]]]" path={background.path} />
             </div>
           {/if}
           <!-- TODO: check if showid exists in shows -->
@@ -67,10 +108,10 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         </Zoomed>
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {resolution.width * zoom}px;" -->
-        <div class="label" title={slide.label || ""}>
+        <div class="label" title={name || ""}>
           <!-- font-size: 0.8em; -->
           <span style="position: absolute;display: contents;">{index + 1}</span>
-          <span class="text">{slide.label || ""}</span>
+          <span class="text">{name || ""}</span>
         </div>
         <!-- </Draggable> -->
       </SelectElem>
@@ -89,6 +130,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     display: flex;
     position: relative;
     padding: 5px;
+    /* height: fit-content; */
   }
 
   .slide {

@@ -19,19 +19,24 @@
       if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
       let slide: null | OutSlide = $outSlide
-      let layout: SlideData[] = GetLayout(slide ? slide.id : null)
+      let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
       let endOfShow: boolean = slide ? slide.index === layout.length - 1 : false
       let index: null | number = null
 
       // TODO: active show slide index on delete......
 
       // go to beginning if live mode & ctrl | no output | last slide active
-      if ($activePage === "show" && $activeShow && (!slide || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id))) {
+      if (
+        $activePage === "show" &&
+        $activeShow &&
+        (!slide || e.ctrlKey || (endOfShow && $activeShow.id !== slide?.id && $shows[$activeShow.id].settings.activeLayout !== slide.layout))
+      ) {
         let layout = GetLayout()
+        let activeLayout: string = $shows[$activeShow!.id].settings.activeLayout
         if (layout.filter((a) => !a.disabled).length) {
           index = 0
           while (layout[index].disabled) index++
-          outSlide.set({ id: $activeShow!.id, index })
+          outSlide.set({ id: $activeShow!.id, layout: activeLayout, index })
         }
       } else if (slide) {
         // TODO: Check for loop to beginning slide...
@@ -63,7 +68,8 @@
       if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
       let slide: null | OutSlide = $outSlide
-      let layout: SlideData[] = GetLayout(slide ? slide.id : null)
+      let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
+      let activeLayout: string = $shows[slide ? slide.id : $activeShow!.id].settings.activeLayout
       let index: number = slide?.index !== undefined ? slide.index - 1 : layout.length - 1
 
       if (index > -1 && layout.slice(0, index + 1).filter((a) => !a.disabled).length) {
@@ -73,7 +79,7 @@
             o!.index = index
             return o
           })
-        } else if ($activeShow) outSlide.set({ id: $activeShow.id, index })
+        } else if ($activeShow) outSlide.set({ id: $activeShow.id, layout: activeLayout, index })
 
         activeEdit.set({ slide: index, items: [] })
         if (layout[index].background) {
@@ -114,7 +120,10 @@
       if (e.key === "c") clearAll()
       else if (e.key === "f") fullscreen = !fullscreen
       else if (e.key === "l") outLocked.set(!$outLocked)
-      else if (e.key === "r") outSlide.set($outSlide)
+      // else if (e.key === "r") {
+      //   outSlide.set($outSlide)
+      //   outBackground.set($outBackground)
+      // }
     }
 
     if (!e.target.closest("input") && !e.target.closest(".edit")) {
@@ -174,8 +183,10 @@
   let length: number = 0
   $: {
     if ($outSlide?.id) {
+      console.log($outSlide)
+
       length = 0
-      $shows[$outSlide.id].layouts[$shows[$outSlide.id].settings.activeLayout].slides.forEach((s: any) => {
+      $shows[$outSlide.id].layouts[$outSlide.layout].slides.forEach((s: any) => {
         length++
         if ($shows[$outSlide!.id].slides[s.id].children) length += $shows[$outSlide!.id].slides[s.id].children!.length
       })
@@ -312,7 +323,7 @@
           {/if}
         </span>
         <!-- TODO: update -->
-        <span style="opacity: 0.6;">{$outSlide.index + 1}/{GetLayout($outSlide.id).length}</span>
+        <span style="opacity: 0.6;">{$outSlide.index + 1}/{length}</span>
       </span>
     {/if}
   {/if}
@@ -329,11 +340,10 @@
     >
       <Icon id="previousFull" size={1.2} />
     </Button>
-    <!-- TODO: check type... -->
     <Button
       on:click={previousSlide}
       title="[[[PreviousSlide [ArrowLeft]]]]"
-      disabled={$outLocked || !$activeShow || !GetLayout().length || ($outSlide && $outSlide.index < 1)}
+      disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index < 1 : !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length)}
       center
     >
       <Icon id="previous" size={1.2} />
@@ -341,15 +351,16 @@
     <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? "[[[Unlock Output]]]" : "[[[Lock Output]]]"} center>
       <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
     </Button>
-    {#if ($activePage === "edit" && $outSlide?.index !== $activeEdit.slide) || !$outSlide || $outSlide.id !== $activeShow?.id}
+    {#if ($activePage === "edit" && $outSlide?.index !== $activeEdit.slide) || !$outSlide || $outSlide.id !== $activeShow?.id || $outSlide.layout !== $shows[$activeShow.id].settings.activeLayout}
       <Button
         on:click={() => {
-          if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null) outSlide.set({ id: $activeShow.id, index: $activeEdit.slide })
-          else if ($activeShow && GetLayout().length) outSlide.set({ id: $activeShow.id, index: 0 })
+          if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null)
+            outSlide.set({ id: $activeShow.id, layout: $shows[$activeShow.id].settings.activeLayout, index: $activeEdit.slide })
+          else if ($activeShow && GetLayout().length) outSlide.set({ id: $activeShow.id, layout: $shows[$activeShow.id].settings.activeLayout, index: 0 })
           // TODO: activeEdit && play media
         }}
         title="[[[Show Current Show/Slide]]]"
-        disabled={$outLocked || !$activeShow || !GetLayout().length}
+        disabled={$outLocked || !$activeShow || !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length}
         center
       >
         <Icon id="play" size={1.2} />
@@ -370,7 +381,7 @@
     <Button
       on:click={nextSlide}
       title="[[[NextSlide [ArrowRight]]]]"
-      disabled={$outLocked || !$activeShow || !GetLayout().length || ($outSlide && $outSlide.index + 1 >= length)}
+      disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index + 1 >= length : !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length)}
       center
     >
       <Icon id="next" size={1.2} />

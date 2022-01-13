@@ -68,8 +68,8 @@
         <!-- {#each Object.values(GetShows().active().slides) as item} -->
         <!-- {#each Object.values(getSlide($activeShow.id, Slide.id)) as item} -->
         <!-- {#each GetShows().active.slides[GetActiveLayout().slides[Slide.index].id].items as item} -->
-        {#if getSlide($outSlide.id, $outSlide.index)}
-          {#each getSlide($outSlide.id, $outSlide.index)?.items as item}
+        {#if getSlide($outSlide)}
+          {#each getSlide($outSlide)?.items as item}
             <Textbox {item} />
           {/each}
         {/if}

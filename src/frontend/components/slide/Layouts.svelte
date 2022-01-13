@@ -1,10 +1,11 @@
 <script lang="ts">
   import { activeShow, shows, slidesOptions } from "../../stores"
   import Button from "../inputs/Button.svelte"
-  import Layout from "../../classes/Layout"
   import { uid } from "uid"
   import Center from "../system/Center.svelte"
   import Icon from "../helpers/Icon.svelte"
+  import HiddenInput from "../inputs/HiddenInput.svelte"
+  import { history } from "../helpers/history"
 
   $: active = $activeShow!.id
   $: layouts = $shows[active].layouts
@@ -16,6 +17,24 @@
   //   return []
   //   // uid(16);
   // }
+
+  function addLayout(e: any) {
+    let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
+    if (e.ctrlKey) {
+      newData.layout = { ...$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout] }
+    }
+    history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: $activeShow! } })
+
+    // shows.update((s) => {
+    //   // TODO: copy active layout
+    //   // TODO: ctrl click = create empty
+    //   let newLayout = new Layout("unnamed")
+    //   let id = uid(16)
+    //   s[active].layouts[id] = newLayout
+    //   s[active].settings.activeLayout = id
+    //   return s
+    // })
+  }
 </script>
 
 <!-- TODO: ctrl scroll wheel zoom! -->
@@ -30,25 +49,14 @@
               s[active].settings.activeLayout = layout[0]
               return s
             })}
-          active={activeLayout === layout[0]}>{layout[1].name || "test"}</Button
+          active={activeLayout === layout[0]}
         >
+          <HiddenInput value={layout[1].name} on:edit={(e) => console.log("layout NAME: ", e.detail)} />
+        </Button>
       {/each}
     </span>
     <span style="display: flex; align-items: center;">
-      <Button
-        on:click={() => {
-          shows.update((s) => {
-            // TODO: copy active layout
-            // TODO: ctrl click = create empty
-            let newLayout = new Layout("unnamed")
-            let id = uid(16)
-            s[active].layouts[id] = newLayout
-            s[active].settings.activeLayout = id
-            return s
-          })
-        }}
-        title="[[[Add Layout]]]"
-      >
+      <Button on:click={addLayout} title="[[[Add Layout. ctrlclick=copy current]]]">
         <Icon size={1.3} id="add" />
       </Button>
       <div class="seperator" />

@@ -84,6 +84,9 @@
     color: var(--secondary-text);
     outline: none;
   }
+  button.dark.active {
+    background-color: var(--primary-darkest);
+  }
   button.active.border {
     outline-offset: -2px;
     /* outline: 2px solid var(--secondary); */

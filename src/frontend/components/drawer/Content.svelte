@@ -12,13 +12,12 @@
   export let bible: any
   export let searchValue: string
   export let firstMatch: null | string
-  console.log(firstMatch)
   $: active = $drawerTabsData[id].activeSubTab
 </script>
 
 <div class="main">
   {#if id === "shows"}
-    <Shows {id} {active} {searchValue} />
+    <Shows {id} {active} {searchValue} bind:firstMatch />
   {:else if id === "backgrounds"}
     <Backgrounds {active} />
   {:else if id === "overlays"}

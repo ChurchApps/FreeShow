@@ -8,7 +8,13 @@ export interface Project {
   name: string
   created: Date
   parent: string
-  shows: ShowRef[]
+  shows: ProjectShowRef[]
+}
+
+export interface ProjectShowRef extends ShowRef {
+  muted?: boolean
+  loop?: boolean
+  filters?: string
 }
 
 export interface ShowRef {

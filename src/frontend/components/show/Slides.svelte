@@ -19,15 +19,15 @@
   // $: zoom = (viewWidth - 20 - 0 - 0 - ($slidesOptions.columns - 1) * (10 + 0)) / $slidesOptions.columns / resolution.width
   $: id = $activeShow!.id
   $: currentShow = $shows[$activeShow!.id]
-  $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
-  $: console.log(layoutSlides)
+  $: activeLayout = $shows[$activeShow!.id].settings.activeLayout
+  $: layoutSlides = [$shows[$activeShow!.id].layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   let scrollElem: any
   let offset: number = -1
   // let behaviour: string = ""
   // setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)
   $: {
-    if (scrollElem && $outSlide !== null && $activeShow?.id === $outSlide?.id) {
+    if (scrollElem && $outSlide !== null && $activeShow!.id === $outSlide?.id && activeLayout === $outSlide?.layout) {
       let index = Math.max(0, $outSlide.index - ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0))
       offset = scrollElem.querySelector(".grid").children[index].offsetTop - 5
 
@@ -36,11 +36,15 @@
       // if (offset < scrollElem.scrollTop || offset > scrollElem.scrollTop + scrollElem.offsetHeight) offset = scrollElem.querySelector(".grid").children[s.index].offsetTop - 5
     }
   }
+
+  function wheel(e: any) {
+    if (e.ctrlKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
+  }
 </script>
 
 <!-- TODO: tab enter not woring -->
 
-<Autoscroll {offset} bind:scrollElem style="display: flex;">
+<Autoscroll on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
   <!-- on:drop={(e) => {
       if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
     }}
@@ -59,12 +63,12 @@
               layoutSlide={slide}
               index={i}
               color={slide.color}
-              active={$outSlide?.index === i && $outSlide?.id === id}
+              active={$outSlide?.index === i && $outSlide?.id === id && $outSlide?.layout === activeLayout}
               list={!$slidesOptions.grid}
               columns={$slidesOptions.columns}
               on:click={(e) => {
                 if (!$outLocked && !e.ctrlKey) {
-                  outSlide.set({ id, index: i })
+                  outSlide.set({ id, layout: activeLayout, index: i })
                   activeEdit.set({ slide: i, items: [] })
                   if (slide.background) {
                     let bg = currentShow.backgrounds[slide.background]

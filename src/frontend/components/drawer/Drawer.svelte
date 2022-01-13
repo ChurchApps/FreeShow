@@ -1,6 +1,6 @@
 <script lang="ts">
   import { selectTextOnFocus } from "../helpers/inputActions"
-  import { activeShow, dictionary, drawer, drawerTabsData, labelsDisabled } from "../../stores"
+  import { activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, projects } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
@@ -38,6 +38,7 @@
   }
   function mousemove(e: any) {
     if (mouse) {
+      autoDrawer = false
       let newHeight: number = window.innerHeight - e.clientY - mouse.offsetY
       if (newHeight < minHeight * 2) newHeight = minHeight
       else if (newHeight > maxHeight) newHeight = maxHeight
@@ -51,7 +52,7 @@
   function click(e: any) {
     if (!move && !(e?.target instanceof HTMLInputElement)) {
       if (height > minHeight) {
-        if (e?.target.classList.contains("top")) {
+        if (e === null || e?.target.classList.contains("top")) {
           drawer.set({ height: minHeight, stored: height })
         }
       } else {
@@ -75,7 +76,10 @@
       .filter((n) => n)
       .join(" ")
   function search() {
-    if (storeHeight !== null) click(null)
+    if (storeHeight !== null) {
+      autoDrawer = true
+      click(null)
+    }
     // if (activeTab === "shows") {
     // }
   }
@@ -88,18 +92,25 @@
     activeVerses: [],
   }
 
-  let firstMatch: null | string = null
+  let firstMatch: null | any = null
   let searchElem: any
+  let autoDrawer: boolean = false
   function keydown(e: any) {
     if (document.activeElement === document.body && !e.ctrlKey && !e.altKey) {
       // Alphabet upper case | Alphabet lower case
       if (/^[A-Z]{1}$/i.test(e.key)) searchElem.focus()
     } else if (e.key === "Enter") {
       // TODO: first match
-      if (document.activeElement === searchElem && searchValue.length && firstMatch) {
-        searchElem.select()
-        history({ id: activeTab === "shows" ? "addShow" : "addShow", newData: firstMatch })
+      if (document.activeElement === searchElem && searchValue.length && firstMatch && $activeProject) {
         console.log(firstMatch)
+        searchElem.select()
+        history({ id: activeTab === "shows" ? "addShow" : "addShow", newData: firstMatch.id })
+        activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
+        searchValue = ""
+        if (autoDrawer && storeHeight === null) {
+          click(null)
+          autoDrawer = false
+        }
       }
     }
   }
@@ -143,7 +154,7 @@
     <!-- TODO: expand drawer on input: -->
     <input
       bind:this={searchElem}
-      class="search"
+      class="search edit"
       type="text"
       placeholder="Search keywords... (Seperated by comma)"
       bind:value={searchValue}
