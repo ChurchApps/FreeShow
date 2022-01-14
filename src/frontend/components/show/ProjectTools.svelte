@@ -1,20 +1,36 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
+  import { activeProject, projects } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
   import Resizeable from "../system/Resizeable.svelte"
   import Notes from "./tools/Notes.svelte"
 
   const tabs: TabsObj = {
     notes: { name: "tools.notes", icon: "notes" },
-    schedule: { name: "tools.schedule", icon: "schedule" }, // program
+    // schedule: { name: "tools.schedule", icon: "schedule" }, // program
     timers: { name: "tools.timers", icon: "timer" },
-    actions: { name: "tools.actions", icon: "actions" }, // ... (start video at 10:00)
+    // actions: { name: "tools.actions", icon: "actions" }, // ... (start video at 10:00)
   }
   let active: string = Object.keys(tabs)[0]
 
   // let elem: any
   // let height: number = elem?.closest(".left").offsetHeight / 2
   // // bind:this={elem} style="height: {height}px;"
+
+  let note: string = ""
+  $: {
+    let n = $projects[$activeProject!].notes
+    if (note !== n) note = n
+  }
+
+  function edit(e: any) {
+    if ($projects[$activeProject!].notes !== e.detail) {
+      projects.update((a) => {
+        a[$activeProject!].notes = e.detail
+        return a
+      })
+    }
+  }
 </script>
 
 <Resizeable id="projectTools" side="bottom" maxWidth={window.innerHeight * 0.75}>
@@ -23,7 +39,7 @@
     <Tabs {tabs} bind:active />
     <div class="content">
       {#if active === "notes"}
-        <Notes value="" />
+        <Notes value={note} on:edit={edit} />
       {/if}
     </div>
   </div>

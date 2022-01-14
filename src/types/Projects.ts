@@ -6,6 +6,7 @@ export interface Projects {
 export interface Project {
   id?: string
   name: string
+  notes: string
   created: Date
   parent: string
   shows: ProjectShowRef[]
@@ -14,7 +15,7 @@ export interface Project {
 export interface ProjectShowRef extends ShowRef {
   muted?: boolean
   loop?: boolean
-  filters?: string
+  filter?: any[]
 }
 
 export interface ShowRef {

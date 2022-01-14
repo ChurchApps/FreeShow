@@ -160,6 +160,20 @@
     "zeros": "Zeros",
     "overrun": "Overrun Color"
   },
+  "filter": {
+    "blur": "Blur",
+    "brightness": "Brightness",
+    "contrast": "Contrast",
+    "grayscale": "Grayscale",
+    "hue-rotate": "Hue Rotate",
+    "invert": "Invert",
+    "opacity": "Opacity",
+    "saturate": "Saturate",
+    "sepia": "Sepia"
+  },
+  "transition": {
+    "fade": "Fade"
+  },
   "month": {
     "1": "January",
     "2": "February",

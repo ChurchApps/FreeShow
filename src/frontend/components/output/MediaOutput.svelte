@@ -2,7 +2,7 @@
   import { fade } from "svelte/transition"
   import { OUTPUT } from "../../../types/Channels"
   import type { Transition } from "../../../types/Show"
-  import { mediaFolders, outBackground, outputWindow } from "../../stores"
+  import { mediaFolders, outBackground, outputWindow, videoExtensions } from "../../stores"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Camera from "./Camera.svelte"
   import Window from "./Window.svelte"
@@ -19,10 +19,9 @@
 
   $: if (!path.length && type === "media") path = $mediaFolders[id].path + "/" + name || ""
   $: extension = path.match(/\.[0-9a-z]+$/i)?.[0]! || ""
-  $: isVideo = extension.includes("mp4") || extension.includes("mov")
+  $: isVideo = $videoExtensions.includes(extension.substring(1))
 
   // $: if ($outputWindow && !videoData.muted) videoData.muted = $outputWindow
-  let loop = true
   let alt = "Could not find image!"
 
   let width: number = 0
@@ -33,6 +32,8 @@
   //   window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
   // })
 
+  let filter: string = ""
+
   let hasLoaded: boolean = false
   let autoMute: boolean = false
   function loaded() {
@@ -41,6 +42,8 @@
       hasLoaded = true
 
       if ($outBackground?.muted !== undefined) videoData.muted = $outBackground.muted
+      if ($outBackground?.loop !== undefined) videoData.loop = $outBackground.loop
+      // if ($outBackground?.filter !== undefined) filter = $outBackground.filter
       else videoData.muted = false
 
       if (!videoData.muted) {
@@ -68,34 +71,49 @@
       hasLoaded = false
     }
   }
+
+  $: if ($outBackground) setUpdater()
+  // let bg: any = null
+  let oldFilter: string = ""
+  setUpdater()
+  function setUpdater() {
+    let temp: any = { ...$outBackground }
+    if (temp.filter !== undefined) {
+      filter = temp.filter
+      delete temp.filter
+    }
+
+    if (oldFilter === filter) videoTime = 0
+    else oldFilter = filter
+  }
 </script>
 
 <!-- TODO: display image stretch / scale -->
 <div transition:fade={transition} bind:clientWidth={width} bind:clientHeight={height}>
   {#if type === "media"}
     {#if isVideo}
-      {#key $outBackground}
-        <!-- TODO: autoplay.... -->
-        <video
-          class="media"
-          style={getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, "cover")}
-          bind:this={video}
-          on:loadedmetadata={loaded}
-          on:playing={playing}
-          bind:currentTime={videoTime}
-          bind:paused={videoData.paused}
-          bind:duration={videoData.duration}
-          bind:muted={videoData.muted}
-          src={path}
-          autoplay
-          {loop}
-        >
-          <track kind="captions" />
-        </video>
-      {/key}
+      <!-- {#key bg} -->
+      <!-- TODO: autoplay.... -->
+      <video
+        class="media"
+        style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};filter: {filter};"
+        bind:this={video}
+        on:loadedmetadata={loaded}
+        on:playing={playing}
+        bind:currentTime={videoTime}
+        bind:paused={videoData.paused}
+        bind:duration={videoData.duration}
+        bind:muted={videoData.muted}
+        src={path}
+        autoplay
+        loop={videoData.loop || false}
+      >
+        <track kind="captions" />
+      </video>
+      <!-- {/key} -->
     {:else}
       <!-- style={getStyleResolution({ width: image?.naturalWidth || 0, height: image?.naturalHeight || 0 }, width, height, "cover")} -->
-      <img class="media" style="object-fit: contain;width: 100%;height: 100%;" src={path} {alt} />
+      <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};" src={path} {alt} />
     {/if}
   {:else if type === "screen"}
     <Window {id} class="media" />

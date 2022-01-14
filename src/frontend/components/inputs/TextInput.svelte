@@ -1,4 +1,4 @@
-<input type="text" value={$$props.value} style={$$props.style} class:center={$$props.center} on:input on:change />
+<input type={$$props.type || "text"} class="edit" value={$$props.value} style={$$props.style} class:center={$$props.center} on:input on:change />
 
 <style>
   input {

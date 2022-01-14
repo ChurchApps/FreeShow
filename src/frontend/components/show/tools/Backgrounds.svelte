@@ -51,6 +51,8 @@
   // TODO: check if file exists!!!
 </script>
 
+<!-- TODO: transition type & duration -->
+
 <div class="main">
   {#if bgs.length}
     {#each bgs as background}

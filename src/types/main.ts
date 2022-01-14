@@ -17,10 +17,10 @@ export interface Time {
   h: string
 }
 
-export type SelectIds = "slide" | "group" | "global_group" | "show" | "show_drawer" | "project" | "folder" | "file" | "navigation" | "media"
+export type SelectIds = "slide" | "group" | "global_group" | "show" | "show_drawer" | "project" | "folder" | "files" | "navigation" | "media"
 export interface Selected {
   id: null | SelectIds
-  elems: any[]
+  data: any[]
 }
 
 // export type DropIds = "slide" | "slide_group" | "show" | "show_drawer" | "project" | "folder" | "file"

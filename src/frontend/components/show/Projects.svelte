@@ -90,6 +90,13 @@
       }
     }
   }
+
+  function newShow(isPrivate: boolean = false) {
+    let id: any = "newShow"
+    if (isPrivate) id = "newPrivateShow"
+    // , newData: { project: $activeProject, type: "private" }
+    history({ id, location: { page: "show", project: $activeProject! } })
+  }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -138,13 +145,13 @@
   {:else if $activeProject !== null}
     <div class="list context #project">
       <Autoscroll {offset} bind:scrollElem>
-        <DropArea id="project" selectChildren>
+        <DropArea id="project" selectChildren let:fileOver file>
           <!-- {/* WIP: live on double click?? */} -->
           {#if $projects[$activeProject].shows.length}
             {#each $projects[$activeProject].shows as show, index}
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
               <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-              <SelectElem id="show" data={{ id: show.id, index }} trigger="column" draggable>
+              <SelectElem id="show" data={{ id: show.id, index }} {fileOver} trigger="column" draggable>
                 <ShowButton id={show.id} {show} {index} class="context #{show.type ? '' : 'show'}__project" icon />
               </SelectElem>
               <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
@@ -156,10 +163,10 @@
       </Autoscroll>
     </div>
     <div class="tabs">
-      <Button on:click={() => history({ id: "newShow", newData: { project: $activeProject } })} center title={$dictionary.new?.show}>
+      <Button on:click={() => newShow()} center title={$dictionary.new?.show}>
         <Icon id="showIcon" />
       </Button>
-      <Button on:click={() => history({ id: "newPrivateShow", newData: { project: $activeProject, type: "private" } })} center title={$dictionary.new?._private}>
+      <Button on:click={() => newShow(true)} center title={$dictionary.new?._private}>
         <Icon id="private" />
       </Button>
     </div>

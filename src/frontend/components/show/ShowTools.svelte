@@ -16,38 +16,47 @@
   let active: string = Object.keys(tabs)[0]
 
   $: showId = $activeShow!.id
-  let note: string = $shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].notes
+  let note: string = ""
   $: {
-    if ($shows[showId]?.settings.activeLayout) note = $shows[showId].layouts[$shows[showId].settings.activeLayout].notes
-    if (note.length && $shows[showId]) {
-      $shows[showId].layouts[$shows[showId].settings.activeLayout].notes = note
+    let n = $shows[showId]?.layouts[$shows[showId].settings.activeLayout].notes
+    if (note !== n) note = n
+    // if (note.length && $shows[showId]) {
+    //   $shows[showId].layouts[$shows[showId].settings.activeLayout].notes = note
+    // }
+  }
+
+  function edit(e: any) {
+    if ($shows[showId].layouts[$shows[showId].settings.activeLayout].notes !== e.detail) {
+      shows.update((a) => {
+        a[showId].layouts[$shows[showId].settings.activeLayout].notes = e.detail
+        return a
+      })
     }
   }
 </script>
 
-<!-- <Resizeable id="showTools" side="bottom" maxWidth={window.innerHeight / 2}> -->
 <div class="main">
-  <!-- TODO: if type !== "video" -->
   <Tabs {tabs} bind:active />
 
   {#if $shows[showId]}
-    <div class="content">
-      {#if active === "groups"}
+    {#if active === "groups"}
+      <div class="content">
         <SlideGroups />
-      {:else if active === "backgrounds"}
+      </div>
+    {:else if active === "backgrounds"}
+      <div class="content">
         <Backgrounds />
-      {:else if active === "transitions"}
-        <Transitions />
-      {:else if active === "notes"}
-        <Notes bind:value={note} />
-      {:else}
-        {active}
-      {/if}
-    </div>
+      </div>
+    {:else if active === "transitions"}
+      <Transitions />
+    {:else if active === "notes"}
+      <div class="content">
+        <Notes on:edit={edit} value={note} />
+      </div>
+    {/if}
   {/if}
 </div>
 
-<!-- </Resizeable> -->
 <style>
   .main {
     display: flex;
@@ -61,7 +70,8 @@
   }
 
   .content {
-    overflow-y: auto;
     height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 </style>

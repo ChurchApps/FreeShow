@@ -5,6 +5,7 @@
   export let id: "slides" | "slide" | "shows" | "project" | "projects" | "drawer"
   export let selectChildren: boolean = false
   export let hoverTimeout: number = 500
+  export let file: boolean = false
   let active: boolean = false
   let hover: boolean = false
 
@@ -13,6 +14,7 @@
   let count: number = 0
   function enter() {
     if (active && selectChildren) {
+      //  || fileOver
       count++
       setTimeout(() => {
         if (count > 0) hover = false
@@ -22,34 +24,75 @@
 
   function leave(_e: any) {
     if (active && selectChildren) {
-      count--
+      //  || fileOver
+      count = Math.max(0, count - 1)
       setTimeout(() => {
         if (count === 0) hover = true
       }, 10)
     }
   }
+
+  function getFiles(e: any): any[] {
+    let files = []
+    // DataTransferItemList interface
+    if (e.dataTransfer.items) {
+      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+        // If dropped items aren't files, reject them
+        if (e.dataTransfer.items[i].kind === "file") {
+          files.push(e.dataTransfer.items[i].getAsFile())
+        }
+      }
+    } else {
+      // DataTransfer interface
+      for (let i = 0; i < e.dataTransfer.files.length; i++) {
+        files.push(e.dataTransfer.files[i])
+      }
+    }
+    return files
+  }
+
+  let fileOver: boolean = false
 </script>
 
 <svelte:window
   on:dragend={() => {
-    selected.set({ id: null, elems: [] })
+    selected.set({ id: null, data: [] })
     hover = false
+    // fileOver = false
   }}
-  on:dragstart={() => (hover = active)}
+  on:dragstart={() => {
+    hover = active
+  }}
 />
+<!-- on:mousemove={() => {
+    if (fileOver) hover = true
+  }}
+  on:click={() => {
+    fileOver = false
+    hover = false
+  }} -->
 
 <div
   class="droparea"
   class:hover
-  on:drop={(e) => {
-    if (validateDrop(id, $selected.id, true)) ondrop(e, id)
+  on:drop|preventDefault={(e) => {
+    let files = getFiles(e)
+    if (files.length) selected.set({ id: "files", data: files })
+    fileOver = false
+    hover = false
+    console.log(files)
+    console.log(id)
+
+    if (validateDrop(id, $selected.id, true) || files.length) ondrop(e, id)
   }}
-  on:dragover|preventDefault
+  on:dragover|preventDefault={(e) => {
+    if (file && e.dataTransfer?.items[0]?.kind === "file") fileOver = true
+  }}
   on:dragenter={enter}
   on:dragleave={leave}
 >
   <span class="ParentBlock">
-    <slot />
+    <slot {fileOver} />
   </span>
 </div>
 {#if hover}
@@ -77,6 +120,8 @@
     height: 100%;
     width: 100%;
     position: absolute;
+    top: 0;
+    left: 0;
     display: flex;
     align-items: center;
     justify-content: center;

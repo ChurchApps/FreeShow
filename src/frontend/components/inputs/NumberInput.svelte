@@ -10,6 +10,7 @@
   export let step: number = 1
   export let min: number = 0
   export let max: number = 1000
+  export let buttons: boolean = true
 
   const dispatch = createEventDispatcher()
   const increment = () => dispatch("change", Math.min(Number(value) + step, max).toFixed(decimals))
@@ -35,6 +36,12 @@
       }, 500)
     }
   }
+
+  function wheel(e: any) {
+    e.preventDefault()
+    if (e.deltaY > 0) decrement()
+    else increment()
+  }
 </script>
 
 <svelte:window
@@ -46,20 +53,24 @@
   }}
 />
 
-<span class="main" on:mousedown={mousedown}>
-  <Button id="decrement" on:click={decrement} center style={"flex: 1;"} disabled={Number(value) - step < min}>
-    <Icon id="remove" size={1.2} white />
-  </Button>
+<span class="numberInput" on:mousedown={mousedown} on:wheel={wheel}>
+  {#if buttons}
+    <Button id="decrement" on:click={decrement} center style={"flex: 1;"} disabled={Number(value) - step < min}>
+      <Icon id="remove" size={1.2} white />
+    </Button>
+  {/if}
   <span class="input">
     <TextInput value={(value * inputMultiplier).toFixed()} on:change={input} center />
   </span>
-  <Button id="increment" on:click={increment} center style={"flex: 1;"} disabled={Number(value) + step > max}>
-    <Icon id="add" size={1.2} white />
-  </Button>
+  {#if buttons}
+    <Button id="increment" on:click={increment} center style={"flex: 1;"} disabled={Number(value) + step > max}>
+      <Icon id="add" size={1.2} white />
+    </Button>
+  {/if}
 </span>
 
 <style>
-  .main {
+  .numberInput {
     display: flex;
     align-items: center;
     background-color: var(--primary-darker);

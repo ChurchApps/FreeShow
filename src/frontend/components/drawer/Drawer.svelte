@@ -117,9 +117,8 @@
 
   // TODO: on show get activeshow, store n bakcground
   let stored: any = null
-
   $: {
-    if (activeTab === "backgrounds" && ($activeShow?.type === null || $activeShow?.type === "private")) stored = JSON.stringify($activeShow)
+    if (activeTab === "backgrounds" && ($activeShow?.type === undefined || $activeShow?.type === "show" || $activeShow?.type === "private")) stored = JSON.stringify($activeShow)
     else if (activeTab === "shows" && stored !== null) {
       activeShow.set(JSON.parse(stored))
       stored = null

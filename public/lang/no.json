@@ -155,6 +155,20 @@
     "zeros": "Null",
     "overrun": "Utløpt Farge"
   },
+  "filter": {
+    "blur": "Uklarhet",
+    "brightness": "Lysstyrke",
+    "contrast": "Kontrast",
+    "grayscale": "Gråtone",
+    "hue-rotate": "Rotere Fargetone",
+    "invert": "Inverter",
+    "opacity": "Gjennomsiktighet",
+    "saturate": "Metning",
+    "sepia": "Sepia"
+  },
+  "transition": {
+    "fade": "Fade"
+  },
   "month": {
     "1": "januar",
     "2": "februar",

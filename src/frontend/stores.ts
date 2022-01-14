@@ -1,3 +1,4 @@
+import type { Transition } from "./../types/Show"
 import { Writable, writable } from "svelte/store"
 import type { StageShows } from "./../types/Stage"
 import type { DrawTools, Draw, DrawSettings } from "./../types/Draw"
@@ -29,7 +30,7 @@ export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, items: [
 export const activePage: Writable<TopViews> = writable("show")
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
-export const selected: Writable<Selected> = writable({ id: null, elems: [] })
+export const selected: Writable<Selected> = writable({ id: null, data: [] })
 
 // project
 export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
@@ -41,6 +42,11 @@ export const outBackground: Writable<null | OutBackground> = writable(null)
 export const outSlide: Writable<null | OutSlide> = writable(null)
 export const outOverlays: Writable<string[]> = writable([])
 export const outAudio: Writable<OutAudio[]> = writable([])
+interface OutTransition extends Transition {
+  action: string
+  slide?: number
+}
+export const outTransition: Writable<null | OutTransition> = writable(null)
 // export const output: Writable<Output> = writable({
 //   // activeSlides
 //   background: null, // video/image
@@ -426,12 +432,14 @@ export const shows: Writable<Shows> = writable({
 export const projects: Writable<Projects> = writable({
   fhsjoe: {
     name: "First",
+    notes: "",
     created: new Date("2021-07-25"),
     parent: "/",
     shows: [{ id: "nåde" }, { id: "ertfgggf" }, { id: "Info" }, { id: "nåde" }, { type: "video", name: "Truth", id: "C:/movies/" }],
   },
   feskof: {
     name: "Meeting",
+    notes: "",
     created: new Date("2021-08-06"),
     parent: "feriwp",
     shows: [{ id: "ertfgggf" }, { id: "nåde" }, { id: "gere" }], // , access: "Private"
@@ -608,7 +616,7 @@ export const defaultName: Writable<null | "date" | string> = writable("date")
 
 // extensions
 export const videoExtensions: Writable<string[]> = writable(["mp4", "mov"])
-export const imageExtensions: Writable<string[]> = writable(["png", "jpg", "jpeg"])
+export const imageExtensions: Writable<string[]> = writable(["png", "jpg", "jpeg", "jfif"])
 
 // empty
 export const dictionary: Writable<Dictionary> = writable({})

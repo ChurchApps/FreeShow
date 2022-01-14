@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, outBackground } from "../../stores"
+  import { activeProject, activeShow, outBackground, projects } from "../../stores"
   import Layouts from "../slide/Layouts.svelte"
   import Slides from "./Slides.svelte"
   import Splash from "../main/Splash.svelte"
@@ -54,8 +54,27 @@
   }
 
   function videoClick(e: any) {
-    if (e.ctrlKey) outBackground.set({ path: show?.id, startAt: videoTime })
-    else outBackground.set({ path: show?.id })
+    let data: any = { muted: false, loop: false, filter: "" }
+    if ($activeProject && $activeShow!.index !== undefined) {
+      data.muted = $projects[$activeProject].shows[$activeShow!.index!].muted || false
+      data.loop = $projects[$activeProject].shows[$activeShow!.index!].loop || false
+      if (filter) data.filter = filter
+    }
+
+    if (e.ctrlKey) outBackground.set({ path: show?.id, startAt: videoTime, ...data })
+    else outBackground.set({ path: show?.id, ...data })
+  }
+
+  let filter: string = ""
+  $: {
+    if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject].shows[$activeShow.index].filter) {
+      let style = ""
+      console.log($projects[$activeProject].shows[$activeShow.index].filter)
+      Object.entries($projects[$activeProject].shows[$activeShow.index].filter!).forEach(([id, a]: any) => {
+        style += ` ${id}(${a})`
+      })
+      filter = style
+    } else filter = ""
   }
 </script>
 
@@ -68,7 +87,7 @@
             <div class="media" style="flex: 1;overflow: hidden;">
               <HoverButton icon="play" size={10} on:click={videoClick} title="[[[Play video output..., ctrlclick to start at current pos]]]">
                 <video
-                  style="width: 100%;height: 100%;"
+                  style="width: 100%;height: 100%;filter: {filter};"
                   src={show.id}
                   on:loadedmetadata={loaded}
                   on:playing={playing}
@@ -76,7 +95,6 @@
                   bind:paused={videoData.paused}
                   bind:duration={videoData.duration}
                   bind:muted={videoData.muted}
-                  loop
                 >
                   <track kind="captions" />
                 </video>
@@ -94,8 +112,8 @@
           {/key}
         {:else}
           <div class="media" style="flex: 1;overflow: hidden;">
-            <HoverButton icon="play" size={10} on:click={() => outBackground.set({ path: show?.id })} title="[[[Play image output...]]]">
-              <Image style="width: 100%;height: 100%;object-fit: contain;" src={show.id} alt={show.name || ""} />
+            <HoverButton icon="play" size={10} on:click={() => outBackground.set({ path: show?.id, filter })} title="[[[Play image output...]]]">
+              <Image style="width: 100%;height: 100%;object-fit: contain;filter: {filter};" src={show.id} alt={show.name || ""} />
             </HoverButton>
           </div>
         {/if}

@@ -1,21 +1,27 @@
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
-import { projects, activeProject, selected, activeShow, shows, videoExtensions } from "./../../stores"
+import { projects, activeProject, selected, activeShow, shows, videoExtensions, imageExtensions } from "./../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
 import { HistoryIDs, history } from "./history"
 import { get } from "svelte/store"
 
 // TODO: file...
 const areas: any = {
-  // slides: ["group"], // , "media"
+  slides: ["media"], // group
   slide: ["media", "overlay", "sound"],
   projects: [],
   project: ["show_drawer", "media"],
-  drawer: ["file"],
+  // drawer: ["file"],
 }
 const areaChildren: any = {
   project: ["show", "media", "show_drawer"],
-  slide: ["slide", "group", "global_group"],
+  slide: ["slide", "group", "global_group", "media"],
 }
+const files: any = {
+  project: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
+  slides: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
+  slide: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
+}
+console.log(files)
 
 export function validateDrop(id: string, selected: any, children: boolean = false): boolean {
   return areas[id]?.includes(selected) || (children && areaChildren[id]?.includes(selected))
@@ -42,7 +48,7 @@ export function ondrop(e: any, id: string) {
   let index = JSON.parse(elem?.getAttribute("data") || "{}").index
   if (index !== undefined && trigger === "end") index++
 
-  console.log("DRAG: ", sel.id, sel.elems)
+  console.log("DRAG: ", sel.id, sel.data)
   console.log("DROP: ", id, index, trigger)
 
   switch (id) {
@@ -52,16 +58,21 @@ export function ondrop(e: any, id: string) {
       let projectShows = get(projects)[get(activeProject)!].shows
       if (index === undefined) index = projectShows.length
 
-      let data: any[] = sel.elems
-      if (sel.id === "media")
-        data = data.map((a) => {
-          let name: string = a.path.substring(a.path.lastIndexOf("\\") + 1)
-          const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
-          let type = "image"
-          if (get(videoExtensions).includes(extension.substring(1))) type = "video"
-          // name.slice(0, name.lastIndexOf("."))
-          return { name: null, id: a.path, type }
-        })
+      let data: any[] = sel.data
+      if (sel.id === "media" || sel.id === "files") {
+        data = data
+          .map((a) => {
+            let name: string = a.name.includes(".") ? a.name : a.path.substring(a.path.lastIndexOf("\\") + 1)
+            const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
+            let type = "image"
+            if (get(videoExtensions).includes(extension.substring(1))) type = "video"
+            let out: any = { name: null, id: a.path, type }
+            if (sel.id === "files" && !files[id].includes(extension.substring(1))) out = null
+            // name.slice(0, name.lastIndexOf("."))
+            return out
+          })
+          .filter((a) => a)
+      }
 
       oldData = [...projectShows]
       if (sel.id === "show") newData = mover(projectShows, getIndexes(data), index)
@@ -70,11 +81,22 @@ export function ondrop(e: any, id: string) {
     case "slide":
     case "slides":
       location = { page: "show", show: get(activeShow), layout: get(shows)[get(activeShow)!.id].settings.activeLayout }
-      if (sel.id === "media") {
+      if (sel.id === "media" || sel.id === "files") {
         // TODO: move multiple add to possible slides
         historyID = "showMedia"
+        console.log(index)
+
         location.layoutSlide = index
-        newData = sel.elems[0]
+        let data: any[] = sel.data
+        // check files
+        if (sel.id === "files") {
+          data = []
+          sel.data.forEach((a) => {
+            const [extension] = a.name.match(/\.[0-9a-z]+$/i) || [""]
+            if (files[id].includes(extension.substring(1))) data.push({ path: a.path, name: a.name })
+          })
+        }
+        newData = data[0]
       } else if (sel.id === "slide" || sel.id === "group") {
         historyID = "slide"
         let ref: any[] = GetLayoutRef()
@@ -92,7 +114,7 @@ export function ondrop(e: any, id: string) {
         let sortedLayout: any[] = []
 
         if (sel.id === "slide") {
-          let selected: number[] = getIndexes(sel.elems)
+          let selected: number[] = getIndexes(sel.data)
 
           ref = ref.filter((a: any, i: number) => {
             if (selected.includes(i)) {
@@ -107,7 +129,7 @@ export function ondrop(e: any, id: string) {
         } else if (sel.id === "group") {
           let movedLayout: any[] = []
 
-          sel.elems.forEach((a) => {
+          sel.data.forEach((a) => {
             moved.push(...GetSlideLayoutRef(a.id))
             movedLayout.push(...GetSlideLayout(a.id))
           })
@@ -127,7 +149,7 @@ export function ondrop(e: any, id: string) {
         newData = changeLayout(sortedLayout, slides, newLayoutRef, moved, newIndex)
       } else if (sel.id === "global_group") {
         historyID = "newSlide"
-        newData = { slides: sel.elems, index }
+        newData = { slides: sel.data, index }
       }
       break
 
@@ -139,7 +161,7 @@ export function ondrop(e: any, id: string) {
   console.log(newData)
 
   if (historyID) history({ id: historyID, oldData, newData, location })
-  selected.set({ id: null, elems: [] })
+  selected.set({ id: null, data: [] })
 }
 
 function changeParent(slides: any, parent: any, ref: any) {
@@ -179,7 +201,7 @@ function changeLayout(layout: any, slides: any, layoutRef: any, moved: any, inde
     // set current parent
     if (ref.newType === "parent" || (ref.newType === undefined && ref.type === "parent")) parent = ref.id
     // update slide children
-    slides = changeParent(slides, parent, ref)
+    slides = changeParent(JSON.parse(JSON.stringify(slides)), parent, ref)
 
     // remove any null value
     Object.keys(layout[i]).forEach((key: string) => {

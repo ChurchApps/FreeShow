@@ -3,7 +3,7 @@ import type { Show } from "./../../types/Show"
 
 export class ShowObj implements Show {
   name: string
-  private: boolean
+  private?: boolean
   category: any
   settings: any
   timestamps: any
@@ -21,12 +21,12 @@ export class ShowObj implements Show {
       activeLayout: layoutID,
       template: null,
     }
-    ;(this.timestamps = {
+    this.timestamps = {
       created,
       modified: null,
       used: null,
-    }),
-      (this.meta = {})
+    }
+    this.meta = {}
     this.slides = {}
     this.layouts = { [layoutID]: { name: "", notes: "", slides: [] } }
     this.backgrounds = {}

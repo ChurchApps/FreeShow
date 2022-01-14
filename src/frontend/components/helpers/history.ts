@@ -28,13 +28,16 @@ import { getGroup } from "./getGroup"
 
 export type HistoryPages = "drawer" | "show" | "edit" | "stage"
 export type HistoryIDs =
+  // edit
   | "textStyle"
   | "deleteItem"
   | "itemStyle"
   | "itemAlign"
+  | "slideStyle"
+  // stage
   | "stageItemAlign"
   | "stageItemStyle"
-  | "slideStyle"
+  // new
   | "newMediaFolder"
   | "newProject"
   | "newFolder"
@@ -44,14 +47,19 @@ export type HistoryIDs =
   | "newShowsCategory"
   | "newSlide"
   | "newItem"
+  // add
   | "addShow"
   | "addLayout"
+  // show
   | "slide"
   | "shows"
+  | "showMedia"
+  // project
   | "project"
   | "projects"
   | "drawer"
-  | "showMedia"
+  // showTools
+  | "transition"
 
 export interface History {
   id: HistoryIDs
@@ -59,6 +67,7 @@ export interface History {
   newData?: any
   location?: {
     page: HistoryPages
+    project?: string
     show?: ShowRef
     layout?: string
     layoutSlide?: number
@@ -68,7 +77,7 @@ export interface History {
 }
 
 // override previous history
-const override = ["textStyle", "deleteItem", "itemStyle", "itemAlign", "stageItemAlign", "stageItemStyle", "slideStyle"]
+const override = ["textStyle", "deleteItem", "itemStyle", "itemAlign", "stageItemAlign", "stageItemStyle", "slideStyle", "transition"]
 
 export function history(obj: History, undo: null | boolean = null) {
   // if (undo) {
@@ -174,7 +183,7 @@ export function history(obj: History, undo: null | boolean = null) {
           let name: string = ""
           let created: Date = new Date()
           if (get(defaultName) === "date") name = dateToString(created)
-          project = { name, created, parent: obj.oldData || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
+          project = { name, notes: "", created, parent: obj.oldData || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
           id = uid()
           obj.newData = project
           obj.oldData = id
@@ -242,24 +251,31 @@ export function history(obj: History, undo: null | boolean = null) {
       // new Show()
       let category: null | string = null
       if (get(drawerTabsData).shows.activeSubTab !== "all") category = get(drawerTabsData).shows.activeSubTab
-      obj.newData = new ShowObj(obj.id === "newPrivateShow", category)
+      if (!obj.newData?.show) obj.newData = { show: new ShowObj(obj.id === "newPrivateShow", category) }
       console.log(obj.newData)
 
-      obj.oldData = console.log(obj.newData)
-      let id: string = uid(16)
+      // obj.oldData = console.log(obj.newData)
+      let id: string = obj.newData.id
+      if (!id) {
+        id = uid(16)
+        obj.newData.id = id
+      }
       // obj.id === "newShowDrawer"
       shows.update((s) => {
-        s[id] = obj.newData
+        s[id] = obj.newData.show
         return s
       })
+
+      let as: any = { id }
       // history addShow...
       if (obj.id !== "newShowDrawer" && activeProject !== null) {
         projects.update((p) => {
-          p[get(activeProject)!].shows.push({ id })
+          p[obj.location!.project!].shows.push(as)
           return p
         })
+        as.index = get(projects)[obj.location!.project!].shows.length - 1
       }
-      // TODO: remove search filter
+      activeShow.set(as)
       break
     case "newShowsCategory":
       categories.update((c) => {
@@ -415,6 +431,20 @@ export function history(obj: History, undo: null | boolean = null) {
           }
           // a[obj.location!.show!.id].layouts[obj.location!.layout!].slides[obj.location!.layoutSlide!].background = id
         }
+        return a
+      })
+      break
+    // show tools
+    case "transition":
+      shows.update((a) => {
+        let ref: any[] = GetLayoutRef(obj.location!.show!.id, obj.location!.layout!)
+        let index = obj.location!.layoutSlide!
+        let slides = a[obj.location!.show!.id].layouts[obj.location!.layout!].slides
+        let slide: any
+        if (ref[index].type === "child") slide = slides[ref[index].layoutIndex].children[ref[index].id]
+        else slide = slides[ref[index].index]
+        if (obj.newData?.duration && obj.newData.duration > 0) slide.transition = obj.newData
+        else delete slide.transition
         return a
       })
       break

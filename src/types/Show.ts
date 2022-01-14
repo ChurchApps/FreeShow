@@ -67,6 +67,7 @@ export interface Backgrounds {
   // name?: string
   path: string
   muted?: boolean
+  loop?: boolean
   filters?: string
 }
 
@@ -77,6 +78,7 @@ export interface SlideData {
   children?: any // layout slide
   color?: null | string
   transition?: Transition
+  end?: boolean
   timer?: number
   background?: string // set backgorund action?
   overlays?: {}
@@ -104,7 +106,7 @@ export interface OutBackground {
   startAt?: number
   muted?: boolean
   loop?: boolean
-  filters?: string
+  filter?: string
   // name?: string
   type?: "media" | "screen" | "camera"
 }

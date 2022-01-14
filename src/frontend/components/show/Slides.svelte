@@ -2,7 +2,7 @@
   // import {flip} from 'svelte/animate';
   // import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, slidesOptions, outSlide, activeEdit, outLocked, outBackground } from "../../stores"
+  import { shows, activeShow, slidesOptions, outSlide, activeEdit, outLocked, outBackground, outTransition } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
   import DropArea from "../system/DropArea.svelte"
@@ -20,6 +20,7 @@
   $: id = $activeShow!.id
   $: currentShow = $shows[$activeShow!.id]
   $: activeLayout = $shows[$activeShow!.id].settings.activeLayout
+  // $: layoutSlides = GetLayout($activeShow!.id, activeLayout)
   $: layoutSlides = [$shows[$activeShow!.id].layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   let scrollElem: any
@@ -39,6 +40,34 @@
 
   function wheel(e: any) {
     if (e.ctrlKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
+  }
+
+  function slideClick(e: any, slide: any, index: number) {
+    if (!$outLocked && !e.ctrlKey) {
+      outSlide.set({ id, layout: activeLayout, index })
+      activeEdit.set({ slide: index, items: [] })
+      if (slide.background) {
+        let bg = currentShow.backgrounds[slide.background]
+        outBackground.set({ path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
+      }
+
+      // transition
+      let t = slide.transition
+      if (t && t.duration > 0) {
+        t.action = "nextSlide"
+        outTransition.set(t)
+      } else outTransition.set(null)
+    }
+  }
+
+  // disable slides that is after end (only visual)
+  let endIndex: null | number = null
+  $: {
+    if (layoutSlides.length) {
+      let index = layoutSlides.findIndex((a) => a.end === true)
+      if (index >= 0) endIndex = index
+      else endIndex = null
+    } else endIndex = null
   }
 </script>
 
@@ -64,18 +93,10 @@
               index={i}
               color={slide.color}
               active={$outSlide?.index === i && $outSlide?.id === id && $outSlide?.layout === activeLayout}
+              {endIndex}
               list={!$slidesOptions.grid}
               columns={$slidesOptions.columns}
-              on:click={(e) => {
-                if (!$outLocked && !e.ctrlKey) {
-                  outSlide.set({ id, layout: activeLayout, index: i })
-                  activeEdit.set({ slide: i, items: [] })
-                  if (slide.background) {
-                    let bg = currentShow.backgrounds[slide.background]
-                    outBackground.set({ path: bg.path, muted: bg.muted !== false })
-                  }
-                }
-              }}
+              on:click={(e) => slideClick(e, slide, i)}
             />
           {/each}
         {:else}

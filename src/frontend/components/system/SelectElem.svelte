@@ -8,13 +8,14 @@
   export let fill: boolean = false
   export let draggable: boolean = false
   export let trigger: null | "row" | "column" = null
+  export let fileOver: boolean = false
 
   function enter(e: any) {
     if (e.buttons && !dragActive) {
-      if ($selected.id !== id) selected.set({ id, elems: [data] })
-      else if (!arrayHasData($selected.elems, data)) {
+      if ($selected.id !== id) selected.set({ id, data: [data] })
+      else if (!arrayHasData($selected.data, data)) {
         selected.update((s) => {
-          s.elems = [...s.elems, data]
+          s.data = [...s.data, data]
           return s
         })
       }
@@ -27,21 +28,21 @@
     // e.dataTransfer.dropEffect = type
     // e.dataTransfer.setData("text", data)
 
-    let elems: any
+    let newData: any
 
-    if (dragged && ($selected.id !== id || !arrayHasData($selected.elems, data))) {
-      elems = [data]
+    if (dragged && ($selected.id !== id || !arrayHasData($selected.data, data))) {
+      newData = [data]
     } else if (!dragged && e.ctrlKey) {
-      if ($selected.id === id && arrayHasData($selected.elems, data)) elems = $selected.elems.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
-      else if ($selected.id === id) elems = [...$selected.elems, data]
-      else elems = [data]
+      if ($selected.id === id && arrayHasData($selected.data, data)) newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
+      else if ($selected.id === id) newData = [...$selected.data, data]
+      else newData = [data]
     }
 
-    if (elems) selected.set({ id, elems })
+    if (newData) selected.set({ id, data: newData })
   }
 
   function deselect(e: any) {
-    if (!e.ctrlKey && $selected.id === id && e.target.closest(".selectElem") === null) selected.set({ id: null, elems: [] })
+    if (!e.ctrlKey && $selected.id === id && e.target.closest(".selectElem") === null) selected.set({ id: null, data: [] })
   }
 
   let dragover: null | "start" | "end" = null
@@ -56,7 +57,7 @@
   on:dragend={() => {
     dragActive = false
     dragover = null
-    if ($selected.id !== id) selected.set({ id, elems: [] })
+    if ($selected.id !== id) selected.set({ id, data: [] })
   }}
 />
 
@@ -66,13 +67,13 @@
   style={$$props.style}
   class="selectElem"
   class:fill
-  class:isSelected={$selected.id === id && arrayHasData($selected.elems, data)}
+  class:isSelected={$selected.id === id && arrayHasData($selected.data, data)}
   on:mouseenter={enter}
   on:mousedown={mousedown}
   on:dragstart={(e) => mousedown(e, true)}
 >
   <!-- TODO: validateDrop(id, $selected.id, true) -->
-  {#if trigger && dragActive}
+  {#if (trigger && dragActive) || fileOver}
     <div class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={() => (dragover = null)}>
       <span id="start" class="TriggerBlock" on:dragover={() => (dragover = "start")} />
       <span id="end" class="TriggerBlock" on:dragover={() => (dragover = "end")} />

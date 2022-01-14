@@ -15,6 +15,7 @@
   on:mouseleave
   on:mousedown
   on:mousemove
+  on:input
   on:change
 />
 

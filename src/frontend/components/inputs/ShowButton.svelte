@@ -66,11 +66,14 @@
     }
   }
 
-  function doubleClick(e: any) {
-    if (!$outLocked && $shows[id] && !e.target.classList.contains("name")) {
-      if (type === "show" || type === "private") outSlide.set({ id, layout: $shows[id].settings.activeLayout, index: 0 })
-      else if (type === "image" || type === "video")
-        outBackground.set({ path: id, muted: show.muted || true, loop: show.loop || false, filters: show.filters || "", type: "media" })
+  function doubleClick() {
+    if (!$outLocked) {
+      if ((type === "show" || type === "private") && $shows[id]) outSlide.set({ id, layout: $shows[id].settings.activeLayout, index: 0 })
+      else if (type === "image" || type === "video") {
+        let out: any = { path: id, muted: show.muted || true, loop: show.loop || false, type: "media" }
+        if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
+        outBackground.set(out)
+      }
     }
   }
 

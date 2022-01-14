@@ -107,7 +107,7 @@
   .main {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
     flex: 1;
   }
 

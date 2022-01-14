@@ -1,10 +1,26 @@
 <script lang="ts">
+  import { createEventDispatcher } from "svelte"
+
   export let value: string
-  // let updated: string = value
+  let time = 1000
+
+  let dispatch = createEventDispatcher()
+  let timeout: any = null
+  function keydown(e: any) {
+    if (timeout === null) {
+      timeout = setTimeout(() => {
+        dispatch("edit", e.target.innerHTML)
+        timeout = null
+      }, time)
+    }
+  }
 </script>
 
+<!-- bind:innerHTML={value} -->
 <div class="paper">
-  <div class="edit" contenteditable="true" on:keydown bind:innerHTML={value} />
+  <div class="edit" contenteditable="true" on:keydown={keydown}>
+    {@html value}
+  </div>
 </div>
 
 <style>

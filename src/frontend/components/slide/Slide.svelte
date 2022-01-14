@@ -16,6 +16,7 @@
   export let columns: number = 1
   export let active: boolean = false
   export let list: boolean = false
+  export let endIndex: null | number = null
 
   let longestText: string = ""
   $: {
@@ -86,11 +87,12 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     class="slide context #slide"
     class:active
     class:disabled={layoutSlide.disabled}
+    class:afterEnd={endIndex !== null && index > endIndex}
     style="background-color: {color};{$slidesOptions.grid ? '' : `width: calc(${100 / columns}% - 6px)`}"
     tabindex={0}
     on:click
   >
-    <DropArea id="slide" hoverTimeout={0}>
+    <DropArea id="slide" hoverTimeout={0} file>
       <SelectElem id="slide" data={{ index }} draggable trigger={list ? "column" : "row"}>
         <!-- <Draggable direction={list ? "column" : "row"}> -->
         <!-- TODO: tab select on enter -->
@@ -151,6 +153,9 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     outline-offset: 4px; */
     outline: 3px solid var(--secondary);
     outline-offset: 4px;
+  }
+  .slide.afterEnd {
+    opacity: 0.7;
   }
   .slide.disabled {
     opacity: 0.2;
