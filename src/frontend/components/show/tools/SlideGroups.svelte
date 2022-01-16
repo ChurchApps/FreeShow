@@ -62,9 +62,9 @@
             style="background-color: {slide.color};"
             on:click={(e) => {
               if (!e.ctrlKey) {
-                selected.set({ id: "group", elems: [{ id: slide.id }] })
+                selected.set({ id: "group", data: [{ id: slide.id }] })
                 ondrop(null, "slide")
-                selected.set({ id: null, elems: [] })
+                selected.set({ id: null, data: [] })
               }
             }}
           >

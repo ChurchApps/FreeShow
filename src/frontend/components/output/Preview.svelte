@@ -17,6 +17,7 @@
     screen,
     shows,
     videoExtensions,
+    playerVideos,
   } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
@@ -127,11 +128,21 @@
     activeEdit.set({ slide: index, items: [] })
 
     // background
-    // !Cannot read property 'background' of undefined
-    if (layout[index].background && $outSlide) {
-      let bg = $shows[$outSlide.id].backgrounds[layout[index].background!]
+    if (layout[index].background) {
+      let bg = $shows[$outSlide?.id || $activeShow!.id].backgrounds[layout[index].background!]
       outBackground.set({ path: bg.path, muted: bg.muted !== false })
     }
+
+    // overlays
+    if (layout[index].overlays?.length) {
+      outOverlays.set([...new Set([...$outOverlays, ...layout[index].overlays])])
+    }
+
+    // audio
+    // if (layout[index].audio) {
+    //   let a = $shows[$outSlide?.id || $activeShow!.id].audio[layout[index].audio!]
+    //   outBackground.set({ path: a.path, volume: a.volume })
+    // }
 
     // transition
     let t: any = layout[index].transition
@@ -194,6 +205,7 @@
   //     ? "height: 90vh"
   //     : "width: 80vw"
 
+  // TODO: video gets ((removed)) if video is starting while another is fading out
   let video: any = null
   let videoData: any = {
     duration: 0,
@@ -217,6 +229,8 @@
       window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
     }, 600)
   }
+
+  let title: string = ""
 
   let mediaName: string = ""
   $: outName = $outBackground?.path ? $outBackground.path.substring($outBackground.path.lastIndexOf("\\") + 1) : ""
@@ -255,7 +269,9 @@
 
     this.pause = () => {
       clearTimeout(timeout)
+      clearTimeout(sliderTimer)
       timeout = null
+      sliderTimer = null
       remaining -= Date.now() - start
       timer = { time: timerMax - remaining / 1000, paused: true }
     }
@@ -264,25 +280,25 @@
       if (timeout) return
       start = Date.now()
       remaining = (timerMax - timer.time) * 1000
-      console.log(remaining)
       timeout = setTimeout(() => {
         clearTimeout(timeout)
         timeout = null
         callback()
       }, remaining)
       timer.paused = false
+      sliderTime()
     }
 
     this.resume()
   }
 
-  let sliderTimer: any = null
   outTransition.subscribe((a) => {
-    if (sliderTimer !== null) sliderTimer = null
+    timer = { time: 0, paused: true }
     if (timeObj !== null) {
       timeObj.clear()
       timeObj = null
     }
+    console.log(timer, timeObj)
 
     if (a && a.duration > 0) {
       timerMax = a.duration
@@ -290,6 +306,7 @@
         timer = { time: 0, paused: true }
         durationAction(a.action)
       }, a.duration * 1000)
+      sliderTime()
     }
   })
 
@@ -309,14 +326,17 @@
   }
 
   // set timer
-  $: if (timeObj && !timer.paused && !sliderTimer) sliderTime()
+  let sliderTimer: any = null
   function sliderTime() {
-    sliderTimer = setTimeout(() => {
-      if (timeObj && !timer.paused) {
-        if (timer.time < timerMax) timer.time += 0.5
-        sliderTime()
-      } else sliderTimer = null
-    }, 500)
+    if (!sliderTimer && timeObj && !timer.paused) {
+      sliderTimer = setTimeout(() => {
+        if (timeObj && !timer.paused) {
+          if (timer.time < timerMax) timer.time += 0.5
+          sliderTimer = null
+          sliderTime()
+        }
+      }, 500)
+    }
   }
 
   function round(value: number, step = 1) {
@@ -364,7 +384,14 @@
           <p><b>[[[Height]]]:</b> {resolution.height} [[[pixels]]]</p>
         </span>
       {/if}
-      <Output center={fullscreen} style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerWidth, "fit") : ""} bind:video bind:videoData bind:videoTime />
+      <Output
+        center={fullscreen}
+        style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerWidth, "fit") : ""}
+        bind:video
+        bind:videoData
+        bind:videoTime
+        bind:title
+      />
     </div>
     <AudioMeter {video} />
     <!-- {#if $activePage === 'live'}
@@ -545,15 +572,22 @@
 
     <!-- video -->
     {#if activeClear === "background"}
-      <span class="name">
-        <p>{mediaName}</p>
-      </span>
-      {#if video && $videoExtensions.includes((outName?.match(/\.[0-9a-z]+$/i)?.[0] || "").substring(1))}
+      {#if $outBackground?.type === "player"}
+        <span class="name">
+          <p>{title.length ? title : $playerVideos[$outBackground?.id || ""].name}</p>
+        </span>
+      {:else}
+        <span class="name">
+          <p>{mediaName}</p>
+        </span>
+      {/if}
+      {#if (video && $videoExtensions.includes((outName?.match(/\.[0-9a-z]+$/i)?.[0] || "").substring(1))) || $outBackground?.type === "player"}
         <span class="group">
           <Button
             style="flex: 0"
             center
             title={videoData.paused ? "Play" : "Paused"}
+            disabled={$outLocked}
             on:click={() => {
               videoData.paused = !videoData.paused
               sendToOutput()
@@ -561,8 +595,8 @@
           >
             <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
           </Button>
-          <VideoSlider bind:videoData bind:videoTime toOutput />
-          <Button style="flex: 0" center title={videoData.muted ? "Unmute" : "Mute"} on:click={() => (videoData.muted = !videoData.muted)}>
+          <VideoSlider disabled={$outLocked} bind:videoData bind:videoTime toOutput />
+          <Button style="flex: 0" center title={videoData.muted ? "Unmute" : "Mute"} disabled={$outLocked} on:click={() => (videoData.muted = !videoData.muted)}>
             <Icon id={videoData.muted ? "muted" : "volume"} size={1.2} />
           </Button>
           <Button style="flex: 0" center title="[[[Loop]]]" on:click={() => (videoData.loop = !videoData.loop)}>

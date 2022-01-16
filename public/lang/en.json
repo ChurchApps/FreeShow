@@ -45,6 +45,7 @@
     "overlays": "Overlays",
     "audio": "Audio",
     "scripture": "Scripture",
+    "player": "Player",
     "live": "Live",
     "web": "Web"
   },

@@ -1,8 +1,12 @@
 <script lang="ts">
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { dictionary, groupCount, groups, slidesOptions } from "../../stores"
+  import { activeShow, dictionary, groupCount, groups, overlays, shows, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import { GetLayoutRef } from "../helpers/get"
+  import { history } from "../helpers/history"
+  import Icon from "../helpers/Icon.svelte"
+  import { joinTime, secondsToTime } from "../helpers/time"
+  import Button from "../inputs/Button.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import Textbox from "./Textbox.svelte"
@@ -75,6 +79,20 @@
     }
     return name
   }
+
+  let duration: number = 0
+  $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
+
+  $: transitionTime =
+    layoutSlide.transition && layoutSlide.transition.duration > 0
+      ? layoutSlide.transition.duration > 59
+        ? joinTime(secondsToTime(layoutSlide.transition.duration))
+        : layoutSlide.transition.duration + "s"
+      : null
+
+  function removeLayout(key: string) {
+    history({ id: "changeLayout", newData: { key }, location: { page: "show", show: $activeShow!, layout: $shows[$activeShow!.id].settings.activeLayout, layoutSlide: index } })
+  }
 </script>
 
 <!-- TODO: disabled -->
@@ -82,31 +100,96 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div class="main" style="width: {$slidesOptions.grid ? 100 / columns : 100}%">
+<div class="main" class:active style="width: {$slidesOptions.grid ? 100 / columns : 100}%">
+  <div class="icons" style="zoom: {4 / columns};">
+    {#if transitionTime}
+      <div>
+        <div class="button">
+          <Button style="padding: 5px;" redHover title="[[[Remove transition]]]" on:click={() => removeLayout("transition")}>
+            <Icon id="transition" white />
+          </Button>
+        </div>
+        <span><p>{transitionTime}</p></span>
+      </div>
+    {/if}
+    {#if layoutSlide.end}
+      <div>
+        <div class="button">
+          <Button style="padding: 5px;" redHover title="[[[Remove go to start]]]" on:click={() => removeLayout("end")}>
+            <Icon id="restart" white />
+          </Button>
+        </div>
+      </div>
+    {/if}
+    {#if background}
+      <div>
+        <div class="button">
+          <Button style="padding: 5px;" redHover title="[[[Remove background]]]" on:click={() => removeLayout("background")}>
+            <!-- <Icon id={background.type} white /> -->
+            <Icon id={background.type || "image"} white />
+          </Button>
+        </div>
+        {#if videoDuration}
+          <!-- <span>01:13</span> -->
+          <span><p>{videoDuration}</p></span>
+        {/if}
+      </div>
+    {/if}
+    {#if layoutSlide.overlays?.length}
+      <div>
+        <div class="button">
+          <Button style="padding: 5px;" redHover title="[[[Remove overlays]]]" on:click={() => removeLayout("overlays")}>
+            <Icon id="overlays" white />
+          </Button>
+        </div>
+        {#if layoutSlide.overlays.length > 1}
+          <span><p>{layoutSlide.overlays.length}</p></span>
+        {/if}
+      </div>
+    {/if}
+    {#if layoutSlide.audio?.length}
+      <div>
+        <div class="button">
+          <Button style="padding: 5px;" redHover title="[[[Remove audio]]]" on:click={() => removeLayout("audio")}>
+            <Icon id="audio" white />
+          </Button>
+        </div>
+        <span><p>03:32</p></span>
+      </div>
+    {/if}
+  </div>
   <div
     class="slide context #slide"
-    class:active
     class:disabled={layoutSlide.disabled}
     class:afterEnd={endIndex !== null && index > endIndex}
     style="background-color: {color};{$slidesOptions.grid ? '' : `width: calc(${100 / columns}% - 6px)`}"
     tabindex={0}
     on:click
   >
+    <div class="hover overlay" />
     <DropArea id="slide" hoverTimeout={0} file>
       <SelectElem id="slide" data={{ index }} draggable trigger={list ? "column" : "row"}>
-        <!-- <Draggable direction={list ? "column" : "row"}> -->
         <!-- TODO: tab select on enter -->
         <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
         <Zoomed background={slide.items.length ? "black" : "transparent"} let:ratio>
           {#if background}
             <div class="background" style="zoom: {1 / ratio}">
-              <MediaLoader name="[[[Could not load]]]" path={background.path} />
+              <MediaLoader name="[[[Could not load]]]" path={background.path} type={background.type || null} bind:duration />
             </div>
           {/if}
           <!-- TODO: check if showid exists in shows -->
           {#each slide.items as item}
             <Textbox {item} />
           {/each}
+          {#if layoutSlide.overlays?.length}
+            {#each layoutSlide.overlays as id}
+              <div style={$overlays[id].style}>
+                {#each $overlays[id].items as item}
+                  <Textbox {item} />
+                {/each}
+              </div>
+            {/each}
+          {/if}
         </Zoomed>
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {resolution.width * zoom}px;" -->
@@ -115,7 +198,6 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           <span style="position: absolute;display: contents;">{index + 1}</span>
           <span class="text">{name || ""}</span>
         </div>
-        <!-- </Draggable> -->
       </SelectElem>
     </DropArea>
   </div>
@@ -148,17 +230,59 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     /* height: fit-content; */
     /* border: 2px solid var(--primary-lighter); */
   }
-  .slide.active {
-    /* outline: 2px solid var(--secondary);
-    outline-offset: 4px; */
-    outline: 3px solid var(--secondary);
-    outline-offset: 4px;
+  .main.active {
+    /* outline: 3px solid var(--secondary); */
+    outline: 2px solid var(--secondary);
+    outline-offset: -1px;
+    z-index: 2;
   }
   .slide.afterEnd {
     opacity: 0.7;
   }
   .slide.disabled {
     opacity: 0.2;
+  }
+
+  .slide:hover > .hover {
+    /* background-color: var(--primary-lighter); */
+    /* filter: brightness(1.1); */
+    opacity: 1;
+  }
+  .hover {
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    background-color: rgb(255 255 255 / 0.05);
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
+
+  .icons {
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    z-index: 1;
+  }
+  .icons div {
+    opacity: 0.9;
+    display: flex;
+  }
+  .icons .button {
+    background-color: rgb(0 0 0 / 0.6);
+    pointer-events: all;
+  }
+  .icons span {
+    pointer-events: all;
+    background-color: rgb(0 0 0 / 0.6);
+    padding: 5px;
+    font-size: 0.75em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
   }
 
   .background {

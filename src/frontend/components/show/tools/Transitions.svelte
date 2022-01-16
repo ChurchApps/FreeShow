@@ -1,17 +1,16 @@
 <script lang="ts">
   import type { TransitionType } from "../../../../types/Show"
-
   import { activeShow, dictionary, groupCount, groups, shows } from "../../../stores"
   import { GetLayout, GetLayoutRef } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
+  import { joinTime, secondsToTime } from "../../helpers/time"
   import Button from "../../inputs/Button.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
 
   $: show = JSON.parse(JSON.stringify($shows[$activeShow!.id]))
-  let slides: any
   $: activeLayout = $shows[$activeShow!.id].settings.activeLayout
-  $: slides = GetLayout($activeShow!.id, activeLayout)
+  $: slides = [GetLayout($activeShow!.id, activeLayout), show.layouts[activeLayout].slides][0]
 
   $: {
     if (show) {
@@ -50,28 +49,20 @@
   }
 
   function change(e: any, i: number) {
-    // let value = Number(e.target.value)
     let value = Number(e.detail)
-    console.log(value)
 
     if (typeof value === "number") {
       // TODO: get default transition
       let type: TransitionType = "fade"
       history({
-        id: "transition",
-        newData: { type, duration: value },
-        oldData: slides[i].transition || null,
+        id: "changeLayout",
+        newData: { key: "transition", value: { type, duration: value } },
         location: { page: "show", show: $activeShow!, layout: activeLayout, layoutSlide: i },
       })
-      slides = GetLayout($activeShow!.id, activeLayout)
     }
   }
 
-  function changeAll(e: any) {
-    console.log(e.detail)
-  }
-
-  function toggleEnd(i: number) {
+  function toggleEnd(i: number, toggle: boolean = true) {
     shows.update((a: any) => {
       // let ref: any[] = GetLayoutRef()
       let slides = a[$activeShow!.id].layouts[activeLayout].slides
@@ -80,23 +71,40 @@
       slides.forEach((a: any) => {
         currentIndex++
         if (currentIndex === i && a.end !== true) a.end = true
-        else if (a.end) delete a.end
+        else if ((toggle || currentIndex !== i) && a.end) delete a.end
         if (a.children) {
           Object.values(a.children).forEach((b: any) => {
             currentIndex++
             if (currentIndex === i && b.end !== true) b.end = true
-            else if (b.end) delete b.end
+            else if ((toggle || currentIndex !== i) && b.end) delete b.end
           })
         }
       })
-      // let slide: any
-      // if (ref[i].type === "child") slide = slides[ref[i].layoutIndex].children[ref[i].id]
-      // else slide = slides[ref[i].index]
-      // if (slide.end === true) delete slide.end
-      // else slide.end = true
       return a
     })
-    slides = GetLayout($activeShow!.id, activeLayout)
+  }
+
+  // total time
+  let total: number = 0
+  $: {
+    if (slides.length) {
+      let temp = 0
+      slides.forEach((slide: any) => {
+        if (slide.transition && slide.transition.duration > 0) temp += slide.transition.duration
+      })
+      total = temp
+    } else total = 0
+  }
+  $: totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
+
+  // apply to all
+  let allTime: number = 10
+  function changeAll(reset: boolean = false) {
+    let value: any = { duration: allTime }
+    let globalType = "fade"
+    if (reset) value = { type: globalType, duration: 0 }
+    history({ id: "changeLayouts", newData: { key: "transition", value, action: "keys" }, location: { page: "show", show: $activeShow!, layout: activeLayout } })
+    toggleEnd(slides.length - 1, false)
   }
 </script>
 
@@ -125,15 +133,20 @@
 <!-- padding: 5px;gap: 5px; -->
 <div class="bottom" style="display: flex;flex-direction: column;">
   <div style="display: flex;gap: 5px;">
-    <!-- <TextInput style="flex: 1;" value={10} on:change={() => console.log("change")} center /> -->
-    <NumberInput value={10} on:change={changeAll} />
+    <!-- <Button style="height: 100%;">
+      <Icon id="transition" />
+    </Button> -->
+    <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} />
     <!-- Apply to all / selected -->
-    <Button style="flex: 1;" dark center>[[[Apply to all]]]</Button>
+    <Button style="flex: 1;" on:click={() => changeAll()} dark center>[[[Apply to all]]]</Button>
   </div>
-  <Button center dark>
-    <Icon id="reset" />
-    [[[Reset]]]
-  </Button>
+  <div style="display: flex;gap: 5px;">
+    <span style="flex: 1;display: flex;align-items: center;justify-content: center;">{totalTime}</span>
+    <Button style="flex: 1;" on:click={() => changeAll(true)} center dark>
+      <Icon id="reset" />
+      [[[Reset]]]
+    </Button>
+  </div>
 </div>
 
 <style>

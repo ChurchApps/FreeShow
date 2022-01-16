@@ -1,13 +1,13 @@
 <script lang="ts">
   import { outBackground } from "../../../stores"
   import Card from "../Card.svelte"
-  import Label from "../Label.svelte"
 
   interface Screen {
     id: string
     name: string
   }
   export let screen: Screen
+  export let streams: any[]
 
   let loaded = false
   $: active = $outBackground?.type === "screen" && $outBackground?.id === screen.id
@@ -17,6 +17,7 @@
 
   function ready() {
     if (!loaded && videoElem) {
+      console.log(screen.name)
       canvas.width = videoElem.offsetWidth
       canvas.height = videoElem.offsetHeight
       canvas.getContext("2d").drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
@@ -37,11 +38,17 @@
     },
   }
 
+  // let timeout: number = 0
+  // if (screen.name === "FreeShow") timeout = 1000
+  // setTimeout(() => {
+  //   console.log(screen.name)
+
   navigator.mediaDevices
     .getUserMedia(constraints)
     .then((stream) => {
+      streams.push(stream)
       videoElem.srcObject = stream
-      videoElem.onloadedmetadata = function () {
+      videoElem.onloadedmetadata = () => {
         videoElem?.play()
         setTimeout(ready, 1000)
       }
@@ -49,22 +56,26 @@
     .catch(function (err) {
       console.log(err.name + ": " + err.message)
     })
+  // }, timeout)
 </script>
 
-<Card {loaded} {active} on:click>
+<Card {loaded} {active} on:click label={screen.name} icon={screen.id.includes("screen") ? "screen" : "window"} white={!screen.id.includes("screen")}>
   <canvas bind:this={canvas} />
   {#if !loaded}
     <video bind:this={videoElem}>
       <track kind="captions" />
     </video>
   {/if}
-
-  <Label label={screen.name} icon={screen.id.includes("screen") ? "screen" : "window"} white={!screen.id.includes("screen")} />
 </Card>
 
 <style>
   video {
     /* TODO: fix positioning */
     position: absolute;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
   }
 </style>

@@ -6,6 +6,7 @@
   export let videoData: any
   export let videoTime: any
   export let toOutput: boolean = false
+  export let disabled: boolean = false
 
   let hover = false
   let time: string = "00:00"
@@ -67,6 +68,7 @@
   {/if}
   <div class="slider">
     <Slider
+    {disabled}
       on:mouseenter={() => (hover = true)}
       on:mouseleave={() => (hover = false)}
       bind:value={videoTime}

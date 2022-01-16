@@ -91,6 +91,7 @@
 
 <main>
   {#if $outputWindow}
+  <!-- TODO: remove on click? (if only one screen) -->
     <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height}>
       <Output style={getStyleResolution(resolution, width, height, "fit")} center />
     </div>

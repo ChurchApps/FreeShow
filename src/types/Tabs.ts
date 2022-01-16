@@ -5,6 +5,9 @@ export interface Category {
   name: string
   icon?: null | string
   path?: string
+  id?: string
+  type?: "youtube" | "vimeo"
+  url?: string
   default?: boolean
   description?: string
 }

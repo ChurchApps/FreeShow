@@ -13,6 +13,7 @@
   export let video: any = null
   export let videoData: any = { duration: 0, paused: true, muted: true }
   export let videoTime: number = 0
+  export let title: string = ""
 
   let resolution: Resolution = $outSlide && $shows[$outSlide.id].settings.resolution ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
 
@@ -57,7 +58,7 @@
   {#if $outBackground !== null}
     <!-- {#key $outBackground} -->
     <div style="zoom: {1 / ratio}">
-      <MediaOutput {...$outBackground} {transition} bind:video bind:videoData bind:videoTime />
+      <MediaOutput {...$outBackground} {transition} bind:video bind:videoData bind:videoTime bind:title />
     </div>
     <!-- {/key} -->
   {/if}

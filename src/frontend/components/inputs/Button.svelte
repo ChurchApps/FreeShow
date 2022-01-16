@@ -5,6 +5,8 @@
   export let dark: boolean = false
   export let bold: boolean = true
   export let red: boolean = false
+  export let redHover: boolean = false
+  export let brighterHover: boolean = false
 </script>
 
 <button
@@ -16,6 +18,8 @@
   class:bold
   class:dark
   class:red
+  class:redHover
+  class:brighterHover
   class={$$props.class}
   on:click
   on:dblclick
@@ -72,6 +76,12 @@
   }
   button:hover:not(:disabled):not(.active) {
     background-color: var(--hover);
+  }
+  button:hover.brighterHover:not(:disabled):not(.active) {
+    background-color: rgb(255 255 255 / 0.3);
+  }
+  button:hover.redHover:not(:disabled):not(.active) {
+    background-color: rgb(255 0 0 / 0.3);
   }
   button:active:not(:disabled):not(.active),
   button:focus:not(.active) {

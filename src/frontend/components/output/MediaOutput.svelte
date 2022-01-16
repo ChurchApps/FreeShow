@@ -4,6 +4,7 @@
   import type { Transition } from "../../../types/Show"
   import { mediaFolders, outBackground, outputWindow, videoExtensions } from "../../stores"
   import { getStyleResolution } from "../slide/getStyleResolution"
+  import Player from "../system/Player.svelte"
   import Camera from "./Camera.svelte"
   import Window from "./Window.svelte"
 
@@ -16,10 +17,11 @@
   export let video: any
   export let videoData: any
   export let videoTime: any
+  export let title: string
 
-  $: if (!path.length && type === "media") path = $mediaFolders[id].path + "/" + name || ""
-  $: extension = path.match(/\.[0-9a-z]+$/i)?.[0]! || ""
-  $: isVideo = $videoExtensions.includes(extension.substring(1))
+  $: if (type === "media" && !path.length) path = $mediaFolders[id].path + "/" + name || ""
+  $: extension = path?.match(/\.[0-9a-z]+$/i)?.[0]! || ""
+  $: isVideo = extension ? $videoExtensions.includes(extension.substring(1)) : false
 
   // $: if ($outputWindow && !videoData.muted) videoData.muted = $outputWindow
   let alt = "Could not find image!"
@@ -116,9 +118,23 @@
       <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};" src={path} {alt} />
     {/if}
   {:else if type === "screen"}
-    <Window {id} class="media" />
+    {#key id}
+      <Window {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" />
+    {/key}
   {:else if type === "camera"}
-    <Camera {id} class="media" />
+    {#key id}
+      <Camera {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" />
+    {/key}
+  {:else if type === "player"}
+    <!-- {#key $outBackground} -->
+    {#key id}
+      <!-- remove when finished -->
+      <!-- TODO: this has to be disabled to get rid of ads! -->
+      {#if !$outputWindow}
+        <div class="overlay" />
+      {/if}
+      <Player {id} bind:videoData bind:videoTime bind:title {startAt} />
+    {/key}
   {/if}
 </div>
 
@@ -143,5 +159,13 @@
   div :global(.media) {
     max-width: 100%;
     max-height: 100%;
+  }
+
+  .overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    z-index: 1;
   }
 </style>

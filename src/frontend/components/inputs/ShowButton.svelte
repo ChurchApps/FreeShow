@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeProject, activeShow, categories, outBackground, outLocked, outSlide, projects, shows } from "../../stores"
+  import { activeProject, activeShow, categories, outBackground, outLocked, outSlide, playerVideos, projects, shows } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import Button from "./Button.svelte"
   import HiddenInput from "./HiddenInput.svelte"
@@ -9,7 +9,7 @@
   export let data: null | string = null
   export let index: null | number = null
   $: type = show.type || "show"
-  $: name = type === "show" || type === "private" ? $shows[show.id].name : show.name
+  $: name = type === "show" || type === "private" ? $shows[show.id].name : type === "player" ? $playerVideos[id].name : show.name
   // export let page: "side" | "drawer" = "drawer"
   export let match: null | number = null
   // TODO: svelte animate
@@ -37,7 +37,10 @@
         if ($shows[show.id]?.private) iconID = "private"
         else if ($shows[show.id].category) iconID = $categories[$shows[show.id].category || ""].icon || null
         else iconID = "noIcon"
-      } else iconID = type
+      }
+      // else if (type === "player" && data && $playerVideos[data].type) iconID = $playerVideos[data].type!
+      else if (type === "player") iconID = "play"
+      else iconID = type
     }
   }
   // export let category: string
@@ -73,7 +76,7 @@
         let out: any = { path: id, muted: show.muted || true, loop: show.loop || false, type: "media" }
         if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
         outBackground.set(out)
-      }
+      } else if (type === "player") outBackground.set({ id, type: "player" })
     }
   }
 

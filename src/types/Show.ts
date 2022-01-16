@@ -66,6 +66,7 @@ export interface Layout {
 export interface Backgrounds {
   // name?: string
   path: string
+  type?: "media" | "camera" | "screen"
   muted?: boolean
   loop?: boolean
   filters?: string
@@ -81,7 +82,8 @@ export interface SlideData {
   end?: boolean
   timer?: number
   background?: string // set backgorund action?
-  overlays?: {}
+  overlays?: string[]
+  audio?: string[]
   actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
 }
 
@@ -94,8 +96,9 @@ export interface Overlays {
   [key: ID]: Overlay
 }
 export interface Overlay {
-  label: string
+  name: string
   color: null | string
+  category: null | string
   style: string
   items: Item[]
 }
@@ -108,7 +111,7 @@ export interface OutBackground {
   loop?: boolean
   filter?: string
   // name?: string
-  type?: "media" | "screen" | "camera"
+  type?: "media" | "screen" | "camera" | "player"
 }
 export interface OutSlide {
   id: ID
@@ -149,4 +152,4 @@ export type ID = string
 export type Style = string
 export type TransitionType = "none" | "fade"
 
-export type ShowType = "show" | "private" | "image" | "video" | "audio" // TODO: types
+export type ShowType = "show" | "private" | "image" | "video" | "audio" | "player" // TODO: types

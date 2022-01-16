@@ -14,7 +14,7 @@
   $: ratio = slideWidth / resolution.width
 </script>
 
-<div class:center>
+<div class:center style="width: 100%;height: 100%;">
   <div
     bind:offsetWidth={slideWidth}
     class="slide"
@@ -63,9 +63,6 @@
   }
 
   .center {
-    width: 100%;
-    height: 100%;
-
     display: flex;
     justify-content: center;
     align-items: center;

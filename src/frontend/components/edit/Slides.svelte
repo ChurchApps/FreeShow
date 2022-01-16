@@ -104,6 +104,7 @@
     display: flex;
     flex-wrap: wrap;
     padding: 5px;
+    width: 100%;
     align-content: flex-start;
   }
 </style>

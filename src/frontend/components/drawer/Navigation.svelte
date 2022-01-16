@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Category } from "../../../types/Tabs"
 
-  import { categories, dictionary, drawerTabsData, mediaFolders, overlayCategories } from "../../stores"
+  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, webFavorites } from "../../stores"
   import { keysToID, sortObject } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -16,6 +16,7 @@
 
   interface Button extends Category {
     id: string
+    url?: string
   }
   let buttons: Button[] = []
   $: {
@@ -29,19 +30,26 @@
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($mediaFolders), "name") as Button[])]
     } else if (id === "overlays") {
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($overlayCategories), "name") as Button[])]
+    } else if (id === "audio") {
+      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($audioFolders), "name") as Button[])]
     } else if (id === "scripture") {
       buttons = [...keysToID(getBibleVersions())]
+    } else if (id === "player") {
+      buttons = [{ id: "youtube", name: "YouTube", icon: "youtube" }]
+    } else if (id === "web") {
+      buttons = [...(sortObject(keysToID($webFavorites), "name") as Button[])]
     } else if (id === "live") {
       buttons = [
         // all: { name: "category.all", default: true, icon: "all" },
         // ...$mediaFolders,
         // id:
-        { id: "windows", name: "windows", default: true, icon: "screen" },
+        { id: "screens", name: "screens", default: true, icon: "screen" },
+        { id: "windows", name: "windows", default: true, icon: "window" },
         // {id: "screen2", name: "second screen", icon: "screen"},
         { id: "cameras", name: "cameras", default: true, icon: "camera" },
         { id: "microphones", name: "microphones", default: true, icon: "microphone" },
       ]
-    } else buttons = []
+    } else buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }]
   }
 
   $: console.log(buttons)

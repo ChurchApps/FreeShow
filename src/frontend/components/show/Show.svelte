@@ -8,6 +8,7 @@
   import VideoSlider from "../output/VideoSlider.svelte"
   import Image from "../drawer/media/Image.svelte"
   import HoverButton from "../inputs/HoverButton.svelte"
+  import Player from "../system/Player.svelte"
 
   $: show = $activeShow
 
@@ -15,6 +16,7 @@
     paused: false,
     muted: true,
     duration: 0,
+    loop: false,
   }
   let videoTime: number = 0
   // activeShow.subscribe((a) => {
@@ -54,15 +56,22 @@
   }
 
   function videoClick(e: any) {
-    let data: any = { muted: false, loop: false, filter: "" }
-    if ($activeProject && $activeShow!.index !== undefined) {
-      data.muted = $projects[$activeProject].shows[$activeShow!.index!].muted || false
-      data.loop = $projects[$activeProject].shows[$activeShow!.index!].loop || false
-      if (filter) data.filter = filter
-    }
+    let data: any = {}
+    let bg = { type: show!.type, startAt: videoTime, ...data }
+    if (show!.type !== "player") {
+      bg.path = show!.id
+      data = { muted: false, loop: false, filter: "" }
+      if ($activeProject && $activeShow!.index !== undefined) {
+        data.muted = $projects[$activeProject].shows[$activeShow!.index!].muted || false
+        data.loop = $projects[$activeProject].shows[$activeShow!.index!].loop || false
+        if (filter) data.filter = filter
+      }
+    } else bg.id = show!.id
 
-    if (e.ctrlKey) outBackground.set({ path: show?.id, startAt: videoTime, ...data })
-    else outBackground.set({ path: show?.id, ...data })
+    autoPause = true
+    videoData.paused = true
+    if (e.ctrlKey) bg.startAt = videoTime
+    outBackground.set(bg)
   }
 
   let filter: string = ""
@@ -80,24 +89,28 @@
 
 <div class="main">
   {#if show}
-    {#if show.type === "video" || show.type === "image"}
+    {#if show.type === "video" || show.type === "image" || show.type === "player"}
       <div style="display: flex;flex-direction: column;height: 100%;">
-        {#if show.type === "video"}
+        {#if show.type === "video" || show.type === "player"}
           {#key show.id}
             <div class="media" style="flex: 1;overflow: hidden;">
               <HoverButton icon="play" size={10} on:click={videoClick} title="[[[Play video output..., ctrlclick to start at current pos]]]">
-                <video
-                  style="width: 100%;height: 100%;filter: {filter};"
-                  src={show.id}
-                  on:loadedmetadata={loaded}
-                  on:playing={playing}
-                  bind:currentTime={videoTime}
-                  bind:paused={videoData.paused}
-                  bind:duration={videoData.duration}
-                  bind:muted={videoData.muted}
-                >
-                  <track kind="captions" />
-                </video>
+                {#if show.type === "player"}
+                  <Player id={show.id} bind:videoData bind:videoTime />
+                {:else}
+                  <video
+                    style="width: 100%;height: 100%;filter: {filter};"
+                    src={show.id}
+                    on:loadedmetadata={loaded}
+                    on:playing={playing}
+                    bind:currentTime={videoTime}
+                    bind:paused={videoData.paused}
+                    bind:duration={videoData.duration}
+                    bind:muted={videoData.muted}
+                  >
+                    <track kind="captions" />
+                  </video>
+                {/if}
               </HoverButton>
             </div>
             <div class="buttons" style="display: flex;">

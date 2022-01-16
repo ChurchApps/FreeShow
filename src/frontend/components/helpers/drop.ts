@@ -1,19 +1,21 @@
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
-import { projects, activeProject, selected, activeShow, shows, videoExtensions, imageExtensions } from "./../../stores"
+import { projects, activeProject, selected, activeShow, shows, videoExtensions, imageExtensions, activePage } from "./../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
 import { HistoryIDs, history } from "./history"
 import { get } from "svelte/store"
+import { uid } from "uid"
 
 // TODO: file...
 const areas: any = {
-  slides: ["media"], // group
-  slide: ["media", "overlay", "sound"],
+  // slides: ["media"], // group
+  slide: ["media", "overlay", "sound", "camera"],
   projects: [],
-  project: ["show_drawer", "media"],
-  // drawer: ["file"],
+  project: ["show_drawer", "media", "player"],
+  overlays: ["slide"],
+  // media_drawer: ["file"],
 }
 const areaChildren: any = {
-  project: ["show", "media", "show_drawer"],
+  project: ["show", "media", "show_drawer", "player"],
   slide: ["slide", "group", "global_group", "media"],
 }
 const files: any = {
@@ -32,7 +34,7 @@ export function ondrop(e: any, id: string) {
   let historyID: null | HistoryIDs = null
   let oldData: any
   let newData: any
-  let location: any = {}
+  let location: any = { page: get(activePage) }
 
   let sel = get(selected)
 
@@ -72,6 +74,12 @@ export function ondrop(e: any, id: string) {
             return out
           })
           .filter((a) => a)
+      } else if (sel.id === "player") {
+        // data = data.map(a => {
+        //   let d = get(playerVideos)[a]
+        //   return {id: }
+        // })
+        data = data.map((a) => ({ id: a, type: "player" }))
       }
 
       oldData = [...projectShows]
@@ -81,7 +89,7 @@ export function ondrop(e: any, id: string) {
     case "slide":
     case "slides":
       location = { page: "show", show: get(activeShow), layout: get(shows)[get(activeShow)!.id].settings.activeLayout }
-      if (sel.id === "media" || sel.id === "files") {
+      if (sel.id === "media" || sel.id === "files" || sel.id === "camera") {
         // TODO: move multiple add to possible slides
         historyID = "showMedia"
         console.log(index)
@@ -95,8 +103,12 @@ export function ondrop(e: any, id: string) {
             const [extension] = a.name.match(/\.[0-9a-z]+$/i) || [""]
             if (files[id].includes(extension.substring(1))) data.push({ path: a.path, name: a.name })
           })
-        }
+        } else if (sel.id === "camera") data[0].type = "camera"
         newData = data[0]
+        // } else if (sel.id === "camera") {
+        //   historyID = "camera"
+        //   location.layoutSlide = index
+        //   newData = sel.data
       } else if (sel.id === "slide" || sel.id === "group") {
         historyID = "slide"
         let ref: any[] = GetLayoutRef()
@@ -150,7 +162,34 @@ export function ondrop(e: any, id: string) {
       } else if (sel.id === "global_group") {
         historyID = "newSlide"
         newData = { slides: sel.data, index }
+      } else if (sel.id === "overlay") {
+        historyID = "changeLayout"
+        location.layoutSlide = index
+        let oldLayout = get(shows)[get(activeShow)!.id].layouts[get(shows)[get(activeShow)!.id].settings.activeLayout].slides
+        let value: any[] = [...new Set([...(oldLayout[index].overlays || []), ...sel.data])]
+        newData = { key: "overlays", value }
       }
+      break
+    case "overlays":
+      // TODO: moving multiple
+      // let selected: number[] = getIndexes(sel.data)
+
+      let ref: any = GetLayoutRef()[sel.data[0].index]
+      let slides: any = get(shows)[get(activeShow)!.id].slides
+      let slide: any = slides[ref.id]
+      let name: string = slide.group || ""
+      let color: null | string = slide.color
+      if (ref.type === "child") {
+        let parent = slides[ref.slidesIndex]
+        name = parent.group || ""
+        color = parent.color
+      }
+
+      // TODO: get active overlay category
+      let category = null
+
+      historyID = "slideToOverlay"
+      newData = { id: uid(), slide: { name, color, items: slide.items, category } }
       break
 
     default:

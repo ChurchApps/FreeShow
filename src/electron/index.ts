@@ -38,6 +38,7 @@ app.on("ready", () => {
   // https://gist.github.com/maximilian-lindsey/a446a7ee87838a62099d
   // const LANserver =
   require("./servers")
+  // WIP: require("./webcam")
 
   // check for uodates
   if (isProd) checkForUpdates()
@@ -67,6 +68,7 @@ const createWindow = () => {
       // preload: "./preload",
       contextIsolation: true,
       enableRemoteModule: false,
+      allowRunningInsecureContent: false,
     },
   })
 
@@ -381,7 +383,8 @@ function createOutputWindow() {
       preload: join(__dirname, "preload"), // use a preload script
       contextIsolation: true,
       enableRemoteModule: false,
-      webSecurity: false, // get local files
+      webSecurity: false, // get local files,
+      allowRunningInsecureContent: false,
     },
   })
   // show: false, // hide window

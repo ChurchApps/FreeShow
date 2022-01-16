@@ -1,5 +1,6 @@
 <script lang="ts">
   export let mic: any
+  export let streams: any[]
 
   // https://dobrian.github.io/cmp/topics/sample-recording-and-playback-with-web-audio-api/1.loading-and-playing-sound-files.html
 
@@ -23,6 +24,7 @@
   let soundLevel: number = 0
 
   const handleSuccess = function (stream: any) {
+    streams.push(stream)
     const context = new AudioContext()
     const source = context.createMediaStreamSource(stream)
     // const processor = new AudioWorkletNode(context, "processor")

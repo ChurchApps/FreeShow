@@ -9,7 +9,9 @@
 
   const tabs: TabsObj = {
     groups: { name: "tools.groups", icon: "groups" },
+    meta: { name: "tools.meta", icon: "meta" },
     backgrounds: { name: "tools.backgrounds", icon: "backgrounds" },
+    audio: { name: "tools.audio", icon: "audio" },
     transitions: { name: "tools.transitions", icon: "transition" },
     notes: { name: "tools.notes", icon: "notes" },
   }

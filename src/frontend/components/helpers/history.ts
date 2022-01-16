@@ -17,6 +17,8 @@ import {
   activeShow,
   categories,
   stageShows,
+  overlays,
+  outOverlays,
 } from "./../../stores"
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory, activePage } from "../../stores"
@@ -54,12 +56,14 @@ export type HistoryIDs =
   | "slide"
   | "shows"
   | "showMedia"
+  | "changeLayout"
+  | "changeLayouts"
   // project
   | "project"
   | "projects"
   | "drawer"
-  // showTools
-  | "transition"
+  // other
+  | "slideToOverlay"
 
 export interface History {
   id: HistoryIDs
@@ -77,7 +81,7 @@ export interface History {
 }
 
 // override previous history
-const override = ["textStyle", "deleteItem", "itemStyle", "itemAlign", "stageItemAlign", "stageItemStyle", "slideStyle", "transition"]
+const override = ["textStyle", "deleteItem", "itemStyle", "itemAlign", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout"]
 
 export function history(obj: History, undo: null | boolean = null) {
   // if (undo) {
@@ -434,8 +438,7 @@ export function history(obj: History, undo: null | boolean = null) {
         return a
       })
       break
-    // show tools
-    case "transition":
+    case "changeLayout":
       shows.update((a) => {
         let ref: any[] = GetLayoutRef(obj.location!.show!.id, obj.location!.layout!)
         let index = obj.location!.layoutSlide!
@@ -443,8 +446,45 @@ export function history(obj: History, undo: null | boolean = null) {
         let slide: any
         if (ref[index].type === "child") slide = slides[ref[index].layoutIndex].children[ref[index].id]
         else slide = slides[ref[index].index]
-        if (obj.newData?.duration && obj.newData.duration > 0) slide.transition = obj.newData
-        else delete slide.transition
+        if (!obj.oldData) obj.oldData = { key: obj.newData.key, value: slide[obj.newData.key] || null }
+        if (obj.newData.value) slide[obj.newData.key] = obj.newData.value
+        else delete slide[obj.newData.key]
+        return a
+      })
+      break
+    case "changeLayouts":
+      const updateValue = (a: any) => {
+        if (!obj.newData.value) delete a[obj.newData.key]
+        else if (obj.newData.action === "keys") {
+          Object.entries(obj.newData.value).forEach(([key, value]: any) => {
+            if (!a[obj.newData.key]) a[obj.newData.key] = {}
+            a[obj.newData.key][key] = value
+          })
+        } else a[obj.newData.key] = obj.newData.value
+        return a
+      }
+      // TODO: store previous value....
+      if (!obj.oldData) obj.oldData = { key: obj.newData.key }
+      shows.update((a: any) => {
+        let slides = a[obj.location!.show!.id].layouts[obj.location!.layout!].slides
+        slides.forEach((a: any) => {
+          a = updateValue(a)
+          if (a.children) {
+            Object.values(a.children).forEach((a: any) => {
+              a = updateValue(a)
+            })
+          }
+        })
+        return a
+      })
+      break
+    case "slideToOverlay":
+      overlays.update((a: any) => {
+        if (undo) {
+          let id: string = obj.oldData.id
+          if (get(outOverlays).includes(id)) outOverlays.set(get(outOverlays).filter((a: any) => a !== id))
+          delete a[id]
+        } else a[obj.newData.id] = obj.newData.slide
         return a
       })
       break
@@ -454,9 +494,12 @@ export function history(obj: History, undo: null | boolean = null) {
       break
   }
 
+  // TODO: go to location
   if (obj.location.page === "drawer") {
     // TODO: open drawer
   } else activePage.set(obj.location.page)
+
+  // TODO: remove history obj if oldData is exactly the same as newdata
 
   if (undo === null) redoHistory.set([])
 
@@ -482,8 +525,6 @@ export function history(obj: History, undo: null | boolean = null) {
   }
   console.log("UNDO: ", [...get(undoHistory)])
   console.log("REDO: ", [...get(redoHistory)])
-
-  // TODO: go to location
 }
 
 export const undo = () => {
@@ -502,6 +543,7 @@ export const undo = () => {
   }
 }
 
+// TODO: fix undo redo swap
 // TODO: redo not working in same order as undo...
 export const redo = () => {
   if (get(redoHistory).length) {

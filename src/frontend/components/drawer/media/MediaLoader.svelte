@@ -5,7 +5,7 @@
 
   export let name: any = ""
   export let path: string
-  export let type: null | "image" | "video" = null
+  export let type: null | "media" | "image" | "video" | "camera" | "screen" = null
   export let hover: boolean = false
   export let loaded: boolean = type === "image"
   export let duration: number = 0

@@ -65,6 +65,8 @@
     "sirv-cli": "^1.0.0",
     "socket.io": "^4.4.1",
     "socket.io-client": "^4.4.1",
-    "uid": "^2.0.0"
+    "svelte-youtube": "0.0.2",
+    "uid": "^2.0.0",
+    "youtube-iframe": "^1.0.3"
   }
 }

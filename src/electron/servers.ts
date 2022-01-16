@@ -104,7 +104,7 @@ function initialize(id: "REMOTE" | "STAGE", socket: any) {
   })
 }
 
-function getOS(ua: string) {
+export function getOS(ua: string) {
   // https://stackoverflow.com/a/59706252
   let os: string = "Unknown"
   const device: { [key: string]: RegExp } = {

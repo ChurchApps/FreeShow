@@ -199,11 +199,11 @@ export const shows: Writable<Shows> = writable({
       sooffes: {
         name: "Standard",
         notes: "",
-        slides: [{ id: "fjeiosjfiose", transition: { type: "none", duration: 200 }, background: "randomID", overlays: [], actions: [] }],
+        slides: [{ id: "fjeiosjfiose", transition: { type: "none", duration: 20 }, background: "randomID", overlays: ["fsioøføjesi"], actions: [], audio: ["test.mp4"] }],
       },
     },
     backgrounds: {
-      randomID: { path: "path", filters: "hue(100deg)" },
+      randomID: { path: "C:\\Users\\Kristoffer\\Minecraft\\Andre\\Lighting & Compositing Tips\\2.jpg", filters: "hue-rotate(100deg)" },
     },
   },
   ertfgggf: {
@@ -475,8 +475,9 @@ export const categories: Writable<Categories> = writable({
 export const overlayCategories: Writable<Categories> = writable({})
 export const overlays: Writable<Overlays> = writable({
   tiesl: {
-    label: "Verse 1",
+    name: "Verse 1",
     color: "green",
+    category: null,
     style: "",
     items: [
       {
@@ -489,8 +490,9 @@ export const overlays: Writable<Overlays> = writable({
     ],
   },
   fsioøføjesi: {
-    label: "",
+    name: "",
     color: null,
+    category: null,
     style: "",
     items: [
       {
@@ -514,9 +516,23 @@ export const mediaFolders: Writable<Categories> = writable({
 
 //   ]
 // })
-export const audio = writable({
-  terd: { type: "music", name: "Song", location: "song" },
-  fese: { type: "audio", name: "Info", location: "info" },
+export const audioFolders: Writable<Categories> = writable({
+  music: { name: "category.music", icon: "folder", path: "C:\\Users\\Kristoffer\\Music", default: true },
+})
+// export const audio = writable({
+//   terd: { type: "music", name: "Song", location: "song" },
+//   fese: { type: "audio", name: "Info", location: "info" },
+// })
+
+export const webFavorites: Writable<Categories> = writable({
+  youtube: { name: "YouTube", icon: "web", url: "https://youtube.com/" },
+  google: { name: "Google", icon: "web", url: "https://google.com/" },
+  example: { name: "Example", icon: "web", url: "https://example.com/" },
+})
+
+export const playerVideos: Writable<Categories> = writable({
+  oceans: { name: "Oceans", type: "youtube", id: "https://www.youtube.com/watch?v=dy9nwe9_xzw" },
+  chosen: { name: "The Chosen", type: "youtube", id: "X-AJdKty74M" },
 })
 
 // STAGE
@@ -564,8 +580,9 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({
   audio: { enabled: true, activeSubTab: null },
   scripture: { enabled: true, activeSubTab: "de4e12af7f28f599-02" },
   timers: { enabled: true, activeSubTab: null },
-  web: { enabled: false, activeSubTab: null },
-  live: { enabled: false, activeSubTab: null },
+  player: { enabled: true, activeSubTab: null },
+  web: { enabled: true, activeSubTab: null },
+  live: { enabled: true, activeSubTab: null },
 })
 export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null })
 

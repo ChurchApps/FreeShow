@@ -241,4 +241,48 @@ export default [
       }),
     ],
   },
+  // webcam
+  {
+    input: "src/server/webcam/main.ts",
+    output: {
+      sourcemap: !production,
+      format: "iife",
+      name: "stage",
+      file: "build/electron/webcam/client.js",
+    },
+    plugins: [
+      svelte({
+        preprocess: sveltePreprocess(),
+        compilerOptions: {
+          // enable run-time checks when not in production
+          dev: !production,
+        },
+      }),
+      // we'll extract any component CSS out into
+      // a separate file - better for performance
+      css({
+        output: "styles.css",
+        mangle: production,
+        compress: production,
+      }),
+
+      resolve({
+        browser: true,
+        dedupe: ["svelte"],
+      }),
+      commonjs(),
+      typescript({
+        tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+        sourceMap: !production,
+        // inlineSources: !production,
+      }),
+
+      html({
+        title: "CamShow",
+        fileName: "index.html",
+        minify: production,
+        meta: [{ charset: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1.0" }],
+      }),
+    ],
+  },
 ]

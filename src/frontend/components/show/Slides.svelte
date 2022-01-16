@@ -2,7 +2,7 @@
   // import {flip} from 'svelte/animate';
   // import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, slidesOptions, outSlide, activeEdit, outLocked, outBackground, outTransition } from "../../stores"
+  import { shows, activeShow, slidesOptions, outSlide, activeEdit, outLocked, outBackground, outTransition, outOverlays } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Slide from "../slide/Slide.svelte"
   import DropArea from "../system/DropArea.svelte"
@@ -43,12 +43,21 @@
   }
 
   function slideClick(e: any, slide: any, index: number) {
+    // TODO: duplicate function of "preview:126 - updateOut"
     if (!$outLocked && !e.ctrlKey) {
       outSlide.set({ id, layout: activeLayout, index })
+
       activeEdit.set({ slide: index, items: [] })
+
+      // background
       if (slide.background) {
         let bg = currentShow.backgrounds[slide.background]
-        outBackground.set({ path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
+        outBackground.set({ type: bg.type || "media", path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
+      }
+
+      // overlays
+      if (slide.overlays?.length) {
+        outOverlays.set([...new Set([...$outOverlays, ...slide.overlays])])
       }
 
       // transition
