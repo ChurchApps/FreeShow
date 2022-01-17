@@ -29,6 +29,7 @@
   import StageTools from "./components/stage/StageTools.svelte"
   import StageShow from "./components/stage/StageShow.svelte"
   import MediaTools from "./components/drawer/media/MediaTools.svelte"
+  import Popup from "./components/main/Popup.svelte"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -91,7 +92,7 @@
 
 <main>
   {#if $outputWindow}
-  <!-- TODO: remove on click? (if only one screen) -->
+    <!-- TODO: remove on click? (if only one screen) -->
     <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height}>
       <Output style={getStyleResolution(resolution, width, height, "fit")} center />
     </div>
@@ -99,6 +100,8 @@
     <!-- <h1>FreeShow</h1> -->
 
     <ContextMenu />
+
+    <Popup />
 
     <div class="column">
       <Top />

@@ -67,6 +67,8 @@
   },
   "new": {
     "show": "New show",
+    "quick": "Quick Show",
+    "_quick": "Create show from text",
     "project": "New project",
     "category": "New category",
     "_private": "New private show",

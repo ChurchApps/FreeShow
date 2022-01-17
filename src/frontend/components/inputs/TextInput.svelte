@@ -1,4 +1,4 @@
-<input type={$$props.type || "text"} class="edit" value={$$props.value} style={$$props.style} class:center={$$props.center} on:input on:change />
+<input type={$$props.type || "text"} class="edit" value={$$props.value} placeholder={$$props.placeholder} style={$$props.style} class:center={$$props.center} on:input on:change />
 
 <style>
   input {
@@ -10,7 +10,12 @@
     font-size: inherit;
     font-weight: inherit;
     border: 0;
+    padding: 0 5px;
     outline-offset: -2px;
+  }
+  input::placeholder {
+    color: var(--text);
+    opacity: 0.5;
   }
   input.center {
     text-align: center;

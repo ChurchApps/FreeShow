@@ -7,8 +7,8 @@ import { uid } from "uid"
 
 // TODO: file...
 const areas: any = {
-  // slides: ["media"], // group
-  slide: ["media", "overlay", "sound", "camera"],
+  slides: ["media", "overlay", "sound", "camera"], // group
+  // slide: ["overlay", "sound", "camera"], // "media",
   projects: [],
   project: ["show_drawer", "media", "player"],
   overlays: ["slide"],
@@ -16,7 +16,7 @@ const areas: any = {
 }
 const areaChildren: any = {
   project: ["show", "media", "show_drawer", "player"],
-  slide: ["slide", "group", "global_group", "media"],
+  slides: ["slide", "group", "global_group", "media"],
 }
 const files: any = {
   project: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
@@ -41,14 +41,17 @@ export function ondrop(e: any, id: string) {
   // TODO: get index!
   let elem = null
   if (e !== null) {
-    if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group") elem = e.target.closest(".selectElem")
+    // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
+    if (id === "project" || id === "slides") elem = e.target.closest(".selectElem")
     else if (id === "slide") elem = e.target.querySelector(".selectElem")
     console.log(elem)
   }
 
   let trigger = e?.target.closest(".TriggerBlock")?.id
   let index = JSON.parse(elem?.getAttribute("data") || "{}").index
-  if (index !== undefined && trigger === "end") index++
+  let center: boolean = false
+  if (trigger?.includes("center")) center = true
+  if (index !== undefined && trigger?.includes("end") && areaChildren[id].includes(sel.id)) index++
 
   console.log("DRAG: ", sel.id, sel.data)
   console.log("DROP: ", id, index, trigger)
@@ -91,20 +94,28 @@ export function ondrop(e: any, id: string) {
       location = { page: "show", show: get(activeShow), layout: get(shows)[get(activeShow)!.id].settings.activeLayout }
       if (sel.id === "media" || sel.id === "files" || sel.id === "camera") {
         // TODO: move multiple add to possible slides
-        historyID = "showMedia"
-        console.log(index)
 
-        location.layoutSlide = index
-        let data: any[] = sel.data
-        // check files
-        if (sel.id === "files") {
-          data = []
-          sel.data.forEach((a) => {
-            const [extension] = a.name.match(/\.[0-9a-z]+$/i) || [""]
-            if (files[id].includes(extension.substring(1))) data.push({ path: a.path, name: a.name })
-          })
-        } else if (sel.id === "camera") data[0].type = "camera"
-        newData = data[0]
+        if (center) {
+          historyID = "showMedia"
+
+          if (trigger?.includes("end")) index--
+          location.layoutSlide = index
+          let data: any[] = sel.data
+          // check files
+          if (sel.id === "files") {
+            data = []
+            sel.data.forEach((a) => {
+              const [extension] = a.name.match(/\.[0-9a-z]+$/i) || [""]
+              if (files[id].includes(extension.substring(1))) data.push({ path: a.path, name: a.name })
+            })
+          } else if (sel.id === "camera") data[0].type = "camera"
+          newData = data[0]
+        } else {
+          historyID = "newSlide"
+          location.layoutSlide = index
+          let slides: any[] = sel.data.map((a) => ({ group: a.name || "", color: null, settings: {}, notes: "", items: [] }))
+          newData = { index, slides, backgrounds: sel.data }
+        }
         // } else if (sel.id === "camera") {
         //   historyID = "camera"
         //   location.layoutSlide = index
@@ -139,6 +150,15 @@ export function ondrop(e: any, id: string) {
 
           sortedLayout = mover(layout, selected, index)
         } else if (sel.id === "group") {
+          if (center) {
+            if (trigger?.includes("end")) {
+              index--
+              newIndex--
+            }
+            ref.splice(index, 1)
+            layout.splice(index, 1)
+          }
+
           let movedLayout: any[] = []
 
           sel.data.forEach((a) => {
@@ -160,8 +180,17 @@ export function ondrop(e: any, id: string) {
 
         newData = changeLayout(sortedLayout, slides, newLayoutRef, moved, newIndex)
       } else if (sel.id === "global_group") {
-        historyID = "newSlide"
-        newData = { slides: sel.data, index }
+        if (center) {
+          historyID = "changeSlide"
+          if (trigger?.includes("end")) index--
+          let ref: any[] = GetLayoutRef()
+          location.slide = ref[index].id
+          delete location.layout
+          newData = { globalGroup: sel.data[0].globalGroup }
+        } else {
+          historyID = "newSlide"
+          newData = { slides: sel.data, index }
+        }
       } else if (sel.id === "overlay") {
         historyID = "changeLayout"
         location.layoutSlide = index
@@ -229,11 +258,13 @@ function changeLayout(layout: any, slides: any, layoutRef: any, moved: any, inde
   let newLayout: any[] = []
 
   // find parent
-  let moveParent: string = moved[0].id
+  // let moveParent: string = moved[0].id
   if (moved[0].type !== "parent") {
     while (layoutRef[index].type !== "parent" && index > 0) index--
-    moveParent = layoutRef[index].id
+    // moveParent = layoutRef[index].id
   }
+
+  console.log([...layout])
 
   let parent: string = layoutRef[0].id
   layoutRef.forEach((ref: any, i: number) => {
@@ -255,21 +286,22 @@ function changeLayout(layout: any, slides: any, layoutRef: any, moved: any, inde
 
       // set new child data
       let index: number = newLayout.length - 1
-      if (parent === moveParent || moved.find((a: any) => a.id === ref.id)) {
-        if (!newLayout[index].children) newLayout[index].children = {}
-        newLayout[index].children[ref.id] = layout[i]
-      }
+      // if (parent === moveParent || moved.find((a: any) => a.id === ref.id)) {
+      if (!newLayout[index].children) newLayout[index].children = {}
+      newLayout[index].children[ref.id] = layout[i]
+      // }
     }
   })
 
   // find and remove children if parent has changed
-  moved.forEach((a: any) => {
-    if (a.newType === "child" || (a.newType === undefined && a.type === "child")) {
-      newLayout.forEach((b) => {
-        if (b.children?.[a.id] && b.id !== moveParent) delete b.children[a.id]
-      })
-    }
-  })
+
+  // moved.forEach((a: any) => {
+  //   if (a.newType === "child" || (a.newType === undefined && a.type === "child")) {
+  //     newLayout.forEach((b) => {
+  //       if (b.children?.[a.id] && b.id !== moveParent) delete b.children[a.id]
+  //     })
+  //   }
+  // })
 
   return { layout: newLayout, slides }
 }

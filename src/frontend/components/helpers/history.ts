@@ -54,7 +54,7 @@ export type HistoryIDs =
   | "addLayout"
   // show
   | "slide"
-  | "shows"
+  | "changeSlide"
   | "showMedia"
   | "changeLayout"
   | "changeLayouts"
@@ -156,6 +156,21 @@ export function history(obj: History, undo: null | boolean = null) {
       shows.update((a) => {
         a[obj.location!.show!.id].slides = obj.newData.slides
         a[obj.location!.show!.id].layouts[obj.location!.layout!].slides = obj.newData.layout
+        return a
+      })
+      break
+    // show
+    case "changeSlide":
+      shows.update((a) => {
+        if (!obj.oldData) obj.oldData = {}
+        let slide: any = a[obj.location!.show!.id].slides[obj.location!.slide!]
+        Object.entries(obj.newData).forEach(([key, value]: any) => {
+          if (undo) slide[key] = obj.oldData[key]
+          else {
+            obj.oldData[key] = slide[key]
+            slide[key] = value
+          }
+        })
         return a
       })
       break
@@ -261,7 +276,7 @@ export function history(obj: History, undo: null | boolean = null) {
       // obj.oldData = console.log(obj.newData)
       let id: string = obj.newData.id
       if (!id) {
-        id = uid(16)
+        id = uid(12)
         obj.newData.id = id
       }
       // obj.id === "newShowDrawer"
@@ -314,15 +329,18 @@ export function history(obj: History, undo: null | boolean = null) {
           if (!id) id = uid()
           let index: number = obj.newData.index !== undefined ? obj.newData.index : GetLayout(obj.location!.show!.id, obj.location!.layout).length
 
-          if (!obj.newData.slides) {
+          if (!obj.newData.slides && !obj.newData.parent) {
             let group: null | string = ""
             let globalGroup: null | string = null
             // add as child
             // TODO: add by template
             if (layout.length) {
               group = null
+              console.log(layout, index)
+
               let parent = layout[index].id
               if (!slides[parent].children) slides[parent].children = []
+              // TODO: don't push, but add to correct index
               slides[parent].children!.push(id)
             } else {
               // auto group
@@ -331,9 +349,11 @@ export function history(obj: History, undo: null | boolean = null) {
             slides[id] = { group, color: null, settings: {}, notes: "", items: [] }
             if (globalGroup) slides[id].globalGroup = globalGroup
           } else {
+            if (obj.newData.parent) obj.newData.slides = [{ group: "", color: null, settings: {}, notes: "", items: [] }]
             // add custom
             id = []
             let layouts: any[] = []
+            let bgs: any[] = []
             obj.newData.slides.forEach((a: any, i: number) => {
               let slideID = obj.newData.id?.[i]
               if (!slideID) {
@@ -341,8 +361,23 @@ export function history(obj: History, undo: null | boolean = null) {
                 id.push(slideID)
               }
               slides[slideID] = a
-              layouts.push({ id: slideID })
+              let l: any = { id: slideID }
+              // add backgrounds
+              if (obj.newData.backgrounds?.length) {
+                let bgID = uid()
+                bgs.push({ id: bgID, bg: obj.newData.backgrounds[i] })
+                l.background = bgID
+              }
+              layouts.push(l)
             })
+
+            // add backgrounds
+            if (bgs.length) {
+              if (!s[obj.location!.show!.id].backgrounds) s[obj.location!.show!.id].backgrounds = {}
+              bgs.forEach((a) => {
+                s[obj.location!.show!.id].backgrounds[a.id] = a.bg
+              })
+            }
 
             let newIndex: number = index
             layout.forEach((a, i) => {
@@ -353,6 +388,11 @@ export function history(obj: History, undo: null | boolean = null) {
 
             s[obj.location!.show!.id].layouts[obj.location!.layout!].slides = addToPos(layout, layouts, newIndex)
           }
+          // if (get(activeEdit).slide)
+          //   activeEdit.update((a) => {
+          //     a.slide = index
+          //     return a
+          //   })
           obj.newData.id = id
         }
         return s

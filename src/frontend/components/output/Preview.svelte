@@ -46,7 +46,7 @@
       if (
         $activePage === "show" &&
         $activeShow &&
-        (!slide || e?.ctrlKey || (endOfShow && $activeShow.id !== slide?.id && $shows[$activeShow.id].settings.activeLayout !== slide.layout))
+        (!slide || e?.ctrlKey || (endOfShow && $activeShow.id !== slide?.id && $shows[$activeShow.id]?.settings.activeLayout !== slide.layout))
       ) {
         layout = GetLayout()
         let activeLayout: string = $shows[$activeShow!.id].settings.activeLayout
@@ -74,8 +74,6 @@
       if (index !== null) updateOut(index, layout)
     }
   }
-
-  $: console.log($activeEdit)
 
   function previousSlide() {
     if (!$outLocked) {

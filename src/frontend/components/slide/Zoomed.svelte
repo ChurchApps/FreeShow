@@ -14,7 +14,7 @@
   $: ratio = slideWidth / resolution.width
 </script>
 
-<div class:center style="width: 100%;height: 100%;">
+<div class:center style={$$props.style || "width: 100%;height: 100%;"}>
   <div
     bind:offsetWidth={slideWidth}
     class="slide"

@@ -6,9 +6,10 @@
   import Center from "../system/Center.svelte"
   import Slides from "./Slides.svelte"
 
-  function addSlide() {
+  function addSlide(e: any) {
     let newData: any = {}
-    if ($activeEdit) newData.index = $activeEdit.slide
+    if ($activeEdit?.slide) newData.index = $activeEdit.slide + 1
+    if (e.ctrlKey) newData.parent = true
     history({ id: "newSlide", newData, location: { page: "edit", show: $activeShow!, layout: $shows[$activeShow!.id].settings.activeLayout } })
   }
 </script>

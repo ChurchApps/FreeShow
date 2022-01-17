@@ -45,7 +45,7 @@
     if (!e.ctrlKey && $selected.id === id && e.target.closest(".selectElem") === null) selected.set({ id: null, data: [] })
   }
 
-  let dragover: null | "start" | "end" = null
+  let dragover: null | "start" | "center" | "end" = null
   let dragActive: boolean = false
 </script>
 
@@ -76,6 +76,8 @@
   {#if (trigger && dragActive) || fileOver}
     <div class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={() => (dragover = null)}>
       <span id="start" class="TriggerBlock" on:dragover={() => (dragover = "start")} />
+      <span id="start_center" class="TriggerBlock" on:dragover={() => (dragover = "center")} />
+      <span id="end_center" class="TriggerBlock" on:dragover={() => (dragover = "center")} />
       <span id="end" class="TriggerBlock" on:dragover={() => (dragover = "end")} />
     </div>
   {/if}
@@ -120,6 +122,9 @@
   }
   .trigger.row.end {
     border-right-width: 2px;
+  }
+  .trigger.center {
+    border-width: 2px;
   }
 
   .trigger span {

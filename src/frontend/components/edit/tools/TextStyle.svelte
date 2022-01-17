@@ -71,7 +71,7 @@
 
   setText()
   function setText() {
-    let styles = getStyles(style)
+    let styles = getStyles(style, true)
     Object.entries(defaults).forEach(([key, value]) => {
       if (key === "text-shadow" && value !== null) {
         let v = value.split(" ")

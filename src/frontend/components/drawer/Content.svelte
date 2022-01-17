@@ -10,6 +10,7 @@
   import Web from "./Web.svelte"
   import Player from "./player/Player.svelte"
   import Screens from "./live/Screens.svelte"
+  import Center from "../system/Center.svelte"
 
   export let id: string
   export let bible: any
@@ -54,6 +55,8 @@
     <!-- <div class="grid"> -->
     <Overlays />
     <!-- </div> -->
+  {:else if id === "audio"}
+    <Center>WIP</Center>
   {:else if id === "scripture"}
     <Scripture {active} bind:bible />
   {:else if id === "player"}

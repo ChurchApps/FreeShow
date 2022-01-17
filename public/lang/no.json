@@ -62,6 +62,8 @@
   },
   "new": {
     "show": "Nytt show",
+    "quick": "Hurtigshow",
+    "_quick": "Opprett show fra tekst",
     "project": "Nytt prosjekt",
     "category": "Ny kategori",
     "_private": "Nytt privat show",

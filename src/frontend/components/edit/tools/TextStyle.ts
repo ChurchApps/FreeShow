@@ -311,3 +311,85 @@ export function getItemText(item: Item): string {
   if (item.text) item.text.forEach((content) => (text += content.value))
   return text
 }
+
+// get caret pos (WIP)
+// https://stackoverflow.com/questions/4811822/get-a-ranges-start-and-end-offsets-relative-to-its-parent-container/4812022#4812022
+export function getCaretCharacterOffsetWithin(element: any) {
+  var caretOffset = 0
+  var doc = element.ownerDocument || element.document
+  var win = doc.defaultView || doc.parentWindow
+  var sel
+  if (typeof win.getSelection != "undefined") {
+    sel = win.getSelection()
+    if (sel.rangeCount > 0) {
+      var range = win.getSelection().getRangeAt(0)
+      var preCaretRange = range.cloneRange()
+      preCaretRange.selectNodeContents(element)
+      preCaretRange.setEnd(range.endContainer, range.endOffset)
+      caretOffset = preCaretRange.toString().length
+    }
+  } else if ((sel = doc.selection) && sel.type != "Control") {
+    var textRange = sel.createRange()
+    var preCaretTextRange = doc.body.createTextRange()
+    preCaretTextRange.moveToElementText(element)
+    preCaretTextRange.setEndPoint("EndToEnd", textRange)
+    caretOffset = preCaretTextRange.text.length
+  }
+  return caretOffset
+}
+
+export function setCaret(element: any) {
+  var range = document.createRange()
+  var sel = window.getSelection()
+
+  range.setStart(element.childNodes[2], 5)
+  range.collapse(true)
+
+  sel?.removeAllRanges()
+  sel?.addRange(range)
+}
+
+// https://stackoverflow.com/questions/6249095/how-to-set-the-caret-cursor-position-in-a-contenteditable-element-div
+function createRange(node: any, pos: number, range: any = null) {
+  if (!range) {
+    range = document.createRange()
+    range.selectNode(node)
+    range.setStart(node, 0)
+  }
+
+  if (pos === 0) {
+    range.setEnd(node, pos)
+  } else if (node && pos > 0) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.textContent.length < pos) {
+        pos -= node.textContent.length
+      } else {
+        range.setEnd(node, pos)
+        pos = 0
+      }
+    } else {
+      for (var lp = 0; lp < node.childNodes.length; lp++) {
+        range = createRange(node.childNodes[lp], pos, range)
+
+        if (pos === 0) {
+          break
+        }
+      }
+    }
+  }
+
+  return range
+}
+export function setCurrentCursorPosition(element: any, pos: number) {
+  if (pos >= 0) {
+    var selection = window.getSelection()
+
+    let range: any = createRange(element, pos)
+
+    if (range) {
+      range.collapse(false)
+      selection?.removeAllRanges()
+      selection?.addRange(range)
+    }
+  }
+}

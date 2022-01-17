@@ -189,7 +189,7 @@ export const shows: Writable<Shows> = writable({
           },
           {
             style: "",
-            text: [{ value: "Her er jeg Gud,\nmed mine byrder", style: "color: red; text-align: center;" }],
+            text: [{ value: "Her er jeg Gud,<br>med mine byrder", style: "color: red; text-align: center;" }],
           },
         ],
         stageItems: [{ style: "", text: [{ value: "  #E     C       D   Cm", style: "" }] }], // chords...
@@ -638,6 +638,9 @@ export const imageExtensions: Writable<string[]> = writable(["png", "jpg", "jpeg
 // empty
 export const dictionary: Writable<Dictionary> = writable({})
 export const theme_css = writable({})
+
+export type Popups = "import"
+export const activePopup: Writable<null | Popups> = writable(null)
 
 // export const theme = writable({
 //   primary: '#2d313b',

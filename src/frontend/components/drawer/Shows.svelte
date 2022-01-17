@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, dictionary, shows } from "../../stores"
+  import { activeShow, dictionary, activePopup, shows } from "../../stores"
   import { keysToID, removeValues, sortObject, sortObjectNumbers } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -136,6 +136,13 @@
     <Icon id="showIcon" style="padding-right: 10px;" />
     <span style="color: var(--secondary);">
       <T id="new.show" />
+    </span>
+  </Button>
+  <Button style="flex: 1;" on:click={() => activePopup.set("import")} center title={$dictionary.new?._quick}>
+    <!-- <Icon id="text" style="padding-right: 10px;" /> -->
+    <Icon id="showIcon" style="padding-right: 10px;" />
+    <span style="color: var(--secondary);">
+      <T id="new.quick" />
     </span>
   </Button>
 </div>

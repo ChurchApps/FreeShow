@@ -87,7 +87,7 @@
       if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
     }}
     on:dragover|preventDefault -->
-  <DropArea id="slides" selectChildren>
+  <DropArea id="slides" hoverTimeout={0} selectChildren>
     {#if $shows[id] === undefined}
       <Center faded>Error! Could not find show!</Center>
     {:else}
@@ -105,6 +105,7 @@
               {endIndex}
               list={!$slidesOptions.grid}
               columns={$slidesOptions.columns}
+              icons
               on:click={(e) => slideClick(e, slide, i)}
             />
           {/each}

@@ -9,7 +9,7 @@
     <div class="align" style={item.align}>
       <div class="text">
         {#each item.text as text}
-          <span style={text.style}>{text.value}</span>
+          <span style={text.style}>{@html text.value}</span>
         {/each}
       </div>
     </div>

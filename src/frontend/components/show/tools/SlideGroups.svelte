@@ -68,7 +68,7 @@
               }
             }}
           >
-            {slide.group || "—"}
+            <p>{slide.group || "—"}</p>
           </div>
         </SelectElem>
       {/each}
@@ -93,7 +93,7 @@
               }
             }}
           >
-            {slide.group || "—"}
+            <p>{slide.group || "—"}</p>
           </div>
         </SelectElem>
       {/each}
@@ -109,6 +109,7 @@
     flex-direction: column;
     gap: 5px;
     flex: 1;
+    overflow-x: clip;
   }
 
   .slide {
@@ -121,6 +122,7 @@
     font-weight: bold;
     background-color: var(--primary-lighter);
     cursor: pointer;
+    padding: 0 5px;
   }
   .slide:hover {
     filter: brightness(1.1);

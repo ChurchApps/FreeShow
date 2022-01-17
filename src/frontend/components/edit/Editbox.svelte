@@ -1,9 +1,12 @@
 <script lang="ts">
+  import { onMount } from "svelte"
+
   import type { Item } from "../../../types/Show"
   import { activeShow, activeEdit, shows } from "../../stores"
   import { history } from "../helpers/history"
   import T from "../helpers/T.svelte"
   import Movebox from "../system/Movebox.svelte"
+  import { getCaretCharacterOffsetWithin, setCurrentCursorPosition } from "./tools/TextStyle"
 
   export let item: Item
   export let index: number
@@ -44,6 +47,10 @@
     }
   }
 
+  $: active = $activeShow!.id
+  $: layout = $shows[active].settings.activeLayout
+  $: slide = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
+
   function keydown(e: any) {
     // TODO:
     // if (e.altKey) lines = []
@@ -51,9 +58,6 @@
 
     // TODO: exlude.....
     if (e.key === "Backspace" && $activeEdit.items.includes(index) && !document.activeElement?.closest(".item") && !document.activeElement?.closest("input")) {
-      let active = $activeShow!.id
-      let layout: string = $shows[active].settings.activeLayout
-      let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
       let items: Item[] = $shows[active].slides[slide].items
       let newItems = [...items]
 
@@ -128,9 +132,67 @@
     // }
   }
 
-  function type(e: any) {
-    console.log(e)
-    // TODO: update text
+  let html: string = ""
+  let previousHTML: string = ""
+
+  onMount(() => {
+    html = ""
+    item.text?.forEach((a) => {
+      let style = a.style ? 'style="' + a.style + '"' : ""
+      html += `<span ${style}>` + a.value + "</span>"
+    })
+    previousHTML = html
+  })
+
+  $: {
+    if (textElem && html !== previousHTML) {
+      previousHTML = html
+      setTimeout(() => {
+        console.log(html)
+        shows.update((a) => {
+          let text = a[active].slides[slide].items[index].text
+          let textItems = getItems(textElem.children)
+          if (textItems.length) text?.forEach((a, i) => (a.value = textItems[i]))
+          return a
+        })
+      }, 10)
+    }
+  }
+
+  function getItems(children: any): any[] {
+    let textItems: any[] = []
+    new Array(...children).forEach((child: any) => {
+      if (child.innerHTML) textItems.push(child.innerHTML)
+    })
+    return textItems
+  }
+
+  function textkey(e: any) {
+    // TODO: <br> will breaks the system...
+    if (e.key === "Enter") {
+      e.preventDefault()
+
+      // get cursor pos & insert <br>
+      let pos = getCaretCharacterOffsetWithin(e.target)
+
+      // find pos
+      let count: number = 0
+      let tag: boolean = false
+      let newPos: null | number = null
+
+      html.split("").forEach((char: string, i: number) => {
+        if (char === "<") tag = true
+        else if (char === ">") tag = false
+        else if (!tag) count++
+        if (count === pos) newPos = i + 1
+      })
+
+      if (newPos !== null) {
+        html = html.slice(0, newPos) + "<br>" + html.slice(newPos, html.length)
+        setCurrentCursorPosition(textElem, newPos)
+      }
+      console.log(html)
+    }
   }
 </script>
 
@@ -152,10 +214,10 @@
           <T id="Type..." />
         </span>
       {/if}
-      <div bind:this={textElem} class="edit" contenteditable={true} on:keydown={type}>
-        {#each item.text as text}
-          <span style={text.style}>{text.value}</span>
-        {/each}
+      <div bind:this={textElem} class="edit" contenteditable bind:innerHTML={html} on:keydown={textkey}>
+        <!-- {#each item.text as text}
+          <span style={text.style}>{@html text.value}</span>
+        {/each} -->
       </div>
     </div>
   {/if}

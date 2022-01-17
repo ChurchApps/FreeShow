@@ -71,7 +71,9 @@
           </HoverButton>
           <p style="flex: 3;">{background.name}</p>
           <span style="color: var(--secondary);">{background.count}</span>
+          <!-- TODO: filters -->
           {#if background.type === "video"}
+            <!-- TODO: mute for each bakcground........ -->
             <Button style="flex: 0" center title={background.muted !== false ? "Unmute" : "Mute"} on:click={() => setBG(background.id, "muted", background.muted === false)}>
               <Icon id={background.muted !== false ? "muted" : "volume"} size={1.2} />
             </Button>
@@ -130,5 +132,8 @@
     height: 100%;
     object-fit: cover;
     z-index: -1;
+  }
+  .main :global(video) {
+    height: 100%;
   }
 </style>
