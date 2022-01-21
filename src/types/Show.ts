@@ -99,7 +99,16 @@ export interface Overlay {
   name: string
   color: null | string
   category: null | string
-  style: string
+  items: Item[]
+}
+
+export interface Templates {
+  [key: ID]: Template
+}
+export interface Template {
+  name: string
+  color: null | string
+  category: null | string
   items: Item[]
 }
 

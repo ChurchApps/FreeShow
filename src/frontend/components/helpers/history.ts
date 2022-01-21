@@ -19,6 +19,8 @@ import {
   stageShows,
   overlays,
   outOverlays,
+  events,
+  templates,
 } from "./../../stores"
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory, activePage } from "../../stores"
@@ -64,6 +66,8 @@ export type HistoryIDs =
   | "drawer"
   // other
   | "slideToOverlay"
+  | "newEvent"
+  | "template"
 
 export interface History {
   id: HistoryIDs
@@ -287,7 +291,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
       let as: any = { id }
       // history addShow...
-      if (obj.id !== "newShowDrawer" && activeProject !== null) {
+      if (obj.id !== "newShowDrawer" && get(activeProject)) {
         projects.update((p) => {
           p[obj.location!.project!].shows.push(as)
           return p
@@ -518,6 +522,7 @@ export function history(obj: History, undo: null | boolean = null) {
         return a
       })
       break
+    // other
     case "slideToOverlay":
       overlays.update((a: any) => {
         if (undo) {
@@ -525,6 +530,37 @@ export function history(obj: History, undo: null | boolean = null) {
           if (get(outOverlays).includes(id)) outOverlays.set(get(outOverlays).filter((a: any) => a !== id))
           delete a[id]
         } else a[obj.newData.id] = obj.newData.slide
+        return a
+      })
+      break
+    case "newEvent":
+      events.update((a) => {
+        if (undo) {
+          if (!obj.newData) delete a[obj.oldData.id]
+          else a[obj.oldData.id] = obj.newData
+        } else a[obj.newData.id] = obj.newData.data
+        return a
+      })
+      break
+    case "template":
+      shows.update((a) => {
+        if (undo) {
+          a[obj.location!.show!.id].slides = obj.newData.slides
+          a[obj.location!.show!.id].settings.template = obj.newData.template
+        } else {
+          let slides = a[obj.location!.show!.id].slides
+          if (!obj.oldData) obj.oldData = { template: a[obj.location!.show!.id].settings.template, slides: JSON.parse(JSON.stringify(slides)) }
+          a[obj.location!.show!.id].settings.template = obj.newData.template
+          let template = get(templates)[obj.newData.template]
+          Object.values(slides).forEach((slide: any) => {
+            slide.items.forEach((item: any, i: number) => {
+              item.style = template.items[i] ? template.items[i].style || "" : template.items[0].style || ""
+              item.text?.forEach((text: any, j: number) => {
+                text.style = template.items[i].text?.[j] ? template.items[i].text?.[j].style || "" : template.items[i].text?.[0].style || ""
+              })
+            })
+          })
+        }
         return a
       })
       break

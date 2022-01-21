@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Category } from "../../../types/Tabs"
 
-  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, webFavorites } from "../../stores"
+  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, templateCategories, webFavorites } from "../../stores"
   import { keysToID, sortObject } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -30,6 +30,8 @@
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($mediaFolders), "name") as Button[])]
     } else if (id === "overlays") {
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($overlayCategories), "name") as Button[])]
+    } else if (id === "templates") {
+      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($templateCategories), "name") as Button[])]
     } else if (id === "audio") {
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($audioFolders), "name") as Button[])]
     } else if (id === "scripture") {

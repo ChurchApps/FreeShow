@@ -2,7 +2,7 @@
   import { selected } from "../../stores"
   import { ondrop, validateDrop } from "../helpers/drop"
 
-  export let id: "slides" | "slide" | "shows" | "project" | "projects" | "overlays"
+  export let id: "all_slides" | "slides" | "slide" | "shows" | "project" | "projects" | "overlays" | "templates"
   export let selectChildren: boolean = false
   export let hoverTimeout: number = 500
   export let file: boolean = false

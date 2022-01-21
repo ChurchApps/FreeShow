@@ -87,38 +87,40 @@
       if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
     }}
     on:dragover|preventDefault -->
-  <DropArea id="slides" hoverTimeout={0} selectChildren>
-    {#if $shows[id] === undefined}
-      <Center faded>Error! Could not find show!</Center>
-    {:else}
-      <div class="grid">
-        <!-- {#each Object.values($shows[id].slides) as slide, i} -->
-        {#if layoutSlides.length}
-          {#each layoutSlides as slide, i}
-            <Slide
-              slide={currentShow.slides[slide.id]}
-              show={currentShow}
-              layoutSlide={slide}
-              index={i}
-              color={slide.color}
-              active={$outSlide?.index === i && $outSlide?.id === id && $outSlide?.layout === activeLayout}
-              {endIndex}
-              list={!$slidesOptions.grid}
-              columns={$slidesOptions.columns}
-              icons
-              on:click={(e) => slideClick(e, slide, i)}
-            />
-          {/each}
-        {:else}
-          <Center faded size={2}>
-            [[[No slides]]]
-            <!-- Add slides button -->
-          </Center>
-        {/if}
+  <DropArea id="all_slides">
+    <DropArea id="slides" hoverTimeout={0} selectChildren>
+      {#if $shows[id] === undefined}
+        <Center faded>Error! Could not find show!</Center>
+      {:else}
+        <div class="grid">
+          <!-- {#each Object.values($shows[id].slides) as slide, i} -->
+          {#if layoutSlides.length}
+            {#each layoutSlides as slide, i}
+              <Slide
+                slide={currentShow.slides[slide.id]}
+                show={currentShow}
+                layoutSlide={slide}
+                index={i}
+                color={slide.color}
+                active={$outSlide?.index === i && $outSlide?.id === id && $outSlide?.layout === activeLayout}
+                {endIndex}
+                list={!$slidesOptions.grid}
+                columns={$slidesOptions.columns}
+                icons
+                on:click={(e) => slideClick(e, slide, i)}
+              />
+            {/each}
+          {:else}
+            <Center faded size={2}>
+              [[[No slides]]]
+              <!-- Add slides button -->
+            </Center>
+          {/if}
 
-        <!-- TODO: snap to width! (Select columns instead of manual zoom size) -->
-      </div>
-    {/if}
+          <!-- TODO: snap to width! (Select columns instead of manual zoom size) -->
+        </div>
+      {/if}
+    </DropArea>
   </DropArea>
 </Autoscroll>
 

@@ -12,15 +12,20 @@
 </script>
 
 <div class="top">
-  <span>
+  <span style="width: 300px;">
+    <!-- logo -->
+    <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;">FreeShow</h1>
+  </span>
+  <span style="position: absolute;left: 50%;height: 100%;transform: translateX(-50%);">
     <TopButton id="show" />
     <TopButton id="edit" />
     <TopButton id="stage" />
     <TopButton id="draw" />
     <TopButton id="calendar" />
+    <!-- <hr /> -->
   </span>
   <span>
-    <TopButton id="settings" />
+    <TopButton id="settings" hideLabel />
     <Button title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display} on:click={display} class="display {$outputDisplay ? 'on' : 'off'}">
       {#if $outputDisplay}
         <Icon id="cancelDisplay" size={1.8} white />
@@ -45,12 +50,25 @@
     display: flex;
   }
 
+  div :global(button.display) {
+    display: flex;
+    justify-content: center;
+    min-width: 60px;
+  }
+
   div :global(button.display.on) {
     background-color: rgb(0 150 0 / 30%) !important;
   }
   div :global(button.display.off) {
     background-color: rgb(150 0 0 / 30%) !important;
   }
+
+  /* hr {
+    background-color: var(--primary-lighter);
+    width: 2px;
+    height: 100%;
+    border: none;
+  } */
 
   /* div :global(button) {
     display: flex;

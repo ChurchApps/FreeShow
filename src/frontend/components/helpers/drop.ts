@@ -7,11 +7,13 @@ import { uid } from "uid"
 
 // TODO: file...
 const areas: any = {
+  all_slides: ["template"],
   slides: ["media", "overlay", "sound", "camera"], // group
   // slide: ["overlay", "sound", "camera"], // "media",
   projects: [],
   project: ["show_drawer", "media", "player"],
   overlays: ["slide"],
+  templates: ["slide"],
   // media_drawer: ["file"],
 }
 const areaChildren: any = {
@@ -197,6 +199,18 @@ export function ondrop(e: any, id: string) {
         let oldLayout = get(shows)[get(activeShow)!.id].layouts[get(shows)[get(activeShow)!.id].settings.activeLayout].slides
         let value: any[] = [...new Set([...(oldLayout[index].overlays || []), ...sel.data])]
         newData = { key: "overlays", value }
+      }
+      break
+    case "all_slides":
+      location = { page: "show", show: get(activeShow) }
+      if (sel.id === "template") {
+        historyID = "template"
+        newData = { template: sel.data[0] }
+        // location.layoutSlide = index
+        // let newData = {template: sel.data[0]}
+        // // let slide = get(shows)[get(activeShow)!.id].slides
+        // newData.slide = slide
+        // newData = { key: "templates", newData, oldData }
       }
       break
     case "overlays":

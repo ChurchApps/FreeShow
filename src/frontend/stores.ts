@@ -1,4 +1,5 @@
-import type { Transition } from "./../types/Show"
+import type { Event } from "./../types/Calendar"
+import type { Templates, Transition } from "./../types/Show"
 import { Writable, writable } from "svelte/store"
 import type { StageShows } from "./../types/Stage"
 import type { DrawTools, Draw, DrawSettings } from "./../types/Draw"
@@ -472,13 +473,13 @@ export const categories: Writable<Categories> = writable({
   info: { name: "category.info", icon: "info", default: true },
   presentation: { name: "category.presentation", icon: "presentation", default: true },
 })
+
 export const overlayCategories: Writable<Categories> = writable({})
 export const overlays: Writable<Overlays> = writable({
   tiesl: {
     name: "Verse 1",
     color: "green",
     category: null,
-    style: "",
     items: [
       {
         style: "",
@@ -493,7 +494,6 @@ export const overlays: Writable<Overlays> = writable({
     name: "",
     color: null,
     category: null,
-    style: "",
     items: [
       {
         style: "top: 400px; left: 180px; height: 220px; width: 1500px; text-align: center;",
@@ -506,6 +506,42 @@ export const overlays: Writable<Overlays> = writable({
     ],
   },
 })
+
+export const templateCategories: Writable<Categories> = writable({
+  song: { name: "category.song", icon: "song", default: true },
+})
+export const templates: Writable<Templates> = writable({
+  tiesl: {
+    name: "Default",
+    color: "purple",
+    category: "song",
+    items: [
+      {
+        style: "",
+        text: [{ value: "Her er jeg Gud,\nmed mine byrder", style: "color: red; text-align: center;" }],
+      },
+      {
+        style: "color: blue; top: 50px; left: 100px; height: 100px; width: 40px;",
+      },
+    ],
+  },
+  fsioøføjesi: {
+    name: "",
+    color: null,
+    category: null,
+    items: [
+      {
+        style: "top: 400px; left: 180px; height: 220px; width: 1500px; text-align: center;",
+        text: [{ value: "Velkommen!", style: "font-size: 180px; font-weight: bold; font-family: Tahoma;" }],
+      },
+      {
+        style: "top: 0px; left: 10px; height: 80px; width: 300px;",
+        text: [{ value: "Impuls", style: "" }],
+      },
+    ],
+  },
+})
+
 export const mediaFolders: Writable<Categories> = writable({
   pictures: { name: "category.pictures", icon: "folder", path: "C:\\Users\\Kristoffer\\Pictures", default: true },
   videos: { name: "category.videos", icon: "folder", path: "C:\\Users\\Kristoffer\\Videos", default: true },
@@ -539,6 +575,94 @@ export const playerVideos: Writable<Categories> = writable({
 // export const stage = writable([type: "text", pos: ])
 // message...
 // layout
+
+// CALENDAR
+export const activeDays: Writable<number[]> = writable([])
+export const events: Writable<{ [key: string]: Event }> = writable({
+  etijosruief: {
+    name: "Sundagssamling",
+    color: "blue",
+    notes: "",
+    location: "",
+    from: new Date(2022, 0, 30, 11),
+    to: new Date(2022, 0, 30, 13),
+    time: true,
+  },
+  tegr9edi: {
+    name: "Korånna-ferie",
+    color: "yellow",
+    notes: "",
+    location: "",
+    from: new Date(2022, 0, 10, 20),
+    to: new Date(2022, 0, 14, 15),
+    time: true,
+  },
+  frgjiofe: {
+    name: "Bibeltime for Ungdom",
+    color: "pink",
+    notes: "",
+    location: "",
+    from: new Date(2022, 0, 17, 11, 15),
+    to: new Date(2022, 0, 17, 12, 15),
+    time: true,
+  },
+  frgjioferg: {
+    name: "Ungdomsmøte",
+    color: "purple",
+    notes: "",
+    location: "",
+    from: new Date(2022, 0, 17, 22),
+    to: new Date(2022, 0, 17, 23, 30),
+    time: true,
+  },
+  frgjio: {
+    name: "Bibeltime",
+    color: "white",
+    notes: "",
+    location: "",
+    from: new Date(2022, 0, 17, 9, 30),
+    to: new Date(2022, 0, 17, 10, 45),
+    time: true,
+  },
+  eioshfs: {
+    name: "Kveldsmøte",
+    color: "red",
+    notes: "",
+    location: "",
+    from: new Date(2022, 0, 17),
+    to: new Date(2022, 0, 17),
+    time: false,
+    repeat: { every: [1, "day"], end: new Date(2022, 0, 21) },
+  },
+  eioshfsh: {
+    name: "Kveldsmøte",
+    color: "cyan",
+    notes: "",
+    location: "",
+    from: new Date(2022, 0, 18),
+    to: new Date(2022, 0, 18),
+    time: false,
+    parent: "eioshfs",
+  },
+  grsh: {
+    name: "Julaften",
+    color: "red",
+    notes: "",
+    location: "",
+    from: new Date(2021, 11, 24, 17),
+    to: new Date(2021, 11, 24, 17),
+    time: true,
+  },
+  grshgr: {
+    name: "Nyttår",
+    color: "darkblue",
+    notes: "",
+    location: "",
+    from: new Date(2021, 11, 31),
+    to: new Date(2021, 11, 31),
+    time: false,
+  },
+})
 
 // SLIDE VIEW
 interface SlidesOptions {
@@ -577,6 +701,7 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({
   shows: { enabled: true, activeSubTab: null },
   backgrounds: { enabled: true, activeSubTab: null },
   overlays: { enabled: true, activeSubTab: null },
+  templates: { enabled: true, activeSubTab: null },
   audio: { enabled: true, activeSubTab: null },
   scripture: { enabled: true, activeSubTab: "de4e12af7f28f599-02" },
   timers: { enabled: true, activeSubTab: null },
@@ -641,6 +766,8 @@ export const theme_css = writable({})
 
 export type Popups = "import"
 export const activePopup: Writable<null | Popups> = writable(null)
+export type SettingsTabs = "general" | "theme" | "show" | "display" | "connection" | "calendar" | "other"
+export const settingsTab: Writable<SettingsTabs> = writable("general")
 
 // export const theme = writable({
 //   primary: '#2d313b',

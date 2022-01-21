@@ -11,6 +11,7 @@
   import Player from "./player/Player.svelte"
   import Screens from "./live/Screens.svelte"
   import Center from "../system/Center.svelte"
+  import Templates from "./Templates.svelte"
 
   export let id: string
   export let bible: any
@@ -52,9 +53,9 @@
   {:else if id === "backgrounds"}
     <Backgrounds {active} />
   {:else if id === "overlays"}
-    <!-- <div class="grid"> -->
     <Overlays />
-    <!-- </div> -->
+  {:else if id === "templates"}
+    <Templates />
   {:else if id === "audio"}
     <Center>WIP</Center>
   {:else if id === "scripture"}
