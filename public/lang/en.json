@@ -20,8 +20,24 @@
     "_title_display_stop": "Stop presentation"
   },
   "themes": {
+    "default": "Default",
     "dark": "Dark",
-    "light": "Light"
+    "light": "Light",
+    "white": "White",
+    "black": "Black"
+  },
+  "theme": {
+    "primary": "Primary",
+    "primary-lighter": "Primary lighter",
+    "primary-darker": "Primary darker",
+    "primary-darkest": "Primary darkest",
+    "text": "Text",
+    "textInvert": "Inverted text",
+    "secondary-text": "Secondary text",
+    "secondary": "Secondary",
+    "secondary-opacity": "Secondary opacity",
+    "hover": "Hover",
+    "focus": "Focus"
   },
   "buttons": {
     "changeTheme": "Change Theme"
@@ -43,6 +59,7 @@
     "shows": "Shows",
     "backgrounds": "Backgrounds",
     "overlays": "Overlays",
+    "templates": "Templates",
     "audio": "Audio",
     "scripture": "Scripture",
     "player": "Player",
@@ -76,12 +93,14 @@
   },
   "tools": {
     "notes": "Notes",
-    "schedule": "Schedule",
     "timers": "Timers",
-    "actions": "Actions",
+    "--schedule": "Schedule",
+    "--actions": "Actions",
     "groups": "Groups",
-    "transitions": "Transitions",
-    "backgrounds": "Backgrounds"
+    "meta": "Meta",
+    "backgrounds": "Backgrounds",
+    "audio": "Audio",
+    "transitions": "Transitions"
   },
   "edit": {
     "font": "Font",
@@ -162,6 +181,37 @@
     "font-size": "Font Size",
     "zeros": "Zeros",
     "overrun": "Overrun Color"
+  },
+  "settings": {
+    "general": "General",
+    "theme": "Theme",
+    "groups": "Groups",
+    "display": "Display",
+    "connection": "Connection",
+    "calendar": "Calendar",
+    "other": "Other",
+    "language": "Language",
+    "disable_labels": "Disable labels",
+    "default_project_name": "Default project name",
+    "resolution": "Resolution",
+    "video_extensions": "Video extensions",
+    "image_extensions": "Image extensions",
+    "add": "Add",
+    "remove": "Remove",
+    "change_name": "Change name",
+    "show_location": "Show location",
+    "font": "Font",
+    "font_family": "Font family",
+    "font_size": "Font size",
+    "colors": "Colors",
+    "add_group": "Add group",
+    "output_screen": "Output screen",
+    "device_name": "Device name",
+    "port": "port",
+    "max_connections": "Max connections",
+    "allowed_connections": "Allowed connections",
+    "reset_settings": "Reset settings",
+    "export_all": "Export everything"
   },
   "filter": {
     "blur": "Blur",

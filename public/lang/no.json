@@ -15,8 +15,24 @@
     "settings": "Innstillinger"
   },
   "themes": {
+    "default": "Standard",
     "dark": "Mørkt",
-    "light": "Lyst"
+    "light": "Lyst",
+    "white": "Hvitt",
+    "black": "Svart"
+  },
+  "theme": {
+    "primary": "Primær",
+    "primary-lighter": "Primær lysere",
+    "primary-darker": "Primær mørkere",
+    "primary-darkest": "Primær mørkest",
+    "text": "Tekst",
+    "textInvert": "Motsatt tekst",
+    "secondary-text": "Sekundær tekst",
+    "secondary": "Sekundær",
+    "secondary-opacity": "Sekundær gjennomsiktig",
+    "hover": "Sveve",
+    "focus": "Fokus"
   },
   "buttons": {
     "changeTheme": "Endre Tema"
@@ -38,6 +54,7 @@
     "shows": "Show",
     "backgrounds": "Bakgrunner",
     "overlays": "Overlegg",
+    "templates": "Maler",
     "audio": "Lyd",
     "scripture": "Bibelen",
     "player": "Spiller",
@@ -71,12 +88,14 @@
   },
   "tools": {
     "notes": "Notater",
-    "schedule": "Plan",
     "timers": "Nedtellinger",
-    "actions": "Handlinger",
+    "--schedule": "Plan",
+    "--actions": "Handlinger",
     "groups": "Grupper",
-    "transitions": "Overganger",
-    "backgrounds": "Bakgrunner"
+    "meta": "Meta",
+    "backgrounds": "Bakgrunner",
+    "audio": "Lyd",
+    "transitions": "Overganger"
   },
   "edit": {
     "font": "Skrift",
@@ -157,6 +176,37 @@
     "font-size": "Tekststørrelse",
     "zeros": "Null",
     "overrun": "Utløpt Farge"
+  },
+  "settings": {
+    "general": "Generelt",
+    "theme": "Tema",
+    "groups": "Grupper",
+    "display": "Skjerm",
+    "connection": "Tilkobling",
+    "calendar": "Kalender",
+    "other": "Annet",
+    "language": "Språk",
+    "disable_labels": "Deaktiver etiketter",
+    "default_project_name": "Standard prosjektnavn",
+    "resolution": "Oppløsning",
+    "video_extensions": "Videoutvidelse",
+    "image_extensions": "Bildeutvidelse",
+    "add": "Legg til",
+    "remove": "Fjern",
+    "change_name": "Endre navn",
+    "show_location": "Show plassering",
+    "font": "Skrift",
+    "font_family": "Skrifttype",
+    "font_size": "Skriftstørrelse",
+    "colors": "Farger",
+    "add_group": "Legg til gruppe",
+    "output_screen": "Skjermutgang",
+    "device_name": "Enhetsnavn",
+    "port": "port",
+    "max_connections": "Maks tilkoblinger",
+    "allowed_connections": "Tillatte tilkoblinger",
+    "reset_settings": "Tilbakestill innstillinger",
+    "export_all": "Eksporter alt"
   },
   "filter": {
     "blur": "Uklarhet",

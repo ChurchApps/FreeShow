@@ -1,4 +1,14 @@
-<input type={$$props.type || "text"} class="edit" value={$$props.value} placeholder={$$props.placeholder} style={$$props.style} class:center={$$props.center} on:input on:change />
+<input
+  type={$$props.type || "text"}
+  class="edit"
+  value={$$props.value}
+  placeholder={$$props.placeholder}
+  style={$$props.style}
+  class:center={$$props.center}
+  class:light={$$props.light}
+  on:input
+  on:change
+/>
 
 <style>
   input {
@@ -19,6 +29,9 @@
   }
   input.center {
     text-align: center;
+  }
+  input.light {
+    background-color: var(--primary);
   }
   input:hover {
     background-color: var(--hover);

@@ -11,6 +11,7 @@
   import Center from "../system/Center.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
+import ProjectTools from "./ProjectTools.svelte";
 
   // let containsProject;
   // activeProject.subscribe(ap => {
@@ -174,6 +175,9 @@
     <Center faded>[[[Select a project]]]</Center>
   {/if}
 </div>
+{#if $activeProject && !$projectView}
+  <ProjectTools />
+{/if}
 
 <style>
   .main {

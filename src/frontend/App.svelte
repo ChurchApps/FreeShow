@@ -1,27 +1,23 @@
 <script lang="ts">
-  // import T from "./components/helpers/T.svelte"
-  // import Settings from "./components/views/Settings.svelte"
+  import { activePage, activeShow, activeStage, drawer, outputDisplay, outputWindow, outSlide, screen, shows } from "./stores"
+  import { setLanguage } from "./utils/language"
+  import { startup } from "./utils/startup"
+  import { redo, undo } from "./components/helpers/history"
+  import { getStyleResolution } from "./components/slide/getStyleResolution"
+  import { OUTPUT } from "../types/Channels"
   import Top from "./components/main/Top.svelte"
   import Projects from "./components/show/Projects.svelte"
   import Show from "./components/show/Show.svelte"
   import Editor from "./components/edit/Editor.svelte"
   import Preview from "./components/output/Preview.svelte"
-  import { setLanguage } from "./utils/language"
-  import { startup } from "./utils/startup"
   import Drawer from "./components/drawer/Drawer.svelte"
-  import type { TopViews } from "../types/Views"
   import ContextMenu from "./components/system/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import { activePage, activeProject, activeShow, activeStage, drawer, outputWindow, outSlide, projectView, screen, shows } from "./stores"
-  import ProjectTools from "./components/show/ProjectTools.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
   import Output from "./components/output/Output.svelte"
-  import { redo, undo } from "./components/helpers/history"
-  import { getStyleResolution } from "./components/slide/getStyleResolution"
-  import type { Resolution } from "../types/Settings"
   import Slide from "./components/draw/Slide.svelte"
   import DrawTools from "./components/draw/DrawTools.svelte"
   import DrawSettings from "./components/draw/DrawSettings.svelte"
@@ -30,6 +26,12 @@
   import StageShow from "./components/stage/StageShow.svelte"
   import MediaTools from "./components/drawer/media/MediaTools.svelte"
   import Popup from "./components/main/Popup.svelte"
+  import Calendar from "./components/calendar/Calendar.svelte"
+  import Day from "./components/calendar/Day.svelte"
+  import CreateCalendarShow from "./components/calendar/CreateCalendarShow.svelte"
+  import SettingsTabs from "./components/settings/SettingsTabs.svelte"
+  import type { TopViews } from "../types/Tabs"
+  import type { Resolution } from "../types/Settings"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -38,97 +40,81 @@
   // https://lokalise.com/blog/svelte-i18n/
   setLanguage()
 
-  // import VideoStream from "./components/controllers/VideoStream.svelte"
-  // import type { activeFilePath } from "./stores";
-
-  // TODO: a better way of doing this!!!
-  // shows.subscribe((s) => {
-  //   if (!$outputWindow) window.api.send(OUTPUT, { channel: "SHOWS", data: s })
-  // })
-
-  let page: TopViews = "show"
-  activePage.subscribe((p) => (page = p))
-
-  // TODO: update send to lan remote on active show/slide update
-
   function keydown(e: any) {
-    // ctrl + number
-    if (e.ctrlKey) {
-      // WIP reflow: flow / ...
-      let menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
-      if (Object.keys(menus).includes((e.key - 1).toString())) {
-        activePage.set(menus[e.key - 1])
-      }
+    if (!$outputWindow) {
+      // ctrl + number
+      if (e.ctrlKey) {
+        let menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
+        if (Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
 
-      // prevent undo
-      if (!e.target.closest(".edit")) {
-        e.preventDefault()
-        if (e.key.toLowerCase() === "z" && !e.shiftKey) {
-          undo()
-        } else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) {
-          redo()
+        // undo/redo
+        if (!e.target.closest(".edit")) {
+          e.preventDefault()
+          if (e.key.toLowerCase() === "z" && !e.shiftKey) undo()
+          else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) redo()
         }
-      }
-    } else {
-      if (e.key === "Escape") {
-        if (document.activeElement !== document.body) {
-          ;(document.activeElement as HTMLElement).blur()
-        } else {
-          // hide / show drawer
-
-          if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
-          else drawer.set({ height: 40, stored: $drawer.height })
+      } else {
+        if (e.key === "Escape") {
+          if (document.activeElement !== document.body) {
+            ;(document.activeElement as HTMLElement).blur()
+          } else {
+            // hide / show drawer
+            if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+            else drawer.set({ height: 40, stored: $drawer.height })
+          }
         }
       }
     }
   }
 
+  function display() {
+    outputDisplay.set(false)
+    window.api.send(OUTPUT, { channel: "DISPLAY", data: false })
+  }
+
   let width: number = 0
   let height: number = 0
   let resolution: Resolution = $outSlide ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
+
+  $: page = $activePage
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <main>
   {#if $outputWindow}
-    <!-- TODO: remove on click? (if only one screen) -->
-    <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height}>
+    <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={display}>
       <Output style={getStyleResolution(resolution, width, height, "fit")} center />
     </div>
   {:else}
-    <!-- <h1>FreeShow</h1> -->
-
     <ContextMenu />
-
     <Popup />
 
     <div class="column">
       <Top />
-      <!-- All / Current/active -->
-
       <div class="row">
         <!-- maxWidth={window.innerWidth / 3} -->
         <Resizeable id="mainLeft">
           <div class="left">
             {#if page === "show"}
               <Projects />
-              {#if $activeProject && !$projectView}
-                <ProjectTools />
-              {/if}
             {:else if page === "edit"}
               <Navigation />
             {:else if page === "stage"}
               <Shows />
             {:else if page === "draw"}
               <DrawTools />
+            {:else if page === "calendar"}
+              <Day />
+            {:else if page === "settings"}
+              <SettingsTabs />
             {/if}
           </div>
         </Resizeable>
+
         <div class="center">
           {#if page === "show"}
             <Show />
-            <!-- <VideoPlayer /> -->
           {:else if page === "edit"}
             <Editor />
           {:else if page === "draw"}
@@ -137,13 +123,16 @@
             <Settings />
           {:else if page === "stage"}
             <StageShow />
+          {:else if page === "calendar"}
+            <Calendar />
           {/if}
         </div>
+
         <Resizeable id="mainRight" side="right">
           <div class="right">
             <Preview />
             {#if page === "show" && $activeShow}
-              {#if ["show", "private", undefined].includes($activeShow.type)}
+              {#if $activeShow.type === "show" || $activeShow.type === undefined}
                 <ShowTools />
               {:else if $activeShow.type === "image" || $activeShow.type === "video"}
                 <MediaTools />
@@ -154,22 +143,17 @@
               <DrawSettings />
             {:else if page === "stage" && $activeStage.id}
               <StageTools />
+            {:else if page === "calendar"}
+              <CreateCalendarShow />
             {/if}
           </div>
         </Resizeable>
       </div>
 
-      <!-- <Slides live={live} setLive={setLive} />
-              <Preview live={live} setLive={setLive} /> -->
       {#if page === "show" || page === "edit"}
         <Drawer />
       {/if}
     </div>
-
-    <!-- <VideoStream /> -->
-    <!-- <p class="file-path">
-    {$activeFilePath ? $activeFilePath : "Press 'Save' or hit 'CTRL + S' to save"}
-  </p> -->
   {/if}
 </main>
 

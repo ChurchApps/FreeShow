@@ -2,7 +2,7 @@
   export let value: any = "#FFF"
 </script>
 
-<div style="background-color: {value};">
+<div style={"background-color: " + value + ";" + $$props.style}>
   <input type="color" bind:value on:input />
 </div>
 
@@ -10,6 +10,9 @@
   div {
     border: 2px solid var(--primary-darker);
     transition: background-color 0.2s;
+  }
+  div:hover {
+    filter: brightness(1.2);
   }
   input[type="color"] {
     opacity: 0;

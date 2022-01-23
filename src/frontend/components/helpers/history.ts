@@ -12,7 +12,7 @@ import {
   projectView,
   folders,
   openedFolders,
-  defaultName,
+  defaultProjectName,
   drawerTabsData,
   activeShow,
   categories,
@@ -21,6 +21,9 @@ import {
   outOverlays,
   events,
   templates,
+  themes,
+  groups,
+  theme,
 } from "./../../stores"
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory, activePage } from "../../stores"
@@ -30,7 +33,7 @@ import { GetLayout, GetLayoutRef } from "./get"
 import { addToPos } from "./mover"
 import { getGroup } from "./getGroup"
 
-export type HistoryPages = "drawer" | "show" | "edit" | "stage"
+export type HistoryPages = "drawer" | "show" | "edit" | "stage" | "settings"
 export type HistoryIDs =
   // edit
   | "textStyle"
@@ -68,6 +71,10 @@ export type HistoryIDs =
   | "slideToOverlay"
   | "newEvent"
   | "template"
+  // settings
+  | "theme"
+  | "addTheme"
+  | "addGlobalGroup"
 
 export interface History {
   id: HistoryIDs
@@ -81,11 +88,12 @@ export interface History {
     layoutSlide?: number
     slide?: string
     items?: any[]
+    theme?: string
   }
 }
 
 // override previous history
-const override = ["textStyle", "deleteItem", "itemStyle", "itemAlign", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout"]
+const override = ["textStyle", "deleteItem", "itemStyle", "itemAlign", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme"]
 
 export function history(obj: History, undo: null | boolean = null) {
   // if (undo) {
@@ -205,7 +213,7 @@ export function history(obj: History, undo: null | boolean = null) {
         if (obj.newData === null) {
           let name: string = ""
           let created: Date = new Date()
-          if (get(defaultName) === "date") name = dateToString(created)
+          if (get(defaultProjectName) === "date") name = dateToString(created)
           project = { name, notes: "", created, parent: obj.oldData || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
           id = uid()
           obj.newData = project
@@ -561,6 +569,43 @@ export function history(obj: History, undo: null | boolean = null) {
             })
           })
         }
+        return a
+      })
+      break
+    // settings
+    case "theme":
+      themes.update((a: any) => {
+        if (!obj.oldData) {
+          obj.oldData = { ...obj.newData }
+          if (obj.newData.id) obj.oldData.value = a[obj.location!.theme!][obj.newData.key][obj.newData.id]
+          else obj.oldData.value = a[obj.location!.theme!][obj.newData.key]
+          if (obj.newData.key === "name" && a[obj.location!.theme!].default) obj.oldData.default = true
+        }
+        if (obj.newData.default) a[obj.location!.theme!].default = true
+        else if (a[obj.location!.theme!].default) delete a[obj.location!.theme!].default
+        if (obj.newData.id) a[obj.location!.theme!][obj.newData.key][obj.newData.id] = obj.newData.value
+        else a[obj.location!.theme!][obj.newData.key] = obj.newData.value
+        // TODO: remove default if name change; if (a[obj.location!.theme!].default) groupValue
+        let key = obj.newData.id || obj.newData.key
+        if (obj.newData.key === "font") key = obj.newData.key + "-" + key
+        document.documentElement.style.setProperty("--" + key, obj.newData.value)
+        return a
+      })
+      break
+    case "addTheme":
+      themes.update((a: any) => {
+        if (obj.newData) a[obj.location!.theme!] = obj.newData
+        else {
+            if (get(theme) === obj.location!.theme!) theme.set(Object.keys(a).find(a => a !== obj.location!.theme!)!)
+            delete a[obj.location!.theme!]
+        }
+        return a
+      })
+      break
+    case "addGlobalGroup":
+      groups.update((a: any) => {
+        if (obj.newData) a[obj.newData!.id!] = obj.newData.data
+        else delete a[obj.newData!.id!]
         return a
       })
       break

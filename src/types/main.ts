@@ -37,6 +37,20 @@ export interface Selected {
   data: any[]
 }
 
+export interface SlidesOptions {
+  columns: number
+  grid: boolean
+}
+
+export interface ActiveEdit {
+  slide: null | number
+  items: number[]
+}
+
+export type Popups = "import"
+
+export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
+
 // export type DropIds = "slide" | "slide_group" | "show" | "show_drawer" | "project" | "folder" | "file"
 // export interface Drop {
 //   id: null | SelectIds

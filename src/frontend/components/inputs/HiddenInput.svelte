@@ -56,7 +56,7 @@
 {#if edit}
   <input bind:this={inputElem} on:change={change} class="nocontext _rename name" bind:value />
 {:else}
-  <p bind:this={nameElem} class="nocontext _rename name">
+  <p bind:this={nameElem} class="nocontext _rename">
     {#if value.length}
       {value}
     {:else}

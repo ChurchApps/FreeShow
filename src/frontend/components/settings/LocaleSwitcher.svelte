@@ -1,12 +1,14 @@
 <script lang="ts">
-  // import { createEventDispatcher } from 'svelte';
   import { setLanguage } from "../../utils/language"
   import { language } from "../../stores"
-  import { languages } from "../../values/settings"
   import Dropdown from "../inputs/Dropdown.svelte"
-  // const dispatch = createEventDispatcher();
 
-  let options = []
+  const languages: any = {
+    en: "English",
+    no: "Norsk",
+  }
+
+  let options: any[] = []
   Object.keys(languages).forEach((id) => {
     options.push({ name: `$:languages.${id}:$ (${languages[id]})`, id: id })
   })
@@ -21,5 +23,5 @@
       <option value="ar">عربي</option>
     </select>
   </div> -->
-<Dropdown value={`$:languages.${$language}:$ (${languages[$language]})`} {options} on:click={(e) => setLanguage(e.detail.id)} />
+<Dropdown value={`$:languages.${$language}:$ (${languages[$language]})`} style="width: 200px;" {options} on:click={(e) => setLanguage(e.detail.id)} />
 <!-- </div> -->

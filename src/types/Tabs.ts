@@ -18,3 +18,13 @@ export interface TabsObj {
     icon: string
   }
 }
+
+export interface DrawerTabs {
+  [key: string]: {
+    enabled: boolean
+    activeSubTab: null | string
+  }
+}
+
+export type SettingsTabs = "general" | "theme" | "groups" | "display" | "connection" | "calendar" | "other"
+export type TopViews = "show" | "edit" | "reflow" | "draw" | "stage" | "calendar" | "settings"

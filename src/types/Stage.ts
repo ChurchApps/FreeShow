@@ -1,5 +1,10 @@
 import type { Resolution } from "./Settings"
 
+export interface ActiveStage {
+  id: null | string
+  items: string[]
+}
+
 export interface StageShows {
   [key: string]: {
     name: string

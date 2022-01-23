@@ -1,165 +1,83 @@
-import type { Event } from "./../types/Calendar"
-import type { Templates, Transition } from "./../types/Show"
 import { Writable, writable } from "svelte/store"
-import type { StageShows } from "./../types/Stage"
+import type { Event } from "./../types/Calendar"
+import type { OutTransition, Templates } from "./../types/Show"
+import type { ActiveStage, StageShows } from "./../types/Stage"
 import type { DrawTools, Draw, DrawSettings } from "./../types/Draw"
 import type { History } from "./components/helpers/history"
-import type { NumberObject, Selected } from "../types/Main"
-import type { TopViews } from "./../types/Views"
-import type { Categories } from "./../types/Tabs"
+import type { ActiveEdit, NumberObject, Selected, SlidesOptions, Popups, DefaultProjectNames } from "../types/Main"
+import type { Categories, DrawerTabs, SettingsTabs, TopViews } from "./../types/Tabs"
 import type { ShowRef, Folders, Projects } from "../types/Projects"
-import type { Dictionary, LanguageKey } from "../types/Settings"
+import type { Dictionary, Themes } from "../types/Settings"
 import type { ID, Shows, Overlays, OutBackground, OutSlide, OutAudio } from "../types/Show"
 
-// global events
-// export const click = writable(null);
-
-// ? Uninque ID
-// https://stackoverflow.com/a/14869745
-// var id = crypto.randomBytes(10).toString('hex'); (check for existing...)
-// start on 0 and count upwards?
-// https://dev.to/rahmanfadhil/how-to-generate-unique-id-in-javascript-1b13
-
 // global
-export const projectView: Writable<boolean> = writable(false) // WIP
-export const activeFilePath: Writable<undefined | string> = writable() // WIP
-interface ActiveEdit {
-  slide: null | number
-  items: number[]
-}
-export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, items: [] })
+// ? export const activeFilePath: Writable<undefined | string> = writable()
+export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
+export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, items: [] })
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
+export const dictionary: Writable<Dictionary> = writable({})
 
-// project
-export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"])
-export const activeProject: Writable<null | ID> = writable("feskof")
-export const activeShow: Writable<null | ShowRef> = writable(null)
-// Layers: background, text, overlay, audio
-export const outLocked: Writable<boolean> = writable(false)
+// output
+export const outLocked: Writable<boolean> = writable(false) // false
 export const outBackground: Writable<null | OutBackground> = writable(null)
 export const outSlide: Writable<null | OutSlide> = writable(null)
 export const outOverlays: Writable<string[]> = writable([])
 export const outAudio: Writable<OutAudio[]> = writable([])
-interface OutTransition extends Transition {
-  action: string
-  slide?: number
-}
 export const outTransition: Writable<null | OutTransition> = writable(null)
-// export const output: Writable<Output> = writable({
-//   // activeSlides
-//   background: null, // video/image
-//   slide: null, // text
-//   overlay: [],
-//   audio: [],
-// })
-// draw
-export const drawTool: Writable<DrawTools> = writable("focus")
-export const draw: Writable<null | Draw> = writable(null)
-export const drawSettings: Writable<DrawSettings> = writable({
-  focus: {
-    color: "#000000",
-    opacity: 0.8,
-    size: 300,
-    glow: true,
-    hold: false,
-  },
-  pointer: {
-    color: "#FF0000",
-    opacity: 0.8,
-    size: 50,
-    // type: "circle",
-    glow: true,
-    hold: false,
-  },
-  fill: {
-    color: "#000000",
-    opacity: 0.8,
-    rainbow: false,
-  },
-  paint: {},
-})
-// stage
-interface ActiveStage {
-  id: null | string
-  items: string[]
-}
-export const activeStage: Writable<ActiveStage> = writable({ id: "eopsjofes", items: [] })
-export const stageShows: Writable<StageShows> = writable({
-  eopsjofes: {
-    name: "Text",
-    enabled: true,
-    password: "",
-    settings: {
-      background: false,
-      color: "#000000",
-      resolution: false,
-      size: { width: 10, height: 20 },
-      labels: false,
-      showLabelIfEmptySlide: true,
-    },
-    items: {
-      "slide#current_slide_text": {
-        enabled: true,
-        style: "top:75px;left:140px;color:red;width:1639px;height:929px;",
-        align: "",
-      },
-    },
-  },
-  eopsjofes3: {
-    name: "Next",
-    enabled: true,
-    password: "",
-    settings: {
-      background: false,
-      color: "#000000",
-      resolution: false,
-      size: { width: 10, height: 20 },
-      labels: false,
-      showLabelIfEmptySlide: true,
-    },
-    items: {
-      "slide#current_slide_text": {
-        enabled: true,
-        style: "top:0.00px;left:38.50px;color:white;width:1842.69px;height:685.21px;",
-        align: "",
-      },
-      "slide#next_slide_text": {
-        enabled: true,
-        style: "color:grey;left:37.50px;top:685.00px;width:1844.49px;height:371.50px;",
-        align: "",
-      },
-    },
-  },
-  eopsjofese: {
-    name: "Timer",
-    enabled: false,
-    password: "test",
-    settings: {
-      background: false,
-      color: "#000000",
-      resolution: false,
-      size: { width: 10, height: 20 },
-      labels: true,
-      showLabelIfEmptySlide: true,
-    },
-    items: {
-      "timers#system_clock": {
-        enabled: true,
-        style: "left:307.00px;top:271.50px;width:1307.76px;height:536.59px;",
-        align: "",
-      },
-    },
-  },
-})
 
 // connections
 export const connections: Writable<{ [key: string]: any }> = writable({ REMOTE: {}, STAGE: {} })
-export const remotePassword: Writable<string> = writable("test")
+export const remotePassword: Writable<string> = writable("test") // generate 4 numbers (6885)
 
+// project
+export const projectView: Writable<boolean> = writable(false)
+export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"]) // []
+export const activeProject: Writable<null | ID> = writable("feskof") // null
+export const projects: Writable<Projects> = writable({
+  // {default}
+  fhsjoe: {
+    name: "First",
+    notes: "",
+    created: new Date("2021-07-25"),
+    parent: "/",
+    shows: [{ id: "nåde" }, { id: "ertfgggf" }, { id: "Info" }, { id: "nåde" }, { type: "video", name: "Truth", id: "C:/movies/" }],
+  },
+  feskof: {
+    name: "Meeting",
+    notes: "",
+    created: new Date("2021-08-06"),
+    parent: "feriwp",
+    shows: [{ id: "ertfgggf" }, { id: "nåde" }, { id: "gere" }],
+  },
+})
+export const folders: Writable<Folders> = writable({
+  // {default}
+  esf1: { name: "Ayy1", parent: "fese" },
+  ffskof: { name: "Name", parent: "/" },
+  // fes: {name: 'Non existant', parent: 'es3333f'},
+  feriwp: { name: "Second", parent: "ffskof" },
+  esf: { name: "Ayy", parent: "fese" },
+  esf3: { name: "Ayy3", parent: "fese" },
+  fes3: { name: "Test3", parent: "fes2" },
+  fese: { name: "Nest", parent: "/" },
+  fes2: { name: "Test2", parent: "fes" },
+  fes: { name: "Test", parent: "esf" },
+  esf2: { name: "Ayy2", parent: "fese" },
+})
+export const categories: Writable<Categories> = writable({
+  // {default}
+  song: { name: "category.song", icon: "song", default: true },
+  info: { name: "category.info", icon: "info", default: true },
+  presentation: { name: "category.presentation", icon: "presentation", default: true },
+})
+
+// SHOW
+export const activeShow: Writable<null | ShowRef> = writable(null) // null
 export const shows: Writable<Shows> = writable({
+  // {default}
   nåde: {
     name: "Nådepuls",
     category: "song", // song/private/notes/presentation
@@ -430,52 +348,114 @@ export const shows: Writable<Shows> = writable({
   },
 })
 
-export const projects: Writable<Projects> = writable({
-  fhsjoe: {
-    name: "First",
-    notes: "",
-    created: new Date("2021-07-25"),
-    parent: "/",
-    shows: [{ id: "nåde" }, { id: "ertfgggf" }, { id: "Info" }, { id: "nåde" }, { type: "video", name: "Truth", id: "C:/movies/" }],
+// DRAW
+export const drawTool: Writable<DrawTools> = writable("focus")
+export const draw: Writable<null | Draw> = writable(null)
+export const drawSettings: Writable<DrawSettings> = writable({
+  // {default}
+  focus: {
+    color: "#000000",
+    opacity: 0.8,
+    size: 300,
+    glow: true,
+    hold: false,
   },
-  feskof: {
-    name: "Meeting",
-    notes: "",
-    created: new Date("2021-08-06"),
-    parent: "feriwp",
-    shows: [{ id: "ertfgggf" }, { id: "nåde" }, { id: "gere" }], // , access: "Private"
+  pointer: {
+    color: "#FF0000",
+    opacity: 0.8,
+    size: 50,
+    // type: "circle",
+    glow: true,
+    hold: false,
   },
-})
-// export const projects = writable([
-//   {name: 'First', created: '25.07.2021', shows: [{id: 'nåde'}, {id: 'ertfgggf'}, {id: 'Info', location: '/'}, {type: 'video', id: 'Truth', location: 'C:/movies/'}]},
-//   {name: 'test', folder: [
-//     {name: 'Meeting', created: '06.08.2021', shows: [{id: 'ertfgggf'}, {id: 'nåde'}, {type: 'private', access: 'Private', id: 'Info'}]}
-//   ]},
-//   {name: 'Nest', folder: [
-//     {name: 'Ayy', folder: []}
-//   ]}
-// ]);
-export const folders: Writable<Folders> = writable({
-  esf1: { name: "Ayy1", parent: "fese" },
-  ffskof: { name: "Name", parent: "/" },
-  // fes: {name: 'Non existant', parent: 'es3333f'},
-  feriwp: { name: "Second", parent: "ffskof" },
-  esf: { name: "Ayy", parent: "fese" },
-  esf3: { name: "Ayy3", parent: "fese" },
-  fes3: { name: "Test3", parent: "fes2" },
-  fese: { name: "Nest", parent: "/" },
-  fes2: { name: "Test2", parent: "fes" },
-  fes: { name: "Test", parent: "esf" },
-  esf2: { name: "Ayy2", parent: "fese" },
-})
-export const categories: Writable<Categories> = writable({
-  song: { name: "category.song", icon: "song", default: true },
-  info: { name: "category.info", icon: "info", default: true },
-  presentation: { name: "category.presentation", icon: "presentation", default: true },
+  fill: {
+    color: "#000000",
+    opacity: 0.8,
+    rainbow: false,
+  },
+  paint: {},
 })
 
-export const overlayCategories: Writable<Categories> = writable({})
+// STAGE
+// message...
+export const activeStage: Writable<ActiveStage> = writable({ id: "eopsjofes", items: [] })
+export const stageShows: Writable<StageShows> = writable({
+  // {default}
+  eopsjofes: {
+    name: "Text",
+    enabled: true,
+    password: "",
+    settings: {
+      background: false,
+      color: "#000000",
+      resolution: false,
+      size: { width: 10, height: 20 },
+      labels: false,
+      showLabelIfEmptySlide: true,
+    },
+    items: {
+      "slide#current_slide_text": {
+        enabled: true,
+        style: "top:75px;left:140px;color:red;width:1639px;height:929px;",
+        align: "",
+      },
+    },
+  },
+  eopsjofes3: {
+    name: "Next",
+    enabled: true,
+    password: "",
+    settings: {
+      background: false,
+      color: "#000000",
+      resolution: false,
+      size: { width: 10, height: 20 },
+      labels: false,
+      showLabelIfEmptySlide: true,
+    },
+    items: {
+      "slide#current_slide_text": {
+        enabled: true,
+        style: "top:0.00px;left:38.50px;color:white;width:1842.69px;height:685.21px;",
+        align: "",
+      },
+      "slide#next_slide_text": {
+        enabled: true,
+        style: "color:grey;left:37.50px;top:685.00px;width:1844.49px;height:371.50px;",
+        align: "",
+      },
+    },
+  },
+  eopsjofese: {
+    name: "Timer",
+    enabled: false,
+    password: "test",
+    settings: {
+      background: false,
+      color: "#000000",
+      resolution: false,
+      size: { width: 10, height: 20 },
+      labels: true,
+      showLabelIfEmptySlide: true,
+    },
+    items: {
+      "timers#system_clock": {
+        enabled: true,
+        style: "left:307.00px;top:271.50px;width:1307.76px;height:536.59px;",
+        align: "",
+      },
+    },
+  },
+})
+
+// overlays
+export const overlayCategories: Writable<Categories> = writable({
+  // {default}
+  grdjh: { name: "payment", icon: "payment", default: true },
+  fejsiofjes: { name: "important", icon: "important", default: true },
+})
 export const overlays: Writable<Overlays> = writable({
+  // {defaults}
   tiesl: {
     name: "Verse 1",
     color: "green",
@@ -507,10 +487,13 @@ export const overlays: Writable<Overlays> = writable({
   },
 })
 
+// templates
 export const templateCategories: Writable<Categories> = writable({
+  // {default}
   song: { name: "category.song", icon: "song", default: true },
 })
 export const templates: Writable<Templates> = writable({
+  // {default}
   tiesl: {
     name: "Default",
     color: "purple",
@@ -542,43 +525,43 @@ export const templates: Writable<Templates> = writable({
   },
 })
 
+// backgrounds
 export const mediaFolders: Writable<Categories> = writable({
+  // {default}
   pictures: { name: "category.pictures", icon: "folder", path: "C:\\Users\\Kristoffer\\Pictures", default: true },
   videos: { name: "category.videos", icon: "folder", path: "C:\\Users\\Kristoffer\\Videos", default: true },
   1234: { name: "Varden", icon: "folder", path: "C:\\Users\\Kristoffer\\Varden" },
 })
-// export const media = writable({
-//   pictures: [
 
-//   ]
-// })
+// audio
 export const audioFolders: Writable<Categories> = writable({
+  // {default}
   music: { name: "category.music", icon: "folder", path: "C:\\Users\\Kristoffer\\Music", default: true },
 })
-// export const audio = writable({
+// export const audio = writable({ // {}
 //   terd: { type: "music", name: "Song", location: "song" },
 //   fese: { type: "audio", name: "Info", location: "info" },
 // })
 
+// web
 export const webFavorites: Writable<Categories> = writable({
+  // {default}
   youtube: { name: "YouTube", icon: "web", url: "https://youtube.com/" },
   google: { name: "Google", icon: "web", url: "https://google.com/" },
   example: { name: "Example", icon: "web", url: "https://example.com/" },
 })
 
+// player
 export const playerVideos: Writable<Categories> = writable({
+  // {default}
   oceans: { name: "Oceans", type: "youtube", id: "https://www.youtube.com/watch?v=dy9nwe9_xzw" },
   chosen: { name: "The Chosen", type: "youtube", id: "X-AJdKty74M" },
 })
 
-// STAGE
-// export const stage = writable([type: "text", pos: ])
-// message...
-// layout
-
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
 export const events: Writable<{ [key: string]: Event }> = writable({
+  // {}
   etijosruief: {
     name: "Sundagssamling",
     color: "blue",
@@ -664,40 +647,29 @@ export const events: Writable<{ [key: string]: Event }> = writable({
   },
 })
 
-// SLIDE VIEW
-interface SlidesOptions {
-  columns: number
-  grid: boolean
-}
-export const slidesOptions: Writable<SlidesOptions> = writable({
-  columns: 4,
-  grid: true,
-})
-export const mediaOptions: Writable<SlidesOptions> = writable({
-  columns: 4,
-  grid: true,
-})
-
-// IU STATE
+// UI STATE
 export const resized: Writable<NumberObject> = writable({
+  // {default}
   leftPanel: 300,
   rightPanel: 300,
   leftPanelDrawer: 300,
   rightPanelDrawer: 300,
   drawer: 200,
 })
-// export const tabs: Writable<StringObject> = writable({
-//   shows:
-// })
-// TABS
-// Drawer
-interface DrawerTabs {
-  [key: string]: {
-    enabled: boolean
-    activeSubTab: null | string
-  }
-}
+export const slidesOptions: Writable<SlidesOptions> = writable({
+  // {default}
+  columns: 4,
+  grid: true,
+})
+export const mediaOptions: Writable<SlidesOptions> = writable({
+  // {default}
+  columns: 4,
+  grid: true,
+})
+
+// DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({
+  // {default}
   shows: { enabled: true, activeSubTab: null },
   backgrounds: { enabled: true, activeSubTab: null },
   overlays: { enabled: true, activeSubTab: null },
@@ -709,40 +681,192 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({
   web: { enabled: true, activeSubTab: null },
   live: { enabled: true, activeSubTab: null },
 })
-export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null })
+export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null }) // {default}
 
 // SETTINGS
-// lan
-export const name: Writable<null | string> = writable(null)
-export const password: Writable<string> = writable("show")
+export const settingsTab: Writable<SettingsTabs> = writable("general")
 
 // general
-export const language: Writable<LanguageKey> = writable("en")
-export const labelsDisabled: Writable<boolean> = writable(false)
+export const language: Writable<string> = writable("en") // "get"
+export const labelsDisabled: Writable<boolean> = writable(false) // false
 
-// text
-export const theme = writable(0)
-export const font = writable({
-  family: "Tahoma",
-  size: 12,
-  color: "white",
-  outline: { width: 2, color: "black" },
-  shadow: { x: 2, y: 2, blur: 4, spread: 0, color: "black" },
+// project
+export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"
+
+// media
+export const videoExtensions: Writable<string[]> = writable(["mp4", "mov"]) // [default]
+export const imageExtensions: Writable<string[]> = writable(["png", "jpg", "jpeg", "jfif"]) // [default]
+
+// theme
+/* --primary: #333e58;
+--primary: #2d313b;
+--primary: #c1c7d8;
+--primary-text: #f0f0ff;
+--primary-text: #131313;
+--secondary: #e6349c;
+--secondary: #e64934;
+--secondary: #34bfe6;
+--secondary: #34e6ae;
+--secondary: #dae634;
+--secondary: #b434e6;
+--secondary: #e63434;
+--secondary: #3434e6;
+--secondary: #34e64f; */
+export const theme: Writable<string> = writable("default") // "default"
+export const themes: Writable<{ [key: string]: Themes }> = writable({
+  // {default}
+  default: {
+    name: "default",
+    default: true,
+    font: {
+      family: "sans-serif",
+      size: "1em",
+    },
+    colors: {
+      primary: "#2d313b",
+      "primary-lighter": "#41444c",
+      "primary-darker": "#202129",
+      "primary-darkest": "#191923",
+      text: "#f0f0ff",
+      textInvert: "#131313",
+      "secondary-text": "#f0f0ff",
+      secondary: "#e6349c", // #d02789
+      "secondary-opacity": "rgba(230, 52, 156, 0.5)",
+      hover: "rgb(255 255 255 / 0.05)",
+      focus: "rgb(255 255 255 / 0.1)",
+      // active: "rgb(230 52 156 / 0.8)",
+    },
+  },
+  dark: {
+    name: "dark",
+    default: true,
+    font: {
+      family: "monospace",
+      size: "1.1em",
+    },
+    colors: {
+      primary: "#2d313b",
+      "primary-lighter": "#41444c",
+      "primary-darker": "#202129",
+      "primary-darkest": "#191923",
+      text: "#f0f0ff",
+      textInvert: "#131313",
+      "secondary-text": "#f0f0ff",
+      secondary: "rgb(230 73 52)",
+      "secondary-opacity": "rgb(230 73 52 / 0.5)",
+      hover: "rgb(255 255 255 / 0.05)",
+      focus: "rgb(255 255 255 / 0.1)",
+      // active: "rgb(230 73 52 / 50%)",
+    },
+  },
+  light: {
+    name: "light",
+    default: true,
+    font: {
+      family: "sans-serif",
+      size: "1em",
+    },
+    colors: {
+      primary: "#EFF2F6",
+      "primary-lighter": "#E8E8E8",
+      "primary-darker": "#CDD0D5",
+      "primary-darkest": "#A1A4AA",
+      text: "#333748",
+      textInvert: "#f0f0ff",
+      "secondary-text": "#131313",
+      secondary: "#e6349c",
+      "secondary-opacity": "rgb(230 52 156 / 0.5)",
+      hover: "rgb(0 0 0 / 0.05)",
+      focus: "rgb(0 0 0 / 0.1)",
+      // active: "rgb(230 52 156 / 50%)",
+    },
+  },
+  white: {
+    name: "white",
+    default: true,
+    font: {
+      family: "Trebuchet MS",
+      size: "1em",
+    },
+    colors: {
+      primary: "#2d313b",
+      "primary-lighter": "#41444c",
+      "primary-darker": "#202129",
+      "primary-darkest": "#191923",
+      text: "#f0f0ff",
+      textInvert: "#131313",
+      "secondary-text": "#ffffff",
+      secondary: "#ffffff",
+      "secondary-opacity": "rgba(255, 255, 255, 0.5)",
+      hover: "rgb(255 255 255 / 0.05)",
+      focus: "rgb(255 255 255 / 0.1)",
+      // active: "rgb(230 52 156 / 0.8)",
+    },
+  },
+  black: {
+    name: "black",
+    default: true,
+    font: {
+      family: "sans-serif",
+      size: "1em",
+    },
+    colors: {
+      primary: "#202020",
+      "primary-lighter": "#303030",
+      "primary-darker": "#101010",
+      "primary-darkest": "#000000",
+      text: "#cccccc",
+      textInvert: "#131313",
+      "secondary-text": "#eeeeee",
+      secondary: "#00ffbe",
+      "secondary-opacity": "rgb(0 255 190 / 0.5)",
+      hover: "rgb(255 255 255 / 0.2)",
+      focus: "rgb(255 255 255 / 0.3)",
+      // active: "rgb(230 52 156 / 50%)",
+    },
+  },
+  terminal: {
+    name: "Terminal",
+    font: {
+      family: "monospace",
+      size: "1em",
+    },
+    colors: {
+      primary: "#202020",
+      "primary-lighter": "#303030",
+      "primary-darker": "#101010",
+      "primary-darkest": "#000000",
+      text: "#cccccc",
+      textInvert: "#131313",
+      "secondary-text": "#F1F1F1",
+      secondary: "#00FF00",
+      "secondary-opacity": "rgb(58 210 255 / 0.5)",
+      hover: "rgb(255 255 255 / 0.2)",
+      focus: "rgb(255 255 255 / 0.3)",
+      // active: "rgb(230 52 156 / 50%)",
+    },
+  },
 })
-export const screen = writable({
-  resolution: { width: 1920, height: 1080 },
-  // format 16:9
-})
+// TODO: custom theme, change group colors ++++
+// export const theme = writable({
+//   primary: '#2d313b',
+//   secondary: '#e6349c',
+//   textPrimary: '#f0f0ff',
+//   textInvert: '#131313',
+// });
+
+// export const font = writable({
+//   family: "Tahoma",
+//   size: 12,
+//   color: "white",
+//   outline: { width: 2, color: "black" },
+//   shadow: { x: 2, y: 2, blur: 4, spread: 0, color: "black" },
+// })
 
 // show
-export const groupCount: Writable<boolean> = writable(true)
-// export const selectedPattern = writable("default")
-// export const patterns = writable({
-//   default: [
-
-//   ]
-// })
+export const groupCount: Writable<boolean> = writable(true) // true
 export const groups: Writable<any> = writable({
+  // {default}
   intro: { name: "intro", default: true, color: "#f5255e" },
   verse: { name: "verse", default: true, color: "#f525a2" },
   pre_chorus: { name: "pre_chorus", default: true, color: "#df25f5" },
@@ -752,30 +876,17 @@ export const groups: Writable<any> = writable({
   outro: { name: "outro", default: true, color: "#3225f5" },
 })
 
-// project
-// TODO: today / closest sunday / week number / custom string / nothing....
-export const defaultName: Writable<null | "date" | string> = writable("date")
+// display
+export const screen = writable({
+  // {default}
+  resolution: { width: 1920, height: 1080 },
+  // format 16:9
+})
 
-// extensions
-export const videoExtensions: Writable<string[]> = writable(["mp4", "mov"])
-export const imageExtensions: Writable<string[]> = writable(["png", "jpg", "jpeg", "jfif"])
-
-// empty
-export const dictionary: Writable<Dictionary> = writable({})
-export const theme_css = writable({})
-
-export type Popups = "import"
-export const activePopup: Writable<null | Popups> = writable(null)
-export type SettingsTabs = "general" | "theme" | "show" | "display" | "connection" | "calendar" | "other"
-export const settingsTab: Writable<SettingsTabs> = writable("general")
-
-// export const theme = writable({
-//   primary: '#2d313b',
-//   secondary: '#e6349c',
-//   textPrimary: '#f0f0ff',
-//   textInvert: '#131313',
-// });
+// connection
+export const name: Writable<null | string> = writable(null) // "get"
+// export const password: Writable<string> = writable("show") // "generate"
 
 // HISTORY
-export const undoHistory: Writable<History[]> = writable([])
-export const redoHistory: Writable<History[]> = writable([])
+export const undoHistory: Writable<History[]> = writable([]) // [?]
+export const redoHistory: Writable<History[]> = writable([]) // [?]

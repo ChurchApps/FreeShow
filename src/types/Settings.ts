@@ -1,12 +1,9 @@
 export interface Themes {
   name: string
-  values: {}
+  default?: boolean
+  font: any
+  colors: any
 }
-
-export interface Languages {
-  [key: LanguageKey]: string
-}
-export type LanguageKey = string
 
 export interface Resolution {
   width: number

@@ -1,5 +1,4 @@
 import { get } from "svelte/store"
-import type { LanguageKey } from "../../types/Settings"
 import { derived } from "svelte/store"
 import { dictionary, language } from "../stores"
 // import { dictionary, locale, _} from 'svelte-i18n';
@@ -9,7 +8,7 @@ import { dictionary, language } from "../stores"
 // let rtls = ["ar"]
 const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
 
-function setLanguage(locale: null | LanguageKey = null) {
+function setLanguage(locale: null | string = null) {
   if (!locale) {
     let replace: any = {
       no: ["nb", "nn"],
@@ -77,7 +76,7 @@ const translate = (id: string, { data = {}, parts = false } = {}) => {
     // let category = id.slice(0, id.indexOf('.'));
     // let key = id.slice(id.indexOf('.') + 1, id.length);
     // string = d[category]?.[key];
-    if (!string) string = `[${id}]`
+    // if (!string) string = `[${id}]`
   }
 
   // replace data {name} = 'Name'

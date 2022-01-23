@@ -18,7 +18,7 @@
 
 {#if screens.length}
   {#key screens}
-    <Dropdown value={`${"main"}`} options={screens} on:click={(e) => (activeScreen = e.detail.id)} />
+    <Dropdown value={`${"main"}`} options={screens} on:click={(e) => (activeScreen = e.detail.id)} style="width: 200px;" />
   {/key}
 {:else}
   Loading screens

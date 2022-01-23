@@ -48,12 +48,12 @@ export interface Slide {
 export interface Item {
   text?: {
     value: string
-    style: Style
+    style: string
   }[]
-  style: Style
+  style: string
   align?: string
   media?: {}
-  type?: "text" | "shape" | "image" | "video" | "music"
+  type?: ItemType
   // tag?: string; // p, div????
 }
 
@@ -61,15 +61,6 @@ export interface Layout {
   name: string
   notes: string
   slides: SlideData[]
-}
-
-export interface Backgrounds {
-  // name?: string
-  path: string
-  type?: "media" | "camera" | "screen"
-  muted?: boolean
-  loop?: boolean
-  filters?: string
 }
 
 export interface SlideData {
@@ -92,6 +83,17 @@ export interface Transition {
   duration: number
 }
 
+export interface Backgrounds {
+  // name?: string
+  path: string
+  type?: BackgroundType
+  muted?: boolean
+  loop?: boolean
+  filters?: string
+}
+
+//
+
 export interface Overlays {
   [key: ID]: Overlay
 }
@@ -112,6 +114,8 @@ export interface Template {
   items: Item[]
 }
 
+// output
+
 export interface OutBackground {
   id?: ID
   path?: string
@@ -120,8 +124,9 @@ export interface OutBackground {
   loop?: boolean
   filter?: string
   // name?: string
-  type?: "media" | "screen" | "camera" | "player"
+  type?: BackgroundType
 }
+
 export interface OutSlide {
   id: ID
   layout: ID
@@ -130,35 +135,21 @@ export interface OutSlide {
   // type?: ShowType
   // private?: boolean
 }
-// export interface OutOverlay {
-//   id: ID
-// }
+
 export interface OutAudio {
   id: ID
   name: string
 }
-// export interface Output {
-//   background: null | {
-//     id: ID
-//     name: string
-//   }
-//   slide: null | {
-//     id: ID
-//     index: number
-//     // layout: ID ?
-//     private?: boolean
-//   }
-//   overlay: {
-//     id: ID
-//   }[]
-//   audio: {
-//     id: ID
-//     name: string
-//   }[]
-// }
+
+export interface OutTransition extends Transition {
+  action: string
+  slide?: number
+}
+
+// types
 
 export type ID = string
-export type Style = string
+export type ItemType = "text" | "shape" | "image" | "video" | "music"
+export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
 export type TransitionType = "none" | "fade"
-
-export type ShowType = "show" | "private" | "image" | "video" | "audio" | "player" // TODO: types
+export type BackgroundType = "media" | "screen" | "camera" | "player"

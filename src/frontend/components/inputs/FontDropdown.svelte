@@ -39,7 +39,7 @@
   }}
 />
 
-<div bind:this={self} class="dropdownElem" style="position: relative;">
+<div bind:this={self} class="dropdownElem" style="position: relative;{$$props.style}">
   <!-- style="font-family: {value};" -->
   <button on:click={() => (active = !active)}>
     {value}
@@ -95,6 +95,7 @@
     width: 100%;
     padding: 8px 12px;
     background-color: transparent;
+    font-family: inherit;
     /* text-transform: uppercase; */
     font-size: 1em;
     white-space: nowrap;

@@ -24,9 +24,9 @@
   }}
 />
 
-<div bind:this={self} class="dropdownElem" style="position: relative;">
+<div bind:this={self} class="dropdownElem" style="position: relative;{$$props.style}">
   <button on:click={() => (active = !active)}>
-    {translate(updater[0], { parts: true })}
+    {translate(updater[0], { parts: true }) || value}
     <!-- <T id={value} /> -->
   </button>
   {#if active}
@@ -40,7 +40,7 @@
           }}
           class:active={option.name === value}
         >
-          {translate(option.name, { parts: true })}
+          {translate(option.name, { parts: true }) || option.name}
           <!-- <T id={option.name} /> -->
         </span>
         <!-- {/if} -->
@@ -82,6 +82,7 @@
     width: 100%;
     padding: 8px 12px;
     background-color: transparent;
+    font-family: inherit;
     /* text-transform: uppercase; */
     font-size: 1em;
     white-space: nowrap;
