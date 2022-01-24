@@ -14,6 +14,7 @@
     font-weight: inherit;
     border: 0;
     outline-offset: -2px;
+    resize: none;
   }
   textarea.center {
     text-align: center;

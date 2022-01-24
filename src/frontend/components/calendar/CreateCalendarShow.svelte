@@ -155,19 +155,24 @@
       {/each}
     {/each}
   {:else}
-    <Center faded>[[[No events]]]</Center>
+    <Center faded>
+      <T id="empty.events" />
+    </Center>
   {/if}
 </div>
 <Button on:click={createShow} dark center>
-  <Icon id="show" />
-  Create Show
+  <Icon id="show" right />
+  <T id="new.show" />
 </Button>
 
 <style>
   .main {
-    padding: 10px;
-    height: 100%;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    padding: 10px;
+    border-top: 2px solid var(--primary-lighter);
   }
 </style>

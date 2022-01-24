@@ -4,6 +4,7 @@
   import { GetProjects } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
@@ -11,7 +12,7 @@
   import Center from "../system/Center.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
-import ProjectTools from "./ProjectTools.svelte";
+  import ProjectTools from "./ProjectTools.svelte"
 
   // let containsProject;
   // activeProject.subscribe(ap => {
@@ -71,7 +72,7 @@ import ProjectTools from "./ProjectTools.svelte";
   let offset: number = -1
   $: {
     if (scrollElem && $activeShow?.index !== undefined)
-      offset = scrollElem.querySelector(".ParentBlock").children[Math.max(0, $activeShow.index - 1)].offsetTop - scrollElem.offsetTop
+      offset = scrollElem.querySelector(".ParentBlock").children[Math.max(0, $activeShow.index - 1)]?.offsetTop - scrollElem.offsetTop
   }
 
   let debug = 0
@@ -92,12 +93,12 @@ import ProjectTools from "./ProjectTools.svelte";
     }
   }
 
-  function newShow(isPrivate: boolean = false) {
-    let id: any = "newShow"
-    if (isPrivate) id = "newPrivateShow"
-    // , newData: { project: $activeProject, type: "private" }
-    history({ id, location: { page: "show", project: $activeProject! } })
-  }
+  // function newShow(isPrivate: boolean = false) {
+  //   let id: any = "newShow"
+  //   if (isPrivate) id = "newPrivateShow"
+  //   // , newData: { project: $activeProject, type: "private" }
+  //   history({ id, location: { page: "show", project: $activeProject! } })
+  // }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -113,6 +114,7 @@ import ProjectTools from "./ProjectTools.svelte";
     <Button
       style="flex: 5;"
       on:click={() => projectView.set(false)}
+      class="context #projectTab _close"
       active={!$projectView}
       dark
       center
@@ -136,7 +138,7 @@ import ProjectTools from "./ProjectTools.svelte";
       </DropArea>
     </div>
     <div class="tabs">
-      <Button on:click={() => history({ id: "newFolder" })} center title={$dictionary.new?._folder}>
+      <Button on:click={() => history({ id: "newFolder" })} center title={$dictionary.new?.folder}>
         <Icon id="folder" />
       </Button>
       <Button on:click={() => history({ id: "newProject" })} center title={$dictionary.new?.project}>
@@ -152,27 +154,31 @@ import ProjectTools from "./ProjectTools.svelte";
             {#each $projects[$activeProject].shows as show, index}
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
               <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-              <SelectElem id="show" data={{ id: show.id, index }} {fileOver} trigger="column" draggable>
+              <SelectElem id="show" data={{ id: show.id, index }} {fileOver} borders="edges" trigger="column" draggable>
                 <ShowButton id={show.id} {show} {index} class="context #{show.type ? '' : 'show'}__project" icon />
               </SelectElem>
               <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
             {/each}
           {:else}
-            <Center faded>[[[No shows]]]</Center>
+            <Center faded>
+              <T id="empty.show" />
+            </Center>
           {/if}
         </DropArea>
       </Autoscroll>
     </div>
-    <div class="tabs">
+    <!-- <div class="tabs">
       <Button on:click={() => newShow()} center title={$dictionary.new?.show}>
         <Icon id="showIcon" />
       </Button>
-      <Button on:click={() => newShow(true)} center title={$dictionary.new?._private}>
+      <Button on:click={() => newShow(true)} center title={$dictionary.new?.private}>
         <Icon id="private" />
       </Button>
-    </div>
+    </div> -->
   {:else}
-    <Center faded>[[[Select a project]]]</Center>
+    <Center faded>
+      <T id="empty.project_select" />
+    </Center>
   {/if}
 </div>
 {#if $activeProject && !$projectView}

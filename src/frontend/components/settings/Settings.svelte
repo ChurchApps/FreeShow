@@ -1,5 +1,19 @@
 <script lang="ts">
-  import { defaultProjectName, dictionary, groups, imageExtensions, labelsDisabled, name, screen, settingsTab, theme, themes, videoExtensions } from "../../stores"
+  import {
+    defaultProjectName,
+    dictionary,
+    displayMetadata,
+    fullColors,
+    groups,
+    imageExtensions,
+    labelsDisabled,
+    name,
+    screen,
+    settingsTab,
+    theme,
+    themes,
+    videoExtensions,
+  } from "../../stores"
   import { history } from "../helpers/history"
   import { uid } from "uid"
   import T from "../helpers/T.svelte"
@@ -15,6 +29,7 @@
   import FontDropdown from "../inputs/FontDropdown.svelte"
 
   const labels = (e: any) => labelsDisabled.set(e.target.checked)
+  const setColors = (e: any) => fullColors.set(e.target.checked)
 
   const projectNames: any[] = [
     { name: "$:projectName.${date}:$", id: "date" },
@@ -62,6 +77,8 @@
     groupColor: "#ffffff",
   }
   $: value.theme = $themes[$theme].default ? $dictionary.themes[$themes[$theme].name] : $themes[$theme].name
+
+  const meta: any[] = [{ name: "never" }, { name: "always" }, { name: "last" }, { name: "first_last" }]
 </script>
 
 <main>
@@ -82,15 +99,30 @@
         <Checkbox checked={$labelsDisabled} on:change={labels} />
       </div>
       <div>
+        <p><T id="settings.full_colors" /></p>
+        <Checkbox checked={$fullColors} on:change={setColors} />
+      </div>
+      <div>
+        <p><T id="settings.display_metadata" /></p>
+        <Dropdown
+          options={meta}
+          value={$displayMetadata}
+          style="width: 200px;"
+          on:click={(e) => {
+            displayMetadata.set(e.detail.name)
+          }}
+        />
+      </div>
+      <div>
         <p><T id="settings.default_project_name" /></p>
         <Dropdown
           options={projectNames}
           value={$defaultProjectName}
+          style="width: 200px;"
           on:click={(e) => {
             // history?
             defaultProjectName.set(e.detail.id)
           }}
-          style="width: 200px;"
         />
       </div>
       <div>

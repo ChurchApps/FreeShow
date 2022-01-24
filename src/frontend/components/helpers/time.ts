@@ -1,4 +1,3 @@
-import { dictionary } from "./../../stores"
 import type { Time } from "./../../../types/Main"
 
 export function secondsToTime(seconds: number): Time {
@@ -24,19 +23,18 @@ export function joinTime(time: Time, ms: boolean = false): string {
   return arr.join(":")
 }
 
-export function dateToString(date: Date, full: boolean = false): string {
+export function dateToString(date: Date, full: boolean = false, d: any = {}): string {
   let year: any = date.getFullYear()
   let month: any = date.getMonth() + 1
   let day: any = date.getDate()
 
   let string: string = ""
   if (full) {
-    let d: any = dictionary
-    // TODO: get dictionary...
-    let weekday = d.weekday ? d.weekday[date.getDay()] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()]
+    let weekday = d.weekday ? d.weekday[date.getDay() > 6 ? 1 : date.getDay() + 1] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()]
     month = d.month
-      ? d.month[date.getMonth()]
+      ? d.month[date.getMonth() + 1]
       : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][date.getMonth()]
+    weekday = weekday[0].toUpperCase() + weekday.slice(1, weekday.length)
 
     // Monday 6. February, 2021
     string = weekday + " " + day + ". " + month + ", " + year

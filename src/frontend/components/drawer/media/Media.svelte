@@ -1,79 +1,185 @@
 <script lang="ts">
-  import { activeShow, outBackground, mediaOptions, outLocked } from "../../../stores"
-  import SelectElem from "../../system/SelectElem.svelte"
-  import Card from "../Card.svelte"
-  import IntersectionObserver from "./IntersectionObserver.svelte"
-  import MediaLoader from "./MediaLoader.svelte"
+  import { READ_FOLDER } from "../../../../types/Channels"
+  import { activeShow, imageExtensions, mediaFolders, mediaOptions, videoExtensions } from "../../../stores"
+  import Icon from "../../helpers/Icon.svelte"
+  import T from "../../helpers/T.svelte"
+  import Button from "../../inputs/Button.svelte"
+  import Center from "../../system/Center.svelte"
+  import Folder from "./Folder.svelte"
+  import Media from "./MediaCard.svelte"
 
-  export let name: string
-  export let path: string
-  export let type: any
-  // export let size: number
-  $: name = name.slice(0, name.lastIndexOf("."))
+  export let active: string | null
 
-  export let activeFile: null | number
-  export let allFiles: string[]
+  let files: any[] = []
+  let extensions: string[] = [...$videoExtensions, ...$imageExtensions]
 
-  let loaded: boolean = type === "image"
-  let videoElem: any
-  let hover: boolean = false
-  let duration: number = 0
+  $: rootPath = active === "all" ? "" : active !== null ? $mediaFolders[active].path! : ""
+  $: path = active === "all" ? "" : rootPath
+  $: name = rootPath === path ? (active !== "all" && active !== null ? $mediaFolders[active].name : "category.all") : path.substring(path.lastIndexOf("\\") + 1)
 
-  function move(e: any) {
-    if (loaded && videoElem) {
-      let percentage: number = e.offsetX / e.target.offsetWidth
-      let steps: number = 10
+  // get list of files & folders
+  $: {
+    if (active === "all") Object.values($mediaFolders).forEach((data) => window.api.send(READ_FOLDER, data.path))
+    else if (path.length) window.api.send(READ_FOLDER, path)
+  }
 
-      // let time = duration * percentage
-      let time = duration * ((Math.floor(percentage * steps) * steps + steps) / 100)
-      if (Number(time) === time) videoElem.currentTime = time
+  // receive files
+  window.api.receive(READ_FOLDER, (msg: any) => {
+    if (active === "all" || msg.path === path) {
+      files = msg.files
+        .filter((file: any) => extensions.includes(file.extension) || file.folder)
+        // .sort((a: any, b: any) => a.name < b.name)
+        .sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+
+      filterFiles()
     }
+  })
+
+  let scrollElem: any
+
+  // arrow selector
+  let activeFile: null | number = null
+  let allFiles: string[] = []
+  let content = allFiles.length
+
+  activeShow.subscribe((a) => {
+    if (a?.type !== "video" && $activeShow?.type !== "image") activeFile = null
+  })
+
+  // filter files
+  let activeView: "all" | "folder" | "image" | "video" = "all"
+  let filteredFiles: any[] = []
+  $: if (activeView) filterFiles()
+
+  function filterFiles() {
+    // filter files
+    if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
+    else filteredFiles = files.filter((a) => (activeView === "folder" && a.folder) || (!a.folder && activeView === ($videoExtensions.includes(a.extension) ? "video" : "image")))
+
+    // reset arrow selector
+    allFiles = [...filteredFiles.filter((a) => !a.folder).map((a) => a.path)]
+    if ($activeShow !== null && allFiles.includes($activeShow.id)) activeFile = allFiles.findIndex((a) => a === $activeShow!.id)
+    else activeFile = null
+    content = allFiles.length
+
+    // scroll to top
+    scrollElem?.scrollTo(0, 0)
   }
 
-  let index: number = allFiles.findIndex((a) => a === path)
-
-  // let clicked: boolean = false
-  // let doubleClick: boolean = false
-  function click(e: any) {
-    // if (!clicked) {
-    //   clicked = true
-    //   setTimeout(() => {
-    // if (!doubleClick)
-    // activeShow.set({ id: path, name, type })
-    if (!e.ctrlKey) activeFile = index
-    //   else doubleClick = false
-    //   clicked = false
-    // }, 501)
-    // }
-  }
-  $: if (activeFile !== null && allFiles[activeFile] === path) activeShow.set({ id: path, name, type })
-
-  function dblclick(e: any) {
-    if (!e.ctrlKey && !$outLocked) outBackground.set({ path: path })
-    // doubleClick = true
+  function wheel(e: any) {
+    if (e.ctrlKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(1, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
   }
 </script>
 
-<Card
-  {loaded}
-  style="width: {$mediaOptions.grid ? 100 : 100 / $mediaOptions.columns}%;"
-  preview={$activeShow?.id === path}
-  active={$outBackground?.path === path}
-  label={name}
-  icon={type === "video" ? "movie" : "image"}
-  white={type === "image"}
-  on:click={click}
-  on:dblclick={dblclick}
-  on:mouseenter={() => (hover = true)}
-  on:mouseleave={() => (hover = false)}
-  on:mousemove={move}
->
-  <SelectElem id="media" data={{ name, path }} draggable fill>
-    <IntersectionObserver class="observer" once let:intersecting>
-      {#if intersecting}
-        <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} />
-      {/if}
-      <!-- ({formatBytes(size)}) -->
-    </IntersectionObserver>
-  </SelectElem>
-</Card>
+<!-- TODO: fix: big images & many files -->
+<!-- TODO: autoscroll -->
+<!-- TODO: droparea for files????????? -->
+<!-- TODO: ctrl scroll wheel zoom! -->
+<div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
+  <div class="grid" class:list={!$mediaOptions.grid} style="height: 100%;">
+    {#if filteredFiles.length}
+      {#key rootPath}
+        {#key path}
+          {#each filteredFiles as file}
+            {#if file.folder}
+              <Folder bind:rootPath={path} name={file.name} path={file.path} />
+            {:else}
+              <Media name={file.name} path={file.path} type={$videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} />
+            {/if}
+          {/each}
+        {/key}
+      {/key}
+    {:else}
+      <Center>
+        <Icon id="noImage" size={5} />
+      </Center>
+    {/if}
+  </div>
+</div>
+
+<div class="tabs" style="display: flex;align-items: center;">
+  <Button
+    disabled={rootPath === path}
+    title="[[[Go back]]]"
+    on:click={() => {
+      const folder = path.slice(0, path.lastIndexOf("\\"))
+      if (folder.length > rootPath.length) path = folder
+      else path = rootPath
+    }}
+  >
+    <Icon size={1.3} id="back" />
+  </Button>
+  <Button disabled={rootPath === path} title="[[[Home]]]" on:click={() => (path = rootPath)}>
+    <Icon size={1.3} id="home" />
+  </Button>
+  <span style="flex: 1;text-align: center;">
+    {#key name}<T id={name} />{/key}
+  </span>
+  <Button disabled={!allFiles.length || activeFile === 0} on:click={() => (activeFile = activeFile === null ? content - 1 : activeFile - 1)}>
+    <Icon size={1.3} id="previous" />
+  </Button>
+  {activeFile === null ? "" : activeFile + 1 + "/"}{content}
+  <Button disabled={!allFiles.length || activeFile === content - 1} on:click={() => (activeFile = activeFile === null ? 0 : activeFile + 1)}>
+    <Icon size={1.3} id="next" />
+  </Button>
+  <div class="seperator" />
+  <Button active={activeView === "all"} on:click={() => (activeView = "all")}>
+    <Icon size={1.3} id="all" />
+  </Button>
+  <Button disabled={active === "all"} active={activeView === "folder"} on:click={() => (activeView = "folder")}>
+    <Icon size={1.3} id="folder" />
+  </Button>
+  <Button active={activeView === "image"} on:click={() => (activeView = "image")}>
+    <Icon size={1.3} id="image" />
+  </Button>
+  <Button active={activeView === "video"} on:click={() => (activeView = "video")}>
+    <Icon size={1.3} id="movie" />
+  </Button>
+  <div class="seperator" />
+  <Button
+    on:click={() =>
+      mediaOptions.update((a) => {
+        a.grid = !$mediaOptions.grid
+        return a
+      })}
+  >
+    <Icon size={1.3} id={$mediaOptions.grid ? "grid" : "list"} white />
+  </Button>
+  <Button on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title="[[[Zoom out]]]">
+    <Icon size={1.3} id="remove" white />
+  </Button>
+  <Button on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(1, $mediaOptions.columns - 1) })} title="[[[Zoom in]]]">
+    <Icon size={1.3} id="add" white />
+  </Button>
+  <p class="text">{(100 / $mediaOptions.columns).toFixed()}%</p>
+</div>
+
+<style>
+  .tabs {
+    display: flex;
+    background-color: var(--primary-darkest);
+  }
+
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1;
+    /* gap: 10px;
+    padding: 10px; */
+    padding: 5px;
+    place-content: flex-start;
+  }
+
+  .text {
+    opacity: 0.8;
+    text-align: right;
+    width: 50px;
+    margin-right: 10px;
+  }
+
+  .seperator {
+    width: 3px;
+    height: 100%;
+    background-color: var(--primary-lighter);
+  }
+</style>

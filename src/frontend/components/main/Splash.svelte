@@ -1,6 +1,6 @@
 <script lang="ts">
   import { MAIN } from "../../../types/Channels"
-  import { dictionary } from "../../stores"
+  import { activePopup, activeProject, dictionary } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -24,7 +24,13 @@
       <Icon id="project" white style="padding-right: 10px;" />
       <T id="new.project" />
     </Button>
-    <Button on:click={(e) => history({ id: e.ctrlKey ? "newShowDrawer" : "newShow" })} title={$dictionary.new?.show}>
+    <Button
+      on:click={(e) => {
+        if (e.ctrlKey) history({ id: "newShow", location: { page: "show", project: $activeProject } })
+        else activePopup.set("show")
+      }}
+      title={$dictionary.new?.show}
+    >
       <Icon id="showIcon" white style="padding-right: 10px;" />
       <T id="new.show" />
     </Button>

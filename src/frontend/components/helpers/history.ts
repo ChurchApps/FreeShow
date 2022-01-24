@@ -24,6 +24,7 @@ import {
   themes,
   groups,
   theme,
+  activeDrawerTab,
 } from "./../../stores"
 import type { ShowRef, Project, Folder } from "./../../../types/Projects"
 import { undoHistory, activePage } from "../../stores"
@@ -54,10 +55,14 @@ export type HistoryIDs =
   | "newShowsCategory"
   | "newSlide"
   | "newItem"
+  // delete
+  | "deleteShowsCategory"
   // add
   | "addShow"
   | "addLayout"
   // show
+  | "deleteShow"
+  | "updateShow"
   | "slide"
   | "changeSlide"
   | "showMedia"
@@ -82,8 +87,9 @@ export interface History {
   newData?: any
   location?: {
     page: HistoryPages
-    project?: string
+    project?: null | string
     show?: ShowRef
+    shows?: any[]
     layout?: string
     layoutSlide?: number
     slide?: string
@@ -177,9 +183,9 @@ export function history(obj: History, undo: null | boolean = null) {
         if (!obj.oldData) obj.oldData = {}
         let slide: any = a[obj.location!.show!.id].slides[obj.location!.slide!]
         Object.entries(obj.newData).forEach(([key, value]: any) => {
-          if (undo) slide[key] = obj.oldData[key]
+          if (undo) slide[key] = obj.newData[key]
           else {
-            obj.oldData[key] = slide[key]
+            obj.oldData[key] = slide[key] || null
             slide[key] = value
           }
         })
@@ -274,44 +280,96 @@ export function history(obj: History, undo: null | boolean = null) {
         })
       }
       break
-    case "newShowDrawer":
     case "newShow":
-    case "newPrivateShow":
-      // TODO: undo
-      // show dialog
-      // new Show()
-      let category: null | string = null
-      if (get(drawerTabsData).shows.activeSubTab !== "all") category = get(drawerTabsData).shows.activeSubTab
-      if (!obj.newData?.show) obj.newData = { show: new ShowObj(obj.id === "newPrivateShow", category) }
-      console.log(obj.newData)
-
-      // obj.oldData = console.log(obj.newData)
-      let id: string = obj.newData.id
-      if (!id) {
-        id = uid(12)
-        obj.newData.id = id
-      }
-      // obj.id === "newShowDrawer"
-      shows.update((s) => {
-        s[id] = obj.newData.show
-        return s
-      })
-
-      let as: any = { id }
-      // history addShow...
-      if (obj.id !== "newShowDrawer" && get(activeProject)) {
-        projects.update((p) => {
-          p[obj.location!.project!].shows.push(as)
-          return p
+      if (undo) {
+        let id = obj.oldData.id
+        if (get(activeShow)?.id === id) activeShow.set(null)
+        if (obj.location!.project) {
+          projects.update((a) => {
+            a[obj.location!.project!].shows = a[obj.location!.project!].shows.filter((a) => a.id !== id)
+            return a
+          })
+        }
+        shows.update((a) => {
+          delete a[id]
+          return a
         })
-        as.index = get(projects)[obj.location!.project!].shows.length - 1
+      } else {
+        let category: null | string = null
+        if (get(drawerTabsData).shows.activeSubTab !== "all") category = get(drawerTabsData).shows.activeSubTab
+        if (!obj.newData?.show) obj.newData = { show: new ShowObj(false, category) }
+
+        let id: string = obj.newData.id
+        if (!id) {
+          id = uid(12)
+          obj.newData.id = id
+        }
+        shows.update((s) => {
+          s[id] = obj.newData.show
+          return s
+        })
+
+        let as: any = { id }
+        if (obj.location!.project && get(projects)[obj.location!.project!]) {
+          projects.update((p) => {
+            p[obj.location!.project!].shows.push(as)
+            return p
+          })
+          as.index = get(projects)[obj.location!.project!].shows.length - 1
+        }
+        activeShow.set(as)
       }
-      activeShow.set(as)
+      break
+    case "deleteShow":
+      if (undo) {
+        let id: string = obj.newData.id
+        shows.update((s) => {
+          s[id] = obj.newData.show
+          return s
+        })
+
+        projects.update((a) => {
+          obj.newData.projects.forEach((b: any) => {
+            a[b.id].shows = b.data
+          })
+          return a
+        })
+      } else {
+        let id = obj.oldData.id
+        if (get(activeShow)?.id === id) activeShow.set(null)
+
+        // remove from projects
+        obj.oldData.projects = []
+        projects.update((a) => {
+          Object.keys(a).forEach((pID) => {
+            let filtered = a[pID].shows.filter((b) => b.id !== id)
+            if (filtered.length < a[pID].shows.length) {
+              obj.oldData.projects.push({ id: pID, data: a[pID].shows })
+              a[pID].shows = filtered
+            }
+          })
+          return a
+        })
+
+        shows.update((a) => {
+          delete a[id]
+          return a
+        })
+      }
+      break
+    case "updateShow":
+      shows.update((a: any) => {
+        if (!obj.oldData) obj.oldData = { key: obj.newData.key, values: [] }
+        obj.location!.shows!.forEach((b, i) => {
+          if (obj.newData.values[i] && !obj.oldData.values[i]) obj.oldData.values[i] = a[b.id][obj.newData.key]
+          a[b.id][obj.newData.key] = obj.newData.values[i] || obj.newData.values[0]
+        })
+        return a
+      })
       break
     case "newShowsCategory":
-      categories.update((c) => {
-        // TODO: undo
-        if (undo) c = obj.oldData
+      categories.update((a) => {
+        if (undo) delete a[obj.newData.id]
         else {
           if (!obj.newData) {
             let id = uid()
@@ -319,11 +377,11 @@ export function history(obj: History, undo: null | boolean = null) {
             let tab = get(drawerTabsData).shows.activeSubTab
             if (tab !== "all" && tab !== "unlabeled") icon = get(drawerTabsData).shows.activeSubTab
             obj.newData = { id, data: { name: "", icon } }
-            obj.oldData = { ...c }
+            obj.oldData = { id }
           }
-          c[obj.newData.id] = obj.newData.data
+          a[obj.newData.id] = obj.newData.data
         }
-        return c
+        return a
       })
       break
     case "newSlide":
@@ -430,6 +488,40 @@ export function history(obj: History, undo: null | boolean = null) {
           slide.items.push(obj.newData)
         }
         return s
+      })
+      break
+
+    // delete
+    case "deleteShowsCategory":
+      categories.update((a) => {
+        if (undo) {
+          a[obj.newData.id] = obj.newData.data
+          shows.update((a) => {
+            obj.newData.shows.forEach((id: string) => {
+              a[id].category = obj.newData.id
+            })
+            return a
+          })
+        } else {
+          obj.oldData = { id: obj.newData.id, data: a[obj.newData.id], shows: [] }
+          // remove shows
+          shows.update((b) => {
+            Object.entries(b).forEach(([id, c]: any) => {
+              if (c.category === obj.newData.id) {
+                obj.oldData.shows.push(id)
+                b[id].category = null
+              }
+            })
+            return b
+          })
+          if (get(drawerTabsData)[get(activeDrawerTab)].activeSubTab === obj.newData.id)
+            drawerTabsData.update((a) => {
+              a[get(activeDrawerTab)].activeSubTab = null
+              return a
+            })
+          delete a[obj.newData.id]
+        }
+        return a
       })
       break
 
@@ -596,8 +688,8 @@ export function history(obj: History, undo: null | boolean = null) {
       themes.update((a: any) => {
         if (obj.newData) a[obj.location!.theme!] = obj.newData
         else {
-            if (get(theme) === obj.location!.theme!) theme.set(Object.keys(a).find(a => a !== obj.location!.theme!)!)
-            delete a[obj.location!.theme!]
+          if (get(theme) === obj.location!.theme!) theme.set(Object.keys(a).find((a) => a !== obj.location!.theme!)!)
+          delete a[obj.location!.theme!]
         }
         return a
       })

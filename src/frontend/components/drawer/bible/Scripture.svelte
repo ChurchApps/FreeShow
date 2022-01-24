@@ -263,16 +263,16 @@
   .main span {
     padding: 4px 10px;
   }
-  .main span.active {
-    background-color: var(--secondary-opacity);
-    color: var(--secondary-text);
+  .main span.active, .main :global(p).active {
+    background-color: var(--focus);
     outline: none;
   }
-  .main span:hover:not(.active) {
+  .main span:hover:not(.active), .main :global(p):hover:not(.active) {
     background-color: var(--hover);
   }
   .main span:focus,
-  .main span:active:not(.active) {
+  .main span:active:not(.active),.main :global(p):focus,
+  .main :global(p):active:not(.active) {
     background-color: var(--focus);
   }
 
@@ -280,18 +280,6 @@
     width: 100%;
     padding: 4px 10px;
     /* text-align-last: justify; */
-  }
-  .main :global(p).active {
-    background-color: var(--secondary-opacity);
-    color: var(--secondary-text);
-    outline: none;
-  }
-  .main :global(p):hover:not(.active) {
-    background-color: var(--hover);
-  }
-  .main :global(p):focus,
-  .main :global(p):active:not(.active) {
-    background-color: var(--focus);
   }
   .main :global(.v) {
     color: var(--secondary);

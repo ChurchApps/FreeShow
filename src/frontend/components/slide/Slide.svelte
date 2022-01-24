@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { dictionary, groupCount, groups, overlays, slidesOptions } from "../../stores"
+  import { dictionary, groupCount, groups, overlays, slidesOptions, fullColors } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
+  import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
   import SelectElem from "../system/SelectElem.svelte"
   import Icons from "./Icons.svelte"
@@ -90,7 +91,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     class="slide context #slide"
     class:disabled={layoutSlide.disabled}
     class:afterEnd={endIndex !== null && index > endIndex}
-    style="background-color: {color};{$slidesOptions.grid ? '' : `width: calc(${100 / columns}% - 6px)`}"
+    style="{$fullColors ? 'background-' : ''}color: {color};{$slidesOptions.grid ? '' : `width: calc(${100 / columns}% - 6px)`}"
     tabindex={0}
     on:click
   >
@@ -104,7 +105,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {#if background}
             {#key background}
               <div class="background" style="zoom: {1 / ratio}">
-                <MediaLoader name="[[[Could not load]]]" path={background.path} type={background.type || null} bind:duration />
+                <MediaLoader name="[[[Could not load]]]" path={background.path} type={background.type !== "player" ? background.type : null} bind:duration />
               </div>
             {/key}
           {/if}
@@ -114,17 +115,15 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {/each}
           {#if layoutSlide.overlays?.length}
             {#each layoutSlide.overlays as id}
-              <div style={$overlays[id].style}>
-                {#each $overlays[id].items as item}
-                  <Textbox {item} />
-                {/each}
-              </div>
+              {#each $overlays[id].items as item}
+                <Textbox {item} />
+              {/each}
             {/each}
           {/if}
         </Zoomed>
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {resolution.width * zoom}px;" -->
-        <div class="label" title={name || ""}>
+        <div class="label" title={name || ""} style="color: {color ? getContrast(color) : 'unset'};">
           <!-- font-size: 0.8em; -->
           <span style="position: absolute;display: contents;">{index + 1}</span>
           <span class="text">{name || ""}</span>
@@ -136,7 +135,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
   {#if !$slidesOptions.grid}
     <hr />
     <div class="quickEdit edit" tabindex={0} contenteditable={true}>
-      <span>{longestText}</span>
+      {@html longestText}
     </div>
   {/if}
 </div>
@@ -235,7 +234,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     display: flex;
     background-color: rgb(0 0 0 / 0.8);
     color: white;
-    padding: 3px;
+    padding: 10px;
     flex: 1;
   }
 </style>

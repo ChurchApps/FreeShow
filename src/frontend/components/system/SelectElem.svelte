@@ -9,6 +9,7 @@
   export let draggable: boolean = false
   export let trigger: null | "row" | "column" = null
   export let fileOver: boolean = false
+  export let borders: "all" | "center" | "edges" = "all"
 
   function enter(e: any) {
     if (e.buttons && !dragActive) {
@@ -30,7 +31,7 @@
 
     let newData: any
 
-    if (dragged && ($selected.id !== id || !arrayHasData($selected.data, data))) {
+    if ((dragged || e.buttons === 2) && ($selected.id !== id || !arrayHasData($selected.data, data))) {
       newData = [data]
     } else if (!dragged && e.ctrlKey) {
       if ($selected.id === id && arrayHasData($selected.data, data)) newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
@@ -42,7 +43,8 @@
   }
 
   function deselect(e: any) {
-    if (!e.ctrlKey && $selected.id === id && e.target.closest(".selectElem") === null) selected.set({ id: null, data: [] })
+    if (!e.ctrlKey && $selected.id === id && !e.target.closest(".selectElem") && !e.target.closest(".popup") && !e.target.closest(".edit") && !e.target.closest(".contextMenu"))
+      selected.set({ id: null, data: [] })
   }
 
   let dragover: null | "start" | "center" | "end" = null
@@ -73,12 +75,18 @@
   on:dragstart={(e) => mousedown(e, true)}
 >
   <!-- TODO: validateDrop(id, $selected.id, true) -->
-  {#if (trigger && dragActive) || fileOver}
+  {#if trigger && (dragActive || fileOver)}
     <div class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={() => (dragover = null)}>
-      <span id="start" class="TriggerBlock" on:dragover={() => (dragover = "start")} />
-      <span id="start_center" class="TriggerBlock" on:dragover={() => (dragover = "center")} />
-      <span id="end_center" class="TriggerBlock" on:dragover={() => (dragover = "center")} />
-      <span id="end" class="TriggerBlock" on:dragover={() => (dragover = "end")} />
+      {#if borders === "all" || borders === "edges"}
+        <span id="start" class="TriggerBlock" on:dragover={() => (dragover = "start")} />
+      {/if}
+      {#if borders === "all" || borders === "center"}
+        <span id="start_center" class="TriggerBlock" on:dragover={() => (dragover = "center")} />
+        <span id="end_center" class="TriggerBlock" on:dragover={() => (dragover = "center")} />
+      {/if}
+      {#if borders === "all" || borders === "edges"}
+        <span id="end" class="TriggerBlock" on:dragover={() => (dragover = "end")} />
+      {/if}
     </div>
   {/if}
   <slot />

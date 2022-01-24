@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { activeShow, dictionary, activePopup, shows } from "../../stores"
+  import { activeShow, dictionary, activePopup, shows, activeProject } from "../../stores"
   import { keysToID, removeValues, sortObject, sortObjectNumbers } from "../helpers/array"
-  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import { dateToString } from "../helpers/time"
@@ -11,6 +10,7 @@
   import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
   import SelectElem from "../system/SelectElem.svelte"
+  import { history } from "../helpers/history"
 
   export let id: string
   export let active: string | null
@@ -118,33 +118,41 @@
       {#each filteredShows as show}
         <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
           {#if searchValue.length <= 1 || show.match}
-            <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true)} class="#drawer_show_button__drawer_show" match={show.match || null} />
+            <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true, $dictionary)} class="#drawer_show_button__drawer_show" match={show.match || null} />
           {/if}
         </SelectElem>
       {/each}
       <!-- TODO: not updating values on activeSubTab change -->
       {#if searchValue.length > 1 && totalMatch === 0}
-        <Center size={1.5} faded>[[[No match]]]</Center>
+        <Center size={1.5} faded><T id="empty.search" /></Center>
       {/if}
     {:else}
-      <Center size={1.5} faded>[[[No shows]]]</Center>
+      <Center size={1.5} faded><T id="empty.show" /></Center>
     {/if}
   </div>
 </Autoscroll>
 <div class="tabs">
-  <Button style="flex: 1;" on:click={() => history({ id: "newShowDrawer" })} center title={$dictionary.new?.show}>
-    <Icon id="showIcon" style="padding-right: 10px;" />
+  <!-- <Button style="flex: 1;" on:click={() => history({ id: "newShowDrawer" })} center title={$dictionary.new?.show}> -->
+  <Button
+    style="flex: 1;"
+    on:click={(e) => {
+      if (e.ctrlKey) history({ id: "newShow", location: { page: "show", project: $activeProject } })
+      else activePopup.set("show")
+    }}
+    center
+    title={$dictionary.new?.show}
+  >
+    <Icon id="showIcon" right />
     <span style="color: var(--secondary);">
       <T id="new.show" />
     </span>
   </Button>
-  <Button style="flex: 1;" on:click={() => activePopup.set("import")} center title={$dictionary.new?._quick}>
-    <!-- <Icon id="text" style="padding-right: 10px;" /> -->
-    <Icon id="showIcon" style="padding-right: 10px;" />
+  <!-- <Button style="flex: 1;" on:click={() => activePopup.set("import")} center title={$dictionary.new?._quick}>
+    <Icon id="showIcon" right />
     <span style="color: var(--secondary);">
       <T id="new.quick" />
     </span>
-  </Button>
+  </Button> -->
 </div>
 
 <style>

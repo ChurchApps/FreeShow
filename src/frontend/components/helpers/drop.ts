@@ -1,5 +1,5 @@
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
-import { projects, activeProject, selected, activeShow, shows, videoExtensions, imageExtensions, activePage } from "./../../stores"
+import { projects, activeProject, selected, activeShow, shows, videoExtensions, imageExtensions, activePage, activeDrawerTab } from "./../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
 import { HistoryIDs, history } from "./history"
 import { get } from "svelte/store"
@@ -19,6 +19,7 @@ const areas: any = {
 const areaChildren: any = {
   project: ["show", "media", "show_drawer", "player"],
   slides: ["slide", "group", "global_group", "media"],
+  navigation: ["show", "show_drawer"],
 }
 const files: any = {
   project: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
@@ -44,19 +45,20 @@ export function ondrop(e: any, id: string) {
   let elem = null
   if (e !== null) {
     // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
-    if (id === "project" || id === "slides") elem = e.target.closest(".selectElem")
+    if (id === "project" || id === "slides" || id === "navigation") elem = e.target.closest(".selectElem")
     else if (id === "slide") elem = e.target.querySelector(".selectElem")
     console.log(elem)
   }
 
   let trigger = e?.target.closest(".TriggerBlock")?.id
-  let index = JSON.parse(elem?.getAttribute("data") || "{}").index
+  let data = JSON.parse(elem?.getAttribute("data") || "{}")
+  let index = data.index
   let center: boolean = false
   if (trigger?.includes("center")) center = true
   if (index !== undefined && trigger?.includes("end") && areaChildren[id].includes(sel.id)) index++
 
   console.log("DRAG: ", sel.id, sel.data)
-  console.log("DROP: ", id, index, trigger)
+  console.log("DROP: ", id, data, trigger)
 
   switch (id) {
     case "project":
@@ -65,9 +67,9 @@ export function ondrop(e: any, id: string) {
       let projectShows = get(projects)[get(activeProject)!].shows
       if (index === undefined) index = projectShows.length
 
-      let data: any[] = sel.data
+      let tempData: any[] = sel.data
       if (sel.id === "media" || sel.id === "files") {
-        data = data
+        tempData = tempData
           .map((a) => {
             let name: string = a.name.includes(".") ? a.name : a.path.substring(a.path.lastIndexOf("\\") + 1)
             const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
@@ -80,16 +82,16 @@ export function ondrop(e: any, id: string) {
           })
           .filter((a) => a)
       } else if (sel.id === "player") {
-        // data = data.map(a => {
+        // tempData = tempData.map(a => {
         //   let d = get(playerVideos)[a]
         //   return {id: }
         // })
-        data = data.map((a) => ({ id: a, type: "player" }))
+        tempData = tempData.map((a) => ({ id: a, type: "player" }))
       }
 
       oldData = [...projectShows]
-      if (sel.id === "show") newData = mover(projectShows, getIndexes(data), index)
-      else newData = addToPos(projectShows, data, index)
+      if (sel.id === "show") newData = mover(projectShows, getIndexes(tempData), index)
+      else newData = addToPos(projectShows, tempData, index)
       break
     case "slide":
     case "slides":
@@ -233,6 +235,13 @@ export function ondrop(e: any, id: string) {
 
       historyID = "slideToOverlay"
       newData = { id: uid(), slide: { name, color, items: slide.items, category } }
+      break
+    case "navigation":
+      if (get(activeDrawerTab) && (sel.id === "show" || sel.id === "show_drawer")) {
+        historyID = "updateShow"
+        newData = { key: "category", values: [data] }
+        location = { page: sel.id === "show" ? "show" : "drawer", shows: sel.data }
+      }
       break
 
     default:

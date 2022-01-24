@@ -18,6 +18,7 @@
     shows,
     videoExtensions,
     playerVideos,
+    dictionary,
   } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
@@ -193,7 +194,7 @@
     }
   }
 
-  $: name = $outSlide ? ($shows[$outSlide.id].private ? `${$shows[$outSlide.id].name} [[[[private]]]]` : $shows[$outSlide.id].name) : "-"
+  $: name = $outSlide ? $shows[$outSlide.id].name : "-"
 
   let fullscreen: boolean = false
   let resolution: Resolution = $screen.resolution
@@ -363,8 +364,8 @@
     if ($outTransition) activeClear = "transition"
     else if ($outAudio.length) activeClear = "audio"
     else if ($outOverlays.length) activeClear = "overlays"
-    else if ($outBackground) activeClear = "background"
     else if ($outSlide?.id) activeClear = "slide"
+    else if ($outBackground) activeClear = "background"
     else activeClear = null
   }
 </script>
@@ -378,8 +379,8 @@
       {#if fullscreen}
         <span class="resolution">
           <!-- TODO: get actual resultion ... -->
-          <p><b>[[[Width]]]:</b> {resolution.width} [[[pixels]]]</p>
-          <p><b>[[[Height]]]:</b> {resolution.height} [[[pixels]]]</p>
+          <p><b><T id="screen.width" />:</b> {resolution.width} <T id="screen.pixels" /></p>
+          <p><b><T id="screen.height" />:</b> {resolution.height} <T id="screen.pixels" /></p>
         </span>
       {/if}
       <Output
@@ -398,10 +399,12 @@
 
   <!-- TODO: enable stage output -->
 
+  <!-- TODO: title keyboard shortcuts -->
+
   <span class="group">
     <Button
       on:click={previousShow}
-      title="[[[PreviousShow [ArrowUp]]]]"
+      title={$dictionary.preview?._previous_show}
       disabled={!Object.keys($projects).length ||
         !$activeProject ||
         !$projects[$activeProject].shows.length ||
@@ -412,13 +415,13 @@
     </Button>
     <Button
       on:click={previousSlide}
-      title="[[[PreviousSlide [ArrowLeft]]]]"
+      title={$dictionary.preview?._previous_slide}
       disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index < 1 : !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length)}
       center
     >
       <Icon id="previous" size={1.2} />
     </Button>
-    <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? "[[[Unlock Output]]]" : "[[[Lock Output]]]"} center>
+    <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
       <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
     </Button>
     {#if ($activePage === "edit" && $outSlide?.index !== $activeEdit.slide) || !$outSlide || $outSlide.id !== $activeShow?.id || $outSlide.layout !== $shows[$activeShow.id].settings.activeLayout}
@@ -429,7 +432,7 @@
           else if ($activeShow && GetLayout().length) outSlide.set({ id: $activeShow.id, layout: $shows[$activeShow.id].settings.activeLayout, index: 0 })
           // TODO: activeEdit && play media
         }}
-        title="[[[Show Current Show/Slide]]]"
+        title={$dictionary.preview?._start}
         disabled={$outLocked || !$activeShow || !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length}
         center
       >
@@ -441,7 +444,7 @@
           outBackground.set($outBackground)
           outSlide.set($outSlide)
         }}
-        title="[[[Update Output Slide]]]"
+        title={$dictionary.preview?._update}
         disabled={!$outSlide || $outLocked}
         center
       >
@@ -450,7 +453,7 @@
     {/if}
     <Button
       on:click={nextSlide}
-      title="[[[NextSlide [ArrowRight]]]]"
+      title={$dictionary.preview?._next_slide}
       disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index + 1 >= length : !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length)}
       center
     >
@@ -458,7 +461,7 @@
     </Button>
     <Button
       on:click={nextShow}
-      title="[[[NextShow [ArrowDown]]]]"
+      title={$dictionary.preview?._next_show}
       disabled={!Object.keys($projects).length ||
         !$activeProject ||
         !$projects[$activeProject].shows.length ||
@@ -473,7 +476,7 @@
     <!-- clear -->
     <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
       <span>
-        <Button class="clearAll" disabled={$outLocked || !out} on:click={clearAll} title="[[[Clear all]]]" red dark center>
+        <Button class="clearAll" disabled={$outLocked || !out} on:click={clearAll} title={$dictionary.clear?.all} red dark center>
           <Icon id="clear" size={1.2} />
           <span style="padding-left: 10px;"><T id={"clear.all"} /></span>
         </Button>
@@ -490,7 +493,7 @@
               clearVideo()
             }
           }}
-          title={activeClear === "background" ? "[[[Clear background]]]" : "[[[Background]]]"}
+          title={activeClear === "background" ? $dictionary.clear?.background : $dictionary.preview?.background}
           red={activeClear === "background"}
           dark
           center
@@ -507,7 +510,7 @@
               outSlide.set(null)
             }
           }}
-          title={activeClear === "slide" ? "[[[Clear slide]]]" : "[[[Slide]]]"}
+          title={activeClear === "slide" ? $dictionary.clear?.slide : $dictionary.preview?.slide}
           red={activeClear === "slide"}
           dark
           center
@@ -524,7 +527,7 @@
               outOverlays.set([])
             }
           }}
-          title={activeClear === "overlays" ? "[[[Clear overlays]]]" : "[[[Overlays]]]"}
+          title={activeClear === "overlays" ? $dictionary.clear?.overlays : $dictionary.preview?.overlays}
           red={activeClear === "overlays"}
           dark
           center
@@ -541,7 +544,7 @@
               outAudio.set([])
             }
           }}
-          title={activeClear === "audio" ? "[[[Clear all audio]]]" : "[[[Audio]]]"}
+          title={activeClear === "audio" ? $dictionary.clear?.audio : $dictionary.preview?.audio}
           red={activeClear === "audio"}
           dark
           center
@@ -558,7 +561,7 @@
               outTransition.set(null)
             }
           }}
-          title={activeClear === "transition" ? "[[[Clear transition]]]" : "[[[Transition]]]"}
+          title={activeClear === "transition" ? $dictionary.clear?.transition : $dictionary.preview?.transition}
           red={activeClear === "transition"}
           dark
           center
@@ -597,7 +600,7 @@
           <Button style="flex: 0" center title={videoData.muted ? "Unmute" : "Mute"} disabled={$outLocked} on:click={() => (videoData.muted = !videoData.muted)}>
             <Icon id={videoData.muted ? "muted" : "volume"} size={1.2} />
           </Button>
-          <Button style="flex: 0" center title="[[[Loop]]]" on:click={() => (videoData.loop = !videoData.loop)}>
+          <Button style="flex: 0" center title={$dictionary.media?._loop} on:click={() => (videoData.loop = !videoData.loop)}>
             <Icon id="loop" white={!videoData.loop} size={1.2} />
           </Button>
         </span>
@@ -690,8 +693,7 @@
   .name {
     display: flex;
     justify-content: center;
-    padding: 5px;
-    padding-top: 10px;
+    padding: 10px;
     opacity: 0.8;
   }
 

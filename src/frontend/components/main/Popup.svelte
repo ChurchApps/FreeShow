@@ -1,50 +1,35 @@
 <script lang="ts">
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
-  import { activePopup } from "../../stores"
+  import { activePopup, activeProject, activeShow, categories, selected, shows } from "../../stores"
   import TextArea from "../inputs/TextArea.svelte"
   import { history } from "../helpers/history"
   import { ShowObj } from "../../classes/Show"
   import type { Show } from "../../../types/Show"
   import { uid } from "uid"
+  import { scale, fade } from "svelte/transition"
+  import TextInput from "../inputs/TextInput.svelte"
+  import T from "../helpers/T.svelte"
+  import { customIcons } from "./customIcons"
+  import { GetLayoutRef } from "../helpers/get"
 
-  function textToShow(e: any) {
-    // console.log(e.target.value)
-
-    let sections = e.target.value.split("\n\n")
+  function textToShow() {
+    let sections = values.text.split("\n\n").filter((a: any) => a.length)
     console.log(sections)
 
     let metaData: string = ""
-    if (sections[0].split("\n").length < 3) metaData = sections.splice(0, 1)[0]
+    if (sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
 
     if (sections.length) {
       let labeled: any[] = []
 
       // find chorus phrase
       let indexes = findPatterns(sections)
-
       labeled = indexes.map((a, i) => ({ type: a, text: sections[i] }))
 
-      // if (sections?.[0].length)
-      //   sections.forEach((section: string) => {
-      //     if (section.length) {
-      //       let lines = section.split("\n")
-      //       // count for typos
-      //       if (indexes.prechorus?.includes()) labeled.push({ type: "chorus", text: section })
-      //       if (lines.length < 2) labeled.push({ type: "break", text: section })
-      //       // else if (similarity(section, chorus) > similarityNum) labeled.push({ type: "chorus", text: section })
-      //       // else if (similarity(section, bridge) > similarityNum) labeled.push({ type: "bridge", text: section })
-      //       else labeled.push({ type: "verse", text: section })
-      //     }
-      //   })
-
-      console.log(metaData)
-      console.log(labeled)
-
-      // TODO: remove . and spaces ....
       let name: string = labeled[0].text.split("\n")[0]
       // get active
-      let category = "song"
+      let category = values.category
       let meta: any = {}
       if (metaData.length) {
         let lines: string[] = metaData.split("\n")
@@ -56,14 +41,20 @@
 
       let layoutID = uid()
       let show: Show = new ShowObj(false, category, layoutID)
-      show.name = name
+      show.name = values.name || name
       show.meta = meta
       let { slides, layouts } = createSlides(labeled)
       show.slides = slides
       show.layouts = { [layoutID]: { name: "", notes: "", slides: layouts } }
       // let newData: any = {name, category, settings: {}, meta}
-      history({ id: "newShowDrawer", newData: { show } })
+      history({ id: "newShow", newData: { show }, location: { page: "show", project: $activeProject } })
+    } else {
+      let show = new ShowObj(false, values.category)
+      show.name = values.name
+      history({ id: "newShow", newData: { show }, location: { page: "show", project: $activeProject } })
     }
+    values.text = ""
+    activePopup.set(null)
   }
 
   function createSlides(labeled: any) {
@@ -86,7 +77,7 @@
         let color: any = null
 
         let allLines: string[] = [text]
-        let lines = text.split("\n")
+        let lines = text.split("\n").filter((a) => a.length)
 
         let length: number = text.replaceAll("\n", "").length
         if ((length < 20 && lines.length >= 6) || (length >= 20 && lines.length >= 4)) {
@@ -131,7 +122,7 @@
       .split("\n")
       .map((a) => {
         a = a.trim()
-        a = a[0].toUpperCase() + a.slice(1, a.length)
+        a = (a[0]?.toUpperCase() || "") + a.slice(1, a.length)
         return a
       })
       .join("\n")
@@ -177,7 +168,7 @@
       // if (lines.length < 2) group =  "break"
       if (find) group = find.type
       else if (!length) group = "break"
-      else if (length < 10 && !sections[i].includes("\n")) group = sections[i]
+      else if (length < 10 && !sections[i].includes("\n")) group = sections[i].trim()
       else if (length < 30 || linesSimilarity(sections[i])) group = "tag"
       else if (a.count > 0) {
         let groups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
@@ -241,23 +232,133 @@
     }
     return costs[s2.length]
   }
+
+  const hide = (e: any) => {
+    if (e.target.classList.contains("popup")) activePopup.set(null)
+  }
+
+  let values: any = {
+    text: "",
+    name: "",
+    category: "song",
+    groupName: "",
+  }
+  const changeValue = (e: any, key: string = "text") => (values[key] = e.target.value)
+
+  let list: string[] = []
+  $: {
+    list = []
+    if ($activePopup === "rename") {
+      if (($activeShow && $selected.id === "slide") || $selected.id === "group") {
+        $selected.data.forEach((a, i) => {
+          let slide = a.id || GetLayoutRef()[a.index].id
+          let name: string = $shows[$activeShow!.id].slides[slide].group || ""
+          list.push(name)
+          if (i === 0) values.groupName = name
+        })
+        list = [...new Set(list)]
+      }
+    }
+  }
+
+  function rename() {
+    $selected.data.forEach((a) => {
+      let newData: any = { group: values.groupName }
+      let slide = a.id
+      if (!slide) {
+        slide = GetLayoutRef()[a.index].id
+        // TODO: change layout children & slide parent children
+        newData.color = null
+      }
+      if ($activeShow && $shows[$activeShow.id].slides[slide].globalGroup) newData.globalGroup = null
+      history({ id: "changeSlide", newData, location: { page: "show", show: $activeShow || undefined, slide } })
+    })
+    activePopup.set(null)
+    values.groupName = ""
+    selected.set({ id: null, data: [] })
+  }
 </script>
 
 {#if $activePopup !== null}
-  <div class="popup">
-    <div class="card">
-      <Button on:click={() => activePopup.set(null)}>
-        <Icon id="close" />
-        close
-      </Button>
-      {#if $activePopup === "import"}
-        <span>Paste text:</span>
-        <span>(Seperate sections with enter)</span>
-        <TextArea value="" on:input={textToShow} />
-        <!-- <TextInput value="" on:change={textToShow} /> -->
-        <!-- <textarea name="" id="" cols="30" rows="10" /> -->
-        <!-- <Button on:click={textToShow}>Paste</Button> -->
-      {/if}
+  <div class="popup" transition:fade={{ duration: 100 }} on:click={hide}>
+    <div class="card" transition:scale={{ duration: 200 }}>
+      <div style="position: relative;">
+        <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{$activePopup}" /></h2>
+        <Button style="position: absolute;right: 0;top: 0;height: 100%;" on:click={() => activePopup.set(null)}>
+          <Icon id="close" size={2} />
+        </Button>
+      </div>
+      <div style="display: flex;flex-direction: column;margin: 20px;">
+        {#if $activePopup === "show"}
+          <div style="display: flex;justify-content: space-between;align-items: center;">
+            <p>Name:</p>
+            <TextInput autofocus value={values.name} on:change={(e) => changeValue(e, "name")} style="width: 50%;height: 30px;" />
+          </div>
+          <div style="display: flex;justify-content: space-between;align-items: center;">
+            <p>Category:</p>
+            <TextInput value={values.category} on:change={(e) => changeValue(e, "category")} style="width: 50%;height: 30px;" />
+          </div>
+          <br />
+          <span>Quick lyrics (Optional): <span style="opacity: 0.5;">((Seperate sections with enter))</span></span>
+          <TextArea style="height: 250px;" value={values.text} on:input={(e) => changeValue(e)} />
+          <Button on:click={textToShow} style="width: 100%;margin-top: 10px;color: var(--secondary);" dark center>
+            {#if values.text.trim().split("\n\n").length > 1}
+              New Show
+            {:else}
+              New Empty
+            {/if}
+          </Button>
+        {:else if $activePopup === "delete_show"}
+          <p><T id="popup.delete_show_confirmation" />:</p>
+          <ul style="list-style-position: inside;">
+            {#each $selected.data as show}
+              <li style="font-weight: bold;">{$shows[show.id].name}</li>
+            {/each}
+          </ul>
+          <Button
+            style="height: auto;margin-top: 10px;"
+            on:click={() => {
+              $selected.data.forEach((a) => {
+                history({ id: "deleteShow", oldData: { id: a.id, show: $shows[a.id] } })
+              })
+              activePopup.set(null)
+            }}
+            red
+            center
+          >
+            <T id="actions.delete" />
+          </Button>
+        {:else if $activePopup === "icon"}
+          <div style="display: flex;flex-wrap: wrap;gap: 5px;justify-content: center;">
+            {#each Object.keys(customIcons) as icon}
+              <Button
+                on:click={() => {
+                  categories.update((a) => {
+                    $selected.data.forEach((b) => {
+                      a[b].icon = icon
+                    })
+                    return a
+                  })
+                  activePopup.set(null)
+                }}
+              >
+                <Icon id={icon} size={2} custom white />
+              </Button>
+            {/each}
+          </div>
+        {:else if $activePopup === "rename"}
+          <p><T id="popup.change_name" />:</p>
+          <ul style="list-style-position: inside;">
+            {#each list as text}
+              <li style="font-weight: bold;">{text}</li>
+            {/each}
+          </ul>
+          <TextInput autofocus value={values.groupName} on:change={(e) => changeValue(e, "groupName")} />
+          <Button style="height: auto;margin-top: 10px;" on:click={rename} center>
+            <T id="actions.rename" />
+          </Button>
+        {/if}
+      </div>
     </div>
   </div>
 {/if}
@@ -265,25 +366,25 @@
 <style>
   .popup {
     position: absolute;
-    background-color: rgb(0 0 0 / 0.2);
+    background-color: rgb(0 0 0 / 0.8);
     /* pointer-events: none; */
     width: 100%;
     height: 100%;
     padding: 20px 300px;
-    z-index: 40;
+    z-index: 80;
 
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .card {
+    position: relative;
     background-color: var(--primary);
+    overflow-y: auto;
 
-    min-width: 500px;
-    min-height: 500px;
-  }
-
-  .popup :global(.edit) {
-    height: 500px;
+    min-width: 50%;
+    min-height: 50px;
+    max-width: 100%;
+    max-height: 100%;
   }
 </style>

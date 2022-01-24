@@ -1,7 +1,40 @@
 {
   "main": {
     "quit": "Quit",
-    "unnamed": "Unnamed"
+    "unnamed": "Unnamed",
+    "drop": "Drop here",
+    "search": "Search"
+  },
+  "screen": {
+    "width": "Width",
+    "height": "Height",
+    "pixels": "pixels"
+  },
+  "preview": {
+    "_previous_show": "Previous show",
+    "_previous_slide": "Previous slide",
+    "_lock": "Lock output",
+    "_unlock": "Unlock output",
+    "_start": "Start show",
+    "_update": "Update output",
+    "_new_slide": "Next slide",
+    "_new_show": "Next show",
+    "background": "Background",
+    "slide": "Slide",
+    "overlays": "Overlays",
+    "audio": "Audio",
+    "transition": "Transition"
+  },
+  "clear": {
+    "all": "Clear all",
+    "background": "Clear background",
+    "slide": "Clear slide",
+    "overlays": "Clear overlays",
+    "audio": "Clear audio",
+    "transistion": "Clear transistion"
+  },
+  "media": {
+    "_loop": "Loop"
   },
   "menu": {
     "show": "Show",
@@ -18,6 +51,23 @@
     "_title_settings": "Go to settings",
     "_title_display": "Present",
     "_title_display_stop": "Stop presentation"
+  },
+  "empty": {
+    "project_select": "Select a project",
+    "show": "No show selected",
+    "slides": "No slides",
+    "search": "No match",
+    "backgrounds": "No backgrounds in show",
+    "groups": "No groups",
+    "events": "No events"
+  },
+  "meta": {
+    "title": "Title",
+    "artist": "Artist",
+    "author": "Author",
+    "publisher": "Publisher",
+    "CCLI": "License",
+    "year": "Year"
   },
   "themes": {
     "default": "Default",
@@ -46,18 +96,9 @@
     "en": "English",
     "no": "Norwegian"
   },
-  "actions": {
-    "rename": "Rename"
-  },
-  "clear": {
-    "all": "Clear all"
-  },
-  "context": {
-    "enabledTabs": "Show/Hide Tabs"
-  },
   "tabs": {
     "shows": "Shows",
-    "backgrounds": "Backgrounds",
+    "media": "Media",
     "overlays": "Overlays",
     "templates": "Templates",
     "audio": "Audio",
@@ -71,25 +112,59 @@
     "unlabeled": "Unlabeled",
     "song": "Song",
     "info": "Info",
-    "presentation": "Presentation"
+    "presentation": "Presentation",
+    "pictures": "Pictures",
+    "videos": "Videos"
   },
   "groups": {
+    "current": "Current",
+    "global": "Global",
     "intro": "Intro",
     "verse": "Verse",
     "pre_chorus": "Pre Chorus",
     "chorus": "Chorus",
     "break": "Break",
+    "tag": "Tag",
     "bridge": "Bridge",
     "outro": "Outro"
   },
+  "popup": {
+    "show": "New show",
+    "rename": "Rename",
+    "delete_show": "Delete show",
+    "delete_show_confirmation": "Are you sure you want to delete",
+    "change_name": "Change name on"
+  },
   "new": {
     "show": "New show",
-    "quick": "Quick Show",
-    "_quick": "Create show from text",
+    "empty_show": "New empty show",
     "project": "New project",
     "category": "New category",
-    "_private": "New private show",
-    "_folder": "New folder"
+    "private": "New private show",
+    "folder": "New folder",
+    "slide": "New slide",
+    "event": "New event"
+  },
+  "actions": {
+    "rename": "Rename",
+    "recolor": "Change color",
+    "remove": "Remove",
+    "private": "Private",
+    "export": "Export",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "close": "Close",
+    "save": "Save",
+    "disable": "Disable"
+  },
+  "context": {
+    "enabledTabs": "Show/Hide Tabs",
+    "addToProject": "Add to project",
+    "newCategory": "New category",
+    "changeIcon": "Change icon",
+    "changeGroup": "Change group",
+    "createNew": "Create new",
+    "selectAll": "Select all"
   },
   "tools": {
     "notes": "Notes",
@@ -97,7 +172,7 @@
     "--schedule": "Schedule",
     "--actions": "Actions",
     "groups": "Groups",
-    "meta": "Meta",
+    "metadata": "Metadata",
     "backgrounds": "Backgrounds",
     "audio": "Audio",
     "transitions": "Transitions"
@@ -213,6 +288,17 @@
     "reset_settings": "Reset settings",
     "export_all": "Export everything"
   },
+  "calendar": {
+    "name": "Name",
+    "color": "Color",
+    "time": "Time",
+    "from_date": "From date",
+    "to_date": "To date",
+    "from_time": "From time",
+    "to_time": "To time",
+    "location": "Location",
+    "notes": "Notes"
+  },
   "filter": {
     "blur": "Blur",
     "brightness": "Brightness",
@@ -223,6 +309,12 @@
     "opacity": "Opacity",
     "saturate": "Saturate",
     "sepia": "Sepia"
+  },
+  "live": {
+    "screens": "Screens",
+    "windows": "Windows",
+    "cameras": "Cameras",
+    "microphones": "Microphones"
   },
   "transition": {
     "fade": "Fade"

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { shows, activeShow, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
+  import T from "../helpers/T.svelte"
   import Slide from "../slide/Slide.svelte"
   import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
@@ -95,7 +96,9 @@
       {/each}
     </div>
   {:else}
-    <Center faded>[[[No slides]]]</Center>
+    <Center faded>
+      <T id="empty.slides" />
+    </Center>
   {/if}
 </Autoscroll>
 

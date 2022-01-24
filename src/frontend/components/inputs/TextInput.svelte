@@ -1,3 +1,4 @@
+<!-- svelte-ignore a11y-autofocus -->
 <input
   type={$$props.type || "text"}
   class="edit"
@@ -6,6 +7,7 @@
   style={$$props.style}
   class:center={$$props.center}
   class:light={$$props.light}
+  autofocus={$$props.autofocus}
   on:input
   on:change
 />
@@ -14,13 +16,12 @@
   input {
     background-color: var(--primary-darker);
     color: var(--text);
-    height: 100%;
     width: 100%;
     font-family: inherit;
     font-size: inherit;
     font-weight: inherit;
     border: 0;
-    padding: 0 5px;
+    padding: 5px 10px;
     outline-offset: -2px;
   }
   input::placeholder {

@@ -1,8 +1,9 @@
 <script lang="ts">
   import { selected } from "../../stores"
   import { ondrop, validateDrop } from "../helpers/drop"
+  import T from "../helpers/T.svelte"
 
-  export let id: "all_slides" | "slides" | "slide" | "shows" | "project" | "projects" | "overlays" | "templates"
+  export let id: "all_slides" | "slides" | "slide" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation"
   export let selectChildren: boolean = false
   export let hoverTimeout: number = 500
   export let file: boolean = false
@@ -96,7 +97,9 @@
   </span>
 </div>
 {#if hover}
-  <span class="text">Drop here</span>
+  <span class="text">
+    <T id="main.drop" />
+  </span>
 {/if}
 
 <style>
@@ -106,6 +109,7 @@
     width: 100%;
     align-self: flex-start;
     transition: 0.3s opacity;
+    position: relative;
   }
   .droparea.hover {
     opacity: 0.3;

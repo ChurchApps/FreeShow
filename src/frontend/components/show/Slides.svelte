@@ -8,6 +8,7 @@
   import DropArea from "../system/DropArea.svelte"
   import Center from "../system/Center.svelte"
   import Autoscroll from "../system/Autoscroll.svelte"
+  import T from "../helpers/T.svelte"
   // import { GetLayout } from "../helpers/get"
 
   // let viewWidth: number = window.innerWidth / 3
@@ -29,7 +30,8 @@
   // setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)
   $: {
     if (scrollElem && $outSlide !== null && $activeShow!.id === $outSlide?.id && activeLayout === $outSlide?.layout) {
-      let index = Math.max(0, $outSlide.index - ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0))
+      let columns = $slidesOptions.grid ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
+      let index = Math.max(0, $outSlide.index - columns)
       offset = scrollElem.querySelector(".grid").children[index].offsetTop - 5
 
       // TODO: always show active slide....
@@ -92,7 +94,7 @@
       {#if $shows[id] === undefined}
         <Center faded>Error! Could not find show!</Center>
       {:else}
-        <div class="grid">
+        <div class="grid context #shows">
           <!-- {#each Object.values($shows[id].slides) as slide, i} -->
           {#if layoutSlides.length}
             {#each layoutSlides as slide, i}
@@ -111,8 +113,8 @@
               />
             {/each}
           {:else}
-            <Center faded size={2}>
-              [[[No slides]]]
+            <Center faded absolute size={2}>
+              <T id="empty.slides" />
               <!-- Add slides button -->
             </Center>
           {/if}

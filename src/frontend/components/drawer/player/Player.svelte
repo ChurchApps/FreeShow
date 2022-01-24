@@ -3,6 +3,7 @@
 
   import { activeShow, outBackground, playerVideos } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
+  import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import HiddenInput from "../../inputs/HiddenInput.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
@@ -58,8 +59,8 @@
     <TextInput value={data.name} on:change={(e) => setValue(e, "name")} placeholder="[[[Name]]]" />
     <TextInput value={data.id} on:change={(e) => setValue(e, "id")} placeholder="[[[Url/ID]]]" />
     <Button on:click={add}>
-      <Icon id="add" />
-      Add
+      <Icon id="add" right />
+      <T id="settings.add" />
     </Button>
   </div>
 </div>

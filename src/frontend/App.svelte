@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activePage, activeShow, activeStage, drawer, outputDisplay, outputWindow, outSlide, screen, shows } from "./stores"
+  import { activePage, activePopup, activeShow, activeStage, drawer, outputDisplay, outputWindow, outSlide, screen, shows } from "./stores"
   import { setLanguage } from "./utils/language"
   import { startup } from "./utils/startup"
   import { redo, undo } from "./components/helpers/history"
@@ -11,7 +11,7 @@
   import Editor from "./components/edit/Editor.svelte"
   import Preview from "./components/output/Preview.svelte"
   import Drawer from "./components/drawer/Drawer.svelte"
-  import ContextMenu from "./components/system/ContextMenu.svelte"
+  import ContextMenu from "./components/context/ContextMenu.svelte"
   import Settings from "./components/settings/Settings.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
@@ -55,9 +55,9 @@
         }
       } else {
         if (e.key === "Escape") {
-          if (document.activeElement !== document.body) {
-            ;(document.activeElement as HTMLElement).blur()
-          } else {
+          if ($activePopup !== null) activePopup.set(null)
+          else if (document.activeElement !== document.body) (document.activeElement as HTMLElement).blur()
+          else {
             // hide / show drawer
             if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
             else drawer.set({ height: 40, stored: $drawer.height })

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { activeProject, activeShow, categories, outBackground, outLocked, outSlide, playerVideos, projects, shows } from "../../stores"
+  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import Button from "./Button.svelte"
   import HiddenInput from "./HiddenInput.svelte"
@@ -9,14 +10,14 @@
   export let data: null | string = null
   export let index: null | number = null
   $: type = show.type || "show"
-  $: name = type === "show" || type === "private" ? $shows[show.id].name : type === "player" ? $playerVideos[id].name : show.name
+  $: name = type === "show" ? $shows[show.id]?.name : type === "player" ? $playerVideos[id].name : show.name
   // export let page: "side" | "drawer" = "drawer"
   export let match: null | number = null
   // TODO: svelte animate
   // search
   $: style = match !== null ? `background: linear-gradient(to right, var(--secondary-opacity) ${match}%, transparent ${match}%);` : ""
 
-  $: newName = name === null && (type === "image" || type === "video") ? getPathName(id) : name
+  $: newName = name === null && (type === "image" || type === "video") ? getPathName(id) : name || ""
   $: console.log(type, id, newName)
 
   const getPathName = (path: string) => {
@@ -31,12 +32,16 @@
 
   export let icon: boolean = false
   let iconID: null | string = null
+  let custom: boolean = false
   $: {
     if (icon) {
-      if (type === "show" || type === "private") {
+      custom = false
+      if (type === "show") {
         if ($shows[show.id]?.private) iconID = "private"
-        else if ($shows[show.id].category) iconID = $categories[$shows[show.id].category || ""].icon || null
-        else iconID = "noIcon"
+        else if ($shows[show.id]?.category && $categories[$shows[show.id].category || ""]) {
+          custom = true
+          iconID = $categories[$shows[show.id].category || ""].icon || null
+        } else iconID = "noIcon"
       }
       // else if (type === "player" && data && $playerVideos[data].type) iconID = $playerVideos[data].type!
       else if (type === "player") iconID = "play"
@@ -69,9 +74,9 @@
     }
   }
 
-  function doubleClick() {
-    if (!$outLocked) {
-      if ((type === "show" || type === "private") && $shows[id]) outSlide.set({ id, layout: $shows[id].settings.activeLayout, index: 0 })
+  function doubleClick(e: any) {
+    if (!$outLocked && !e.target.closest("input")) {
+      if (type === "show" && $shows[id]?.layouts[$shows[id].settings.activeLayout].slides.length) outSlide.set({ id, layout: $shows[id].settings.activeLayout, index: 0 })
       else if (type === "image" || type === "video") {
         let out: any = { path: id, muted: show.muted || true, loop: show.loop || false, type: "media" }
         if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
@@ -80,11 +85,8 @@
     }
   }
 
-  function edit(event: any) {
-    shows.update((s: any) => {
-      s[id].name = event.detail.value
-      return s
-    })
+  function edit(e: any) {
+    history({ id: "updateShow", newData: { key: "name", values: [e.detail.value] }, location: { page: index === null ? "drawer" : "show", shows: [{ id }] } })
   }
 </script>
 
@@ -94,7 +96,7 @@
   <Button on:click={click} on:dblclick={doubleClick} {active} class="context {$$props.class}" {style} bold={false} border>
     <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
       {#if iconID}
-        <Icon id={iconID} />
+        <Icon id={iconID} {custom} />
       {/if}
       <!-- <p style="margin: 5px;">{newName}</p> -->
       <HiddenInput value={newName} on:edit={edit} />

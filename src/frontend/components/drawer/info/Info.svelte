@@ -15,9 +15,9 @@
 
 <div class="main">
   <div class="padding">
-    {#if id === "shows" && ($activeShow?.type === null || $activeShow?.type === "private")}
+    {#if id === "shows" && ($activeShow?.type === null || $activeShow?.type === "show")}
       <ShowInfo />
-    {:else if id === "backgrounds" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
+    {:else if id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
       <MediaInfo />
     {:else if id === "scripture"}
       <ScriptureInfo {bible} />

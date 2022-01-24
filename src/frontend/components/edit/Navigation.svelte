@@ -2,6 +2,7 @@
   import { activeEdit, activeShow, shows } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Center from "../system/Center.svelte"
   import Slides from "./Slides.svelte"
@@ -25,10 +26,12 @@
     <Slides />
     <!-- style="background-color: var(--primary-darkest);" -->
     <Button center on:click={addSlide}>
-      <Icon id="add" />
-      [[[Add Slide]]]
+      <Icon id="add" right />
+      <T id="new.slide" />
     </Button>
   {/if}
 {:else}
-  <Center faded>[[[Select a show to edit]]]</Center>
+  <Center faded>
+    <T id="empty.show" />
+  </Center>
 {/if}

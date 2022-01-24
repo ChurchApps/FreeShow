@@ -2,6 +2,7 @@
   import type { TabsObj } from "../../../types/Tabs"
   import { activeProject, projects } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
+  import Center from "../system/Center.svelte"
   import Resizeable from "../system/Resizeable.svelte"
   import Notes from "./tools/Notes.svelte"
 
@@ -18,9 +19,12 @@
   // // bind:this={elem} style="height: {height}px;"
 
   let note: string = ""
+  let a: any = null
   $: {
-    let n = $projects[$activeProject!].notes
-    if (note !== n) note = n
+    if ($activeProject !== a) {
+      note = $projects[$activeProject!].notes
+      a = $activeProject
+    }
   }
 
   function edit(e: any) {
@@ -40,6 +44,8 @@
     <div class="content">
       {#if active === "notes"}
         <Notes value={note} on:edit={edit} />
+      {:else if active === "timers"}
+        <Center>WIP</Center>
       {/if}
     </div>
   </div>

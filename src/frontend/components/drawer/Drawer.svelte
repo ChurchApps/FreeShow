@@ -1,6 +1,6 @@
 <script lang="ts">
   import { selectTextOnFocus } from "../helpers/inputActions"
-  import { activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, projects } from "../../stores"
+  import { activeDrawerTab, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, projects } from "../../stores"
 
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
@@ -20,8 +20,6 @@
   let defaultHeight: number = 300
   // let height: number = defaultHeight // maxHeight / 2
   $: height = $drawer.height
-
-  let activeTab: string = "shows"
 
   let move: boolean = false
   let mouse: null | { x: number; y: number; offsetY: number } = null
@@ -80,7 +78,7 @@
       autoDrawer = true
       click(null)
     }
-    // if (activeTab === "shows") {
+    // if ($activeDrawerTab === "shows") {
     // }
   }
 
@@ -104,7 +102,7 @@
       if (document.activeElement === searchElem && searchValue.length && firstMatch && $activeProject) {
         console.log(firstMatch)
         searchElem.select()
-        history({ id: activeTab === "shows" ? "addShow" : "addShow", newData: firstMatch.id })
+        history({ id: $activeDrawerTab === "shows" ? "addShow" : "addShow", newData: firstMatch.id })
         activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
         searchValue = ""
         if (autoDrawer && storeHeight === null) {
@@ -118,8 +116,8 @@
   // TODO: on show get activeshow, store n bakcground
   let stored: any = null
   $: {
-    if (activeTab === "backgrounds" && ($activeShow?.type === undefined || $activeShow?.type === "show")) stored = JSON.stringify($activeShow)
-    else if (activeTab === "shows" && stored !== null) {
+    if ($activeDrawerTab === "media" && ($activeShow?.type === undefined || $activeShow?.type === "show")) stored = JSON.stringify($activeShow)
+    else if ($activeDrawerTab === "shows" && stored !== null) {
       activeShow.set(JSON.parse(stored))
       stored = null
     }
@@ -137,9 +135,9 @@
         {#if $drawerTabsData[tab[0]].enabled}
           <!-- translate(tab[1].name) -->
           <Button
-            on:click={() => (activeTab = tab[0])}
-            active={activeTab === tab[0]}
-            class="context #rename__drawer_top"
+            on:click={() => activeDrawerTab.set(tab[0])}
+            active={$activeDrawerTab === tab[0]}
+            class="context #drawer_top"
             title={$labelsDisabled ? $dictionary[tab[1].name.split(".")[0]]?.[tab[1].name.split(".")[1]] : ""}
           >
             <Icon id={tab[1].icon} size={1.3} />
@@ -151,24 +149,17 @@
       {/each}
     </span>
     <!-- TODO: expand drawer on input: -->
-    <input
-      bind:this={searchElem}
-      class="search edit"
-      type="text"
-      placeholder="Search keywords... (Seperated by comma)"
-      bind:value={searchValue}
-      on:input={search}
-      use:selectTextOnFocus
-    />
+    <input bind:this={searchElem} class="search edit" type="text" placeholder="{$dictionary.main?.search}..." bind:value={searchValue} on:input={search} use:selectTextOnFocus />
+    <!-- placeholder="Search keywords... (Seperated by comma)" -->
     <!-- use:blurOnEscape -->
   </div>
   <div class="content">
     <Resizeable id={"drawerNavigation"}>
-      <Navigation id={activeTab} />
+      <Navigation id={$activeDrawerTab} />
     </Resizeable>
-    <Content id={activeTab} {searchValue} bind:firstMatch bind:bible />
+    <Content id={$activeDrawerTab} {searchValue} bind:firstMatch bind:bible />
     <Resizeable id={"drawerInfo"} side="right">
-      <Info id={activeTab} {bible} />
+      <Info id={$activeDrawerTab} {bible} />
     </Resizeable>
   </div>
 </section>

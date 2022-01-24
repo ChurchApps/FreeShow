@@ -86,7 +86,7 @@ export const shows: Writable<Shows> = writable({
       template: null,
     },
     timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
-    meta: { title: "Nådepuls", artist: "test", license: "CC" },
+    meta: { title: "Nådepuls", artist: "test", CCLI: "CC" },
     slides: {
       fjeiosjfiose: {
         group: "Verse 1",
@@ -134,7 +134,7 @@ export const shows: Writable<Shows> = writable({
     },
     timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
     // stats: {timesUsed: 100}
-    meta: { title: "Syng det ut", artist: "test", license: "CC" },
+    meta: { title: "Syng det ut", artist: "test", CCLI: "CC" },
     slides: {
       feowo: {
         group: "Verse 1",
@@ -271,7 +271,7 @@ export const shows: Writable<Shows> = writable({
     },
     timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
     // stats: {timesUsed: 100}
-    meta: { title: "Syng det ut", artist: "test", license: "CC" },
+    meta: { title: "Syng det ut", artist: "test", CCLI: "CC" },
     slides: {
       feowo: {
         group: "Verse 1",
@@ -668,10 +668,11 @@ export const mediaOptions: Writable<SlidesOptions> = writable({
 })
 
 // DRAWER
+export const activeDrawerTab: Writable<string> = writable("shows")
 export const drawerTabsData: Writable<DrawerTabs> = writable({
   // {default}
   shows: { enabled: true, activeSubTab: null },
-  backgrounds: { enabled: true, activeSubTab: null },
+  media: { enabled: true, activeSubTab: null },
   overlays: { enabled: true, activeSubTab: null },
   templates: { enabled: true, activeSubTab: null },
   audio: { enabled: true, activeSubTab: null },
@@ -689,6 +690,9 @@ export const settingsTab: Writable<SettingsTabs> = writable("general")
 // general
 export const language: Writable<string> = writable("en") // "get"
 export const labelsDisabled: Writable<boolean> = writable(false) // false
+export const fullColors: Writable<boolean> = writable(true) // true
+// TODO: never, last slide, first & last, always
+export const displayMetadata: Writable<string> = writable("never") // "never"
 
 // project
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"
@@ -868,12 +872,13 @@ export const groupCount: Writable<boolean> = writable(true) // true
 export const groups: Writable<any> = writable({
   // {default}
   intro: { name: "intro", default: true, color: "#f5255e" },
-  verse: { name: "verse", default: true, color: "#f525a2" },
-  pre_chorus: { name: "pre_chorus", default: true, color: "#df25f5" },
-  chorus: { name: "chorus", default: true, color: "#af25f5" },
-  break: { name: "break", default: true, color: "#8825f5" },
-  bridge: { name: "bridge", default: true, color: "#6225f5" },
-  outro: { name: "outro", default: true, color: "#3225f5" },
+  verse: { name: "verse", default: true, color: "#f52598" },
+  pre_chorus: { name: "pre_chorus", default: true, color: "#f525d2" },
+  chorus: { name: "chorus", default: true, color: "#d525f5" },
+  break: { name: "break", default: true, color: "#a525f5" },
+  tag: { name: "tag", default: true, color: "#8825f5" },
+  bridge: { name: "bridge", default: true, color: "#7525f5" },
+  outro: { name: "outro", default: true, color: "#5825f5" },
 })
 
 // display

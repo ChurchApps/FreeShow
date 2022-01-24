@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { outputWindow, outBackground, outSlide, outOverlays, outAudio, overlays, shows, screen } from "../../stores"
+  import { outputWindow, outBackground, outSlide, outOverlays, outAudio, overlays, shows, screen, displayMetadata } from "../../stores"
   import Textbox from "../slide/Textbox.svelte"
   import { fade } from "svelte/transition"
-  import { getSlide } from "../helpers/get"
+  import { GetLayout, getSlide } from "../helpers/get"
   import MediaOutput from "./MediaOutput.svelte"
   import type { Transition } from "../../../types/Show"
   import { OUTPUT } from "../../../types/Channels"
@@ -76,10 +76,18 @@
         {/if}
       </span>
     {/key}
+    {#if $displayMetadata === "always" || ($displayMetadata === "last" && $outSlide.index === GetLayout($outSlide.id).length - 1)}
+      <span
+        transition:fade={transition}
+        style="font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);position: absolute;left: {resolution.width / 2}px;bottom: 20px;transform: translateX(-50%);"
+      >
+        {Object.values($shows[$outSlide.id].meta).join("; ")}
+      </span>
+    {/if}
   {/if}
   {#if $outOverlays.length}
     {#each $outOverlays as id}
-      <div style={$overlays[id].style} transition:fade={transition}>
+      <div transition:fade={transition}>
         <div>
           {#each $overlays[id].items as item}
             <Textbox {item} />

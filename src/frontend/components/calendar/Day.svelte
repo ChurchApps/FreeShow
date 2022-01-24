@@ -91,9 +91,9 @@
 </script>
 
 {#if createNew}
-  <div style="flex: 1;padding: 10px;">
+  <div class="main" style="flex: 1;padding: 10px;">
     <Panel>
-      <h6>[[[New event]]]</h6>
+      <h6><T id="new.event" /></h6>
       <div class="gap" style="justify-content: space-between;">
         <span class="titles" style="max-width: 40%;">
           <p><T id="calendar.name" /></p>
@@ -158,9 +158,9 @@
   >
     <Icon id="save" />
     {#if stored === JSON.stringify(editEvent)}
-      [[[Close]]]
+      <T id="actions.close" />
     {:else}
-      [[[Save event]]]
+      <T id="actions.save" />
     {/if}
   </Button>
 {:else if $activeDays.length}
@@ -200,7 +200,9 @@
           </div>
         {/each}
       {:else}
-        <Center faded>[[[No events]]]</Center>
+        <Center faded>
+          <T id="empty.events" />
+        </Center>
       {/if}
     </div>
   </div>
@@ -212,17 +214,19 @@
     dark
     center
   >
-    <Icon id="add" />
-    [[[Create event]]]
+    <Icon id="add" right />
+    <T id="new.event" />
   </Button>
 {/if}
 
 <style>
   .main {
-    padding: 10px;
-    height: 100%;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    padding: 10px;
   }
 
   .date {

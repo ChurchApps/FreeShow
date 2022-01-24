@@ -1,7 +1,40 @@
 {
   "main": {
     "quit": "Avslutt",
-    "unnamed": "Uten navn"
+    "unnamed": "Uten navn",
+    "drop": "Slipp her",
+    "search": "Søk"
+  },
+  "screen": {
+    "width": "Bredde",
+    "height": "Høyde",
+    "pixels": "piksler"
+  },
+  "preview": {
+    "_previous_show": "Forrige show",
+    "_previous_slide": "Forrige lysbilde",
+    "_lock": "Lås utgang",
+    "_unlock": "Lås opp utgang",
+    "_start": "Start show",
+    "_update": "Oppdater utgang",
+    "_new_slide": "Neste lysbilde",
+    "_new_show": "Neste show",
+    "background": "Bakgrunner",
+    "slide": "Lysbilde",
+    "overlays": "Overlegg",
+    "audio": "Lyd",
+    "transition": "Overgang"
+  },
+  "clear": {
+    "all": "Fjern alt",
+    "background": "Fjern bakgrunn",
+    "slide": "Fjern lysbilde",
+    "overlays": "Fjern overlegg",
+    "audio": "Fjern lyd",
+    "transistion": "Fjern overgang"
+  },
+  "media": {
+    "_loop": "Loop"
   },
   "menu": {
     "show": "Presenter",
@@ -13,6 +46,23 @@
     "draw": "Tegne",
     "calendar": "Kalender",
     "settings": "Innstillinger"
+  },
+  "empty": {
+    "project_select": "Velg et prosjekt",
+    "show": "Ingen show valgt",
+    "slides": "Ingen lysbilder",
+    "search": "Ingen treff",
+    "backgrounds": "Ingen bakgrunner i show",
+    "groups": "Ingen grupper",
+    "events": "Ingen arrangement"
+  },
+  "meta": {
+    "title": "Tittel",
+    "artist": "Artist",
+    "author": "Låtskriver",
+    "publisher": "Utgiver",
+    "CCLI": "Lisens",
+    "year": "År"
   },
   "themes": {
     "default": "Standard",
@@ -41,18 +91,9 @@
     "en": "Engelsk",
     "no": "Norsk"
   },
-  "actions": {
-    "rename": "Gi nytt navn"
-  },
-  "clear": {
-    "all": "Fjern alt"
-  },
-  "context": {
-    "enabledTabs": "Vis/Skjul Faner"
-  },
   "tabs": {
     "shows": "Show",
-    "backgrounds": "Bakgrunner",
+    "media": "Medier",
     "overlays": "Overlegg",
     "templates": "Maler",
     "audio": "Lyd",
@@ -66,25 +107,59 @@
     "unlabeled": "Umerket",
     "song": "Sang",
     "info": "Info",
-    "presentation": "Presentasjon"
+    "presentation": "Presentasjon",
+    "pictures": "Bilder",
+    "videos": "Videoer"
   },
   "groups": {
+    "current": "Gjeldende",
+    "global": "Globale",
     "intro": "Intro",
     "verse": "Vers",
-    "pre_chorus": "Stikk",
+    "pre_chorus": "Pre-chorus",
     "chorus": "Refreng",
     "break": "Mellomspill",
+    "tag": "Stikk",
     "bridge": "Bro",
     "outro": "Outro"
   },
+  "popup": {
+    "show": "Nytt show",
+    "rename": "Gi nytt navn",
+    "delete_show": "Slett show",
+    "delete_show_confirmation": "Er du sikker på at du vil slette",
+    "change_name": "Endre navn på"
+  },
   "new": {
     "show": "Nytt show",
-    "quick": "Hurtigshow",
-    "_quick": "Opprett show fra tekst",
+    "empty_show": "Nytt tomt show",
     "project": "Nytt prosjekt",
     "category": "Ny kategori",
-    "_private": "Nytt privat show",
-    "_folder": "Ny mappe"
+    "private": "Nytt privat show",
+    "folder": "Ny mappe",
+    "slide": "Nytt lysbilde",
+    "event": "Nytt arrangement"
+  },
+  "actions": {
+    "rename": "Endre navn",
+    "recolor": "Endre farge",
+    "remove": "Fjern",
+    "private": "Privat",
+    "export": "Eksporter",
+    "duplicate": "Dupliser",
+    "delete": "Slett",
+    "close": "Lukk",
+    "save": "Lagre",
+    "disable": "Deaktiver"
+  },
+  "context": {
+    "enabledTabs": "Vis/Skjul Faner",
+    "addToProject": "Legg til prosjekt",
+    "newCategory": "Ny kategori",
+    "changeIcon": "Endre ikon",
+    "changeGroup": "Endre gruppe",
+    "createNew": "Lag ny",
+    "selectAll": "Marker alt"
   },
   "tools": {
     "notes": "Notater",
@@ -92,7 +167,7 @@
     "--schedule": "Plan",
     "--actions": "Handlinger",
     "groups": "Grupper",
-    "meta": "Meta",
+    "metadata": "Metadata",
     "backgrounds": "Bakgrunner",
     "audio": "Lyd",
     "transitions": "Overganger"
@@ -208,6 +283,17 @@
     "reset_settings": "Tilbakestill innstillinger",
     "export_all": "Eksporter alt"
   },
+  "calendar": {
+    "name": "Navn",
+    "color": "Farge",
+    "time": "Tid",
+    "from_date": "Fra dato",
+    "to_date": "Til dato",
+    "from_time": "Fra tid",
+    "to_time": "Til tid",
+    "location": "Posisjon",
+    "notes": "Notater"
+  },
   "filter": {
     "blur": "Uklarhet",
     "brightness": "Lysstyrke",
@@ -218,6 +304,12 @@
     "opacity": "Gjennomsiktighet",
     "saturate": "Metning",
     "sepia": "Sepia"
+  },
+  "live": {
+    "screens": "Skjermer",
+    "windows": "Vinduer",
+    "cameras": "Kameraer",
+    "microphones": "Mikrofoner"
   },
   "transition": {
     "fade": "Fade"

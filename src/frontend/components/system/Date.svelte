@@ -19,15 +19,23 @@
   }
 </script>
 
-<span>
+<div>
   {#each format.split(",") as key}
-    {#key d}
-      {#if data[key].toString().includes("T: ")}
-        <T id={data[key].slice(3, data[key].length)} />
-      {:else}
-        {data[key]}
-      {/if}
-      {" "}
-    {/key}
+    <span>
+      {#key d}
+        {#if data[key].toString().includes("T: ")}
+          <T id={data[key].slice(3, data[key].length)} />
+        {:else}
+          {data[key]}
+        {/if}
+        {" "}
+      {/key}
+    </span>
   {/each}
-</span>
+</div>
+
+<style>
+  div span:first-child {
+    text-transform: capitalize;
+  }
+</style>

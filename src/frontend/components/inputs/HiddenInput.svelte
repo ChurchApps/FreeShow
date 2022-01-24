@@ -47,6 +47,7 @@
 <svelte:window
   on:mousedown={mousedown}
   on:mouseup={() => clearTimeout(timeout)}
+  on:dragstart={() => clearTimeout(timeout)}
   on:contextmenu={click}
   on:keydown={(e) => {
     if (e.key === "Enter" || e.key === "Tab") edit = false
@@ -54,7 +55,7 @@
 />
 
 {#if edit}
-  <input bind:this={inputElem} on:change={change} class="nocontext _rename name" bind:value />
+  <input bind:this={inputElem} on:change={change} class="edit nocontext _rename name" bind:value />
 {:else}
   <p bind:this={nameElem} class="nocontext _rename">
     {#if value.length}

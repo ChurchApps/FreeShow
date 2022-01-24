@@ -5,13 +5,13 @@
   import Windows from "./live/Windows.svelte"
   import Overlays from "./Overlays.svelte"
   import Scripture from "./bible/Scripture.svelte"
-  import Backgrounds from "./media/Backgrounds.svelte"
   import Shows from "./Shows.svelte"
   import Web from "./Web.svelte"
   import Player from "./player/Player.svelte"
   import Screens from "./live/Screens.svelte"
   import Center from "../system/Center.svelte"
   import Templates from "./Templates.svelte"
+  import Media from "./media/Media.svelte"
 
   export let id: string
   export let bible: any
@@ -50,8 +50,8 @@
 <div class="main">
   {#if id === "shows"}
     <Shows {id} {active} {searchValue} bind:firstMatch />
-  {:else if id === "backgrounds"}
-    <Backgrounds {active} />
+  {:else if id === "media"}
+    <Media {active} />
   {:else if id === "overlays"}
     <Overlays />
   {:else if id === "templates"}

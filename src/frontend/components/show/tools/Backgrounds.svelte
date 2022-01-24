@@ -2,6 +2,7 @@
   import { activeShow, outBackground, shows, videoExtensions } from "../../../stores"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import Icon from "../../helpers/Icon.svelte"
+import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import HoverButton from "../../inputs/HoverButton.svelte"
   import Center from "../../system/Center.svelte"
@@ -85,7 +86,9 @@
       </SelectElem>
     {/each}
   {:else}
-    <Center faded>[[[No backgrounds in show]]]</Center>
+    <Center faded>
+      <T id="empty.backgrounds" />
+    </Center>
   {/if}
 </div>
 

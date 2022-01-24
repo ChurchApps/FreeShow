@@ -2,35 +2,37 @@
   import type { TabsObj } from "../../../types/Tabs"
   import { shows, activeShow } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
+  import Audio from "./tools/Audio.svelte"
   import Backgrounds from "./tools/Backgrounds.svelte"
+  import Metadata from "./tools/Metadata.svelte"
   import Notes from "./tools/Notes.svelte"
   import SlideGroups from "./tools/SlideGroups.svelte"
   import Transitions from "./tools/Transitions.svelte"
 
   const tabs: TabsObj = {
     groups: { name: "tools.groups", icon: "groups" },
-    meta: { name: "tools.meta", icon: "meta" },
-    backgrounds: { name: "tools.backgrounds", icon: "backgrounds" },
+    metadata: { name: "tools.metadata", icon: "info" },
+    backgrounds: { name: "tools.backgrounds", icon: "media" },
     audio: { name: "tools.audio", icon: "audio" },
     transitions: { name: "tools.transitions", icon: "transition" },
     notes: { name: "tools.notes", icon: "notes" },
   }
   let active: string = Object.keys(tabs)[0]
 
-  $: showId = $activeShow!.id
+  $: showId = $activeShow?.id
+  let a: any = null
   let note: string = ""
   $: {
-    let n = $shows[showId]?.layouts[$shows[showId].settings.activeLayout].notes
-    if (note !== n) note = n
-    // if (note.length && $shows[showId]) {
-    //   $shows[showId].layouts[$shows[showId].settings.activeLayout].notes = note
-    // }
+    if (showId && $shows[showId].settings.activeLayout !== a) {
+      note = showId ? $shows[showId]?.layouts[$shows[showId].settings.activeLayout].notes : ""
+      a = $shows[showId].settings.activeLayout
+    }
   }
 
   function edit(e: any) {
-    if ($shows[showId].layouts[$shows[showId].settings.activeLayout].notes !== e.detail) {
+    if (showId && $shows[showId].layouts[$shows[showId].settings.activeLayout].notes !== e.detail) {
       shows.update((a) => {
-        a[showId].layouts[$shows[showId].settings.activeLayout].notes = e.detail
+        a[showId!].layouts[$shows[showId!].settings.activeLayout].notes = e.detail
         return a
       })
     }
@@ -40,14 +42,22 @@
 <div class="main">
   <Tabs {tabs} bind:active />
 
-  {#if $shows[showId]}
+  {#if showId && $shows[showId]}
     {#if active === "groups"}
       <div class="content">
         <SlideGroups />
       </div>
+    {:else if active === "metadata"}
+      <div class="content">
+        <Metadata />
+      </div>
     {:else if active === "backgrounds"}
       <div class="content">
         <Backgrounds />
+      </div>
+    {:else if active === "audio"}
+      <div class="content">
+        <Audio />
       </div>
     {:else if active === "transitions"}
       <Transitions />

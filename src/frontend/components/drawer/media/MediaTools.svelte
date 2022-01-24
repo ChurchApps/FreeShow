@@ -5,7 +5,7 @@
   import NumberInput from "../../inputs/NumberInput.svelte"
 
   let project: any = null
-  $: project = $activeProject && $activeShow!.index ? $projects[$activeProject].shows[$activeShow!.index] : null
+  $: project = $activeProject && $activeShow?.index ? $projects[$activeProject].shows[$activeShow!.index] : null
   // $: type = $activeShow!.type
 
   let index: number = -1
@@ -39,7 +39,7 @@
   }
 
   $: {
-    if ($activeShow!.index && $activeShow!.index !== index) {
+    if ($activeShow?.index && $activeShow.index !== index) {
       let temp: any = {}
       Object.entries(filters).forEach(([id, a]: any) => {
         a.value = project.filter?.[id]?.replace(/[^0-9.]/g, "") || a.default

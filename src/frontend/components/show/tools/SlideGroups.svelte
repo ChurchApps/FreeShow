@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { activeShow, dictionary, groups, selected, shows } from "../../../stores"
+  import { activeShow, dictionary, fullColors, groups, selected, shows } from "../../../stores"
   import SelectElem from "../../system/SelectElem.svelte"
   import { ondrop } from "../../helpers/drop"
   import Center from "../../system/Center.svelte"
   import { history } from "../../helpers/history"
+  import { getContrast } from "../../helpers/color"
+  import T from "../../helpers/T.svelte"
 
   let slides: any[] = []
   $: {
@@ -53,13 +55,13 @@
 
 <div style="display: flex;padding: 10px;height: 100%;">
   <div class="main">
-    <h4>[[[Local]]]</h4>
+    <h4><T id="groups.current" /></h4>
     {#if sortedSlides.length}
       {#each sortedSlides as slide}
         <SelectElem id="group" data={{ id: slide.id }} draggable>
           <div
-            class="slide context #slide_group"
-            style="background-color: {slide.color};"
+            class="slide context #group"
+            style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}"
             on:click={(e) => {
               if (!e.ctrlKey) {
                 selected.set({ id: "group", data: [{ id: slide.id }] })
@@ -73,20 +75,22 @@
         </SelectElem>
       {/each}
     {:else}
-      <Center faded>[[[No slides]]]</Center>
+      <Center faded>
+        <T id="empty.slides" />
+      </Center>
     {/if}
   </div>
 
   <div class="seperator" />
 
   <div class="main">
-    <h4>[[[Global]]]</h4>
+    <h4><T id="groups.global" /></h4>
     {#if sortedGroups.length}
       {#each sortedGroups as slide}
         <SelectElem id="global_group" data={slide} draggable>
           <div
-            class="slide"
-            style="background-color: {slide.color};"
+            class="slide context #global_group"
+            style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}"
             on:click={(e) => {
               if (!e.ctrlKey && $activeShow) {
                 history({ id: "newSlide", newData: { slides: [slide] }, location: { page: "show", show: $activeShow, layout: $shows[$activeShow.id].settings.activeLayout } })
@@ -98,7 +102,9 @@
         </SelectElem>
       {/each}
     {:else}
-      <Center faded>[[[No slides]]]</Center>
+      <Center faded>
+        <T id="empty.slides" />
+      </Center>
     {/if}
   </div>
 </div>

@@ -1,12 +1,15 @@
 <script lang="ts">
   import type { TransitionType } from "../../../../types/Show"
-  import { activeShow, dictionary, groupCount, groups, shows } from "../../../stores"
+  import { activeShow, dictionary, fullColors, groupCount, groups, shows } from "../../../stores"
+  import { getContrast } from "../../helpers/color"
   import { GetLayout, GetLayoutRef } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
+  import T from "../../helpers/T.svelte"
   import { joinTime, secondsToTime } from "../../helpers/time"
   import Button from "../../inputs/Button.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
+  import Center from "../../system/Center.svelte"
 
   $: show = JSON.parse(JSON.stringify($shows[$activeShow!.id]))
   $: activeLayout = $shows[$activeShow!.id].settings.activeLayout
@@ -108,46 +111,54 @@
   }
 </script>
 
-<div class="content">
-  <div>
-    {#each slides as slide, i}
-      <div class="slide">
-        <span style="margin: 10px 5px;min-width: 20px;text-align: center;opacity: 0.8;">{i + 1}</span>
-        <p style="background-color: {slide.color || 'var(--primary-lighter)'};">{show.slides[slide.id].group || ""}{slide.count ? " " + slide.count : ""}</p>
-        <!-- transition -->
-        <Button style="height: 100%;">
-          <Icon id="transition" />
-        </Button>
-        <!-- next timer -->
-        <!-- empty or 0 === disabled -->
-        <NumberInput value={slide.transition?.duration || 0} on:change={(e) => change(e, i)} buttons={false} />
-        <!-- <TextInput type="number" style="min-width: 50px;flex: 1;" value={0} on:change={(e) => change(e, i)} center /> -->
-        <!-- to beginning -->
-        <Button style="height: 100%;" on:click={() => toggleEnd(i)}>
-          <Icon id="restart" white={slide.end !== true} />
-        </Button>
-      </div>
-    {/each}
+{#if slides.length}
+  <div class="content">
+    <div>
+      {#each slides as slide, i}
+        <div class="slide">
+          <span style="margin: 10px 5px;min-width: 20px;text-align: center;opacity: 0.8;">{i + 1}</span>
+          <p class="group" style="{$fullColors ? 'background-' : ''}color: {slide.color || 'unset'};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}">
+            {show.slides[slide.id].group || ""}{slide.count ? " " + slide.count : ""}
+          </p>
+          <!-- transition -->
+          <Button style="height: 100%;">
+            <Icon id="transition" />
+          </Button>
+          <!-- next timer -->
+          <!-- empty or 0 === disabled -->
+          <NumberInput value={slide.transition?.duration || 0} on:change={(e) => change(e, i)} buttons={false} />
+          <!-- <TextInput type="number" style="min-width: 50px;flex: 1;" value={0} on:change={(e) => change(e, i)} center /> -->
+          <!-- to beginning -->
+          <Button style="height: 100%;" on:click={() => toggleEnd(i)}>
+            <Icon id="restart" white={slide.end !== true} />
+          </Button>
+        </div>
+      {/each}
+    </div>
   </div>
-</div>
-<!-- padding: 5px;gap: 5px; -->
-<div class="bottom" style="display: flex;flex-direction: column;">
-  <div style="display: flex;gap: 5px;">
-    <!-- <Button style="height: 100%;">
+  <!-- padding: 5px;gap: 5px; -->
+  <div class="bottom" style="display: flex;flex-direction: column;">
+    <div style="display: flex;gap: 5px;">
+      <!-- <Button style="height: 100%;">
       <Icon id="transition" />
     </Button> -->
-    <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} />
-    <!-- Apply to all / selected -->
-    <Button style="flex: 1;" on:click={() => changeAll()} dark center>[[[Apply to all]]]</Button>
+      <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} />
+      <!-- Apply to all / selected -->
+      <Button style="flex: 1;" on:click={() => changeAll()} dark center>[[[Apply to all]]]</Button>
+    </div>
+    <div style="display: flex;gap: 5px;">
+      <span style="flex: 1;display: flex;align-items: center;justify-content: center;">{totalTime}</span>
+      <Button style="flex: 1;" on:click={() => changeAll(true)} center dark>
+        <Icon id="reset" />
+        [[[Reset]]]
+      </Button>
+    </div>
   </div>
-  <div style="display: flex;gap: 5px;">
-    <span style="flex: 1;display: flex;align-items: center;justify-content: center;">{totalTime}</span>
-    <Button style="flex: 1;" on:click={() => changeAll(true)} center dark>
-      <Icon id="reset" />
-      [[[Reset]]]
-    </Button>
-  </div>
-</div>
+{:else}
+  <Center faded>
+    <T id="empty.slides" />
+  </Center>
+{/if}
 
 <style>
   .content {
@@ -167,7 +178,7 @@
     flex: 1;
   }
 
-  p {
+  .group {
     flex: 3;
     height: 100%;
     display: flex;
@@ -175,5 +186,6 @@
     justify-content: center;
     font-size: 0.8em;
     font-weight: bold;
+    background-color: var(--primary-lighter);
   }
 </style>

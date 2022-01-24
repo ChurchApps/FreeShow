@@ -1,8 +1,7 @@
 <script lang="ts">
   import ContextChild from "./ContextChild.svelte"
-
   import ContextItem from "./ContextItem.svelte"
-  import { contextMenuItems, contextMenuLayouts } from "../../values/contextMenus"
+  import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
 
   let contextElem: any = null
   let contextActive: boolean = false
@@ -10,12 +9,14 @@
   let x: number = 0
   let y: number = 0
   let side: "right" | "left" = "right"
+  let translate = 0
   function contextMenu(e: MouseEvent) {
     if (e.target?.closest(".contextMenu") === null && e.target?.closest(".nocontext") === null) {
       contextElem = e.target!.closest(".context")
 
       x = e.clientX
       y = e.clientY
+      translate = 0
       activeMenu = contextMenuLayouts.default
       let c = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
       if (c?.includes("__")) {
@@ -30,7 +31,7 @@
 
       let contextHeight = Object.keys(activeMenu).length * 30 + 10
       if (x + 250 > window.innerWidth) x -= 250
-      if (y + contextHeight > window.innerHeight) y -= contextHeight
+      if (y + contextHeight > window.innerHeight) translate = 100
       if (x + (250 + 150) > window.innerWidth) side = "left"
       else side = "right"
 
@@ -46,7 +47,7 @@
 <svelte:window on:contextmenu={contextMenu} on:click={click} />
 
 {#if contextActive}
-  <div class="contextMenu" style="left: {x}px; top: {y}px;">
+  <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);">
     {#key activeMenu}
       {#each activeMenu as id}
         {#if id === "SEPERATOR"}
