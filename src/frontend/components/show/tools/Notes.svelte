@@ -31,7 +31,7 @@
     /* display: flex; */
     flex: 1;
     height: 100%;
-    box-shadow: inset 0 0 10px 0px rgb(0 0 0 / 30%);
+    /* box-shadow: inset 0 0 10px 0px rgb(0 0 0 / 30%); */
   }
 
   .edit {

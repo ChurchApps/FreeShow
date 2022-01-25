@@ -56,6 +56,7 @@
 
 <Card
   {loaded}
+  class="context #media_card"
   style="width: {$mediaOptions.grid ? 100 : 100 / $mediaOptions.columns}%;"
   preview={$activeShow?.id === path}
   active={$outBackground?.path === path}

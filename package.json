@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "main": "build/electron/index.js",
+  "description": "An application for showing song lyrics and more for free!",
+  "repository": "git@github.com:vassbo/freeshow.git",
+  "author": "Kristoffer Vassbø <kristoffer@vassbo.net>",
+  "license": "GNU GPLv3",
   "scripts": {
     "prestart": "cross-env NODE_ENV=development node scripts/preBuild.js",
     "start": "cross-env NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",

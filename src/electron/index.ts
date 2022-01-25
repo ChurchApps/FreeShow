@@ -25,7 +25,7 @@ if (!electronSettings.get("loaded")) console.log("Error! Could not get stored da
 let mainWindow: BrowserWindow | null
 
 app.on("ready", () => {
-  // createSplash()
+  createLoading()
   createWindow()
 
   displays = screen.getAllDisplays()
@@ -44,11 +44,23 @@ app.on("ready", () => {
   if (isProd) checkForUpdates()
 })
 
-// let splash: BrowserWindow | null = null
-// const createSplash = () => {
-//   splash = new BrowserWindow({ width: 810, height: 610, transparent: true, frame: false, alwaysOnTop: true })
-//   splash.loadURL(`file://${join(__dirname, "public", "index.html")}`)
-// }
+let loadingWindow: BrowserWindow | null = null
+const createLoading = () => {
+  loadingWindow = new BrowserWindow({ width: 500, height: 300, transparent: true, frame: false, alwaysOnTop: true, resizable: false })
+  // const url =
+  //   // process.env.NODE_ENV === "production"
+  //   isProd
+  //     ? // in production, use the statically build version of our application
+  //       `file://${join(__dirname, "public", "loading.html")}`
+  //     : // in dev, target the host and port of the local rollup web server
+  //       "http://localhost:3001"
+  loadingWindow.loadFile("public/loading.html")
+}
+ipcMain.once("LOADED", () => {
+  mainWindow?.show()
+  loadingWindow?.close()
+  loadingWindow = null
+})
 
 const createWindow = () => {
   let width: number = electronSettings.get("width")
@@ -60,6 +72,9 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width,
     height,
+    frame: false,
+    autoHideMenuBar: process.platform === "win32",
+    show: false,
     webPreferences: {
       devTools: isProd ? false : true,
       // preload: join(__dirname, "preload.js"), // use a preload script
@@ -109,7 +124,7 @@ const createWindow = () => {
 
   mainWindow.once("ready-to-show", () => {
     // splash?.destroy()
-    mainWindow?.show()
+    // mainWindow?.show()
     createOutputWindow()
   })
 }
@@ -309,12 +324,24 @@ export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContent
 
 const os = require("os")
 ipcMain.on(MAIN, (e, args) => {
-  if (args.channel === "GET_OS") e.reply(MAIN, { channel: "GET_OS", data: os.hostname() })
-  else if (args.channel === "GET_VERSION") e.reply(MAIN, { channel: "GET_VERSION", data: app.getVersion() })
+  if (args.channel === "GET_OS") e.reply(MAIN, { channel: args.channel, data: { platform: os.platform(), name: os.hostname() } })
+  else if (args.channel === "GET_VERSION") e.reply(MAIN, { channel: args.channel, data: app.getVersion() })
+  else if (args.channel === "DISPLAY") e.reply(MAIN, { channel: args.channel, data: outputWindow?.isVisible() })
   else if (args.channel === "OUTPUT") {
     console.log(e.sender.id, outputWindow?.id, outputWindow?.webContents.id)
     // e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
-    e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
+    e.reply(MAIN, { channel: args.channel, data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
+  } else if (args.channel === "CLOSE") {
+    mainWindow?.close()
+    outputWindow?.close()
+  } else if (args.channel === "MAXIMIZE") {
+    if (mainWindow?.isMaximized()) mainWindow?.unmaximize()
+    else mainWindow?.maximize()
+    toApp(MAIN, { channel: args.channel, data: mainWindow?.isMaximized() })
+  } else if (args.channel === "MAXIMIZED") {
+    toApp(MAIN, { channel: args.channel, data: mainWindow?.isMaximized() })
+  } else if (args.channel === "MINIMIZE") {
+    mainWindow?.minimize()
   } else {
     toApp(MAIN, args)
     // fs.readFile("path/to/file", (error, data) => {

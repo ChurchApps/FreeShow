@@ -9,6 +9,6 @@ type ClientChannels = "CONNECTION" | "DISCONNECT" | "ERROR" | "DATA" | "PASSWORD
 
 export interface MainData {
   channel: MainChannels
-  data?: string
+  data?: any
 }
-type MainChannels = "GET_OS" | "OUTPUT"
+type MainChannels = "GET_OS" | "OUTPUT" | "DISPLAY"

@@ -59,7 +59,7 @@
     })
 </script>
 
-<Card {loaded} {active} on:click label={cam.name} icon="camera" white={!cam.id.includes("cam")}>
+<Card class="context #live_card" {loaded} {active} on:click label={cam.name} icon="camera" white={!cam.id.includes("cam")}>
   <SelectElem id="camera" data={{ id: cam.id, type: "camera" }} draggable>
     {#if error}
       <div class="error">

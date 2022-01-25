@@ -18,12 +18,9 @@
   $: style = match !== null ? `background: linear-gradient(to right, var(--secondary-opacity) ${match}%, transparent ${match}%);` : ""
 
   $: newName = name === null && (type === "image" || type === "video") ? getPathName(id) : name || ""
-  $: console.log(type, id, newName)
 
   const getPathName = (path: string) => {
     let name = path.substring(path.lastIndexOf("\\") + 1)
-    console.log(name.slice(0, name.lastIndexOf(".")) || path)
-
     return name.slice(0, name.lastIndexOf(".")) || path
   }
 
@@ -57,7 +54,6 @@
   // }
   // $: icon = check()
   $: active = index !== null ? $activeShow?.index === index : $activeShow?.id === id
-  $: console.log(index, $activeShow?.index)
 
   function click(e: any) {
     // set active show

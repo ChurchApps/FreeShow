@@ -49,6 +49,8 @@ body {
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   background-color: #2d313b;
   background-color: var(--primary);
   color: #f0f0ff;

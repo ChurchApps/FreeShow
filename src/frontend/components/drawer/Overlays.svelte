@@ -27,6 +27,7 @@
     <div class="grid">
       {#each Object.entries($overlays) as [id, overlay]}
         <Card
+          class="context #overlay_card"
           active={$outOverlays.includes(id)}
           label={overlay.name || "—"}
           color={overlay.color}

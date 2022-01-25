@@ -21,7 +21,7 @@
 
   <span class="buttons">
     <Button on:click={() => history({ id: "newProject" })} title={$dictionary.new?.project}>
-      <Icon id="project" white style="padding-right: 10px;" />
+      <Icon id="project" style="padding-right: 10px;" />
       <T id="new.project" />
     </Button>
     <Button
@@ -31,7 +31,7 @@
       }}
       title={$dictionary.new?.show}
     >
-      <Icon id="showIcon" white style="padding-right: 10px;" />
+      <Icon id="showIcon" style="padding-right: 10px;" />
       <T id="new.show" />
     </Button>
   </span>
@@ -50,12 +50,14 @@
 
   .buttons {
     display: flex;
-    /* flex-direction: column; */
+    flex-direction: column;
+    gap: 10px;
   }
   .buttons :global(button) {
-    background-color: var(--secondary);
+    background-color: var(--primary);
+    /* background-color: var(--secondary);
     color: var(--secondary-text);
     font-size: 1em;
-    margin: 10px;
+    margin: 10px; */
   }
 </style>

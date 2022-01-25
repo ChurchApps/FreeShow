@@ -11,33 +11,14 @@
   $: layouts = $shows[active].layouts
   $: activeLayout = $shows[active].settings.activeLayout
 
-  $: console.log(activeLayout)
-  // function createLayout() {
-  //   let layout = new Layout("unnamed");
-  //   return []
-  //   // uid(16);
-  // }
-
   function addLayout(e: any) {
     let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
     if (e.ctrlKey) {
       newData.layout = { ...$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout] }
     }
     history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: $activeShow! } })
-
-    // shows.update((s) => {
-    //   // TODO: copy active layout
-    //   // TODO: ctrl click = create empty
-    //   let newLayout = new Layout("unnamed")
-    //   let id = uid(16)
-    //   s[active].layouts[id] = newLayout
-    //   s[active].settings.activeLayout = id
-    //   return s
-    // })
   }
 </script>
-
-<!-- TODO: ctrl scroll wheel zoom! -->
 
 <div>
   {#if layouts}
@@ -84,8 +65,6 @@
   div {
     display: flex;
     justify-content: space-between;
-    /* position: absolute;
-    bottom: 0; */
     width: 100%;
     /* height: 50px; */
     background-color: var(--primary);

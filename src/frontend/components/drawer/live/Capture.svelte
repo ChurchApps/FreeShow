@@ -59,7 +59,7 @@
   // }, timeout)
 </script>
 
-<Card {loaded} {active} on:click label={screen.name} icon={screen.id.includes("screen") ? "screen" : "window"} white={!screen.id.includes("screen")}>
+<Card class="context #live_card" {loaded} {active} on:click label={screen.name} icon={screen.id.includes("screen") ? "screen" : "window"} white={!screen.id.includes("screen")}>
   <canvas bind:this={canvas} />
   {#if !loaded}
     <video bind:this={videoElem}>

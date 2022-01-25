@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let scrollElem: any
+  export let scrollElem: any = null
   export let offset: number = -1
   let behaviour: string = ""
   setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)

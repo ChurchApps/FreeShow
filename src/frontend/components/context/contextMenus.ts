@@ -13,9 +13,14 @@ export interface ContextMenuItem {
 // }
 
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
-  quit: { label: "main.quit", icon: "quit", shortcuts: ["Alt+F4"] },
+  // MENU
+  save: { label: "actions.save", icon: "save", shortcuts: ["Ctrl+S"] },
+  import: { label: "actions.import", icon: "import", items: ["txt", "media", "pptx", "ew", "pro"] },
+  export_more: { label: "actions.export", icon: "export", items: ["projects", "current project", "lyrics as txt", "..."] },
+  // MAIN
+  quit: { label: "main.quit", icon: "close", shortcuts: ["Alt+F4"] },
   settings: { label: "menu.settings", icon: "settings" },
-  about: { label: "main.about", icon: "about" },
+  about: { label: "main.about", icon: "info" },
   rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
   delete: { label: "actions.delete", icon: "delete" },
   export: { label: "actions.export", icon: "export" },
@@ -46,29 +51,49 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
+  // MENU
+  file: ["save", "import", "export_more", "SEPERATOR", "quit"],
+  about: ["about"],
+  // MAIN
   default: ["settings", "about", "SEPERATOR", "quit"],
   rename: ["rename"],
+
   // DRAWER
   drawer_top: ["enabledTabs"],
-  // navigation
+  // NAVIGATION
   category_shows: ["newCategory"],
-  category_backgrounds: ["newCategory"],
-  // content
+  category_overlays: ["newCategory"],
+  category_templates: ["newCategory"],
+  category_media: ["newFolder"],
+  category_audio: ["newFolder"],
+  category_shows_button: ["rename", "changeIcon", "delete"],
+  category_overlays_button: ["rename", "changeIcon", "delete"],
+  category_templates_button: ["rename", "changeIcon", "delete"],
+  category_media_button: ["rename", "delete"],
+  category_audio_button: ["rename", "delete"],
+  // CONTENT
   drawer_show: ["newShowPopup", "newShow"],
   // , "changeCategory" ? edit with rename & categories...
   // , "convertToOverlay"
-  drawer_show_button: ["rename", "addToProject", "delete", "duplicate", "SEPERATOR", "export"],
-  category_shows_button: ["rename", "changeIcon", "delete"],
+  drawer_show_button: ["addToProject", "rename", "duplicate", "delete", "SEPERATOR", "export"],
+  // media / audio
+  media_card: ["add_to_project"],
+  overlay_card: ["rename", "recolor", "addToFirstSlide", "edit", "SEPERATOR", "duplicate", "delete"],
+  template_card: ["rename", "recolor", "addToShow", "edit", "SEPERATOR", "duplicate", "delete"],
+  player_button: ["edit", "addToProjct", "delete"],
+  live_card: ["addToFirstSlide"],
+
   // PROJECT
   projects: ["newProject", "newFolder"],
   projectTab: ["close"],
   project: ["newShowPopup", "newShow"], // , "newPrivateShow"
   show: ["rename", "remove", "private", "duplicate"],
   shows: ["newSlide", "selectAll"],
+
   // SHOWS
   // , "copy", "paste"
-  slide: ["disable", "edit", "slideGroups", "SEPERATOR", "delete", "duplicate"],
-  group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "delete", "duplicate"],
+  slide: ["slideGroups", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
+  group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["rename", "recolor"],
   // global_group: ["rename"],
 }

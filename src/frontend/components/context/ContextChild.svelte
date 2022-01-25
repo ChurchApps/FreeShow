@@ -7,7 +7,7 @@
   import Icon from "../helpers/Icon.svelte"
   import { GetLayoutRef } from "../helpers/get"
 
-  export let contextElem: any
+  export let contextElem: any = null
   export let contextActive: boolean
   export let id: string
   export let menu: ContextMenuItem = contextMenuItems[id]
@@ -19,6 +19,7 @@
   let open: boolean = false
   let elem: HTMLDivElement
   let timeout: any = null
+  let duration: number = 200
 
   function hover(e: any) {
     if (elem.contains(e.target)) {
@@ -30,14 +31,14 @@
         timeout = setTimeout(() => {
           open = true
           timeout = null
-        }, 500)
+        }, duration)
       }
     } else if (open && e.target?.closest(".contextMenu") !== null) {
       if (timeout === null) {
         timeout = setTimeout(() => {
           open = false
           timeout = null
-        }, 500)
+        }, duration / 2)
       }
     } else if (timeout !== null) {
       clearTimeout(timeout)
@@ -66,11 +67,15 @@
     }
     return items
   }
+
+  const keydown = (e: any) => {
+    if (e.key === "Enter") open = !open
+  }
 </script>
 
 <svelte:window on:mouseover={hover} />
 
-<div bind:this={elem} class="item" on:click={click}>
+<div bind:this={elem} class="item" on:click={click} tabindex={0} on:keydown={keydown}>
   <!-- {#key label}
     <T id={label} />
   {/key} -->

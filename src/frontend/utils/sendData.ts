@@ -7,7 +7,6 @@ import { shows, outSlide, stageShows, connections, remotePassword, projects, fol
 // REMOTE
 
 function getRemote(msg: ClientMessage) {
-  console.log(msg)
 
   // let initialize: ClientMessage = {
   //   id: msg.id,
@@ -45,7 +44,6 @@ function getRemote(msg: ClientMessage) {
       }
       break
     case "ACCESS":
-      console.log(msg.data)
       if (msg.data === get(remotePassword)) {
         msg = { id: msg.id, channel: "SHOWS", data: filterObjectArray(get(shows), ["name", "private", "category", "timestamps"]) }
 
@@ -142,7 +140,6 @@ function getStage(msg: ClientMessage) {
             return sc
           })
           show = arrayToObject(filterObjectArray(get(stageShows), ["enabled", "name", "settings", "items"]))[msg.data.id]
-          console.log(show)
           if (show.enabled) {
             msg.data = show
             sendData(STAGE, { channel: "SLIDES", data: [] })
@@ -153,15 +150,12 @@ function getStage(msg: ClientMessage) {
     case "SLIDES":
       let out = get(outSlide)
       msg.data = []
-      console.log(out)
       if (out) {
         let layout = GetLayout(out.id, out.layout)
-        console.log(layout)
         msg.data = [get(shows)[out.id].slides[layout[out.index].id]]
         if (out.index + 1 < layout.length) msg.data.push(get(shows)[out.id].slides[layout[out.index + 1].id])
         else msg.data.push(null)
       }
-      console.log(msg)
 
       break
     // case "SHOW":
@@ -240,13 +234,11 @@ let time: number = 1000
 export function timedout(id: "REMOTE" | "STAGE", msg: ClientMessage, run: Function) {
   let timeID = id + msg.id || "" + msg.channel
   if (!timeouts[timeID]) {
-    console.log(msg)
     timeouts[timeID] = true
     let first: string = JSON.stringify(msg.data)
     run()
     // TODO: msg does not change!!!
     setTimeout(() => {
-      console.log(msg)
       if (JSON.stringify(msg.data) !== first) run()
       delete timeouts[timeID]
     }, time)

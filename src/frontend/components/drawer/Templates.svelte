@@ -18,6 +18,7 @@
     <div class="grid">
       {#each Object.entries($templates) as [id, overlay]}
         <Card
+          class="context #template_card"
           active={id === activeTemplate}
           label={overlay.name || "—"}
           color={overlay.color}

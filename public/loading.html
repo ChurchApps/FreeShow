@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loading</title>
+
+    <link rel="stylesheet" href="global.css" />
+
+    <style>
+      main {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+      }
+
+      p {
+        opacity: 0.5;
+      }
+
+      .loader {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        overflow: hidden;
+        height: 3px;
+        background-color: var(--primary-lighter);
+      }
+
+      .loader span:before {
+        content: "";
+        position: absolute;
+        height: 100%;
+        background-color: var(--secondary);
+        animation: first 1.8s infinite ease-out;
+      }
+
+      .loader span:after {
+        content: "";
+        position: absolute;
+        height: 100%;
+        background-color: var(--secondary);
+        animation: second 1.8s infinite ease-in;
+      }
+
+      @keyframes first {
+        0% {
+          left: -100%;
+          width: 80%;
+        }
+        100% {
+          left: 100%;
+          width: 20%;
+        }
+      }
+
+      @keyframes second {
+        0% {
+          left: -150%;
+          width: 80%;
+        }
+        100% {
+          left: 100%;
+          width: 20%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loader">
+      <span></span>
+    </div>
+    <main>
+      <h1>FreeShow</h1>
+      <p>v0.1.0 (Beta)</p>
+    </main>
+  </body>
+</html>

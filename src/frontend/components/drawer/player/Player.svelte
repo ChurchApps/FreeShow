@@ -41,6 +41,7 @@
         {#if video.type === active}
           <SelectElem id="player" data={id} draggable>
             <Button
+              class="context #player_button"
               on:click={() => activeShow.set({ id, type: "player" })}
               on:dblclick={() => outBackground.set({ id, type: "player" })}
               active={$activeShow?.id === id}

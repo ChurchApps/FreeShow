@@ -889,7 +889,7 @@ export const screen = writable({
 })
 
 // connection
-export const name: Writable<null | string> = writable(null) // "get"
+export const os: Writable<any> = writable({ platform: "", name: "" }) // "get"
 // export const password: Writable<string> = writable("show") // "generate"
 
 // HISTORY

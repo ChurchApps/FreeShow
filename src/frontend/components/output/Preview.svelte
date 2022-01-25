@@ -105,6 +105,7 @@
       outSlide.set(null)
       outOverlays.set([])
       outAudio.set([])
+      outTransition.set(null)
       clearVideo()
     }
   }
@@ -240,8 +241,6 @@
   let length: number = 0
   $: {
     if ($outSlide?.id) {
-      console.log($outSlide)
-
       length = 0
       $shows[$outSlide.id].layouts[$outSlide.layout].slides.forEach((s: any) => {
         length++
@@ -297,7 +296,6 @@
       timeObj.clear()
       timeObj = null
     }
-    console.log(timer, timeObj)
 
     if (a && a.duration > 0) {
       timerMax = a.duration
@@ -429,7 +427,10 @@
         on:click={() => {
           if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null)
             outSlide.set({ id: $activeShow.id, layout: $shows[$activeShow.id].settings.activeLayout, index: $activeEdit.slide })
-          else if ($activeShow && GetLayout().length) outSlide.set({ id: $activeShow.id, layout: $shows[$activeShow.id].settings.activeLayout, index: 0 })
+          else if ($activeShow && GetLayout().length) {
+            outSlide.set({ id: $activeShow.id, layout: $shows[$activeShow.id].settings.activeLayout, index: 0 })
+            // TODO: nextSlide(null)
+          }
           // TODO: activeEdit && play media
         }}
         title={$dictionary.preview?._start}

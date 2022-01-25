@@ -26,7 +26,6 @@ const files: any = {
   slides: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
   slide: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
 }
-console.log(files)
 
 export function validateDrop(id: string, selected: any, children: boolean = false): boolean {
   return areas[id]?.includes(selected) || (children && areaChildren[id]?.includes(selected))

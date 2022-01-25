@@ -50,7 +50,6 @@
     } else buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }]
   }
 
-  $: console.log(buttons)
   // TODO: scroll down to selected
   $: {
     if ($drawerTabsData[id].activeSubTab === null) {
@@ -97,17 +96,17 @@
               bold={false}
               title={category.description ? category.description : category.path ? category.path : ""}
             >
-              <span style="display: flex;align-items: center;">
+              <span style="display: flex;align-items: center;width: 100%;">
                 <Icon
                   id={category.icon || "noIcon"}
                   custom={id === "shows" && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
                   select={category.id !== "all" && category.id !== "unlabeled"}
                 />
-                <span id={category.id}>
-                  {#if category.default}
-                    <p style="margin: 5px;">
-                      <T id={category.name} />
-                    </p>
+                <span id={category.id} style="width: 100%;text-align: left;">
+                  {#if id === "scripture" || id === "player"}
+                    <p style="margin: 5px;">{category.name}</p>
+                  {:else if category.default}
+                    <p style="margin: 5px;"><T id={category.name} /></p>
                   {:else}
                     <HiddenInput value={category.name} />
                   {/if}
@@ -135,7 +134,7 @@
     </div>
   {:else if id === "media"}
     <!-- <FilePicker /> -->
-    <FolderPicker title={$dictionary.new?.category}>
+    <FolderPicker title={$dictionary.new?.folder}>
       <Icon id="folder" right />
       <span style="color: var(--secondary);">
         <T id="new.folder" />

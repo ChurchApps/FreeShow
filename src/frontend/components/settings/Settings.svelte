@@ -7,7 +7,7 @@
     groups,
     imageExtensions,
     labelsDisabled,
-    name,
+    os,
     screen,
     settingsTab,
     theme,
@@ -311,7 +311,7 @@
       <!-- TODO: connection -->
       <div>
         <p><T id="settings.device_name" /></p>
-        <TextInput value={$name} light />
+        <TextInput value={$os.name} light />
       </div>
       <div>
         <p>RemoteShow <T id="settings.port" /></p>

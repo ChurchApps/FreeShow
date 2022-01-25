@@ -6,7 +6,7 @@
   import { history } from "../helpers/history"
   import { GetLayout, GetLayoutRef } from "../helpers/get"
 
-  export let contextElem: any
+  export let contextElem: any = null
   export let contextActive: boolean
   export let id: string
   export let menu: ContextMenuItem = contextMenuItems[id]
@@ -27,16 +27,21 @@
 
   function contextItemClick() {
     if (!disabled) {
-      let actionItem: null | HTMLElement = contextElem.classList.contains("_" + id) ? contextElem : contextElem.querySelector("._" + id)
-      console.log(contextElem)
-      // let data: any = JSON.parse(contextElem.getAttribute("data-context") || "{}")
-      // console.log(data)
+      let actionItem: null | HTMLElement = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id)
       let sel: any = $selected
       console.log(sel)
       let hide: boolean = true
-      console.log(id)
 
       switch (id) {
+        case "settings":
+          activePage.set("settings")
+          break
+        case "about":
+          activePopup.set("about")
+          break
+        case "quit":
+          // app.exit()
+          break
         case "rename":
           if (sel.id === "slide" || sel.id === "group") {
             activePopup.set("rename")
@@ -218,10 +223,14 @@
       if (hide) contextActive = false
     }
   }
+
+  const keydown = (e: any) => {
+    if (e.key === "Enter") contextItemClick()
+  }
 </script>
 
 <!-- {$fullColors ? 'background-' : ''} -->
-<div on:click={contextItemClick} title={menu?.shortcuts?.join(", ")} class:enabled class:disabled style="color: {menu?.color || 'unset'}">
+<div on:click={contextItemClick} title={menu?.shortcuts?.join(", ")} class:enabled class:disabled style="color: {menu?.color || 'unset'}" tabindex={0} on:keydown={keydown}>
   {#if menu?.icon}<Icon id={menu.icon} />{/if}
   {#if menu?.translate === false}
     {menu?.label}

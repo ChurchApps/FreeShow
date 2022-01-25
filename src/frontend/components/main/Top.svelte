@@ -26,7 +26,12 @@
   </span>
   <span>
     <TopButton id="settings" hideLabel />
-    <Button title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display} on:click={display} class="display {$outputDisplay ? 'on' : 'off'}">
+    <Button
+      title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display}
+      on:click={display}
+      class="display {$outputDisplay ? 'on' : 'off'}"
+      red={$outputDisplay}
+    >
       {#if $outputDisplay}
         <Icon id="cancelDisplay" size={1.8} white />
       {:else}
@@ -42,6 +47,7 @@
     display: flex;
     justify-content: space-between;
     z-index: 30;
+    min-height: 50px;
     height: 50px;
     /* box-shadow: 0px 2px 4px rgb(0 0 0 / 30%); */
     /* border-bottom: 4px solid var(--primary-lighter); */
@@ -56,12 +62,12 @@
     min-width: 60px;
   }
 
-  div :global(button.display.on) {
+  /* div :global(button.display.on) {
     background-color: rgb(0 150 0 / 30%) !important;
   }
   div :global(button.display.off) {
     background-color: rgb(150 0 0 / 30%) !important;
-  }
+  } */
 
   /* hr {
     background-color: var(--primary-lighter);

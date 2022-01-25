@@ -17,7 +17,7 @@
 <!-- TODO: use global resolution .... -->
 <!-- display: table; -->
 <div
-  class="main"
+  class="main {$$props.class}"
   style="flex-direction: {$mediaOptions.grid ? 'column' : 'row'};width: {$mediaOptions.grid ? 100 / $mediaOptions.columns : 100}%;"
   class:preview
   class:active

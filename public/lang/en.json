@@ -1,9 +1,14 @@
 {
   "main": {
     "quit": "Quit",
+    "about": "About",
     "unnamed": "Unnamed",
     "drop": "Drop here",
     "search": "Search"
+  },
+  "titlebar": {
+    "file": "File",
+    "about": "About"
   },
   "screen": {
     "width": "Width",
@@ -133,7 +138,8 @@
     "rename": "Rename",
     "delete_show": "Delete show",
     "delete_show_confirmation": "Are you sure you want to delete",
-    "change_name": "Change name on"
+    "change_name": "Change name on",
+    "about": "About"
   },
   "new": {
     "show": "New show",
@@ -150,6 +156,7 @@
     "recolor": "Change color",
     "remove": "Remove",
     "private": "Private",
+    "import": "Import",
     "export": "Export",
     "duplicate": "Duplicate",
     "delete": "Delete",

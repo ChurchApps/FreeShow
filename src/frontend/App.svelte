@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activePage, activePopup, activeShow, activeStage, drawer, outputDisplay, outputWindow, outSlide, screen, shows } from "./stores"
+  import { activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, shows } from "./stores"
   import { setLanguage } from "./utils/language"
   import { startup } from "./utils/startup"
   import { redo, undo } from "./components/helpers/history"
@@ -32,6 +32,8 @@
   import SettingsTabs from "./components/settings/SettingsTabs.svelte"
   import type { TopViews } from "../types/Tabs"
   import type { Resolution } from "../types/Settings"
+  import MenuBar from "./components/main/MenuBar.svelte"
+  import { onMount } from "svelte"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -49,9 +51,13 @@
 
         // undo/redo
         if (!e.target.closest(".edit")) {
-          e.preventDefault()
-          if (e.key.toLowerCase() === "z" && !e.shiftKey) undo()
-          else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) redo()
+          if (e.key.toLowerCase() === "z" && !e.shiftKey) {
+            e.preventDefault()
+            undo()
+          } else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) {
+            e.preventDefault()
+            redo()
+          }
         }
       } else {
         if (e.key === "Escape") {
@@ -77,11 +83,19 @@
   let resolution: Resolution = $outSlide ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
 
   $: page = $activePage
+
+  // on loaded
+  onMount(() => {
+    window.api.send("LOADED")
+  })
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<main>
+{#if !$outputWindow && $os.platform === "win32"}
+  <MenuBar />
+{/if}
+<main style={$outputWindow ? "" : "height: calc(100% - 30px);"}>
   {#if $outputWindow}
     <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={display}>
       <Output style={getStyleResolution(resolution, width, height, "fit")} center />
@@ -195,7 +209,8 @@
 	} */
 
   .fill {
-    cursor: none;
+    /* TODO: setting for hiding cursor... */
+    /* cursor: none; */
     height: 100%;
     width: 100%;
     /* TODO: change electron window resolution...?? */

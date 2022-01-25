@@ -86,7 +86,7 @@
     .then(handleSuccess)
 </script>
 
-<div class="main">
+<div class="main context #live_card">
   <span>
     {mic.name}
   </span>

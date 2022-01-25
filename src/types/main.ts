@@ -47,7 +47,7 @@ export interface ActiveEdit {
   items: number[]
 }
 
-export type Popups = "show" | "delete_show" | "icon" | "rename"
+export type Popups = "show" | "delete_show" | "icon" | "rename" | "about"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

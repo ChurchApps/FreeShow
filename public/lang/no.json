@@ -1,9 +1,14 @@
 {
   "main": {
     "quit": "Avslutt",
+    "about": "Om",
     "unnamed": "Uten navn",
     "drop": "Slipp her",
     "search": "Søk"
+  },
+  "titlebar": {
+    "file": "Fil",
+    "about": "Om"
   },
   "screen": {
     "width": "Bredde",
@@ -128,7 +133,8 @@
     "rename": "Gi nytt navn",
     "delete_show": "Slett show",
     "delete_show_confirmation": "Er du sikker på at du vil slette",
-    "change_name": "Endre navn på"
+    "change_name": "Endre navn på",
+    "about": "Om"
   },
   "new": {
     "show": "Nytt show",
@@ -145,6 +151,7 @@
     "recolor": "Endre farge",
     "remove": "Fjern",
     "private": "Privat",
+    "import": "Importer",
     "export": "Eksporter",
     "duplicate": "Dupliser",
     "delete": "Slett",

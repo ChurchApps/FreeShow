@@ -11,8 +11,8 @@
   let side: "right" | "left" = "right"
   let translate = 0
   function contextMenu(e: MouseEvent) {
-    if (e.target?.closest(".contextMenu") === null && e.target?.closest(".nocontext") === null) {
-      contextElem = e.target!.closest(".context")
+    if (!e.target?.closest(".contextMenu") && !e.target?.closest(".nocontext")) {
+      contextElem = e.target!.closest(".context") || document.body
 
       x = e.clientX
       y = e.clientY
@@ -20,14 +20,15 @@
       activeMenu = contextMenuLayouts.default
       let c = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
       if (c?.includes("__")) {
-        activeMenu = []
         let menus = c.slice(1, c.length).split("__")
-        menus.forEach((c2: string, i: number) => {
-          activeMenu.push(...contextMenuLayouts[c2])
-          if (i < menus.length - 1) activeMenu.push("SEPERATOR")
-        })
-      } else if (c) activeMenu = contextMenuLayouts[c.slice(1, c.length)]
-      console.log(activeMenu)
+        if (contextMenuLayouts[menus[1]]) {
+          activeMenu = []
+          menus.forEach((c2: string, i: number) => {
+            activeMenu.push(...contextMenuLayouts[c2])
+            if (i < menus.length - 1) activeMenu.push("SEPERATOR")
+          })
+        }
+      } else if (c && contextMenuLayouts[c.slice(1, c.length)]) activeMenu = contextMenuLayouts[c.slice(1, c.length)]
 
       let contextHeight = Object.keys(activeMenu).length * 30 + 10
       if (x + 250 > window.innerWidth) x -= 250
@@ -36,11 +37,11 @@
       else side = "right"
 
       contextActive = true
-    }
+    } else contextActive = false
   }
 
   const click = (e: MouseEvent) => {
-    if (e.target?.closest(".contextMenu") === null) contextActive = false
+    if (!e.target?.closest(".contextMenu")) contextActive = false
   }
 </script>
 
