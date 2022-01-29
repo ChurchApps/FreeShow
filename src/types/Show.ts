@@ -14,9 +14,9 @@ export interface Show {
     template: null | ID
   }
   timestamps: {
-    created: Date
-    modified: null | Date
-    used: null | Date
+    created: number
+    modified: null | number
+    used: null | number
   }
   meta: {
     title?: string

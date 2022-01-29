@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activePopup, activeShow, selected, shows } from "../../../stores"
+  import { activePopup, activeShow, selected, showsCache } from "../../../stores"
   import { GetLayoutRef } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import T from "../../helpers/T.svelte"
@@ -13,7 +13,7 @@
       if (($activeShow && $selected.id === "slide") || $selected.id === "group") {
         $selected.data.forEach((a, i) => {
           let slide = a.id || GetLayoutRef()[a.index].id
-          let name: string = $shows[$activeShow!.id].slides[slide].group || ""
+          let name: string = $showsCache[$activeShow!.id].slides[slide].group || ""
           list.push(name)
           if (i === 0) groupName = name
         })
@@ -31,7 +31,7 @@
         // TODO: change layout children & slide parent children
         newData.color = null
       }
-      if ($activeShow && $shows[$activeShow.id].slides[slide].globalGroup) newData.globalGroup = null
+      if ($activeShow && $showsCache[$activeShow.id].slides[slide].globalGroup) newData.globalGroup = null
       history({ id: "changeSlide", newData, location: { page: "show", show: $activeShow || undefined, slide } })
     })
     activePopup.set(null)

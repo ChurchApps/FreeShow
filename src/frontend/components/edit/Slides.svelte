@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { shows, activeShow, activeEdit } from "../../stores"
+  import { showsCache, activeShow, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import T from "../helpers/T.svelte"
   import Slide from "../slide/Slide.svelte"
@@ -7,7 +7,7 @@
   import Center from "../system/Center.svelte"
 
   // $: editIndex = $output.slide?.index || 0
-  $: currentShow = $shows[$activeShow!.id]
+  $: currentShow = $showsCache[$activeShow!.id]
 
   // TODO: change on show change...
   if ($activeEdit.slide === null || $activeEdit.slide >= GetLayout().length) {
@@ -27,8 +27,8 @@
 
   // let layoutSlides: SlideData[] = []
   // $: layoutSlides = GetLayout($activeShow!.id)
-  $: activeLayout = $shows[$activeShow!.id].settings.activeLayout
-  $: layoutSlides = [$shows[$activeShow!.id].layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
+  $: activeLayout = $showsCache[$activeShow!.id].settings.activeLayout
+  $: layoutSlides = [$showsCache[$activeShow!.id].layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   function keydown(e: any) {
     if (!(e.target instanceof HTMLTextAreaElement) && !e.target.closest(".edit")) {

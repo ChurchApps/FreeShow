@@ -6,6 +6,12 @@
     "drop": "Slipp her",
     "search": "Søk"
   },
+  "example": {
+    "welcome": "Velkommen",
+    "meetings": "Møter",
+    "example": "Eksempel",
+    "example_note": "Skriv notater her"
+  },
   "titlebar": {
     "file": "Fil",
     "about": "Om"
@@ -60,6 +66,10 @@
     "backgrounds": "Ingen bakgrunner i show",
     "groups": "Ingen grupper",
     "events": "Ingen arrangement"
+  },
+  "error": {
+    "no_show": "Kunne ikke finne noen show",
+    "no_layouts": "Kunne ikke finne noen oppsett"
   },
   "meta": {
     "title": "Tittel",
@@ -134,7 +144,11 @@
     "delete_show": "Slett show",
     "delete_show_confirmation": "Er du sikker på at du vil slette",
     "change_name": "Endre navn på",
-    "about": "Om"
+    "about": "Om",
+    "unsaved": "Du har ikke lagret enda! Er du sikker på at du vil avslutte?",
+    "cancel": "Avbryt",
+    "quit": "Avslutt uten å lagre",
+    "save_quit": "Lagre og avslutt"
   },
   "new": {
     "show": "Nytt show",

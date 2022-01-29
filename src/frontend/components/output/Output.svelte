@@ -87,13 +87,15 @@
   {/if}
   {#if $outOverlays.length}
     {#each $outOverlays as id}
-      <div transition:fade={transition}>
-        <div>
-          {#each $overlays[id].items as item}
-            <Textbox {item} />
-          {/each}
+      {#if $overlays[id]}
+        <div transition:fade={transition}>
+          <div>
+            {#each $overlays[id].items as item}
+              <Textbox {item} />
+            {/each}
+          </div>
         </div>
-      </div>
+      {/if}
     {/each}
   {/if}
   <Draw />

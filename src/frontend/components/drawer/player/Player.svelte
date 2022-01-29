@@ -25,6 +25,7 @@
 
   let data: any = { name: "", id: "" }
   function add() {
+    // TODO: remove url (keep only id)
     playerVideos.update((a) => {
       a[uid()] = { ...data, type: active }
       return a

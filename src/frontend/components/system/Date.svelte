@@ -6,9 +6,11 @@
   export let format = "day,d,m,y"
   export let d = null
 
-  if (d === null) {
-    d = new Date()
-    setInterval(() => (d = new Date()), 1000)
+  $: {
+    if (d === null) {
+      d = new Date()
+      setInterval(() => (d = new Date()), 1000)
+    } else d = new Date(d)
   }
 
   $: data = {

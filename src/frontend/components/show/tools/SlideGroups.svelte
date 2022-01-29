@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { activeShow, dictionary, fullColors, groups, selected, shows } from "../../../stores"
-  import SelectElem from "../../system/SelectElem.svelte"
-  import { ondrop } from "../../helpers/drop"
-  import Center from "../../system/Center.svelte"
-  import { history } from "../../helpers/history"
+  import { activeShow, dictionary, fullColors, groups, selected, showsCache } from "../../../stores"
   import { getContrast } from "../../helpers/color"
+  import { ondrop } from "../../helpers/drop"
+  import { history } from "../../helpers/history"
   import T from "../../helpers/T.svelte"
+  import Center from "../../system/Center.svelte"
+  import SelectElem from "../../system/SelectElem.svelte"
 
   let slides: any[] = []
   $: {
     let added: any = {}
-    slides = Object.entries(JSON.parse(JSON.stringify($shows[$activeShow!.id].slides))).map(([id, slide]: any) => {
+    slides = Object.entries(JSON.parse(JSON.stringify($showsCache[$activeShow!.id].slides))).map(([id, slide]: any) => {
       // add global group
       if (slide.globalGroup && $groups[slide.globalGroup]) {
         let old = { group: slide.group, color: slide.color }
@@ -20,7 +20,7 @@
 
         // update local group
         if (JSON.stringify(old) !== JSON.stringify({ group: slide.group, color: slide.color })) {
-          shows.update((a) => {
+          showsCache.update((a) => {
             a[$activeShow!.id].slides[id].group = slide.group
             a[$activeShow!.id].slides[id].color = slide.color
             return a
@@ -93,7 +93,7 @@
             style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}"
             on:click={(e) => {
               if (!e.ctrlKey && $activeShow) {
-                history({ id: "newSlide", newData: { slides: [slide] }, location: { page: "show", show: $activeShow, layout: $shows[$activeShow.id].settings.activeLayout } })
+                history({ id: "newSlide", newData: { slides: [slide] }, location: { page: "show", show: $activeShow, layout: $showsCache[$activeShow.id].settings.activeLayout } })
               }
             }}
           >

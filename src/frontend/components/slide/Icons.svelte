@@ -27,6 +27,7 @@
   $: notMuted = background?.muted === false
 </script>
 
+<!-- TODO: check if exists -->
 <div class="icons" style="zoom: {4 / columns};">
   {#if transitionTime}
     <div>

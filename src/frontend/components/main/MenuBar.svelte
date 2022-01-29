@@ -1,5 +1,6 @@
 <script lang="ts">
   import { MAIN } from "../../../types/Channels"
+  import { activePopup, saved } from "../../stores"
   import ContextChild from "../context/ContextChild.svelte"
   import ContextItem from "../context/ContextItem.svelte"
   import { contextMenuItems, contextMenuLayouts } from "../context/contextMenus"
@@ -70,7 +71,7 @@
 
   <div class="nocontext menus" on:mousemove={move} on:click={menu} on:contextmenu={menu}>
     {#each menus as menu}
-      <Button id={menu} active={activeID === menu} dark>
+      <Button id={menu} active={activeID === menu} dark red={menu === "file" && !$saved}>
         <T id="titlebar.{menu}" />
       </Button>
     {/each}
@@ -82,7 +83,14 @@
     <Button on:click={() => window.api.send(MAIN, { channel: "MAXIMIZE" })} style="transform: rotate(180deg);" center>
       <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 1 : 1.1} white />
     </Button>
-    <Button id="close" on:click={() => window.api.send(MAIN, { channel: "CLOSE" })} center>
+    <Button
+      id="close"
+      on:click={() => {
+        if ($saved) window.api.send(MAIN, { channel: "CLOSE" })
+        else activePopup.set("unsaved")
+      }}
+      center
+    >
       <Icon id="close" size={1.4} white />
     </Button>
   </div>

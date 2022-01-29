@@ -1,12 +1,12 @@
-import type { ShowRef } from "./../../../types/Projects"
 import { get } from "svelte/store"
 import type { Project, Projects } from "../../../types/Projects"
 import type { ID, Show, Shows, Slide, SlideData } from "../../../types/Show"
-import { activeProject, activeShow, projects, shows } from "../../stores"
+import { activeProject, activeShow, projects, showsCache } from "../../stores"
+import type { ShowRef } from "./../../../types/Projects"
 
 // export const getProject = (id: ID): Project => get(projects)[id]
 // export const getProjectShows = (id: ID): Project => getProject(id)[get(activeProject)].shows
-// export const getShow = (showID: ID): Show => get(shows)[showID]
+// export const getShow = (showID: ID): Show => get(showsCache)[showID]
 // export const getSlide = (showID: ID, slideIndex: number): Slide => getShow(showID).slides[slideID] // TODO: get layout...
 
 export const getOutBackground = () => {
@@ -27,7 +27,7 @@ export const getOutOverlays = () => []
 export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null): SlideData[] => {
   // console.trace(showID)
   if (!showID) showID = get(activeShow)!.id
-  let currentShow: Show = get(shows)[showID]
+  let currentShow: Show = get(showsCache)[showID]
   if (!layoutID) layoutID = currentShow?.settings.activeLayout
   let layoutSlides: SlideData[] = []
   if (currentShow) {
@@ -52,7 +52,7 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
 
 export const GetLayoutRef = (showID: null | ID = null, layoutID: null | ID = null): any[] => {
   if (!showID) showID = get(activeShow)!.id
-  let currentShow: Show = get(shows)[showID]
+  let currentShow: Show = get(showsCache)[showID]
   if (!layoutID) layoutID = currentShow.settings.activeLayout
   let layoutSlides: any[] = []
   if (currentShow) {
@@ -71,7 +71,7 @@ export const GetLayoutRef = (showID: null | ID = null, layoutID: null | ID = nul
 
 // only for groups
 export const GetSlideLayout = (slideID: ID): any[] => {
-  let currentShow: Show = get(shows)[get(activeShow)!.id]
+  let currentShow: Show = get(showsCache)[get(activeShow)!.id]
   let layoutSlides: any[] = []
   if (currentShow) {
     let slide: Slide = currentShow.slides[slideID]
@@ -81,7 +81,7 @@ export const GetSlideLayout = (slideID: ID): any[] => {
   return layoutSlides
 }
 export const GetSlideLayoutRef = (slideID: ID): any[] => {
-  let currentShow: Show = get(shows)[get(activeShow)!.id]
+  let currentShow: Show = get(showsCache)[get(activeShow)!.id]
   let layoutSlides: any[] = []
   if (currentShow) {
     let slide: Slide = currentShow.slides[slideID]
@@ -95,13 +95,13 @@ export const GetShow = (ref: ShowRef): Show => {
   let s: Show
   if (ref.type === "video") {
   } else {
-    s = get(shows)[ref.id]
+    s = get(showsCache)[ref.id]
   }
   return s!
 }
 
 export function GetShows() {
-  let list: Shows = get(shows)
+  let list: Shows = get(showsCache)
   // this.active = () => {
   //   this.slides = s[get(activeShow).id].slides
 
@@ -114,7 +114,7 @@ export function GetShows() {
 }
 
 export const getSlide = (out: any): Slide => {
-  return get(shows)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]
+  return get(showsCache)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]
 }
 
 export function GetProjects() {

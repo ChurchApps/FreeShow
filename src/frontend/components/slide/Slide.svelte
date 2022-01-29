@@ -115,9 +115,11 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {/each}
           {#if layoutSlide.overlays?.length}
             {#each layoutSlide.overlays as id}
-              {#each $overlays[id].items as item}
-                <Textbox {item} />
-              {/each}
+              {#if $overlays[id]}
+                {#each $overlays[id].items as item}
+                  <Textbox {item} />
+                {/each}
+              {/if}
             {/each}
           {/if}
         </Zoomed>

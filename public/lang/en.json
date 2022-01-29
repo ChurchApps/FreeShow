@@ -6,6 +6,12 @@
     "drop": "Drop here",
     "search": "Search"
   },
+  "example": {
+    "welcome": "Welcome",
+    "meetings": "Meetings",
+    "example": "Example",
+    "example_note": "Write notes here"
+  },
   "titlebar": {
     "file": "File",
     "about": "About"
@@ -65,6 +71,10 @@
     "backgrounds": "No backgrounds in show",
     "groups": "No groups",
     "events": "No events"
+  },
+  "error": {
+    "no_show": "Could not find show",
+    "no_layouts": "Could not find any layouts"
   },
   "meta": {
     "title": "Title",
@@ -139,7 +149,11 @@
     "delete_show": "Delete show",
     "delete_show_confirmation": "Are you sure you want to delete",
     "change_name": "Change name on",
-    "about": "About"
+    "about": "About",
+    "unsaved": "You have not saved yet! Are you sure you want to quit?",
+    "cancel": "Cancel",
+    "quit": "Quit without saving",
+    "save_quit": "Save & Quit"
   },
   "new": {
     "show": "New show",

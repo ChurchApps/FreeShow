@@ -11,4 +11,4 @@ export interface MainData {
   channel: MainChannels
   data?: any
 }
-type MainChannels = "GET_OS" | "OUTPUT" | "DISPLAY"
+type MainChannels = "GET_OS" | "VERSION" | "OUTPUT" | "DISPLAY" | "GET_PATHS"

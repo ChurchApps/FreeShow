@@ -11,7 +11,7 @@ export class ShowObj implements Show {
   slides: any
   layouts: any
   backgrounds: any
-  constructor(isPrivate: boolean = false, category: null | string = null, layoutID: string = uid(), created: Date = new Date()) {
+  constructor(isPrivate: boolean = false, category: null | string = null, layoutID: string = uid(), created: number = new Date().getTime()) {
     // private?: boolean,
     this.name = ""
     this.private = isPrivate

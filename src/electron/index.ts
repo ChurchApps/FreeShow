@@ -1,4 +1,4 @@
-import { READ_FOLDER } from "./../types/Channels"
+import { READ_FOLDER, SHOW, STORE } from "./../types/Channels"
 // const { ValidChannels, Data } = require("./src/types/Channels")
 import { app, BrowserWindow, ipcMain, dialog, desktopCapturer, screen } from "electron"
 import { Display } from "electron/main"
@@ -7,7 +7,7 @@ import { URL } from "url"
 import { GET_SCREENS, MAIN, OPEN_FILE, OUTPUT, OPEN_FOLDER, FILE_INFO } from "../types/Channels"
 import path from "path"
 import fs from "fs"
-import electronSettings from "./utils/settings"
+import { appSettings, electronSettings, shows } from "./utils/store"
 import checkForUpdates from "./utils/updater"
 // import express from express();
 // import express from "./server/connection")
@@ -46,16 +46,19 @@ app.on("ready", () => {
 
 let loadingWindow: BrowserWindow | null = null
 const createLoading = () => {
-  loadingWindow = new BrowserWindow({ width: 500, height: 300, transparent: true, frame: false, alwaysOnTop: true, resizable: false })
-  // const url =
-  //   // process.env.NODE_ENV === "production"
-  //   isProd
-  //     ? // in production, use the statically build version of our application
-  //       `file://${join(__dirname, "public", "loading.html")}`
-  //     : // in dev, target the host and port of the local rollup web server
-  //       "http://localhost:3001"
+  loadingWindow = new BrowserWindow({
+    width: 500,
+    height: 300,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    webPreferences: { nodeIntegration: true, contextIsolation: false, enableRemoteModule: true },
+  })
   loadingWindow.loadFile("public/loading.html")
+  // if (!isProd) loadingWindow.webContents.openDevTools()
 }
+
 ipcMain.once("LOADED", () => {
   mainWindow?.show()
   loadingWindow?.close()
@@ -66,21 +69,20 @@ const createWindow = () => {
   let width: number = electronSettings.get("width")
   let height: number = electronSettings.get("height")
   let maximized: boolean = electronSettings.get("maximized")
-  // let { width, height } = store.get("windowBounds")
-  // let maximized = store.get("maximized")
 
   mainWindow = new BrowserWindow({
     width,
     height,
     frame: false,
     autoHideMenuBar: process.platform === "win32",
-    show: false,
+    // show: false,
     webPreferences: {
       devTools: isProd ? false : true,
       // preload: join(__dirname, "preload.js"), // use a preload script
       preload: join(__dirname, "preload"), // use a preload script
       webSecurity: false, // load local files
       // preload: "./preload",
+      nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
       allowRunningInsecureContent: false,
@@ -124,6 +126,8 @@ const createWindow = () => {
 
   mainWindow.once("ready-to-show", () => {
     // splash?.destroy()
+    console.log(mainWindow)
+
     // mainWindow?.show()
     createOutputWindow()
   })
@@ -136,9 +140,9 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit()
 })
 
-app.on("activate", () => {
-  if (mainWindow === null) createWindow()
-})
+// app.on("activate", () => {
+//   if (mainWindow === null) createWindow()
+// })
 
 app.on("web-contents-created", (e, contents) => {
   console.info(e)
@@ -147,9 +151,6 @@ app.on("web-contents-created", (e, contents) => {
     console.info(event, params)
     // Strip away preload scripts if unused or verify their location is legitimate
     delete webPreferences.preload
-
-    // Disable Node.js integration
-    webPreferences.nodeIntegration = false
 
     // Verify URL being loaded
     // if (!params.src.startsWith(`file://${join(__dirname)}`)) {
@@ -314,6 +315,57 @@ app.on("web-contents-created", (e, contents) => {
 //   app.quit()
 // })
 
+// STORE
+ipcMain.on(STORE, (e, msg) => {
+  if (msg.channel === "SAVE") save(msg.data)
+  else if (msg.channel === "SETTINGS") {
+    let data: any[] = []
+    Object.entries(appSettings.store).forEach(([key, value]) => {
+      data.push({ key, value })
+    })
+    e.reply(STORE, { channel: "SETTINGS", data })
+  } else if (msg.channel === "SHOW") {
+    let data: any = {}
+    Object.entries(shows.store).forEach(([id, value]) => {
+      data[id] = value
+    })
+    e.reply(STORE, { channel: "SHOW", data })
+  }
+})
+
+// save
+function save(data: any) {
+  Object.entries(data.settings).forEach(([key, value]: any) => {
+    console.log(key, JSON.stringify(appSettings.get(key)) !== JSON.stringify(value))
+
+    if (JSON.stringify(appSettings.get(key)) !== JSON.stringify(value)) appSettings.set(key, value)
+  })
+  Object.entries(data.shows).forEach(([id, value]: any) => {
+    let p: string = path.resolve(data.path, value.name + ".show")
+    if (JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
+      fs.writeFile(p, JSON.stringify([id, value]), (err) => {
+        console.log(err)
+      })
+    }
+  })
+}
+
+// SHOW
+// let getShowLocation ...
+// TODO: check for name used......
+// Oceans.json
+ipcMain.on(SHOW, (e, msg) => {
+  let show: any = "{}"
+  let p: string = path.resolve(msg.path, msg.name + ".show")
+  if (fs.existsSync(p)) {
+    show = JSON.parse(fs.readFileSync(p, "utf8"))
+    if (show[0] === msg.id) {
+      e.reply(SHOW, { id: msg.id, show })
+      // } else e.reply(SHOW, { error: "wrong_id" })
+    } else e.reply(SHOW, { error: "not_found", id: msg.id, file_id: show[0] })
+  } else e.reply(SHOW, { error: "not_found", id: msg.id })
+})
+
 // DISPLAY WINDOW
 
 // const toApp = (channel, args): void => mainWindow.webContents.send(channel, args)
@@ -322,35 +374,45 @@ export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContent
 
 // ipcMain.handle("displayMessage", text => dialog.showMessageBox(text))
 
+const updateShowsPath = (path: string) => {
+  if (!fs.existsSync(path)) fs.mkdirSync(path, { recursive: true })
+}
+
 const os = require("os")
-ipcMain.on(MAIN, (e, args) => {
-  if (args.channel === "GET_OS") e.reply(MAIN, { channel: args.channel, data: { platform: os.platform(), name: os.hostname() } })
-  else if (args.channel === "GET_VERSION") e.reply(MAIN, { channel: args.channel, data: app.getVersion() })
-  else if (args.channel === "DISPLAY") e.reply(MAIN, { channel: args.channel, data: outputWindow?.isVisible() })
-  else if (args.channel === "OUTPUT") {
+ipcMain.on(MAIN, (e, msg) => {
+  let data: any
+  if (msg.channel === "GET_OS") data = { platform: os.platform(), name: os.hostname() }
+  else if (msg.channel === "VERSION") data = app.getVersion()
+  else if (msg.channel === "DISPLAY") data = outputWindow?.isVisible()
+  else if (msg.channel === "GET_PATHS") {
+    data = {
+      documents: app.getPath("documents"),
+      pictures: app.getPath("pictures"),
+      videos: app.getPath("videos"),
+      music: app.getPath("music"),
+    }
+
+    // create documents/Shows
+    updateShowsPath(path.resolve(data.documents, "Shows"))
+  } else if (msg.channel === "OUTPUT") {
     console.log(e.sender.id, outputWindow?.id, outputWindow?.webContents.id)
     // e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
-    e.reply(MAIN, { channel: args.channel, data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
-  } else if (args.channel === "CLOSE") {
+    data = e.sender.id === outputWindow?.webContents.id ? "true" : "false"
+  } else if (msg.channel === "CLOSE") {
     mainWindow?.close()
     outputWindow?.close()
-  } else if (args.channel === "MAXIMIZE") {
+  } else if (msg.channel === "MAXIMIZE") {
     if (mainWindow?.isMaximized()) mainWindow?.unmaximize()
     else mainWindow?.maximize()
-    toApp(MAIN, { channel: args.channel, data: mainWindow?.isMaximized() })
-  } else if (args.channel === "MAXIMIZED") {
-    toApp(MAIN, { channel: args.channel, data: mainWindow?.isMaximized() })
-  } else if (args.channel === "MINIMIZE") {
+    data = mainWindow?.isMaximized()
+  } else if (msg.channel === "MAXIMIZED") {
+    data = mainWindow?.isMaximized()
+  } else if (msg.channel === "MINIMIZE") {
     mainWindow?.minimize()
   } else {
-    toApp(MAIN, args)
-    // fs.readFile("path/to/file", (error, data) => {
-    //   // Do something with file contents
-
-    //   // Send result back to renderer process
-    //   toApp('main', {data, error});
-    // });
+    data = msg
   }
+  if (data) e.reply(MAIN, { channel: msg.channel, data })
 })
 
 let displays: Display[] = []

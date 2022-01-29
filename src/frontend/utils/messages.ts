@@ -1,24 +1,53 @@
+import { get } from "svelte/store"
+import type { ClientMessage } from "../../types/Socket"
 import {
+  activeProject,
+  audioFolders,
+  defaultProjectName,
+  displayMetadata,
+  draw,
+  drawer,
+  drawerTabsData,
+  drawSettings,
+  drawTool,
+  events,
+  folders,
+  fullColors,
+  groupCount,
+  groups,
+  imageExtensions,
+  labelsDisabled,
+  language,
+  mediaFolders,
+  mediaOptions,
+  openedFolders,
+  os,
   outBackground,
+  outLocked,
   outOverlays,
   outputDisplay,
   outputWindow,
   outSlide,
-  mediaFolders,
-  draw,
-  drawTool,
-  drawSettings,
-  stageShows,
-  openedFolders,
-  activeProject,
+  overlayCategories,
+  overlays,
+  playerVideos,
   projects,
-  folders,
+  resized,
+  saved,
+  screen,
+  showsCache,
+  showsPath,
+  slidesOptions,
+  stageShows,
+  templateCategories,
+  templates,
+  theme,
+  themes,
+  videoExtensions,
+  webFavorites,
 } from "../stores"
 import { OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
-import { client, sendData, sendClientAll, timedout, arrayToObject, filterObjectArray } from "./sendData"
-import { shows } from "../stores"
-import { get } from "svelte/store"
-import type { ClientMessage } from "../../types/Socket"
+import { arrayToObject, client, filterObjectArray, sendClientAll, sendData, timedout } from "./sendData"
 
 export function listen() {
   if (get(outputWindow)) {
@@ -30,7 +59,7 @@ export function listen() {
       if (msg.channel === "BACKGROUND") outBackground.set(msg.data)
       else if (msg.channel === "SLIDE") outSlide.set(msg.data)
       else if (msg.channel === "OVERLAYS") outOverlays.set(msg.data)
-      else if (msg.channel === "SHOWS") shows.set(msg.data)
+      else if (msg.channel === "SHOWS") showsCache.set(msg.data)
       else if (msg.channel === "DRAW") draw.set(msg.data)
       else if (msg.channel === "DRAW_TOOL") drawTool.set(msg.data)
       else if (msg.channel === "DRAW_SETTINGS") drawSettings.set(msg.data)
@@ -58,7 +87,7 @@ export function listen() {
     outSlide.subscribe((data) => {
       // TODO: send only current show!
       // TODO: dont send if it already has data...?
-      if (data !== null) window.api.send(OUTPUT, { channel: "SHOWS", data: get(shows) })
+      if (data !== null) window.api.send(OUTPUT, { channel: "SHOWS", data: get(showsCache) })
       window.api.send(OUTPUT, { channel: "SLIDE", data })
     })
     outOverlays.subscribe((data) => {
@@ -96,7 +125,7 @@ export function listen() {
     activeProject.subscribe((data) => {
       window.api.send(REMOTE, { channel: "PROJECT", data })
     })
-    shows.subscribe((data) => {
+    showsCache.subscribe((data) => {
       // window.api.send(REMOTE, { channel: "SHOW", data })
       timedout(REMOTE, { channel: "SHOW", data }, () => sendClientAll(REMOTE, "SHOW", data, "active"))
       // TODO: this, timedout +++
@@ -111,10 +140,48 @@ export function listen() {
     outSlide.subscribe(() => {
       sendData(STAGE, { channel: "SLIDES" }, true)
     })
-    shows.subscribe(() => {
+    showsCache.subscribe(() => {
       sendData(STAGE, { channel: "SLIDES" })
     })
   }
+
+  // SAVE
+  activeProject.subscribe(() => saved.set(false))
+  audioFolders.subscribe(() => saved.set(false))
+  defaultProjectName.subscribe(() => saved.set(false))
+  displayMetadata.subscribe(() => saved.set(false))
+  drawer.subscribe(() => saved.set(false))
+  drawerTabsData.subscribe(() => saved.set(false))
+  drawSettings.subscribe(() => saved.set(false))
+  events.subscribe(() => saved.set(false))
+  folders.subscribe(() => saved.set(false))
+  fullColors.subscribe(() => saved.set(false))
+  groupCount.subscribe(() => saved.set(false))
+  groups.subscribe(() => saved.set(false))
+  imageExtensions.subscribe(() => saved.set(false))
+  labelsDisabled.subscribe(() => saved.set(false))
+  language.subscribe(() => saved.set(false))
+  mediaFolders.subscribe(() => saved.set(false))
+  mediaOptions.subscribe(() => saved.set(false))
+  openedFolders.subscribe(() => saved.set(false))
+  os.subscribe(() => saved.set(false))
+  outLocked.subscribe(() => saved.set(false))
+  overlayCategories.subscribe(() => saved.set(false))
+  overlays.subscribe(() => saved.set(false))
+  playerVideos.subscribe(() => saved.set(false))
+  projects.subscribe(() => saved.set(false))
+  resized.subscribe(() => saved.set(false))
+  screen.subscribe(() => saved.set(false))
+  showsCache.subscribe(() => saved.set(false))
+  showsPath.subscribe(() => saved.set(false))
+  slidesOptions.subscribe(() => saved.set(false))
+  stageShows.subscribe(() => saved.set(false))
+  templateCategories.subscribe(() => saved.set(false))
+  templates.subscribe(() => saved.set(false))
+  theme.subscribe(() => saved.set(false))
+  themes.subscribe(() => saved.set(false))
+  videoExtensions.subscribe(() => saved.set(false))
+  webFavorites.subscribe(() => saved.set(false))
 }
 
 // const send = (id: "OUTPUT" | "REMOTE" | "STAGE", channel: string, data: any) => {window.api.send(id, { channel, data })}

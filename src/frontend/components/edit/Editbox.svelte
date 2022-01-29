@@ -2,7 +2,7 @@
   import { onMount } from "svelte"
 
   import type { Item } from "../../../types/Show"
-  import { activeShow, activeEdit, shows } from "../../stores"
+  import { activeShow, activeEdit, showsCache } from "../../stores"
   import { history } from "../helpers/history"
   import T from "../helpers/T.svelte"
   import Movebox from "../system/Movebox.svelte"
@@ -48,8 +48,8 @@
   }
 
   $: active = $activeShow!.id
-  $: layout = $shows[active].settings.activeLayout
-  $: slide = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
+  $: layout = $showsCache[active].settings.activeLayout
+  $: slide = $showsCache[active].layouts[layout].slides[$activeEdit.slide!].id
 
   function keydown(e: any) {
     // TODO:
@@ -58,7 +58,7 @@
 
     // TODO: exlude.....
     if (e.key === "Backspace" && $activeEdit.items.includes(index) && !document.activeElement?.closest(".item") && !document.activeElement?.closest("input")) {
-      let items: Item[] = $shows[active].slides[slide].items
+      let items: Item[] = $showsCache[active].slides[slide].items
       let newItems = [...items]
 
       newItems.splice(index, 1)
@@ -149,7 +149,7 @@
       previousHTML = html
       setTimeout(() => {
         console.log(html)
-        shows.update((a) => {
+        showsCache.update((a) => {
           let text = a[active].slides[slide].items[index].text
           let textItems = getItems(textElem.children)
           if (textItems.length) text?.forEach((a, i) => (a.value = textItems[i]))

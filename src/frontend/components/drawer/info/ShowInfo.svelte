@@ -5,13 +5,13 @@
 
   $: show = $shows[$activeShow.id]
 
-  $: created = show.timestamps.created || null
-  $: modified = show.timestamps.modified || null
-  $: used = show.timestamps.used || null
+  $: created = show?.timestamps.created || null
+  $: modified = show?.timestamps.modified || null
+  $: used = show?.timestamps.used || null
 </script>
 
-<h2 style="text-align: center" title={show.name}>
-  {#if show.name.length}
+<h2 style="text-align: center" title={show?.name}>
+  {#if show?.name.length}
     {show.name}
   {:else}
     <span style="opacity: 0.5">

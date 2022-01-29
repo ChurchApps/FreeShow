@@ -1,14 +1,16 @@
 import { Writable, writable } from "svelte/store"
+import type { ActiveEdit, DefaultProjectNames, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
+import type { Folders, Projects, ShowRef } from "../types/Projects"
+import type { Dictionary, Themes } from "../types/Settings"
+import type { ID, OutAudio, OutBackground, OutSlide, Overlays, Shows } from "../types/Show"
 import type { Event } from "./../types/Calendar"
+import type { Draw, DrawSettings, DrawTools } from "./../types/Draw"
 import type { OutTransition, Templates } from "./../types/Show"
 import type { ActiveStage, StageShows } from "./../types/Stage"
-import type { DrawTools, Draw, DrawSettings } from "./../types/Draw"
-import type { History } from "./components/helpers/history"
-import type { ActiveEdit, NumberObject, Selected, SlidesOptions, Popups, DefaultProjectNames } from "../types/Main"
 import type { Categories, DrawerTabs, SettingsTabs, TopViews } from "./../types/Tabs"
-import type { ShowRef, Folders, Projects } from "../types/Projects"
-import type { Dictionary, Themes } from "../types/Settings"
-import type { ID, Shows, Overlays, OutBackground, OutSlide, OutAudio } from "../types/Show"
+import type { History } from "./components/helpers/history"
+
+export const version: Writable<string> = writable("0.0.0")
 
 // global
 // ? export const activeFilePath: Writable<undefined | string> = writable()
@@ -19,6 +21,8 @@ export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const dictionary: Writable<Dictionary> = writable({})
+export const notFound: Writable<any> = writable({show: []})
+export const saved: Writable<boolean> = writable(true)
 
 // output
 export const outLocked: Writable<boolean> = writable(false) // false
@@ -34,21 +38,21 @@ export const remotePassword: Writable<string> = writable("test") // generate 4 n
 
 // project
 export const projectView: Writable<boolean> = writable(false)
-export const openedFolders: Writable<ID[]> = writable(["feriwp", "ffskof"]) // []
-export const activeProject: Writable<null | ID> = writable("feskof") // null
+export const openedFolders: Writable<ID[]> = writable([]) // []
+export const activeProject: Writable<null | ID> = writable(null) // null
 export const projects: Writable<Projects> = writable({
   // {default}
   fhsjoe: {
     name: "First",
     notes: "",
-    created: new Date("2021-07-25"),
+    created: new Date("2021-07-25").getTime(),
     parent: "/",
     shows: [{ id: "nåde" }, { id: "ertfgggf" }, { id: "Info" }, { id: "nåde" }, { type: "video", name: "Truth", id: "C:/movies/" }],
   },
   feskof: {
     name: "Meeting",
     notes: "",
-    created: new Date("2021-08-06"),
+    created: new Date("2021-08-06").getTime(),
     parent: "feriwp",
     shows: [{ id: "ertfgggf" }, { id: "nåde" }, { id: "gere" }],
   },
@@ -76,55 +80,62 @@ export const categories: Writable<Categories> = writable({
 
 // SHOW
 export const activeShow: Writable<null | ShowRef> = writable(null) // null
-export const shows: Writable<Shows> = writable({
-  // {default}
+export const shows: Writable<any> = writable({
   nåde: {
     name: "Nådepuls",
-    category: "song", // song/private/notes/presentation
-    settings: {
-      activeLayout: "sooffes",
-      template: null,
-    },
-    timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
-    meta: { title: "Nådepuls", artist: "test", CCLI: "CC" },
-    slides: {
-      fjeiosjfiose: {
-        group: "Verse 1",
-        color: "green",
-        settings: {
-          background: false,
-          color: "#000000",
-          // resolution: []
-          // transition: {},
-        },
-        notes: "",
-        items: [
-          {
-            style: "top: 50px; left: 100px; height: 100px; width: 40px;",
-          },
-          {
-            style: "top: 50px; left: 500px; height: 100px; width: 40px;",
-            text: [{ value: "", style: "color: blue;" }],
-          },
-          {
-            style: "",
-            text: [{ value: "Her er jeg Gud,<br>med mine byrder", style: "color: red; text-align: center;" }],
-          },
-        ],
-        stageItems: [{ style: "", text: [{ value: "  #E     C       D   Cm", style: "" }] }], // chords...
-      },
-    },
-    layouts: {
-      sooffes: {
-        name: "Standard",
-        notes: "",
-        slides: [{ id: "fjeiosjfiose", transition: { type: "none", duration: 20 }, background: "randomID", overlays: ["fsioøføjesi"], actions: [], audio: ["test.mp4"] }],
-      },
-    },
-    backgrounds: {
-      randomID: { path: "C:\\Users\\Kristoffer\\Minecraft\\Andre\\Lighting & Compositing Tips\\2.jpg", filters: "hue-rotate(100deg)" },
-    },
+    category: "song",
+    timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
   },
+})
+export const showsCache: Writable<Shows> = writable({
+  // {default}
+  // nåde: {
+  //   name: "Nådepuls",
+  //   category: "song", // song/private/notes/presentation
+  //   settings: {
+  //     activeLayout: "sooffes",
+  //     template: null,
+  //   },
+  //   timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
+  //   meta: { title: "Nådepuls", artist: "test", CCLI: "CC" },
+  //   slides: {
+  //     fjeiosjfiose: {
+  //       group: "Verse 1",
+  //       color: "green",
+  //       settings: {
+  //         background: false,
+  //         color: "#000000",
+  //         // resolution: []
+  //         // transition: {},
+  //       },
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "top: 50px; left: 100px; height: 100px; width: 40px;",
+  //         },
+  //         {
+  //           style: "top: 50px; left: 500px; height: 100px; width: 40px;",
+  //           text: [{ value: "", style: "color: blue;" }],
+  //         },
+  //         {
+  //           style: "",
+  //           text: [{ value: "Her er jeg Gud,<br>med mine byrder", style: "color: red; text-align: center;" }],
+  //         },
+  //       ],
+  //       stageItems: [{ style: "", text: [{ value: "  #E     C       D   Cm", style: "" }] }], // chords...
+  //     },
+  //   },
+  //   layouts: {
+  //     sooffes: {
+  //       name: "Standard",
+  //       notes: "",
+  //       slides: [{ id: "fjeiosjfiose", transition: { type: "none", duration: 20 }, background: "randomID", overlays: ["fsioøføjesi"], actions: [], audio: ["test.mp4"] }],
+  //     },
+  //   },
+  //   backgrounds: {
+  //     randomID: { path: "C:\\Users\\Kristoffer\\Minecraft\\Andre\\Lighting & Compositing Tips\\2.jpg", filters: "hue-rotate(100deg)" },
+  //   },
+  // },
   ertfgggf: {
     name: "Syng det ut",
     category: null,
@@ -132,7 +143,7 @@ export const shows: Writable<Shows> = writable({
       activeLayout: "fesfsef",
       template: null,
     },
-    timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
+    timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
     // stats: {timesUsed: 100}
     meta: { title: "Syng det ut", artist: "test", CCLI: "CC" },
     slides: {
@@ -219,7 +230,7 @@ export const shows: Writable<Shows> = writable({
       activeLayout: "fesfsef",
       template: null,
     },
-    timestamps: { created: new Date("2021-08-09"), modified: null, used: null },
+    timestamps: { created: new Date("2021-08-09").getTime(), modified: null, used: null },
     meta: {},
     slides: {
       fsioøføjesi: {
@@ -269,7 +280,7 @@ export const shows: Writable<Shows> = writable({
       activeLayout: "fesfsef",
       template: null,
     },
-    timestamps: { created: new Date("2021-07-25"), modified: null, used: null },
+    timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
     // stats: {timesUsed: 100}
     meta: { title: "Syng det ut", artist: "test", CCLI: "CC" },
     slides: {
@@ -567,8 +578,8 @@ export const events: Writable<{ [key: string]: Event }> = writable({
     color: "blue",
     notes: "",
     location: "",
-    from: new Date(2022, 0, 30, 11),
-    to: new Date(2022, 0, 30, 13),
+    from: new Date(2022, 0, 30, 11).getTime(),
+    to: new Date(2022, 0, 30, 13).getTime(),
     time: true,
   },
   tegr9edi: {
@@ -576,8 +587,8 @@ export const events: Writable<{ [key: string]: Event }> = writable({
     color: "yellow",
     notes: "",
     location: "",
-    from: new Date(2022, 0, 10, 20),
-    to: new Date(2022, 0, 14, 15),
+    from: new Date(2022, 0, 10, 20).getTime(),
+    to: new Date(2022, 0, 14, 15).getTime(),
     time: true,
   },
   frgjiofe: {
@@ -585,8 +596,8 @@ export const events: Writable<{ [key: string]: Event }> = writable({
     color: "pink",
     notes: "",
     location: "",
-    from: new Date(2022, 0, 17, 11, 15),
-    to: new Date(2022, 0, 17, 12, 15),
+    from: new Date(2022, 0, 17, 11, 15).getTime(),
+    to: new Date(2022, 0, 17, 12, 15).getTime(),
     time: true,
   },
   frgjioferg: {
@@ -594,8 +605,8 @@ export const events: Writable<{ [key: string]: Event }> = writable({
     color: "purple",
     notes: "",
     location: "",
-    from: new Date(2022, 0, 17, 22),
-    to: new Date(2022, 0, 17, 23, 30),
+    from: new Date(2022, 0, 17, 22).getTime(),
+    to: new Date(2022, 0, 17, 23, 30).getTime(),
     time: true,
   },
   frgjio: {
@@ -603,8 +614,8 @@ export const events: Writable<{ [key: string]: Event }> = writable({
     color: "white",
     notes: "",
     location: "",
-    from: new Date(2022, 0, 17, 9, 30),
-    to: new Date(2022, 0, 17, 10, 45),
+    from: new Date(2022, 0, 17, 9, 30).getTime(),
+    to: new Date(2022, 0, 17, 10, 45).getTime(),
     time: true,
   },
   eioshfs: {
@@ -612,18 +623,18 @@ export const events: Writable<{ [key: string]: Event }> = writable({
     color: "red",
     notes: "",
     location: "",
-    from: new Date(2022, 0, 17),
-    to: new Date(2022, 0, 17),
+    from: new Date(2022, 0, 17).getTime(),
+    to: new Date(2022, 0, 17).getTime(),
     time: false,
-    repeat: { every: [1, "day"], end: new Date(2022, 0, 21) },
+    repeat: { every: [1, "day"], end: new Date(2022, 0, 21).getTime() },
   },
   eioshfsh: {
     name: "Kveldsmøte",
     color: "cyan",
     notes: "",
     location: "",
-    from: new Date(2022, 0, 18),
-    to: new Date(2022, 0, 18),
+    from: new Date(2022, 0, 18).getTime(),
+    to: new Date(2022, 0, 18).getTime(),
     time: false,
     parent: "eioshfs",
   },
@@ -632,8 +643,8 @@ export const events: Writable<{ [key: string]: Event }> = writable({
     color: "red",
     notes: "",
     location: "",
-    from: new Date(2021, 11, 24, 17),
-    to: new Date(2021, 11, 24, 17),
+    from: new Date(2021, 11, 24, 17).getTime(),
+    to: new Date(2021, 11, 24, 17).getTime(),
     time: true,
   },
   grshgr: {
@@ -641,8 +652,8 @@ export const events: Writable<{ [key: string]: Event }> = writable({
     color: "darkblue",
     notes: "",
     location: "",
-    from: new Date(2021, 11, 31),
-    to: new Date(2021, 11, 31),
+    from: new Date(2021, 11, 31).getTime(),
+    to: new Date(2021, 11, 31).getTime(),
     time: false,
   },
 })
@@ -693,13 +704,14 @@ export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const fullColors: Writable<boolean> = writable(true) // true
 // TODO: never, last slide, first & last, always
 export const displayMetadata: Writable<string> = writable("never") // "never"
+export const showsPath: Writable<null | string> = writable("C:\\Users\\Kristoffer\\Documents\\Shows") // null
 
 // project
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"
 
 // media
-export const videoExtensions: Writable<string[]> = writable(["mp4", "mov"]) // [default]
-export const imageExtensions: Writable<string[]> = writable(["png", "jpg", "jpeg", "jfif"]) // [default]
+export const videoExtensions: Writable<string[]> = writable(["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"]) // [default]
+export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"]) // [default]
 
 // theme
 /* --primary: #333e58;
@@ -760,7 +772,6 @@ export const themes: Writable<{ [key: string]: Themes }> = writable({
       "secondary-opacity": "rgb(230 73 52 / 0.5)",
       hover: "rgb(255 255 255 / 0.05)",
       focus: "rgb(255 255 255 / 0.1)",
-      // active: "rgb(230 73 52 / 50%)",
     },
   },
   light: {
@@ -782,7 +793,6 @@ export const themes: Writable<{ [key: string]: Themes }> = writable({
       "secondary-opacity": "rgb(230 52 156 / 0.5)",
       hover: "rgb(0 0 0 / 0.05)",
       focus: "rgb(0 0 0 / 0.1)",
-      // active: "rgb(230 52 156 / 50%)",
     },
   },
   white: {
@@ -804,7 +814,6 @@ export const themes: Writable<{ [key: string]: Themes }> = writable({
       "secondary-opacity": "rgba(255, 255, 255, 0.5)",
       hover: "rgb(255 255 255 / 0.05)",
       focus: "rgb(255 255 255 / 0.1)",
-      // active: "rgb(230 52 156 / 0.8)",
     },
   },
   black: {
@@ -826,7 +835,6 @@ export const themes: Writable<{ [key: string]: Themes }> = writable({
       "secondary-opacity": "rgb(0 255 190 / 0.5)",
       hover: "rgb(255 255 255 / 0.2)",
       focus: "rgb(255 255 255 / 0.3)",
-      // active: "rgb(230 52 156 / 50%)",
     },
   },
   terminal: {
@@ -847,7 +855,6 @@ export const themes: Writable<{ [key: string]: Themes }> = writable({
       "secondary-opacity": "rgb(58 210 255 / 0.5)",
       hover: "rgb(255 255 255 / 0.2)",
       focus: "rgb(255 255 255 / 0.3)",
-      // active: "rgb(230 52 156 / 50%)",
     },
   },
 })
@@ -889,7 +896,7 @@ export const screen = writable({
 })
 
 // connection
-export const os: Writable<any> = writable({ platform: "", name: "" }) // "get"
+export const os: Writable<any> = writable({ platform: "", name: "Computer" }) // "get"
 // export const password: Writable<string> = writable("show") // "generate"
 
 // HISTORY

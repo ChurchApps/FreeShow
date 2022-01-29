@@ -1,5 +1,5 @@
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
-import { projects, activeProject, selected, activeShow, shows, videoExtensions, imageExtensions, activePage, activeDrawerTab } from "./../../stores"
+import { projects, activeProject, selected, activeShow, showsCache, videoExtensions, imageExtensions, activePage, activeDrawerTab } from "./../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
 import { HistoryIDs, history } from "./history"
 import { get } from "svelte/store"
@@ -94,7 +94,7 @@ export function ondrop(e: any, id: string) {
       break
     case "slide":
     case "slides":
-      location = { page: "show", show: get(activeShow), layout: get(shows)[get(activeShow)!.id].settings.activeLayout }
+      location = { page: "show", show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout }
       if (sel.id === "media" || sel.id === "files" || sel.id === "camera") {
         // TODO: move multiple add to possible slides
 
@@ -128,8 +128,8 @@ export function ondrop(e: any, id: string) {
         let ref: any[] = GetLayoutRef()
         let layout: any[] = GetLayout()
 
-        let slides = get(shows)[get(activeShow)!.id].slides
-        let oldLayout = get(shows)[get(activeShow)!.id].layouts[get(shows)[get(activeShow)!.id].settings.activeLayout].slides
+        let slides = get(showsCache)[get(activeShow)!.id].slides
+        let oldLayout = get(showsCache)[get(activeShow)!.id].layouts[get(showsCache)[get(activeShow)!.id].settings.activeLayout].slides
         oldData = JSON.parse(JSON.stringify({ layout: oldLayout, slides }))
 
         if (index === undefined) index = layout.length
@@ -197,7 +197,7 @@ export function ondrop(e: any, id: string) {
       } else if (sel.id === "overlay") {
         historyID = "changeLayout"
         location.layoutSlide = index
-        let oldLayout = get(shows)[get(activeShow)!.id].layouts[get(shows)[get(activeShow)!.id].settings.activeLayout].slides
+        let oldLayout = get(showsCache)[get(activeShow)!.id].layouts[get(showsCache)[get(activeShow)!.id].settings.activeLayout].slides
         let value: any[] = [...new Set([...(oldLayout[index].overlays || []), ...sel.data])]
         newData = { key: "overlays", value }
       }
@@ -219,7 +219,7 @@ export function ondrop(e: any, id: string) {
       // let selected: number[] = getIndexes(sel.data)
 
       let ref: any = GetLayoutRef()[sel.data[0].index]
-      let slides: any = get(shows)[get(activeShow)!.id].slides
+      let slides: any = get(showsCache)[get(activeShow)!.id].slides
       let slide: any = slides[ref.id]
       let name: string = slide.group || ""
       let color: null | string = slide.color

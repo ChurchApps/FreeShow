@@ -1,23 +1,15 @@
 <script lang="ts">
-  import { MAIN } from "../../../types/Channels"
-  import { activePopup, activeProject, dictionary } from "../../stores"
+  import { activePopup, activeProject, dictionary, version } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
-
   import Button from "../inputs/Button.svelte"
   import Center from "../system/Center.svelte"
-
-  let version: string = "0.0.0"
-  window.api.send(MAIN, { channel: "GET_VERSION" })
-  window.api.receive(MAIN, (data: any) => {
-    if (data.channel === "GET_VERSION") version = data.data
-  })
 </script>
 
 <Center>
   <h1>FreeShow</h1>
-  <p style="padding: 30px">v{version} (Beta)</p>
+  <p style="padding: 30px">v{$version}</p>
 
   <span class="buttons">
     <Button on:click={() => history({ id: "newProject" })} title={$dictionary.new?.project}>

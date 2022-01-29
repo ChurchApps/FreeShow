@@ -9,6 +9,7 @@
   import ChangeIcon from "./popups/ChangeIcon.svelte"
   import Rename from "./popups/Rename.svelte"
   import About from "./popups/About.svelte"
+  import Unsaved from "./popups/Unsaved.svelte"
 
   const hide = (e: any) => {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -35,6 +36,8 @@
           <Rename />
         {:else if $activePopup === "about"}
           <About />
+        {:else if $activePopup === "unsaved"}
+          <Unsaved />
         {/if}
       </div>
     </div>

@@ -22,7 +22,7 @@
       console.log(id, opened)
       if (opened) {
         let spliced = $openedFolders
-        if (spliced.indexOf(id)) {
+        if (spliced.indexOf(id) > -1) {
           spliced.splice(spliced.indexOf(id), 1)
           openedFolders.set(spliced)
         }

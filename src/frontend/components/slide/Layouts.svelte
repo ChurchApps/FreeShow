@@ -1,20 +1,21 @@
 <script lang="ts">
-  import { activeShow, shows, slidesOptions } from "../../stores"
-  import Button from "../inputs/Button.svelte"
   import { uid } from "uid"
-  import Center from "../system/Center.svelte"
-  import Icon from "../helpers/Icon.svelte"
-  import HiddenInput from "../inputs/HiddenInput.svelte"
+  import { activeShow, showsCache, slidesOptions } from "../../stores"
   import { history } from "../helpers/history"
+  import Icon from "../helpers/Icon.svelte"
+  import T from "../helpers/T.svelte"
+  import Button from "../inputs/Button.svelte"
+  import HiddenInput from "../inputs/HiddenInput.svelte"
+  import Center from "../system/Center.svelte"
 
   $: active = $activeShow!.id
-  $: layouts = $shows[active].layouts
-  $: activeLayout = $shows[active].settings.activeLayout
+  $: layouts = $showsCache[active]?.layouts
+  $: activeLayout = $showsCache[active]?.settings.activeLayout
 
   function addLayout(e: any) {
     let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
     if (e.ctrlKey) {
-      newData.layout = { ...$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout] }
+      newData.layout = { ...$showsCache[$activeShow!.id].layouts[$showsCache[$activeShow!.id].settings.activeLayout] }
     }
     history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: $activeShow! } })
   }
@@ -26,7 +27,7 @@
       {#each Object.entries(layouts) as layout}
         <Button
           on:click={() =>
-            shows.update((s) => {
+            showsCache.update((s) => {
               s[active].settings.activeLayout = layout[0]
               return s
             })}
@@ -57,7 +58,9 @@
       <p class="text">{(100 / $slidesOptions.columns).toFixed()}%</p>
     </span>
   {:else}
-    <Center faded>[[[Could not find any layouts...]]]</Center>
+    <Center faded>
+      <T id="error.no_layouts" />
+    </Center>
   {/if}
 </div>
 

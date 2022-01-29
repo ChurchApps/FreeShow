@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeProject, activeShow, categories, outBackground, outLocked, outSlide, playerVideos, projects, shows } from "../../stores"
+  import { activeProject, activeShow, categories, notFound, outBackground, outLocked, outSlide, playerVideos, projects, shows, showsCache } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import Button from "./Button.svelte"
@@ -72,7 +72,10 @@
 
   function doubleClick(e: any) {
     if (!$outLocked && !e.target.closest("input")) {
-      if (type === "show" && $shows[id]?.layouts[$shows[id].settings.activeLayout].slides.length) outSlide.set({ id, layout: $shows[id].settings.activeLayout, index: 0 })
+      console.log($showsCache, $shows, id)
+
+      if (type === "show" && $showsCache[id] && $shows[id]?.layouts[$showsCache[id].settings.activeLayout].slides.length)
+        outSlide.set({ id, layout: $shows[id].settings.activeLayout, index: 0 })
       else if (type === "image" || type === "video") {
         let out: any = { path: id, muted: show.muted || true, loop: show.loop || false, type: "media" }
         if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
@@ -89,7 +92,7 @@
 <div {id} class="main">
   <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{newName}</span> -->
   <!-- WIP padding-left: 0.8em; -->
-  <Button on:click={click} on:dblclick={doubleClick} {active} class="context {$$props.class}" {style} bold={false} border>
+  <Button on:click={click} on:dblclick={doubleClick} {active} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
     <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
       {#if iconID}
         <Icon id={iconID} {custom} />

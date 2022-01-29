@@ -3,7 +3,7 @@
   import T from "../helpers/T.svelte"
   import ContextItem from "./ContextItem.svelte"
   import { ContextMenuItem, contextMenuItems } from "./contextMenus"
-  import { activeShow, drawerTabsData, groups, selected, shows } from "../../stores"
+  import { activeShow, drawerTabsData, groups, selected, showsCache } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import { GetLayoutRef } from "../helpers/get"
 
@@ -59,7 +59,7 @@
         })
         break
       case "slide_groups":
-        let currentGroup = $shows[$activeShow!.id].slides[GetLayoutRef()[$selected.data[0].index].id].globalGroup
+        let currentGroup = $showsCache[$activeShow!.id].slides[GetLayoutRef()[$selected.data[0].index].id].globalGroup
         Object.entries($groups).forEach(([aID, a]: any) => {
           items.push([id, { id: aID, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: a.default, enabled: aID === currentGroup }])
         })

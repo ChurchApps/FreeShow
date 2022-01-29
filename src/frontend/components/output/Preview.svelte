@@ -7,18 +7,18 @@
     activePage,
     activeProject,
     activeShow,
+    dictionary,
     outAudio,
     outBackground,
     outLocked,
     outOverlays,
     outSlide,
     outTransition,
+    playerVideos,
     projects,
     screen,
-    shows,
+    showsCache,
     videoExtensions,
-    playerVideos,
-    dictionary,
   } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
@@ -47,10 +47,10 @@
       if (
         $activePage === "show" &&
         $activeShow &&
-        (!slide || e?.ctrlKey || (endOfShow && $activeShow.id !== slide?.id && $shows[$activeShow.id]?.settings.activeLayout !== slide.layout))
+        (!slide || e?.ctrlKey || (endOfShow && $activeShow.id !== slide?.id && $showsCache[$activeShow.id]?.settings.activeLayout !== slide.layout))
       ) {
         layout = GetLayout()
-        let activeLayout: string = $shows[$activeShow!.id].settings.activeLayout
+        let activeLayout: string = $showsCache[$activeShow!.id].settings.activeLayout
         if (layout.filter((a) => !a.disabled).length) {
           index = 0
           while (layout[index].disabled) index++
@@ -82,7 +82,7 @@
 
       let slide: null | OutSlide = $outSlide
       let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
-      let activeLayout: string = $shows[slide ? slide.id : $activeShow!.id].settings.activeLayout
+      let activeLayout: string = $showsCache[slide ? slide.id : $activeShow!.id].settings.activeLayout
       let index: number = slide?.index !== undefined ? slide.index - 1 : layout.length - 1
 
       if (index > -1 && layout.slice(0, index + 1).filter((a) => !a.disabled).length) {
@@ -129,7 +129,7 @@
 
     // background
     if (layout[index].background) {
-      let bg = $shows[$outSlide?.id || $activeShow!.id].backgrounds[layout[index].background!]
+      let bg = $showsCache[$outSlide?.id || $activeShow!.id].backgrounds[layout[index].background!]
       outBackground.set({ path: bg.path, muted: bg.muted !== false })
     }
 
@@ -140,7 +140,7 @@
 
     // audio
     // if (layout[index].audio) {
-    //   let a = $shows[$outSlide?.id || $activeShow!.id].audio[layout[index].audio!]
+    //   let a = $showsCache[$outSlide?.id || $activeShow!.id].audio[layout[index].audio!]
     //   outBackground.set({ path: a.path, volume: a.volume })
     // }
 
@@ -195,7 +195,7 @@
     }
   }
 
-  $: name = $outSlide ? $shows[$outSlide.id].name : "-"
+  $: name = $outSlide ? $showsCache[$outSlide.id].name : "-"
 
   let fullscreen: boolean = false
   let resolution: Resolution = $screen.resolution
@@ -242,9 +242,9 @@
   $: {
     if ($outSlide?.id) {
       length = 0
-      $shows[$outSlide.id].layouts[$outSlide.layout].slides.forEach((s: any) => {
+      $showsCache[$outSlide.id].layouts[$outSlide.layout].slides.forEach((s: any) => {
         length++
-        if ($shows[$outSlide!.id].slides[s.id].children) length += $shows[$outSlide!.id].slides[s.id].children!.length
+        if ($showsCache[$outSlide!.id].slides[s.id].children) length += $showsCache[$outSlide!.id].slides[s.id].children!.length
       })
     }
   }
@@ -414,7 +414,7 @@
     <Button
       on:click={previousSlide}
       title={$dictionary.preview?._previous_slide}
-      disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index < 1 : !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length)}
+      disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index < 1 : !GetLayout(null, $showsCache[$activeShow.id]?.settings.activeLayout || null).length)}
       center
     >
       <Icon id="previous" size={1.2} />
@@ -422,19 +422,19 @@
     <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
       <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
     </Button>
-    {#if ($activePage === "edit" && $outSlide?.index !== $activeEdit.slide) || !$outSlide || $outSlide.id !== $activeShow?.id || $outSlide.layout !== $shows[$activeShow.id].settings.activeLayout}
+    {#if ($activePage === "edit" && $outSlide?.index !== $activeEdit.slide) || !$outSlide || $outSlide.id !== $activeShow?.id || $outSlide.layout !== $showsCache[$activeShow.id].settings.activeLayout}
       <Button
         on:click={() => {
           if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null)
-            outSlide.set({ id: $activeShow.id, layout: $shows[$activeShow.id].settings.activeLayout, index: $activeEdit.slide })
+            outSlide.set({ id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: $activeEdit.slide })
           else if ($activeShow && GetLayout().length) {
-            outSlide.set({ id: $activeShow.id, layout: $shows[$activeShow.id].settings.activeLayout, index: 0 })
+            outSlide.set({ id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: 0 })
             // TODO: nextSlide(null)
           }
           // TODO: activeEdit && play media
         }}
         title={$dictionary.preview?._start}
-        disabled={$outLocked || !$activeShow || !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length}
+        disabled={$outLocked || !$activeShow || !GetLayout(null, $showsCache[$activeShow.id]?.settings.activeLayout || null).length}
         center
       >
         <Icon id="play" size={1.2} />
@@ -455,7 +455,7 @@
     <Button
       on:click={nextSlide}
       title={$dictionary.preview?._next_slide}
-      disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index + 1 >= length : !GetLayout(null, $shows[$activeShow.id]?.settings.activeLayout || null).length)}
+      disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index + 1 >= length : !GetLayout(null, $showsCache[$activeShow.id]?.settings.activeLayout || null).length)}
       center
     >
       <Icon id="next" size={1.2} />

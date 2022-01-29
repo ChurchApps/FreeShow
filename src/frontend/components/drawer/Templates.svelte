@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { activeShow, outSlide, screen, shows, templates } from "../../stores"
+  import { activeShow, outSlide, screen, showsCache, templates } from "../../stores"
   import { history } from "../helpers/history"
   import Textbox from "../slide/Textbox.svelte"
   import Zoomed from "../slide/Zoomed.svelte"
@@ -8,9 +8,9 @@
   import SelectElem from "../system/SelectElem.svelte"
   import Card from "./Card.svelte"
 
-  let resolution: Resolution = $outSlide ? $shows[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
+  let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
 
-  $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $shows[$activeShow.id].settings.template : null
+  $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id].settings.template : null
 </script>
 
 <div style="position: relative;height: 100%;">

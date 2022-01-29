@@ -76,7 +76,7 @@
 
   let filter: string = ""
   $: {
-    if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject].shows[$activeShow.index].filter) {
+    if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject].shows[$activeShow.index]?.filter) {
       let style = ""
       console.log($projects[$activeProject].shows[$activeShow.index].filter)
       Object.entries($projects[$activeProject].shows[$activeShow.index].filter!).forEach(([id, a]: any) => {

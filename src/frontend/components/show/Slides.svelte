@@ -2,27 +2,27 @@
   // import {flip} from 'svelte/animate';
   // import type { Resolution } from "../../../types/Settings"
 
-  import { shows, activeShow, slidesOptions, outSlide, activeEdit, outLocked, outBackground, outTransition, outOverlays } from "../../stores"
+  import { activeEdit, activeShow, outBackground, outLocked, outOverlays, outSlide, outTransition, showsCache, slidesOptions } from "../../stores"
   import { GetLayout } from "../helpers/get"
-  import Slide from "../slide/Slide.svelte"
-  import DropArea from "../system/DropArea.svelte"
-  import Center from "../system/Center.svelte"
-  import Autoscroll from "../system/Autoscroll.svelte"
   import T from "../helpers/T.svelte"
+  import Slide from "../slide/Slide.svelte"
+  import Autoscroll from "../system/Autoscroll.svelte"
+  import Center from "../system/Center.svelte"
+  import DropArea from "../system/DropArea.svelte"
   // import { GetLayout } from "../helpers/get"
 
   // let viewWidth: number = window.innerWidth / 3
-  // let resolution: Resolution = $shows[$activeShow!.id].settings.resolution || $screen.resolution
+  // let resolution: Resolution = $showsCache[$activeShow!.id].settings.resolution || $screen.resolution
   // let zoom = 0.15
   // console.log(elem)
 
   // = width / main padding - slide padding - extra - columns*gaps/padding / columns / resolution
   // $: zoom = (viewWidth - 20 - 0 - 0 - ($slidesOptions.columns - 1) * (10 + 0)) / $slidesOptions.columns / resolution.width
   $: id = $activeShow!.id
-  $: currentShow = $shows[$activeShow!.id]
-  $: activeLayout = $shows[$activeShow!.id].settings.activeLayout
+  $: currentShow = $showsCache[$activeShow!.id]
+  $: activeLayout = $showsCache[$activeShow!.id]?.settings.activeLayout
   // $: layoutSlides = GetLayout($activeShow!.id, activeLayout)
-  $: layoutSlides = [$shows[$activeShow!.id].layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
+  $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   let scrollElem: any
   let offset: number = -1
@@ -91,11 +91,13 @@
     on:dragover|preventDefault -->
   <DropArea id="all_slides">
     <DropArea id="slides" hoverTimeout={0} selectChildren>
-      {#if $shows[id] === undefined}
-        <Center faded>Error! Could not find show!</Center>
+      {#if $showsCache[id] === undefined}
+        <Center faded>
+          <T id="error.no_show" />
+        </Center>
       {:else}
         <div class="grid context #shows">
-          <!-- {#each Object.values($shows[id].slides) as slide, i} -->
+          <!-- {#each Object.values($showsCache[id].slides) as slide, i} -->
           {#if layoutSlides.length}
             {#each layoutSlides as slide, i}
               <Slide

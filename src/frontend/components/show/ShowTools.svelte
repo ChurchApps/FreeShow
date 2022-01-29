@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
-  import { shows, activeShow } from "../../stores"
+  import { activeShow, showsCache } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
   import Audio from "./tools/Audio.svelte"
   import Backgrounds from "./tools/Backgrounds.svelte"
@@ -23,16 +23,16 @@
   let a: any = null
   let note: string = ""
   $: {
-    if (showId && $shows[showId].settings.activeLayout !== a) {
-      note = showId ? $shows[showId]?.layouts[$shows[showId].settings.activeLayout].notes : ""
-      a = $shows[showId].settings.activeLayout
+    if (showId && $showsCache[showId]?.settings.activeLayout !== a) {
+      note = showId ? $showsCache[showId]?.layouts[$showsCache[showId].settings.activeLayout].notes : ""
+      a = $showsCache[showId]?.settings.activeLayout
     }
   }
 
   function edit(e: any) {
-    if (showId && $shows[showId].layouts[$shows[showId].settings.activeLayout].notes !== e.detail) {
-      shows.update((a) => {
-        a[showId!].layouts[$shows[showId!].settings.activeLayout].notes = e.detail
+    if (showId && $showsCache[showId].layouts[$showsCache[showId].settings.activeLayout].notes !== e.detail) {
+      showsCache.update((a) => {
+        a[showId!].layouts[$showsCache[showId!].settings.activeLayout].notes = e.detail
         return a
       })
     }
@@ -42,7 +42,7 @@
 <div class="main">
   <Tabs {tabs} bind:active />
 
-  {#if showId && $shows[showId]}
+  {#if showId && $showsCache[showId]}
     {#if active === "groups"}
       <div class="content">
         <SlideGroups />

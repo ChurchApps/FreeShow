@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
   import type { TabsObj } from "../../../types/Tabs"
-  import { activeEdit, activeShow, shows } from "../../stores"
+  import { activeEdit, activeShow, showsCache } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -21,7 +21,7 @@
   let active: string = Object.keys(tabs)[0]
 
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
-  $: allSlideItems = $activeEdit.slide !== null ? $shows[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items : []
+  $: allSlideItems = $activeEdit.slide !== null ? $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items : []
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
   // select active items or all items
   $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems

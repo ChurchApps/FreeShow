@@ -3,8 +3,8 @@ export interface Event {
   color: null | string
   notes: string
   location: string
-  from: Date
-  to: Date
+  from: number
+  to: number
   time: boolean
   repeat?: any
   parent?: string

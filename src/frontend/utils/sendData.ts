@@ -2,12 +2,11 @@ import { GetLayout } from "./../components/helpers/get"
 import type { ClientMessage } from "./../../types/Socket"
 import { REMOTE, STAGE } from "./../../types/Channels"
 import { get } from "svelte/store"
-import { shows, outSlide, stageShows, connections, remotePassword, projects, folders, activeProject } from "./../stores"
+import { showsCache, outSlide, stageShows, connections, remotePassword, projects, folders, activeProject } from "./../stores"
 
 // REMOTE
 
 function getRemote(msg: ClientMessage) {
-
   // let initialize: ClientMessage = {
   //   id: msg.id,
   //   channel: "DATA",
@@ -29,7 +28,7 @@ function getRemote(msg: ClientMessage) {
     case "PASSWORD":
       msg.data = get(remotePassword).length ? true : false
       if (!msg.data) {
-        msg = { id: msg.id, channel: "SHOWS", data: filterObjectArray(get(shows), ["name", "private", "category", "timestamps"]) }
+        msg = { id: msg.id, channel: "SHOWS", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
 
         sendData(REMOTE, { channel: "PROJECTS" })
         window.api.send(REMOTE, { channel: "FOLDERS", data: get(folders) })
@@ -38,14 +37,14 @@ function getRemote(msg: ClientMessage) {
         let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null }
         if (out.slide !== null) {
           oldOutSlide = get(outSlide)!.id
-          out.show = get(shows)[oldOutSlide]
+          out.show = get(showsCache)[oldOutSlide]
         }
         window.api.send(REMOTE, { channel: "OUT", data: out })
       }
       break
     case "ACCESS":
       if (msg.data === get(remotePassword)) {
-        msg = { id: msg.id, channel: "SHOWS", data: filterObjectArray(get(shows), ["name", "private", "category", "timestamps"]) }
+        msg = { id: msg.id, channel: "SHOWS", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
 
         sendData(REMOTE, { channel: "PROJECTS" })
         window.api.send(REMOTE, { channel: "FOLDERS", data: get(folders) })
@@ -54,7 +53,7 @@ function getRemote(msg: ClientMessage) {
         let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null }
         if (out.slide !== null) {
           oldOutSlide = get(outSlide)!.id
-          out.show = get(shows)[oldOutSlide]
+          out.show = get(showsCache)[oldOutSlide]
         }
         window.api.send(REMOTE, { channel: "OUT", data: out })
       } else msg = { id: msg.id, channel: "ERROR", data: "wrongPass" }
@@ -65,7 +64,7 @@ function getRemote(msg: ClientMessage) {
     case "SHOW":
       // msg.data = filterObjectArray(get(shows)[msg.data], [""])
       let showID: string = msg.data
-      msg.data = get(shows)[showID]
+      msg.data = get(showsCache)[showID]
       msg.data.id = showID
       if (msg.id) {
         if (!get(connections).REMOTE[msg.id]) get(connections).REMOTE[msg.id] = {}
@@ -100,7 +99,7 @@ function getRemote(msg: ClientMessage) {
         if (out && out.id !== oldOutSlide) {
           id = out.id
           oldOutSlide = id
-          msg.data.show = get(shows)[id]
+          msg.data.show = get(showsCache)[id]
           msg.data.show.id = id
         }
       }
@@ -152,8 +151,8 @@ function getStage(msg: ClientMessage) {
       msg.data = []
       if (out) {
         let layout = GetLayout(out.id, out.layout)
-        msg.data = [get(shows)[out.id].slides[layout[out.index].id]]
-        if (out.index + 1 < layout.length) msg.data.push(get(shows)[out.id].slides[layout[out.index + 1].id])
+        msg.data = [get(showsCache)[out.id].slides[layout[out.index].id]]
+        if (out.index + 1 < layout.length) msg.data.push(get(showsCache)[out.id].slides[layout[out.index + 1].id])
         else msg.data.push(null)
       }
 

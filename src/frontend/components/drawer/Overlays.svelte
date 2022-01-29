@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { outOverlays, outSlide, overlays, screen, shows } from "../../stores"
+  import { outOverlays, outSlide, overlays, screen, showsCache } from "../../stores"
   import Textbox from "../slide/Textbox.svelte"
   import Zoomed from "../slide/Zoomed.svelte"
   import DropArea from "../system/DropArea.svelte"
@@ -10,7 +10,7 @@
   // let viewWidth: number = window.innerWidth
   // let columns: number = $slidesOptions.columns
   // let columns: number = 4
-  let resolution: Resolution = $outSlide ? $shows[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
+  let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
 
   // $: zoom = (viewWidth - 20 - (columns - 1) * 10) / columns / resolution.width
   // $: ratio = slideWidth / resolution.width

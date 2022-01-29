@@ -1,39 +1,41 @@
 <script lang="ts">
-  import { activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, shows } from "./stores"
-  import { setLanguage } from "./utils/language"
-  import { startup } from "./utils/startup"
-  import { redo, undo } from "./components/helpers/history"
-  import { getStyleResolution } from "./components/slide/getStyleResolution"
+  import { onMount } from "svelte"
   import { OUTPUT } from "../types/Channels"
+  import type { Resolution } from "../types/Settings"
+  import type { TopViews } from "../types/Tabs"
+  import Calendar from "./components/calendar/Calendar.svelte"
+  import CreateCalendarShow from "./components/calendar/CreateCalendarShow.svelte"
+  import Day from "./components/calendar/Day.svelte"
+  import ContextMenu from "./components/context/ContextMenu.svelte"
+  import DrawSettings from "./components/draw/DrawSettings.svelte"
+  import DrawTools from "./components/draw/DrawTools.svelte"
+  import Slide from "./components/draw/Slide.svelte"
+  import Drawer from "./components/drawer/Drawer.svelte"
+  import MediaTools from "./components/drawer/media/MediaTools.svelte"
+  import Editor from "./components/edit/Editor.svelte"
+  import EditTools from "./components/edit/EditTools.svelte"
+  import Navigation from "./components/edit/Navigation.svelte"
+  import { redo, undo } from "./components/helpers/history"
+  import { loadShows } from "./components/helpers/setShow"
+  import MenuBar from "./components/main/MenuBar.svelte"
+  import Popup from "./components/main/Popup.svelte"
   import Top from "./components/main/Top.svelte"
+  import Output from "./components/output/Output.svelte"
+  import Preview from "./components/output/Preview.svelte"
+  import Settings from "./components/settings/Settings.svelte"
+  import SettingsTabs from "./components/settings/SettingsTabs.svelte"
   import Projects from "./components/show/Projects.svelte"
   import Show from "./components/show/Show.svelte"
-  import Editor from "./components/edit/Editor.svelte"
-  import Preview from "./components/output/Preview.svelte"
-  import Drawer from "./components/drawer/Drawer.svelte"
-  import ContextMenu from "./components/context/ContextMenu.svelte"
-  import Settings from "./components/settings/Settings.svelte"
-  import Navigation from "./components/edit/Navigation.svelte"
-  import EditTools from "./components/edit/EditTools.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
-  import Resizeable from "./components/system/Resizeable.svelte"
-  import Output from "./components/output/Output.svelte"
-  import Slide from "./components/draw/Slide.svelte"
-  import DrawTools from "./components/draw/DrawTools.svelte"
-  import DrawSettings from "./components/draw/DrawSettings.svelte"
+  import { getStyleResolution } from "./components/slide/getStyleResolution"
   import Shows from "./components/stage/Shows.svelte"
-  import StageTools from "./components/stage/StageTools.svelte"
   import StageShow from "./components/stage/StageShow.svelte"
-  import MediaTools from "./components/drawer/media/MediaTools.svelte"
-  import Popup from "./components/main/Popup.svelte"
-  import Calendar from "./components/calendar/Calendar.svelte"
-  import Day from "./components/calendar/Day.svelte"
-  import CreateCalendarShow from "./components/calendar/CreateCalendarShow.svelte"
-  import SettingsTabs from "./components/settings/SettingsTabs.svelte"
-  import type { TopViews } from "../types/Tabs"
-  import type { Resolution } from "../types/Settings"
-  import MenuBar from "./components/main/MenuBar.svelte"
-  import { onMount } from "svelte"
+  import StageTools from "./components/stage/StageTools.svelte"
+  import Resizeable from "./components/system/Resizeable.svelte"
+  import { activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, showsCache } from "./stores"
+  import { setLanguage } from "./utils/language"
+  import { save } from "./utils/save"
+  import { startup } from "./utils/startup"
 
   // CHECK IF FIRST TIME USER
   startup()
@@ -48,6 +50,9 @@
       if (e.ctrlKey) {
         let menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
         if (Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
+
+        // save
+        if (e.key === "s") save()
 
         // undo/redo
         if (!e.target.closest(".edit")) {
@@ -80,13 +85,20 @@
 
   let width: number = 0
   let height: number = 0
-  let resolution: Resolution = $outSlide ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
+  let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution! : $screen.resolution
 
   $: page = $activePage
 
   // on loaded
   onMount(() => {
     window.api.send("LOADED")
+  })
+
+  activeShow.subscribe((a) => {
+    if (a) {
+      console.log("GET SHOW CACHE: ", a)
+      loadShows([a.id])
+    }
   })
 </script>
 

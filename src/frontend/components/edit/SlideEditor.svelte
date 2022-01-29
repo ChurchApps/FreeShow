@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
 
-  import { activeShow, shows, screen, activeEdit } from "../../stores"
+  import { activeShow, showsCache, screen, activeEdit } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
   import { getStyles } from "../helpers/style"
@@ -14,7 +14,7 @@
   $: currentShow = $activeShow!.id
   // $: layoutSlides = GetLayout(currentShow)
   // TODO: overlay editor
-  $: Slide = $activeEdit.slide !== null ? $shows[currentShow].slides[GetLayout(currentShow)[$activeEdit.slide]?.id] : null
+  $: Slide = $activeEdit.slide !== null ? $showsCache[currentShow].slides[GetLayout(currentShow)[$activeEdit.slide]?.id] : null
 
   // interface Mouse {
   //   x: number
@@ -36,14 +36,14 @@
 
   let width: number = 0
   let height: number = 0
-  let resolution: Resolution = Slide ? $shows[currentShow].settings.resolution! : $screen.resolution
+  let resolution: Resolution = Slide ? $showsCache[currentShow].settings.resolution! : $screen.resolution
   // TODO: zoom more in...
 
   let ratio: number = 1
 
   $: {
     if (Object.keys(newStyles).length && active.length) {
-      let items = $shows[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
+      let items = $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
       let newData: any[] = []
       let oldData: any[] = []
       active.forEach((id) => {

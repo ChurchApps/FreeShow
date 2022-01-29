@@ -76,8 +76,17 @@
       <span></span>
     </div>
     <main>
-      <h1>FreeShow</h1>
-      <p>v0.1.0 (Beta)</p>
+      <h1 style="font-size: 3em">FreeShow</h1>
+      <p>v<span class="version">0.0.0</span></p>
     </main>
+
+    <script>
+      const { ipcRenderer } = require("electron")
+
+      ipcRenderer.send("MAIN", { channel: "VERSION" })
+      ipcRenderer.on("MAIN", (e, msg) => {
+        if (msg.channel === "VERSION" && msg.data) document.querySelector(".version").innerHTML = msg.data
+      })
+    </script>
   </body>
 </html>

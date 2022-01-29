@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { activeShow, outBackground, shows, videoExtensions } from "../../../stores"
+  import { activeShow, outBackground, showsCache, videoExtensions } from "../../../stores"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import Icon from "../../helpers/Icon.svelte"
-import T from "../../helpers/T.svelte"
+  import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import HoverButton from "../../inputs/HoverButton.svelte"
   import Center from "../../system/Center.svelte"
   import SelectElem from "../../system/SelectElem.svelte"
 
-  $: show = $shows[$activeShow!.id]
+  $: show = $showsCache[$activeShow!.id]
   let layoutBackgrounds: any[] = []
   $: {
     if (show) {
@@ -41,7 +41,7 @@ import T from "../../helpers/T.svelte"
   }
 
   function setBG(id: string, key: string, value: boolean) {
-    shows.update((a: any) => {
+    showsCache.update((a: any) => {
       let bgs = a[$activeShow!.id].backgrounds
       if (value) delete bgs[id][key]
       else bgs[id][key] = value

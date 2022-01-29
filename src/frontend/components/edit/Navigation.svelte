@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeEdit, activeShow, shows } from "../../stores"
+  import { activeEdit, activeShow, showsCache } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -11,7 +11,7 @@
     let newData: any = {}
     if ($activeEdit?.slide) newData.index = $activeEdit.slide + 1
     if (e.ctrlKey) newData.parent = true
-    history({ id: "newSlide", newData, location: { page: "edit", show: $activeShow!, layout: $shows[$activeShow!.id].settings.activeLayout } })
+    history({ id: "newSlide", newData, location: { page: "edit", show: $activeShow!, layout: $showsCache[$activeShow!.id].settings.activeLayout } })
   }
 </script>
 

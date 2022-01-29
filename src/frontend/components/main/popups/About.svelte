@@ -1,9 +1,9 @@
 <script lang="ts">
-  let version: string = "0.1.0 (Beta)"
+  import { version } from "../../../stores"
 </script>
 
 <h1>FreeShow</h1>
-<p>v{version}</p>
+<p>v{$version}</p>
 <div>Made with {"<3"} by Kristoffer Vassbø</div>
 <div>Want to report an issue; create an issue on GitHub</div>
 <div>

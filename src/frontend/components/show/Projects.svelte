@@ -4,6 +4,7 @@
   import { GetProjects } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { loadShows } from "../helpers/setShow"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
@@ -92,6 +93,15 @@
       }
     }
   }
+
+  activeProject.subscribe((a) => {
+    if (!a) projectView.set(true)
+    else {
+      console.log("GET SHOW CACHE 2")
+      loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
+      // TODO: CHECK VIDEOS
+    }
+  })
 
   // function newShow(isPrivate: boolean = false) {
   //   let id: any = "newShow"

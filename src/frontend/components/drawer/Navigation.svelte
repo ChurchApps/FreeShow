@@ -70,7 +70,7 @@
     buttons.forEach((a) => {
       length[a.id] = 0
       if (id === "shows") {
-        Object.values($shows).forEach((b) => {
+        Object.values($shows).forEach((b: any) => {
           if (!b.private) {
             if (a.id === "all" || b.category === a.id || (b.category === null && a.id === "unlabeled")) length[a.id]++
           }
@@ -153,14 +153,17 @@
     overflow-x: hidden;
   }
 
-  .main :global(button) {
+  .categories :global(button) {
     width: 100%;
     padding: 0.2em 0.8em;
     justify-content: space-between;
   }
-  .main :global(svg) {
-    margin-right: calc(0.8em - 5px);
+  .tabs :global(button) {
+    width: 100%;
   }
+  /* .main :global(svg) {
+    margin-right: calc(0.8em - 5px);
+  } */
 
   .tabs {
     display: flex;

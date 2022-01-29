@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TransitionType } from "../../../../types/Show"
-  import { activeShow, dictionary, fullColors, groupCount, groups, shows } from "../../../stores"
+  import { activeShow, dictionary, fullColors, groupCount, groups, showsCache } from "../../../stores"
   import { getContrast } from "../../helpers/color"
   import { GetLayout, GetLayoutRef } from "../../helpers/get"
   import { history } from "../../helpers/history"
@@ -11,8 +11,8 @@
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Center from "../../system/Center.svelte"
 
-  $: show = JSON.parse(JSON.stringify($shows[$activeShow!.id]))
-  $: activeLayout = $shows[$activeShow!.id].settings.activeLayout
+  $: show = JSON.parse(JSON.stringify($showsCache[$activeShow!.id]))
+  $: activeLayout = $showsCache[$activeShow!.id].settings.activeLayout
   $: slides = [GetLayout($activeShow!.id, activeLayout), show.layouts[activeLayout].slides][0]
 
   $: {
@@ -66,7 +66,7 @@
   }
 
   function toggleEnd(i: number, toggle: boolean = true) {
-    shows.update((a: any) => {
+    showsCache.update((a: any) => {
       // let ref: any[] = GetLayoutRef()
       let slides = a[$activeShow!.id].layouts[activeLayout].slides
       // remove old

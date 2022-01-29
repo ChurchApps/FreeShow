@@ -2,9 +2,11 @@
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import { ContextMenuItem, contextMenuItems } from "./contextMenus"
-  import { activeEdit, activePage, activePopup, activeProject, activeShow, drawerTabsData, projects, projectView, selected, shows } from "../../stores"
+  import { activeEdit, activePage, activePopup, activeProject, activeShow, drawerTabsData, projects, projectView, saved, selected, showsCache } from "../../stores"
   import { history } from "../helpers/history"
   import { GetLayout, GetLayoutRef } from "../helpers/get"
+  import { save } from "../../utils/save"
+  import { MAIN } from "../../../types/Channels"
 
   export let contextElem: any = null
   export let contextActive: boolean
@@ -13,8 +15,8 @@
   export let disabled: boolean = false
   let enabled: boolean = menu?.enabled ? true : false
 
-  if (id === "private" && $shows[$selected.data[0]?.id]?.private) {
-    enabled = $shows[$selected.data[0].id].private!
+  if (id === "private" && $showsCache[$selected.data[0]?.id]?.private) {
+    enabled = $showsCache[$selected.data[0].id].private!
   } else if (id === "disable") {
     if ($selected.id === "slide" && $activeShow && GetLayout()[$selected.data[0]?.index]?.disabled) {
       enabled = GetLayout()[$selected.data[0].index].disabled!
@@ -33,6 +35,9 @@
       let hide: boolean = true
 
       switch (id) {
+        case "save":
+          save()
+          break
         case "settings":
           activePage.set("settings")
           break
@@ -40,7 +45,8 @@
           activePopup.set("about")
           break
         case "quit":
-          // app.exit()
+          if ($saved) window.api.send(MAIN, { channel: "CLOSE" })
+          else activePopup.set("unsaved")
           break
         case "rename":
           if (sel.id === "slide" || sel.id === "group") {
@@ -99,9 +105,9 @@
         case "duplicate":
           if (sel.id === "show" || sel.id === "show_drawer") {
             sel.data.forEach((a: any) => {
-              let show = { ...$shows[a.id] }
+              let show = { ...$showsCache[a.id] }
               show.name += " #2"
-              show.timestamps.modified = new Date()
+              show.timestamps.modified = new Date().getTime()
               console.log(show)
               history({ id: "newShow", newData: { show }, location: { page: "show", project: sel.id === "show" ? $activeProject : null } })
             })
@@ -148,7 +154,7 @@
           }
           break
         case "private":
-          shows.update((a) => {
+          showsCache.update((a) => {
             sel.data.forEach((b: any) => {
               a[b.id].private = !enabled
             })
@@ -158,7 +164,7 @@
         // show
         case "disable":
           if (sel.id === "slide") {
-            shows.update((a) => {
+            showsCache.update((a) => {
               sel.data.forEach((b: any) => {
                 let ref = GetLayoutRef()[b.index]
                 if (ref.type === "child") a[$activeShow!.id].layouts[a[$activeShow!.id].settings.activeLayout].slides[ref.layoutIndex].children[ref.id].disabled = !enabled
@@ -167,7 +173,7 @@
               return a
             })
           } else if (sel.id === "group") {
-            shows.update((a) => {
+            showsCache.update((a) => {
               let ref = GetLayoutRef()
               ref.forEach((b: any) => {
                 sel.data.forEach((c: any) => {

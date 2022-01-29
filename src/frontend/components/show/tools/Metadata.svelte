@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { activeShow, shows } from "../../../stores"
+  import { activeShow, showsCache } from "../../../stores"
   import T from "../../helpers/T.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
   import Panel from "../../system/Panel.svelte"
 
-  $: meta = $shows[$activeShow!.id].meta
+  $: meta = $showsCache[$activeShow!.id].meta
 
   let values: any = {}
 

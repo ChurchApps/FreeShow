@@ -1,38 +1,38 @@
-import { ShowObj } from "../../classes/Show"
+import { get } from "svelte/store"
 import { uid } from "uid"
-import { GetShow } from "./get"
+import type { Slide } from "../../../types/Show"
+import { ShowObj } from "../../classes/Show"
+import { activePage, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
+import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
-  shows,
-  activeProject,
+  activeDrawerTab,
   activeEdit,
-  projects,
-  redoHistory,
-  mediaFolders,
-  projectView,
-  folders,
-  openedFolders,
-  defaultProjectName,
-  drawerTabsData,
+  activeProject,
   activeShow,
   categories,
-  stageShows,
-  overlays,
-  outOverlays,
+  defaultProjectName,
+  drawerTabsData,
   events,
-  templates,
-  themes,
+  folders,
   groups,
+  mediaFolders,
+  openedFolders,
+  outOverlays,
+  overlays,
+  projects,
+  projectView,
+  redoHistory,
+  showsCache,
+  stageShows,
+  templates,
   theme,
-  activeDrawerTab,
+  themes,
 } from "./../../stores"
-import type { ShowRef, Project, Folder } from "./../../../types/Projects"
-import { undoHistory, activePage } from "../../stores"
-import { get } from "svelte/store"
-import type { Slide } from "../../../types/Show"
-import { GetLayout, GetLayoutRef } from "./get"
-import { addToPos } from "./mover"
+import { GetLayout, GetLayoutRef, GetShow } from "./get"
 import { getGroup } from "./getGroup"
+import { addToPos } from "./mover"
+import { setShow } from "./setShow"
 
 export type HistoryPages = "drawer" | "show" | "edit" | "stage" | "settings"
 export type HistoryIDs =
@@ -120,7 +120,7 @@ export function history(obj: History, undo: null | boolean = null) {
     // style
     case "textStyle":
     case "deleteItem":
-      shows.update((s) => {
+      showsCache.update((s) => {
         console.log(obj.location!.items)
 
         obj.location!.items!.forEach((item, index) => {
@@ -139,7 +139,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "itemStyle":
     case "itemAlign":
-      shows.update((s) => {
+      showsCache.update((s) => {
         obj.location!.items!.forEach((item, index) => {
           s[obj.location!.show!.id!].slides[obj.location!.slide!].items[item][obj.id === "itemStyle" ? "style" : "align"] = obj.newData[index]
         })
@@ -156,7 +156,7 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     case "slideStyle":
-      shows.update((s) => {
+      showsCache.update((s) => {
         let slide: Slide = GetShow(obj.location?.show!).slides[obj.location?.slide!]
         slide.settings = obj.newData
         return s
@@ -171,7 +171,7 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     case "slide":
-      shows.update((a) => {
+      showsCache.update((a) => {
         a[obj.location!.show!.id].slides = obj.newData.slides
         a[obj.location!.show!.id].layouts[obj.location!.layout!].slides = obj.newData.layout
         return a
@@ -179,7 +179,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     // show
     case "changeSlide":
-      shows.update((a) => {
+      showsCache.update((a) => {
         if (!obj.oldData) obj.oldData = {}
         let slide: any = a[obj.location!.show!.id].slides[obj.location!.slide!]
         Object.entries(obj.newData).forEach(([key, value]: any) => {
@@ -218,7 +218,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
         if (obj.newData === null) {
           let name: string = ""
-          let created: Date = new Date()
+          let created: number = new Date().getTime()
           if (get(defaultProjectName) === "date") name = dateToString(created)
           project = { name, notes: "", created, parent: obj.oldData || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
           id = uid()
@@ -290,10 +290,7 @@ export function history(obj: History, undo: null | boolean = null) {
             return a
           })
         }
-        shows.update((a) => {
-          delete a[id]
-          return a
-        })
+        setShow(id, "delete")
       } else {
         let category: null | string = null
         if (get(drawerTabsData).shows.activeSubTab !== "all") category = get(drawerTabsData).shows.activeSubTab
@@ -304,10 +301,7 @@ export function history(obj: History, undo: null | boolean = null) {
           id = uid(12)
           obj.newData.id = id
         }
-        shows.update((s) => {
-          s[id] = obj.newData.show
-          return s
-        })
+        setShow(id, obj.newData.show)
 
         let as: any = { id }
         if (obj.location!.project && get(projects)[obj.location!.project!]) {
@@ -323,10 +317,7 @@ export function history(obj: History, undo: null | boolean = null) {
     case "deleteShow":
       if (undo) {
         let id: string = obj.newData.id
-        shows.update((s) => {
-          s[id] = obj.newData.show
-          return s
-        })
+        setShow(id, obj.newData.show)
 
         projects.update((a) => {
           obj.newData.projects.forEach((b: any) => {
@@ -351,14 +342,12 @@ export function history(obj: History, undo: null | boolean = null) {
           return a
         })
 
-        shows.update((a) => {
-          delete a[id]
-          return a
-        })
+        setShow(id, "delete")
       }
       break
     case "updateShow":
-      shows.update((a: any) => {
+      // TODO: showsCache
+      showsCache.update((a: any) => {
         if (!obj.oldData) obj.oldData = { key: obj.newData.key, values: [] }
         obj.location!.shows!.forEach((b, i) => {
           if (obj.newData.values[i] && !obj.oldData.values[i]) obj.oldData.values[i] = a[b.id][obj.newData.key]
@@ -386,7 +375,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "newSlide":
       // TODO: undo
-      shows.update((s) => {
+      showsCache.update((s) => {
         // TODO: add after activeEdit.index (+ children slides...)
         let layout = s[obj.location!.show!.id].layouts[obj.location!.layout!].slides
         let slides = s[obj.location!.show!.id].slides
@@ -479,7 +468,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "newItem":
       // TODO: undo
-      shows.update((s) => {
+      showsCache.update((s) => {
         let slide: Slide = s[obj.location!.show!.id].slides[obj.location!.slide!]
         if (undo) {
           slide.items = slide.items.splice(slide.items.indexOf(obj.oldData, 1))
@@ -496,7 +485,7 @@ export function history(obj: History, undo: null | boolean = null) {
       categories.update((a) => {
         if (undo) {
           a[obj.newData.id] = obj.newData.data
-          shows.update((a) => {
+          showsCache.update((a) => {
             obj.newData.shows.forEach((id: string) => {
               a[id].category = obj.newData.id
             })
@@ -505,7 +494,7 @@ export function history(obj: History, undo: null | boolean = null) {
         } else {
           obj.oldData = { id: obj.newData.id, data: a[obj.newData.id], shows: [] }
           // remove shows
-          shows.update((b) => {
+          showsCache.update((b) => {
             Object.entries(b).forEach(([id, c]: any) => {
               if (c.category === obj.newData.id) {
                 obj.oldData.shows.push(id)
@@ -542,7 +531,7 @@ export function history(obj: History, undo: null | boolean = null) {
       }
       break
     case "addLayout":
-      shows.update((a) => {
+      showsCache.update((a) => {
         if (undo) {
           delete a[obj.location!.show!.id].layouts[obj.oldData.id]
           a[obj.location!.show!.id].settings.activeLayout = obj.newData.id
@@ -556,7 +545,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
 
     case "showMedia":
-      shows.update((a) => {
+      showsCache.update((a) => {
         let id: null | string = null
         Object.entries(a[obj.location!.show!.id].backgrounds).forEach(([id, a]: any) => {
           if (a.path === obj.newData.path) id = id
@@ -583,7 +572,7 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     case "changeLayout":
-      shows.update((a) => {
+      showsCache.update((a) => {
         let ref: any[] = GetLayoutRef(obj.location!.show!.id, obj.location!.layout!)
         let index = obj.location!.layoutSlide!
         let slides = a[obj.location!.show!.id].layouts[obj.location!.layout!].slides
@@ -609,7 +598,7 @@ export function history(obj: History, undo: null | boolean = null) {
       }
       // TODO: store previous value....
       if (!obj.oldData) obj.oldData = { key: obj.newData.key }
-      shows.update((a: any) => {
+      showsCache.update((a: any) => {
         let slides = a[obj.location!.show!.id].layouts[obj.location!.layout!].slides
         slides.forEach((a: any) => {
           a = updateValue(a)
@@ -643,7 +632,7 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     case "template":
-      shows.update((a) => {
+      showsCache.update((a) => {
         if (undo) {
           a[obj.location!.show!.id].slides = obj.newData.slides
           a[obj.location!.show!.id].settings.template = obj.newData.template
