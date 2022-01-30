@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { dictionary, groupCount, groups, overlays, slidesOptions, fullColors } from "../../stores"
+  import { dictionary, groupCount, groups, overlays, slidesOptions, fullColors, groupNumbers } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
@@ -49,9 +49,10 @@
   }
 
   $: name = getGroupName(layoutSlide.id)
+  // dynamic counter
   function getGroupName(slideID: string) {
     let name = group
-    if (name) {
+    if (name && $groupNumbers) {
       // different slides with same name
       let added: any = {}
       Object.entries(show.slides).forEach(([id, a]: any) => {
@@ -125,10 +126,10 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         </Zoomed>
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {resolution.width * zoom}px;" -->
-        <div class="label" title={name || ""} style="color: {color ? getContrast(color) : 'unset'};">
+        <div class="label" title={name || ""} style="color: {$fullColors && color ? getContrast(color) : 'unset'};">
           <!-- font-size: 0.8em; -->
           <span style="position: absolute;display: contents;">{index + 1}</span>
-          <span class="text">{name || ""}</span>
+          <span class="text">{name === null ? "" : name || "—"}</span>
         </div>
       </SelectElem>
     </div>

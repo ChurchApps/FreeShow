@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
-import { SHOW, STORE } from "../../../types/Channels"
+import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
 import { notFound, shows, showsCache, showsPath } from "../../stores"
 
-export function setShow(id: string, value: "delete" | Show, update: boolean = true): Show {
+export function setShow(id: string, value: "delete" | Show): Show {
   let previousValue: Show
 
   showsCache.update((a) => {
@@ -29,23 +29,28 @@ export function setShow(id: string, value: "delete" | Show, update: boolean = tr
   console.log("SHOW UPDATED: ", id, value)
 
   // add to shows index
-  if (update) {
-    console.log("UPDATE SHOW")
-    window.api.send(STORE, { channel: "SHOW", data: { id, value: get(shows)[id] } })
-  }
+  // if (update) {
+  //   console.log("UPDATE SHOW")
+  //   window.api.send(STORE, { channel: "SHOW", data: { id, value: get(shows)[id] } })
+  // }
 
   return previousValue!
 }
 
 export function loadShows(s: string[]) {
-  console.log(s)
-
+  // return new Promise((resolve) => {
   s.forEach((id) => {
     if (!get(shows)[id]) {
       notFound.update((a) => {
         a.show.push(id)
         return a
       })
-    } else if (!get(showsCache)[id]) window.api.send(SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
+      // resolve("not_found")
+    } else if (!get(showsCache)[id]) {
+      console.log("LOAD SHOWS:", s)
+      window.api.send(SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
+      // if (i >= s.length - 1) resolve("loaded")
+    }
   })
+  // })
 }

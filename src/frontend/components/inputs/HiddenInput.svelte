@@ -61,7 +61,7 @@
     {#if value.length}
       {value}
     {:else}
-      <span style="opacity: 0.5; pointer-events: none;">{$dictionary.main.unnamed}</span>
+      <span style="opacity: 0.5; pointer-events: none;">{$dictionary.main?.unnamed}</span>
     {/if}
   </p>
 {/if}

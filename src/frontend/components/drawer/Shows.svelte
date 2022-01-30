@@ -127,7 +127,7 @@
         <Center size={1.5} faded><T id="empty.search" /></Center>
       {/if}
     {:else}
-      <Center size={1.5} faded><T id="empty.show" /></Center>
+      <Center size={1.5} faded><T id="empty.shows" /></Center>
     {/if}
   </div>
 </Autoscroll>

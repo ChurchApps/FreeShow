@@ -1,8 +1,9 @@
 import { get } from "svelte/store"
 import { MAIN, SHOW, STORE } from "../../types/Channels"
 import type { MainData } from "../../types/Socket"
-import { setShow } from "../components/helpers/setShow"
-import { notFound, os, outputWindow, shows, version } from "../stores"
+import { history } from "../components/helpers/history"
+import { loadShows, setShow } from "../components/helpers/setShow"
+import { activeShow, events, folders, notFound, os, outputWindow, overlays, pendingShowsHistory, projects, shows, stageShows, templates, themes, version } from "../stores"
 import { outputDisplay } from "./../stores"
 import { createData } from "./createData"
 import { listen } from "./messages"
@@ -14,8 +15,14 @@ export function startup() {
     window.api.send(MAIN, { channel: "OUTPUT" })
     window.api.send(MAIN, { channel: "DISPLAY" })
     window.api.send(MAIN, { channel: "VERSION" })
+    window.api.send(STORE, { channel: "SHOWS" })
+    window.api.send(STORE, { channel: "STAGE_SHOWS" })
+    window.api.send(STORE, { channel: "PROJECTS" })
+    window.api.send(STORE, { channel: "OVERLAYS" })
+    window.api.send(STORE, { channel: "TEMPLATES" })
+    window.api.send(STORE, { channel: "EVENTS" })
+    window.api.send(STORE, { channel: "THEMES" })
     window.api.send(STORE, { channel: "SETTINGS" })
-    window.api.send(STORE, { channel: "SHOW" })
   }
   window.api.receive(MAIN, (msg: MainData) => {
     if (msg.channel === "GET_OS") os.set(msg.data!)
@@ -32,7 +39,15 @@ export function startup() {
   // store
   window.api.receive(STORE, (msg: any) => {
     if (msg.channel === "SETTINGS") updateSettings(msg.data)
-    else if (msg.channel === "SHOW") shows.set(msg.data)
+    else if (msg.channel === "SHOWS") shows.set(msg.data)
+    else if (msg.channel === "STAGE_SHOWS") stageShows.set(msg.data)
+    else if (msg.channel === "PROJECTS") {
+      projects.set(msg.data.projects)
+      folders.set(msg.data.folders)
+    } else if (msg.channel === "OVERLAYS") overlays.set(msg.data)
+    else if (msg.channel === "TEMPLATES") templates.set(msg.data)
+    else if (msg.channel === "EVENTS") events.set(msg.data)
+    else if (msg.channel === "THEMES") themes.set(msg.data)
   })
 
   // show
@@ -43,14 +58,21 @@ export function startup() {
         return a
       })
     } else {
-      if (get(notFound).show?.includes(msg.id)) {
+      if (get(notFound).show.includes(msg.id)) {
         notFound.update((a) => {
           a.show.splice(a.show.indexOf(msg.id), 1)
           return a
         })
       }
 
-      setShow(msg.show[0], msg.show[1], false)
+      setShow(msg.show[0], msg.show[1])
+
+      get(pendingShowsHistory).forEach((a) => history(a))
     }
+  })
+
+  // load
+  activeShow.subscribe((a) => {
+    if (a) loadShows([a.id])
   })
 }

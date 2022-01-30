@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activePage, undoHistory } from "../../stores"
+import { activePage, pendingShowsHistory, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -32,7 +32,7 @@ import {
 import { GetLayout, GetLayoutRef, GetShow } from "./get"
 import { getGroup } from "./getGroup"
 import { addToPos } from "./mover"
-import { setShow } from "./setShow"
+import { loadShows, setShow } from "./setShow"
 
 export type HistoryPages = "drawer" | "show" | "edit" | "stage" | "settings"
 export type HistoryIDs =
@@ -100,6 +100,11 @@ export interface History {
 
 // override previous history
 const override = ["textStyle", "deleteItem", "itemStyle", "itemAlign", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme"]
+
+export function historyAwait(s: string[], obj: History) {
+  pendingShowsHistory.set([...get(pendingShowsHistory), obj])
+  loadShows(s)
+}
 
 export function history(obj: History, undo: null | boolean = null) {
   // if (undo) {
@@ -350,11 +355,19 @@ export function history(obj: History, undo: null | boolean = null) {
       showsCache.update((a: any) => {
         if (!obj.oldData) obj.oldData = { key: obj.newData.key, values: [] }
         obj.location!.shows!.forEach((b, i) => {
-          if (obj.newData.values[i] && !obj.oldData.values[i]) obj.oldData.values[i] = a[b.id][obj.newData.key]
-          a[b.id][obj.newData.key] = obj.newData.values[i] || obj.newData.values[0]
+          if (obj.newData.values[i] !== undefined && obj.oldData.values[i] === undefined) obj.oldData.values[i] = a[b.id][obj.newData.key]
+          a[b.id][obj.newData.key] = obj.newData.values[i] === undefined ? obj.newData.values[0] : obj.newData.values[i]
         })
         return a
       })
+      if (["name", "category", "timestamps", "private"].includes(obj.newData.key)) {
+        shows.update((a: any) => {
+          obj.location!.shows!.forEach((b, i) => {
+            a[b.id][obj.newData.key] = obj.newData.values[i] === undefined ? obj.newData.values[0] : obj.newData.values[i]
+          })
+          return a
+        })
+      }
       break
     case "newShowsCategory":
       categories.update((a) => {

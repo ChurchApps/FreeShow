@@ -61,6 +61,7 @@
   "empty": {
     "project_select": "Velg et prosjekt",
     "show": "Ingen show valgt",
+    "shows": "Ingen show",
     "slides": "Ingen lysbilder",
     "search": "Ingen treff",
     "backgrounds": "Ingen bakgrunner i show",
@@ -283,6 +284,8 @@
     "other": "Annet",
     "language": "Språk",
     "disable_labels": "Deaktiver etiketter",
+    "group_numbers": "Gruppenummer",
+    "full_colors": "Full lysbilde gruppefarger",
     "default_project_name": "Standard prosjektnavn",
     "resolution": "Oppløsning",
     "video_extensions": "Videoutvidelse",

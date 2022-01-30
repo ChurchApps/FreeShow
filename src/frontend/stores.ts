@@ -21,8 +21,9 @@ export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const dictionary: Writable<Dictionary> = writable({})
-export const notFound: Writable<any> = writable({show: []})
+export const notFound: Writable<any> = writable({ show: [] })
 export const saved: Writable<boolean> = writable(true)
+export const pendingShowsHistory: Writable<any[]> = writable([])
 
 // output
 export const outLocked: Writable<boolean> = writable(false) // false
@@ -81,11 +82,26 @@ export const categories: Writable<Categories> = writable({
 // SHOW
 export const activeShow: Writable<null | ShowRef> = writable(null) // null
 export const shows: Writable<any> = writable({
-  nåde: {
-    name: "Nådepuls",
-    category: "song",
-    timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
-  },
+  // nåde: {
+  //   name: "Nådepuls",
+  //   category: "song",
+  //   timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
+  // },
+  // ertfgggf: {
+  //   name: "Syng det ut",
+  //   category: "song",
+  //   timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
+  // },
+  // Info: {
+  //   name: "Info",
+  //   category: "info",
+  //   timestamps: { created: new Date("2021-08-09").getTime(), modified: null, used: null },
+  // },
+  // gere: {
+  //   name: "Test",
+  //   category: "song",
+  //   timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
+  // },
 })
 export const showsCache: Writable<Shows> = writable({
   // {default}
@@ -136,227 +152,226 @@ export const showsCache: Writable<Shows> = writable({
   //     randomID: { path: "C:\\Users\\Kristoffer\\Minecraft\\Andre\\Lighting & Compositing Tips\\2.jpg", filters: "hue-rotate(100deg)" },
   //   },
   // },
-  ertfgggf: {
-    name: "Syng det ut",
-    category: null,
-    settings: {
-      activeLayout: "fesfsef",
-      template: null,
-    },
-    timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
-    // stats: {timesUsed: 100}
-    meta: { title: "Syng det ut", artist: "test", CCLI: "CC" },
-    slides: {
-      feowo: {
-        group: "Verse 1",
-        color: "orange",
-        settings: {},
-        notes: "",
-        items: [
-          {
-            style: "top: 0px; left: 200px; height: 220px; width: 900px;",
-            align: "",
-            text: [
-              { value: "Jesus det evige navn\nSom ingen utslette ", style: "font-family: Tahoma;" },
-              { value: "kan", style: "color: red;" },
-            ],
-          },
-          {
-            style: "top: 0px; left: 10px; height: 80px; width: 300px;",
-            text: [{ value: "Impuls", style: "" }],
-          },
-        ],
-      },
-      fesfo: {
-        group: "Chorus",
-        color: "red",
-        globalGroup: "chorus",
-        settings: {},
-        children: ["fesfofes"],
-        notes: "",
-        items: [
-          {
-            style: "",
-            text: [{ value: "Andre linje", tag: "p", style: "color: red; text-align: center;" }],
-          },
-        ],
-      },
-      fesfofes: {
-        group: null,
-        color: null,
-        settings: {},
-        notes: "",
-        items: [
-          {
-            style: "",
-            text: [{ value: "Andre linje", tag: "p", style: "color: orange; text-align: center;" }],
-          },
-        ],
-      },
-      blank: {
-        group: "Blank",
-        color: null,
-        settings: {},
-        notes: "",
-        items: [],
-      },
-    },
-    layouts: {
-      fesfsef: {
-        name: "",
-        notes: "test",
-        slides: [
-          { id: "feowo" },
-          { id: "fesfo", children: { fesfofes: { disabled: true } } },
-          { id: "feowo" },
-          { id: "blank" },
-          { id: "blank", disabled: true },
-          { id: "blank" },
-          { id: "blank" },
-          { id: "blank" },
-          { id: "blank" },
-          { id: "fesfo", children: { fesfofes: {} } },
-          { id: "blank" },
-        ],
-      },
-    },
-    backgrounds: {},
-  },
-  Info: {
-    // TODO: how to tdo info/kunngjeringer... in a better way
-    name: "Info",
-    category: "info",
-    settings: {
-      activeLayout: "fesfsef",
-      template: null,
-    },
-    timestamps: { created: new Date("2021-08-09").getTime(), modified: null, used: null },
-    meta: {},
-    slides: {
-      fsioøføjesi: {
-        group: "",
-        color: null,
-        settings: {},
-        notes: "",
-        items: [
-          {
-            style: "top: 400px; left: 180px; height: 220px; width: 1500px; justify-content: center;",
-            text: [{ value: "Velkommen!", style: "font-size: 180px; font-weight: bold; font-family: Tahoma;" }],
-          },
-          {
-            style: "top: 0px; left: 10px; height: 80px; width: 300px;",
-            text: [{ value: "Impuls", style: "" }],
-          },
-        ],
-      },
-      fesfo: {
-        group: "Chorus",
-        color: null,
-        settings: {},
-        notes: "",
-        items: [
-          {
-            style: "",
-            text: [{ value: "Andre linje", tag: "p", style: "color: blue; text-align: center;" }],
-          },
-        ],
-      },
-    },
-    layouts: {
-      fesfsef: {
-        name: "",
-        notes: "",
-        slides: [{ id: "fsioøføjesi" }, { id: "fesfo" }],
-      },
-    },
-    backgrounds: {},
-  },
-
-  gere: {
-    name: "Test",
-    private: true,
-    category: null,
-    settings: {
-      activeLayout: "fesfsef",
-      template: null,
-    },
-    timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
-    // stats: {timesUsed: 100}
-    meta: { title: "Syng det ut", artist: "test", CCLI: "CC" },
-    slides: {
-      feowo: {
-        group: "Verse 1",
-        color: "orange",
-        settings: {},
-        notes: "",
-        items: [
-          {
-            style: "top: 0px; left: 200px; height: 220px; width: 900px; text-align: center;",
-            text: [
-              { value: "Privat! ", style: "font-family: Tahoma;" },
-              { value: "kan", style: "color: red;" },
-            ],
-          },
-          {
-            style: "top: 0px; left: 10px; height: 80px; width: 300px;",
-            text: [{ value: "Impuls", style: "" }],
-          },
-        ],
-      },
-      fesfo: {
-        group: "Chorus",
-        color: "red",
-        settings: {},
-        children: ["fesfofes"],
-        notes: "",
-        items: [
-          {
-            style: "",
-            text: [{ value: "Andre linje", tag: "p", style: "color: red; text-align: center;" }],
-          },
-        ],
-      },
-      fesfofes: {
-        group: null,
-        color: null,
-        settings: {},
-        notes: "",
-        items: [
-          {
-            style: "",
-            text: [{ value: "Andre linje", tag: "p", style: "color: orange; text-align: center;" }],
-          },
-        ],
-      },
-      blank: {
-        group: "Blank",
-        color: null,
-        settings: {},
-        notes: "",
-        items: [],
-      },
-    },
-    layouts: {
-      fesfsef: {
-        name: "",
-        notes: "test",
-        slides: [
-          { id: "feowo" },
-          { id: "fesfo" },
-          { id: "feowo" },
-          { id: "blank" },
-          { id: "blank" },
-          { id: "blank" },
-          { id: "blank" },
-          { id: "blank" },
-          { id: "blank" },
-          { id: "fesfo" },
-          { id: "blank" },
-        ],
-      },
-    },
-    backgrounds: {},
-  },
+  // ertfgggf: {
+  //   name: "Syng det ut",
+  //   category: null,
+  //   settings: {
+  //     activeLayout: "fesfsef",
+  //     template: null,
+  //   },
+  //   timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
+  //   // stats: {timesUsed: 100}
+  //   meta: { title: "Syng det ut", artist: "test", CCLI: "CC" },
+  //   slides: {
+  //     feowo: {
+  //       group: "Verse 1",
+  //       color: "orange",
+  //       settings: {},
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "top: 0px; left: 200px; height: 220px; width: 900px;",
+  //           align: "",
+  //           text: [
+  //             { value: "Jesus det evige navn\nSom ingen utslette ", style: "font-family: Tahoma;" },
+  //             { value: "kan", style: "color: red;" },
+  //           ],
+  //         },
+  //         {
+  //           style: "top: 0px; left: 10px; height: 80px; width: 300px;",
+  //           text: [{ value: "Impuls", style: "" }],
+  //         },
+  //       ],
+  //     },
+  //     fesfo: {
+  //       group: "Chorus",
+  //       color: "red",
+  //       globalGroup: "chorus",
+  //       settings: {},
+  //       children: ["fesfofes"],
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "",
+  //           text: [{ value: "Andre linje", tag: "p", style: "color: red; text-align: center;" }],
+  //         },
+  //       ],
+  //     },
+  //     fesfofes: {
+  //       group: null,
+  //       color: null,
+  //       settings: {},
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "",
+  //           text: [{ value: "Andre linje", tag: "p", style: "color: orange; text-align: center;" }],
+  //         },
+  //       ],
+  //     },
+  //     blank: {
+  //       group: "Blank",
+  //       color: null,
+  //       settings: {},
+  //       notes: "",
+  //       items: [],
+  //     },
+  //   },
+  //   layouts: {
+  //     fesfsef: {
+  //       name: "",
+  //       notes: "test",
+  //       slides: [
+  //         { id: "feowo" },
+  //         { id: "fesfo", children: { fesfofes: { disabled: true } } },
+  //         { id: "feowo" },
+  //         { id: "blank" },
+  //         { id: "blank", disabled: true },
+  //         { id: "blank" },
+  //         { id: "blank" },
+  //         { id: "blank" },
+  //         { id: "blank" },
+  //         { id: "fesfo", children: { fesfofes: {} } },
+  //         { id: "blank" },
+  //       ],
+  //     },
+  //   },
+  //   backgrounds: {},
+  // },
+  // Info: {
+  //   // TODO: how to tdo info/kunngjeringer... in a better way
+  //   name: "Info",
+  //   category: "info",
+  //   settings: {
+  //     activeLayout: "fesfsef",
+  //     template: null,
+  //   },
+  //   timestamps: { created: new Date("2021-08-09").getTime(), modified: null, used: null },
+  //   meta: {},
+  //   slides: {
+  //     fsioøføjesi: {
+  //       group: "",
+  //       color: null,
+  //       settings: {},
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "top: 400px; left: 180px; height: 220px; width: 1500px; justify-content: center;",
+  //           text: [{ value: "Velkommen!", style: "font-size: 180px; font-weight: bold; font-family: Tahoma;" }],
+  //         },
+  //         {
+  //           style: "top: 0px; left: 10px; height: 80px; width: 300px;",
+  //           text: [{ value: "Impuls", style: "" }],
+  //         },
+  //       ],
+  //     },
+  //     fesfo: {
+  //       group: "Chorus",
+  //       color: null,
+  //       settings: {},
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "",
+  //           text: [{ value: "Andre linje", tag: "p", style: "color: blue; text-align: center;" }],
+  //         },
+  //       ],
+  //     },
+  //   },
+  //   layouts: {
+  //     fesfsef: {
+  //       name: "",
+  //       notes: "",
+  //       slides: [{ id: "fsioøføjesi" }, { id: "fesfo" }],
+  //     },
+  //   },
+  //   backgrounds: {},
+  // },
+  // gere: {
+  //   name: "Test",
+  //   private: true,
+  //   category: null,
+  //   settings: {
+  //     activeLayout: "fesfsef",
+  //     template: null,
+  //   },
+  //   timestamps: { created: new Date("2021-07-25").getTime(), modified: null, used: null },
+  //   // stats: {timesUsed: 100}
+  //   meta: { title: "Syng det ut", artist: "test", CCLI: "CC" },
+  //   slides: {
+  //     feowo: {
+  //       group: "Verse 1",
+  //       color: "orange",
+  //       settings: {},
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "top: 0px; left: 200px; height: 220px; width: 900px; text-align: center;",
+  //           text: [
+  //             { value: "Privat! ", style: "font-family: Tahoma;" },
+  //             { value: "kan", style: "color: red;" },
+  //           ],
+  //         },
+  //         {
+  //           style: "top: 0px; left: 10px; height: 80px; width: 300px;",
+  //           text: [{ value: "Impuls", style: "" }],
+  //         },
+  //       ],
+  //     },
+  //     fesfo: {
+  //       group: "Chorus",
+  //       color: "red",
+  //       settings: {},
+  //       children: ["fesfofes"],
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "",
+  //           text: [{ value: "Andre linje", tag: "p", style: "color: red; text-align: center;" }],
+  //         },
+  //       ],
+  //     },
+  //     fesfofes: {
+  //       group: null,
+  //       color: null,
+  //       settings: {},
+  //       notes: "",
+  //       items: [
+  //         {
+  //           style: "",
+  //           text: [{ value: "Andre linje", tag: "p", style: "color: orange; text-align: center;" }],
+  //         },
+  //       ],
+  //     },
+  //     blank: {
+  //       group: "Blank",
+  //       color: null,
+  //       settings: {},
+  //       notes: "",
+  //       items: [],
+  //     },
+  //   },
+  //   layouts: {
+  //     fesfsef: {
+  //       name: "",
+  //       notes: "test",
+  //       slides: [
+  //         { id: "feowo" },
+  //         { id: "fesfo" },
+  //         { id: "feowo" },
+  //         { id: "blank" },
+  //         { id: "blank" },
+  //         { id: "blank" },
+  //         { id: "blank" },
+  //         { id: "blank" },
+  //         { id: "blank" },
+  //         { id: "fesfo" },
+  //         { id: "blank" },
+  //       ],
+  //     },
+  //   },
+  //   backgrounds: {},
+  // },
 })
 
 // DRAW
@@ -701,6 +716,7 @@ export const settingsTab: Writable<SettingsTabs> = writable("general")
 // general
 export const language: Writable<string> = writable("en") // "get"
 export const labelsDisabled: Writable<boolean> = writable(false) // false
+export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
 // TODO: never, last slide, first & last, always
 export const displayMetadata: Writable<string> = writable("never") // "never"
@@ -730,133 +746,133 @@ export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp
 --secondary: #34e64f; */
 export const theme: Writable<string> = writable("default") // "default"
 export const themes: Writable<{ [key: string]: Themes }> = writable({
-  // {default}
-  default: {
-    name: "default",
-    default: true,
-    font: {
-      family: "sans-serif",
-      size: "1em",
-    },
-    colors: {
-      primary: "#2d313b",
-      "primary-lighter": "#41444c",
-      "primary-darker": "#202129",
-      "primary-darkest": "#191923",
-      text: "#f0f0ff",
-      textInvert: "#131313",
-      "secondary-text": "#f0f0ff",
-      secondary: "#e6349c", // #d02789
-      "secondary-opacity": "rgba(230, 52, 156, 0.5)",
-      hover: "rgb(255 255 255 / 0.05)",
-      focus: "rgb(255 255 255 / 0.1)",
-      // active: "rgb(230 52 156 / 0.8)",
-    },
-  },
-  dark: {
-    name: "dark",
-    default: true,
-    font: {
-      family: "monospace",
-      size: "1.1em",
-    },
-    colors: {
-      primary: "#2d313b",
-      "primary-lighter": "#41444c",
-      "primary-darker": "#202129",
-      "primary-darkest": "#191923",
-      text: "#f0f0ff",
-      textInvert: "#131313",
-      "secondary-text": "#f0f0ff",
-      secondary: "rgb(230 73 52)",
-      "secondary-opacity": "rgb(230 73 52 / 0.5)",
-      hover: "rgb(255 255 255 / 0.05)",
-      focus: "rgb(255 255 255 / 0.1)",
-    },
-  },
-  light: {
-    name: "light",
-    default: true,
-    font: {
-      family: "sans-serif",
-      size: "1em",
-    },
-    colors: {
-      primary: "#EFF2F6",
-      "primary-lighter": "#E8E8E8",
-      "primary-darker": "#CDD0D5",
-      "primary-darkest": "#A1A4AA",
-      text: "#333748",
-      textInvert: "#f0f0ff",
-      "secondary-text": "#131313",
-      secondary: "#e6349c",
-      "secondary-opacity": "rgb(230 52 156 / 0.5)",
-      hover: "rgb(0 0 0 / 0.05)",
-      focus: "rgb(0 0 0 / 0.1)",
-    },
-  },
-  white: {
-    name: "white",
-    default: true,
-    font: {
-      family: "Trebuchet MS",
-      size: "1em",
-    },
-    colors: {
-      primary: "#2d313b",
-      "primary-lighter": "#41444c",
-      "primary-darker": "#202129",
-      "primary-darkest": "#191923",
-      text: "#f0f0ff",
-      textInvert: "#131313",
-      "secondary-text": "#ffffff",
-      secondary: "#ffffff",
-      "secondary-opacity": "rgba(255, 255, 255, 0.5)",
-      hover: "rgb(255 255 255 / 0.05)",
-      focus: "rgb(255 255 255 / 0.1)",
-    },
-  },
-  black: {
-    name: "black",
-    default: true,
-    font: {
-      family: "sans-serif",
-      size: "1em",
-    },
-    colors: {
-      primary: "#202020",
-      "primary-lighter": "#303030",
-      "primary-darker": "#101010",
-      "primary-darkest": "#000000",
-      text: "#cccccc",
-      textInvert: "#131313",
-      "secondary-text": "#eeeeee",
-      secondary: "#00ffbe",
-      "secondary-opacity": "rgb(0 255 190 / 0.5)",
-      hover: "rgb(255 255 255 / 0.2)",
-      focus: "rgb(255 255 255 / 0.3)",
-    },
-  },
-  terminal: {
-    name: "Terminal",
-    font: {
-      family: "monospace",
-      size: "1em",
-    },
-    colors: {
-      primary: "#202020",
-      "primary-lighter": "#303030",
-      "primary-darker": "#101010",
-      "primary-darkest": "#000000",
-      text: "#cccccc",
-      textInvert: "#131313",
-      "secondary-text": "#F1F1F1",
-      secondary: "#00FF00",
-      "secondary-opacity": "rgb(58 210 255 / 0.5)",
-      hover: "rgb(255 255 255 / 0.2)",
-      focus: "rgb(255 255 255 / 0.3)",
-    },
-  },
+  // // {default}
+  // default: {
+  //   name: "default",
+  //   default: true,
+  //   font: {
+  //     family: "sans-serif",
+  //     size: "1em",
+  //   },
+  //   colors: {
+  //     primary: "#2d313b",
+  //     "primary-lighter": "#41444c",
+  //     "primary-darker": "#202129",
+  //     "primary-darkest": "#191923",
+  //     text: "#f0f0ff",
+  //     textInvert: "#131313",
+  //     "secondary-text": "#f0f0ff",
+  //     secondary: "#e6349c", // #d02789
+  //     "secondary-opacity": "rgba(230, 52, 156, 0.5)",
+  //     hover: "rgb(255 255 255 / 0.05)",
+  //     focus: "rgb(255 255 255 / 0.1)",
+  //     // active: "rgb(230 52 156 / 0.8)",
+  //   },
+  // },
+  // dark: {
+  //   name: "dark",
+  //   default: true,
+  //   font: {
+  //     family: "monospace",
+  //     size: "1.1em",
+  //   },
+  //   colors: {
+  //     primary: "#2d313b",
+  //     "primary-lighter": "#41444c",
+  //     "primary-darker": "#202129",
+  //     "primary-darkest": "#191923",
+  //     text: "#f0f0ff",
+  //     textInvert: "#131313",
+  //     "secondary-text": "#f0f0ff",
+  //     secondary: "rgb(230 73 52)",
+  //     "secondary-opacity": "rgb(230 73 52 / 0.5)",
+  //     hover: "rgb(255 255 255 / 0.05)",
+  //     focus: "rgb(255 255 255 / 0.1)",
+  //   },
+  // },
+  // light: {
+  //   name: "light",
+  //   default: true,
+  //   font: {
+  //     family: "sans-serif",
+  //     size: "1em",
+  //   },
+  //   colors: {
+  //     primary: "#EFF2F6",
+  //     "primary-lighter": "#E8E8E8",
+  //     "primary-darker": "#CDD0D5",
+  //     "primary-darkest": "#A1A4AA",
+  //     text: "#333748",
+  //     textInvert: "#f0f0ff",
+  //     "secondary-text": "#131313",
+  //     secondary: "#e6349c",
+  //     "secondary-opacity": "rgb(230 52 156 / 0.5)",
+  //     hover: "rgb(0 0 0 / 0.05)",
+  //     focus: "rgb(0 0 0 / 0.1)",
+  //   },
+  // },
+  // white: {
+  //   name: "white",
+  //   default: true,
+  //   font: {
+  //     family: "Trebuchet MS",
+  //     size: "1em",
+  //   },
+  //   colors: {
+  //     primary: "#2d313b",
+  //     "primary-lighter": "#41444c",
+  //     "primary-darker": "#202129",
+  //     "primary-darkest": "#191923",
+  //     text: "#f0f0ff",
+  //     textInvert: "#131313",
+  //     "secondary-text": "#ffffff",
+  //     secondary: "#ffffff",
+  //     "secondary-opacity": "rgba(255, 255, 255, 0.5)",
+  //     hover: "rgb(255 255 255 / 0.05)",
+  //     focus: "rgb(255 255 255 / 0.1)",
+  //   },
+  // },
+  // black: {
+  //   name: "black",
+  //   default: true,
+  //   font: {
+  //     family: "sans-serif",
+  //     size: "1em",
+  //   },
+  //   colors: {
+  //     primary: "#202020",
+  //     "primary-lighter": "#303030",
+  //     "primary-darker": "#101010",
+  //     "primary-darkest": "#000000",
+  //     text: "#cccccc",
+  //     textInvert: "#131313",
+  //     "secondary-text": "#eeeeee",
+  //     secondary: "#00ffbe",
+  //     "secondary-opacity": "rgb(0 255 190 / 0.5)",
+  //     hover: "rgb(255 255 255 / 0.2)",
+  //     focus: "rgb(255 255 255 / 0.3)",
+  //   },
+  // },
+  // terminal: {
+  //   name: "Terminal",
+  //   font: {
+  //     family: "monospace",
+  //     size: "1em",
+  //   },
+  //   colors: {
+  //     primary: "#202020",
+  //     "primary-lighter": "#303030",
+  //     "primary-darker": "#101010",
+  //     "primary-darkest": "#000000",
+  //     text: "#cccccc",
+  //     textInvert: "#131313",
+  //     "secondary-text": "#F1F1F1",
+  //     secondary: "#00FF00",
+  //     "secondary-opacity": "rgb(58 210 255 / 0.5)",
+  //     hover: "rgb(255 255 255 / 0.2)",
+  //     focus: "rgb(255 255 255 / 0.3)",
+  //   },
+  // },
 })
 // TODO: custom theme, change group colors ++++
 // export const theme = writable({

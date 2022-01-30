@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
-import { audioFolders, dictionary, folders, mediaFolders, playerVideos, projects, templateCategories, templates } from "./../stores"
+import { audioFolders, dictionary, folders, mediaFolders, projects, templates } from "./../stores"
 import { save } from "./save"
 
 export function createData(paths: any) {
@@ -56,10 +56,6 @@ export function createData(paths: any) {
     }
     return a
   })
-  templateCategories.update((a) => {
-    a.song = { name: "category.song", icon: "song", default: true }
-    return a
-  })
   // TODO: translate templates
   templates.update((a) => {
     a.default = {
@@ -84,11 +80,6 @@ export function createData(paths: any) {
   })
   audioFolders.update((a) => {
     a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
-    return a
-  })
-  playerVideos.update((a) => {
-    a.oceans = { name: "Oceans - Hillsong UNITED", type: "youtube", id: "dy9nwe9_xzw" }
-    a.hosen = { name: "The Chosen Trailer", type: "youtube", id: "X-AJdKty74M" }
     return a
   })
 

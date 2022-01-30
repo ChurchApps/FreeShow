@@ -389,6 +389,7 @@
         bind:videoTime
         bind:title
       />
+      <!-- <RecordedOutput /> -->
     </div>
     <AudioMeter {video} />
     <!-- {#if $activePage === 'live'}
@@ -704,8 +705,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    border: 4px solid var(--secondary);
-    z-index: 80;
+    /* border: 4px solid var(--secondary); */
+    z-index: 90;
   }
   .resolution {
     position: absolute;

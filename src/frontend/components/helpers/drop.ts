@@ -1,7 +1,7 @@
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
 import { projects, activeProject, selected, activeShow, showsCache, videoExtensions, imageExtensions, activePage, activeDrawerTab } from "./../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
-import { HistoryIDs, history } from "./history"
+import { HistoryIDs, history, historyAwait } from "./history"
 import { get } from "svelte/store"
 import { uid } from "uid"
 
@@ -236,10 +236,13 @@ export function ondrop(e: any, id: string) {
       newData = { id: uid(), slide: { name, color, items: slide.items, category } }
       break
     case "navigation":
-      if (get(activeDrawerTab) && (sel.id === "show" || sel.id === "show_drawer")) {
-        historyID = "updateShow"
-        newData = { key: "category", values: [data] }
+      if (data !== "all" && get(activeDrawerTab) && (sel.id === "show" || sel.id === "show_drawer")) {
+        newData = { key: "category", values: [data === "unlabeled" ? null : data] }
         location = { page: sel.id === "show" ? "show" : "drawer", shows: sel.data }
+        historyAwait(
+          sel.data.map((a) => a.id),
+          { id: "updateShow", newData, location }
+        )
       }
       break
 

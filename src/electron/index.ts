@@ -7,7 +7,7 @@ import { URL } from "url"
 import { GET_SCREENS, MAIN, OPEN_FILE, OUTPUT, OPEN_FOLDER, FILE_INFO } from "../types/Channels"
 import path from "path"
 import fs from "fs"
-import { appSettings, electronSettings, shows } from "./utils/store"
+import { settings, electronSettings, shows, stageShows, projects, overlays, templates, events, themes } from "./utils/store"
 import checkForUpdates from "./utils/updater"
 // import express from express();
 // import express from "./server/connection")
@@ -53,6 +53,7 @@ const createLoading = () => {
     frame: false,
     alwaysOnTop: true,
     resizable: false,
+    icon: "public/freeshow.ico",
     webPreferences: { nodeIntegration: true, contextIsolation: false, enableRemoteModule: true },
   })
   loadingWindow.loadFile("public/loading.html")
@@ -74,6 +75,7 @@ const createWindow = () => {
     width,
     height,
     frame: false,
+    icon: "public/freeshow.ico",
     autoHideMenuBar: process.platform === "win32",
     // show: false,
     webPreferences: {
@@ -125,9 +127,6 @@ const createWindow = () => {
   })
 
   mainWindow.once("ready-to-show", () => {
-    // splash?.destroy()
-    console.log(mainWindow)
-
     // mainWindow?.show()
     createOutputWindow()
   })
@@ -170,54 +169,6 @@ app.on("web-contents-created", (e, contents) => {
     }
   })
 })
-
-// // First instantiate the class
-// const store = new Store({
-//   // We'll call our data file 'user-preferences'
-//   configName: "storage",
-//   defaults: {
-//     // 800x600 is the default size of our window
-//     windowBounds: { width: 800, height: 600 },
-//     maximized: true,
-//   },
-// })
-
-// app.on("ready", () => {
-//   let { width, height } = store.get("windowBounds")
-//   let maximized = store.get("maximized")
-
-//   // https://gist.github.com/maximilian-lindsey/a446a7ee87838a62099d
-//   // const LANserver =
-//   require("./server/connection")
-
-//   mainWindow = new BrowserWindow({
-//     width,
-//     height,
-//     webPreferences: {
-//       // preload: `${__dirname}/preload.js`
-//       preload: path.join(__dirname, "preload.js"), // use a preload script
-//       // nodeIntegration: false, // is default value after Electron v5
-//       // contextIsolation: true, // protect against prototype pollution
-//       // enableRemoteModule: false, // turn off remote
-//       sandbox: true,
-//     },
-//   })
-
-//   mainWindow.on("maximize", () => store.set("maximized", true))
-//   mainWindow.on("unmaximize", () => store.set("maximized", false))
-//   mainWindow.on("resize", () => {
-//     if (mainWindow) {
-//       var { width, height } = mainWindow.getBounds()
-//     }
-//     store.set("windowBounds", { width, height })
-//   })
-
-//   mainWindow.loadFile("./public/index.html")
-//   // mainWindow.loadFile(path.join(__dirname, "index.html"));
-//   // win.loadFile(path.join(__dirname, "dist/index.html"));
-//   mainWindow.webContents.openDevTools()
-
-//   if (maximized) mainWindow.maximize()
 
 //   // https://www.electronjs.org/docs/api/menu
 //   // const menu = new Menu();
@@ -264,96 +215,45 @@ app.on("web-contents-created", (e, contents) => {
 //   //   });
 //   // });
 
-//   // function createNewFile(content) {
-//   //   dialog
-//   //     .showSaveDialog(mainWindow, {
-//   //       title: "Create New File",
-//   //       properties: ["showOverwriteConfirmation"],
-//   //       filters: [
-//   //         {
-//   //           name: "Markdown Files",
-//   //           extensions: ["md"],
-//   //         },
-//   //       ],
-//   //     })
-//   //     .then(({ canceled, filePath }) => {
-//   //       if (canceled) return;
-
-//   //       fs.writeFile(filePath, content, err => {
-//   //         if (err) return;
-
-//   //         toApp("fileopened", {
-//   //           path: filePath,
-//   //           content
-//   //         });
-//   //       });
-//   //     });
-//   // };
-
-//   // function openFile(filters = [{ name: "All", extensions: ["*"] }]) {
-//   //   const file = dialog.showOpenDialogSync(mainWindow, {
-//   //     properties: ["openFile"],
-//   //     filters: filters,
-//   //     title: 'Ayy',
-//   //     message: 'test message'
-//   //   });
-
-//   //   if (file) {
-//   //     fs.readFile(file[0], "utf8", (err, data) => {
-//   //       if (err) return;
-
-//   //       toApp("fileopened", {
-//   //         path: file[0],
-//   //         content: data,
-//   //       });
-//   //     });
-//   //   }
-//   // };
-// })
-
-// app.on("window-all-closed", () => {
-//   app.quit()
-// })
-
 // STORE
 ipcMain.on(STORE, (e, msg) => {
   if (msg.channel === "SAVE") save(msg.data)
-  else if (msg.channel === "SETTINGS") {
-    let data: any[] = []
-    Object.entries(appSettings.store).forEach(([key, value]) => {
-      data.push({ key, value })
-    })
-    e.reply(STORE, { channel: "SETTINGS", data })
-  } else if (msg.channel === "SHOW") {
-    let data: any = {}
-    Object.entries(shows.store).forEach(([id, value]) => {
-      data[id] = value
-    })
-    e.reply(STORE, { channel: "SHOW", data })
-  }
+  else if (msg.channel === "SETTINGS") e.reply(STORE, { channel: "SETTINGS", data: settings.store })
+  else if (msg.channel === "SHOWS") e.reply(STORE, { channel: "SHOWS", data: shows.store })
+  else if (msg.channel === "STAGE_SHOWS") e.reply(STORE, { channel: "SHOW", data: stageShows.store })
+  else if (msg.channel === "PROJECTS") e.reply(STORE, { channel: "PROJECTS", data: projects.store })
+  else if (msg.channel === "OVERLAYS") e.reply(STORE, { channel: "OVERLAYS", data: overlays.store })
+  else if (msg.channel === "TEMPLATES") e.reply(STORE, { channel: "TEMPLATES", data: templates.store })
+  else if (msg.channel === "EVENTS") e.reply(STORE, { channel: "EVENTS", data: events.store })
+  else if (msg.channel === "THEMES") e.reply(STORE, { channel: "THEMES", data: themes.store })
 })
 
 // save
 function save(data: any) {
   Object.entries(data.settings).forEach(([key, value]: any) => {
-    console.log(key, JSON.stringify(appSettings.get(key)) !== JSON.stringify(value))
-
-    if (JSON.stringify(appSettings.get(key)) !== JSON.stringify(value)) appSettings.set(key, value)
+    if (JSON.stringify(settings.get(key)) !== JSON.stringify(value)) settings.set(key, value)
   })
-  Object.entries(data.shows).forEach(([id, value]: any) => {
+
+  if (JSON.stringify(shows.store) !== JSON.stringify(data.shows)) shows.set(data.shows)
+  else if (JSON.stringify(stageShows.store) !== JSON.stringify(data.stageShows)) stageShows.set(data.stageShows)
+  else if (JSON.stringify(projects.store) !== JSON.stringify(data.projects)) projects.set(data.projects)
+  else if (JSON.stringify(overlays.store) !== JSON.stringify(data.overlays)) overlays.set(data.overlays)
+  else if (JSON.stringify(templates.store) !== JSON.stringify(data.templates)) templates.set(data.templates)
+  else if (JSON.stringify(events.store) !== JSON.stringify(data.events)) events.set(data.events)
+  else if (JSON.stringify(themes.store) !== JSON.stringify(data.themes)) themes.set(data.themes)
+
+  // SHOWS
+  Object.entries(data.showsCache).forEach(([id, value]: any) => {
     let p: string = path.resolve(data.path, value.name + ".show")
-    if (JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
-      fs.writeFile(p, JSON.stringify([id, value]), (err) => {
-        console.log(err)
+    if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
+      fs.writeFile(p, JSON.stringify([id, value]), (err): void => {
+        if (err) toApp(SHOW, { error: "no_write", err, id })
       })
     }
   })
 }
 
 // SHOW
-// let getShowLocation ...
-// TODO: check for name used......
-// Oceans.json
 ipcMain.on(SHOW, (e, msg) => {
   let show: any = "{}"
   let p: string = path.resolve(msg.path, msg.name + ".show")
@@ -361,7 +261,6 @@ ipcMain.on(SHOW, (e, msg) => {
     show = JSON.parse(fs.readFileSync(p, "utf8"))
     if (show[0] === msg.id) {
       e.reply(SHOW, { id: msg.id, show })
-      // } else e.reply(SHOW, { error: "wrong_id" })
     } else e.reply(SHOW, { error: "not_found", id: msg.id, file_id: show[0] })
   } else e.reply(SHOW, { error: "not_found", id: msg.id })
 })

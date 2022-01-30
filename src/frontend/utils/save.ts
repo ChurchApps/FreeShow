@@ -12,6 +12,7 @@ import {
   folders,
   fullColors,
   groupCount,
+  groupNumbers,
   groups,
   imageExtensions,
   labelsDisabled,
@@ -28,6 +29,7 @@ import {
   resized,
   saved,
   screen,
+  shows,
   showsCache,
   showsPath,
   slidesOptions,
@@ -52,8 +54,7 @@ export function save() {
     drawer: get(drawer),
     drawerTabsData: get(drawerTabsData),
     drawSettings: get(drawSettings),
-    events: get(events),
-    folders: get(folders),
+    groupNumbers: get(groupNumbers),
     fullColors: get(fullColors),
     groupCount: get(groupCount),
     groups: get(groups),
@@ -66,23 +67,33 @@ export function save() {
     os: get(os),
     outLocked: get(outLocked),
     overlayCategories: get(overlayCategories),
-    overlays: get(overlays),
     playerVideos: get(playerVideos),
-    projects: get(projects),
     resized: get(resized),
     screen: get(screen),
     slidesOptions: get(slidesOptions),
-    stageShows: get(stageShows),
     templateCategories: get(templateCategories),
-    templates: get(templates),
     theme: get(theme),
-    themes: get(themes),
     videoExtensions: get(videoExtensions),
     webFavorites: get(webFavorites),
   }
   // save settings & shows
   // , shows: get(shows)
 
-  window.api.send(STORE, { channel: "SAVE", data: { settings, shows: get(showsCache), path: get(showsPath) } })
+  window.api.send(STORE, {
+    channel: "SAVE",
+    data: {
+      settings,
+      shows: get(shows),
+      showsCache: get(showsCache),
+      stageShows: get(stageShows),
+      projects: { projects: get(projects), folders: get(folders) },
+      overlays: get(overlays),
+      templates: get(templates),
+      events: get(events),
+      themes: get(themes),
+      path: get(showsPath),
+    },
+  })
+
   saved.set(true)
 }

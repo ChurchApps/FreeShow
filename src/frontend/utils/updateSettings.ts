@@ -8,10 +8,9 @@ import {
   drawer,
   drawerTabsData,
   drawSettings,
-  events,
-  folders,
   fullColors,
   groupCount,
+  groupNumbers,
   groups,
   imageExtensions,
   labelsDisabled,
@@ -22,142 +21,118 @@ import {
   os,
   outLocked,
   overlayCategories,
-  overlays,
   playerVideos,
-  projects,
   resized,
   saved,
   screen,
   slidesOptions,
-  stageShows,
   templateCategories,
-  templates,
   theme,
-  themes,
   videoExtensions,
   webFavorites,
 } from "./../stores"
 
 export function updateSettings(data: any[]) {
-  console.log(data)
-
-  data.forEach((a) => {
-    switch (a.key) {
+  Object.entries(data).forEach(([key, value]) => {
+    switch (key) {
       case "initialized":
-        if (!a.value) {
+        if (!value) {
           console.log("INITIALIZE")
           window.api.send(MAIN, { channel: "GET_PATHS" })
         }
         break
       case "outLocked":
-        outLocked.set(a.value)
+        outLocked.set(value)
         break
       case "openedFolders":
-        openedFolders.set(a.value)
+        openedFolders.set(value)
         break
       case "activeProject":
-        activeProject.set(a.value)
-        break
-      case "projects":
-        projects.set(a.value)
-        break
-      case "folders":
-        folders.set(a.value)
+        activeProject.set(value)
         break
       case "categories":
-        categories.set(a.value)
+        categories.set(value)
         break
       case "drawSettings":
-        drawSettings.set(a.value)
-        break
-      case "stageShows":
-        stageShows.set(a.value)
+        drawSettings.set(value)
         break
       case "overlayCategories":
-        overlayCategories.set(a.value)
-        break
-      case "overlays":
-        overlays.set(a.value)
+        overlayCategories.set(value)
         break
       case "templateCategories":
-        templateCategories.set(a.value)
-        break
-      case "templates":
-        templates.set(a.value)
+        templateCategories.set(value)
         break
       case "mediaFolders":
-        mediaFolders.set(a.value)
+        mediaFolders.set(value)
         break
       case "audioFolders":
-        audioFolders.set(a.value)
+        audioFolders.set(value)
         break
       case "webFavorites":
-        webFavorites.set(a.value)
+        webFavorites.set(value)
         break
       case "playerVideos":
-        playerVideos.set(a.value)
-        break
-      case "events":
-        events.set(a.value)
+        playerVideos.set(value)
         break
       case "resized":
-        resized.set(a.value)
+        resized.set(value)
         break
       case "slidesOptions":
-        slidesOptions.set(a.value)
+        slidesOptions.set(value)
         break
       case "mediaOptions":
-        mediaOptions.set(a.value)
+        mediaOptions.set(value)
         break
       case "drawerTabsData":
-        drawerTabsData.set(a.value)
+        drawerTabsData.set(value)
         break
       case "drawer":
-        drawer.set(a.value)
+        drawer.set(value)
         break
       case "language":
-        language.set(a.value)
+        // TODO: get device lang
+        language.set(value)
         break
       case "labelsDisabled":
-        labelsDisabled.set(a.value)
+        labelsDisabled.set(value)
+        break
+      case "groupNumbers":
+        groupNumbers.set(value)
         break
       case "fullColors":
-        fullColors.set(a.value)
+        fullColors.set(value)
         break
       case "displayMetadata":
-        displayMetadata.set(a.value)
+        displayMetadata.set(value)
         break
       case "defaultProjectName":
-        defaultProjectName.set(a.value)
+        defaultProjectName.set(value)
         break
       case "videoExtensions":
-        videoExtensions.set(a.value)
+        videoExtensions.set(value)
         break
       case "imageExtensions":
-        imageExtensions.set(a.value)
+        imageExtensions.set(value)
         break
       case "theme":
-        theme.set(a.value)
-        break
-      case "themes":
-        themes.set(a.value)
+        theme.set(value)
         break
       case "groupCount":
-        groupCount.set(a.value)
+        groupCount.set(value)
         break
       case "groups":
-        groups.set(a.value)
+        groups.set(value)
         break
       case "screen":
-        screen.set(a.value)
+        screen.set(value)
         break
       case "os":
-        if (!a.value.platform) window.api.send(MAIN, { channel: "GET_OS" })
-        os.set(a.value)
+        if (!value.platform) window.api.send(MAIN, { channel: "GET_OS" })
+        os.set(value)
         break
 
       default:
-        console.log("MISSING: ", a.key)
+        console.log("MISSING: ", key)
         break
     }
   })

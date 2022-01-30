@@ -66,6 +66,7 @@
   "empty": {
     "project_select": "Select a project",
     "show": "No show selected",
+    "shows": "No shows",
     "slides": "No slides",
     "search": "No match",
     "backgrounds": "No backgrounds in show",
@@ -288,6 +289,8 @@
     "other": "Other",
     "language": "Language",
     "disable_labels": "Disable labels",
+    "group_numbers": "Group numbers",
+    "full_colors": "Full slide group colors",
     "default_project_name": "Default project name",
     "resolution": "Resolution",
     "video_extensions": "Video extensions",

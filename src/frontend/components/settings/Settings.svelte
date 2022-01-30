@@ -4,6 +4,7 @@
     dictionary,
     displayMetadata,
     fullColors,
+    groupNumbers,
     groups,
     imageExtensions,
     labelsDisabled,
@@ -30,6 +31,7 @@
 
   const labels = (e: any) => labelsDisabled.set(e.target.checked)
   const setColors = (e: any) => fullColors.set(e.target.checked)
+  const setGroupNumber = (e: any) => groupNumbers.set(e.target.checked)
 
   const projectNames: any[] = [
     { name: "$:projectName.${date}:$", id: "date" },
@@ -97,6 +99,10 @@
         <p><T id="settings.disable_labels" /></p>
         <!-- style="width: 200px;" -->
         <Checkbox checked={$labelsDisabled} on:change={labels} />
+      </div>
+      <div>
+        <p><T id="settings.group_numbers" /></p>
+        <Checkbox checked={$groupNumbers} on:change={setGroupNumber} />
       </div>
       <div>
         <p><T id="settings.full_colors" /></p>

@@ -16,7 +16,6 @@
   import EditTools from "./components/edit/EditTools.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
   import { redo, undo } from "./components/helpers/history"
-  import { loadShows } from "./components/helpers/setShow"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
   import Top from "./components/main/Top.svelte"
@@ -92,13 +91,6 @@
   // on loaded
   onMount(() => {
     window.api.send("LOADED")
-  })
-
-  activeShow.subscribe((a) => {
-    if (a) {
-      console.log("GET SHOW CACHE: ", a)
-      loadShows([a.id])
-    }
   })
 </script>
 
