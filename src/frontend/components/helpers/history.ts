@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activePage, pendingShowsHistory, shows, undoHistory } from "../../stores"
+import { activePage, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -101,9 +101,14 @@ export interface History {
 // override previous history
 const override = ["textStyle", "deleteItem", "itemStyle", "itemAlign", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme"]
 
-export function historyAwait(s: string[], obj: History) {
-  pendingShowsHistory.set([...get(pendingShowsHistory), obj])
+export async function historyAwait(s: string[], obj: History) {
   loadShows(s)
+    .then(() => {
+      history(obj)
+    })
+    .catch((e) => {
+      console.error(e)
+    })
 }
 
 export function history(obj: History, undo: null | boolean = null) {

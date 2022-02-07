@@ -1,24 +1,20 @@
 <script lang="ts">
-  import { selectTextOnFocus } from "../helpers/inputActions"
+  import type { Bible } from "../../../types/Scripture"
   import { activeDrawerTab, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, projects } from "../../stores"
-
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
-  import Info from "./info/Info.svelte"
   import Navigation from "../drawer/Navigation.svelte"
+  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
-
+  import { selectTextOnFocus } from "../helpers/inputActions"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Resizeable from "../system/Resizeable.svelte"
-  import type { Bible } from "../../../types/Scripture"
-  import { history } from "../helpers/history"
+  import Info from "./info/Info.svelte"
 
   const minHeight = 40
-  // const maxHeight = window.innerHeight * 0.75
   let maxHeight = window.innerHeight - 50
   let defaultHeight: number = 300
-  // let height: number = defaultHeight // maxHeight / 2
   $: height = $drawer.height
 
   let move: boolean = false
@@ -32,7 +28,6 @@
         offsetY: window.innerHeight - height - e.clientY,
       }
     }
-    // console.log(e.clientY, e.target.offsetTop)
   }
   function mousemove(e: any) {
     if (mouse) {
@@ -42,7 +37,6 @@
       else if (newHeight > maxHeight) newHeight = maxHeight
       else move = true
       drawer.set({ height: newHeight, stored: null })
-      // if (newHeight >= 50 && newHeight < 500) height = newHeight
     }
   }
 
@@ -50,9 +44,7 @@
   function click(e: any) {
     if (!move && !(e?.target instanceof HTMLInputElement)) {
       if (height > minHeight) {
-        if (e === null || e?.target.classList.contains("top")) {
-          drawer.set({ height: minHeight, stored: height })
-        }
+        if (e === null || e?.target.classList.contains("top")) drawer.set({ height: minHeight, stored: height })
       } else {
         if (storeHeight === null || storeHeight < defaultHeight) height = defaultHeight
         else height = storeHeight
@@ -66,6 +58,8 @@
     if (!e.target.closest(".top")) move = false
   }
 
+  // TODO: serach for each drawer menu
+  // TODO: better search! (not seperated by comma...)
   let searchValue = ""
   $: searchValue = searchValue.endsWith(" ") ? removeWhitespace(searchValue) + " " : removeWhitespace(searchValue)
   const removeWhitespace = (v: string) =>
@@ -113,7 +107,6 @@
     }
   }
 
-  // TODO: on show get activeshow, store n bakcground
   let stored: any = null
   $: {
     if ($activeDrawerTab === "media" && ($activeShow?.type === undefined || $activeShow?.type === "show")) stored = JSON.stringify($activeShow)
@@ -128,12 +121,10 @@
 
 <!-- <Resizeable id="drawer" side="bottom" minWidth={50}> -->
 <section class="drawer" style="height: {height}px">
-  <!-- <div class="dragger" on:mousedown={mouseDown} on:click={click} /> -->
   <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click}>
     <span class="tabs">
       {#each Object.entries(drawerTabs) as tab}
         {#if $drawerTabsData[tab[0]].enabled}
-          <!-- translate(tab[1].name) -->
           <Button
             on:click={() => activeDrawerTab.set(tab[0])}
             active={$activeDrawerTab === tab[0]}
@@ -148,10 +139,7 @@
         {/if}
       {/each}
     </span>
-    <!-- TODO: expand drawer on input: -->
     <input bind:this={searchElem} class="search edit" type="text" placeholder="{$dictionary.main?.search}..." bind:value={searchValue} on:input={search} use:selectTextOnFocus />
-    <!-- placeholder="Search keywords... (Seperated by comma)" -->
-    <!-- use:blurOnEscape -->
   </div>
   <div class="content">
     <Resizeable id={"drawerNavigation"}>
@@ -164,19 +152,15 @@
   </div>
 </section>
 
-<!-- </Resizeable> -->
 <style>
   section {
     display: flex;
     flex-direction: column;
-    /* overflow-y: hidden; */
-    /* position: relative; */
     width: 100%;
     height: 100px;
     z-index: 20;
 
     background-color: var(--primary);
-    /* box-shadow: 0px -2px 4px rgb(0 0 0 / 30%); */
   }
 
   .top {
@@ -184,12 +168,10 @@
     height: 40px;
     display: flex;
     justify-content: space-between;
-    /* border-top: 4px solid var(--secondary); */
     padding-top: 4px;
   }
   .top::after {
     content: "";
-    /* background-color: var(--secondary); */
     background-color: var(--primary-lighter);
     position: absolute;
     top: 0;
@@ -202,7 +184,6 @@
     display: flex;
   }
   .top .tabs span {
-    /* font-size: 1.1em; */
     padding-left: 8px;
   }
 
@@ -210,14 +191,15 @@
     background-color: rgb(0 0 0 / 0.2);
     color: var(--text);
     /* font-family: inherit; */
-    width: 50%;
+    width: 300px;
+    /* width: 50%; */
     padding: 0 8px;
     border: none;
+    border-left: 4px solid var(--primary-darker);
   }
   .search:active,
   .search:focus {
     outline: 2px solid var(--secondary);
-    /* background-color: var(--secondary-opacity); */
   }
   .search::placeholder {
     color: inherit;
@@ -226,7 +208,6 @@
 
   .content {
     display: flex;
-    /* height: 100%; */
     height: calc(100% - 40px);
     justify-content: space-between;
   }

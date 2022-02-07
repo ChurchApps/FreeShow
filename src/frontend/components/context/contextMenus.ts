@@ -8,17 +8,23 @@ export interface ContextMenuItem {
   shortcuts?: string[]
   enabled?: boolean
 }
-// export interface ContextMenuLayout {
-//   [key: string | "SEPERATOR"]: string[] | null
-// }
 
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   // MENU
   save: { label: "actions.save", icon: "save", shortcuts: ["Ctrl+S"] },
   import: { label: "actions.import", icon: "import", items: ["txt", "media", "pptx", "ew", "pro"] },
   export_more: { label: "actions.export", icon: "export", items: ["projects", "current project", "lyrics as txt", "..."] },
+  undo: { label: "actions.undo", icon: "undo", shortcuts: ["Ctrl+Z"] },
+  redo: { label: "actions.redo", icon: "redo", shortcuts: ["Ctrl+Y"] },
+  cut: { label: "actions.cut", icon: "cut", shortcuts: ["Ctrl+X"] },
+  copy: { label: "actions.copy", icon: "copy", shortcuts: ["Ctrl+C"] },
+  paste: { label: "actions.paste", icon: "paste", shortcuts: ["Ctrl+V"] },
+  docs: { label: "main.docs", icon: "document" },
+  resetZoom: { label: "actions.resetZoom", icon: "reset" },
+  zoomIn: { label: "actions.zoomIn", icon: "zoomIn" },
+  zoomOut: { label: "actions.zoomOut", icon: "zoomOut" },
   // MAIN
-  quit: { label: "main.quit", icon: "close", shortcuts: ["Alt+F4"] },
+  quit: { label: "main.quit", icon: "close" },
   settings: { label: "menu.settings", icon: "settings" },
   about: { label: "main.about", icon: "info" },
   rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
@@ -53,7 +59,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
 export const contextMenuLayouts: { [key: string]: string[] } = {
   // MENU
   file: ["save", "import", "export_more", "SEPERATOR", "quit"],
-  about: ["about"],
+  edit: ["undo", "redo", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"],
+  view: ["resetZoom", "zoomIn", "zoomOut"],
+  help: ["docs", "about"],
   // MAIN
   default: ["settings", "about", "SEPERATOR", "quit"],
   rename: ["rename"],
@@ -97,5 +105,3 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   global_group: ["rename", "recolor"],
   // global_group: ["rename"],
 }
-
-// accelerator: process.platform === 'darwin' ? 'Alt+Cmd+I' : 'Alt+Shift+I',

@@ -33,7 +33,7 @@
 
     // if ($activeDays[0]) {
     Object.entries($events).forEach(([id, a]) => {
-      if (isBetween(a.from, a.to, copy(current))) temp.push({ id, ...a })
+      if (isBetween(new Date(a.from), new Date(a.to), copy(current))) temp.push({ id, ...a })
     })
     // }
 

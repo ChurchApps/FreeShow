@@ -5,10 +5,10 @@ export interface ClientMessage {
 }
 
 type DeviceID = string
-type ClientChannels = "CONNECTION" | "DISCONNECT" | "ERROR" | "DATA" | "PASSWORD" | "ACCESS" | "SHOWS" | "SHOW" | "SLIDES" | "PROJECTS" | "OUT"
+type ClientChannels = "CONNECTION" | "DISCONNECT" | "ERROR" | "DATA" | "PASSWORD" | "ACCESS" | "SHOWS" | "SHOWS_CACHE" | "SHOW" | "SLIDES" | "PROJECTS" | "OUT"
 
 export interface MainData {
   channel: MainChannels
   data?: any
 }
-type MainChannels = "GET_OS" | "VERSION" | "OUTPUT" | "DISPLAY" | "GET_PATHS"
+type MainChannels = "GET_OS" | "VERSION" | "OUTPUT" | "DISPLAY" | "GET_PATHS" | "MENU"

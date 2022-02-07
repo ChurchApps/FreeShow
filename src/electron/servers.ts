@@ -1,12 +1,12 @@
-import { STAGE, REMOTE } from "./../types/Channels"
-import { join } from "path"
+import { ipcMain } from "electron"
 import express, { Response } from "express"
 import http from "http"
+import { join } from "path"
 import { Server } from "socket.io"
-import { ipcMain } from "electron"
+import { REMOTE, STAGE } from "./../types/Channels"
 import { toApp } from "./index"
 
-// get
+// TODO: get
 var REMOTE_PORT: number = 5510
 var STAGE_PORT: number = 5511
 var REMOTE_MAX: number = 10
@@ -23,25 +23,14 @@ const stageServer = http.createServer(stageExpressApp)
 const ioRemote = new Server(remoteServer)
 const ioStage = new Server(stageServer)
 
-// console.log(join(__dirname, "..", "public", "build", "remote.html"))
-// console.log(join(__dirname, "..", "public", "remote.html"))
-// console.log(join(__dirname, "public", "remote.html"))
-// console.log(join(__dirname, "remote.html"))
+remoteExpressApp.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, "remote", "index.html")))
+stageExpressApp.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, "stage", "index.html")))
 
-// res.sendFile(join(__dirname, "..", "public", "build", "remote.html"))
-// res.sendFile(__dirname + "/server/remote/remote.html")
-// res.sendFile(__dirname + "/server/remote/client.js")
-// res.sendFile(__dirname + "/server/remote/styles.css")
-// res.sendFile(__dirname + '/main.js');
-// res.sendFile('../src/App.svelte');
-remoteExpressApp.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, "/remote/index.html")))
-stageExpressApp.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, "/stage/index.html")))
+remoteExpressApp.use(express.static(join(__dirname, "remote")))
+stageExpressApp.use(express.static(join(__dirname, "stage")))
 
-remoteExpressApp.use(express.static(__dirname + "/remote"))
-stageExpressApp.use(express.static(__dirname + "/stage"))
-
-remoteServer.listen(REMOTE_PORT, () => console.log("Remote on *:" + REMOTE_PORT))
-stageServer.listen(STAGE_PORT, () => console.log("Stage on *:" + STAGE_PORT))
+remoteServer.listen(REMOTE_PORT, () => console.log("Remote on:" + REMOTE_PORT))
+stageServer.listen(STAGE_PORT, () => console.log("Stage on:" + STAGE_PORT))
 
 remoteServer.once("error", (err: any) => {
   if (err.code === "EADDRINUSE") remoteServer.close()

@@ -1,5 +1,7 @@
+import { REMOTE } from "./../../types/Channels"
 import { get } from "svelte/store"
 import { derived } from "svelte/store"
+import { MAIN } from "../../types/Channels"
 import { dictionary, language } from "../stores"
 // import { dictionary, locale, _} from 'svelte-i18n';
 // const LANGUAGE_FILE_URL = './lang/{locale}.json';
@@ -33,6 +35,8 @@ function setLanguage(locale: null | string = null) {
     .then((response) => response.json())
     .then((messages) => {
       dictionary.set(messages)
+      window.api.send(MAIN, { channel: "LANGUAGE", data: { lang: locale, strings: messages } })
+      window.api.send(REMOTE, { channel: "LANGUAGE", data: { lang: locale, strings: messages } })
       // cachedLocale = locale;
       language.set(locale!)
       // console.log(messages);

@@ -1,6 +1,10 @@
 {
   "main": {
+    "welcome": "Velkommen til FreeShow!",
+    "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
+    "tips": "Finn nyttige tips og tutorials på nettsiden.",
     "quit": "Avslutt",
+    "docs": "Dokumenter",
     "about": "Om",
     "unnamed": "Uten navn",
     "drop": "Slipp her",
@@ -14,7 +18,9 @@
   },
   "titlebar": {
     "file": "Fil",
-    "about": "Om"
+    "edit": "Rediger",
+    "view": "Visning",
+    "help": "Hjelp"
   },
   "screen": {
     "width": "Bredde",
@@ -67,6 +73,21 @@
     "backgrounds": "Ingen bakgrunner i show",
     "groups": "Ingen grupper",
     "events": "Ingen arrangement"
+  },
+  "remote": {
+    "projects": "Prosjekter",
+    "project": "Prosjekt",
+    "shows": "Show",
+    "show": "Presenter",
+    "slide": "Lysbilde",
+    "lyrics": "Tekst",
+    "end": "Slutt",
+    "no_output": "Ingen utgang",
+    "remember": "Husk meg",
+    "loading": "Laster...",
+    "submit": "Send",
+    "password": "Passord",
+    "wrong_password": "Feil passord"
   },
   "error": {
     "no_show": "Kunne ikke finne noen show",
@@ -125,7 +146,10 @@
     "info": "Info",
     "presentation": "Presentasjon",
     "pictures": "Bilder",
-    "videos": "Videoer"
+    "videos": "Videoer",
+    "offers": "Offer",
+    "notice": "Merk",
+    "visuals": "Visuelt"
   },
   "groups": {
     "current": "Gjeldende",
@@ -172,7 +196,20 @@
     "delete": "Slett",
     "close": "Lukk",
     "save": "Lagre",
-    "disable": "Deaktiver"
+    "disable": "Deaktiver",
+    "undo": "Angre",
+    "redo": "Gjør om",
+    "cut": "Klipp ut",
+    "copy": "Kopier",
+    "paste": "Lim inn",
+    "pasteAndMatchStyle": "Lim inn uten formatering",
+    "selectAll": "Merk alt",
+    "speech": "Tale",
+    "startSpeaking": "Start tale",
+    "stopSpeaking": "Stopp tale",
+    "resetZoom": "Tilbakestill zoom",
+    "zoomIn": "Zoom inn",
+    "zoomOut": "Zoom ut"
   },
   "context": {
     "enabledTabs": "Vis/Skjul Faner",
@@ -286,6 +323,7 @@
     "disable_labels": "Deaktiver etiketter",
     "group_numbers": "Gruppenummer",
     "full_colors": "Full lysbilde gruppefarger",
+    "auto_output": "Vis utgangsskjerm ved oppstart",
     "default_project_name": "Standard prosjektnavn",
     "resolution": "Oppløsning",
     "video_extensions": "Videoutvidelse",

@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    autoOutput,
     defaultProjectName,
     dictionary,
     displayMetadata,
@@ -31,6 +32,7 @@
 
   const labels = (e: any) => labelsDisabled.set(e.target.checked)
   const setColors = (e: any) => fullColors.set(e.target.checked)
+  const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
   const setGroupNumber = (e: any) => groupNumbers.set(e.target.checked)
 
   const projectNames: any[] = [
@@ -107,6 +109,10 @@
       <div>
         <p><T id="settings.full_colors" /></p>
         <Checkbox checked={$fullColors} on:change={setColors} />
+      </div>
+      <div>
+        <p><T id="settings.auto_output" /></p>
+        <Checkbox checked={$autoOutput} on:change={setAutoOutput} />
       </div>
       <div>
         <p><T id="settings.display_metadata" /></p>

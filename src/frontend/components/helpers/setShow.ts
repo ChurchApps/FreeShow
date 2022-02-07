@@ -37,20 +37,40 @@ export function setShow(id: string, value: "delete" | Show): Show {
   return previousValue!
 }
 
-export function loadShows(s: string[]) {
-  // return new Promise((resolve) => {
-  s.forEach((id) => {
-    if (!get(shows)[id]) {
-      notFound.update((a) => {
-        a.show.push(id)
-        return a
-      })
-      // resolve("not_found")
-    } else if (!get(showsCache)[id]) {
-      console.log("LOAD SHOWS:", s)
-      window.api.send(SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
-      // if (i >= s.length - 1) resolve("loaded")
-    }
+export async function loadShows(s: string[]) {
+  return new Promise((resolve) => {
+    s.forEach((id) => {
+      if (!get(shows)[id]) {
+        notFound.update((a) => {
+          a.show.push(id)
+          return a
+        })
+        resolve("not_found")
+      } else if (!get(showsCache)[id]) {
+        console.log("LOAD SHOWS:", s)
+        window.api.send(SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
+
+        // RECEIVE
+        window.api.receive(SHOW, (msg: any) => {
+          if (msg.error) {
+            notFound.update((a) => {
+              a.show.push(msg.id)
+              return a
+            })
+            resolve("not_found")
+          } else {
+            if (get(notFound).show.includes(msg.id)) {
+              notFound.update((a) => {
+                a.show.splice(a.show.indexOf(msg.id), 1)
+                return a
+              })
+            }
+
+            setShow(msg.show[0], msg.show[1])
+            resolve("loaded")
+          }
+        })
+      } else resolve("already_loaded")
+    })
   })
-  // })
 }

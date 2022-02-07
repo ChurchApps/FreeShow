@@ -47,7 +47,7 @@
     }
   }
 
-  const menus: string[] = ["file", "about"]
+  const menus: string[] = ["file", "edit", "view", "help"]
 </script>
 
 <svelte:window on:click={click} on:contextmenu={click} />

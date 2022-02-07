@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
-import { MAIN, SHOW, STORE } from "../../types/Channels"
+import { MAIN, STORE } from "../../types/Channels"
 import type { MainData } from "../../types/Socket"
-import { history } from "../components/helpers/history"
-import { loadShows, setShow } from "../components/helpers/setShow"
-import { activeShow, events, folders, notFound, os, outputWindow, overlays, pendingShowsHistory, projects, shows, stageShows, templates, themes, version } from "../stores"
+import { menuClick } from "../components/context/menuClick"
+import { loadShows } from "../components/helpers/setShow"
+import { activeShow, events, folders, os, outputWindow, overlays, projects, shows, stageShows, templates, themes, version } from "../stores"
 import { outputDisplay } from "./../stores"
 import { createData } from "./createData"
 import { listen } from "./messages"
@@ -29,6 +29,7 @@ export function startup() {
     else if (msg.channel === "VERSION") version.set(msg.data)
     else if (msg.channel === "DISPLAY") outputDisplay.set(msg.data)
     else if (msg.channel === "GET_PATHS") createData(msg.data)
+    else if (msg.channel === "MENU") menuClick(msg.data)
     else if (msg.channel === "OUTPUT") {
       if (msg.data === "true") outputWindow.set(true)
       // LISTEN TO MESSAGES FROM CLIENT/ELECTRON
@@ -48,27 +49,6 @@ export function startup() {
     else if (msg.channel === "TEMPLATES") templates.set(msg.data)
     else if (msg.channel === "EVENTS") events.set(msg.data)
     else if (msg.channel === "THEMES") themes.set(msg.data)
-  })
-
-  // show
-  window.api.receive(SHOW, (msg: any) => {
-    if (msg.error) {
-      notFound.update((a) => {
-        a.show.push(msg.id)
-        return a
-      })
-    } else {
-      if (get(notFound).show.includes(msg.id)) {
-        notFound.update((a) => {
-          a.show.splice(a.show.indexOf(msg.id), 1)
-          return a
-        })
-      }
-
-      setShow(msg.show[0], msg.show[1])
-
-      get(pendingShowsHistory).forEach((a) => history(a))
-    }
   })
 
   // load

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { uid } from "uid"
   import { ShowObj } from "../../classes/Show"
-
   import { activeDays, activeProject, dictionary, events } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -23,8 +22,8 @@
         temp.push({ date: day, events: [] })
         let thisDay = new Date(day)
         Object.entries($events).forEach(([id, a]) => {
-          if (sameDay(a.from, copy(thisDay))) {
-            if (sameDay(a.to, copy(thisDay))) temp[temp.length - 1].events.push({ id, ...a })
+          if (sameDay(new Date(a.from), copy(thisDay))) {
+            if (sameDay(new Date(a.to), copy(thisDay))) temp[temp.length - 1].events.push({ id, ...a })
             else temp.push({ date: day, events: [{ id, ...a }] })
           }
           // if (isBetween(a.from, a.to, copy(thisDay))) temp[temp.length - 1].push({ id, ...a })

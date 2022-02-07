@@ -1,7 +1,5 @@
 <script lang="ts">
   import { mediaOptions } from "../../../stores"
-
-  // import { READ_FOLDER } from "../../../../types/Channels"
   import Icon from "../../helpers/Icon.svelte"
   import Card from "../Card.svelte"
   import Image from "./Image.svelte"
@@ -11,13 +9,10 @@
   export let name: string
   export let path: string
 
-  $: console.log(path, name)
-
-  // TODO: items: only get media content
-
   let files: any[] = []
   let items: number = 0
 
+  // TODO: folder preview
   // let videoExtensions: string[] = ["mp4", "mov"]
   // let imageExtensions: string[] = ["png", "jpg", "jpeg"]
   // let extensions: string[] = [...videoExtensions, ...imageExtensions]

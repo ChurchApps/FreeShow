@@ -1,5 +1,6 @@
 import { MAIN } from "../../types/Channels"
 import {
+  activePopup,
   activeProject,
   audioFolders,
   categories,
@@ -37,7 +38,7 @@ export function updateSettings(data: any[]) {
     switch (key) {
       case "initialized":
         if (!value) {
-          console.log("INITIALIZE")
+          activePopup.set("initialize")
           window.api.send(MAIN, { channel: "GET_PATHS" })
         }
         break

@@ -3,19 +3,44 @@
   import Button from "./components/Button.svelte"
   import type { TabsObj } from "../../types/Tabs"
   import Tabs from "./components/Tabs.svelte"
-  import Projects from "./components/Projects.svelte"
   import Slide from "./components/slide/Slide.svelte"
-  import { GetLayout, getSlide } from "./helpers/get"
+  import { GetLayout, getNextSlide, nextSlide } from "./helpers/get"
   import Icon from "./components/Icon.svelte"
   import Center from "./components/Center.svelte"
   import ShowButton from "./components/ShowButton.svelte"
   import { dateToString } from "./helpers/time"
   import Slides from "./components/slide/Slides.svelte"
   import Clear from "./components/slide/Clear.svelte"
+  import ProjectButton from "./components/ProjectButton.svelte"
 
-  const lang: any = {
-    error: {
-      wrongPass: "Wrong password!",
+  var dictionary: any = {
+    empty: {
+      project_select: "Select a project",
+      show: "No show selected",
+      shows: "No shows",
+      slides: "No slides",
+      search: "No match",
+      backgrounds: "No backgrounds in show",
+      groups: "No groups",
+      events: "No events",
+    },
+    remote: {
+      projects: "Projects",
+      project: "Project",
+      shows: "Shows",
+      show: "Show",
+      slide: "Slide",
+      lyrics: "Lyrics",
+      end: "End",
+      no_output: "No output",
+      remember: "Remember me",
+      loading: "Loading...",
+      submit: "Submit",
+      password: "Password",
+      wrong_password: "Wrong password",
+    },
+    clear: {
+      all: "Clear all",
     },
   }
 
@@ -32,10 +57,12 @@
   let connected: boolean = false
 
   let shows: any[] = []
+  // let showsCache: any[] = []
   // let show: null | string = null
   let activeShowID: null | string = null
   let activeShow: any = null
   let outShow: any = null
+  let outLayout: any = null
   let outSlide: any = null
   let project: null | string = null
   let projects: any[] = []
@@ -47,7 +74,7 @@
   //   if (id && show) send("SHOW", show)
   // }
 
-  // $: outShow = outSlide ? shows.find((s) => s.id === outSlide.id) : null
+  // $: outShow = outSlide ? showsCache.find((s) => s.id === outSlide.id) : null
   $: activeProject = projects.find((p) => p.id === project) || null
   $: {
     console.log(activeShowID)
@@ -85,24 +112,43 @@
     console.log(msg)
     switch (msg.channel) {
       case "PASSWORD":
-        isPassword = msg.data
+        if (msg.data.dictionary) dictionary = msg.data.dictionary
+        isPassword = msg.data.password
         break
       case "ERROR":
-        setError(lang.error[msg.data])
+        if (msg.data === "wrongPass") setError(dictionary.remote.wrong_password)
+        else setError(msg.data)
+        break
+      case "LANGUAGE":
+        Object.keys(dictionary).forEach((a) => {
+          Object.keys(dictionary).forEach((b) => {
+            if (msg.data.strings[a][b]) dictionary[a][b] = msg.data.strings[a][b]
+          })
+        })
+        break
+      case "PROJECTS":
+        projects = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
         break
       case "SHOWS":
+        // TODO: move this...
         if (remember && password.length) localStorage.password = password
         connected = true
-        shows = msg.data
+        shows = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
         break
+      // case "SHOWS_CACHE":
+      //   showsCache = msg.data
+      //   break
       case "SHOW":
         if (!activeShow) activeTab = "show"
         // if (activeTab === "shows" || activeTab === "project" || activeTab === "projects") activeTab = "show"
+        // shows[msg.data.id] = msg.data
+        // activeShow = msg.data.id
         activeShow = msg.data
         console.log(activeTab)
         break
       case "OUT":
         outSlide = msg.data.slide
+        if (msg.data.layout) outLayout = msg.data.layout
         if (outSlide === null) outShow = null
         else if (msg.data.show) {
           outShow = msg.data.show
@@ -115,13 +161,14 @@
       case "FOLDERS":
         folders = msg.data.folders
         if (!openedFolders.length) openedFolders = msg.data.opened
+        console.log(folders)
         break
       case "PROJECTS":
         if (!projects) activeTab = "projects"
         projects = msg.data
         break
       case "PROJECT":
-        if (!project) {
+        if (!project && msg.data) {
           project = msg.data
           if (!activeShow) activeTab = "project"
         }
@@ -132,25 +179,33 @@
     }
   })
 
+  // TODO: change layouts
+
   let activeTab: string = "shows"
-  let tabs: TabsObj = {
-    projects: { name: "Projects", icon: "home" },
-    project: { name: "Project", icon: "project" },
-    shows: { name: "Shows", icon: "shows" },
-    show: { name: "Show", icon: "show" },
-    slide: { name: "Slide", icon: "slide" },
-    lyrics: { name: "Lyrics", icon: "text" },
+  let tabs: TabsObj = {}
+  $: tabs = {
+    projects: { name: dictionary.remote.projects, icon: "home" },
+    project: { name: dictionary.remote.project, icon: "project" },
+    shows: { name: dictionary.remote.shows, icon: "shows" },
+    show: { name: dictionary.remote.show, icon: "show" },
+    slide: { name: dictionary.remote.slide, icon: "slide" },
+    lyrics: { name: dictionary.remote.lyrics, icon: "text" },
   }
   let transition: any = { type: "fade", duration: 500 }
 
-  $: layout = outShow ? GetLayout(outShow) : null
+  $: layout = outShow ? GetLayout(outShow, outLayout) : null
+  $: console.log(layout, outShow, outLayout)
+
   $: totalSlides = layout ? layout.length : 0
 
+  // $: filteredSlides = layout?.map((a, i) => ({...a, index: i})).filter(a => a.disabled !== true)
   function next() {
-    if (outSlide + 1 < totalSlides) send("OUT", outSlide + 1)
+    let index = nextSlide(layout, outSlide)
+    if (index !== null) send("OUT", index)
   }
   function previous() {
-    if (outSlide > 0) send("OUT", outSlide - 1)
+    let index = nextSlide(layout, outSlide, true)
+    if (index !== null) send("OUT", index)
   }
 
   let category: string = "all"
@@ -251,8 +306,7 @@
   // auto scroll
   $: {
     if (lyricsScroll && outSlide !== null && activeTab === "lyrics") {
-      let index = outSlide === 0 ? outSlide : outSlide - 1
-      let offset = lyricsScroll.children[index].offsetTop - lyricsScroll.offsetTop - 5
+      let offset = lyricsScroll.children[outSlide]?.offsetTop - lyricsScroll.offsetTop - 5
       lyricsScroll.scrollTo(0, offset)
     }
   }
@@ -272,14 +326,21 @@
   <section class="justify">
     <div class="content">
       {#if activeTab === "projects"}
-        {#if false}
-          {#if projects.length}
-            <Projects {folders} {projects} activeProject={project} bind:activeShow {openedFolders} />
-          {:else}
-            <Center faded>[[[No projects]]]</Center>
-          {/if}
+        <h2>{dictionary.remote.projects}</h2>
+        {#if projects.length}
+          <!-- <Projects {folders} {projects} activeProject={project} bind:activeShow {openedFolders} /> -->
+          {#each projects as project}
+            <ProjectButton
+              active={activeProject?.id === project.id}
+              name={project.name}
+              on:click={() => {
+                activeProject = project
+                activeTab = "project"
+              }}
+            />
+          {/each}
         {:else}
-          <Center faded>[[[WIP]]]</Center>
+          <Center faded>{dictionary.empty.project_select}</Center>
         {/if}
       {:else if activeTab === "project"}
         {#if activeProject}
@@ -299,10 +360,10 @@
               {/each}
             </div>
           {:else}
-            <Center faded>[[[No shows]]]</Center>
+            <Center faded>{dictionary.empty.shows}</Center>
           {/if}
         {:else}
-          <Center faded>[[[Select a project]]]</Center>
+          <Center faded>{dictionary.empty.project_select}</Center>
         {/if}
       {:else if activeTab === "shows"}
         {#if shows.length}
@@ -327,50 +388,54 @@
             {/each}
           </div>
           {#if searchValue.length > 1 && totalMatch === 0}
-            <Center faded>[[[No match]]]</Center>
+            <Center faded>{dictionary.empty.search}</Center>
           {/if}
         {:else}
-          <Center faded>[[[No shows! Create one in the program]]]</Center>
+          <Center faded>{dictionary.empty.shows}</Center>
         {/if}
       {:else if activeTab === "show"}
         {#if activeShow}
           <h2>{activeShow.name}</h2>
           <div bind:this={scrollElem} class="scroll" style="background-color: var(--primary-darker);scroll-behavior: smooth;">
             <Slides
+              {dictionary}
               {scrollElem}
               {outShow}
               {activeShow}
               on:click={(e) => {
-                send("OUT", { id: activeShow.id, index: e.detail })
+                // TODO: fix...
+                send("OUT", { id: activeShow.id, index: e.detail, layout: activeShow.settings.activeLayout })
                 outShow = activeShow
               }}
               {outSlide}
             />
           </div>
-          <div class="buttons" style="display: flex;width: 100%;">
-            <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-            <Button style="flex: 1;" on:click={previous} disabled={outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
-            <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outSlide + 1}/{totalSlides}</span>
-            <Button style="flex: 1;" on:click={next} disabled={outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
-            <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
-          </div>
+          {#if outSlide}
+            <div class="buttons" style="display: flex;width: 100%;">
+              <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
+              <Button style="flex: 1;" on:click={previous} disabled={outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
+              <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outSlide + 1}/{totalSlides}</span>
+              <Button style="flex: 1;" on:click={next} disabled={outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
+              <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
+            </div>
+          {/if}
           <!-- TODO: change layout -->
         {:else}
-          <Center faded>[[[No show selected]]]</Center>
+          <Center faded>{dictionary.empty.show}</Center>
         {/if}
       {:else if activeTab === "slide"}
         {#if outShow}
           <h2>{outShow.name}</h2>
           <div on:click={click} class="outSlides">
-            <Slide {outShow} {outSlide} {transition} />
-            {#if getSlide(outShow, outSlide + 1)}
-              <Slide {outShow} outSlide={outSlide + 1} {transition} />
+            <Slide {outShow} {outSlide} {outLayout} {transition} />
+            {#if nextSlide(layout, outSlide) && getNextSlide(outShow, outSlide, outLayout)}
+              <Slide {outShow} outSlide={nextSlide(layout, outSlide)} {outLayout} {transition} />
             {:else}
-              <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;">[[[End]]]</div>
+              <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;">{dictionary.remote.end}</div>
             {/if}
           </div>
           <div class="buttons">
-            <Clear {outSlide} on:click={(e) => send(e.detail.id, e.detail.value)} />
+            <Clear {dictionary} {outSlide} on:click={(e) => send(e.detail.id, e.detail.value)} />
           </div>
           <div class="buttons" style="display: flex;width: 100%;">
             <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
@@ -380,28 +445,32 @@
             <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
           </div>
         {:else}
-          <Center faded>[[[No output]]]</Center>
+          <Center faded>{dictionary.remote.no_output}</Center>
         {/if}
       {:else if activeTab === "lyrics"}
         {#if outShow}
           <h2>{outShow.name}</h2>
           <div on:click={click} bind:this={lyricsScroll} class="lyrics">
-            {#each GetLayout(outShow) as layoutSlide, i}
-              <span style="padding: 5px;{outSlide === i ? 'background-color: var(--secondary);color: var(--secondary-text);' : ''}">
-                <span class="label" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
-                  <span style="left: 0;position: absolute;">{i + 1}</span>
-                  <span>{outShow.slides[layoutSlide.id].label || ""}</span>
+            {#each GetLayout(outShow, outLayout) as layoutSlide, i}
+              {#if !layoutSlide.disabled}
+                <span style="padding: 5px;{outSlide === i ? 'background-color: var(--secondary);color: var(--secondary-text);' : ''}">
+                  <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
+                    <span style="left: 0;position: absolute;">{i + 1}</span>
+                    <span>{outShow.slides[layoutSlide.id].group === null ? "" : outShow.slides[layoutSlide.id].group || "—"}</span>
+                  </span>
+                  {#each outShow.slides[layoutSlide.id].items as item}
+                    {#if item.text}
+                      <div class="lyric">
+                        {#each item.text as text}
+                          <span>{@html text.value}</span>
+                        {/each}
+                      </div>
+                    {:else}
+                      <span style="opacity: 0.5;">—</span>
+                    {/if}
+                  {/each}
                 </span>
-                {#each outShow.slides[layoutSlide.id].items as item}
-                  {#if item.text}
-                    <div class="lyric">
-                      {#each item.text as text}
-                        <span>{text.value}</span>
-                      {/each}
-                    </div>
-                  {/if}
-                {/each}
-              </span>
+              {/if}
             {/each}
           </div>
           <div class="buttons" style="display: flex;width: 100%;">
@@ -412,7 +481,7 @@
             <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
           </div>
         {:else}
-          <Center faded>[[[No output]]]</Center>
+          <Center faded>{dictionary.remote.no_output}</Center>
         {/if}
       {/if}
     </div>
@@ -426,21 +495,44 @@
         class="input"
         style="text-align: center;"
         type="password"
-        placeholder="Password"
+        placeholder={dictionary.remote.password}
         on:keydown={(e) => {
           if (e.key === "Enter") submit()
         }}
         bind:value={password}
       />
-      <Button on:click={submit} style="color: var(--secondary);" bold dark center>Submit</Button>
-      <span style="text-align: center;"><input type="checkbox" bind:checked={remember} /><span style="opacity: 0.6;padding-left: 10px;">Remember me</span></span>
+      <Button on:click={submit} style="color: var(--secondary);" bold dark center>{dictionary.remote.submit}</Button>
+      <span style="text-align: center;"><input type="checkbox" bind:checked={remember} /><span style="opacity: 0.6;padding-left: 10px;">{dictionary.remote.remember}</span></span>
     </div>
   </div>
 {:else}
-  Loading...
+  <Center>
+    {dictionary.remote.loading}
+  </Center>
 {/if}
 
 <style>
+  /* @font-face {
+    font-family: "CMGSans";
+    src: url("./fonts/CMGSans-Regular.ttf");
+  }
+  @font-face {
+    font-family: "CMGSans";
+    src: url("./fonts/CMGSans-Bold.ttf");
+    font-weight: bold;
+  }
+  @font-face {
+    font-family: "CMGSans";
+    src: url("./fonts/CMGSans-Italic.ttf");
+    font-style: italic;
+  }
+  @font-face {
+    font-family: "CMGSans";
+    src: url("./fonts/CMGSans-BoldItalic.ttf");
+    font-weight: bold;
+    font-style: italic;
+  } */
+
   :root {
     --primary: #2d313b;
     --primary-lighter: #41444c;
@@ -479,7 +571,7 @@
     color: var(--text);
     /* transition: background-color 0.5s; */
 
-    font-family: system-ui;
+    font-family: sans-serif;
     font-size: 1.5em;
 
     height: 100%;
@@ -525,6 +617,10 @@
     text-align: center;
     font-size: 1.3em;
     padding: 0.2em 0.8em;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .input {
@@ -599,7 +695,7 @@
     scroll-behavior: smooth;
   }
   .lyric {
-    font-size: 1.3em;
+    font-size: 1.1em;
     text-align: center;
   }
 </style>

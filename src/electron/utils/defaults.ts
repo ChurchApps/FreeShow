@@ -14,7 +14,11 @@ export const defaultSettings = {
     fill: {},
     paint: {},
   },
-  overlayCategories: {},
+  overlayCategories: {
+    offers: { name: "category.offers", icon: "money", default: true },
+    notice: { name: "category.notice", icon: "notice", default: true },
+    visuals: { name: "category.visuals", icon: "star", default: true },
+  },
   templateCategories: {
     song: { name: "category.song", icon: "song", default: true },
   },

@@ -7,7 +7,7 @@ import sveltePreprocess from "svelte-preprocess"
 import typescript from "@rollup/plugin-typescript"
 import css from "rollup-plugin-css-only"
 import serve from "rollup-plugin-serve"
-import html from "@rollup/plugin-html"
+import copy from "rollup-plugin-copy"
 
 const production = !process.env.ROLLUP_WATCH
 
@@ -46,7 +46,8 @@ export default [
       svelte({
         preprocess: sveltePreprocess({
           typescript: {
-            tsconfigFile: production ? "./tsconfig.svelte.prod.json" : "./tsconfig.svelte.json",
+            // tsconfigFile: production ? "./tsconfig.svelte.prod.json" : "./tsconfig.svelte.json",
+            tsconfigFile: "./tsconfig.svelte.json",
           },
         }),
         compilerOptions: {
@@ -73,7 +74,8 @@ export default [
       }),
       commonjs(),
       typescript({
-        tsconfig: production ? "./tsconfig.svelte.prod.json" : "./tsconfig.svelte.json",
+        // tsconfig: production ? "./tsconfig.svelte.prod.json" : "./tsconfig.svelte.json",
+        tsconfig: "./tsconfig.svelte.json",
         sourceMap: !production,
         inlineSources: !production,
       }),
@@ -122,7 +124,8 @@ export default [
       svelte({
         preprocess: sveltePreprocess({
           typescript: {
-            tsconfigFile: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+            // tsconfigFile: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+            tsconfigFile: "./tsconfig.server.json",
           },
         }),
         compilerOptions: {
@@ -149,7 +152,8 @@ export default [
       }),
       commonjs(),
       typescript({
-        tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+        // tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+        tsconfig: "./tsconfig.server.json",
         sourceMap: !production,
         inlineSources: !production,
       }),
@@ -183,12 +187,20 @@ export default [
       //   mangle: true,
       // }),
 
-      html({
-        title: "RemoteShow",
-        fileName: "index.html",
-        // publicPath: "remote",
-        minify: production,
-        meta: [{ charset: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1.0" }],
+      // html({
+      //   title: "RemoteShow",
+      //   fileName: "index.html",
+      //   minify: production,
+      //   meta: [{ charset: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1.0" }],
+      //   attributes: { link: { "": '"/><link rel="manifest" href="manifest.json" />' } },
+      // }),
+      copy({
+        targets: [
+          { src: "src/server/remote/index.html", dest: "build/electron/remote" },
+          { src: "src/server/remote/manifest.json", dest: "build/electron/remote" },
+          { src: "src/server/icon.png", dest: "build/electron/remote" },
+          { src: "src/server/sw.js", dest: "build/electron/remote" },
+        ],
       }),
     ],
   },
@@ -228,16 +240,25 @@ export default [
       }),
       commonjs(),
       typescript({
-        tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+        // tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+        tsconfig: "./tsconfig.server.json",
         sourceMap: !production,
         // inlineSources: !production,
       }),
 
-      html({
-        title: "StageShow",
-        fileName: "index.html",
-        minify: production,
-        meta: [{ charset: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1.0" }],
+      // html({
+      //   title: "StageShow",
+      //   fileName: "index.html",
+      //   minify: production,
+      //   meta: [{ charset: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1.0" }],
+      // }),
+      copy({
+        targets: [
+          { src: "src/server/stage/index.html", dest: "build/electron/stage" },
+          { src: "src/server/stage/manifest.json", dest: "build/electron/stage" },
+          { src: "src/server/icon.png", dest: "build/electron/stage" },
+          { src: "src/server/sw.js", dest: "build/electron/stage" },
+        ],
       }),
     ],
   },
@@ -272,16 +293,25 @@ export default [
       }),
       commonjs(),
       typescript({
-        tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+        // tsconfig: production ? "./tsconfig.server.prod.json" : "./tsconfig.server.json",
+        tsconfig: "./tsconfig.server.json",
         sourceMap: !production,
         // inlineSources: !production,
       }),
 
-      html({
-        title: "CamShow",
-        fileName: "index.html",
-        minify: production,
-        meta: [{ charset: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1.0" }],
+      // html({
+      //   title: "CamShow",
+      //   fileName: "index.html",
+      //   minify: production,
+      //   meta: [{ charset: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1.0" }],
+      // }),
+      copy({
+        targets: [
+          { src: "src/server/webcam/index.html", dest: "build/electron/webcam" },
+          { src: "src/server/webcam/manifest.json", dest: "build/electron/webcam" },
+          { src: "src/server/icon.png", dest: "build/electron/webcam" },
+          { src: "src/server/sw.js", dest: "build/electron/webcam" },
+        ],
       }),
     ],
   },

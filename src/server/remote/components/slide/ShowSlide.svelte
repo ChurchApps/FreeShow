@@ -3,6 +3,7 @@
   import Zoomed from "./Zoomed.svelte"
 
   export let slide: any
+  export let layoutSlide: any
   export let color: string | null = slide.color
   export let index: number
   export let columns: number = 1
@@ -16,7 +17,7 @@
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
-  <div class="slide context #slide" class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
+  <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
     <Zoomed {resolution} background={slide.items.length ? "black" : "transparent"}>
       <!-- TODO: check if showid exists in shows -->
       {#each slide.items as item}
@@ -25,10 +26,10 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     </Zoomed>
     <!-- TODO: BG: white, color: black -->
     <!-- style="width: {resolution.width * zoom}px;" -->
-    <div class="label" title={slide.label || ""}>
+    <div class="label" title={slide.group || ""}>
       <!-- font-size: 0.8em; -->
       <span style="position: absolute;display: contents;">{index + 1}</span>
-      <span class="text">{slide.label || ""}</span>
+      <span class="text">{slide.group || ""}</span>
     </div>
   </div>
 </div>
@@ -55,14 +56,18 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     outline: 3px solid var(--secondary);
     outline-offset: 4px;
   }
+  .slide.disabled {
+    opacity: 0.2;
+  }
 
   .label {
     display: flex;
-    padding: 0 5px;
-    padding-bottom: 2px;
+    padding: 5px;
+    padding-bottom: 3px;
     font-size: 0.8em;
-    /* font-weight: bold; */
+    font-weight: bold;
     align-items: center;
+    /* opacity: 0.8; */
   }
 
   .label .text {

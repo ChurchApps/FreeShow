@@ -73,8 +73,7 @@
 
 <!-- TODO: fix: big images & many files -->
 <!-- TODO: autoscroll -->
-<!-- TODO: droparea for files????????? -->
-<!-- TODO: ctrl scroll wheel zoom! -->
+<!-- TODO: ctrl+arrow keys change drawer item... -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
   <div class="grid" class:list={!$mediaOptions.grid} style="height: 100%;">
     {#if filteredFiles.length}

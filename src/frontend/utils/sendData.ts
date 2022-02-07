@@ -2,11 +2,12 @@ import { GetLayout } from "./../components/helpers/get"
 import type { ClientMessage } from "./../../types/Socket"
 import { REMOTE, STAGE } from "./../../types/Channels"
 import { get } from "svelte/store"
-import { showsCache, outSlide, stageShows, connections, remotePassword, projects, folders, activeProject } from "./../stores"
+import { showsCache, outSlide, stageShows, connections, remotePassword, projects, folders, activeProject, dictionary, openedFolders, shows } from "./../stores"
+import { loadShows } from "../components/helpers/setShow"
 
 // REMOTE
 
-function getRemote(msg: ClientMessage) {
+async function getRemote(msg: ClientMessage) {
   // let initialize: ClientMessage = {
   //   id: msg.id,
   //   channel: "DATA",
@@ -26,15 +27,18 @@ function getRemote(msg: ClientMessage) {
   // window.api.send(REMOTE, { id: msg.id, channel: "FOLDERS", data: "" })
   switch (msg.channel) {
     case "PASSWORD":
-      msg.data = get(remotePassword).length ? true : false
-      if (!msg.data) {
-        msg = { id: msg.id, channel: "SHOWS", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
+      msg.data = { dictionary: get(dictionary) }
+      msg.data.password = get(remotePassword).length ? true : false
+      if (!msg.data.password) {
+        // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
+        msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
 
-        sendData(REMOTE, { channel: "PROJECTS" })
+        sendData(REMOTE, { channel: "PROJECTS", data: get(projects) })
+        window.api.send(REMOTE, { channel: "SHOWS", data: get(shows) })
         window.api.send(REMOTE, { channel: "FOLDERS", data: get(folders) })
         window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
 
-        let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null }
+        let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null, layout: get(outSlide)?.layout || null }
         if (out.slide !== null) {
           oldOutSlide = get(outSlide)!.id
           out.show = get(showsCache)[oldOutSlide]
@@ -44,13 +48,14 @@ function getRemote(msg: ClientMessage) {
       break
     case "ACCESS":
       if (msg.data === get(remotePassword)) {
-        msg = { id: msg.id, channel: "SHOWS", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
+        // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
+        msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
 
-        sendData(REMOTE, { channel: "PROJECTS" })
-        window.api.send(REMOTE, { channel: "FOLDERS", data: get(folders) })
+        sendData(REMOTE, { channel: "PROJECTS", data: get(projects) })
+        window.api.send(REMOTE, { channel: "FOLDERS", data: { folders: get(folders), opened: get(openedFolders) } })
         window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
 
-        let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null }
+        let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null, layout: get(outSlide)?.layout || null }
         if (out.slide !== null) {
           oldOutSlide = get(outSlide)!.id
           out.show = get(showsCache)[oldOutSlide]
@@ -64,8 +69,11 @@ function getRemote(msg: ClientMessage) {
     case "SHOW":
       // msg.data = filterObjectArray(get(shows)[msg.data], [""])
       let showID: string = msg.data
-      msg.data = get(showsCache)[showID]
-      msg.data.id = showID
+      console.log(msg)
+
+      await loadShows([showID])
+      msg.data = { id: showID, ...get(showsCache)[showID] }
+
       if (msg.id) {
         if (!get(connections).REMOTE[msg.id]) get(connections).REMOTE[msg.id] = {}
         connections.update((sc) => {
@@ -81,6 +89,7 @@ function getRemote(msg: ClientMessage) {
         outSlide.set(null)
       } else if (msg.data?.id) {
         id = msg.data.id
+        await loadShows([id])
         let layout = GetLayout(id)
         if (msg.data.index < layout.length && msg.data.index >= 0) outSlide.update(() => msg.data)
         msg.data = null
@@ -95,7 +104,7 @@ function getRemote(msg: ClientMessage) {
         }
         msg.data = null
       } else {
-        msg.data = { slide: out ? out.index : null }
+        msg.data = { slide: out ? out.index : null, layout: out?.layout || null }
         if (out && out.id !== oldOutSlide) {
           id = out.id
           oldOutSlide = id
@@ -112,7 +121,8 @@ function getRemote(msg: ClientMessage) {
       }
       break
     case "PROJECTS":
-      msg.data = filterObjectArray(get(projects), ["name", "parent", "shows"])
+      // msg.data = filterObjectArray(get(projects), ["name", "parent", "shows"])
+      msg.data = get(projects)
       break
     // case "PROJECT":
     //   msg.data = filterObjectArray(get(projects), ["name", "parent"])
@@ -151,8 +161,11 @@ function getStage(msg: ClientMessage) {
       msg.data = []
       if (out) {
         let layout = GetLayout(out.id, out.layout)
-        msg.data = [get(showsCache)[out.id].slides[layout[out.index].id]]
-        if (out.index + 1 < layout.length) msg.data.push(get(showsCache)[out.id].slides[layout[out.index + 1].id])
+        let slides = get(showsCache)[out.id].slides
+        msg.data = [slides[layout[out.index].id]]
+        let index = out.index + 1
+        while (index < layout.length && layout[index].disabled === true) index++
+        if (index < layout.length && !layout[index].disabled) msg.data.push(slides[layout[index].id])
         else msg.data.push(null)
       }
 
@@ -221,8 +234,8 @@ export function client(id: "REMOTE" | "STAGE", msg: ClientMessage) {
 }
 
 // send data to client
-export function sendData(id: "REMOTE" | "STAGE", msg: ClientMessage, check: boolean = false) {
-  if (id === REMOTE) msg = getRemote(msg)
+export async function sendData(id: "REMOTE" | "STAGE", msg: ClientMessage, check: boolean = false) {
+  if (id === REMOTE) msg = await getRemote(msg)
   else if (id === STAGE) msg = getStage(msg)
   if (msg.data !== null && (!check || !checkSent(id, msg))) window.api.send(id, msg)
 }

@@ -53,7 +53,6 @@
   // TODO: scroll down to selected
   $: {
     if ($drawerTabsData[id].activeSubTab === null) {
-      // setTab(Object.keys(buttons)[0])
       setTab(buttons[0].id)
     }
   }
@@ -86,7 +85,6 @@
       {#key buttons}
         {#each buttons as category}
           <SelectElem id="category" borders="center" trigger="column" data={category.id}>
-            <!-- TODO: titles -->
             <Button
               class={category.id === "all" || category.id === "unlabeled" ? "" : `context #category_${id}_button__category_${id}`}
               active={category.id === $drawerTabsData[id].activeSubTab}
@@ -133,7 +131,6 @@
       </Button>
     </div>
   {:else if id === "media"}
-    <!-- <FilePicker /> -->
     <FolderPicker title={$dictionary.new?.folder}>
       <Icon id="folder" right />
       <span style="color: var(--secondary);">
@@ -161,20 +158,9 @@
   .tabs :global(button) {
     width: 100%;
   }
-  /* .main :global(svg) {
-    margin-right: calc(0.8em - 5px);
-  } */
 
   .tabs {
     display: flex;
     background-color: var(--primary-darker);
   }
-
-  /* button {
-    padding: 10px;
-    display: flex;
-    border: none;
-    background-color: inherit;
-    color: inherit;
-  } */
 </style>

@@ -4,6 +4,7 @@
   import Splash from "../main/Splash.svelte"
 </script>
 
+<!-- TODO: activeEdit, edit overlays, templates, ... -->
 {#if $activeShow}
   {#if $activeShow.type === "video"}
     <!--  -->

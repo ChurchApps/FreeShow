@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { activeShow, dictionary, activePopup, shows, activeProject } from "../../stores"
+  import type { Show } from "../../../types/Show"
+  import { activePopup, activeProject, activeShow, dictionary, shows } from "../../stores"
   import { keysToID, removeValues, sortObject, sortObjectNumbers } from "../helpers/array"
+  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import { dateToString } from "../helpers/time"
   import Button from "../inputs/Button.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
-  import type { Show } from "../../../types/Show"
   import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
   import SelectElem from "../system/SelectElem.svelte"
-  import { history } from "../helpers/history"
 
   export let id: string
   export let active: string | null
@@ -80,11 +80,9 @@
     match?: number
   }
   let filteredShows: ShowId[]
-  $: {
-    filteredStored = filteredShows = showsSorted.filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
-  }
-
   let filteredStored: any
+  $: filteredStored = filteredShows = showsSorted.filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
+
   export let firstMatch: null | any = null
   $: {
     if (searchValue.length > 1) {
@@ -110,8 +108,6 @@
   }
 </script>
 
-<!-- TODO: sort by percentage -->
-<!-- TODO: go to first on input enter -->
 <Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
   <div class="column context #drawer_show">
     {#if filteredShows.length}
@@ -132,7 +128,6 @@
   </div>
 </Autoscroll>
 <div class="tabs">
-  <!-- <Button style="flex: 1;" on:click={() => history({ id: "newShowDrawer" })} center title={$dictionary.new?.show}> -->
   <Button
     style="flex: 1;"
     on:click={(e) => {
@@ -147,12 +142,6 @@
       <T id="new.show" />
     </span>
   </Button>
-  <!-- <Button style="flex: 1;" on:click={() => activePopup.set("import")} center title={$dictionary.new?._quick}>
-    <Icon id="showIcon" right />
-    <span style="color: var(--secondary);">
-      <T id="new.quick" />
-    </span>
-  </Button> -->
 </div>
 
 <style>
@@ -161,7 +150,6 @@
     display: flex;
     flex-direction: column;
     background-color: var(--primary-darker);
-    /* flex: 1; */
     height: 100%;
   }
 

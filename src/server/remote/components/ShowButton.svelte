@@ -65,7 +65,7 @@
       <!-- {#if icon}
           <Icon id={icon} />
         {/if} -->
-      <p style="margin: 5px;">{show.name}</p>
+      <p style="margin: 5px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">{show.name}</p>
       <!-- <HiddenInput value={name} on:edit={edit} /> -->
     </span>
 
@@ -76,7 +76,7 @@
     {/if}
 
     {#if data}
-      <span style="opacity: 0.5;padding-left: 10px;font-size: 0.8em;">{data}</span>
+      <span style="opacity: 0.5;padding-left: 10px;font-size: 0.8em;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{data}</span>
     {/if}
   </Button>
 </div>

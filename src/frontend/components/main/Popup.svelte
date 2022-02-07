@@ -10,6 +10,7 @@
   import Rename from "./popups/Rename.svelte"
   import About from "./popups/About.svelte"
   import Unsaved from "./popups/Unsaved.svelte"
+  import Initialize from "./popups/Initialize.svelte"
 
   const hide = (e: any) => {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -26,7 +27,9 @@
         </Button>
       </div>
       <div style="display: flex;flex-direction: column;margin: 20px;">
-        {#if $activePopup === "show"}
+        {#if $activePopup === "initialize"}
+          <Initialize />
+        {:else if $activePopup === "show"}
           <CreateShow />
         {:else if $activePopup === "delete_show"}
           <DeleteShow />

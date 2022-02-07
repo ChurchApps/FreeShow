@@ -1,16 +1,11 @@
-import { READ_FOLDER, SHOW, STORE } from "./../types/Channels"
-// const { ValidChannels, Data } = require("./src/types/Channels")
-import { app, BrowserWindow, ipcMain, dialog, desktopCapturer, screen } from "electron"
-import { Display } from "electron/main"
-import { join } from "path"
-import { URL } from "url"
-import { GET_SCREENS, MAIN, OPEN_FILE, OUTPUT, OPEN_FOLDER, FILE_INFO } from "../types/Channels"
-import path from "path"
+import { app, BrowserWindow, desktopCapturer, dialog, Display, ipcMain, Menu, screen } from "electron"
 import fs from "fs"
-import { settings, electronSettings, shows, stageShows, projects, overlays, templates, events, themes } from "./utils/store"
+import path, { join } from "path"
+import { URL } from "url"
+import { FILE_INFO, GET_SCREENS, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { template } from "./utils/menuTemplate"
+import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 import checkForUpdates from "./utils/updater"
-// import express from express();
-// import express from "./server/connection")
 
 // WIP: Tray / push notifications
 // https://www.webtips.dev/how-to-make-your-very-first-desktop-app-with-electron-and-svelte
@@ -18,10 +13,9 @@ import checkForUpdates from "./utils/updater"
 const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
 electronSettings.set("loaded", true)
-if (!electronSettings.get("loaded")) console.log("Error! Could not get stored data.")
+if (!electronSettings.get("loaded")) console.error("Could not get stored data!")
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
+// keep a global reference of the window object to prevent it closing automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow | null
 
 app.on("ready", () => {
@@ -40,9 +34,13 @@ app.on("ready", () => {
   require("./servers")
   // WIP: require("./webcam")
 
+  if (process.platform === "win32") app.setAppUserModelId(app.name)
+
   // check for uodates
   if (isProd) checkForUpdates()
 })
+
+// LOADING WINDOW
 
 let loadingWindow: BrowserWindow | null = null
 const createLoading = () => {
@@ -53,7 +51,7 @@ const createLoading = () => {
     frame: false,
     alwaysOnTop: true,
     resizable: false,
-    icon: "public/freeshow.ico",
+    icon: "public/icon.ico",
     webPreferences: { nodeIntegration: true, contextIsolation: false, enableRemoteModule: true },
   })
   loadingWindow.loadFile("public/loading.html")
@@ -66,6 +64,8 @@ ipcMain.once("LOADED", () => {
   loadingWindow = null
 })
 
+// MAIN WINDOW
+
 const createWindow = () => {
   let width: number = electronSettings.get("width")
   let height: number = electronSettings.get("height")
@@ -74,16 +74,16 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width,
     height,
-    frame: false,
-    icon: "public/freeshow.ico",
-    autoHideMenuBar: process.platform === "win32",
-    // show: false,
+    icon: "public/icon.ico",
+    frame: !isProd,
+    autoHideMenuBar: !isProd || process.platform === "win32",
+    backgroundColor: "#2d313b",
+    show: !isProd,
     webPreferences: {
-      devTools: isProd ? false : true,
-      // preload: join(__dirname, "preload.js"), // use a preload script
+      // beta dev tools
+      devTools: !isProd || Number(app.getVersion()[0]) > 1,
       preload: join(__dirname, "preload"), // use a preload script
       webSecurity: false, // load local files
-      // preload: "./preload",
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
@@ -91,24 +91,13 @@ const createWindow = () => {
     },
   })
 
-  const url =
-    // process.env.NODE_ENV === "production"
-    isProd
-      ? // in production, use the statically build version of our application
-        `file://${join(__dirname, "public", "index.html")}`
-      : // in dev, target the host and port of the local rollup web server
-        "http://localhost:3000"
+  // app.asar/build/~electron/public/index.html
+  const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
 
   mainWindow.loadURL(url).catch((err) => {
-    console.error(JSON.stringify(err))
+    console.error("UNVALID URL:", JSON.stringify(err))
     app.quit()
   })
-  // mainWindow.loadURL(`file://${join("./", "public", "index.html")}`)
-  // mainWindow.loadFile("./public/index.html")
-  // mainWindow.loadFile(join(__dirname, "public", "index.html")).catch((err) => {
-  //   console.error(JSON.stringify(err))
-  //   app.quit()
-  // })
 
   if (!isProd) mainWindow.webContents.openDevTools()
 
@@ -122,32 +111,24 @@ const createWindow = () => {
 
   if (maximized) mainWindow.maximize()
 
-  mainWindow.on("closed", () => {
-    mainWindow = null
-  })
+  mainWindow.on("closed", () => (mainWindow = null))
+  mainWindow.once("ready-to-show", createOutputWindow)
 
-  mainWindow.once("ready-to-show", () => {
-    // mainWindow?.show()
-    createOutputWindow()
-  })
+  // MENU
+  const menu = Menu.buildFromTemplate(template({}))
+  mainWindow!.setMenu(menu)
 }
 
-// those two events are completely optional to subscrbe to, but that's a common way to get the
-// user experience people expect to have on macOS: do not quit the application directly
-// after the user close the last window, instead wait for Command + Q (or equivalent).
+// macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit()
 })
 
-// app.on("activate", () => {
-//   if (mainWindow === null) createWindow()
-// })
-
-app.on("web-contents-created", (e, contents) => {
-  console.info(e)
+app.on("web-contents-created", (_e, contents) => {
+  // console.info(e)
   // Security of webviews
-  contents.on("will-attach-webview", (event, webPreferences, params) => {
-    console.info(event, params)
+  contents.on("will-attach-webview", (_event, webPreferences, _params) => {
+    // console.info(event, params)
     // Strip away preload scripts if unused or verify their location is legitimate
     delete webPreferences.preload
 
@@ -169,51 +150,6 @@ app.on("web-contents-created", (e, contents) => {
     }
   })
 })
-
-//   // https://www.electronjs.org/docs/api/menu
-//   // const menu = new Menu();
-
-//   // menu.append(
-//   //   new MenuItem({
-//   //     label: "Save",
-//   //     accelerator: "CmdOrCtrl+S",
-//   //     click: () => toApp("savefile"),
-//   //   })
-//   // );
-//   // menu.append(
-//   //   new MenuItem({
-//   //     label: "Open",
-//   //     accelerator: "CmdOrCtrl+O",
-//   //     click: openFile,
-//   //   })
-//   // );
-//   // menu.append(
-//   //   new MenuItem({
-//   //     role: "reload",
-//   //     accelerator: "CmdOrCtrl+R",
-//   //   })
-//   // );
-
-//   // Menu.setApplicationMenu(menu);
-
-//   // ipcMain.on('show-context-menu', (event) => {
-//   //   const template = [
-//   //     {
-//   //       role: 'reload'
-//   //     },
-//   //   ]
-//   //   const menu = Menu.buildFromTemplate(template)
-//   //   menu.popup(BrowserWindow.fromWebContents(event.sender))
-//   // })
-
-//   // ipcMain.on("savenewfile", (e, content) => {
-//   //   createNewFile(content);
-//   // });
-//   // ipcMain.on("saveexistingfile", (e, { path, content }) => {
-//   //   fs.writeFile(path, content, err => {
-//   //     if (err) return;
-//   //   });
-//   // });
 
 // STORE
 ipcMain.on(STORE, (e, msg) => {
@@ -265,16 +201,15 @@ ipcMain.on(SHOW, (e, msg) => {
   } else e.reply(SHOW, { error: "not_found", id: msg.id })
 })
 
-// DISPLAY WINDOW
-
-// const toApp = (channel, args): void => mainWindow.webContents.send(channel, args)
-// module.exports = toApp
 export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContents.send(channel, ...args)
-
-// ipcMain.handle("displayMessage", text => dialog.showMessageBox(text))
 
 const updateShowsPath = (path: string) => {
   if (!fs.existsSync(path)) fs.mkdirSync(path, { recursive: true })
+}
+
+export async function openURL(url: string) {
+  const { shell } = require("electron")
+  await shell.openExternal(url)
 }
 
 const os = require("os")
@@ -283,7 +218,11 @@ ipcMain.on(MAIN, (e, msg) => {
   if (msg.channel === "GET_OS") data = { platform: os.platform(), name: os.hostname() }
   else if (msg.channel === "VERSION") data = app.getVersion()
   else if (msg.channel === "DISPLAY") data = outputWindow?.isVisible()
-  else if (msg.channel === "GET_PATHS") {
+  else if (msg.channel === "URL") openURL(msg.data)
+  else if (msg.channel === "LANGUAGE") {
+    const menu = Menu.buildFromTemplate(template(msg.data.strings))
+    mainWindow!.setMenu(menu)
+  } else if (msg.channel === "GET_PATHS") {
     data = {
       documents: app.getPath("documents"),
       pictures: app.getPath("pictures"),
@@ -294,7 +233,7 @@ ipcMain.on(MAIN, (e, msg) => {
     // create documents/Shows
     updateShowsPath(path.resolve(data.documents, "Shows"))
   } else if (msg.channel === "OUTPUT") {
-    console.log(e.sender.id, outputWindow?.id, outputWindow?.webContents.id)
+    // console.log(e.sender.id, outputWindow?.id, outputWindow?.webContents.id)
     // e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
     data = e.sender.id === outputWindow?.webContents.id ? "true" : "false"
   } else if (msg.channel === "CLOSE") {
@@ -303,6 +242,7 @@ ipcMain.on(MAIN, (e, msg) => {
   } else if (msg.channel === "MAXIMIZE") {
     if (mainWindow?.isMaximized()) mainWindow?.unmaximize()
     else mainWindow?.maximize()
+    msg.channel = "MAXIMIZED"
     data = mainWindow?.isMaximized()
   } else if (msg.channel === "MAXIMIZED") {
     data = mainWindow?.isMaximized()
@@ -311,8 +251,10 @@ ipcMain.on(MAIN, (e, msg) => {
   } else {
     data = msg
   }
-  if (data) e.reply(MAIN, { channel: msg.channel, data })
+  if (data !== undefined) e.reply(MAIN, { channel: msg.channel, data })
 })
+
+// OUTPUT WINDOW
 
 let displays: Display[] = []
 // TODO: get this from settings...
@@ -324,29 +266,13 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
     if (msg.data === true) {
       if (externalDisplay && JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(externalDisplay.bounds)) {
         outputWindow?.setBounds(externalDisplay.bounds)
-        // outputWindow?.setSize(externalDisplay.bounds.width, externalDisplay.bounds.height)
-        // outputWindow?.setPosition(externalDisplay.bounds.x + 50, externalDisplay.bounds.y + 50)
       }
       outputWindow?.show()
     } else outputWindow?.hide()
-  } else if (msg.channel.includes("MAIN")) {
-    mainWindow?.webContents.send(OUTPUT, msg)
-  } else {
-    outputWindow?.webContents.send(OUTPUT, msg)
-  }
+  } else if (msg.channel.includes("MAIN")) mainWindow?.webContents.send(OUTPUT, msg)
+  else outputWindow?.webContents.send(OUTPUT, msg)
 })
-// https://stackoverflow.com/questions/51808712/electronjs-multiple-monitors
-// export const toOutput = (channel: string, ...args: any[]) => outputWindow?.webContents.send(channel, args)
-// app.whenReady().then(() => {
-//   displays = screen.getAllDisplays()
-//   // TODO: get this from settings...
-//   externalDisplay =
-//     displays.find((display) => {
-//       return display.bounds.x !== 0 || display.bounds.y !== 0
-//     }) || null
 
-//   createOutputWindow()
-// })
 let outputWindow: BrowserWindow | null = null
 function createOutputWindow() {
   // https://www.electronjs.org/docs/latest/api/browser-window
@@ -363,55 +289,36 @@ function createOutputWindow() {
     fullscreen: true,
     skipTaskbar: true, // hide taskbar
     // focusable: false, // makes non focusable
-    roundedCorners: false, // disable rounded corners on mac
-    backgroundColor: "#000",
+    // titleBarStyle: "hidden", // hide titlebar
+    // kiosk: true,
+    // roundedCorners: false, // disable rounded corners on mac
+    backgroundColor: "#000000",
     show: false,
     webPreferences: {
-      devTools: true,
+      // beta dev tools
+      devTools: !isProd || Number(app.getVersion()[0]) > 1,
       preload: join(__dirname, "preload"), // use a preload script
       contextIsolation: true,
       enableRemoteModule: false,
-      webSecurity: false, // get local files,
+      webSecurity: false, // get local files
       allowRunningInsecureContent: false,
     },
   })
-  // show: false, // hide window
-  // titleBarStyle: "hidden", // hide titlebar
-  // kiosk: true,
 
-  // Menu.setApplicationMenu(null) // hide menubar (all windows)
   outputWindow.removeMenu() // hide menubar
-  // outputWindow.setMenuBarVisibility(false)
 
-  // outputWindow.setIgnoreMouseEvents(true) // hide window on click
-
-  const url =
-    // process.env.NODE_ENV === "production"
-    isProd
-      ? // in production, use the statically build version of our application
-        `file://${join(__dirname, "public", "index.html")}`
-      : // in dev, target the host and port of the local rollup web server
-        "http://localhost:3000"
+  const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
 
   outputWindow.loadURL(url).catch((err) => {
     console.error(JSON.stringify(err))
     app.quit()
   })
 
+  // TODO: get setting "auto display"
   if (externalDisplay) {
-    // outputWindow?.setBounds(externalDisplay.bounds)
-    // console.log(externalDisplay)
-    // console.log(externalDisplay.bounds)
-
-    // outputWindow.setSize(externalDisplay.bounds.width, externalDisplay.bounds.height)
-    // outputWindow.setPosition(externalDisplay.bounds.x + 50, externalDisplay.bounds.y + 50)
     outputWindow?.show()
     mainWindow?.webContents.send(OUTPUT, { channel: "DISPLAY", data: true })
   }
-
-  // outputWindow.webContents.openDevTools()
-  // outputWindow.maximize()
-  // outputWindow.show()
 
   // toOutput("MAIN", { channel: "OUTPUT", data: "true" })
   // outputWindow.webContents.send("MAIN", { channel: "OUTPUT" })
@@ -422,80 +329,19 @@ function createOutputWindow() {
 // LISTENERS
 
 ipcMain.on(GET_SCREENS, (_e, args: string[] = ["screen"]) => {
-  // ["window", "screen"]
   desktopCapturer.getSources({ types: args }).then(async (sources) => {
     try {
       const screens: any[] = []
       sources.map((source) => screens.push({ name: source.name, id: source.id }))
-      // sources.map((source) => screens.push(source))
       toApp(GET_SCREENS, screens)
-
-      // const videoOptionsMenu = Menu.buildFromTemplate(
-      //   sources.map(source => {
-      //     return {
-      //       label: source.name,
-      //       click: () => toApp('getScreens', source)
-      //     }
-      //   })
-      // );
-
-      // videoOptionsMenu.popup();
     } catch (err) {
-      console.error("Error:", err)
+      console.error(err)
     }
   })
 })
 
-// WIP https://github.com/electron/electron/issues/1948
-ipcMain.on(OPEN_FILE, (_e, args) => {
-  if (!args.filters) args.filters = [{ name: "All", extensions: ["*"] }]
-  if (!args.title) args.title = "Test"
-
-  let file = dialog.showOpenDialogSync(mainWindow!, {
-    properties: ["openFile"],
-    filters: args.filters,
-    title: args.title,
-  })
-
-  if (file) {
-    toApp(MAIN, file)
-    // server(file);
-    // toApp("openFile", {
-    //   path: chunk(file),
-    //   // content: data,
-    // });
-    // toApp('openFile', "./video");
-    toApp(OPEN_FILE, file)
-    // fs.readFile(file[0], "utf8", (err, data) => {
-    //   toApp('main', err);
-    //   toApp('main', data);
-    //   if (err) return;
-
-    //   toApp("openFile", {
-    //     path: chunk(path),
-    //     // content: data,
-    //   });
-
-    //   // toApp("openFile", {
-    //   //   path: file[0],
-    //   //   // content: data,
-    //   // });
-    // });
-  }
-  // fs.readFile(args.path, (error, data) => {
-  //   // Do something with file contents
-
-  //   // Send result back to renderer process
-  //   toApp("openedFile", {data, error});
-  // });
-})
-
 ipcMain.on(OPEN_FOLDER, (_e, title: string) => {
-  let folder: any = dialog.showOpenDialogSync(mainWindow!, {
-    properties: ["openDirectory"],
-    title: title,
-  })
-
+  let folder: any = dialog.showOpenDialogSync(mainWindow!, { properties: ["openDirectory"], title: title })
   if (folder) toApp(OPEN_FOLDER, folder[0])
 })
 
@@ -514,94 +360,7 @@ ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {
 })
 
 ipcMain.on(FILE_INFO, (_e, filePath: string) => {
-  // const pathToFile: string = path.join(filePath)
   const stat = fs.statSync(filePath)
   const [extension] = filePath.substring(filePath.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]
-
   toApp(FILE_INFO, { path: filePath, stat, extension: extension.substring(1) })
 })
-
-// server
-// express.use(express.static(path.join(__dirname, 'public')))
-
-// express.get('/', function(req, res) {
-//   res.sendFile(path.join(__dirname + '/index.htm'))
-// })
-
-// function server(path: string) {
-//   // express.get("/video", function (req, res) {
-//   //   const stat = fs.statSync(path)
-//   //   const fileSize = stat.size
-//   //   const range = req.headers.range
-//   //   if (range) {
-//   //     const parts = range.replace(/bytes=/, "").split("-")
-//   //     const start = parseInt(parts[0], 10)
-//   //     const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1
-//   //     if (start >= fileSize) {
-//   //       res.status(416).send("Requested range not satisfiable\n" + start + " >= " + fileSize)
-//   //       return
-//   //     }
-//   //     const chunksize = end - start + 1
-//   //     const file = fs.createReadStream(path, { start, end })
-//   //     const head = {
-//   //       "Content-Range": `bytes ${start}-${end}/${fileSize}`,
-//   //       "Accept-Ranges": "bytes",
-//   //       "Content-Length": chunksize,
-//   //       "Content-Type": "video/mp4",
-//   //     }
-//   //     res.writeHead(206, head)
-//   //     file.pipe(res)
-//   //   } else {
-//   //     const head = {
-//   //       "Content-Length": fileSize,
-//   //       "Content-Type": "video/mp4",
-//   //     }
-//   //     res.writeHead(200, head)
-//   //     fs.createReadStream(path).pipe(res)
-//   //   }
-//   // })
-// }
-
-// express.listen(3000, function () {
-//   console.log('Listening on port 3000!')
-// })
-
-// function chunk(path) {
-//   const stat = fs.statSync(path)
-//   const fileSize = stat.size
-//   const range = req.headers.range
-
-//   if (range) {
-//     const parts = range.replace(/bytes=/, "").split("-")
-//     const start = parseInt(parts[0], 10)
-//     const end = parts[1]
-//       ? parseInt(parts[1], 10)
-//       : fileSize-1
-
-//     if(start >= fileSize) {
-//       res.status(416).send('Requested range not satisfiable\n'+start+' >= '+fileSize);
-//       return
-//     }
-
-//     const chunksize = (end-start)+1
-//     const file = fs.createReadStream(path, {start, end})
-//     const head = {
-//       'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-//       'Accept-Ranges': 'bytes',
-//       'Content-Length': chunksize,
-//       'Content-Type': 'video/mp4',
-//     }
-
-//     // res.writeHead(206, head)
-//     // file.pipe(res)
-//     return file
-//   } else {
-//     const head = {
-//       'Content-Length': fileSize,
-//       'Content-Type': 'video/mp4',
-//     }
-//     // res.writeHead(200, head)
-//     // fs.createReadStream(path).pipe(res)
-//     return fs.createReadStream(path)
-//   }
-// }

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { mediaOptions } from "../../stores"
-
   import Icon from "../helpers/Icon.svelte"
 
   export let label: string
@@ -25,7 +24,6 @@
     padding: 4px 6px;
     background-color: var(--primary-lighter);
     font-size: 0.8em;
-    /* font-weight: bold; */
     height: 25px;
     flex: 1;
 
@@ -33,9 +31,6 @@
     text-overflow: ellipsis;
     overflow: hidden;
 
-    /* position: absolute;
-    bottom: 25px;
-    transform: translateY(100%); */
     width: 100%;
     text-align: center;
   }

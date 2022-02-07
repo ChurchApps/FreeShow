@@ -1,6 +1,10 @@
 {
   "main": {
+    "welcome": "Welcome to FreeShow!",
+    "good_luck": "I hope you find this software useful. Good luck showing! :)",
+    "tips": "Find handy tips and tutorials on the website.",
     "quit": "Quit",
+    "docs": "Docs",
     "about": "About",
     "unnamed": "Unnamed",
     "drop": "Drop here",
@@ -14,7 +18,9 @@
   },
   "titlebar": {
     "file": "File",
-    "about": "About"
+    "edit": "Edit",
+    "view": "View",
+    "help": "Help"
   },
   "screen": {
     "width": "Width",
@@ -73,6 +79,21 @@
     "groups": "No groups",
     "events": "No events"
   },
+  "remote": {
+    "projects": "Projects",
+    "project": "Project",
+    "shows": "Shows",
+    "show": "Show",
+    "slide": "Slide",
+    "lyrics": "Lyrics",
+    "end": "End",
+    "no_output": "No output",
+    "remember": "Remember me",
+    "loading": "Loading...",
+    "submit": "Submit",
+    "password": "Password",
+    "wrong_password": "Wrong password"
+  },
   "error": {
     "no_show": "Could not find show",
     "no_layouts": "Could not find any layouts"
@@ -130,7 +151,10 @@
     "info": "Info",
     "presentation": "Presentation",
     "pictures": "Pictures",
-    "videos": "Videos"
+    "videos": "Videos",
+    "offers": "Offers",
+    "notice": "Notice",
+    "visuals": "Visuals"
   },
   "groups": {
     "current": "Current",
@@ -177,7 +201,20 @@
     "delete": "Delete",
     "close": "Close",
     "save": "Save",
-    "disable": "Disable"
+    "disable": "Disable",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "pasteAndMatchStyle": "Paste And Match Style",
+    "selectAll": "Select All",
+    "speech": "Speech",
+    "startSpeaking": "Start Speaking",
+    "stopSpeaking": "Stop Speaking",
+    "resetZoom": "Reset Zoom",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out"
   },
   "context": {
     "enabledTabs": "Show/Hide Tabs",
@@ -291,6 +328,7 @@
     "disable_labels": "Disable labels",
     "group_numbers": "Group numbers",
     "full_colors": "Full slide group colors",
+    "auto_output": "Show output screen on startup",
     "default_project_name": "Default project name",
     "resolution": "Resolution",
     "video_extensions": "Video extensions",

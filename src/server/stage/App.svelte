@@ -5,6 +5,7 @@
   import Icon from "./components/Icon.svelte"
   import Slide from "./components/Slide.svelte"
 
+  // TODO: translate
   const lang: any = {
     error: {
       wrongPass: "Wrong password!",

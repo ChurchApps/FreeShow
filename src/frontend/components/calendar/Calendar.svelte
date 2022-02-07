@@ -60,8 +60,8 @@
     let first = days[0][0].getTime()
     let last = days[5][days.length - 1].getTime()
     Object.entries($events).forEach(([id, a]) => {
-      let from = a.from.getTime()
-      let to = a.to?.getTime() || 0
+      let from = new Date(a.from).getTime()
+      let to = new Date(a.to)?.getTime() || 0
       if (from > first || from < last || to > first || to < last) {
         // if (from > first && from < last || to > first && to < last) {
         currentEvents.push({ id, ...a })

@@ -1,3 +1,4 @@
+import { shows } from "./../stores"
 import { get } from "svelte/store"
 import type { ClientMessage } from "../../types/Socket"
 import {
@@ -125,7 +126,13 @@ export function listen() {
     activeProject.subscribe((data) => {
       window.api.send(REMOTE, { channel: "PROJECT", data })
     })
+    shows.subscribe((data) => {
+      sendData(REMOTE, { channel: "SHOWS", data })
+    })
     showsCache.subscribe((data) => {
+      sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
+
+      // TODO: ?
       // window.api.send(REMOTE, { channel: "SHOW", data })
       timedout(REMOTE, { channel: "SHOW", data }, () => sendClientAll(REMOTE, "SHOW", data, "active"))
       // TODO: this, timedout +++

@@ -1,18 +1,14 @@
 <script lang="ts">
-  import { drawerTabs } from "../../values/tabs"
+  import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import ContextItem from "./ContextItem.svelte"
   import { ContextMenuItem, contextMenuItems } from "./contextMenus"
-  import { activeShow, drawerTabsData, groups, selected, showsCache } from "../../stores"
-  import Icon from "../helpers/Icon.svelte"
-  import { GetLayoutRef } from "../helpers/get"
+  import { loadItems } from "./loadItems"
 
   export let contextElem: any = null
   export let contextActive: boolean
   export let id: string
   export let menu: ContextMenuItem = contextMenuItems[id]
-  // export let label: string
-  // export let submenus: string[]
   export let side: "right" | "left" = "right"
   $: transform = side === "right" ? "100%" : "-100%"
 
@@ -50,24 +46,6 @@
     if (e.target?.closest(".submenu") === null) open = !open
   }
 
-  function loadItems(id: string): [string, ContextMenuItem][] {
-    let items: [string, ContextMenuItem][] = []
-    switch (id) {
-      case "enabled_drawer_tabs":
-        Object.entries(drawerTabs).forEach(([aID, a], i) => {
-          if (i >= 2) items.push([id, { id: aID, label: a.name, icon: a.icon, enabled: $drawerTabsData[aID].enabled }])
-        })
-        break
-      case "slide_groups":
-        let currentGroup = $showsCache[$activeShow!.id].slides[GetLayoutRef()[$selected.data[0].index].id].globalGroup
-        Object.entries($groups).forEach(([aID, a]: any) => {
-          items.push([id, { id: aID, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: a.default, enabled: aID === currentGroup }])
-        })
-        break
-    }
-    return items
-  }
-
   const keydown = (e: any) => {
     if (e.key === "Enter") open = !open
   }
@@ -76,9 +54,6 @@
 <svelte:window on:mouseover={hover} />
 
 <div bind:this={elem} class="item" on:click={click} tabindex={0} on:keydown={keydown}>
-  <!-- {#key label}
-    <T id={label} />
-  {/key} -->
   <span style="display: flex;gap: 10px;">
     {#if menu?.icon}<Icon id={menu.icon} />{/if}
     {#key menu}
@@ -128,9 +103,7 @@
   .submenu {
     min-width: 150px;
     position: absolute;
-    /* right: 0; */
     transform: translate(100%, -10px);
-    /* transform: translate(100%, -25%); */
     background-color: var(--primary);
     box-shadow: 2px 2px 3px rgb(0 0 0 / 0.2);
     padding: 5px 0;

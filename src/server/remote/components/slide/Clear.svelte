@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte"
-
   import Button from "../Button.svelte"
-import Icon from "../Icon.svelte";
+  import Icon from "../Icon.svelte"
 
+  export let dictionary: any
   export let locked: boolean = false
   export let outBackground: null | string = null
   export let outSlide: null | number
@@ -26,10 +26,10 @@ import Icon from "../Icon.svelte";
 <div class="clear">
   <span>
     <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
-    <Button class="clearAll" disabled={locked || !out} on:click={clearAll} title="[[[Clear all]]]" red dark center>
+    <Button class="clearAll" disabled={locked || !out} on:click={clearAll} red dark center>
       <!-- <T id={"clear.all"} /> -->
       <Icon id="clear" size={1.2} />
-      <span style="padding-left: 10px;">Clear All</span>
+      <span style="padding-left: 10px;">{dictionary.clear.all}</span>
     </Button>
   </span>
   <span class="group">
@@ -41,12 +41,11 @@ import Icon from "../Icon.svelte";
           // clearVideo()
         }
       }}
-          title="[[[Clear background]]]"
       red
       dark
       center
     >
-    <Icon id="background" size={1.2} />
+      <Icon id="background" size={1.2} />
     </Button>
     <Button
       disabled={locked || outSlide === null}
@@ -56,12 +55,11 @@ import Icon from "../Icon.svelte";
           // outSlide = null
         }
       }}
-          title="[[[Clear slide]]]"
       red
       dark
       center
     >
-    <Icon id="slide" size={1.2} />
+      <Icon id="slide" size={1.2} />
     </Button>
     <Button
       disabled={locked || !outOverlays.length}
@@ -70,12 +68,11 @@ import Icon from "../Icon.svelte";
           outOverlays = []
         }
       }}
-          title="[[[Clear overlays]]]"
       red
       dark
       center
     >
-    <Icon id="overlays" size={1.2} />
+      <Icon id="overlays" size={1.2} />
     </Button>
     <Button
       disabled={locked || !outAudio.length}
@@ -84,12 +81,11 @@ import Icon from "../Icon.svelte";
           outAudio = []
         }
       }}
-          title="[[[Clear all audio]]]"
       red
       dark
       center
     >
-    <Icon id="audio" size={1.2} />
+      <Icon id="audio" size={1.2} />
     </Button>
   </span>
 </div>

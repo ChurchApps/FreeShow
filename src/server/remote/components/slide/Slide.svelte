@@ -8,7 +8,8 @@
   import { getSlide } from "../../helpers/get"
 
   export let outShow: any
-  export let outSlide: number
+  export let outSlide: any
+  export let outLayout: any
 
   let width: number = 0
   let height: number = 0
@@ -25,8 +26,8 @@
     {#if outShow}
       {#key outSlide}
         <span transition:fade|local={transition} style="pointer-events: none;">
-          {#if getSlide(outShow, outSlide)}
-            {#each getSlide(outShow, outSlide)?.items as item}
+          {#if getSlide(outShow, outSlide, outLayout)}
+            {#each getSlide(outShow, outSlide, outLayout)?.items as item}
               <Textbox {item} />
             {/each}
           {/if}

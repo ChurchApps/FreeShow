@@ -1,10 +1,9 @@
 {
-  "compileOnSave": true,
   "compilerOptions": {
     "outDir": "../../build",
     "target": "ES2015",
     "module": "commonjs",
-    "sourceMap": true,
+    "sourceMap": false,
     "stripInternal": true,
     "lib": ["es2015", "esnext", "dom"],
     "moduleResolution": "node",

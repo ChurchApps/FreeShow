@@ -2,8 +2,8 @@ const { readdirSync, statSync, readFileSync, writeFileSync, existsSync, lstatSyn
 const { join } = require("path")
 
 const Terser = require("terser")
-const HTMLMinifier = require("html-minifier")
-const CleanCSS = require("clean-css")
+// const HTMLMinifier = require("html-minifier")
+// const CleanCSS = require("clean-css")
 
 const minifyJSOptions = {
   mangle: {
@@ -113,13 +113,13 @@ const copyPublicFolderAndMinify = (folderPath, destinationPath) => {
           useShortDoctype: true,
           quoteCharacter: "'",
         }
-        const minified = HTMLMinifier.minify(unminifiedCorrected, minifierOptions)
-        writeFileSync(newPath, minified)
+        // const minified = HTMLMinifier.minify(unminifiedCorrected, minifierOptions)
+        // writeFileSync(newPath, minified)
       } else if (/\.css$/.exec(curPath)) {
-        const unminified = readFileSync(curPath, "utf8")
-        const minified = new CleanCSS().minify(unminified)
-        writeFileSync(newPath, minified.styles)
-      } else if (/\.png$/.exec(curPath)) {
+        // const unminified = readFileSync(curPath, "utf8")
+        // const minified = new CleanCSS().minify(unminified)
+        // writeFileSync(newPath, minified.styles)
+      } else if (/\.png|\.ico|\.icns|\.html$/.exec(curPath)) {
         const pngFile = readFileSync(curPath)
         writeFileSync(newPath, pngFile)
       }
@@ -127,15 +127,15 @@ const copyPublicFolderAndMinify = (folderPath, destinationPath) => {
   })
 }
 
-const cleanTsconfig = () => {
-  const tsconfigSvelteJSONPath = join(__dirname, "..", "tsconfig.svelte.prod.json")
-  const tsconfigElectronJSONPath = join(__dirname, "..", "tsconfig.electron.prod.json")
-  const tsconfigServerJSONPath = join(__dirname, "..", "tsconfig.server.prod.json")
+// const cleanTsconfig = () => {
+//   const tsconfigSvelteJSONPath = join(__dirname, "..", "tsconfig.svelte.prod.json")
+//   const tsconfigElectronJSONPath = join(__dirname, "..", "tsconfig.electron.prod.json")
+//   const tsconfigServerJSONPath = join(__dirname, "..", "tsconfig.server.prod.json")
 
-  if (existsSync(tsconfigSvelteJSONPath)) unlinkSync(tsconfigSvelteJSONPath)
-  if (existsSync(tsconfigElectronJSONPath)) unlinkSync(tsconfigElectronJSONPath)
-  if (existsSync(tsconfigServerJSONPath)) unlinkSync(tsconfigServerJSONPath)
-}
+//   if (existsSync(tsconfigSvelteJSONPath)) unlinkSync(tsconfigSvelteJSONPath)
+//   if (existsSync(tsconfigElectronJSONPath)) unlinkSync(tsconfigElectronJSONPath)
+//   if (existsSync(tsconfigServerJSONPath)) unlinkSync(tsconfigServerJSONPath)
+// }
 
 const bundledElectronPath = join(__dirname, "..", "build")
 
@@ -143,4 +143,4 @@ const jsFiles = getAllJSFiles(bundledElectronPath)
 minifyJSFiles(jsFiles)
 
 copyPublicFolderAndMinify(join(__dirname, "..", "public"), join(bundledElectronPath, "public"))
-cleanTsconfig()
+// cleanTsconfig()

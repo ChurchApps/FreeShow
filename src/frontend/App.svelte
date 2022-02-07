@@ -52,6 +52,7 @@
 
         // save
         if (e.key === "s") save()
+        // else if (e.key === "r") e.preventDefault()
 
         // undo/redo
         if (!e.target.closest(".edit")) {
@@ -89,9 +90,7 @@
   $: page = $activePage
 
   // on loaded
-  onMount(() => {
-    window.api.send("LOADED")
-  })
+  onMount(() => window.api.send("LOADED"))
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -111,7 +110,6 @@
     <div class="column">
       <Top />
       <div class="row">
-        <!-- maxWidth={window.innerWidth / 3} -->
         <Resizeable id="mainLeft">
           <div class="left">
             {#if page === "show"}
@@ -185,7 +183,6 @@
     flex-direction: column;
     height: 100%;
     justify-content: space-between;
-    /* flex: 1 1 auto; */
   }
   .row {
     display: flex;
