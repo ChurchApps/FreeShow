@@ -50,6 +50,7 @@ export interface Item {
     value: string
     style: string
   }[]
+  auto?: boolean
   style: string
   align?: string
   media?: {}

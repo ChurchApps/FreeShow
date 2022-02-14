@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte"
-  import { OUTPUT } from "../types/Channels"
+  import { MAIN } from "../types/Channels"
   import type { Resolution } from "../types/Settings"
   import type { TopViews } from "../types/Tabs"
   import Calendar from "./components/calendar/Calendar.svelte"
@@ -16,6 +16,7 @@
   import EditTools from "./components/edit/EditTools.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
   import { redo, undo } from "./components/helpers/history"
+  import { loadShows } from "./components/helpers/setShow"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
   import Top from "./components/main/Top.svelte"
@@ -31,7 +32,7 @@
   import StageShow from "./components/stage/StageShow.svelte"
   import StageTools from "./components/stage/StageTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
-  import { activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, showsCache } from "./stores"
+  import { activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, shows, showsCache } from "./stores"
   import { setLanguage } from "./utils/language"
   import { save } from "./utils/save"
   import { startup } from "./utils/startup"
@@ -42,6 +43,10 @@
   // SET LANGUAGE
   // https://lokalise.com/blog/svelte-i18n/
   setLanguage()
+
+  // load add shows???
+  // search (cache search text?...)
+  loadShows(Object.keys($shows))
 
   function keydown(e: any) {
     if (!$outputWindow) {
@@ -80,7 +85,7 @@
 
   function display() {
     outputDisplay.set(false)
-    window.api.send(OUTPUT, { channel: "DISPLAY", data: false })
+    window.api.send(MAIN, { channel: "DISPLAY", data: false })
   }
 
   let width: number = 0

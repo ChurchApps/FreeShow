@@ -102,7 +102,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
       <SelectElem id="slide" data={{ index }} draggable trigger={list ? "column" : "row"}>
         <!-- TODO: tab select on enter -->
         <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
-        <Zoomed background={slide.items.length ? "black" : "transparent"} let:ratio>
+        <Zoomed background={slide.items.length ? "black" : "transparent"} let:ratio zoom>
           {#if background}
             {#key background}
               <div class="background" style="zoom: {1 / ratio}">

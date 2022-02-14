@@ -21,12 +21,13 @@
   let active: string = Object.keys(tabs)[0]
 
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
-  $: allSlideItems = $activeEdit.slide !== null ? $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items : []
+  $: allSlideItems = $activeEdit.slide !== null ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items : []
+  $: console.log(allSlideItems)
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
   // select active items or all items
   $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
   // select last item
-  $: item = items.length ? items[items.length - 1] : null
+  $: item = items?.length ? items[items.length - 1] : null
 </script>
 
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->

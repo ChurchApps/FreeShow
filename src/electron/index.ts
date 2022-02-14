@@ -76,7 +76,7 @@ const createWindow = () => {
     height,
     icon: "public/icon.ico",
     frame: !isProd,
-    autoHideMenuBar: !isProd || process.platform === "win32",
+    autoHideMenuBar: isProd && process.platform === "win32",
     backgroundColor: "#2d313b",
     show: !isProd,
     webPreferences: {

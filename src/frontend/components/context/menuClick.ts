@@ -76,6 +76,9 @@ export function menuClick(id: string, enabled: boolean = true, menu: any = null,
         })
       }
       break
+    case "remove_slide":
+      history({ id: "removeSlides", newData: { indexes: sel.data.map((a: any) => a.index) }, location: { page: "show", show: get(activeShow)! } })
+      break
     case "delete":
       if (sel.id === "show_drawer") {
         activePopup.set("delete_show")
@@ -83,12 +86,6 @@ export function menuClick(id: string, enabled: boolean = true, menu: any = null,
         sel.data.forEach((a: any) => {
           history({ id: "deleteShowsCategory", newData: { id: a } })
         })
-      } else if (sel.id === "slide") {
-        // TODO: delete slide....
-        // shows.update((a) => {
-        //   delete a[get(activeShow)!.id].slides[GetLayoutRef()[sel.data[0].index].id]
-        //   return a
-        // })
       }
       break
     case "duplicate":

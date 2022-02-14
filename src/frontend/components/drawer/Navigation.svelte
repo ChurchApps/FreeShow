@@ -77,7 +77,23 @@
       }
     })
   }
+
+  function keydown(e: KeyboardEvent) {
+    if (!e.target?.closest(".edit") && e.ctrlKey) {
+      if (e.key === "ArrowDown") {
+        // Ctrl + Arrow Down = change active drawer sub tab
+        let index = buttons.findIndex((a) => a.id === $drawerTabsData[id].activeSubTab)
+        if (index + 1 < buttons.length) setTab(buttons[index + 1].id)
+      } else if (e.key === "ArrowUp") {
+        // Ctrl + Arrow Up = change active drawer sub tab
+        let index = buttons.findIndex((a) => a.id === $drawerTabsData[id].activeSubTab)
+        if (index - 1 >= 0) setTab(buttons[index - 1].id)
+      }
+    }
+  }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div class="main">
   <div class="categories context #category_{id}">

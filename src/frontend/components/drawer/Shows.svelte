@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Show } from "../../../types/Show"
-  import { activePopup, activeProject, activeShow, dictionary, shows } from "../../stores"
+  import { activePopup, activeProject, activeShow, dictionary, shows, showsCache } from "../../stores"
   import { keysToID, removeValues, sortObject, sortObjectNumbers } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -28,7 +28,7 @@
 
   let totalMatch: number = 0
   $: totalMatch = searchValue ? 0 : 0
-  function search(obj: Show): number {
+  function search(obj: any): number {
     let match: any[] = []
 
     sva.forEach((sv, i) => {
@@ -38,23 +38,25 @@
         else if (searchIncludes(obj.name, sv)) match[i] += 25
         // if (obj.category !== null && searchIncludes($categories[obj.category].name, sv)) match[i] += 10
 
-        Object.values(obj.slides).forEach((slide) => {
-          slide.items.forEach((item) => {
-            let text = ""
-            item.text?.forEach((box) => {
-              text += box.value
-            })
-            if (text.length) {
-              if (searchEquals(text, sv)) match[i] += 20
-              else if (searchIncludes(text, sv)) {
-                // TODO: more specific match
-                // console.log(sv, filter(text))
-                // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
-                match[i] += 10
+        if ($showsCache[obj.id]) {
+          Object.values($showsCache[obj.id].slides).forEach((slide) => {
+            slide.items.forEach((item) => {
+              let text = ""
+              item.text?.forEach((box) => {
+                text += box.value
+              })
+              if (text.length) {
+                if (searchEquals(text, sv)) match[i] += 20
+                else if (searchIncludes(text, sv)) {
+                  // TODO: more specific match
+                  // console.log(sv, filter(text))
+                  // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
+                  match[i] += 10
+                }
               }
-            }
+            })
           })
-        })
+        }
       }
     })
 

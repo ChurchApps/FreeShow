@@ -92,18 +92,18 @@
       allItems = []
       allSlideItems.forEach((_item, i) => allItems.push(i))
     }
-    let newData: any = []
-    let oldData: any = []
+    let values: any = []
+    let oldValues: any = []
     // loop through all items
     allItems.forEach((itemIndex) => {
-      oldData.push({ ...allSlideItems[itemIndex] })
-      newData.push(addStyleString(allSlideItems[itemIndex].style, [key, style]))
+      oldValues.push({ ...allSlideItems[itemIndex] })
+      values.push(addStyleString(allSlideItems[itemIndex].style, [key, style]))
     })
 
     history({
-      id: "itemStyle",
-      oldData,
-      newData,
+      id: "setItems",
+      oldData: { key: "style", values: oldValues },
+      newData: { key: "style", values },
       location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
     })
   }

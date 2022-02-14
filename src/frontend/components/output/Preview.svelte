@@ -179,12 +179,12 @@
       // }
     }
 
-    if (!e.target.closest("input") && !e.target.closest(".edit")) {
-      if (!$outLocked && (e.key === "ArrowRight" || (e.key === " " && !e.shiftKey))) {
+    if (!e.target.closest("input") && !e.target.closest(".edit") && $activeShow && ($activeShow?.type === "show" || $activeShow?.type === undefined)) {
+      if (!$outLocked && ((!e.ctrlKey && e.key === "ArrowRight") || (e.key === " " && !e.shiftKey))) {
         // Arrow Right | Space Bar
         e.preventDefault()
         nextSlide(e)
-      } else if (!$outLocked && (e.key === "ArrowLeft" || (e.key === " " && e.shiftKey))) {
+      } else if (!$outLocked && ((!e.ctrlKey && e.key === "ArrowLeft") || (e.key === " " && e.shiftKey))) {
         // Arrow Left | Shift + Space Bar
         e.preventDefault()
         previousSlide()

@@ -24,7 +24,7 @@
   on:click
   on:dblclick
 >
-  <div class="over">
+  <div class="over" style="flex-direction: {$mediaOptions.grid ? 'column' : 'row'};width: 100%;">
     {#if preview}
       <div class="overlay" />
     {:else}

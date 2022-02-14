@@ -67,9 +67,29 @@
   }
 
   function wheel(e: any) {
-    if (e.ctrlKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(1, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
+    if (e.ctrlKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
+  }
+
+  function keydown(e: any) {
+    if (!e.target.closest("input") && !e.target.closest(".edit") && e.ctrlKey && allFiles.length) {
+      if (e.key === "ArrowRight") {
+        // e.preventDefault()
+        if (activeFile === null || activeFile < content - 1) activeFile = activeFile === null ? 0 : activeFile + 1
+      } else if (e.key === "ArrowLeft") {
+        // e.preventDefault()
+        if (activeFile === null || activeFile > 0) activeFile = activeFile === null ? content - 1 : activeFile - 1
+      } else if (e.key === "Backspace") {
+        if (rootPath !== path) {
+          const folder = path.slice(0, path.lastIndexOf("\\"))
+          if (folder.length > rootPath.length) path = folder
+          else path = rootPath
+        }
+      }
+    }
   }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <!-- TODO: fix: big images & many files -->
 <!-- TODO: autoscroll -->
@@ -144,10 +164,10 @@
   >
     <Icon size={1.3} id={$mediaOptions.grid ? "grid" : "list"} white />
   </Button>
-  <Button on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title="[[[Zoom out]]]">
+  <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title="[[[Zoom out]]]">
     <Icon size={1.3} id="remove" white />
   </Button>
-  <Button on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(1, $mediaOptions.columns - 1) })} title="[[[Zoom in]]]">
+  <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title="[[[Zoom in]]]">
     <Icon size={1.3} id="add" white />
   </Button>
   <p class="text">{(100 / $mediaOptions.columns).toFixed()}%</p>

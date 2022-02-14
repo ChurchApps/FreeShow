@@ -27,8 +27,8 @@
 
   // let layoutSlides: SlideData[] = []
   // $: layoutSlides = GetLayout($activeShow!.id)
-  $: activeLayout = $showsCache[$activeShow!.id].settings.activeLayout
-  $: layoutSlides = [$showsCache[$activeShow!.id].layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
+  $: activeLayout = $showsCache[$activeShow!.id]?.settings.activeLayout
+  $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   function keydown(e: any) {
     if (!(e.target instanceof HTMLTextAreaElement) && !e.target.closest(".edit")) {

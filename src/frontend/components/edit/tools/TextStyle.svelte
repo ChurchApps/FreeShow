@@ -72,6 +72,8 @@
   setText()
   function setText() {
     let styles = getStyles(style, true)
+    console.log(styles)
+
     Object.entries(defaults).forEach(([key, value]) => {
       if (key === "text-shadow" && value !== null) {
         let v = value.split(" ")
@@ -86,6 +88,8 @@
     })
   }
 
+  $: console.log("TEXT: ", text)
+
   const inputChange = (e: any, key: string) => update(key, e.target.value)
   const updateNull = (key: string, style: string) => update(key, text[key] === style ? null : style)
   const decoration = (key: string) => {
@@ -98,6 +102,23 @@
       style = style.join(" ")
     }
     update("text-decoration", style)
+  }
+
+  // auto
+  let isAuto: boolean = false
+  const auto = (e: any) => {
+    isAuto = e.target.checked
+    let allItems: number[] = $activeEdit.items
+    // update all items if nothing is selected
+    if (!allItems.length) {
+      allItems = []
+      allSlideItems.forEach((_item, i) => allItems.push(i))
+    }
+    history({
+      id: "setItems",
+      newData: { key: "auto", values: [isAuto] },
+      location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
+    })
   }
 
   function update(key: string, style: any, aligns: boolean = false) {
@@ -131,19 +152,21 @@
       allSlideItems.forEach((_item, i) => allItems.push(i))
     }
     let newData: any = []
-    let oldData: any = []
+    // let oldData: any = []
     // loop through all items
     allItems.forEach((itemIndex) => {
-      oldData.push({ ...allSlideItems[itemIndex] })
+      // oldData.push({ ...allSlideItems[itemIndex] })
       let selected = selection
       if (selected === null || selected[1] - selected[0] <= 0) selected = [0, getItemText(allSlideItems[itemIndex]).length]
       newData.push(aligns ? addStyleString(allSlideItems[itemIndex].align || "", [key, style]) : addStyle(selected, allSlideItems[itemIndex], [key, style]))
     })
+    // console.log("NEW DATA", newData)
 
     history({
-      id: aligns ? "itemAlign" : "textStyle",
-      oldData,
-      newData,
+      // WIP
+      id: aligns ? "setItems" : "textStyle",
+      // oldData: { key: aligns ? "align" : "style", values: oldData },
+      newData: { key: aligns ? "align" : null, values: newData },
       location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
     })
   }
@@ -171,18 +194,18 @@
       <Color bind:value={text.color} on:input={(e) => inputChange(e, "color")} />
       <NumberInput value={text["font-size"]} on:change={(e) => update("font-size", e.detail)} />
       <!-- TODO: auto size -->
-      <span><input type="checkbox" /></span>
+      <span><input type="checkbox" on:click={auto} checked={isAuto} /></span>
     </span>
   </div>
   <hr />
   <h6><T id="edit.style" /></h6>
   <div class="line" style="margin-bottom: 10px;">
-    <IconButton on:click={() => updateNull("font-weight", "bold")} title={$dictionary.edit._title_bold} icon="bold" active={text["font-weight"] === "bold"} />
-    <IconButton on:click={() => updateNull("font-style", "italic")} title={$dictionary.edit._title_italic} icon="italic" active={text["font-style"] === "italic"} />
-    <IconButton on:click={() => decoration("underline")} title={$dictionary.edit._title_underline} icon="underline" active={text["text-decoration"]?.includes("underline")} />
+    <IconButton on:click={() => updateNull("font-weight", "bold")} title={$dictionary.edit?._title_bold} icon="bold" active={text["font-weight"] === "bold"} />
+    <IconButton on:click={() => updateNull("font-style", "italic")} title={$dictionary.edit?._title_italic} icon="italic" active={text["font-style"] === "italic"} />
+    <IconButton on:click={() => decoration("underline")} title={$dictionary.edit?._title_underline} icon="underline" active={text["text-decoration"]?.includes("underline")} />
     <IconButton
       on:click={() => decoration("line-through")}
-      title={$dictionary.edit._title_strikethrough}
+      title={$dictionary.edit?._title_strikethrough}
       icon="strikethrough"
       active={text["text-decoration"]?.includes("line-through")}
     />
@@ -202,15 +225,15 @@
   <hr />
   <h6><T id="edit.align" /></h6>
   <div class="line">
-    <IconButton on:click={() => update("text-align", "left", true)} title={$dictionary.edit._title_left} icon="alignLeft" active={align["text-align"] === "left"} />
-    <IconButton on:click={() => update("text-align", "center", true)} title={$dictionary.edit._title_center} icon="alignCenter" active={align["text-align"] === "center"} />
-    <IconButton on:click={() => update("text-align", "right", true)} title={$dictionary.edit._title_right} icon="alignRight" active={align["text-align"] === "right"} />
-    <IconButton on:click={() => update("text-align", "justify", true)} title={$dictionary.edit._title_justify} icon="alignJustify" active={align["text-align"] === "justify"} />
+    <IconButton on:click={() => update("text-align", "left", true)} title={$dictionary.edit?._title_left} icon="alignLeft" active={align["text-align"] === "left"} />
+    <IconButton on:click={() => update("text-align", "center", true)} title={$dictionary.edit?._title_center} icon="alignCenter" active={align["text-align"] === "center"} />
+    <IconButton on:click={() => update("text-align", "right", true)} title={$dictionary.edit?._title_right} icon="alignRight" active={align["text-align"] === "right"} />
+    <IconButton on:click={() => update("text-align", "justify", true)} title={$dictionary.edit?._title_justify} icon="alignJustify" active={align["text-align"] === "justify"} />
   </div>
   <div class="line">
-    <IconButton on:click={() => update("align-items", "flex-start", true)} title={$dictionary.edit._title_top} icon="alignTop" active={align["align-items"] === "flex-start"} />
-    <IconButton on:click={() => update("align-items", "center", true)} title={$dictionary.edit._title_center} icon="alignMiddle" active={align["align-items"] === "center"} />
-    <IconButton on:click={() => update("align-items", "flex-end", true)} title={$dictionary.edit._title_bottom} icon="alignBottom" active={align["align-items"] === "flex-end"} />
+    <IconButton on:click={() => update("align-items", "flex-start", true)} title={$dictionary.edit?._title_top} icon="alignTop" active={align["align-items"] === "flex-start"} />
+    <IconButton on:click={() => update("align-items", "center", true)} title={$dictionary.edit?._title_center} icon="alignMiddle" active={align["align-items"] === "center"} />
+    <IconButton on:click={() => update("align-items", "flex-end", true)} title={$dictionary.edit?._title_bottom} icon="alignBottom" active={align["align-items"] === "flex-end"} />
   </div>
   <hr />
   <span>

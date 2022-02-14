@@ -51,7 +51,7 @@
       let shows = GetProjects().active.shows // $projects[$activeProject].shows
 
       // TODO: duplicate of preview next / previousShow()
-      if (shows.length) {
+      if (shows.length && !e.ctrlKey) {
         let newIndex: null | number = null
         if (e.key === "ArrowDown") {
           // Arrow Down = change active show in project

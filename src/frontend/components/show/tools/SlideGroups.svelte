@@ -14,7 +14,7 @@
       // add global group
       if (slide.globalGroup && $groups[slide.globalGroup]) {
         let old = { group: slide.group, color: slide.color }
-        if ($groups[slide.globalGroup].default) slide.group = $dictionary.groups[$groups[slide.globalGroup].name]
+        if ($groups[slide.globalGroup].default) slide.group = $dictionary.groups?.[$groups[slide.globalGroup].name] || $groups[slide.globalGroup].name
         else slide.group = $groups[slide.globalGroup].name
         slide.color = $groups[slide.globalGroup].color
 
@@ -43,7 +43,7 @@
 
   $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
     let name = group.name
-    if (group.default) name = $dictionary.groups[group.name]
+    if (group.default) name = $dictionary.groups?.[group.name]
     return { group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
   })
 

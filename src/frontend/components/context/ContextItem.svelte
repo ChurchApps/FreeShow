@@ -55,7 +55,7 @@
       {/key}
     {/if}
   </span>
-  {#if menu.shortcuts}
+  {#if menu?.shortcuts}
     <span style="opacity: 0.5;">
       {menu.shortcuts[0]}
     </span>

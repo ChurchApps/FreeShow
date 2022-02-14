@@ -68,7 +68,15 @@
         let square = mouse.e.target.closest(".square")
         if (square.classList[1].includes("n")) {
           styles.top = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
-          styles.height = e.clientY / ratio - mouse.offset.height
+          // styles.height = e.clientY / ratio + (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y + mouse.offset.height
+
+          // styles.height = mouse.height - e.clientY / ratio + mouse.offset.height
+          // styles.height = mouse.offset.height - e.clientY / ratio - styles.top
+          // styles.height = mouse.offset.y - e.clientY / ratio + mouse.offset.y
+          // styles.height = mouse.offset.height - e.clientY / ratio + mouse.offset.y
+          // TODO: resize square
+          styles.height = mouse.offset.height - (e.clientY - itemElem.closest(".slide").offsetTop) / ratio + mouse.offset.y + mouse.height
+          // styles.height = 0 - e.clientY / ratio + mouse.offset.height
           if (e.shiftKey) store = e.clientY / ratio - mouse.offset.height
           // styles.height = e.clientY / ratio - mouse.offset.height
           // styles.height = e.clientY / ratio - mouse.offset.height - (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
@@ -98,13 +106,17 @@
           // styles.width = mouse.offset.x - itemElem.offsetWidth - (e.clientX - e.target.closest(".slide").offsetLeft) / ratio
 
           if (!e.shiftKey || store === null) {
-            styles.width = e.clientX / ratio - mouse.offset.width
+            styles.width = mouse.offset.width - (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio + mouse.offset.x + mouse.width
+            // styles.width = e.clientX / ratio - mouse.offset.width
             store = e.clientX / ratio - mouse.offset.width
           }
         }
 
         ;["top", "left", "width", "height"].forEach((value) => {
-          if (styles[value] !== undefined && !styles[value].toString().includes("px")) styles[value] = styles[value].toFixed(2) + "px"
+          if (styles[value] !== undefined && !styles[value].toString().includes("px")) {
+            if (value === "width" || value === "height") styles[value] = Math.max(16 / ratio, styles[value])
+            styles[value] = styles[value].toFixed(2) + "px"
+          }
         })
       }
       newStyles = styles

@@ -1,9 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte"
 
+  // import { onMount } from "svelte"
   import type { Item } from "../../../types/Show"
-  import { activeShow, activeEdit, showsCache } from "../../stores"
+  import { activeEdit, activeShow, showsCache } from "../../stores"
+  import { GetLayoutRef } from "../helpers/get"
   import { history } from "../helpers/history"
+  import { _shows } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Movebox from "../system/Movebox.svelte"
   import { getCaretCharacterOffsetWithin, setCurrentCursorPosition } from "./tools/TextStyle"
@@ -29,6 +32,8 @@
       mouse = {
         x: e.clientX,
         y: e.clientY,
+        width: item.offsetWidth,
+        height: item.offsetHeight,
         offset: {
           x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
           y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
@@ -49,7 +54,7 @@
 
   $: active = $activeShow!.id
   $: layout = $showsCache[active].settings.activeLayout
-  $: slide = $showsCache[active].layouts[layout].slides[$activeEdit.slide!].id
+  $: slide = [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide!].id][1]
 
   function keydown(e: any) {
     // TODO:
@@ -73,7 +78,7 @@
     if (!e.ctrlKey && e.target.closest(".item") !== itemElem && !e.target.closest(".editTools")) {
       if ($activeEdit.items.includes(index)) {
         // TODO: clicking another item will add text to that!
-        updateText()
+        // updateText()
         if (!e.target.closest(".item")) {
           activeEdit.update((ae) => {
             ae.items = []
@@ -93,62 +98,80 @@
 
   // update text on item blur or text cursor move
   let textElem: any
-  function updateText() {
-    let text: string = textElem.innerText
-    console.log(text)
+  // function updateText() {
+  //   let text: string = textElem.innerText
+  //   console.log(text)
 
-    // let sel: null | Selection = window.getSelection()
-    // if (sel?.anchorNode?.parentElement) {
-    //   let parent: Element = sel.anchorNode.parentElement.closest(".edit")!
-    //   let index = 0
-    //   ;[...parent.children].forEach((childElem: any, i: number) => {
-    //     if (childElem === sel!.anchorNode!.parentElement) index = i
-    //   })
+  //   // let sel: null | Selection = window.getSelection()
+  //   // if (sel?.anchorNode?.parentElement) {
+  //   //   let parent: Element = sel.anchorNode.parentElement.closest(".edit")!
+  //   //   let index = 0
+  //   //   ;[...parent.children].forEach((childElem: any, i: number) => {
+  //   //     if (childElem === sel!.anchorNode!.parentElement) index = i
+  //   //   })
 
-    //   let active = $activeShow!.id
-    //   let layout: string = $shows[active].settings.activeLayout
-    //   let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
-    //   // let pos = sel!.anchorOffset!
+  //   //   let active = $activeShow!.id
+  //   //   let layout: string = $shows[active].settings.activeLayout
+  //   //   let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
+  //   //   // let pos = sel!.anchorOffset!
 
-    //   // TODO: breaks dont work
-    //   // get lengths
-    //   let textIndex = 0
-    //   let itemTextLength = 0
-    //   let oldItemsLength = 0
-    //   $shows[active].slides[slide].items[$activeEdit.items!].text?.forEach((itemText, i) => {
-    //     if (i < index) textIndex += itemText.value.length
-    //     if (i === index) itemTextLength = itemText.value.length
-    //     oldItemsLength += itemText.value.length
-    //   })
-    //   let newTextLength = text.length - oldItemsLength
-    //   let newItemText = text.slice(textIndex, textIndex + itemTextLength + newTextLength)
+  //   //   // TODO: breaks dont work
+  //   //   // get lengths
+  //   //   let textIndex = 0
+  //   //   let itemTextLength = 0
+  //   //   let oldItemsLength = 0
+  //   //   $shows[active].slides[slide].items[$activeEdit.items!].text?.forEach((itemText, i) => {
+  //   //     if (i < index) textIndex += itemText.value.length
+  //   //     if (i === index) itemTextLength = itemText.value.length
+  //   //     oldItemsLength += itemText.value.length
+  //   //   })
+  //   //   let newTextLength = text.length - oldItemsLength
+  //   //   let newItemText = text.slice(textIndex, textIndex + itemTextLength + newTextLength)
 
-    //   // WIP
-    //   shows.update((s) => {
-    //     let item = GetShow({ id: active }).slides[slide].items[$activeEdit.item!]
-    //     if (item.text) item.text[index].value = newItemText
-    //     return s
-    //   })
-    // }
-  }
+  //   //   // WIP
+  //   //   shows.update((s) => {
+  //   //     let item = GetShow({ id: active }).slides[slide].items[$activeEdit.item!]
+  //   //     if (item.text) item.text[index].value = newItemText
+  //   //     return s
+  //   //   })
+  //   // }
+  // }
 
   let html: string = ""
   let previousHTML: string = ""
+  let currentStyle: string = ""
 
-  onMount(() => {
-    html = ""
-    item.text?.forEach((a) => {
-      let style = a.style ? 'style="' + a.style + '"' : ""
-      html += `<span ${style}>` + a.value + "</span>"
-    })
-    previousHTML = html
-  })
+  onMount(update)
+  $: console.log(item.text?.[0].style)
+  $: if (item.text?.[0].style !== currentStyle) update()
 
+  function update() {
+    if ($activeEdit.slide !== null) {
+      html = ""
+      currentStyle = item.text?.[0].style || ""
+      item.text?.forEach((a) => {
+        let style = a.style ? 'style="' + a.style + '"' : ""
+        html += `<span ${style}>` + a.value + "</span>"
+      })
+      previousHTML = html
+    }
+  }
+
+  $: console.log(item)
+
+  $: console.log(html, previousHTML)
+
+  // || $showsCache[active].slides
   $: {
     if (textElem && html !== previousHTML) {
       previousHTML = html
       setTimeout(() => {
         console.log(html)
+        // let text = _shows([active]).slides([slide]).items([index]).get("text")
+        // let textItems = getItems(textElem.children)
+        // let values: any = {}
+        // if (textItems.length) values = text?.forEach((a, i) => (a.value = textItems[i]))
+        // _shows([active]).slides([slide]).items([index]).set({key: "text", values})
         showsCache.update((a) => {
           let text = a[active].slides[slide].items[index].text
           let textItems = getItems(textElem.children)
@@ -171,24 +194,22 @@
     // TODO: <br> will breaks the system...
     if (e.key === "Enter") {
       e.preventDefault()
-
       // get cursor pos & insert <br>
       let pos = getCaretCharacterOffsetWithin(e.target)
-
       // find pos
       let count: number = 0
       let tag: boolean = false
       let newPos: null | number = null
-
       html.split("").forEach((char: string, i: number) => {
         if (char === "<") tag = true
         else if (char === ">") tag = false
         else if (!tag) count++
         if (count === pos) newPos = i + 1
       })
-
       if (newPos !== null) {
         html = html.slice(0, newPos) + "<br>" + html.slice(newPos, html.length)
+        console.log(textElem, newPos)
+
         setCurrentCursorPosition(textElem, newPos)
       }
       console.log(html)
@@ -200,7 +221,7 @@
 
 <div
   bind:this={itemElem}
-  class="item"
+  class="item context #edit_box"
   class:selected={$activeEdit.items.includes(index)}
   style="{item.style}; outline: {3 / ratio}px solid rgb(255 255 255 / 0.2);"
   on:mousedown={mousedown}
@@ -214,7 +235,7 @@
           <T id="Type..." />
         </span>
       {/if}
-      <div bind:this={textElem} class="edit" contenteditable bind:innerHTML={html} on:keydown={textkey}>
+      <div bind:this={textElem} style={item.align} class="edit" contenteditable bind:innerHTML={html} on:keydown={textkey}>
         <!-- {#each item.text as text}
           <span style={text.style}>{@html text.value}</span>
         {/each} -->
@@ -238,7 +259,8 @@
     width: 100%;
   }
 
-  .align {
+  .align,
+  .edit {
     height: 100%;
     display: flex;
     text-align: center;

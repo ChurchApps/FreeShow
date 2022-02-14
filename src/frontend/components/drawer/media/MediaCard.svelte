@@ -38,6 +38,11 @@
   function dblclick(e: any) {
     if (!e.ctrlKey && !$outLocked) outBackground.set({ path: path })
   }
+
+  // TODO: Enter play media
+  function keydown(e: any) {
+    if (e.key === "Enter") dblclick(e)
+  }
 </script>
 
 <Card
@@ -51,6 +56,7 @@
   white={type === "image"}
   on:click={click}
   on:dblclick={dblclick}
+  on:keydown={keydown}
   on:mouseenter={() => (hover = true)}
   on:mouseleave={() => (hover = false)}
   on:mousemove={move}
