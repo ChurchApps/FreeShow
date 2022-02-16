@@ -3,6 +3,7 @@
   import type { TabsObj } from "../../../types/Tabs"
   import { activeEdit, activeShow, showsCache } from "../../stores"
   import { GetLayout } from "../helpers/get"
+  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
@@ -22,12 +23,39 @@
 
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
   $: allSlideItems = $activeEdit.slide !== null ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items : []
-  $: console.log(allSlideItems)
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
   // select active items or all items
   $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
   // select last item
   $: item = items?.length ? items[items.length - 1] : null
+
+  function reset() {
+    if (active === "text") {
+      let values: any = []
+      items.forEach((item) => {
+        if (item.text) {
+          let text = item.text.map((a) => {
+            a.style = ""
+            return a
+          })
+          values.push(text)
+        }
+      })
+
+      if (values.length) {
+        history({
+          id: "textStyle",
+          newData: { key: "text", values },
+          location: {
+            page: "edit",
+            show: $activeShow!,
+            slide: GetLayout()[$activeEdit.slide!].id,
+            items: $activeEdit.items.length ? $activeEdit.items : Object.keys(allSlideItems),
+          },
+        })
+      }
+    }
+  }
 </script>
 
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
@@ -55,14 +83,14 @@
 
     <span style="display: flex;">
       {#if active === "text" || active === "item"}
-        <Button style="flex: 1;" dark center>
-          <Icon id="apply" />
+        <Button style="flex: 1;" dark center disabled title="WIP">
+          <Icon id="copy" right />
           <T id={"edit.apply_to_all"} />
         </Button>
       {/if}
       {#if active !== "items"}
-        <Button style="flex: 1;" dark center>
-          <Icon id="reset" />
+        <Button style="flex: 1;" on:click={reset} dark center>
+          <Icon id="reset" right />
           <T id={"edit.reset"} />
         </Button>
       {/if}

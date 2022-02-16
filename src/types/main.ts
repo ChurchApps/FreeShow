@@ -43,6 +43,8 @@ export interface SlidesOptions {
 }
 
 export interface ActiveEdit {
+  // id?: string
+  // type?: "show" | "media" | "overlay" | "template"
   slide: null | number
   items: number[]
 }

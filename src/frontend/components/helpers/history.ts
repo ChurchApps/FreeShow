@@ -30,7 +30,7 @@ import {
 } from "./../../stores"
 import { addToPos } from "./mover"
 import { loadShows, setShow } from "./setShow"
-import { _shows } from "./shows"
+import { _show } from "./shows"
 
 export type HistoryPages = "drawer" | "show" | "edit" | "stage" | "settings"
 export type HistoryIDs =
@@ -98,7 +98,7 @@ export interface History {
 }
 
 // override previous history
-const override = ["textStyle", "deleteItem", "setItems", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme"]
+const override = ["textStyle", "deleteItem", "setItems", "setStyle", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme"]
 
 export async function historyAwait(s: string[], obj: History) {
   loadShows(s)
@@ -124,7 +124,8 @@ export function history(obj: History, undo: null | boolean = null) {
 
   // console.log(obj)
 
-  let showIDs = [obj.location!.show!.id!]
+  let showIDs: any[] = []
+  if (obj.location?.show?.id) showIDs = [obj.location.show.id]
   let old: any = null
 
   switch (obj.id) {
@@ -132,9 +133,9 @@ export function history(obj: History, undo: null | boolean = null) {
     // style
     case "deleteItem":
       if (undo) {
-        _shows(showIDs).slides([obj.location!.slide!]).items(obj.location!.items!).add(obj.newData)
+        _show(showIDs).slides([obj.location!.slide!]).items(obj.location!.items!).add(obj.newData)
       } else {
-        obj.oldData = _shows(showIDs).slides([obj.location!.slide!]).items(obj.location!.items!).remove()
+        obj.oldData = _show(showIDs).slides([obj.location!.slide!]).items(obj.location!.items!).remove()
       }
       break
     // case "textStyle":
@@ -162,7 +163,7 @@ export function history(obj: History, undo: null | boolean = null) {
     case "setStyle":
       console.log("TEXT STYLE", obj.newData)
       // TODO: get old data (not getting first value....)
-      old = _shows(showIDs).slides([obj.location!.slide!]).items(obj.location!.items!).set(obj.newData)
+      old = _show(showIDs).slides([obj.location!.slide!]).items(obj.location!.items!).set(obj.newData)
       console.log(old)
       break
     case "stageItemStyle":
@@ -175,7 +176,7 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     case "slideStyle":
-      old = _shows(showIDs).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData })
+      old = _show(showIDs).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData })
       // showsCache.update((s) => {
       //   let slide: Slide = GetShow(obj.location?.show!).slides[obj.location?.slide!]
       //   slide.settings = obj.newData
@@ -192,8 +193,8 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "slide":
       old = {}
-      old.slides = _shows(showIDs).set({ key: "slides", value: obj.newData.slides })
-      old.layout = _shows(showIDs).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout })
+      old.slides = _show(showIDs).set({ key: "slides", value: obj.newData.slides })
+      old.layout = _show(showIDs).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout })
       // showsCache.update((a) => {
       //   a[obj.location!.show!.id].slides = obj.newData.slides
       //   a[obj.location!.show!.id].layouts[obj.location!.layout!].slides = obj.newData.layout
@@ -203,7 +204,7 @@ export function history(obj: History, undo: null | boolean = null) {
     // show
     case "changeSlide":
       old = obj.newData
-      _shows(showIDs)
+      _show(showIDs)
         .slides([obj.location!.slide!])
         .set({ key: Object.entries(obj.newData)[0], values: Object.values(obj.newData) })
       // showsCache.update((a) => {
@@ -416,69 +417,52 @@ export function history(obj: History, undo: null | boolean = null) {
         let id: any = obj.newData.id?.[0]
         if (!id) id = uid()
         if (!obj.newData) obj.newData = {}
-        let layouts = _shows(showIDs).layouts([obj.location!.layout])
+        let layouts = _show(showIDs).layouts([obj.location!.layout])
         let index: number = obj.newData.index !== undefined ? obj.newData.index : layouts.get()[0].length
-        let parentIndex: number | null = null
         let ref = layouts.ref()[0]
 
-        if (!obj.newData.slides && !obj.newData.parent) {
-          let parent: boolean = true
+        if (!obj.newData.slide && !obj.newData.parent) {
+          let isParent: boolean = true
           // add as child
           // TODO: add by template
           if (layouts.get()[0].length) {
-            parent = false
-            // group = null
-            console.log(layouts.get()[0], index)
-
-            // let ref = GetLayoutRef(obj.location!.show!.id, obj.location!.layout)
-            let parentId = ref[index - 1].id
-            let slides = _shows(showIDs).slides([parentId]).get()[0]
+            isParent = false
+            let parent = ref[index - 1].parent || ref[index - 1]
+            let slides = _show(showIDs).slides([parent.id]).get()[0]
             let value: string[] = [id]
             if (slides.children) value = addToPos(slides.children, [value], index)
-            // TODO: don't push, but add to correct index
-            console.log(ref, index, parentId)
-            parentIndex = ref[index - 1].parent?.index !== undefined ? ref[index - 1].parent?.index : ref[index - 1].index
-            console.log("PARENT: ", parentIndex)
 
-            console.log(value)
-
-            _shows(showIDs).slides([parentId]).set({ key: "children", value })
+            _show(showIDs).slides([parent.id]).set({ key: "children", value })
           }
-          let slide: any = { group: parent ? "" : null, color: null, settings: {}, notes: "", items: [] }
-          if (parent) slide.globalGroup = "verse"
+          let slide: any = { group: isParent ? "" : null, color: null, settings: {}, notes: "", items: [] }
+          if (isParent) slide.globalGroup = "verse"
           // globalGroup = getGroup(obj.location!.show!.id, obj.location!.layout!)
-          _shows(showIDs).slides([id]).add(slide, parent)
-
-          console.log(ref[index - 1])
+          _show(showIDs).slides([id]).add(slide, isParent)
 
           // layout
           let value: any = { id }
-          // if (parent) value = addToPos(layouts.get()[0][ref.parent.index].children, value, index)
-          if (parent) {
-            _shows(showIDs).layouts("active").slides([index]).add([value])
-            // _shows(showIDs)
-            //   .layouts("active")
-            //   .slides([parentIndex !== null ? parentIndex : index])
-            //   // .add([value], parent ? null : ref[index - 1].id)
-            //   .add([value], parent ? null : ref[index - 1]?.type === "child" ? ref[index - 1].index : 0)
+          if (isParent) {
+            _show(showIDs).layouts("active").slides([index]).add([value])
           }
         } else {
           // add custom
-          let id: string = _shows(showIDs).slides().add()
+          let id: string = _show(showIDs).slides().add(obj.newData.slide, true)
           let l: any = { id }
 
           // bgs
           if (obj.newData.backgrounds?.length) {
-            let bgid = _shows(showIDs).backgrounds().add(obj.newData.backgrounds)
+            let bgid = _show(showIDs).backgrounds().add(obj.newData.backgrounds)
             l.background = bgid
           }
 
           // layouts
-          let newIndex: number = index
-          layouts.get()[0].forEach((a: any, i: number) => {
-            if (i < index && a.children) newIndex -= Object.keys(a.children).length
-          })
-          _shows(showIDs).layouts("active").slides([newIndex]).add(l)
+          // let newIndex: number = index
+          // layouts.get()[0].forEach((a: any, i: number) => {
+          //   if (i < index && a.children) newIndex -= Object.keys(a.children).length
+          // })
+          // [newIndex]
+
+          _show(showIDs).layouts("active").slides().add([l])
         }
 
         activeEdit.update((a) => {
@@ -538,9 +522,9 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "removeSlides":
       if (undo) {
-        _shows([obj.location!.show!.id]).layouts().slides(obj.newData.indexes).add(obj.newData.layouts)
+        _show([obj.location!.show!.id]).layouts().slides(obj.newData.indexes).add(obj.newData.layouts)
       } else {
-        obj.oldData = _shows([obj.location!.show!.id]).layouts().slides(obj.newData.indexes).remove()
+        obj.oldData = _show([obj.location!.show!.id]).layouts().slides(obj.newData.indexes).remove()
       }
       break
 
@@ -562,12 +546,12 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "addLayout":
       if (undo) {
-        _shows(showIDs).layouts().remove(obj.oldData.id)
-        _shows(showIDs).set({ key: "settings.activeLayout", value: obj.newData.id })
+        _show(showIDs).layouts().remove(obj.oldData.id)
+        _show(showIDs).set({ key: "settings.activeLayout", value: obj.newData.id })
       } else {
-        old = { id: _shows(showIDs).get("settings.activeLayout") }
-        _shows(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
-        _shows(showIDs).set({ key: "settings.activeLayout", value: obj.newData.id })
+        old = { id: _show(showIDs).get("settings.activeLayout") }
+        _show(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
+        _show(showIDs).set({ key: "settings.activeLayout", value: obj.newData.id })
       }
       // showsCache.update((a) => {
       //   if (undo) {
@@ -584,19 +568,19 @@ export function history(obj: History, undo: null | boolean = null) {
 
     case "showMedia":
       let bgid: null | string = null
-      Object.entries(_shows(showIDs).backgrounds().get()).forEach(([id, a]: any) => {
+      Object.entries(_show(showIDs).backgrounds().get()).forEach(([id, a]: any) => {
         if (a.path === obj.newData.path) bgid = id
       })
 
       if (undo) {
-        if (bgid) _shows(showIDs).backgrounds([bgid]).remove()
-        _shows(showIDs).layouts([obj.location!.layout!]).slides([obj.location!.layoutSlide!]).remove("background")
+        if (bgid) _show(showIDs).backgrounds([bgid]).remove()
+        _show(showIDs).layouts([obj.location!.layout!]).slides([obj.location!.layoutSlide!]).remove("background")
       } else {
-        if (!bgid) bgid = _shows(showIDs).backgrounds().add(obj.newData)
-        let ref = _shows(showIDs).layouts([obj.location!.layout!]).ref()[obj.location!.layoutSlide!]
-        // let layoutSlide = _shows(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()
-        if (ref.type === "parent") _shows(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
-        else _shows(showIDs).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.index]).set({ key: "background", value: bgid })
+        if (!bgid) bgid = _show(showIDs).backgrounds().add(obj.newData)
+        let ref = _show(showIDs).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
+        // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()
+        if (ref.type === "parent") _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
+        else _show(showIDs).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.index]).set({ key: "background", value: bgid })
       }
 
       // showsCache.update((a) => {
@@ -626,9 +610,9 @@ export function history(obj: History, undo: null | boolean = null) {
       // })
       break
     case "changeLayout":
-      let ref = _shows(showIDs).layouts().ref()[obj.location!.layoutSlide!]
-      if (ref.type === "parent") old = _shows(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).set(obj.newData)
-      else old = _shows(showIDs).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.index]).set(obj.newData)
+      let ref = _show(showIDs).layouts().ref()[obj.location!.layoutSlide!]
+      if (ref.type === "parent") old = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).set(obj.newData)
+      else old = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.index]).set(obj.newData)
       // showsCache.update((a) => {
       //   let ref: any[] = GetLayoutRef(obj.location!.show!.id, obj.location!.layout!)
       //   let index = obj.location!.layoutSlide!
@@ -762,6 +746,8 @@ export function history(obj: History, undo: null | boolean = null) {
   } else activePage.set(obj.location.page)
 
   // TODO: remove history obj if oldData is exactly the same as newdata
+
+  // TODO: slide text edit, dont override different style keys!
 
   if (undo === null) redoHistory.set([])
 

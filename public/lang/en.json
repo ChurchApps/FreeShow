@@ -1,14 +1,18 @@
 {
   "main": {
     "welcome": "Welcome to FreeShow!",
-    "good_luck": "I hope you find this software useful. Good luck showing! :)",
-    "tips": "Find handy tips and tutorials on the website.",
     "quit": "Quit",
     "docs": "Docs",
     "about": "About",
     "unnamed": "Unnamed",
     "drop": "Drop here",
     "search": "Search"
+  },
+  "setup": {
+    "good_luck": "I hope you find this software useful. Good luck showing! :)",
+    "tips": "Find handy tips and tutorials on the website.",
+    "change_later": "You can change these settings later",
+    "get_started": "Get started!"
   },
   "example": {
     "welcome": "Welcome",
@@ -176,6 +180,8 @@
     "delete_show_confirmation": "Are you sure you want to delete",
     "change_name": "Change name on",
     "about": "About",
+    "icon": "Icons",
+    "initialize": "Welcome",
     "unsaved": "You have not saved yet! Are you sure you want to quit?",
     "cancel": "Cancel",
     "quit": "Quit without saving",

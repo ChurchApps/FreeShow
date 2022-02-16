@@ -75,7 +75,9 @@
           // styles.height = mouse.offset.y - e.clientY / ratio + mouse.offset.y
           // styles.height = mouse.offset.height - e.clientY / ratio + mouse.offset.y
           // TODO: resize square
-          styles.height = mouse.offset.height - (e.clientY - itemElem.closest(".slide").offsetTop) / ratio + mouse.offset.y + mouse.height
+          // styles.height = mouse.offset.height - (e.clientY - itemElem.closest(".slide").offsetTop) / ratio + mouse.offset.y + mouse.height
+          // styles.height = mouse.offset.height - (e.clientY - mouse.height) / ratio + mouse.offset.y
+          styles.height = mouse.offset.height - (e.clientY - mouse.height + itemElem.closest(".slide").offsetTop) / ratio + mouse.offset.y
           // styles.height = 0 - e.clientY / ratio + mouse.offset.height
           if (e.shiftKey) store = e.clientY / ratio - mouse.offset.height
           // styles.height = e.clientY / ratio - mouse.offset.height
@@ -106,7 +108,8 @@
           // styles.width = mouse.offset.x - itemElem.offsetWidth - (e.clientX - e.target.closest(".slide").offsetLeft) / ratio
 
           if (!e.shiftKey || store === null) {
-            styles.width = mouse.offset.width - (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio + mouse.offset.x + mouse.width
+            // styles.width = mouse.offset.width - (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio + mouse.offset.x + mouse.width
+            styles.width = mouse.offset.width - (e.clientX - mouse.width + itemElem.closest(".slide").offsetLeft) / ratio + mouse.offset.x
             // styles.width = e.clientX / ratio - mouse.offset.width
             store = e.clientX / ratio - mouse.offset.width
           }

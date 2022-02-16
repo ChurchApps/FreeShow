@@ -108,7 +108,30 @@
       if (id === "shows" && $activeShow.type === null && scrollElem) offset = scrollElem.querySelector("#" + $activeShow.id)?.offsetTop - scrollElem.offsetTop
     }
   }
+
+  function keydown(e: any) {
+    if (!e.target.closest("input") && !e.target.closest(".edit") && e.ctrlKey && filteredShows.length) {
+      let id: any = null
+      if (e.key === "ArrowRight") {
+        if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[0].id
+        else {
+          let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
+          if (currentIndex < filteredShows.length - 1) id = filteredShows[currentIndex + 1].id
+        }
+      } else if (e.key === "ArrowLeft") {
+        if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[filteredShows.length - 1].id
+        else {
+          let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
+          if (currentIndex > 0) id = filteredShows[currentIndex - 1].id
+        }
+      }
+      // TODO: index...
+      if (id) activeShow.set({ id })
+    }
+  }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
   <div class="column context #drawer_show">

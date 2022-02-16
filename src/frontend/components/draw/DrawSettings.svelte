@@ -24,23 +24,27 @@
     {/key}
     <div style="display: flex;gap: 10px;">
       <span class="titles">
-        {#each Object.keys($drawSettings[$drawTool]) as key}
-          <p><T id="draw.{key}" /></p>
-        {/each}
+        {#if $drawSettings[$drawTool]}
+          {#each Object.keys($drawSettings[$drawTool]) as key}
+            <p><T id="draw.{key}" /></p>
+          {/each}
+        {/if}
       </span>
 
       <span style="display: flex;flex-direction: column;">
-        {#each Object.entries($drawSettings[$drawTool]) as [key, value]}
-          {#if key === "color"}
-            <Color {value} on:input={(e) => input(e, key)} />
-          {:else if key === "glow" || key === "hold" || key === "rainbow"}
-            <input type="checkbox" checked={value} on:change={(e) => check(e, key)} />
-          {:else if key === "opacity"}
-            <NumberInput {value} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => change(e, key)} />
-          {:else}
-            <NumberInput {value} max={2000} on:change={(e) => change(e, key)} />
-          {/if}
-        {/each}
+        {#if $drawSettings[$drawTool]}
+          {#each Object.entries($drawSettings[$drawTool]) as [key, value]}
+            {#if key === "color"}
+              <Color {value} on:input={(e) => input(e, key)} />
+            {:else if key === "glow" || key === "hold" || key === "rainbow"}
+              <input type="checkbox" checked={value} on:change={(e) => check(e, key)} />
+            {:else if key === "opacity"}
+              <NumberInput {value} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => change(e, key)} />
+            {:else}
+              <NumberInput {value} max={2000} on:change={(e) => change(e, key)} />
+            {/if}
+          {/each}
+        {/if}
       </span>
     </div>
   </Panel>

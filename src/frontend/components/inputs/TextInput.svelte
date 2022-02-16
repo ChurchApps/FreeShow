@@ -7,6 +7,7 @@
   style={$$props.style}
   class:center={$$props.center}
   class:light={$$props.light}
+  disabled={$$props.disabled}
   autofocus={$$props.autofocus}
   on:input
   on:change
@@ -26,6 +27,9 @@
   }
   input::placeholder {
     color: var(--text);
+    opacity: 0.5;
+  }
+  input:disabled {
     opacity: 0.5;
   }
   input.center {

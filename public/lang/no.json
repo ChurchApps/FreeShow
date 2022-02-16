@@ -1,14 +1,18 @@
 {
   "main": {
     "welcome": "Velkommen til FreeShow!",
-    "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
-    "tips": "Finn nyttige tips og tutorials på nettsiden.",
     "quit": "Avslutt",
     "docs": "Dokumenter",
     "about": "Om",
     "unnamed": "Uten navn",
     "drop": "Slipp her",
     "search": "Søk"
+  },
+  "setup": {
+    "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
+    "tips": "Finn nyttige tips og tutorials på nettsiden.",
+    "change_later": "Du kan endre dette senere",
+    "get_started": "Kom i gang!"
   },
   "example": {
     "welcome": "Velkommen",
@@ -171,6 +175,8 @@
     "delete_show_confirmation": "Er du sikker på at du vil slette",
     "change_name": "Endre navn på",
     "about": "Om",
+    "icon": "Ikoner",
+    "initialize": "Velkommen",
     "unsaved": "Du har ikke lagret enda! Er du sikker på at du vil avslutte?",
     "cancel": "Avbryt",
     "quit": "Avslutt uten å lagre",

@@ -10,6 +10,7 @@
   import IconButton from "../../inputs/IconButton.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Panel from "../../system/Panel.svelte"
+  import { autoSize } from "./autoSize"
   import { addStyle, addStyleString, getItemStyleAtPos, getItemText, getSelectionRange } from "./TextStyle"
 
   export let allSlideItems: Item[]
@@ -106,6 +107,7 @@
 
   // auto
   let isAuto: boolean = false
+  $: if (item?.auto) isAuto = true
   const auto = (e: any) => {
     isAuto = e.target.checked
     let allItems: number[] = $activeEdit.items
@@ -114,11 +116,13 @@
       allItems = []
       allSlideItems.forEach((_item, i) => allItems.push(i))
     }
+    let fullItems = allItems.map((a) => allSlideItems[a])
     history({
       id: "setItems",
       newData: { key: "auto", values: [isAuto] },
       location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
     })
+    if (isAuto) autoSize(allItems, fullItems, false)
   }
 
   function update(key: string, style: any, aligns: boolean = false) {
@@ -192,7 +196,7 @@
       <!-- dropdown: system fonts, web fonts, custom (CMGSans) -->
       <FontDropdown value={text["font-family"]} on:click={(e) => update("font-family", e.detail)} />
       <Color bind:value={text.color} on:input={(e) => inputChange(e, "color")} />
-      <NumberInput value={text["font-size"]} on:change={(e) => update("font-size", e.detail)} />
+      <NumberInput disabled={isAuto} value={text["font-size"]} on:change={(e) => update("font-size", e.detail)} />
       <!-- TODO: auto size -->
       <span><input type="checkbox" on:click={auto} checked={isAuto} /></span>
     </span>

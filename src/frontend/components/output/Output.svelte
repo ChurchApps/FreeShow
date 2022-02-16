@@ -15,7 +15,7 @@
   export let videoTime: number = 0
   export let title: string = ""
 
-  let resolution: Resolution = $outSlide && $shows[$outSlide.id].settings.resolution ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
+  let resolution: Resolution = $outSlide && $shows[$outSlide.id].settings?.resolution ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
 
   if ($outputWindow) {
     window.api.receive(OUTPUT, (msg: any) => {

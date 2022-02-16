@@ -32,18 +32,20 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
   let layoutSlides: SlideData[] = []
   if (currentShow) {
     currentShow.layouts[layoutID].slides.forEach((ls) => {
-      let slide: Slide = currentShow.slides[ls.id]
-      let newLS = { ...ls }
-      delete newLS.children
-      layoutSlides.push({ ...newLS, color: slide.color })
+      if (ls) {
+        let slide: Slide = currentShow.slides[ls.id]
+        let newLS = { ...ls }
+        delete newLS.children
+        layoutSlides.push({ ...newLS, color: slide.color })
 
-      if (slide.children) {
-        slide.children.forEach((id: string) => {
-          if (ls.children?.[id]) {
-            let slideData: any = ls.children[id]
-            if (slideData) layoutSlides.push({ id, ...slideData, color: slide.color, parent: ls.id })
-          } else layoutSlides.push({ id, color: slide.color, parent: ls.id })
-        })
+        if (slide.children) {
+          slide.children.forEach((id: string) => {
+            if (ls.children?.[id]) {
+              let slideData: any = ls.children[id]
+              if (slideData) layoutSlides.push({ id, ...slideData, color: slide.color, parent: ls.id })
+            } else layoutSlides.push({ id, color: slide.color, parent: ls.id })
+          })
+        }
       }
     })
   }

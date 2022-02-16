@@ -6,10 +6,9 @@
   import { activeEdit, activeShow, showsCache } from "../../stores"
   import { GetLayoutRef } from "../helpers/get"
   import { history } from "../helpers/history"
-  import { _shows } from "../helpers/shows"
+  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Movebox from "../system/Movebox.svelte"
-  import { getCaretCharacterOffsetWithin, setCurrentCursorPosition } from "./tools/TextStyle"
 
   export let item: Item
   export let index: number
@@ -142,36 +141,40 @@
   let currentStyle: string = ""
 
   onMount(update)
-  $: console.log(item.text?.[0].style)
-  $: if (item.text?.[0].style !== currentStyle) update()
+  $: {
+    let s = ""
+    item.text?.forEach((a) => {
+      s += a.style
+    })
+    if (currentStyle !== s) update()
+  }
 
   function update() {
     if ($activeEdit.slide !== null) {
+      // html = `<div class="align" style="${item.align}">`
       html = ""
-      currentStyle = item.text?.[0].style || ""
+      currentStyle = ""
       item.text?.forEach((a) => {
+        currentStyle += a.style
         let style = a.style ? 'style="' + a.style + '"' : ""
         html += `<span ${style}>` + a.value + "</span>"
       })
+      // html += "</div>"
       previousHTML = html
     }
   }
-
-  $: console.log(item)
-
-  $: console.log(html, previousHTML)
 
   // || $showsCache[active].slides
   $: {
     if (textElem && html !== previousHTML) {
       previousHTML = html
       setTimeout(() => {
-        console.log(html)
-        // let text = _shows([active]).slides([slide]).items([index]).get("text")
+        // console.log(html)
+        // let text = _show([active]).slides([slide]).items([index]).get("text")
         // let textItems = getItems(textElem.children)
         // let values: any = {}
         // if (textItems.length) values = text?.forEach((a, i) => (a.value = textItems[i]))
-        // _shows([active]).slides([slide]).items([index]).set({key: "text", values})
+        // _show([active]).slides([slide]).items([index]).set({key: "text", values})
         showsCache.update((a) => {
           let text = a[active].slides[slide].items[index].text
           let textItems = getItems(textElem.children)
@@ -193,26 +196,31 @@
   function textkey(e: any) {
     // TODO: <br> will breaks the system...
     if (e.key === "Enter") {
+      document.execCommand("insertLineBreak")
       e.preventDefault()
-      // get cursor pos & insert <br>
-      let pos = getCaretCharacterOffsetWithin(e.target)
-      // find pos
-      let count: number = 0
-      let tag: boolean = false
-      let newPos: null | number = null
-      html.split("").forEach((char: string, i: number) => {
-        if (char === "<") tag = true
-        else if (char === ">") tag = false
-        else if (!tag) count++
-        if (count === pos) newPos = i + 1
-      })
-      if (newPos !== null) {
-        html = html.slice(0, newPos) + "<br>" + html.slice(newPos, html.length)
-        console.log(textElem, newPos)
-
-        setCurrentCursorPosition(textElem, newPos)
-      }
-      console.log(html)
+      //  || e.key === "a"
+      //   let char = e.key
+      //   if (char === "Enter") char = "<br>"
+      //   e.preventDefault()
+      //   // get cursor pos & insert <br>
+      //   let pos = getCaretCharacterOffsetWithin(textElem)
+      //   // find pos
+      //   let count: number = 0
+      //   let tag: boolean = false
+      //   let newPos: null | number = null
+      //   html.split("").forEach((char: string, i: number) => {
+      //     if (char === "<") tag = true
+      //     else if (char === ">") tag = false
+      //     else if (!tag) count++
+      //     if (count === pos) newPos = i + 1
+      //   })
+      //   if (newPos !== null) {
+      //     html = html.slice(0, newPos) + char + html.slice(newPos, html.length)
+      //     console.log(textElem, newPos)
+      //     // setCurrentCursorPosition(textElem, pos)
+      //     // textElem.focus()
+      //   }
+      //   console.log(html)
     }
   }
 </script>
@@ -235,7 +243,7 @@
           <T id="Type..." />
         </span>
       {/if}
-      <div bind:this={textElem} style={item.align} class="edit" contenteditable bind:innerHTML={html} on:keydown={textkey}>
+      <div bind:this={textElem} class="edit" contenteditable bind:innerHTML={html} on:keydown={textkey}>
         <!-- {#each item.text as text}
           <span style={text.style}>{@html text.value}</span>
         {/each} -->
@@ -247,6 +255,8 @@
 <style>
   .item {
     outline: 5px solid rgb(255 255 255 / 0.2);
+    transition: background-color 0.3s;
+    /* cursor: text; */
   }
   .item.selected {
     outline: 5px solid var(--secondary);
@@ -258,9 +268,12 @@
     position: absolute;
     width: 100%;
   }
+  .item:hover {
+    /* .item:hover > .edit { */
+    background-color: rgb(255 255 255 / 0.05);
+  }
 
-  .align,
-  .edit {
+  .align {
     height: 100%;
     display: flex;
     text-align: center;
@@ -271,8 +284,16 @@
     outline: none;
     width: 100%;
     overflow-wrap: break-word;
+    font-size: 0;
+    /* display: inline-block; */
     /* height: 100%; */
-    /* white-space: initial;
-    color: white; */
+    /* white-space: initial; */
+  }
+
+  .edit :global(span) {
+    font-size: 100px;
+    /* min-height: 100px;
+    min-width: 100px;
+    display: inline-table; */
   }
 </style>

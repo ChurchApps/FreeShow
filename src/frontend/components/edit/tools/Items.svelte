@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Item } from "../../../../types/Show"
-  import { activeEdit, activeShow } from "../../../stores"
+  import { activeEdit, activePopup, activeShow } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
@@ -10,7 +10,6 @@
   import Panel from "../../system/Panel.svelte"
 
   export let allSlideItems: Item[]
-  $: console.log(allSlideItems)
 
   function add(type: "text" | "shape" | "image" | "video" | "music") {
     let newData: Item = {
@@ -32,16 +31,21 @@
 <Panel>
   <h6><T id="edit.add_items" /></h6>
   <div class="grid">
-    <!-- text, image, video, audio, ... -->
     <IconButton icon="text" on:click={() => add("text")} />
     <IconButton icon="image" />
-    <IconButton icon="text" />
-    <IconButton icon="text" />
+    <IconButton icon="video" />
+    <IconButton icon="live" />
+    <IconButton icon="audio" />
+  </div>
+  <!-- <hr />
+  <h6><T id="edit.add_icons" /></h6> -->
+  <div>
+    <Button style="width: 100%;" on:click={() => activePopup.set("icon")} dark center>Add SVG</Button>
   </div>
   <hr />
-  <h6><T id="edit.add_shapes" /></h6>
+  <!-- square, circle, triangle, star, heart, ... -->
+  <!-- <h6><T id="edit.add_shapes" /></h6>
   <div class="grid">
-    <!-- square, circle, triangle, star, heart, ... -->
     <IconButton icon="text" />
     <IconButton icon="text" />
     <IconButton icon="text" />
@@ -51,7 +55,7 @@
     <IconButton icon="text" />
     <IconButton icon="text" />
   </div>
-  <hr />
+  <hr /> -->
   <h6><T id="edit.arrange_items" /></h6>
   <div class="items" style="display: flex;flex-direction: column;">
     {#each allSlideItems as currentItem, i}

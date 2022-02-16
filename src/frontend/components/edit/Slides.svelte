@@ -88,6 +88,7 @@
           index={i}
           color={slide.color}
           active={$activeEdit.slide === i}
+          noQuickEdit
           {columns}
           on:click={(e) => {
             if (!e.ctrlKey) activeEdit.set({ slide: i, items: [] })

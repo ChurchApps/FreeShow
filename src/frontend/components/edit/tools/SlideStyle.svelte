@@ -1,12 +1,20 @@
 <script lang="ts">
   import { activeEdit, activeShow } from "../../../stores"
-  import { GetLayout, getSlide } from "../../helpers/get"
+  import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
+  import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
   import Color from "../../inputs/Color.svelte"
   import Panel from "../../system/Panel.svelte"
 
-  $: editSlide = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide) : null
+  // $: editSlide = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide) : null
+  $: editSlide =
+    $activeEdit.slide !== null
+      ? _show("active")
+          .slides([_show("active").layouts("active").slides([$activeEdit.slide]).get()[0].id])
+          .get()[0]
+      : null
+  // get(showsCache)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]
 
   $: background = editSlide?.settings.background || false
   $: color = editSlide?.settings.color || "#000000"

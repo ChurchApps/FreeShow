@@ -49,10 +49,18 @@
           <Icon size={1.3} id="list" white />
         {/if}
       </Button>
-      <Button on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })} title="[[[Zoom out]]]">
+      <Button
+        disabled={$slidesOptions.columns >= 10}
+        on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })}
+        title="[[[Zoom out]]]"
+      >
         <Icon size={1.3} id="remove" white />
       </Button>
-      <Button on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, $slidesOptions.columns - 1) })} title="[[[Zoom in]]]">
+      <Button
+        disabled={$slidesOptions.columns <= 2}
+        on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })}
+        title="[[[Zoom in]]]"
+      >
         <Icon size={1.3} id="add" white />
       </Button>
       <p class="text">{(100 / $slidesOptions.columns).toFixed()}%</p>

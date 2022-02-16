@@ -32,10 +32,15 @@
 
   .text {
     width: 100%;
+    font-size: 0;
     /* height: 100%; */
 
     overflow-wrap: break-word;
     /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
+  }
+
+  .text :global(span) {
+    font-size: 100px;
   }
 </style>

@@ -309,7 +309,14 @@ export function getItemStyleAtPos(textArray: { value: string; style: string }[],
 export function getItemText(item: Item): string {
   let text: string = ""
   if (item.text) item.text.forEach((content) => (text += content.value))
-  return text
+  return text.replaceAll("<br>", "")
+}
+
+// seperate text with breaks
+export function getItemLines(item: Item): string[] {
+  let text: string = ""
+  if (item.text) item.text.forEach((content) => (text += content.value))
+  return text.split("<br>")
 }
 
 // get caret pos (WIP)
@@ -319,7 +326,7 @@ export function getCaretCharacterOffsetWithin(element: any) {
   var doc = element.ownerDocument || element.document
   var win = doc.defaultView || doc.parentWindow
   var sel
-  if (typeof win.getSelection != "undefined") {
+  if (typeof win.getSelection !== "undefined") {
     sel = win.getSelection()
     if (sel.rangeCount > 0) {
       var range = win.getSelection().getRangeAt(0)
@@ -327,13 +334,14 @@ export function getCaretCharacterOffsetWithin(element: any) {
       preCaretRange.selectNodeContents(element)
       preCaretRange.setEnd(range.endContainer, range.endOffset)
       caretOffset = preCaretRange.toString().length
+      console.log("CARET: ", range, preCaretRange, caretOffset)
     }
-  } else if ((sel = doc.selection) && sel.type != "Control") {
-    var textRange = sel.createRange()
-    var preCaretTextRange = doc.body.createTextRange()
-    preCaretTextRange.moveToElementText(element)
-    preCaretTextRange.setEndPoint("EndToEnd", textRange)
-    caretOffset = preCaretTextRange.text.length
+    // } else if ((sel = doc.selection) && sel.type != "Control") {
+    //   var textRange = sel.createRange()
+    //   var preCaretTextRange = doc.body.createTextRange()
+    //   preCaretTextRange.moveToElementText(element)
+    //   preCaretTextRange.setEndPoint("EndToEnd", textRange)
+    //   caretOffset = preCaretTextRange.text.length
   }
   return caretOffset
 }
@@ -356,6 +364,8 @@ function createRange(node: any, pos: number, range: any = null) {
     range.selectNode(node)
     range.setStart(node, 0)
   }
+
+  console.log("CREATE RANGE: ", pos, range, node)
 
   if (pos === 0) {
     range.setEnd(node, pos)
@@ -385,6 +395,8 @@ export function setCurrentCursorPosition(element: any, pos: number) {
     var selection = window.getSelection()
 
     let range: any = createRange(element, pos)
+    // let range: any = createRange(element.childNodes[0], 5)
+    // console.log(element, pos, range)
 
     if (range) {
       range.collapse(false)

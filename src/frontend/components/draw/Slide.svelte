@@ -16,12 +16,12 @@
 
   let parent: any
   function move(e: any) {
-    if ((e.buttons || !$drawSettings[$drawTool].hold) && e.target.closest(".parent") === parent && e.target.closest(".slide") !== null) {
+    if ((e.buttons || !$drawSettings[$drawTool]?.hold) && e.target.closest(".parent") === parent && e.target.closest(".slide") !== null) {
       let slide = e.target.closest(".slide")
       let x = (e.clientX - slide.offsetLeft - (slide.closest(".parent").offsetLeft || 0)) / ratio
       let y = (e.clientY - slide.offsetTop - (slide.closest(".parent").offsetTop || 0)) / ratio
       if ($drawTool === "pointer" || $drawTool === "focus") {
-        let size = $drawSettings[$drawTool].size
+        let size = $drawSettings[$drawTool]?.size
         x -= size / 2
         y -= size / 2
       }
@@ -31,7 +31,7 @@
   }
 
   const wheel = (e: any) => {
-    if (draw !== null && $drawSettings[$drawTool].size && e.target.closest(".parent") === parent && e.target.closest(".slide") !== null) {
+    if (draw !== null && $drawSettings[$drawTool]?.size && e.target.closest(".parent") === parent && e.target.closest(".slide") !== null) {
       drawSettings.update((ds) => {
         ds[$drawTool].size -= e.deltaY / (e.ctrlKey ? 10 : e.altKey ? 100 : 25)
         if (ds[$drawTool].size < 0) ds[$drawTool].size = 0
@@ -44,7 +44,7 @@
 
 <svelte:window
   on:mouseup={() => {
-    if ($drawSettings[$drawTool].hold) draw.set(null)
+    if ($drawSettings[$drawTool]?.hold) draw.set(null)
   }}
   on:mousemove={move}
 />

@@ -9,9 +9,26 @@ export const defaultSettings = {
     presentation: { name: "category.presentation", icon: "presentation", default: true },
   },
   drawSettings: {
-    focus: {},
-    pointer: {},
-    fill: {},
+    focus: {
+      color: "#000000",
+      opacity: 0.8,
+      size: 300,
+      glow: true,
+      hold: false,
+    },
+    pointer: {
+      color: "#FF0000",
+      opacity: 0.8,
+      size: 50,
+      // type: "circle",
+      glow: true,
+      hold: false,
+    },
+    fill: {
+      color: "#000000",
+      opacity: 0.8,
+      rainbow: false,
+    },
     paint: {},
   },
   overlayCategories: {

@@ -3,7 +3,7 @@
   import { activeEdit, activeShow, screen, showsCache } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
-  import { _shows } from "../helpers/shows"
+  import { _show } from "../helpers/shows"
   import { getStyles } from "../helpers/style"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -11,27 +11,23 @@
   import Center from "../system/Center.svelte"
   import Snaplines from "../system/Snaplines.svelte"
   import Editbox from "./Editbox.svelte"
-  import { addStyleString, getItemText } from "./tools/TextStyle"
+  import { autoSize } from "./tools/autoSize"
 
   $: currentShow = $activeShow!.id
   // $: layoutSlides = GetLayout(currentShow)
   // TODO: overlay editor
   // $: Slide = $activeEdit.slide !== null && $showsCache[currentShow] ? $showsCache[currentShow].slides[GetLayout(currentShow)[$activeEdit.slide]?.id] : null
-  $: console.log($showsCache)
 
-  $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _shows([currentShow]).slides().get().length) activeEdit.set({ slide: 0, items: [] })
+  $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show([currentShow]).slides().get().length) activeEdit.set({ slide: 0, items: [] })
   $: Slide =
     $activeEdit.slide !== null && $showsCache[currentShow]
-      ? _shows([currentShow])
-          .slides([_shows([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
-          .get()[0][0]
+      ? _show([currentShow])
+          .slides([_show([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
+          .get()[0]
       : null
 
-  $: console.log(Slide)
-  $: if ($showsCache[currentShow]) console.log(_shows([currentShow]).get()[0], _shows([currentShow]).layouts("active").ref()[0])
-
   // $: if (currentShow) {
-  //   console.log($activeEdit.slide, _shows([currentShow]).layouts("active").slides().get()[0], _shows([currentShow]).layouts("active").ref()[0][$activeEdit.slide!]?.id)
+  //   console.log($activeEdit.slide, _show([currentShow]).layouts("active").slides().get()[0], _show([currentShow]).layouts("active").ref()[0][$activeEdit.slide!]?.id)
   // }
 
   // showsCache.subscribe((a) => {
@@ -41,17 +37,15 @@
   //     $activeEdit.slide !== null &&
   //     JSON.stringify(Slide) !==
   //       JSON.stringify(
-  //         _shows([currentShow])
-  //           .slides([_shows([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
-  //           .get()[0][0]
+  //         _show([currentShow])
+  //           .slides([_show([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
+  //           .get()[0]
   //       )
   //   )
-  //     Slide = _shows([currentShow])
-  //       .slides([_shows([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
-  //       .get()[0][0]
+  //     Slide = _show([currentShow])
+  //       .slides([_show([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
+  //       .get()[0]
   // })
-
-  $: console.log(Slide)
 
   // interface Mouse {
   //   x: number
@@ -107,33 +101,7 @@
 
   $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
     let items = $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
-    active.forEach((id) => {
-      let item = items[id]
-
-      if (item.auto) {
-        let styles: any = getStyles(item.style)
-
-        // TODO: only longest line
-        let length = getItemText(item).length
-        let size: any
-        if (styles.height.replace(/\D.+/g, "") / styles.width.replace(/\D.+/g, "") > 1.8 / length) {
-          size = (styles.width.replace(/\D.+/g, "") / length) * 1.5
-        } else {
-          // TODO: get lines!
-          size = styles.height.replace(/\D.+/g, "") * 0.8
-        }
-        let values = item.text
-        values?.map((a) => {
-          a.style = addStyleString(a.style, ["font-size", size + "px"])
-          return a
-        })
-
-        _shows([$activeShow!.id])
-          .slides([GetLayout()[$activeEdit.slide!].id])
-          .items(active)
-          .set({ key: "text", values: [values] })
-      }
-    })
+    if (items) autoSize(active, items)
   }
 </script>
 

@@ -153,6 +153,7 @@ export function listen() {
   }
 
   // SAVE
+  // TODO: better saving!
   activeProject.subscribe(() => saved.set(false))
   audioFolders.subscribe(() => saved.set(false))
   defaultProjectName.subscribe(() => saved.set(false))

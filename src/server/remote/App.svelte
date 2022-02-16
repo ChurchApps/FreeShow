@@ -184,7 +184,7 @@
   let activeTab: string = "shows"
   let tabs: TabsObj = {}
   $: tabs = {
-    projects: { name: dictionary.remote.projects, icon: "home" },
+    projects: { name: dictionary.remote.projects, icon: "folder" },
     project: { name: dictionary.remote.project, icon: "project" },
     shows: { name: dictionary.remote.shows, icon: "shows" },
     show: { name: dictionary.remote.show, icon: "show" },

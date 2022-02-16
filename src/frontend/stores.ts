@@ -52,30 +52,7 @@ export const showsCache: Writable<Shows> = writable({}) // {default}
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
 export const draw: Writable<null | Draw> = writable(null)
-export const drawSettings: Writable<DrawSettings> = writable({
-  // {default}
-  focus: {
-    color: "#000000",
-    opacity: 0.8,
-    size: 300,
-    glow: true,
-    hold: false,
-  },
-  pointer: {
-    color: "#FF0000",
-    opacity: 0.8,
-    size: 50,
-    // type: "circle",
-    glow: true,
-    hold: false,
-  },
-  fill: {
-    color: "#000000",
-    opacity: 0.8,
-    rainbow: false,
-  },
-  paint: {},
-})
+export const drawSettings: Writable<DrawSettings> = writable({}) // {default}
 
 // STAGE
 // message...
@@ -192,18 +169,10 @@ export const templates: Writable<Templates> = writable({
 })
 
 // backgrounds
-export const mediaFolders: Writable<Categories> = writable({
-  // {default}
-  pictures: { name: "category.pictures", icon: "folder", path: "C:\\Users\\Kristoffer\\Pictures", default: true },
-  videos: { name: "category.videos", icon: "folder", path: "C:\\Users\\Kristoffer\\Videos", default: true },
-  1234: { name: "Varden", icon: "folder", path: "C:\\Users\\Kristoffer\\Varden" },
-})
+export const mediaFolders: Writable<Categories> = writable({}) // {default}
 
 // audio
-export const audioFolders: Writable<Categories> = writable({
-  // {default}
-  music: { name: "category.music", icon: "folder", path: "C:\\Users\\Kristoffer\\Music", default: true },
-})
+export const audioFolders: Writable<Categories> = writable({}) // {default}
 // export const audio = writable({ // {}
 //   terd: { type: "music", name: "Song", location: "song" },
 //   fese: { type: "audio", name: "Info", location: "info" },

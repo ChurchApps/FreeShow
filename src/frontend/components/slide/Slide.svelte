@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { onMount } from "svelte"
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { dictionary, groupCount, groups, overlays, slidesOptions, fullColors, groupNumbers } from "../../stores"
+  import { activeShow, dictionary, fullColors, groupCount, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
+  import { getItemText } from "../edit/tools/TextStyle"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
   import SelectElem from "../system/SelectElem.svelte"
@@ -19,20 +21,21 @@
   export let list: boolean = false
   export let endIndex: null | number = null
   export let icons: boolean = false
+  export let noQuickEdit: boolean = false
 
-  let longestText: string = ""
-  $: {
-    longestText = ""
-    slide.items.forEach((item) => {
-      if (item.text) {
-        let t = ""
-        item.text.forEach((text) => {
-          t += text.value
-        })
-        if (t.length > longestText.length) longestText = t
-      }
-    })
-  }
+  // let longestText: string = ""
+  // $: {
+  //   longestText = ""
+  //   slide.items.forEach((item) => {
+  //     if (item.text) {
+  //       let t = ""
+  //       item.text.forEach((text) => {
+  //         t += text.value
+  //       })
+  //       if (t.length > longestText.length) longestText = t
+  //     }
+  //   })
+  // }
 
   $: background = layoutSlide.background ? show.backgrounds[layoutSlide.background] : null
   let duration: number = 0
@@ -77,6 +80,62 @@
     }
     return name
   }
+
+  // quick edit
+  let html: string = ""
+  let previousHTML: string = ""
+  let longest: any = null
+
+  onMount(() => {
+    let texts: any[] = slide.items.map((item) => getItemText(item))
+    let prev: any = null
+    texts.forEach((a, i) => {
+      if (!prev || a.length > prev) {
+        prev = a.length
+        longest = i
+      }
+    })
+    if (longest !== null) update()
+  })
+
+  function update() {
+    // html = `<div class="align" style="${item.align}">`
+    html = ""
+    slide.items[longest].text?.forEach((a) => {
+      html += a.value
+    })
+    previousHTML = html
+  }
+
+  // || $showsCache[active].slides
+  let textElem: any
+  $: {
+    if (textElem && html !== previousHTML) {
+      previousHTML = html
+      setTimeout(() => {
+        // console.log(html)
+        // let text = _shows([active]).slides([slide]).items([index]).get("text")
+        // let textItems = getItems(textElem.children)
+        // let values: any = {}
+        // if (textItems.length) values = text?.forEach((a, i) => (a.value = textItems[i]))
+        // _shows([active]).slides([slide]).items([index]).set({key: "text", values})
+        showsCache.update((a) => {
+          let text = a[$activeShow!.id].slides[layoutSlide.id].items[longest].text
+          let textItems = getItems(textElem.children)
+          if (textItems.length) text?.forEach((a, i) => (a.value = textItems[i]))
+          return a
+        })
+      }, 10)
+    }
+  }
+
+  function getItems(children: any): any[] {
+    let textItems: any[] = []
+    new Array(...children).forEach((child: any) => {
+      if (child.innerHTML) textItems.push(child.innerHTML)
+    })
+    return textItems
+  }
 </script>
 
 <!-- TODO: disabled -->
@@ -84,7 +143,7 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div class="main" class:active style="width: {$slidesOptions.grid ? 100 / columns : 100}%">
+<div class="main" class:active style="width: {$slidesOptions.grid || noQuickEdit ? 100 / columns : 100}%">
   {#if icons}
     <Icons {layoutSlide} {background} {duration} {columns} {index} />
   {/if}
@@ -92,7 +151,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     class="slide context #slide"
     class:disabled={layoutSlide.disabled}
     class:afterEnd={endIndex !== null && index > endIndex}
-    style="{$fullColors ? 'background-' : ''}color: {color};{$slidesOptions.grid ? '' : `width: calc(${100 / columns}% - 6px)`}"
+    style="{$fullColors ? 'background-' : ''}color: {color};{$slidesOptions.grid || noQuickEdit ? '' : `width: calc(${100 / columns}% - 6px)`}"
     tabindex={0}
     on:click
   >
@@ -135,10 +194,10 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     </div>
     <!-- </DropArea> -->
   </div>
-  {#if !$slidesOptions.grid}
+  {#if !$slidesOptions.grid && !noQuickEdit}
     <hr />
-    <div class="quickEdit edit" tabindex={0} contenteditable={true}>
-      {@html longestText}
+    <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
+      {@html html}
     </div>
   {/if}
 </div>

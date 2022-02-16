@@ -5,9 +5,9 @@
   $: settings = $drawSettings[tool]
 
   $: {
-    if (settings.rainbow && !timeout) generate()
+    if (settings?.rainbow && !timeout) generate()
   }
-  $: rainbow = settings.rainbow ? "rgb(0, 0, 0)" : null
+  $: rainbow = settings?.rainbow ? "rgb(0, 0, 0)" : null
 
   let r = 0,
     g = 0,
@@ -23,26 +23,26 @@
     if (r == 0 && g == 0 && b > 0) b--
 
     rainbow = "rgb(" + r + "," + g + "," + b + ")"
-    if (settings.rainbow) timeout = setTimeout(generate, 10)
+    if (settings?.rainbow) timeout = setTimeout(generate, 10)
     else timeout = null
   }
 </script>
 
 {#if tool === "fill"}
-  <div class="fill" style="background-color: {rainbow || settings.color};opacity: {settings.opacity};" />
+  <div class="fill" style="background-color: {rainbow || settings?.color};opacity: {settings?.opacity};" />
 {:else if $draw !== null}
   {#if tool === "focus"}
     <div
       class="focus"
-      style="left: {$draw.x}px;top: {$draw.y}px;opacity: {settings.opacity};width: {settings.size}px;height: {settings.size}px;box-shadow: 0 0 0 50000px {settings.color}{settings.glow
-        ? `, inset 0 0 ${settings.size / 3}px ${settings.color}`
+      style="left: {$draw.x}px;top: {$draw.y}px;opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;box-shadow: 0 0 0 50000px {settings?.color}{settings?.glow
+        ? `, inset 0 0 ${settings?.size / 3}px ${settings?.color}`
         : ''};"
     />
   {:else if tool === "pointer"}
     <div
       class="point"
-      style="left: {$draw.x}px;top: {$draw.y}px;background-color: {settings.color};opacity: {settings.opacity};width: {settings.size}px;height: {settings.size}px;{settings.glow
-        ? `box-shadow: 0 0 ${settings.size / 5}px ${settings.size / 20}px ${settings.color}`
+      style="left: {$draw.x}px;top: {$draw.y}px;background-color: {settings?.color};opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;{settings?.glow
+        ? `box-shadow: 0 0 ${settings?.size / 5}px ${settings?.size / 20}px ${settings?.color}`
         : ''}"
     />
   {/if}
