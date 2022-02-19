@@ -5,11 +5,17 @@
 </script>
 
 <div class="item" style={item.style}>
-  {#if item.text}
+  {#if item.lines}
     <div class="align" style={item.align}>
-      <div class="text">
-        {#each item.text as text}
-          <span style={text.style}>{text.value}</span>
+      <div class="lines">
+        {#each item.lines as line}
+          <div class="break" style={line.align} class:height={!line.text[0].value.length}>
+            <div class="text">
+              {#each line.text as text}
+                <span style={text.style}>{@html text.value}</span>
+              {/each}
+            </div>
+          </div>
         {/each}
       </div>
     </div>
@@ -22,6 +28,16 @@
     display: flex;
     text-align: center;
     align-items: center;
+  }
+
+  .lines {
+    /* overflow-wrap: break-word;
+    font-size: 0; */
+    width: 100%;
+  }
+
+  .break {
+    width: 100%;
   }
 
   /* span {
@@ -38,5 +54,13 @@
     overflow-wrap: break-word;
     /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
+  }
+
+  .text :global(span) {
+    font-size: 100px;
+  }
+
+  .height {
+    height: 1em;
   }
 </style>

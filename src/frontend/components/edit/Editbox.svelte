@@ -1,12 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte"
-
-  // import { onMount } from "svelte"
-  import type { Item } from "../../../types/Show"
+  import type { Item, Line } from "../../../types/Show"
   import { activeEdit, activeShow, showsCache } from "../../stores"
   import { GetLayoutRef } from "../helpers/get"
   import { history } from "../helpers/history"
-  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Movebox from "../system/Movebox.svelte"
 
@@ -74,24 +71,26 @@
   }
 
   function deselect(e: any) {
-    if (!e.ctrlKey && e.target.closest(".item") !== itemElem && !e.target.closest(".editTools")) {
-      if ($activeEdit.items.includes(index)) {
-        // TODO: clicking another item will add text to that!
-        // updateText()
-        if (!e.target.closest(".item")) {
-          activeEdit.update((ae) => {
-            ae.items = []
-            return ae
-          })
+    if (!e.target.closest(".editTools") && !e.target.closest(".drawer")) {
+      if (!e.ctrlKey && e.target.closest(".item") !== itemElem) {
+        if ($activeEdit.items.includes(index)) {
+          // TODO: clicking another item will add text to that!
+          // updateText()
+          if (!e.target.closest(".item")) {
+            activeEdit.update((ae) => {
+              ae.items = []
+              return ae
+            })
+          }
         }
       }
-    }
 
-    //  && e.target.tagName !== "INPUT"
-    if (window.getSelection() && !e.target.closest(".editTools")) {
-      window.getSelection()?.removeAllRanges()
-      // } else if (document.selection) {
-      //   document.selection.empty()
+      //  && e.target.tagName !== "INPUT"
+      if (window.getSelection()) {
+        window.getSelection()?.removeAllRanges()
+        // } else if (document.selection) {
+        //   document.selection.empty()
+      }
     }
   }
 
@@ -143,8 +142,10 @@
   onMount(update)
   $: {
     let s = ""
-    item.text?.forEach((a) => {
-      s += a.style
+    item.lines?.forEach((line) => {
+      line.text?.forEach((a) => {
+        s += a.style
+      })
     })
     if (currentStyle !== s) update()
   }
@@ -154,75 +155,139 @@
       // html = `<div class="align" style="${item.align}">`
       html = ""
       currentStyle = ""
-      item.text?.forEach((a) => {
-        currentStyle += a.style
-        let style = a.style ? 'style="' + a.style + '"' : ""
-        html += `<span ${style}>` + a.value + "</span>"
+      item.lines?.forEach((line) => {
+        // TODO: break ...:
+        let style = line.text[0].value.length ? (line.align ? 'style="' + line.align + '"' : "") : 'style="height: 1em;"'
+        html += `<div class="break" ${style}>`
+        line.text?.forEach((a) => {
+          currentStyle += a.style
+          let style = a.style ? 'style="' + a.style + '"' : ""
+          html += `<span ${style}>` + a.value + "</span>"
+        })
+        html += "</div>"
       })
       // html += "</div>"
       previousHTML = html
     }
   }
 
+  // TODO: break after style
+  // TODO: style in break
+
+  // let sel = getSelectionRange()
+
   // || $showsCache[active].slides
   $: {
     if (textElem && html !== previousHTML) {
       previousHTML = html
+      // let pos = getCaretCharacterOffsetWithin(textElem)
       setTimeout(() => {
-        // console.log(html)
-        // let text = _show([active]).slides([slide]).items([index]).get("text")
-        // let textItems = getItems(textElem.children)
-        // let values: any = {}
-        // if (textItems.length) values = text?.forEach((a, i) => (a.value = textItems[i]))
-        // _show([active]).slides([slide]).items([index]).set({key: "text", values})
         showsCache.update((a) => {
-          let text = a[active].slides[slide].items[index].text
-          let textItems = getItems(textElem.children)
-          if (textItems.length) text?.forEach((a, i) => (a.value = textItems[i]))
+          // let lines = a[active].slides[slide].items[index].lines
+          let newLines: Line[] = []
+          let pos: number = -1
+          currentStyle = ""
+          new Array(...textElem.children).forEach((line: any) => {
+            let align: string = line.getAttribute("style") || ""
+            pos++
+            newLines.push({ align, text: [] })
+            new Array(...line.children).forEach((child: any) => {
+              let style = child.getAttribute("style") || ""
+              let brs = child.innerHTML.split("<br>")
+              brs.forEach((value: any, i: number) => {
+                if (i > 0) {
+                  pos++
+                  newLines.push({ align, text: [] })
+                }
+                newLines[pos].text.push({ style, value })
+                currentStyle += style
+              })
+            })
+          })
+          a[active].slides[slide].items[index].lines = newLines
           return a
         })
       }, 10)
     }
   }
 
-  function getItems(children: any): any[] {
-    let textItems: any[] = []
-    new Array(...children).forEach((child: any) => {
-      if (child.innerHTML) textItems.push(child.innerHTML)
-    })
-    return textItems
-  }
+  // function textkey(e: any) {
+  //   // TODO: <br> will breaks the system...
+  //   if (e.key === "Enter2") {
+  //     // || e.key === "Backspace") {
+  //     // let pos = getCaretCharacterOffsetWithin(textElem)
+  //     sel = getSelectionRange()
+  //     if (e.key === "Enter") {
+  //       e.preventDefault()
+  //       document.execCommand("insertLineBreak")
+  //     }
+  //     // if (e.key === "Backspace") {
+  //     //   sel.forEach((a) => {
+  //     //     if (a.start !== undefined) {
+  //     //       a = { start: Math.max(0, a.start - 1), end: Math.max(0, a.end - 1) }
+  //     //     }
+  //     //   })
+  //     // }
+  //     setTimeout(update, 20)
+  //     setTimeout(() => {
+  //       // set new cursor pos
+  //       let range = createRange2(textElem, sel)
+  //       range.collapse(false)
 
-  function textkey(e: any) {
-    // TODO: <br> will breaks the system...
-    if (e.key === "Enter") {
-      document.execCommand("insertLineBreak")
-      e.preventDefault()
-      //  || e.key === "a"
-      //   let char = e.key
-      //   if (char === "Enter") char = "<br>"
-      //   e.preventDefault()
-      //   // get cursor pos & insert <br>
-      //   let pos = getCaretCharacterOffsetWithin(textElem)
-      //   // find pos
-      //   let count: number = 0
-      //   let tag: boolean = false
-      //   let newPos: null | number = null
-      //   html.split("").forEach((char: string, i: number) => {
-      //     if (char === "<") tag = true
-      //     else if (char === ">") tag = false
-      //     else if (!tag) count++
-      //     if (count === pos) newPos = i + 1
-      //   })
-      //   if (newPos !== null) {
-      //     html = html.slice(0, newPos) + char + html.slice(newPos, html.length)
-      //     console.log(textElem, newPos)
-      //     // setCurrentCursorPosition(textElem, pos)
-      //     // textElem.focus()
-      //   }
-      //   console.log(html)
-    }
-  }
+  //       console.log("RANGE: ", range)
+
+  //       let selection = window.getSelection()
+  //       selection?.removeAllRanges()
+  //       selection?.addRange(range)
+
+  //       // setCurrentCursorPosition(textElem, pos)
+  //       // let range = document.createRange()
+  //       // range.selectNode(textElem)
+  //       // let started = false
+  //       // sel.forEach(a => {
+  //       //   if (a.start !== undefined && !started) {
+  //       //     started = true
+  //       //     range.setStart()
+  //       //   }
+  //       //   range.setStart(textElem, 0)
+  //       //   range.setEnd(textElem, 0)
+  //       //   range.collapse(false)
+  //       // })
+  //       // selection?.removeAllRanges()
+  //       // selection?.addRange(range)
+  //     }, 30)
+
+  //     // console.log(pos)
+
+  //     // setTimeout(() => {
+  //     //   setCurrentCursorPosition(textElem, pos)
+  //     // }, 100)
+
+  //     //  || e.key === "a"
+  //     //   let char = e.key
+  //     //   if (char === "Enter") char = "<br>"
+  //     //   e.preventDefault()
+  //     //   // get cursor pos & insert <br>
+  //     //   let pos = getCaretCharacterOffsetWithin(textElem)
+  //     //   // find pos
+  //     //   let count: number = 0
+  //     //   let tag: boolean = false
+  //     //   let newPos: null | number = null
+  //     //   html.split("").forEach((char: string, i: number) => {
+  //     //     if (char === "<") tag = true
+  //     //     else if (char === ">") tag = false
+  //     //     else if (!tag) count++
+  //     //     if (count === pos) newPos = i + 1
+  //     //   })
+  //     //   if (newPos !== null) {
+  //     //     html = html.slice(0, newPos) + char + html.slice(newPos, html.length)
+  //     //     console.log(textElem, newPos)
+  //     //     // setCurrentCursorPosition(textElem, pos)
+  //     //     // textElem.focus()
+  //     //   }
+  //     //   console.log(html)
+  //   }
+  // }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -236,18 +301,23 @@
 >
   <Movebox {ratio} active={$activeEdit.items.includes(index)} />
   <!-- on:input={updateText} -->
-  {#if item.text}
+  {#if item.lines}
     <div class="align" style={item.align}>
-      {#if item.text.length < 2 && !item.text?.[0].value.length}
+      {#if item.lines?.length < 2 && !item.lines?.[0]?.text[0].value.length}
         <span class="placeholder">
           <T id="Type..." />
         </span>
       {/if}
-      <div bind:this={textElem} class="edit" contenteditable bind:innerHTML={html} on:keydown={textkey}>
+      <!-- {#each item.lines as line}
+        <div class="align" style={line.align}> -->
+      <!-- on:keydown={textkey} -->
+      <div bind:this={textElem} class="edit" contenteditable bind:innerHTML={html}>
         <!-- {#each item.text as text}
-          <span style={text.style}>{@html text.value}</span>
-        {/each} -->
+            <span style={text.style}>{@html text.value}</span>
+          {/each} -->
       </div>
+      <!-- </div>
+      {/each} -->
     </div>
   {/if}
 </div>
@@ -288,6 +358,14 @@
     /* display: inline-block; */
     /* height: 100%; */
     /* white-space: initial; */
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .edit :global(.break) {
+    /* display: contents; */
+    width: 100%;
   }
 
   .edit :global(span) {

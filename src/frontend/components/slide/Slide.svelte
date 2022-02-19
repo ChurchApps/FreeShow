@@ -101,8 +101,10 @@
   function update() {
     // html = `<div class="align" style="${item.align}">`
     html = ""
-    slide.items[longest].text?.forEach((a) => {
-      html += a.value
+    slide.items[longest].lines?.forEach((line) => {
+      line.text.forEach((a) => {
+        html += a.value
+      })
     })
     previousHTML = html
   }
@@ -120,9 +122,13 @@
         // if (textItems.length) values = text?.forEach((a, i) => (a.value = textItems[i]))
         // _shows([active]).slides([slide]).items([index]).set({key: "text", values})
         showsCache.update((a) => {
-          let text = a[$activeShow!.id].slides[layoutSlide.id].items[longest].text
+          let lines = a[$activeShow!.id].slides[layoutSlide.id].items[longest].lines
           let textItems = getItems(textElem.children)
-          if (textItems.length) text?.forEach((a, i) => (a.value = textItems[i]))
+          if (textItems.length) {
+            lines?.forEach((line) => {
+              line.text.forEach((a, i) => (a.value = textItems[i]))
+            })
+          }
           return a
         })
       }, 10)

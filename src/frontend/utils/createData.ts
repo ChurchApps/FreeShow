@@ -27,8 +27,8 @@ export function createData(paths: any) {
           items: [
             {
               style: "top: 400px;left: 180px;height: 220px;width: 1500px;",
-              align: "justify-content: center;",
-              text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }],
+              align: "",
+              lines: [{ align: "", text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }] }],
             },
           ],
         },
@@ -67,8 +67,8 @@ export function createData(paths: any) {
       items: [
         {
           style: "top: 400px;left: 180px;height: 220px;width: 1500px;",
-          align: "justify-content: center;",
-          text: [{ value: "Template", style: "font-size: 180px;font-weight: bold;" }],
+          align: "",
+          lines: [{ align: "", text: [{ value: "Template", style: "font-size: 180px;font-weight: bold;" }] }],
         },
       ],
     }

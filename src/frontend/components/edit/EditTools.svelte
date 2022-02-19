@@ -24,6 +24,8 @@
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
   $: allSlideItems = $activeEdit.slide !== null ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items : []
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
+  $: console.log(JSON.parse(JSON.stringify(allSlideItems)))
+
   // select active items or all items
   $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
   // select last item
@@ -33,9 +35,12 @@
     if (active === "text") {
       let values: any = []
       items.forEach((item) => {
-        if (item.text) {
-          let text = item.text.map((a) => {
-            a.style = ""
+        if (item.lines) {
+          let text = item.lines.map((a) => {
+            a.text = a.text.map((a) => {
+              a.style = ""
+              return a
+            })
             return a
           })
           values.push(text)

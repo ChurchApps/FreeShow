@@ -46,16 +46,21 @@ export interface Slide {
 }
 
 export interface Item {
-  text?: {
-    value: string
-    style: string
-  }[]
+  lines?: Line[]
   auto?: boolean
   style: string
   align?: string
   media?: {}
   type?: ItemType
   // tag?: string; // p, div????
+}
+
+export interface Line {
+  align: string
+  text: {
+    value: string
+    style: string
+  }[]
 }
 
 export interface Layout {

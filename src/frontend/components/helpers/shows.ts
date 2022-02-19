@@ -166,6 +166,81 @@ export function _show(id: any) {
           })
           return prev
         },
+        /** Lines function */
+        lines: (lines: any[] = []) => ({
+          /** Get slides items lines */
+          get: () => {
+            let a: any[] = []
+            if (!slideIds.length) slideIds = Object.keys(shows[id].slides)
+            a.push([])
+            slideIds.forEach((slideId, i) => {
+              indexes.forEach((index) => {
+                if (!lines.length) lines = Object.keys(shows[id].slides[slideId].items[index].lines)
+                lines.forEach((line) => {
+                  a[i].push(shows[id].slides[slideId].items[index].lines[line])
+                })
+              })
+            })
+            return a
+          },
+          /** Set slides items lines: {key: value} */
+          set: ({ key, values }: any) => {
+            let prev: any = { key, values: [] }
+            showsCache.update((a: any) => {
+              if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
+              slideIds.forEach((slideId) => {
+                indexes.forEach((index, i) => {
+                  if (!lines?.length) lines = Object.keys(a[id].slides[slideId].items[index].lines)
+                  lines.forEach((line, lineIndex) => {
+                    if (key) {
+                      console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i][lineIndex])
+                      prev.values.push(a[id].slides[slideId].items[index][key] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])) : null)
+                      a[id].slides[slideId].items[index].lines[line][key] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
+                    } else {
+                      prev.values.push(a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line])) : null)
+                      a[id].slides[slideId].items[index].lines[line] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
+                    }
+                  })
+                })
+              })
+              return a
+            })
+            return prev
+          },
+          /** Add items */
+          add: ({ lineIndexes, items }: any) => {
+            showsCache.update((a: any) => {
+              slideIds.forEach((slideId) => {
+                indexes.forEach((index) => {
+                  items.forEach((item: any, i: number) => {
+                    // WIP
+                    a[id].slides[slideId].items[index].lines[lineIndexes[i]] = item
+                  })
+                })
+              })
+              return a
+            })
+          },
+          /** Remove items */
+          remove: () => {
+            let prev: any = { lineIndexes: [], items: [] }
+            showsCache.update((a: any) => {
+              if (!slideIds.length) slideIds = Object.keys(a[id].slides)
+              slideIds.forEach((slideId) => {
+                indexes.forEach((index) => {
+                  if (!lines.length) lines = Object.keys(shows[id].slides[slideId].items[index].lines)
+                  lines.forEach((line) => {
+                    prev.lineIndexes.push(line)
+                    prev.items.push(a[id].slides[slideId].items[index].lines[line])
+                    delete a[id].slides[slideId].items[index].lines[line]
+                  })
+                })
+              })
+              return a
+            })
+            return prev
+          },
+        }),
       }),
     }),
     /** Layouts function */

@@ -268,7 +268,10 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
         outputWindow?.setBounds(externalDisplay.bounds)
       }
       outputWindow?.show()
-    } else outputWindow?.hide()
+    } else {
+      outputWindow?.hide()
+      mainWindow?.webContents.send(OUTPUT, msg)
+    }
   } else if (msg.channel.includes("MAIN")) mainWindow?.webContents.send(OUTPUT, msg)
   else outputWindow?.webContents.send(OUTPUT, msg)
 })

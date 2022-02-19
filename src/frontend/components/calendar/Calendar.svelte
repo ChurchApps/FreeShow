@@ -77,7 +77,7 @@
   $: {
     for (let i = 0; i < 7; i++) {
       let index = sundayFirstDay ? (i === 0 ? 7 : i) : i + 1
-      weekdays.push($dictionary.weekday[index])
+      weekdays.push($dictionary.weekday?.[index])
     }
   }
 
@@ -189,7 +189,7 @@
       <Icon id="previous" />
     </Button>
     <span style="text-transform: capitalize;align-self: center;padding: 0 10px;">
-      {$dictionary.month[current.getMonth() + 1]}
+      {$dictionary.month?.[current.getMonth() + 1]}
       {current.getFullYear()}
     </span>
     <Button style="flex: 1;" on:click={() => (current = new Date(year, month, 33))} center>

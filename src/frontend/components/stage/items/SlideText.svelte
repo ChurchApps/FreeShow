@@ -15,10 +15,10 @@
     if (slide?.items) {
       text = ""
       slide.items.forEach((item) => {
-        if (item.text?.length) {
-          if (text.length) text += "<br />"
-          text += item.text.map((t) => t.value).join("")
-        }
+        item.lines?.forEach((line) => {
+          // if (text.length) text += "<br />"
+          text += line.text.map((t) => t.value).join("")
+        })
       })
     }
   }

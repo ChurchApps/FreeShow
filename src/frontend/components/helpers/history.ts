@@ -36,6 +36,7 @@ export type HistoryPages = "drawer" | "show" | "edit" | "stage" | "settings"
 export type HistoryIDs =
   // edit
   | "textStyle"
+  | "textAlign"
   | "deleteItem"
   | "setItems"
   | "setStyle"
@@ -94,11 +95,12 @@ export interface History {
     slide?: string
     items?: any[]
     theme?: string
+    lines?: number[]
   }
 }
 
 // override previous history
-const override = ["textStyle", "deleteItem", "setItems", "setStyle", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme"]
+const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme"]
 
 export async function historyAwait(s: string[], obj: History) {
   loadShows(s)
@@ -159,10 +161,18 @@ export function history(obj: History, undo: null | boolean = null) {
     // break
     // set items
     case "textStyle":
-    case "setItems":
-    case "setStyle":
+    case "textAlign":
       console.log("TEXT STYLE", obj.newData)
       // TODO: get old data (not getting first value....)
+      old = _show(showIDs)
+        .slides([obj.location!.slide!])
+        .items(obj.location!.items!)
+        .lines(obj.location!.lines! || [])
+        .set(obj.newData)
+      console.log(old)
+      break
+    case "setItems":
+    case "setStyle":
       old = _show(showIDs).slides([obj.location!.slide!]).items(obj.location!.items!).set(obj.newData)
       console.log(old)
       break
@@ -685,8 +695,10 @@ export function history(obj: History, undo: null | boolean = null) {
           Object.values(slides).forEach((slide: any) => {
             slide.items.forEach((item: any, i: number) => {
               item.style = template.items[i] ? template.items[i].style || "" : template.items[0].style || ""
-              item.text?.forEach((text: any, j: number) => {
-                text.style = template.items[i].text?.[j] ? template.items[i].text?.[j].style || "" : template.items[i].text?.[0].style || ""
+              item.lines?.forEach((line: any, j: number) => {
+                line.text.forEach((text: any, k: number) => {
+                  text.style = template.items[i].lines?.[j].text[k] ? template.items[i].lines?.[j].text[k].style || "" : template.items[i].lines?.[0].text[0].style || ""
+                })
               })
             })
           })

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Item } from "../../../../types/Show"
-  import { activeShow, activeEdit, dictionary } from "../../../stores"
+  import { activeEdit, activeShow, dictionary } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import { getStyles } from "../../helpers/style"
@@ -11,16 +11,21 @@
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Panel from "../../system/Panel.svelte"
   import { autoSize } from "./autoSize"
-  import { addStyle, addStyleString, getItemStyleAtPos, getItemText, getSelectionRange } from "./TextStyle"
+  import { addStyle, addStyleString, getItemStyleAtPos, getLineText, getSelectionRange } from "./TextStyle"
 
   export let allSlideItems: Item[]
   export let item: Item | null
 
   // get style of last text or at caret pos
-  $: style = item?.text ? (selection !== null && selection[1] - selection[0] >= 0 ? getItemStyleAtPos(item.text, selection[1]) : item.text[item.text.length - 1].style) : ""
+  // $: style = item?.lines
+  //   ? selection !== null && selection[selection.length - 1]?.end - selection[selection.length - 1]?.start >= 0
+  //     ? getItemStyleAtPos(item.lines, selection)
+  //     : item.lines[item.lines.length - 1].text[item.lines[item.lines.length - 1].text.length - 1].style
+  //   : ""
+  $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : ""
   $: alignStyle = item?.align ? item.align : null
 
-  let selection: null | [number, number] = null
+  let selection: null | { start: number; end: number }[] = null
   activeEdit.subscribe((ae) => {
     if (!ae.items.length) selection = null
   })
@@ -31,9 +36,10 @@
     // if (e.target.closest(".edit") && !e.target.closest(".editTools")) {
     if (e.target.closest(".edit")) {
       if (sel.type === "None") selection = null
-      else if (sel.type === "caret") selection = [sel.anchorOffset, sel.focusOffset]
+      // else if (sel.type === "caret") selection = [sel.anchorOffset, sel.focusOffset]
       else selection = getSelectionRange() // range
     }
+    console.log("SEL: ", selection)
   }
 
   const defaults: { [key: string]: any } = {
@@ -88,8 +94,6 @@
       align[key] = aligns[key]?.length ? aligns[key] : value
     })
   }
-
-  $: console.log("TEXT: ", text)
 
   const inputChange = (e: any, key: string) => update(key, e.target.value)
   const updateNull = (key: string, style: string) => update(key, text[key] === style ? null : style)
@@ -161,16 +165,34 @@
     allItems.forEach((itemIndex) => {
       // oldData.push({ ...allSlideItems[itemIndex] })
       let selected = selection
-      if (selected === null || selected[1] - selected[0] <= 0) selected = [0, getItemText(allSlideItems[itemIndex]).length]
-      newData.push(aligns ? addStyleString(allSlideItems[itemIndex].align || "", [key, style]) : addStyle(selected, allSlideItems[itemIndex], [key, style]))
+      if (selected === null || selected[selection!.length - 1].end - selected[selection!.length - 1].start <= 0) {
+        selected = []
+        allSlideItems[itemIndex].lines?.forEach((line) => {
+          selected!.push({ start: 0, end: getLineText(line).length })
+        })
+      }
+
+      if (key === "text-align") {
+        let newAligns: any[] = []
+        allSlideItems[itemIndex].lines?.forEach((_a, line) => {
+          if (selected![line].start !== undefined) newAligns.push(key + ": " + align[key])
+          else newAligns.push(allSlideItems[itemIndex].lines![line].align)
+        })
+        newData.push(newAligns)
+      } else {
+        newData.push(
+          aligns ? addStyleString(allSlideItems[itemIndex].align || "", [key, style]) : addStyle(selected, allSlideItems[itemIndex], [key, style]).lines!.map((a) => a.text)
+        )
+      }
     })
-    // console.log("NEW DATA", newData)
+
+    // TODO: get selected lines... (if text align)
 
     history({
       // WIP
-      id: aligns ? "setItems" : "textStyle",
+      id: key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
       // oldData: { key: aligns ? "align" : "style", values: oldData },
-      newData: { key: aligns ? "align" : null, values: newData },
+      newData: { key: aligns ? "align" : "text", values: newData },
       location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
     })
   }

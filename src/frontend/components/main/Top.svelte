@@ -9,6 +9,10 @@
     outputDisplay.set(!$outputDisplay)
     window.api.send(OUTPUT, { channel: "DISPLAY", data: $outputDisplay })
   }
+
+  window.api.receive(OUTPUT, (msg: any) => {
+    if (msg.channel === "Display") outputDisplay.set(msg.data)
+  })
 </script>
 
 <div class="top">

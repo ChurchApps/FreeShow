@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte"
-  import { MAIN } from "../types/Channels"
+  import { OUTPUT } from "../types/Channels"
   import type { Resolution } from "../types/Settings"
   import type { TopViews } from "../types/Tabs"
   import Calendar from "./components/calendar/Calendar.svelte"
@@ -32,7 +32,7 @@
   import StageShow from "./components/stage/StageShow.svelte"
   import StageTools from "./components/stage/StageTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
-  import { activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, shows, showsCache } from "./stores"
+  import { activeEdit, activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, shows, showsCache } from "./stores"
   import { setLanguage } from "./utils/language"
   import { save } from "./utils/save"
   import { startup } from "./utils/startup"
@@ -73,7 +73,12 @@
         if (e.key === "Escape") {
           if ($activePopup !== null) activePopup.set(null)
           else if (document.activeElement !== document.body) (document.activeElement as HTMLElement).blur()
-          else {
+          else if ($activeEdit.items.length) {
+            activeEdit.update((a) => {
+              a.items = []
+              return a
+            })
+          } else {
             // hide / show drawer
             if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
             else drawer.set({ height: 40, stored: $drawer.height })
@@ -85,7 +90,7 @@
 
   function display() {
     outputDisplay.set(false)
-    window.api.send(MAIN, { channel: "DISPLAY", data: false })
+    window.api.send(OUTPUT, { channel: "DISPLAY", data: false })
   }
 
   let width: number = 0

@@ -16,7 +16,7 @@
       style: "",
       type,
     }
-    if (type === "text") newData.text = [{ value: "", style: "" }]
+    if (type === "text") newData.lines = [{ align: "", text: [{ value: "", style: "" }] }]
     console.log(newData)
 
     history({
