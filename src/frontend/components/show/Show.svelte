@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeProject, activeShow, outBackground, projects } from "../../stores"
+  import { activeProject, activeShow, dictionary, outBackground, projects } from "../../stores"
   import Layouts from "../slide/Layouts.svelte"
   import Slides from "./Slides.svelte"
   import Splash from "../main/Splash.svelte"
@@ -94,7 +94,8 @@
         {#if show.type === "video" || show.type === "player"}
           {#key show.id}
             <div class="media" style="flex: 1;overflow: hidden;">
-              <HoverButton icon="play" size={10} on:click={videoClick} title="[[[Play video output..., ctrlclick to start at current pos]]]">
+              <!-- TODO: info about: CTRL click to play at current pos -->
+              <HoverButton icon="play" size={10} on:click={videoClick} title={$dictionary.media?.play}>
                 {#if show.type === "player"}
                   <Player id={show.id} bind:videoData bind:videoTime />
                 {:else}
@@ -125,7 +126,7 @@
           {/key}
         {:else}
           <div class="media" style="flex: 1;overflow: hidden;">
-            <HoverButton icon="play" size={10} on:click={() => outBackground.set({ path: show?.id, filter })} title="[[[Play image output...]]]">
+            <HoverButton icon="play" size={10} on:click={() => outBackground.set({ path: show?.id, filter })} title={$dictionary.media?.show}>
               <Image style="width: 100%;height: 100%;object-fit: contain;filter: {filter};" src={show.id} alt={show.name || ""} />
             </HoverButton>
           </div>

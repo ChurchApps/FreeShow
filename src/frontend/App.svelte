@@ -32,7 +32,22 @@
   import StageShow from "./components/stage/StageShow.svelte"
   import StageTools from "./components/stage/StageTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
-  import { activeEdit, activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, shows, showsCache } from "./stores"
+  import {
+    activeDrawerTab,
+    activeEdit,
+    activePage,
+    activePopup,
+    activeShow,
+    activeStage,
+    drawer,
+    os,
+    outputDisplay,
+    outputWindow,
+    outSlide,
+    screen,
+    shows,
+    showsCache,
+  } from "./stores"
   import { setLanguage } from "./utils/language"
   import { save } from "./utils/save"
   import { startup } from "./utils/startup"
@@ -50,13 +65,27 @@
 
   function keydown(e: any) {
     if (!$outputWindow) {
-      // ctrl + number
       if (e.ctrlKey) {
-        let menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
-        if (Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
+        // ctrl + number
+        let drawerMenus: string[] = ["shows", "media", "overlays", "templates", "audio", "scripture", "player", "live"]
+        if (Object.keys(drawerMenus).includes((e.key - 1).toString())) {
+          activeDrawerTab.set(drawerMenus[e.key - 1])
+
+          // show drawer
+          if ($drawer.height < 300) {
+            if ($drawer.stored === null) height = 300
+            else height = $drawer.stored
+            drawer.set({ height, stored: null })
+          }
+        }
 
         // save
         if (e.key === "s") save()
+        if (e.key === "n") activePopup.set("show")
+        else if (e.key === "o") {
+          outputDisplay.set(!$outputDisplay)
+          window.api.send(OUTPUT, { channel: "DISPLAY", data: $outputDisplay })
+        }
         // else if (e.key === "r") e.preventDefault()
 
         // undo/redo
@@ -70,6 +99,11 @@
           }
         }
       } else {
+        if (document.activeElement === document.body) {
+          let menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
+          if (Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
+        }
+
         if (e.key === "Escape") {
           if ($activePopup !== null) activePopup.set(null)
           else if (document.activeElement !== document.body) (document.activeElement as HTMLElement).blur()

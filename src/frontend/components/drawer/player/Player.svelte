@@ -1,7 +1,6 @@
 <script lang="ts">
   import { uid } from "uid"
-
-  import { activeShow, outBackground, playerVideos } from "../../../stores"
+  import { activeShow, dictionary, outBackground, playerVideos } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -58,8 +57,8 @@
     </div>
   </div>
   <div class="add">
-    <TextInput value={data.name} on:change={(e) => setValue(e, "name")} placeholder="[[[Name]]]" />
-    <TextInput value={data.id} on:change={(e) => setValue(e, "id")} placeholder="[[[Url/ID]]]" />
+    <TextInput value={data.name} on:change={(e) => setValue(e, "name")} placeholder={$dictionary.inputs?.name} />
+    <TextInput value={data.id} on:change={(e) => setValue(e, "id")} placeholder={$dictionary.inputs?.video_id} />
     <Button on:click={add}>
       <Icon id="add" right />
       <T id="settings.add" />

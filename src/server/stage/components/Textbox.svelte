@@ -10,11 +10,9 @@
       <div class="lines">
         {#each item.lines as line}
           <div class="break" style={line.align} class:height={!line.text[0].value.length}>
-            <div class="text">
-              {#each line.text as text}
-                <span style={text.style}>{@html text.value}</span>
-              {/each}
-            </div>
+            {#each line.text as text}
+              <span style={text.style}>{@html text.value}</span>
+            {/each}
           </div>
         {/each}
       </div>
@@ -38,16 +36,7 @@
 
   .break {
     width: 100%;
-  }
 
-  /* span {
-    display: inline;
-    white-space: initial;
-    color: white;
-  } */
-
-  .text {
-    width: 100%;
     /* height: 100%; */
     user-select: text;
 
@@ -56,7 +45,13 @@
     -webkit-line-break: after-white-space; */
   }
 
-  .text :global(span) {
+  /* span {
+    display: inline;
+    white-space: initial;
+    color: white;
+  } */
+
+  .break :global(span) {
     font-size: 100px;
   }
 

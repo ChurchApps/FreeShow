@@ -69,19 +69,22 @@
       let totalLength: number = 0
 
       // TODO: align clocks (another font?)
-      let values: any[] = []
+      let values: any[][] = [[{ value: textDay, style: "font-weight: bold;" }], [{ value: "", style: "font-size:30px;" }]]
       day.events
         .sort((a: any, b: any) => a.from - b.from)
         .forEach((event: any) => {
+          let v: any[] = []
           if (event.time) {
             let time = getTime(event.from)
             // if (event.to.getTime() - event.from.getTime() > 0) time += " - " + getTime(event.to)
-            values.push({ value: time + " ", style: "font-weight: bold;font-size:70px;font-family:calibri;" })
+            v.push({ value: time + " ", style: "font-weight: bold;font-size:70px;font-family:calibri;" })
           }
-          values.push({ value: event.name, style: "font-size:80px;" })
-          if (event.location) values.push({ value: " - " + event.location, style: "font-size:80px;font-style:italic;" })
-          if (event.notes) values.push({ value: ":<br>&nbsp;&nbsp;&nbsp;&nbsp;" + event.notes, style: "font-size:80px;" })
-          values.push({ value: "<br>", style: "font-size:80px;" })
+          v.push({ value: event.name, style: "font-size:80px;" })
+          if (event.location) v.push({ value: " - " + event.location, style: "font-size:80px;font-style:italic;" })
+          if (event.notes) v[v.length - 1].value += ":"
+          values.push(...v)
+          if (event.notes) values.push([{ value: "&nbsp;&nbsp;&nbsp;&nbsp;" + event.notes, style: "font-size:80px;" }])
+          values.push([{ value: "", style: "font-size:80px;" }])
           totalLength += event.name.length + event.location.length + event.notes.length
         })
       let items: any[] = [
@@ -89,7 +92,7 @@
           // TODO: use template!!
           style: "left:100px;top:120px;width:1770px;height:840px;",
           align: "text-align:left;",
-          text: [{ value: textDay + "<br>", style: "font-weight: bold;" }, { value: "<br>", style: "font-size:30px;" }, ...values],
+          lines: values.map((a) => ({ align: "", text: a })),
         },
       ]
 

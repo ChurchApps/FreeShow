@@ -22,9 +22,12 @@
   let active: string = Object.keys(tabs)[0]
 
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
-  $: allSlideItems = $activeEdit.slide !== null ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items : []
+  $: if ($activeEdit.slide !== null && GetLayout($activeShow?.id!).length <= $activeEdit.slide && GetLayout($activeShow?.id!).length > 0) activeEdit.set({ slide: 0, items: [] })
+  $: allSlideItems =
+    $activeEdit.slide !== null && GetLayout($activeShow?.id!).length > $activeEdit.slide
+      ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items
+      : []
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
-  $: console.log(JSON.parse(JSON.stringify(allSlideItems)))
 
   // select active items or all items
   $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
@@ -90,13 +93,13 @@
       {#if active === "text" || active === "item"}
         <Button style="flex: 1;" dark center disabled title="WIP">
           <Icon id="copy" right />
-          <T id={"edit.apply_to_all"} />
+          <T id={"actions.to_all"} />
         </Button>
       {/if}
       {#if active !== "items"}
         <Button style="flex: 1;" on:click={reset} dark center>
           <Icon id="reset" right />
-          <T id={"edit.reset"} />
+          <T id={"actions.reset"} />
         </Button>
       {/if}
     </span>

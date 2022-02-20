@@ -3,7 +3,7 @@ import { get } from "svelte/store"
 import { activeEdit, activeShow } from "../../../stores"
 import { _show } from "../../helpers/shows"
 import { getStyles } from "../../helpers/style"
-import { addStyleString, getItemLines } from "./TextStyle"
+import { addStyleString, getItemLines } from "./textStyle"
 
 export function autoSize(items: number[], fullItems: any[], check: boolean = true) {
   let values: any[] = []

@@ -8,6 +8,10 @@
     "drop": "Drop here",
     "search": "Search"
   },
+  "languages": {
+    "en": "English",
+    "no": "Norwegian"
+  },
   "setup": {
     "good_luck": "I hope you find this software useful. Good luck showing! :)",
     "tips": "Find handy tips and tutorials on the website.",
@@ -54,8 +58,17 @@
     "audio": "Clear audio",
     "transistion": "Clear transistion"
   },
+  "remove": {
+    "background": "Remove background",
+    "overlays": "Remove overlays",
+    "audio": "Remove audio",
+    "transistion": "Remove transistion",
+    "to_start": "Remove Go to start"
+  },
   "media": {
-    "_loop": "Loop"
+    "_loop": "Loop",
+    "play": "Play",
+    "show": "Show"
   },
   "menu": {
     "show": "Show",
@@ -79,10 +92,14 @@
     "shows": "No shows",
     "slides": "No slides",
     "slide": "No slide selected",
+    "items": "No items selected",
     "search": "No match",
-    "backgrounds": "No backgrounds in show",
+    "media": "No media in show",
+    "stage_show": "No stage show",
+    "stage_shows": "No stage shows",
     "groups": "No groups",
-    "events": "No events"
+    "events": "No events",
+    "text": "Type something"
   },
   "remote": {
     "projects": "Projects",
@@ -101,7 +118,8 @@
   },
   "error": {
     "no_show": "Could not find show",
-    "no_layouts": "Could not find any layouts"
+    "no_layouts": "Could not find any layouts",
+    "load": "Cound not load"
   },
   "meta": {
     "title": "Title",
@@ -134,9 +152,9 @@
   "buttons": {
     "changeTheme": "Change Theme"
   },
-  "languages": {
-    "en": "English",
-    "no": "Norwegian"
+  "inputs": {
+    "name": "Name",
+    "video_id": "Video ID/URL"
   },
   "tabs": {
     "shows": "Shows",
@@ -197,6 +215,14 @@
     "slide": "New slide",
     "event": "New event"
   },
+  "show": {
+    "name": "Name",
+    "category": "Category",
+    "quick_lyrics": "Quick Lyrics",
+    "new_layout": "New layout",
+    "grid": "Grid view",
+    "list": "List view"
+  },
   "actions": {
     "rename": "Rename",
     "recolor": "Change color",
@@ -221,7 +247,13 @@
     "stopSpeaking": "Stop Speaking",
     "resetZoom": "Reset Zoom",
     "zoomIn": "Zoom In",
-    "zoomOut": "Zoom Out"
+    "zoomOut": "Zoom Out",
+    "reset": "Reset",
+    "to_all": "Apply to all",
+    "back": "Go back",
+    "home": "Home",
+    "mute": "Mute",
+    "unmute": "Unmute"
   },
   "context": {
     "enabledTabs": "Show/Hide Tabs",
@@ -239,7 +271,7 @@
     "--actions": "Actions",
     "groups": "Groups",
     "metadata": "Metadata",
-    "backgrounds": "Backgrounds",
+    "media": "Media",
     "audio": "Audio",
     "transitions": "Transitions"
   },
@@ -276,9 +308,7 @@
     "opacity": "Opacity",
     "corner_radius": "Corner Radius",
     "border": "Border",
-    "length": "Length",
-    "reset": "Reset",
-    "apply_to_all": "Apply to all"
+    "length": "Length"
   },
   "borders": {
     "solid": "Solid",
@@ -355,6 +385,8 @@
     "max_connections": "Max connections",
     "allowed_connections": "Allowed connections",
     "reset_settings": "Reset settings",
+    "reset_colors": "Reset colors",
+    "reset_themes": "Reset themes",
     "export_all": "Export everything"
   },
   "calendar": {
@@ -366,9 +398,11 @@
     "from_time": "From time",
     "to_time": "To time",
     "location": "Location",
-    "notes": "Notes"
+    "notes": "Notes",
+    "today": "Today"
   },
   "filter": {
+    "filters": "Filters",
     "blur": "Blur",
     "brightness": "Brightness",
     "contrast": "Contrast",
@@ -414,6 +448,9 @@
   "info": {
     "created": "Created",
     "modified": "Modified",
-    "used": "Used"
+    "used": "Used",
+    "changed": "Used",
+    "extension": "File extension",
+    "size": "Size"
   }
 }

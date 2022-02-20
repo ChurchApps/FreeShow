@@ -8,6 +8,10 @@
     "drop": "Slipp her",
     "search": "Søk"
   },
+  "languages": {
+    "en": "Engelsk",
+    "no": "Norsk"
+  },
   "setup": {
     "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
     "tips": "Finn nyttige tips og tutorials på nettsiden.",
@@ -54,8 +58,17 @@
     "audio": "Fjern lyd",
     "transistion": "Fjern overgang"
   },
+  "remove": {
+    "background": "Fjern bakgrunn",
+    "overlays": "Fjern overlegg",
+    "audio": "Fjern lyd",
+    "transistion": "Fjern overgang",
+    "to_start": "Fjern Gå til start"
+  },
   "media": {
-    "_loop": "Loop"
+    "_loop": "Loop",
+    "play": "Spill av",
+    "show": "Vis"
   },
   "menu": {
     "show": "Presenter",
@@ -74,10 +87,14 @@
     "shows": "Ingen show",
     "slides": "Ingen lysbilder",
     "slide": "Ingen lysbilde valgt",
+    "items": "Ingen elementer valgt",
     "search": "Ingen treff",
-    "backgrounds": "Ingen bakgrunner i show",
+    "media": "Ingen medier i show",
+    "stage_show": "Ingen sceneshow",
+    "stage_shows": "Ingen sceneshow",
     "groups": "Ingen grupper",
-    "events": "Ingen arrangement"
+    "events": "Ingen arrangement",
+    "text": "Skriv noe"
   },
   "remote": {
     "projects": "Prosjekter",
@@ -96,7 +113,8 @@
   },
   "error": {
     "no_show": "Kunne ikke finne noen show",
-    "no_layouts": "Kunne ikke finne noen oppsett"
+    "no_layouts": "Kunne ikke finne noen oppsett",
+    "load": "Kunne ikke laste inn"
   },
   "meta": {
     "title": "Tittel",
@@ -129,9 +147,9 @@
   "buttons": {
     "changeTheme": "Endre Tema"
   },
-  "languages": {
-    "en": "Engelsk",
-    "no": "Norsk"
+  "inputs": {
+    "name": "Navn",
+    "video_id": "Video ID/URL"
   },
   "tabs": {
     "shows": "Show",
@@ -192,6 +210,14 @@
     "slide": "Nytt lysbilde",
     "event": "Nytt arrangement"
   },
+  "show": {
+    "name": "Navn",
+    "category": "Kategori",
+    "quick_lyrics": "Hurtigtekst",
+    "new_layout": "Nytt oppsett",
+    "grid": "Rutenett",
+    "list": "Listevisning"
+  },
   "actions": {
     "rename": "Endre navn",
     "recolor": "Endre farge",
@@ -216,7 +242,13 @@
     "stopSpeaking": "Stopp tale",
     "resetZoom": "Tilbakestill zoom",
     "zoomIn": "Zoom inn",
-    "zoomOut": "Zoom ut"
+    "zoomOut": "Zoom ut",
+    "reset": "Tilbakestill",
+    "to_all": "Legg til alle",
+    "back": "Gå tilbake",
+    "home": "Hjem",
+    "mute": "Slå av lyden",
+    "unmute": "Slå på lyden"
   },
   "context": {
     "enabledTabs": "Vis/Skjul Faner",
@@ -234,7 +266,7 @@
     "--actions": "Handlinger",
     "groups": "Grupper",
     "metadata": "Metadata",
-    "backgrounds": "Bakgrunner",
+    "media": "Medier",
     "audio": "Lyd",
     "transitions": "Overganger"
   },
@@ -271,9 +303,7 @@
     "opacity": "Gjennomsiktighet",
     "corner_radius": "Hjørneradius",
     "border": "Ramme",
-    "length": "Lengde",
-    "reset": "Nullstill",
-    "apply_to_all": "Legg til alle"
+    "length": "Lengde"
   },
   "borders": {
     "solid": "Hel",
@@ -350,6 +380,8 @@
     "max_connections": "Maks tilkoblinger",
     "allowed_connections": "Tillatte tilkoblinger",
     "reset_settings": "Tilbakestill innstillinger",
+    "reset_colors": "Tilbakestill farger",
+    "reset_themes": "Tilbakestill temaer",
     "export_all": "Eksporter alt"
   },
   "calendar": {
@@ -361,9 +393,11 @@
     "from_time": "Fra tid",
     "to_time": "Til tid",
     "location": "Posisjon",
-    "notes": "Notater"
+    "notes": "Notater",
+    "today": "I dag"
   },
   "filter": {
+    "filters": "Filtre",
     "blur": "Uklarhet",
     "brightness": "Lysstyrke",
     "contrast": "Kontrast",
@@ -409,6 +443,9 @@
   "info": {
     "created": "Opprettet",
     "modified": "Endret",
-    "used": "Brukt"
+    "used": "Brukt",
+    "changed": "Brukt",
+    "extension": "Filtype",
+    "size": "Størrelse"
   }
 }

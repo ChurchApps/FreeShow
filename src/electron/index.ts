@@ -51,10 +51,12 @@ const createLoading = () => {
     frame: false,
     alwaysOnTop: true,
     resizable: false,
+    // show: false,
     icon: "public/icon.ico",
     webPreferences: { nodeIntegration: true, contextIsolation: false, enableRemoteModule: true },
   })
   loadingWindow.loadFile("public/loading.html")
+  // loadingWindow.once("ready-to-show", () => loadingWindow!.showInactive())
   // if (!isProd) loadingWindow.webContents.openDevTools()
 }
 
@@ -267,7 +269,7 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       if (externalDisplay && JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(externalDisplay.bounds)) {
         outputWindow?.setBounds(externalDisplay.bounds)
       }
-      outputWindow?.show()
+      outputWindow?.showInactive()
     } else {
       outputWindow?.hide()
       mainWindow?.webContents.send(OUTPUT, msg)
@@ -319,7 +321,7 @@ function createOutputWindow() {
 
   // TODO: get setting "auto display"
   if (externalDisplay) {
-    outputWindow?.show()
+    outputWindow?.showInactive()
     mainWindow?.webContents.send(OUTPUT, { channel: "DISPLAY", data: true })
   }
 

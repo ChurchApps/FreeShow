@@ -5,31 +5,26 @@
 
   export let next: boolean = false
   export let style: boolean = false
-  let text: string = ""
 
   $: index = $outSlide ? $outSlide.index + (next ? 1 : 0) : null
   $: slideId = index !== null && $activeShow && index < GetLayout().length ? GetLayout()[index].id : null
   $: slide = $outSlide?.id && slideId ? $showsCache[$outSlide.id].slides[slideId] : null
 
-  $: {
-    if (slide?.items) {
-      text = ""
-      slide.items.forEach((item) => {
-        item.lines?.forEach((line) => {
-          // if (text.length) text += "<br />"
-          text += line.text.map((t) => t.value).join("")
-        })
-      })
-    }
-  }
+  // $: {
+  //   if (slide?.items) {
+  //     text = ""
+  //     slide.items.forEach((item) => {
+  //       item.lines?.forEach((line) => {
+  //         // if (text.length) text += "<br />"
+  //         text += line.text.map((t) => t.value).join("")
+  //       })
+  //     })
+  //   }
+  // }
 </script>
 
-{#if style}
-  {#if slide}
-    {#each slide.items as item}
-      <Textbox {item} />
-    {/each}
-  {/if}
-{:else}
-  {@html text}
+{#if slide}
+  {#each slide.items as item}
+    <Textbox {item} {style} />
+  {/each}
 {/if}

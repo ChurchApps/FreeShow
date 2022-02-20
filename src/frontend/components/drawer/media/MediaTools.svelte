@@ -87,9 +87,12 @@
 <div class="main">
   <!-- {type} -->
   {#if project === null}
-    Add to a project to make edits!
+    <!-- TODO: edit any media -->
+    (((Add to a project to make edits!)))
   {:else}
-    <h2 style="text-align: center;">[[[Filters]]]</h2>
+    <h2 style="text-align: center;">
+      <T id="filter.filters" />
+    </h2>
     <!-- {#if type === "video"}
       <Button style="flex: 0" center title={project.muted ? "Unmute" : "Mute"} on:click={() => updateProject("muted", !project.muted)}>
         <Icon id={project.muted ? "muted" : "volume"} size={1.2} />
@@ -104,7 +107,9 @@
         <NumberInput {...filters[id]} on:change={(e) => updateProject(id, e.detail)} />
       </span>
     {/each}
-    <Button on:click={reset} center>[[[Reset]]]</Button>
+    <Button on:click={reset} center>
+      <T id="actions.reset" />
+    </Button>
   {/if}
 </div>
 

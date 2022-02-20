@@ -138,7 +138,7 @@
           !sameDay(new Date($activeDays[0]), today) ||
           current.getMonth() !== new Date($activeDays[0]).getMonth() ||
           current.getFullYear() !== new Date($activeDays[0]).getFullYear()}
-        title="[[[Today]]]"
+        title={$dictionary.calendar?.today}
         style="width: 100%;height: 100%;"
         center
       >

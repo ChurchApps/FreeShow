@@ -37,25 +37,13 @@
     <IconButton icon="live" />
     <IconButton icon="audio" />
   </div>
-  <!-- <hr />
-  <h6><T id="edit.add_icons" /></h6> -->
   <div>
-    <Button style="width: 100%;" on:click={() => activePopup.set("icon")} dark center>Add SVG</Button>
+    <!-- square, circle, triangle, star, heart, ... -->
+    <Button style="width: 100%;" on:click={() => activePopup.set("icon")} dark center>
+      <T id="edit.add_icons" />
+    </Button>
   </div>
   <hr />
-  <!-- square, circle, triangle, star, heart, ... -->
-  <!-- <h6><T id="edit.add_shapes" /></h6>
-  <div class="grid">
-    <IconButton icon="text" />
-    <IconButton icon="text" />
-    <IconButton icon="text" />
-    <IconButton icon="text" />
-    <IconButton icon="text" />
-    <IconButton icon="text" />
-    <IconButton icon="text" />
-    <IconButton icon="text" />
-  </div>
-  <hr /> -->
   <h6><T id="edit.arrange_items" /></h6>
   <div class="items" style="display: flex;flex-direction: column;">
     {#each allSlideItems as currentItem, i}

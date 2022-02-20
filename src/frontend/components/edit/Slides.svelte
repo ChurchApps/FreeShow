@@ -28,6 +28,7 @@
   // let layoutSlides: SlideData[] = []
   // $: layoutSlides = GetLayout($activeShow!.id)
   $: activeLayout = $showsCache[$activeShow!.id]?.settings.activeLayout
+  // TODO: not getting parent color at first
   $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   function keydown(e: any) {

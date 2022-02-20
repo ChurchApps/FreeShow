@@ -40,7 +40,7 @@ export function createData(paths: any) {
           slides: [{ id: "1" }],
         },
       },
-      backgrounds: {},
+      media: {},
     })
   }
 

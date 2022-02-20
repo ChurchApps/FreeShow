@@ -1,6 +1,6 @@
 <script lang="ts">
   import { uid } from "uid"
-  import { activeShow, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, dictionary, showsCache, slidesOptions } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -38,11 +38,12 @@
       {/each}
     </span>
     <span style="display: flex; align-items: center;">
-      <Button on:click={addLayout} title="[[[Add Layout. ctrlclick=copy current]]]">
+      <!-- TODO: CTRL click = copy current layout, also right click... -->
+      <Button on:click={addLayout} title={$dictionary.show?.new_layout}>
         <Icon size={1.3} id="add" />
       </Button>
       <div class="seperator" />
-      <Button on:click={() => slidesOptions.set({ ...$slidesOptions, grid: !$slidesOptions.grid })} title={$slidesOptions.grid ? "[[[Set List View]]]" : "[[[Set Grid View]]]"}>
+      <Button on:click={() => slidesOptions.set({ ...$slidesOptions, grid: !$slidesOptions.grid })} title={$slidesOptions.grid ? $dictionary.show?.list : $dictionary.show?.grid}>
         {#if $slidesOptions.grid}
           <Icon size={1.3} id="grid" white />
         {:else}
@@ -52,14 +53,14 @@
       <Button
         disabled={$slidesOptions.columns >= 10}
         on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })}
-        title="[[[Zoom out]]]"
+        title={$dictionary.actions?.zoomOut}
       >
         <Icon size={1.3} id="remove" white />
       </Button>
       <Button
         disabled={$slidesOptions.columns <= 2}
         on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })}
-        title="[[[Zoom in]]]"
+        title={$dictionary.actions?.zoomIn}
       >
         <Icon size={1.3} id="add" white />
       </Button>

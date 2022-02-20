@@ -1,6 +1,6 @@
 <script lang="ts">
   import { READ_FOLDER } from "../../../../types/Channels"
-  import { activeShow, imageExtensions, mediaFolders, mediaOptions, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, imageExtensions, mediaFolders, mediaOptions, videoExtensions } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -119,7 +119,7 @@
 <div class="tabs" style="display: flex;align-items: center;">
   <Button
     disabled={rootPath === path}
-    title="[[[Go back]]]"
+    title={$dictionary.actions?.back}
     on:click={() => {
       const folder = path.slice(0, path.lastIndexOf("\\"))
       if (folder.length > rootPath.length) path = folder
@@ -128,7 +128,7 @@
   >
     <Icon size={1.3} id="back" />
   </Button>
-  <Button disabled={rootPath === path} title="[[[Home]]]" on:click={() => (path = rootPath)}>
+  <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
     <Icon size={1.3} id="home" />
   </Button>
   <span style="flex: 1;text-align: center;">
@@ -164,10 +164,10 @@
   >
     <Icon size={1.3} id={$mediaOptions.grid ? "grid" : "list"} white />
   </Button>
-  <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title="[[[Zoom out]]]">
+  <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title={$dictionary.actions?.zoomOut}>
     <Icon size={1.3} id="remove" white />
   </Button>
-  <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title="[[[Zoom in]]]">
+  <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn}>
     <Icon size={1.3} id="add" white />
   </Button>
   <p class="text">{(100 / $mediaOptions.columns).toFixed()}%</p>

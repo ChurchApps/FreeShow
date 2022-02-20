@@ -3,7 +3,7 @@
   import type { Show, Slide, SlideData } from "../../../types/Show"
   import { activeShow, dictionary, fullColors, groupCount, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
-  import { getItemText } from "../edit/tools/TextStyle"
+  import { getItemText } from "../edit/tools/textStyle"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
   import SelectElem from "../system/SelectElem.svelte"
@@ -37,7 +37,7 @@
   //   })
   // }
 
-  $: background = layoutSlide.background ? show.backgrounds[layoutSlide.background] : null
+  $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
   let duration: number = 0
   // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
   // $: name = full_name.slice(0, full_name.lastIndexOf("."))
@@ -45,7 +45,7 @@
   $: group = slide.group
   $: {
     if (slide.globalGroup && $groups[slide.globalGroup]) {
-      if ($groups[slide.globalGroup].default) group = $dictionary.groups[$groups[slide.globalGroup].name]
+      if ($groups[slide.globalGroup].default) group = $dictionary.groups?.[$groups[slide.globalGroup].name]
       else group = $groups[slide.globalGroup].name
       color = $groups[slide.globalGroup].color
     }
@@ -171,7 +171,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {#if background}
             {#key background}
               <div class="background" style="zoom: {1 / ratio}">
-                <MediaLoader name="[[[Could not load]]]" path={background.path} type={background.type !== "player" ? background.type : null} bind:duration />
+                <MediaLoader name={$dictionary.error?.load} path={background.path} type={background.type !== "player" ? background.type : null} bind:duration />
               </div>
             {/key}
           {/if}

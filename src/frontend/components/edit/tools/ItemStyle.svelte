@@ -5,12 +5,11 @@
   import { history } from "../../helpers/history"
   import { getStyles } from "../../helpers/style"
   import T from "../../helpers/T.svelte"
-
   import Color from "../../inputs/Color.svelte"
   import Dropdown from "../../inputs/Dropdown.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Panel from "../../system/Panel.svelte"
-  import { addStyleString } from "./TextStyle"
+  import { addStyleString } from "./textStyle"
 
   export let allSlideItems: Item[]
   export let item: Item | null

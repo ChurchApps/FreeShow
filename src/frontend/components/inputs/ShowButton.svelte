@@ -74,8 +74,8 @@
     if (!$outLocked && !e.target.closest("input")) {
       console.log($showsCache, $shows, id)
 
-      if (type === "show" && $showsCache[id] && $shows?.[id]?.layouts[$showsCache[id].settings.activeLayout].slides.length)
-        outSlide.set({ id, layout: $shows[id].settings.activeLayout, index: 0 })
+      if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length)
+        outSlide.set({ id, layout: $showsCache[id].settings.activeLayout, index: 0 })
       else if (type === "image" || type === "video") {
         let out: any = { path: id, muted: show.muted || true, loop: show.loop || false, type: "media" }
         if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter

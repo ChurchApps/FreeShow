@@ -88,6 +88,7 @@
   {#if edit}
     <Movebox {ratio} active={$activeStage.items.includes(id)} />
   {/if}
+  <!-- TODO: auto size! -->
   <div class="align" style={item.align}>
     <div>
       {#if id.split("#")[0] === "countdowns"}
@@ -123,8 +124,11 @@
     align-items: center;
   }
 
-  .align div {
+  .align div,
+  .align :global(.item) {
     width: 100%;
-    overflow-wrap: break-word;
+    height: 100%;
+    color: unset;
+    /* overflow-wrap: break-word; */
   }
 </style>

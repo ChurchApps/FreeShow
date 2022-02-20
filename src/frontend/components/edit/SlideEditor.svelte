@@ -26,6 +26,8 @@
           .get()[0]
       : null
 
+  $: console.log(Slide)
+
   // $: if (currentShow) {
   //   console.log($activeEdit.slide, _show([currentShow]).layouts("active").slides().get()[0], _show([currentShow]).layouts("active").ref()[0][$activeEdit.slide!]?.id)
   // }

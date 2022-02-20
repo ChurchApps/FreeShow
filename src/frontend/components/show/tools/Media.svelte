@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, outBackground, showsCache, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, outBackground, showsCache, videoExtensions } from "../../../stores"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
@@ -27,14 +27,14 @@
       backgrounds = []
       bgs = []
       layoutBackgrounds.forEach((a: any) => {
-        let id = show.backgrounds[a].path
+        let id = show.media[a].path
 
         let type = "image"
         const [extension] = id.substring(id.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]
         if ($videoExtensions.includes(extension.substring(1))) type = "video"
 
         if (backgrounds[id]) backgrounds[id].count++
-        else backgrounds[id] = { id: a, ...show.backgrounds[a], type, count: 1 }
+        else backgrounds[id] = { id: a, ...show.media[a], type, count: 1 }
       })
       Object.values(backgrounds).forEach((a) => bgs.push(a))
     } else bgs = []
@@ -42,7 +42,7 @@
 
   function setBG(id: string, key: string, value: boolean) {
     showsCache.update((a: any) => {
-      let bgs = a[$activeShow!.id].backgrounds
+      let bgs = a[$activeShow!.id].media
       if (value) delete bgs[id][key]
       else bgs[id][key] = value
       return a
@@ -64,7 +64,7 @@
             icon="play"
             size={3}
             on:click={() => outBackground.set({ path: background.path, muted: background.muted !== false })}
-            title="[[[Play video output...]]]"
+            title={$dictionary.media?.play}
           >
             <!-- <div style="flex: 2;height: 50px;"> -->
             <MediaLoader name={background.name} path={background.path} type={background.type} />
@@ -78,7 +78,7 @@
             <Button style="flex: 0" center title={background.muted !== false ? "Unmute" : "Mute"} on:click={() => setBG(background.id, "muted", background.muted === false)}>
               <Icon id={background.muted !== false ? "muted" : "volume"} size={1.2} />
             </Button>
-            <Button style="flex: 0" center title="[[[Loop video]]]" on:click={() => setBG(background.id, "loop", background.loop === false)}>
+            <Button style="flex: 0" center title={$dictionary.media?._loop} on:click={() => setBG(background.id, "loop", background.loop === false)}>
               <Icon id="loop" white={background.loop === false} size={1.2} />
             </Button>
           {/if}
@@ -87,7 +87,7 @@
     {/each}
   {:else}
     <Center faded>
-      <T id="empty.backgrounds" />
+      <T id="empty.media" />
     </Center>
   {/if}
 </div>

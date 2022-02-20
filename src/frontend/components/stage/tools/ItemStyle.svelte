@@ -1,6 +1,6 @@
 <script lang="ts">
   import { activeStage, dictionary, stageShows } from "../../../stores"
-  import { addStyleString } from "../../edit/tools/TextStyle"
+  import { addStyleString } from "../../edit/tools/textStyle"
   import { history } from "../../helpers/history"
   import { getStyles } from "../../helpers/style"
   import T from "../../helpers/T.svelte"
@@ -144,6 +144,8 @@
       </div>
     {/each}
   {:else}
-    <Center faded>[[[No items selected....]]]</Center>
+    <Center faded>
+      <T id="empty.items" />
+    </Center>
   {/if}
 </Panel>

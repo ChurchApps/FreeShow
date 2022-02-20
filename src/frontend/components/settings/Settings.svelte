@@ -275,8 +275,12 @@
         </div>
       {/each}
       <hr />
-      <Button style="width: 100%;" center>[[[Reset Colors]]]</Button>
-      <Button style="width: 100%;" center>[[[Reset Themes]]]</Button>
+      <Button style="width: 100%;" center>
+        <T id="settings.reset_colors" />
+      </Button>
+      <Button style="width: 100%;" center>
+        <T id="settings.reset_themes" />
+      </Button>
     {:else if $settingsTab === "groups"}
       <!-- <hr>
       <h3>Global Groups</h3> -->

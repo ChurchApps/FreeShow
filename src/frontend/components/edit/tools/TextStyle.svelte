@@ -11,7 +11,7 @@
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Panel from "../../system/Panel.svelte"
   import { autoSize } from "./autoSize"
-  import { addStyle, addStyleString, getItemStyleAtPos, getLineText, getSelectionRange } from "./TextStyle"
+  import { addStyle, addStyleString, getItemStyleAtPos, getLineText, getSelectionRange } from "./textStyle"
 
   export let allSlideItems: Item[]
   export let item: Item | null
@@ -23,7 +23,16 @@
   //     : item.lines[item.lines.length - 1].text[item.lines[item.lines.length - 1].text.length - 1].style
   //   : ""
   $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : ""
+  $: lineAlignStyle = item?.lines && selection?.length ? getLastLineAlign() : ""
   $: alignStyle = item?.align ? item.align : null
+
+  function getLastLineAlign() {
+    let last = ""
+    item?.lines!.forEach((line: any, i: number) => {
+      if (selection![i].start) last = line.align.length ? line.align.split(":")[1].replaceAll(";", "").trim() : ""
+    })
+    return last
+  }
 
   let selection: null | { start: number; end: number }[] = null
   activeEdit.subscribe((ae) => {
@@ -79,7 +88,6 @@
   setText()
   function setText() {
     let styles = getStyles(style, true)
-    console.log(styles)
 
     Object.entries(defaults).forEach(([key, value]) => {
       if (key === "text-shadow" && value !== null) {
@@ -89,10 +97,11 @@
         })
       } else text[key] = styles[key]?.length ? styles[key] : value
     })
+    // TODO: better aligns....
     let aligns = getStyles(alignStyle)
-    Object.entries(defaultAligns).forEach(([key, value]) => {
-      align[key] = aligns[key]?.length ? aligns[key] : value
-    })
+    align["align-items"] = aligns["align-items"]?.length ? aligns["align-items"] : defaultAligns["align-items"]
+    align["text-align"] = lineAlignStyle?.length ? lineAlignStyle : defaultAligns["text-align"]
+    console.log(align)
   }
 
   const inputChange = (e: any, key: string) => update(key, e.target.value)
@@ -165,17 +174,19 @@
     allItems.forEach((itemIndex) => {
       // oldData.push({ ...allSlideItems[itemIndex] })
       let selected = selection
-      if (selected === null || selected[selection!.length - 1].end - selected[selection!.length - 1].start <= 0) {
+      if (!selected?.length) {
         selected = []
         allSlideItems[itemIndex].lines?.forEach((line) => {
           selected!.push({ start: 0, end: getLineText(line).length })
         })
       }
 
+      console.log(selected)
+
       if (key === "text-align") {
         let newAligns: any[] = []
         allSlideItems[itemIndex].lines?.forEach((_a, line) => {
-          if (selected![line].start !== undefined) newAligns.push(key + ": " + align[key])
+          if (!selection || selection[line].start !== undefined) newAligns.push(key + ": " + align[key])
           else newAligns.push(allSlideItems[itemIndex].lines![line].align)
         })
         newData.push(newAligns)
@@ -186,8 +197,7 @@
       }
     })
 
-    // TODO: get selected lines... (if text align)
-
+    // TODO: remove unused (if default)
     history({
       // WIP
       id: key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
@@ -243,8 +253,8 @@
       <p><T id="edit.word_spacing" /></p>
     </span>
     <span>
-      <NumberInput value={text["line-height"]} min={0.1} max={100} step={0.1} inputMultiplier={10} on:change={(e) => update("line-height", e.detail)} />
-      <NumberInput value={text["letter-spacing"]} min={-1000} on:change={(e) => update("letter-spacing", e.detail)} />
+      <NumberInput value={text["line-height"]} max={10} step={0.1} decimals={1} inputMultiplier={10} on:change={(e) => update("line-height", e.detail)} />
+      <NumberInput value={text["letter-spacing"]} max={100} min={-1000} on:change={(e) => update("letter-spacing", e.detail)} />
       <NumberInput value={text["word-spacing"]} min={-100} on:change={(e) => update("word-spacing", e.detail)} />
     </span>
   </div>

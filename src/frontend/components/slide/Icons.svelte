@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, shows } from "../../stores"
+  import { activeShow, dictionary, showsCache } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { joinTime, secondsToTime } from "../helpers/time"
@@ -21,7 +21,11 @@
       : null
 
   function removeLayout(key: string) {
-    history({ id: "changeLayout", newData: { key }, location: { page: "show", show: $activeShow!, layout: $shows[$activeShow!.id].settings.activeLayout, layoutSlide: index } })
+    history({
+      id: "changeLayout",
+      newData: { key },
+      location: { page: "show", show: $activeShow!, layout: $showsCache[$activeShow!.id].settings.activeLayout, layoutSlide: index },
+    })
   }
 
   $: notMuted = background?.muted === false
@@ -32,7 +36,7 @@
   {#if transitionTime}
     <div>
       <div class="button">
-        <Button style="padding: 5px;" redHover title="[[[Remove transition]]]" on:click={() => removeLayout("transition")}>
+        <Button style="padding: 5px;" redHover title={$dictionary.remove?.transition} on:click={() => removeLayout("transition")}>
           <Icon id="transition" white />
         </Button>
       </div>
@@ -42,7 +46,7 @@
   {#if layoutSlide.end}
     <div>
       <div class="button">
-        <Button style="padding: 5px;" redHover title="[[[Remove go to start]]]" on:click={() => removeLayout("end")}>
+        <Button style="padding: 5px;" redHover title={$dictionary.remove?.to_start} on:click={() => removeLayout("end")}>
           <Icon id="restart" white />
         </Button>
       </div>
@@ -51,7 +55,7 @@
   {#if background}
     <div>
       <div class="button">
-        <Button style="padding: 5px;" redHover title="[[[Remove background]]]" on:click={() => removeLayout("background")}>
+        <Button style="padding: 5px;" redHover title={$dictionary.remove?.background} on:click={() => removeLayout("background")}>
           <!-- <Icon id={background.type} white /> -->
           <Icon id={background.type || "image"} white />
         </Button>
@@ -65,7 +69,7 @@
   {#if notMuted}
     <div>
       <div class="button">
-        <Button style="padding: 5px;" redHover title="[[[Mute]]]" on:click={() => console.log("mute")}>
+        <Button style="padding: 5px;" redHover title={$dictionary.actions?.mute} on:click={() => console.log("mute")}>
           <Icon id="volume" white />
         </Button>
       </div>
@@ -74,7 +78,7 @@
   {#if layoutSlide.overlays?.length}
     <div>
       <div class="button">
-        <Button style="padding: 5px;" redHover title="[[[Remove overlays]]]" on:click={() => removeLayout("overlays")}>
+        <Button style="padding: 5px;" redHover title={$dictionary.remove?.overlays} on:click={() => removeLayout("overlays")}>
           <Icon id="overlays" white />
         </Button>
       </div>
@@ -86,7 +90,7 @@
   {#if layoutSlide.audio?.length}
     <div>
       <div class="button">
-        <Button style="padding: 5px;" redHover title="[[[Remove audio]]]" on:click={() => removeLayout("audio")}>
+        <Button style="padding: 5px;" redHover title={$dictionary.remove?.audio} on:click={() => removeLayout("audio")}>
           <Icon id="audio" white />
         </Button>
       </div>

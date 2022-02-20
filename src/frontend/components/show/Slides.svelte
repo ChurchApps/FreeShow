@@ -53,7 +53,7 @@
 
       // background
       if (slide.background) {
-        let bg = currentShow.backgrounds[slide.background]
+        let bg = currentShow.media[slide.background]
         outBackground.set({ type: bg.type || "media", path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
       }
 

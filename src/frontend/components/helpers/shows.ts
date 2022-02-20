@@ -92,17 +92,17 @@ export function _show(id: any) {
       },
       /** Remove slide */
       remove: () => {
-        let slide: any[] = []
+        let slides: any = {ids: [], slides: []}
         showsCache.update((a: any) => {
           if (!slideIds.length) slideIds = Object.keys(a[id].slides)
-          slideIds.forEach((slideId, i) => {
-            if (i === 0) slide[i] = []
-            slide[i].push(a[id].slides[slideId])
+          slideIds.forEach((slideId) => {
+            slides.ids.push(slideId)
+            slides.slides.push(a[id].slides[slideId])
             delete a[id].slides[slideId]
           })
           return a
         })
-        return slide
+        return slides
       },
       /** Items function */
       items: (indexes: number[] = []) => ({
@@ -251,9 +251,8 @@ export function _show(id: any) {
         let a: any[] = []
         if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
         else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
-        a.push([])
-        layoutIds.forEach((layoutId: any, i: number) => {
-          a[i].push(shows[id].layouts[layoutId])
+        layoutIds.forEach((layoutId: any) => {
+          a.push(shows[id].layouts[layoutId])
         })
         return a
       },
@@ -422,7 +421,8 @@ export function _show(id: any) {
                 indexes.forEach((index: number) => {
                   children.forEach((child: number) => {
                     if (!a[id].layouts[layoutId].slides[index].children) a[id].layouts[layoutId].slides[index].children = []
-                    prev[i].push(a[id].layouts[layoutId].slides[index].children[child][key])
+                    if (!a[id].layouts[layoutId].slides[index].children[child]) a[id].layouts[layoutId].slides[index].children[child] = {}
+                    prev[i].push(a[id].layouts[layoutId].slides[index].children[child][key] || null)
                     a[id].layouts[layoutId].slides[index].children[child][key] = value
                   })
                 })
@@ -434,54 +434,53 @@ export function _show(id: any) {
         }),
       }),
     }),
-    /** Backgrounds function */
-    backgrounds: (backgroundIds: string[] = []) => ({
-      /** Get backgrounds */
+    /** Media function */
+    media: (mediaIds: string[] = []) => ({
+      /** Get media */
       get: () => {
         let a: any[] = []
-        if (!backgroundIds.length) backgroundIds = Object.keys(shows[id].backgrounds)
-        a.push([])
-        backgroundIds.forEach((backgroundId, i) => {
-          a[i].push(shows[id].backgrounds[backgroundId])
+        if (!mediaIds.length) mediaIds = Object.keys(shows[id].media)
+        mediaIds.forEach((mediaId) => {
+          a.push(shows[id].media[mediaId])
         })
         return a
       },
-      /** Set backgrounds: {key: value} */
+      /** Set media: {key: value} */
       set: ({ key, value }: any) => {
         // let prev: any[] = []
         showsCache.update((a: any) => {
-          if (!backgroundIds.length) backgroundIds = Object.keys(a[id].layouts)
-          backgroundIds.forEach((backgroundId) => {
+          if (!mediaIds.length) mediaIds = Object.keys(a[id].layouts)
+          mediaIds.forEach((mediaId) => {
             // if (i === 0) prev[i] = []
-            // prev[i].push(a[id].backgrounds[backgroundId][key])
-            a[id].backgrounds[backgroundId][key] = value
+            // prev[i].push(a[id].media[mediaId][key])
+            a[id].media[mediaId][key] = value
           })
           return a
         })
         // return prev
       },
-      /** Add new background */
+      /** Add new media */
       add: (object: any) => {
         let bgid: string = uid()
         showsCache.update((a: any) => {
-          a[id].backgrounds[bgid] = object
+          a[id].media[bgid] = object
           return a
         })
         return bgid
       },
-      /** Remove background */
+      /** Remove media */
       remove: () => {
-        let background: any[] = []
+        let media: any[] = []
         showsCache.update((a: any) => {
-          if (!backgroundIds.length) backgroundIds = Object.keys(a[id].backgrounds)
-          backgroundIds.forEach((backgroundId, i) => {
-            if (i === 0) background[i] = []
-            background[i].push(a[id].backgrounds[backgroundId])
-            delete a[id].backgrounds[backgroundId]
+          if (!mediaIds.length) mediaIds = Object.keys(a[id].media)
+          mediaIds.forEach((mediaId, i) => {
+            if (i === 0) media[i] = []
+            media[i].push(a[id].media[mediaId])
+            delete a[id].media[mediaId]
           })
           return a
         })
-        return background
+        return media
       },
     }),
   }

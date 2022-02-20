@@ -26,7 +26,7 @@ export interface Show {
   }
   slides: { [key: ID]: Slide }
   layouts: { [key: ID]: Layout }
-  backgrounds: { [key: ID]: Backgrounds }
+  media: { [key: ID]: Media }
 }
 
 export interface Slide {
@@ -89,10 +89,10 @@ export interface Transition {
   duration: number
 }
 
-export interface Backgrounds {
+export interface Media {
   // name?: string
   path: string
-  type?: BackgroundType
+  type?: MediaType
   muted?: boolean
   loop?: boolean
   filters?: string
@@ -130,7 +130,7 @@ export interface OutBackground {
   loop?: boolean
   filter?: string
   // name?: string
-  type?: BackgroundType
+  type?: MediaType
 }
 
 export interface OutSlide {
@@ -158,4 +158,4 @@ export type ID = string
 export type ItemType = "text" | "shape" | "image" | "video" | "music"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
 export type TransitionType = "none" | "fade"
-export type BackgroundType = "media" | "screen" | "camera" | "player"
+export type MediaType = "media" | "screen" | "camera" | "player"

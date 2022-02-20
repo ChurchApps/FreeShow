@@ -129,7 +129,7 @@
 
     // background
     if (layout[index].background) {
-      let bg = $showsCache[$outSlide?.id || $activeShow!.id].backgrounds[layout[index].background!]
+      let bg = $showsCache[$outSlide?.id || $activeShow!.id].media[layout[index].background!]
       outBackground.set({ path: bg.path, muted: bg.muted !== false })
     }
 

@@ -53,10 +53,6 @@
   $: slide = [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide!].id][1]
 
   function keydown(e: any) {
-    // TODO:
-    // if (e.altKey) lines = []
-    // if ctrlkey = select multiple
-
     // TODO: exlude.....
     if (e.key === "Backspace" && $activeEdit.items.includes(index) && !document.activeElement?.closest(".item") && !document.activeElement?.closest("input")) {
       let items: Item[] = $showsCache[active].slides[slide].items
@@ -74,8 +70,6 @@
     if (!e.target.closest(".editTools") && !e.target.closest(".drawer")) {
       if (!e.ctrlKey && e.target.closest(".item") !== itemElem) {
         if ($activeEdit.items.includes(index)) {
-          // TODO: clicking another item will add text to that!
-          // updateText()
           if (!e.target.closest(".item")) {
             activeEdit.update((ae) => {
               ae.items = []
@@ -113,7 +107,6 @@
   //   //   let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
   //   //   // let pos = sel!.anchorOffset!
 
-  //   //   // TODO: breaks dont work
   //   //   // get lengths
   //   //   let textIndex = 0
   //   //   let itemTextLength = 0
@@ -140,24 +133,36 @@
   let currentStyle: string = ""
 
   onMount(update)
+  let currentSlide: number = -1
+  $: if ($activeEdit.slide !== null && $activeEdit.slide !== currentSlide) {
+    currentSlide = $activeEdit.slide
+    console.log($activeEdit.slide)
+    setTimeout(update, 10)
+    // update()
+  }
   $: {
     let s = ""
     item.lines?.forEach((line) => {
+      s += line.align
       line.text?.forEach((a) => {
         s += a.style
       })
     })
+
+    console.log(currentStyle, s)
     if (currentStyle !== s) update()
   }
 
   function update() {
     if ($activeEdit.slide !== null) {
+      console.log(item)
       // html = `<div class="align" style="${item.align}">`
       html = ""
       currentStyle = ""
       item.lines?.forEach((line) => {
         // TODO: break ...:
-        let style = line.text[0].value.length ? (line.align ? 'style="' + line.align + '"' : "") : 'style="height: 1em;"'
+        currentStyle += line.align
+        let style = line.align ? 'style="' + line.align + '"' : ""
         html += `<div class="break" ${style}>`
         line.text?.forEach((a) => {
           currentStyle += a.style
@@ -171,12 +176,8 @@
     }
   }
 
-  // TODO: break after style
-  // TODO: style in break
-
   // let sel = getSelectionRange()
 
-  // || $showsCache[active].slides
   $: {
     if (textElem && html !== previousHTML) {
       previousHTML = html
@@ -190,18 +191,21 @@
           new Array(...textElem.children).forEach((line: any) => {
             let align: string = line.getAttribute("style") || ""
             pos++
+            currentStyle += align
             newLines.push({ align, text: [] })
             new Array(...line.children).forEach((child: any) => {
               let style = child.getAttribute("style") || ""
-              let brs = child.innerHTML.split("<br>")
-              brs.forEach((value: any, i: number) => {
-                if (i > 0) {
-                  pos++
-                  newLines.push({ align, text: [] })
-                }
-                newLines[pos].text.push({ style, value })
-                currentStyle += style
-              })
+              newLines[pos].text.push({ style, value: child.innerText })
+              currentStyle += style
+              // let brs = child.innerHTML.split("<br>")
+              // brs.forEach((value: any, i: number) => {
+              //   if (i > 0) {
+              //     pos++
+              //     newLines.push({ align, text: [] })
+              //   }
+              //   newLines[pos].text.push({ style, value })
+              //   currentStyle += style
+              // })
             })
           })
           a[active].slides[slide].items[index].lines = newLines
@@ -212,7 +216,6 @@
   }
 
   // function textkey(e: any) {
-  //   // TODO: <br> will breaks the system...
   //   if (e.key === "Enter2") {
   //     // || e.key === "Backspace") {
   //     // let pos = getCaretCharacterOffsetWithin(textElem)
@@ -302,16 +305,24 @@
   <Movebox {ratio} active={$activeEdit.items.includes(index)} />
   <!-- on:input={updateText} -->
   {#if item.lines}
-    <div class="align" style={item.align}>
+    <!-- TODO: remove align..... -->
+    <div class="align" style={item.align || ""}>
       {#if item.lines?.length < 2 && !item.lines?.[0]?.text[0].value.length}
         <span class="placeholder">
-          <T id="Type..." />
+          <T id="empty.text" />
         </span>
       {/if}
       <!-- {#each item.lines as line}
         <div class="align" style={line.align}> -->
       <!-- on:keydown={textkey} -->
-      <div bind:this={textElem} class="edit" contenteditable bind:innerHTML={html}>
+      <div
+        bind:this={textElem}
+        class="edit"
+        contenteditable
+        bind:innerHTML={html}
+        style={item.align ? item.align.replace("align-items", "justify-content") : ""}
+        class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0].value.length}
+      >
         <!-- {#each item.text as text}
             <span style={text.style}>{@html text.value}</span>
           {/each} -->
@@ -353,6 +364,7 @@
   .edit {
     outline: none;
     width: 100%;
+    height: 100%;
     overflow-wrap: break-word;
     font-size: 0;
     /* display: inline-block; */
@@ -361,11 +373,26 @@
 
     display: flex;
     flex-direction: column;
+    text-align: center;
+    justify-content: center;
+    /* align-items: center; */
+  }
+
+  .edit.height {
+    font-size: unset;
+  }
+  .edit.height :global(.break) {
+    height: 1em;
+  }
+  .edit.height :global(span) {
+    height: 100%;
+    display: block;
   }
 
   .edit :global(.break) {
     /* display: contents; */
     width: 100%;
+    /* line-height: normal; */
   }
 
   .edit :global(span) {

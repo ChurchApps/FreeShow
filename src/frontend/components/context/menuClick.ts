@@ -4,6 +4,7 @@ import { activeEdit, activePage, activePopup, activeProject, activeShow, drawerT
 import { save } from "../../utils/save"
 import { history, redo, undo } from "../helpers/history"
 import { GetLayoutRef } from "../helpers/get"
+import { _show } from "../helpers/shows"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = null) {
   let m: any = { hide: true }
@@ -77,7 +78,33 @@ export function menuClick(id: string, enabled: boolean = true, menu: any = null,
       }
       break
     case "remove_slide":
-      history({ id: "removeSlides", newData: { indexes: sel.data.map((a: any) => a.index) }, location: { page: "show", show: get(activeShow)! } })
+      let location: any = { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout }
+      let ref = _show(location.show).layouts([location.layout]).ref()[0]
+      let parents: any[] = []
+      let childs: any[] = []
+
+      // remove parents and delete childs
+      sel.data.forEach((a: any) => {
+        if (ref[a.index].type === "parent") parents.push(ref[a.index].index)
+        else childs.push(ref[a.index].id)
+      })
+      // TODO: "delete" in menu if child...
+      console.log(parents, childs)
+
+      if (parents.length) {
+        history({
+          id: "removeSlides",
+          newData: { indexes: parents },
+          location,
+        })
+      }
+      if (childs.length) {
+        history({
+          id: "deleteSlides",
+          newData: { ids: childs },
+          location: { page: "show", show: get(activeShow)! },
+        })
+      }
       break
     case "delete":
       if (sel.id === "show_drawer") {

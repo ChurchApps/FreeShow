@@ -1,6 +1,7 @@
 <script lang="ts">
   // import { STAGE } from "../../../types/Channels"
   import { activeStage, stageShows } from "../../stores"
+  import T from "../helpers/T.svelte"
   // import { sendData } from "../../utils/sendData"
   // import Checkbox from "../inputs/Checkbox.svelte"
   import Center from "../system/Center.svelte"
@@ -52,7 +53,9 @@
       {/each}
     </div>
   {:else}
-    <Center faded>[[[No stage shows]]]</Center>
+    <Center faded>
+      <T id="empty.stage_shows" />
+    </Center>
   {/if}
   <!-- Add -->
 </div>

@@ -3,6 +3,7 @@
   import { activeStage, screen, connections, stageShows } from "../../stores"
   import { history } from "../helpers/history"
   import { getStyles } from "../helpers/style"
+  import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Zoomed from "../slide/Zoomed.svelte"
   import Center from "../system/Center.svelte"
@@ -58,7 +59,9 @@
         <!-- {/key} -->
       </Zoomed>
     {:else}
-      <Center size={2} faded>[[[No stage show]]]</Center>
+      <Center size={2} faded>
+        <T id="empty.stage_show" />
+      </Center>
     {/if}
   </div>
   <div class="bar">

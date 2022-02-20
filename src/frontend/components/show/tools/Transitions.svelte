@@ -144,13 +144,15 @@
     </Button> -->
       <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} />
       <!-- Apply to all / selected -->
-      <Button style="flex: 1;" on:click={() => changeAll()} dark center>[[[Apply to all]]]</Button>
+      <Button style="flex: 1;" on:click={() => changeAll()} dark center>
+        <T id="actions.to_all" />
+      </Button>
     </div>
     <div style="display: flex;gap: 5px;">
       <span style="flex: 1;display: flex;align-items: center;justify-content: center;">{totalTime}</span>
       <Button style="flex: 1;" on:click={() => changeAll(true)} center dark>
         <Icon id="reset" />
-        [[[Reset]]]
+        <T id="actions.reset" />
       </Button>
     </div>
   </div>
