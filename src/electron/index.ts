@@ -85,7 +85,7 @@ const createWindow = () => {
       // beta dev tools
       devTools: !isProd || Number(app.getVersion()[0]) > 1,
       preload: join(__dirname, "preload"), // use a preload script
-      webSecurity: false, // load local files
+      webSecurity: isProd, // load local files
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
@@ -305,7 +305,7 @@ function createOutputWindow() {
       preload: join(__dirname, "preload"), // use a preload script
       contextIsolation: true,
       enableRemoteModule: false,
-      webSecurity: false, // get local files
+      webSecurity: isProd, // get local files
       allowRunningInsecureContent: false,
     },
   })

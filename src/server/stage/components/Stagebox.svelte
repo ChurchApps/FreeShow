@@ -43,8 +43,11 @@
     align-items: center;
   }
 
-  .align div {
+  .align div,
+  .align :global(.item) {
     width: 100%;
-    overflow-wrap: break-word;
+    height: 100%;
+    color: unset;
+    /* overflow-wrap: break-word; */
   }
 </style>

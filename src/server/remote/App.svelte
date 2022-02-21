@@ -453,16 +453,20 @@
           <div on:click={click} bind:this={lyricsScroll} class="lyrics">
             {#each GetLayout(outShow, outLayout) as layoutSlide, i}
               {#if !layoutSlide.disabled}
-                <span style="padding: 5px;{outSlide === i ? 'background-color: var(--secondary);color: var(--secondary-text);' : ''}">
+                <span style="padding: 5px;{outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);color: #FFFFFF;' : ''}">
                   <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                     <span style="left: 0;position: absolute;">{i + 1}</span>
                     <span>{outShow.slides[layoutSlide.id].group === null ? "" : outShow.slides[layoutSlide.id].group || "—"}</span>
                   </span>
                   {#each outShow.slides[layoutSlide.id].items as item}
-                    {#if item.text}
+                    {#if item.lines}
                       <div class="lyric">
-                        {#each item.text as text}
-                          <span>{@html text.value}</span>
+                        {#each item.lines as line}
+                          <div class="break">
+                            {#each line.text as text}
+                              <span>{@html text.value}</span>
+                            {/each}
+                          </div>
                         {/each}
                       </div>
                     {:else}
@@ -485,7 +489,18 @@
         {/if}
       {/if}
     </div>
-    <Tabs {tabs} bind:active={activeTab} />
+    <Tabs
+      {tabs}
+      bind:active={activeTab}
+      disabled={{
+        projects: projects.length,
+        project: activeProject,
+        shows: shows.length,
+        show: activeShow,
+        slide: outShow,
+        lyrics: outShow,
+      }}
+    />
   </section>
 {:else if isPassword}
   <div class="center">

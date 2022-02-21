@@ -6,16 +6,17 @@
 
   export let tabs: TabsObj
   export let active: string
+  export let disabled: any
 </script>
 
 <div class="tabs">
-  {#each Object.entries(tabs) as tab}
-    <Button on:click={() => (active = tab[0])} title={tab[1].name} active={active === tab[0]} center>
-      <Icon id={tab[1].icon} size={2} />
+  {#each Object.entries(tabs) as [id, tab]}
+    <Button on:click={() => (active = id)} title={tab.name} active={active === id} center disabled={!disabled[id]}>
+      <Icon id={tab.icon} size={2} />
       <!-- {#if labels}
-        <T id={tab[1].name} />
+        <T id={tab.name} />
       {/if} -->
-      <span class="label">{tab[1].name}</span>
+      <span class="label">{tab.name}</span>
     </Button>
   {/each}
 </div>

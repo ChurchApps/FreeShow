@@ -2,16 +2,17 @@
   import type { Item } from "../../../types/Show"
 
   export let item: Item
+  export let style: boolean = true
 </script>
 
-<div class="item" style={item.style}>
+<div class="item" style={style ? item.style : ""}>
   {#if item.lines}
-    <div class="align" style={item.align}>
+    <div class="align" style={style ? item.align : ""}>
       <div class="lines">
         {#each item.lines as line}
-          <div class="break" style={line.align} class:height={!line.text[0].value.length}>
+          <div class="break" style={style ? line.align : ""} class:height={!line.text[0].value.length}>
             {#each line.text as text}
-              <span style={text.style}>{@html text.value}</span>
+              <span style={style ? text.style : ""}>{@html text.value}</span>
             {/each}
           </div>
         {/each}

@@ -12,6 +12,14 @@
     "en": "Engelsk",
     "no": "Norsk"
   },
+  "about": {
+    "made": "Laget i Norge av",
+    "report": "Vil to rapportere en feil? Opprett en \"issue\" på GitHub",
+    "help": "Vil du hjelpe med å oversette eller foreslå en funksjon? Send en e-post til",
+    "assets": "Ressurser brukt",
+    "libraries": "Biblioteker brukt",
+    "thanks": "Takk til"
+  },
   "setup": {
     "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
     "tips": "Finn nyttige tips og tutorials på nettsiden.",

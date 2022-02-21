@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { activePopup } from "../../stores"
+
   import ContextChild from "./ContextChild.svelte"
   import ContextItem from "./ContextItem.svelte"
   import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
@@ -11,7 +13,7 @@
   let side: "right" | "left" = "right"
   let translate = 0
   function contextMenu(e: MouseEvent) {
-    if (!e.target?.closest(".contextMenu") && !e.target?.closest(".nocontext")) {
+    if (!e.target?.closest(".contextMenu") && !e.target?.closest(".nocontext") && !$activePopup) {
       contextElem = e.target!.closest(".context") || document.body
 
       x = e.clientX

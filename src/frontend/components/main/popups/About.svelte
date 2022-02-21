@@ -1,5 +1,6 @@
 <script lang="ts">
   import { version } from "../../../stores"
+  import T from "../../helpers/T.svelte"
 </script>
 
 <div style="text-align: center;">
@@ -8,21 +9,19 @@
 </div>
 <br />
 <div class="main">
-  <div>Made with {"<3"} by Kristoffer Vassbø</div>
-  <div>Want to report an issue; create an issue on GitHub</div>
+  <div><T id="about.made" /> Kristoffer Vassbø</div>
+  <div><T id="about.issue" /></div>
   <div>
-    Want to help translate or request a feature; send a mail to <a href="mailto:support@freeshow.net">support@freeshow.net</a>
+    <T id="about.help" /> <a href="mailto:support@freeshow.net">support@freeshow.net</a>
   </div>
   <br />
+  <!-- <h6><T id="about.libraries" /></h6>
+  <h6><T id="about.thanks" /></h6> -->
   <div>
-    <h6>Libraries used / Thanks to:</h6>
-    <div>
+    <h6><T id="about.assets" /></h6>
+    <div style="display: flex;justify-content: space-between;">
       <span>churchmotiongraphics.com</span>
       <span>CMG Sans</span>
-    </div>
-    <div>
-      <span>XX</span>
-      <span>XX</span>
     </div>
   </div>
 </div>
