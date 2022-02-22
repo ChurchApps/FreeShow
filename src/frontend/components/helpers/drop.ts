@@ -1,5 +1,5 @@
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
-import { projects, activeProject, selected, activeShow, showsCache, videoExtensions, imageExtensions, activePage, activeDrawerTab } from "./../../stores"
+import { projects, activeProject, selected, activeShow, showsCache, videoExtensions, imageExtensions, activePage, activeDrawerTab } from "../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
 import { HistoryIDs, history, historyAwait } from "./history"
 import { get } from "svelte/store"
