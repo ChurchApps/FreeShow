@@ -21,6 +21,6 @@
     "esModuleInterop": true,
     "isolatedModules": true
   },
-  "include": ["."],
+  "include": [".", "types"],
   "exclude": ["node_modules/*", "__sapper__/*", "public/*"]
 }
