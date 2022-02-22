@@ -76,7 +76,25 @@
       "publisherName": "FreeShow"
     }
   },
+  "config": {
+    "forge": {
+      "publishers": [
+        {
+          "name": "@electron-forge/publisher-github",
+          "config": {
+            "repository": {
+              "owner": "vassbo",
+              "name": "freeshow"
+            }
+          },
+          "draft": true,
+          "prerelease": true
+        }
+      ]
+    }
+  },
   "devDependencies": {
+    "@electron-forge/publisher-github": "^6.0.0-beta.63",
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-typescript": "^8.3.0",
