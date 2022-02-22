@@ -78,7 +78,7 @@ export function _show(id: any) {
       /** Add new slide */
       add: (slide: any = null, parent: boolean = false) => {
         // TODO: template....
-        let group = null
+        let group: null | string = null
         if (parent) group = ""
         if (!slide) slide = { group, color: null, settings: {}, notes: "", items: [] }
         showsCache.update((a: any) => {
@@ -92,7 +92,7 @@ export function _show(id: any) {
       },
       /** Remove slide */
       remove: () => {
-        let slides: any = {ids: [], slides: []}
+        let slides: any = { ids: [], slides: [] }
         showsCache.update((a: any) => {
           if (!slideIds.length) slideIds = Object.keys(a[id].slides)
           slideIds.forEach((slideId) => {
