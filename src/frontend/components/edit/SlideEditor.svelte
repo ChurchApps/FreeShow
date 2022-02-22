@@ -11,7 +11,7 @@
   import Center from "../system/Center.svelte"
   import Snaplines from "../system/Snaplines.svelte"
   import Editbox from "./Editbox.svelte"
-  import { autoSize } from "./tools/autoSize"
+  import { autoSize } from "./scripts/autoSize"
 
   $: currentShow = $activeShow!.id
   // $: layoutSlides = GetLayout(currentShow)

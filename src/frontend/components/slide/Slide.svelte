@@ -3,7 +3,7 @@
   import type { Show, Slide, SlideData } from "../../../types/Show"
   import { activeShow, dictionary, fullColors, groupCount, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
-  import { getItemText } from "../edit/tools/textStyle"
+  import { getItemText } from "../edit/scripts/textStyle"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
   import SelectElem from "../system/SelectElem.svelte"

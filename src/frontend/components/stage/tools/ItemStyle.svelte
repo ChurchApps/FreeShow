@@ -1,6 +1,6 @@
 <script lang="ts">
   import { activeStage, dictionary, stageShows } from "../../../stores"
-  import { addStyleString } from "../../edit/tools/textStyle"
+  import { addStyleString } from "../../edit/scripts/textStyle"
   import { history } from "../../helpers/history"
   import { getStyles } from "../../helpers/style"
   import T from "../../helpers/T.svelte"

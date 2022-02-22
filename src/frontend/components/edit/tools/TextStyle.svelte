@@ -10,8 +10,8 @@
   import IconButton from "../../inputs/IconButton.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Panel from "../../system/Panel.svelte"
-  import { autoSize } from "./autoSize"
-  import { addStyle, addStyleString, getItemStyleAtPos, getLineText, getSelectionRange } from "./textStyle"
+  import { autoSize } from "../scripts/autoSize"
+  import { addStyle, addStyleString, getItemStyleAtPos, getLineText, getSelectionRange } from "../scripts/textStyle"
 
   export let allSlideItems: Item[]
   export let item: Item | null

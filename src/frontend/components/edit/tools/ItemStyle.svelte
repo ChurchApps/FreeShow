@@ -9,7 +9,7 @@
   import Dropdown from "../../inputs/Dropdown.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Panel from "../../system/Panel.svelte"
-  import { addStyleString } from "./textStyle"
+  import { addStyleString } from "../scripts/textStyle"
 
   export let allSlideItems: Item[]
   export let item: Item | null

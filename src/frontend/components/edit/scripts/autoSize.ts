@@ -1,4 +1,4 @@
-import { GetLayout } from "./../../helpers/get"
+import { GetLayout } from "../../helpers/get"
 import { get } from "svelte/store"
 import { activeEdit, activeShow } from "../../../stores"
 import { _show } from "../../helpers/shows"
