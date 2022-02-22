@@ -1,5 +1,5 @@
 import type { Version } from "../../../../types/Scripture"
-import type { Categories } from "./../../../../types/Tabs"
+import type { Categories } from "../../../../types/Tabs"
 import { versions } from "./versions"
 
 export function getBibleVersions(): Categories {

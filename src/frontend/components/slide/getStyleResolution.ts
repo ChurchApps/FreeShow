@@ -1,4 +1,4 @@
-import type { Resolution } from "./../../../types/Settings"
+import type { Resolution } from "../../../types/Settings"
 
 // contain = width & height
 // fill = stretch

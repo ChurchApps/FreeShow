@@ -1,4 +1,4 @@
-import { REMOTE } from "./../../types/Channels"
+import { REMOTE } from "../../types/Channels"
 import { get } from "svelte/store"
 import { derived } from "svelte/store"
 import { MAIN } from "../../types/Channels"

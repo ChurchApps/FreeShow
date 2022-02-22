@@ -1,4 +1,4 @@
-import type { Time } from "./../../../types/Main"
+import type { Time } from "../../../types/Main"
 
 export function secondsToTime(seconds: number): Time {
   let h: any = Math.floor(seconds / 3600)

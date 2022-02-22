@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { Project, Projects } from "../../../types/Projects"
 import type { ID, Show, Shows, Slide, SlideData } from "../../../types/Show"
 import { activeProject, activeShow, projects, showsCache } from "../../stores"
-import type { ShowRef } from "./../../../types/Projects"
+import type { ShowRef } from "../../../types/Projects"
 
 // export const getProject = (id: ID): Project => get(projects)[id]
 // export const getProjectShows = (id: ID): Project => getProject(id)[get(activeProject)].shows

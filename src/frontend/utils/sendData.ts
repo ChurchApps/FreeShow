@@ -1,8 +1,8 @@
-import { GetLayout } from "./../components/helpers/get"
-import type { ClientMessage } from "./../../types/Socket"
-import { REMOTE, STAGE } from "./../../types/Channels"
+import { GetLayout } from "../components/helpers/get"
+import type { ClientMessage } from "../../types/Socket"
+import { REMOTE, STAGE } from "../../types/Channels"
 import { get } from "svelte/store"
-import { showsCache, outSlide, stageShows, connections, remotePassword, projects, folders, activeProject, dictionary, openedFolders, shows } from "./../stores"
+import { showsCache, outSlide, stageShows, connections, remotePassword, projects, folders, activeProject, dictionary, openedFolders, shows } from "../stores"
 import { loadShows } from "../components/helpers/setShow"
 
 // REMOTE

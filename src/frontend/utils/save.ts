@@ -40,7 +40,7 @@ import {
   themes,
   videoExtensions,
   webFavorites,
-} from "./../stores"
+} from "../stores"
 
 export function save() {
   console.log("SAVING...")

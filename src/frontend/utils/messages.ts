@@ -1,4 +1,4 @@
-import { shows } from "./../stores"
+import { shows } from "../stores"
 import { get } from "svelte/store"
 import type { ClientMessage } from "../../types/Socket"
 import {
@@ -47,7 +47,7 @@ import {
   videoExtensions,
   webFavorites,
 } from "../stores"
-import { OUTPUT, REMOTE, STAGE } from "./../../types/Channels"
+import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import { arrayToObject, client, filterObjectArray, sendClientAll, sendData, timedout } from "./sendData"
 
 export function listen() {

@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeShow, shows } from "./../../stores"
+import { activeShow, shows } from "../../stores"
 
 export function getGroup(showID: null | string, layoutID: null | string) {
   if (!showID && get(activeShow)) showID = get(activeShow)!.id

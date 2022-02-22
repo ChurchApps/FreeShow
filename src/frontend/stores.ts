@@ -3,11 +3,11 @@ import type { ActiveEdit, DefaultProjectNames, NumberObject, Popups, Selected, S
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
 import type { ID, OutAudio, OutBackground, OutSlide, Overlays, Shows } from "../types/Show"
-import type { Event } from "./../types/Calendar"
-import type { Draw, DrawSettings, DrawTools } from "./../types/Draw"
-import type { OutTransition, Templates } from "./../types/Show"
-import type { ActiveStage, StageShows } from "./../types/Stage"
-import type { Categories, DrawerTabs, SettingsTabs, TopViews } from "./../types/Tabs"
+import type { Event } from "../types/Calendar"
+import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
+import type { OutTransition, Templates } from "../types/Show"
+import type { ActiveStage, StageShows } from "../types/Stage"
+import type { Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { History } from "./components/helpers/history"
 
 export const version: Writable<string> = writable("0.0.0")

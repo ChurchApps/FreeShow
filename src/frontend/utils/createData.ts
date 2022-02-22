@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
-import { audioFolders, dictionary, folders, mediaFolders, projects, shows, templates } from "./../stores"
+import { audioFolders, dictionary, folders, mediaFolders, projects, shows, templates } from "../stores"
 import { save } from "./save"
 
 export function createData(paths: any) {

@@ -1,5 +1,5 @@
 import { uid } from "uid"
-import type { Show } from "./../../types/Show"
+import type { Show } from "../../types/Show"
 
 export class ShowObj implements Show {
   name: string

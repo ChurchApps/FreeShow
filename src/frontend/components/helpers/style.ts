@@ -1,4 +1,4 @@
-import type { StringObject } from "./../../../types/Main"
+import type { StringObject } from "../../../types/Main"
 export const getStyles = (str: string | null | undefined, removeText: boolean = false) => {
   let styles: StringObject = {}
   if (str?.length) {

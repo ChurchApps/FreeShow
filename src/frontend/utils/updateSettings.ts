@@ -31,7 +31,7 @@ import {
   theme,
   videoExtensions,
   webFavorites,
-} from "./../stores"
+} from "../stores"
 
 export function updateSettings(data: any[]) {
   Object.entries(data).forEach(([key, value]) => {

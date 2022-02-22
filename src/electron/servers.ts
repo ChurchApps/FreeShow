@@ -3,7 +3,7 @@ import express, { Response } from "express"
 import http from "http"
 import { join } from "path"
 import { Server } from "socket.io"
-import { REMOTE, STAGE } from "./../types/Channels"
+import { REMOTE, STAGE } from "../types/Channels"
 import { toApp } from "./index"
 
 // TODO: get

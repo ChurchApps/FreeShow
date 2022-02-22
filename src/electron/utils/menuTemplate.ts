@@ -1,4 +1,4 @@
-import { MAIN } from "./../../types/Channels"
+import { MAIN } from "../../types/Channels"
 import { openURL, toApp } from ".."
 import { app } from "electron"
 
