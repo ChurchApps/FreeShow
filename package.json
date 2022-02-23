@@ -27,7 +27,7 @@
     "postinstall": "electron-builder install-app-deps",
     "prepack": "npm run build",
     "pack": "electron-builder --dir",
-    "predist": "npm run build",
+    "prerelease": "npm run build",
     "release": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
     "postdist": "node scripts/cleanBuilds.js",
     "lint:electron": "eslint -c eslint.electron.json --ext .js,.ts src/electron",
@@ -37,7 +37,6 @@
     "preversion": "npm-run-all -s"
   },
   "build": {
-    "extends": null,
     "appId": "net.freeshow.app",
     "productName": "FreeShow",
     "files": [
@@ -49,6 +48,7 @@
       "public/**/*"
     ],
     "mac": {
+      "icon": "build/public/icon.png",
       "target": [
         "dmg",
         "zip"
