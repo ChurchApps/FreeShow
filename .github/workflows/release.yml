@@ -23,7 +23,7 @@ jobs:
       - name: build distributables
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run publish
+        run: npm run release
 
   # release:
   #   name: "Release"
