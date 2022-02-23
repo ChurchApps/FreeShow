@@ -29,7 +29,7 @@
     "pack": "electron-builder --dir",
     "predist": "npm run build",
     "dist": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
-    "publish": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --publish always",
+    "publish": "cross-env electron-builder build --publish always",
     "postdist": "node scripts/cleanBuilds.js",
     "lint:electron": "eslint -c eslint.electron.json --ext .js,.ts src/electron",
     "lint:svelte": "eslint -c eslint.svelte.json --ext .js,.ts src/frontend",
