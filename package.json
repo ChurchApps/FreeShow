@@ -29,7 +29,7 @@
     "pack": "electron-builder --dir",
     "predist": "npm run build",
     "dist": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
-    "publish": "cross-env electron-builder build --publish always",
+    "publish": "electron-forge publish",
     "postdist": "node scripts/cleanBuilds.js",
     "lint:electron": "eslint -c eslint.electron.json --ext .js,.ts src/electron",
     "lint:svelte": "eslint -c eslint.svelte.json --ext .js,.ts src/frontend",
@@ -88,6 +88,46 @@
       "target": "NSIS",
       "icon": "build/public/icon.png",
       "publisherName": "FreeShow"
+    }
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "freeshow"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ],
+      "publishers": [
+        {
+          "name": "@electron-forge/publisher-github",
+          "config": {
+            "repository": {
+              "owner": "vassbo",
+              "name": "freeshow"
+            }
+          },
+          "prerelease": true,
+          "draft": true
+        }
+      ]
     }
   },
   "devDependencies": {
