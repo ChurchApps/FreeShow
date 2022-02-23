@@ -37,6 +37,7 @@
     "preversion": "npm-run-all -s"
   },
   "build": {
+    "extends": null,
     "appId": "net.freeshow.app",
     "productName": "FreeShow",
     "files": [
