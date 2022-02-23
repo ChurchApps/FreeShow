@@ -1,11 +1,12 @@
 name: Release
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - "main"
 
 jobs:
-  release:
+  publish:
+    name: "Publish"
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -19,7 +20,30 @@ jobs:
           node-version: 14
       - name: install dependencies
         run: npm ci
-      - name: publish
+      - name: build distributables
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run dist
+
+  release:
+    name: "Release"
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+      - name: List fetched artifacts
+        run: ls -R
+      - name: Emit a Github Release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          draft: true
+          files: |
+            *.exe
+            *.zip
+            *.dmg
+            *.deb
+            *.AppImage
+            LICENSE
