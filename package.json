@@ -1,6 +1,6 @@
 {
   "name": "freeshow",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "private": true,
   "main": "build/electron/index.js",
   "description": "An application for showing song lyrics and more for free!",
@@ -48,9 +48,6 @@
       "public/**/*"
     ],
     "mac": {
-      "publish": [
-        "github"
-      ],
       "target": [
         "dmg",
         "zip"
@@ -72,18 +69,12 @@
       ]
     },
     "linux": {
-      "publish": [
-        "github"
-      ],
       "target": [
         "AppImage",
         "deb"
       ]
     },
     "win": {
-      "publish": [
-        "github"
-      ],
       "target": "NSIS",
       "icon": "build/public/icon.png",
       "publisherName": "FreeShow"
@@ -91,29 +82,6 @@
   },
   "config": {
     "forge": {
-      "packagerConfig": {},
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "freeshow"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "darwin"
-          ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {}
-        }
-      ],
       "publishers": [
         {
           "name": "@electron-forge/publisher-github",
@@ -123,8 +91,8 @@
               "name": "freeshow"
             }
           },
-          "prerelease": true,
-          "draft": true
+          "draft": true,
+          "prerelease": true
         }
       ]
     }
