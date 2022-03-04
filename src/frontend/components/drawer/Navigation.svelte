@@ -147,7 +147,7 @@
       </Button>
     </div>
   {:else if id === "media"}
-    <FolderPicker title={$dictionary.new?.folder}>
+    <FolderPicker id="media" title={$dictionary.new?.folder}>
       <Icon id="folder" right />
       <span style="color: var(--secondary);">
         <T id="new.folder" />

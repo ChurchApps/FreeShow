@@ -1,3 +1,4 @@
+import { showsPath } from "./../stores"
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
 import { audioFolders, dictionary, folders, mediaFolders, projects, shows, templates } from "../stores"
@@ -84,6 +85,7 @@ export function createData(paths: any) {
     a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
     return a
   })
+  showsPath.set(paths.shows)
 
   save()
 }

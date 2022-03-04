@@ -1,3 +1,4 @@
+import { showsPath } from "./../stores"
 import { MAIN } from "../../types/Channels"
 import {
   activePopup,
@@ -39,7 +40,6 @@ export function updateSettings(data: any[]) {
       case "initialized":
         if (!value) {
           activePopup.set("initialize")
-          window.api.send(MAIN, { channel: "GET_PATHS" })
         }
         break
       case "outLocked":
@@ -105,6 +105,9 @@ export function updateSettings(data: any[]) {
         break
       case "displayMetadata":
         displayMetadata.set(value)
+        break
+      case "showsPath":
+        showsPath.set(value)
         break
       case "defaultProjectName":
         defaultProjectName.set(value)

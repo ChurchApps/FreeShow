@@ -51,6 +51,7 @@ export function save() {
     audioFolders: get(audioFolders),
     defaultProjectName: get(defaultProjectName),
     displayMetadata: get(displayMetadata),
+    showsPath: get(showsPath),
     drawer: get(drawer),
     drawerTabsData: get(drawerTabsData),
     drawSettings: get(drawSettings),

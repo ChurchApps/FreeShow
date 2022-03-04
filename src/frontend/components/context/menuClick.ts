@@ -21,6 +21,10 @@ export function menuClick(id: string, enabled: boolean = true, menu: any = null,
       if (get(saved)) window.api.send(MAIN, { channel: "CLOSE" })
       else activePopup.set("unsaved")
       break
+    // view
+    case "fullscreen":
+      window.api.send(MAIN, { channel: "FULLSCREEN" })
+      break
     // edit
     case "undo":
       undo()
@@ -31,7 +35,7 @@ export function menuClick(id: string, enabled: boolean = true, menu: any = null,
     // view
     // help
     case "docs":
-      window.api.send(MAIN, { channel: "URL", data: "https://freeshow.net/docs" })
+      window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" })
       break
     case "about":
       activePopup.set("about")

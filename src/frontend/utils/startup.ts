@@ -3,7 +3,7 @@ import { MAIN, STORE } from "../../types/Channels"
 import type { MainData } from "../../types/Socket"
 import { menuClick } from "../components/context/menuClick"
 import { loadShows } from "../components/helpers/setShow"
-import { activeShow, events, folders, os, outputWindow, overlays, projects, shows, stageShows, templates, themes, version } from "../stores"
+import { activeShow, events, folders, os, outputWindow, overlays, projects, shows, showsPath, stageShows, templates, themes, version } from "../stores"
 import { outputDisplay } from "../stores"
 import { createData } from "./createData"
 import { listen } from "./messages"
@@ -30,6 +30,7 @@ export function startup() {
     else if (msg.channel === "DISPLAY") outputDisplay.set(msg.data)
     else if (msg.channel === "GET_PATHS") createData(msg.data)
     else if (msg.channel === "MENU") menuClick(msg.data)
+    else if (msg.channel === "SHOWS_PATH") showsPath.set(msg.data)
     else if (msg.channel === "OUTPUT") {
       if (msg.data === "true") outputWindow.set(true)
       // LISTEN TO MESSAGES FROM CLIENT/ELECTRON

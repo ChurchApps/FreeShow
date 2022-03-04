@@ -20,6 +20,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   copy: { label: "actions.copy", icon: "copy", shortcuts: ["Ctrl+C"] },
   paste: { label: "actions.paste", icon: "paste", shortcuts: ["Ctrl+V"] },
   docs: { label: "main.docs", icon: "document" },
+  fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
   resetZoom: { label: "actions.resetZoom", icon: "reset" },
   zoomIn: { label: "actions.zoomIn", icon: "zoomIn" },
   zoomOut: { label: "actions.zoomOut", icon: "zoomOut" },
@@ -48,7 +49,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   remove: { label: "actions.remove", icon: "remove" },
   remove_slide: { label: "actions.remove", icon: "remove" },
   slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove", "SEPERATOR", "LOAD_slide_groups"] },
-  selectAll: { label: "context.selectAll", icon: "select" },
+  selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
   newSlide: { label: "new.slide", icon: "add" },
   // newGroup: { label: "context.createNew", icon: "add" },
   // SLIDE
@@ -61,7 +62,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // MENU
   file: ["save", "import", "export_more", "SEPERATOR", "quit"],
   edit: ["undo", "redo", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"],
-  view: ["resetZoom", "zoomIn", "zoomOut"],
+  view: ["fullscreen", "resetZoom", "zoomIn", "zoomOut"],
   help: ["docs", "about"],
   // MAIN
   default: ["settings", "about", "SEPERATOR", "quit"],

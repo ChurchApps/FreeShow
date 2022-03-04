@@ -12,6 +12,7 @@
     os,
     screen,
     settingsTab,
+    showsPath,
     theme,
     themes,
     videoExtensions,
@@ -29,6 +30,7 @@
   import LocaleSwitcher from "./LocaleSwitcher.svelte"
   import NumberInput from "../inputs/NumberInput.svelte"
   import FontDropdown from "../inputs/FontDropdown.svelte"
+import FolderPicker from "../inputs/FolderPicker.svelte"
 
   const labels = (e: any) => labelsDisabled.set(e.target.checked)
   const setColors = (e: any) => fullColors.set(e.target.checked)
@@ -212,7 +214,12 @@
       </div>
       <div>
         <p><T id="settings.show_location" /></p>
-        <span>select folder... (user/documents/FreeShow)</span>
+        <span>
+          {$showsPath}
+          <FolderPicker id="shows">
+            [[[Choose another location...]]]
+          </FolderPicker>
+        </span>
       </div>
       <!-- project store location... -->
     {:else if $settingsTab === "theme"}

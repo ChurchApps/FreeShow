@@ -10,7 +10,7 @@
 <br />
 <div class="main">
   <div><T id="about.made" /> Kristoffer Vassbø</div>
-  <div><T id="about.issue" /></div>
+  <div><T id="about.report" /></div>
   <div>
     <T id="about.help" /> <a href="mailto:support@freeshow.net">support@freeshow.net</a>
   </div>

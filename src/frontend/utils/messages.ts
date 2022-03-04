@@ -158,6 +158,7 @@ export function listen() {
   audioFolders.subscribe(() => saved.set(false))
   defaultProjectName.subscribe(() => saved.set(false))
   displayMetadata.subscribe(() => saved.set(false))
+  showsPath.subscribe(() => saved.set(false))
   drawer.subscribe(() => saved.set(false))
   drawerTabsData.subscribe(() => saved.set(false))
   drawSettings.subscribe(() => saved.set(false))
