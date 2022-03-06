@@ -12,6 +12,7 @@
   export let tree: Tree[]
   export let id: ID
   export let opened = false
+  export let index: number
   $: {
     if (id !== "/") opened = $openedFolders.includes(id)
   }
@@ -31,6 +32,10 @@
       opened = !opened
     }
   }
+
+  function edit(e: any) {
+    history({ id: "updateProjectFolder", newData: { key: "name", value: e.detail.value }, location: { page: "show", folder: id } })
+  }
 </script>
 
 <div class="surround">
@@ -42,7 +47,7 @@
         {:else}
           <Icon id="folder" />
         {/if}
-        <HiddenInput value={name} />
+        <HiddenInput value={name} on:edit={edit} />
       </span>
       <button class="add" on:click={() => history({ id: "newFolder", oldData: id })} title={$dictionary.new?._folder}>+</button>
     </button>
@@ -53,9 +58,9 @@
       {#each tree as project}
         {#if project.parent === id}
           <li>
-            <SelectElem id="folder" data={project.id}>
+            <SelectElem id="folder" data={{ type: project.type || "project", id: project.id, index: project.type === "folder" ? index : 0 }} draggable>
               {#if project.type === "folder"}
-                <svelte:self {tree} id={project.id} name={project.name} />
+                <svelte:self {tree} id={project.id} name={project.name} index={index + 1} />
               {:else if project.id}
                 <ProjectButton name={project.name} parent={id} id={project.id} />
               {/if}

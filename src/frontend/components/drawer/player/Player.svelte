@@ -59,7 +59,7 @@
   <div class="add">
     <TextInput value={data.name} on:change={(e) => setValue(e, "name")} placeholder={$dictionary.inputs?.name} />
     <TextInput value={data.id} on:change={(e) => setValue(e, "id")} placeholder={$dictionary.inputs?.video_id} />
-    <Button on:click={add}>
+    <Button on:click={add} style="white-space: nowrap;">
       <Icon id="add" right />
       <T id="settings.add" />
     </Button>

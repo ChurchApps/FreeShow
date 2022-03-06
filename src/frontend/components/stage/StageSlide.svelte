@@ -1,4 +1,5 @@
 <script lang="ts">
+  import T from "../helpers/T.svelte"
   import Zoomed from "../slide/Zoomed.svelte"
   import Stagebox from "./Stagebox.svelte"
 
@@ -6,6 +7,8 @@
   interface Show {
     settings: any
     name: string
+    enabled: boolean
+    password: string
     items: {
       [key: string]: any
     }
@@ -22,8 +25,8 @@
   let ratio: number = 1
 </script>
 
-<div class="main" style="width: {100 / columns}%" class:list>
-  <div class="slide context #slide" class:active style={show.settings.background ? `background-color: ${show.settings.color};` : ""} tabindex={0} on:click>
+<div class="main" class:active style="width: {100 / columns}%" class:list>
+  <div class="slide context #stage_slide" class:disabled={!show.enabled} style={show.settings.background ? `background-color: ${show.settings.color};` : ""} tabindex={0} on:click>
     <div style="width: 100%;">
       <Zoomed background={show.items.length ? "black" : "transparent"} style="width: 100%;" bind:ratio>
         {#each Object.entries(show.items) as [id, item]}
@@ -34,7 +37,13 @@
       </Zoomed>
       <div class="label" title={show.name}>
         <span style="position: absolute;display: contents;">{index + 1}</span>
-        <span class="text">{show.name}</span>
+        <span class="text">
+          {#if show.name}
+            {show.name}
+          {:else}
+            <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
+          {/if}
+        </span>
       </div>
     </div>
   </div>
@@ -48,6 +57,12 @@
   }
   .main.list {
     width: 100%;
+  }
+  .main.active {
+    /* outline: 3px solid var(--secondary); */
+    outline: 2px solid var(--secondary);
+    outline-offset: -1px;
+    z-index: 2;
   }
 
   .slide {
@@ -64,11 +79,8 @@
     /* height: fit-content; */
     /* border: 2px solid var(--primary-lighter); */
   }
-  .slide.active {
-    /* outline: 3px solid var(--secondary); */
-    outline: 2px solid var(--secondary);
-    outline-offset: 3px;
-    z-index: 2;
+  .slide.disabled {
+    opacity: 0.2;
   }
 
   .label {

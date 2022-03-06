@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ID } from "../../../types/Show"
   import { activeProject, activeShow, projects, projectView } from "../../stores"
+  import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import HiddenInput from "./HiddenInput.svelte"
 
@@ -31,6 +32,10 @@
       })
     }
   }
+
+  function edit(e: any) {
+    history({ id: "updateProject", newData: { key: "name", value: e.detail.value }, location: { page: "show", project: id } })
+  }
 </script>
 
 <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
@@ -45,7 +50,7 @@
   class:active
 >
   <Icon id="file" />
-  <HiddenInput value={name} />
+  <HiddenInput value={name} on:edit={edit} />
 </button>
 
 <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->

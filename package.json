@@ -1,6 +1,6 @@
 {
   "name": "freeshow",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "main": "build/electron/index.js",
   "description": "An application for showing song lyrics and more for free!",
@@ -37,7 +37,7 @@
     "preversion": "npm-run-all -s"
   },
   "build": {
-    "appId": "net.freeshow.app",
+    "appId": "com.github.vassbo.freeshow",
     "productName": "FreeShow",
     "files": [
       "build/public/**/*",
@@ -81,25 +81,7 @@
       "publisherName": "FreeShow"
     }
   },
-  "config": {
-    "forge": {
-      "publishers": [
-        {
-          "name": "@electron-forge/publisher-github",
-          "config": {
-            "repository": {
-              "owner": "vassbo",
-              "name": "freeshow"
-            }
-          },
-          "draft": true,
-          "prerelease": true
-        }
-      ]
-    }
-  },
   "devDependencies": {
-    "@electron-forge/publisher-github": "^6.0.0-beta.63",
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-typescript": "^8.3.0",

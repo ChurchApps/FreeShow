@@ -34,7 +34,7 @@ export const outTransition: Writable<null | OutTransition> = writable(null)
 
 // connections
 export const connections: Writable<{ [key: string]: any }> = writable({ REMOTE: {}, STAGE: {} })
-export const remotePassword: Writable<string> = writable("test") // generate 4 numbers (6885)
+export const remotePassword: Writable<string> = writable("") // generate 4 numbers
 
 // project
 export const projectView: Writable<boolean> = writable(false)
@@ -330,7 +330,7 @@ export const fullColors: Writable<boolean> = writable(true) // true
 export const autoOutput: Writable<boolean> = writable(true) // true
 // TODO: never, last slide, first & last, always
 export const displayMetadata: Writable<string> = writable("never") // "never"
-export const showsPath: Writable<null | string> = writable("C:\\Users\\Kristoffer\\Documents\\Shows") // null
+export const showsPath: Writable<null | string> = writable(null) // null
 
 // project
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"

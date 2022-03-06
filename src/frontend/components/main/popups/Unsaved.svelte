@@ -7,7 +7,8 @@
 </script>
 
 <T id="popup.unsaved" />
-<div style="display: flex;width: 100%;">
+<!-- WIP -->
+<div style="display: flex;justify-content: space-around;">
   <Button
     on:click={() => {
       activePopup.set(null)

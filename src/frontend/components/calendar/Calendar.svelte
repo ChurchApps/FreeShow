@@ -132,7 +132,7 @@
       <Button
         on:click={() => {
           current = today
-          activeDays.set([today.getTime()])
+          activeDays.set([copy(today).getTime()])
         }}
         active={!!$activeDays.length ||
           !sameDay(new Date($activeDays[0]), today) ||

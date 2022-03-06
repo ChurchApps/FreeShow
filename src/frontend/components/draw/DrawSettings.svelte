@@ -46,6 +46,10 @@
           {/each}
         {/if}
       </span>
+
+      {#if $drawTool === "paint"}
+        WIP
+      {/if}
     </div>
   </Panel>
 </div>

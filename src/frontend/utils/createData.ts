@@ -1,3 +1,4 @@
+import { remotePassword, showsPath } from "./../stores"
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
 import { audioFolders, dictionary, folders, mediaFolders, projects, shows, templates } from "../stores"
@@ -26,7 +27,7 @@ export function createData(paths: any) {
           notes: "",
           items: [
             {
-              style: "top: 400px;left: 180px;height: 220px;width: 1500px;",
+              style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
               align: "",
               lines: [{ align: "", text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }] }],
             },
@@ -66,7 +67,7 @@ export function createData(paths: any) {
       category: "song",
       items: [
         {
-          style: "top: 400px;left: 180px;height: 220px;width: 1500px;",
+          style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
           align: "",
           lines: [{ align: "", text: [{ value: "Template", style: "font-size: 180px;font-weight: bold;" }] }],
         },
@@ -84,6 +85,11 @@ export function createData(paths: any) {
     a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
     return a
   })
+  showsPath.set(paths.shows)
+
+  remotePassword.set(randomNumber(1000, 9999).toString())
 
   save()
 }
+
+const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * to - from) + from

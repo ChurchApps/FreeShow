@@ -10,8 +10,10 @@
     imageExtensions,
     labelsDisabled,
     os,
+    remotePassword,
     screen,
     settingsTab,
+    showsPath,
     theme,
     themes,
     videoExtensions,
@@ -29,11 +31,16 @@
   import LocaleSwitcher from "./LocaleSwitcher.svelte"
   import NumberInput from "../inputs/NumberInput.svelte"
   import FontDropdown from "../inputs/FontDropdown.svelte"
+  import FolderPicker from "../inputs/FolderPicker.svelte"
+  import { onMount } from "svelte"
+  import { MAIN } from "../../../types/Channels"
 
   const labels = (e: any) => labelsDisabled.set(e.target.checked)
   const setColors = (e: any) => fullColors.set(e.target.checked)
   const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
   const setGroupNumber = (e: any) => groupNumbers.set(e.target.checked)
+
+  const setRemotePassword = (e: any) => remotePassword.set(e.target.value)
 
   const projectNames: any[] = [
     { name: "$:projectName.${date}:$", id: "date" },
@@ -57,6 +64,14 @@
     "hover",
     "focus",
   ]
+
+  let ip = "IP"
+  onMount(() => {
+    window.api.send(MAIN, { channel: "IP" })
+  })
+  window.api.receive(MAIN, (msg: any) => {
+    if (msg.channel === "IP") ip = msg.data["Wi-Fi"]?.filter((a: any) => a.family === "IPv4")[0].address
+  })
 
   function updateTheme(e: any, id: null | string, key: string = "colors") {
     history({ id: "theme", newData: { key, id, value: e.target?.value || e }, location: { page: "settings", theme: $theme } })
@@ -212,7 +227,10 @@
       </div>
       <div>
         <p><T id="settings.show_location" /></p>
-        <span>select folder... (user/documents/FreeShow)</span>
+        <span>
+          {$showsPath}
+          <FolderPicker id="shows">[[[Choose another location...]]]</FolderPicker>
+        </span>
       </div>
       <!-- project store location... -->
     {:else if $settingsTab === "theme"}
@@ -327,8 +345,14 @@
       <!-- TODO: connection -->
       <div>
         <p><T id="settings.device_name" /></p>
-        <TextInput value={$os.name} light />
+        <TextInput style="max-width: 50%;" value={$os.name} light />
       </div>
+      <div>
+        <p>RemoteShow <T id="settings.password" /></p>
+        <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
+      </div>
+      <!-- TODO: change -->
+      WIP VV
       <div>
         <p>RemoteShow <T id="settings.port" /></p>
         <NumberInput value={5510} min={1000} max={10000} buttons={false} />
@@ -344,6 +368,11 @@
       <div>
         <p><T id="settings.allowed_connections" /></p>
         <span>(all, only phones, (laptops), ...)</span>
+      </div>
+      <br /><br />
+      <div style="justify-content: center;">
+        <p>Connect using:&nbsp;</p>
+        <b style="font-size: 1.2em;">{ip}:[port]</b>
       </div>
     {:else if $settingsTab === "calendar"}
       <!-- WIP -->

@@ -23,9 +23,11 @@ import {
   outLocked,
   overlayCategories,
   playerVideos,
+  remotePassword,
   resized,
   saved,
   screen,
+  showsPath,
   slidesOptions,
   templateCategories,
   theme,
@@ -39,7 +41,6 @@ export function updateSettings(data: any[]) {
       case "initialized":
         if (!value) {
           activePopup.set("initialize")
-          window.api.send(MAIN, { channel: "GET_PATHS" })
         }
         break
       case "outLocked":
@@ -50,6 +51,9 @@ export function updateSettings(data: any[]) {
         break
       case "activeProject":
         activeProject.set(value)
+        break
+      case "remotePassword":
+        remotePassword.set(value)
         break
       case "categories":
         categories.set(value)
@@ -105,6 +109,10 @@ export function updateSettings(data: any[]) {
         break
       case "displayMetadata":
         displayMetadata.set(value)
+        break
+      case "showsPath":
+        if (!value) window.api.send(MAIN, { channel: "SHOWS_PATH" })
+        else showsPath.set(value)
         break
       case "defaultProjectName":
         defaultProjectName.set(value)

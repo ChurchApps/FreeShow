@@ -3,6 +3,7 @@ import fs from "fs"
 import path, { join } from "path"
 import { URL } from "url"
 import { FILE_INFO, GET_SCREENS, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { closeServers } from "./servers"
 import { template } from "./utils/menuTemplate"
 import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 import checkForUpdates from "./utils/updater"
@@ -61,6 +62,7 @@ const createLoading = () => {
 }
 
 ipcMain.once("LOADED", () => {
+  if (electronSettings.get("maximized")) mainWindow!.maximize()
   mainWindow?.show()
   loadingWindow?.close()
   loadingWindow = null
@@ -71,19 +73,18 @@ ipcMain.once("LOADED", () => {
 const createWindow = () => {
   let width: number = electronSettings.get("width")
   let height: number = electronSettings.get("height")
-  let maximized: boolean = electronSettings.get("maximized")
 
   mainWindow = new BrowserWindow({
     width,
     height,
     icon: "public/icon.ico",
-    frame: !isProd,
+    frame: !isProd || process.platform !== "win32",
     autoHideMenuBar: isProd && process.platform === "win32",
     backgroundColor: "#2d313b",
     show: !isProd,
     webPreferences: {
       // beta dev tools
-      devTools: !isProd || Number(app.getVersion()[0]) > 1,
+      devTools: !isProd || Number(app.getVersion()[0]) === 0,
       preload: join(__dirname, "preload"), // use a preload script
       webSecurity: isProd, // load local files
       nodeIntegration: false,
@@ -111,19 +112,21 @@ const createWindow = () => {
     electronSettings.set("height", height)
   })
 
-  if (maximized) mainWindow.maximize()
-
   mainWindow.on("closed", () => (mainWindow = null))
   mainWindow.once("ready-to-show", createOutputWindow)
 
   // MENU
   const menu = Menu.buildFromTemplate(template({}))
-  mainWindow!.setMenu(menu)
+  // mainWindow!.setMenu(menu)
+  Menu.setApplicationMenu(menu)
 }
 
 // macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit()
+  if (process.platform !== "darwin") {
+    closeServers()
+    app.quit()
+  }
 })
 
 app.on("web-contents-created", (_e, contents) => {
@@ -180,6 +183,12 @@ function save(data: any) {
   else if (JSON.stringify(events.store) !== JSON.stringify(data.events)) events.set(data.events)
   else if (JSON.stringify(themes.store) !== JSON.stringify(data.themes)) themes.set(data.themes)
 
+  // check folder
+  if (!fs.existsSync(data.path)) {
+    data.path = updateShowsPath()
+    toApp(MAIN, { channel: "SHOWS_PATH", data: data.path })
+  }
+
   // SHOWS
   Object.entries(data.showsCache).forEach(([id, value]: any) => {
     let p: string = path.resolve(data.path, value.name + ".show")
@@ -193,6 +202,12 @@ function save(data: any) {
 
 // SHOW
 ipcMain.on(SHOW, (e, msg) => {
+  // check folder
+  if (!fs.existsSync(msg.path)) {
+    msg.path = updateShowsPath()
+    toApp(MAIN, { channel: "SHOWS_PATH", data: msg.path })
+  }
+
   let show: any = "{}"
   let p: string = path.resolve(msg.path, msg.name + ".show")
   if (fs.existsSync(p)) {
@@ -205,8 +220,10 @@ ipcMain.on(SHOW, (e, msg) => {
 
 export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContents.send(channel, ...args)
 
-const updateShowsPath = (path: string) => {
-  if (!fs.existsSync(path)) fs.mkdirSync(path, { recursive: true })
+const updateShowsPath = (p: any = null) => {
+  if (!p) p = path.resolve(app.getPath("documents"), "Shows")
+  if (!fs.existsSync(p)) p = fs.mkdirSync(p, { recursive: true })
+  return p
 }
 
 export async function openURL(url: string) {
@@ -221,19 +238,24 @@ ipcMain.on(MAIN, (e, msg) => {
   else if (msg.channel === "VERSION") data = app.getVersion()
   else if (msg.channel === "DISPLAY") data = outputWindow?.isVisible()
   else if (msg.channel === "URL") openURL(msg.data)
-  else if (msg.channel === "LANGUAGE") {
+  else if (msg.channel === "IP") {
+    data = os.networkInterfaces()
+  } else if (msg.channel === "LANGUAGE") {
     const menu = Menu.buildFromTemplate(template(msg.data.strings))
-    mainWindow!.setMenu(menu)
+    Menu.setApplicationMenu(menu)
+  } else if (msg.channel === "SHOWS_PATH") {
+    data = updateShowsPath()
   } else if (msg.channel === "GET_PATHS") {
     data = {
       documents: app.getPath("documents"),
       pictures: app.getPath("pictures"),
       videos: app.getPath("videos"),
       music: app.getPath("music"),
+      shows: path.resolve(app.getPath("documents"), "Shows"),
     }
 
     // create documents/Shows
-    updateShowsPath(path.resolve(data.documents, "Shows"))
+    updateShowsPath()
   } else if (msg.channel === "OUTPUT") {
     // console.log(e.sender.id, outputWindow?.id, outputWindow?.webContents.id)
     // e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
@@ -250,6 +272,8 @@ ipcMain.on(MAIN, (e, msg) => {
     data = mainWindow?.isMaximized()
   } else if (msg.channel === "MINIMIZE") {
     mainWindow?.minimize()
+  } else if (msg.channel === "FULLSCREEN") {
+    mainWindow?.setFullScreen(!mainWindow?.isFullScreen())
   } else {
     data = msg
   }
@@ -286,7 +310,7 @@ function createOutputWindow() {
     height: externalDisplay?.bounds.height || 610,
     x: externalDisplay?.bounds.x || 0,
     y: externalDisplay?.bounds.y || 0,
-    transparent: true, // disable interaction (resize)
+    transparent: isProd, // disable interaction (resize)
     alwaysOnTop: true, // keep window on top of other windows
     resizable: false, // disable resizing on mac and windows
     frame: false, // hide title/buttons
@@ -301,7 +325,7 @@ function createOutputWindow() {
     show: false,
     webPreferences: {
       // beta dev tools
-      devTools: !isProd || Number(app.getVersion()[0]) > 1,
+      devTools: !isProd || Number(app.getVersion()[0]) === 0,
       preload: join(__dirname, "preload"), // use a preload script
       contextIsolation: true,
       enableRemoteModule: false,
@@ -320,7 +344,8 @@ function createOutputWindow() {
   })
 
   // TODO: get setting "auto display"
-  if (externalDisplay) {
+  if (externalDisplay && JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(externalDisplay.bounds)) {
+    outputWindow?.setBounds(externalDisplay.bounds)
     outputWindow?.showInactive()
     mainWindow?.webContents.send(OUTPUT, { channel: "DISPLAY", data: true })
   }
@@ -345,9 +370,9 @@ ipcMain.on(GET_SCREENS, (_e, args: string[] = ["screen"]) => {
   })
 })
 
-ipcMain.on(OPEN_FOLDER, (_e, title: string) => {
-  let folder: any = dialog.showOpenDialogSync(mainWindow!, { properties: ["openDirectory"], title: title })
-  if (folder) toApp(OPEN_FOLDER, folder[0])
+ipcMain.on(OPEN_FOLDER, (_e, msg: { id: string; title: string | undefined }) => {
+  let folder: any = dialog.showOpenDialogSync(mainWindow!, { properties: ["openDirectory"], title: msg.title })
+  if (folder) toApp(OPEN_FOLDER, { id: msg.id, path: folder[0] })
 })
 
 ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {

@@ -1,11 +1,18 @@
 <script lang="ts">
   // import { STAGE } from "../../../types/Channels"
   import { activeStage, stageShows } from "../../stores"
+  import { history } from "../helpers/history"
+  import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
+  import Button from "../inputs/Button.svelte"
   // import { sendData } from "../../utils/sendData"
   // import Checkbox from "../inputs/Checkbox.svelte"
   import Center from "../system/Center.svelte"
   import StageSlide from "./StageSlide.svelte"
+
+  function addSlide() {
+    history({ id: "newStageShow", location: { page: "stage" } })
+  }
 </script>
 
 <div class="main">
@@ -58,12 +65,20 @@
     </Center>
   {/if}
   <!-- Add -->
+  <Button on:click={addSlide} style="width: 100%;background-color: var(--primary);" center>
+    <Icon id="add" right />
+    <T id="new.slide" />
+  </Button>
 </div>
 
 <style>
   .main {
-    background-color: var(--primary-darker);
     flex: 1;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    overflow: auto;
+    background-color: var(--primary-darker);
   }
 
   /* .main :global(button) {
@@ -76,7 +91,9 @@
     flex-wrap: wrap;
     /* gap: 10px; */
     padding: 5px;
-    /* height: 100%; */
-    /* align-content: flex-start; */
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    align-content: flex-start;
   }
 </style>

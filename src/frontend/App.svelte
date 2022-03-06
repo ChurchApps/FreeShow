@@ -142,7 +142,7 @@
 {#if !$outputWindow && $os.platform === "win32"}
   <MenuBar />
 {/if}
-<main style={$outputWindow ? "" : "height: calc(100% - 30px);"}>
+<main style={$outputWindow && $os.platform === "win32" ? "" : "height: calc(100% - 30px);"}>
   {#if $outputWindow}
     <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={display}>
       <Output style={getStyleResolution(resolution, width, height, "fit")} center />

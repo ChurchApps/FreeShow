@@ -1,5 +1,6 @@
 <script lang="ts">
   import { activeShow, showsCache } from "../../../stores"
+  import { history } from "../../helpers/history"
   import T from "../../helpers/T.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
   import Panel from "../../system/Panel.svelte"
@@ -17,6 +18,8 @@
 
   const changeValue = (e: any, key: string) => {
     values[key] = e.target.value
+    console.log(values)
+    history({ id: "updateShow", newData: { key: "meta", values: [values] }, location: { page: "show", shows: [{ id: $activeShow!.id }] } })
   }
 </script>
 

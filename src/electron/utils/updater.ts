@@ -14,7 +14,7 @@ export default function checkForUpdates() {
 
   autoUpdater.on("update-available", () => {
     notification = new Notification({
-      title: app.name,
+      title: app.getName(),
       body: "Updates are available. Click to download.",
       silent: true,
     })
@@ -28,7 +28,7 @@ export default function checkForUpdates() {
 
   // autoUpdater.on("update-not-available", () => {
   //   notification = new Notification({
-  //     title: app.name,
+  //     title: app.getName(),
   //     body: "Your software is up to date.",
   //     silent: true,
   //     icon: nativeImage.createFromPath(join(__dirname, "..", "..", "public", "icon.png"))
@@ -38,21 +38,23 @@ export default function checkForUpdates() {
 
   autoUpdater.on("update-downloaded", () => {
     notification = new Notification({
-      title: app.name,
+      title: app.getName(),
       body: "The updates are ready. Click to quit and install.",
       silent: true,
       icon: nativeImage.createFromPath(join(__dirname, "..", "..", "public", "icon.png")),
     })
     notification.show()
     notification.on("click", () => {
+      // TODO: save
       autoUpdater.quitAndInstall()
     })
   })
 
   autoUpdater.on("error", (err) => {
     notification = new Notification({
-      title: app.name,
-      body: JSON.stringify(err),
+      title: app.getName(),
+      body: "Error: " + JSON.stringify(err) + "\n" + autoUpdater.getFeedURL(),
+      silent: true,
       icon: nativeImage.createFromPath(join(__dirname, "..", "..", "public", "icon.png")),
     })
     notification.show()
