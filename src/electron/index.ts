@@ -3,6 +3,7 @@ import fs from "fs"
 import path, { join } from "path"
 import { URL } from "url"
 import { FILE_INFO, GET_SCREENS, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { closeServers } from "./servers"
 import { template } from "./utils/menuTemplate"
 import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 import checkForUpdates from "./utils/updater"
@@ -61,6 +62,7 @@ const createLoading = () => {
 }
 
 ipcMain.once("LOADED", () => {
+  if (electronSettings.get("maximized")) mainWindow!.maximize()
   mainWindow?.show()
   loadingWindow?.close()
   loadingWindow = null
@@ -71,7 +73,6 @@ ipcMain.once("LOADED", () => {
 const createWindow = () => {
   let width: number = electronSettings.get("width")
   let height: number = electronSettings.get("height")
-  let maximized: boolean = electronSettings.get("maximized")
 
   mainWindow = new BrowserWindow({
     width,
@@ -111,8 +112,6 @@ const createWindow = () => {
     electronSettings.set("height", height)
   })
 
-  if (maximized) mainWindow.maximize()
-
   mainWindow.on("closed", () => (mainWindow = null))
   mainWindow.once("ready-to-show", createOutputWindow)
 
@@ -124,7 +123,10 @@ const createWindow = () => {
 
 // macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit()
+  if (process.platform !== "darwin") {
+    closeServers()
+    app.quit()
+  }
 })
 
 app.on("web-contents-created", (_e, contents) => {
@@ -236,9 +238,13 @@ ipcMain.on(MAIN, (e, msg) => {
   else if (msg.channel === "VERSION") data = app.getVersion()
   else if (msg.channel === "DISPLAY") data = outputWindow?.isVisible()
   else if (msg.channel === "URL") openURL(msg.data)
-  else if (msg.channel === "LANGUAGE") {
+  else if (msg.channel === "IP") {
+    data = os.networkInterfaces()
+  } else if (msg.channel === "LANGUAGE") {
     const menu = Menu.buildFromTemplate(template(msg.data.strings))
     Menu.setApplicationMenu(menu)
+  } else if (msg.channel === "SHOWS_PATH") {
+    data = updateShowsPath()
   } else if (msg.channel === "GET_PATHS") {
     data = {
       documents: app.getPath("documents"),

@@ -1,4 +1,4 @@
-<input type="checkbox" style={$$props.style} checked={$$props.checked || false} on:change />
+<input id={$$props.id} type="checkbox" style={$$props.style} checked={$$props.checked || false} on:change />
 
 <style>
   input {

@@ -23,7 +23,8 @@
       } else ae.items = [index]
       return ae
     })
-    if ((e.target.closest(".line") && !e.ctrlKey) || e.target.closest(".square") || (e.ctrlKey && !e.target.closest(".line")) || e.altKey) {
+
+    if ((e.target.closest(".line") && !e.ctrlKey) || e.target.closest(".square") || (e.ctrlKey && !e.target.closest(".line")) || e.altKey || e.buttons === 4) {
       let item = e.target.closest(".item")
       mouse = {
         x: e.clientX,

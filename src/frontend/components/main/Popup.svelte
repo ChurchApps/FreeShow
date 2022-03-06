@@ -11,6 +11,7 @@
   import About from "./popups/About.svelte"
   import Unsaved from "./popups/Unsaved.svelte"
   import Initialize from "./popups/Initialize.svelte"
+  import Shortcuts from "./popups/Shortcuts.svelte"
 
   const hide = (e: any) => {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -39,6 +40,8 @@
           <Rename />
         {:else if $activePopup === "about"}
           <About />
+        {:else if $activePopup === "shortcuts"}
+          <Shortcuts />
         {:else if $activePopup === "unsaved"}
           <Unsaved />
         {/if}
@@ -56,6 +59,8 @@
     height: calc(100% - 30px);
     padding: 20px 300px;
     z-index: 80;
+
+    font-size: 1.2em;
 
     display: flex;
     align-items: center;

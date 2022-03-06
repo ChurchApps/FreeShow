@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Bible } from "../../../types/Scripture"
-  import { activeDrawerTab, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, projects } from "../../stores"
+  import { activeDrawerTab, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, projects } from "../../stores"
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
   import Navigation from "../drawer/Navigation.svelte"
@@ -13,7 +13,7 @@
   import Info from "./info/Info.svelte"
 
   const minHeight = 40
-  let maxHeight = window.innerHeight - 50
+  let maxHeight = window.innerHeight - 50 - ($os.platform === "win32" ? 30 : 0)
   let defaultHeight: number = 300
   $: height = $drawer.height
 
@@ -21,7 +21,7 @@
   let mouse: null | { x: number; y: number; offsetY: number } = null
   function mousedown(e: any) {
     if (e.target.classList.contains("top")) {
-      maxHeight = window.innerHeight - 50
+      maxHeight = window.innerHeight - 50 - ($os.platform === "win32" ? 30 : 0)
       mouse = {
         x: e.clientX,
         y: e.clientY,

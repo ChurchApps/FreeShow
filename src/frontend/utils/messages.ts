@@ -1,5 +1,5 @@
-import { shows } from "../stores"
 import { get } from "svelte/store"
+import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import {
   activeProject,
@@ -33,9 +33,11 @@ import {
   overlays,
   playerVideos,
   projects,
+  remotePassword,
   resized,
   saved,
   screen,
+  shows,
   showsCache,
   showsPath,
   slidesOptions,
@@ -47,7 +49,6 @@ import {
   videoExtensions,
   webFavorites,
 } from "../stores"
-import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import { arrayToObject, client, filterObjectArray, sendClientAll, sendData, timedout } from "./sendData"
 
 export function listen() {
@@ -155,6 +156,7 @@ export function listen() {
   // SAVE
   // TODO: better saving!
   activeProject.subscribe(() => saved.set(false))
+  remotePassword.subscribe(() => saved.set(false))
   audioFolders.subscribe(() => saved.set(false))
   defaultProjectName.subscribe(() => saved.set(false))
   displayMetadata.subscribe(() => saved.set(false))

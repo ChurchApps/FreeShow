@@ -13,6 +13,7 @@
 
   function enter(e: any) {
     if (e.buttons && !dragActive) {
+      if (data.index && $selected.data[0]?.index && data.index < $selected.data[0].index) return
       if ($selected.id !== id) selected.set({ id, data: [data] })
       else if (!arrayHasData($selected.data, data)) {
         selected.update((s) => {
@@ -28,6 +29,7 @@
     // e.dataTransfer.effectAllowed = type
     // e.dataTransfer.dropEffect = type
     // e.dataTransfer.setData("text", data)
+    if (data.index && $selected.data[0]?.index && data.index < $selected.data[0].index) return
 
     let newData: any
 

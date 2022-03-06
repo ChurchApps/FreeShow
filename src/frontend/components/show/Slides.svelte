@@ -32,7 +32,7 @@
     if (scrollElem && $outSlide !== null && $activeShow!.id === $outSlide?.id && activeLayout === $outSlide?.layout) {
       let columns = $slidesOptions.grid ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
       let index = Math.max(0, $outSlide.index - columns)
-      offset = scrollElem.querySelector(".grid").children[index].offsetTop - 5
+      offset = scrollElem.querySelector(".grid").children[index]?.offsetTop || 5 - 5
 
       // TODO: always show active slide....
       // console.log(offset, scrollElem.scrollTop, scrollElem.scrollTop + scrollElem.offsetHeight)

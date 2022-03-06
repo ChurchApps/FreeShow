@@ -37,8 +37,9 @@ export function menuClick(id: string, enabled: boolean = true, menu: any = null,
     case "docs":
       window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" })
       break
+    case "shortcuts":
     case "about":
-      activePopup.set("about")
+      activePopup.set(id)
       break
 
     // main

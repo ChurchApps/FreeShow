@@ -1,3 +1,4 @@
+import { activeShow } from "./../stores"
 import { GetLayout } from "../components/helpers/get"
 import type { ClientMessage } from "../../types/Socket"
 import { REMOTE, STAGE } from "../../types/Channels"
@@ -47,7 +48,7 @@ async function getRemote(msg: ClientMessage) {
       }
       break
     case "ACCESS":
-      if (msg.data === get(remotePassword)) {
+      if (!get(remotePassword).length || msg.data === get(remotePassword)) {
         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
 
@@ -159,7 +160,7 @@ function getStage(msg: ClientMessage) {
     case "SLIDES":
       let out = get(outSlide)
       msg.data = []
-      if (out) {
+      if (out && get(activeShow)) {
         let layout = GetLayout(out.id, out.layout)
         let slides = get(showsCache)[out.id].slides
         msg.data = [slides[layout[out.index].id]]

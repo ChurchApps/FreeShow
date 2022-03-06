@@ -54,6 +54,7 @@ export type HistoryIDs =
   | "newShowsCategory"
   | "newSlide"
   | "newItem"
+  | "newStageShow"
   // delete
   | "deleteShowsCategory"
   | "removeSlides"
@@ -70,6 +71,8 @@ export type HistoryIDs =
   | "changeLayout"
   | "changeLayouts"
   // project
+  | "updateProject"
+  | "updateProjectFolder"
   | "project"
   | "projects"
   | "drawer"
@@ -89,6 +92,7 @@ export interface History {
   location?: {
     page: HistoryPages
     project?: null | string
+    folder?: string
     show?: ShowRef
     shows?: any[]
     layout?: string
@@ -194,6 +198,21 @@ export function history(obj: History, undo: null | boolean = null) {
       //   return s
       // })
       break
+    //
+    case "updateProject":
+      projects.update((a: any) => {
+        if (!obj.oldData) obj.oldData = { key: obj.newData.key, value: a[obj.location?.project!][obj.newData.key] }
+        a[obj.location?.project!][obj.newData.key] = obj.newData.value
+        return a
+      })
+      break
+    case "updateProjectFolder":
+      folders.update((a: any) => {
+        if (!obj.oldData) obj.oldData = { key: obj.newData.key, value: a[obj.location?.folder!][obj.newData.key] }
+        a[obj.location?.folder!][obj.newData.key] = obj.newData.value
+        return a
+      })
+      break
     // MOVE
     case "project": // projecList
       projects.update((p) => {
@@ -242,27 +261,28 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     case "newProject":
-      if (typeof obj.newData === "string") {
+      if (undo) {
         projects.update((p) => {
-          delete p[obj.newData]
+          delete p[obj.newData.id]
           return p
         })
-        if (get(activeProject) === obj.newData) {
+        if (get(activeProject) === obj.newData.id) {
           activeProject.set(null)
           projectView.set(true)
         }
+        console.log(obj.newData.id, get(projects))
       } else {
         let project: Project = obj.newData
-        let id: string = obj.oldData
+        let id: string = obj.oldData?.id
 
         if (obj.newData === null) {
           let name: string = ""
           let created: number = new Date().getTime()
           if (get(defaultProjectName) === "date") name = dateToString(created)
-          project = { name, notes: "", created, parent: obj.oldData || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
-          id = uid()
+          project = { name, notes: "", created, parent: id || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
+          id = id || uid()
           obj.newData = project
-          obj.oldData = id
+          obj.oldData = { id }
           // TODO: edit name...
         }
         projects.update((p) => {
@@ -503,6 +523,30 @@ export function history(obj: History, undo: null | boolean = null) {
         return s
       })
       break
+    case "newStageShow":
+      stageShows.update((a) => {
+        if (undo) delete a[obj.newData.id]
+        else {
+          let id = obj.oldData?.id
+          if (!id) id = uid()
+          a[id] = {
+            name: "",
+            enabled: true,
+            password: "",
+            settings: {
+              background: false,
+              color: "#000000",
+              resolution: false,
+              size: { width: 10, height: 20 },
+              labels: false,
+              showLabelIfEmptySlide: true,
+            },
+            items: {},
+          }
+        }
+        return a
+      })
+      break
 
     // delete
     case "deleteShowsCategory":
@@ -563,6 +607,7 @@ export function history(obj: History, undo: null | boolean = null) {
     case "addShow":
       if (activeProject !== null) {
         console.log(undo)
+        // TODO: clear slide if active!
 
         if (obj.oldData === null) obj.oldData = [get(activeProject), [...get(projects)[get(activeProject)!].shows]]
         console.log(obj.oldData)
@@ -577,11 +622,12 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "addLayout":
       if (undo) {
-        _show(showIDs).layouts().remove(obj.oldData.id)
         _show(showIDs).set({ key: "settings.activeLayout", value: obj.newData.id })
+        _show(showIDs).layouts().remove(obj.oldData.id)
       } else {
         old = { id: _show(showIDs).get("settings.activeLayout") }
-        _show(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
+        // _show(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
+        _show(showIDs).layouts().add(obj.newData.id, obj.newData.layout)
         _show(showIDs).set({ key: "settings.activeLayout", value: obj.newData.id })
       }
       // showsCache.update((a) => {

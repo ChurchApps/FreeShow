@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { activeShow, dictionary, fullColors, groupCount, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, dictionary, fullColors, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import { getItemText } from "../edit/scripts/textStyle"
   import { getContrast } from "../helpers/color"
@@ -55,18 +55,20 @@
   // dynamic counter
   function getGroupName(slideID: string) {
     let name = group
-    if (name && $groupNumbers) {
-      // different slides with same name
+    if (name) {
       let added: any = {}
+      // if ($groupCount) {
+      // different slides with same name
       Object.entries(show.slides).forEach(([id, a]: any) => {
         if (added[a.group]) {
           added[a.group]++
           if (id === slideID) name += " #" + added[a.group]
         } else added[a.group] = 1
       })
+      // }
 
       // same group count
-      if ($groupCount) {
+      if ($groupNumbers) {
         added = {}
         GetLayoutRef().forEach((a: any, i: number) => {
           if (a.type === "parent") {

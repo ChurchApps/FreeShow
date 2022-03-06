@@ -1,4 +1,3 @@
-import { showsPath } from "./../stores"
 import { MAIN } from "../../types/Channels"
 import {
   activePopup,
@@ -24,9 +23,11 @@ import {
   outLocked,
   overlayCategories,
   playerVideos,
+  remotePassword,
   resized,
   saved,
   screen,
+  showsPath,
   slidesOptions,
   templateCategories,
   theme,
@@ -50,6 +51,9 @@ export function updateSettings(data: any[]) {
         break
       case "activeProject":
         activeProject.set(value)
+        break
+      case "remotePassword":
+        remotePassword.set(value)
         break
       case "categories":
         categories.set(value)
@@ -107,7 +111,8 @@ export function updateSettings(data: any[]) {
         displayMetadata.set(value)
         break
       case "showsPath":
-        showsPath.set(value)
+        if (!value) window.api.send(MAIN, { channel: "SHOWS_PATH" })
+        else showsPath.set(value)
         break
       case "defaultProjectName":
         defaultProjectName.set(value)

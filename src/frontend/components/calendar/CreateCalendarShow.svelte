@@ -4,6 +4,7 @@
   import { activeDays, activeProject, dictionary, events } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { checkName } from "../helpers/show"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Center from "../system/Center.svelte"
@@ -61,7 +62,8 @@
         if (day.events[0].from.getFullYear() !== day.events[0].to.getFullYear()) textDay += " " + day.events[0].to.getFullYear()
       }
       let group: string = textDay
-      let color: any = day.events.length === 1 ? day.events[0].color : null
+      // only one event or all events have the same color
+      let color: any = day.events.length === 1 || [...new Set(day.events.map((a: any) => a.color))].length === 1 ? day.events[0].color : null
 
       // TODO: event over multiple days!!
 
@@ -76,13 +78,14 @@
           let v: any[] = []
           if (event.time) {
             let time = getTime(event.from)
+            // TODO: event.to (if days are different?)
             // if (event.to.getTime() - event.from.getTime() > 0) time += " - " + getTime(event.to)
             v.push({ value: time + " ", style: "font-weight: bold;font-size:70px;font-family:calibri;" })
           }
           v.push({ value: event.name, style: "font-size:80px;" })
           if (event.location) v.push({ value: " - " + event.location, style: "font-size:80px;font-style:italic;" })
           if (event.notes) v[v.length - 1].value += ":"
-          values.push(...v)
+          values.push(v)
           if (event.notes) values.push([{ value: "&nbsp;&nbsp;&nbsp;&nbsp;" + event.notes, style: "font-size:80px;" }])
           values.push([{ value: "", style: "font-size:80px;" }])
           totalLength += event.name.length + event.location.length + event.notes.length
@@ -91,8 +94,8 @@
         {
           // TODO: use template!!
           style: "left:100px;top:120px;width:1770px;height:840px;",
-          align: "text-align:left;",
-          lines: values.map((a) => ({ align: "", text: a })),
+          align: "",
+          lines: values.map((a) => ({ align: "text-align:left;", text: a })),
         },
       ]
 
@@ -111,6 +114,7 @@
     // TODO: week?
     show.name = getDateString(from)
     if (sortedDays[0] - sortedDays[1] < 0) show.name += " - " + getDateString(to)
+    show.name = checkName(show.name)
     show.slides = slides
     show.layouts = { [layoutID]: { name: "", notes: "", slides: layouts } }
     return { show }

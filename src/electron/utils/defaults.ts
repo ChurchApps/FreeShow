@@ -3,6 +3,7 @@ export const defaultSettings = {
   outLocked: false,
   openedFolders: [],
   activeProject: null,
+  remotePassword: "",
   categories: {
     song: { name: "category.song", icon: "song", default: true },
     info: { name: "category.info", icon: "info", default: true },
@@ -70,9 +71,10 @@ export const defaultSettings = {
   drawer: { height: 300, stored: null },
   language: "en",
   labelsDisabled: false,
-  groupNumbers: false,
+  groupNumbers: true,
   fullColors: true,
   displayMetadata: "never",
+  showsPath: null,
   defaultProjectName: "date",
   videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],
   imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"],
@@ -218,6 +220,28 @@ export const defaultThemes: any = {
       "secondary-opacity": "rgb(58 210 255 / 0.5)",
       hover: "rgb(255 255 255 / 0.2)",
       focus: "rgb(255 255 255 / 0.3)",
+    },
+  },
+}
+
+export const defaultStage: any = {
+  eopsjofes: {
+    name: "Stage",
+    enabled: true,
+    password: "",
+    settings: {
+      background: false,
+      color: "#000000",
+      resolution: false,
+      size: { width: 10, height: 20 },
+      labels: false,
+      showLabelIfEmptySlide: true,
+    },
+    items: {
+      "slide#current_slide_text": {
+        style: "top:40.50px;left:45.50px;color:red;width:1830px;height:1000px;",
+        align: "",
+      },
     },
   },
 }

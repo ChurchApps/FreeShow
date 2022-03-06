@@ -28,6 +28,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   quit: { label: "main.quit", icon: "close" },
   settings: { label: "menu.settings", icon: "settings" },
   about: { label: "main.about", icon: "info" },
+  shortcuts: { label: "popup.shortcuts", icon: "shortcut" },
   rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
   delete: { label: "actions.delete", icon: "delete" },
   export: { label: "actions.export", icon: "export" },
@@ -63,7 +64,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   file: ["save", "import", "export_more", "SEPERATOR", "quit"],
   edit: ["undo", "redo", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"],
   view: ["fullscreen", "resetZoom", "zoomIn", "zoomOut"],
-  help: ["docs", "about"],
+  help: ["shortcuts", "docs", "about"],
   // MAIN
   default: ["settings", "about", "SEPERATOR", "quit"],
   rename: ["rename"],
@@ -90,7 +91,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   media_card: ["add_to_project"],
   overlay_card: ["rename", "recolor", "addToFirstSlide", "edit", "SEPERATOR", "duplicate", "delete"],
   template_card: ["rename", "recolor", "addToShow", "edit", "SEPERATOR", "duplicate", "delete"],
-  player_button: ["edit", "addToProjct", "delete"],
+  player_button: ["edit", "addToProject", "delete"],
   live_card: ["addToFirstSlide"],
 
   // PROJECT
@@ -106,6 +107,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["rename", "recolor"],
   // global_group: ["rename"],
+
+  // STAGE
+  stage_slide: ["rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
   // EDIT
   edit_box: ["format?", "delete", "make stage exlusive", "SEPERATOR", "duplicate", "copy", "paste"],

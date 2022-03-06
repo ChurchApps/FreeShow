@@ -76,6 +76,7 @@ export function template(lang: any): any {
     {
       label: lang.titlebar?.help || "Help",
       submenu: [
+        { label: lang.popup?.shortcuts || "Shortcuts", click: () => mc("shortcuts") },
         {
           label: lang.main?.docs || "Docs",
           click: () => openURL("https://freeshow.app/docs"),

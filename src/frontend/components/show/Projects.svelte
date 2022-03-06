@@ -142,7 +142,7 @@
       <DropArea id="projects">
         <!-- All Projects: -->
 
-        <ProjectsFolder id="/" name="All Projects" {tree} opened />
+        <ProjectsFolder id="/" name="All Projects" {tree} opened index={1} />
 
         <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->
       </DropArea>

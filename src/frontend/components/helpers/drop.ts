@@ -10,13 +10,14 @@ const areas: any = {
   all_slides: ["template"],
   slides: ["media", "overlay", "sound", "camera"], // group
   // slide: ["overlay", "sound", "camera"], // "media",
-  projects: [],
+  // projects: ["folder"],
   project: ["show_drawer", "media", "player"],
   overlays: ["slide"],
   templates: ["slide"],
   // media_drawer: ["file"],
 }
 const areaChildren: any = {
+  projects: ["folder"],
   project: ["show", "media", "show_drawer", "player"],
   slides: ["slide", "group", "global_group", "media"],
   navigation: ["show", "show_drawer"],
@@ -44,7 +45,7 @@ export function ondrop(e: any, id: string) {
   let elem: any = null
   if (e !== null) {
     // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
-    if (id === "project" || id === "slides" || id === "navigation") elem = e.target.closest(".selectElem")
+    if (id === "project" || id === "projects" || id === "slides" || id === "navigation") elem = e.target.closest(".selectElem")
     else if (id === "slide") elem = e.target.querySelector(".selectElem")
     console.log(elem)
   }
@@ -60,6 +61,26 @@ export function ondrop(e: any, id: string) {
   console.log("DROP: ", id, data, trigger)
 
   switch (id) {
+    case "projects":
+      if (sel.id === "folder" && (!data.type || data.type === "folder")) {
+        location.page = "show"
+        // TODO: move multiple
+        // TODO: folder selection..... (css)
+        sel.data.forEach((selData) => {
+          // check to see that its not itself OR a child of itself...
+          if (selData.id !== data.id && (!selData.index || !data.index || selData.index >= data.index)) {
+            if (selData.type === "folder") {
+              historyID = "updateProjectFolder"
+              location.folder = selData.id
+            } else {
+              historyID = "updateProject"
+              location.project = selData.id
+            }
+            newData = { key: "parent", value: data.id || "/" }
+          }
+        })
+      }
+      break
     case "project":
       historyID = "project"
       location.page = "show"

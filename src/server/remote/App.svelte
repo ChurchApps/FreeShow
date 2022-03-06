@@ -88,7 +88,7 @@
   let isPassword: boolean = false
   let password: string = ""
   const submit = () => {
-    if (password.length) send("ACCESS", password)
+    send("ACCESS", password)
   }
 
   // local storage

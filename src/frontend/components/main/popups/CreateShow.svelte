@@ -3,8 +3,9 @@
 
   import type { Show } from "../../../../types/Show"
   import { ShowObj } from "../../../classes/Show"
-  import { activePopup, activeProject, shows } from "../../../stores"
+  import { activePopup, activeProject } from "../../../stores"
   import { history } from "../../helpers/history"
+  import { checkName } from "../../helpers/show"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import TextArea from "../../inputs/TextArea.svelte"
@@ -52,15 +53,6 @@
     }
     values.text = ""
     activePopup.set(null)
-  }
-
-  // check if name axists and add number
-  function checkName(name: string) {
-    let number = 1
-    // remove illegal file name characters
-    name = name.trim().replace(/[/\\?%*:|"<>]/g, "")
-    while (Object.values($shows).find((a: any) => a.name === (number > 1 ? name + " " + number : name))) number++
-    return number > 1 ? name + " " + number : name
   }
 
   function createSlides(labeled: any) {
@@ -133,7 +125,7 @@
       t.split(",").forEach((a: any, i: number) => {
         console.log(a)
         newLineText += a
-        if (i <= t.split(",").length - 1 && newLineText.length < 10 && (a.length < 10 || t.split(",")[i]?.length < 10)) newLineText += ","
+        if (i < t.split(",").length - 1 && newLineText.length < 10 && (a.length < 10 || t.split(",")[i]?.length < 10)) newLineText += ","
         else newLineText += "\n"
       })
       newText += newLineText

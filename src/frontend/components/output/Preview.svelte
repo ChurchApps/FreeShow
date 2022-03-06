@@ -195,7 +195,7 @@
     }
   }
 
-  $: name = $outSlide ? $showsCache[$outSlide.id].name : "-"
+  $: name = $outSlide && $showsCache[$outSlide.id] ? $showsCache[$outSlide.id].name : "—"
 
   let fullscreen: boolean = false
   let resolution: Resolution = $screen.resolution
@@ -242,7 +242,7 @@
   $: {
     if ($outSlide?.id) {
       length = 0
-      $showsCache[$outSlide.id].layouts[$outSlide.layout].slides.forEach((s: any) => {
+      $showsCache[$outSlide.id]?.layouts[$outSlide.layout]?.slides.forEach((s: any) => {
         length++
         if ($showsCache[$outSlide!.id].slides[s.id].children) length += $showsCache[$outSlide!.id].slides[s.id].children!.length
       })
@@ -633,7 +633,7 @@
     <!-- transition -->
     {#if $outTransition && activeClear === "transition"}
       <span class="name">
-        <p><T id="transition.{$outTransition.type}" /></p>
+        <p><T id="transition.{$outTransition.type || 'fade'}" /></p>
       </span>
       {#if timeObj}
         <span class="group">

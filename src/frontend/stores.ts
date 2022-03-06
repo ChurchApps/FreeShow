@@ -34,7 +34,7 @@ export const outTransition: Writable<null | OutTransition> = writable(null)
 
 // connections
 export const connections: Writable<{ [key: string]: any }> = writable({ REMOTE: {}, STAGE: {} })
-export const remotePassword: Writable<string> = writable("test") // generate 4 numbers (6885)
+export const remotePassword: Writable<string> = writable("") // generate 4 numbers
 
 // project
 export const projectView: Writable<boolean> = writable(false)

@@ -16,7 +16,7 @@
     if (mouse) {
       styles = {}
       let itemElem = mouse.e.target.closest(".item")
-      if (mouse.e.target.closest(".line") || (!mouse.e.target.closest(".edit") && !mouse.e.target.closest(".square")) || mouse.e.ctrlKey || mouse.e.altKey) {
+      if (mouse.e.target.closest(".line") || (!mouse.e.target.closest(".edit") && !mouse.e.target.closest(".square")) || mouse.e.ctrlKey || mouse.e.buttons === 4 || mouse.e.altKey) {
         e.preventDefault()
         styles.left = (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio - mouse.offset.x
         styles.top = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y

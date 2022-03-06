@@ -47,6 +47,10 @@
     -webkit-line-break: after-white-space; */
   }
 
+  .item :global(.wj) {
+    color: #ff5050;
+  }
+
   /* span {
     display: inline;
     white-space: initial;

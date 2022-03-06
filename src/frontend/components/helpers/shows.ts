@@ -13,12 +13,11 @@ export function _show(id: any) {
   return {
     /** Get key value in shows of leave blank for full show */
     get: (key: string | null = null) => {
-      let a: any[] = []
-      if (key === null) a.push(shows[id])
-      else {
+      let a: any = shows[id]
+      if (key) {
         let double = key.split(".")
-        if (double.length > 1) a.push(shows[id][double[0]][double[1]])
-        a.push(shows[id][key])
+        if (double.length > 1) a = shows[id][double[0]][double[1]]
+        else a = shows[id][key]
       }
       return a
     },
@@ -293,9 +292,9 @@ export function _show(id: any) {
         return prev
       },
       /** Add layout */
-      add: (layoutId: string = uid()) => {
+      add: (layoutId: string = uid(), layout: any = null) => {
         showsCache.update((a: any) => {
-          a[id].layouts[layoutId] = { name: "", notes: "", slides: [] }
+          a[id].layouts[layoutId] = layout || { name: "", notes: "", slides: [] }
           return a
         })
         return layoutId
