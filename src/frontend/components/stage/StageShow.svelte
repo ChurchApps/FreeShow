@@ -1,20 +1,14 @@
 <script lang="ts">
-  import type { Resolution } from "../../../types/Settings"
-  import { activeStage, screen, connections, stageShows } from "../../stores"
+  import { activeStage, connections, stageShows } from "../../stores"
   import { history } from "../helpers/history"
   import { getStyles } from "../helpers/style"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Zoomed from "../slide/Zoomed.svelte"
   import Center from "../system/Center.svelte"
+  import Main from "../system/Main.svelte"
   import Snaplines from "../system/Snaplines.svelte"
   import Stagebox from "./Stagebox.svelte"
-
-  $: Slide = $activeStage.id ? $stageShows[$activeStage.id] : null
-
-  let width: number = 0
-  let height: number = 0
-  let resolution: Resolution = Slide && Slide.settings.resolution ? Slide.settings.size! : $screen.resolution
 
   let lines: [string, number][] = []
   let mouse: any = null
@@ -24,28 +18,33 @@
   let ratio: number = 1
 
   $: {
-    if (Object.keys(newStyles).length && active.length) {
-      let items: any = $stageShows[$activeStage.id!].items
-      let newData: any[] = []
-      let oldData: any[] = []
-      active.forEach((id) => {
-        let item = items[id]
-        let styles: any = getStyles(item.style)
-        Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+    if (active.length) {
+      if (Object.keys(newStyles).length) setStyles()
+    } else newStyles = {}
+  }
 
-        let textStyles: string = ""
-        Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+  function setStyles() {
+    let items: any = $stageShows[$activeStage.id!].items
+    let newData: any[] = []
+    let oldData: any[] = []
 
-        // TODO: move multiple!
-        newData.push(textStyles)
-        oldData.push(item.style)
-      })
-      history({ id: "stageItemStyle", oldData, newData, location: { page: "stage", slide: $activeStage.id!, items: active } })
-    } else if (!active.length) newStyles = {}
+    active.forEach((id) => {
+      let styles: any = getStyles(items[id].style)
+      Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+
+      let textStyles: string = ""
+      Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+
+      // TODO: move multiple!
+      newData.push(textStyles)
+      oldData.push(items[id].style)
+    })
+
+    history({ id: "stageItemStyle", oldData, newData, location: { page: "stage", slide: $activeStage.id!, items: active } })
   }
 </script>
 
-<div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
+<Main slide={$activeStage.id ? $stageShows[$activeStage.id] : null} let:width let:height let:resolution>
   <div class="parent">
     {#if $activeStage.id}
       <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
@@ -68,15 +67,9 @@
     <!-- TODO: get already connected... -->
     Connections: {Object.keys($connections.STAGE).length}
   </div>
-</div>
+</Main>
 
 <style>
-  .main {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
   .parent {
     width: 100%;
     height: 100%;

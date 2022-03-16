@@ -254,7 +254,7 @@
   }
 
   function keydown(e: any) {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && e.ctrlKey) {
       ;(document.activeElement as any)?.blur()
       textToShow()
     }

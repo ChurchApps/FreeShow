@@ -3,20 +3,20 @@
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
 
+  let today = new Date()
+  $: current = new Date(today.getFullYear(), today.getMonth())
+  $: year = current.getFullYear()
+  $: month = current.getMonth()
+  const MILLISECONDS_IN_A_DAY = 86400000
+
   const copy = (date: Date, add: number = 0) => new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate() + add))
   const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthIndex(month), 0).getDate()
   const getMonthIndex = (month: number) => (month + 1 > 12 ? month + 1 : 0)
   const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
   const isBetween = (from: Date, to: Date, date: Date) => date >= copy(from) && date <= copy(to)
 
-  let today = new Date()
   activeDays.set([copy(today).getTime()])
-  $: current = new Date(today.getFullYear(), today.getMonth())
-  $: year = current.getFullYear()
-  $: month = current.getMonth()
 
-  // $: week = getWeekNumber(current)
-  // console.log(week);
   // https://stackoverflow.com/a/6117889
   function getWeekNumber(d: Date) {
     d = copy(d)
@@ -26,51 +26,56 @@
     // Get first day of year
     let firstDay = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
     // Calculate full weeks to nearest Thursday
-    let weekNumber = Math.ceil(((d.getTime() - firstDay.getTime()) / 86400000 + 1) / 7)
+    let weekNumber = Math.ceil(((d.getTime() - firstDay.getTime()) / MILLISECONDS_IN_A_DAY + 1) / 7)
     return weekNumber
   }
 
   let sundayFirstDay: boolean = false
 
   let days: Date[][] = []
-  $: {
-    let d: any = []
-    for (let i = 1; i <= getDaysInMonth(year, month); i++) {
-      d.push(new Date(year, month, i))
-    }
-    let day = d[0].getDay()
-    let before: Date[] = []
-    if ((sundayFirstDay && day > 0) || day > 1 || day === 0) {
-      let add = sundayFirstDay ? day : day === 0 ? 6 : day - 1
-      for (let i = add - 1; i >= 0; i--) {
-        before.push(new Date(year, month, -i))
-      }
-    }
-    d = [...before, ...d]
-    while (d.length < 42) d.push(copy(d[d.length - 1], 1))
+  $: getDays(month)
+
+  function getDays(month: number) {
+    let daysList: any = []
+    for (let i = 1; i <= getDaysInMonth(year, month); i++) daysList.push(new Date(year, month, i))
+
+    let before: Date[] = getDaysBefore(daysList[0].getDay())
+
+    daysList = [...before, ...daysList]
     days = []
-    while (d.length) days.push(d.splice(0, 7))
-    console.log(days)
+
+    while (daysList.length < 42) daysList.push(copy(daysList[daysList.length - 1], 1))
+    while (daysList.length) days.push(daysList.splice(0, 7))
   }
-  console.log(today)
+
+  function getDaysBefore(firstDay: number): Date[] {
+    if (!sundayFirstDay && firstDay < 1 && firstDay <= 1 && firstDay !== 0) return []
+
+    let before: Date[] = []
+    let i = (sundayFirstDay ? firstDay : firstDay === 0 ? 6 : firstDay - 1) - 1
+    for (i; i >= 0; i--) before.push(new Date(year, month, -i))
+    return before
+  }
 
   let currentEvents: any[] = []
-  $: {
+  events.subscribe(updateEvents)
+
+  function updateEvents(events: any) {
+    if (!days[0]) return
+
     currentEvents = []
     let first = days[0][0].getTime()
     let last = days[5][days.length - 1].getTime()
-    Object.entries($events).forEach(([id, a]) => {
-      let from = new Date(a.from).getTime()
-      let to = new Date(a.to)?.getTime() || 0
+
+    Object.entries(events).forEach(([id, event]: any) => {
+      let from = new Date(event.from).getTime()
+      let to = new Date(event.to)?.getTime() || 0
       if (from > first || from < last || to > first || to < last) {
-        // if (from > first && from < last || to > first && to < last) {
-        currentEvents.push({ id, ...a })
+        currentEvents.push({ id, ...event })
       }
     })
 
-    // sort
     currentEvents = currentEvents.sort((a, b) => a.from - b.from)
-    console.log(currentEvents)
   }
 
   let weekdays: string[] = []
@@ -87,15 +92,16 @@
   }
 
   function getEvents(day: Date, currentEvents: any[]) {
-    let e: any[] = []
+    let events: any[] = []
     currentEvents.forEach((a) => {
-      if (a.to ? isBetween(a.from, a.to, copy(day)) : sameDay(a.from, day)) e.push(a)
+      if (a.to ? isBetween(a.from, a.to, copy(day)) : sameDay(a.from, day)) events.push(a)
     })
-    return e
+    return events
   }
 
   function dayClick(e: any, day: Date) {
     day = copy(day)
+
     if (e.ctrlKey) {
       activeDays.update((a) => {
         if (a.includes(day.getTime())) {
@@ -103,7 +109,10 @@
         } else a.push(day.getTime())
         return a
       })
-    } else if (e.shiftKey) {
+      return
+    }
+
+    if (e.shiftKey) {
       let first = $activeDays[0] || day.getTime()
       let last = day.getTime()
       if (day.getTime() - first < 0) {
@@ -112,13 +121,16 @@
       }
       let temp = []
       let count = 0
+
       do {
-        temp.push(first + count * 86400000)
-        console.log(new Date(temp[temp.length - 1]), new Date(last))
+        temp.push(first + count * MILLISECONDS_IN_A_DAY)
         count++
       } while (!sameDay(new Date(temp[temp.length - 1]), new Date(last)))
       activeDays.set(temp)
-    } else activeDays.set([day.getTime()])
+      return
+    }
+
+    activeDays.set([day.getTime()])
   }
 
   function move(e: any, day: Date) {

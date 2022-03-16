@@ -13,24 +13,12 @@
   import Editbox from "./Editbox.svelte"
   import { autoSize } from "./scripts/autoSize"
 
-  $: currentShow = $activeShow!.id
-  // $: layoutSlides = GetLayout(currentShow)
   // TODO: overlay editor
-  // $: Slide = $activeEdit.slide !== null && $showsCache[currentShow] ? $showsCache[currentShow].slides[GetLayout(currentShow)[$activeEdit.slide]?.id] : null
 
-  $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show([currentShow]).slides().get().length) activeEdit.set({ slide: 0, items: [] })
-  $: Slide =
-    $activeEdit.slide !== null && $showsCache[currentShow]
-      ? _show([currentShow])
-          .slides([_show([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
-          .get()[0]
-      : null
-
-  $: console.log(Slide)
-
-  // $: if (currentShow) {
-  //   console.log($activeEdit.slide, _show([currentShow]).layouts("active").slides().get()[0], _show([currentShow]).layouts("active").ref()[0][$activeEdit.slide!]?.id)
-  // }
+  $: currentShow = $activeShow!.id
+  $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
+  $: ref = $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
+  $: Slide = $activeEdit.slide !== null && ref ? _show("active").slides([ref[$activeEdit.slide]?.id]).get()[0] : null
 
   // showsCache.subscribe((a) => {
   //   console.log(a)
@@ -62,6 +50,7 @@
   //   // offsetHeight: number
   //   e: any
   // }
+
   let lines: [string, number][] = []
   let mouse: any = null
   let newStyles: any = {}
@@ -75,34 +64,38 @@
   let ratio: number = 1
 
   $: {
-    if (Object.keys(newStyles).length && active.length) {
-      let items = $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
-      let values: any[] = []
-      // let oldValues: any[] = []
-      active.forEach((id) => {
-        let item = items[id]
-        let styles: any = getStyles(item.style)
-        Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+    if (active.length) updateStyles()
+    else newStyles = {}
+  }
 
-        let textStyles: string = ""
-        Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+  function updateStyles() {
+    if (!Object.keys(newStyles).length) return
 
-        // TODO: move multiple!
-        values.push(textStyles)
-        // oldValues.push(item.style)
-      })
+    let items = $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
+    let values: any[] = []
+    active.forEach((id) => {
+      let item = items[id]
+      let styles: any = getStyles(item.style)
+      let textStyles: string = ""
 
-      history({
-        id: "setStyle",
-        // oldData: { key: "style", values: oldValues },
-        newData: { key: "style", values },
-        location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: active },
-      })
-    } else if (!active.length) newStyles = {}
+      Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+      Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+
+      // TODO: move multiple!
+      values.push(textStyles)
+    })
+
+    history({
+      id: "setStyle",
+      newData: { key: "style", values },
+      location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: active },
+      // location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: active },
+    })
   }
 
   $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
-    let items = $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
+    let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
+    // let items = $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
     if (items) autoSize(active, items)
   }
 </script>

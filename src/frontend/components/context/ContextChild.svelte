@@ -17,27 +17,34 @@
   let timeout: any = null
   let duration: number = 200
 
-  function hover(e: any) {
+  function onMouseOver(e: any) {
     if (elem.contains(e.target)) {
-      if (timeout !== null) {
-        clearTimeout(timeout)
-        timeout = null
-      }
+      clearTimeout()
       if (!open) {
         timeout = setTimeout(() => {
           open = true
           timeout = null
         }, duration)
       }
-    } else if (open && e.target?.closest(".contextMenu") !== null) {
+      return
+    }
+
+    if (open && e.target?.closest(".contextMenu") !== null) {
       if (timeout === null) {
         timeout = setTimeout(() => {
           open = false
           timeout = null
         }, duration / 2)
       }
-    } else if (timeout !== null) {
-      clearTimeout(timeout)
+      return
+    }
+
+    clearTimeout()
+  }
+
+  function clearTimeout() {
+    if (timeout !== null) {
+      window.clearTimeout(timeout)
       timeout = null
     }
   }
@@ -46,12 +53,12 @@
     if (e.target?.closest(".submenu") === null) open = !open
   }
 
-  const keydown = (e: any) => {
+  function keydown(e: any) {
     if (e.key === "Enter") open = !open
   }
 </script>
 
-<svelte:window on:mouseover={hover} />
+<svelte:window on:mouseover={onMouseOver} />
 
 <div bind:this={elem} class="item" on:click={click} tabindex={0} on:keydown={keydown}>
   <span style="display: flex;gap: 10px;">

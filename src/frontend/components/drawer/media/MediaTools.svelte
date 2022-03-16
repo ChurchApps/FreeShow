@@ -84,7 +84,7 @@
   }
 </script>
 
-<div class="main">
+<div class="main border">
   <!-- {type} -->
   {#if project === null}
     <!-- TODO: edit any media -->
@@ -120,7 +120,6 @@
     overflow: auto;
     height: 100%;
     padding: 10px;
-    border-top: 2px solid var(--primary-lighter);
   }
 
   .main :global(.numberInput) {

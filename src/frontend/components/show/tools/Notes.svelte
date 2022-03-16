@@ -2,17 +2,18 @@
   import { createEventDispatcher } from "svelte"
 
   export let value: string
-  let time = 100
 
+  const TIME = 100
   let dispatch = createEventDispatcher()
   let timeout: any = null
+
   function keydown(e: any) {
-    if (timeout === null) {
-      timeout = setTimeout(() => {
-        dispatch("edit", e.target.innerHTML)
-        timeout = null
-      }, time)
-    }
+    if (timeout !== null) return
+
+    timeout = setTimeout(() => {
+      dispatch("edit", e.target.innerHTML)
+      timeout = null
+    }, TIME)
   }
 </script>
 

@@ -37,4 +37,6 @@ export interface Folder {
   type?: "folder"
 }
 
-export interface Tree extends Folder {}
+export interface Tree extends Folder {
+  shows?: []
+}

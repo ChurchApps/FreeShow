@@ -1,97 +1,48 @@
 <script lang="ts">
   import type { Tree } from "../../../types/Projects"
   import { activeProject, activeShow, dictionary, folders, projects, projectView } from "../../stores"
-  import { GetProjects } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { loadShows } from "../helpers/setShow"
+  import { checkInput } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
+  import { autoscroll } from "../system/autoscroll"
   import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import ProjectTools from "./ProjectTools.svelte"
 
-  // let containsProject;
-  // activeProject.subscribe(ap => {
-  //   containsProject = [[], $activeProject];
-  //   if (ap !== null && $folders[$projects[ap].parent]) {
-  //     containsProject[0].push($projects[ap].parent);
-  //     let debug = 0;
-  //     while ($folders[containsProject[0][containsProject[0].length - 1]].parent !== '/' || debug > 50) {
-  //       debug++;
-  //       containsProject[0].push($folders[containsProject[0][containsProject[0].length - 1]].parent);
-  //     }
-  //   }
-  //   console.log(containsProject);
-  // });
-
-  let tree: Tree[] = [] // TODO: Folder...
+  let tree: Tree[] = []
   $: {
     tree = []
-    Object.entries($folders).forEach((folder) => {
-      folder[1].id = folder[0]
-      folder[1].type = "folder"
-      tree.push(folder[1])
-    })
-    Object.entries($projects).forEach((project) => {
-      let p = { ...project[1] }
-      p.id = project[0]
-      p.shows = []
-      tree.push(p)
-    })
-  }
-
-  function keydown(e: KeyboardEvent) {
-    if (!e.target?.closest(".edit") && $activeProject !== null) {
-      if (e.key.includes("Arrow")) e.preventDefault()
-      let shows = GetProjects().active.shows // $projects[$activeProject].shows
-
-      // TODO: duplicate of preview next / previousShow()
-      if (shows.length && !e.ctrlKey) {
-        let newIndex: null | number = null
-        if (e.key === "ArrowDown") {
-          // Arrow Down = change active show in project
-          newIndex = 0
-          if ($activeShow && $activeShow?.index !== null) newIndex = shows.findIndex((_s, i) => i - 1 === $activeShow!.index)
-        } else if (e.key === "ArrowUp") {
-          // Arrow Up = change active show in project
-          newIndex = shows.length - 1
-          if ($activeShow && $activeShow?.index !== null) newIndex = shows.findIndex((_s, i) => i + 1 === $activeShow!.index)
-        }
-        // Set active show in project list
-        if (newIndex !== null && newIndex !== $activeShow?.index && newIndex >= 0 && newIndex < shows.length) activeShow.set({ ...shows[newIndex], index: newIndex })
-      }
-    }
+    Object.entries($folders).forEach(([id, folder]) => tree.push({ ...folder, id, type: "folder" }))
+    Object.entries($projects).forEach(([id, project]) => tree.push({ ...project, id, shows: [] }))
   }
 
   // autoscroll
   let scrollElem: any
   let offset: number = -1
+  $: offset = autoscroll(scrollElem, ($activeShow?.index || 1) - 1)
+
   $: {
-    if (scrollElem && $activeShow?.index !== undefined)
-      offset = scrollElem.querySelector(".ParentBlock").children[Math.max(0, $activeShow.index - 1)]?.offsetTop - scrollElem.offsetTop
+    // get pos if clicked in drawer
+    if ($activeShow && $activeProject) findShowInProject()
   }
 
-  let debug = 0
-  $: {
-    // get pos if clicked in drawer show
-    let pos: null | number = $activeShow?.index || null
-    if ($activeShow && $activeProject) {
-      let i = $projects[$activeProject].shows.findIndex((p) => p.id === $activeShow?.id)
-      if (i > -1) pos = i
+  function findShowInProject() {
+    let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
+    let pos: number = i > -1 ? i : $activeShow?.index || -1
 
-      if (($activeShow?.type === "video" || $activeShow?.type === "image") && pos !== null && $activeShow.index !== pos && debug < 50) {
-        debug++
-        activeShow.update((a) => {
-          a!.index = pos!
-          return a
-        })
-      }
-    }
+    if (($activeShow?.type !== "video" && $activeShow?.type !== "image") || pos < 0 || $activeShow.index === pos) return
+
+    activeShow.update((a) => {
+      a!.index = pos
+      return a
+    })
   }
 
   activeProject.subscribe((a) => {
@@ -102,16 +53,9 @@
       // TODO: CHECK VIDEOS
     }
   })
-
-  // function newShow(isPrivate: boolean = false) {
-  //   let id: any = "newShow"
-  //   if (isPrivate) id = "newPrivateShow"
-  //   // , newData: { project: $activeProject, type: "private" }
-  //   history({ id, location: { page: "show", project: $activeProject! } })
-  // }
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={checkInput} />
 
 <div class="main">
   <span class="tabs">

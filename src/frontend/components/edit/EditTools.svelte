@@ -35,39 +35,39 @@
   $: item = items?.length ? items[items.length - 1] : null
 
   function reset() {
-    if (active === "text") {
-      let values: any = []
-      items.forEach((item) => {
-        if (item.lines) {
-          let text = item.lines.map((a) => {
-            a.text = a.text.map((a) => {
-              a.style = ""
-              return a
-            })
+    if (active !== "text") return
+
+    let values: any = []
+    items.forEach((item) => {
+      if (item.lines) {
+        let text = item.lines.map((a) => {
+          a.text = a.text.map((a) => {
+            a.style = ""
             return a
           })
-          values.push(text)
-        }
-      })
-
-      if (values.length) {
-        history({
-          id: "textStyle",
-          newData: { key: "text", values },
-          location: {
-            page: "edit",
-            show: $activeShow!,
-            slide: GetLayout()[$activeEdit.slide!].id,
-            items: $activeEdit.items.length ? $activeEdit.items : Object.keys(allSlideItems),
-          },
+          return a
         })
+        values.push(text)
       }
-    }
+    })
+
+    if (!values.length) return
+
+    history({
+      id: "textStyle",
+      newData: { key: "text", values },
+      location: {
+        page: "edit",
+        show: $activeShow!,
+        slide: GetLayout()[$activeEdit.slide!].id,
+        items: $activeEdit.items.length ? $activeEdit.items : Object.keys(allSlideItems),
+      },
+    })
   }
 </script>
 
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
-<div class="main editTools">
+<div class="main border editTools">
   {#if $activeShow && $activeEdit.slide !== null}
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
@@ -113,7 +113,6 @@
     flex-direction: column;
     overflow: hidden;
     height: 100%;
-    border-top: 2px solid var(--primary-lighter);
   }
 
   .content {

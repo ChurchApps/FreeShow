@@ -6,7 +6,7 @@
   export let center: boolean = false
   export let zoom: boolean = true
   export let hideOverflow: boolean = true
-  export let resolution: Resolution = $activeShow?.id && $showsCache[$activeShow.id].settings.resolution ? $showsCache[$activeShow.id].settings.resolution! : $screen.resolution
+  export let resolution: Resolution = $activeShow?.id && $showsCache[$activeShow.id]?.settings.resolution ? $showsCache[$activeShow.id].settings.resolution! : $screen.resolution
   let slideWidth: number = 0
   export let ratio: number = 1
   $: ratio = Math.max(0.01, slideWidth / resolution.width)

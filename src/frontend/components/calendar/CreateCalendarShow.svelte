@@ -134,7 +134,7 @@
   }
 </script>
 
-<div class="main">
+<div class="main border">
   <span>
     {from.getDate()}. {$dictionary.month[from.getMonth() + 1]}
     {from.getFullYear()}
@@ -179,6 +179,5 @@
     overflow-x: hidden;
     height: 100%;
     padding: 10px;
-    border-top: 2px solid var(--primary-lighter);
   }
 </style>

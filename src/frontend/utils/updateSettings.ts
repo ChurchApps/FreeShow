@@ -40,6 +40,7 @@ export function updateSettings(data: any[]) {
     switch (key) {
       case "initialized":
         if (!value) {
+          // FIRST TIME USER
           activePopup.set("initialize")
         }
         break

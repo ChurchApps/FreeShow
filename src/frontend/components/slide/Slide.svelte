@@ -171,7 +171,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
         <Zoomed background={slide.items.length ? "black" : "transparent"} let:ratio zoom>
           {#if background}
-            {#key background}
+            {#key background.path}
               <div class="background" style="zoom: {1 / ratio}">
                 <MediaLoader name={$dictionary.error?.load} path={background.path} type={background.type !== "player" ? background.type : null} bind:duration />
               </div>

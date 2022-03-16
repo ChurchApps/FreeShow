@@ -23,6 +23,7 @@ export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const dictionary: Writable<Dictionary> = writable({})
 export const notFound: Writable<any> = writable({ show: [] })
 export const saved: Writable<boolean> = writable(true)
+export const audioSource: Writable<any> = writable(null)
 
 // output
 export const outLocked: Writable<boolean> = writable(false) // false

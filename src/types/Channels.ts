@@ -22,7 +22,7 @@ export type GetScreens = "GET_SCREENS"
 export type Remote = "REMOTE"
 export type Stage = "STAGE"
 
-export type ValidChannels = Main | Store | Show | OpenFile | OpenFolder | ReadFolder | GetScreens | Remote | Stage
+export type ValidChannels = Main | Store | Show | OutputData | OpenFile | OpenFolder | ReadFolder | GetScreens | Remote | Stage
 
 export type Data = string | DataObject
 export interface DataObject {

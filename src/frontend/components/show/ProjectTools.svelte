@@ -14,26 +14,22 @@
   }
   let active: string = Object.keys(tabs)[0]
 
-  // let elem: any
-  // let height: number = elem?.closest(".left").offsetHeight / 2
-  // // bind:this={elem} style="height: {height}px;"
-
   let note: string = ""
-  let a: any = null
+  let currentProject: any = null
   $: {
-    if ($activeProject !== a) {
+    if ($activeProject !== currentProject) {
       note = $projects[$activeProject!].notes
-      a = $activeProject
+      currentProject = $activeProject
     }
   }
 
   function edit(e: any) {
-    if ($projects[$activeProject!].notes !== e.detail) {
-      projects.update((a) => {
-        a[$activeProject!].notes = e.detail
-        return a
-      })
-    }
+    if ($projects[$activeProject!].notes === e.detail) return
+
+    projects.update((a) => {
+      a[$activeProject!].notes = e.detail
+      return a
+    })
   }
 </script>
 
