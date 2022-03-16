@@ -4,6 +4,7 @@
   import { keysToID, removeValues, sortObject, sortObjectNumbers } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import { dateToString } from "../helpers/time"
   import Button from "../inputs/Button.svelte"
@@ -16,6 +17,7 @@
   export let active: string | null
   export let searchValue: string
 
+  // TODO: better search
   $: sva = searchValue
     .toLowerCase()
     // .replace(/[^\w\s,]/g, "")
@@ -39,22 +41,18 @@
         // if (obj.category !== null && searchIncludes($categories[obj.category].name, sv)) match[i] += 10
 
         if ($showsCache[obj.id]) {
-          Object.values($showsCache[obj.id].slides).forEach((slide) => {
-            slide.items.forEach((item) => {
-              let text = ""
-              item.text?.forEach((box) => {
-                text += box.value
-              })
-              if (text.length) {
-                if (searchEquals(text, sv)) match[i] += 20
-                else if (searchIncludes(text, sv)) {
-                  // TODO: more specific match
-                  // console.log(sv, filter(text))
-                  // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
-                  match[i] += 10
-                }
+          let lines: any[] = _show(obj.id).slides().items().lines().get()[0]
+          lines.forEach((line) => {
+            let text = line.text?.map((t: any) => t.value)[0]
+            if (text?.length) {
+              if (searchEquals(text, sv)) match[i] += 20
+              else if (searchIncludes(text, sv)) {
+                // TODO: more specific match
+                // console.log(sv, filter(text))
+                // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
+                match[i] += 10
               }
-            })
+            }
           })
         }
       }

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeEdit, activePage, shows, undoHistory } from "../../stores"
+import { activeEdit, activePage, overlayCategories, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -52,6 +52,8 @@ export type HistoryIDs =
   | "newShow"
   | "newPrivateShow"
   | "newShowsCategory"
+  | "newOverlay"
+  | "newOverlaysCategory"
   | "newSlide"
   | "newItem"
   | "newStageShow"
@@ -252,12 +254,16 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     // NEW
     case "newMediaFolder":
-      mediaFolders.update((mf) => {
+      mediaFolders.update((a) => {
         if (obj.newData.data === null) {
           // remove folder
-          delete mf[obj.newData.id]
-        } else mf[obj.newData.id] = obj.newData.data
-        return mf
+          delete a[obj.newData.id]
+        } else a[obj.newData.id] = obj.newData.data
+        return a
+      })
+      drawerTabsData.update((a) => {
+        a.media.activeSubTab = obj.newData.id
+        return a
       })
       break
     case "newProject":
@@ -432,6 +438,54 @@ export function history(obj: History, undo: null | boolean = null) {
             let icon: null | string = null
             let tab = get(drawerTabsData).shows.activeSubTab
             if (tab !== "all" && tab !== "unlabeled") icon = get(drawerTabsData).shows.activeSubTab
+            obj.newData = { id, data: { name: "", icon } }
+            obj.oldData = { id }
+          }
+          a[obj.newData.id] = obj.newData.data
+        }
+        return a
+      })
+      break
+    case "newOverlay":
+      if (undo) {
+        let id: string = obj.oldData.id
+        if (get(outOverlays).includes(id)) outOverlays.set(get(outOverlays).filter((a) => a !== id))
+        overlays.update((a) => {
+          delete a[id]
+          return a
+        })
+      } else {
+        let category: null | string = null
+        if (get(drawerTabsData).overlays.activeSubTab !== "all") category = get(drawerTabsData).overlays.activeSubTab
+        let overlay = {
+          name: "",
+          color: null,
+          category,
+          items: [],
+        }
+        if (!obj.newData?.overlay) obj.newData = { overlay }
+
+        let id: string = obj.newData.id
+        if (!id) {
+          id = uid(12)
+          obj.newData.id = id
+        }
+
+        overlays.update((a) => {
+          a[id] = overlay
+          return a
+        })
+      }
+      break
+    case "newOverlaysCategory":
+      overlayCategories.update((a) => {
+        if (undo) delete a[obj.newData.id]
+        else {
+          if (!obj.newData) {
+            let id = uid()
+            let icon: null | string = null
+            let tab = get(drawerTabsData).overlays.activeSubTab
+            if (tab !== "all" && tab !== "unlabeled") icon = get(drawerTabsData).overlays.activeSubTab
             obj.newData = { id, data: { name: "", icon } }
             obj.oldData = { id }
           }

@@ -7,6 +7,7 @@
   import T from "../helpers/T.svelte"
   import Movebox from "../system/Movebox.svelte"
 
+  export let items: Item[] | null = null
   export let item: Item
   export let index: number
   export let ratio: number
@@ -49,15 +50,15 @@
     }
   }
 
-  $: active = $activeShow!.id
-  $: layout = $showsCache[active].settings.activeLayout
-  $: slide = [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide!].id][1]
+  $: active = $activeShow?.id
+  $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
+  $: slide = layout && $activeEdit.slide ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
   function keydown(e: any) {
     // TODO: exlude.....
     if (e.key === "Backspace" && $activeEdit.items.includes(index) && !document.activeElement?.closest(".item") && !document.activeElement?.closest("input")) {
-      let items: Item[] = $showsCache[active].slides[slide].items
-      let newItems = [...items]
+      if (!items && active) items = $showsCache[active].slides[slide].items
+      let newItems = [...(items || [])]
 
       newItems.splice(index, 1)
 
@@ -135,7 +136,7 @@
 
   onMount(update)
   let currentSlide: number = -1
-  $: if ($activeEdit.slide !== null && $activeEdit.slide !== currentSlide) {
+  $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide) {
     currentSlide = $activeEdit.slide
     console.log($activeEdit.slide)
     setTimeout(update, 10)
@@ -180,7 +181,7 @@
   // let sel = getSelectionRange()
 
   $: {
-    if (textElem && html !== previousHTML) {
+    if (textElem && html !== previousHTML && slide) {
       previousHTML = html
       // let pos = getCaretCharacterOffsetWithin(textElem)
       setTimeout(() => {
@@ -209,7 +210,7 @@
               // })
             })
           })
-          a[active].slides[slide].items[index].lines = newLines
+          a[active!].slides[slide].items[index].lines = newLines
           return a
         })
       }, 10)

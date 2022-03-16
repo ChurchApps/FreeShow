@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
   import type { TabsObj } from "../../../types/Tabs"
-  import { activeEdit, activeShow, showsCache } from "../../stores"
+  import { activeEdit, activeShow, overlays, showsCache } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -22,11 +22,13 @@
   let active: string = Object.keys(tabs)[0]
 
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
-  $: if ($activeEdit.slide !== null && GetLayout($activeShow?.id!).length <= $activeEdit.slide && GetLayout($activeShow?.id!).length > 0) activeEdit.set({ slide: 0, items: [] })
+  $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length <= $activeEdit.slide && GetLayout($activeShow?.id!).length > 0)
+    activeEdit.set({ slide: 0, items: [] })
   $: allSlideItems =
-    $activeEdit.slide !== null && GetLayout($activeShow?.id!).length > $activeEdit.slide
+    $activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length > $activeEdit.slide
       ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items
       : []
+  $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!].items
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
   // select active items or all items
@@ -68,11 +70,13 @@
 
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
 <div class="main border editTools">
-  {#if $activeShow && $activeEdit.slide !== null}
+  {#if ($activeShow && $activeEdit.slide !== null) || $activeEdit.id}
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
-        <TextStyle bind:allSlideItems bind:item />
+        {#if item?.lines}
+          <TextStyle bind:allSlideItems bind:item />
+        {/if}
       </div>
     {:else if active === "item"}
       <div class="content">

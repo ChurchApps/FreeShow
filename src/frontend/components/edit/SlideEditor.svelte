@@ -18,7 +18,7 @@
   $: currentShow = $activeShow!.id
   $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
   $: ref = $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
-  $: Slide = $activeEdit.slide !== null && ref ? _show("active").slides([ref[$activeEdit.slide]?.id]).get()[0] : null
+  $: Slide = $activeEdit.slide !== null && ref ? _show("active").slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
 
   // showsCache.subscribe((a) => {
   //   console.log(a)

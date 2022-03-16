@@ -211,6 +211,8 @@ export function menuClick(id: string, enabled: boolean = true, menu: any = null,
     case "edit":
       if (sel.id === "slide") {
         activeEdit.set({ slide: sel.data[0].index, items: [] })
+      } else if (sel.id === "overlay") {
+        activeEdit.set({ type: "overlay", id: sel.data, items: [] })
       }
       activePage.set("edit")
       break

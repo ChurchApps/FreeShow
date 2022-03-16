@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, dictionary, outBackground, showsCache, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, outBackground, outLocked, showsCache, videoExtensions } from "../../../stores"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
@@ -63,7 +63,9 @@
             style="flex: 2;height: 50px;"
             icon="play"
             size={3}
-            on:click={() => outBackground.set({ path: background.path, muted: background.muted !== false })}
+            on:click={() => {
+              if (!$outLocked) outBackground.set({ path: background.path, muted: background.muted !== false })
+            }}
             title={$dictionary.media?.play}
           >
             <!-- <div style="flex: 2;height: 50px;"> -->

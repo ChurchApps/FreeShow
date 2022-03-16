@@ -53,7 +53,7 @@
   {:else if id === "media"}
     <Media {active} />
   {:else if id === "overlays"}
-    <Overlays />
+    <Overlays {active} />
   {:else if id === "templates"}
     <Templates />
   {:else if id === "audio"}

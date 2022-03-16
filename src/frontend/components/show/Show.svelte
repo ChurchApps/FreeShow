@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { OutBackground } from "../../../types/Show"
-  import { activeProject, activeShow, dictionary, outBackground, projects } from "../../stores"
+  import { activeProject, activeShow, dictionary, outBackground, outLocked, projects } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
@@ -62,6 +62,8 @@
   }
 
   function onVideoClick(e: any) {
+    if ($outLocked) return
+
     let bg: any = { type: show!.type, startAt: e.ctrlKey ? videoTime : 0 }
 
     if (show!.type === "player") bg.id = show!.id
@@ -135,7 +137,14 @@
           {/key}
         {:else}
           <div class="media" style="flex: 1;overflow: hidden;">
-            <HoverButton icon="play" size={10} on:click={() => outBackground.set({ path: show?.id, filter })} title={$dictionary.media?.show}>
+            <HoverButton
+              icon="play"
+              size={10}
+              on:click={() => {
+                if (!$outLocked) outBackground.set({ path: show?.id, filter })
+              }}
+              title={$dictionary.media?.show}
+            >
               <Image style="width: 100%;height: 100%;object-fit: contain;filter: {filter};" src={show.id} alt={show.name || ""} />
             </HoverButton>
           </div>

@@ -222,6 +222,7 @@
     "private": "New private show",
     "folder": "New folder",
     "slide": "New slide",
+    "overlay": "New overlay",
     "event": "New event"
   },
   "show": {

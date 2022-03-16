@@ -29,7 +29,7 @@
   function getLastLineAlign() {
     let last = ""
     item?.lines!.forEach((line: any, i: number) => {
-      if (selection![i].start) last = line.align.length ? line.align.split(":")[1].replaceAll(";", "").trim() : ""
+      if (selection![i]?.start) last = line.align.length ? line.align.split(":")[1].replaceAll(";", "").trim() : ""
     })
     return last
   }
@@ -190,7 +190,7 @@
           else newAligns.push(allSlideItems[itemIndex].lines![line].align)
         })
         newData.push(newAligns)
-      } else {
+      } else if (allSlideItems[itemIndex].lines) {
         newData.push(
           aligns ? addStyleString(allSlideItems[itemIndex].align || "", [key, style]) : addStyle(selected, allSlideItems[itemIndex], [key, style]).lines!.map((a) => a.text)
         )
@@ -198,13 +198,17 @@
     })
 
     // TODO: remove unused (if default)
-    history({
-      // WIP
-      id: key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
-      // oldData: { key: aligns ? "align" : "style", values: oldData },
-      newData: { key: aligns ? "align" : "text", values: newData },
-      location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
-    })
+    if (newData.length && $activeEdit.id) {
+      // update layout
+    } else if (newData.length) {
+      history({
+        // WIP
+        id: key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
+        // oldData: { key: aligns ? "align" : "style", values: oldData },
+        newData: { key: aligns ? "align" : "text", values: newData },
+        location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
+      })
+    }
   }
 
   function keyup(e: any) {
