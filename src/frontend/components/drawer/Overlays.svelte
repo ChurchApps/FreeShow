@@ -21,7 +21,7 @@
     .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
 </script>
 
-<div style="position: relative;height: 100%;">
+<div style="position: relative;height: 100%;overflow-y: auto;">
   <DropArea id="overlays">
     <div class="grid">
       {#each filteredOverlays as overlay}
@@ -44,7 +44,7 @@
           <SelectElem id="overlay" data={overlay.id} fill draggable>
             <Zoomed {resolution} background={overlay.items.length ? "black" : "transparent"}>
               {#each overlay.items as item}
-                <Textbox {item} />
+                <Textbox {item} ref={{ type: "overlay", id: overlay.id }} />
               {/each}
             </Zoomed>
           </SelectElem>

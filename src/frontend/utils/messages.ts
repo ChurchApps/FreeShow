@@ -61,6 +61,7 @@ export function listen() {
     window.api.send(OUTPUT, { channel: "SLIDE", data })
   })
   outOverlays.subscribe((data) => {
+    if (data !== null) window.api.send(OUTPUT, { channel: "OVERLAY", data: get(overlays) })
     window.api.send(OUTPUT, { channel: "OVERLAYS", data })
   })
   mediaFolders.subscribe((data) => {

@@ -44,6 +44,8 @@
 
   if ($outputWindow || mirror) receiveData(OUTPUT, receiveOUTPUT)
 
+  $: console.log($outSlide)
+
   $: currentLayout = $outSlide ? _show($outSlide.id).layouts([$outSlide.layout]).ref()[0] : []
   $: currentSlide = $outSlide ? _show($outSlide.id).slides([currentLayout![$outSlide.index].id]).get()[0] : null
 </script>
@@ -59,7 +61,7 @@
       <span transition:fade={transition} style="pointer-events: none;">
         {#if currentSlide}
           {#each currentSlide?.items as item}
-            <Textbox {item} />
+            <Textbox {item} ref={{ showId: $outSlide.id, id: currentSlide.id }} />
           {/each}
         {/if}
       </span>
@@ -79,7 +81,7 @@
         <div transition:fade={transition}>
           <div>
             {#each $overlays[id].items as item}
-              <Textbox {item} />
+              <Textbox {item} ref={{ type: "overlay", id }} />
             {/each}
           </div>
         </div>

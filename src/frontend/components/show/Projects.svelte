@@ -45,14 +45,18 @@
     })
   }
 
-  activeProject.subscribe((a) => {
-    if (!a) projectView.set(true)
-    else {
-      console.log("GET SHOW CACHE 2")
-      loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
-      // TODO: CHECK VIDEOS
+  activeProject.subscribe(loadProjectShows)
+  function loadProjectShows(a: null | string) {
+    if (!a || !$projects[a]) {
+      activeProject.set(null)
+      projectView.set(true)
+      return
     }
-  })
+
+    console.log("GET SHOW CACHE 2")
+    loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
+    // TODO: CHECK VIDEOS
+  }
 </script>
 
 <svelte:window on:keydown={checkInput} />
@@ -61,7 +65,7 @@
   <span class="tabs">
     <!-- TODO: set different project system folders.... -->
     <!-- TODO: right click change... -->
-    <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={"Projects"}>
+    <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
       <Icon id="folder" />
     </Button>
     <!-- TODO: right click go to recent -->
@@ -73,10 +77,10 @@
       dark
       center
       disabled={$activeProject === null}
-      title={$activeProject ? "Project: " + $projects[$activeProject].name : null}
+      title={$activeProject ? $dictionary.remote?.project + ": " + $projects[$activeProject]?.name : null}
     >
       <Icon id="project" style="padding-right: 10px;" />
-      <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject].name : ""}</p>
+      <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject]?.name : ""}</p>
     </Button>
     <!-- <button onClick={() => setProject(true)} style={{width: '50%', backgroundColor: (project ? 'transparent' : ''), color: (project ? 'var(--secondary)' : '')}}>Projects</button>
     <button onClick={() => setProject(false)} style={{width: '50%', backgroundColor: (project ? '' : 'transparent'), color: (project ? '' : 'var(--secondary)')}}>Timeline</button> -->
@@ -104,8 +108,8 @@
       <Autoscroll {offset} bind:scrollElem>
         <DropArea id="project" selectChildren let:fileOver file>
           <!-- {/* WIP: live on double click?? */} -->
-          {#if $projects[$activeProject].shows.length}
-            {#each $projects[$activeProject].shows as show, index}
+          {#if $projects[$activeProject]?.shows.length}
+            {#each $projects[$activeProject]?.shows as show, index}
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
               <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
               <SelectElem id="show" data={{ id: show.id, index }} {fileOver} borders="edges" trigger="column" draggable>

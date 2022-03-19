@@ -16,7 +16,7 @@ export const version: Writable<string> = writable("0.0.0")
 // ? export const activeFilePath: Writable<undefined | string> = writable()
 export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
-export const activeEdit: Writable<ActiveEdit> = writable({ slide: null, items: [] })
+export const activeEdit: Writable<ActiveEdit> = writable({ items: [] })
 export const outputWindow: Writable<boolean> = writable(false)
 export const outputDisplay: Writable<boolean> = writable(false)
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
@@ -24,6 +24,7 @@ export const dictionary: Writable<Dictionary> = writable({})
 export const notFound: Writable<any> = writable({ show: [] })
 export const saved: Writable<boolean> = writable(true)
 export const audioSource: Writable<any> = writable(null)
+export const activeTimers: Writable<any[]> = writable([])
 
 // output
 export const outLocked: Writable<boolean> = writable(false) // false

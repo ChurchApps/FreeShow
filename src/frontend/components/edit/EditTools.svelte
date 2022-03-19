@@ -12,14 +12,16 @@
   import ItemStyle from "./tools/ItemStyle.svelte"
   import SlideStyle from "./tools/SlideStyle.svelte"
   import TextStyle from "./tools/TextStyle.svelte"
+  import TimerStyle from "./tools/TimerStyle.svelte"
 
-  const tabs: TabsObj = {
+  let tabs: TabsObj = {
     text: { name: "tools.text", icon: "text" },
     item: { name: "tools.item", icon: "item" },
     items: { name: "tools.items", icon: "items" },
     slide: { name: "tools.slide", icon: "options" }, // slide
   }
   let active: string = Object.keys(tabs)[0]
+  $: tabs.text.icon = item?.type || "text"
 
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
   $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length <= $activeEdit.slide && GetLayout($activeShow?.id!).length > 0)
@@ -28,7 +30,7 @@
     $activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length > $activeEdit.slide
       ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items
       : []
-  $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!].items
+  $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
   // select active items or all items
@@ -74,7 +76,9 @@
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
-        {#if item?.lines}
+        {#if item?.type === "timer"}
+          <TimerStyle bind:allSlideItems bind:item />
+        {:else if item?.lines}
           <TextStyle bind:allSlideItems bind:item />
         {/if}
       </div>

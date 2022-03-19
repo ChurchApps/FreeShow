@@ -1,14 +1,18 @@
 <script lang="ts">
-  import { outTransition } from "../../../stores"
+  import { dictionary, outTransition } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import { nextSlide } from "../../helpers/showActions"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Slider from "../../inputs/Slider.svelte"
 
+  // TODO: global timer...
+
   let timer = { time: 0, paused: true }
   let timerMax: number = 0
   let timeObj: any = null
+  let sliderTimer: any = null
+
   const Timer: any = function (this: any, callback: any, delay: number) {
     let timeout: any,
       start: number,
@@ -55,8 +59,9 @@
     if (a && a.duration > 0) {
       timerMax = a.duration
       timeObj = new Timer(() => {
-        timer = { time: 0, paused: true }
         durationAction(a.action)
+        // TODO: pause
+        timer = { time: 0, paused: timer.paused }
       }, a.duration * 1000)
       sliderTime()
     }
@@ -78,7 +83,6 @@
   }
 
   // set timer
-  let sliderTimer: any = null
   function sliderTime() {
     if (!sliderTimer && timeObj && !timer.paused) {
       sliderTimer = setTimeout(() => {
@@ -97,6 +101,7 @@
   }
 
   function durationAction(action: string) {
+    if (timer.paused) return
     switch (action) {
       case "nextSlide":
         nextSlide(null)
@@ -116,7 +121,7 @@
       <Button
         style="flex: 0"
         center
-        title={timer.paused ? "Play" : "Paused"}
+        title={timer.paused ? $dictionary.media?.play : $dictionary.media?.pause}
         on:click={() => {
           if (timer.paused) timeObj.resume()
           else timeObj.pause()

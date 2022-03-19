@@ -58,7 +58,7 @@
   {#if ($activePage === "edit" && $outSlide?.index !== $activeEdit.slide) || !$outSlide || $outSlide.id !== $activeShow?.id || $outSlide.layout !== $showsCache[$activeShow.id].settings.activeLayout}
     <Button
       on:click={() => {
-        if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null)
+        if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null && $activeEdit.slide !== undefined)
           outSlide.set({ id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: $activeEdit.slide })
         else if ($activeShow && GetLayout().length) {
           outSlide.set({ id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: 0 })
@@ -104,7 +104,7 @@
   >
     <Icon id="nextFull" size={1.2} />
   </Button>
-</span>
+  </span>
 
 <style>
   .group {

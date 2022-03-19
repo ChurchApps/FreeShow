@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { OUTPUT } from "../../../types/Channels"
+
   import type { Resolution } from "../../../types/Settings"
   import { activeEdit, overlays, screen } from "../../stores"
   import { _show } from "../helpers/shows"
@@ -13,7 +15,8 @@
 
   // TODO: overlay editor
 
-  $: Slide = $overlays[$activeEdit.id!]
+  $: currentId = $activeEdit.id!
+  $: Slide = $overlays[currentId]
 
   let lines: [string, number][] = []
   let mouse: any = null
@@ -48,12 +51,14 @@
       values.push(textStyles)
     })
 
-    // history({
-    //   id: "setStyle",
-    //   newData: { key: "style", values },
-    //   location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: active },
-    //   // location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: active },
-    // })
+    // TODO: history
+    overlays.update((a) => {
+      active.forEach((index) => {
+        a[$activeEdit.id!].items[index].style = values[index] || values[0]
+      })
+      return a
+    })
+    window.api.send(OUTPUT, { channel: "OVERLAY", data: $overlays })
   }
 
   $: if (Object.keys(newStyles).length && $overlays[$activeEdit.id!] && active.length) {
@@ -67,7 +72,7 @@
     <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
       <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
       {#each Slide.items as item, index}
-        <Editbox items={Slide.items} {item} {index} {ratio} bind:mouse />
+        <Editbox items={Slide.items} ref={{ type: "overlay", id: currentId }} {item} {index} {ratio} bind:mouse />
       {/each}
     </Zoomed>
   {:else}

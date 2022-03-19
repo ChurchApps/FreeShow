@@ -32,6 +32,8 @@ export function checkInput(e: any) {
 }
 
 export function nextSlide(e: any) {
+  console.log(get(outSlide))
+
   if (get(outLocked)) return
   if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
@@ -105,7 +107,8 @@ function getNextEnabled(index: null | number): null | number {
     .layouts(slide ? [slide.layout] : "active")
     .ref()[0]
 
-  if (layout[index].data.end) index = 0
+  if (layout[index - 1]?.data.end) index = 0
+  if (!layout[index]) return null
   if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
 
   while (layout[index].data.disabled || index > layout.length) index++
@@ -114,6 +117,7 @@ function getNextEnabled(index: null | number): null | number {
 
 function updateOut(index: number, layout: any) {
   activeEdit.set({ slide: index, items: [] })
+  _show(get(activeShow)!.id).set({ key: "timestamps.used", value: new Date().getTime() })
 
   // background
   if (layout[index].background) {
@@ -133,8 +137,7 @@ function updateOut(index: number, layout: any) {
   // }
 
   // transition
-  let t: any = layout[index].transition
-  console.log(index, t)
+  let t: any = layout[index].data.transition
   if (t && t.duration > 0) {
     t.action = "nextSlide"
     outTransition.set(t)

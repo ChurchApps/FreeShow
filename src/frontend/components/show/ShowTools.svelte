@@ -23,11 +23,12 @@
   $: showId = $activeShow?.id
   let currentLayout: any = null
   let note: string = ""
-  $: {
-    if (showId && ($showsCache[showId]?.settings.activeLayout !== currentLayout || active)) {
-      note = showId ? _show("active").layouts("active").get("notes")[0] : ""
-      currentLayout = $showsCache[showId]?.settings.activeLayout
-    }
+  $: if (showId && $showsCache[showId]?.settings.activeLayout !== currentLayout) updateNote()
+
+  function updateNote() {
+    if (!showId) return
+    note = showId ? _show("active").layouts("active").get("notes")[0] : ""
+    currentLayout = $showsCache[showId]?.settings.activeLayout
   }
 
   function edit(e: any) {
@@ -35,6 +36,8 @@
     _show("active").layouts("active").set({ key: "notes", value: e.detail })
   }
 </script>
+
+<svelte:window on:mousedown={updateNote} />
 
 <div class="main border">
   <Tabs {tabs} bind:active />

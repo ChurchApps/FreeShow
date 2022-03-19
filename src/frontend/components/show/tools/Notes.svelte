@@ -1,11 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte"
+  import T from "../../helpers/T.svelte"
 
   export let value: string
 
   const TIME = 100
   let dispatch = createEventDispatcher()
   let timeout: any = null
+
+  let content: any
+  let updatedValue: string = value
 
   function keydown(e: any) {
     if (timeout !== null) return
@@ -19,7 +23,12 @@
 
 <!-- bind:innerHTML={value} -->
 <div class="paper">
-  <div class="edit" contenteditable="true" on:keydown={keydown}>
+  {#if !updatedValue.length}
+    <div class="empty">
+      <T id="empty.text" />...
+    </div>
+  {/if}
+  <div bind:this={content} class="edit" contenteditable="true" on:keydown={keydown} on:keyup={() => (updatedValue = content.innerText)}>
     {@html value}
   </div>
 </div>
@@ -39,5 +48,12 @@
     height: 100%;
     padding: 10px;
     outline: none;
+  }
+
+  .empty {
+    position: absolute;
+    pointer-events: none;
+    padding: 10px;
+    opacity: 0.5;
   }
 </style>

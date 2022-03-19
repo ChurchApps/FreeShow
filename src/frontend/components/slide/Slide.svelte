@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { activeShow, dictionary, fullColors, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import { getItemText } from "../edit/scripts/textStyle"
   import { getContrast } from "../helpers/color"
@@ -45,8 +45,18 @@
   $: group = slide.group
   $: {
     if (slide.globalGroup && $groups[slide.globalGroup]) {
-      if ($groups[slide.globalGroup].default) group = $dictionary.groups?.[$groups[slide.globalGroup].name]
-      else group = $groups[slide.globalGroup].name
+      // TODO: history
+      // history({
+      //   id: "changeSlide",
+      //   newData: { key: "group", values: [$groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name] },
+      //   location: { page: "show", show: $activeShow!, layout: $showsCache[$activeShow!.id].settings.activeLayout, slide: layoutSlide.id },
+      // })
+      // history({
+      //   id: "changeSlide",
+      //   newData: { key: "color", values: [$groups[slide.globalGroup].color] },
+      //   location: { page: "show", show: $activeShow!, layout: $showsCache[$activeShow!.id].settings.activeLayout, slide: layoutSlide.id },
+      // })
+      group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
       color = $groups[slide.globalGroup].color
     }
   }
@@ -144,6 +154,21 @@
     })
     return textItems
   }
+
+  let timer: number[] = []
+  $: if ($activeTimers) {
+    timer = []
+    slide.items.forEach(checkItem)
+  }
+  function checkItem(item: any) {
+    if (item.type !== "timer") return
+    console.log($activeTimers, item)
+
+    $activeTimers.forEach((a, i) => {
+      if (a.showId === $activeShow?.id && a.slideId === layoutSlide.id && a.id === item.timer.id) timer.push(i)
+    })
+    console.log(timer)
+  }
 </script>
 
 <!-- TODO: disabled -->
@@ -153,7 +178,7 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:active style="width: {$slidesOptions.grid || noQuickEdit ? 100 / columns : 100}%">
   {#if icons}
-    <Icons {layoutSlide} {background} {duration} {columns} {index} />
+    <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} />
   {/if}
   <div
     class="slide context #slide"
@@ -179,13 +204,13 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {/if}
           <!-- TODO: check if showid exists in shows -->
           {#each slide.items as item}
-            <Textbox {item} />
+            <Textbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} />
           {/each}
           {#if layoutSlide.overlays?.length}
             {#each layoutSlide.overlays as id}
               {#if $overlays[id]}
                 {#each $overlays[id].items as item}
-                  <Textbox {item} />
+                  <Textbox {item} ref={{ type: "overlay", id }} />
                 {/each}
               {/if}
             {/each}

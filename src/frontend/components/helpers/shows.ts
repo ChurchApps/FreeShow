@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { showsCache, activeShow } from "../../stores"
+import { showsCache, activeShow, shows as allShows } from "../../stores"
 import { addToPos } from "./mover"
 // import { loadShows } from "./setShow"
 
@@ -35,6 +35,13 @@ export function _show(id: any) {
         }
         return a
       })
+      allShows.update((a: any) => {
+        let double = key.split(".")
+        if (double.length > 1)
+          if (a[id][double[0]][double[1]]) a[id][double[0]][double[1]] = value
+          else if (a[id][key]) a[id][key] = value
+        return a
+      })
       return prev
     },
     /** Remove key in given shows */
@@ -56,7 +63,7 @@ export function _show(id: any) {
         if (!slideIds.length) slideIds = Object.keys(shows[id].slides)
         slideIds.forEach((slideId) => {
           if (key) a.push(shows[id].slides[slideId][key])
-          else a.push(shows[id].slides[slideId])
+          else a.push({ id: slideId, ...shows[id].slides[slideId] })
         })
         return a
       },
@@ -65,10 +72,10 @@ export function _show(id: any) {
         let prev: any[] = []
         showsCache.update((a: any) => {
           if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
-          slideIds.forEach((slideId, i) => {
-            if (i === 0) prev[i] = []
-            prev[i].push(a[id].slides[slideId][key])
-            a[id].slides[slideId][key] = value
+          slideIds.forEach((slideId) => {
+            prev.push(a[id].slides[slideId][key])
+            if (value === undefined) delete a[id].slides[slideId][key]
+            else a[id].slides[slideId][key] = value
           })
           return a
         })
@@ -111,13 +118,12 @@ export function _show(id: any) {
           if (!slideIds.length) slideIds = Object.keys(shows[id].slides)
           a.push([])
           slideIds.forEach((slideId, i) => {
-            if (!indexes.length) a[i].push(...shows[id].slides[slideId].items)
-            else {
-              indexes.forEach((index) => {
-                if (key === null) a[i].push(shows[id].slides[slideId].items[index])
-                else a[i].push(shows[id].slides[slideId].items[index][key])
-              })
-            }
+            // if (!indexes.length) a[i].push(...shows[id].slides[slideId].items)
+            if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
+            indexes.forEach((index) => {
+              if (key === null) a[i].push({ id: slideId, ...shows[id].slides[slideId].items[index] })
+              else a[i].push(shows[id].slides[slideId].items[index][key])
+            })
           })
           return a
         },
@@ -173,9 +179,9 @@ export function _show(id: any) {
           /** Get slides items lines */
           get: () => {
             let a: any[] = []
-            if (!slideIds.length) slideIds = Object.keys(shows[id].slides)
-            a.push([])
+            if (!slideIds.length && shows[id]) slideIds = Object.keys(shows[id].slides)
             slideIds.forEach((slideId, i) => {
+              a.push([])
               if (!indexes.length) indexes = Object.keys(shows[id].slides[slideId].items) as any
               indexes.forEach((index) => {
                 if (!lines.length) lines = Object.keys(shows[id].slides[slideId].items[index].lines)
@@ -445,7 +451,7 @@ export function _show(id: any) {
         let a: any[] = []
         if (!mediaIds.length) mediaIds = Object.keys(shows[id].media)
         mediaIds.forEach((mediaId) => {
-          a.push(shows[id].media[mediaId])
+          a.push({ mediaId, ...shows[id].media[mediaId] })
         })
         return a
       },
@@ -457,7 +463,8 @@ export function _show(id: any) {
           mediaIds.forEach((mediaId) => {
             // if (i === 0) prev[i] = []
             // prev[i].push(a[id].media[mediaId][key])
-            a[id].media[mediaId][key] = value
+            if (value === undefined) delete a[id].media[mediaId][key]
+            else a[id].media[mediaId][key] = value
           })
           return a
         })

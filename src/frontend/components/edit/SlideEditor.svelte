@@ -91,6 +91,8 @@
       location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: active },
       // location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: active },
     })
+
+    _show($activeShow!.id).set({ key: "timestamps.modified", value: new Date().getTime() })
   }
 
   $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
@@ -105,7 +107,7 @@
     <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
       <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
       {#each Slide.items as item, index}
-        <Editbox {item} {index} {ratio} bind:mouse />
+        <Editbox {item} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />
       {/each}
     </Zoomed>
   {:else}

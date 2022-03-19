@@ -4,6 +4,7 @@
   import Clock from "../../system/Clock.svelte"
   import Date from "../../system/Date.svelte"
   import MediaInfo from "./MediaInfo.svelte"
+  import PlayerInfo from "./PlayerInfo.svelte"
   import ScriptureInfo from "./ScriptureInfo.svelte"
   import ShowInfo from "./ShowInfo.svelte"
 
@@ -21,6 +22,8 @@
       <MediaInfo />
     {:else if id === "scripture"}
       <ScriptureInfo {bible} />
+    {:else if id === "player"}
+      <PlayerInfo />
     {:else}
       <Center>
         <Clock />

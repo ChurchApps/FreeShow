@@ -227,6 +227,7 @@ export function history(obj: History, undo: null | boolean = null) {
       old = {}
       old.slides = _show(showIDs).set({ key: "slides", value: obj.newData.slides })
       old.layout = _show(showIDs).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout })
+      if (undo) old = null
       // showsCache.update((a) => {
       //   a[obj.location!.show!.id].slides = obj.newData.slides
       //   a[obj.location!.show!.id].layouts[obj.location!.layout!].slides = obj.newData.layout
@@ -235,10 +236,8 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     // show
     case "changeSlide":
-      old = obj.newData
-      _show(showIDs)
-        .slides([obj.location!.slide!])
-        .set({ key: Object.entries(obj.newData)[0], values: Object.values(obj.newData) })
+      old = { key: obj.newData.key, value: _show(showIDs).slides([obj.location!.slide!]).set(obj.newData) }
+
       // showsCache.update((a) => {
       //   if (!obj.oldData) obj.oldData = {}
       //   let slide: any = a[obj.location!.show!.id].slides[obj.location!.slide!]
@@ -368,7 +367,7 @@ export function history(obj: History, undo: null | boolean = null) {
         }
         setShow(id, obj.newData.show)
 
-        let as: any = { id }
+        let as: any = { id, type: "show" }
         if (obj.location!.project && get(projects)[obj.location!.project!]) {
           projects.update((p) => {
             p[obj.location!.project!].shows.push(as)
@@ -507,7 +506,7 @@ export function history(obj: History, undo: null | boolean = null) {
         let ref = layouts.ref()[0]
         // let color: null | string = null
 
-        if (!obj.newData.slide && !obj.newData.parent) {
+        if (!obj.newData.slide && !obj.newData.slides && !obj.newData.parent) {
           let isParent: boolean = true
           // add as child
           // TODO: add by template
@@ -536,24 +535,29 @@ export function history(obj: History, undo: null | boolean = null) {
             _show(showIDs).layouts("active").slides([index]).add([value])
           }
         } else {
-          // add custom
-          let id: string = _show(showIDs).slides().add(obj.newData.slide, true)
-          let l: any = { id }
+          let slides = obj.newData.slides || [obj.newData.slide]
+          slides.forEach((slide: any, i: number) => {
+            // add custom
+            let id: string = _show(showIDs).slides().add(slide, true)
+            let l: any = { id }
 
-          // bgs
-          if (obj.newData.backgrounds?.length) {
-            let bgid = _show(showIDs).media().add(obj.newData.backgrounds)
-            l.background = bgid
-          }
+            // bgs
+            if (obj.newData.backgrounds?.length) {
+              let bgid = _show(showIDs)
+                .media()
+                .add(obj.newData.backgrounds[i] || obj.newData.backgrounds[0])
+              l.background = bgid
+            }
 
-          // layouts
-          // let newIndex: number = index
-          // layouts.get()[0].forEach((a: any, i: number) => {
-          //   if (i < index && a.children) newIndex -= Object.keys(a.children).length
-          // })
-          // [newIndex]
+            // layouts
+            // let newIndex: number = index
+            // layouts.get()[0].forEach((a: any, i: number) => {
+            //   if (i < index && a.children) newIndex -= Object.keys(a.children).length
+            // })
+            // [newIndex]
 
-          _show(showIDs).layouts("active").slides().add([l])
+            _show(showIDs).layouts("active").slides().add([l])
+          })
         }
 
         activeEdit.update((a) => {
@@ -699,9 +703,12 @@ export function history(obj: History, undo: null | boolean = null) {
 
     case "showMedia":
       let bgid: null | string = null
-      Object.entries(_show(showIDs).media().get()).forEach(([id, a]: any) => {
-        if (a.path === obj.newData.path) bgid = id
-      })
+      _show(showIDs)
+        .media()
+        .get()
+        .forEach((media: any) => {
+          if (media.path === obj.newData.path) bgid = media.id
+        })
 
       if (undo) {
         if (bgid) _show(showIDs).media([bgid]).remove()
@@ -709,7 +716,7 @@ export function history(obj: History, undo: null | boolean = null) {
       } else {
         if (!bgid) bgid = _show(showIDs).media().add(obj.newData)
         let ref = _show(showIDs).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
-        // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()
+        // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
         if (ref.type === "parent") _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
         else _show(showIDs).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.index]).set({ key: "background", value: bgid })
       }

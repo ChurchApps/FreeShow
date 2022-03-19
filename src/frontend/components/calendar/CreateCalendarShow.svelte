@@ -110,7 +110,8 @@
     if (currentEvents.length > 1) layouts[layouts.length - 1].end = true
 
     let layoutID = uid()
-    let show = new ShowObj(true, "event", layoutID)
+    let show = new ShowObj(true, "info", layoutID)
+    // if (!$categories.event) createCategory()
     // TODO: week?
     show.name = getDateString(from)
     if (sortedDays[0] - sortedDays[1] < 0) show.name += " - " + getDateString(to)
@@ -119,6 +120,14 @@
     show.layouts = { [layoutID]: { name: "", notes: "", slides: layouts } }
     return { show }
   }
+
+  // function createCategory() {
+  //   // TODO: history
+  //   categories.update((a) => {
+  //     a.event = { name: "category.events", icon: "event", default: true }
+  //     return a
+  //   })
+  // }
 
   const getDateString = (date: Date) => {
     let d = ("0" + date.getDate()).slice(-2)

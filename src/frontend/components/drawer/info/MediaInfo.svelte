@@ -30,15 +30,15 @@
   {/if}
 </h2>
 <p>
-  <T id={"info.extension"} />
+  <span class="title"><T id={"info.extension"} /></span>
   <span style="text-transform: uppercase;">{info.extension || "-"}</span>
 </p>
 <p>
-  <T id={"info.size"} />
+  <span class="title"><T id={"info.size"} /></span>
   <span>{formatBytes(size)}</span>
 </p>
 <p>
-  <T id={"info.created"} />
+  <span class="title"><T id={"info.created"} /></span>
   {#if created}
     <Date d={created} />
   {:else}
@@ -46,7 +46,7 @@
   {/if}
 </p>
 <p>
-  <T id={"info.modified"} />
+  <span class="title"><T id={"info.modified"} /></span>
   {#if modified}
     <Date d={modified} />
   {:else}
@@ -54,7 +54,7 @@
   {/if}
 </p>
 <p>
-  <T id={"info.changed"} />
+  <span class="title"><T id={"info.changed"} /></span>
   {#if changed}
     <!-- format="d,m,y" -->
     <Date d={changed} />
@@ -67,5 +67,9 @@
   p {
     display: flex;
     justify-content: space-between;
+  }
+
+  .title {
+    opacity: 0.8;
   }
 </style>

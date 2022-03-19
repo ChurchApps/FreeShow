@@ -2,9 +2,9 @@
   import type { TabsObj } from "../../../types/Tabs"
   import { activeProject, projects } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
-  import Center from "../system/Center.svelte"
   import Resizeable from "../system/Resizeable.svelte"
   import Notes from "./tools/Notes.svelte"
+  import Timers from "./tools/Timers.svelte"
 
   const tabs: TabsObj = {
     notes: { name: "tools.notes", icon: "notes" },
@@ -16,11 +16,11 @@
 
   let note: string = ""
   let currentProject: any = null
-  $: {
-    if ($activeProject !== currentProject) {
-      note = $projects[$activeProject!].notes
-      currentProject = $activeProject
-    }
+  $: if ($activeProject !== currentProject) updateNote()
+
+  function updateNote() {
+    note = $projects[$activeProject!].notes
+    currentProject = $activeProject
   }
 
   function edit(e: any) {
@@ -33,7 +33,9 @@
   }
 </script>
 
-<Resizeable id="projectTools" side="bottom" maxWidth={window.innerHeight * 0.75}>
+<svelte:window on:mousedown={updateNote} />
+
+<Resizeable id="projectTools" side="bottom" width={150} maxWidth={window.innerHeight * 0.75}>
   <!-- minWidth={80} -->
   <div class="main">
     <Tabs {tabs} bind:active />
@@ -41,7 +43,7 @@
       {#if active === "notes"}
         <Notes value={note} on:edit={edit} />
       {:else if active === "timers"}
-        <Center>WIP</Center>
+        <Timers />
       {/if}
     </div>
   </div>

@@ -4,6 +4,7 @@ import { menuClick } from "../components/context/menuClick"
 import { loadShows } from "../components/helpers/setShow"
 import {
   activeShow,
+  activeTimers,
   draw,
   drawSettings,
   drawTool,
@@ -40,7 +41,8 @@ export function startup() {
 
   receiveData(MAIN, receiveMAIN)
   receiveData(STORE, receiveSTORE)
-  receiveData(OUTPUT, get(outputWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
+  receiveData(OUTPUT, receiveOUTPUT)
+  // receiveData(OUTPUT, get(outputWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
   // window.api.receive(OUTPUT, (msg: any) => {
   //   if (!get(outputWindow) || ["DISPLAY"].includes(msg.channel)) {
   //     if (receiveOUTPUT[msg.channel]) receiveMAIN[msg.channel](msg.data)
@@ -90,14 +92,16 @@ const receiveOUTPUT: any = {
   BACKGROUND: (a: any) => outBackground.set(a),
   SLIDE: (a: any) => outSlide.set(a),
   OVERLAYS: (a: any) => outOverlays.set(a),
+  OVERLAY: (a: any) => overlays.set(a),
   SHOWS: (a: any) => showsCache.set(a),
   DRAW: (a: any) => draw.set(a),
   DRAW_TOOL: (a: any) => drawTool.set(a),
   DRAW_SETTINGS: (a: any) => drawSettings.set(a),
   MEDIA: (a: any) => mediaFolders.set(a),
+  ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
   DISPLAY: (a: any) => outputDisplay.set(a),
 }
 
-const receiveOUTPUTasOutput: any = {
-  DISPLAY: receiveOUTPUT.DISPLAY,
-}
+// const receiveOUTPUTasOutput: any = {
+//   DISPLAY: receiveOUTPUT.DISPLAY,
+// }

@@ -1,14 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { Item, Line } from "../../../types/Show"
-  import { activeEdit, activeShow, showsCache } from "../../stores"
+  import { activeEdit, activeShow, overlays, showsCache } from "../../stores"
   import { GetLayoutRef } from "../helpers/get"
   import { history } from "../helpers/history"
+  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
+  import Timer from "../slide/views/Timer.svelte"
   import Movebox from "../system/Movebox.svelte"
 
   export let items: Item[] | null = null
   export let item: Item
+  export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
   export let index: number
   export let ratio: number
 
@@ -25,6 +28,8 @@
       return ae
     })
 
+    console.log($activeEdit.items)
+
     if ((e.target.closest(".line") && !e.ctrlKey) || e.target.closest(".square") || (e.ctrlKey && !e.target.closest(".line")) || e.altKey || e.buttons === 4) {
       let item = e.target.closest(".item")
       mouse = {
@@ -38,12 +43,6 @@
           width: e.clientX / ratio - item.offsetWidth,
           height: e.clientY / ratio - item.offsetHeight,
         },
-        // offsetX: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
-        // offsetY: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
-        // offsetWidth: (e.clientX - e.target.closest(".slide").offsetLeft + 125) / ratio - item.offsetWidth + e.target.offsetWidth,
-        // offsetHeight: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetHeight + e.target.offsetHeight,
-        // offsetWidth: e.target.offsetParent.offsetWidth - e.clientX,
-        // offsetHeight: e.target.offsetParent.offsetHeight - e.clientY,
         item,
         e: e,
       }
@@ -52,7 +51,7 @@
 
   $: active = $activeShow?.id
   $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
-  $: slide = layout && $activeEdit.slide ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
+  $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
   function keydown(e: any) {
     // TODO: exlude.....
@@ -65,6 +64,8 @@
       // TODO: not working properly
 
       history({ id: "deleteItem", oldData: items, newData: newItems, location: { page: "edit", show: $activeShow!, layout: layout, slide: slide } })
+
+      _show($activeShow!.id).set({ key: "timestamps.modified", value: new Date().getTime() })
     }
   }
 
@@ -90,46 +91,7 @@
     }
   }
 
-  // update text on item blur or text cursor move
   let textElem: any
-  // function updateText() {
-  //   let text: string = textElem.innerText
-  //   console.log(text)
-
-  //   // let sel: null | Selection = window.getSelection()
-  //   // if (sel?.anchorNode?.parentElement) {
-  //   //   let parent: Element = sel.anchorNode.parentElement.closest(".edit")!
-  //   //   let index = 0
-  //   //   ;[...parent.children].forEach((childElem: any, i: number) => {
-  //   //     if (childElem === sel!.anchorNode!.parentElement) index = i
-  //   //   })
-
-  //   //   let active = $activeShow!.id
-  //   //   let layout: string = $shows[active].settings.activeLayout
-  //   //   let slide: string = $shows[active].layouts[layout].slides[$activeEdit.slide!].id
-  //   //   // let pos = sel!.anchorOffset!
-
-  //   //   // get lengths
-  //   //   let textIndex = 0
-  //   //   let itemTextLength = 0
-  //   //   let oldItemsLength = 0
-  //   //   $shows[active].slides[slide].items[$activeEdit.items!].text?.forEach((itemText, i) => {
-  //   //     if (i < index) textIndex += itemText.value.length
-  //   //     if (i === index) itemTextLength = itemText.value.length
-  //   //     oldItemsLength += itemText.value.length
-  //   //   })
-  //   //   let newTextLength = text.length - oldItemsLength
-  //   //   let newItemText = text.slice(textIndex, textIndex + itemTextLength + newTextLength)
-
-  //   //   // WIP
-  //   //   shows.update((s) => {
-  //   //     let item = GetShow({ id: active }).slides[slide].items[$activeEdit.item!]
-  //   //     if (item.text) item.text[index].value = newItemText
-  //   //     return s
-  //   //   })
-  //   // }
-  // }
-
   let html: string = ""
   let previousHTML: string = ""
   let currentStyle: string = ""
@@ -181,118 +143,49 @@
   // let sel = getSelectionRange()
 
   $: {
-    if (textElem && html !== previousHTML && slide) {
+    if (textElem && html !== previousHTML) {
       previousHTML = html
       // let pos = getCaretCharacterOffsetWithin(textElem)
       setTimeout(() => {
-        showsCache.update((a) => {
-          // let lines = a[active].slides[slide].items[index].lines
-          let newLines: Line[] = []
-          let pos: number = -1
-          currentStyle = ""
-          new Array(...textElem.children).forEach((line: any) => {
-            let align: string = line.getAttribute("style") || ""
-            pos++
-            currentStyle += align
-            newLines.push({ align, text: [] })
-            new Array(...line.children).forEach((child: any) => {
-              let style = child.getAttribute("style") || ""
-              newLines[pos].text.push({ style, value: child.innerText })
-              currentStyle += style
-              // let brs = child.innerHTML.split("<br>")
-              // brs.forEach((value: any, i: number) => {
-              //   if (i > 0) {
-              //     pos++
-              //     newLines.push({ align, text: [] })
-              //   }
-              //   newLines[pos].text.push({ style, value })
-              //   currentStyle += style
-              // })
-            })
+        let newLines: Line[] = getNewLines()
+        console.log("NEW", newLines)
+        if ($activeEdit.type === "overlay") {
+          overlays.update((a) => {
+            a[$activeEdit.id!].items[index].lines = newLines
+            return a
           })
-          a[active!].slides[slide].items[index].lines = newLines
-          return a
-        })
+        } else if (slide) {
+          showsCache.update((a) => {
+            console.log("NEW", newLines)
+
+            // let lines = a[active].slides[slide].items[index].lines
+            a[active!].slides[slide].items[index].lines = newLines
+            return a
+          })
+
+          _show(active).set({ key: "timestamps.modified", value: new Date().getTime() })
+        }
       }, 10)
     }
   }
 
-  // function textkey(e: any) {
-  //   if (e.key === "Enter2") {
-  //     // || e.key === "Backspace") {
-  //     // let pos = getCaretCharacterOffsetWithin(textElem)
-  //     sel = getSelectionRange()
-  //     if (e.key === "Enter") {
-  //       e.preventDefault()
-  //       document.execCommand("insertLineBreak")
-  //     }
-  //     // if (e.key === "Backspace") {
-  //     //   sel.forEach((a) => {
-  //     //     if (a.start !== undefined) {
-  //     //       a = { start: Math.max(0, a.start - 1), end: Math.max(0, a.end - 1) }
-  //     //     }
-  //     //   })
-  //     // }
-  //     setTimeout(update, 20)
-  //     setTimeout(() => {
-  //       // set new cursor pos
-  //       let range = createRange2(textElem, sel)
-  //       range.collapse(false)
-
-  //       console.log("RANGE: ", range)
-
-  //       let selection = window.getSelection()
-  //       selection?.removeAllRanges()
-  //       selection?.addRange(range)
-
-  //       // setCurrentCursorPosition(textElem, pos)
-  //       // let range = document.createRange()
-  //       // range.selectNode(textElem)
-  //       // let started = false
-  //       // sel.forEach(a => {
-  //       //   if (a.start !== undefined && !started) {
-  //       //     started = true
-  //       //     range.setStart()
-  //       //   }
-  //       //   range.setStart(textElem, 0)
-  //       //   range.setEnd(textElem, 0)
-  //       //   range.collapse(false)
-  //       // })
-  //       // selection?.removeAllRanges()
-  //       // selection?.addRange(range)
-  //     }, 30)
-
-  //     // console.log(pos)
-
-  //     // setTimeout(() => {
-  //     //   setCurrentCursorPosition(textElem, pos)
-  //     // }, 100)
-
-  //     //  || e.key === "a"
-  //     //   let char = e.key
-  //     //   if (char === "Enter") char = "<br>"
-  //     //   e.preventDefault()
-  //     //   // get cursor pos & insert <br>
-  //     //   let pos = getCaretCharacterOffsetWithin(textElem)
-  //     //   // find pos
-  //     //   let count: number = 0
-  //     //   let tag: boolean = false
-  //     //   let newPos: null | number = null
-  //     //   html.split("").forEach((char: string, i: number) => {
-  //     //     if (char === "<") tag = true
-  //     //     else if (char === ">") tag = false
-  //     //     else if (!tag) count++
-  //     //     if (count === pos) newPos = i + 1
-  //     //   })
-  //     //   if (newPos !== null) {
-  //     //     html = html.slice(0, newPos) + char + html.slice(newPos, html.length)
-  //     //     console.log(textElem, newPos)
-  //     //     // setCurrentCursorPosition(textElem, pos)
-  //     //     // textElem.focus()
-  //     //   }
-  //     //   console.log(html)
-  //   }
-  // }
+  function getNewLines() {
+    let newLines: Line[] = []
+    let pos: number = -1
+    currentStyle = ""
+    new Array(...textElem.children).forEach((line: any) => {
+      let align: string = line.getAttribute("style") || ""
+      pos++
+      currentStyle += align
+      newLines.push({ align, text: [] })
+      new Array(...line.children).forEach((child: any) => {
+        let style = child.getAttribute("style") || ""
+        newLines[pos].text.push({ style, value: child.innerText })
+        currentStyle += style
+      })
+    })
+    return newLines
+  }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -309,7 +202,7 @@
   {#if item.lines}
     <!-- TODO: remove align..... -->
     <div class="align" style={item.align || ""}>
-      {#if item.lines?.length < 2 && !item.lines?.[0]?.text[0].value.length}
+      {#if item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
         <span class="placeholder">
           <T id="empty.text" />
         </span>
@@ -332,6 +225,8 @@
       <!-- </div>
       {/each} -->
     </div>
+  {:else if item.type === "timer"}
+    <Timer {item} {ref} />
   {/if}
 </div>
 

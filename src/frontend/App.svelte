@@ -26,6 +26,7 @@
   import Projects from "./components/show/Projects.svelte"
   import Show from "./components/show/Show.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
+  import TimerInterval from "./components/show/tools/TimerInterval.svelte"
   import { getStyleResolution } from "./components/slide/getStyleResolution"
   import Shows from "./components/stage/Shows.svelte"
   import StageShow from "./components/stage/StageShow.svelte"
@@ -112,6 +113,15 @@
     outputDisplay.set(false)
     window.api.send(OUTPUT, { channel: "DISPLAY", data: false })
   }
+
+  // close youtube ad
+  let closeAd: boolean = false
+  window.api.receive(OUTPUT, (a: any) => {
+    if (a.channel === "CLOSE_AD") {
+      closeAd = true
+      setTimeout(() => (closeAd = false), 10)
+    }
+  })
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -119,7 +129,7 @@
 {#if !$outputWindow && $os.platform === "win32"}
   <MenuBar />
 {/if}
-<main style={!$outputWindow && $os.platform === "win32" ? "height: calc(100% - 30px);" : ""}>
+<main style={!$outputWindow && $os.platform === "win32" ? "height: calc(100% - 30px);" : ""} class:closeAd>
   {#if $outputWindow}
     <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={hideDisplay}>
       <Output style={getStyleResolution(resolution, width, height, "fit")} center />
@@ -127,6 +137,7 @@
   {:else}
     <ContextMenu />
     <Popup />
+    <TimerInterval />
 
     <div class="column">
       <Top />
@@ -197,6 +208,10 @@
 <style>
   main {
     height: 100%;
+  }
+
+  .closeAd {
+    height: 1px;
   }
 
   .column {

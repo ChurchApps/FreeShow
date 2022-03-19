@@ -71,11 +71,13 @@
     "overlays": "Remove overlays",
     "audio": "Remove audio",
     "transistion": "Remove transistion",
-    "to_start": "Remove Go to start"
+    "to_start": "Remove Go to start",
+    "timer": "Remove timer"
   },
   "media": {
     "_loop": "Loop",
     "play": "Play",
+    "pause": "Pause",
     "show": "Show"
   },
   "menu": {
@@ -107,7 +109,8 @@
     "stage_shows": "No stage shows",
     "groups": "No groups",
     "events": "No events",
-    "text": "Type something"
+    "text": "Type something",
+    "timers": "No timers in the shows in this project"
   },
   "remote": {
     "projects": "Projects",
@@ -127,7 +130,8 @@
   "error": {
     "no_show": "Could not find show",
     "no_layouts": "Could not find any layouts",
-    "load": "Cound not load"
+    "load": "Cound not load",
+    "not_found": "Not found"
   },
   "meta": {
     "title": "Title",
@@ -162,7 +166,8 @@
   },
   "inputs": {
     "name": "Name",
-    "video_id": "Video ID/URL"
+    "video_id": "Video ID/URL",
+    "close_ad": "Close ad on output screen"
   },
   "tabs": {
     "shows": "Shows",
@@ -178,9 +183,10 @@
   "category": {
     "all": "All",
     "unlabeled": "Unlabeled",
-    "song": "Song",
+    "song": "Songs",
     "info": "Info",
-    "presentation": "Presentation",
+    "events": "Events",
+    "presentation": "Presentations",
     "pictures": "Pictures",
     "videos": "Videos",
     "offers": "Offers",
@@ -464,6 +470,10 @@
     "used": "Used",
     "changed": "Used",
     "extension": "File extension",
-    "size": "Size"
+    "size": "Size",
+    "slides": "Slides",
+    "words": "Words",
+    "template": "Template",
+    "category": "Category"
   }
 }

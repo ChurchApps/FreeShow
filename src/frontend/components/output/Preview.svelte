@@ -123,7 +123,7 @@
   <ShowActions />
 
   {#if $activePage === "show"}
-    <ClearButtons bind:autoChange bind:activeClear bind:video bind:videoData bind:videoTime {callClear} />
+    <ClearButtons bind:autoChange bind:activeClear bind:video bind:videoData bind:videoTime bind:callClear />
 
     {#if activeClear === "background"}
       <Media {video} bind:videoData bind:videoTime bind:title />

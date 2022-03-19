@@ -84,7 +84,7 @@
   }
 
   function keydown(e: any) {
-    if (e.target.closest("input") || e.target.closest(".edit") || !e.ctrlKey || allFiles.length) return
+    if (e.target.closest("input") || e.target.closest(".edit") || !e.ctrlKey || !allFiles.length) return
 
     if (shortcuts[e.key]) {
       // e.preventDefault()

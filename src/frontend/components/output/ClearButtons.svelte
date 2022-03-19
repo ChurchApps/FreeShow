@@ -30,7 +30,10 @@
   }
 
   export let callClear: boolean = false
-  $: if (callClear) clearAll()
+  $: if (callClear) {
+    clearAll()
+    callClear = false
+  }
 
   const clearAll = () => {
     if ($outLocked) return

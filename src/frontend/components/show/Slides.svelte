@@ -4,6 +4,7 @@
 
   import { activeEdit, activeShow, outBackground, outLocked, outOverlays, outSlide, outTransition, showsCache, slidesOptions } from "../../stores"
   import { GetLayout } from "../helpers/get"
+  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Slide from "../slide/Slide.svelte"
   import Autoscroll from "../system/Autoscroll.svelte"
@@ -48,6 +49,7 @@
     // TODO: duplicate function of "preview:126 - updateOut"
     if (!$outLocked && !e.ctrlKey) {
       outSlide.set({ id, layout: activeLayout, index })
+      _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
 
       activeEdit.set({ slide: index, items: [] })
 

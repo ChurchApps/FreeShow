@@ -1,6 +1,5 @@
 <script lang="ts">
   import { uid } from "uid"
-
   import type { Bible } from "../../../../types/Scripture"
   import type { Resolution } from "../../../../types/Settings"
   import type { Item } from "../../../../types/Show"
@@ -170,7 +169,7 @@
   {#if bible.activeVerses}
     <!-- {#each slides as items} -->
     {#each slides[0] as item}
-      <Textbox {item} />
+      <Textbox {item} ref={{ id: "scripture" }} />
     {/each}
     <!-- {/each} -->
   {/if}
