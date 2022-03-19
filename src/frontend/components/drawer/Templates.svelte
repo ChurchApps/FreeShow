@@ -31,7 +31,7 @@
           <SelectElem id="template" data={id} fill draggable>
             <Zoomed {resolution} background={overlay.items.length ? "black" : "transparent"}>
               {#each overlay.items as item}
-                <Textbox {item} />
+                <Textbox {item} ref={{ type: "template", id }} />
               {/each}
             </Zoomed>
           </SelectElem>

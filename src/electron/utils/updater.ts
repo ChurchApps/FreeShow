@@ -6,8 +6,9 @@ let notification: Notification | null
 
 export default function checkForUpdates() {
   // if produciton
-  autoUpdater.checkForUpdates().catch((err) => {
-    console.error(JSON.stringify(err))
+  autoUpdater.checkForUpdatesAndNotify({
+    title: app.getName(),
+    body: "Update available. Click to download.",
   })
 
   // autoUpdater.logger = console;
@@ -17,6 +18,7 @@ export default function checkForUpdates() {
       title: app.getName(),
       body: "Updates are available. Click to download.",
       silent: true,
+      icon: nativeImage.createFromPath(join(__dirname, "..", "..", "public", "icon.png")),
     })
     notification.show()
     notification.on("click", () => {

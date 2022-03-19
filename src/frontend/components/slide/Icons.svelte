@@ -1,10 +1,15 @@
 <script lang="ts">
-  import { activeShow, dictionary, showsCache } from "../../stores"
+  import { OUTPUT } from "../../../types/Channels"
+
+  import { activeShow, activeTimers, dictionary, showsCache } from "../../stores"
+  import { requestData } from "../../utils/request"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { _show } from "../helpers/shows"
   import { joinTime, secondsToTime } from "../helpers/time"
   import Button from "../inputs/Button.svelte"
 
+  export let timer: any
   export let layoutSlide: any
   export let background: any
   export let duration: any
@@ -12,6 +17,7 @@
   export let index: number
 
   $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
+  $: notMuted = background?.muted === false
 
   $: transitionTime =
     layoutSlide.transition && layoutSlide.transition.duration > 0
@@ -28,11 +34,34 @@
     })
   }
 
-  $: notMuted = background?.muted === false
+  // TODO: history
+  function mute() {
+    _show("active").media([layoutSlide.background]).set({ key: "muted", value: undefined })
+  }
+
+  function resetTimer() {
+    activeTimers.update((a) => {
+      a = a.filter((_a, i) => !timer.includes(i))
+      return a
+    })
+    requestData(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
+  }
 </script>
 
 <!-- TODO: check if exists -->
 <div class="icons" style="zoom: {4 / columns};">
+  {#if timer.length}
+    <div>
+      <div class="button">
+        <Button style="padding: 5px;" redHover title={$dictionary.remove?.timer} on:click={() => resetTimer()}>
+          <Icon id="timer" white />
+        </Button>
+      </div>
+      {#if timer.length > 1}
+        <span><p>{timer.length}</p></span>
+      {/if}
+    </div>
+  {/if}
   {#if transitionTime}
     <div>
       <div class="button">
@@ -69,7 +98,7 @@
   {#if notMuted}
     <div>
       <div class="button">
-        <Button style="padding: 5px;" redHover title={$dictionary.actions?.mute} on:click={() => console.log("mute")}>
+        <Button style="padding: 5px;" redHover title={$dictionary.actions?.mute} on:click={() => mute()}>
           <Icon id="volume" white />
         </Button>
       </div>

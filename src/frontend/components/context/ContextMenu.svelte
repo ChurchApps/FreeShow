@@ -1,6 +1,5 @@
 <script lang="ts">
   import { activePopup } from "../../stores"
-
   import ContextChild from "./ContextChild.svelte"
   import ContextItem from "./ContextItem.svelte"
   import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
@@ -12,34 +11,45 @@
   let y: number = 0
   let side: "right" | "left" = "right"
   let translate = 0
-  function contextMenu(e: MouseEvent) {
-    if (!e.target?.closest(".contextMenu") && !e.target?.closest(".nocontext") && !$activePopup) {
-      contextElem = e.target!.closest(".context") || document.body
 
-      x = e.clientX
-      y = e.clientY
-      translate = 0
-      activeMenu = contextMenuLayouts.default
-      let c = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
-      if (c?.includes("__")) {
-        let menus = c.slice(1, c.length).split("__")
-        if (contextMenuLayouts[menus[1]]) {
-          activeMenu = []
-          menus.forEach((c2: string, i: number) => {
-            activeMenu.push(...contextMenuLayouts[c2])
-            if (i < menus.length - 1) activeMenu.push("SEPERATOR")
-          })
-        }
-      } else if (c && contextMenuLayouts[c.slice(1, c.length)]) activeMenu = contextMenuLayouts[c.slice(1, c.length)]
+  function onContextMenu(e: MouseEvent) {
+    if (e.target?.closest(".contextMenu") || e.target?.closest(".nocontext") || $activePopup) {
+      contextActive = false
+      return
+    }
 
-      let contextHeight = Object.keys(activeMenu).length * 30 + 10
-      if (x + 250 > window.innerWidth) x -= 250
-      if (y + contextHeight > window.innerHeight) translate = 100
-      if (x + (250 + 150) > window.innerWidth) side = "left"
-      else side = "right"
+    x = e.clientX
+    y = e.clientY
+    side = "right"
+    translate = 0
 
-      contextActive = true
-    } else contextActive = false
+    contextElem = e.target!.closest(".context") || document.body
+    let id: string = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
+    activeMenu = getContextMenu(id) || contextMenuLayouts.default
+
+    let contextHeight = Object.keys(activeMenu).length * 30 + 10
+    if (x + 250 > window.innerWidth) x -= 250
+    if (y + contextHeight > window.innerHeight) translate = 100
+    if (x + (250 + 150) > window.innerWidth) side = "left"
+
+    contextActive = true
+  }
+
+  function getContextMenu(id: string) {
+    if (id?.includes("__")) {
+      let menus = id.slice(1, id.length).split("__")
+      // if (contextMenuLayouts[menus[1]]) {
+      let menu: any[] = []
+      menus.forEach((c2: string, i: number) => {
+        menu.push(...contextMenuLayouts[c2])
+        if (i < menus.length - 1) menu.push("SEPERATOR")
+      })
+      return menu
+      // }
+      // return
+    }
+    if (id && contextMenuLayouts[id.slice(1, id.length)]) return contextMenuLayouts[id.slice(1, id.length)]
+    return
   }
 
   const click = (e: MouseEvent) => {
@@ -47,7 +57,7 @@
   }
 </script>
 
-<svelte:window on:contextmenu={contextMenu} on:click={click} />
+<svelte:window on:contextmenu={onContextMenu} on:click={click} />
 
 {#if contextActive}
   <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);">

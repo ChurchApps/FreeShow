@@ -10,16 +10,17 @@
   $: currentShow = $showsCache[$activeShow!.id]
 
   // TODO: change on show change...
-  if ($activeEdit.slide === null || $activeEdit.slide >= GetLayout().length) {
-    let slide = null
-    if ($activeShow && GetLayout().length) {
-      if (typeof $activeShow.index === "number") {
-        slide = $activeShow.index
-        if (slide >= GetLayout().length) slide = 0
-      } else slide = 0
-    }
-    activeEdit.set({ slide, items: [] })
-  }
+  // if ($activeEdit.slide === null || $activeEdit.slide === undefined || $activeEdit.slide >= GetLayout().length) {
+  //   let slide = null
+  //   if ($activeShow && GetLayout().length) {
+  //     if (typeof $activeShow.index === "number") {
+  //       slide = $activeShow.index
+  //       if (slide >= GetLayout().length) slide = 0
+  //     } else slide = 0
+  //   }
+  //   activeEdit.set({ slide, items: [] })
+  // }
+
   // activeShow.subscribe(() => {
   //   activeEdit.set({ slide: $activeShow?.index || 0, item: null })
   // })
@@ -36,7 +37,7 @@
       if (e.key === "ArrowDown") {
         // Arrow Down
         e.preventDefault()
-        if ($activeEdit.slide === null) {
+        if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
           activeEdit.set({ slide: 0, items: [] })
         } else if ($activeEdit.slide < layoutSlides.length - 1) {
           activeEdit.set({ slide: $activeEdit.slide + 1, items: [] })
@@ -44,7 +45,7 @@
       } else if (e.key === "ArrowUp") {
         // Arrow Up
         e.preventDefault()
-        if ($activeEdit.slide === null) {
+        if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
           activeEdit.set({ slide: layoutSlides.length - 1, items: [] })
         } else if ($activeEdit.slide > 0) {
           activeEdit.set({ slide: $activeEdit.slide - 1, items: [] })
@@ -56,7 +57,7 @@
   let scrollElem: any
   let offset: number = -1
   $: {
-    if ($activeEdit.slide !== null) {
+    if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) {
       let index = $activeEdit.slide - 1
       setTimeout(() => {
         if (index >= 0) offset = scrollElem.querySelector(".grid").children[index].offsetTop - 5

@@ -210,7 +210,7 @@ export function ondrop(e: any, id: string) {
           let ref: any[] = GetLayoutRef()
           location.slide = ref[index!].id
           delete location.layout
-          newData = { globalGroup: sel.data[0].globalGroup }
+          newData = { key: "globalGroup", value: sel.data[0].globalGroup }
         } else {
           historyID = "newSlide"
           newData = { slides: sel.data, index }

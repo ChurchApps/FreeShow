@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { uid } from "uid"
+
   import type { Item } from "../../../../types/Show"
-  import { activeEdit, activePopup, activeShow } from "../../../stores"
+  import { activeEdit, activePopup, activeShow, overlays } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
@@ -11,20 +13,29 @@
 
   export let allSlideItems: Item[]
 
-  function add(type: "text" | "shape" | "image" | "video" | "music") {
+  function add(type: "text" | "shape" | "image" | "video" | "audio" | "timer") {
     let newData: Item = {
       style: "",
       type,
     }
     if (type === "text") newData.lines = [{ align: "", text: [{ value: "", style: "" }] }]
+    else if (type === "timer") newData.timer = { id: uid(), name: "", type: "countdown", start: 300, end: 0, format: "MM:SS" }
     console.log(newData)
 
-    history({
-      id: "newItem",
-      oldData: null,
-      newData,
-      location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id },
-    })
+    if ($activeEdit.type === "overlay") {
+      // TODO: history
+      overlays.update((a) => {
+        a[$activeEdit.id!].items.push(newData)
+        return a
+      })
+    } else if (!$activeEdit.id) {
+      history({
+        id: "newItem",
+        oldData: null,
+        newData,
+        location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id },
+      })
+    }
   }
 </script>
 
@@ -36,6 +47,7 @@
     <IconButton icon="video" />
     <IconButton icon="live" />
     <IconButton icon="audio" />
+    <IconButton icon="timer" on:click={() => add("timer")} />
   </div>
   <div>
     <!-- square, circle, triangle, star, heart, ... -->

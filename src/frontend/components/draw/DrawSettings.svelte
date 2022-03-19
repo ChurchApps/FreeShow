@@ -17,7 +17,7 @@
   }
 </script>
 
-<div class="main">
+<div class="main border">
   <Panel>
     {#key $drawTool}
       <h6><T id="draw.{$drawTool}" /></h6>
@@ -62,6 +62,5 @@
     overflow-x: hidden;
     height: 100%;
     padding: 10px;
-    border-top: 2px solid var(--primary-lighter);
   }
 </style>

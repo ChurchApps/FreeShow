@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeEdit, activePage, shows, undoHistory } from "../../stores"
+import { activeEdit, activePage, overlayCategories, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -52,6 +52,8 @@ export type HistoryIDs =
   | "newShow"
   | "newPrivateShow"
   | "newShowsCategory"
+  | "newOverlay"
+  | "newOverlaysCategory"
   | "newSlide"
   | "newItem"
   | "newStageShow"
@@ -225,6 +227,7 @@ export function history(obj: History, undo: null | boolean = null) {
       old = {}
       old.slides = _show(showIDs).set({ key: "slides", value: obj.newData.slides })
       old.layout = _show(showIDs).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout })
+      if (undo) old = null
       // showsCache.update((a) => {
       //   a[obj.location!.show!.id].slides = obj.newData.slides
       //   a[obj.location!.show!.id].layouts[obj.location!.layout!].slides = obj.newData.layout
@@ -233,10 +236,8 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     // show
     case "changeSlide":
-      old = obj.newData
-      _show(showIDs)
-        .slides([obj.location!.slide!])
-        .set({ key: Object.entries(obj.newData)[0], values: Object.values(obj.newData) })
+      old = { key: obj.newData.key, value: _show(showIDs).slides([obj.location!.slide!]).set(obj.newData) }
+
       // showsCache.update((a) => {
       //   if (!obj.oldData) obj.oldData = {}
       //   let slide: any = a[obj.location!.show!.id].slides[obj.location!.slide!]
@@ -252,12 +253,16 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     // NEW
     case "newMediaFolder":
-      mediaFolders.update((mf) => {
+      mediaFolders.update((a) => {
         if (obj.newData.data === null) {
           // remove folder
-          delete mf[obj.newData.id]
-        } else mf[obj.newData.id] = obj.newData.data
-        return mf
+          delete a[obj.newData.id]
+        } else a[obj.newData.id] = obj.newData.data
+        return a
+      })
+      drawerTabsData.update((a) => {
+        a.media.activeSubTab = obj.newData.id
+        return a
       })
       break
     case "newProject":
@@ -362,7 +367,7 @@ export function history(obj: History, undo: null | boolean = null) {
         }
         setShow(id, obj.newData.show)
 
-        let as: any = { id }
+        let as: any = { id, type: "show" }
         if (obj.location!.project && get(projects)[obj.location!.project!]) {
           projects.update((p) => {
             p[obj.location!.project!].shows.push(as)
@@ -440,6 +445,54 @@ export function history(obj: History, undo: null | boolean = null) {
         return a
       })
       break
+    case "newOverlay":
+      if (undo) {
+        let id: string = obj.oldData.id
+        if (get(outOverlays).includes(id)) outOverlays.set(get(outOverlays).filter((a) => a !== id))
+        overlays.update((a) => {
+          delete a[id]
+          return a
+        })
+      } else {
+        let category: null | string = null
+        if (get(drawerTabsData).overlays.activeSubTab !== "all") category = get(drawerTabsData).overlays.activeSubTab
+        let overlay = {
+          name: "",
+          color: null,
+          category,
+          items: [],
+        }
+        if (!obj.newData?.overlay) obj.newData = { overlay }
+
+        let id: string = obj.newData.id
+        if (!id) {
+          id = uid(12)
+          obj.newData.id = id
+        }
+
+        overlays.update((a) => {
+          a[id] = overlay
+          return a
+        })
+      }
+      break
+    case "newOverlaysCategory":
+      overlayCategories.update((a) => {
+        if (undo) delete a[obj.newData.id]
+        else {
+          if (!obj.newData) {
+            let id = uid()
+            let icon: null | string = null
+            let tab = get(drawerTabsData).overlays.activeSubTab
+            if (tab !== "all" && tab !== "unlabeled") icon = get(drawerTabsData).overlays.activeSubTab
+            obj.newData = { id, data: { name: "", icon } }
+            obj.oldData = { id }
+          }
+          a[obj.newData.id] = obj.newData.data
+        }
+        return a
+      })
+      break
     case "newSlide":
       if (undo) {
         // TODO: undo new slide
@@ -453,7 +506,7 @@ export function history(obj: History, undo: null | boolean = null) {
         let ref = layouts.ref()[0]
         // let color: null | string = null
 
-        if (!obj.newData.slide && !obj.newData.parent) {
+        if (!obj.newData.slide && !obj.newData.slides && !obj.newData.parent) {
           let isParent: boolean = true
           // add as child
           // TODO: add by template
@@ -482,24 +535,29 @@ export function history(obj: History, undo: null | boolean = null) {
             _show(showIDs).layouts("active").slides([index]).add([value])
           }
         } else {
-          // add custom
-          let id: string = _show(showIDs).slides().add(obj.newData.slide, true)
-          let l: any = { id }
+          let slides = obj.newData.slides || [obj.newData.slide]
+          slides.forEach((slide: any, i: number) => {
+            // add custom
+            let id: string = _show(showIDs).slides().add(slide, true)
+            let l: any = { id }
 
-          // bgs
-          if (obj.newData.backgrounds?.length) {
-            let bgid = _show(showIDs).media().add(obj.newData.backgrounds)
-            l.background = bgid
-          }
+            // bgs
+            if (obj.newData.backgrounds?.length) {
+              let bgid = _show(showIDs)
+                .media()
+                .add(obj.newData.backgrounds[i] || obj.newData.backgrounds[0])
+              l.background = bgid
+            }
 
-          // layouts
-          // let newIndex: number = index
-          // layouts.get()[0].forEach((a: any, i: number) => {
-          //   if (i < index && a.children) newIndex -= Object.keys(a.children).length
-          // })
-          // [newIndex]
+            // layouts
+            // let newIndex: number = index
+            // layouts.get()[0].forEach((a: any, i: number) => {
+            //   if (i < index && a.children) newIndex -= Object.keys(a.children).length
+            // })
+            // [newIndex]
 
-          _show(showIDs).layouts("active").slides().add([l])
+            _show(showIDs).layouts("active").slides().add([l])
+          })
         }
 
         activeEdit.update((a) => {
@@ -645,9 +703,12 @@ export function history(obj: History, undo: null | boolean = null) {
 
     case "showMedia":
       let bgid: null | string = null
-      Object.entries(_show(showIDs).media().get()).forEach(([id, a]: any) => {
-        if (a.path === obj.newData.path) bgid = id
-      })
+      _show(showIDs)
+        .media()
+        .get()
+        .forEach((media: any) => {
+          if (media.path === obj.newData.path) bgid = media.id
+        })
 
       if (undo) {
         if (bgid) _show(showIDs).media([bgid]).remove()
@@ -655,7 +716,7 @@ export function history(obj: History, undo: null | boolean = null) {
       } else {
         if (!bgid) bgid = _show(showIDs).media().add(obj.newData)
         let ref = _show(showIDs).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
-        // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()
+        // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
         if (ref.type === "parent") _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
         else _show(showIDs).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.index]).set({ key: "background", value: bgid })
       }

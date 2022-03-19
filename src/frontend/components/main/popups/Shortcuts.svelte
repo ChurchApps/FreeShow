@@ -21,6 +21,7 @@
     // "tabs.live": "ctrl + 8",
     "Change tabs": "num",
     "Change drawer tab": "ctrl + num",
+    "Toggle drawer": "esc",
     ctrl: "SEPERATOR",
     "actions.selectAll": "ctrl + a",
     "clear.all": "ctrl + c",

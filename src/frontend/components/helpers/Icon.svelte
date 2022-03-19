@@ -21,15 +21,17 @@
   }
 </script>
 
-{#if icon}
-  <svg class={$$props.class} class:white class:right class:select on:click={click} style="{$$props.style || ''} min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
-    {@html icon}
-  </svg>
-{/if}
+<svg class={$$props.class} class:white class:right class:select on:click={click} style="{$$props.style || ''} min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
+  {@html icon ? icon : icons.noIcon}
+</svg>
 
 <style>
   svg {
     fill: var(--secondary);
+  }
+
+  svg.select {
+    cursor: pointer;
   }
 
   svg.select:hover {

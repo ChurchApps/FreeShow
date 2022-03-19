@@ -13,31 +13,54 @@
   export let disabled: boolean = false
   let enabled: boolean = menu?.enabled ? true : false
 
-  if (id === "private" && $showsCache[$selected.data[0]?.id]?.private) {
-    enabled = $showsCache[$selected.data[0].id].private!
-  } else if (id === "disable") {
-    if ($selected.id === "slide" && $activeShow && GetLayout()[$selected.data[0]?.index]?.disabled) {
-      enabled = GetLayout()[$selected.data[0].index].disabled!
-    } else if ($selected.id === "group") {
-      enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
-    }
-  } else if (id === "remove" && $selected.id === "slide") {
-    if ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child") disabled = true
-  } else if (id === "undo" && !$undoHistory.length) disabled = true
-  else if (id === "redo" && !$redoHistory.length) disabled = true
+  const conditions: any = {
+    private: () => {
+      if ($showsCache[$selected.data[0]?.id]?.private) enabled = $showsCache[$selected.data[0].id].private!
+    },
+    disable: () => {
+      if ($selected.id === "slide" && $activeShow && GetLayout()[$selected.data[0]?.index]?.disabled) {
+        enabled = GetLayout()[$selected.data[0].index].disabled!
+        return
+      }
+      if ($selected.id === "group") enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
+    },
+    remove: () => {
+      if ($selected.id === "slide" && ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child")) disabled = true
+    },
+    undo: () => {
+      if (!$undoHistory.length) disabled = true
+    },
+    redo: () => {
+      if (!$redoHistory.length) disabled = true
+    },
+  }
+  if (conditions[id]) conditions[id]()
+
+  // if (id === "private" && $showsCache[$selected.data[0]?.id]?.private) {
+  //   enabled = $showsCache[$selected.data[0].id].private!
+  // } else if (id === "disable") {
+  //   if ($selected.id === "slide" && $activeShow && GetLayout()[$selected.data[0]?.index]?.disabled) {
+  //     enabled = GetLayout()[$selected.data[0].index].disabled!
+  //   } else if ($selected.id === "group") {
+  //     enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
+  //   }
+  // } else if (id === "remove" && $selected.id === "slide") {
+  //   if ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child") disabled = true
+  // } else if (id === "undo" && !$undoHistory.length) disabled = true
+  // else if (id === "redo" && !$redoHistory.length) disabled = true
 
   function contextItemClick() {
-    if (!disabled) {
-      let actionItem: null | HTMLElement = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id)
-      let sel: any = $selected
+    if (disabled) return
 
-      let m: any = menuClick(id, enabled, menu, contextElem, actionItem, sel)
-      if (m.enabled !== undefined) enabled = m.enabled
-      if (m.hide) contextActive = false
-    }
+    let actionItem: null | HTMLElement = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id)
+    let sel: any = $selected
+
+    let m: any = menuClick(id, enabled, menu, contextElem, actionItem, sel)
+    if (m.enabled !== undefined) enabled = m.enabled
+    if (m.hide) contextActive = false
   }
 
-  const keydown = (e: any) => {
+  function keydown(e: any) {
     if (e.key === "Enter") contextItemClick()
   }
 </script>

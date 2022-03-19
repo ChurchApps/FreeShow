@@ -18,15 +18,14 @@
       let path: string = msg.path
       let exists = Object.values($mediaFolders).find((a) => a.path === path)
       // TODO: alert exists
-      if (!exists) {
-        let id = uid()
-        history({
-          id: "newMediaFolder",
-          oldData: { id: id, data: null },
-          newData: { id: id, data: { name: path.substring(path.lastIndexOf("\\") + 1), icon: "folder", path: path } },
-          location: { page: "drawer" },
-        })
-      }
+      if (exists) return
+      let id = uid()
+      history({
+        id: "newMediaFolder",
+        oldData: { id: id, data: null },
+        newData: { id: id, data: { name: path.substring(path.lastIndexOf("\\") + 1), icon: "folder", path: path } },
+        location: { page: "drawer" },
+      })
     } else if (id === "shows") {
       // set new shows folder location
       showsPath.set(msg.path)

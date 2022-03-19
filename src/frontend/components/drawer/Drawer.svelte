@@ -20,37 +20,43 @@
   let move: boolean = false
   let mouse: null | { x: number; y: number; offsetY: number } = null
   function mousedown(e: any) {
-    if (e.target.classList.contains("top")) {
-      maxHeight = window.innerHeight - 50 - ($os.platform === "win32" ? 30 : 0)
-      mouse = {
-        x: e.clientX,
-        y: e.clientY,
-        offsetY: window.innerHeight - height - e.clientY,
-      }
+    if (!e.target.classList.contains("top")) return
+
+    maxHeight = window.innerHeight - 50 - ($os.platform === "win32" ? 30 : 0)
+    mouse = {
+      x: e.clientX,
+      y: e.clientY,
+      offsetY: window.innerHeight - height - e.clientY,
     }
   }
+
   function mousemove(e: any) {
-    if (mouse) {
-      autoDrawer = false
-      let newHeight: number = window.innerHeight - e.clientY - mouse.offsetY
-      if (newHeight < minHeight * 2) newHeight = minHeight
-      else if (newHeight > maxHeight) newHeight = maxHeight
-      else move = true
-      drawer.set({ height: newHeight, stored: null })
-    }
+    if (!mouse) return
+
+    autoDrawer = false
+    drawer.set({ height: getHeight(window.innerHeight - e.clientY - mouse.offsetY), stored: null })
+  }
+
+  function getHeight(height: any) {
+    if (height < minHeight * 2) return minHeight
+    if (height > maxHeight) return maxHeight
+    move = true
+    return height
   }
 
   $: storeHeight = $drawer.stored
   function click(e: any) {
-    if (!move && !(e?.target instanceof HTMLInputElement)) {
-      if (height > minHeight) {
-        if (e === null || e?.target.classList.contains("top")) drawer.set({ height: minHeight, stored: height })
-      } else {
-        if (storeHeight === null || storeHeight < defaultHeight) height = defaultHeight
-        else height = storeHeight
-        drawer.set({ height, stored: null })
-      }
-    } else move = false
+    if (move || e?.target instanceof HTMLInputElement) {
+      move = false
+      return
+    }
+
+    if (height > minHeight) {
+      if (e === null || e?.target.classList.contains("top")) drawer.set({ height: minHeight, stored: height })
+      return
+    }
+
+    drawer.set({ height: storeHeight === null || storeHeight < defaultHeight ? defaultHeight : storeHeight, stored: null })
   }
 
   function mouseup(e: any) {
@@ -68,10 +74,10 @@
       .filter((n) => n)
       .join(" ")
   function search() {
-    if (storeHeight !== null) {
-      autoDrawer = true
-      click(null)
-    }
+    if (storeHeight === null) return
+
+    autoDrawer = true
+    click(null)
     // if ($activeDrawerTab === "shows") {
     // }
   }
@@ -93,16 +99,17 @@
       if (/^[A-Z]{1}$/i.test(e.key)) searchElem.focus()
     } else if (e.key === "Enter") {
       // TODO: first match
-      if (document.activeElement === searchElem && searchValue.length && firstMatch && $activeProject) {
-        console.log(firstMatch)
-        searchElem.select()
-        history({ id: $activeDrawerTab === "shows" ? "addShow" : "addShow", newData: firstMatch.id })
-        activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
-        searchValue = ""
-        if (autoDrawer && storeHeight === null) {
-          click(null)
-          autoDrawer = false
-        }
+      if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject) return
+
+      console.log(firstMatch)
+      searchElem.select()
+      history({ id: $activeDrawerTab === "shows" ? "addShow" : "addShow", newData: firstMatch.id })
+      activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
+      searchValue = ""
+
+      if (!autoDrawer || storeHeight !== null) {
+        click(null)
+        autoDrawer = false
       }
     }
   }
@@ -182,6 +189,8 @@
 
   .top .tabs {
     display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   .top .tabs span {
     padding-left: 8px;

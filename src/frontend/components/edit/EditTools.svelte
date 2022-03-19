@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
   import type { TabsObj } from "../../../types/Tabs"
-  import { activeEdit, activeShow, showsCache } from "../../stores"
+  import { activeEdit, activeShow, overlays, showsCache } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -12,21 +12,25 @@
   import ItemStyle from "./tools/ItemStyle.svelte"
   import SlideStyle from "./tools/SlideStyle.svelte"
   import TextStyle from "./tools/TextStyle.svelte"
+  import TimerStyle from "./tools/TimerStyle.svelte"
 
-  const tabs: TabsObj = {
+  let tabs: TabsObj = {
     text: { name: "tools.text", icon: "text" },
     item: { name: "tools.item", icon: "item" },
     items: { name: "tools.items", icon: "items" },
     slide: { name: "tools.slide", icon: "options" }, // slide
   }
   let active: string = Object.keys(tabs)[0]
+  $: tabs.text.icon = item?.type || "text"
 
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
-  $: if ($activeEdit.slide !== null && GetLayout($activeShow?.id!).length <= $activeEdit.slide && GetLayout($activeShow?.id!).length > 0) activeEdit.set({ slide: 0, items: [] })
+  $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length <= $activeEdit.slide && GetLayout($activeShow?.id!).length > 0)
+    activeEdit.set({ slide: 0, items: [] })
   $: allSlideItems =
-    $activeEdit.slide !== null && GetLayout($activeShow?.id!).length > $activeEdit.slide
+    $activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length > $activeEdit.slide
       ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items
       : []
+  $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
   // select active items or all items
@@ -35,44 +39,48 @@
   $: item = items?.length ? items[items.length - 1] : null
 
   function reset() {
-    if (active === "text") {
-      let values: any = []
-      items.forEach((item) => {
-        if (item.lines) {
-          let text = item.lines.map((a) => {
-            a.text = a.text.map((a) => {
-              a.style = ""
-              return a
-            })
+    if (active !== "text") return
+
+    let values: any = []
+    items.forEach((item) => {
+      if (item.lines) {
+        let text = item.lines.map((a) => {
+          a.text = a.text.map((a) => {
+            a.style = ""
             return a
           })
-          values.push(text)
-        }
-      })
-
-      if (values.length) {
-        history({
-          id: "textStyle",
-          newData: { key: "text", values },
-          location: {
-            page: "edit",
-            show: $activeShow!,
-            slide: GetLayout()[$activeEdit.slide!].id,
-            items: $activeEdit.items.length ? $activeEdit.items : Object.keys(allSlideItems),
-          },
+          return a
         })
+        values.push(text)
       }
-    }
+    })
+
+    if (!values.length) return
+
+    history({
+      id: "textStyle",
+      newData: { key: "text", values },
+      location: {
+        page: "edit",
+        show: $activeShow!,
+        slide: GetLayout()[$activeEdit.slide!].id,
+        items: $activeEdit.items.length ? $activeEdit.items : Object.keys(allSlideItems),
+      },
+    })
   }
 </script>
 
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
-<div class="main editTools">
-  {#if $activeShow && $activeEdit.slide !== null}
+<div class="main border editTools">
+  {#if ($activeShow && $activeEdit.slide !== null) || $activeEdit.id}
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
-        <TextStyle bind:allSlideItems bind:item />
+        {#if item?.type === "timer"}
+          <TimerStyle bind:allSlideItems bind:item />
+        {:else if item?.lines}
+          <TextStyle bind:allSlideItems bind:item />
+        {/if}
       </div>
     {:else if active === "item"}
       <div class="content">
@@ -113,7 +121,6 @@
     flex-direction: column;
     overflow: hidden;
     height: 100%;
-    border-top: 2px solid var(--primary-lighter);
   }
 
   .content {

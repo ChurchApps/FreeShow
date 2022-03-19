@@ -7,6 +7,8 @@ import { dictionary, language } from "../stores"
 // const LANGUAGE_FILE_URL = './lang/{locale}.json';
 // let cachedLocale;
 
+// https://lokalise.com/blog/svelte-i18n/
+
 // let rtls = ["ar"]
 const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
 

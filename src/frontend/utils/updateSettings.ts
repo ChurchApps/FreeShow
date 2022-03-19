@@ -1,3 +1,4 @@
+import { projectView } from "./../stores"
 import { MAIN } from "../../types/Channels"
 import {
   activePopup,
@@ -40,6 +41,7 @@ export function updateSettings(data: any[]) {
     switch (key) {
       case "initialized":
         if (!value) {
+          // FIRST TIME USER
           activePopup.set("initialize")
         }
         break
@@ -51,6 +53,7 @@ export function updateSettings(data: any[]) {
         break
       case "activeProject":
         activeProject.set(value)
+        if (value) projectView.set(false)
         break
       case "remotePassword":
         remotePassword.set(value)

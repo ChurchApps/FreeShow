@@ -1,44 +1,47 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { activeShow, showsCache, screen, outSlide, draw, drawTool, drawSettings } from "../../stores"
-  import { GetLayout } from "../helpers/get"
+  import { activeShow, draw, drawSettings, drawTool, outSlide, screen, showsCache } from "../../stores"
+  import { _show } from "../helpers/shows"
   import Output from "../output/Output.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
 
-  $: Slide = $outSlide !== null && $activeShow !== null ? $showsCache[$activeShow.id].slides[GetLayout($activeShow.id)[$outSlide.index]?.id] : null
+  $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
+  $: Slide = $outSlide !== null && ref ? _show("active").slides([ref[$outSlide.index]?.id]) : null
 
   let width: number = 0
   let height: number = 0
-  let resolution: Resolution = Slide && $activeShow !== null ? $showsCache[$activeShow.id].settings.resolution! : $screen.resolution
   // TODO: zoom more in...
-
+  let resolution: Resolution = Slide && $activeShow !== null ? $showsCache[$activeShow.id].settings.resolution! : $screen.resolution
   let ratio: number = 0
 
   let parent: any
-  function move(e: any) {
-    if ((e.buttons || !$drawSettings[$drawTool]?.hold) && e.target.closest(".parent") === parent && e.target.closest(".slide") !== null) {
-      let slide = e.target.closest(".slide")
-      let x = (e.clientX - slide.offsetLeft - (slide.closest(".parent").offsetLeft || 0)) / ratio
-      let y = (e.clientY - slide.offsetTop - (slide.closest(".parent").offsetTop || 0)) / ratio
-      if ($drawTool === "pointer" || $drawTool === "focus") {
-        let size = $drawSettings[$drawTool]?.size
-        x -= size / 2
-        y -= size / 2
-      }
+  function onMouseMove(e: any) {
+    let slide = e.target.closest(".slide")
 
-      draw.set({ x, y })
-    } else draw.set(null)
+    if ((!e.buttons && $drawSettings[$drawTool]?.hold) || e.target.closest(".parent") !== parent || !slide) {
+      draw.set(null)
+      return
+    }
+
+    let x = (e.clientX - slide.offsetLeft - (slide.closest(".parent").offsetLeft || 0)) / ratio
+    let y = (e.clientY - slide.offsetTop - (slide.closest(".parent").offsetTop || 0)) / ratio
+
+    if ($drawTool === "pointer" || $drawTool === "focus") {
+      let size = $drawSettings[$drawTool]?.size
+      x -= size / 2
+      y -= size / 2
+    }
+
+    draw.set({ x, y })
   }
 
   const wheel = (e: any) => {
-    if (draw !== null && $drawSettings[$drawTool]?.size && e.target.closest(".parent") === parent && e.target.closest(".slide") !== null) {
-      drawSettings.update((ds) => {
-        ds[$drawTool].size -= e.deltaY / (e.ctrlKey ? 10 : e.altKey ? 100 : 25)
-        if (ds[$drawTool].size < 0) ds[$drawTool].size = 0
-        else if (ds[$drawTool].size > 2000) ds[$drawTool].size = 2000
-        return ds
-      })
-    }
+    if (draw === null || !$drawSettings[$drawTool]?.size || e.target.closest(".parent") !== parent || !e.target.closest(".slide")) return
+
+    drawSettings.update((a) => {
+      a[$drawTool].size = Math.max(0, Math.min(2000, a[$drawTool].size - e.deltaY / (e.ctrlKey ? 10 : e.altKey ? 100 : 25)))
+      return a
+    })
   }
 </script>
 
@@ -46,12 +49,13 @@
   on:mouseup={() => {
     if ($drawSettings[$drawTool]?.hold) draw.set(null)
   }}
-  on:mousemove={move}
+  on:mousemove={onMouseMove}
 />
 
 <div class="parent" bind:this={parent} bind:offsetWidth={width} bind:offsetHeight={height}>
-  <div style="width: 100%;height: 100%;display: flex;flex-direction: column;justify-content: center;" on:mousedown={move} on:wheel={wheel}>
-    <Output bind:ratio center style={getStyleResolution(resolution, width, height)} transition={{ type: "fade", duration: 0 }} />
+  <div style="width: 100%;height: 100%;display: flex;flex-direction: column;justify-content: center;" on:mousedown={onMouseMove} on:wheel={wheel}>
+    <!-- TODO: draw get video time! -->
+    <Output bind:ratio center style={getStyleResolution(resolution, width, height)} transition={{ type: "fade", duration: 0 }} mirror />
   </div>
 </div>
 

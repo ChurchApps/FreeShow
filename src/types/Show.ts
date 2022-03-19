@@ -50,9 +50,20 @@ export interface Item {
   auto?: boolean
   style: string
   align?: string
-  media?: {}
+  media?: any
+  timer?: Timer
   type?: ItemType
   // tag?: string; // p, div????
+}
+
+export interface Timer {
+  id: string
+  name: string
+  type?: "countdown"
+  start: number
+  end: number
+  format: string
+  paused?: boolean
 }
 
 export interface Line {
@@ -155,7 +166,7 @@ export interface OutTransition extends Transition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "shape" | "image" | "video" | "music"
+export type ItemType = "text" | "shape" | "image" | "video" | "audio" | "timer"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
 export type TransitionType = "none" | "fade"
 export type MediaType = "media" | "screen" | "camera" | "player"

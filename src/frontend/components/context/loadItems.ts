@@ -13,7 +13,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
       })
       break
     case "slide_groups":
-      let currentGroup = get(showsCache)[get(activeShow)!.id].slides[GetLayoutRef()[get(selected).data[0].index].id].globalGroup
+      let currentGroup = get(showsCache)[get(activeShow)!.id].slides[GetLayoutRef()[get(selected).data[0]?.index].id].globalGroup
       Object.entries(get(groups)).forEach(([aID, a]: any) => {
         items.push([id, { id: aID, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: a.default, enabled: aID === currentGroup }])
       })

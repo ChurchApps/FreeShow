@@ -71,11 +71,13 @@
     "overlays": "Fjern overlegg",
     "audio": "Fjern lyd",
     "transistion": "Fjern overgang",
-    "to_start": "Fjern Gå til start"
+    "to_start": "Fjern Gå til start",
+    "timer": "Fjern nedtelling"
   },
   "media": {
     "_loop": "Loop",
     "play": "Spill av",
+    "pause": "Sett på pause",
     "show": "Vis"
   },
   "menu": {
@@ -107,7 +109,8 @@
     "stage_shows": "Ingen sceneshow",
     "groups": "Ingen grupper",
     "events": "Ingen arrangement",
-    "text": "Skriv noe"
+    "text": "Skriv noe",
+    "timers": "Ingen nedtellinger i noen show i dette prosjektet"
   },
   "remote": {
     "projects": "Prosjekter",
@@ -127,7 +130,8 @@
   "error": {
     "no_show": "Kunne ikke finne noen show",
     "no_layouts": "Kunne ikke finne noen oppsett",
-    "load": "Kunne ikke laste inn"
+    "load": "Kunne ikke laste inn",
+    "not_found": "Ikke funnet"
   },
   "meta": {
     "title": "Tittel",
@@ -162,7 +166,8 @@
   },
   "inputs": {
     "name": "Navn",
-    "video_id": "Video ID/URL"
+    "video_id": "Video ID/URL",
+    "close_ad": "Lukk annonse på utgangsskjermen"
   },
   "tabs": {
     "shows": "Show",
@@ -178,9 +183,10 @@
   "category": {
     "all": "Alt",
     "unlabeled": "Umerket",
-    "song": "Sang",
+    "song": "Sanger",
     "info": "Info",
-    "presentation": "Presentasjon",
+    "events": "Hendelser",
+    "presentation": "Presentasjoner",
     "pictures": "Bilder",
     "videos": "Videoer",
     "offers": "Offer",
@@ -222,6 +228,7 @@
     "private": "Nytt privat show",
     "folder": "Ny mappe",
     "slide": "Nytt lysbilde",
+    "overlay": "Nytt overlegg",
     "event": "Nytt arrangement"
   },
   "show": {
@@ -463,6 +470,10 @@
     "used": "Brukt",
     "changed": "Brukt",
     "extension": "Filtype",
-    "size": "Størrelse"
+    "size": "Størrelse",
+    "slides": "Lysbilder",
+    "words": "Ord",
+    "template": "Mal",
+    "category": "Kategori"
   }
 }

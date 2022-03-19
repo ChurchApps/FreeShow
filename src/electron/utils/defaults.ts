@@ -33,8 +33,8 @@ export const defaultSettings = {
     paint: {},
   },
   overlayCategories: {
-    offers: { name: "category.offers", icon: "money", default: true },
-    notice: { name: "category.notice", icon: "notice", default: true },
+    offers: { name: "category.offers", icon: "cash", default: true },
+    notice: { name: "category.notice", icon: "info", default: true },
     visuals: { name: "category.visuals", icon: "star", default: true },
   },
   templateCategories: {

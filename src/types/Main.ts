@@ -44,8 +44,9 @@ export interface SlidesOptions {
 
 export interface ActiveEdit {
   // id?: string
-  // type?: "show" | "media" | "overlay" | "template"
-  slide: null | number
+  type?: "show" | "media" | "overlay" | "template" | "audio"
+  id?: string
+  slide?: null | number
   items: number[]
 }
 

@@ -49,3 +49,24 @@ export function dateToString(date: any, full: boolean = false, d: any = {}): str
   // TODO: get format (DD.MM.YY) | YYYY-MM-DD | MM/DD/YYYY
   return string
 }
+
+export function secondsToTimes(time: number) {
+  // let hours: number = Math.floor((time / (1000 * 60 * 60)) % 24);
+  // let minutes: number = Math.floor((time / 1000 / 60) % 60);
+  // let seconds: number = Math.floor((time / 1000) % 60);
+  let hours: number = Math.floor((time / (60 * 60)) % 24)
+  let minutes: number = Math.floor((time / 60) % 60)
+  let seconds: number = Math.floor(time % 60)
+
+  return { hours, minutes, seconds }
+}
+
+export function format(t: string, { hours, minutes, seconds }: any) {
+  if (t === "HH") return addZero(hours)
+  if (t === "MM") return addZero(minutes)
+  if (t === "SS") return addZero(seconds)
+  return ""
+}
+
+const addZero = (a: number) => ("0" + a).slice(-2)
+// const clip = (a: number) => Math.max(0, Math.min(59, a))

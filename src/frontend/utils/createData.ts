@@ -1,7 +1,6 @@
-import { remotePassword, showsPath } from "./../stores"
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
-import { audioFolders, dictionary, folders, mediaFolders, projects, shows, templates } from "../stores"
+import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, showsPath, templates } from "../stores"
 import { save } from "./save"
 
 export function createData(paths: any) {
@@ -45,6 +44,33 @@ export function createData(paths: any) {
     })
   }
 
+  overlays.update((a) => {
+    a.watermark = {
+      name: get(dictionary).example?.watermark || "Watermark",
+      color: "#e6349c",
+      category: null,
+      items: [
+        {
+          style: "top:870px;left:1248px;height:170px;width:630px;",
+          align: "align-items:flex-end;",
+          lines: [{ align: "text-align: right;", text: [{ value: "FreeShow", style: "font-size:50px;font-weight:bold;color:#e6349c;" }] }],
+        },
+      ],
+    }
+    a.visual = {
+      name: get(dictionary).example?.recording || "Recording",
+      color: "red",
+      category: "visuals",
+      // TODO: create box
+      items: [
+        { style: "top:35px;left:36.5px;height:1008.21px;width:1847.62px;border:4px solid white;" },
+        { style: "top:80px;left:80px;height:40px;width:40px;background-color:red;border-radius:50%;" },
+        { style: "top:80px;left:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] },
+      ],
+    }
+    return a
+  })
+
   folders.update((a) => {
     a.default = { name: get(dictionary).example?.meetings || "Meetings", parent: "/" }
     return a
@@ -59,6 +85,7 @@ export function createData(paths: any) {
     }
     return a
   })
+
   // TODO: translate templates
   templates.update((a) => {
     a.default = {
@@ -75,7 +102,6 @@ export function createData(paths: any) {
     }
     return a
   })
-  // TODO: get folders
   mediaFolders.update((a) => {
     a.pictures = { name: "category.pictures", icon: "folder", path: paths.pictures, default: true }
     a.videos = { name: "category.videos", icon: "folder", path: paths.videos, default: true }

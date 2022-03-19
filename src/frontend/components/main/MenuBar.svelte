@@ -8,7 +8,15 @@
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
-  let maximized = false
+  const menus: string[] = ["file", "edit", "view", "help"]
+
+  let maximized: boolean = false
+  let active: boolean = false
+  let activeID: null | string = null
+  let activeMenu: string[] = []
+  let x: number = 0
+  let y: number = 30
+
   window.api.send(MAIN, { channel: "MAXIMIZED" })
   window.api.receive(MAIN, (msg: any) => {
     if (msg.channel === "MAXIMIZED") maximized = msg.data
@@ -16,22 +24,13 @@
 
   function menu(e: any) {
     let id: string = e.target.id
-    if (activeID === id) {
-      activeID = null
-      active = false
-    } else {
-      activeID = id
+    active = activeID !== id
+    activeID = activeID === id ? null : id
+    if (activeID !== id) {
       x = e.target.offsetLeft
       activeMenu = contextMenuLayouts[id]
-      active = true
     }
   }
-
-  let active: boolean = false
-  let activeID: null | string = null
-  let activeMenu: string[] = []
-  let x: number = 0
-  let y: number = 30
 
   const click = (e: MouseEvent) => {
     if (e.target?.closest(".menu") === null && e.target?.closest(".menus") === null) {
@@ -46,8 +45,6 @@
       menu(e)
     }
   }
-
-  const menus: string[] = ["file", "edit", "view", "help"]
 </script>
 
 <svelte:window on:click={click} on:contextmenu={click} />

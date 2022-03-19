@@ -28,7 +28,7 @@
   })
 </script>
 
-<div class="main stageTools">
+<div class="main border stageTools">
   <Tabs {tabs} bind:active labels={false} />
   {#if active === "item"}
     <div class="content">
@@ -60,7 +60,6 @@
     flex-direction: column;
     overflow: hidden;
     height: 100%;
-    border-top: 2px solid var(--primary-lighter);
   }
 
   .content {

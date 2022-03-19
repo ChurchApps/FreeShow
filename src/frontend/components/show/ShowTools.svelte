@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
   import { activeShow, showsCache } from "../../stores"
+  import { _show } from "../helpers/shows"
   import Tabs from "../main/Tabs.svelte"
   import Audio from "./tools/Audio.svelte"
   import Media from "./tools/Media.svelte"
@@ -20,26 +21,25 @@
   let active: string = Object.keys(tabs)[0]
 
   $: showId = $activeShow?.id
-  let a: any = null
+  let currentLayout: any = null
   let note: string = ""
-  $: {
-    if (showId && $showsCache[showId]?.settings.activeLayout !== a) {
-      note = showId ? $showsCache[showId]?.layouts[$showsCache[showId].settings.activeLayout].notes : ""
-      a = $showsCache[showId]?.settings.activeLayout
-    }
+  $: if (showId && $showsCache[showId]?.settings.activeLayout !== currentLayout) updateNote()
+
+  function updateNote() {
+    if (!showId) return
+    note = showId ? _show("active").layouts("active").get("notes")[0] : ""
+    currentLayout = $showsCache[showId]?.settings.activeLayout
   }
 
   function edit(e: any) {
-    if (showId && $showsCache[showId].layouts[$showsCache[showId].settings.activeLayout].notes !== e.detail) {
-      showsCache.update((a) => {
-        a[showId!].layouts[$showsCache[showId!].settings.activeLayout].notes = e.detail
-        return a
-      })
-    }
+    if (!showId || $showsCache[showId].layouts[$showsCache[showId].settings.activeLayout].notes === e.detail) return
+    _show("active").layouts("active").set({ key: "notes", value: e.detail })
   }
 </script>
 
-<div class="main">
+<svelte:window on:mousedown={updateNote} />
+
+<div class="main border">
   <Tabs {tabs} bind:active />
 
   {#if showId && $showsCache[showId]}
@@ -77,7 +77,6 @@
     overflow-y: auto; */
     overflow: hidden;
     height: 100%;
-    border-top: 2px solid var(--primary-lighter);
     /* overflow-x: hidden; */
   }
 

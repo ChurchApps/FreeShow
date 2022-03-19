@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Category } from "../../../types/Tabs"
-  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, shows, templateCategories, webFavorites } from "../../stores"
+  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, overlays, shows, templateCategories, webFavorites } from "../../stores"
   import { keysToID, sortObject } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -29,7 +29,11 @@
     } else if (id === "media") {
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($mediaFolders), "name") as Button[])]
     } else if (id === "overlays") {
-      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($overlayCategories), "name") as Button[])]
+      buttons = [
+        { id: "all", name: "category.all", default: true, icon: "all" },
+        ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
+        { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
+      ]
     } else if (id === "templates") {
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($templateCategories), "name") as Button[])]
     } else if (id === "audio") {
@@ -65,6 +69,7 @@
   }
 
   let length: any = {}
+  if (id) length = {}
   $: {
     buttons.forEach((a) => {
       length[a.id] = 0
@@ -73,6 +78,10 @@
           if (!b.private) {
             if (a.id === "all" || b.category === a.id || (b.category === null && a.id === "unlabeled")) length[a.id]++
           }
+        })
+      } else if (id === "overlays") {
+        Object.values($overlays).forEach((b: any) => {
+          if (a.id === "all" || b.category === a.id || (b.category === null && a.id === "unlabeled")) length[a.id]++
         })
       }
     })
@@ -113,8 +122,8 @@
               <span style="display: flex;align-items: center;width: 100%;">
                 <Icon
                   id={category.icon || "noIcon"}
-                  custom={id === "shows" && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
-                  select={category.id !== "all" && category.id !== "unlabeled"}
+                  custom={(id === "shows" || id === "overlays") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
+                  select={(id === "shows" || id === "overlays") && category.id !== "all" && category.id !== "unlabeled"}
                 />
                 <span id={category.id} style="width: 100%;text-align: left;">
                   {#if id === "scripture" || id === "player"}
@@ -153,6 +162,15 @@
         <T id="new.folder" />
       </span>
     </FolderPicker>
+  {:else if id === "overlays"}
+    <div class="tabs">
+      <Button on:click={() => history({ id: "newOverlaysCategory" })} center title={$dictionary.new?.category}>
+        <Icon id="all" right />
+        <span style="color: var(--secondary);">
+          <T id="new.category" />
+        </span>
+      </Button>
+    </div>
   {/if}
 </div>
 

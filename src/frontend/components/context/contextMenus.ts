@@ -88,7 +88,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // , "convertToOverlay"
   drawer_show_button: ["addToProject", "rename", "duplicate", "delete", "SEPERATOR", "export"],
   // media / audio
-  media_card: ["add_to_project"],
+  media_card: ["edit", "add_to_project", "add_to_show"],
   overlay_card: ["rename", "recolor", "addToFirstSlide", "edit", "SEPERATOR", "duplicate", "delete"],
   template_card: ["rename", "recolor", "addToShow", "edit", "SEPERATOR", "duplicate", "delete"],
   player_button: ["edit", "addToProject", "delete"],

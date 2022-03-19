@@ -1,7 +1,9 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
+  import Timer from "./views/Timer.svelte"
 
   export let item: Item
+  export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
   export let style: boolean = true
 </script>
 
@@ -18,6 +20,8 @@
         {/each}
       </div>
     </div>
+  {:else if item.type === "timer"}
+    <Timer {item} {ref} />
   {/if}
 </div>
 

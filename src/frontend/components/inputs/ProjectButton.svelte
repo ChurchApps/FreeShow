@@ -49,7 +49,7 @@
   class="context #rename__projects"
   class:active
 >
-  <Icon id="file" />
+  <Icon id="project" />
   <HiddenInput value={name} on:edit={edit} />
 </button>
 

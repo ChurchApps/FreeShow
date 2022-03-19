@@ -70,22 +70,32 @@
     if (e.ctrlKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
   }
 
+  const shortcuts: any = {
+    ArrowRight: () => {
+      if (activeFile === null || activeFile < content - 1) activeFile = activeFile === null ? 0 : activeFile + 1
+    },
+    ArrowLeft: () => {
+      if (activeFile === null || activeFile > 0) activeFile = activeFile === null ? content - 1 : activeFile - 1
+    },
+    Backspace: () => {
+      if (rootPath === path) return
+      goBack()
+    },
+  }
+
   function keydown(e: any) {
-    if (!e.target.closest("input") && !e.target.closest(".edit") && e.ctrlKey && allFiles.length) {
-      if (e.key === "ArrowRight") {
-        // e.preventDefault()
-        if (activeFile === null || activeFile < content - 1) activeFile = activeFile === null ? 0 : activeFile + 1
-      } else if (e.key === "ArrowLeft") {
-        // e.preventDefault()
-        if (activeFile === null || activeFile > 0) activeFile = activeFile === null ? content - 1 : activeFile - 1
-      } else if (e.key === "Backspace") {
-        if (rootPath !== path) {
-          const folder = path.slice(0, path.lastIndexOf("\\"))
-          if (folder.length > rootPath.length) path = folder
-          else path = rootPath
-        }
-      }
+    if (e.target.closest("input") || e.target.closest(".edit") || !e.ctrlKey || !allFiles.length) return
+
+    if (shortcuts[e.key]) {
+      // e.preventDefault()
+      shortcuts[e.key]()
     }
+  }
+
+  function goBack() {
+    const lastSlash = path.lastIndexOf("/") > -1 ? path.lastIndexOf("/") : path.lastIndexOf("\\")
+    const folder = path.slice(0, lastSlash)
+    path = folder.length > rootPath.length ? folder : rootPath
   }
 </script>
 
@@ -117,22 +127,20 @@
 </div>
 
 <div class="tabs" style="display: flex;align-items: center;">
-  <Button
-    disabled={rootPath === path}
-    title={$dictionary.actions?.back}
-    on:click={() => {
-      const folder = path.slice(0, path.lastIndexOf("\\"))
-      if (folder.length > rootPath.length) path = folder
-      else path = rootPath
-    }}
-  >
+  <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
     <Icon size={1.3} id="back" />
   </Button>
   <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
     <Icon size={1.3} id="home" />
   </Button>
   <span style="flex: 1;text-align: center;">
-    {#key name}<T id={name} />{/key}
+    <!-- {#key name} -->
+    {#if name.includes(".")}
+      <T id={name} />
+    {:else}
+      {name}
+    {/if}
+    <!-- {/key} -->
   </span>
   <Button disabled={!allFiles.length || activeFile === 0} on:click={() => (activeFile = activeFile === null ? content - 1 : activeFile - 1)}>
     <Icon size={1.3} id="previous" />
@@ -164,10 +172,18 @@
   >
     <Icon size={1.3} id={$mediaOptions.grid ? "grid" : "list"} white />
   </Button>
-  <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title={$dictionary.actions?.zoomOut}>
+  <Button
+    disabled={$mediaOptions.columns >= 10}
+    on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })}
+    title={$dictionary.actions?.zoomOut}
+  >
     <Icon size={1.3} id="remove" white />
   </Button>
-  <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn}>
+  <Button
+    disabled={$mediaOptions.columns <= 2}
+    on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })}
+    title={$dictionary.actions?.zoomIn}
+  >
     <Icon size={1.3} id="add" white />
   </Button>
   <p class="text">{(100 / $mediaOptions.columns).toFixed()}%</p>
