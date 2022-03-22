@@ -1,253 +1,265 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
-import { activeEdit, activePage, activePopup, activeProject, activeShow, drawerTabsData, projects, projectView, saved, selected, showsCache } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, drawerTabsData, projects, projectView, saved, selected, showsCache } from "../../stores"
+import { send } from "../../utils/request"
 import { save } from "../../utils/save"
-import { history, redo, undo } from "../helpers/history"
 import { GetLayoutRef } from "../helpers/get"
+import { history, redo, undo } from "../helpers/history"
 import { _show } from "../helpers/shows"
+import { activeRename } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = null) {
-  let m: any = { hide: true }
+  if (actions[id]) return actions[id]({ sel, actionItem, enabled, contextElem, menu })
+  console.log("MISSING CONTEXT: ", id)
+}
 
-  switch (id) {
-    // file
-    case "save":
-      save()
-      break
-    case "settings":
-      activePage.set("settings")
-      break
-    case "quit":
-      if (get(saved)) window.api.send(MAIN, { channel: "CLOSE" })
-      else activePopup.set("unsaved")
-      break
-    // view
-    case "fullscreen":
-      window.api.send(MAIN, { channel: "FULLSCREEN" })
-      break
-    // edit
-    case "undo":
-      undo()
-      break
-    case "redo":
-      redo()
-      break
-    // view
-    // help
-    case "docs":
-      window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" })
-      break
-    case "shortcuts":
-    case "about":
-      activePopup.set(id)
-      break
+const actions: any = {
+  // file
+  save: () => save(),
+  settings: () => activePage.set("settings"),
+  quit: () => {
+    if (get(saved)) send(MAIN, ["CLOSE"])
+    else activePopup.set("unsaved")
+  },
+  // view
+  fullscreen: () => send(MAIN, ["FULLSCREEN"]),
+  // edit
+  undo: () => undo(),
+  redo: () => redo(),
+  // view
+  // help
+  docs: () => window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" }),
+  shortcuts: () => activePopup.set("shortcuts"),
+  about: () => activePopup.set("about"),
+  // main
+  rename: (obj: any) => {
+    console.log(obj)
 
-    // main
-    case "rename":
-      if (sel.id === "slide" || sel.id === "group") {
-        activePopup.set("rename")
-      } else {
-        if (actionItem instanceof HTMLInputElement) {
-          // actionItem.focus()
-          console.log(actionItem.value)
-          // actionItem!.dispatchEvent(new CustomEvent("doubleclick"))
-        } else if (actionItem) {
-          // actionItem.click()
-          console.log(actionItem.innerHTML)
-          // actionItem.dispatchEvent(new CustomEvent("contextmenu"))
-        }
-      }
-      break
-    case "remove":
-      if (sel.id === "show" && get(activeProject)) {
-        // TODO: don't remove private!!!!
-        projects.update((a) => {
-          sel.data.forEach((b: any) => {
-            a[get(activeProject)!].shows = a[get(activeProject)!].shows.filter((a) => a.id !== b.id)
+    if (obj.sel.id === "slide" || obj.sel.id === "group") activePopup.set("rename")
+    else if (obj.sel.id === "show") activeRename.set("show_" + obj.sel.data[0].id + "#" + obj.sel.data[0].index)
+    else if (obj.sel.id === "show_drawer") activeRename.set("show_drawer_" + obj.sel.data[0].id)
+    else if (obj.sel.id === "category") activeRename.set("category_" + get(activeDrawerTab) + "_" + obj.sel.data[0])
+    else if (obj.sel.id === "project") activeRename.set("project_" + obj.sel.data[0].id)
+    else if (obj.sel.id === "folder") activeRename.set("folder_" + obj.sel.data[0].id)
+    else if (obj.sel.id === "layout") activeRename.set("layout_" + obj.sel.data[0])
 
-            if (get(activeShow)?.index === b.index) {
-              activeShow.update((a) => {
-                delete a!.index
-                return a
-              })
-            }
-          })
-          return a
-        })
-      } else if (sel.id === "slide") {
-        sel.data.forEach((a: any) => {
-          let slide = GetLayoutRef()[a.index].id
-          // TODO: change layout children & slide parent children
-          history({ id: "changeSlide", newData: { group: null, color: null, globalGroup: null }, location: { page: "show", show: get(activeShow)!, slide } })
-        })
-      }
-      break
-    case "remove_slide":
-      let location: any = { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout }
-      let ref = _show(location.show).layouts([location.layout]).ref()[0]
-      let parents: any[] = []
-      let childs: any[] = []
-
-      // remove parents and delete childs
-      sel.data.forEach((a: any) => {
-        if (ref[a.index].type === "parent") parents.push(ref[a.index].index)
-        else childs.push(ref[a.index].id)
-      })
-      // TODO: "delete" in menu if child...
-      console.log(parents, childs)
-
-      if (parents.length) {
-        history({
-          id: "removeSlides",
-          newData: { indexes: parents },
-          location,
-        })
-      }
-      if (childs.length) {
-        history({
-          id: "deleteSlides",
-          newData: { ids: childs },
-          location: { page: "show", show: get(activeShow)! },
-        })
-      }
-      break
-    case "delete":
-      if (sel.id === "show_drawer") {
-        activePopup.set("delete_show")
-      } else if (sel.id === "category") {
-        sel.data.forEach((a: any) => {
-          history({ id: "deleteShowsCategory", newData: { id: a } })
-        })
-      }
-      break
-    case "duplicate":
-      if (sel.id === "show" || sel.id === "show_drawer") {
-        sel.data.forEach((a: any) => {
-          let show = { ...get(showsCache)[a.id] }
-          show.name += " #2"
-          show.timestamps.modified = new Date().getTime()
-          console.log(show)
-          history({ id: "newShow", newData: { show }, location: { page: "show", project: sel.id === "show" ? get(activeProject) : null } })
-        })
-      } else if (sel.id === "slide") {
-        // TODO: duplicate slide....
-      }
-      break
-    // drawer
-    case "enabled_drawer_tabs":
-      m.hide = false
-      m.enabled = !enabled
-      drawerTabsData.update((a) => {
-        a[menu.id!].enabled = !enabled
-        return a
-      })
-      break
-    case "addToProject":
-      if ((sel.id === "show" || sel.id === "show_drawer") && get(activeProject)) {
-        projects.update((a) => {
-          a[get(activeProject)!].shows.push(...sel.data)
-          // sel.data.forEach((b: any) => {
-          //   console.log(b, a[get(activeProject)!].shows)
-
-          //   a[get(activeProject)!].shows.push({ id: b.id })
-          // })
+    // else if (obj.actionItem instanceof HTMLInputElement) {
+    //   // obj.actionItem.focus()
+    //   console.log(obj.actionItem.value)
+    //   // obj.actionItem!.dispatchEvent(new CustomEvent("doubleclick"))
+    // } else if (obj.actionItem) {
+    //   // obj.actionItem.click()
+    //   console.log(obj.actionItem.innerHTML)
+    //   // obj.actionItem.dispatchEvent(new CustomEvent("contextmenu"))
+    // }
+  },
+  remove: (obj: any) => {
+    if (obj.sel.id === "show" && get(activeProject)) {
+      let shows = get(projects)[get(activeProject)!].shows
+      let indexes = obj.sel.data.map((a: any) => a.index)
+      if (get(activeShow)?.index !== undefined && indexes.includes(get(activeShow)?.index)) {
+        activeShow.update((a) => {
+          delete a!.index
           return a
         })
       }
-      break
-    // new
-    case "newShowPopup":
-      activePopup.set("show")
-      break
-    case "newShow":
-    case "newProject":
-    case "newFolder":
-    case "newPrivateShow":
-      let oldData = null
-      if (id === "newProject" || id === "newFolder") oldData = contextElem.getAttribute("data-parent") || contextElem.id
-      history({ id, oldData, location: { page: "show", project: get(activeProject) } })
-      break
-    // project
-    case "close":
-      if (contextElem.classList.contains("#projectTab") && get(activeProject)) {
-        activeProject.set(null)
-        projectView.set(true)
-      }
-      break
-    case "private":
-      showsCache.update((a) => {
-        sel.data.forEach((b: any) => {
-          a[b.id].private = !enabled
-        })
-        return a
-      })
-      break
-    // show
-    case "disable":
-      if (sel.id === "slide") {
-        showsCache.update((a) => {
-          sel.data.forEach((b: any) => {
-            let ref = GetLayoutRef()[b.index]
-            if (ref.type === "child") a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[ref.layoutIndex].children[ref.id].disabled = !enabled
-            else a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[ref.index].disabled = !enabled
-          })
-          return a
-        })
-      } else if (sel.id === "group") {
-        showsCache.update((a) => {
-          let ref = GetLayoutRef()
-          ref.forEach((b: any) => {
-            sel.data.forEach((c: any) => {
-              console.log(b)
-              if (b.type === "child" && b.parent === c.id)
-                a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex].children[b.id].disabled = !enabled
-              else if (b.id === c.id) a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex || b.index].disabled = !enabled
-            })
-          })
-          return a
-        })
-      }
-      break
-    case "edit":
-      if (sel.id === "slide") {
-        activeEdit.set({ slide: sel.data[0].index, items: [] })
-      } else if (sel.id === "overlay") {
-        activeEdit.set({ type: "overlay", id: sel.data, items: [] })
-      }
-      activePage.set("edit")
-      break
-    case "slide_groups":
-      sel.data.forEach((a: any) => {
+      history({ id: "updateProject", newData: { key: "shows", value: shows.filter((_a, i) => !indexes.includes(i)) }, location: { page: "show", project: get(activeProject) } })
+      // // TODO: don't remove private!!!!
+      // projects.update((a) => {
+      //   obj.sel.data.forEach((b: any) => {
+      //     a[get(activeProject)!].shows = a[get(activeProject)!].shows.filter((a) => a.id !== b.id)
+
+      //     if (get(activeShow)?.index === b.index) {
+      //       activeShow.update((a) => {
+      //         delete a!.index
+      //         return a
+      //       })
+      //     }
+      //   })
+      //   return a
+      // })
+      return
+    }
+    if (obj.sel.id === "slide") {
+      obj.sel.data.forEach((a: any) => {
         let slide = GetLayoutRef()[a.index].id
-        // TODO: store group/color to redo
         // TODO: change layout children & slide parent children
-        history({ id: "changeSlide", newData: { globalGroup: menu.id }, location: { page: "show", show: get(activeShow)!, slide } })
+        history({ id: "changeSlide", newData: { group: null, color: null, globalGroup: null }, location: { page: "show", show: get(activeShow)!, slide } })
       })
-      break
-    // drawer navigation
-    case "changeIcon":
-      activePopup.set("icon")
-      break
-    case "selectAll":
-      let data: any[] = []
-      if (sel.id === "group") {
+    }
+  },
+  remove_slide: (obj: any) => {
+    let location: any = { page: "show", show: get(activeShow)!, layout: _show("active").get("settings.activeLayout") }
+    // console.log(location)
+    let ref = _show(location.show.id).layouts([location.layout]).ref()[0]
+    let parents: any[] = []
+    let childs: any[] = []
+
+    // remove parents and delete childs
+    obj.sel.data.forEach((a: any) => {
+      if (ref[a.index].type === "parent") parents.push(ref[a.index].index)
+      else childs.push(ref[a.index].id)
+    })
+
+    if (parents.length) {
+      console.log(parents)
+      history({
+        id: "removeSlides",
+        newData: { indexes: parents },
+        location,
+      })
+    }
+    if (childs.length) {
+      history({
+        id: "deleteSlides",
+        newData: { ids: childs },
+        location: { page: "show", show: get(activeShow)! },
+      })
+    }
+  },
+  delete: (obj: any) => {
+    if (obj.sel.id === "show_drawer") {
+      activePopup.set("delete_show")
+      return
+    }
+    if (obj.sel.id === "group") {
+      console.log(obj.sel.data)
+      history({
+        id: "deleteGroups",
+        newData: { ids: obj.sel.data.map((a: any) => a.id) },
+        location: { page: "show", show: get(activeShow)!, layout: _show("active").get("settings.activeLayout") },
+      })
+      return
+    }
+    if (obj.sel.id === "category") {
+      obj.sel.data.forEach((a: any) => {
+        history({ id: "deleteShowsCategory", newData: { id: a } })
+      })
+    }
+  },
+  duplicate: (obj: any) => {
+    if (obj.sel.id === "show" || obj.sel.id === "show_drawer") {
+      obj.sel.data.forEach((a: any) => {
+        let show = { ...get(showsCache)[a.id] }
+        show.name += " #2"
+        show.timestamps.modified = new Date().getTime()
+        console.log(show)
+        history({ id: "newShow", newData: { show }, location: { page: "show", project: obj.sel.id === "show" ? get(activeProject) : null } })
+      })
+      return
+    }
+    if (obj.sel.id === "slide") {
+      // TODO: duplicate slide....
+    }
+  },
+  // drawer
+  enabled_drawer_tabs: (obj: any) => {
+    let m = { hide: false, enabled: !obj.enabled }
+    drawerTabsData.update((a) => {
+      a[obj.menu.id!].enabled = !obj.enabled
+      return a
+    })
+    return m
+  },
+  addToProject: (obj: any) => {
+    if (obj.sel.id !== "show" || obj.sel.id !== "show_drawer" || !get(activeProject)) return
+
+    projects.update((a) => {
+      a[get(activeProject)!].shows.push(...obj.sel.data)
+      // sel.data.forEach((b: any) => {
+      //   console.log(b, a[get(activeProject)!].shows)
+
+      //   a[get(activeProject)!].shows.push({ id: b.id })
+      // })
+      return a
+    })
+  },
+
+  // new
+  newShowPopup: () => activePopup.set("show"),
+
+  newShow: () => history({ id: "newShow", location: { page: "show", project: get(activeProject) } }),
+  newPrivateShow: () => history({ id: "newPrivateShow", location: { page: "show", project: get(activeProject) } }),
+  newProject: (obj: any) =>
+    history({ id: "newProject", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
+  newFolder: (obj: any) =>
+    history({ id: "newFolder", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
+
+  // project
+  close: (obj: any) => {
+    if (!obj.contextElem.classList.contains("#projectTab") || !get(activeProject)) return
+    activeProject.set(null)
+    projectView.set(true)
+  },
+  private: (obj: any) => {
+    showsCache.update((a: any) => {
+      obj.sel.data.forEach((b: any) => {
+        a[b.id].private = !obj.enabled
+      })
+      return a
+    })
+  },
+
+  // show
+  disable: (obj: any) => {
+    if (obj.sel.id === "slide") {
+      showsCache.update((a) => {
+        obj.sel.data.forEach((b: any) => {
+          let ref = GetLayoutRef()[b.index]
+          if (ref.type === "child") a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[ref.layoutIndex].children[ref.id].disabled = !obj.enabled
+          else a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[ref.index].disabled = !obj.enabled
+        })
+        return a
+      })
+      return
+    }
+    if (obj.sel.id === "group") {
+      showsCache.update((a) => {
         let ref = GetLayoutRef()
-        sel.data.forEach((a: any) => {
-          ref.forEach((b, i) => {
-            if (b.type === "child" ? a.id === b.parent : a.id === b.id) data.push({ index: i })
+        ref.forEach((b: any) => {
+          obj.sel.data.forEach((c: any) => {
+            console.log(b)
+            if (b.type === "child" && b.parent === c.id)
+              a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex].children[b.id].disabled = !obj.enabled
+            else if (b.id === c.id) a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex || b.index].disabled = !obj.enabled
           })
         })
-        selected.set({ id: "slide", data })
-      } else if (get(activeShow)) {
-        data = GetLayoutRef().map((_a, index) => ({ index }))
-      }
+        return a
+      })
+    }
+  },
+
+  edit: (obj: any) => {
+    if (obj.sel.id === "slide") activeEdit.set({ slide: obj.sel.data[0].index, items: [] })
+    else if (obj.sel.id === "overlay") activeEdit.set({ type: "overlay", id: obj.sel.data, items: [] })
+    activePage.set("edit")
+  },
+
+  slide_groups: (obj: any) => {
+    obj.sel.data.forEach((a: any) => {
+      let slide = GetLayoutRef()[a.index].id
+      // TODO: store group/color to redo
+      // TODO: change layout children & slide parent children
+      history({ id: "changeSlide", newData: { globalGroup: obj.menu.id }, location: { page: "show", show: get(activeShow)!, slide } })
+    })
+  },
+
+  // drawer navigation
+  changeIcon: () => activePopup.set("icon"),
+
+  selectAll: (obj: any) => {
+    let data: any[] = []
+    if (obj.sel.id === "group") {
+      let ref = GetLayoutRef()
+      obj.sel.data.forEach((a: any) => {
+        ref.forEach((b, i) => {
+          if (b.type === "child" ? a.id === b.parent : a.id === b.id) data.push({ index: i })
+        })
+      })
       selected.set({ id: "slide", data })
-      break
-
-    default:
-      console.log("MISSING CONTEXT: ", id)
-      break
-  }
-
-  return m
+    } else if (get(activeShow)) {
+      data = GetLayoutRef().map((_a, index) => ({ index }))
+    }
+    selected.set({ id: "slide", data })
+  },
 }

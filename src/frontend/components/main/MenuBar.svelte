@@ -26,24 +26,23 @@
     let id: string = e.target.id
     active = activeID !== id
     activeID = activeID === id ? null : id
-    if (activeID !== id) {
-      x = e.target.offsetLeft
-      activeMenu = contextMenuLayouts[id]
-    }
+
+    if (activeID === null) return
+    x = e.target.offsetLeft
+    activeMenu = contextMenuLayouts[id]
   }
 
   const click = (e: MouseEvent) => {
-    if (e.target?.closest(".menu") === null && e.target?.closest(".menus") === null) {
-      activeID = null
-      active = false
-    }
+    if (e.target?.closest(".menu") || e.target?.closest(".menus")) return
+
+    activeID = null
+    active = false
   }
 
   const move = (e: any) => {
-    if (active && activeID !== e.target.id) {
-      ;(document.activeElement as any)?.blur()
-      menu(e)
-    }
+    if (!active || activeID === e.target.id) return
+    ;(document.activeElement as any)?.blur()
+    menu(e)
   }
 </script>
 

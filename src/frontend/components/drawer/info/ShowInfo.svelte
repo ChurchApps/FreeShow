@@ -20,7 +20,7 @@
     words = 0
     allLines.forEach((lines: any) => {
       lines.forEach((line: any) => {
-        line.text?.forEach((text: any) => (words += text.value.split(" ").length))
+        line?.text?.forEach((text: any) => (words += text.value.split(" ").length))
       })
     })
   }

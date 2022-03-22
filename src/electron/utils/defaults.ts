@@ -54,8 +54,8 @@ export const defaultSettings = {
     rightPanelDrawer: 300,
     drawer: 200,
   },
-  slidesOptions: { columns: 4, grid: true },
-  mediaOptions: { columns: 4, grid: true },
+  slidesOptions: { columns: 4, mode: "grid" },
+  mediaOptions: { columns: 5, mode: "grid" },
   drawerTabsData: {
     shows: { enabled: true, activeSubTab: null },
     media: { enabled: true, activeSubTab: null },

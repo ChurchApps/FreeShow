@@ -112,7 +112,10 @@ const createWindow = () => {
     electronSettings.set("height", height)
   })
 
-  mainWindow.on("closed", () => (mainWindow = null))
+  mainWindow.on("closed", () => {
+    mainWindow = null
+    outputWindow?.close()
+  })
   mainWindow.once("ready-to-show", createOutputWindow)
 
   // MENU

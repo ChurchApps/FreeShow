@@ -17,7 +17,7 @@
     if (id !== "/") opened = $openedFolders.includes(id)
   }
   const toggle = (e: any) => {
-    if (!e.ctrlKey && !e.target.classList.contains("name") && !e.target.classList.contains("add")) {
+    if (!e.ctrlKey && !e.metaKey && !e.target.classList.contains("name") && !e.target.classList.contains("add")) {
       // console.log(1);
       // console.log($openedFolders.splice($openedFolders.indexOf(id), 1));
       console.log(id, opened)
@@ -47,7 +47,7 @@
         {:else}
           <Icon id="folder" />
         {/if}
-        <HiddenInput value={name} on:edit={edit} />
+        <HiddenInput value={name} id={"folder_" + id} on:edit={edit} />
       </span>
       <button class="add" on:click={() => history({ id: "newFolder", oldData: id })} title={$dictionary.new?._folder}>+</button>
     </button>

@@ -33,24 +33,21 @@
     }
   }
 
+  function dblclick(e: any) {
+    if (e.target.closest(".edit")) return
+    projectView.set(false)
+    if ($projects[id].shows.length) activeShow.set({ ...$projects[id].shows[0], index: 0 })
+  }
+
   function edit(e: any) {
     history({ id: "updateProject", newData: { key: "name", value: e.detail.value }, location: { page: "show", project: id } })
   }
 </script>
 
 <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
-<button
-  on:click={click}
-  on:dblclick={() => {
-    projectView.set(false)
-    if ($projects[id].shows.length) activeShow.set({ ...$projects[id].shows[0], index: 0 })
-  }}
-  data-parent={parent}
-  class="context #rename__projects"
-  class:active
->
+<button on:click={click} on:dblclick={dblclick} data-parent={parent} class="context #rename__projects" class:active>
   <Icon id="project" />
-  <HiddenInput value={name} on:edit={edit} />
+  <HiddenInput value={name} id={"project_" + id} on:edit={edit} />
 </button>
 
 <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->

@@ -10,7 +10,7 @@
   function addSlide(e: any) {
     let newData: any = {}
     if ($activeEdit?.slide !== null && $activeEdit?.slide !== undefined) newData.index = $activeEdit.slide + 1
-    if (e.ctrlKey) newData.parent = true
+    if (e.ctrlKey || e.metaKey) newData.parent = true
     history({ id: "newSlide", newData, location: { page: "edit", show: $activeShow!, layout: $showsCache[$activeShow!.id].settings.activeLayout } })
   }
 </script>

@@ -183,6 +183,7 @@
   "category": {
     "all": "Alt",
     "unlabeled": "Umerket",
+    "favorites": "Favoritter",
     "song": "Sanger",
     "info": "Info",
     "events": "Hendelser",
@@ -237,7 +238,8 @@
     "quick_lyrics": "Hurtigtekst",
     "new_layout": "Nytt oppsett",
     "grid": "Rutenett",
-    "list": "Listevisning"
+    "list": "Listevisning",
+    "lyrics": "Tekstvisning"
   },
   "actions": {
     "rename": "Endre navn",
@@ -419,6 +421,13 @@
     "location": "Posisjon",
     "notes": "Notater",
     "today": "I dag"
+  },
+  "scripture": {
+    "max_verses": "Maks vers per lysbilde",
+    "verse_numbers": "Versnummer",
+    "version": "Vis versjon",
+    "reference": "Vis referanse",
+    "red_jesus": "Jesus ord i rødt"
   },
   "filter": {
     "filters": "Filtre",

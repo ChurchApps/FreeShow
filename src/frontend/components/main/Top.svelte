@@ -1,17 +1,17 @@
 <script type="ts">
   import { OUTPUT } from "../../../types/Channels"
   import { dictionary, outputDisplay } from "../../stores"
-  import { receiveData, requestData } from "../../utils/request"
+  import { receive, send } from "../../utils/request"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
   import TopButton from "../inputs/TopButton.svelte"
 
   function display() {
     outputDisplay.set(!$outputDisplay)
-    requestData(OUTPUT, ["DISPLAY"], $outputDisplay)
+    send(OUTPUT, ["DISPLAY"], $outputDisplay)
   }
 
-  receiveData(OUTPUT, { DISPLAY: (a: any) => outputDisplay.set(a) })
+  receive(OUTPUT, { DISPLAY: (a: any) => outputDisplay.set(a) })
 </script>
 
 <div class="top">

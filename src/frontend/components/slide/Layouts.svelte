@@ -7,6 +7,7 @@
   import Button from "../inputs/Button.svelte"
   import HiddenInput from "../inputs/HiddenInput.svelte"
   import Center from "../system/Center.svelte"
+  import SelectElem from "../system/SelectElem.svelte"
 
   $: active = $activeShow!.id
   $: layouts = $showsCache[active]?.layouts
@@ -14,27 +15,36 @@
 
   function addLayout(e: any) {
     let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
-    if (e.ctrlKey) {
+    if (e.ctrlKey || e.metaKey) {
       newData.layout = { ...$showsCache[$activeShow!.id].layouts[$showsCache[$activeShow!.id].settings.activeLayout] }
     }
     history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: $activeShow! } })
+  }
+
+  const slidesViews: any = { grid: "list", list: "lyrics", lyrics: "grid" }
+
+  function changeName(e: any) {
+    history({ id: "changeLayoutKey", newData: { key: "name", value: e.detail.value }, location: { page: "show", show: $activeShow!, layout: activeLayout } })
   }
 </script>
 
 <div>
   {#if layouts}
     <span style="display: flex;">
-      {#each Object.entries(layouts) as layout}
-        <Button
-          on:click={() =>
-            showsCache.update((s) => {
-              s[active].settings.activeLayout = layout[0]
-              return s
-            })}
-          active={activeLayout === layout[0]}
-        >
-          <HiddenInput value={layout[1].name} on:edit={(e) => console.log("layout NAME: ", e.detail)} />
-        </Button>
+      {#each Object.entries(layouts) as [id, layout]}
+        <SelectElem id="layout" data={id} borders="edges" trigger="row" draggable>
+          <Button
+            class="context #layout"
+            on:click={() =>
+              showsCache.update((s) => {
+                s[active].settings.activeLayout = id
+                return s
+              })}
+            active={activeLayout === id}
+          >
+            <HiddenInput value={layout.name} id={"layout_" + id} on:edit={changeName} />
+          </Button>
+        </SelectElem>
       {/each}
     </span>
     <span style="display: flex; align-items: center;">
@@ -43,12 +53,8 @@
         <Icon size={1.3} id="add" />
       </Button>
       <div class="seperator" />
-      <Button on:click={() => slidesOptions.set({ ...$slidesOptions, grid: !$slidesOptions.grid })} title={$slidesOptions.grid ? $dictionary.show?.list : $dictionary.show?.grid}>
-        {#if $slidesOptions.grid}
-          <Icon size={1.3} id="grid" white />
-        {:else}
-          <Icon size={1.3} id="list" white />
-        {/if}
+      <Button on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
+        <Icon size={1.3} id={$slidesOptions.mode} white />
       </Button>
       <Button
         disabled={$slidesOptions.columns >= 10}

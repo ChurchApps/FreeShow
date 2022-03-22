@@ -29,7 +29,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   settings: { label: "menu.settings", icon: "settings" },
   about: { label: "main.about", icon: "info" },
   shortcuts: { label: "popup.shortcuts", icon: "shortcut" },
-  rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
+  rename: { label: "actions.rename", icon: "rename" },
   delete: { label: "actions.delete", icon: "delete" },
   export: { label: "actions.export", icon: "export" },
   // DRAWER
@@ -77,7 +77,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   category_templates: ["newCategory"],
   category_media: ["newFolder"],
   category_audio: ["newFolder"],
-  category_shows_button: ["rename", "changeIcon", "delete"],
+  category_shows_button: ["changeIcon", "delete"],
   category_overlays_button: ["rename", "changeIcon", "delete"],
   category_templates_button: ["rename", "changeIcon", "delete"],
   category_media_button: ["rename", "delete"],
@@ -107,6 +107,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["rename", "recolor"],
   // global_group: ["rename"],
+  layout: ["rename", "remove", "duplicate"],
 
   // STAGE
   stage_slide: ["rename", "disable", "SEPERATOR", "duplicate", "delete"],

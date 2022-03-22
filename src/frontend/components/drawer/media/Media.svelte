@@ -67,7 +67,7 @@
   }
 
   function wheel(e: any) {
-    if (e.ctrlKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
+    if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
   }
 
   const shortcuts: any = {
@@ -97,6 +97,8 @@
     const folder = path.slice(0, lastSlash)
     path = folder.length > rootPath.length ? folder : rootPath
   }
+
+  const slidesViews: any = { grid: "list", list: "grid" }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -105,7 +107,7 @@
 <!-- TODO: autoscroll -->
 <!-- TODO: ctrl+arrow keys change drawer item... -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
-  <div class="grid" class:list={!$mediaOptions.grid} style="height: 100%;">
+  <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
     {#if filteredFiles.length}
       {#key rootPath}
         {#key path}
@@ -166,11 +168,12 @@
   <Button
     on:click={() =>
       mediaOptions.update((a) => {
-        a.grid = !$mediaOptions.grid
+        a.mode = slidesViews[$mediaOptions.mode]
         return a
       })}
+    title={$dictionary.show?.[$mediaOptions.mode]}
   >
-    <Icon size={1.3} id={$mediaOptions.grid ? "grid" : "list"} white />
+    <Icon size={1.3} id={$mediaOptions.mode} white />
   </Button>
   <Button
     disabled={$mediaOptions.columns >= 10}

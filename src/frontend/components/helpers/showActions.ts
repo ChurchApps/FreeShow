@@ -17,7 +17,7 @@ const keys: any = {
 }
 
 export function checkInput(e: any) {
-  if (e.target?.closest(".edit") || e.ctrlKey) return
+  if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
   if (keys[e.key]) {
     if (get(activeProject) === null) return

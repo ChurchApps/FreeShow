@@ -13,7 +13,7 @@
 
   function enter(e: any) {
     if (e.buttons && !dragActive) {
-      if (data.index && $selected.data[0]?.index && data.index < $selected.data[0].index) return
+      if ((id === "project" || id === "folder") && data.index && $selected.data[0]?.index && data.index < $selected.data[0].index) return
       if ($selected.id !== id) selected.set({ id, data: [data] })
       else if (!arrayHasData($selected.data, data)) {
         selected.update((s) => {
@@ -29,13 +29,14 @@
     // e.dataTransfer.effectAllowed = type
     // e.dataTransfer.dropEffect = type
     // e.dataTransfer.setData("text", data)
-    if (data.index && $selected.data[0]?.index && data.index < $selected.data[0].index) return
+
+    if ((id === "project" || id === "folder") && data.index && $selected.data[0]?.index && data.index < $selected.data[0].index) return
 
     let newData: any
 
     if ((dragged || e.buttons === 2) && ($selected.id !== id || !arrayHasData($selected.data, data))) {
       newData = [data]
-    } else if (!dragged && e.ctrlKey) {
+    } else if (!dragged && (e.ctrlKey || e.metaKey)) {
       if ($selected.id === id && arrayHasData($selected.data, data)) newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
       else if ($selected.id === id) newData = [...$selected.data, data]
       else newData = [data]
@@ -45,7 +46,15 @@
   }
 
   function deselect(e: any) {
-    if (!e.ctrlKey && $selected.id === id && !e.target.closest(".selectElem") && !e.target.closest(".popup") && !e.target.closest(".edit") && !e.target.closest(".contextMenu"))
+    if (
+      !e.ctrlKey &&
+      !e.metaKey &&
+      $selected.id === id &&
+      !e.target.closest(".selectElem") &&
+      !e.target.closest(".popup") &&
+      !e.target.closest(".edit") &&
+      !e.target.closest(".contextMenu")
+    )
       selected.set({ id: null, data: [] })
   }
 

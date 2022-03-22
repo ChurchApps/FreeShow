@@ -10,10 +10,9 @@
   const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
 
   function create(e: any) {
-    if (!e.target.closest(".main")) {
-      window.api.send(MAIN, { channel: "GET_PATHS" })
-      activePopup.set(null)
-    }
+    if (e.target.closest(".main") && !e.target.closest(".start")) return
+    window.api.send(MAIN, { channel: "GET_PATHS" })
+    activePopup.set(null)
   }
 </script>
 
@@ -44,7 +43,7 @@
   </div>
 
   <br />
-  <Button on:click={create} style="font-size: 2em;" border center>
+  <Button class="start" on:click={create} style="font-size: 2em;" border center>
     <T id="setup.get_started" />
   </Button>
 </div>

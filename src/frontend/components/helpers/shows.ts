@@ -37,9 +37,8 @@ export function _show(id: any) {
       })
       allShows.update((a: any) => {
         let double = key.split(".")
-        if (double.length > 1)
-          if (a[id][double[0]][double[1]]) a[id][double[0]][double[1]] = value
-          else if (a[id][key]) a[id][key] = value
+        if (double.length > 1 && a[id][double[0]]?.[double[1]]) a[id][double[0]][double[1]] = value
+        else if (a[id][key]) a[id][key] = value
         return a
       })
       return prev
@@ -88,9 +87,12 @@ export function _show(id: any) {
         if (parent) group = ""
         if (!slide) slide = { group, color: null, settings: {}, notes: "", items: [] }
         showsCache.update((a: any) => {
-          if (!slideIds[0]) slideIds.push(uid())
-          a[id].slides[slideIds[0]] = slide
-          // slideIds.forEach((slideId) => {})
+          if (!slideIds[0]) a[id].slides[uid()] = slide
+          else {
+            slideIds.forEach((slideId: string, i: number) => {
+              a[id].slides[slideId] = slide[i] || slide[0]
+            })
+          }
           return a
         })
         // ADD TO LAYOUT......????
@@ -186,7 +188,9 @@ export function _show(id: any) {
               indexes.forEach((index) => {
                 if (!lines.length) lines = Object.keys(shows[id].slides[slideId].items[index].lines)
                 lines.forEach((line) => {
-                  a[i].push(shows[id].slides[slideId].items[index].lines[line])
+                  if (shows[id].slides[slideId].items?.[index]) {
+                    a[i].push(shows[id].slides[slideId].items[index].lines[line])
+                  }
                 })
               })
             })
@@ -272,14 +276,14 @@ export function _show(id: any) {
         if (shows[id]) {
           if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
           else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
-          a.push([])
           layoutIds.forEach((layoutId: any, i: number) => {
+            a.push([])
             shows[id].layouts[layoutId].slides.forEach((layoutSlide: any, index: number) => {
               let slide = shows[id].slides[layoutSlide.id]
               a[i].push({ type: "parent", index, id: layoutSlide.id, children: slide.children || [], data: layoutSlide })
               if (slide.children) {
                 slide.children.forEach((childId: string, jndex: number) => {
-                  a[i].push({ type: "child", index: jndex, id: childId, parent: { id: layoutSlide.id, index }, data: layoutSlide.children?.[jndex] || {} })
+                  a[i].push({ type: "child", index: jndex, id: childId, parent: { id: layoutSlide.id, index }, data: layoutSlide.children?.[childId] || {} })
                 })
               }
             })
@@ -293,9 +297,8 @@ export function _show(id: any) {
         showsCache.update((a: any) => {
           if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
           else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
-          layoutIds.forEach((layoutId: any, i: number) => {
-            if (i === 0) prev[i] = []
-            prev[i].push(a[id].layouts[layoutId][key])
+          layoutIds.forEach((layoutId: any) => {
+            prev.push({key, value: a[id].layouts[layoutId][key]})
             a[id].layouts[layoutId][key] = value
           })
           return a
@@ -372,11 +375,13 @@ export function _show(id: any) {
                 indexes
                   .sort((a, b) => a - b)
                   .forEach((index: number, i) => {
-                    if (parent === null) a[id].layouts[layoutId].slides = addToPos(slides, [layouts[i]], index)
+                    console.log(a[id].layouts[layoutId].slides, [layouts[i]], index)
+                    if (parent === null) a[id].layouts[layoutId].slides = addToPos(a[id].layouts[layoutId].slides, [layouts[i]], index)
                     else {
                       if (!a[id].layouts[layoutId].slides[parent].children) a[id].layouts[layoutId].slides[parent].children = {}
                       a[id].layouts[layoutId].slides[parent].children[layouts[i].id] = removeId(layouts[i]) || {}
                     }
+                    console.log(a[id].layouts[layoutId].slides)
                   })
               } else {
                 if (parent === null) a[id].layouts[layoutId].slides = addToPos(slides, layouts, length)
@@ -396,22 +401,24 @@ export function _show(id: any) {
         },
         /** Remove slides in layouts */
         remove: (key: null | string = null) => {
-          let prev: any = { indexes: [], layouts: [] }
+          // let prev: any = { indexes: [], layouts: [] }
+          let prev: any = {}
           showsCache.update((a: any) => {
             if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
             else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
-            layoutIds.forEach((layoutId: any) => {
-              if (!indexes.length) indexes = Object.keys(shows[id].layouts[layoutId].slides)
-              indexes
-                .sort((a, b) => b - a)
+            layoutIds.forEach((layoutId: any, i: number) => {
+              prev[layoutId] = { indexes: [], layouts: [] }
+              if (!indexes[i]?.length) indexes[i] = Object.keys(shows[id].layouts[layoutId].slides)
+              indexes[i]
+                .sort((a: any, b: any) => b - a)
                 .forEach((index: number) => {
-                  prev.indexes.push(index)
+                  prev[layoutId].indexes.push(index)
                   if (key) {
-                    prev.layouts.push(a[id].layouts[layoutId].slides[index][key])
+                    prev[layoutId].layouts.push(a[id].layouts[layoutId].slides[index][key])
                     delete a[id].layouts[layoutId].slides[index][key]
                   }
-                  prev.layouts.push(a[id].layouts[layoutId].slides[index])
-                  delete a[id].layouts[layoutId].slides[index]
+                  prev[layoutId].layouts.push(a[id].layouts[layoutId].slides[index])
+                  a[id].layouts[layoutId].slides.splice(index, 1)
                 })
             })
             return a

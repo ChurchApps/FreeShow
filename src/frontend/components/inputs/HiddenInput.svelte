@@ -1,8 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte"
-  import { dictionary } from "../../stores"
+  import { activeRename, dictionary } from "../../stores"
 
   export let value: string = ""
+  export let id: string
+
   $: value = edit ? (value.endsWith(" ") ? removeWhitespace(value) + " " : removeWhitespace(value)) : value.trim()
 
   const removeWhitespace = (v: string) =>
@@ -14,16 +16,25 @@
   let nameElem: HTMLParagraphElement, inputElem: HTMLInputElement
   let edit: boolean = false
   let prevVal: string = ""
-  $: {
-    if (!edit && !value.length && prevVal.length) value = prevVal
-  }
+  $: if (!edit && !value.length && prevVal.length) value = prevVal
   const click = (e: any) => {
     if (e.target === nameElem) {
       //  || e.target.closest(".contextMenu")
       edit = true
       prevVal = value
       setTimeout(() => inputElem?.focus(), 10)
-    } else if (e.target !== inputElem) edit = false
+    } else if (e.target !== inputElem) {
+      edit = false
+      activeRename.set(null)
+    }
+  }
+
+  $: console.log($activeRename, id)
+
+  $: if ($activeRename === id) {
+    edit = true
+    setTimeout(() => inputElem?.focus(), 10)
+    // prevVal = value
   }
 
   let timeout: any
@@ -32,7 +43,10 @@
       timeout = setTimeout(() => {
         click(e)
       }, 500)
-    } else if (e.target !== inputElem) edit = false
+    } else if (e.target !== inputElem) {
+      edit = false
+      activeRename.set(null)
+    }
   }
 
   const dispatch = createEventDispatcher()
@@ -48,16 +62,19 @@
   on:mousedown={mousedown}
   on:mouseup={() => clearTimeout(timeout)}
   on:dragstart={() => clearTimeout(timeout)}
-  on:contextmenu={click}
   on:keydown={(e) => {
-    if (e.key === "Enter" || e.key === "Tab") edit = false
+    if (e.key === "Enter" || e.key === "Tab") {
+      edit = false
+      activeRename.set(null)
+    }
   }}
 />
+<!-- on:contextmenu={click} -->
 
 {#if edit}
   <input bind:this={inputElem} on:change={change} class="edit nocontext _rename name" bind:value />
 {:else}
-  <p bind:this={nameElem} class="nocontext _rename">
+  <p bind:this={nameElem} class="_rename">
     {#if value.length}
       {value}
     {:else}

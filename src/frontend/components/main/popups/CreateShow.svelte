@@ -1,13 +1,14 @@
 <script lang="ts">
   import { uid } from "uid"
-
   import type { Show } from "../../../../types/Show"
   import { ShowObj } from "../../../classes/Show"
-  import { activePopup, activeProject } from "../../../stores"
+  import { activePopup, activeProject, categories, drawerTabsData } from "../../../stores"
+  import { sortObject } from "../../helpers/array"
   import { history } from "../../helpers/history"
   import { checkName } from "../../helpers/show"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
+  import Dropdown from "../../inputs/Dropdown.svelte"
   import TextArea from "../../inputs/TextArea.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
 
@@ -17,6 +18,7 @@
 
     let metaData: string = ""
     if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
+    let category = selectedCategory.id.length ? selectedCategory.id : null
 
     if (sections.length) {
       let labeled: any[] = []
@@ -27,7 +29,6 @@
 
       let name: string = labeled[0].text.split("\n")[0]
       // get active
-      let category = values.category
       let meta: any = {}
       if (metaData.length) {
         let lines: string[] = metaData.split("\n")
@@ -47,7 +48,7 @@
       // let newData: any = {name, category, settings: {}, meta}
       history({ id: "newShow", newData: { show }, location: { page: "show", project: $activeProject } })
     } else {
-      let show = new ShowObj(false, values.category)
+      let show = new ShowObj(false, category)
       show.name = checkName(values.name)
       history({ id: "newShow", newData: { show }, location: { page: "show", project: $activeProject } })
     }
@@ -250,15 +251,24 @@
   let values: any = {
     text: "",
     name: "",
-    category: "song",
   }
 
   function keydown(e: any) {
-    if (e.key === "Enter" && e.ctrlKey) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       ;(document.activeElement as any)?.blur()
       textToShow()
     }
   }
+
+  const cats: any = [
+    { id: "", name: "—" },
+    ...sortObject(
+      Object.keys($categories).map((id) => ({ id, name: "$:" + $categories[id].name + ":$" })),
+      "name"
+    ),
+  ]
+  let selectedCategory: any =
+    $drawerTabsData.shows.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab] ? cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab) : cats[0]
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -269,7 +279,7 @@
 </div>
 <div style="display: flex;justify-content: space-between;align-items: center;">
   <p><T id="show.category" /></p>
-  <TextInput value={values.category} on:change={(e) => changeValue(e, "category")} style="width: 50%;height: 30px;" />
+  <Dropdown options={cats} value={selectedCategory.name} on:click={(e) => (selectedCategory = e.detail)} style="width: 50%;" />
 </div>
 <br />
 <!-- TODO: show example? -->

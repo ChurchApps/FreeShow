@@ -63,7 +63,7 @@
       if (i > -1) pos = i
     }
 
-    if (!e.ctrlKey && !active && !e.target.closest("input")) {
+    if (!e.ctrlKey && !e.metaKey && !active && !e.target.closest("input")) {
       let show: any = { id, type }
       if (pos !== null) show.index = pos
       activeShow.set(show)
@@ -98,7 +98,7 @@
         <Icon id={iconID} {custom} />
       {/if}
       <!-- <p style="margin: 5px;">{newName}</p> -->
-      <HiddenInput value={newName} on:edit={edit} />
+      <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} />
     </span>
 
     {#if match}

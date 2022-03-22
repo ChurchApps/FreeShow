@@ -23,21 +23,29 @@
     if (id === "shows") {
       buttons = [
         { id: "all", name: "category.all", default: true, icon: "all" },
-        ...(sortObject(keysToID($categories), "name") as Button[]),
         { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
+        { id: "SEPERATOR", name: "" },
+        ...(sortObject(keysToID($categories), "name") as Button[]),
       ]
     } else if (id === "media") {
-      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($mediaFolders), "name") as Button[])]
+      buttons = [
+        { id: "all", name: "category.all", default: true, icon: "all" },
+        // TODO: media favorites
+        // { id: "favorites", name: "category.favorites", default: true, icon: "star" },
+        { id: "SEPERATOR", name: "" },
+        ...(sortObject(keysToID($mediaFolders), "name") as Button[]),
+      ]
     } else if (id === "overlays") {
       buttons = [
         { id: "all", name: "category.all", default: true, icon: "all" },
-        ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
         { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
+        { id: "SEPERATOR", name: "" },
+        ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
       ]
     } else if (id === "templates") {
-      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($templateCategories), "name") as Button[])]
+      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, { id: "SEPERATOR", name: "" }, ...(sortObject(keysToID($templateCategories), "name") as Button[])]
     } else if (id === "audio") {
-      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, ...(sortObject(keysToID($audioFolders), "name") as Button[])]
+      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, { id: "SEPERATOR", name: "" }, ...(sortObject(keysToID($audioFolders), "name") as Button[])]
     } else if (id === "scripture") {
       buttons = [...keysToID(getBibleVersions())]
     } else if (id === "player") {
@@ -51,7 +59,11 @@
         { id: "cameras", name: "live.cameras", default: true, icon: "camera" },
         { id: "microphones", name: "live.microphones", default: true, icon: "microphone" },
       ]
-    } else buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }]
+    } else
+      buttons = [
+        { id: "all", name: "category.all", default: true, icon: "all" },
+        { id: "SEPERATOR", name: "" },
+      ]
   }
 
   // TODO: scroll down to selected
@@ -88,7 +100,7 @@
   }
 
   function keydown(e: KeyboardEvent) {
-    if (!e.target?.closest(".edit") && e.ctrlKey) {
+    if (!e.target?.closest(".edit") && (e.ctrlKey || e.metaKey)) {
       if (e.key === "ArrowDown") {
         // Ctrl + Arrow Down = change active drawer sub tab
         let index = buttons.findIndex((a) => a.id === $drawerTabsData[id].activeSubTab)
@@ -109,39 +121,43 @@
     <DropArea id="navigation" selectChildren>
       {#key buttons}
         {#each buttons as category}
-          <SelectElem id="category" borders="center" trigger="column" data={category.id}>
-            <Button
-              class={category.id === "all" || category.id === "unlabeled" ? "" : `context #category_${id}_button__category_${id}`}
-              active={category.id === $drawerTabsData[id].activeSubTab}
-              on:click={(e) => {
-                if (!e.ctrlKey) setTab(category.id)
-              }}
-              bold={false}
-              title={category.description ? category.description : category.path ? category.path : ""}
-            >
-              <span style="display: flex;align-items: center;width: 100%;">
-                <Icon
-                  id={category.icon || "noIcon"}
-                  custom={(id === "shows" || id === "overlays") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
-                  select={(id === "shows" || id === "overlays") && category.id !== "all" && category.id !== "unlabeled"}
-                />
-                <span id={category.id} style="width: 100%;text-align: left;">
-                  {#if id === "scripture" || id === "player"}
-                    <p style="margin: 5px;">{category.name}</p>
-                  {:else if category.default}
-                    <p style="margin: 5px;"><T id={category.name} /></p>
-                  {:else}
-                    <HiddenInput value={category.name} />
-                  {/if}
+          {#if category.id === "SEPERATOR"}
+            <hr />
+          {:else}
+            <SelectElem id="category" borders="center" trigger="column" data={category.id}>
+              <Button
+                class={category.id === "all" || category.id === "unlabeled" ? "" : `context #${category.default ? "" : "rename__"}category_${id}_button__category_${id}`}
+                active={category.id === $drawerTabsData[id].activeSubTab}
+                on:click={(e) => {
+                  if (!e.ctrlKey && !e.metaKey) setTab(category.id)
+                }}
+                bold={false}
+                title={category.description ? category.description : category.path ? category.path : ""}
+              >
+                <span style="display: flex;align-items: center;width: 100%;">
+                  <Icon
+                    id={category.icon || "noIcon"}
+                    custom={(id === "shows" || id === "overlays") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
+                    select={(id === "shows" || id === "overlays") && category.id !== "all" && category.id !== "unlabeled"}
+                  />
+                  <span id={category.id} style="width: 100%;text-align: left;">
+                    {#if id === "scripture" || id === "player"}
+                      <p style="margin: 5px;">{category.name}</p>
+                    {:else if category.default}
+                      <p style="margin: 5px;"><T id={category.name} /></p>
+                    {:else}
+                      <HiddenInput value={category.name} id={"category_" + id + "_" + category.id} />
+                    {/if}
+                  </span>
                 </span>
-              </span>
-              {#if length[category.id]}
-                <span style="opacity: 0.5;">
-                  {length[category.id]}
-                </span>
-              {/if}
-            </Button>
-          </SelectElem>
+                {#if length[category.id]}
+                  <span style="opacity: 0.5;">
+                    {length[category.id]}
+                  </span>
+                {/if}
+              </Button>
+            </SelectElem>
+          {/if}
         {/each}
       {/key}
     </DropArea>
@@ -196,5 +212,11 @@
   .tabs {
     display: flex;
     background-color: var(--primary-darker);
+  }
+
+  hr {
+    height: 2px;
+    border: none;
+    background-color: var(--primary-lighter);
   }
 </style>

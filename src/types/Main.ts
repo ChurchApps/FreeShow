@@ -21,6 +21,7 @@ export type SelectIds =
   | "slide"
   | "group"
   | "global_group"
+  | "layout"
   | "show"
   | "show_drawer"
   | "project"
@@ -39,7 +40,7 @@ export interface Selected {
 
 export interface SlidesOptions {
   columns: number
-  grid: boolean
+  mode: "grid" | "list" | "lyrics"
 }
 
 export interface ActiveEdit {

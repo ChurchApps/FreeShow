@@ -3,18 +3,19 @@
   import Timer from "./views/Timer.svelte"
 
   export let item: Item
+  export let smallFontSize: boolean = false
   export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
   export let style: boolean = true
 </script>
 
-<div class="item" style={style ? item.style : ""}>
+<div class="item" style={style ? item.style : null}>
   {#if item.lines}
-    <div class="align" style={style ? item.align : ""}>
+    <div class="align" style={style ? item.align : null}>
       <div class="lines">
         {#each item.lines as line}
-          <div class="break" style={style ? line.align : ""} class:height={!line.text[0].value.length}>
+          <div class="break" class:smallFontSize style={style ? line.align : null} class:height={!line.text[0].value.length}>
             {#each line.text as text}
-              <span style={style ? text.style : ""}>{@html text.value}</span>
+              <span style={style ? text.style : null}>{@html text.value}</span>
             {/each}
           </div>
         {/each}
@@ -63,6 +64,9 @@
 
   .break :global(span) {
     font-size: 100px;
+  }
+  .break.smallFontSize :global(span) {
+    font-size: 30px;
   }
 
   .height {

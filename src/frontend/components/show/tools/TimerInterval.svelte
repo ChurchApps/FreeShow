@@ -1,8 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-
   import { activeTimers } from "../../../stores"
-  import { requestData } from "../../../utils/request"
+  import { send } from "../../../utils/request"
 
   let timeout: any = null
   $: if ($activeTimers.length && timeout === null) startTimer()
@@ -20,7 +19,7 @@
         a = a.map(increment)
         return a
       })
-      requestData(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
+      send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
       startTimer()
     }, INTERVAL)
   }

@@ -5,6 +5,8 @@
   export let background: string = "black"
   export let center: boolean = false
   export let zoom: boolean = true
+  export let disableStyle: boolean = false
+  export let aspectRatio: boolean = true
   export let hideOverflow: boolean = true
   export let resolution: Resolution = $activeShow?.id && $showsCache[$activeShow.id]?.settings.resolution ? $showsCache[$activeShow.id].settings.resolution! : $screen.resolution
   let slideWidth: number = 0
@@ -17,7 +19,8 @@
     bind:offsetWidth={slideWidth}
     class="slide"
     class:hideOverflow
-    style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};"
+    class:disableStyle
+    style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};` : ''};"
   >
     {#if zoom}
       <span style="zoom: {ratio};">
@@ -36,7 +39,7 @@
     /* z-index: -1; */
   }
 
-  .slide :global(.item) {
+  .slide:not(.disableStyle) :global(.item) {
     position: absolute;
     /* display: inline-flex; */
     overflow: hidden;

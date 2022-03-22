@@ -99,7 +99,8 @@
   let longest: any = null
 
   onMount(() => {
-    let texts: any[] = slide.items.map((item) => getItemText(item))
+    let texts: any[] = slide.items?.map((item) => getItemText(item))
+    if (!texts) return
     let prev: any = null
     texts.forEach((a, i) => {
       if (!prev || a.length > prev) {
@@ -158,7 +159,7 @@
   let timer: number[] = []
   $: if ($activeTimers) {
     timer = []
-    slide.items.forEach(checkItem)
+    slide.items?.forEach(checkItem)
   }
   function checkItem(item: any) {
     if (item.type !== "timer") return
@@ -176,7 +177,7 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div class="main" class:active style="width: {$slidesOptions.grid || noQuickEdit ? 100 / columns : 100}%">
+<div class="main" class:active style="width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%">
   {#if icons}
     <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} />
   {/if}
@@ -184,7 +185,11 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     class="slide context #slide"
     class:disabled={layoutSlide.disabled}
     class:afterEnd={endIndex !== null && index > endIndex}
-    style="{$fullColors ? 'background-' : ''}color: {color};{$slidesOptions.grid || noQuickEdit ? '' : `width: calc(${100 / columns}% - 6px)`}"
+    style="{$fullColors || ($slidesOptions.mode === 'lyrics' && !noQuickEdit) ? 'background-' : ''}color: {$slidesOptions.mode === 'lyrics' && !noQuickEdit
+      ? 'initial'
+      : color};{$slidesOptions.mode === 'lyrics' && !noQuickEdit ? 'font-weight: bold;' : ''}{$slidesOptions.mode === 'grid' || noQuickEdit || $slidesOptions.mode === 'lyrics'
+      ? ''
+      : `width: calc(${100 / columns}% - 6px)`}"
     tabindex={0}
     on:click
   >
@@ -194,8 +199,20 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
       <SelectElem id="slide" data={{ index }} draggable trigger={list ? "column" : "row"}>
         <!-- TODO: tab select on enter -->
         <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
-        <Zoomed background={slide.items.length ? "black" : "transparent"} let:ratio zoom>
-          {#if background}
+        {#if $slidesOptions.mode === "lyrics" && !noQuickEdit}
+          <div class="label" title={name || ""} style="color: {color};">
+            <span style="position: absolute;display: contents;">{index + 1}</span>
+            <span class="text">{name === null ? "" : name || "—"}</span>
+          </div>
+        {/if}
+        <Zoomed
+          background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? "black" : "transparent"}
+          let:ratio
+          zoom={$slidesOptions.mode !== "lyrics" || noQuickEdit}
+          aspectRatio={$slidesOptions.mode !== "lyrics" || noQuickEdit}
+          disableStyle={$slidesOptions.mode === "lyrics" && !noQuickEdit}
+        >
+          {#if background && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
             {#key background.path}
               <div class="background" style="zoom: {1 / ratio}">
                 <MediaLoader name={$dictionary.error?.load} path={background.path} type={background.type !== "player" ? background.type : null} bind:duration />
@@ -203,10 +220,18 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
             {/key}
           {/if}
           <!-- TODO: check if showid exists in shows -->
-          {#each slide.items as item}
-            <Textbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} />
-          {/each}
-          {#if layoutSlide.overlays?.length}
+          {#if slide.items}
+            {#each slide.items as item}
+              <!-- TODO: lyrics zoom on text -->
+              <Textbox
+                {item}
+                ref={{ showId: $activeShow?.id, id: layoutSlide.id }}
+                style={$slidesOptions.mode !== "lyrics" || noQuickEdit}
+                smallFontSize={$slidesOptions.mode === "lyrics" && !noQuickEdit}
+              />
+            {/each}
+          {/if}
+          {#if layoutSlide.overlays?.length && $slidesOptions.mode !== "lyrics" && noQuickEdit}
             {#each layoutSlide.overlays as id}
               {#if $overlays[id]}
                 {#each $overlays[id].items as item}
@@ -216,18 +241,20 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
             {/each}
           {/if}
         </Zoomed>
-        <!-- TODO: BG: white, color: black -->
-        <!-- style="width: {resolution.width * zoom}px;" -->
-        <div class="label" title={name || ""} style="color: {$fullColors && color ? getContrast(color) : 'unset'};">
-          <!-- font-size: 0.8em; -->
-          <span style="position: absolute;display: contents;">{index + 1}</span>
-          <span class="text">{name === null ? "" : name || "—"}</span>
-        </div>
+        {#if $slidesOptions.mode !== "lyrics" || noQuickEdit}
+          <!-- TODO: BG: white, color: black -->
+          <!-- style="width: {resolution.width * zoom}px;" -->
+          <div class="label" title={name || ""} style="color: {$fullColors && color ? getContrast(color) : 'unset'};">
+            <!-- font-size: 0.8em; -->
+            <span style="position: absolute;display: contents;">{index + 1}</span>
+            <span class="text">{name === null ? "" : name || "—"}</span>
+          </div>
+        {/if}
       </SelectElem>
     </div>
     <!-- </DropArea> -->
   </div>
-  {#if !$slidesOptions.grid && !noQuickEdit}
+  {#if $slidesOptions.mode === "list" && !noQuickEdit}
     <hr />
     <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
       {@html html}

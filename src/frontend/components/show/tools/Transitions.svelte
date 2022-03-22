@@ -66,20 +66,25 @@
   }
 
   function toggleEnd(i: number, toggle: boolean = true) {
+    // TODO: more global way of doing this!
     showsCache.update((a: any) => {
       // let ref: any[] = GetLayoutRef()
       let slides = a[$activeShow!.id].layouts[activeLayout].slides
       // remove old
       let currentIndex: number = -1
-      slides.forEach((a: any) => {
+      slides.forEach((l: any) => {
         currentIndex++
-        if (currentIndex === i && a.end !== true) a.end = true
-        else if ((toggle || currentIndex !== i) && a.end) delete a.end
-        if (a.children) {
-          Object.values(a.children).forEach((b: any) => {
+        if (currentIndex === i && l.end !== true) l.end = true
+        else if ((toggle || currentIndex !== i) && l.end) delete l.end
+        let children: string[] = a[$activeShow!.id].slides[l.id]?.children
+        if (children?.length) {
+          if (!l.children) l.children = {}
+          children.forEach((child) => {
             currentIndex++
-            if (currentIndex === i && b.end !== true) b.end = true
-            else if ((toggle || currentIndex !== i) && b.end) delete b.end
+            if (currentIndex === i && l.children[child]?.end !== true) {
+              if (!l.children[child]) l.children[child] = {}
+              l.children[child].end = true
+            } else if ((toggle || currentIndex !== i) && l.children[child]?.end) delete l.children[child]?.end
           })
         }
       })

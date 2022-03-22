@@ -52,7 +52,7 @@
       outputDisplay.set(!$outputDisplay)
       window.api.send(OUTPUT, { channel: "DISPLAY", data: $outputDisplay })
     },
-    r: (e: any) => e.preventDefault(),
+    r: () => console.log("refresh"),
     s: () => save(),
     y: (e: any) => {
       if (!e.target.closest(".edit")) redo()
@@ -86,7 +86,7 @@
 
   function keydown(e: any) {
     if ($outputWindow) return
-    if (e.ctrlKey) {
+    if (e.ctrlKey || e.metaKey) {
       if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
         activeDrawerTab.set(drawerMenus[e.key - 1])
         // open drawer
@@ -131,7 +131,9 @@
 {/if}
 <main style={!$outputWindow && $os.platform === "win32" ? "height: calc(100% - 30px);" : ""} class:closeAd>
   {#if $outputWindow}
+    <!-- TODO: mac center  -->
     <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={hideDisplay}>
+      <!-- Mac: width: 100%; -->
       <Output style={getStyleResolution(resolution, width, height, "fit")} center />
     </div>
   {:else}

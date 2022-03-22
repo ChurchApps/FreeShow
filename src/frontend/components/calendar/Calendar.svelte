@@ -102,7 +102,7 @@
   function dayClick(e: any, day: Date) {
     day = copy(day)
 
-    if (e.ctrlKey) {
+    if (e.ctrlKey || e.metaKey) {
       activeDays.update((a) => {
         if (a.includes(day.getTime())) {
           if (a.length > 1) a.splice(a.indexOf(day.getTime()), 1)

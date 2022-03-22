@@ -30,19 +30,19 @@ import { outputDisplay } from "../stores"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
 import { listen } from "./messages"
-import { receiveData, requestData } from "./request"
+import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
 
 export function startup() {
   if (!get(outputWindow)) {
-    requestData(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
-    requestData(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "THEMES", "SETTINGS"])
+    send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
+    send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "THEMES", "SETTINGS"])
   }
 
-  receiveData(MAIN, receiveMAIN)
-  receiveData(STORE, receiveSTORE)
-  receiveData(OUTPUT, receiveOUTPUT)
-  // receiveData(OUTPUT, get(outputWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
+  receive(MAIN, receiveMAIN)
+  receive(STORE, receiveSTORE)
+  receive(OUTPUT, receiveOUTPUT)
+  // receive(OUTPUT, get(outputWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
   // window.api.receive(OUTPUT, (msg: any) => {
   //   if (!get(outputWindow) || ["DISPLAY"].includes(msg.channel)) {
   //     if (receiveOUTPUT[msg.channel]) receiveMAIN[msg.channel](msg.data)

@@ -20,7 +20,7 @@
   export let mouse: any
   function mousedown(e: any) {
     activeEdit.update((ae) => {
-      if (e.ctrlKey) {
+      if (e.ctrlKey || e.metaKey) {
         if (ae.items.includes(index)) {
           if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
         } else ae.items.push(index)
@@ -30,7 +30,13 @@
 
     console.log($activeEdit.items)
 
-    if ((e.target.closest(".line") && !e.ctrlKey) || e.target.closest(".square") || (e.ctrlKey && !e.target.closest(".line")) || e.altKey || e.buttons === 4) {
+    if (
+      (e.target.closest(".line") && !e.ctrlKey && !e.metaKey) ||
+      e.target.closest(".square") ||
+      ((e.ctrlKey || e.metaKey) && !e.target.closest(".line")) ||
+      e.altKey ||
+      e.buttons === 4
+    ) {
       let item = e.target.closest(".item")
       mouse = {
         x: e.clientX,
@@ -71,7 +77,7 @@
 
   function deselect(e: any) {
     if (!e.target.closest(".editTools") && !e.target.closest(".drawer")) {
-      if (!e.ctrlKey && e.target.closest(".item") !== itemElem) {
+      if (!e.ctrlKey && !e.metaKey && e.target.closest(".item") !== itemElem) {
         if ($activeEdit.items.includes(index)) {
           if (!e.target.closest(".item")) {
             activeEdit.update((ae) => {

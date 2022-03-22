@@ -25,6 +25,7 @@ export const notFound: Writable<any> = writable({ show: [] })
 export const saved: Writable<boolean> = writable(true)
 export const audioSource: Writable<any> = writable(null)
 export const activeTimers: Writable<any[]> = writable([])
+export const activeRename: Writable<any> = writable(null)
 
 // output
 export const outLocked: Writable<boolean> = writable(false) // false
@@ -296,12 +297,12 @@ export const resized: Writable<NumberObject> = writable({
 export const slidesOptions: Writable<SlidesOptions> = writable({
   // {default}
   columns: 4,
-  grid: true,
+  mode: "grid",
 })
 export const mediaOptions: Writable<SlidesOptions> = writable({
   // {default}
-  columns: 4,
-  grid: true,
+  columns: 5,
+  mode: "grid",
 })
 
 // DRAWER

@@ -183,6 +183,7 @@
   "category": {
     "all": "All",
     "unlabeled": "Unlabeled",
+    "favorites": "Favorites",
     "song": "Songs",
     "info": "Info",
     "events": "Events",
@@ -237,7 +238,8 @@
     "quick_lyrics": "Quick Lyrics",
     "new_layout": "New layout",
     "grid": "Grid view",
-    "list": "List view"
+    "list": "List view",
+    "lyrics": "Lyrics view"
   },
   "actions": {
     "rename": "Rename",
@@ -419,6 +421,13 @@
     "location": "Location",
     "notes": "Notes",
     "today": "Today"
+  },
+  "scripture": {
+    "max_verses": "Max verses per slide",
+    "verse_numbers": "Verse numbers",
+    "version": "Show version",
+    "reference": "Show reference",
+    "red_jesus": "Jesus words in red"
   },
   "filter": {
     "filters": "Filters",
