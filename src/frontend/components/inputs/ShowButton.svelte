@@ -2,6 +2,7 @@
   import { activeProject, activeShow, categories, notFound, outBackground, outLocked, outSlide, playerVideos, projects, shows, showsCache } from "../../stores"
   import { historyAwait } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { checkName } from "../helpers/show"
   import Button from "./Button.svelte"
   import HiddenInput from "./HiddenInput.svelte"
 
@@ -85,7 +86,7 @@
   }
 
   function edit(e: any) {
-    historyAwait([id], { id: "updateShow", newData: { key: "name", values: [e.detail.value] }, location: { page: index === null ? "drawer" : "show", shows: [{ id }] } })
+    historyAwait([id], { id: "updateShow", newData: { key: "name", values: [checkName(e.detail.value)] }, location: { page: index === null ? "drawer" : "show", shows: [{ id }] } })
   }
 </script>
 

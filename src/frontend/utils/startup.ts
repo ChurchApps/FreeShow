@@ -5,6 +5,7 @@ import { loadShows } from "../components/helpers/setShow"
 import {
   activeShow,
   activeTimers,
+  autoOutput,
   draw,
   drawSettings,
   drawTool,
@@ -14,6 +15,7 @@ import {
   os,
   outBackground,
   outOverlays,
+  outputScreen,
   outputWindow,
   outSlide,
   overlays,
@@ -52,6 +54,11 @@ export function startup() {
   setLanguage()
   loadShows(Object.keys(get(shows)))
   // search (cache search text?...)
+
+  // output
+  if (get(autoOutput)) {
+    send(OUTPUT, ["DISPLAY"], { enabled: true, screen: get(outputScreen) })
+  }
 
   // load new show on show change
   activeShow.subscribe((a) => {
@@ -99,7 +106,13 @@ const receiveOUTPUT: any = {
   DRAW_SETTINGS: (a: any) => drawSettings.set(a),
   MEDIA: (a: any) => mediaFolders.set(a),
   ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
-  DISPLAY: (a: any) => outputDisplay.set(a),
+  DISPLAY: (a: any) => outputDisplay.set(a.enabled),
+  SCREEN_ADDED: (a: any) => {
+    if (get(autoOutput) && !get(outputDisplay)) {
+      send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })
+      outputScreen.set(a)
+    }
+  },
 }
 
 // const receiveOUTPUTasOutput: any = {

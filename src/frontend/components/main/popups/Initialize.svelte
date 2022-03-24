@@ -34,7 +34,9 @@
     <p><T id="settings.show_location" /></p>
     <span>
       {$showsPath}
-      <FolderPicker id="shows">[[[Choose another location...]]]</FolderPicker>
+      <FolderPicker id="shows">
+        <T id="inputs.shows_folder" />
+      </FolderPicker>
     </span>
   </div>
   <div>

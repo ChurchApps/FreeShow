@@ -111,7 +111,7 @@
 
   function hideDisplay() {
     outputDisplay.set(false)
-    window.api.send(OUTPUT, { channel: "DISPLAY", data: false })
+    window.api.send(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
   }
 
   // close youtube ad

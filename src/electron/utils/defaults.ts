@@ -1,8 +1,11 @@
-export const defaultSettings = {
+import type { SaveListSettings } from "./../../types/Save"
+export const defaultSettings: { [key in SaveListSettings]: any } = {
   initialized: false,
   outLocked: false,
+  outputScreen: null,
   openedFolders: [],
   activeProject: null,
+  presenterControllerKeys: true,
   remotePassword: "",
   categories: {
     song: { name: "category.song", icon: "song", default: true },

@@ -46,6 +46,7 @@
     // "clear.audio": "f4",
     // "clear.transitions": "f5",
     "actions.fullscreen": "f11",
+    // presenterKeys: "SEPERATOR",
   }
 </script>
 

@@ -32,6 +32,12 @@
     "example": "Example",
     "example_note": "Write notes here"
   },
+  "overlays": {
+    "watermark": "Watermark",
+    "recording": "Recording",
+    "rounded": "Rounded",
+    "call": "Video call"
+  },
   "titlebar": {
     "file": "File",
     "edit": "Edit",
@@ -167,7 +173,8 @@
   "inputs": {
     "name": "Name",
     "video_id": "Video ID/URL",
-    "close_ad": "Close ad on output screen"
+    "close_ad": "Close ad on output screen",
+    "shows_folder": "Choose another location"
   },
   "tabs": {
     "shows": "Shows",

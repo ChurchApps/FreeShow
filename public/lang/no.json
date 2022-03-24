@@ -32,6 +32,12 @@
     "example": "Eksempel",
     "example_note": "Skriv notater her"
   },
+  "overlays": {
+    "watermark": "Vannmerke",
+    "recording": "Opptak",
+    "rounded": "Avrundet",
+    "call": "Videoanrop"
+  },
   "titlebar": {
     "file": "Fil",
     "edit": "Rediger",
@@ -167,7 +173,8 @@
   "inputs": {
     "name": "Navn",
     "video_id": "Video ID/URL",
-    "close_ad": "Lukk annonse på utgangsskjermen"
+    "close_ad": "Lukk annonse på utgangsskjermen",
+    "shows_folder": "Velg en annen plassering"
   },
   "tabs": {
     "shows": "Show",

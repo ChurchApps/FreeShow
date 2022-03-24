@@ -48,7 +48,7 @@ export function createData(paths: any) {
     a.watermark = {
       name: get(dictionary).example?.watermark || "Watermark",
       color: "#e6349c",
-      category: null,
+      category: "notice",
       items: [
         {
           style: "top:870px;left:1248px;height:170px;width:630px;",
@@ -66,6 +66,17 @@ export function createData(paths: any) {
         { style: "top:35px;left:36.5px;height:1008.21px;width:1847.62px;border:4px solid white;" },
         { style: "top:80px;left:80px;height:40px;width:40px;background-color:red;border-radius:50%;" },
         { style: "top:80px;left:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] },
+      ],
+    }
+    a.rounded = {
+      name: get(dictionary).example?.rounded || "Rounded",
+      color: null,
+      category: "visuals",
+      items: [
+        { style: "top:0px;left:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 100%, transparent 50px, black 0px);" },
+        { style: "top:0px;right:0px;height:50px;width:50px;background:radial-gradient(circle at 0 100%, transparent 50px, black 0px);" },
+        { style: "bottom:0px;right:0px;height:50px;width:50px;background:radial-gradient(circle at 0 0, transparent 50px, black 0px);" },
+        { style: "bottom:0px;left:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 0, transparent 50px, black 0px);" },
       ],
     }
     return a

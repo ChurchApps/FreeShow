@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { GET_SCREENS } from "../../../../types/Channels"
+  import { MAIN } from "../../../../types/Channels"
   import { outBackground } from "../../../stores"
+  import { receive, send } from "../../../utils/request"
   import Capture from "./Capture.svelte"
 
   let windows: any[] = []
   export let streams: any[]
-  window.api.send(GET_SCREENS, ["window"])
-  window.api.receive(GET_SCREENS, (data: any) => {
-    // set freeshow last
-    let index = data.findIndex((a: any) => a.name === "FreeShow")
-    console.log(index)
-
-    if (index >= 0) {
-      let thisWindow = data.splice(index, 1)
-      data = [...data, ...thisWindow]
-    }
-    console.log(data)
-    windows = data
+  send(MAIN, ["GET_WINDOWS"])
+  receive(MAIN, {
+    GET_WINDOWS: (d: any) => {
+      // set freeshow last
+      // let index = d.findIndex((a: any) => a.name === "FreeShow")
+      // if (index >= 0) {
+      //   let thisWindow = d.splice(index, 1)
+      //   d = [...d, ...thisWindow]
+      // }
+      windows = d
+    },
   })
 </script>
 
