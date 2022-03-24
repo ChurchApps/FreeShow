@@ -1,5 +1,6 @@
 <script>
   import YouTube from "svelte-youtube"
+  import { OUTPUT } from "../../../../types/Channels"
   import { outputWindow } from "../../../stores"
 
   export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
@@ -32,34 +33,39 @@
   function onReady(e) {
     // access to player in all event handlers via event.target
     // console.log(e, video)
+    console.log("READY")
     console.log(e.detail.target)
     player = e.detail.target
     if (videoData.muted) player.mute()
-    videoData.paused = false
+    // videoData.paused = false
     videoData.duration = player.getDuration()
     videoTime = startAt
     // player.hideVideoInfo()
     // player.setOption("captions", "fontSize", -1)
     setTimeout(() => {
       // TODO: output update startAt
+      videoData.paused = true
       player.seekTo(videoTime)
       title = player.getVideoData().title
       console.log(player.getVideoData(), title)
       // console.log(player.playerInfo.videoData) // title | author
       setTimeout(() => {
+        videoData.paused = false
         loaded = true
+        // if (!$outputWindow) window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
       }, 100)
     }, 500)
   }
 
   setInterval(() => {
-    if (loaded && player.getPlayerState() === 1) videoTime = player.getCurrentTime()
+    if (!$outputWindow && loaded && player.getPlayerState() === 1) videoTime = player.getCurrentTime()
     // else player.seekTo(videoTime)
   }, 500)
+  $: console.log(player?.getCurrentTime(), videoTime)
   $: if (player && player.getPlayerState() === 2 && player.getCurrentTime() !== videoTime) player.seekTo(videoTime)
 
   $: {
-    if (player) {
+    if (player && loaded) {
       if (videoData.paused) player.pauseVideo()
       else player.playVideo()
       if (videoData.muted) player.mute()
@@ -68,19 +74,19 @@
     }
   }
 
-  $: {
-    if (!id && player) player.stopVideo()
-  }
+  $: if (!id && player) player.stopVideo()
+
+  // $: if ($outputWindow && player && videoData.paused) player.seekTo(videoTime)
 
   function change(e) {
     // ended (0), playing (1), paused (2), video cued (5) or unstarted (-1).
-    if (!$outputWindow) {
-      if (loaded) {
-        videoData.paused = player.getPlayerState() === 1 ? false : true
-        videoTime = player.getCurrentTime()
-      }
-      videoData.duration = player.getDuration()
+    if ($outputWindow) return
+
+    if (loaded) {
+      videoData.paused = player.getPlayerState() === 1 ? false : true
+      videoTime = player.getCurrentTime()
     }
+    videoData.duration = player.getDuration()
   }
 
   // $: if (videoTime) player.seekTo()
@@ -88,8 +94,9 @@
 
 <div class="main" class:hide={!id}>
   <!-- https://www.youtube.com/watch?v=rfxnmIPCzIc -->
-  <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} />
-  {#if !id}
+  {#if id}
+    <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} />
+  {:else}
     [[[Type video url/id into search area!]]]
     <!-- {:else}
     <YouTube class="yt" videoId={id} {options} on:ready={onReady} /> -->

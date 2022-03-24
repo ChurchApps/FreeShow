@@ -5,6 +5,7 @@ import { loadShows } from "../components/helpers/setShow"
 import {
   activeShow,
   activeTimers,
+  autoOutput,
   draw,
   drawSettings,
   drawTool,
@@ -14,6 +15,7 @@ import {
   os,
   outBackground,
   outOverlays,
+  outputScreen,
   outputWindow,
   outSlide,
   overlays,
@@ -30,19 +32,19 @@ import { outputDisplay } from "../stores"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
 import { listen } from "./messages"
-import { receiveData, requestData } from "./request"
+import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
 
 export function startup() {
   if (!get(outputWindow)) {
-    requestData(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
-    requestData(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "THEMES", "SETTINGS"])
+    send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
+    send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "THEMES", "SETTINGS"])
   }
 
-  receiveData(MAIN, receiveMAIN)
-  receiveData(STORE, receiveSTORE)
-  receiveData(OUTPUT, receiveOUTPUT)
-  // receiveData(OUTPUT, get(outputWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
+  receive(MAIN, receiveMAIN)
+  receive(STORE, receiveSTORE)
+  receive(OUTPUT, receiveOUTPUT)
+  // receive(OUTPUT, get(outputWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
   // window.api.receive(OUTPUT, (msg: any) => {
   //   if (!get(outputWindow) || ["DISPLAY"].includes(msg.channel)) {
   //     if (receiveOUTPUT[msg.channel]) receiveMAIN[msg.channel](msg.data)
@@ -52,6 +54,11 @@ export function startup() {
   setLanguage()
   loadShows(Object.keys(get(shows)))
   // search (cache search text?...)
+
+  // output
+  if (get(autoOutput)) {
+    send(OUTPUT, ["DISPLAY"], { enabled: true, screen: get(outputScreen) })
+  }
 
   // load new show on show change
   activeShow.subscribe((a) => {
@@ -99,7 +106,13 @@ const receiveOUTPUT: any = {
   DRAW_SETTINGS: (a: any) => drawSettings.set(a),
   MEDIA: (a: any) => mediaFolders.set(a),
   ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
-  DISPLAY: (a: any) => outputDisplay.set(a),
+  DISPLAY: (a: any) => outputDisplay.set(a.enabled),
+  SCREEN_ADDED: (a: any) => {
+    if (get(autoOutput) && !get(outputDisplay)) {
+      send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })
+      outputScreen.set(a)
+    }
+  },
 }
 
 // const receiveOUTPUTasOutput: any = {

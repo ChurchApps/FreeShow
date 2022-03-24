@@ -1,8 +1,11 @@
-export const defaultSettings = {
+import type { SaveListSettings } from "./../../types/Save"
+export const defaultSettings: { [key in SaveListSettings]: any } = {
   initialized: false,
   outLocked: false,
+  outputScreen: null,
   openedFolders: [],
   activeProject: null,
+  presenterControllerKeys: true,
   remotePassword: "",
   categories: {
     song: { name: "category.song", icon: "song", default: true },
@@ -54,8 +57,8 @@ export const defaultSettings = {
     rightPanelDrawer: 300,
     drawer: 200,
   },
-  slidesOptions: { columns: 4, grid: true },
-  mediaOptions: { columns: 4, grid: true },
+  slidesOptions: { columns: 4, mode: "grid" },
+  mediaOptions: { columns: 5, mode: "grid" },
   drawerTabsData: {
     shows: { enabled: true, activeSubTab: null },
     media: { enabled: true, activeSubTab: null },

@@ -66,7 +66,7 @@ export function template(lang: any): any {
     {
       label: lang.titlebar?.view || "View",
       submenu: [
-        ...(isProd && Number(app.getVersion()[0]) > 0 ? [] : [{ role: "reload" }, { role: "toggleDevTools" }, { type: "separator" }]),
+        ...(isProd ? [] : [{ role: "reload" }, { role: "toggleDevTools" }, { type: "separator" }]),
         { label: lang.actions?.fullscreen || "Toggle Fullscreen", role: "togglefullscreen" },
         { label: lang.actions?.resetZoom || "Reset Zoom", role: "resetZoom" },
         { label: lang.actions?.zoomIn || "Zoom In", role: "zoomIn" },

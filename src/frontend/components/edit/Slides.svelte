@@ -72,8 +72,8 @@
   // }
 
   function wheel(e: any) {
-    if (e.ctrlKey) columns = Math.max(1, Math.min(10, columns + e.deltaY / 100))
-    // if (e.ctrlKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
+    if (e.ctrlKey || e.metaKey) columns = Math.max(1, Math.min(10, columns + e.deltaY / 100))
+    // if (e.ctrlKey || e.metaKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
   }
 </script>
 
@@ -93,7 +93,7 @@
           noQuickEdit
           {columns}
           on:click={(e) => {
-            if (!e.ctrlKey) activeEdit.set({ slide: i, items: [] })
+            if (!e.ctrlKey && !e.metaKey) activeEdit.set({ slide: i, items: [] })
           }}
         />
       {/each}

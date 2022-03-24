@@ -25,6 +25,7 @@ export const notFound: Writable<any> = writable({ show: [] })
 export const saved: Writable<boolean> = writable(true)
 export const audioSource: Writable<any> = writable(null)
 export const activeTimers: Writable<any[]> = writable([])
+export const activeRename: Writable<any> = writable(null)
 
 // output
 export const outLocked: Writable<boolean> = writable(false) // false
@@ -296,12 +297,12 @@ export const resized: Writable<NumberObject> = writable({
 export const slidesOptions: Writable<SlidesOptions> = writable({
   // {default}
   columns: 4,
-  grid: true,
+  mode: "grid",
 })
 export const mediaOptions: Writable<SlidesOptions> = writable({
   // {default}
-  columns: 4,
-  grid: true,
+  columns: 5,
+  mode: "grid",
 })
 
 // DRAWER
@@ -329,10 +330,14 @@ export const language: Writable<string> = writable("en") // "get"
 export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
-export const autoOutput: Writable<boolean> = writable(true) // true
 // TODO: never, last slide, first & last, always
 export const displayMetadata: Writable<string> = writable("never") // "never"
 export const showsPath: Writable<null | string> = writable(null) // null
+export const presenterControllerKeys: Writable<boolean> = writable(true) // true
+
+// display
+export const autoOutput: Writable<boolean> = writable(true) // true
+export const outputScreen: Writable<null | string> = writable(null) // null
 
 // project
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"

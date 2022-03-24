@@ -64,7 +64,7 @@
   function onVideoClick(e: any) {
     if ($outLocked) return
 
-    let bg: any = { type: show!.type, startAt: e.ctrlKey ? videoTime : 0 }
+    let bg: any = { type: show!.type, startAt: e.ctrlKey || e.metaKey ? videoTime : 0 }
 
     if (show!.type === "player") bg.id = show!.id
     else {

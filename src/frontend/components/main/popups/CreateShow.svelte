@@ -1,13 +1,14 @@
 <script lang="ts">
   import { uid } from "uid"
-
   import type { Show } from "../../../../types/Show"
   import { ShowObj } from "../../../classes/Show"
-  import { activePopup, activeProject } from "../../../stores"
+  import { activePopup, activeProject, categories, drawerTabsData, groups } from "../../../stores"
+  import { sortObject } from "../../helpers/array"
   import { history } from "../../helpers/history"
   import { checkName } from "../../helpers/show"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
+  import Dropdown from "../../inputs/Dropdown.svelte"
   import TextArea from "../../inputs/TextArea.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
 
@@ -15,27 +16,28 @@
     let sections = values.text.split("\n\n").filter((a: any) => a.length)
     console.log(sections)
 
-    let metaData: string = ""
-    if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
+    // let metaData: string = ""
+    // if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
+    let category = selectedCategory.id.length ? selectedCategory.id : null
 
     if (sections.length) {
       let labeled: any[] = []
 
       // find chorus phrase
-      let indexes = findPatterns(sections)
-      labeled = indexes.map((a, i) => ({ type: a, text: sections[i] }))
+      let patterns = findPatterns(sections)
+      sections = patterns.sections
+      labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] }))
 
       let name: string = labeled[0].text.split("\n")[0]
       // get active
-      let category = values.category
       let meta: any = {}
-      if (metaData.length) {
-        let lines: string[] = metaData.split("\n")
-        meta.title = lines.splice(0, 1)[0]
-        if (meta.title.length) name = meta.title
-        if (lines.length) meta.artist = lines.splice(0, 1)[0]
-        if (lines.length) meta.other = lines.join("\n")
-      }
+      // if (metaData.length) {
+      //   let lines: string[] = metaData.split("\n")
+      //   meta.title = lines.splice(0, 1)[0]
+      //   if (meta.title.length) name = meta.title
+      //   if (lines.length) meta.artist = lines.splice(0, 1)[0]
+      //   if (lines.length) meta.other = lines.join("\n")
+      // }
 
       let layoutID = uid()
       let show: Show = new ShowObj(false, category, layoutID)
@@ -47,11 +49,11 @@
       // let newData: any = {name, category, settings: {}, meta}
       history({ id: "newShow", newData: { show }, location: { page: "show", project: $activeProject } })
     } else {
-      let show = new ShowObj(false, values.category)
+      let show = new ShowObj(false, category)
       show.name = checkName(values.name)
       history({ id: "newShow", newData: { show }, location: { page: "show", project: $activeProject } })
     }
-    values.text = ""
+    values = { name: "", text: "" }
     activePopup.set(null)
   }
 
@@ -150,62 +152,77 @@
     let similarCount: any[] = []
     // total count of totally different slides
     let totalMatches: number = 0
-    sections.forEach((a: string, i: number) => {
-      similarCount[i] = { matches: [], count: 0 }
-      let already = similarCount.find((a) => a.matches.includes(i))
-      if (already) {
-        similarCount[i] = already
-      } else {
-        sections.forEach((b: string, j: number) => {
-          if (i !== j && similarity(a, b) > similarityNum) {
-            similarCount[i].count++
-            similarCount[i].matches.push(j)
-          }
-        })
-        if (similarCount[i].count > 0) totalMatches++
-      }
-    })
+    sections.forEach(countMatchingSections)
 
     // let totalMatches = similarCount.filter((a) => a > 0).length
     let matches: number = 0
     let stored: any[] = []
-    let indexes = similarCount.map((a, i) => {
+    let indexes = similarCount.map(getIndexes)
+    console.log(indexes)
+
+    return { sections, indexes }
+
+    function countMatchingSections(a: string, i: number) {
+      similarCount[i] = { matches: [], count: 0 }
+
+      let alreadyCounted = similarCount.find((a) => a.matches.includes(i))
+      if (alreadyCounted) {
+        similarCount[i] = alreadyCounted
+        return
+      }
+
+      sections.forEach(count)
+      if (similarCount[i].count > 0) totalMatches++
+
+      function count(b: string, j: number) {
+        if (i === j || similarityNum > similarity(a, b)) return
+        similarCount[i].count++
+        similarCount[i].matches.push(j)
+      }
+    }
+
+    function getIndexes(a: any, i: number) {
       // let lines = sections[i].split("\n")
+      let splitted: string[] = sections[i].split("\n")
       let length: number = sections[i].replaceAll("\n", "").length
-      let group = "verse"
       let find = stored.find((a) => similarity(a.text, sections[i]) > similarityNum)
 
+      // TODO: repeat x6
+      // TODO: labels in text
       // TODO: frihet, the blessing
       // verses repeat..., bridge repeat
 
       // if (lines.length < 2) group =  "break"
-      if (find) group = find.type
-      else if (!length) group = "break"
-      else if (length < 10 && !sections[i].includes("\n")) group = sections[i].trim()
-      else if (length < 30 || linesSimilarity(sections[i])) group = "tag"
-      else if (a.count > 0) {
+      if (find) return find.type
+      if (!length) return "break"
+      if (length < 10 && !sections[i].includes("\n")) return sections[i].trim()
+      if (length < 30 || linesSimilarity(sections[i])) return "tag"
+      if (splitted[0].length < 15 && splitted[1].length > 20) {
+        // console.log(sections[i], splitted.slice(1, splitted.length))
+        sections[i] = splitted.slice(1, splitted.length).join("\n")
+        let group = splitted[0].replace(/\d+/g, "").trim()
+        return $groups[group.toLowerCase()] ? group.toLowerCase() : splitted[0]
+      }
+      if (a.count > 0) {
         let groups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
         matches++
+        let group = groups[matches]
         if (totalMatches > 2) group = groups[matches - 1] || "other"
-        else group = groups[matches]
         stored.push({ type: group, text: sections[i] })
+        return group
       }
-      return group
-    })
-    console.log(indexes)
-
-    return indexes
+      return "verse"
+    }
   }
 
   function linesSimilarity(text: string): boolean {
     let lines = text.split("\n")
+    if (lines.length < 3) return false
     let isSimilar = false
-    if (lines.length > 2) {
-      lines.reduce((a: string, b: string) => {
-        if (similarity(a, b) > 0.95) isSimilar = true
-        return ""
-      })
-    }
+    lines.reduce((a: string, b: string) => {
+      if (similarity(a, b) > 0.95) isSimilar = true
+      return ""
+    })
     return isSimilar
   }
 
@@ -250,15 +267,23 @@
   let values: any = {
     text: "",
     name: "",
-    category: "song",
   }
 
   function keydown(e: any) {
-    if (e.key === "Enter" && e.ctrlKey) {
-      ;(document.activeElement as any)?.blur()
-      textToShow()
-    }
+    if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return
+    ;(document.activeElement as any)?.blur()
+    textToShow()
   }
+
+  const cats: any = [
+    { id: "", name: "—" },
+    ...sortObject(
+      Object.keys($categories).map((id) => ({ id, name: "$:" + $categories[id].name + ":$" })),
+      "name"
+    ),
+  ]
+  let selectedCategory: any =
+    $drawerTabsData.shows.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab] ? cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab) : cats[0]
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -269,7 +294,7 @@
 </div>
 <div style="display: flex;justify-content: space-between;align-items: center;">
   <p><T id="show.category" /></p>
-  <TextInput value={values.category} on:change={(e) => changeValue(e, "category")} style="width: 50%;height: 30px;" />
+  <Dropdown options={cats} value={selectedCategory.name} on:click={(e) => (selectedCategory = e.detail)} style="width: 50%;" />
 </div>
 <br />
 <!-- TODO: show example? -->

@@ -32,7 +32,7 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
   let layoutSlides: SlideData[] = []
   if (currentShow) {
     currentShow.layouts[layoutID].slides.forEach((ls) => {
-      if (ls) {
+      if (ls && currentShow.slides[ls.id]) {
         let slide: Slide = currentShow.slides[ls.id]
         let newLS = { ...ls }
         delete newLS.children
@@ -60,11 +60,13 @@ export const GetLayoutRef = (showID: null | ID = null, layoutID: null | ID = nul
   if (currentShow) {
     currentShow.layouts[layoutID].slides.forEach((ls, i) => {
       let slide: Slide = currentShow.slides[ls.id]
-      layoutSlides.push({ type: "parent", id: ls.id, index: i })
-      if (slide.children) {
-        slide.children.forEach((id: string, j) => {
-          layoutSlides.push({ type: "child", id, parent: ls.id, layoutIndex: i, slideIndex: j })
-        })
+      if (slide) {
+        layoutSlides.push({ type: "parent", id: ls.id, index: i })
+        if (slide.children) {
+          slide.children.forEach((id: string, j) => {
+            layoutSlides.push({ type: "child", id, parent: ls.id, layoutIndex: i, slideIndex: j })
+          })
+        }
       }
     })
   }

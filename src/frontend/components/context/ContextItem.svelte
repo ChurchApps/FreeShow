@@ -56,8 +56,8 @@
     let sel: any = $selected
 
     let m: any = menuClick(id, enabled, menu, contextElem, actionItem, sel)
-    if (m.enabled !== undefined) enabled = m.enabled
-    if (m.hide) contextActive = false
+    if (m?.enabled !== undefined) enabled = m.enabled
+    if (!m || m.hide) contextActive = false
   }
 
   function keydown(e: any) {

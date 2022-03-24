@@ -2,6 +2,7 @@
   import { activeProject, activeShow, categories, notFound, outBackground, outLocked, outSlide, playerVideos, projects, shows, showsCache } from "../../stores"
   import { historyAwait } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { checkName } from "../helpers/show"
   import Button from "./Button.svelte"
   import HiddenInput from "./HiddenInput.svelte"
 
@@ -63,7 +64,7 @@
       if (i > -1) pos = i
     }
 
-    if (!e.ctrlKey && !active && !e.target.closest("input")) {
+    if (!e.ctrlKey && !e.metaKey && !active && !e.target.closest("input")) {
       let show: any = { id, type }
       if (pos !== null) show.index = pos
       activeShow.set(show)
@@ -85,7 +86,7 @@
   }
 
   function edit(e: any) {
-    historyAwait([id], { id: "updateShow", newData: { key: "name", values: [e.detail.value] }, location: { page: index === null ? "drawer" : "show", shows: [{ id }] } })
+    historyAwait([id], { id: "updateShow", newData: { key: "name", values: [checkName(e.detail.value)] }, location: { page: index === null ? "drawer" : "show", shows: [{ id }] } })
   }
 </script>
 
@@ -98,7 +99,7 @@
         <Icon id={iconID} {custom} />
       {/if}
       <!-- <p style="margin: 5px;">{newName}</p> -->
-      <HiddenInput value={newName} on:edit={edit} />
+      <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} />
     </span>
 
     {#if match}

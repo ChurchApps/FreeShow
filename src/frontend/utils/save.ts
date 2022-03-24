@@ -3,6 +3,7 @@ import { STORE } from "../../types/Channels"
 import {
   activeProject,
   audioFolders,
+  categories,
   defaultProjectName,
   displayMetadata,
   drawer,
@@ -22,10 +23,13 @@ import {
   openedFolders,
   os,
   outLocked,
+  outputScreen,
   overlayCategories,
   overlays,
   playerVideos,
+  presenterControllerKeys,
   projects,
+  remotePassword,
   resized,
   saved,
   screen,
@@ -41,16 +45,19 @@ import {
   videoExtensions,
   webFavorites,
 } from "../stores"
+import type { SaveList } from "./../../types/Save"
 
 export function save() {
   console.log("SAVING...")
 
-  let settings: any = {
+  let settings: { [key in SaveList]: any } = {
     initialized: true,
     activeProject: get(activeProject),
     audioFolders: get(audioFolders),
+    categories: get(categories),
     defaultProjectName: get(defaultProjectName),
     displayMetadata: get(displayMetadata),
+    events: get(events),
     showsPath: get(showsPath),
     drawer: get(drawer),
     drawerTabsData: get(drawerTabsData),
@@ -67,13 +74,18 @@ export function save() {
     openedFolders: get(openedFolders),
     os: get(os),
     outLocked: get(outLocked),
+    outputScreen: get(outputScreen),
     overlayCategories: get(overlayCategories),
+    presenterControllerKeys: get(presenterControllerKeys),
     playerVideos: get(playerVideos),
+    remotePassword: get(remotePassword),
     resized: get(resized),
     screen: get(screen),
     slidesOptions: get(slidesOptions),
     templateCategories: get(templateCategories),
+    templates: get(templates),
     theme: get(theme),
+    themes: get(themes),
     videoExtensions: get(videoExtensions),
     webFavorites: get(webFavorites),
   }

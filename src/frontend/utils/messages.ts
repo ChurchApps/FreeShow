@@ -1,9 +1,11 @@
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
   activeProject,
   audioFolders,
+  categories,
   defaultProjectName,
   displayMetadata,
   draw,
@@ -15,6 +17,7 @@ import {
   folders,
   fullColors,
   groupCount,
+  groupNumbers,
   groups,
   imageExtensions,
   labelsDisabled,
@@ -26,10 +29,12 @@ import {
   outBackground,
   outLocked,
   outOverlays,
+  outputScreen,
   outSlide,
   overlayCategories,
   overlays,
   playerVideos,
+  presenterControllerKeys,
   projects,
   remotePassword,
   resized,
@@ -123,44 +128,48 @@ export function listen() {
 
   // SAVE
   // TODO: better saving!
-  activeProject.subscribe(() => saved.set(false))
-  remotePassword.subscribe(() => saved.set(false))
-  audioFolders.subscribe(() => saved.set(false))
-  defaultProjectName.subscribe(() => saved.set(false))
-  displayMetadata.subscribe(() => saved.set(false))
-  showsPath.subscribe(() => saved.set(false))
-  drawer.subscribe(() => saved.set(false))
-  drawerTabsData.subscribe(() => saved.set(false))
-  drawSettings.subscribe(() => saved.set(false))
-  events.subscribe(() => saved.set(false))
-  folders.subscribe(() => saved.set(false))
-  fullColors.subscribe(() => saved.set(false))
-  groupCount.subscribe(() => saved.set(false))
-  groups.subscribe(() => saved.set(false))
-  imageExtensions.subscribe(() => saved.set(false))
-  labelsDisabled.subscribe(() => saved.set(false))
-  language.subscribe(() => saved.set(false))
-  mediaFolders.subscribe(() => saved.set(false))
-  mediaOptions.subscribe(() => saved.set(false))
-  openedFolders.subscribe(() => saved.set(false))
-  os.subscribe(() => saved.set(false))
-  outLocked.subscribe(() => saved.set(false))
-  overlayCategories.subscribe(() => saved.set(false))
-  overlays.subscribe(() => saved.set(false))
-  playerVideos.subscribe(() => saved.set(false))
-  projects.subscribe(() => saved.set(false))
-  resized.subscribe(() => saved.set(false))
-  screen.subscribe(() => saved.set(false))
-  showsCache.subscribe(() => saved.set(false))
-  showsPath.subscribe(() => saved.set(false))
-  slidesOptions.subscribe(() => saved.set(false))
-  stageShows.subscribe(() => saved.set(false))
-  templateCategories.subscribe(() => saved.set(false))
-  templates.subscribe(() => saved.set(false))
-  theme.subscribe(() => saved.set(false))
-  themes.subscribe(() => saved.set(false))
-  videoExtensions.subscribe(() => saved.set(false))
-  webFavorites.subscribe(() => saved.set(false))
+  let s = { ...saveList, folders: folders, overlays: overlays, projects: projects, showsCache: showsCache, stageShows: stageShows }
+  Object.values(s).forEach((a) => {
+    if (a) a.subscribe(() => saved.set(false))
+  })
 }
 
-// const send = (id: "OUTPUT" | "REMOTE" | "STAGE", channel: string, data: any) => {window.api.send(id, { channel, data })}
+const saveList: { [key in SaveList]: any } = {
+  initialized: null,
+  activeProject: activeProject,
+  audioFolders: audioFolders,
+  categories: categories,
+  defaultProjectName: defaultProjectName,
+  displayMetadata: displayMetadata,
+  events: events,
+  showsPath: showsPath,
+  drawer: drawer,
+  drawerTabsData: drawerTabsData,
+  drawSettings: drawSettings,
+  groupNumbers: groupNumbers,
+  fullColors: fullColors,
+  groupCount: groupCount,
+  groups: groups,
+  imageExtensions: imageExtensions,
+  labelsDisabled: labelsDisabled,
+  language: language,
+  mediaFolders: mediaFolders,
+  mediaOptions: mediaOptions,
+  openedFolders: openedFolders,
+  os: os,
+  outLocked: outLocked,
+  outputScreen: outputScreen,
+  overlayCategories: overlayCategories,
+  presenterControllerKeys: presenterControllerKeys,
+  playerVideos: playerVideos,
+  remotePassword: remotePassword,
+  resized: resized,
+  screen: screen,
+  slidesOptions: slidesOptions,
+  templateCategories: templateCategories,
+  templates: templates,
+  theme: theme,
+  themes: themes,
+  videoExtensions: videoExtensions,
+  webFavorites: webFavorites,
+}

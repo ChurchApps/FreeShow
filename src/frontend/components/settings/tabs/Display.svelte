@@ -1,12 +1,22 @@
 <script lang="ts">
+  import { autoOutput } from "../../../stores"
   import T from "../../helpers/T.svelte"
+  import Checkbox from "../../inputs/Checkbox.svelte"
   import Screens from "../Screens.svelte"
+
+  function setAutoOutput(e: any) {
+    autoOutput.set(e.target.checked)
+  }
 </script>
 
 <!-- TODO: display... -->
 <div>
   <p><T id="settings.output_screen" /></p>
   <Screens />
+</div>
+<div>
+  <p><T id="settings.auto_output" /></p>
+  <Checkbox checked={$autoOutput} on:change={setAutoOutput} />
 </div>
 
 <style>

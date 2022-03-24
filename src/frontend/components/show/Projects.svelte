@@ -119,7 +119,7 @@
             {/each}
           {:else}
             <Center faded>
-              <T id="empty.show" />
+              <T id="empty.shows" />
             </Center>
           {/if}
         </DropArea>

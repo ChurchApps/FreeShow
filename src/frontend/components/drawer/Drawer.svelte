@@ -94,7 +94,7 @@
   let searchElem: any
   let autoDrawer: boolean = false
   function keydown(e: any) {
-    if (document.activeElement === document.body && !e.ctrlKey && !e.altKey) {
+    if (document.activeElement === document.body && !e.ctrlKey && !e.metaKey && !e.altKey) {
       // Alphabet upper case | Alphabet lower case
       if (/^[A-Z]{1}$/i.test(e.key)) searchElem.focus()
     } else if (e.key === "Enter") {

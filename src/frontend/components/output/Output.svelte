@@ -4,7 +4,7 @@
   import type { Resolution } from "../../../types/Settings"
   import type { Transition } from "../../../types/Show"
   import { displayMetadata, outAudio, outBackground, outOverlays, outputWindow, outSlide, overlays, screen, shows } from "../../stores"
-  import { receiveData } from "../../utils/request"
+  import { receive } from "../../utils/request"
   import Draw from "../draw/Draw.svelte"
   import { _show } from "../helpers/shows"
   import Textbox from "../slide/Textbox.svelte"
@@ -42,7 +42,7 @@
     },
   }
 
-  if ($outputWindow || mirror) receiveData(OUTPUT, receiveOUTPUT)
+  if ($outputWindow || mirror) receive(OUTPUT, receiveOUTPUT)
 
   $: console.log($outSlide)
 

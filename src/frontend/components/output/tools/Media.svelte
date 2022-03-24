@@ -14,7 +14,11 @@
   $: outName = $outBackground?.path ? $outBackground.path.substring($outBackground.path.lastIndexOf("\\") + 1) : ""
   $: mediaName = outName.slice(0, outName.lastIndexOf("."))
 
-  const sendToOutput = () => window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { ...videoData, time: videoTime } })
+  const sendToOutput = () => {
+    // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { ...videoData, time: videoTime } })
+    window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+    window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+  }
 </script>
 
 {#if $outBackground?.type === "player"}

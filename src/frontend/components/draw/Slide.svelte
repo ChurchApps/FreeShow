@@ -39,7 +39,7 @@
     if (draw === null || !$drawSettings[$drawTool]?.size || e.target.closest(".parent") !== parent || !e.target.closest(".slide")) return
 
     drawSettings.update((a) => {
-      a[$drawTool].size = Math.max(0, Math.min(2000, a[$drawTool].size - e.deltaY / (e.ctrlKey ? 10 : e.altKey ? 100 : 25)))
+      a[$drawTool].size = Math.max(0, Math.min(2000, a[$drawTool].size - e.deltaY / (e.ctrlKey || e.metaKey ? 10 : e.altKey ? 100 : 25)))
       return a
     })
   }

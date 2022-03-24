@@ -74,6 +74,7 @@
   let showsSorted: any
   shows.subscribe((s) => {
     showsSorted = removeValues(sortObject(keysToID(s), "name"), "private", true)
+    // TODO: remove category if it does not exist!
   })
   interface ShowId extends Show {
     id: string
@@ -108,7 +109,7 @@
   }
 
   function keydown(e: any) {
-    if (!e.target.closest("input") && !e.target.closest(".edit") && e.ctrlKey && filteredShows.length) {
+    if (!e.target.closest("input") && !e.target.closest(".edit") && (e.ctrlKey || e.metaKey) && filteredShows.length) {
       let id: any = null
       if (e.key === "ArrowRight") {
         if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[0].id
@@ -154,7 +155,7 @@
   <Button
     style="flex: 1;"
     on:click={(e) => {
-      if (e.ctrlKey) history({ id: "newShow", location: { page: "show", project: $activeProject } })
+      if (e.ctrlKey || e.metaKey) history({ id: "newShow", location: { page: "show", project: $activeProject } })
       else activePopup.set("show")
     }}
     center

@@ -1,8 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-
   import { activeShow, activeTimers, dictionary, showsCache } from "../../stores"
-  import { requestData } from "../../utils/request"
+  import { send } from "../../utils/request"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { _show } from "../helpers/shows"
@@ -44,7 +43,7 @@
       a = a.filter((_a, i) => !timer.includes(i))
       return a
     })
-    requestData(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
+    send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
   }
 </script>
 

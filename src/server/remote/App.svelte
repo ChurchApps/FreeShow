@@ -189,7 +189,7 @@
     shows: { name: dictionary.remote.shows, icon: "shows" },
     show: { name: dictionary.remote.show, icon: "show" },
     slide: { name: dictionary.remote.slide, icon: "slide" },
-    lyrics: { name: dictionary.remote.lyrics, icon: "text" },
+    lyrics: { name: dictionary.remote.lyrics, icon: "lyrics" },
   }
   let transition: any = { type: "fade", duration: 500 }
 

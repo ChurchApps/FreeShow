@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { activePage, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, screen } from "../../stores"
+  import { activePage, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, presenterControllerKeys, screen } from "../../stores"
   import { nextSlide, previousSlide } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -24,16 +24,31 @@
   }
 
   const shortcuts: any = {
+    // presenter controller keys
     Escape: () => {
       // TODO: dont toggle drawer
-      if (fullscreen) fullscreen = false
+      if ($presenterControllerKeys) callClear = true
+      else if (fullscreen) fullscreen = false
     },
+    ".": () => {
+      if ($presenterControllerKeys) callClear = true
+    },
+    F5: () => {
+      if ($presenterControllerKeys) nextSlide(null, true)
+    },
+    PageDown: (e: any) => {
+      if ($presenterControllerKeys) nextSlide(e)
+    },
+    PageUp: () => {
+      if ($presenterControllerKeys) previousSlide()
+    },
+
     ArrowRight: (e: any) => {
-      if ($outLocked || e.ctrlKey) return
+      if ($outLocked || e.ctrlKey || e.metaKey) return
       nextSlide(e)
     },
     ArrowLeft: (e: any) => {
-      if ($outLocked || e.ctrlKey) return
+      if ($outLocked || e.ctrlKey || e.metaKey) return
       previousSlide()
     },
     " ": (e: any) => {
@@ -43,7 +58,7 @@
   }
 
   function keydown(e: any) {
-    if ((e.ctrlKey || e.altKey) && ctrlShortcuts[e.key]) ctrlShortcuts[e.key]()
+    if ((e.ctrlKey || e.metaKey || e.altKey) && !e.metaKey && ctrlShortcuts[e.key]) ctrlShortcuts[e.key]()
     if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow || ($activeShow?.type !== "show" && $activeShow?.type !== undefined)) return
 
     if (shortcuts[e.key]) {

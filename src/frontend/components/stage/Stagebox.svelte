@@ -17,7 +17,7 @@
     if (edit) {
       console.log(e)
       activeStage.update((ae) => {
-        if (e.ctrlKey) {
+        if (e.ctrlKey || e.metaKey) {
           // if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
           // else ae.items.push(id)
           if (!ae.items.includes(id)) ae.items.push(id)
@@ -25,7 +25,7 @@
         return ae
       })
       let item = e.target.closest(".item")
-      // if ((e.target.closest(".line") && !e.ctrlKey) || e.target.closest(".square") || (e.ctrlKey && !e.target.closest(".line")) || !e.target.closest(".edit") || e.altKey) {
+      // if ((e.target.closest(".line") && (!e.ctrlKey || !e.metaKey)) || e.target.closest(".square") || ((e.ctrlKey || e.metaKey) && !e.target.closest(".line")) || !e.target.closest(".edit") || e.altKey) {
       mouse = {
         x: e.clientX,
         y: e.clientY,
@@ -58,7 +58,10 @@
 
   function deselect(e: any) {
     if (!e.target.closest(".stageTools")) {
-      if ((edit && !e.ctrlKey && e.target.closest(".item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".item")) || e.target.closest(".panel")) {
+      if (
+        (edit && !e.ctrlKey && !e.metaKey && e.target.closest(".item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".item")) ||
+        e.target.closest(".panel")
+      ) {
         activeStage.update((ae) => {
           ae.items = []
           return ae

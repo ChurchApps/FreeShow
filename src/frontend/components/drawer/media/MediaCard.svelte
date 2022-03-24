@@ -31,12 +31,12 @@
   let index: number = allFiles.findIndex((a) => a === path)
 
   function click(e: any) {
-    if (!e.ctrlKey) activeFile = index
+    if (!e.ctrlKey && !e.metaKey) activeFile = index
   }
   $: if (activeFile !== null && allFiles[activeFile] === path) activeShow.set({ id: path, name, type })
 
   function dblclick(e: any) {
-    if (!e.ctrlKey && !$outLocked) outBackground.set({ path: path })
+    if (!e.ctrlKey && !e.metaKey && !$outLocked) outBackground.set({ path: path })
   }
 
   // TODO: Enter play media
@@ -48,7 +48,7 @@
 <Card
   {loaded}
   class="context #media_card"
-  style="width: {$mediaOptions.grid ? 100 : 100 / $mediaOptions.columns}%;"
+  style="width: {$mediaOptions.mode === 'grid' ? 100 : 100 / $mediaOptions.columns}%;"
   preview={$activeShow?.id === path}
   active={$outBackground?.path === path}
   label={name}

@@ -33,6 +33,12 @@
       </span>
     </div>
     <div style="display: flex;justify-content: space-between;">
+      <span>Google Fonts (Icons)</span>
+      <span>
+        <a href="#void" on:click={() => openURL("https://fonts.google.com/icons")}>https://fonts.google.com/icons</a>
+      </span>
+    </div>
+    <div style="display: flex;justify-content: space-between;">
       <span>Electron (Cross-platform desktop apps)</span>
       <span>
         <a href="#void" on:click={() => openURL("https://www.electronjs.org/")}>https://www.electronjs.org/</a>

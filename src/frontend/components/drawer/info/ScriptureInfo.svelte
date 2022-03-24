@@ -65,7 +65,7 @@
   let versesPerSlide: number = 3
   let showVersion: boolean = false
   let showVerse: boolean = true
-  let keepFormatting: boolean = false // red jesus words
+  let redJesus: boolean = false // red jesus words
   // TODO: break slide on text overflow!
 
   let slides: Item[][] = [[]]
@@ -86,7 +86,7 @@
         // TODO: use template
         // TODO: html in {bible.verses[s][1]}
         let text = bible.verses[s][1]
-        if (keepFormatting) {
+        if (redJesus) {
           // TODO: formatting (already function in Scripture.svelte)
           text = text
         } else text = text.replace(/(<([^>]+)>)/gi, "")
@@ -161,7 +161,7 @@
     if (id === "verse_numbers") verseNumbers = val
     else if (id === "show_version") showVersion = val
     else if (id === "show_verse") showVerse = val
-    else if (id === "keep_formatting") keepFormatting = val
+    else if (id === "red_jesus") redJesus = val
   }
 </script>
 
@@ -175,8 +175,6 @@
   {/if}
 </Zoomed>
 
-x{slides.length}
-<br />
 {bible.version}
 <br />
 {bible.book}
@@ -187,32 +185,31 @@ x{slides.length}
 <!-- settings -->
 <div class="settings">
   <span>
-    <p>[[[Max verses per slide]]]</p>
+    <p><T id="scripture.max_verses" /></p>
     <NumberInput value={versesPerSlide} min={1} max={20} on:change={(e) => (versesPerSlide = e.detail)} />
     <!-- font size... -->
   </span>
   <span>
-    <p>[[[Verse numbers]]]</p>
+    <p><T id="scripture.verse_numbers" /></p>
     <Checkbox id="verse_numbers" checked={verseNumbers} on:change={checked} />
   </span>
   <span>
-    <p>[[[Bible Version]]]</p>
+    <p><T id="scripture.version" /></p>
     <Checkbox id="show_version" checked={showVersion} on:change={checked} />
   </span>
   <span>
-    <p>[[[Reference]]]</p>
+    <p><T id="scripture.reference" /></p>
     <Checkbox id="show_verse" checked={showVerse} on:change={checked} />
   </span>
   <span>
-    <!-- red Jesus words -->
-    <p>[[[Keep formatting]]] (WIP)</p>
-    <Checkbox id="keep_formatting" checked={keepFormatting} on:change={checked} />
+    <p><T id="scripture.red_jesus" /> (WIP)</p>
+    <Checkbox id="red_jesus" checked={redJesus} on:change={checked} />
   </span>
 </div>
 
 <Button on:click={createShow} disabled={!verseRange} dark center>
   <Icon id="show" right />
-  <T id="new.show" />
+  <T id="new.show" /><span style="opacity: 0.6;margin-left: 10px;">({slides.length})</span>
 </Button>
 
 <style>

@@ -6,7 +6,6 @@ export const OPEN_FILE: OpenFile = "OPEN_FILE"
 export const OPEN_FOLDER: OpenFolder = "OPEN_FOLDER"
 export const READ_FOLDER: ReadFolder = "READ_FOLDER"
 export const FILE_INFO: FileInfo = "FILE_INFO"
-export const GET_SCREENS: GetScreens = "GET_SCREENS"
 export const REMOTE: Remote = "REMOTE"
 export const STAGE: Stage = "STAGE"
 
@@ -18,11 +17,10 @@ export type OpenFile = "OPEN_FILE"
 export type OpenFolder = "OPEN_FOLDER"
 export type ReadFolder = "READ_FOLDER"
 export type FileInfo = "FILE_INFO"
-export type GetScreens = "GET_SCREENS"
 export type Remote = "REMOTE"
 export type Stage = "STAGE"
 
-export type ValidChannels = Main | Store | Show | OutputData | OpenFile | OpenFolder | ReadFolder | GetScreens | Remote | Stage
+export type ValidChannels = Main | Store | Show | OutputData | OpenFile | OpenFolder | ReadFolder | Remote | Stage
 
 export type Data = string | DataObject
 export interface DataObject {

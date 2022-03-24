@@ -1,12 +1,9 @@
 <script lang="ts">
   import type { Item } from "../../../../types/Show"
-
   import { activeEdit, activeShow } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
-
   import { getStyles } from "../../helpers/style"
-
   import T from "../../helpers/T.svelte"
   import Color from "../../inputs/Color.svelte"
   import FontDropdown from "../../inputs/FontDropdown.svelte"

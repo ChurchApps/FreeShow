@@ -31,7 +31,7 @@
   // setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)
   $: {
     if (scrollElem && $outSlide !== null && $activeShow!.id === $outSlide?.id && activeLayout === $outSlide?.layout) {
-      let columns = $slidesOptions.grid ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
+      let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
       let index = Math.max(0, $outSlide.index - columns)
       offset = scrollElem.querySelector(".grid").children[index]?.offsetTop || 5 - 5
 
@@ -42,12 +42,12 @@
   }
 
   function wheel(e: any) {
-    if (e.ctrlKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
+    if (e.ctrlKey || e.metaKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
   }
 
   function slideClick(e: any, slide: any, index: number) {
     // TODO: duplicate function of "preview:126 - updateOut"
-    if (!$outLocked && !e.ctrlKey) {
+    if (!$outLocked && !e.ctrlKey && !e.metaKey) {
       outSlide.set({ id, layout: activeLayout, index })
       _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
 
@@ -110,7 +110,7 @@
                 color={slide.color}
                 active={$outSlide?.index === i && $outSlide?.id === id && $outSlide?.layout === activeLayout}
                 {endIndex}
-                list={!$slidesOptions.grid}
+                list={$slidesOptions.mode !== "grid"}
                 columns={$slidesOptions.columns}
                 icons
                 on:click={(e) => slideClick(e, slide, i)}

@@ -2,7 +2,7 @@ import { app, BrowserWindow, desktopCapturer, dialog, Display, ipcMain, Menu, sc
 import fs from "fs"
 import path, { join } from "path"
 import { URL } from "url"
-import { FILE_INFO, GET_SCREENS, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
 import { closeServers } from "./servers"
 import { template } from "./utils/menuTemplate"
 import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
@@ -25,10 +25,21 @@ app.on("ready", () => {
 
   displays = screen.getAllDisplays()
   // TODO: get this from settings...
-  externalDisplay =
-    displays.find((display) => {
-      return display.bounds.x !== 0 || display.bounds.y !== 0
-    }) || null
+  // externalDisplay =
+  //   displays.find((display) => {
+  //     return display.bounds.x !== 0 || display.bounds.y !== 0
+  //   }) || null
+
+  // SCREEN LISTENERS
+  screen.on("display-added", (_e: any, display) => {
+    if (!outputWindow?.isEnabled()) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
+  })
+  screen.on("display-removed", (_e: any, display) => {
+    if (outputScreen === display.id.toString()) {
+      outputWindow?.hide()
+      toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
+    }
+  })
 
   // https://gist.github.com/maximilian-lindsey/a446a7ee87838a62099d
   // const LANserver =
@@ -82,6 +93,7 @@ const createWindow = () => {
     autoHideMenuBar: isProd && process.platform === "win32",
     backgroundColor: "#2d313b",
     show: !isProd,
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     webPreferences: {
       // beta dev tools
       devTools: !isProd || Number(app.getVersion()[0]) === 0,
@@ -112,7 +124,14 @@ const createWindow = () => {
     electronSettings.set("height", height)
   })
 
-  mainWindow.on("closed", () => (mainWindow = null))
+  // mainWindow.on("focus", () => {
+  //   // hide second screen task bar ?
+  // })
+
+  mainWindow.on("closed", () => {
+    mainWindow = null
+    outputWindow?.close()
+  })
   mainWindow.once("ready-to-show", createOutputWindow)
 
   // MENU
@@ -245,6 +264,15 @@ ipcMain.on(MAIN, (e, msg) => {
     Menu.setApplicationMenu(menu)
   } else if (msg.channel === "SHOWS_PATH") {
     data = updateShowsPath()
+  } else if (msg.channel === "GET_WINDOWS" || msg.channel === "GET_SCREENS") {
+    desktopCapturer.getSources({ types: [msg.channel === "GET_WINDOWS" ? "window" : "screen"] }).then(async (sources) => {
+      const screens: any[] = []
+      sources.map((source) => screens.push({ name: source.name, id: source.id }))
+      msg.data = screens
+      toApp(MAIN, msg)
+    })
+  } else if (msg.channel === "GET_DISPLAYS") {
+    data = displays
   } else if (msg.channel === "GET_PATHS") {
     data = {
       documents: app.getPath("documents"),
@@ -283,22 +311,49 @@ ipcMain.on(MAIN, (e, msg) => {
 // OUTPUT WINDOW
 
 let displays: Display[] = []
-// TODO: get this from settings...
-let externalDisplay: Display | null = null
+let outputScreen: string | null = null
 
 // create output
 ipcMain.on(OUTPUT, (_e, msg: any) => {
   if (msg.channel === "DISPLAY") {
-    if (msg.data === true) {
-      if (externalDisplay && JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(externalDisplay.bounds)) {
-        outputWindow?.setBounds(externalDisplay.bounds)
+    if (msg.data.enabled) {
+      let screen = msg.data.screen
+      if (screen) {
+        screen =
+          displays.find((display) => {
+            return display.id.toString() === screen
+          }) || null
       }
-      outputWindow?.showInactive()
+      if (!screen) {
+        screen =
+          displays.find((display) => {
+            return display.bounds.x !== mainWindow?.getBounds().x || display.bounds.y !== mainWindow?.getBounds().y
+          }) || null
+        if (screen) toApp(MAIN, { channel: "SET_SCREEN", data: screen })
+      }
+      outputScreen = screen ? screen.id.toString() : null
+
+      if (screen) {
+        if (JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(screen.bounds)) outputWindow?.setBounds(screen.bounds)
+        // TODO: output task bar
+        outputWindow?.showInactive()
+        // outputWindow?.show()
+        // outputWindow?.maximize()
+        // outputWindow?.blur()
+        // mainWindow?.focus()
+        // outputWindow?.setFullScreen(true)
+        // outputWindow?.setAlwaysOnTop(true, "pop-up-menu", 1)
+        // outputWindow?.setAlwaysOnTop(true, "pop-up-menu")
+        // outputWindow?.setFullScreenable(false)
+        // outputWindow?.setAlwaysOnTop(true, "screen-saver", 1)
+        outputWindow?.moveTop()
+        // outputWindow?.maximize()
+      }
     } else {
       outputWindow?.hide()
-      mainWindow?.webContents.send(OUTPUT, msg)
     }
-  } else if (msg.channel.includes("MAIN")) mainWindow?.webContents.send(OUTPUT, msg)
+    toApp(OUTPUT, msg)
+  } else if (msg.channel.includes("MAIN")) toApp(OUTPUT, msg)
   else outputWindow?.webContents.send(OUTPUT, msg)
 })
 
@@ -306,11 +361,11 @@ let outputWindow: BrowserWindow | null = null
 function createOutputWindow() {
   // https://www.electronjs.org/docs/latest/api/browser-window
   outputWindow = new BrowserWindow({
-    width: externalDisplay?.bounds.width || 810,
-    height: externalDisplay?.bounds.height || 610,
-    x: externalDisplay?.bounds.x || 0,
-    y: externalDisplay?.bounds.y || 0,
-    transparent: isProd, // disable interaction (resize)
+    width: 810,
+    height: 610,
+    x: 0,
+    y: 0,
+    // transparent: isProd, // disable interaction (resize)
     alwaysOnTop: true, // keep window on top of other windows
     resizable: false, // disable resizing on mac and windows
     frame: false, // hide title/buttons
@@ -335,6 +390,8 @@ function createOutputWindow() {
   })
 
   outputWindow.removeMenu() // hide menubar
+  outputWindow.setAlwaysOnTop(true, "pop-up-menu", 1)
+  outputWindow.setVisibleOnAllWorkspaces(true)
 
   const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
 
@@ -343,13 +400,6 @@ function createOutputWindow() {
     app.quit()
   })
 
-  // TODO: get setting "auto display"
-  if (externalDisplay && JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(externalDisplay.bounds)) {
-    outputWindow?.setBounds(externalDisplay.bounds)
-    outputWindow?.showInactive()
-    mainWindow?.webContents.send(OUTPUT, { channel: "DISPLAY", data: true })
-  }
-
   // toOutput("MAIN", { channel: "OUTPUT", data: "true" })
   // outputWindow.webContents.send("MAIN", { channel: "OUTPUT" })
 
@@ -357,18 +407,6 @@ function createOutputWindow() {
 }
 
 // LISTENERS
-
-ipcMain.on(GET_SCREENS, (_e, args: string[] = ["screen"]) => {
-  desktopCapturer.getSources({ types: args }).then(async (sources) => {
-    try {
-      const screens: any[] = []
-      sources.map((source) => screens.push({ name: source.name, id: source.id }))
-      toApp(GET_SCREENS, screens)
-    } catch (err) {
-      console.error(err)
-    }
-  })
-})
 
 ipcMain.on(OPEN_FOLDER, (_e, msg: { id: string; title: string | undefined }) => {
   let folder: any = dialog.showOpenDialogSync(mainWindow!, { properties: ["openDirectory"], title: msg.title })

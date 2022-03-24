@@ -26,7 +26,12 @@
   // })
 </script>
 
-<Card on:click={() => (rootPath = path)} label="{name}{items ? { items } : ''}" icon={$mediaOptions.grid ? "folder" : null} color={$mediaOptions.grid ? "var(--secondary);" : ""}>
+<Card
+  on:click={() => (rootPath = path)}
+  label="{name}{items ? { items } : ''}"
+  icon={$mediaOptions.mode === "grid" ? "folder" : null}
+  color={$mediaOptions.mode === "grid" ? "var(--secondary);" : ""}
+>
   <div class="flex" style="width: 100%;height: 100%;">
     <div class="grid">
       {#key path}

@@ -68,15 +68,15 @@
   {/if}
   <div class="slider">
     <Slider
-    {disabled}
+      {disabled}
       on:mouseenter={() => (hover = true)}
       on:mouseleave={() => (hover = false)}
       bind:value={videoTime}
       step={1}
       max={videoData.duration}
       on:mousedown={() => {
-        if (!videoData.paused) pauseAtMove()
         if (toOutput) sendToOutput()
+        if (!videoData.paused) pauseAtMove()
       }}
       on:mousemove={move}
       on:change={() => {

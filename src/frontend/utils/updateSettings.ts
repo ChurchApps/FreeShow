@@ -1,4 +1,3 @@
-import { projectView } from "./../stores"
 import { MAIN } from "../../types/Channels"
 import {
   activePopup,
@@ -10,6 +9,7 @@ import {
   drawer,
   drawerTabsData,
   drawSettings,
+  events,
   fullColors,
   groupCount,
   groupNumbers,
@@ -22,8 +22,11 @@ import {
   openedFolders,
   os,
   outLocked,
+  outputScreen,
   overlayCategories,
   playerVideos,
+  presenterControllerKeys,
+  projectView,
   remotePassword,
   resized,
   saved,
@@ -31,123 +34,74 @@ import {
   showsPath,
   slidesOptions,
   templateCategories,
+  templates,
   theme,
+  themes,
   videoExtensions,
   webFavorites,
 } from "../stores"
+import type { SaveList } from "./../../types/Save"
 
 export function updateSettings(data: any[]) {
-  Object.entries(data).forEach(([key, value]) => {
-    switch (key) {
-      case "initialized":
-        if (!value) {
-          // FIRST TIME USER
-          activePopup.set("initialize")
-        }
-        break
-      case "outLocked":
-        outLocked.set(value)
-        break
-      case "openedFolders":
-        openedFolders.set(value)
-        break
-      case "activeProject":
-        activeProject.set(value)
-        if (value) projectView.set(false)
-        break
-      case "remotePassword":
-        remotePassword.set(value)
-        break
-      case "categories":
-        categories.set(value)
-        break
-      case "drawSettings":
-        drawSettings.set(value)
-        break
-      case "overlayCategories":
-        overlayCategories.set(value)
-        break
-      case "templateCategories":
-        templateCategories.set(value)
-        break
-      case "mediaFolders":
-        mediaFolders.set(value)
-        break
-      case "audioFolders":
-        audioFolders.set(value)
-        break
-      case "webFavorites":
-        webFavorites.set(value)
-        break
-      case "playerVideos":
-        playerVideos.set(value)
-        break
-      case "resized":
-        resized.set(value)
-        break
-      case "slidesOptions":
-        slidesOptions.set(value)
-        break
-      case "mediaOptions":
-        mediaOptions.set(value)
-        break
-      case "drawerTabsData":
-        drawerTabsData.set(value)
-        break
-      case "drawer":
-        drawer.set(value)
-        break
-      case "language":
-        // TODO: get device lang
-        language.set(value)
-        break
-      case "labelsDisabled":
-        labelsDisabled.set(value)
-        break
-      case "groupNumbers":
-        groupNumbers.set(value)
-        break
-      case "fullColors":
-        fullColors.set(value)
-        break
-      case "displayMetadata":
-        displayMetadata.set(value)
-        break
-      case "showsPath":
-        if (!value) window.api.send(MAIN, { channel: "SHOWS_PATH" })
-        else showsPath.set(value)
-        break
-      case "defaultProjectName":
-        defaultProjectName.set(value)
-        break
-      case "videoExtensions":
-        videoExtensions.set(value)
-        break
-      case "imageExtensions":
-        imageExtensions.set(value)
-        break
-      case "theme":
-        theme.set(value)
-        break
-      case "groupCount":
-        groupCount.set(value)
-        break
-      case "groups":
-        groups.set(value)
-        break
-      case "screen":
-        screen.set(value)
-        break
-      case "os":
-        if (!value.platform) window.api.send(MAIN, { channel: "GET_OS" })
-        os.set(value)
-        break
-
-      default:
-        console.log("MISSING: ", key)
-        break
-    }
+  Object.entries(data).forEach(([key, value]: any) => {
+    if (updateList[key as SaveList]) updateList[key as SaveList](value)
+    else console.log("MISSING: ", key)
   })
 
   saved.set(true)
+}
+
+const updateList: { [key in SaveList]: any } = {
+  // FIRST TIME USER
+  initialized: (v: any) => {
+    if (!v) {
+      activePopup.set("initialize")
+    }
+  },
+  activeProject: (v: any) => {
+    activeProject.set(v)
+    if (v) projectView.set(false)
+  },
+  showsPath: (v: any) => {
+    if (!v) window.api.send(MAIN, { channel: "SHOWS_PATH" })
+    else showsPath.set(v)
+  },
+  os: (v: any) => {
+    if (!v.platform) window.api.send(MAIN, { channel: "GET_OS" })
+    os.set(v)
+  },
+  // TODO: get device lang
+  language: (v: any) => language.set(v),
+  events: (v: any) => events.set(v),
+  remotePassword: (v: any) => remotePassword.set(v),
+  audioFolders: (v: any) => audioFolders.set(v),
+  defaultProjectName: (v: any) => defaultProjectName.set(v),
+  displayMetadata: (v: any) => displayMetadata.set(v),
+  categories: (v: any) => categories.set(v),
+  drawer: (v: any) => drawer.set(v),
+  drawerTabsData: (v: any) => drawerTabsData.set(v),
+  drawSettings: (v: any) => drawSettings.set(v),
+  groupNumbers: (v: any) => groupNumbers.set(v),
+  fullColors: (v: any) => fullColors.set(v),
+  groupCount: (v: any) => groupCount.set(v),
+  groups: (v: any) => groups.set(v),
+  imageExtensions: (v: any) => imageExtensions.set(v),
+  labelsDisabled: (v: any) => labelsDisabled.set(v),
+  mediaFolders: (v: any) => mediaFolders.set(v),
+  mediaOptions: (v: any) => mediaOptions.set(v),
+  openedFolders: (v: any) => openedFolders.set(v),
+  outLocked: (v: any) => outLocked.set(v),
+  outputScreen: (v: any) => outputScreen.set(v),
+  overlayCategories: (v: any) => overlayCategories.set(v),
+  presenterControllerKeys: (v: any) => presenterControllerKeys.set(v),
+  playerVideos: (v: any) => playerVideos.set(v),
+  resized: (v: any) => resized.set(v),
+  screen: (v: any) => screen.set(v),
+  slidesOptions: (v: any) => slidesOptions.set(v),
+  templateCategories: (v: any) => templateCategories.set(v),
+  templates: (v: any) => templates.set(v),
+  theme: (v: any) => theme.set(v),
+  themes: (v: any) => themes.set(v),
+  videoExtensions: (v: any) => videoExtensions.set(v),
+  webFavorites: (v: any) => webFavorites.set(v),
 }

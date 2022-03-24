@@ -18,13 +18,13 @@
 <!-- display: table; -->
 <div
   class="main {$$props.class}"
-  style="flex-direction: {$mediaOptions.grid ? 'column' : 'row'};width: {$mediaOptions.grid ? 100 / $mediaOptions.columns : 100}%;"
+  style="flex-direction: {$mediaOptions.mode === 'grid' ? 'column' : 'row'};width: {$mediaOptions.mode === 'grid' ? 100 / $mediaOptions.columns : 100}%;"
   class:preview
   class:active
   on:click
   on:dblclick
 >
-  <div class="over" style="flex-direction: {$mediaOptions.grid ? 'column' : 'row'};width: 100%;">
+  <div class="over" style="flex-direction: {$mediaOptions.mode === 'grid' ? 'column' : 'row'};width: 100%;">
     {#if preview}
       <div class="overlay" />
     {:else}

@@ -17,7 +17,7 @@ const keys: any = {
 }
 
 export function checkInput(e: any) {
-  if (e.target?.closest(".edit") || e.ctrlKey) return
+  if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
   if (keys[e.key]) {
     if (get(activeProject) === null) return
@@ -31,7 +31,7 @@ export function checkInput(e: any) {
   }
 }
 
-export function nextSlide(e: any) {
+export function nextSlide(e: any, start: boolean = false) {
   console.log(get(outSlide))
 
   if (get(outLocked)) return
@@ -51,7 +51,7 @@ export function nextSlide(e: any) {
   if (
     get(activePage) === "show" &&
     get(activeShow) &&
-    (!slide || e?.ctrlKey || (isLastSlide && get(activeShow)!.id !== slide?.id && get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout))
+    (start || !slide || e?.ctrlKey || (isLastSlide && get(activeShow)!.id !== slide?.id && get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout))
   ) {
     // layout = GetLayout()
     layout = _show("active").layouts("active").ref()[0]

@@ -38,7 +38,7 @@
     })
   }
 
-  $: sortedSlides = slides.filter((a) => a.group !== null).sort((a: any, b: any) => a.group.localeCompare(b.group))
+  $: sortedSlides = slides.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group.localeCompare(b.group))
   // $: sortedSlides = slides.filter((a) => a.group !== null).sort((a: any, b: any) => (a.group > b.group ? 1 : b.group > a.group ? -1 : 0))
 
   $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
@@ -63,7 +63,7 @@
             class="slide context #group"
             style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}"
             on:click={(e) => {
-              if (!e.ctrlKey) {
+              if (!e.ctrlKey && !e.metaKey) {
                 selected.set({ id: "group", data: [{ id: slide.id }] })
                 ondrop(null, "slide")
                 selected.set({ id: null, data: [] })
@@ -92,7 +92,7 @@
             class="slide context #global_group"
             style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}"
             on:click={(e) => {
-              if (!e.ctrlKey && $activeShow) {
+              if (!e.ctrlKey && !e.metaKey && $activeShow) {
                 history({ id: "newSlide", newData: { slide }, location: { page: "show", show: $activeShow, layout: $showsCache[$activeShow.id].settings.activeLayout } })
               }
             }}

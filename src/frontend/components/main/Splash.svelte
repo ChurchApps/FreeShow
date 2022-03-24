@@ -18,7 +18,7 @@
     </Button>
     <Button
       on:click={(e) => {
-        if (e.ctrlKey) history({ id: "newShow", location: { page: "show", project: $activeProject } })
+        if (e.ctrlKey || e.metaKey) history({ id: "newShow", location: { page: "show", project: $activeProject } })
         else activePopup.set("show")
       }}
       title={$dictionary.new?.show}

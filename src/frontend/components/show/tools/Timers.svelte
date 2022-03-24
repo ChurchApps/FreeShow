@@ -1,13 +1,12 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-
-  import { activeProject, activeTimers, projects, showsCache, shows } from "../../../stores"
-  import { requestData } from "../../../utils/request"
+  import { activeProject, activeTimers, projects, shows, showsCache } from "../../../stores"
+  import { send } from "../../../utils/request"
   import Icon from "../../helpers/Icon.svelte"
   import { loadShows } from "../../helpers/setShow"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
-  import { secondsToTimes, format } from "../../helpers/time"
+  import { format, secondsToTimes } from "../../helpers/time"
   import Button from "../../inputs/Button.svelte"
   import Timer from "../../slide/views/Timer.svelte"
   import Center from "../../system/Center.svelte"
@@ -58,7 +57,7 @@
 
   function reset(item: any) {
     activeTimers.set($activeTimers.filter((a: any) => a.showId !== item.showId || a.slideId !== item.slideId || a.id !== item.timer.id))
-    requestData(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
+    send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
   }
 
   $: active = 0
@@ -105,7 +104,7 @@
     <Button
       on:click={() => {
         activeTimers.set([])
-        requestData(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
+        send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
       }}
       dark
     >

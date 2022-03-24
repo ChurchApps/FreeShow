@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { autoOutput, defaultProjectName, displayMetadata, fullColors, groupNumbers, imageExtensions, labelsDisabled, screen, showsPath, videoExtensions } from "../../../stores"
+  import { defaultProjectName, displayMetadata, fullColors, groupNumbers, imageExtensions, labelsDisabled, screen, showsPath, videoExtensions } from "../../../stores"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
@@ -12,7 +12,6 @@
   const inputs: any = {
     labels: (e: any) => labelsDisabled.set(e.target.checked),
     colors: (e: any) => fullColors.set(e.target.checked),
-    autoOutput: (e: any) => autoOutput.set(e.target.checked),
     groupNumber: (e: any) => groupNumbers.set(e.target.checked),
   }
 
@@ -39,10 +38,6 @@
 <div>
   <p><T id="settings.full_colors" /></p>
   <Checkbox checked={$fullColors} on:change={inputs.colors} />
-</div>
-<div>
-  <p><T id="settings.auto_output" /></p>
-  <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
 </div>
 <div>
   <p><T id="settings.display_metadata" /></p>
@@ -144,7 +139,9 @@
   <p><T id="settings.show_location" /></p>
   <span>
     {$showsPath}
-    <FolderPicker id="shows">[[[Choose another location...]]]</FolderPicker>
+    <FolderPicker id="shows">
+      <T id="inputs.shows_folder" />
+    </FolderPicker>
   </span>
 </div>
 

@@ -1,6 +1,6 @@
 {
   "name": "freeshow",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "main": "build/electron/index.js",
   "description": "An application for showing song lyrics and more for free!",
@@ -73,7 +73,8 @@
       "target": [
         "AppImage",
         "deb"
-      ]
+      ],
+      "icon": "build/public/icon.png"
     },
     "win": {
       "target": "NSIS",
