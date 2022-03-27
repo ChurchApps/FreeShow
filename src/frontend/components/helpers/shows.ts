@@ -81,16 +81,16 @@ export function _show(id: any) {
         return prev
       },
       /** Add new slide */
-      add: (slide: any = null, parent: boolean = false) => {
+      add: (slide: null | any[] = null, parent: boolean = false) => {
         // TODO: template....
         let group: null | string = null
         if (parent) group = ""
-        if (!slide) slide = { group, color: null, settings: {}, notes: "", items: [] }
+        if (!slide) slide = [{ group, color: null, settings: {}, notes: "", items: [] }]
         showsCache.update((a: any) => {
           if (!slideIds[0]) a[id].slides[uid()] = slide
           else {
             slideIds.forEach((slideId: string, i: number) => {
-              a[id].slides[slideId] = slide[i] || slide[0]
+              a[id].slides[slideId] = slide![i] || slide![0]
             })
           }
           return a
@@ -426,7 +426,7 @@ export function _show(id: any) {
           return prev
         },
         /** Layout slides children function */
-        children: (children: number[] = []) => ({
+        children: (children: string[] = []) => ({
           /** Set layout slides children: {key: value} */
           set: ({ key, value }: any) => {
             let prev: any[] = []
@@ -436,8 +436,8 @@ export function _show(id: any) {
                 if (i === 0) prev[i] = []
                 if (!indexes.length) indexes = Object.keys(shows[id].layouts[layoutId].slides)
                 indexes.forEach((index: number) => {
-                  children.forEach((child: number) => {
-                    if (!a[id].layouts[layoutId].slides[index].children) a[id].layouts[layoutId].slides[index].children = []
+                  children.forEach((child: string) => {
+                    if (!a[id].layouts[layoutId].slides[index].children) a[id].layouts[layoutId].slides[index].children = {}
                     if (!a[id].layouts[layoutId].slides[index].children[child]) a[id].layouts[layoutId].slides[index].children[child] = {}
                     prev[i].push(a[id].layouts[layoutId].slides[index].children[child][key] || null)
                     a[id].layouts[layoutId].slides[index].children[child][key] = value

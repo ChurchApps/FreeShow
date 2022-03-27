@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { defaultProjectName, displayMetadata, fullColors, groupNumbers, imageExtensions, labelsDisabled, screen, showsPath, videoExtensions } from "../../../stores"
+  import { displayMetadata, fullColors, groupNumbers, imageExtensions, labelsDisabled, screen, showsPath, videoExtensions } from "../../../stores"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
@@ -15,8 +15,14 @@
     groupNumber: (e: any) => groupNumbers.set(e.target.checked),
   }
 
-  const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
-  const meta: any[] = [{ name: "never" }, { name: "always" }, { name: "last" }, { name: "first_last" }]
+  // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
+  const meta: any[] = [
+    { id: "never", name: "$:show_at.never:$" },
+    { id: "always", name: "$:show_at.always:$" },
+    { id: "first", name: "$:show_at.first:$" },
+    { id: "last", name: "$:show_at.last:$" },
+    { id: "first_last", name: "$:show_at.first_last:$" },
+  ]
 
   const changeValue = (e: any, key: string) => (value[key] = e.target.value)
   let value: any = { video: "", image: "" }
@@ -43,14 +49,14 @@
   <p><T id="settings.display_metadata" /></p>
   <Dropdown
     options={meta}
-    value={$displayMetadata}
+    value={meta.find((a) => a.id === $displayMetadata)?.name || "—"}
     style="width: 200px;"
     on:click={(e) => {
-      displayMetadata.set(e.detail.name)
+      displayMetadata.set(e.detail.id)
     }}
   />
 </div>
-<div>
+<!-- <div>
   <p><T id="settings.default_project_name" /></p>
   <Dropdown
     options={projectNames}
@@ -61,12 +67,13 @@
       defaultProjectName.set(e.detail.id)
     }}
   />
-</div>
+</div> -->
 <div>
   <p><T id="settings.resolution" /></p>
-  <span>
+  <span class="inputs">
     <!-- defaults dropdown -->
     <!-- custom... -->
+    <T id="screen.width" />:
     <NumberInput
       value={$screen.resolution.width}
       min={100}
@@ -79,6 +86,7 @@
         })
       }}
     />
+    <T id="screen.height" />:
     <NumberInput
       value={$screen.resolution.height}
       min={100}
@@ -96,11 +104,11 @@
 <div>
   <p><T id="settings.video_extensions" /></p>
   <span class="flex">
-    {#each $videoExtensions as extension, i}
-      <span style="text-transform: uppercase;">
+    <span style="text-transform: uppercase;margin-right: 10px;">
+      {#each $videoExtensions as extension, i}
         {#if i > 0},&nbsp;{/if}<span class="hoverDelete" on:click={() => videoExtensions.set($videoExtensions.filter((a) => a !== extension))}>{extension}</span>
-      </span>
-    {/each}
+      {/each}
+    </span>
     <TextInput value={value.video} on:input={(e) => changeValue(e, "video")} light />
     <Button
       on:click={() => {
@@ -117,11 +125,11 @@
 <div>
   <p><T id="settings.image_extensions" /></p>
   <span class="flex">
-    {#each $imageExtensions as extension, i}
-      <span style="text-transform: uppercase;">
+    <span style="text-transform: uppercase;margin-right: 10px;">
+      {#each $imageExtensions as extension, i}
         {#if i > 0},&nbsp;{/if}<span class="hoverDelete" on:click={() => imageExtensions.set($imageExtensions.filter((a) => a !== extension))}>{extension}</span>
-      </span>
-    {/each}
+      {/each}
+    </span>
     <TextInput value={value.image} on:input={(e) => changeValue(e, "image")} light />
     <Button
       on:click={() => {
@@ -137,13 +145,20 @@
 </div>
 <div>
   <p><T id="settings.show_location" /></p>
-  <span>
+  <span style="display: flex;align-items: center;">
     {$showsPath}
     <FolderPicker id="shows">
       <T id="inputs.shows_folder" />
     </FolderPicker>
   </span>
 </div>
+
+<hr />
+<!-- <Button style="width: 100%;" center><T id="settings.export_settings" /></Button> -->
+<!-- <Button style="width: 100%;" center><T id="settings.import_all" /></Button>
+<Button style="width: 100%;" center><T id="settings.export_all" /></Button> -->
+<Button style="width: 100%;" center><T id="settings.reset_settings" /></Button>
+<Button style="width: 100%;" center><T id="settings.reset_all" /></Button>
 
 <!-- project store location... -->
 <style>
@@ -152,6 +167,7 @@
     align-items: center;
     justify-content: space-between;
     margin: 5px 0;
+    height: 35px;
   }
   .flex {
     display: flex;
@@ -162,7 +178,22 @@
   }
 
   .hoverDelete:hover {
-    color: red;
+    color: #ff5050;
     text-decoration: line-through;
+  }
+
+  .inputs {
+    display: flex;
+    align-items: center;
+  }
+  .inputs :global(input) {
+    width: 100px;
+  }
+
+  hr {
+    margin: 20px 0;
+    border: none;
+    height: 2px;
+    background-color: var(--primary-lighter);
   }
 </style>

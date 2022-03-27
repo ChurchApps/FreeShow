@@ -4,7 +4,7 @@
 
   export let item: Item
   export let smallFontSize: boolean = false
-  export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
+  export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; id: string }
   export let style: boolean = true
 </script>
 

@@ -18,12 +18,7 @@
   $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
   $: notMuted = background?.muted === false
 
-  $: transitionTime =
-    layoutSlide.transition && layoutSlide.transition.duration > 0
-      ? layoutSlide.transition.duration > 59
-        ? joinTime(secondsToTime(layoutSlide.transition.duration))
-        : layoutSlide.transition.duration + "s"
-      : null
+  $: nextTimer = (layoutSlide.nextTimer || 0) > 0 ? (layoutSlide.nextTimer > 59 ? joinTime(secondsToTime(layoutSlide.nextTimer)) : layoutSlide.nextTimer + "s") : null
 
   function removeLayout(key: string) {
     history({
@@ -61,14 +56,14 @@
       {/if}
     </div>
   {/if}
-  {#if transitionTime}
+  {#if nextTimer}
     <div>
       <div class="button">
-        <Button style="padding: 5px;" redHover title={$dictionary.remove?.transition} on:click={() => removeLayout("transition")}>
-          <Icon id="transition" white />
+        <Button style="padding: 5px;" redHover title={$dictionary.remove?.nextTimer} on:click={() => removeLayout("nextTimer")}>
+          <Icon id="clock" white />
         </Button>
       </div>
-      <span><p>{transitionTime}</p></span>
+      <span><p>{nextTimer}</p></span>
     </div>
   {/if}
   {#if layoutSlide.end}

@@ -1,3 +1,4 @@
+import { transitionData } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -58,6 +59,9 @@ export function listen() {
   // TO OUTPUT
   outBackground.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "BACKGROUND", data })
+  })
+  transitionData.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "TRANSITION", data })
   })
   outSlide.subscribe((data) => {
     // TODO: send only current show!

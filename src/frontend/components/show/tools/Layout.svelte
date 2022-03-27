@@ -1,7 +1,5 @@
 <script lang="ts">
-  import type { TransitionType } from "../../../../types/Show"
-  import { activeShow, dictionary, fullColors, groupCount, groups, showsCache } from "../../../stores"
-  import { getContrast } from "../../helpers/color"
+  import { activePopup, activeShow, dictionary, fullColors, groupCount, groups, selected, showsCache } from "../../../stores"
   import { GetLayout, GetLayoutRef } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
@@ -10,6 +8,8 @@
   import Button from "../../inputs/Button.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Center from "../../system/Center.svelte"
+  import DropArea from "../../system/DropArea.svelte"
+  import SelectElem from "../../system/SelectElem.svelte"
 
   $: show = JSON.parse(JSON.stringify($showsCache[$activeShow!.id]))
   $: activeLayout = $showsCache[$activeShow!.id].settings.activeLayout
@@ -53,19 +53,16 @@
 
   function change(e: any, i: number) {
     let value = Number(e.detail)
-
     if (typeof value === "number") {
-      // TODO: get default transition
-      let type: TransitionType = "fade"
       history({
         id: "changeLayout",
-        newData: { key: "transition", value: { type, duration: value } },
+        newData: { key: "nextTimer", value },
         location: { page: "show", show: $activeShow!, layout: activeLayout, layoutSlide: i },
       })
     }
   }
 
-  function toggleEnd(i: number, toggle: boolean = true) {
+  function toggleEnd(i: number, value: null | boolean = null) {
     // TODO: more global way of doing this!
     showsCache.update((a: any) => {
       // let ref: any[] = GetLayoutRef()
@@ -74,8 +71,8 @@
       let currentIndex: number = -1
       slides.forEach((l: any) => {
         currentIndex++
-        if (currentIndex === i && l.end !== true) l.end = true
-        else if ((toggle || currentIndex !== i) && l.end) delete l.end
+        if (currentIndex === i && l.end !== true) l.end = value === null ? true : value
+        else if ((!value || currentIndex !== i) && l.end) delete l.end
         let children: string[] = a[$activeShow!.id].slides[l.id]?.children
         if (children?.length) {
           if (!l.children) l.children = {}
@@ -83,8 +80,8 @@
             currentIndex++
             if (currentIndex === i && l.children[child]?.end !== true) {
               if (!l.children[child]) l.children[child] = {}
-              l.children[child].end = true
-            } else if ((toggle || currentIndex !== i) && l.children[child]?.end) delete l.children[child]?.end
+              l.children[child].end = value === null ? true : value
+            } else if ((!value || currentIndex !== i) && l.children[child]?.end) delete l.children[child]?.end
           })
         }
       })
@@ -98,7 +95,7 @@
     if (slides.length) {
       let temp = 0
       slides.forEach((slide: any) => {
-        if (slide.transition && slide.transition.duration > 0) temp += slide.transition.duration
+        if ((slide.nextTimer || 0) > 0) temp += slide.nextTimer
       })
       total = temp
     } else total = 0
@@ -108,37 +105,52 @@
   // apply to all
   let allTime: number = 10
   function changeAll(reset: boolean = false) {
-    let value: any = { duration: allTime }
-    let globalType = "fade"
-    if (reset) value = { type: globalType, duration: 0 }
-    history({ id: "changeLayouts", newData: { key: "transition", value, action: "keys" }, location: { page: "show", show: $activeShow!, layout: activeLayout } })
-    toggleEnd(slides.length - 1, false)
+    let location: any = { page: "show", show: $activeShow!, layout: activeLayout }
+    history({ id: "changeLayouts", newData: { key: "nextTimer", value: reset ? 0 : allTime }, location })
+    if (reset) history({ id: "changeLayouts", newData: { key: "transition", value: undefined }, location })
+    let index = 0
+    slides.forEach((slide: any, i: number) => {
+      if (reset && slide.end) index = i
+      else if (!reset && !slide.disabled) index = i
+    })
+    toggleEnd(index, !reset)
   }
 </script>
 
 {#if slides.length}
   <div class="content">
     <div>
-      {#each slides as slide, i}
-        <div class="slide">
-          <span style="margin: 10px 5px;min-width: 20px;text-align: center;opacity: 0.8;">{i + 1}</span>
-          <p class="group" style="{$fullColors ? 'background-' : ''}color: {slide.color || 'unset'};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}">
-            {show.slides[slide.id].group || ""}{slide.count ? " " + slide.count : ""}
-          </p>
-          <!-- transition -->
-          <Button style="height: 100%;">
-            <Icon id="transition" />
-          </Button>
-          <!-- next timer -->
-          <!-- empty or 0 === disabled -->
-          <NumberInput value={slide.transition?.duration || 0} on:change={(e) => change(e, i)} buttons={false} />
-          <!-- <TextInput type="number" style="min-width: 50px;flex: 1;" value={0} on:change={(e) => change(e, i)} center /> -->
-          <!-- to beginning -->
-          <Button style="height: 100%;" on:click={() => toggleEnd(i)}>
-            <Icon id="restart" white={slide.end !== true} />
-          </Button>
-        </div>
-      {/each}
+      <DropArea id="slides" hoverTimeout={0} selectChildren>
+        {#each slides as slide, i}
+          <div class="slide" class:disabled={slide.disabled}>
+            <span style="margin: 10px 5px;min-width: 20px;text-align: center;opacity: 0.8;">{i + 1}</span>
+            <SelectElem id="slide" data={{ index: i }} draggable trigger="column" style="height: 100%;flex: 3;">
+              <p class="group context #slide" style="background-color: inherit;border-bottom: 3px solid {slide.color || 'unset'};{$fullColors ? '' : `color: ${slide.color};`}">
+                {show.slides[slide.id].group || ""}{slide.count ? " " + slide.count : ""}
+              </p>
+            </SelectElem>
+            <!-- transition -->
+            <Button
+              style="height: 100%;"
+              title={$dictionary.popup?.transition}
+              on:click={() => {
+                selected.set({ id: "slide", data: [{ ...slide, index: i }] })
+                activePopup.set("transition")
+              }}
+            >
+              <Icon id="transition" white={!slide?.transition} />
+            </Button>
+            <!-- next timer -->
+            <!-- empty or 0 === disabled -->
+            <NumberInput value={slide.nextTimer || 0} on:change={(e) => change(e, i)} buttons={false} />
+            <!-- <TextInput type="number" style="min-width: 50px;flex: 1;" value={0} on:change={(e) => change(e, i)} center /> -->
+            <!-- to beginning -->
+            <Button style="height: 100%;" on:click={() => toggleEnd(i)}>
+              <Icon id="restart" white={slide.end !== true} />
+            </Button>
+          </div>
+        {/each}
+      </DropArea>
     </div>
   </div>
   <!-- padding: 5px;gap: 5px; -->
@@ -150,13 +162,14 @@
       <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} />
       <!-- Apply to all / selected -->
       <Button style="flex: 1;" on:click={() => changeAll()} dark center>
+        <Icon id="clock" right />
         <T id="actions.to_all" />
       </Button>
     </div>
     <div style="display: flex;gap: 5px;">
       <span style="flex: 1;display: flex;align-items: center;justify-content: center;">{totalTime}</span>
       <Button style="flex: 1;" on:click={() => changeAll(true)} center dark>
-        <Icon id="reset" />
+        <Icon id="reset" right />
         <T id="actions.reset" />
       </Button>
     </div>
@@ -174,10 +187,14 @@
   }
 
   .slide {
-    height: 25px;
+    height: 28px;
     display: flex;
     align-items: center;
-    margin: 10px 0;
+    margin: 5px 0;
+  }
+
+  .slide.disabled {
+    opacity: 0.2;
   }
 
   .slide :global(.numberInput),

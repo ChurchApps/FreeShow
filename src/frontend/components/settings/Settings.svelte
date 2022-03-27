@@ -6,7 +6,6 @@
   import Display from "./tabs/Display.svelte"
   import General from "./tabs/General.svelte"
   import Groups from "./tabs/Groups.svelte"
-  import Other from "./tabs/Other.svelte"
   import Theme from "./tabs/Theme.svelte"
 </script>
 
@@ -29,8 +28,6 @@
       <Connection />
     {:else if $settingsTab === "calendar"}
       <Calendar />
-    {:else if $settingsTab === "other"}
-      <Other />
     {/if}
   </div>
 </main>

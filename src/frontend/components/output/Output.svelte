@@ -2,9 +2,10 @@
   import { fade } from "svelte/transition"
   import { OUTPUT } from "../../../types/Channels"
   import type { Resolution } from "../../../types/Settings"
-  import type { Transition } from "../../../types/Show"
-  import { displayMetadata, outAudio, outBackground, outOverlays, outputWindow, outSlide, overlays, screen, shows } from "../../stores"
+  import type { Transition, TransitionType } from "../../../types/Show"
+  import { displayMetadata, outAudio, outBackground, outOverlays, outputWindow, outSlide, overlays, screen, shows, showsCache, transitionData } from "../../stores"
   import { receive } from "../../utils/request"
+  import { transitions } from "../../utils/transitions"
   import Draw from "../draw/Draw.svelte"
   import { _show } from "../helpers/shows"
   import Textbox from "../slide/Textbox.svelte"
@@ -19,10 +20,13 @@
 
   // TODO: showing slide upon clear fade out will show black output (Transition bug!)
   // TODO: dont show transition upon no change!s
-  export let transition: Transition = { type: "fade", duration: 500 } // text (not background)
+  export let transition: Transition = $transitionData.text
   export let style = ""
   export let center: boolean = false
   export let ratio: number = 0
+
+  $: slideTransition = $showsCache && $outSlide ? _show($outSlide.id).layouts("active").ref()[0][$outSlide.index].data.transition : null
+  $: transition = slideTransition ? slideTransition : $transitionData.text
 
   let resolution: Resolution = $outSlide && $shows[$outSlide.id].settings?.resolution ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
 
@@ -44,10 +48,12 @@
 
   if ($outputWindow || mirror) receive(OUTPUT, receiveOUTPUT)
 
-  $: console.log($outSlide)
-
   $: currentLayout = $outSlide ? _show($outSlide.id).layouts([$outSlide.layout]).ref()[0] : []
   $: currentSlide = $outSlide ? _show($outSlide.id).slides([currentLayout![$outSlide.index].id]).get()[0] : null
+
+  function custom(node: any, { type = "fade", duration = 500 }: any) {
+    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration }
+  }
 </script>
 
 <Zoomed {center} {style} {resolution} bind:ratio>
@@ -58,7 +64,7 @@
   {/if}
   {#if $outSlide}
     {#key $outSlide}
-      <span transition:fade={transition} style="pointer-events: none;">
+      <span transition:custom={transition} style="pointer-events: none;display: block;">
         {#if currentSlide}
           {#each currentSlide?.items as item}
             <Textbox {item} ref={{ showId: $outSlide.id, id: currentSlide.id }} />
@@ -66,12 +72,14 @@
         {/if}
       </span>
     {/key}
-    {#if $displayMetadata === "always" || ($displayMetadata === "last" && $outSlide.index === currentLayout.length - 1)}
+    {#if $displayMetadata === "always" || ($displayMetadata.includes("first") && $outSlide.index === 0) || ($displayMetadata.includes("last") && $outSlide.index === currentLayout.length - 1)}
       <span
         transition:fade={transition}
-        style="font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);position: absolute;left: {resolution.width / 2}px;bottom: 20px;transform: translateX(-50%);"
+        style="font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);position: absolute;left: {resolution.width / 2}px;bottom: 20px;transform: translateX(-50%);opacity: 0.8;"
       >
-        {Object.values($shows[$outSlide.id].meta).join("; ")}
+        {Object.values($showsCache[$outSlide.id].meta || {})
+          .filter((a) => a.length)
+          .join("; ")}
       </span>
     {/if}
   {/if}

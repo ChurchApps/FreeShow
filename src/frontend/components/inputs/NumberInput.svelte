@@ -10,6 +10,7 @@
   export let step: number = 1
   export let min: number = 0
   export let max: number = 1000
+  export let fixed: number = 0
   export let buttons: boolean = true
   export let disabled: boolean = false
 
@@ -61,7 +62,7 @@
     </Button>
   {/if}
   <span class="input">
-    <TextInput {disabled} value={(value * inputMultiplier).toFixed()} on:change={input} center />
+    <TextInput {disabled} value={(value * inputMultiplier).toFixed(fixed)} on:change={input} center />
   </span>
   {#if buttons}
     <Button id="increment" on:click={increment} center style={"flex: 1;"} disabled={disabled || Number(value) + step > max}>

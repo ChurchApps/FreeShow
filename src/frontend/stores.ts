@@ -2,10 +2,10 @@ import { Writable, writable } from "svelte/store"
 import type { ActiveEdit, DefaultProjectNames, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
-import type { ID, OutAudio, OutBackground, OutSlide, Overlays, Shows } from "../types/Show"
+import type { ID, OutAudio, OutBackground, OutSlide, OutTransition, Overlays, Shows, Transition } from "../types/Show"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
-import type { OutTransition, Templates } from "../types/Show"
+import type { Templates } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
 import type { Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { History } from "./components/helpers/history"
@@ -34,6 +34,10 @@ export const outSlide: Writable<null | OutSlide> = writable(null)
 export const outOverlays: Writable<string[]> = writable([])
 export const outAudio: Writable<OutAudio[]> = writable([])
 export const outTransition: Writable<null | OutTransition> = writable(null)
+export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
+  text: { type: "fade", duration: 500 },
+  media: { type: "fade", duration: 500 },
+}) // {default}
 
 // connections
 export const connections: Writable<{ [key: string]: any }> = writable({ REMOTE: {}, STAGE: {} })
@@ -330,7 +334,6 @@ export const language: Writable<string> = writable("en") // "get"
 export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
-// TODO: never, last slide, first & last, always
 export const displayMetadata: Writable<string> = writable("never") // "never"
 export const showsPath: Writable<null | string> = writable(null) // null
 export const presenterControllerKeys: Writable<boolean> = writable(true) // true

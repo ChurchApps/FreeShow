@@ -58,7 +58,7 @@
       {#each tree as project}
         {#if project.parent === id}
           <li>
-            <SelectElem id="folder" data={{ type: project.type || "project", id: project.id, index: project.type === "folder" ? index : 0 }} draggable>
+            <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id, index: project.type === "folder" ? index : 0 }} draggable>
               {#if project.type === "folder"}
                 <svelte:self {tree} id={project.id} name={project.name} index={index + 1} />
               {:else if project.id}

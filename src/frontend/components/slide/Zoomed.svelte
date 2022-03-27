@@ -6,6 +6,7 @@
   export let center: boolean = false
   export let zoom: boolean = true
   export let disableStyle: boolean = false
+  export let relative: boolean = false
   export let aspectRatio: boolean = true
   export let hideOverflow: boolean = true
   export let resolution: Resolution = $activeShow?.id && $showsCache[$activeShow.id]?.settings.resolution ? $showsCache[$activeShow.id].settings.resolution! : $screen.resolution
@@ -20,6 +21,7 @@
     class="slide"
     class:hideOverflow
     class:disableStyle
+    class:relative
     style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};` : ''};"
   >
     {#if zoom}
@@ -39,11 +41,13 @@
     /* z-index: -1; */
   }
 
-  .slide:not(.disableStyle) :global(.item) {
+  .slide:not(.relative) :global(.item) {
     position: absolute;
     /* display: inline-flex; */
     overflow: hidden;
+  }
 
+  .slide:not(.disableStyle) :global(.item) {
     color: white;
     font-size: 100px;
     font-family: "CMGSans";

@@ -11,7 +11,7 @@
 <div class="main">
   {#each tools as tool}
     <Button on:click={() => drawTool.set(tool)} active={$drawTool === tool} bold={false}>
-      <Icon id={tool} />
+      <Icon id={tool} right />
       <T id="draw.{tool}" />
     </Button>
   {/each}
@@ -19,7 +19,7 @@
 
 <style>
   .main :global(button) {
-    padding: 20px;
+    padding: 12px;
     width: 100%;
   }
 </style>

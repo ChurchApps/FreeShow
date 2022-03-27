@@ -62,7 +62,7 @@
     "slide": "Slide",
     "overlays": "Overlays",
     "audio": "Audio",
-    "transition": "Transition"
+    "nextTimer": "Next slide timer"
   },
   "clear": {
     "all": "Clear all",
@@ -70,13 +70,13 @@
     "slide": "Clear slide",
     "overlays": "Clear overlays",
     "audio": "Clear audio",
-    "transistion": "Clear transistion"
+    "nextTimer": "Clear Next slide timer"
   },
   "remove": {
     "background": "Remove background",
     "overlays": "Remove overlays",
     "audio": "Remove audio",
-    "transistion": "Remove transistion",
+    "nextTimer": "Remove Next slide timer",
     "to_start": "Remove Go to start",
     "timer": "Remove timer"
   },
@@ -147,6 +147,13 @@
     "CCLI": "License",
     "year": "Year"
   },
+  "show_at": {
+    "never": "No slides",
+    "always": "All slides",
+    "first": "First slide",
+    "last": "Last slide",
+    "first_last": "First and last slide"
+  },
   "themes": {
     "default": "Default",
     "dark": "Dark",
@@ -216,6 +223,7 @@
   "popup": {
     "show": "New show",
     "rename": "Rename",
+    "transition": "Transition",
     "delete_show": "Delete show",
     "delete_show_confirmation": "Are you sure you want to delete",
     "change_name": "Change name on",
@@ -279,7 +287,8 @@
     "back": "Go back",
     "home": "Home",
     "mute": "Mute",
-    "unmute": "Unmute"
+    "unmute": "Unmute",
+    "actions": "Actions"
   },
   "context": {
     "enabledTabs": "Show/Hide Tabs",
@@ -299,7 +308,7 @@
     "metadata": "Metadata",
     "media": "Media",
     "audio": "Audio",
-    "transitions": "Transitions"
+    "layout": "Layout"
   },
   "edit": {
     "font": "Font",
@@ -392,7 +401,7 @@
     "group_numbers": "Group numbers",
     "full_colors": "Full slide group colors",
     "auto_output": "Show output screen on startup",
-    "display_metadata": "Display metadata in show",
+    "display_metadata": "Display metadata while showing",
     "default_project_name": "Default project name",
     "resolution": "Resolution",
     "video_extensions": "Video extensions",
@@ -412,6 +421,7 @@
     "port": "port",
     "max_connections": "Max connections",
     "allowed_connections": "Allowed connections",
+    "reset_all": "Reset all",
     "reset_settings": "Reset settings",
     "reset_colors": "Reset colors",
     "reset_themes": "Reset themes",
@@ -455,7 +465,14 @@
     "microphones": "Microphones"
   },
   "transition": {
-    "fade": "Fade"
+    "current_slide": "for current silde",
+    "text": "Text transition",
+    "media": "Media transition",
+    "none": "None",
+    "fade": "Fade",
+    "blur": "Blur",
+    "scale": "Scale",
+    "spin": "Spin"
   },
   "month": {
     "1": "January",

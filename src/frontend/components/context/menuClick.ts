@@ -3,7 +3,7 @@ import { MAIN } from "../../../types/Channels"
 import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, drawerTabsData, projects, projectView, saved, selected, showsCache } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
-import { GetLayoutRef } from "../helpers/get"
+import { GetLayoutRef, GetLayout } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { _show } from "../helpers/shows"
 import { activeRename } from "./../../stores"
@@ -16,6 +16,8 @@ export function menuClick(id: string, enabled: boolean = true, menu: any = null,
 const actions: any = {
   // file
   save: () => save(),
+  import: () => activePopup.set("import"),
+  export_more: () => activePopup.set("export"),
   settings: () => activePage.set("settings"),
   quit: () => {
     if (get(saved)) send(MAIN, ["CLOSE"])
@@ -184,6 +186,7 @@ const actions: any = {
     history({ id: "newProject", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
   newFolder: (obj: any) =>
     history({ id: "newFolder", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
+  newSlide: () => history({ id: "newSlide", location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } }),
 
   // project
   close: (obj: any) => {
@@ -206,8 +209,11 @@ const actions: any = {
       showsCache.update((a) => {
         obj.sel.data.forEach((b: any) => {
           let ref = GetLayoutRef()[b.index]
-          if (ref.type === "child") a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[ref.layoutIndex].children[ref.id].disabled = !obj.enabled
-          else a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[ref.index].disabled = !obj.enabled
+          let slides = a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides
+          if (ref.type === "child") {
+            if (!slides[ref.layoutIndex].children) slides[ref.layoutIndex].children = {}
+            slides[ref.layoutIndex].children[ref.id] = { ...slides[ref.layoutIndex].children[ref.id], disabled: !obj.enabled }
+          } else slides[ref.index].disabled = !obj.enabled
         })
         return a
       })
@@ -244,6 +250,8 @@ const actions: any = {
     })
   },
 
+  actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
+
   // drawer navigation
   changeIcon: () => activePopup.set("icon"),
 
@@ -262,4 +270,16 @@ const actions: any = {
     }
     selected.set({ id: "slide", data })
   },
+}
+
+function changeSlideAction(obj: any, id: string) {
+  obj.sel.data.forEach((a: any) => {
+    let actions: any = GetLayout()[a.index].actions || {}
+    actions = { ...actions, [id]: actions[id] ? !actions[id] : true }
+    history({
+      id: "changeLayout",
+      newData: { key: "actions", value: actions },
+      location: { page: "show", show: get(activeShow)!, layoutSlide: a.index, layout: _show("active").get("settings.activeLayout") },
+    })
+  })
 }

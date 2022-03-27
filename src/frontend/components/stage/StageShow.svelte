@@ -47,7 +47,8 @@
 <Main slide={$activeStage.id ? $stageShows[$activeStage.id] : null} let:width let:height let:resolution>
   <div class="parent">
     {#if $activeStage.id}
-      <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
+      <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio disableStyle hideOverflow={false} center>
+        <!-- TODO: snapping to top left... -->
         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
         <!-- {#key Slide} -->
         {#each Object.entries($stageShows[$activeStage.id].items) as [id, item]}

@@ -290,7 +290,7 @@ ipcMain.on(MAIN, (e, msg) => {
     data = e.sender.id === outputWindow?.webContents.id ? "true" : "false"
   } else if (msg.channel === "CLOSE") {
     mainWindow?.close()
-    outputWindow?.close()
+    // outputWindow?.close()
   } else if (msg.channel === "MAXIMIZE") {
     if (mainWindow?.isMaximized()) mainWindow?.unmaximize()
     else mainWindow?.maximize()

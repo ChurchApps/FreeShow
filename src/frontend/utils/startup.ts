@@ -1,3 +1,4 @@
+import { transitionData } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
@@ -62,7 +63,7 @@ export function startup() {
 
   // load new show on show change
   activeShow.subscribe((a) => {
-    if (a) loadShows([a.id])
+    if (a && (a.type === undefined || a.type === "show")) loadShows([a.id])
   })
 }
 
@@ -97,6 +98,7 @@ const receiveSTORE: any = {
 
 const receiveOUTPUT: any = {
   BACKGROUND: (a: any) => outBackground.set(a),
+  TRANSITION: (a: any) => transitionData.set(a),
   SLIDE: (a: any) => outSlide.set(a),
   OVERLAYS: (a: any) => outOverlays.set(a),
   OVERLAY: (a: any) => overlays.set(a),
