@@ -5,13 +5,14 @@
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
-  const tabs: SettingsTabs[] = ["general", "theme", "groups", "display", "connection", "calendar", "other"]
+  // , "calendar"
+  const tabs: SettingsTabs[] = ["general", "theme", "groups", "display", "connection"]
 </script>
 
 <div class="main">
   {#each tabs as tab}
     <Button on:click={() => settingsTab.set(tab)} active={$settingsTab === tab} bold={false}>
-      <Icon id={tab} />
+      <Icon id={tab} right />
       <T id="settings.{tab}" />
     </Button>
   {/each}
@@ -19,7 +20,7 @@
 
 <style>
   .main :global(button) {
-    padding: 20px;
+    padding: 12px;
     width: 100%;
   }
 </style>

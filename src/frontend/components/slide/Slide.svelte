@@ -9,6 +9,7 @@
   import SelectElem from "../system/SelectElem.svelte"
   import Icons from "./Icons.svelte"
   import Textbox from "./Textbox.svelte"
+  import Actions from "./Actions.svelte"
   import Zoomed from "./Zoomed.svelte"
 
   export let slide: Slide
@@ -172,7 +173,7 @@
   }
 </script>
 
-<!-- TODO: disabled -->
+<!-- TODO: noQuickEdit -->
 <!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
@@ -180,6 +181,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
 <div class="main" class:active style="width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%">
   {#if icons}
     <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} />
+    <Actions {columns} {index} actions={layoutSlide.actions || {}} />
   {/if}
   <div
     class="slide context #slide"
@@ -211,6 +213,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           zoom={$slidesOptions.mode !== "lyrics" || noQuickEdit}
           aspectRatio={$slidesOptions.mode !== "lyrics" || noQuickEdit}
           disableStyle={$slidesOptions.mode === "lyrics" && !noQuickEdit}
+          relative={$slidesOptions.mode === "lyrics" && !noQuickEdit}
         >
           {#if background && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
             {#key background.path}

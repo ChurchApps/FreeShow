@@ -109,7 +109,7 @@ export interface History {
 }
 
 // override previous history
-const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme"]
+const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme", "changeLayouts"]
 
 export async function historyAwait(s: string[], obj: History) {
   loadShows(s)
@@ -506,19 +506,18 @@ export function history(obj: History, undo: null | boolean = null) {
         // TODO: undo new slide
         // decrement active edit slide index if removed slide(s) is active
       } else {
-        let id: any = obj.newData.id?.[0]
+        let id: any = obj.newData?.id?.[0]
         if (!id) id = uid()
         if (!obj.newData) obj.newData = {}
-        let layouts = _show(showIDs).layouts([obj.location!.layout])
-        let index: number = obj.newData.index !== undefined ? obj.newData.index : layouts.get()[0].slides.length
-        let ref = layouts.ref()[0]
+        let ref = _show(showIDs).layouts([obj.location!.layout]).ref()[0]
+        let index: number = obj.newData.index !== undefined ? obj.newData.index : ref.length
         // let color: null | string = null
 
         if (!obj.newData.slide && !obj.newData.slides && !obj.newData.parent) {
           let isParent: boolean = true
           // add as child
           // TODO: add by template
-          if (layouts.get()[0].slides.length) {
+          if (ref.length) {
             isParent = false
 
             let parent = ref[index - 1].parent || ref[index - 1]
@@ -535,7 +534,7 @@ export function history(obj: History, undo: null | boolean = null) {
           let slide: any = { group: isParent ? "" : null, color: null, settings: {}, notes: "", items: [] }
           if (isParent) slide.globalGroup = "verse"
           // globalGroup = getGroup(obj.location!.show!.id, obj.location!.layout!)
-          _show(showIDs).slides([id]).add(slide, isParent)
+          _show(showIDs).slides([id]).add([slide], isParent)
 
           // layout
           let value: any = { id }
@@ -546,7 +545,7 @@ export function history(obj: History, undo: null | boolean = null) {
           let slides = obj.newData.slides || [obj.newData.slide]
           slides.forEach((slide: any, i: number) => {
             // add custom
-            let id: string = _show(showIDs).slides().add(slide, true)
+            let id: string = _show(showIDs).slides().add([slide], true)
             let l: any = { id }
 
             // bgs
@@ -804,7 +803,7 @@ export function history(obj: History, undo: null | boolean = null) {
     case "changeLayout":
       let ref = _show(showIDs).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
       if (ref.type === "parent") old = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).set(obj.newData)
-      else old = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.index]).set(obj.newData)
+      else old = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set(obj.newData)
       // showsCache.update((a) => {
       //   let ref: any[] = GetLayoutRef(obj.location!.show!.id, obj.location!.layout!)
       //   let index = obj.location!.layoutSlide!

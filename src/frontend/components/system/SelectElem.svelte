@@ -13,7 +13,10 @@
 
   function enter(e: any) {
     if (e.buttons && !dragActive) {
-      if ((id === "project" || id === "folder") && data.index && $selected.data[0]?.index && data.index < $selected.data[0].index) return
+      if ((id === "project" || id === "folder") && $selected.data[0] && data.index < $selected.data[0].index) {
+        selected.set({ id, data: [data] })
+        return
+      }
       if ($selected.id !== id) selected.set({ id, data: [data] })
       else if (!arrayHasData($selected.data, data)) {
         selected.update((s) => {
@@ -30,7 +33,8 @@
     // e.dataTransfer.dropEffect = type
     // e.dataTransfer.setData("text", data)
 
-    if ((id === "project" || id === "folder") && data.index && $selected.data[0]?.index && data.index < $selected.data[0].index) return
+    if (id === "folder" && $selected.data[0]?.id === "folder" && data.index < $selected.data[0].index) return
+    if (id === "folder" && ($selected.data[0]?.id === "project" || data.index > $selected.data[0]?.index)) return
 
     let newData: any
 

@@ -1,14 +1,15 @@
 <script lang="ts">
-  import { activeShow, outSlide, showsCache } from "../../../stores"
-  import { GetLayout } from "../../helpers/get"
+  import { outSlide, showsCache } from "../../../stores"
+  import { _show } from "../../helpers/shows"
   import Textbox from "../../slide/Textbox.svelte"
 
   export let next: boolean = false
   export let style: boolean = false
+  export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; id: string }
 
   $: index = $outSlide ? $outSlide.index + (next ? 1 : 0) : null
-  $: slideId = index !== null && $activeShow && index < GetLayout().length ? GetLayout()[index].id : null
-  $: slide = $outSlide?.id && slideId ? $showsCache[$outSlide.id].slides[slideId] : null
+  $: slideId = index !== null && $outSlide ? _show("active").layouts("active").ref()[0][index!].id : null
+  $: slide = $outSlide && slideId ? $showsCache[$outSlide.id].slides[slideId] : null
 
   // $: {
   //   if (slide?.items) {
@@ -25,6 +26,6 @@
 
 {#if slide}
   {#each slide.items as item}
-    <Textbox {item} {style} />
+    <Textbox {item} {style} {ref} />
   {/each}
 {/if}

@@ -2,8 +2,9 @@
   // import {flip} from 'svelte/animate';
   // import type { Resolution } from "../../../types/Settings"
 
-  import { activeEdit, activeShow, outBackground, outLocked, outOverlays, outSlide, outTransition, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, outLocked, outSlide, showsCache, slidesOptions } from "../../stores"
   import { GetLayout } from "../helpers/get"
+  import { updateOut } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Slide from "../slide/Slide.svelte"
@@ -45,31 +46,32 @@
     if (e.ctrlKey || e.metaKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
   }
 
-  function slideClick(e: any, slide: any, index: number) {
+  function slideClick(e: any, index: number) {
     // TODO: duplicate function of "preview:126 - updateOut"
     if (!$outLocked && !e.ctrlKey && !e.metaKey) {
       outSlide.set({ id, layout: activeLayout, index })
-      _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
+      updateOut(index, _show("active").layouts("active").ref()[0])
+      // _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
 
-      activeEdit.set({ slide: index, items: [] })
+      // activeEdit.set({ slide: index, items: [] })
 
-      // background
-      if (slide.background) {
-        let bg = currentShow.media[slide.background]
-        outBackground.set({ type: bg.type || "media", path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
-      }
+      // // background
+      // if (slide.background) {
+      //   let bg = currentShow.media[slide.background]
+      //   outBackground.set({ type: bg.type || "media", path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
+      // }
 
-      // overlays
-      if (slide.overlays?.length) {
-        outOverlays.set([...new Set([...$outOverlays, ...slide.overlays])])
-      }
+      // // overlays
+      // if (slide.overlays?.length) {
+      //   outOverlays.set([...new Set([...$outOverlays, ...slide.overlays])])
+      // }
 
-      // transition
-      let t = slide.transition
-      if (t && t.duration > 0) {
-        t.action = "nextSlide"
-        outTransition.set(t)
-      } else outTransition.set(null)
+      // // transition
+      // let t = slide.transition
+      // if (t && t.duration > 0) {
+      //   t.action = "nextSlide"
+      //   outTransition.set(t)
+      // } else outTransition.set(null)
     }
   }
 
@@ -113,7 +115,7 @@
                 list={$slidesOptions.mode !== "grid"}
                 columns={$slidesOptions.columns}
                 icons
-                on:click={(e) => slideClick(e, slide, i)}
+                on:click={(e) => slideClick(e, i)}
               />
             {/each}
           {:else}

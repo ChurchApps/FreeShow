@@ -32,7 +32,25 @@
   import StageShow from "./components/stage/StageShow.svelte"
   import StageTools from "./components/stage/StageTools.svelte"
   import Resizeable from "./components/system/Resizeable.svelte"
-  import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, drawer, os, outputDisplay, outputWindow, outSlide, screen, showsCache } from "./stores"
+  import {
+    activeDrawerTab,
+    activeEdit,
+    activePage,
+    activePopup,
+    activeShow,
+    activeStage,
+    drawer,
+    os,
+    outAudio,
+    outBackground,
+    outOverlays,
+    outputDisplay,
+    outputWindow,
+    outSlide,
+    outTransition,
+    screen,
+    showsCache,
+  } from "./stores"
   import { save } from "./utils/save"
   import { startup } from "./utils/startup"
 
@@ -66,6 +84,8 @@
   }
   const keys: any = {
     Escape: () => {
+      if ($outBackground || $outSlide || $outOverlays.length || $outAudio.length || $outTransition) return
+
       // close popup
       if ($activePopup !== null) activePopup.set(null)
       // blur focused elements
@@ -76,12 +96,19 @@
           a.items = []
           return a
         })
-      } else {
-        // hide / show drawer
-        if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
-        else drawer.set({ height: 40, stored: $drawer.height })
+        // } else {
+        //   // hide / show drawer
+        //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+        //   else drawer.set({ height: 40, stored: $drawer.height })
       }
     },
+    // Enter: (e: any) => {
+    //   if (!e.target.closest(".edit")) {
+    //     // hide / show drawer
+    //     if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+    //     else drawer.set({ height: 40, stored: $drawer.height })
+    //   }
+    // },
   }
 
   function keydown(e: any) {

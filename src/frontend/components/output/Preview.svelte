@@ -30,11 +30,16 @@
       if ($presenterControllerKeys) callClear = true
       else if (fullscreen) fullscreen = false
     },
+    F1: () => outBackground.set(null),
+    F2: () => outSlide.set(null),
+    F3: () => outOverlays.set([]),
+    F4: () => outAudio.set([]),
     ".": () => {
       if ($presenterControllerKeys) callClear = true
     },
     F5: () => {
       if ($presenterControllerKeys) nextSlide(null, true)
+      else outTransition.set(null)
     },
     PageDown: (e: any) => {
       if ($presenterControllerKeys) nextSlide(e)
@@ -93,13 +98,107 @@
     }
   }
 
-  function getActiveClear(transition: any, audio: any, overlays: any, slide: any, background: any) {
-    if (transition) return "transition"
+  function getActiveClear(nextTimer: any, audio: any, overlays: any, slide: any, background: any) {
+    if (nextTimer) return "nextTimer"
     if (audio.length) return "audio"
     if (overlays.length) return "overlays"
     if (slide?.id) return "slide"
     if (background) return "background"
     return null
+  }
+
+  // nextTimer
+  let timer = { time: 0, paused: true }
+  let timerMax: number = 0
+  let timeObj: any = null
+  let sliderTimer: any = null
+  let autoPlay: boolean = true
+
+  outTransition.subscribe((a) => {
+    timer = { time: 0, paused: true }
+    if (timeObj !== null) {
+      timeObj.clear()
+      timeObj = null
+    }
+
+    if (a && a.duration > 0) {
+      timerMax = a.duration
+      timeObj = new Timer(() => {
+        // if (timer.paused) {
+        //   timer = { time: 0, paused: true }
+        //   return
+        // }
+
+        console.log($outSlide?.index)
+        outTransition.set(null)
+
+        nextSlide(null)
+        // timer = { time: 0, paused: false }
+      }, a.duration * 1000)
+      sliderTime()
+    }
+  })
+
+  const Timer: any = function (this: any, callback: any, delay: number) {
+    let timeout: any,
+      start: number,
+      remaining = delay
+    timer.time = timerMax - remaining / 1000
+
+    this.clear = () => {
+      clearTimeout(timeout)
+      timeout = null
+    }
+
+    this.pause = () => {
+      clearTimeout(timeout)
+      clearTimeout(sliderTimer)
+      timeout = null
+      sliderTimer = null
+      autoPlay = false
+      remaining -= Date.now() - start
+      timer = { time: timerMax - remaining / 1000, paused: true }
+    }
+
+    this.resume = () => {
+      if (timeout) return
+      start = Date.now()
+      remaining = (timerMax - timer.time) * 1000
+      autoPlay = true
+      timeout = setTimeout(() => {
+        clearTimeout(timeout)
+        timeout = null
+        callback()
+      }, remaining)
+      timer.paused = false
+      sliderTime()
+    }
+
+    if (autoPlay) this.resume()
+  }
+
+  // function durationAction(action: string) {
+  //   if (timer.paused) return
+  //   switch (action) {
+  //     case "nextSlide":
+  //       nextSlide(null)
+  //       break
+  //   }
+  // }
+
+  // set timer
+  function sliderTime() {
+    console.log(timer)
+
+    if (!sliderTimer && timeObj && !timer.paused && autoPlay) {
+      sliderTimer = setTimeout(() => {
+        if (timeObj && !timer.paused) {
+          if (timer.time < timerMax) timer.time += 0.5
+          sliderTimer = null
+          sliderTime()
+        }
+      }, 500)
+    }
   }
 </script>
 
@@ -149,8 +248,8 @@
     <!-- audio -->
 
     <!-- transition -->
-    {#if $outTransition && activeClear === "transition"}
-      <Transition />
+    {#if $outTransition && activeClear === "nextTimer"}
+      <Transition bind:timer {timerMax} {timeObj} />
     {/if}
   {/if}
 </div>

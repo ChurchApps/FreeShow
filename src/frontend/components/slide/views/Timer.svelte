@@ -5,7 +5,7 @@
   import { format, secondsToTimes } from "../../helpers/time"
 
   export let item: Item
-  export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
+  export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; id: string }
 
   // TODO: timer stops when leaving window...
 

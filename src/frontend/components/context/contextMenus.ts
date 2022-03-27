@@ -12,8 +12,8 @@ export interface ContextMenuItem {
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   // MENU
   save: { label: "actions.save", icon: "save", shortcuts: ["Ctrl+S"] },
-  import: { label: "actions.import", icon: "import", items: ["txt", "media", "pptx", "ew", "pro"] },
-  export_more: { label: "actions.export", icon: "export", items: ["projects", "current project", "lyrics as txt", "..."] },
+  import: { label: "actions.import", icon: "import" },
+  export_more: { label: "actions.export", icon: "export" },
   undo: { label: "actions.undo", icon: "undo", shortcuts: ["Ctrl+Z"] },
   redo: { label: "actions.redo", icon: "redo", shortcuts: ["Ctrl+Y"] },
   cut: { label: "actions.cut", icon: "cut", shortcuts: ["Ctrl+X"] },
@@ -57,6 +57,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   disable: { label: "actions.disable", icon: "disable" },
   edit: { label: "menu.edit", icon: "edit" },
   recolor: { label: "actions.recolor", icon: "color" },
+  actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -103,7 +104,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
   // SHOWS
   // , "copy", "paste"
-  slide: ["slideGroups", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
+  slide: ["slideGroups", "actions", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["rename", "recolor"],
   // global_group: ["rename"],

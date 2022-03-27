@@ -62,7 +62,7 @@
     "slide": "Lysbilde",
     "overlays": "Overlegg",
     "audio": "Lyd",
-    "transition": "Overgang"
+    "nextTimer": "Tid til neste lysbilde"
   },
   "clear": {
     "all": "Fjern alt",
@@ -70,13 +70,13 @@
     "slide": "Fjern lysbilde",
     "overlays": "Fjern overlegg",
     "audio": "Fjern lyd",
-    "transistion": "Fjern overgang"
+    "transition": "Fjern Tid til neste lysbilde"
   },
   "remove": {
     "background": "Fjern bakgrunn",
     "overlays": "Fjern overlegg",
     "audio": "Fjern lyd",
-    "transistion": "Fjern overgang",
+    "nextTimer": "Fjern Tid til neste lysbilde",
     "to_start": "Fjern Gå til start",
     "timer": "Fjern nedtelling"
   },
@@ -147,6 +147,13 @@
     "CCLI": "Lisens",
     "year": "År"
   },
+  "show_at": {
+    "never": "Ingen lysbilder",
+    "always": "Alle lysbilder",
+    "first": "Første lysbilde",
+    "last": "Siste lysbilde",
+    "first_last": "Første og siste lysbilde"
+  },
   "themes": {
     "default": "Standard",
     "dark": "Mørkt",
@@ -216,6 +223,7 @@
   "popup": {
     "show": "Nytt show",
     "rename": "Gi nytt navn",
+    "transition": "Overgang",
     "delete_show": "Slett show",
     "delete_show_confirmation": "Er du sikker på at du vil slette",
     "change_name": "Endre navn på",
@@ -279,7 +287,8 @@
     "back": "Gå tilbake",
     "home": "Hjem",
     "mute": "Slå av lyden",
-    "unmute": "Slå på lyden"
+    "unmute": "Slå på lyden",
+    "actions": "Handlinger"
   },
   "context": {
     "enabledTabs": "Vis/Skjul Faner",
@@ -299,7 +308,7 @@
     "metadata": "Metadata",
     "media": "Medier",
     "audio": "Lyd",
-    "transitions": "Overganger"
+    "layout": "Oppsett"
   },
   "edit": {
     "font": "Skrift",
@@ -392,7 +401,7 @@
     "group_numbers": "Gruppenummer",
     "full_colors": "Full lysbilde gruppefarger",
     "auto_output": "Vis utgangsskjerm ved oppstart",
-    "display_metadata": "Vis metadata i show",
+    "display_metadata": "Vis metadata under presentering",
     "default_project_name": "Standard prosjektnavn",
     "resolution": "Oppløsning",
     "video_extensions": "Videoutvidelse",
@@ -412,6 +421,7 @@
     "port": "port",
     "max_connections": "Maks tilkoblinger",
     "allowed_connections": "Tillatte tilkoblinger",
+    "reset_all": "Tilbakestill alt",
     "reset_settings": "Tilbakestill innstillinger",
     "reset_colors": "Tilbakestill farger",
     "reset_themes": "Tilbakestill temaer",
@@ -455,7 +465,14 @@
     "microphones": "Mikrofoner"
   },
   "transition": {
-    "fade": "Fade"
+    "current_slide": "for valgt lysbilde",
+    "text": "Tekstovergang",
+    "media": "Medieovergang",
+    "none": "Ingen",
+    "fade": "Falme",
+    "blur": "Uklart",
+    "scale": "Skalere",
+    "spin": "Spinn"
   },
   "month": {
     "1": "januar",

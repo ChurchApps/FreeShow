@@ -53,7 +53,6 @@
       return
     }
 
-    console.log("GET SHOW CACHE 2")
     loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
     // TODO: CHECK VIDEOS
   }

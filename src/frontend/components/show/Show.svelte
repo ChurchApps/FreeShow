@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { OutBackground } from "../../../types/Show"
-  import { activeProject, activeShow, dictionary, outBackground, outLocked, projects } from "../../stores"
+  import { activeProject, activeShow, dictionary, outBackground, outLocked, outSlide, projects } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
@@ -76,6 +76,7 @@
     autoPause = true
     videoData.paused = true
 
+    if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === bg.path)) outSlide.set(null)
     outBackground.set(bg)
   }
 

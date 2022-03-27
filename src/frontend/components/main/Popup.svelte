@@ -12,6 +12,9 @@
   import Unsaved from "./popups/Unsaved.svelte"
   import Initialize from "./popups/Initialize.svelte"
   import Shortcuts from "./popups/Shortcuts.svelte"
+  import Import from "./popups/Import.svelte"
+  import Export from "./popups/Export.svelte"
+  import Transition from "./popups/Transition.svelte"
 
   const hide = (e: any) => {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -30,6 +33,10 @@
       <div style="display: flex;flex-direction: column;margin: 20px;">
         {#if $activePopup === "initialize"}
           <Initialize />
+        {:else if $activePopup === "import"}
+          <Import />
+        {:else if $activePopup === "export"}
+          <Export />
         {:else if $activePopup === "show"}
           <CreateShow />
         {:else if $activePopup === "delete_show"}
@@ -38,6 +45,8 @@
           <ChangeIcon />
         {:else if $activePopup === "rename"}
           <Rename />
+        {:else if $activePopup === "transition"}
+          <Transition />
         {:else if $activePopup === "about"}
           <About />
         {:else if $activePopup === "shortcuts"}

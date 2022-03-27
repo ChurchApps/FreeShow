@@ -1,6 +1,6 @@
 <script lang="ts">
   import { uid } from "uid"
-  import { activeShow, dictionary, showsCache, slidesOptions } from "../../stores"
+  import { activePopup, activeShow, dictionary, showsCache, slidesOptions } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -53,6 +53,9 @@
         <Icon size={1.3} id="add" />
       </Button>
       <div class="seperator" />
+      <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition}>
+        <Icon size={1.3} id="transition" white />
+      </Button>
       <Button on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
         <Icon size={1.3} id={$slidesOptions.mode} white />
       </Button>

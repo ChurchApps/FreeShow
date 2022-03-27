@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { OutSlide } from "../../../types/Show"
-import { activeEdit, activePage, activeProject, activeShow, outBackground, outLocked, outOverlays, outSlide, outTransition, projects, showsCache } from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, projects, showsCache } from "./../../stores"
 import { _show } from "./shows"
 
 const keys: any = {
@@ -115,31 +115,37 @@ function getNextEnabled(index: null | number): null | number {
   return index
 }
 
-function updateOut(index: number, layout: any) {
+export function updateOut(index: number, layout: any) {
   activeEdit.set({ slide: index, items: [] })
   _show(get(activeShow)!.id).set({ key: "timestamps.used", value: new Date().getTime() })
+  let data = layout[index].data
 
   // background
-  if (layout[index].background) {
-    let bg = get(showsCache)[get(outSlide)?.id || get(activeShow)!.id].media[layout[index].background!]
-    outBackground.set({ path: bg.path, muted: bg.muted !== false })
+  if (data.background) {
+    let bg = get(showsCache)[get(outSlide)?.id || get(activeShow)!.id].media[data.background!]
+    outBackground.set({ type: bg.type || "media", path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
   }
 
   // overlays
-  if (layout[index].overlays?.length) {
-    outOverlays.set([...new Set([...get(outOverlays), ...layout[index].overlays])])
+  if (data.overlays?.length) {
+    outOverlays.set([...new Set([...get(outOverlays), ...data.overlays])])
   }
 
   // audio
-  // if (layout[index].audio) {
-  //   let a = get(showsCache)[get(outSlide)?.id || get(activeShow)!.id].audio[layout[index].audio!]
+  // if (data.audio) {
+  //   let a = get(showsCache)[get(outSlide)?.id || get(activeShow)!.id].audio[data.audio!]
   //   outBackground.set({ path: a.path, volume: a.volume })
   // }
 
-  // transition
-  let t: any = layout[index].data.transition
-  if (t && t.duration > 0) {
-    t.action = "nextSlide"
-    outTransition.set(t)
+  // nextTimer
+  if ((data.nextTimer || 0) > 0) {
+    outTransition.set({ duration: data.nextTimer })
   } else outTransition.set(null)
+
+  // actions
+  if (data.actions) {
+    if (data.actions.clearBackground) outBackground.set(null)
+    if (data.actions.clearOverlays) outOverlays.set([])
+    if (data.actions.clearAudio) outAudio.set([])
+  }
 }

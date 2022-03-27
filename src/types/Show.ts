@@ -37,7 +37,6 @@ export interface Slide {
     background?: boolean
     color?: string
     resolution?: Resolution
-    transition?: Transition
   }
   children?: string[]
   notes: string
@@ -86,13 +85,21 @@ export interface SlideData {
   parent?: ID // layout ref
   children?: any // layout slide
   color?: null | string
+  // TODO: this is next slide timer
+  nextTimer?: number
   transition?: Transition
   end?: boolean
   timer?: number
   background?: string // set backgorund action?
   overlays?: string[]
   audio?: string[]
-  actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
+
+  actions?: {
+    clearBackground?: boolean
+    clearOverlays?: boolean
+    clearAudio?: boolean
+  }
+  // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
 }
 
 export interface Transition {
@@ -158,9 +165,10 @@ export interface OutAudio {
   name: string
 }
 
-export interface OutTransition extends Transition {
-  action: string
-  slide?: number
+export interface OutTransition {
+  // action: string
+  // slide?: number
+  duration: number
 }
 
 // types
@@ -168,5 +176,5 @@ export interface OutTransition extends Transition {
 export type ID = string
 export type ItemType = "text" | "shape" | "image" | "video" | "audio" | "timer"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
-export type TransitionType = "none" | "fade"
+export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "screen" | "camera" | "player"

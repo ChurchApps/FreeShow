@@ -97,10 +97,10 @@
       {#if id.split("#")[0] === "countdowns"}
         <!--  -->
       {:else if id.includes("slide_text")}
-        <SlideText next={id.includes("next")} />
+        <SlideText next={id.includes("next")} ref={{ type: "stage", id }} />
       {:else if id.includes("slide")}
         <span style="pointer-events: none;">
-          <SlideText next={id.includes("next")} style />
+          <SlideText next={id.includes("next")} ref={{ type: "stage", id }} style />
         </span>
       {:else if id.includes("clock")}
         <Clock />

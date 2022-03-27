@@ -4,18 +4,18 @@
   import { _show } from "../helpers/shows"
   import Tabs from "../main/Tabs.svelte"
   import Audio from "./tools/Audio.svelte"
+  import Layout from "./tools/Layout.svelte"
   import Media from "./tools/Media.svelte"
   import Metadata from "./tools/Metadata.svelte"
   import Notes from "./tools/Notes.svelte"
   import SlideGroups from "./tools/SlideGroups.svelte"
-  import Transitions from "./tools/Transitions.svelte"
 
   const tabs: TabsObj = {
     groups: { name: "tools.groups", icon: "groups" },
-    metadata: { name: "tools.metadata", icon: "info" },
+    layout: { name: "tools.layout", icon: "layout" },
     media: { name: "tools.media", icon: "media" },
     audio: { name: "tools.audio", icon: "audio" },
-    transitions: { name: "tools.transitions", icon: "transition" },
+    metadata: { name: "tools.metadata", icon: "info" },
     notes: { name: "tools.notes", icon: "notes" },
   }
   let active: string = Object.keys(tabs)[0]
@@ -47,10 +47,8 @@
       <div class="content">
         <SlideGroups />
       </div>
-    {:else if active === "metadata"}
-      <div class="content">
-        <Metadata />
-      </div>
+    {:else if active === "layout"}
+      <Layout />
     {:else if active === "media"}
       <div class="content">
         <Media />
@@ -59,8 +57,10 @@
       <div class="content">
         <Audio />
       </div>
-    {:else if active === "transitions"}
-      <Transitions />
+    {:else if active === "metadata"}
+      <div class="content">
+        <Metadata />
+      </div>
     {:else if active === "notes"}
       <div class="content">
         <Notes on:edit={edit} value={note} />
@@ -84,5 +84,9 @@
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
+  }
+
+  .main :global(.tabs button) {
+    min-width: 50%;
   }
 </style>

@@ -5,7 +5,7 @@
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
-  $: out = $outBackground === null && $outSlide === null && !$outOverlays.length && !$outAudio.length ? false : true
+  $: allCleared = !$outBackground && !$outSlide && !$outOverlays.length && !$outAudio.length && !$outTransition
 
   export let autoChange: any
   export let activeClear: any
@@ -43,6 +43,7 @@
     outOverlays.set([])
     outAudio.set([])
     outTransition.set(null)
+    allCleared = true
     clearVideo()
     autoChange = true
   }
@@ -50,7 +51,7 @@
 
 <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
   <span>
-    <Button class="clearAll" disabled={$outLocked || !out} on:click={clearAll} title={$dictionary.clear?.all} red dark center>
+    <Button class="clearAll" disabled={$outLocked || allCleared} on:click={clearAll} title={$dictionary.clear?.all} red dark center>
       <Icon id="clear" size={1.2} />
       <span style="padding-left: 10px;"><T id={"clear.all"} /></span>
     </Button>
@@ -134,23 +135,23 @@
       <Icon id="audio" size={1.2} />
     </Button>
     <Button
-      disabled={($outLocked && activeClear === "transition") || !$outTransition}
+      disabled={($outLocked && activeClear === "nextTimer") || !$outTransition}
       on:click={() => {
-        if (activeClear !== "transition") {
+        if (activeClear !== "nextTimer") {
           // previousActive = activeClear
           autoChange = false
-          activeClear = "transition"
+          activeClear = "nextTimer"
         } else if (!$outLocked) {
           autoChange = true
           outTransition.set(null)
         }
       }}
-      title={activeClear === "transition" ? $dictionary.clear?.transition : $dictionary.preview?.transition}
-      red={activeClear === "transition"}
+      title={activeClear === "nextTimer" ? $dictionary.clear?.nextTimer : $dictionary.preview?.nextTimer}
+      red={activeClear === "nextTimer"}
       dark
       center
     >
-      <Icon id="transition" size={1.2} />
+      <Icon id="clock" size={1.2} />
     </Button>
   </span>
 </div>
