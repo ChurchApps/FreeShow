@@ -40,6 +40,7 @@
   }
 
   function wheel(e: any) {
+    if (disabled) return
     e.preventDefault()
     if (e.deltaY > 0) decrement()
     else increment()

@@ -45,7 +45,7 @@
 </script>
 
 <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
-<button on:click={click} on:dblclick={dblclick} data-parent={parent} class="context #rename__projects" class:active>
+<button on:click={click} on:dblclick={dblclick} data-parent={parent} class="context #project_button__projects" class:active>
   <Icon id="project" />
   <HiddenInput value={name} id={"project_" + id} on:edit={edit} />
 </button>

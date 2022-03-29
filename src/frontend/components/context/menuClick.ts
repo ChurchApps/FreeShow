@@ -133,11 +133,13 @@ const actions: any = {
       })
       return
     }
-    if (obj.sel.id === "category") {
-      obj.sel.data.forEach((a: any) => {
-        history({ id: "deleteShowsCategory", newData: { id: a } })
-      })
+
+    const deleteIDs: any = {
+      folder: "deleteFolder",
+      project: "deleteProject",
+      category: "deleteShowsCategory",
     }
+    obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id], newData: { id: a.id || a } }))
   },
   duplicate: (obj: any) => {
     if (obj.sel.id === "show" || obj.sel.id === "show_drawer") {

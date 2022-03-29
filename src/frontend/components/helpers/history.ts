@@ -58,6 +58,8 @@ export type HistoryIDs =
   | "newItem"
   | "newStageShow"
   // delete
+  | "deleteFolder"
+  | "deleteProject"
   | "deleteShowsCategory"
   | "removeSlides"
   | "deleteSlides"
@@ -614,6 +616,68 @@ export function history(obj: History, undo: null | boolean = null) {
       break
 
     // delete
+    case "deleteFolder":
+      folders.update((a) => {
+        let id = obj.newData.id
+        if (undo) {
+          a[id] = obj.newData.data
+
+          projects.update((p) => {
+            obj.newData.projectParents.forEach((a: any) => {
+              p[a.id].parent = a.parent
+            })
+            return p
+          })
+
+          obj.newData.folderParents.forEach((f: any) => {
+            a[f.id].parent = f.parent
+          })
+        } else {
+          obj.oldData = { id, data: a[id], folderParents: [], projectParents: [] }
+
+          // projects
+          let found: number = -1
+          let allProjects: any = get(projects)
+          do {
+            if (found > -1) {
+              let key = Object.keys(allProjects)[found]
+              obj.oldData.projectParents.push({ id: key, parent: allProjects[key].parent })
+              allProjects[key].parent = a[id].parent
+            }
+            found = Object.values(allProjects).findIndex((a: any) => a.parent === id)
+          } while (found > -1)
+          projects.set(allProjects)
+
+          // folders
+          found = -1
+          do {
+            if (found > -1) {
+              let key = Object.keys(a)[found]
+              obj.oldData.folderParents.push({ id: key, parent: a[key].parent })
+              a[key].parent = a[id].parent
+            }
+            found = Object.values(a).findIndex((a: any) => a.parent === id)
+          } while (found > -1)
+
+          delete a[obj.newData.id]
+        }
+        return a
+      })
+      // TODO: update children
+      break
+    case "deleteProject":
+      projects.update((a) => {
+        if (undo) {
+          a[obj.newData.id] = obj.newData.data
+        } else {
+          obj.oldData = { id: obj.newData.id, data: a[obj.newData.id] }
+          delete a[obj.newData.id]
+          console.log(a, obj.newData.id)
+        }
+        return a
+      })
+      if (get(activeProject) === obj.newData.id) activeProject.set(null)
+      break
     case "deleteShowsCategory":
       categories.update((a) => {
         if (undo) {

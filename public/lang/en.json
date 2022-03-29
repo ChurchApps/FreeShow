@@ -181,7 +181,7 @@
     "name": "Name",
     "video_id": "Video ID/URL",
     "close_ad": "Close ad on output screen",
-    "shows_folder": "Choose another location"
+    "change_folder": "Choose another location"
   },
   "tabs": {
     "shows": "Shows",
@@ -227,6 +227,8 @@
     "delete_show": "Delete show",
     "delete_show_confirmation": "Are you sure you want to delete",
     "change_name": "Change name on",
+    "import": "Import",
+    "export": "Export",
     "about": "About",
     "shortcuts": "Shortcuts",
     "icon": "Icons",
@@ -289,6 +291,28 @@
     "mute": "Mute",
     "unmute": "Unmute",
     "actions": "Actions"
+  },
+  "export": {
+    "export": "Export",
+    "export_as": "Export {} as",
+    "exported": "Exported!",
+    "current_show": "Current show",
+    "current_project": "Current project",
+    "selected_shows": "Selected shows",
+    "all_shows": "All shows",
+    "all_projects": "All projects",
+    "options": "Options",
+    "preview": "Preview",
+    "title": "Title",
+    "metadata": "Metadata",
+    "page_numbers": "Page numbers",
+    "groups": "Groups",
+    "numbers": "Numbered slides",
+    "invert": "Invert slides",
+    "text": "Plain text",
+    "slides": "Slides",
+    "rows": "Rows",
+    "columns": "Columns"
   },
   "context": {
     "enabledTabs": "Show/Hide Tabs",

@@ -17,7 +17,7 @@ export const version: Writable<string> = writable("0.0.0")
 export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
 export const activeEdit: Writable<ActiveEdit> = writable({ items: [] })
-export const outputWindow: Writable<boolean> = writable(false)
+export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
 export const outputDisplay: Writable<boolean> = writable(false)
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const dictionary: Writable<Dictionary> = writable({})
@@ -26,6 +26,16 @@ export const saved: Writable<boolean> = writable(true)
 export const audioSource: Writable<any> = writable(null)
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
+export const alertMessage: Writable<string> = writable("")
+
+export const exportOptions: Writable<any> = writable({
+  pdf: {
+    rows: 5,
+    columns: 2,
+    slide: true,
+    text: true,
+  },
+})
 
 // output
 export const outLocked: Writable<boolean> = writable(false) // false
@@ -336,6 +346,7 @@ export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
 export const displayMetadata: Writable<string> = writable("never") // "never"
 export const showsPath: Writable<null | string> = writable(null) // null
+export const exportPath: Writable<null | string> = writable(null) // null
 export const presenterControllerKeys: Writable<boolean> = writable(true) // true
 
 // display

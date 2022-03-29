@@ -15,6 +15,7 @@
   import Editor from "./components/edit/Editor.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
+  import Pdf from "./components/export/PDF.svelte"
   import { redo, undo } from "./components/helpers/history"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
@@ -45,7 +46,7 @@
     outBackground,
     outOverlays,
     outputDisplay,
-    outputWindow,
+    currentWindow,
     outSlide,
     outTransition,
     screen,
@@ -65,6 +66,8 @@
   const menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
   const drawerMenus: string[] = ["shows", "media", "overlays", "templates", "audio", "scripture", "player", "live"]
   const ctrlKeys: any = {
+    e: () => activePopup.set("export"),
+    i: () => activePopup.set("import"),
     n: () => activePopup.set("show"),
     o: () => {
       outputDisplay.set(!$outputDisplay)
@@ -112,7 +115,7 @@
   }
 
   function keydown(e: any) {
-    if ($outputWindow) return
+    if ($currentWindow === "output") return
     if (e.ctrlKey || e.metaKey) {
       if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
         activeDrawerTab.set(drawerMenus[e.key - 1])
@@ -153,90 +156,95 @@
 
 <svelte:window on:keydown={keydown} />
 
-{#if !$outputWindow && $os.platform === "win32"}
-  <MenuBar />
-{/if}
-<main style={!$outputWindow && $os.platform === "win32" ? "height: calc(100% - 30px);" : ""} class:closeAd>
-  {#if $outputWindow}
-    <!-- TODO: mac center  -->
-    <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={hideDisplay}>
-      <!-- Mac: width: 100%; -->
-      <Output style={getStyleResolution(resolution, width, height, "fit")} center />
-    </div>
-  {:else}
-    <ContextMenu />
-    <Popup />
-    <TimerInterval />
+{#if $currentWindow === "pdf"}
+  <Pdf />
+{:else}
+  {#if !$currentWindow && $os.platform === "win32"}
+    <MenuBar />
+  {/if}
+  <main style={!$currentWindow && $os.platform === "win32" ? "height: calc(100% - 30px);" : ""} class:closeAd>
+    {#if $currentWindow === "output"}
+      <!-- TODO: mac center  -->
+      <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={hideDisplay}>
+        <!-- Mac: width: 100%; -->
+        <Output style={getStyleResolution(resolution, width, height, "fit")} center />
+      </div>
+    {:else}
+      <ContextMenu />
+      <Popup />
+      <TimerInterval />
 
-    <div class="column">
-      <Top />
-      <div class="row">
-        <Resizeable id="mainLeft">
-          <div class="left">
+      <div class="column">
+        <Top />
+        <div class="row">
+          <Resizeable id="mainLeft">
+            <div class="left">
+              {#if page === "show"}
+                <Projects />
+              {:else if page === "edit"}
+                <Navigation />
+              {:else if page === "stage"}
+                <Shows />
+              {:else if page === "draw"}
+                <DrawTools />
+              {:else if page === "calendar"}
+                <Day />
+              {:else if page === "settings"}
+                <SettingsTabs />
+              {/if}
+            </div>
+          </Resizeable>
+
+          <div class="center">
             {#if page === "show"}
-              <Projects />
+              <Show />
             {:else if page === "edit"}
-              <Navigation />
-            {:else if page === "stage"}
-              <Shows />
+              <Editor />
             {:else if page === "draw"}
-              <DrawTools />
-            {:else if page === "calendar"}
-              <Day />
+              <Slide />
             {:else if page === "settings"}
-              <SettingsTabs />
+              <Settings />
+            {:else if page === "stage"}
+              <StageShow />
+            {:else if page === "calendar"}
+              <Calendar />
             {/if}
           </div>
-        </Resizeable>
 
-        <div class="center">
-          {#if page === "show"}
-            <Show />
-          {:else if page === "edit"}
-            <Editor />
-          {:else if page === "draw"}
-            <Slide />
-          {:else if page === "settings"}
-            <Settings />
-          {:else if page === "stage"}
-            <StageShow />
-          {:else if page === "calendar"}
-            <Calendar />
-          {/if}
+          <Resizeable id="mainRight" let:width side="right">
+            <div class="right" class:row={width > 600}>
+              <Preview />
+              {#if page === "show" && $activeShow}
+                {#if $activeShow.type === "show" || $activeShow.type === undefined}
+                  <ShowTools />
+                {:else if $activeShow.type === "image" || $activeShow.type === "video"}
+                  <MediaTools />
+                {/if}
+              {:else if page === "edit"}
+                <EditTools />
+              {:else if page === "draw"}
+                <DrawSettings />
+              {:else if page === "stage" && $activeStage.id}
+                <StageTools />
+              {:else if page === "calendar"}
+                <CreateCalendarShow />
+              {/if}
+            </div>
+          </Resizeable>
         </div>
 
-        <Resizeable id="mainRight" let:width side="right">
-          <div class="right" class:row={width > 600}>
-            <Preview />
-            {#if page === "show" && $activeShow}
-              {#if $activeShow.type === "show" || $activeShow.type === undefined}
-                <ShowTools />
-              {:else if $activeShow.type === "image" || $activeShow.type === "video"}
-                <MediaTools />
-              {/if}
-            {:else if page === "edit"}
-              <EditTools />
-            {:else if page === "draw"}
-              <DrawSettings />
-            {:else if page === "stage" && $activeStage.id}
-              <StageTools />
-            {:else if page === "calendar"}
-              <CreateCalendarShow />
-            {/if}
-          </div>
-        </Resizeable>
+        {#if page === "show" || page === "edit"}
+          <Drawer />
+        {/if}
       </div>
-
-      {#if page === "show" || page === "edit"}
-        <Drawer />
-      {/if}
-    </div>
-  {/if}
-</main>
+    {/if}
+  </main>
+{/if}
 
 <style>
   main {
     height: 100%;
+    background-color: var(--primary);
   }
 
   .closeAd {

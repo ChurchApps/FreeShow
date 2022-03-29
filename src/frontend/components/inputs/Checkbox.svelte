@@ -1,4 +1,4 @@
-<input id={$$props.id} type="checkbox" style={$$props.style} checked={$$props.checked || false} on:change />
+<input id={$$props.id} type="checkbox" disabled={$$props.disabled} style={$$props.style} checked={$$props.checked || false} on:change />
 
 <style>
   input {
@@ -13,6 +13,9 @@
     /* outline: 2px solid lightblue; */
     /* box-shadow: none; */
   }
+  input:not(:disabled) {
+    cursor: pointer;
+  }
   input:focus,
   input:active {
     background-color: var(--focus);
@@ -22,5 +25,8 @@
   }
   input:checked {
     background-color: var(--secondary);
+  }
+  input:disabled {
+    opacity: 0.3;
   }
 </style>

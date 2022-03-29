@@ -15,6 +15,7 @@
   import Import from "./popups/Import.svelte"
   import Export from "./popups/Export.svelte"
   import Transition from "./popups/Transition.svelte"
+  import Alert from "./popups/Alert.svelte"
 
   const hide = (e: any) => {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -25,7 +26,9 @@
   <div class="popup" transition:fade={{ duration: 100 }} on:click={hide}>
     <div class="card" transition:scale={{ duration: 200 }}>
       <div style="position: relative;">
-        <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{$activePopup}" /></h2>
+        {#if $activePopup !== "alert"}
+          <h2 style="text-align: center;margin: 10px 50px;min-height: 30px;"><T id="popup.{$activePopup}" /></h2>
+        {/if}
         <Button style="position: absolute;right: 0;top: 0;height: 100%;" on:click={() => activePopup.set(null)}>
           <Icon id="close" size={2} />
         </Button>
@@ -53,6 +56,8 @@
           <Shortcuts />
         {:else if $activePopup === "unsaved"}
           <Unsaved />
+        {:else if $activePopup === "alert"}
+          <Alert />
         {/if}
       </div>
     </div>
