@@ -129,7 +129,7 @@ const createWindow = () => {
   let focused: boolean = false
   mainWindow.on("focus", () => {
     // WIP hide task bar on second screen
-    if (!focused) {
+    if (process.platform === "win32" && !focused) {
       focused = true
       outputWindow?.focus()
       mainWindow?.focus()
@@ -364,6 +364,7 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       if (screen) {
         if (JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(screen.bounds)) outputWindow?.setBounds(screen.bounds)
         // TODO: output task bar
+        outputWindow?.setVisibleOnAllWorkspaces(true)
         outputWindow?.showInactive()
         // outputWindow?.show()
         // outputWindow?.maximize()
@@ -376,6 +377,9 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
         // outputWindow?.setAlwaysOnTop(true, "screen-saver", 1)
         outputWindow?.moveTop()
         // outputWindow?.maximize()
+
+        // focus on mac
+        mainWindow?.focus()
       }
     } else {
       outputWindow?.hide()

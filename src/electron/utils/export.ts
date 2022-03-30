@@ -47,7 +47,7 @@ export function createPDFWindow(data: any) {
     },
   })
 
-  const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
+  const url: string = isProd ? `file://${join(__dirname, "..", "..", "..", "public", "index.html")}` : "http://localhost:3000"
   exportWindow.loadURL(url)
 
   exportWindow.webContents.on("did-finish-load", () => {
