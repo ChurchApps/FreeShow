@@ -45,6 +45,7 @@ export interface Slide {
 }
 
 export interface Item {
+  id?: string
   lines?: Line[]
   auto?: boolean
   style: string
@@ -174,7 +175,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "shape" | "image" | "video" | "audio" | "timer"
+export type ItemType = "text" | "shape" | "image" | "video" | "audio" | "icon" | "timer"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "screen" | "camera" | "player"

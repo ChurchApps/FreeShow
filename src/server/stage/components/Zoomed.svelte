@@ -1,5 +1,7 @@
 <script lang="ts">
   export let show: any
+  export let disableStyle: boolean = false
+  export let relative: boolean = false
 
   let resolution: any = show && show.settings.resolution ? show.settings.size : { width: 1920, height: 1080 } // $screen.resolution
   let slideWidth: number = 0
@@ -8,7 +10,7 @@
 </script>
 
 <div class="center">
-  <div bind:offsetWidth={slideWidth} class="slide" style="{$$props.style || ''}aspect-ratio: {resolution.width}/{resolution.height};">
+  <div bind:offsetWidth={slideWidth} class:disableStyle class:relative class="slide" style="{$$props.style || ''}aspect-ratio: {resolution.width}/{resolution.height};">
     <span style="zoom: {ratio};">
       <slot />
     </span>
@@ -23,11 +25,13 @@
     /* z-index: -1; */
   }
 
-  .slide :global(.item) {
+  .slide:not(.relative) :global(.item) {
     position: absolute;
     /* display: inline-flex; */
     overflow: hidden;
+  }
 
+  .slide:not(.disableStyle) :global(.item) {
     color: white;
     font-size: 100px;
     /* font-family: "CMGSans"; */
@@ -42,6 +46,10 @@
 
     height: 150px;
     width: 400px;
+
+    width: 100%;
+    height: 100%;
+    color: unset;
   }
 
   .center {

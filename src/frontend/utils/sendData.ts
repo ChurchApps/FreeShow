@@ -76,10 +76,10 @@ async function getRemote(msg: ClientMessage) {
       msg.data = { id: showID, ...get(showsCache)[showID] }
 
       if (msg.id) {
-        if (!get(connections).REMOTE[msg.id]) get(connections).REMOTE[msg.id] = {}
-        connections.update((sc) => {
-          sc.REMOTE[msg.id!].active = showID
-          return sc
+        connections.update((a) => {
+          if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
+          a.REMOTE[msg.id!].active = showID
+          return a
         })
       }
       break
@@ -114,10 +114,10 @@ async function getRemote(msg: ClientMessage) {
         }
       }
       if (id.length && msg.id) {
-        if (!get(connections).REMOTE[msg.id]) get(connections).REMOTE[msg.id] = {}
-        connections.update((sc) => {
-          sc.REMOTE[msg.id!].active = id
-          return sc
+        connections.update((a) => {
+          if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
+          a.REMOTE[msg.id!].active = id
+          return a
         })
       }
       break
@@ -138,19 +138,23 @@ let oldOutSlide = ""
 function getStage(msg: ClientMessage) {
   switch (msg.channel) {
     case "SHOWS":
-      msg.data = turnIntoBoolean(filterObjectArray(get(stageShows), ["enabled", "name", "password"], "enabled"), "password")
+      msg.data = turnIntoBoolean(
+        filterObjectArray(get(stageShows), ["disabled", "name", "password"]).filter((a: any) => !a.disabled),
+        "password"
+      )
       break
     case "SHOW":
       if (msg.id) {
         let show = get(stageShows)[msg.data.id]
         if (!show.password.length || show.password === msg.data.password) {
           // connection successfull
-          connections.update((sc) => {
-            sc.STAGE[msg.id!].active = msg.data.id
-            return sc
+          connections.update((a) => {
+            if (!a.STAGE[msg.id!]) a.STAGE[msg.id!] = {}
+            a.STAGE[msg.id!].active = msg.data.id
+            return a
           })
-          show = arrayToObject(filterObjectArray(get(stageShows), ["enabled", "name", "settings", "items"]))[msg.data.id]
-          if (show.enabled) {
+          show = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[msg.data.id]
+          if (!show.disabled) {
             msg.data = show
             sendData(STAGE, { channel: "SLIDES", data: [] })
           } else msg = { id: msg.id, channel: "ERROR", data: "noShow" }

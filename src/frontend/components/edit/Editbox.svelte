@@ -4,6 +4,7 @@
   import { activeEdit, activeShow, overlays, showsCache } from "../../stores"
   import { GetLayoutRef } from "../helpers/get"
   import { history } from "../helpers/history"
+  import Icon from "../helpers/Icon.svelte"
   import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Timer from "../slide/views/Timer.svelte"
@@ -27,8 +28,6 @@
       } else ae.items = [index]
       return ae
     })
-
-    console.log($activeEdit.items)
 
     if (
       (e.target.closest(".line") && !e.ctrlKey && !e.metaKey) ||
@@ -233,6 +232,8 @@
     </div>
   {:else if item.type === "timer"}
     <Timer {item} {ref} />
+  {:else if item.type === "icon"}
+    <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}
 </div>
 

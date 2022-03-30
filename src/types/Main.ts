@@ -28,6 +28,7 @@ export type SelectIds =
   | "folder"
   | "files"
   | "category"
+  | "stage"
   | "media"
   | "overlay"
   | "template"

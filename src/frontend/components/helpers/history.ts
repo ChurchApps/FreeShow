@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeEdit, activePage, overlayCategories, shows, undoHistory } from "../../stores"
+import { activeEdit, activePage, activeStage, overlayCategories, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -60,6 +60,7 @@ export type HistoryIDs =
   // delete
   | "deleteFolder"
   | "deleteProject"
+  | "deleteStage"
   | "deleteShowsCategory"
   | "removeSlides"
   | "deleteSlides"
@@ -598,7 +599,7 @@ export function history(obj: History, undo: null | boolean = null) {
           if (!id) id = uid()
           a[id] = {
             name: "",
-            enabled: true,
+            disabled: false,
             password: "",
             settings: {
               background: false,
@@ -666,17 +667,28 @@ export function history(obj: History, undo: null | boolean = null) {
       // TODO: update children
       break
     case "deleteProject":
+      if (get(activeProject) === obj.newData.id) activeProject.set(null)
       projects.update((a) => {
         if (undo) {
           a[obj.newData.id] = obj.newData.data
         } else {
           obj.oldData = { id: obj.newData.id, data: a[obj.newData.id] }
           delete a[obj.newData.id]
-          console.log(a, obj.newData.id)
         }
         return a
       })
-      if (get(activeProject) === obj.newData.id) activeProject.set(null)
+      break
+    case "deleteStage":
+      if (get(activeStage) === obj.newData.id) activeStage.set({ id: null, items: [] })
+      stageShows.update((a) => {
+        if (undo) {
+          a[obj.newData.id] = obj.newData.data
+        } else {
+          obj.oldData = { id: obj.newData.id, data: a[obj.newData.id] }
+          delete a[obj.newData.id]
+        }
+        return a
+      })
       break
     case "deleteShowsCategory":
       categories.update((a) => {

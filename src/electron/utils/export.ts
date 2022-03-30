@@ -62,6 +62,7 @@ ipcMain.on(EXPORT, (_e, msg: any) => {
     exportWindow?.close()
     exportWindow = null
   } else if (msg.channel === "EXPORT") {
+    toApp(MAIN, { channel: "ALERT", data: msg.data.name })
     if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
   }
 })

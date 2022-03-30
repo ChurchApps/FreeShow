@@ -73,12 +73,12 @@ export const drawSettings: Writable<DrawSettings> = writable({}) // {default}
 
 // STAGE
 // message...
-export const activeStage: Writable<ActiveStage> = writable({ id: "eopsjofes", items: [] })
+export const activeStage: Writable<ActiveStage> = writable({ id: null, items: [] })
 export const stageShows: Writable<StageShows> = writable({
   // {default}
   eopsjofes: {
     name: "Text",
-    enabled: true,
+    disabled: false,
     password: "",
     settings: {
       background: false,
@@ -98,7 +98,7 @@ export const stageShows: Writable<StageShows> = writable({
   },
   eopsjofes3: {
     name: "Next",
-    enabled: true,
+    disabled: false,
     password: "",
     settings: {
       background: false,
@@ -123,7 +123,7 @@ export const stageShows: Writable<StageShows> = writable({
   },
   eopsjofese: {
     name: "Timer",
-    enabled: false,
+    disabled: true,
     password: "test",
     settings: {
       background: false,

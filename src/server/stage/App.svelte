@@ -7,6 +7,9 @@
 
   // TODO: translate
   const lang: any = {
+    empty: {
+      shows: "No shows",
+    },
     error: {
       wrongPass: "Wrong password!",
       missingID: "Something went wrong, try again!",
@@ -74,7 +77,7 @@
           shows = msg.data
           if (showRef) {
             let index = shows.findIndex((s: any) => s.id === showRef.id)
-            if (index < 0 || shows[index].enabled === false) showRef = null
+            if (index < 0 || shows[index].disabled === true) showRef = null
           }
         }
         break
@@ -82,7 +85,7 @@
         console.log(msg.data)
 
         if (msg.data === null) showRef = null
-        else if (msg.data.enabled === false) {
+        else if (msg.data.disabled === true) {
           if (showRef.id === msg.data.id) showRef = null
           shows = shows.filter((s: any) => s.id === msg.data.id)
         } else {
@@ -183,7 +186,9 @@
       </span>
     </div>
   {:else}
-    <Center faded>[[[No shows]]]</Center>
+    <Center faded>
+      {lang.empty.shows}
+    </Center>
   {/if}
 {:else if show}
   <!-- on click -->
@@ -258,6 +263,7 @@
     font-size: 1.5em;
 
     height: 100%;
+
     /* width: 100vw;
   height: 100vh; */
   }

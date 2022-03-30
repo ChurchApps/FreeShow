@@ -47,8 +47,8 @@
   <span style="display: flex;">
     {#if active !== "items"}
       <Button style="flex: 1;" dark center>
-        <Icon id="reset" />
-        <T id={"edit.reset"} />
+        <Icon id="reset" right />
+        <T id={"actions.reset"} />
       </Button>
     {/if}
   </span>

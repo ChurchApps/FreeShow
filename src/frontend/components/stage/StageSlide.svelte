@@ -7,7 +7,7 @@
   interface Show {
     settings: any
     name: string
-    enabled: boolean
+    disabled: boolean
     password: string
     items: {
       [key: string]: any
@@ -26,7 +26,7 @@
 </script>
 
 <div class="main" class:active style="width: {100 / columns}%" class:list>
-  <div class="slide context #stage_slide" class:disabled={!show.enabled} style={show.settings.background ? `background-color: ${show.settings.color};` : ""} tabindex={0} on:click>
+  <div class="slide context #stage_slide" class:disabled={show.disabled} style={show.settings.background ? `background-color: ${show.settings.color};` : ""} tabindex={0} on:click>
     <div style="width: 100%;">
       <Zoomed background={show.items.length ? "black" : "transparent"} style="width: 100%;" disableStyle bind:ratio>
         {#each Object.entries(show.items) as [id, item]}

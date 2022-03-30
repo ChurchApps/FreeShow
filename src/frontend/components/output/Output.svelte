@@ -67,7 +67,7 @@
       <span transition:custom={transition} style="pointer-events: none;display: block;">
         {#if currentSlide}
           {#each currentSlide?.items as item}
-            <Textbox {item} ref={{ showId: $outSlide.id, id: currentSlide.id }} />
+            <Textbox {item} {ratio} ref={{ showId: $outSlide.id, id: currentSlide.id }} />
           {/each}
         {/if}
       </span>

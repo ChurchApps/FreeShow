@@ -231,7 +231,7 @@ export const defaultThemes: any = {
 export const defaultStage: any = {
   eopsjofes: {
     name: "Stage",
-    enabled: true,
+    disabled: false,
     password: "",
     settings: {
       background: false,

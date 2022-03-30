@@ -81,7 +81,17 @@
       newData,
       location: { page: "stage", slide: $activeStage.id!, items },
     })
+
+    // if (!timeout) {
+    //   updateStageShow()
+    //   timeout = setTimeout(() => {
+    //     updateStageShow()
+    //     timeout = null
+    //   }, 500)
+    // }
   }
+
+  // let timeout: any = null
 </script>
 
 <Panel>

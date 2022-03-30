@@ -1,6 +1,5 @@
 <script lang="ts">
   import { MAIN } from "../../../../types/Channels"
-
   import { version } from "../../../stores"
   import T from "../../helpers/T.svelte"
 
@@ -12,7 +11,12 @@
 
 <div style="text-align: center;">
   <h1>FreeShow</h1>
-  <p style="opacity: 0.5;">v{$version}</p>
+  <p>
+    <span style="opacity: 0.8;">v{$version} -</span>
+    <a href="#void" on:click={() => openURL("https://freeshow.app/?v" + $version)}>
+      <T id="about.check_updates" />
+    </a>
+  </p>
 </div>
 <br />
 <div class="main">
@@ -84,12 +88,12 @@
 
   a {
     color: var(--text);
-    opacity: 0.5;
-  }
-  a:hover {
     opacity: 0.6;
   }
+  a:hover {
+    opacity: 0.7;
+  }
   a:active {
-    opacity: 0.8;
+    opacity: 0.9;
   }
 </style>

@@ -118,8 +118,8 @@ export function _show(id: any) {
         get: (key: string | null = null) => {
           let a: any[] = []
           if (!slideIds.length) slideIds = Object.keys(shows[id].slides)
-          a.push([])
           slideIds.forEach((slideId, i) => {
+            a.push([])
             // if (!indexes.length) a[i].push(...shows[id].slides[slideId].items)
             if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
             indexes.forEach((index) => {
@@ -188,7 +188,7 @@ export function _show(id: any) {
               indexes.forEach((index) => {
                 if (!lines.length) lines = Object.keys(shows[id].slides[slideId].items[index].lines)
                 lines.forEach((line) => {
-                  if (shows[id].slides[slideId].items?.[index]) {
+                  if (shows[id].slides[slideId].items?.[index]?.lines?.[line]) {
                     a[i].push(shows[id].slides[slideId].items[index].lines[line])
                   }
                 })
@@ -298,7 +298,7 @@ export function _show(id: any) {
           if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
           else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
           layoutIds.forEach((layoutId: any) => {
-            prev.push({key, value: a[id].layouts[layoutId][key]})
+            prev.push({ key, value: a[id].layouts[layoutId][key] })
             a[id].layouts[layoutId][key] = value
           })
           return a

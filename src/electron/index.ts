@@ -126,9 +126,18 @@ const createWindow = () => {
     electronSettings.set("height", height)
   })
 
-  // mainWindow.on("focus", () => {
-  //   // hide second screen task bar ?
-  // })
+  let focused: boolean = false
+  mainWindow.on("focus", () => {
+    // WIP hide task bar on second screen
+    if (!focused) {
+      focused = true
+      outputWindow?.focus()
+      mainWindow?.focus()
+      setTimeout(() => {
+        focused = false
+      }, 100)
+    }
+  })
 
   mainWindow.on("closed", () => {
     mainWindow = null
@@ -384,13 +393,17 @@ function createOutputWindow() {
     height: 610,
     x: 0,
     y: 0,
-    // transparent: isProd, // disable interaction (resize)
     alwaysOnTop: true, // keep window on top of other windows
     resizable: false, // disable resizing on mac and windows
     frame: false, // hide title/buttons
-    type: "toolbar", // hide from taskbar
     fullscreen: true,
     skipTaskbar: true, // hide taskbar
+
+    // parent: mainWindow!,
+    // modal: true,
+
+    // type: "toolbar", // hide from taskbar
+    // transparent: isProd, // disable interaction (resize)
     // focusable: false, // makes non focusable
     // titleBarStyle: "hidden", // hide titlebar
     // kiosk: true,

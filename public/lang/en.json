@@ -13,6 +13,7 @@
     "no": "Norwegian"
   },
   "about": {
+    "check_updates": "Look for updates",
     "made": "Made in Norway by",
     "report": "Want to report an issue? Create an issue on GitHub",
     "help": "Want to help translate or request a feature? Send a mail to",
@@ -358,6 +359,7 @@
     "outline": "Outline",
     "width": "Width",
     "shadow": "Shadow",
+    "shadow_inset": "Shadow inset",
     "offsetX": "Offset X",
     "offsetY": "Offset Y",
     "blur": "Blur",
@@ -367,7 +369,12 @@
     "opacity": "Opacity",
     "corner_radius": "Corner Radius",
     "border": "Border",
-    "length": "Length"
+    "length": "Length",
+    "x": "X",
+    "y": "Y",
+    "add_items": "Add items",
+    "add_icons": "Add icons",
+    "arrange_items": "Arrange items"
   },
   "borders": {
     "solid": "Solid",
@@ -402,8 +409,8 @@
     "timers": "Timers",
     "system_clock": "System clock",
     "video_time": "Video time",
-    "video_countdown": "Video countdowns",
-    "countdowns": "Countdowns",
+    "video_countdown": "Video countdown",
+    "project_timers": "Project timers",
     "other": "Other",
     "chords": "Chords",
     "message": "Message",

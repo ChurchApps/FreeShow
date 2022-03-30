@@ -7,6 +7,7 @@
   export let size: number = 1
   export let white: boolean = false
   export let right: boolean = false
+  export let fill: boolean = false
   export let custom: boolean = false
   export let select: boolean = false
 
@@ -21,7 +22,18 @@
   }
 </script>
 
-<svg class={$$props.class} class:white class:right class:select on:click={click} style="{$$props.style || ''} min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
+<svg
+  class={$$props.class}
+  class:white
+  class:right
+  class:fill
+  class:select
+  on:click={click}
+  style="{$$props.style || ''} min-width: {width}"
+  {width}
+  {height}
+  viewBox="0 0 {box} {box}"
+>
   {@html icon ? icon : icons.noIcon}
 </svg>
 
@@ -44,5 +56,10 @@
 
   svg.right {
     padding-right: 0.8em;
+  }
+
+  svg.fill {
+    width: 100%;
+    height: 100%;
   }
 </style>

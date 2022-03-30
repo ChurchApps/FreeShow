@@ -8,7 +8,7 @@ export interface ActiveStage {
 export interface StageShows {
   [key: string]: {
     name: string
-    enabled: boolean
+    disabled: boolean
     password: string
     settings: {
       background: boolean

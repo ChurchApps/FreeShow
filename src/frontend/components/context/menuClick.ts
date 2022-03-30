@@ -1,6 +1,20 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
-import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, drawerTabsData, projects, projectView, saved, selected, showsCache } from "../../stores"
+import {
+  activeDrawerTab,
+  activeEdit,
+  activePage,
+  activePopup,
+  activeProject,
+  activeShow,
+  drawerTabsData,
+  projects,
+  projectView,
+  saved,
+  selected,
+  showsCache,
+  stageShows,
+} from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
 import { GetLayoutRef, GetLayout } from "../helpers/get"
@@ -137,6 +151,7 @@ const actions: any = {
     const deleteIDs: any = {
       folder: "deleteFolder",
       project: "deleteProject",
+      stage: "deleteStage",
       category: "deleteShowsCategory",
     }
     obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id], newData: { id: a.id || a } }))
@@ -231,6 +246,16 @@ const actions: any = {
               a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex].children[b.id].disabled = !obj.enabled
             else if (b.id === c.id) a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex || b.index].disabled = !obj.enabled
           })
+        })
+        return a
+      })
+    }
+    if (obj.sel.id === "stage") {
+      // history({ id: "changeStage", newData: {key: "disabled", value: }, location: { page: "stage", slide: obj.sel.data.map(({id}: any) => (id)) } })
+      stageShows.update((a) => {
+        let value: boolean = !a[obj.sel.data[0].id].disabled
+        obj.sel.data.forEach((b: any) => {
+          a[b.id].disabled = value
         })
         return a
       })

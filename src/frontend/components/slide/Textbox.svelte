@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
+  import Icon from "../helpers/Icon.svelte"
   import Timer from "./views/Timer.svelte"
 
   export let item: Item
+  export let ratio: number = 1
   export let smallFontSize: boolean = false
   export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; id: string }
   export let style: boolean = true
@@ -23,6 +25,8 @@
     </div>
   {:else if item.type === "timer"}
     <Timer {item} {ref} />
+  {:else if item.type === "icon"}
+    <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}
 </div>
 

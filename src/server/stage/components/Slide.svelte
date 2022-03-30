@@ -21,7 +21,7 @@
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
   <div class="slide" style={show.settings.background ? `background-color: ${show.settings.color};` : ""}>
-    <Zoomed {show} style={getStyleResolution(resolution, width, height)}>
+    <Zoomed {show} style={getStyleResolution(resolution, width, height)} disableStyle>
       {#each Object.entries(show.items) as [id, item]}
         {#if item.enabled}
           <Stagebox {show} {id} {item} {slides} />
@@ -46,6 +46,6 @@
     justify-content: center;
     align-items: center;
     /* padding: 10px; */
-    overflow: auto;
+    overflow: hidden;
   }
 </style>

@@ -4,15 +4,18 @@
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
 
-  let msg: string = $alertMessage.toString()
+  let msg: string = ""
+  $: msg = $alertMessage.toString()
 </script>
 
 <p>
-  {#if msg?.includes(".")}
-    <T id={msg} />
-  {:else}
-    {msg}
-  {/if}
+  {#key msg}
+    {#if msg?.includes(".")}
+      <T id={msg} />
+    {:else}
+      {msg}
+    {/if}
+  {/key}
 </p>
 
 <Button on:click={() => activePopup.set(null)} center>

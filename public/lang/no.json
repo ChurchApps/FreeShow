@@ -13,6 +13,7 @@
     "no": "Norsk"
   },
   "about": {
+    "check_updates": "Se etter oppdateringer",
     "made": "Laget i Norge av",
     "report": "Vil to rapportere en feil? Opprett en \"issue\" på GitHub",
     "help": "Vil du hjelpe med å oversette eller foreslå en funksjon? Send en e-post til",
@@ -358,6 +359,7 @@
     "outline": "Strek",
     "width": "Bredde",
     "shadow": "Skygge",
+    "shadow_inset": "Innfelt skygge",
     "offsetX": "Forskyvning X",
     "offsetY": "Forskyvning Y",
     "blur": "Uklarhet",
@@ -367,7 +369,12 @@
     "opacity": "Gjennomsiktighet",
     "corner_radius": "Hjørneradius",
     "border": "Ramme",
-    "length": "Lengde"
+    "length": "Lengde",
+    "x": "X",
+    "y": "Y",
+    "add_items": "Legg til elementer",
+    "add_icons": "Legg til ikoner",
+    "arrange_items": "Ordne elementer"
   },
   "borders": {
     "solid": "Hel",
@@ -403,7 +410,7 @@
     "system_clock": "Systemklokke",
     "video_time": "Videotid",
     "video_countdown": "Video nedtelling",
-    "countdowns": "Nedtellinger",
+    "project_timers": "Prosjekt-nedtellinger",
     "other": "Andre",
     "chords": "Akkorder",
     "message": "Melding",
