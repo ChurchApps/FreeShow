@@ -10,6 +10,7 @@ import {
   drawerTabsData,
   drawSettings,
   events,
+  exportPath,
   fullColors,
   groupCount,
   groupNumbers,
@@ -65,6 +66,10 @@ const updateList: { [key in SaveList]: any } = {
   showsPath: (v: any) => {
     if (!v) window.api.send(MAIN, { channel: "SHOWS_PATH" })
     else showsPath.set(v)
+  },
+  exportPath: (v: any) => {
+    if (!v) window.api.send(MAIN, { channel: "EXPORT_PATH" })
+    else exportPath.set(v)
   },
   os: (v: any) => {
     if (!v.platform) window.api.send(MAIN, { channel: "GET_OS" })

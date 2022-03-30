@@ -40,7 +40,7 @@
 
 <div class="surround">
   {#if id !== "/"}
-    <button {id} class:opened class="folder context #rename__projects" on:click={toggle}>
+    <button {id} class:opened class="folder context #folder__projects" on:click={toggle}>
       <span>
         {#if opened}
           <Icon id="folderOpen" />

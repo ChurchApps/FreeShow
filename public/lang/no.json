@@ -13,6 +13,7 @@
     "no": "Norsk"
   },
   "about": {
+    "check_updates": "Se etter oppdateringer",
     "made": "Laget i Norge av",
     "report": "Vil to rapportere en feil? Opprett en \"issue\" på GitHub",
     "help": "Vil du hjelpe med å oversette eller foreslå en funksjon? Send en e-post til",
@@ -181,7 +182,7 @@
     "name": "Navn",
     "video_id": "Video ID/URL",
     "close_ad": "Lukk annonse på utgangsskjermen",
-    "shows_folder": "Velg en annen plassering"
+    "change_folder": "Velg en annen plassering"
   },
   "tabs": {
     "shows": "Show",
@@ -227,6 +228,8 @@
     "delete_show": "Slett show",
     "delete_show_confirmation": "Er du sikker på at du vil slette",
     "change_name": "Endre navn på",
+    "import": "Importer",
+    "export": "Eksporter",
     "about": "Om",
     "shortcuts": "Hurtigtaster",
     "icon": "Ikoner",
@@ -290,6 +293,28 @@
     "unmute": "Slå på lyden",
     "actions": "Handlinger"
   },
+  "export": {
+    "export": "Eksporter",
+    "export_as": "Eksporter {} som",
+    "exported": "Eksportert!",
+    "current_show": "Valgt show",
+    "current_project": "Valgt prosjekt",
+    "selected_shows": "Alle valgte show",
+    "all_shows": "Alle show",
+    "all_projects": "Alle prosjekter",
+    "options": "Alternativer",
+    "preview": "Forhåndsvisning",
+    "title": "Tittel",
+    "metadata": "Metadata",
+    "page_numbers": "Sidenummer",
+    "groups": "Grupper",
+    "numbers": "Nummererte lysbilder",
+    "invert": "Inverter lysbilder",
+    "text": "Kun tekst",
+    "slides": "Lysbilder",
+    "rows": "Rader",
+    "columns": "Kolonner"
+  },
   "context": {
     "enabledTabs": "Vis/Skjul Faner",
     "addToProject": "Legg til prosjekt",
@@ -334,6 +359,7 @@
     "outline": "Strek",
     "width": "Bredde",
     "shadow": "Skygge",
+    "shadow_inset": "Innfelt skygge",
     "offsetX": "Forskyvning X",
     "offsetY": "Forskyvning Y",
     "blur": "Uklarhet",
@@ -343,7 +369,12 @@
     "opacity": "Gjennomsiktighet",
     "corner_radius": "Hjørneradius",
     "border": "Ramme",
-    "length": "Lengde"
+    "length": "Lengde",
+    "x": "X",
+    "y": "Y",
+    "add_items": "Legg til elementer",
+    "add_icons": "Legg til ikoner",
+    "arrange_items": "Ordne elementer"
   },
   "borders": {
     "solid": "Hel",
@@ -379,7 +410,7 @@
     "system_clock": "Systemklokke",
     "video_time": "Videotid",
     "video_countdown": "Video nedtelling",
-    "countdowns": "Nedtellinger",
+    "project_timers": "Prosjekt-nedtellinger",
     "other": "Andre",
     "chords": "Akkorder",
     "message": "Melding",

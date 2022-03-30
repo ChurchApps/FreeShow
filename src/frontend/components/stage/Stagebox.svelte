@@ -18,40 +18,45 @@
       console.log(e)
       activeStage.update((ae) => {
         if (e.ctrlKey || e.metaKey) {
-          // if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
-          // else ae.items.push(id)
-          if (!ae.items.includes(id)) ae.items.push(id)
+          if (ae.items.includes(id)) {
+            if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
+          } else ae.items.push(id)
         } else ae.items = [id]
         return ae
       })
-      let item = e.target.closest(".item")
-      // if ((e.target.closest(".line") && (!e.ctrlKey || !e.metaKey)) || e.target.closest(".square") || ((e.ctrlKey || e.metaKey) && !e.target.closest(".line")) || !e.target.closest(".edit") || e.altKey) {
+
+      // if (
+      //   (e.target.closest(".line") && !e.ctrlKey && !e.metaKey) ||
+      //   e.target.closest(".square") ||
+      //   ((e.ctrlKey || e.metaKey) && !e.target.closest(".line")) ||
+      //   e.altKey ||
+      //   e.buttons === 4
+      // ) {
+      let item = e.target.closest(".stage_item")
       mouse = {
         x: e.clientX,
         y: e.clientY,
+        width: item.offsetWidth,
+        height: item.offsetHeight,
         offset: {
           x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
           y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
           width: e.clientX / ratio - item.offsetWidth,
           height: e.clientY / ratio - item.offsetHeight,
         },
-        // offsetX: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
-        // offsetY: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
-        // offsetWidth: (e.clientX - e.target.closest(".slide").offsetLeft + 125) / ratio - item.offsetWidth + e.target.offsetWidth,
-        // offsetHeight: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetHeight + e.target.offsetHeight,
-        // offsetWidth: e.target.offsetParent.offsetWidth - e.clientX,
-        // offsetHeight: e.target.offsetParent.offsetHeight - e.clientY,
+        item,
         e: e,
+        // }
       }
-      // }
     }
   }
 
   function keydown(e: any) {
     if (edit) {
-      if (e.key === "Backspace" && $activeStage.items.includes(id) && !document.activeElement?.closest(".item") && !document.activeElement?.closest("input")) {
+      if (e.key === "Backspace" && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest("input")) {
         // TODO: history??
         $stageShows[$activeStage.id!].items[id].enabled = false
+        activeStage.set({ id: $activeStage.id, items: [] })
       }
     }
   }
@@ -59,7 +64,7 @@
   function deselect(e: any) {
     if (!e.target.closest(".stageTools")) {
       if (
-        (edit && !e.ctrlKey && !e.metaKey && e.target.closest(".item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".item")) ||
+        (edit && !e.ctrlKey && !e.metaKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) ||
         e.target.closest(".panel")
       ) {
         activeStage.update((ae) => {
@@ -75,7 +80,7 @@
 
 <div
   {id}
-  class="item"
+  class="stage_item item"
   class:outline={edit}
   class:selected={edit && $activeStage.items.includes(id)}
   style="{item.style};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}"
@@ -112,10 +117,10 @@
 </div>
 
 <style>
-  .item.outline {
+  .stage_item.outline {
     outline: 5px solid rgb(255 255 255 / 0.2);
   }
-  .item.selected {
+  .stage_item.selected {
     outline: 5px solid var(--secondary);
     overflow: visible;
   }

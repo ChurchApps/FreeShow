@@ -148,7 +148,7 @@
   <span style="display: flex;align-items: center;">
     {$showsPath}
     <FolderPicker id="shows">
-      <T id="inputs.shows_folder" />
+      <T id="inputs.change_folder" />
     </FolderPicker>
   </span>
 </div>

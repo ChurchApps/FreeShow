@@ -3,7 +3,7 @@
   import { OUTPUT } from "../../../types/Channels"
   import type { Resolution } from "../../../types/Settings"
   import type { Transition, TransitionType } from "../../../types/Show"
-  import { displayMetadata, outAudio, outBackground, outOverlays, outputWindow, outSlide, overlays, screen, shows, showsCache, transitionData } from "../../stores"
+  import { displayMetadata, outAudio, outBackground, outOverlays, currentWindow, outSlide, overlays, screen, shows, showsCache, transitionData } from "../../stores"
   import { receive } from "../../utils/request"
   import { transitions } from "../../utils/transitions"
   import Draw from "../draw/Draw.svelte"
@@ -46,7 +46,7 @@
     },
   }
 
-  if ($outputWindow || mirror) receive(OUTPUT, receiveOUTPUT)
+  if ($currentWindow || mirror) receive(OUTPUT, receiveOUTPUT)
 
   $: currentLayout = $outSlide ? _show($outSlide.id).layouts([$outSlide.layout]).ref()[0] : []
   $: currentSlide = $outSlide ? _show($outSlide.id).slides([currentLayout![$outSlide.index].id]).get()[0] : null
@@ -67,7 +67,7 @@
       <span transition:custom={transition} style="pointer-events: none;display: block;">
         {#if currentSlide}
           {#each currentSlide?.items as item}
-            <Textbox {item} ref={{ showId: $outSlide.id, id: currentSlide.id }} />
+            <Textbox {item} {ratio} ref={{ showId: $outSlide.id, id: currentSlide.id }} />
           {/each}
         {/if}
       </span>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { uid } from "uid"
   import { OPEN_FOLDER } from "../../../types/Channels"
-  import { mediaFolders, showsPath } from "../../stores"
+  import { exportPath, mediaFolders, showsPath } from "../../stores"
   import { history } from "../helpers/history"
   import Button from "./Button.svelte"
 
@@ -29,6 +29,8 @@
     } else if (id === "shows") {
       // set new shows folder location
       showsPath.set(msg.path)
+    } else if (id === "export") {
+      exportPath.set(msg.path)
     }
   })
 </script>

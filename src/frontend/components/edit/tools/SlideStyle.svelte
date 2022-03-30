@@ -16,8 +16,8 @@
       : null
   // get(showsCache)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]
 
-  $: background = editSlide?.settings.background || false
-  $: color = editSlide?.settings.color || "#000000"
+  $: background = editSlide?.settings?.background || false
+  $: color = editSlide?.settings?.color || "#000000"
   // $: resolution = editSlide?.settings.resolution || []
   // $: transition = editSlide?.settings.transition || {}
 

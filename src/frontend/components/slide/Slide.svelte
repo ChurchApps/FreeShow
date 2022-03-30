@@ -228,6 +228,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
               <!-- TODO: lyrics zoom on text -->
               <Textbox
                 {item}
+                {ratio}
                 ref={{ showId: $activeShow?.id, id: layoutSlide.id }}
                 style={$slidesOptions.mode !== "lyrics" || noQuickEdit}
                 smallFontSize={$slidesOptions.mode === "lyrics" && !noQuickEdit}

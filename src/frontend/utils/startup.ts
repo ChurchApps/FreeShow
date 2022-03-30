@@ -1,4 +1,4 @@
-import { transitionData } from "./../stores"
+import { activePopup, alertMessage } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
@@ -7,17 +7,19 @@ import {
   activeShow,
   activeTimers,
   autoOutput,
+  currentWindow,
   draw,
   drawSettings,
   drawTool,
   events,
+  exportPath,
   folders,
   mediaFolders,
   os,
   outBackground,
   outOverlays,
+  outputDisplay,
   outputScreen,
-  outputWindow,
   outSlide,
   overlays,
   projects,
@@ -27,9 +29,9 @@ import {
   stageShows,
   templates,
   themes,
+  transitionData,
   version,
 } from "../stores"
-import { outputDisplay } from "../stores"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
 import { listen } from "./messages"
@@ -37,7 +39,7 @@ import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
 
 export function startup() {
-  if (!get(outputWindow)) {
+  if (!get(currentWindow)) {
     send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
     send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "THEMES", "SETTINGS"])
   }
@@ -45,9 +47,9 @@ export function startup() {
   receive(MAIN, receiveMAIN)
   receive(STORE, receiveSTORE)
   receive(OUTPUT, receiveOUTPUT)
-  // receive(OUTPUT, get(outputWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
+  // receive(OUTPUT, get(currentWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
   // window.api.receive(OUTPUT, (msg: any) => {
-  //   if (!get(outputWindow) || ["DISPLAY"].includes(msg.channel)) {
+  //   if (!get(currentWindow) || ["DISPLAY"].includes(msg.channel)) {
   //     if (receiveOUTPUT[msg.channel]) receiveMAIN[msg.channel](msg.data)
   //   }
   // })
@@ -76,8 +78,14 @@ const receiveMAIN: any = {
   GET_PATHS: (a: any) => createData(a),
   MENU: (a: any) => menuClick(a),
   SHOWS_PATH: (a: any) => showsPath.set(a),
+  EXPORT_PATH: (a: any) => exportPath.set(a),
+  ALERT: (a: any) => {
+    alertMessage.set(a)
+    activePopup.set("alert")
+  },
   OUTPUT: (a: any) => {
-    if (a === "true") outputWindow.set(true)
+    if (a === "true") currentWindow.set("output")
+    else if (a === "pdf") currentWindow.set("pdf")
     else listen()
   },
 }

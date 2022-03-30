@@ -39,12 +39,15 @@
     "actions.cut": "ctrl + x",
     "actions.redo": "ctrl + y",
     "actions.undo": "ctrl + z",
+    "actions.export": "ctrl + e",
+    "actions.import": "ctrl + i",
     f: "SEPERATOR",
     // "clear.background": "f1",
     // "clear.slide": "f2",
     // "clear.overlays": "f3",
     // "clear.audio": "f4",
     // "clear.transitions": "f5",
+    // MAC: cmd + shift + f
     "actions.fullscreen": "f11",
     // presenterKeys: "SEPERATOR",
   }

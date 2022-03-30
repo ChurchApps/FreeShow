@@ -39,38 +39,50 @@ export function setShow(id: string, value: "delete" | Show): Show {
 
 export async function loadShows(s: string[]) {
   return new Promise((resolve) => {
+    let count = 0
+
     s.forEach((id) => {
       if (!get(shows)[id]) {
+        count++
         notFound.update((a) => {
           a.show.push(id)
           return a
         })
-        resolve("not_found")
+        // resolve("not_found")
       } else if (!get(showsCache)[id]) {
         console.log("LOAD SHOWS:", s)
         window.api.send(SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
-
-        // RECEIVE
-        window.api.receive(SHOW, (msg: any) => {
-          if (msg.error) {
-            notFound.update((a) => {
-              a.show.push(msg.id)
-              return a
-            })
-            resolve("not_found")
-          } else {
-            if (get(notFound).show.includes(msg.id)) {
-              notFound.update((a) => {
-                a.show.splice(a.show.indexOf(msg.id), 1)
-                return a
-              })
-            }
-
-            setShow(msg.show[0], msg.show[1])
-            resolve("loaded")
-          }
-        })
-      } else resolve("already_loaded")
+      } else count++
+      // } else resolve("already_loaded")
     })
+
+    // RECEIVE
+    window.api.receive(SHOW, (msg: any) => {
+      count++
+      if (msg.error) {
+        notFound.update((a) => {
+          a.show.push(msg.id)
+          return a
+        })
+        // resolve("not_found")
+      } else {
+        if (get(notFound).show.includes(msg.id)) {
+          notFound.update((a) => {
+            a.show.splice(a.show.indexOf(msg.id), 1)
+            return a
+          })
+        }
+
+        setShow(msg.show[0], msg.show[1])
+      }
+      console.log(count, s, msg, "LOAD")
+
+      if (count >= s.length) {
+        setTimeout(() => {
+          resolve("loaded")
+        }, 50)
+      }
+    })
+    if (count >= s.length) resolve("loaded")
   })
 }

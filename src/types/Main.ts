@@ -28,6 +28,7 @@ export type SelectIds =
   | "folder"
   | "files"
   | "category"
+  | "stage"
   | "media"
   | "overlay"
   | "template"
@@ -51,7 +52,7 @@ export interface ActiveEdit {
   items: number[]
 }
 
-export type Popups = "initialize" | "import" | "export" | "show" | "delete_show" | "icon" | "rename" | "transition" | "about" | "shortcuts" | "unsaved"
+export type Popups = "initialize" | "import" | "export" | "show" | "delete_show" | "icon" | "rename" | "transition" | "about" | "shortcuts" | "unsaved" | "alert"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

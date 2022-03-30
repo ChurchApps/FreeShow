@@ -13,6 +13,7 @@
     "no": "Norwegian"
   },
   "about": {
+    "check_updates": "Look for updates",
     "made": "Made in Norway by",
     "report": "Want to report an issue? Create an issue on GitHub",
     "help": "Want to help translate or request a feature? Send a mail to",
@@ -181,7 +182,7 @@
     "name": "Name",
     "video_id": "Video ID/URL",
     "close_ad": "Close ad on output screen",
-    "shows_folder": "Choose another location"
+    "change_folder": "Choose another location"
   },
   "tabs": {
     "shows": "Shows",
@@ -227,6 +228,8 @@
     "delete_show": "Delete show",
     "delete_show_confirmation": "Are you sure you want to delete",
     "change_name": "Change name on",
+    "import": "Import",
+    "export": "Export",
     "about": "About",
     "shortcuts": "Shortcuts",
     "icon": "Icons",
@@ -290,6 +293,28 @@
     "unmute": "Unmute",
     "actions": "Actions"
   },
+  "export": {
+    "export": "Export",
+    "export_as": "Export {} as",
+    "exported": "Exported!",
+    "current_show": "Current show",
+    "current_project": "Current project",
+    "selected_shows": "Selected shows",
+    "all_shows": "All shows",
+    "all_projects": "All projects",
+    "options": "Options",
+    "preview": "Preview",
+    "title": "Title",
+    "metadata": "Metadata",
+    "page_numbers": "Page numbers",
+    "groups": "Groups",
+    "numbers": "Numbered slides",
+    "invert": "Invert slides",
+    "text": "Plain text",
+    "slides": "Slides",
+    "rows": "Rows",
+    "columns": "Columns"
+  },
   "context": {
     "enabledTabs": "Show/Hide Tabs",
     "addToProject": "Add to project",
@@ -334,6 +359,7 @@
     "outline": "Outline",
     "width": "Width",
     "shadow": "Shadow",
+    "shadow_inset": "Shadow inset",
     "offsetX": "Offset X",
     "offsetY": "Offset Y",
     "blur": "Blur",
@@ -343,7 +369,12 @@
     "opacity": "Opacity",
     "corner_radius": "Corner Radius",
     "border": "Border",
-    "length": "Length"
+    "length": "Length",
+    "x": "X",
+    "y": "Y",
+    "add_items": "Add items",
+    "add_icons": "Add icons",
+    "arrange_items": "Arrange items"
   },
   "borders": {
     "solid": "Solid",
@@ -378,8 +409,8 @@
     "timers": "Timers",
     "system_clock": "System clock",
     "video_time": "Video time",
-    "video_countdown": "Video countdowns",
-    "countdowns": "Countdowns",
+    "video_countdown": "Video countdown",
+    "project_timers": "Project timers",
     "other": "Other",
     "chords": "Chords",
     "message": "Message",

@@ -1,7 +1,7 @@
 <script>
   import YouTube from "svelte-youtube"
   import { OUTPUT } from "../../../../types/Channels"
-  import { outputWindow } from "../../../stores"
+  import { currentWindow } from "../../../stores"
 
   export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
   export let videoTime = 0
@@ -58,7 +58,7 @@
   }
 
   setInterval(() => {
-    if (!$outputWindow && loaded && player.getPlayerState() === 1) videoTime = player.getCurrentTime()
+    if (!$currentWindow && loaded && player.getPlayerState() === 1) videoTime = player.getCurrentTime()
     // else player.seekTo(videoTime)
   }, 500)
   $: console.log(player?.getCurrentTime(), videoTime)
@@ -80,7 +80,7 @@
 
   function change(e) {
     // ended (0), playing (1), paused (2), video cued (5) or unstarted (-1).
-    if ($outputWindow) return
+    if ($currentWindow) return
 
     if (loaded) {
       videoData.paused = player.getPlayerState() === 1 ? false : true

@@ -1,28 +1,48 @@
 <script lang="ts">
-  import { activeStage, stageShows } from "../../../stores"
+  import { activeProject, activeStage, projects, stageShows } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
+  import { getTimers } from "../../show/tools/timers"
   import Panel from "../../system/Panel.svelte"
+  import { updateStageShow } from "../stage"
 
   const titles = {
     slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
     timers: ["system_clock", "video_time", "video_countdown"],
-    countdowns: ["{countdowns}"],
+    project_timers: ["{timers}"],
     other: ["chords", "message"],
   }
 
   $: enabledItems = $stageShows[$activeStage.id!].items
   function click(item: string) {
     stageShows.update((ss) => {
-      if (!enabledItems[item]) enabledItems[item] = { enabled: true, style: "", align: "" }
+      if (!enabledItems[item]) enabledItems[item] = { enabled: true, style: "width: 200px;height: 100px;", align: "" }
       else if (enabledItems[item].enabled) enabledItems[item].enabled = false
       else enabledItems[item].enabled = true
       return ss
     })
+
+    if (!timeout) {
+      updateStageShow()
+      timeout = setTimeout(() => {
+        updateStageShow()
+        timeout = null
+      }, 500)
+    }
   }
 
-  $: countdowns = ["test"]
+  let timeout: any = null
+
+  $: showsList = $activeProject ? $projects[$activeProject].shows : []
+  let timers: any[] = []
+
+  $: if (showsList.length) loadTimers()
+  async function loadTimers() {
+    showsList.forEach(async (a) => {
+      timers = [...timers, ...(await getTimers(a))]
+    })
+  }
 </script>
 
 <div class="main">
@@ -31,17 +51,17 @@
       {#if i > 0}<hr />{/if}
       <h6><T id="stage.{title}" /></h6>
 
-      {#if title === "countdowns"}
-        {#each countdowns as item}
-          <Button on:click={() => click(title + "#" + item)} active={enabledItems[title + "#" + item]?.enabled} style="width: 100%;">
-            <Icon id="countdown" />
-            <span class="overflow">{item}</span>
+      {#if title === "project_timers"}
+        {#each timers as item}
+          <Button on:click={() => click(title + "#" + item.timer.name)} active={enabledItems[title + "#" + item.timer.name]?.enabled} style="width: 100%;">
+            <Icon id="timer" right />
+            <span class="overflow">{item.timer.name}</span>
           </Button>
         {/each}
       {:else}
         {#each items as item}
           <Button on:click={() => click(title + "#" + item)} active={enabledItems[title + "#" + item]?.enabled} style="width: 100%;">
-            <Icon id={item.split("_")[item.split("_").length - 1]} />
+            <Icon id={item.split("_")[item.split("_").length - 1]} right />
             <span class="overflow"><T id="stage.{item}" /></span>
           </Button>
         {/each}

@@ -51,8 +51,8 @@ body {
 body {
   display: flex;
   flex-direction: column;
-  background-color: #2d313b;
-  background-color: var(--primary);
+  /* background-color: #2d313b;
+  background-color: var(--primary); */
   color: #f0f0ff;
   color: var(--text);
   box-sizing: border-box;

@@ -9,6 +9,7 @@ export type SaveListSettings =
   | "defaultProjectName"
   | "displayMetadata"
   | "showsPath"
+  | "exportPath"
   | "drawer"
   | "drawerTabsData"
   | "drawSettings"

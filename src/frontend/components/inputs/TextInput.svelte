@@ -38,7 +38,7 @@
   input.light {
     background-color: var(--primary);
   }
-  input:hover {
+  input:hover:not(:disabled) {
     background-color: var(--hover);
   }
 </style>

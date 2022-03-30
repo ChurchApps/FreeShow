@@ -8,12 +8,20 @@
   const dispatch = createEventDispatcher()
   export let options: Option[]
   let active: boolean = false
-  export let value: string
+  export let value: any
   if (!value) value = options[0].name || "Select"
   $: updater = [value, $language]
   // TODO: disable active on click anywhere
 
   let self: HTMLDivElement
+
+  function wheel(e: any) {
+    e.preventDefault()
+    let index = options.findIndex((a) => a.name === (value.name || value))
+    if (e.deltaY > 0) index = Math.min(options.length - 1, index + 1)
+    else index = Math.max(0, index - 1)
+    dispatch("click", options[index])
+  }
 </script>
 
 <svelte:window
@@ -24,13 +32,13 @@
   }}
 />
 
-<div bind:this={self} class="dropdownElem" style="position: relative;{$$props.style}">
-  <button on:click={() => (active = !active)}>
+<div bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
+  <button on:click={() => (active = !active)} on:wheel={wheel}>
     {translate(updater[0], { parts: true }) || value}
     <!-- <T id={value} /> -->
   </button>
   {#if active}
-    <div class="dropdown" transition:slide={{ duration: 200 }}>
+    <div class="dropdown" style={$$props.style || ""} transition:slide={{ duration: 200 }}>
       {#each options as option}
         <!-- {#if option.name !== value} -->
         <span
@@ -59,8 +67,9 @@
   }
 
   .dropdown {
-    position: absolute;
-    width: 100%;
+    /* position: absolute;
+    width: 100%; */
+    position: fixed;
     display: flex;
     flex-direction: column;
     border: 2px solid var(--primary-lighter);

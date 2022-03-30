@@ -2,11 +2,12 @@ import { app, BrowserWindow, desktopCapturer, dialog, Display, ipcMain, Menu, sc
 import fs from "fs"
 import path, { join } from "path"
 import { URL } from "url"
-import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE, EXPORT } from "../types/Channels"
 import { closeServers } from "./servers"
 import { template } from "./utils/menuTemplate"
 import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 import checkForUpdates from "./utils/updater"
+import { createPDFWindow, exportTXT } from "./utils/export"
 
 // WIP: Tray / push notifications
 // https://www.webtips.dev/how-to-make-your-very-first-desktop-app-with-electron-and-svelte
@@ -70,13 +71,14 @@ const createLoading = () => {
   loadingWindow.loadFile("public/loading.html")
   // loadingWindow.once("ready-to-show", () => loadingWindow!.showInactive())
   // if (!isProd) loadingWindow.webContents.openDevTools()
+
+  loadingWindow.on("closed", () => (loadingWindow = null))
 }
 
 ipcMain.once("LOADED", () => {
   if (electronSettings.get("maximized")) mainWindow!.maximize()
   mainWindow?.show()
   loadingWindow?.close()
-  loadingWindow = null
 })
 
 // MAIN WINDOW
@@ -124,9 +126,18 @@ const createWindow = () => {
     electronSettings.set("height", height)
   })
 
-  // mainWindow.on("focus", () => {
-  //   // hide second screen task bar ?
-  // })
+  let focused: boolean = false
+  mainWindow.on("focus", () => {
+    // WIP hide task bar on second screen
+    if (!focused) {
+      focused = true
+      outputWindow?.focus()
+      mainWindow?.focus()
+      setTimeout(() => {
+        focused = false
+      }, 100)
+    }
+  })
 
   mainWindow.on("closed", () => {
     mainWindow = null
@@ -204,7 +215,7 @@ function save(data: any) {
 
   // check folder
   if (!fs.existsSync(data.path)) {
-    data.path = updateShowsPath()
+    data.path = updateOutputPath()
     toApp(MAIN, { channel: "SHOWS_PATH", data: data.path })
   }
 
@@ -219,11 +230,27 @@ function save(data: any) {
   })
 }
 
+// EXPORT
+ipcMain.on(EXPORT, (_e, msg) => {
+  if (msg.channel === "GENERATE") {
+    // check folder
+    if (!msg.data.path) {
+      msg.data.path = dialog.showOpenDialogSync(mainWindow!, { properties: ["openDirectory"] })?.[0]
+      if (msg.data.path) toApp(MAIN, { channel: "EXPORT_PATH", data: msg.data.path })
+    }
+
+    if (msg.data.path) {
+      if (msg.data.type === "pdf") createPDFWindow(msg.data)
+      else if (msg.data.type === "txt") exportTXT(msg.data)
+    }
+  }
+})
+
 // SHOW
 ipcMain.on(SHOW, (e, msg) => {
   // check folder
   if (!fs.existsSync(msg.path)) {
-    msg.path = updateShowsPath()
+    msg.path = updateOutputPath()
     toApp(MAIN, { channel: "SHOWS_PATH", data: msg.path })
   }
 
@@ -239,8 +266,8 @@ ipcMain.on(SHOW, (e, msg) => {
 
 export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContents.send(channel, ...args)
 
-const updateShowsPath = (p: any = null) => {
-  if (!p) p = path.resolve(app.getPath("documents"), "Shows")
+const updateOutputPath = (p: any = null, name: string = "Shows") => {
+  if (!p) p = path.resolve(app.getPath("documents"), name)
   if (!fs.existsSync(p)) p = fs.mkdirSync(p, { recursive: true })
   return p
 }
@@ -263,7 +290,9 @@ ipcMain.on(MAIN, (e, msg) => {
     const menu = Menu.buildFromTemplate(template(msg.data.strings))
     Menu.setApplicationMenu(menu)
   } else if (msg.channel === "SHOWS_PATH") {
-    data = updateShowsPath()
+    data = updateOutputPath()
+  } else if (msg.channel === "EXPORT_PATH") {
+    data = updateOutputPath(null, "Exports")
   } else if (msg.channel === "GET_WINDOWS" || msg.channel === "GET_SCREENS") {
     desktopCapturer.getSources({ types: [msg.channel === "GET_WINDOWS" ? "window" : "screen"] }).then(async (sources) => {
       const screens: any[] = []
@@ -283,14 +312,13 @@ ipcMain.on(MAIN, (e, msg) => {
     }
 
     // create documents/Shows
-    updateShowsPath()
+    updateOutputPath()
   } else if (msg.channel === "OUTPUT") {
     // console.log(e.sender.id, outputWindow?.id, outputWindow?.webContents.id)
     // e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
     data = e.sender.id === outputWindow?.webContents.id ? "true" : "false"
   } else if (msg.channel === "CLOSE") {
     mainWindow?.close()
-    // outputWindow?.close()
   } else if (msg.channel === "MAXIMIZE") {
     if (mainWindow?.isMaximized()) mainWindow?.unmaximize()
     else mainWindow?.maximize()
@@ -365,13 +393,17 @@ function createOutputWindow() {
     height: 610,
     x: 0,
     y: 0,
-    // transparent: isProd, // disable interaction (resize)
     alwaysOnTop: true, // keep window on top of other windows
     resizable: false, // disable resizing on mac and windows
     frame: false, // hide title/buttons
-    type: "toolbar", // hide from taskbar
     fullscreen: true,
     skipTaskbar: true, // hide taskbar
+
+    // parent: mainWindow!,
+    // modal: true,
+
+    // type: "toolbar", // hide from taskbar
+    // transparent: isProd, // disable interaction (resize)
     // focusable: false, // makes non focusable
     // titleBarStyle: "hidden", // hide titlebar
     // kiosk: true,
@@ -404,6 +436,8 @@ function createOutputWindow() {
   // outputWindow.webContents.send("MAIN", { channel: "OUTPUT" })
 
   if (!isProd) outputWindow.webContents.openDevTools()
+
+  outputWindow.on("closed", () => (outputWindow = null))
 }
 
 // LISTENERS

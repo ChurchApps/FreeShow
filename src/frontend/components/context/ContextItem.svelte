@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, redoHistory, selected, showsCache, undoHistory } from "../../stores"
+  import { activeShow, redoHistory, selected, showsCache, stageShows, undoHistory } from "../../stores"
   import { GetLayout, GetLayoutRef } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -23,6 +23,7 @@
         return
       }
       if ($selected.id === "group") enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
+      else if ($selected.id === "stage") enabled = $stageShows[$selected.data[0].id]?.disabled
     },
     remove: () => {
       if ($selected.id === "slide" && ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child")) disabled = true

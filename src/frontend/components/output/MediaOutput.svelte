@@ -2,7 +2,7 @@
   import { fade } from "svelte/transition"
   import { OUTPUT } from "../../../types/Channels"
   import type { Transition } from "../../../types/Show"
-  import { mediaFolders, outBackground, outputWindow, videoExtensions } from "../../stores"
+  import { mediaFolders, outBackground, currentWindow, videoExtensions } from "../../stores"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Player from "../system/Player.svelte"
   import Camera from "./Camera.svelte"
@@ -35,7 +35,7 @@
   let hasLoaded: boolean = false
   let autoMute: boolean = false
   function loaded() {
-    if ($outputWindow) return
+    if ($currentWindow) return
 
     console.log("LOADED")
     hasLoaded = true
@@ -49,7 +49,7 @@
   }
 
   function playing() {
-    if (!hasLoaded || $outputWindow) return
+    if (!hasLoaded || $currentWindow) return
 
     console.log("PLAYING")
     videoData.paused = true
@@ -130,7 +130,7 @@
     <div transition:fade={transition}>
       <!-- remove when finished -->
       <!-- TODO: this has to be disabled to get rid of ads! -->
-      {#if !$outputWindow}
+      {#if !$currentWindow}
         <div class="overlay" />
       {/if}
       <Player {id} bind:videoData bind:videoTime bind:title {startAt} />

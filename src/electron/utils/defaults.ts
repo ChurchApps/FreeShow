@@ -78,6 +78,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   fullColors: true,
   displayMetadata: "never",
   showsPath: null,
+  exportPath: null,
   defaultProjectName: "date",
   videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],
   imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"],
@@ -230,7 +231,7 @@ export const defaultThemes: any = {
 export const defaultStage: any = {
   eopsjofes: {
     name: "Stage",
-    enabled: true,
+    disabled: false,
     password: "",
     settings: {
       background: false,

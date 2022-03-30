@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { outputWindow, playerVideos } from "../../stores"
+  import { currentWindow, playerVideos } from "../../stores"
   import YouTube from "../drawer/player/YouTube.svelte"
 
   export let id: string
@@ -12,7 +12,7 @@
   export let title: string = ""
   export let startAt: number = 0
 
-  if ($outputWindow) videoData.muted = true
+  if ($currentWindow) videoData.muted = true
 </script>
 
 {#if video?.type === "youtube"}

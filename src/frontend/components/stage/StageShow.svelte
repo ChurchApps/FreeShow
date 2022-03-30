@@ -8,6 +8,7 @@
   import Center from "../system/Center.svelte"
   import Main from "../system/Main.svelte"
   import Snaplines from "../system/Snaplines.svelte"
+  import { updateStageShow } from "./stage"
   import Stagebox from "./Stagebox.svelte"
 
   let lines: [string, number][] = []
@@ -22,6 +23,8 @@
       if (Object.keys(newStyles).length) setStyles()
     } else newStyles = {}
   }
+
+  $: if ($activeStage.id === null && Object.keys($stageShows).length) activeStage.set({ id: Object.keys($stageShows)[0], items: [] })
 
   function setStyles() {
     let items: any = $stageShows[$activeStage.id!].items
@@ -41,7 +44,16 @@
     })
 
     history({ id: "stageItemStyle", oldData, newData, location: { page: "stage", slide: $activeStage.id!, items: active } })
+    if (!timeout) {
+      updateStageShow()
+      timeout = setTimeout(() => {
+        updateStageShow()
+        timeout = null
+      }, 500)
+    }
   }
+
+  let timeout: any = null
 </script>
 
 <Main slide={$activeStage.id ? $stageShows[$activeStage.id] : null} let:width let:height let:resolution>

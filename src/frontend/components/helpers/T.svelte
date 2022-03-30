@@ -2,6 +2,8 @@
   import { dictionary, language } from "../../stores"
 
   export let id: string
+  export let index: number = 0
+  export let lowercase: boolean = false
   // let pre = '', suf = '';
   let category: string, key: string
   // if (id.includes('$:')) {
@@ -18,7 +20,13 @@
 </script>
 
 {#key language}
-  {$dictionary[category]?.[key] || `[${id}]`}
+  {#if $dictionary[category]?.[key]?.includes("{}")}
+    {$dictionary[category]?.[key].split("{}")[index] || `[${id}]`}
+  {:else if lowercase}
+    {$dictionary[category]?.[key].toLowerCase() || `[${id}]`}
+  {:else}
+    {$dictionary[category]?.[key] || `[${id}]`}
+  {/if}
 {/key}
 <!-- {#if $dictionary[category]?.[key]}
   {pre}{$dictionary[category]?.[key]}{suf}

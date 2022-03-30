@@ -31,8 +31,8 @@ export function template(lang: any): any {
       label: lang.titlebar?.file || "File",
       submenu: [
         { label: lang.actions?.save || "Save", accelerator: "CmdOrCtrl+S", click: () => mc("save") },
-        { label: lang.actions?.import || "Import", submenu: [{ label: "txt" }] },
-        { label: lang.actions?.export || "Export", submenu: [{ label: "txt" }] },
+        { label: lang.actions?.import || "Import", click: () => mc("import") },
+        { label: lang.actions?.export || "Export", click: () => mc("export_more") },
         { type: "separator" },
         { label: lang.main?.quit || "Quit", accelerator: isMac ? "CmdOrCtrl+Q" : "", click: () => mc("quit") },
       ],
