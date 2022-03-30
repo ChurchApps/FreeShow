@@ -15,7 +15,7 @@
   import Editor from "./components/edit/Editor.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
-  import Pdf from "./components/export/PDF.svelte"
+  import Pdf from "./components/export/Pdf.svelte"
   import { redo, undo } from "./components/helpers/history"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
