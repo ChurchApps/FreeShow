@@ -2,7 +2,7 @@
   import { EXPORT } from "../../../../types/Channels"
   import { activePopup, activeProject, activeShow, exportPath, projects, selected, showsCache } from "../../../stores"
   import { send } from "../../../utils/request"
-  import Pdf from "../../export/PDF.svelte"
+  import Pdf from "../../export/Pdf.svelte"
   import { loadShows } from "../../helpers/setShow"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
