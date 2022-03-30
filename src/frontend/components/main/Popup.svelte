@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
-  import { activePopup } from "../../stores"
+  import { activePopup, os } from "../../stores"
   import { scale, fade } from "svelte/transition"
   import T from "../helpers/T.svelte"
   import DeleteShow from "./popups/DeleteShow.svelte"
@@ -23,7 +23,7 @@
 </script>
 
 {#if $activePopup !== null}
-  <div class="popup" transition:fade={{ duration: 100 }} on:click={hide}>
+  <div style={$os.platform === "win32" ? "height: calc(100% - 30px);" : null} class="popup" transition:fade={{ duration: 100 }} on:click={hide}>
     <div class="card" transition:scale={{ duration: 200 }}>
       <div style="position: relative;">
         {#if $activePopup !== "alert"}
@@ -70,7 +70,7 @@
     background-color: rgb(0 0 0 / 0.8);
     /* pointer-events: none; */
     width: 100%;
-    height: calc(100% - 30px);
+    height: 100%;
     padding: 20px 300px;
     z-index: 80;
 
