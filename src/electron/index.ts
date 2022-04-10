@@ -6,7 +6,7 @@ import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE, EXPORT 
 import { closeServers } from "./servers"
 import { template } from "./utils/menuTemplate"
 import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
-import checkForUpdates from "./utils/updater"
+// import checkForUpdates from "./utils/updater"
 import { createPDFWindow, exportTXT } from "./utils/export"
 
 // WIP: Tray / push notifications
@@ -49,8 +49,8 @@ app.on("ready", () => {
 
   if (process.platform === "win32") app.setAppUserModelId(app.name)
 
-  // check for uodates
-  if (isProd) checkForUpdates()
+  // check for updates
+  // if (isProd) checkForUpdates()
 })
 
 // LOADING WINDOW
@@ -205,13 +205,13 @@ function save(data: any) {
     if (JSON.stringify(settings.get(key)) !== JSON.stringify(value)) settings.set(key, value)
   })
 
-  if (JSON.stringify(shows.store) !== JSON.stringify(data.shows)) shows.set(data.shows)
-  else if (JSON.stringify(stageShows.store) !== JSON.stringify(data.stageShows)) stageShows.set(data.stageShows)
-  else if (JSON.stringify(projects.store) !== JSON.stringify(data.projects)) projects.set(data.projects)
-  else if (JSON.stringify(overlays.store) !== JSON.stringify(data.overlays)) overlays.set(data.overlays)
-  else if (JSON.stringify(templates.store) !== JSON.stringify(data.templates)) templates.set(data.templates)
-  else if (JSON.stringify(events.store) !== JSON.stringify(data.events)) events.set(data.events)
-  else if (JSON.stringify(themes.store) !== JSON.stringify(data.themes)) themes.set(data.themes)
+  if (data.shows && JSON.stringify(shows.store) !== JSON.stringify(data.shows)) shows.set(data.shows)
+  if (data.stageShows && JSON.stringify(stageShows.store) !== JSON.stringify(data.stageShows)) stageShows.set(data.stageShows)
+  if (data.projects && JSON.stringify(projects.store) !== JSON.stringify(data.projects)) projects.set(data.projects)
+  if (data.overlays && JSON.stringify(overlays.store) !== JSON.stringify(data.overlays)) overlays.set(data.overlays)
+  if (data.templates && JSON.stringify(templates.store) !== JSON.stringify(data.templates)) templates.set(data.templates)
+  if (data.events && JSON.stringify(events.store) !== JSON.stringify(data.events)) events.set(data.events)
+  if (data.themes && JSON.stringify(themes.store) !== JSON.stringify(data.themes)) themes.set(data.themes)
 
   // check folder
   if (!fs.existsSync(data.path)) {

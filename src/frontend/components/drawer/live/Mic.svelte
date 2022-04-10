@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { onDestroy } from "svelte"
+  import Icon from "../../helpers/Icon.svelte"
+  import Button from "../../inputs/Button.svelte"
+
   export let mic: any
-  export let streams: any[]
 
   // https://dobrian.github.io/cmp/topics/sample-recording-and-playback-with-web-audio-api/1.loading-and-playing-sound-files.html
 
@@ -23,20 +26,16 @@
 
   let soundLevel: number = 0
 
+  let audioStream: any
+  let context: any
+  let source: any
+  // let gainNode: any
+  let audio: any
+
   const handleSuccess = function (stream: any) {
-    streams.push(stream)
-    const context = new AudioContext()
-    const source = context.createMediaStreamSource(stream)
-    // const processor = new AudioWorkletNode(context, "processor")
-    // const processor = context.createScriptProcessor(1024, 1, 1)
-
-    // source.connect(processor)
-    // processor.connect(context.destination)
-
-    // processor.onaudioprocess = function (e) {
-    //   // Do something with the data, e.g. convert it to WAV
-    //   console.log(e.inputBuffer)
-    // }
+    audioStream = stream
+    context = new AudioContext()
+    source = context.createMediaStreamSource(stream)
 
     var analyser = context.createAnalyser()
     analyser.smoothingTimeConstant = 0.2
@@ -57,24 +56,20 @@
       }
 
       average = values / length
-      // console.log(average)
       soundLevel = Math.min(100, average)
 
       average = values = 0
     }
 
-    // var input = context.createMediaStreamSource(stream)
-
     source.connect(analyser)
     analyser.connect(node)
     node.connect(context.destination)
 
-    if (mic.id === "default") {
-      source.connect(context.destination)
-      // source.play()
-    }
-
-    //input.connect(context.destination); // hello feedback
+    audio = new Audio()
+    audio.srcObject = stream
+    audio.play()
+    audio.volume = 0
+    console.log(audio)
   }
 
   navigator.mediaDevices
@@ -84,29 +79,48 @@
       },
     })
     .then(handleSuccess)
+    .catch((e) => console.log(e))
+
+  onDestroy(() => {
+    audioStream?.getAudioTracks().forEach((track: any) => track.stop())
+  })
 </script>
 
-<div class="main context #live_card">
-  <span>
-    {mic.name}
-  </span>
+{#if context}
+  <div class="main context #live_card">
+    <span>
+      {mic.name}
+    </span>
 
-  <span class="meter">
-    <!-- <p>L</p> -->
-    <div style="width: {100 - soundLevel}%" />
-  </span>
-</div>
+    <span style="display: flex;align-items: center;width: 50%;">
+      <span class="meter">
+        <!-- <p>L</p> -->
+        <div style="width: {100 - soundLevel}%" />
+      </span>
+      <Button
+        style="margin-left: 5px;"
+        on:click={() => {
+          if (audio?.volume === 0) audio.volume = 1
+          else audio.volume = 0
+        }}
+      >
+        <Icon id={audio?.volume === 0 ? "muted" : "volume"} />
+      </Button>
+    </span>
+  </div>
+{/if}
 
 <style>
   .main {
     display: flex;
+    align-items: center;
     justify-content: space-between;
   }
   .meter {
     background-image: linear-gradient(to right, rgb(200, 0, 0) 1%, rgb(255, 220, 0) 16%, rgb(0, 220, 0) 45%, rgb(0, 120, 0) 100%);
     /* filter: hue-rotate(250deg); */
     height: 5px;
-    width: 50%;
+    flex: 1;
   }
 
   .meter div {

@@ -58,6 +58,7 @@ const actions: any = {
     else if (obj.sel.id === "project") activeRename.set("project_" + obj.sel.data[0].id)
     else if (obj.sel.id === "folder") activeRename.set("folder_" + obj.sel.data[0].id)
     else if (obj.sel.id === "layout") activeRename.set("layout_" + obj.sel.data[0])
+    else if (obj.sel.id === "player") activeRename.set("player_" + obj.sel.data[0])
 
     // else if (obj.actionItem instanceof HTMLInputElement) {
     //   // obj.actionItem.focus()
@@ -100,7 +101,9 @@ const actions: any = {
       obj.sel.data.forEach((a: any) => {
         let slide = GetLayoutRef()[a.index].id
         // TODO: change layout children & slide parent children
-        history({ id: "changeSlide", newData: { group: null, color: null, globalGroup: null }, location: { page: "show", show: get(activeShow)!, slide } })
+        history({ id: "changeSlide", newData: { key: "group", value: null }, location: { page: "show", show: get(activeShow)!, slide } })
+        history({ id: "changeSlide", newData: { key: "color", value: null }, location: { page: "show", show: get(activeShow)!, slide } })
+        history({ id: "changeSlide", newData: { key: "globalGroup", value: null }, location: { page: "show", show: get(activeShow)!, slide } })
       })
     }
   },
@@ -198,7 +201,7 @@ const actions: any = {
   newShowPopup: () => activePopup.set("show"),
 
   newShow: () => history({ id: "newShow", location: { page: "show", project: get(activeProject) } }),
-  newPrivateShow: () => history({ id: "newPrivateShow", location: { page: "show", project: get(activeProject) } }),
+  newPrivateShow: () => history({ id: "newShow", newData: { private: true }, location: { page: "show", project: get(activeProject) } }),
   newProject: (obj: any) =>
     history({ id: "newProject", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
   newFolder: (obj: any) =>
@@ -273,7 +276,7 @@ const actions: any = {
       let slide = GetLayoutRef()[a.index].id
       // TODO: store group/color to redo
       // TODO: change layout children & slide parent children
-      history({ id: "changeSlide", newData: { globalGroup: obj.menu.id }, location: { page: "show", show: get(activeShow)!, slide } })
+      history({ id: "changeSlide", newData: { key: "globalGroup", value: obj.menu.id }, location: { page: "show", show: get(activeShow)!, slide } })
     })
   },
 

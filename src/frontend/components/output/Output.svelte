@@ -25,7 +25,7 @@
   export let center: boolean = false
   export let ratio: number = 0
 
-  $: slideTransition = $showsCache && $outSlide ? _show($outSlide.id).layouts("active").ref()[0][$outSlide.index].data.transition : null
+  $: slideTransition = $showsCache && $outSlide ? _show($outSlide.id).layouts("active").ref()[0][$outSlide.index]?.data.transition : null
   $: transition = slideTransition ? slideTransition : $transitionData.text
 
   let resolution: Resolution = $outSlide && $shows[$outSlide.id].settings?.resolution ? $shows[$outSlide.id].settings.resolution! : $screen.resolution

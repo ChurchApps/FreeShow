@@ -88,7 +88,7 @@
 <p>
   <span class="title"><T id={"info.template"} /></span>
   <span>
-    {#if fullShow?.settings.template}
+    {#if fullShow?.settings?.template}
       {#if $templates[fullShow?.settings.template]}
         {$templates[fullShow?.settings.template]?.name}
       {:else}

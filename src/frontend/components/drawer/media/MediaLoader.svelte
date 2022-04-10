@@ -1,5 +1,6 @@
 <script lang="ts">
   import { videoExtensions } from "../../../stores"
+  import Camera from "../../output/Camera.svelte"
   import { getStyleResolution } from "../../slide/getStyleResolution"
   import Image from "./Image.svelte"
 
@@ -56,6 +57,16 @@
             <track kind="captions" />
           </video>
         {/if}
+      </div>
+    {:else if type === "camera"}
+      <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">
+        <!-- TODO: media height -->
+        <Camera
+          id={path}
+          class="media"
+          style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};"
+          bind:videoElem
+        />
       </div>
     {:else}
       <!-- <img loading="lazy" src={path} alt={name} /> -->

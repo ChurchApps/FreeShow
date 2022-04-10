@@ -61,7 +61,7 @@
     let slides: any = {}
     let layouts: any[] = []
     let stored: any = {}
-    labeled.forEach((a: any) => {
+    repeat(labeled).forEach((a: any) => {
       let id: any
       let text: string = fixText(a.text)
       if (stored[a.type]) {
@@ -117,6 +117,22 @@
     return { slides, layouts }
   }
 
+  function repeat(labeled: any[]) {
+    let newLabels: any[] = []
+    labeled.forEach((a: any) => {
+      let match = a.text.match(/\nx[0-9]/)
+      if (match !== null) {
+        let repeatNumber = a.text.slice(match.index + 2, match.index + 4).replace(/[A-Z]/gi, "")
+        // remove
+        a.text = a.text.slice(0, match.index + 1) + a.text.slice(match.index + match[0].length + 1, a.text.length)
+        ;[...Array(Number(repeatNumber))].map(() => {
+          newLabels.push(a)
+        })
+      } else newLabels.push(a)
+    })
+    return newLabels
+  }
+
   function fixText(text: string): string {
     text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
     // let splittedCommas = text.replaceAll(",", "\n")
@@ -133,6 +149,20 @@
       newText += newLineText
     })
     text = newText
+
+    let splitted = text.split("\n")
+    let label = splitted[0]
+      .toLowerCase()
+      .replace(/x[0-9]/g, "")
+      .replace(/[0-9]/g, "")
+      .replace(/[[\]]/g, "")
+      .trim()
+      .replaceAll(" ", "_")
+    console.log(label)
+
+    if ($groups[label]) splitted = splitted.slice(1, splitted.length)
+    text = splitted.join("\n")
+
     text = text
       .split("\n")
       .map((a) => {
@@ -195,7 +225,24 @@
       // if (lines.length < 2) group =  "break"
       if (find) return find.type
       if (!length) return "break"
-      if (length < 10 && !sections[i].includes("\n")) return sections[i].trim()
+      // TODO: group....
+      let name = splitted[0]
+        .toLowerCase()
+        .replace(/x[0-9]/g, "")
+        .replace(/[0-9]/g, "")
+        .replace(/[[\]]/g, "")
+        .trim()
+        .replaceAll(" ", "_")
+      console.log(name)
+      if ($groups[name]) return name
+      // TODO: remove numbers....
+      console.log(splitted[0].match(/\[[^\]]*]/g))
+      if ((splitted[0].match(/\[[^\]]*]/g)?.[0] || "").length === splitted[0].length)
+        return splitted[0]
+          .replace(/[\[\]']+/g, "")
+          .replace(/x[0-9]/g, "")
+          .replace(/[0-9]/g, "")
+      // if (length < 10 && !sections[i].includes("\n")) return sections[i].trim()
       if (length < 30 || linesSimilarity(sections[i])) return "tag"
       if (splitted[0].length < 15 && splitted[1].length > 20) {
         // console.log(sections[i], splitted.slice(1, splitted.length))

@@ -28,9 +28,9 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
   // console.trace(showID)
   if (!showID) showID = get(activeShow)!.id
   let currentShow: Show = get(showsCache)[showID]
-  if (!layoutID) layoutID = currentShow?.settings.activeLayout
+  if (!layoutID) layoutID = currentShow?.settings?.activeLayout
   let layoutSlides: SlideData[] = []
-  if (currentShow) {
+  if (currentShow?.layouts) {
     currentShow.layouts[layoutID].slides.forEach((ls) => {
       if (ls && currentShow.slides[ls.id]) {
         let slide: Slide = currentShow.slides[ls.id]

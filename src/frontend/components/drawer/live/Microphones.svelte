@@ -7,8 +7,6 @@
     }
   }
 
-export let streams: any[]
-
   let mics: Mics = {}
   navigator.mediaDevices.enumerateDevices().then(function (devices) {
     devices.forEach((d) => {
@@ -20,14 +18,14 @@ export let streams: any[]
     })
   })
 
-  $: console.log(mics)
+  // $: console.log(mics)
 </script>
 
 <div class="row">
   {#each Object.values(mics) as mic}
     <div class="row">
       {#each Object.entries(mic) as m}
-        <Mic bind:streams mic={{ id: m[0], name: m[1] }} />
+        <Mic mic={{ id: m[0], name: m[1] }} />
       {/each}
     </div>
   {/each}

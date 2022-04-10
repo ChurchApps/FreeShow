@@ -10,15 +10,16 @@
   import Timer from "../slide/views/Timer.svelte"
   import Movebox from "../system/Movebox.svelte"
 
-  export let items: Item[] | null = null
+  // export let items: Item[] | null = null
   export let item: Item
   export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
   export let index: number
-  export let ratio: number
+  export let ratio: number = 1
+  export let plain: boolean = false
 
   let itemElem: any
 
-  export let mouse: any
+  export let mouse: any = {}
   function mousedown(e: any) {
     activeEdit.update((ae) => {
       if (e.ctrlKey || e.metaKey) {
@@ -56,19 +57,19 @@
 
   $: active = $activeShow?.id
   $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
+  // export let slide: string = ""
   $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
   function keydown(e: any) {
     // TODO: exlude.....
     if (e.key === "Backspace" && $activeEdit.items.includes(index) && !document.activeElement?.closest(".item") && !document.activeElement?.closest("input")) {
-      if (!items && active) items = $showsCache[active].slides[slide].items
-      let newItems = [...(items || [])]
-
-      newItems.splice(index, 1)
+      // if (!items && active) items = $showsCache[active].slides[slide].items
+      // let newItems = [...(items || [])]
+      // newItems.splice(index, 1)
 
       // TODO: not working properly
 
-      history({ id: "deleteItem", oldData: items, newData: newItems, location: { page: "edit", show: $activeShow!, layout: layout, slide: slide } })
+      history({ id: "deleteItem", location: { page: "edit", show: $activeShow!, items: $activeEdit.items, layout: layout, slide: slide } })
 
       _show($activeShow!.id).set({ key: "timestamps.modified", value: new Date().getTime() })
     }
@@ -111,7 +112,7 @@
   }
   $: {
     let s = ""
-    item.lines?.forEach((line) => {
+    item?.lines?.forEach((line) => {
       s += line.align
       line.text?.forEach((a) => {
         s += a.style
@@ -123,20 +124,20 @@
   }
 
   function update() {
-    if ($activeEdit.slide !== null) {
+    if (plain || $activeEdit.slide !== null) {
       console.log(item)
       // html = `<div class="align" style="${item.align}">`
       html = ""
       currentStyle = ""
-      item.lines?.forEach((line) => {
+      item?.lines?.forEach((line) => {
         // TODO: break ...:
         currentStyle += line.align
         let style = line.align ? 'style="' + line.align + '"' : ""
-        html += `<div class="break" ${style}>`
+        html += `<div class="break" ${plain ? "" : style}>`
         line.text?.forEach((a) => {
           currentStyle += a.style
           let style = a.style ? 'style="' + a.style + '"' : ""
-          html += `<span ${style}>` + a.value + "</span>"
+          html += `<span ${plain ? "" : style}>` + a.value + "</span>"
         })
         html += "</div>"
       })
@@ -159,12 +160,12 @@
             a[$activeEdit.id!].items[index].lines = newLines
             return a
           })
-        } else if (slide) {
+        } else if (ref.id) {
           showsCache.update((a) => {
             console.log("NEW", newLines)
 
             // let lines = a[active].slides[slide].items[index].lines
-            a[active!].slides[slide].items[index].lines = newLines
+            a[active!].slides[ref.id].items[index].lines = newLines
             return a
           })
 
@@ -178,13 +179,13 @@
     let newLines: Line[] = []
     let pos: number = -1
     currentStyle = ""
-    new Array(...textElem.children).forEach((line: any) => {
-      let align: string = line.getAttribute("style") || ""
+    new Array(...textElem.children).forEach((line: any, i: number) => {
+      let align: string = plain ? item.lines![i]?.align || "" : line.getAttribute("style") || ""
       pos++
       currentStyle += align
       newLines.push({ align, text: [] })
-      new Array(...line.children).forEach((child: any) => {
-        let style = child.getAttribute("style") || ""
+      new Array(...line.children).forEach((child: any, j: number) => {
+        let style = plain ? item.lines![i]?.text[j]?.style || "" : child.getAttribute("style") || ""
         newLines[pos].text.push({ style, value: child.innerText })
         currentStyle += style
       })
@@ -197,16 +198,18 @@
 
 <div
   bind:this={itemElem}
-  class="item context #edit_box"
+  class={plain ? "" : "item context #edit_box"}
   class:selected={$activeEdit.items.includes(index)}
-  style="{item.style}; outline: {3 / ratio}px solid rgb(255 255 255 / 0.2);"
+  style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);`}
   on:mousedown={mousedown}
 >
-  <Movebox {ratio} active={$activeEdit.items.includes(index)} />
+  {#if !plain}
+    <Movebox {ratio} active={$activeEdit.items.includes(index)} />
+  {/if}
   <!-- on:input={updateText} -->
-  {#if item.lines}
+  {#if item?.lines}
     <!-- TODO: remove align..... -->
-    <div class="align" style={item.align || ""}>
+    <div class="align" class:plain style={plain ? null : item.align || null}>
       {#if item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
         <span class="placeholder">
           <T id="empty.text" />
@@ -220,7 +223,7 @@
         class="edit"
         contenteditable
         bind:innerHTML={html}
-        style={item.align ? item.align.replace("align-items", "justify-content") : ""}
+        style={plain ? null : item.align ? item.align.replace("align-items", "justify-content") : null}
         class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0].value.length}
       >
         <!-- {#each item.text as text}
@@ -230,9 +233,9 @@
       <!-- </div>
       {/each} -->
     </div>
-  {:else if item.type === "timer"}
+  {:else if item?.type === "timer"}
     <Timer {item} {ref} />
-  {:else if item.type === "icon"}
+  {:else if item?.type === "icon"}
     <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}
 </div>
@@ -264,6 +267,9 @@
     text-align: center;
     align-items: center;
   }
+  .align.plain {
+    text-align: left;
+  }
 
   .edit {
     outline: none;
@@ -280,6 +286,11 @@
     text-align: center;
     justify-content: center;
     /* align-items: center; */
+  }
+  .plain .edit {
+    font-size: 1.5em;
+    justify-content: flex-start;
+    text-align: left;
   }
 
   .edit.height {
@@ -299,7 +310,7 @@
     /* line-height: normal; */
   }
 
-  .edit :global(span) {
+  .edit:not(.plain .edit) :global(span) {
     font-size: 100px;
     /* min-height: 100px;
     min-width: 100px;

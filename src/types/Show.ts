@@ -110,7 +110,9 @@ export interface Transition {
 
 export interface Media {
   // name?: string
-  path: string
+  id?: string
+  name?: string
+  path?: string
   type?: MediaType
   muted?: boolean
   loop?: boolean
@@ -144,6 +146,7 @@ export interface Template {
 export interface OutBackground {
   id?: ID
   path?: string
+  name?: string
   startAt?: number
   muted?: boolean
   loop?: boolean

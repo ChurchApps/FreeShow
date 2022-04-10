@@ -12,7 +12,6 @@
 
   $: id = id.includes("=") ? id.slice(id.lastIndexOf("=") + 1, id.length) : id
   $: id = id.length === 11 ? id : ""
-  console.log(id)
 
   const options = {
     // height: "390",
@@ -33,8 +32,8 @@
   function onReady(e) {
     // access to player in all event handlers via event.target
     // console.log(e, video)
-    console.log("READY")
-    console.log(e.detail.target)
+    // console.log("READY")
+    // console.log(e.detail.target)
     player = e.detail.target
     if (videoData.muted) player.mute()
     // videoData.paused = false
@@ -47,7 +46,7 @@
       videoData.paused = true
       player.seekTo(videoTime)
       title = player.getVideoData().title
-      console.log(player.getVideoData(), title)
+      // console.log(player.getVideoData(), title)
       // console.log(player.playerInfo.videoData) // title | author
       setTimeout(() => {
         videoData.paused = false
@@ -61,7 +60,7 @@
     if (!$currentWindow && loaded && player.getPlayerState() === 1) videoTime = player.getCurrentTime()
     // else player.seekTo(videoTime)
   }, 500)
-  $: console.log(player?.getCurrentTime(), videoTime)
+  // $: console.log(player?.getCurrentTime(), videoTime)
   $: if (player && player.getPlayerState() === 2 && player.getCurrentTime() !== videoTime) player.seekTo(videoTime)
 
   $: {
@@ -96,8 +95,8 @@
   <!-- https://www.youtube.com/watch?v=rfxnmIPCzIc -->
   {#if id}
     <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} />
-  {:else}
-    [[[Type video url/id into search area!]]]
+    <!-- {:else}
+    [[[Type video url/id into search area!]]] -->
     <!-- {:else}
     <YouTube class="yt" videoId={id} {options} on:ready={onReady} /> -->
   {/if}

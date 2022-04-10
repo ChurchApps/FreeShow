@@ -47,7 +47,7 @@
   <Button
     on:click={previousSlide}
     title={$dictionary.preview?._previous_slide}
-    disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index < 1 : !GetLayout(null, $showsCache[$activeShow.id]?.settings.activeLayout || null).length)}
+    disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index < 1 : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
     center
   >
     <Icon id="previous" size={1.2} />
@@ -67,7 +67,7 @@
         // TODO: activeEdit && play media
       }}
       title={$dictionary.preview?._start}
-      disabled={$outLocked || !$activeShow || !GetLayout(null, $showsCache[$activeShow.id]?.settings.activeLayout || null).length}
+      disabled={$outLocked || !$activeShow || !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length}
       center
     >
       <Icon id="play" size={1.2} />
@@ -88,7 +88,7 @@
   <Button
     on:click={nextSlide}
     title={$dictionary.preview?._next_slide}
-    disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index + 1 >= length : !GetLayout(null, $showsCache[$activeShow.id]?.settings.activeLayout || null).length)}
+    disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index + 1 >= length : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
     center
   >
     <Icon id="next" size={1.2} />
@@ -99,12 +99,12 @@
     disabled={!Object.keys($projects).length ||
       !$activeProject ||
       !$projects[$activeProject].shows.length ||
-      ($activeShow?.index && $activeShow.index + 1 >= $projects[$activeProject].shows.length)}
+      ($activeShow !== null && $activeShow.index !== undefined && $activeShow.index + 1 >= $projects[$activeProject].shows.length)}
     center
   >
     <Icon id="nextFull" size={1.2} />
   </Button>
-  </span>
+</span>
 
 <style>
   .group {

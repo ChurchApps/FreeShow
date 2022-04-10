@@ -167,11 +167,13 @@ function getStage(msg: ClientMessage) {
       if (out && get(activeShow)) {
         let layout = GetLayout(out.id, out.layout)
         let slides = get(showsCache)[out.id].slides
-        msg.data = [slides[layout[out.index].id]]
-        let index = out.index + 1
-        while (index < layout.length && layout[index].disabled === true) index++
-        if (index < layout.length && !layout[index].disabled) msg.data.push(slides[layout[index].id])
-        else msg.data.push(null)
+        if (layout[out.index]) {
+          msg.data = [slides[layout[out.index].id]]
+          let index = out.index + 1
+          while (index < layout.length && layout[index].disabled === true) index++
+          if (index < layout.length && !layout[index].disabled) msg.data.push(slides[layout[index].id])
+          else msg.data.push(null)
+        }
       }
 
       break

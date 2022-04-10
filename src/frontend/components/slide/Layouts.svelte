@@ -11,7 +11,7 @@
 
   $: active = $activeShow!.id
   $: layouts = $showsCache[active]?.layouts
-  $: activeLayout = $showsCache[active]?.settings.activeLayout
+  $: activeLayout = $showsCache[active]?.settings?.activeLayout
 
   function addLayout(e: any) {
     let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
@@ -47,39 +47,41 @@
         </SelectElem>
       {/each}
     </span>
-    <span style="display: flex; align-items: center;">
-      <!-- TODO: CTRL click = copy current layout, also right click... -->
-      <Button on:click={addLayout} title={$dictionary.show?.new_layout}>
-        <Icon size={1.3} id="add" />
-      </Button>
-      <div class="seperator" />
-      <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition}>
-        <Icon size={1.3} id="transition" white />
-      </Button>
-      <Button on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
-        <Icon size={1.3} id={$slidesOptions.mode} white />
-      </Button>
-      <Button
-        disabled={$slidesOptions.columns >= 10}
-        on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })}
-        title={$dictionary.actions?.zoomOut}
-      >
-        <Icon size={1.3} id="remove" white />
-      </Button>
-      <Button
-        disabled={$slidesOptions.columns <= 2}
-        on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })}
-        title={$dictionary.actions?.zoomIn}
-      >
-        <Icon size={1.3} id="add" white />
-      </Button>
-      <p class="text">{(100 / $slidesOptions.columns).toFixed()}%</p>
-    </span>
   {:else}
     <Center faded>
       <T id="error.no_layouts" />
     </Center>
   {/if}
+  <span style="display: flex; align-items: center;">
+    <!-- TODO: CTRL click = copy current layout, also right click... -->
+    {#if layouts}
+      <Button on:click={addLayout} title={$dictionary.show?.new_layout}>
+        <Icon size={1.3} id="add" />
+      </Button>
+    {/if}
+    <div class="seperator" />
+    <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition}>
+      <Icon size={1.3} id="transition" white />
+    </Button>
+    <Button on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
+      <Icon size={1.3} id={$slidesOptions.mode} white />
+    </Button>
+    <Button
+      disabled={$slidesOptions.columns >= 10}
+      on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })}
+      title={$dictionary.actions?.zoomOut}
+    >
+      <Icon size={1.3} id="remove" white />
+    </Button>
+    <Button
+      disabled={$slidesOptions.columns <= 2}
+      on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })}
+      title={$dictionary.actions?.zoomIn}
+    >
+      <Icon size={1.3} id="add" white />
+    </Button>
+    <p class="text">{(100 / $slidesOptions.columns).toFixed()}%</p>
+  </span>
 </div>
 
 <style>

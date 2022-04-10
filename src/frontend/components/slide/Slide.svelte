@@ -3,13 +3,14 @@
   import type { Show, Slide, SlideData } from "../../../types/Show"
   import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
+  import Editbox from "../edit/Editbox.svelte"
   import { getItemText } from "../edit/scripts/textStyle"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
   import SelectElem from "../system/SelectElem.svelte"
+  import Actions from "./Actions.svelte"
   import Icons from "./Icons.svelte"
   import Textbox from "./Textbox.svelte"
-  import Actions from "./Actions.svelte"
   import Zoomed from "./Zoomed.svelte"
 
   export let slide: Slide
@@ -218,7 +219,12 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {#if background && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
             {#key background.path}
               <div class="background" style="zoom: {1 / ratio}">
-                <MediaLoader name={$dictionary.error?.load} path={background.path} type={background.type !== "player" ? background.type : null} bind:duration />
+                <MediaLoader
+                  name={$dictionary.error?.load}
+                  path={background.path || background.id || ""}
+                  type={background.type !== "player" ? background.type : null}
+                  bind:duration
+                />
               </div>
             {/key}
           {/if}
@@ -260,8 +266,17 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
   </div>
   {#if $slidesOptions.mode === "list" && !noQuickEdit}
     <hr />
-    <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
+    <!-- <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
       {@html html}
+    </div> -->
+    <div class="quickEdit">
+      {#if slide.items}
+        {#each slide.items as item, index}
+          {#if item.lines}
+            <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} {index} plain />
+          {/if}
+        {/each}
+      {/if}
     </div>
   {/if}
 </div>

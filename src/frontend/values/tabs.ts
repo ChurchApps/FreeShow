@@ -15,5 +15,5 @@ export const drawerTabs: Tab = {
   // timers: { name: "tabs.timers", icon: "timers" },
   player: { name: "tabs.player", icon: "play" },
   // web: { name: "tabs.web", icon: "web" },
-  live: { name: "tabs.live", icon: "live" },
+  live: { name: "tabs.live", icon: "camera" },
 }

@@ -122,7 +122,7 @@
 {:else if type === "camera"}
   {#key id}
     <div transition:fade={transition} bind:clientWidth={width} bind:clientHeight={height}>
-      <Camera {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" />
+      <Camera {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem={video} />
     </div>
   {/key}
 {:else if type === "player"}

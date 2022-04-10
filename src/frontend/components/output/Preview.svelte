@@ -14,7 +14,7 @@
 
   let callClear: boolean = false
   const ctrlShortcuts: any = {
-    c: () => (callClear = true),
+    // c: () => (callClear = true),
     f: () => (fullscreen = !fullscreen),
     l: () => outLocked.set(!$outLocked),
     // r: () => {
@@ -35,7 +35,8 @@
     F3: () => outOverlays.set([]),
     F4: () => outAudio.set([]),
     ".": () => {
-      if ($presenterControllerKeys) callClear = true
+      // if ($presenterControllerKeys)
+      callClear = true
     },
     F5: () => {
       if ($presenterControllerKeys) nextSlide(null, true)
@@ -60,6 +61,8 @@
       if (e.shiftKey) previousSlide()
       else nextSlide(e)
     },
+    Home: (e: any) => nextSlide(e, true),
+    End: (e: any) => nextSlide(e, false, true),
   }
 
   function keydown(e: any) {

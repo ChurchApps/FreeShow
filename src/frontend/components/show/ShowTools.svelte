@@ -14,7 +14,7 @@
     groups: { name: "tools.groups", icon: "groups" },
     layout: { name: "tools.layout", icon: "layout" },
     media: { name: "tools.media", icon: "media" },
-    audio: { name: "tools.audio", icon: "audio" },
+    // audio: { name: "tools.audio", icon: "audio" },
     metadata: { name: "tools.metadata", icon: "info" },
     notes: { name: "tools.notes", icon: "notes" },
   }
@@ -23,12 +23,12 @@
   $: showId = $activeShow?.id
   let currentLayout: any = null
   let note: string = ""
-  $: if (showId && $showsCache[showId]?.settings.activeLayout !== currentLayout) updateNote()
+  $: if (showId && $showsCache[showId]?.settings?.activeLayout !== currentLayout) updateNote()
 
   function updateNote() {
     if (!showId) return
     note = showId ? _show("active").layouts("active").get("notes")[0] : ""
-    currentLayout = $showsCache[showId]?.settings.activeLayout
+    currentLayout = $showsCache[showId]?.settings?.activeLayout
   }
 
   function edit(e: any) {

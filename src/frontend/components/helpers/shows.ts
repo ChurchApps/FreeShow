@@ -57,12 +57,15 @@ export function _show(id: any) {
     /** Slides function */
     slides: (slideIds: string[] = []) => ({
       /** Get slides */
-      get: (key: null | string = null) => {
+      get: (key: null | string = null, addId: boolean = true) => {
         let a: any[] = []
         if (!slideIds.length) slideIds = Object.keys(shows[id].slides)
         slideIds.forEach((slideId) => {
           if (key) a.push(shows[id].slides[slideId][key])
-          else a.push({ id: slideId, ...shows[id].slides[slideId] })
+          else {
+            a.push(shows[id].slides[slideId])
+            if (addId) a[a.length - 1].id = slideId
+          }
         })
         return a
       },
@@ -86,13 +89,11 @@ export function _show(id: any) {
         let group: null | string = null
         if (parent) group = ""
         if (!slide) slide = [{ group, color: null, settings: {}, notes: "", items: [] }]
+        if (!slideIds.length) slideIds = [uid()]
         showsCache.update((a: any) => {
-          if (!slideIds[0]) a[id].slides[uid()] = slide
-          else {
-            slideIds.forEach((slideId: string, i: number) => {
-              a[id].slides[slideId] = slide![i] || slide![0]
-            })
-          }
+          slideIds.forEach((slideId: string, i: number) => {
+            a[id].slides[slideId] = slide![i] || slide![0]
+          })
           return a
         })
         // ADD TO LAYOUT......????
@@ -115,16 +116,19 @@ export function _show(id: any) {
       /** Items function */
       items: (indexes: number[] = []) => ({
         /** Get slides items */
-        get: (key: string | null = null) => {
+        get: (key: string | null = null, addId: boolean = true) => {
           let a: any[] = []
-          if (!slideIds.length) slideIds = Object.keys(shows[id].slides)
+          if (!slideIds.length) slideIds = Object.keys(shows[id]?.slides || {})
           slideIds.forEach((slideId, i) => {
             a.push([])
             // if (!indexes.length) a[i].push(...shows[id].slides[slideId].items)
             if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
             indexes.forEach((index) => {
-              if (key === null) a[i].push({ id: slideId, ...shows[id].slides[slideId].items[index] })
-              else a[i].push(shows[id].slides[slideId].items[index][key])
+              if (key) a[i].push(shows[id].slides[slideId].items[index][key])
+              else {
+                a[i].push({ ...shows[id].slides[slideId].items[index] })
+                if (addId) a[i][a[i].length - 1].id = slideId
+              }
             })
           })
           return a
@@ -150,11 +154,11 @@ export function _show(id: any) {
           return prev
         },
         /** Add items */
-        add: ({ indexes, items }: any) => {
+        add: (items: any[]) => {
           showsCache.update((a: any) => {
             slideIds.forEach((slideId) => {
-              items.forEach((item: any, i: number) => {
-                a[id].slides[slideId].items[indexes[i]] = item
+              items.forEach((item: any) => {
+                a[id].slides[slideId].items.push(item)
               })
             })
             return a
@@ -162,14 +166,13 @@ export function _show(id: any) {
         },
         /** Remove items */
         remove: () => {
-          let prev: any = { indexes: [], items: [] }
+          let prev: any = []
           showsCache.update((a: any) => {
             if (!slideIds.length) slideIds = Object.keys(a[id].slides)
             slideIds.forEach((slideId) => {
               indexes.forEach((index) => {
-                prev.indexes.push(index)
-                prev.items.push(a[id].slides[slideId].items[index])
-                delete a[id].slides[slideId].items[index]
+                prev.push(a[id].slides[slideId].items[index])
+                a[id].slides[slideId].items.splice(index, 1)
               })
             })
             return a
@@ -181,7 +184,7 @@ export function _show(id: any) {
           /** Get slides items lines */
           get: () => {
             let a: any[] = []
-            if (!slideIds.length && shows[id]) slideIds = Object.keys(shows[id].slides)
+            if (!slideIds.length && shows[id]) slideIds = Object.keys(shows[id].slides || {})
             slideIds.forEach((slideId, i) => {
               a.push([])
               if (!indexes.length) indexes = Object.keys(shows[id].slides[slideId].items) as any
@@ -262,7 +265,7 @@ export function _show(id: any) {
       /** Get layouts */
       get: (key: string | null = null) => {
         let a: any[] = []
-        if (layoutIds === "active") layoutIds = [shows[id]?.settings.activeLayout]
+        if (layoutIds === "active") layoutIds = shows[id]?.settings?.activeLayout ? [shows[id].settings.activeLayout] : []
         else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
         layoutIds.forEach((layoutId: any) => {
           if (key) a.push(shows[id]?.layouts[layoutId][key])
@@ -458,7 +461,7 @@ export function _show(id: any) {
         let a: any[] = []
         if (!mediaIds.length) mediaIds = Object.keys(shows[id].media)
         mediaIds.forEach((mediaId) => {
-          a.push({ mediaId, ...shows[id].media[mediaId] })
+          a.push({ key: mediaId, ...shows[id].media[mediaId] })
         })
         return a
       },

@@ -40,10 +40,9 @@
         }
       })
       layoutSlides[show.id] = a
-      if (show.meta?.title)
-        show.meta = Object.values(show.meta || {})
-          .filter((a: any) => a.length)
-          .join("; ")
+      show.meta = Object.values(show.meta || {})
+        .filter((a: any) => a.length)
+        .join("; ")
     })
 
     if ($currentWindow === "pdf") {
@@ -152,6 +151,7 @@
     position: relative;
     background-color: white;
     color: black;
+    /* scroll-snap-type: y mandatory; */
     /* page-break-inside: avoid;
     max-height: inherit; */
   }

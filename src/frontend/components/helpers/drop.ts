@@ -122,7 +122,7 @@ export function ondrop(e: any, id: string) {
         if (center) {
           historyID = "showMedia"
 
-          if (trigger?.includes("end")) index!--
+          // if (trigger?.includes("end")) index!--
           location.layoutSlide = index
           let data: any[] = sel.data
           // check files

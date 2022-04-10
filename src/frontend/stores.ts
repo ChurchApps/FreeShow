@@ -27,6 +27,7 @@ export const audioSource: Writable<any> = writable(null)
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
 export const alertMessage: Writable<string> = writable("")
+export const clipboard: Writable<{ id: null | string; data: any[] }> = writable({ id: null, data: [] })
 
 export const exportOptions: Writable<any> = writable({
   pdf: {

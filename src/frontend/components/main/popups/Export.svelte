@@ -60,6 +60,7 @@
     // notes: false,
     pageNumbers: true,
     grid: [3, 6],
+    oneFile: false,
   }
 
   function updatePdfOptions(e: any, key: string) {
@@ -149,6 +150,14 @@
     <T id="inputs.change_folder" />
   </FolderPicker>
 </span>
+
+<!-- TODO: all as one file -->
+{#if shows.length > 1}
+  <span>
+    <p><T id="export.oneFile" /></p>
+    <Checkbox disabled={shows.length < 2} checked={pdfOptions.oneFile} on:change={(e) => updatePdfOptions(e, "oneFile")} />
+  </span>
+{/if}
 
 <Button disabled={!shows.length} on:click={exportClick} center>
   <T id="export.export" />

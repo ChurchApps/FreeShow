@@ -12,7 +12,7 @@
 
   let mediaName: string = ""
   $: outName = $outBackground?.path ? $outBackground.path.substring($outBackground.path.lastIndexOf("\\") + 1) : ""
-  $: mediaName = outName.slice(0, outName.lastIndexOf("."))
+  $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : $outBackground?.name || ""
 
   const sendToOutput = () => {
     // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { ...videoData, time: videoTime } })
