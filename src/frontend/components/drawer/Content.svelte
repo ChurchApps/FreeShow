@@ -38,9 +38,12 @@
     //     })
     //   })
 
+    console.log("STOP")
+
     streams.forEach((stream: any) => {
       stream.getTracks().forEach((track: any) => {
         console.log(track)
+        track.enabled = false
         track.stop()
       })
     })
@@ -73,9 +76,9 @@
       {:else if active === "windows"}
         <Windows bind:streams />
       {:else if active === "cameras"}
-        <Cameras bind:streams />
+        <Cameras />
       {:else if active === "microphones"}
-        <Microphones bind:streams />
+        <Microphones />
       {/if}
     </div>
   {/if}

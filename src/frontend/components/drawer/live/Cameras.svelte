@@ -2,7 +2,7 @@
   import { outBackground } from "../../../stores"
   import Cam from "./Cam.svelte"
 
-  export let streams: any[]
+  // export let streams: any[]
 
   // var socket = io()
   // let webcam: boolean = false
@@ -35,13 +35,13 @@
   })
 </script>
 
+<!-- TODO: showing the same preview..... -->
 {#each cams as cam}
   <Cam
     {cam}
-    bind:streams
     on:click={() => {
       if ($outBackground?.id === cam.id) outBackground.set(null)
-      else outBackground.set({ id: cam.id, type: "camera" })
+      else outBackground.set({ name: cam.name, id: cam.id, type: "camera" })
     }}
   />
 {/each}

@@ -10,7 +10,7 @@
   let slides: any[] = []
   $: {
     let added: any = {}
-    slides = Object.entries(JSON.parse(JSON.stringify($showsCache[$activeShow!.id].slides))).map(([id, slide]: any) => {
+    slides = Object.entries(JSON.parse(JSON.stringify($showsCache[$activeShow!.id].slides || {}))).map(([id, slide]: any) => {
       // add global group
       if (slide.globalGroup && $groups[slide.globalGroup]) {
         let old = { group: slide.group, color: slide.color }

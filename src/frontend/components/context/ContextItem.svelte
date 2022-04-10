@@ -28,6 +28,14 @@
     remove: () => {
       if ($selected.id === "slide" && ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child")) disabled = true
     },
+    recolor: () => {
+      // WIP
+      if ($selected.id === "slide") disabled = true
+    },
+    duplicate: () => {
+      // WIP
+      disabled = true
+    },
     undo: () => {
       if (!$undoHistory.length) disabled = true
     },

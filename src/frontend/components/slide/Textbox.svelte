@@ -10,8 +10,8 @@
   export let style: boolean = true
 </script>
 
-<div class="item" style={style ? item.style : null}>
-  {#if item.lines}
+<div class="item" style={style ? item?.style : null}>
+  {#if item?.lines}
     <div class="align" style={style ? item.align : null}>
       <div class="lines">
         {#each item.lines as line}
@@ -23,9 +23,9 @@
         {/each}
       </div>
     </div>
-  {:else if item.type === "timer"}
+  {:else if item?.type === "timer"}
     <Timer {item} {ref} />
-  {:else if item.type === "icon"}
+  {:else if item?.type === "icon"}
     <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}
 </div>

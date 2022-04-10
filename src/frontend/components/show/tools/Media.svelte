@@ -27,7 +27,7 @@
       backgrounds = []
       bgs = []
       layoutBackgrounds.forEach((a: any) => {
-        let id = show.media[a].path
+        let id = show.media[a].path!
 
         let type = "image"
         const [extension] = id.substring(id.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]

@@ -46,19 +46,19 @@ import {
   videoExtensions,
   webFavorites,
 } from "../stores"
-import type { SaveList } from "./../../types/Save"
+import type { SaveListSettings } from "./../../types/Save"
 
 export function save() {
   console.log("SAVING...")
 
-  let settings: { [key in SaveList]: any } = {
+  let settings: { [key in SaveListSettings]: any } = {
     initialized: true,
     activeProject: get(activeProject),
     audioFolders: get(audioFolders),
     categories: get(categories),
     defaultProjectName: get(defaultProjectName),
     displayMetadata: get(displayMetadata),
-    events: get(events),
+    // events: get(events),
     showsPath: get(showsPath),
     exportPath: get(exportPath),
     drawer: get(drawer),
@@ -85,9 +85,9 @@ export function save() {
     screen: get(screen),
     slidesOptions: get(slidesOptions),
     templateCategories: get(templateCategories),
-    templates: get(templates),
+    // templates: get(templates),
     theme: get(theme),
-    themes: get(themes),
+    // themes: get(themes),
     videoExtensions: get(videoExtensions),
     webFavorites: get(webFavorites),
   }
@@ -103,9 +103,9 @@ export function save() {
       stageShows: get(stageShows),
       projects: { projects: get(projects), folders: get(folders) },
       overlays: get(overlays),
-      // templates: get(templates),
-      // events: get(events),
-      // themes: get(themes),
+      templates: get(templates),
+      events: get(events),
+      themes: get(themes),
       // path: get(showsPath),
     },
   })

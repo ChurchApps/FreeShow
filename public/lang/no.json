@@ -71,7 +71,7 @@
     "slide": "Fjern lysbilde",
     "overlays": "Fjern overlegg",
     "audio": "Fjern lyd",
-    "transition": "Fjern Tid til neste lysbilde"
+    "nextTimer": "Fjern Tid til neste lysbilde"
   },
   "remove": {
     "background": "Fjern bakgrunn",

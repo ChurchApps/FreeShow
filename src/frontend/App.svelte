@@ -16,7 +16,9 @@
   import EditTools from "./components/edit/EditTools.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
   import Pdf from "./components/export/Pdf.svelte"
+  import { copy, paste } from "./components/helpers/clipboard"
   import { redo, undo } from "./components/helpers/history"
+  import { _show } from "./components/helpers/shows"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
   import Top from "./components/main/Top.svelte"
@@ -51,6 +53,8 @@
     outTransition,
     screen,
     showsCache,
+    outputScreen,
+    selected,
   } from "./stores"
   import { save } from "./utils/save"
   import { startup } from "./utils/startup"
@@ -66,12 +70,16 @@
   const menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
   const drawerMenus: string[] = ["shows", "media", "overlays", "templates", "audio", "scripture", "player", "live"]
   const ctrlKeys: any = {
+    c: () => {
+      if ($selected.id) copy($selected)
+      else if ($activeEdit.items) copy({ id: "item", data: $activeEdit })
+    },
+    v: () => paste(),
     e: () => activePopup.set("export"),
     i: () => activePopup.set("import"),
     n: () => activePopup.set("show"),
     o: () => {
-      outputDisplay.set(!$outputDisplay)
-      window.api.send(OUTPUT, { channel: "DISPLAY", data: $outputDisplay })
+      window.api.send(OUTPUT, { channel: "DISPLAY", data: { enabled: !$outputDisplay, screen: $outputScreen } })
     },
     r: () => console.log("refresh"),
     s: () => save(),

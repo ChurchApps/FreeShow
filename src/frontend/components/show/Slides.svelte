@@ -22,9 +22,9 @@
   // $: zoom = (viewWidth - 20 - 0 - 0 - ($slidesOptions.columns - 1) * (10 + 0)) / $slidesOptions.columns / resolution.width
   $: id = $activeShow!.id
   $: currentShow = $showsCache[$activeShow!.id]
-  $: activeLayout = $showsCache[$activeShow!.id]?.settings.activeLayout
+  $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
   // $: layoutSlides = GetLayout($activeShow!.id, activeLayout)
-  $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
+  $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts?.[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   let scrollElem: any
   let offset: number = -1
@@ -34,7 +34,7 @@
     if (scrollElem && $outSlide !== null && $activeShow!.id === $outSlide?.id && activeLayout === $outSlide?.layout) {
       let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
       let index = Math.max(0, $outSlide.index - columns)
-      offset = scrollElem.querySelector(".grid").children[index]?.offsetTop || 5 - 5
+      offset = scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5 - 5
 
       // TODO: always show active slide....
       // console.log(offset, scrollElem.scrollTop, scrollElem.scrollTop + scrollElem.offsetHeight)

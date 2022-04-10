@@ -7,12 +7,14 @@ const keys: any = {
   ArrowDown: (index: number | null, shows: any) => {
     // change active show in project
     if (index === null) return 0
-    return shows.findIndex((_a: any, i: number) => i - 1 === index) || 0
+    index = shows.findIndex((_a: any, i: number) => i - 1 === index)
+    return index === null || index < 0 ? 0 : index
   },
   ArrowUp: (index: number | null, shows: any) => {
     // change active show in project
     if (index === null) return shows.length - 1
-    return shows.findIndex((_a: any, i: number) => i + 1 === index) || shows.length - 1
+    index = shows.findIndex((_a: any, i: number) => i + 1 === index)
+    return index === null || index < 0 ? shows.length - 1 : index
   },
 }
 
@@ -23,7 +25,7 @@ export function checkInput(e: any) {
     if (get(activeProject) === null) return
     e.preventDefault()
     let shows = get(projects)[get(activeProject)!].shows
-    let index: null | number = get(activeShow)?.index || null
+    let index: null | number = get(activeShow)?.index !== undefined ? get(activeShow)!.index! : null
     let newIndex: number = keys[e.key](index, shows)
 
     // Set active show in project list
@@ -31,7 +33,7 @@ export function checkInput(e: any) {
   }
 }
 
-export function nextSlide(e: any, start: boolean = false) {
+export function nextSlide(e: any, start: boolean = false, end: boolean = false) {
   console.log(get(outSlide))
 
   if (get(outLocked)) return
@@ -68,7 +70,7 @@ export function nextSlide(e: any, start: boolean = false) {
   if (!slide) return
 
   // TODO: Check for loop to beginning slide...
-  index = getNextEnabled(slide.index)
+  index = getNextEnabled(slide.index, end)
 
   if (index !== null) {
     outSlide.set({ ...slide, index })
@@ -89,7 +91,7 @@ export function previousSlide() {
   let index: number = slide?.index !== undefined ? slide.index - 1 : layout.length - 1
 
   if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) return
-  while (layout[index].disabled) index--
+  while (layout[index].data.disabled) index--
 
   if (slide) outSlide.set({ ...slide, index })
   else if (get(activeShow)) outSlide.set({ id: get(activeShow)!.id, layout: activeLayout, index })
@@ -97,7 +99,7 @@ export function previousSlide() {
   updateOut(index, layout)
 }
 
-function getNextEnabled(index: null | number): null | number {
+function getNextEnabled(index: null | number, end: boolean = false): null | number {
   if (index === null) return null
 
   index++
@@ -111,7 +113,13 @@ function getNextEnabled(index: null | number): null | number {
   if (!layout[index]) return null
   if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
 
-  while (layout[index].data.disabled || index > layout.length) index++
+  while (layout[index].data.disabled && index < layout.length) index++
+
+  if (end) {
+    index = layout.length - 1
+    while (layout[index].data.disabled && index > 0) index--
+  }
+
   return index
 }
 
@@ -123,7 +131,7 @@ export function updateOut(index: number, layout: any) {
   // background
   if (data.background) {
     let bg = get(showsCache)[get(outSlide)?.id || get(activeShow)!.id].media[data.background!]
-    outBackground.set({ type: bg.type || "media", path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
+    outBackground.set({ name: bg.name, type: bg.type || "media", path: bg.path, id: bg.id, muted: bg.muted !== false, loop: bg.loop !== false })
   }
 
   // overlays

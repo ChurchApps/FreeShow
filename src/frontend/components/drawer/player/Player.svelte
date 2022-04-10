@@ -25,11 +25,20 @@
   let data: any = { name: "", id: "" }
   function add() {
     // TODO: remove url (keep only id)
+    if (data.id.length)
+      playerVideos.update((a) => {
+        if (!data.name.length) data.name = data.id
+        a[uid()] = { ...data, type: active }
+        return a
+      })
+    data = { name: "", id: "" }
+  }
+
+  function changeName(name: string, id: string) {
     playerVideos.update((a) => {
-      a[uid()] = { ...data, type: active }
+      a[id].name = name
       return a
     })
-    data = { name: "", id: "" }
   }
 </script>
 
@@ -48,7 +57,7 @@
               bold={false}
               border
             >
-              <HiddenInput value={video.name} />
+              <HiddenInput value={video.name || ""} id={"player_" + id} on:edit={(e) => changeName(e.detail.value, id)} />
               <span style="opacity: 0.5;">{video.id}</span>
             </Button>
           </SelectElem>
