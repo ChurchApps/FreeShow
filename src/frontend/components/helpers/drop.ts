@@ -122,7 +122,7 @@ export function ondrop(e: any, id: string) {
         if (center) {
           historyID = "showMedia"
 
-          // if (trigger?.includes("end")) index!--
+          if (trigger?.includes("end")) index!--
           location.layoutSlide = index
           let data: any[] = sel.data
           // check files
@@ -130,7 +130,8 @@ export function ondrop(e: any, id: string) {
             data = []
             sel.data.forEach((a: any) => {
               const [extension] = a.name.match(/\.[0-9a-z]+$/i) || [""]
-              if (files[id].includes(extension.substring(1))) data.push({ path: a.path, name: a.name })
+              if (files[id].includes(extension.substring(1)))
+                data.push({ path: a.path, name: a.name, type: get(imageExtensions).includes(extension.substring(1)) ? "image" : "video" })
             })
           } else if (sel.id === "camera") data[0].type = "camera"
           newData = data[0]
@@ -138,7 +139,16 @@ export function ondrop(e: any, id: string) {
           historyID = "newSlide"
           location.layoutSlide = index
           let slides: any[] = sel.data.map((a: any) => ({ group: a.name || "", color: null, settings: {}, notes: "", items: [] }))
-          newData = { index, slides, backgrounds: sel.data }
+          if (sel.id === "files") {
+            data = []
+            sel.data.forEach((a: any) => {
+              const [extension] = a.name.match(/\.[0-9a-z]+$/i) || [""]
+              if (files[id].includes(extension.substring(1)))
+                data.push({ path: a.path, name: a.name, type: get(imageExtensions).includes(extension.substring(1)) ? "image" : "video" })
+            })
+          }
+          // TODO: add to index (not end)
+          newData = { index, slides, backgrounds: data }
         }
         // } else if (sel.id === "camera") {
         //   historyID = "camera"

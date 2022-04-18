@@ -9,14 +9,14 @@
   }
 </script>
 
+<div>
+  <p><T id="settings.auto_output" /></p>
+  <Checkbox checked={$autoOutput} on:change={setAutoOutput} />
+</div>
 <!-- TODO: display... -->
 <div>
   <p><T id="settings.output_screen" /></p>
   <Screens />
-</div>
-<div>
-  <p><T id="settings.auto_output" /></p>
-  <Checkbox checked={$autoOutput} on:change={setAutoOutput} />
 </div>
 
 <style>

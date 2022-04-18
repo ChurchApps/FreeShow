@@ -21,6 +21,19 @@
     "libraries": "Libraries used",
     "thanks": "Thanks to"
   },
+  "tooltip": {
+    "project": "Create a new project where you can add and arange shows.",
+    "show": "Create a new show where you can add song lyrics, presentations and media.",
+    "groups": "All the groups in the current show and all the global groups. Click or drag them to add them to the current layout.",
+    "layout": "Add transitions and next timers to slides in current layout.",
+    "media": "All media in current show. Show them, or drag them to current layout.",
+    "metadata": "Edit metadata for current show.",
+    "notes": "Write notes.",
+    "text": "Edit the content of all selected items.",
+    "item": "Edit all selected items.",
+    "items": "Add and arrange items.",
+    "slide": "Edit current slide."
+  },
   "setup": {
     "good_luck": "I hope you find this software useful. Good luck showing! :)",
     "tips": "Find handy tips and tutorials on the website.",
@@ -63,6 +76,7 @@
     "slide": "Slide",
     "overlays": "Overlays",
     "audio": "Audio",
+    "to_start": "Go to start",
     "nextTimer": "Next slide timer"
   },
   "clear": {
@@ -138,7 +152,8 @@
     "no_show": "Could not find show",
     "no_layouts": "Could not find any layouts",
     "load": "Cound not load",
-    "not_found": "Not found"
+    "not_found": "Not found",
+    "display": "Could not show output window on current display"
   },
   "meta": {
     "title": "Title",
@@ -375,6 +390,14 @@
     "add_items": "Add items",
     "add_icons": "Add icons",
     "arrange_items": "Arrange items"
+  },
+  "items": {
+    "text": "Textbox",
+    "image": "Image",
+    "video": "Video",
+    "live": "Live",
+    "audio": "Audio",
+    "timer": "Timer"
   },
   "borders": {
     "solid": "Solid",

@@ -5,6 +5,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   outputScreen: null,
   openedFolders: [],
   activeProject: null,
+  autoOutput: false,
   presenterControllerKeys: true,
   remotePassword: "",
   categories: {

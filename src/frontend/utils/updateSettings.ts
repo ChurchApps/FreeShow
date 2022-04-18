@@ -1,8 +1,11 @@
+import { OUTPUT } from "./../../types/Channels"
+import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
 import {
   activePopup,
   activeProject,
   audioFolders,
+  autoOutput,
   categories,
   defaultProjectName,
   displayMetadata,
@@ -42,6 +45,7 @@ import {
   webFavorites,
 } from "../stores"
 import type { SaveList } from "./../../types/Save"
+import { send } from "./request"
 
 export function updateSettings(data: any[]) {
   Object.entries(data).forEach(([key, value]: any) => {
@@ -49,7 +53,9 @@ export function updateSettings(data: any[]) {
     else console.log("MISSING: ", key)
   })
 
-  saved.set(true)
+  setTimeout(() => {
+    saved.set(true)
+  }, 10)
 }
 
 const updateList: { [key in SaveList]: any } = {
@@ -62,6 +68,18 @@ const updateList: { [key in SaveList]: any } = {
   activeProject: (v: any) => {
     activeProject.set(v)
     if (v) projectView.set(false)
+  },
+  autoOutput: (v: any) => {
+    autoOutput.set(v)
+    if (v && get(outputScreen)) {
+      send(OUTPUT, ["DISPLAY"], { enabled: true, screen: get(outputScreen) })
+    }
+  },
+  outputScreen: (v: any) => {
+    outputScreen.set(v)
+    if (get(autoOutput)) {
+      send(OUTPUT, ["DISPLAY"], { enabled: true, screen: v })
+    }
   },
   showsPath: (v: any) => {
     if (!v) window.api.send(MAIN, { channel: "SHOWS_PATH" })
@@ -96,7 +114,6 @@ const updateList: { [key in SaveList]: any } = {
   mediaOptions: (v: any) => mediaOptions.set(v),
   openedFolders: (v: any) => openedFolders.set(v),
   outLocked: (v: any) => outLocked.set(v),
-  outputScreen: (v: any) => outputScreen.set(v),
   overlayCategories: (v: any) => overlayCategories.set(v),
   presenterControllerKeys: (v: any) => presenterControllerKeys.set(v),
   playerVideos: (v: any) => playerVideos.set(v),

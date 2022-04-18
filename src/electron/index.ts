@@ -1,3 +1,4 @@
+import { IMPORT } from "./../types/Channels"
 import { app, BrowserWindow, desktopCapturer, dialog, Display, ipcMain, Menu, screen } from "electron"
 import fs from "fs"
 import path, { join } from "path"
@@ -8,6 +9,7 @@ import { template } from "./utils/menuTemplate"
 import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 // import checkForUpdates from "./utils/updater"
 import { createPDFWindow, exportTXT } from "./utils/export"
+import { importShow } from "./utils/import"
 
 // WIP: Tray / push notifications
 // https://www.webtips.dev/how-to-make-your-very-first-desktop-app-with-electron-and-svelte
@@ -25,6 +27,9 @@ app.on("ready", () => {
   createWindow()
 
   displays = screen.getAllDisplays()
+  console.log("DISPLAYS")
+  console.log(displays)
+
   // TODO: get this from settings...
   // externalDisplay =
   //   displays.find((display) => {
@@ -36,7 +41,7 @@ app.on("ready", () => {
     if (!outputWindow?.isEnabled()) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
   })
   screen.on("display-removed", (_e: any, display) => {
-    if (outputScreen === display.id.toString()) {
+    if (outputScreenId === display.id.toString()) {
       outputWindow?.hide()
       toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
     }
@@ -205,13 +210,34 @@ function save(data: any) {
     if (JSON.stringify(settings.get(key)) !== JSON.stringify(value)) settings.set(key, value)
   })
 
-  if (data.shows && JSON.stringify(shows.store) !== JSON.stringify(data.shows)) shows.set(data.shows)
-  if (data.stageShows && JSON.stringify(stageShows.store) !== JSON.stringify(data.stageShows)) stageShows.set(data.stageShows)
-  if (data.projects && JSON.stringify(projects.store) !== JSON.stringify(data.projects)) projects.set(data.projects)
-  if (data.overlays && JSON.stringify(overlays.store) !== JSON.stringify(data.overlays)) overlays.set(data.overlays)
-  if (data.templates && JSON.stringify(templates.store) !== JSON.stringify(data.templates)) templates.set(data.templates)
-  if (data.events && JSON.stringify(events.store) !== JSON.stringify(data.events)) events.set(data.events)
-  if (data.themes && JSON.stringify(themes.store) !== JSON.stringify(data.themes)) themes.set(data.themes)
+  if (data.shows && JSON.stringify(shows.store) !== JSON.stringify(data.shows)) {
+    shows.clear()
+    shows.set(data.shows)
+  }
+  if (data.stageShows && JSON.stringify(stageShows.store) !== JSON.stringify(data.stageShows)) {
+    stageShows.clear()
+    stageShows.set(data.stageShows)
+  }
+  if (data.projects && JSON.stringify(projects.store) !== JSON.stringify(data.projects)) {
+    projects.clear()
+    projects.set(data.projects)
+  }
+  if (data.overlays && JSON.stringify(overlays.store) !== JSON.stringify(data.overlays)) {
+    overlays.clear()
+    overlays.set(data.overlays)
+  }
+  if (data.templates && JSON.stringify(templates.store) !== JSON.stringify(data.templates)) {
+    templates.clear()
+    templates.set(data.templates)
+  }
+  if (data.events && JSON.stringify(events.store) !== JSON.stringify(data.events)) {
+    events.clear()
+    events.set(data.events)
+  }
+  if (data.themes && JSON.stringify(themes.store) !== JSON.stringify(data.themes)) {
+    themes.clear()
+    themes.set(data.themes)
+  }
 
   // check folder
   if (!fs.existsSync(data.path)) {
@@ -229,6 +255,13 @@ function save(data: any) {
     }
   })
 }
+
+// IMPORT
+ipcMain.on(IMPORT, (_e, msg) => {
+  let files = dialog.showOpenDialogSync(mainWindow!, { properties: ["openFile"], filters: [{ name: msg.data.name, extensions: msg.data.extensions }] })
+  let name = files ? files[0].slice((files[0].lastIndexOf("\\") || files[0].lastIndexOf("/")) + 1, files[0].lastIndexOf(".")) : ""
+  if (!msg.data.extensions || files?.length) importShow(msg.channel, name, files || null, updateOutputPath(path.resolve(app.getPath("documents"), "Shows", name)))
+})
 
 // EXPORT
 ipcMain.on(EXPORT, (_e, msg) => {
@@ -301,7 +334,12 @@ ipcMain.on(MAIN, (e, msg) => {
       toApp(MAIN, msg)
     })
   } else if (msg.channel === "GET_DISPLAYS") {
-    data = displays
+    let outputScreens: any[] = []
+    let mainInternal: boolean = screen.getDisplayMatching(mainWindow!.getBounds()).internal
+    displays.forEach((display) => {
+      if (!mainInternal || !display.internal) outputScreens.push(display)
+    })
+    data = outputScreens
   } else if (msg.channel === "GET_PATHS") {
     data = {
       documents: app.getPath("documents"),
@@ -339,30 +377,32 @@ ipcMain.on(MAIN, (e, msg) => {
 // OUTPUT WINDOW
 
 let displays: Display[] = []
-let outputScreen: string | null = null
+let outputScreenId: string | null = null
 
 // create output
 ipcMain.on(OUTPUT, (_e, msg: any) => {
   if (msg.channel === "DISPLAY") {
     if (msg.data.enabled) {
-      let screen = msg.data.screen
-      if (screen) {
-        screen =
+      let outputScreen: any = null
+      if (msg.data.screen) {
+        outputScreen =
           displays.find((display) => {
-            return display.id.toString() === screen
+            return display.id.toString() === msg.data.screen
           }) || null
       }
-      if (!screen) {
-        screen =
+      if (!outputScreen) {
+        outputScreen =
           displays.find((display) => {
             return display.bounds.x !== mainWindow?.getBounds().x || display.bounds.y !== mainWindow?.getBounds().y
           }) || null
-        if (screen) toApp(MAIN, { channel: "SET_SCREEN", data: screen })
+        if (outputScreen) toApp(MAIN, { channel: "SET_SCREEN", data: outputScreen })
       }
-      outputScreen = screen ? screen.id.toString() : null
+      outputScreenId = outputScreen ? outputScreen.id.toString() : null
 
-      if (screen) {
-        if (JSON.stringify(outputWindow?.getBounds) !== JSON.stringify(screen.bounds)) outputWindow?.setBounds(screen.bounds)
+      if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
+
+      if (outputScreen && outputScreen.bounds.x - mainWindow!.getBounds().x > 10 && outputScreen.bounds.y - mainWindow!.getBounds().y > 10) {
+        if (JSON.stringify(outputWindow?.getBounds()) !== JSON.stringify(outputScreen.bounds)) outputWindow?.setBounds(outputScreen.bounds)
         // TODO: output task bar
         outputWindow?.setVisibleOnAllWorkspaces(true)
         outputWindow?.showInactive()
@@ -380,6 +420,10 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
 
         // focus on mac
         mainWindow?.focus()
+      } else {
+        outputWindow?.hide()
+        msg.data.enabled = false
+        toApp(MAIN, { channel: "ALERT", data: "error.display" })
       }
     } else {
       outputWindow?.hide()

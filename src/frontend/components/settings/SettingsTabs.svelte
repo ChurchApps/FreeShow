@@ -11,7 +11,7 @@
 
 <div class="main">
   {#each tabs as tab}
-    <Button on:click={() => settingsTab.set(tab)} active={$settingsTab === tab} bold={false}>
+    <Button id="button" on:click={() => settingsTab.set(tab)} active={$settingsTab === tab} bold={false}>
       <Icon id={tab} right />
       <T id="settings.{tab}" />
     </Button>
@@ -19,7 +19,7 @@
 </div>
 
 <style>
-  .main :global(button) {
+  .main :global(#button) {
     padding: 12px;
     width: 100%;
   }

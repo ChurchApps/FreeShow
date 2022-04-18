@@ -1,4 +1,4 @@
-import { transitionData } from "./../stores"
+import { autoOutput, transitionData } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -143,6 +143,7 @@ const saveList: { [key in SaveList]: any } = {
   initialized: null,
   activeProject: activeProject,
   audioFolders: audioFolders,
+  autoOutput: autoOutput,
   categories: categories,
   defaultProjectName: defaultProjectName,
   displayMetadata: displayMetadata,

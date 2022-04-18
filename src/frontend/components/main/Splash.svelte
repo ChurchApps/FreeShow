@@ -12,8 +12,8 @@
   <p style="padding: 30px">v{$version}</p>
 
   <span class="buttons">
-    <Button on:click={() => history({ id: "newProject" })} title={$dictionary.new?.project}>
-      <Icon id="project" style="padding-right: 10px;" />
+    <Button on:click={() => history({ id: "newProject" })} title={$dictionary.tooltip?.project} dark>
+      <Icon id="project" right />
       <T id="new.project" />
     </Button>
     <Button
@@ -21,9 +21,10 @@
         if (e.ctrlKey || e.metaKey) history({ id: "newShow", location: { page: "show", project: $activeProject } })
         else activePopup.set("show")
       }}
-      title={$dictionary.new?.show}
+      title={$dictionary.tooltip?.show}
+      dark
     >
-      <Icon id="showIcon" style="padding-right: 10px;" />
+      <Icon id="showIcon" right />
       <T id="new.show" />
     </Button>
   </span>

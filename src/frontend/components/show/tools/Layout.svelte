@@ -142,10 +142,10 @@
             </Button>
             <!-- next timer -->
             <!-- empty or 0 === disabled -->
-            <NumberInput value={slide.nextTimer || 0} on:change={(e) => change(e, i)} buttons={false} />
+            <NumberInput title={$dictionary.preview.nextTimer} value={slide.nextTimer || 0} on:change={(e) => change(e, i)} buttons={false} />
             <!-- <TextInput type="number" style="min-width: 50px;flex: 1;" value={0} on:change={(e) => change(e, i)} center /> -->
             <!-- to beginning -->
-            <Button style="height: 100%;" on:click={() => toggleEnd(i)}>
+            <Button title={$dictionary.preview.to_start} style="height: 100%;" on:click={() => toggleEnd(i)}>
               <Icon id="restart" white={slide.end !== true} />
             </Button>
           </div>

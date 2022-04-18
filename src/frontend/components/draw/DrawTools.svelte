@@ -10,7 +10,7 @@
 
 <div class="main">
   {#each tools as tool}
-    <Button on:click={() => drawTool.set(tool)} active={$drawTool === tool} bold={false}>
+    <Button id="button" on:click={() => drawTool.set(tool)} active={$drawTool === tool} bold={false}>
       <Icon id={tool} right />
       <T id="draw.{tool}" />
     </Button>
@@ -18,7 +18,7 @@
 </div>
 
 <style>
-  .main :global(button) {
+  .main :global(#button) {
     padding: 12px;
     width: 100%;
   }

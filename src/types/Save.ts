@@ -2,9 +2,9 @@ export type SaveList = SaveListSettings | "themes" | "events" | "templates"
 
 export type SaveListSettings =
   | "initialized"
-  // | "autoOutput"
   | "activeProject"
   | "audioFolders"
+  | "autoOutput"
   | "categories"
   | "defaultProjectName"
   | "displayMetadata"

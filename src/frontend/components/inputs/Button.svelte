@@ -1,5 +1,8 @@
 <script lang="ts">
+  import { fade } from "svelte/transition"
+
   export let active: boolean = false
+  export let title: string = ""
   export let center: boolean = false
   export let border: boolean = false
   export let dark: boolean = false
@@ -7,9 +10,39 @@
   export let red: boolean = false
   export let redHover: boolean = false
   export let brighterHover: boolean = false
+
+  let tooltipTime: number = 800
+  let showTooltip: boolean = false
+  let timeout: any = null
+  function startTimer() {
+    if (!timeout && title?.length) {
+      timeout = setTimeout(() => {
+        showTooltip = true
+        timeout = null
+      }, tooltipTime)
+    }
+  }
+
+  function hideTooltip() {
+    showTooltip = false
+    clearTimeout(timeout)
+    timeout = null
+  }
+
+  let tooltipStyle: string = ""
+  let mouse: any = { x: 0, y: 0 }
+  function mousemove(e: any) {
+    if (!title?.length) return
+    mouse = { x: e.clientX, y: e.clientY }
+    if (mouse.x + 250 > window.innerWidth) tooltipStyle += "transform: translateX(-100%);"
+    if (mouse.y + 80 > window.innerHeight) tooltipStyle += "transform: translateY(-100%);"
+  }
 </script>
 
 <button
+  on:mouseenter={startTimer}
+  on:mousemove={mousemove}
+  on:mouseleave={hideTooltip}
   id={$$props.id}
   style={$$props.style}
   class:active
@@ -25,13 +58,18 @@
   on:dblclick
   disabled={$$props.disabled}
   tabindex={active ? -1 : 0}
-  title={$$props.title}
 >
+  {#if showTooltip}
+    <div class="tooltip" transition:fade={{ duration: 200 }} style="left: {mouse.x}px;top: {mouse.y}px;{tooltipStyle}">
+      {title}
+    </div>
+  {/if}
   <slot />
 </button>
 
 <style>
   button {
+    position: relative;
     background-color: inherit;
     color: inherit;
     font-family: inherit;
@@ -125,5 +163,23 @@
     opacity: 0.5;
     /* this is to prevent interfearing with mouse event listeners */
     pointer-events: none;
+  }
+
+  /* tooltip */
+  button:hover > .tooltip {
+    display: block;
+  }
+  .tooltip {
+    z-index: 30;
+    pointer-events: none;
+    position: fixed;
+    background-color: var(--primary-darkest);
+    border: 2px solid var(--primary-lighter);
+    padding: 5px 10px;
+    top: 0;
+    left: 0;
+    max-width: 250px;
+    text-align: left;
+    white-space: normal;
   }
 </style>
