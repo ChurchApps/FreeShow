@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
-  import { labelsDisabled } from "../../stores"
-  import { translate } from "../../utils/language"
+  import { dictionary, labelsDisabled } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
@@ -13,7 +12,7 @@
 
 <div class="tabs">
   {#each Object.entries(tabs) as tab}
-    <Button on:click={() => (active = tab[0])} active={active === tab[0]} title={!labels ? translate(tab[1].name) : ""} dark center>
+    <Button on:click={() => (active = tab[0])} active={active === tab[0]} title={$dictionary.tooltip?.[tab[0]]} dark center>
       <Icon id={tab[1].icon} />
       {#if labels}
         <span style="padding-left: 10px;">

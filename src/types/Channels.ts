@@ -2,6 +2,7 @@ export const MAIN: Main = "MAIN"
 export const STORE: Store = "STORE"
 export const SHOW: Show = "SHOW"
 export const OUTPUT: OutputData = "OUTPUT"
+export const IMPORT: Import = "IMPORT"
 export const EXPORT: Export = "EXPORT"
 export const OPEN_FILE: OpenFile = "OPEN_FILE"
 export const OPEN_FOLDER: OpenFolder = "OPEN_FOLDER"
@@ -14,6 +15,7 @@ export type Main = "MAIN"
 export type Store = "STORE"
 export type Show = "SHOW"
 export type OutputData = "OUTPUT"
+export type Import = "IMPORT"
 export type Export = "EXPORT"
 export type OpenFile = "OPEN_FILE"
 export type OpenFolder = "OPEN_FOLDER"
@@ -22,7 +24,7 @@ export type FileInfo = "FILE_INFO"
 export type Remote = "REMOTE"
 export type Stage = "STAGE"
 
-export type ValidChannels = Main | Store | Show | OutputData | Export | OpenFile | OpenFolder | ReadFolder | Remote | Stage
+export type ValidChannels = Main | Store | Show | OutputData | Import | Export | OpenFile | OpenFolder | ReadFolder | Remote | Stage
 
 export type Data = string | DataObject
 export interface DataObject {

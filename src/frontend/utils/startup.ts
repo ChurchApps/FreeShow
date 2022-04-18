@@ -1,3 +1,4 @@
+import { IMPORT } from "./../../types/Channels"
 import { activePopup, alertMessage } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STORE } from "../../types/Channels"
@@ -37,6 +38,9 @@ import { setLanguage } from "./language"
 import { listen } from "./messages"
 import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
+import { convertPowerpoint } from "../converters/powerpoint"
+import { convertPDF } from "../converters/pdf"
+import { convertText } from "../converters/txt"
 
 export function startup() {
   if (!get(currentWindow)) {
@@ -47,6 +51,7 @@ export function startup() {
   receive(MAIN, receiveMAIN)
   receive(STORE, receiveSTORE)
   receive(OUTPUT, receiveOUTPUT)
+  receive(IMPORT, receiveIMPORT)
   // receive(OUTPUT, get(currentWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
   // window.api.receive(OUTPUT, (msg: any) => {
   //   if (!get(currentWindow) || ["DISPLAY"].includes(msg.channel)) {
@@ -59,9 +64,9 @@ export function startup() {
   // search (cache search text?...)
 
   // output
-  if (get(autoOutput)) {
-    send(OUTPUT, ["DISPLAY"], { enabled: true, screen: get(outputScreen) })
-  }
+  // if (get(autoOutput)) {
+  //   send(OUTPUT, ["DISPLAY"], { enabled: true, screen: get(outputScreen) })
+  // }
 
   // load new show on show change
   activeShow.subscribe((a) => {
@@ -128,3 +133,9 @@ const receiveOUTPUT: any = {
 // const receiveOUTPUTasOutput: any = {
 //   DISPLAY: receiveOUTPUT.DISPLAY,
 // }
+
+const receiveIMPORT: any = {
+  powerpoint: (a: any) => convertPowerpoint(a),
+  pdf: (a: any) => convertPDF(a),
+  txt: (a: any) => convertText(a),
+}

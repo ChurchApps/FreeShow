@@ -835,12 +835,13 @@ export function history(obj: History, undo: null | boolean = null) {
 
     case "showMedia":
       let bgid: null | string = null
-      _show(showIDs)
-        .media()
-        .get()
-        .forEach((media: any) => {
-          if (media.id === obj.newData.id) bgid = media.key
-        })
+      if (obj.newData.id)
+        _show(showIDs)
+          .media()
+          .get()
+          .forEach((media: any) => {
+            if (media.id === obj.newData.id) bgid = media.key
+          })
 
       if (undo) {
         if (bgid) _show(showIDs).media([bgid]).remove()

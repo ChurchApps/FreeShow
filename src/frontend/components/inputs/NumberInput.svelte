@@ -5,6 +5,7 @@
   import TextInput from "./TextInput.svelte"
 
   export let value: number
+  export let title: string = ""
   export let inputMultiplier: number = 1
   export let decimals: number = 0
   export let step: number = 1
@@ -62,7 +63,7 @@
       <Icon id="remove" size={1.2} white />
     </Button>
   {/if}
-  <span class="input">
+  <span class="input" {title}>
     <TextInput {disabled} value={(value * inputMultiplier).toFixed(fixed)} on:change={input} center />
   </span>
   {#if buttons}

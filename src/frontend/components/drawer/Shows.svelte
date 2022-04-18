@@ -159,7 +159,7 @@
       else activePopup.set("show")
     }}
     center
-    title={$dictionary.new?.show}
+    title={$dictionary.tooltip?.show}
   >
     <Icon id="showIcon" right />
     <span style="color: var(--secondary);">

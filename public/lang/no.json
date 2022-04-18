@@ -21,6 +21,19 @@
     "libraries": "Biblioteker brukt",
     "thanks": "Takk til"
   },
+  "tooltip": {
+    "project": "Opprett ett nytt prosjekt hvor du kan legge til og organisere show.",
+    "show": "Opprett ett nytt show hvor du kan legge til sangtekster, presentasjoner og medier.",
+    "groups": "Alle gruppene i valgt show og alle globale grupper. Klikk eller dra dem for å legge dem til i valgt oppsett.",
+    "layout": "Legg til overganger og tid til neste til lysbilder i valgt oppsett.",
+    "media": "Alle medier i valgt show. Vis dem, eller dra dem til nåværende oppsett.",
+    "metadata": "Rediger metadata for nåværende show.",
+    "notes": "Skriv notater.",
+    "text": "Rediger innholdet til alle valgte elementer.",
+    "item": "Rediger alle valgte elementer.",
+    "items": "Legg til eller ordne elementer.",
+    "slide": "Rediger valgt lysbilde."
+  },
   "setup": {
     "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
     "tips": "Finn nyttige tips og tutorials på nettsiden.",
@@ -63,6 +76,7 @@
     "slide": "Lysbilde",
     "overlays": "Overlegg",
     "audio": "Lyd",
+    "to_start": "Gå til start",
     "nextTimer": "Tid til neste lysbilde"
   },
   "clear": {
@@ -138,7 +152,8 @@
     "no_show": "Kunne ikke finne noen show",
     "no_layouts": "Kunne ikke finne noen oppsett",
     "load": "Kunne ikke laste inn",
-    "not_found": "Ikke funnet"
+    "not_found": "Ikke funnet",
+    "display": "Kunne ikke vise utgangsvindu på nåværende skjerm"
   },
   "meta": {
     "title": "Tittel",
@@ -375,6 +390,14 @@
     "add_items": "Legg til elementer",
     "add_icons": "Legg til ikoner",
     "arrange_items": "Ordne elementer"
+  },
+  "items": {
+    "text": "Tekstboks",
+    "image": "Bilde",
+    "video": "Video",
+    "live": "Direkte",
+    "audio": "Lyd",
+    "timer": "Nedtelling"
   },
   "borders": {
     "solid": "Hel",

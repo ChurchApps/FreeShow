@@ -16,14 +16,14 @@
     <!-- logo -->
     <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;">FreeShow</h1>
   </span>
-  <span style="position: absolute;left: 50%;height: 100%;transform: translateX(-50%);">
+  <span>
     <TopButton id="show" />
     <TopButton id="edit" />
     <TopButton id="stage" />
     <TopButton id="draw" />
     <TopButton id="calendar" />
   </span>
-  <span>
+  <span style="width: 300px;justify-content: flex-end;">
     <TopButton id="settings" hideLabel />
     <Button
       title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display}

@@ -351,7 +351,7 @@ export const exportPath: Writable<null | string> = writable(null) // null
 export const presenterControllerKeys: Writable<boolean> = writable(true) // true
 
 // display
-export const autoOutput: Writable<boolean> = writable(true) // true
+export const autoOutput: Writable<boolean> = writable(false) // false
 export const outputScreen: Writable<null | string> = writable(null) // null
 
 // project

@@ -3,6 +3,7 @@ import { STORE } from "../../types/Channels"
 import {
   activeProject,
   audioFolders,
+  autoOutput,
   categories,
   defaultProjectName,
   displayMetadata,
@@ -55,6 +56,7 @@ export function save() {
     initialized: true,
     activeProject: get(activeProject),
     audioFolders: get(audioFolders),
+    autoOutput: get(autoOutput),
     categories: get(categories),
     defaultProjectName: get(defaultProjectName),
     displayMetadata: get(displayMetadata),

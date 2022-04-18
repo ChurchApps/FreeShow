@@ -123,7 +123,7 @@
   }
 
   function keydown(e: any) {
-    if ($currentWindow === "output") return
+    if ($currentWindow === "output" || document.activeElement?.classList.contains("edit")) return
     if (e.ctrlKey || e.metaKey) {
       if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
         activeDrawerTab.set(drawerMenus[e.key - 1])

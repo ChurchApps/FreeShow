@@ -4,6 +4,7 @@
   import { history } from "../../helpers/history"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
+  import Checkbox from "../../inputs/Checkbox.svelte"
   import Color from "../../inputs/Color.svelte"
   import Panel from "../../system/Panel.svelte"
 
@@ -11,7 +12,7 @@
   $: editSlide =
     $activeEdit.slide !== null
       ? _show("active")
-          .slides([_show("active").layouts("active").slides([$activeEdit.slide]).get()[0].id])
+          .slides([_show("active").layouts("active").slides([$activeEdit.slide]).get()[0][0].id])
           .get()[0]
       : null
   // get(showsCache)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]
@@ -44,7 +45,8 @@
       <p><T id="edit.color" /></p>
     </span>
     <span style="flex: 1;">
-      <input type="checkbox" checked={background} />
+      <!-- <input type="checkbox" checked={background} /> -->
+      <Checkbox checked={background} />
       <Color bind:value={color} on:input={(e) => inputChange(e, "background")} />
     </span>
   </div>
@@ -53,7 +55,7 @@
   <div class="gap">
     <span class="titles">
       <p><T id="edit.resolution" /></p>
-      <p><T id="edit.transition" /></p>
+      <!-- <p><T id="edit.transition" /></p> -->
     </span>
     <span style="flex: 1;">
       <!-- <input type="checkbox" checked={background} />
