@@ -12,7 +12,7 @@
   $: editSlide =
     $activeEdit.slide !== null
       ? _show("active")
-          .slides([_show("active").layouts("active").slides([$activeEdit.slide]).get()[0][0].id])
+          .slides([_show("active").layouts("active").slides([$activeEdit.slide]).get()[0][0]?.id])
           .get()[0]
       : null
   // get(showsCache)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]

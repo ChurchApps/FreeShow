@@ -515,11 +515,11 @@ export function history(obj: History, undo: null | boolean = null) {
         let index: number = obj.newData.index !== undefined ? obj.newData.index : ref.length
         // let color: null | string = null
 
-        if (!obj.newData.slide && !obj.newData.slides && !obj.newData.parent) {
+        if (!obj.newData.slide && !obj.newData.slides) {
           let isParent: boolean = true
           // add as child
           // TODO: add by template
-          if (ref.length) {
+          if (ref.length && !obj.newData.parent) {
             isParent = false
 
             let parent = ref[index - 1].parent || ref[index - 1]

@@ -61,6 +61,14 @@
     }
   }
 
+  function keydown(e: any) {
+    if (e.key === " ") {
+      e.preventDefault()
+      if (show!.type === "video" || show!.type === "player") onVideoClick(e)
+      else if (show!.type === "image" && !$outLocked) outBackground.set({ path: show?.id, filter })
+    }
+  }
+
   function onVideoClick(e: any) {
     if ($outLocked) return
 
@@ -98,6 +106,8 @@
     } else filter = ""
   }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div class="main">
   {#if show}

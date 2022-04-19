@@ -9,6 +9,7 @@
   import Output from "./Output.svelte"
   import ShowActions from "./ShowActions.svelte"
   import Media from "./tools/Media.svelte"
+  import Overlay from "./tools/Overlay.svelte"
   import Show from "./tools/Show.svelte"
   import Transition from "./tools/Transition.svelte"
 
@@ -58,8 +59,11 @@
       previousSlide()
     },
     " ": (e: any) => {
-      if (e.shiftKey) previousSlide()
-      else nextSlide(e)
+      if ($outSlide?.id !== $activeShow?.id) nextSlide(e, true)
+      else {
+        if (e.shiftKey) previousSlide()
+        else nextSlide(e)
+      }
     },
     Home: (e: any) => nextSlide(e, true),
     End: (e: any) => nextSlide(e, false, true),
@@ -246,6 +250,8 @@
       <Media {video} bind:videoData bind:videoTime bind:title />
     {:else if activeClear === "slide"}
       <Show />
+    {:else if activeClear === "overlays"}
+      <Overlay />
     {/if}
     <!-- overlays -->
     <!-- audio -->
