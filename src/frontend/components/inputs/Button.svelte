@@ -23,6 +23,7 @@
     }
   }
 
+  $: if ($$props.disabled) hideTooltip()
   function hideTooltip() {
     showTooltip = false
     clearTimeout(timeout)

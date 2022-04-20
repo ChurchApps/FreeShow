@@ -1,13 +1,15 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
   import type { TabsObj } from "../../../types/Tabs"
-  import { activeEdit, activeShow, overlays, showsCache } from "../../stores"
+  import { activeEdit, activeShow, overlays, showsCache, templates } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Tabs from "../main/Tabs.svelte"
+  import Center from "../system/Center.svelte"
   import Items from "./tools/Items.svelte"
   import ItemStyle from "./tools/ItemStyle.svelte"
   import SlideStyle from "./tools/SlideStyle.svelte"
@@ -23,6 +25,24 @@
   let active: string = Object.keys(tabs)[0]
   $: tabs.text.icon = item?.type || "text"
 
+  let slides: any[] = []
+  $: if (allSlideItems && ($activeEdit?.id || $activeShow?.id) && $activeEdit.slide !== null && $activeEdit.slide !== undefined)
+    slides = _show($activeEdit?.id || $activeShow?.id)
+      .slides()
+      .get()
+  $: if (!item?.lines && item?.type !== "timer" && !tabs.text.disabled) {
+    active = "items"
+    tabs.text.disabled = true
+  } else if ((item?.lines || item?.type === "timer") && tabs.text.disabled) {
+    active = "text"
+    tabs.text.disabled = false
+  }
+  $: if (!allSlideItems.length && !tabs.item.disabled) {
+    tabs.item.disabled = true
+  } else if (allSlideItems.length && tabs.item.disabled) {
+    tabs.item.disabled = false
+  }
+
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
   $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length <= $activeEdit.slide && GetLayout($activeShow?.id!).length > 0)
     activeEdit.set({ slide: 0, items: [] })
@@ -31,6 +51,7 @@
       ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items
       : []
   $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items
+  $: if ($activeEdit.type === "template") allSlideItems = $templates[$activeEdit.id!]?.items
   const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
   // select active items or all items
@@ -59,7 +80,7 @@
 
     history({
       id: "textStyle",
-      newData: { key: "text", values },
+      newData: { style: { key: "text", values } },
       location: {
         page: "edit",
         show: $activeShow!,
@@ -72,7 +93,7 @@
 
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
 <div class="main border editTools">
-  {#if ($activeShow && $activeEdit.slide !== null) || $activeEdit.id}
+  {#if (slides?.length && $activeShow && $activeEdit.slide !== null) || $activeEdit.id}
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
@@ -80,6 +101,10 @@
           <TimerStyle bind:allSlideItems bind:item />
         {:else if item?.lines}
           <TextStyle bind:allSlideItems bind:item />
+        {:else}
+          <Center faded>
+            <T id="empty.items" />
+          </Center>
         {/if}
       </div>
     {:else if active === "item"}
@@ -111,6 +136,10 @@
         </Button>
       {/if}
     </span>
+  {:else}
+    <Center faded>
+      <T id="empty.slides" />
+    </Center>
   {/if}
 </div>
 

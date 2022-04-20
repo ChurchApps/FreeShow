@@ -64,7 +64,7 @@ export function _show(id: any) {
           if (key) a.push(shows[id].slides[slideId][key])
           else {
             a.push(shows[id].slides[slideId])
-            if (addId) a[a.length - 1].id = slideId
+            if (addId && a[a.length - 1]) a[a.length - 1].id = slideId
           }
         })
         return a
@@ -92,6 +92,9 @@ export function _show(id: any) {
         if (!slideIds.length) slideIds = [uid()]
         showsCache.update((a: any) => {
           slideIds.forEach((slideId: string, i: number) => {
+            console.log(slide)
+            console.log(slide![i] || slide![0])
+
             a[id].slides[slideId] = slide![i] || slide![0]
           })
           return a
@@ -184,14 +187,14 @@ export function _show(id: any) {
           /** Get slides items lines */
           get: () => {
             let a: any[] = []
-            if (!slideIds.length && shows[id]) slideIds = Object.keys(shows[id].slides || {})
+            if (!slideIds.length && shows[id]?.slides) slideIds = Object.keys(shows[id].slides || {})
             slideIds.forEach((slideId, i) => {
               a.push([])
               if (!indexes.length) indexes = Object.keys(shows[id].slides[slideId].items) as any
               indexes.forEach((index) => {
-                if (!lines.length) lines = Object.keys(shows[id].slides[slideId].items[index].lines)
+                if (!lines.length) lines = Object.keys(shows[id].slides[slideId].items[index]?.lines || {})
                 lines.forEach((line) => {
-                  if (shows[id].slides[slideId].items?.[index]?.lines?.[line]) {
+                  if (shows[id].slides[slideId]?.items?.[index]?.lines?.[line]) {
                     a[i].push(shows[id].slides[slideId].items[index].lines[line])
                   }
                 })

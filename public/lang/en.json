@@ -6,7 +6,8 @@
     "about": "About",
     "unnamed": "Unnamed",
     "drop": "Drop here",
-    "search": "Search"
+    "search": "Search",
+    "none": "None"
   },
   "languages": {
     "en": "English",
@@ -23,7 +24,7 @@
   },
   "tooltip": {
     "project": "Create a new project where you can add and arange shows.",
-    "show": "Create a new show where you can add song lyrics, presentations and media.",
+    "show": "Create a new show where you can add song lyrics, presentations and media. Hold ctrl to create empty.",
     "groups": "All the groups in the current show and all the global groups. Click or drag them to add them to the current layout.",
     "layout": "Add transitions and next timers to slides in current layout.",
     "media": "All media in current show. Show them, or drag them to current layout.",
@@ -44,13 +45,16 @@
     "welcome": "Welcome",
     "meetings": "Meetings",
     "example": "Example",
-    "example_note": "Write notes here"
-  },
-  "overlays": {
+    "example_note": "Write notes here",
     "watermark": "Watermark",
     "recording": "Recording",
     "rounded": "Rounded",
-    "call": "Video call"
+    "call": "Video call",
+    "header": "Header",
+    "text": "Text",
+    "big": "Big",
+    "default": "Standard",
+    "small": "Small"
   },
   "titlebar": {
     "file": "File",
@@ -263,6 +267,7 @@
     "folder": "New folder",
     "slide": "New slide",
     "overlay": "New overlay",
+    "template": "New template",
     "event": "New event"
   },
   "show": {

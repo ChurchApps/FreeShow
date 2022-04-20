@@ -102,7 +102,7 @@
     history({
       id: "setItems",
       oldData: { key: "style", values: oldValues },
-      newData: { key: "style", values },
+      newData: {style: { key: "style", values }},
       location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
     })
   }

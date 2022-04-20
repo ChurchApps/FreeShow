@@ -3,6 +3,7 @@
   import SlideEditor from "../edit/SlideEditor.svelte"
   import OverlayEditor from "../edit/OverlayEditor.svelte"
   import Splash from "../main/Splash.svelte"
+  import TemplateEditor from "./TemplateEditor.svelte"
 
   // $: if ($activeShow && $activeEdit.id) activeEdit.set({ slide: 0, items: [] })
   // TODO: check if slide 0 exists
@@ -13,6 +14,8 @@
 <!-- TODO: activeEdit, edit overlays, templates, ... -->
 {#if $activeEdit.type === "overlay"}
   <OverlayEditor />
+{:else if $activeEdit.type === "template"}
+  <TemplateEditor />
 {:else if $activeEdit.type === "media" || $activeShow?.type === "video" || $activeShow?.type === "image"}
   <!--  -->
 {:else if $activeEdit.type === "audio" || $activeShow?.type === "audio"}

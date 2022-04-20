@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { Item, Line } from "../../../types/Show"
-  import { activeEdit, activeShow, overlays, showsCache } from "../../stores"
+  import { activeEdit, activeShow, overlays, showsCache, templates } from "../../stores"
   import { GetLayoutRef } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -157,6 +157,11 @@
         console.log("NEW", newLines)
         if ($activeEdit.type === "overlay") {
           overlays.update((a) => {
+            a[$activeEdit.id!].items[index].lines = newLines
+            return a
+          })
+        } else if ($activeEdit.type === "template") {
+          templates.update((a) => {
             a[$activeEdit.id!].items[index].lines = newLines
             return a
           })

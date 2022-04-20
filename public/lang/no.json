@@ -6,7 +6,8 @@
     "about": "Om",
     "unnamed": "Uten navn",
     "drop": "Slipp her",
-    "search": "Søk"
+    "search": "Søk",
+    "none": "Ingen"
   },
   "languages": {
     "en": "Engelsk",
@@ -23,7 +24,7 @@
   },
   "tooltip": {
     "project": "Opprett ett nytt prosjekt hvor du kan legge til og organisere show.",
-    "show": "Opprett ett nytt show hvor du kan legge til sangtekster, presentasjoner og medier.",
+    "show": "Opprett ett nytt show hvor du kan legge til sangtekster, presentasjoner og medier. Hold ctrl for å opprette tomt.",
     "groups": "Alle gruppene i valgt show og alle globale grupper. Klikk eller dra dem for å legge dem til i valgt oppsett.",
     "layout": "Legg til overganger og tid til neste til lysbilder i valgt oppsett.",
     "media": "Alle medier i valgt show. Vis dem, eller dra dem til nåværende oppsett.",
@@ -44,13 +45,16 @@
     "welcome": "Velkommen",
     "meetings": "Møter",
     "example": "Eksempel",
-    "example_note": "Skriv notater her"
-  },
-  "overlays": {
+    "example_note": "Skriv notater her",
     "watermark": "Vannmerke",
     "recording": "Opptak",
     "rounded": "Avrundet",
-    "call": "Videoanrop"
+    "call": "Videoanrop",
+    "header": "Overskrift",
+    "text": "Tekst",
+    "big": "Stor",
+    "default": "Standard",
+    "small": "Liten"
   },
   "titlebar": {
     "file": "Fil",
@@ -263,6 +267,7 @@
     "folder": "Ny mappe",
     "slide": "Nytt lysbilde",
     "overlay": "Nytt overlegg",
+    "template": "Ny mal",
     "event": "Nytt arrangement"
   },
   "show": {

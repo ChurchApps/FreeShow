@@ -99,15 +99,68 @@ export function createData(paths: any) {
 
   // TODO: translate templates
   templates.update((a) => {
-    a.default = {
-      name: "Title",
+    a.header = {
+      name: get(dictionary).example?.header || "Header",
       color: null,
-      category: "song",
+      category: "presentation",
       items: [
         {
           style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
           align: "",
-          lines: [{ align: "", text: [{ value: "Template", style: "font-size: 180px;font-weight: bold;" }] }],
+          lines: [{ align: "", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 180px;font-weight: bold;" }] }],
+        },
+      ],
+    }
+    a.text = {
+      name: get(dictionary).example?.text || "Text",
+      color: null,
+      category: "presentation",
+      items: [
+        {
+          style: "top:35px;left:50.5px;height:220px;width:1820px;",
+          align: "",
+          lines: [{ align: "text-align: left;", text: [{ value: get(dictionary).example?.header || "Header", style: "font-size: 120px;font-weight: bold;" }] }],
+        },
+        {
+          style: "top:290px;left:50.5px;height:750px;width:1820px;",
+          align: "",
+          lines: [{ align: "text-align: left;", text: [{ value: get(dictionary).example?.text || "Text", style: "font-size: 80px;" }] }],
+        },
+      ],
+    }
+    a.big = {
+      name: get(dictionary).example?.big || "big",
+      color: null,
+      category: "song",
+      items: [
+        {
+          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          align: "",
+          lines: [{ align: "", text: [{ value: get(dictionary).example?.big || "big", style: "font-size: 120px;" }] }],
+        },
+      ],
+    }
+    a.default = {
+      name: get(dictionary).example?.default || "default",
+      color: null,
+      category: "song",
+      items: [
+        {
+          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          align: "",
+          lines: [{ align: "", text: [{ value: get(dictionary).example?.default || "default", style: "font-size: 100px;" }] }],
+        },
+      ],
+    }
+    a.small = {
+      name: get(dictionary).example?.small || "small",
+      color: null,
+      category: "song",
+      items: [
+        {
+          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          align: "",
+          lines: [{ align: "", text: [{ value: get(dictionary).example?.small || "small", style: "font-size: 80px;" }] }],
         },
       ],
     }

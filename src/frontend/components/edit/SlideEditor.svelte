@@ -13,12 +13,10 @@
   import Editbox from "./Editbox.svelte"
   import { autoSize } from "./scripts/autoSize"
 
-  // TODO: overlay editor
-
   $: currentShow = $activeShow!.id
   $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
   $: ref = $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
-  $: Slide = $activeEdit.slide !== null && ref ? _show("active").slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
+  $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show("active").slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
 
   // showsCache.subscribe((a) => {
   //   console.log(a)
@@ -87,7 +85,7 @@
 
     history({
       id: "setStyle",
-      newData: { key: "style", values },
+      newData: { style: { key: "style", values } },
       location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: active },
       // location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: active },
     })

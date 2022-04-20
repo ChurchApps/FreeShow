@@ -16,6 +16,7 @@ export interface TabsObj {
   [key: string]: {
     name: string
     icon: string
+    disabled?: boolean
   }
 }
 

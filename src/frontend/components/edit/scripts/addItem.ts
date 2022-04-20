@@ -1,5 +1,5 @@
 import { GetLayout } from "./../../helpers/get"
-import { activeEdit, activeShow, overlays } from "./../../../stores"
+import { activeEdit, activeShow, overlays, templates } from "../../../stores"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, ItemType } from "../../../../types/Show"
@@ -18,6 +18,12 @@ export function addItem(type: ItemType, id: any = null) {
   if (get(activeEdit).type === "overlay") {
     // TODO: history
     overlays.update((a) => {
+      a[get(activeEdit).id!].items.push(newData)
+      return a
+    })
+  } else if (get(activeEdit).type === "template") {
+    // TODO: history
+    templates.update((a) => {
       a[get(activeEdit).id!].items.push(newData)
       return a
     })

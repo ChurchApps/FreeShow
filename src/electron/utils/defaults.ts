@@ -43,6 +43,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   },
   templateCategories: {
     song: { name: "category.song", icon: "song", default: true },
+    presentation: { name: "category.presentation", icon: "presentation", default: true },
   },
   mediaFolders: {},
   audioFolders: {},
