@@ -205,7 +205,7 @@
         // WIP
         id: key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
         // oldData: { key: aligns ? "align" : "style", values: oldData },
-        newData: { key: aligns ? "align" : "text", values: newData },
+        newData: {style: { key: aligns ? "align" : "text", values: newData }},
         location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
       })
     }

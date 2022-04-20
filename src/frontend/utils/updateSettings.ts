@@ -12,7 +12,6 @@ import {
   drawer,
   drawerTabsData,
   drawSettings,
-  events,
   exportPath,
   fullColors,
   groupCount,
@@ -38,18 +37,16 @@ import {
   showsPath,
   slidesOptions,
   templateCategories,
-  templates,
   theme,
-  themes,
   videoExtensions,
   webFavorites,
 } from "../stores"
-import type { SaveList } from "./../../types/Save"
+import type { SaveListSettings } from "./../../types/Save"
 import { send } from "./request"
 
 export function updateSettings(data: any[]) {
   Object.entries(data).forEach(([key, value]: any) => {
-    if (updateList[key as SaveList]) updateList[key as SaveList](value)
+    if (updateList[key as SaveListSettings]) updateList[key as SaveListSettings](value)
     else console.log("MISSING: ", key)
   })
 
@@ -58,10 +55,10 @@ export function updateSettings(data: any[]) {
   }, 10)
 }
 
-const updateList: { [key in SaveList]: any } = {
-  // FIRST TIME USER
+const updateList: { [key in SaveListSettings]: any } = {
   initialized: (v: any) => {
     if (!v) {
+      // FIRST TIME USER
       activePopup.set("initialize")
     }
   },
@@ -95,7 +92,7 @@ const updateList: { [key in SaveList]: any } = {
   },
   // TODO: get device lang
   language: (v: any) => language.set(v),
-  events: (v: any) => events.set(v),
+  // events: (v: any) => events.set(v),
   remotePassword: (v: any) => remotePassword.set(v),
   audioFolders: (v: any) => audioFolders.set(v),
   defaultProjectName: (v: any) => defaultProjectName.set(v),
@@ -121,9 +118,9 @@ const updateList: { [key in SaveList]: any } = {
   screen: (v: any) => screen.set(v),
   slidesOptions: (v: any) => slidesOptions.set(v),
   templateCategories: (v: any) => templateCategories.set(v),
-  templates: (v: any) => templates.set(v),
+  // templates: (v: any) => templates.set(v),
   theme: (v: any) => theme.set(v),
-  themes: (v: any) => themes.set(v),
+  // themes: (v: any) => themes.set(v),
   videoExtensions: (v: any) => videoExtensions.set(v),
   webFavorites: (v: any) => webFavorites.set(v),
 }

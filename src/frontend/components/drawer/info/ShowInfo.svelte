@@ -90,12 +90,12 @@
   <span>
     {#if fullShow?.settings?.template}
       {#if $templates[fullShow?.settings.template]}
-        {$templates[fullShow?.settings.template]?.name}
+        {$templates[fullShow?.settings.template]?.name || "—"}
       {:else}
         <T id="error.not_found" />
       {/if}
     {:else}
-      —
+      <T id="main.none" />
     {/if}
   </span>
 </p>

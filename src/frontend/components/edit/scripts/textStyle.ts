@@ -158,7 +158,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
       }
     })
   })
-  if (!style.length && lines.length) style = lines[lines.length - 1].text[lines[lines.length - 1].text.length - 1].style
+  if (!style.length && lines.length) style = lines[lines.length - 1].text[lines[lines.length - 1].text.length - 1]?.style || ""
 
   return style
 }

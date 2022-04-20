@@ -1,9 +1,10 @@
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
-import { projects, activeProject, selected, activeShow, showsCache, videoExtensions, imageExtensions, activePage, activeDrawerTab } from "../../stores"
+import { projects, activeProject, selected, activeShow, showsCache, videoExtensions, imageExtensions, activePage, activeDrawerTab, drawerTabsData } from "../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
 import { HistoryIDs, history, historyAwait } from "./history"
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { _show } from "./shows"
 
 // TODO: file...
 const areas: any = {
@@ -20,6 +21,7 @@ const areaChildren: any = {
   projects: ["folder"],
   project: ["show", "media", "show_drawer", "player"],
   slides: ["slide", "group", "global_group", "media"],
+  all_slides: [],
   navigation: ["show", "show_drawer"],
 }
 const files: any = {
@@ -45,7 +47,7 @@ export function ondrop(e: any, id: string) {
   let elem: any = null
   if (e !== null) {
     // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
-    if (id === "project" || id === "projects" || id === "slides" || id === "navigation") elem = e.target.closest(".selectElem")
+    if (id === "project" || id === "projects" || id === "slides" || id === "all_slides" || id === "navigation") elem = e.target.closest(".selectElem")
     else if (id === "slide") elem = e.target.querySelector(".selectElem")
     console.log(elem)
   }
@@ -55,7 +57,7 @@ export function ondrop(e: any, id: string) {
   let index: undefined | number = data.index
   let center: boolean = false
   if (trigger?.includes("center")) center = true
-  if (index !== undefined && trigger?.includes("end") && areaChildren[id].includes(sel.id)) index++
+  if (index !== undefined && trigger?.includes("end") && areaChildren[id]?.includes(sel.id)) index++
 
   console.log("DRAG: ", sel.id, sel.data)
   console.log("DROP: ", id, data, trigger)
@@ -234,10 +236,17 @@ export function ondrop(e: any, id: string) {
       }
       break
     case "all_slides":
-      location = { page: "show", show: get(activeShow) }
+      location = { page: "show", show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout }
       if (sel.id === "template") {
         historyID = "template"
+
+        console.log(index)
+
+        // TODO: add slide
+        // if (trigger) location.layoutSlide = index
+        if (center) location.layoutSlide = index
         newData = { template: sel.data[0] }
+
         // location.layoutSlide = index
         // let newData = {template: sel.data[0]}
         // // let slide = get(shows)[get(activeShow)!.id].slides
@@ -274,6 +283,30 @@ export function ondrop(e: any, id: string) {
           sel.data.map((a: any) => a.id),
           { id: "updateShow", newData, location }
         )
+      }
+      break
+    case "templates":
+      if (sel.id === "slide") {
+        sel.data.forEach((selData) => {
+          let ref = _show("active").layouts("active").ref()[0][selData.index]
+          let slide = _show("active").slides([ref.id]).get()[0]
+          let parent = ref.parent ? _show("active").slides([ref.parent.id]).get()[0] : null
+          history({
+            id: "newTemplate",
+            newData: {
+              template: {
+                name: parent ? parent.group || "" : slide.group || "",
+                color: parent ? parent.color || "" : slide.color || "",
+                category:
+                  get(drawerTabsData).templates.activeSubTab === "all" || get(drawerTabsData).templates.activeSubTab === "unlabeled"
+                    ? null
+                    : get(drawerTabsData).templates.activeSubTab,
+                items: slide.items,
+              },
+            },
+            location: { page: "show" },
+          })
+        })
       }
       break
 

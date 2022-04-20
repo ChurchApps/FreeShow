@@ -268,6 +268,7 @@ const actions: any = {
   edit: (obj: any) => {
     if (obj.sel.id === "slide") activeEdit.set({ slide: obj.sel.data[0].index, items: [] })
     else if (obj.sel.id === "overlay") activeEdit.set({ type: "overlay", id: obj.sel.data, items: [] })
+    else if (obj.sel.id === "template") activeEdit.set({ type: "template", id: obj.sel.data, items: [] })
     activePage.set("edit")
   },
 

@@ -59,6 +59,7 @@
 
   let currentEvents: any[] = []
   events.subscribe(updateEvents)
+  $: if (month) updateEvents($events)
 
   function updateEvents(events: any) {
     if (!days[0]) return
@@ -94,7 +95,7 @@
   function getEvents(day: Date, currentEvents: any[]) {
     let events: any[] = []
     currentEvents.forEach((a) => {
-      if (a.to ? isBetween(a.from, a.to, copy(day)) : sameDay(a.from, day)) events.push(a)
+      if (a.to ? isBetween(new Date(a.from), new Date(a.to), copy(day)) : sameDay(new Date(a.from), day)) events.push(a)
     })
     return events
   }
@@ -197,14 +198,14 @@
     {/each}
   </div>
   <div class="bottom">
-    <Button style="flex: 1;" on:click={() => (current = new Date(year, month, 0))} center>
+    <Button style="width: 200px;" on:click={() => (current = new Date(year, month, 0))} center>
       <Icon id="previous" />
     </Button>
     <span style="text-transform: capitalize;align-self: center;padding: 0 10px;">
       {$dictionary.month?.[current.getMonth() + 1]}
       {current.getFullYear()}
     </span>
-    <Button style="flex: 1;" on:click={() => (current = new Date(year, month, 33))} center>
+    <Button style="width: 200px;" on:click={() => (current = new Date(year, month, 33))} center>
       <Icon id="next" />
     </Button>
   </div>
@@ -295,6 +296,7 @@
 
   .bottom {
     display: flex;
+    justify-content: space-between;
     background-color: var(--primary-darkest);
   }
 </style>

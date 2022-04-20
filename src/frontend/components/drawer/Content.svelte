@@ -58,7 +58,7 @@
   {:else if id === "overlays"}
     <Overlays {active} />
   {:else if id === "templates"}
-    <Templates />
+    <Templates {active} />
   {:else if id === "audio"}
     <Center>WIP</Center>
   {:else if id === "scripture"}

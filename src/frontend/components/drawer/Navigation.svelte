@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Category } from "../../../types/Tabs"
-  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, overlays, shows, templateCategories, webFavorites } from "../../stores"
+  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, overlays, shows, templateCategories, templates, webFavorites } from "../../stores"
   import { keysToID, sortObject } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
@@ -43,7 +43,12 @@
         ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
       ]
     } else if (id === "templates") {
-      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, { id: "SEPERATOR", name: "" }, ...(sortObject(keysToID($templateCategories), "name") as Button[])]
+      buttons = [
+        { id: "all", name: "category.all", default: true, icon: "all" },
+        { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
+        { id: "SEPERATOR", name: "" },
+        ...(sortObject(keysToID($templateCategories), "name") as Button[]),
+      ]
     } else if (id === "audio") {
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, { id: "SEPERATOR", name: "" }, ...(sortObject(keysToID($audioFolders), "name") as Button[])]
     } else if (id === "scripture") {
@@ -93,6 +98,10 @@
         })
       } else if (id === "overlays") {
         Object.values($overlays).forEach((b: any) => {
+          if (a.id === "all" || b.category === a.id || (b.category === null && a.id === "unlabeled")) length[a.id]++
+        })
+      } else if (id === "templates") {
+        Object.values($templates).forEach((b: any) => {
           if (a.id === "all" || b.category === a.id || (b.category === null && a.id === "unlabeled")) length[a.id]++
         })
       }
@@ -181,6 +190,15 @@
   {:else if id === "overlays"}
     <div class="tabs">
       <Button on:click={() => history({ id: "newOverlaysCategory" })} center title={$dictionary.new?.category}>
+        <Icon id="all" right />
+        <span style="color: var(--secondary);">
+          <T id="new.category" />
+        </span>
+      </Button>
+    </div>
+  {:else if id === "templates"}
+    <div class="tabs">
+      <Button on:click={() => history({ id: "newTemplatesCategory" })} center title={$dictionary.new?.category}>
         <Icon id="all" right />
         <span style="color: var(--secondary);">
           <T id="new.category" />

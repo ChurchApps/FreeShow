@@ -175,15 +175,15 @@
           <div class="event" style="color: {event.color || 'unset'}" on:click={() => edit(event)}>
             {#if event.time}
               <span class="time">
-                {#if sameDay(event.from, current)}
-                  {getTime(event.from)}
+                {#if sameDay(new Date(event.from), current)}
+                  {getTime(new Date(event.from))}
                 {/if}
-                {#if !sameDay(event.from, current) || event.from.getTime() - event.to.getTime() > 0}
-                  {#if sameDay(event.to, current)}
-                    {#if sameDay(event.from, current)}
+                {#if !sameDay(new Date(event.from), current) || new Date(event.from).getTime() - new Date(event.to).getTime() > 0}
+                  {#if sameDay(new Date(event.to), current)}
+                    {#if sameDay(new Date(event.from), current)}
                       -
                     {/if}
-                    {getTime(event.to)}
+                    {getTime(new Date(event.to))}
                   {/if}
                 {/if}
               </span>

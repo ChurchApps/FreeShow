@@ -25,8 +25,8 @@
   const inputChange = (e: any, key: string) => update(key, e.target.value)
 
   function update(id: string, value: any) {
-    let newData: any = { ...editSlide?.settings }
-    newData[id] = value
+    let newData: any = { style: { ...editSlide?.settings } }
+    newData.style[id] = value
 
     history({
       id: "slideStyle",
