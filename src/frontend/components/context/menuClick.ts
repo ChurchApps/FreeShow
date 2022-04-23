@@ -12,6 +12,7 @@ import {
   projectView,
   saved,
   selected,
+  shows,
   showsCache,
   stageShows,
 } from "../../stores"
@@ -108,7 +109,7 @@ const actions: any = {
     }
   },
   remove_slide: (obj: any) => {
-    let location: any = { page: "show", show: get(activeShow)!, layout: _show("active").get("settings.activeLayout") }
+    let location: any = { page: get(activePage) as any, show: get(activeShow)!, layout: _show("active").get("settings.activeLayout") }
     // console.log(location)
     let ref = _show(location.show.id).layouts([location.layout]).ref()[0]
     let parents: any[] = []
@@ -132,7 +133,7 @@ const actions: any = {
       history({
         id: "deleteSlides",
         newData: { ids: childs },
-        location: { page: "show", show: get(activeShow)! },
+        location: { page: get(activePage) as any, show: get(activeShow)! },
       })
     }
   },
@@ -156,8 +157,9 @@ const actions: any = {
       project: "deleteProject",
       stage: "deleteStage",
       category: "deleteShowsCategory",
+      player: "deletePlayerVideo",
     }
-    obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id], newData: { id: a.id || a } }))
+    obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
   },
   duplicate: (obj: any) => {
     if (obj.sel.id === "show" || obj.sel.id === "show_drawer") {
@@ -217,7 +219,14 @@ const actions: any = {
   private: (obj: any) => {
     showsCache.update((a: any) => {
       obj.sel.data.forEach((b: any) => {
-        a[b.id].private = !obj.enabled
+        a[b.id].private = !a[b.id].private
+      })
+      return a
+    })
+    shows.update((a: any) => {
+      obj.sel.data.forEach((b: any) => {
+        if (a[b.id].private) delete a[b.id].private
+        else a[b.id].private = true
       })
       return a
     })

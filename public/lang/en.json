@@ -20,7 +20,10 @@
     "help": "Want to help translate or request a feature? Send a mail to",
     "assets": "Assets used",
     "libraries": "Libraries used",
-    "thanks": "Thanks to"
+    "thanks": "Thanks to",
+    "new_update": "New update available",
+    "download": "Go to freeshow.app to download",
+    "changes": "What's new"
   },
   "tooltip": {
     "project": "Create a new project where you can add and arange shows.",
@@ -103,7 +106,11 @@
     "_loop": "Loop",
     "play": "Play",
     "pause": "Pause",
-    "show": "Show"
+    "show": "Show",
+    "all": "Folders, images & videos",
+    "folder": "Only folders",
+    "image": "Only images",
+    "video": "Only videos"
   },
   "menu": {
     "show": "Show",
@@ -132,6 +139,7 @@
     "media": "No media in show",
     "stage_show": "No stage show",
     "stage_shows": "No stage shows",
+    "player": "No videos",
     "groups": "No groups",
     "events": "No events",
     "text": "Type something",

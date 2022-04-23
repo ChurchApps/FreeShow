@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide, Template } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeEdit, activePage, activeStage, overlayCategories, shows, templateCategories, undoHistory } from "../../stores"
+import { activeEdit, activePage, activeStage, notFound, overlayCategories, playerVideos, shows, templateCategories, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -66,6 +66,7 @@ export type HistoryIDs =
   | "removeSlides"
   | "deleteSlides"
   | "deleteGroups"
+  | "deletePlayerVideo"
   // add
   | "addShow"
   | "addLayout"
@@ -576,6 +577,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
         if (!obj.newData.slide && !obj.newData.slides) {
           let isParent: boolean = true
+          let items = []
           // add as child
           // TODO: add by template
           if (ref.length && !obj.newData.parent) {
@@ -592,7 +594,30 @@ export function history(obj: History, undo: null | boolean = null) {
 
             _show(showID).slides([parent.id]).set({ key: "children", value })
           }
-          let slide: any = { group: isParent ? "" : null, color: null, settings: {}, notes: "", items: [] }
+          console.log(ref.length && index)
+          if (ref.length && index - 1 > 0) {
+            items = JSON.parse(
+              JSON.stringify(
+                _show(showID)
+                  .slides([ref[index - 1].id])
+                  .items()
+                  .get()[0]
+              )
+            )
+            // remove values
+            items = items.map((item: any) => {
+              if (item.lines) {
+                item.lines.forEach((line: any, i: number) => {
+                  line.text?.forEach((_text: any, j: number) => {
+                    item.lines[i].text[j].value = ""
+                  })
+                })
+              }
+              return item
+            })
+          }
+          console.log(items)
+          let slide: any = { group: isParent ? "" : null, color: null, settings: {}, notes: "", items }
           if (isParent) slide.globalGroup = "verse"
           // globalGroup = getGroup(obj.location!.show!.id, obj.location!.layout!)
           _show(showID).slides([id]).add([slide], isParent)
@@ -607,12 +632,13 @@ export function history(obj: History, undo: null | boolean = null) {
           slides.forEach((slide: any, i: number) => {
             let id: string = ""
             // check if already exists!!
-            _show(showID)
-              .slides()
-              .get()
-              .forEach((a) => {
-                if (JSON.stringify(a) === JSON.stringify(slide)) id = slide.id
-              })
+            if (!obj.newData.unique)
+              _show(showID)
+                .slides()
+                .get()
+                .forEach((a) => {
+                  if (JSON.stringify(a) === JSON.stringify(slide)) id = slide.id
+                })
             // add custom
             if (!id.length) id = _show(showID).slides().add([slide], true)
 
@@ -851,6 +877,24 @@ export function history(obj: History, undo: null | boolean = null) {
         }
       }
       break
+    case "deletePlayerVideo":
+      playerVideos.update((a) => {
+        if (undo) {
+          a[obj.newData.id] = obj.newData.data
+          if (get(notFound).show.includes(obj.newData.id)) {
+            notFound.update((a) => {
+              // TODO: not working if multiple undos?
+              a.show.splice(a.show.indexOf(obj.newData.id), 1)
+              return a
+            })
+          }
+        } else {
+          old = { id: obj.newData.id, data: a[obj.newData.id] }
+          delete a[obj.newData.id]
+        }
+        return a
+      })
+      break
 
     // ADD
     case "addShow":
@@ -878,6 +922,14 @@ export function history(obj: History, undo: null | boolean = null) {
         // _show(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
         _show(showID).layouts().add(obj.newData.id, obj.newData.layout)
         _show(showID).set({ key: "settings.activeLayout", value: obj.newData.id })
+
+        // set active layout in project
+        if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!].shows[get(activeShow)!.index!]) {
+          projects.update((a) => {
+            a[get(activeProject)!].shows[get(activeShow)!.index!].layout = obj.newData.id
+            return a
+          })
+        }
       }
       // showsCache.update((a) => {
       //   if (undo) {

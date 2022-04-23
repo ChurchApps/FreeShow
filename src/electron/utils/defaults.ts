@@ -49,8 +49,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   audioFolders: {},
   webFavorites: {},
   playerVideos: {
-    oceans: { name: "Oceans - Hillsong UNITED", type: "youtube", id: "dy9nwe9_xzw" },
     chosen: { name: "The Chosen Trailer", type: "youtube", id: "X-AJdKty74M" },
+    jesus: { name: "Jesus, Only Jesus", type: "vimeo", id: "426363743" },
   },
   resized: {
     leftPanel: 300,

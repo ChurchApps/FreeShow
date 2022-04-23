@@ -62,9 +62,10 @@
   }
 
   function keydown(e: any) {
-    if (e.key === " ") {
+    if (e.target.closest("input") || e.target.closest(".edit")) return
+    if (e.key === " " && show) {
       e.preventDefault()
-      if (show!.type === "video" || show!.type === "player") onVideoClick(e)
+      if ((show!.type === "video" && $outBackground?.path !== show.id) || (show!.type === "player" && $outBackground?.id !== show.id)) onVideoClick(e)
       else if (show!.type === "image" && !$outLocked) outBackground.set({ path: show?.id, filter })
     }
   }
@@ -119,7 +120,7 @@
               <!-- TODO: info about: CTRL click to play at current pos -->
               <HoverButton icon="play" size={10} on:click={onVideoClick} title={$dictionary.media?.play}>
                 {#if show.type === "player"}
-                  <Player id={show.id} bind:videoData bind:videoTime />
+                  <Player id={show.id} bind:videoData bind:videoTime preview />
                 {:else}
                   <video
                     style="width: 100%;height: 100%;filter: {filter};"
@@ -137,12 +138,17 @@
               </HoverButton>
             </div>
             <div class="buttons" style="display: flex;">
-              <Button style="flex: 0" center title={videoData.paused ? "Play" : "Paused"} on:click={() => (videoData.paused = !videoData.paused)}>
-                <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
+              <Button style="flex: 0" center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => (videoData.paused = !videoData.paused)}>
+                <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
               </Button>
               <VideoSlider bind:videoData bind:videoTime />
-              <Button style="flex: 0" center title={videoData.muted ? "Unmute" : "Mute"} on:click={() => (videoData.muted = !videoData.muted)}>
-                <Icon id={videoData.muted ? "muted" : "volume"} size={1.2} />
+              <Button
+                style="flex: 0"
+                center
+                title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
+                on:click={() => (videoData.muted = !videoData.muted)}
+              >
+                <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
               </Button>
             </div>
           {/key}

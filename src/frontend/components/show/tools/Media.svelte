@@ -27,7 +27,7 @@
       backgrounds = []
       bgs = []
       layoutBackgrounds.forEach((a: any) => {
-        let id = show.media[a].path!
+        let id = show.media[a].path || show.media[a].id!
 
         let type = "image"
         const [extension] = id.substring(id.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]
@@ -57,7 +57,7 @@
 <div class="main">
   {#if bgs.length}
     {#each bgs as background}
-      <SelectElem id="media" data={{ path: background.path }} draggable>
+      <SelectElem id="media" data={{ ...background }} draggable>
         <div class="item" title={background.path} class:active={$outBackground?.path === background.path}>
           <HoverButton
             style="flex: 2;height: 50px;"
@@ -78,7 +78,7 @@
           {#if background.type === "video"}
             <!-- TODO: mute for each bakcground........ -->
             <Button style="flex: 0" center title={background.muted !== false ? "Unmute" : "Mute"} on:click={() => setBG(background.id, "muted", background.muted === false)}>
-              <Icon id={background.muted !== false ? "muted" : "volume"} size={1.2} />
+              <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
             </Button>
             <Button style="flex: 0" center title={$dictionary.media?._loop} on:click={() => setBG(background.id, "loop", background.loop === false)}>
               <Icon id="loop" white={background.loop === false} size={1.2} />

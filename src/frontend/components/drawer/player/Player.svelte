@@ -6,6 +6,7 @@
   import Button from "../../inputs/Button.svelte"
   import HiddenInput from "../../inputs/HiddenInput.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
+  import Center from "../../system/Center.svelte"
   import SelectElem from "../../system/SelectElem.svelte"
 
   export let active: any
@@ -40,29 +41,38 @@
       return a
     })
   }
+
+  $: videos = Object.entries($playerVideos)
+    .map(([id, video]: any) => ({ rid: id, ...video }))
+    .filter((a) => a.type === active)
+    .sort((a, b) => (a.name < b.name ? -1 : 1))
 </script>
 
 <!-- TODO: loading -->
 <div class="main">
   <div class="scroll">
-    <div class="content">
-      {#each Object.entries($playerVideos) as [id, video]}
-        {#if video.type === active}
-          <SelectElem id="player" data={id} draggable>
+    <div class="content" style="height: 100%;">
+      {#if videos.length}
+        {#each videos as video}
+          <SelectElem id="player" data={video.rid} draggable>
             <Button
               class="context #player_button"
-              on:click={() => activeShow.set({ id, type: "player" })}
-              on:dblclick={() => outBackground.set({ id, type: "player" })}
-              active={$activeShow?.id === id}
+              on:click={() => activeShow.set({ id: video.rid, type: "player" })}
+              on:dblclick={() => outBackground.set({ id: video.rid, type: "player" })}
+              active={$activeShow?.id === video.rid}
               bold={false}
               border
             >
-              <HiddenInput value={video.name || ""} id={"player_" + id} on:edit={(e) => changeName(e.detail.value, id)} />
+              <HiddenInput value={video.name || ""} id={"player_" + video.rid} on:edit={(e) => changeName(e.detail.value, video.rid)} />
               <span style="opacity: 0.5;">{video.id}</span>
             </Button>
           </SelectElem>
-        {/if}
-      {/each}
+        {/each}
+      {:else}
+        <Center faded>
+          <T id="empty.player" />
+        </Center>
+      {/if}
     </div>
   </div>
   <div class="add">

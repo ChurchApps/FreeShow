@@ -6,6 +6,7 @@
   export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
   export let videoTime = 0
   export let id
+  export let preview
 
   export let title
   export let startAt = 0
@@ -35,7 +36,7 @@
     // console.log("READY")
     // console.log(e.detail.target)
     player = e.detail.target
-    if (videoData.muted) player.mute()
+    if (videoData.muted || (!preview && $currentWindow !== "output")) player.mute()
     // videoData.paused = false
     videoData.duration = player.getDuration()
     videoTime = startAt
@@ -52,7 +53,7 @@
         videoData.paused = false
         loaded = true
         // if (!$outputWindow) window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
-      }, 100)
+      }, 300)
     }, 500)
   }
 
@@ -68,7 +69,7 @@
       if (videoData.paused) player.pauseVideo()
       else player.playVideo()
       if (videoData.muted) player.mute()
-      else player.unMute()
+      else if ($currentWindow === "output" || preview) player.unMute()
       // player.setLoop(videoData.loop)
     }
   }
@@ -77,15 +78,19 @@
 
   // $: if ($outputWindow && player && videoData.paused) player.seekTo(videoTime)
 
+  let loopStop = false
   function change(e) {
     // ended (0), playing (1), paused (2), video cued (5) or unstarted (-1).
-    if ($currentWindow) return
+    if ($currentWindow || loopStop) return
+    loopStop = true
 
     if (loaded) {
       videoData.paused = player.getPlayerState() === 1 ? false : true
       videoTime = player.getCurrentTime()
     }
     videoData.duration = player.getDuration()
+
+    setTimeout(() => (loopStop = false), 50)
   }
 
   // $: if (videoTime) player.seekTo()

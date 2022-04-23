@@ -9,7 +9,7 @@ import { _show } from "./shows"
 // TODO: file...
 const areas: any = {
   all_slides: ["template"],
-  slides: ["media", "overlay", "sound", "camera"], // group
+  slides: ["media", "overlay", "sound", "camera", "show"], // group
   // slide: ["overlay", "sound", "camera"], // "media",
   // projects: ["folder"],
   project: ["show_drawer", "media", "player"],
@@ -20,7 +20,7 @@ const areas: any = {
 const areaChildren: any = {
   projects: ["folder"],
   project: ["show", "media", "show_drawer", "player"],
-  slides: ["slide", "group", "global_group", "media"],
+  slides: ["slide", "group", "global_group", "camera", "media", "show"],
   all_slides: [],
   navigation: ["show", "show_drawer"],
 }
@@ -95,7 +95,7 @@ export function ondrop(e: any, id: string) {
           .map((a: any) => {
             let name: string = a.name.includes(".") ? a.name : a.path.substring(a.path.lastIndexOf("\\") + 1)
             const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
-            let type = "image"
+            let type = a.type || "image"
             if (get(videoExtensions).includes(extension.substring(1))) type = "video"
             let out: any = { name: null, id: a.path, type }
             if (sel.id === "files" && !files[id].includes(extension.substring(1))) out = null
@@ -118,7 +118,8 @@ export function ondrop(e: any, id: string) {
     case "slide":
     case "slides":
       location = { page: "show", show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout }
-      if (sel.id === "media" || sel.id === "files" || sel.id === "camera") {
+      if ((sel.id === "show" && ["media", "image", "video"].includes(sel.data[0].type)) || sel.id === "media" || sel.id === "files" || sel.id === "camera") {
+        let data: any[] = sel.data
         // TODO: move multiple add to possible slides
 
         if (center) {
@@ -126,7 +127,6 @@ export function ondrop(e: any, id: string) {
 
           if (trigger?.includes("end")) index!--
           location.layoutSlide = index
-          let data: any[] = sel.data
           // check files
           if (sel.id === "files") {
             data = []
@@ -136,6 +136,7 @@ export function ondrop(e: any, id: string) {
                 data.push({ path: a.path, name: a.name, type: get(imageExtensions).includes(extension.substring(1)) ? "image" : "video" })
             })
           } else if (sel.id === "camera") data[0].type = "camera"
+          else if (!sel.data[0].name) sel.data[0].name = sel.data[0].path
           newData = data[0]
         } else {
           historyID = "newSlide"
@@ -230,8 +231,13 @@ export function ondrop(e: any, id: string) {
       } else if (sel.id === "overlay") {
         historyID = "changeLayout"
         location.layoutSlide = index
-        let oldLayout = get(showsCache)[get(activeShow)!.id].layouts[get(showsCache)[get(activeShow)!.id].settings.activeLayout].slides
-        let value: any[] = [...new Set([...(oldLayout[index!].overlays || []), ...sel.data])]
+        let ref = _show("active").layouts("active").ref()[0][index!]
+        let slide = _show("active")
+          .layouts("active")
+          .slides([ref.type === "parent" ? ref.index : ref.parent.index])
+          .get()[0][0]
+        if (ref.type === "child") slide = slide.children[ref.index]
+        let value: any[] = [...new Set([...(slide.overlays || []), ...sel.data])]
         newData = { key: "overlays", value }
       }
       break

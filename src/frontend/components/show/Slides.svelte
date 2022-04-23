@@ -4,6 +4,7 @@
 
   import { activeShow, outLocked, outSlide, showsCache, slidesOptions } from "../../stores"
   import { GetLayout } from "../helpers/get"
+  import { history } from "../helpers/history"
   import { updateOut } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
@@ -83,6 +84,11 @@
       if (index >= 0) endIndex = index
       else endIndex = null
     } else endIndex = null
+  }
+
+  $: if (id && currentShow?.settings.template) {
+    // update show by its template
+    history({ id: "template", newData: { template: currentShow.settings.template }, location: { page: "show", show: $activeShow! } })
   }
 </script>
 

@@ -93,7 +93,11 @@
             style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}"
             on:click={(e) => {
               if (!e.ctrlKey && !e.metaKey && $activeShow) {
-                history({ id: "newSlide", newData: { slide }, location: { page: "show", show: $activeShow, layout: $showsCache[$activeShow.id].settings.activeLayout } })
+                history({
+                  id: "newSlide",
+                  newData: { slide, unique: true },
+                  location: { page: "show", show: $activeShow, layout: $showsCache[$activeShow.id].settings.activeLayout },
+                })
               }
             }}
           >

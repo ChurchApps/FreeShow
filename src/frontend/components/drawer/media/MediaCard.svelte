@@ -28,7 +28,7 @@
     }
   }
 
-  let index: number = allFiles.findIndex((a) => a === path)
+  $: index = allFiles.findIndex((a) => a === path)
 
   function click(e: any) {
     if (!e.ctrlKey && !e.metaKey) activeFile = index
@@ -36,7 +36,7 @@
   $: if (activeFile !== null && allFiles[activeFile] === path) activeShow.set({ id: path, name, type })
 
   function dblclick(e: any) {
-    if (!e.ctrlKey && !e.metaKey && !$outLocked) outBackground.set({ path: path })
+    if (!e.ctrlKey && !e.metaKey && !$outLocked) outBackground.set({ path: path, type })
   }
 
   // TODO: Enter play media

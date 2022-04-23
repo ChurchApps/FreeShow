@@ -13,6 +13,7 @@ export interface Project {
 }
 
 export interface ProjectShowRef extends ShowRef {
+  layout?: string
   muted?: boolean
   loop?: boolean
   filter?: any[]

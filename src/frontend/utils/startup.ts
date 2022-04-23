@@ -41,6 +41,7 @@ import { updateSettings } from "./updateSettings"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { convertPDF } from "../converters/pdf"
 import { convertText } from "../converters/txt"
+import { checkForUpdates } from "./checkForUpdates"
 
 export function startup() {
   if (!get(currentWindow)) {
@@ -78,7 +79,10 @@ export function startup() {
 
 const receiveMAIN: any = {
   GET_OS: (a: any) => os.set(a),
-  VERSION: (a: any) => version.set(a),
+  VERSION: (a: any) => {
+    version.set(a)
+    checkForUpdates(a)
+  },
   DISPLAY: (a: any) => outputDisplay.set(a),
   GET_PATHS: (a: any) => createData(a),
   MENU: (a: any) => menuClick(a),

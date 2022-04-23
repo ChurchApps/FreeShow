@@ -11,12 +11,20 @@
   export let data: null | string = null
   export let index: null | number = null
   $: type = show.type || "show"
-  $: name = type === "show" ? $shows[show.id]?.name : type === "player" ? $playerVideos[id].name : show.name
+  $: name = type === "show" ? $shows[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
   // export let page: "side" | "drawer" = "drawer"
   export let match: null | number = null
   // TODO: svelte animate
   // search
   $: style = match !== null ? `background: linear-gradient(to right, var(--secondary-opacity) ${match}%, transparent ${match}%);` : ""
+
+  function setNotFound(id: string) {
+    notFound.update((a) => {
+      a.show.push(id)
+      return a
+    })
+    return id
+  }
 
   $: newName = name === null && (type === "image" || type === "video") ? getPathName(id) : name || ""
 
@@ -66,7 +74,22 @@
 
     if (!e.ctrlKey && !e.metaKey && !active && !e.target.closest("input")) {
       let show: any = { id, type }
-      if (pos !== null) show.index = pos
+      if (pos !== null) {
+        show.index = pos
+
+        // set active layout in project
+        if ($projects[$activeProject!].shows[pos].layout) {
+          showsCache.update((a) => {
+            a[id].settings.activeLayout = $projects[$activeProject!].shows[pos!].layout!
+            return a
+          })
+        } else if ($showsCache[id]) {
+          projects.update((a) => {
+            a[$activeProject!].shows[pos!].layout = $showsCache[id].settings.activeLayout
+            return a
+          })
+        }
+      }
       activeShow.set(show)
     }
   }
@@ -78,7 +101,7 @@
       if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length)
         outSlide.set({ id, layout: $showsCache[id].settings.activeLayout, index: 0 })
       else if (type === "image" || type === "video") {
-        let out: any = { path: id, muted: show.muted || true, loop: show.loop || false, type: "media" }
+        let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: "media" }
         if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
         outBackground.set(out)
       } else if (type === "player") outBackground.set({ id, type: "player" })
@@ -96,7 +119,7 @@
   <Button on:click={click} on:dblclick={doubleClick} {active} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
     <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
       {#if iconID}
-        <Icon id={iconID} {custom} />
+        <Icon id={iconID} {custom} right />
       {/if}
       <!-- <p style="margin: 5px;">{newName}</p> -->
       <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} />

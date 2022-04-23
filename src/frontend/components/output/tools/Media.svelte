@@ -35,18 +35,27 @@
     <Button
       style="flex: 0"
       center
-      title={videoData.paused ? "Play" : "Paused"}
+      title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause}
       disabled={$outLocked}
       on:click={() => {
         videoData.paused = !videoData.paused
         sendToOutput()
       }}
     >
-      <Icon id={videoData.paused ? "play" : "pause"} size={1.2} />
+      <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
     </Button>
     <VideoSlider disabled={$outLocked} bind:videoData bind:videoTime toOutput />
-    <Button style="flex: 0" center title={videoData.muted ? "Unmute" : "Mute"} disabled={$outLocked} on:click={() => (videoData.muted = !videoData.muted)}>
-      <Icon id={videoData.muted ? "muted" : "volume"} size={1.2} />
+    <Button
+      style="flex: 0"
+      center
+      title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
+      disabled={$outLocked}
+      on:click={() => {
+        videoData.muted = !videoData.muted
+        sendToOutput()
+      }}
+    >
+      <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
     </Button>
     <Button
       style="flex: 0"

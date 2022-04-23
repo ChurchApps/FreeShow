@@ -15,8 +15,10 @@
   let list: any[] = []
   $: if (showsList.length) loadTimers()
   async function loadTimers() {
+    list = []
     showsList.forEach(async (a) => {
-      list = [...list, ...(await getTimers(a))]
+      let timers = await getTimers(a)
+      if (timers) list = [...list, ...timers]
     })
   }
 

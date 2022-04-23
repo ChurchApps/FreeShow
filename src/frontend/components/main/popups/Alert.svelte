@@ -10,10 +10,10 @@
 
 <p>
   {#key msg}
-    {#if msg?.includes(".")}
+    {#if msg?.length - msg?.replaceAll(".", "").length === 1}
       <T id={msg} />
     {:else}
-      {msg}
+      {@html msg}
     {/if}
   {/key}
 </p>

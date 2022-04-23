@@ -1,6 +1,6 @@
 <script lang="ts">
   import { uid } from "uid"
-  import { activePopup, activeShow, dictionary, showsCache, slidesOptions } from "../../stores"
+  import { activePopup, activeProject, activeShow, dictionary, projects, showsCache, slidesOptions } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -26,22 +26,34 @@
   function changeName(e: any) {
     history({ id: "changeLayoutKey", newData: { key: "name", value: e.detail.value }, location: { page: "show", show: $activeShow!, layout: activeLayout } })
   }
+
+  function setLayout(id: string) {
+    showsCache.update((s) => {
+      s[active].settings.activeLayout = id
+      return s
+    })
+
+    // set active layout in project
+    if (
+      ($activeShow?.type === undefined || $activeShow?.type === "show") &&
+      $activeShow?.index !== undefined &&
+      $activeProject &&
+      $projects[$activeProject].shows[$activeShow.index]
+    ) {
+      projects.update((a) => {
+        a[$activeProject!].shows[$activeShow!.index!].layout = id
+        return a
+      })
+    }
+  }
 </script>
 
 <div>
   {#if layouts}
-    <span style="display: flex;">
+    <span style="display: flex;overflow-x: auto;">
       {#each Object.entries(layouts) as [id, layout]}
         <SelectElem id="layout" data={id} borders="edges" trigger="row" draggable>
-          <Button
-            class="context #layout"
-            on:click={() =>
-              showsCache.update((s) => {
-                s[active].settings.activeLayout = id
-                return s
-              })}
-            active={activeLayout === id}
-          >
+          <Button class="context #layout" on:click={() => setLayout(id)} active={activeLayout === id}>
             <HiddenInput value={layout.name} id={"layout_" + id} on:edit={changeName} />
           </Button>
         </SelectElem>

@@ -40,8 +40,11 @@ app.on("ready", () => {
   screen.on("display-added", (_e: any, display) => {
     if (!outputWindow?.isEnabled()) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
   })
-  screen.on("display-removed", (_e: any, display) => {
-    if (outputScreenId === display.id.toString()) {
+  screen.on("display-removed", (_e: any) => {
+    let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
+    let mainMonitor = screen.getDisplayNearestPoint({ x: mainWindow!.getBounds().x, y: mainWindow!.getBounds().y })
+    if (outputMonitor !== mainMonitor) {
+      // if (outputScreenId === display.id.toString()) {
       outputWindow?.hide()
       toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
     }
@@ -100,7 +103,8 @@ const createWindow = () => {
     autoHideMenuBar: isProd && process.platform === "win32",
     backgroundColor: "#2d313b",
     show: !isProd,
-    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
+    titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
+    trafficLightPosition: { x: 10, y: 12 },
     webPreferences: {
       // beta dev tools
       devTools: !isProd || Number(app.getVersion()[0]) === 0,
@@ -377,7 +381,7 @@ ipcMain.on(MAIN, (e, msg) => {
 // OUTPUT WINDOW
 
 let displays: Display[] = []
-let outputScreenId: string | null = null
+// let outputScreenId: string | null = null
 
 // create output
 ipcMain.on(OUTPUT, (_e, msg: any) => {
@@ -397,14 +401,14 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
           }) || null
         if (outputScreen) toApp(MAIN, { channel: "SET_SCREEN", data: outputScreen })
       }
-      outputScreenId = outputScreen ? outputScreen.id.toString() : null
+      // outputScreenId = outputScreen ? outputScreen.id.toString() : null
 
       if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
 
-      if (outputScreen && outputScreen.bounds.x - mainWindow!.getBounds().x > 10 && outputScreen.bounds.y - mainWindow!.getBounds().y > 10) {
+      if (outputScreen && (msg.data.force || (outputScreen.bounds.x - mainWindow!.getBounds().x > 10 && outputScreen.bounds.y - mainWindow!.getBounds().y > 10))) {
         if (JSON.stringify(outputWindow?.getBounds()) !== JSON.stringify(outputScreen.bounds)) outputWindow?.setBounds(outputScreen.bounds)
         // TODO: output task bar
-        outputWindow?.setVisibleOnAllWorkspaces(true)
+        // outputWindow?.setVisibleOnAllWorkspaces(true)
         outputWindow?.showInactive()
         // outputWindow?.show()
         // outputWindow?.maximize()
@@ -471,7 +475,7 @@ function createOutputWindow() {
 
   outputWindow.removeMenu() // hide menubar
   outputWindow.setAlwaysOnTop(true, "pop-up-menu", 1)
-  outputWindow.setVisibleOnAllWorkspaces(true)
+  // outputWindow.setVisibleOnAllWorkspaces(true)
 
   const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
 
@@ -486,6 +490,7 @@ function createOutputWindow() {
   if (!isProd) outputWindow.webContents.openDevTools()
 
   outputWindow.on("closed", () => (outputWindow = null))
+  outputWindow.on("ready-to-show", () => mainWindow?.focus())
 }
 
 // LISTENERS

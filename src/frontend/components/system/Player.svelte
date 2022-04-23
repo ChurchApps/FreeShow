@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { currentWindow, playerVideos } from "../../stores"
+  import { playerVideos } from "../../stores"
+  import Vimeo from "../drawer/player/Vimeo.svelte"
   import YouTube from "../drawer/player/YouTube.svelte"
 
   export let id: string
+  export let preview: boolean = false
 
   $: video = $playerVideos[id]
   $: console.log(video?.id)
@@ -11,10 +13,10 @@
   export let videoTime: number = 0
   export let title: string = ""
   export let startAt: number = 0
-
-  if ($currentWindow) videoData.muted = true
 </script>
 
 {#if video?.type === "youtube"}
-  <YouTube id={video.id} bind:videoData bind:videoTime bind:title {startAt} />
+  <YouTube id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} />
+{:else if video?.type === "vimeo"}
+  <Vimeo id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} />
 {/if}

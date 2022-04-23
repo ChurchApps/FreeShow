@@ -20,7 +20,10 @@
     "help": "Vil du hjelpe med å oversette eller foreslå en funksjon? Send en e-post til",
     "assets": "Ressurser brukt",
     "libraries": "Biblioteker brukt",
-    "thanks": "Takk til"
+    "thanks": "Takk til",
+    "new_update": "Ny oppdatering tilgjengelig",
+    "download": "Gå til freeshow.app for å laste ned",
+    "changes": "Hva er nytt"
   },
   "tooltip": {
     "project": "Opprett ett nytt prosjekt hvor du kan legge til og organisere show.",
@@ -100,10 +103,14 @@
     "timer": "Fjern nedtelling"
   },
   "media": {
-    "_loop": "Loop",
+    "_loop": "Gjenta",
     "play": "Spill av",
     "pause": "Sett på pause",
-    "show": "Vis"
+    "show": "Vis",
+    "all": "Mapper, bilder og videoer",
+    "folder": "Bare mapper",
+    "image": "Bare bilder",
+    "video": "Bare videoer"
   },
   "menu": {
     "show": "Presenter",
@@ -132,6 +139,7 @@
     "media": "Ingen medier i show",
     "stage_show": "Ingen sceneshow",
     "stage_shows": "Ingen sceneshow",
+    "player": "Ingen videoer",
     "groups": "Ingen grupper",
     "events": "Ingen arrangement",
     "text": "Skriv noe",

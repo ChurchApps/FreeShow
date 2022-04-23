@@ -83,7 +83,7 @@
   $: {
     for (let i = 0; i < 7; i++) {
       let index = sundayFirstDay ? (i === 0 ? 7 : i) : i + 1
-      weekdays.push($dictionary.weekday?.[index])
+      weekdays.push($dictionary.weekday?.[index] || "")
     }
   }
 
@@ -104,6 +104,7 @@
     day = copy(day)
 
     if (e.ctrlKey || e.metaKey) {
+      // TODO: clicking after creation will add duplicate
       activeDays.update((a) => {
         if (a.includes(day.getTime())) {
           if (a.length > 1) a.splice(a.indexOf(day.getTime()), 1)

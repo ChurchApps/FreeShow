@@ -13,7 +13,7 @@
   import MediaOutput from "./MediaOutput.svelte"
 
   export let video: any = null
-  export let videoData: any = { duration: 0, paused: true, muted: true, loop: false }
+  export let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
   export let videoTime: number = 0
   export let title: string = ""
   export let mirror: boolean = false
@@ -34,7 +34,6 @@
     VIDEO_DATA: (a: any) => {
       videoData = a
       if (a.paused && a.time) videoTime = a.time
-      videoData.muted = true
     },
     VIDEO_TIME: (a: number) => {
       // if (!videoData.paused) {
@@ -44,9 +43,13 @@
       // }
       videoTime = a
     },
+    BACKGROUND: (a: any) => {
+      if (a?.muted) videoData.muted = a.muted
+      if (a?.loop) videoData.loop = a.loop
+    },
   }
 
-  if ($currentWindow || mirror) receive(OUTPUT, receiveOUTPUT)
+  if ($currentWindow === "output" || mirror) receive(OUTPUT, receiveOUTPUT)
 
   $: currentLayout = $outSlide ? _show($outSlide.id).layouts([$outSlide.layout]).ref()[0] : []
   $: currentSlide = $outSlide ? _show($outSlide.id).slides([currentLayout![$outSlide.index].id]).get()[0] : null

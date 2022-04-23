@@ -193,7 +193,7 @@
     overflow-y: hidden;
   }
   .top .tabs span {
-    padding-left: 8px;
+    margin-left: 0.5em;
   }
 
   .search {
