@@ -15,7 +15,7 @@
     <Button on:click={() => (active = tab[0])} active={active === tab[0]} disabled={tab[1].disabled} title={$dictionary.tooltip?.[tab[0]]} dark center>
       <Icon id={tab[1].icon} />
       {#if labels}
-        <span style="padding-left: 10px;">
+        <span style="margin-left: 0.5em;">
           <T id={tab[1].name} />
         </span>
       {/if}

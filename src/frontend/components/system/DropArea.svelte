@@ -82,7 +82,7 @@
     fileOver = false
     hover = false
     console.log(files)
-    console.log(id)
+    console.log($selected.id, "=>", id)
 
     if (validateDrop(id, $selected.id, true) || files.length) ondrop(e, id)
   }}

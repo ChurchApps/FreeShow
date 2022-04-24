@@ -3,6 +3,8 @@ import { toApp } from ".."
 import { IMPORT } from "./../../types/Channels"
 import PPTX2Json from "pptx2json"
 import pdf from "pdf-poppler"
+import SqliteToJson from "sqlite-to-json"
+import sqlite3 from "sqlite3"
 
 export async function importShow(id: any, name: string, files: string[] | null, output: string | undefined) {
   if (!files?.length) return
@@ -44,5 +46,26 @@ export async function importShow(id: any, name: string, files: string[] | null, 
           console.error(err)
         })
     }
+  } else if (id === "videopsalm") {
+    let data: any[] = []
+    files.forEach((filePath) => {
+      let content = readFileSync(filePath, "utf8").toString()
+      // let name = files ? filePath.slice((filePath.lastIndexOf("\\") || filePath.lastIndexOf("/")) + 1, filePath.lastIndexOf(".")) : ""
+      data.push({ content })
+    })
+    toApp(IMPORT, { channel: id, data: data })
+  } else if (id === "easyworship") {
+    let data: any[] = []
+    files.forEach((filePath) => {
+      const exporter = new SqliteToJson({
+        client: new sqlite3.Database(filePath),
+      })
+      exporter.all((err: any, all: any) => {
+        if (!err) data.push({ content: all })
+      })
+    })
+    setTimeout(() => {
+      toApp(IMPORT, { channel: id, data: data })
+    }, 100)
   }
 }

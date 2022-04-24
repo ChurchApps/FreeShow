@@ -3,6 +3,7 @@
   import T from "../../helpers/T.svelte"
 
   export let value: string
+  export let update: any = false
 
   const TIME = 100
   let dispatch = createEventDispatcher()
@@ -10,6 +11,8 @@
 
   let content: any
   let updatedValue: string = value
+
+  $: if (update) updatedValue = value
 
   function keydown(e: any) {
     if (timeout !== null) return

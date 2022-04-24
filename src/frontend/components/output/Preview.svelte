@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { OUTPUT } from "../../../types/Channels"
+
   import type { Resolution } from "../../../types/Settings"
   import { activePage, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, presenterControllerKeys, screen } from "../../stores"
   import { nextSlide, previousSlide } from "../helpers/showActions"
@@ -71,11 +73,21 @@
 
   function keydown(e: any) {
     if ((e.ctrlKey || e.metaKey || e.altKey) && !e.metaKey && ctrlShortcuts[e.key]) ctrlShortcuts[e.key]()
-    if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow || ($activeShow?.type !== "show" && $activeShow?.type !== undefined)) return
+    if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow) return
 
-    if (shortcuts[e.key]) {
+    if (($activeShow?.type === "show" || $activeShow?.type === undefined) && shortcuts[e.key]) {
       e.preventDefault()
       shortcuts[e.key](e)
+      return
+    }
+
+    if ($outBackground?.type === "media" || $outBackground?.type === "video" || $outBackground?.type === "player") {
+      e.preventDefault()
+      if (e.key === " ") {
+        videoData.paused = !videoData.paused
+        window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+        window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+      }
     }
   }
 
@@ -139,7 +151,7 @@
         console.log($outSlide?.index)
         outTransition.set(null)
 
-        nextSlide(null)
+        nextSlide(null, false, false, true)
         // timer = { time: 0, paused: false }
       }, a.duration * 1000)
       sliderTime()

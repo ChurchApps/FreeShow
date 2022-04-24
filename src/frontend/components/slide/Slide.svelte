@@ -241,7 +241,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
               />
             {/each}
           {/if}
-          {#if layoutSlide.overlays?.length && $slidesOptions.mode !== "lyrics" && noQuickEdit}
+          {#if layoutSlide.overlays?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
             {#each layoutSlide.overlays as id}
               {#if $overlays[id]}
                 {#each $overlays[id].items as item}

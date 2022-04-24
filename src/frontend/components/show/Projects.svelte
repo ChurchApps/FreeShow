@@ -76,7 +76,7 @@
       dark
       center
       disabled={$activeProject === null}
-      title={$activeProject ? $dictionary.remote?.project + ": " + $projects[$activeProject]?.name : null}
+      title={$activeProject ? $dictionary.remote?.project + ": " + $projects[$activeProject]?.name : ""}
     >
       <Icon id="project" style="padding-right: 10px;" />
       <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject]?.name : ""}</p>
@@ -111,7 +111,7 @@
             {#each $projects[$activeProject]?.shows as show, index}
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
               <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-              <SelectElem id="show" data={{ id: show.id, index }} {fileOver} borders="edges" trigger="column" draggable>
+              <SelectElem id="show" data={{ id: show.id, index, type: show.type }} {fileOver} borders="edges" trigger="column" draggable>
                 <ShowButton id={show.id} {show} {index} class="context #{show.type ? '' : 'show'}__project" icon />
               </SelectElem>
               <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->

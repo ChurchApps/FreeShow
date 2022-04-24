@@ -15,21 +15,36 @@
 
   $: rootPath = active === "all" ? "" : active !== null ? $mediaFolders[active].path! : ""
   $: path = active === "all" ? "" : rootPath
-  $: name = rootPath === path ? (active !== "all" && active !== null ? $mediaFolders[active].name : "category.all") : path.substring(path.lastIndexOf("\\") + 1)
+  $: name =
+    rootPath === path ? (active !== "all" && active !== null ? $mediaFolders[active].name : "category.all") : path.substring((path.lastIndexOf("\\") || path.lastIndexOf("/")) + 1)
 
   // get list of files & folders
+  let prevActive: null | string = null
   $: {
-    if (active === "all") Object.values($mediaFolders).forEach((data) => window.api.send(READ_FOLDER, data.path))
-    else if (path.length) window.api.send(READ_FOLDER, path)
+    if (active === "all") {
+      if (active !== prevActive) {
+        prevActive = active
+        files = []
+        Object.values($mediaFolders).forEach((data) => window.api.send(READ_FOLDER, data.path))
+      }
+    } else if (path.length) {
+      if (path !== prevActive) {
+        prevActive = path
+        files = []
+        window.api.send(READ_FOLDER, path)
+      }
+    }
   }
 
   // receive files
   window.api.receive(READ_FOLDER, (msg: any) => {
     if (active === "all" || msg.path === path) {
-      files = msg.files
-        .filter((file: any) => extensions.includes(file.extension) || file.folder)
-        // .sort((a: any, b: any) => a.name < b.name)
-        .sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+      files.push(
+        ...msg.files
+          .filter((file: any) => extensions.includes(file.extension) || file.folder)
+          // .sort((a: any, b: any) => a.name < b.name)
+          .sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+      )
 
       filterFiles()
     }
@@ -54,7 +69,10 @@
   function filterFiles() {
     // filter files
     if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
-    else filteredFiles = files.filter((a) => (activeView === "folder" && a.folder) || (!a.folder && activeView === ($videoExtensions.includes(a.extension) ? "video" : "image")))
+    else
+      filteredFiles = files.filter(
+        (a) => (activeView === "folder" && active !== "all" && a.folder) || (!a.folder && activeView === ($videoExtensions.includes(a.extension) ? "video" : "image"))
+      )
 
     // reset arrow selector
     allFiles = [...filteredFiles.filter((a) => !a.folder).map((a) => a.path)]
@@ -99,6 +117,7 @@
   }
 
   const slidesViews: any = { grid: "list", list: "grid" }
+  const nextActiveView: any = { all: "folder", folder: "image", image: "video", video: "all" }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -136,13 +155,13 @@
     <Icon size={1.3} id="home" />
   </Button>
   <span style="flex: 1;text-align: center;">
-    <!-- {#key name} -->
-    {#if name.includes(".")}
-      <T id={name} />
-    {:else}
-      {name}
-    {/if}
-    <!-- {/key} -->
+    {#key name}
+      {#if name.includes(".")}
+        <T id={name} />
+      {:else}
+        {name}
+      {/if}
+    {/key}
   </span>
   <Button disabled={!allFiles.length || activeFile === 0} on:click={() => (activeFile = activeFile === null ? content - 1 : activeFile - 1)}>
     <Icon size={1.3} id="previous" />
@@ -152,19 +171,9 @@
     <Icon size={1.3} id="next" />
   </Button>
   <div class="seperator" />
-  <Button active={activeView === "all"} on:click={() => (activeView = "all")}>
-    <Icon size={1.3} id="all" />
+  <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
+    <Icon size={1.3} id={activeView} white={activeView === "all"} />
   </Button>
-  <Button disabled={active === "all"} active={activeView === "folder"} on:click={() => (activeView = "folder")}>
-    <Icon size={1.3} id="folder" />
-  </Button>
-  <Button active={activeView === "image"} on:click={() => (activeView = "image")}>
-    <Icon size={1.3} id="image" />
-  </Button>
-  <Button active={activeView === "video"} on:click={() => (activeView = "video")}>
-    <Icon size={1.3} id="movie" />
-  </Button>
-  <div class="seperator" />
   <Button
     on:click={() =>
       mediaOptions.update((a) => {

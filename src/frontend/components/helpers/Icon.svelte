@@ -55,7 +55,7 @@
   }
 
   svg.right {
-    padding-right: 0.8em;
+    margin-right: 0.5em;
   }
 
   svg.fill {

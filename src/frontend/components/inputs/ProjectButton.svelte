@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ID } from "../../../types/Show"
-  import { activeProject, activeShow, projects, projectView } from "../../stores"
+  import { activeProject, activeShow, projects, projectView, showsCache } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import HiddenInput from "./HiddenInput.svelte"
@@ -23,7 +23,8 @@
     // get active show pos
     if ($activeShow !== null) {
       let pos: number = -1
-      if ($activeProject) pos = $projects[$activeProject].shows.findIndex((p) => p.id === $activeShow!.id)
+      if ($activeProject)
+        pos = $projects[$activeProject].shows.findIndex((p) => p.id === $activeShow!.id && (!p.layout || $showsCache[$activeShow!.id].settings.activeLayout === p.layout))
       console.log(pos)
 
       activeShow.update((as: any) => {

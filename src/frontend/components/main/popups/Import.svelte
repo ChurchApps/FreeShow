@@ -10,10 +10,12 @@
     { name: "Text file", extensions: ["txt"], id: "txt" },
     { name: "PDF", extensions: ["pdf"], id: "pdf" },
     { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint" },
+    { name: "EasyWorship", extensions: ["db"], id: "easyworship", tutorial: "Import SongsWords.db, & Songs.db to import metadata" },
+    { name: "VideoPsalm", extensions: ["json"], id: "videopsalm", tutorial: "Find the Songbook.vpc file<br>Add .zip to the end<br>Extract & import the .json files" },
     { tba: true, name: "FreeShow", extensions: ["show", "json"], id: "freeshow" }, // show / project
-    { tba: true, name: "EasyWorship", extensions: ["ew"], id: "easyworship" },
-    { tba: true, name: "ProPresenter", extensions: ["pro"], id: "propresenter" },
-    { tba: true, name: "VideoPsalm", extensions: ["vpsa"], id: "videopsalm" },
+    { tba: true, name: "ProPresenter", extensions: ["pro6", "pro7"], id: "propresenter" },
+    { tba: true, name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },
+    { tba: true, name: "OpenSong", extensions: ["xml"], id: "opensong" },
   ]
 </script>
 
@@ -29,7 +31,10 @@
           alertMessage.set("Comming soon...")
         } else if (format.extensions) {
           send(IMPORT, [format.id], format)
-          activePopup.set(null)
+          if (format.tutorial) {
+            alertMessage.set(format.tutorial)
+            activePopup.set("alert")
+          } else activePopup.set(null)
         } else {
           // clipboard
           navigator.clipboard

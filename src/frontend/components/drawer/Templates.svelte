@@ -14,13 +14,20 @@
   export let active: string | null
 
   let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
+  let filteredTemplates: any
 
   $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings.template : null
 
-  let filteredTemplates: any
-  $: filteredTemplates = Object.keys($templates)
-    .map((id) => ({ id, ...$templates[id] }))
-    .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
+  // TODO: update templates
+  $: if ($templates || active) updateTemplates()
+  templates.subscribe(updateTemplates)
+
+  function updateTemplates() {
+    filteredTemplates = Object.keys($templates)
+      .map((id) => ({ id, ...$templates[id] }))
+      .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
+      .sort((a, b) => (a.name < b.name ? -1 : 1))
+  }
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;">

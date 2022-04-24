@@ -41,6 +41,9 @@ import { updateSettings } from "./updateSettings"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { convertPDF } from "../converters/pdf"
 import { convertText } from "../converters/txt"
+import { checkForUpdates } from "./checkForUpdates"
+import { convertVideopsalm } from "../converters/videopsalm"
+import { convertEasyWorship } from "../converters/easyworship"
 
 export function startup() {
   if (!get(currentWindow)) {
@@ -78,7 +81,10 @@ export function startup() {
 
 const receiveMAIN: any = {
   GET_OS: (a: any) => os.set(a),
-  VERSION: (a: any) => version.set(a),
+  VERSION: (a: any) => {
+    version.set(a)
+    checkForUpdates(a)
+  },
   DISPLAY: (a: any) => outputDisplay.set(a),
   GET_PATHS: (a: any) => createData(a),
   MENU: (a: any) => menuClick(a),
@@ -138,4 +144,6 @@ const receiveIMPORT: any = {
   powerpoint: (a: any) => convertPowerpoint(a),
   pdf: (a: any) => convertPDF(a),
   txt: (a: any) => convertText(a),
+  videopsalm: (a: any) => convertVideopsalm(a),
+  easyworship: (a: any) => convertEasyWorship(a),
 }

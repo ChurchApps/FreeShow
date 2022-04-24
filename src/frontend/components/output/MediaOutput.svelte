@@ -68,6 +68,8 @@
     hasLoaded = false
   }
 
+  $: console.log(mirror, videoData.muted)
+
   $: if ($outBackground) setUpdater()
   // let bg: any = null
   let oldFilter: string = ""
@@ -97,7 +99,7 @@
         bind:currentTime={videoTime}
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
-        bind:muted={videoData.muted}
+        muted={$currentWindow !== "output" ? true : videoData.muted}
         src={path}
         autoplay
         loop={videoData.loop || false}

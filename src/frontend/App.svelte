@@ -68,7 +68,7 @@
   let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution! : $screen.resolution
 
   const menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
-  const drawerMenus: string[] = ["shows", "media", "overlays", "templates", "audio", "scripture", "player", "live"]
+  const drawerMenus: string[] = ["shows", "media", "overlays", "audio", "scripture", "templates", "player", "live"]
   const ctrlKeys: any = {
     c: () => {
       if ($selected.id) copy($selected)
@@ -147,7 +147,8 @@
     }
   }
 
-  function hideDisplay() {
+  function hideDisplay(ctrlKey: boolean = true) {
+    if (!ctrlKey) return
     outputDisplay.set(false)
     window.api.send(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
   }
@@ -173,7 +174,7 @@
   <main style={!$currentWindow && $os.platform === "win32" ? "height: calc(100% - 30px);" : ""} class:closeAd>
     {#if $currentWindow === "output"}
       <!-- TODO: mac center  -->
-      <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={hideDisplay}>
+      <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={() => hideDisplay()} on:click={(e) => hideDisplay(e.ctrlKey || e.metaKey)}>
         <!-- Mac: width: 100%; -->
         <Output style={getStyleResolution(resolution, width, height, "fit")} center />
       </div>

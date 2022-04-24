@@ -11,7 +11,22 @@
 
   let ip = "IP"
   onMount(() => send(MAIN, ["IP"]))
-  receive(MAIN, { IP: (a: any) => (ip = a["Wi-Fi"]?.filter((a: any) => a.family === "IPv4")[0].address) })
+  receive(MAIN, { IP: (a: any) => getIP(a) })
+  // receive(MAIN, { IP: (a: any) => (ip = a["Wi-Fi"]?.filter((a: any) => a.family === "IPv4")[0].address) })
+
+  function getIP(nets: any) {
+    let results: any = {}
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]) {
+        // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+        if (net.family === "IPv4" && !net.internal) {
+          if (!results[name]) results[name] = []
+          results[name].push(net.address)
+        }
+      }
+    }
+    return results["en0"][0]
+  }
 </script>
 
 <!-- TODO: connection -->

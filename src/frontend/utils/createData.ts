@@ -10,7 +10,7 @@ export function createData(paths: any) {
       category: "presentation",
       settings: {
         activeLayout: "default",
-        template: "default",
+        template: "header",
       },
       timestamps: {
         created: new Date("2022-01-01").getTime(),

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { shows } from "../../stores"
 
 // check if name axists and add number
-export function checkName(name: string) {
+export function checkName(name: string = "") {
   let number = 1
   // remove illegal file name characters
   name = name.trim().replace(/[/\\?%*:|"<>]/g, "")

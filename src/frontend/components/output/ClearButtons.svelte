@@ -14,19 +14,26 @@
   export let videoData: any
 
   function clearVideo() {
-    // TODO: clear after fade out.....
+    videoData.paused = true
+    window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+    window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+
     setTimeout(() => {
-      video = null
-      videoTime = 0
-      videoData = {
-        time: 0,
-        duration: 0,
-        paused: true,
-        muted: false,
-        loop: false,
+      if (videoData.paused) {
+        video = null
+        videoTime = 0
+        videoData = {
+          time: 0,
+          duration: 0,
+          paused: true,
+          muted: false,
+          loop: false,
+        }
+        window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+        window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
       }
-      window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
-    }, 600)
+      // TODO: clear after transition out.....
+    }, 500)
   }
 
   export let callClear: boolean = false
@@ -38,13 +45,13 @@
   const clearAll = () => {
     if ($outLocked) return
 
+    clearVideo()
     outBackground.set(null)
     outSlide.set(null)
     outOverlays.set([])
     outAudio.set([])
     outTransition.set(null)
     allCleared = true
-    clearVideo()
     autoChange = true
   }
 </script>
@@ -66,8 +73,8 @@
           activeClear = "background"
         } else if (!$outLocked) {
           autoChange = true
-          outBackground.set(null)
           clearVideo()
+          outBackground.set(null)
         }
       }}
       title={activeClear === "background" ? $dictionary.clear?.background : $dictionary.preview?.background}

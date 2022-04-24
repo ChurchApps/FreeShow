@@ -54,6 +54,8 @@
     currentEvents.forEach((day: any) => {
       let id = uid()
       let textDay = new Date(day.date).getDate() + ". " + $dictionary.month[new Date(day.date).getMonth() + 1]
+      day.events[0].from = new Date(day.events[0].from)
+      day.events[0].to = new Date(day.events[0].to)
       if (!sameDay(day.events[0].from, day.events[0].to)) {
         if (day.events[0].from.getFullYear() !== day.events[0].to.getFullYear()) textDay += " " + day.events[0].from.getFullYear()
         if (day.events[0].from.getMonth() === day.events[0].to.getMonth() && day.events[0].from.getFullYear() === day.events[0].to.getFullYear()) {
@@ -103,7 +105,7 @@
       let l: any = { id }
       if (currentEvents.length > 1) {
         let duration = totalLength < 25 ? Math.max(5, totalLength * 0.6) : totalLength < 80 ? Math.max(10, totalLength * 0.3) : Math.max(25, totalLength * 0.2)
-        l.transition = { duration: Math.min(60, Math.floor(duration)) }
+        l.nextTimer = Math.min(60, Math.floor(duration))
       }
       layouts.push(l)
     })

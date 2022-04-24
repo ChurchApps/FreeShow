@@ -33,7 +33,7 @@ export function checkInput(e: any) {
   }
 }
 
-export function nextSlide(e: any, start: boolean = false, end: boolean = false) {
+export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false) {
   console.log(get(outSlide))
 
   if (get(outLocked)) return
@@ -55,14 +55,18 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false) 
     get(activeShow) &&
     (start || !slide || e?.ctrlKey || (isLastSlide && get(activeShow)!.id !== slide?.id && get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout))
   ) {
+    let id = loop ? slide!.id : get(activeShow)!.id
+    if (!id) return
+
     // layout = GetLayout()
-    layout = _show("active").layouts("active").ref()[0]
+    layout = _show(id).layouts("active").ref()[0]
     if (!layout.filter((a) => !a.data.disabled).length) return
 
     index = 0
     while (layout[index].data.disabled) index++
 
-    outSlide.set({ id: get(activeShow)!.id, layout: _show("active").get("settings.activeLayout"), index })
+    console.log(id, layout, index)
+    outSlide.set({ id, layout: _show(id).get("settings.activeLayout"), index })
     updateOut(index, layout)
     return
   }

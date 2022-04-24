@@ -52,7 +52,7 @@ export function updateSettings(data: any[]) {
 
   setTimeout(() => {
     saved.set(true)
-  }, 10)
+  }, 100)
 }
 
 const updateList: { [key in SaveListSettings]: any } = {

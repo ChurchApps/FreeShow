@@ -44,8 +44,7 @@
   .content {
     width: 50%;
     display: flex;
-    /* align-items: center; */
-    justify-content: center;
+    /* justify-content: center; */
   }
   .screens {
     zoom: 0.1;

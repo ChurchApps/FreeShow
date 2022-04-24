@@ -63,7 +63,7 @@
       </div>
     {:else if active === "notes"}
       <div class="content">
-        <Notes on:edit={edit} value={note} />
+        <Notes on:edit={edit} value={note} update={active} />
       </div>
     {/if}
   {/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, redoHistory, selected, showsCache, stageShows, undoHistory } from "../../stores"
+  import { activeShow, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
   import { GetLayout, GetLayoutRef } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -15,7 +15,7 @@
 
   const conditions: any = {
     private: () => {
-      if ($showsCache[$selected.data[0]?.id]?.private) enabled = $showsCache[$selected.data[0].id].private!
+      if ($shows[$selected.data[0]?.id]?.private) enabled = $shows[$selected.data[0].id].private!
     },
     disable: () => {
       if ($selected.id === "slide" && $activeShow && GetLayout()[$selected.data[0]?.index]?.disabled) {

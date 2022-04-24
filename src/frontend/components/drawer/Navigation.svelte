@@ -54,7 +54,10 @@
     } else if (id === "scripture") {
       buttons = [...keysToID(getBibleVersions())]
     } else if (id === "player") {
-      buttons = [{ id: "youtube", name: "YouTube", icon: "youtube" }]
+      buttons = [
+        { id: "youtube", name: "YouTube", icon: "youtube" },
+        { id: "vimeo", name: "Vimeo", icon: "vimeo" },
+      ]
     } else if (id === "web") {
       buttons = [...(sortObject(keysToID($webFavorites), "name") as Button[])]
     } else if (id === "live") {
@@ -148,6 +151,7 @@
                     id={category.icon || "noIcon"}
                     custom={(id === "shows" || id === "overlays") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
                     select={(id === "shows" || id === "overlays") && category.id !== "all" && category.id !== "unlabeled"}
+                    right
                   />
                   <span id={category.id} style="width: 100%;text-align: left;">
                     {#if id === "scripture" || id === "player"}

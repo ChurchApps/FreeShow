@@ -146,7 +146,7 @@
 
     let layoutID = uid()
     // TODO: private!!!?
-    let show = new ShowObj(true, "scripture", layoutID)
+    let show = new ShowObj(false, "scripture", layoutID)
     // TODO: if name exists create new layout!!
     // TODO: keep same chapter on same show (just add new layouts...?)
     show.name = checkName(bible.book + " " + bible.chapter + "," + verseRange)
