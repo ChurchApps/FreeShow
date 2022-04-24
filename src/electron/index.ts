@@ -262,7 +262,7 @@ function save(data: any) {
 
 // IMPORT
 ipcMain.on(IMPORT, (_e, msg) => {
-  let files = dialog.showOpenDialogSync(mainWindow!, { properties: ["openFile"], filters: [{ name: msg.data.name, extensions: msg.data.extensions }] })
+  let files = dialog.showOpenDialogSync(mainWindow!, { properties: ["openFile", "multiSelections"], filters: [{ name: msg.data.name, extensions: msg.data.extensions }] })
   let name = files ? files[0].slice((files[0].lastIndexOf("\\") || files[0].lastIndexOf("/")) + 1, files[0].lastIndexOf(".")) : ""
   if (!msg.data.extensions || files?.length) importShow(msg.channel, name, files || null, updateOutputPath(path.resolve(app.getPath("documents"), "Shows", name)))
 })
