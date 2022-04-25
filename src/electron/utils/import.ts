@@ -2,7 +2,6 @@ import { readdir, readFileSync } from "fs"
 import { toApp } from ".."
 import { IMPORT } from "./../../types/Channels"
 import PPTX2Json from "pptx2json"
-import pdf from "pdf-poppler"
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
 
@@ -29,6 +28,9 @@ export async function importShow(id: any, name: string, files: string[] | null, 
         out_prefix: "img",
         page: null,
       }
+
+      // TODO: linux don't support pdf-poppler!
+      const pdf = require("pdf-poppler")
 
       pdf
         .convert(files[0], opts)

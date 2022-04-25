@@ -264,7 +264,8 @@ function save(data: any) {
 ipcMain.on(IMPORT, (_e, msg) => {
   let files = dialog.showOpenDialogSync(mainWindow!, { properties: ["openFile", "multiSelections"], filters: [{ name: msg.data.name, extensions: msg.data.extensions }] })
   let name = files ? files[0].slice((files[0].lastIndexOf("\\") || files[0].lastIndexOf("/")) + 1, files[0].lastIndexOf(".")) : ""
-  if (!msg.data.extensions || files?.length) importShow(msg.channel, name, files || null, updateOutputPath(path.resolve(app.getPath("documents"), "Shows", name)))
+  if ((os.platform() !== "linux" || msg.channel !== "pdf") && (!msg.data.extensions || files?.length))
+    importShow(msg.channel, name, files || null, updateOutputPath(path.resolve(app.getPath("documents"), "Shows", name)))
 })
 
 // EXPORT
@@ -490,7 +491,10 @@ function createOutputWindow() {
   if (!isProd) outputWindow.webContents.openDevTools()
 
   outputWindow.on("closed", () => (outputWindow = null))
-  outputWindow.on("ready-to-show", () => mainWindow?.focus())
+  outputWindow.on("ready-to-show", () => {
+    outputWindow?.hide()
+    mainWindow?.focus()
+  })
 }
 
 // LISTENERS
