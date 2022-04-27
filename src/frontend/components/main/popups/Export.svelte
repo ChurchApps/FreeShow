@@ -1,6 +1,6 @@
 <script lang="ts">
   import { EXPORT } from "../../../../types/Channels"
-  import { activePopup, activeProject, activeShow, exportPath, projects, selected, showsCache } from "../../../stores"
+  import { activePopup, activeProject, activeShow, alertMessage, exportPath, os, projects, selected, showsCache } from "../../../stores"
   import { send } from "../../../utils/request"
   import Pdf from "../../export/Pdf.svelte"
   import { loadShows } from "../../helpers/setShow"
@@ -68,6 +68,11 @@
   }
 
   function exportClick() {
+    if ($os.platform === "linux" && format.id === "pdf") {
+      alertMessage.set("Can't export as PDF on Linux.")
+      activePopup.set("alert")
+      return
+    }
     send(EXPORT, ["GENERATE"], { type: format.id, path: $exportPath, shows, options: format.id === "pdf" ? pdfOptions : {} })
     activePopup.set(null)
   }

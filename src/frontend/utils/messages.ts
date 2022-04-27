@@ -1,4 +1,4 @@
-import { autoOutput, transitionData } from "./../stores"
+import { alertUpdates, autoOutput, outputPosition, transitionData } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -142,6 +142,7 @@ export function listen() {
 const saveList: { [key in SaveList]: any } = {
   initialized: null,
   activeProject: activeProject,
+  alertUpdates: alertUpdates,
   audioFolders: audioFolders,
   autoOutput: autoOutput,
   categories: categories,
@@ -166,6 +167,7 @@ const saveList: { [key in SaveList]: any } = {
   os: os,
   outLocked: outLocked,
   outputScreen: outputScreen,
+  outputPosition: outputPosition,
   overlayCategories: overlayCategories,
   presenterControllerKeys: presenterControllerKeys,
   playerVideos: playerVideos,

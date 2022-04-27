@@ -13,7 +13,7 @@
   import Media from "./tools/Media.svelte"
   import Overlay from "./tools/Overlay.svelte"
   import Show from "./tools/Show.svelte"
-  import Transition from "./tools/Transition.svelte"
+  import NextTimer from "./tools/NextTimer.svelte"
 
   let callClear: boolean = false
   const ctrlShortcuts: any = {
@@ -258,19 +258,16 @@
   {#if $activePage === "show"}
     <ClearButtons bind:autoChange bind:activeClear bind:video bind:videoData bind:videoTime bind:callClear />
 
-    {#if activeClear === "background"}
+    {#if activeClear === "background" && $outBackground}
       <Media {video} bind:videoData bind:videoTime bind:title />
-    {:else if activeClear === "slide"}
+    {:else if activeClear === "slide" && $outSlide}
       <Show />
-    {:else if activeClear === "overlays"}
+    {:else if activeClear === "overlays" && $outOverlays.length}
       <Overlay />
-    {/if}
-    <!-- overlays -->
-    <!-- audio -->
-
-    <!-- transition -->
-    {#if $outTransition && activeClear === "nextTimer"}
-      <Transition bind:timer {timerMax} {timeObj} />
+    {:else if activeClear === "audio" && $outAudio.length}
+      <!-- <Audio /> -->
+    {:else if $outTransition && activeClear === "nextTimer" && $outTransition}
+      <NextTimer bind:timer {timerMax} {timeObj} />
     {/if}
   {/if}
 </div>

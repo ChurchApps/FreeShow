@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { STORE } from "../../types/Channels"
 import {
   activeProject,
+  alertUpdates,
   audioFolders,
   autoOutput,
   categories,
@@ -25,6 +26,7 @@ import {
   openedFolders,
   os,
   outLocked,
+  outputPosition,
   outputScreen,
   overlayCategories,
   overlays,
@@ -55,6 +57,7 @@ export function save() {
   let settings: { [key in SaveListSettings]: any } = {
     initialized: true,
     activeProject: get(activeProject),
+    alertUpdates: get(alertUpdates),
     audioFolders: get(audioFolders),
     autoOutput: get(autoOutput),
     categories: get(categories),
@@ -79,6 +82,7 @@ export function save() {
     os: get(os),
     outLocked: get(outLocked),
     outputScreen: get(outputScreen),
+    outputPosition: get(outputPosition),
     overlayCategories: get(overlayCategories),
     presenterControllerKeys: get(presenterControllerKeys),
     playerVideos: get(playerVideos),

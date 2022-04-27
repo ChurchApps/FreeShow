@@ -260,11 +260,33 @@ function save(data: any) {
   })
 }
 
+// Custom .show file
+
+//   var data = null;
+//   if (process.platform === 'win32' && process.argv.length >= 2) {
+//     var openFilePath = process.argv[1];
+//     data = fs.readFileSync(openFilePath, 'utf-8');
+//   }
+
+// "fileAssociations": [
+//   {
+//     "ext": "show",
+//     "name": "Show File",
+//     "description": "A FreeShow lyric/presentation file",
+//     "role": "Editor",
+//     "perMachine": true
+//   }
+// ],
+
 // IMPORT
 ipcMain.on(IMPORT, (_e, msg) => {
   let files = dialog.showOpenDialogSync(mainWindow!, { properties: ["openFile", "multiSelections"], filters: [{ name: msg.data.name, extensions: msg.data.extensions }] })
   let name = files ? files[0].slice((files[0].lastIndexOf("\\") || files[0].lastIndexOf("/")) + 1, files[0].lastIndexOf(".")) : ""
-  if (!msg.data.extensions || files?.length) importShow(msg.channel, name, files || null, updateOutputPath(path.resolve(app.getPath("documents"), "Shows", name)))
+  if ((os.platform() !== "linux" || msg.channel !== "pdf") && (!msg.data.extensions || files?.length)) {
+    let outputPath: string | undefined
+    if (msg.channel === "pdf") outputPath = updateOutputPath(path.resolve(app.getPath("documents"), "Shows", name))
+    importShow(msg.channel, name, files || null, outputPath)
+  }
 })
 
 // EXPORT
@@ -381,6 +403,7 @@ ipcMain.on(MAIN, (e, msg) => {
 // OUTPUT WINDOW
 
 let displays: Display[] = []
+let outputPosition: any = null
 // let outputScreenId: string | null = null
 
 // create output
@@ -406,7 +429,12 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
 
       if (outputScreen && (msg.data.force || (outputScreen.bounds.x - mainWindow!.getBounds().x > 10 && outputScreen.bounds.y - mainWindow!.getBounds().y > 10))) {
-        if (JSON.stringify(outputWindow?.getBounds()) !== JSON.stringify(outputScreen.bounds)) outputWindow?.setBounds(outputScreen.bounds)
+        if (outputPosition === null) outputPosition = outputWindow?.getBounds()
+        if (JSON.stringify(outputPosition) !== JSON.stringify(outputScreen.bounds) || msg.data.reset) {
+          outputWindow?.setBounds(outputScreen.bounds)
+          outputPosition = outputScreen.bounds
+          toApp(OUTPUT, { channel: "POSITION", data: outputPosition })
+        }
         // TODO: output task bar
         // outputWindow?.setVisibleOnAllWorkspaces(true)
         outputWindow?.showInactive()
@@ -433,6 +461,8 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       outputWindow?.hide()
     }
     toApp(OUTPUT, msg)
+  } else if (msg.channel === "POSITION") {
+    outputWindow?.setBounds(msg.data)
   } else if (msg.channel.includes("MAIN")) toApp(OUTPUT, msg)
   else outputWindow?.webContents.send(OUTPUT, msg)
 })
@@ -490,7 +520,10 @@ function createOutputWindow() {
   if (!isProd) outputWindow.webContents.openDevTools()
 
   outputWindow.on("closed", () => (outputWindow = null))
-  outputWindow.on("ready-to-show", () => mainWindow?.focus())
+  outputWindow.on("ready-to-show", () => {
+    outputWindow?.hide()
+    mainWindow?.focus()
+  })
 }
 
 // LISTENERS

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { displayMetadata, fullColors, groupNumbers, imageExtensions, labelsDisabled, screen, showsPath, videoExtensions } from "../../../stores"
+  import { alertUpdates, displayMetadata, fullColors, groupNumbers, imageExtensions, labelsDisabled, screen, showsPath, videoExtensions } from "../../../stores"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
@@ -10,6 +10,7 @@
   import LocaleSwitcher from "../LocaleSwitcher.svelte"
 
   const inputs: any = {
+    updates: (e: any) => alertUpdates.set(e.target.checked),
     labels: (e: any) => labelsDisabled.set(e.target.checked),
     colors: (e: any) => fullColors.set(e.target.checked),
     groupNumber: (e: any) => groupNumbers.set(e.target.checked),
@@ -31,6 +32,11 @@
 <div>
   <p><T id="settings.language" /></p>
   <LocaleSwitcher />
+</div>
+<div>
+  <p><T id="settings.alert_updates" /></p>
+  <!-- style="width: 200px;" -->
+  <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
 </div>
 <div>
   <p><T id="settings.disable_labels" /></p>

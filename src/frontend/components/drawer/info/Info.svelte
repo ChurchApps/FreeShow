@@ -16,7 +16,7 @@
 
 <div class="main">
   <div class="padding">
-    {#if id === "shows" && ($activeShow?.type === null || $activeShow?.type === "show")}
+    {#if id === "shows" && $activeShow !== null && ($activeShow.type === undefined || $activeShow.type === "show")}
       <ShowInfo />
     {:else if id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
       <MediaInfo />

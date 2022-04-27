@@ -125,7 +125,7 @@
         }
       }
       // TODO: index...
-      if (id) activeShow.set({ id })
+      if (id) activeShow.set({ id, type: "show" })
     }
   }
 </script>

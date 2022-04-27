@@ -1,6 +1,6 @@
 {
   "name": "freeshow",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "main": "build/electron/index.js",
   "description": "An application for showing song lyrics and more for free!",

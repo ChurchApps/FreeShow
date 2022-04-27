@@ -1,5 +1,5 @@
 import { IMPORT } from "./../../types/Channels"
-import { activePopup, alertMessage } from "./../stores"
+import { activePopup, alertMessage, outputPosition } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
@@ -44,6 +44,11 @@ import { convertText } from "../converters/txt"
 import { checkForUpdates } from "./checkForUpdates"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertEasyWorship } from "../converters/easyworship"
+import { history } from "../components/helpers/history"
+import { convertOpenLP } from "../converters/openlp"
+import { checkName } from "../components/helpers/show"
+import { convertOpenSong } from "../converters/opensong"
+import { convertProPresenter } from "../converters/propresenter"
 
 export function startup() {
   if (!get(currentWindow)) {
@@ -128,6 +133,7 @@ const receiveOUTPUT: any = {
   MEDIA: (a: any) => mediaFolders.set(a),
   ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
   DISPLAY: (a: any) => outputDisplay.set(a.enabled),
+  POSITION: (a: any) => outputPosition.set(a),
   SCREEN_ADDED: (a: any) => {
     if (get(autoOutput) && !get(outputDisplay)) {
       send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })
@@ -141,9 +147,32 @@ const receiveOUTPUT: any = {
 // }
 
 const receiveIMPORT: any = {
-  powerpoint: (a: any) => convertPowerpoint(a),
-  pdf: (a: any) => convertPDF(a),
   txt: (a: any) => convertText(a),
-  videopsalm: (a: any) => convertVideopsalm(a),
+  pdf: (a: any) => convertPDF(a),
+  powerpoint: (a: any) => convertPowerpoint(a),
+  freeshow: (a: any) => importShow(a),
   easyworship: (a: any) => convertEasyWorship(a),
+  videopsalm: (a: any) => convertVideopsalm(a),
+  openlp: (a: any) => convertOpenLP(a),
+  opensong: (a: any) => convertOpenSong(a),
+  propresenter: (a: any) => convertProPresenter(a),
+}
+
+function importShow(files: any[]) {
+  let duplicates: string[] = []
+  files.forEach(({ content }: any) => {
+    let [id, show] = JSON.parse(content)
+
+    // if exits
+    if (get(shows)[id]) duplicates.push(show.name)
+    else show.name = checkName(show.name)
+
+    history({ id: "newShow", newData: { id, show } })
+  })
+
+  // TODO: override or skip
+  if (duplicates.length) {
+    alertMessage.set("Overriten some shows:<br>- " + duplicates.join("<br>- "))
+    activePopup.set("alert")
+  }
 }

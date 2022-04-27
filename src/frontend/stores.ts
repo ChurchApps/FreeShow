@@ -342,6 +342,7 @@ export const settingsTab: Writable<SettingsTabs> = writable("general")
 
 // general
 export const language: Writable<string> = writable("en") // "get"
+export const alertUpdates: Writable<boolean> = writable(true) // true
 export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
@@ -352,6 +353,7 @@ export const presenterControllerKeys: Writable<boolean> = writable(true) // true
 
 // display
 export const autoOutput: Writable<boolean> = writable(false) // false
+export const outputPosition: Writable<{ x: number; y: number; width: number; height: number }> = writable({ x: 0, y: 0, width: 0, height: 0 }) // {default}
 export const outputScreen: Writable<null | string> = writable(null) // null
 
 // project

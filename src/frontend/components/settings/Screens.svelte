@@ -17,7 +17,7 @@
 
   function changeOutputScreen(e: any) {
     outputScreen.set(e.detail.id.toString())
-    if ($outputDisplay) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: $outputScreen })
+    if ($outputDisplay) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: $outputScreen, reset: true })
   }
 </script>
 

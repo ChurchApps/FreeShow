@@ -5,17 +5,25 @@
   import { send } from "../../../utils/request"
   import Button from "../../inputs/Button.svelte"
 
+  // TODO: program icons
+
   const formats = [
     { name: "Clipboard", id: "clipboard" },
     { name: "Text file", extensions: ["txt"], id: "txt" },
     { name: "PDF", extensions: ["pdf"], id: "pdf" },
     { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint" },
-    { name: "EasyWorship", extensions: ["db"], id: "easyworship", tutorial: "Import SongsWords.db, & Songs.db to import metadata" },
-    { name: "VideoPsalm", extensions: ["json"], id: "videopsalm", tutorial: "Find the Songbook.vpc file<br>Add .zip to the end<br>Extract & import the .json files" },
-    { tba: true, name: "FreeShow", extensions: ["show", "json"], id: "freeshow" }, // show / project
-    { tba: true, name: "ProPresenter", extensions: ["pro6", "pro7"], id: "propresenter" },
-    { tba: true, name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },
-    { tba: true, name: "OpenSong", extensions: ["xml"], id: "opensong" },
+    { name: "FreeShow", extensions: ["show"], id: "freeshow" }, // show / project
+    { tba: true, name: "FreeShow Project", extensions: ["shows"], id: "freeshow" }, // show / project
+    { name: "ProPresenter", extensions: ["pro6", "pro7"], id: "propresenter" },
+    {
+      name: "EasyWorship",
+      extensions: ["db"],
+      id: "easyworship",
+      tutorial: "Import the SongsWords.db file from the Data folder<br>Optionally select Songs.db to import title/metadata)",
+    },
+    { name: "VideoPsalm", extensions: ["json"], id: "videopsalm", tutorial: "Find the Songbook.vpc file(s)<br>Add .zip to the end<br>Extract it & import the .json file" },
+    { name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },
+    { name: "OpenSong", extensions: ["xml"], id: "opensong" },
   ]
 </script>
 
