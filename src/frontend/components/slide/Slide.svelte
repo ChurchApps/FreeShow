@@ -172,7 +172,20 @@
     })
     console.log(timer)
   }
+
+  let altKeyPressed: boolean = false
+  function keydown(e: any) {
+    if (e.altKey) {
+      e.preventDefault()
+      altKeyPressed = true
+    }
+  }
+  function keyup() {
+    altKeyPressed = false
+  }
 </script>
+
+<svelte:window on:keydown={keydown} on:keyup={keyup} />
 
 <!-- TODO: noQuickEdit -->
 <!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->
@@ -180,7 +193,7 @@
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:active style="width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%">
-  {#if icons}
+  {#if icons && !altKeyPressed}
     <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} />
     <Actions {columns} {index} actions={layoutSlide.actions || {}} />
   {/if}
@@ -216,7 +229,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           disableStyle={$slidesOptions.mode === "lyrics" && !noQuickEdit}
           relative={$slidesOptions.mode === "lyrics" && !noQuickEdit}
         >
-          {#if background && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
+          {#if !altKeyPressed && background && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
             {#key background.path}
               <div class="background" style="zoom: {1 / ratio}">
                 <MediaLoader
@@ -241,7 +254,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
               />
             {/each}
           {/if}
-          {#if layoutSlide.overlays?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
+          {#if !altKeyPressed && layoutSlide.overlays?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
             {#each layoutSlide.overlays as id}
               {#if $overlays[id]}
                 {#each $overlays[id].items as item}

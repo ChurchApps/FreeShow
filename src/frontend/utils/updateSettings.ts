@@ -4,6 +4,7 @@ import { MAIN } from "../../types/Channels"
 import {
   activePopup,
   activeProject,
+  alertUpdates,
   audioFolders,
   autoOutput,
   categories,
@@ -25,6 +26,7 @@ import {
   openedFolders,
   os,
   outLocked,
+  outputPosition,
   outputScreen,
   overlayCategories,
   playerVideos,
@@ -93,6 +95,8 @@ const updateList: { [key in SaveListSettings]: any } = {
   // TODO: get device lang
   language: (v: any) => language.set(v),
   // events: (v: any) => events.set(v),
+  alertUpdates: (v: any) => alertUpdates.set(v === false ? false : true),
+  outputPosition: (v: any) => outputPosition.set(v),
   remotePassword: (v: any) => remotePassword.set(v),
   audioFolders: (v: any) => audioFolders.set(v),
   defaultProjectName: (v: any) => defaultProjectName.set(v),

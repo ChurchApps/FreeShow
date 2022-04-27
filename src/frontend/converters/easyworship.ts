@@ -48,7 +48,7 @@ export function convertEasyWorship(data: any) {
     let show = new ShowObj(false, category || null, layoutID)
     if (song) {
       show.meta = {
-        title: show.name,
+        title: song?.title || "",
         author: song.author || "",
         copyright: song.copyright || "",
       }

@@ -51,7 +51,7 @@
     // TODO: duplicate function of "preview:126 - updateOut"
     if (!$outLocked && !e.ctrlKey && !e.metaKey) {
       outSlide.set({ id, layout: activeLayout, index })
-      updateOut(index, _show("active").layouts("active").ref()[0])
+      updateOut(index, _show("active").layouts("active").ref()[0], !e.altKey)
       // _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
 
       // activeEdit.set({ slide: index, items: [] })

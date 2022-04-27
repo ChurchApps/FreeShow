@@ -127,10 +127,13 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
   return index
 }
 
-export function updateOut(index: number, layout: any) {
+export function updateOut(index: number, layout: any, extra: boolean = true) {
   activeEdit.set({ slide: index, items: [] })
   _show(get(activeShow)!.id).set({ key: "timestamps.used", value: new Date().getTime() })
   let data = layout[index].data
+
+  // holding "alt" key will disable all extra features
+  if (!extra) return
 
   // background
   if (data.background) {

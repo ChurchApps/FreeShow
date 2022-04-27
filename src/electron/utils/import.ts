@@ -48,14 +48,6 @@ export async function importShow(id: any, name: string, files: string[] | null, 
           console.error(err)
         })
     }
-  } else if (id === "videopsalm") {
-    let data: any[] = []
-    files.forEach((filePath) => {
-      let content = readFileSync(filePath, "utf8").toString()
-      // let name = files ? filePath.slice((filePath.lastIndexOf("\\") || filePath.lastIndexOf("/")) + 1, filePath.lastIndexOf(".")) : ""
-      data.push({ content })
-    })
-    toApp(IMPORT, { channel: id, data: data })
   } else if (id === "easyworship") {
     let data: any[] = []
     files.forEach((filePath) => {
@@ -69,5 +61,14 @@ export async function importShow(id: any, name: string, files: string[] | null, 
     setTimeout(() => {
       toApp(IMPORT, { channel: id, data: data })
     }, 100)
+  } else {
+    // FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong
+    let data: any[] = []
+    files.forEach((filePath) => {
+      let content = readFileSync(filePath, "utf8").toString()
+      let name = files ? filePath.slice((filePath.lastIndexOf("\\") || filePath.lastIndexOf("/")) + 1, filePath.lastIndexOf(".")) : ""
+      data.push({ content, name })
+    })
+    toApp(IMPORT, { channel: id, data: data })
   }
 }
