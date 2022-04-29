@@ -149,8 +149,8 @@
                 <span style="display: flex;align-items: center;width: 100%;">
                   <Icon
                     id={category.icon || "noIcon"}
-                    custom={(id === "shows" || id === "overlays") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
-                    select={(id === "shows" || id === "overlays") && category.id !== "all" && category.id !== "unlabeled"}
+                    custom={(id === "shows" || id === "overlays" || id === "templates") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
+                    select={(id === "shows" || id === "overlays" || id === "templates") && category.id !== "all" && category.id !== "unlabeled"}
                     right
                   />
                   <span id={category.id} style="width: 100%;text-align: left;">

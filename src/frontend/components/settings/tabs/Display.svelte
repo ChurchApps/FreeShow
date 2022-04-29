@@ -1,7 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
 
-  import { autoOutput, outputPosition } from "../../../stores"
+  import { autoOutput, outputPosition, outputScreen } from "../../../stores"
   import { send } from "../../../utils/request"
   import T from "../../helpers/T.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
@@ -12,12 +12,17 @@
     autoOutput.set(e.target.checked)
   }
   function changeOutputPosition(e: any, key: string) {
+    outputScreen.set(null)
     outputPosition.set({ ...$outputPosition, [key]: Number(e.detail) })
     send(OUTPUT, ["POSITION"], $outputPosition)
   }
 </script>
 
-<div style="justify-content: center;"><T id="settings.hide_output_hint" /></div>
+<div style="justify-content: center;flex-direction: column;">
+  <p><T id="settings.hide_output_hint" /></p>
+  <p><T id="settings.show_output_hint" /></p>
+  <p><T id="settings.move_output_hint" /></p>
+</div>
 <br />
 <div>
   <p><T id="settings.auto_output" /></p>

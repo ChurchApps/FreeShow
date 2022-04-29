@@ -23,7 +23,7 @@
     },
     { name: "VideoPsalm", extensions: ["json"], id: "videopsalm", tutorial: "Find the Songbook.vpc file(s)<br>Add .zip to the end<br>Extract it & import the .json file" },
     { name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },
-    { name: "OpenSong", extensions: ["xml"], id: "opensong" },
+    { name: "OpenSong", extensions: [], id: "opensong" },
   ]
 </script>
 

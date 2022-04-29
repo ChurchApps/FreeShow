@@ -130,11 +130,17 @@
       allSlideItems.forEach((_item, i) => allItems.push(i))
     }
     let fullItems = allItems.map((a) => allSlideItems[a])
-    history({
+    console.log({
       id: "setItems",
-      newData: { key: "auto", values: [isAuto] },
+      newData: { style: { key: "auto", values: [isAuto] } },
       location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
     })
+    history({
+      id: "setItems",
+      newData: { style: { key: "auto", values: [isAuto] } },
+      location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
+    })
+
     if (isAuto) autoSize(allItems, fullItems, false)
   }
 
@@ -205,7 +211,7 @@
         // WIP
         id: key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
         // oldData: { key: aligns ? "align" : "style", values: oldData },
-        newData: {style: { key: aligns ? "align" : "text", values: newData }},
+        newData: { style: { key: aligns ? "align" : "text", values: newData } },
         location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
       })
     }

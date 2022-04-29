@@ -93,10 +93,10 @@
   </div>
 {/each}
 <hr />
-<Button style="width: 100%;" center>
+<Button style="width: 100%;" center disabled>
   <T id="settings.reset_colors" />
 </Button>
-<Button style="width: 100%;" center>
+<Button style="width: 100%;" center disabled>
   <T id="settings.reset_themes" />
 </Button>
 

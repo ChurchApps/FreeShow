@@ -7,7 +7,7 @@
   import TopButton from "../inputs/TopButton.svelte"
 
   function display(e: any) {
-    send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, screen: $outputScreen, force: e.ctrlKey })
+    send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, screen: $outputScreen, force: e.ctrlKey || e.metaKey })
   }
 </script>
 

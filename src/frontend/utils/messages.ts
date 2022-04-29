@@ -1,4 +1,4 @@
-import { alertUpdates, autoOutput, outputPosition, transitionData } from "./../stores"
+import { alertUpdates, autoOutput, backgroundColor, outputPosition, transitionData } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -77,6 +77,15 @@ export function listen() {
   mediaFolders.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "MEDIA", data })
   })
+  displayMetadata.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "META", data })
+  })
+  backgroundColor.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "COLOR", data })
+  })
+  screen.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "SCREEN", data })
+  })
   draw.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "DRAW", data })
   })
@@ -145,6 +154,7 @@ const saveList: { [key in SaveList]: any } = {
   alertUpdates: alertUpdates,
   audioFolders: audioFolders,
   autoOutput: autoOutput,
+  backgroundColor: backgroundColor,
   categories: categories,
   defaultProjectName: defaultProjectName,
   displayMetadata: displayMetadata,

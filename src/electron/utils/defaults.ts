@@ -8,6 +8,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   activeProject: null,
   alertUpdates: true,
   autoOutput: false,
+  backgroundColor: "#000000",
   presenterControllerKeys: true,
   remotePassword: "",
   categories: {
@@ -76,7 +77,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     live: { enabled: true, activeSubTab: null },
   },
   drawer: { height: 300, stored: null },
-  language: "en",
+  language: null,
   labelsDisabled: false,
   groupNumbers: true,
   fullColors: true,

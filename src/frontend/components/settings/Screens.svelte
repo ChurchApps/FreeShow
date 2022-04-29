@@ -6,6 +6,7 @@
 
   let screens: any[] = []
   send(MAIN, ["GET_DISPLAYS"])
+  // send(MAIN, ["GET_SCREENS"])
   receive(MAIN, {
     GET_DISPLAYS: (d: any) => {
       screens = d
@@ -13,11 +14,12 @@
     SET_SCREEN: (d: any) => {
       if (!$outputScreen) outputScreen.set(d.id.toString())
     },
+    // GET_SCREENS: (d: any) => (screens = d),
   })
 
   function changeOutputScreen(e: any) {
     outputScreen.set(e.detail.id.toString())
-    if ($outputDisplay) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: $outputScreen, reset: true })
+    send(OUTPUT, ["DISPLAY"], { enabled: $outputDisplay, screen: $outputScreen, reset: true })
   }
 </script>
 
@@ -72,6 +74,5 @@
   .screen.active {
     background-color: var(--secondary);
     color: var(--secondary-text);
-    cursor: default;
   }
 </style>

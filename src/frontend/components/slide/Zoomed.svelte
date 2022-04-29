@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { activeShow, screen, showsCache } from "../../stores"
+  import { activeShow, backgroundColor, screen, showsCache } from "../../stores"
 
-  export let background: string = "black"
+  export let background: string = $backgroundColor || "#000000"
   export let center: boolean = false
   export let zoom: boolean = true
   export let disableStyle: boolean = false

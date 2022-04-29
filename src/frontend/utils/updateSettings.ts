@@ -7,6 +7,7 @@ import {
   alertUpdates,
   audioFolders,
   autoOutput,
+  backgroundColor,
   categories,
   defaultProjectName,
   displayMetadata,
@@ -45,6 +46,7 @@ import {
 } from "../stores"
 import type { SaveListSettings } from "./../../types/Save"
 import { send } from "./request"
+import { setLanguage } from "./language"
 
 export function updateSettings(data: any[]) {
   Object.entries(data).forEach(([key, value]: any) => {
@@ -93,9 +95,13 @@ const updateList: { [key in SaveListSettings]: any } = {
     os.set(v)
   },
   // TODO: get device lang
-  language: (v: any) => language.set(v),
+  language: (v: any) => {
+    language.set(v)
+    setLanguage(v)
+  },
   // events: (v: any) => events.set(v),
   alertUpdates: (v: any) => alertUpdates.set(v === false ? false : true),
+  backgroundColor: (v: any) => backgroundColor.set(v),
   outputPosition: (v: any) => outputPosition.set(v),
   remotePassword: (v: any) => remotePassword.set(v),
   audioFolders: (v: any) => audioFolders.set(v),

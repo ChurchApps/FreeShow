@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ShowObj } from "../../../classes/Show"
   import { convertText } from "../../../converters/txt"
-  import { activePopup, activeProject, categories, drawerTabsData } from "../../../stores"
+  import { activePopup, activeProject, categories, dictionary, drawerTabsData } from "../../../stores"
   import { sortObject } from "../../helpers/array"
   import { history } from "../../helpers/history"
   import { checkName } from "../../helpers/show"
@@ -54,18 +54,18 @@
 
 <svelte:window on:keydown={keydown} />
 
-<div style="display: flex;justify-content: space-between;align-items: center;">
+<div class="section">
   <p><T id="show.name" /></p>
   <TextInput autofocus value={values.name} on:change={(e) => changeValue(e, "name")} style="width: 50%;height: 30px;" />
 </div>
-<div style="display: flex;justify-content: space-between;align-items: center;">
+<div class="section">
   <p><T id="show.category" /></p>
   <Dropdown options={cats} value={selectedCategory.name} on:click={(e) => (selectedCategory = e.detail)} style="width: 50%;" />
 </div>
 <br />
 <!-- TODO: show example? -->
 <span><T id="show.quick_lyrics" /></span>
-<TextArea style="height: 250px;" value={values.text} on:input={(e) => changeValue(e)} />
+<TextArea placeholder={$dictionary.main.quick_example} style="height: 250px;" value={values.text} on:input={(e) => changeValue(e)} />
 <Button on:click={textToShow} style="width: 100%;margin-top: 10px;color: var(--secondary);" dark center>
   {#if values.text.trim().length > 0}
     <T id="new.show" />
@@ -73,3 +73,16 @@
     <T id="new.empty_show" />
   {/if}
 </Button>
+
+<style>
+  .section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .section :global(.dropdown) {
+    position: absolute;
+    width: 100% !important;
+  }
+</style>

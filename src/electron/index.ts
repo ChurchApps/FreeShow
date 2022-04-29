@@ -4,7 +4,7 @@ import fs from "fs"
 import path, { join } from "path"
 import { URL } from "url"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE, EXPORT } from "../types/Channels"
-import { closeServers } from "./servers"
+import { closeServers, startServers } from "./servers"
 import { template } from "./utils/menuTemplate"
 import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 // import checkForUpdates from "./utils/updater"
@@ -43,9 +43,10 @@ app.on("ready", () => {
   screen.on("display-removed", (_e: any) => {
     let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
     let mainMonitor = screen.getDisplayNearestPoint({ x: mainWindow!.getBounds().x, y: mainWindow!.getBounds().y })
-    if (outputMonitor !== mainMonitor) {
+    if (outputMonitor.id === mainMonitor.id) {
       // if (outputScreenId === display.id.toString()) {
       outputWindow?.hide()
+      if (process.platform === "darwin") outputWindow?.minimize()
       toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
     }
   })
@@ -104,7 +105,7 @@ const createWindow = () => {
     backgroundColor: "#2d313b",
     show: !isProd,
     titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
-    trafficLightPosition: { x: 10, y: 12 },
+    trafficLightPosition: { x: 10, y: 15 },
     webPreferences: {
       // beta dev tools
       devTools: !isProd || Number(app.getVersion()[0]) === 0,
@@ -135,18 +136,18 @@ const createWindow = () => {
     electronSettings.set("height", height)
   })
 
-  let focused: boolean = false
-  mainWindow.on("focus", () => {
-    // WIP hide task bar on second screen
-    if (process.platform === "win32" && !focused) {
-      focused = true
-      outputWindow?.focus()
-      mainWindow?.focus()
-      setTimeout(() => {
-        focused = false
-      }, 100)
-    }
-  })
+  // let focused: boolean = false
+  // mainWindow.on("focus", () => {
+  //   // WIP hide task bar on second screen
+  //   if (process.platform === "win32" && !focused) {
+  //     focused = true
+  //     outputWindow?.focus()
+  //     mainWindow?.focus()
+  //     setTimeout(() => {
+  //       focused = false
+  //     }, 100)
+  //   }
+  // })
 
   mainWindow.on("closed", () => {
     mainWindow = null
@@ -160,12 +161,20 @@ const createWindow = () => {
   Menu.setApplicationMenu(menu)
 }
 
+// Mac ctrl+Q
+let quit = false
+app.on("before-quit", () => (quit = true))
 // macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
+  if (process.platform !== "darwin" || quit) {
     closeServers()
     app.quit()
   }
+})
+// mac activate
+app.on("activate", () => {
+  startServers()
+  mainWindow?.show()
 })
 
 app.on("web-contents-created", (_e, contents) => {
@@ -355,6 +364,8 @@ ipcMain.on(MAIN, (e, msg) => {
   } else if (msg.channel === "GET_WINDOWS" || msg.channel === "GET_SCREENS") {
     desktopCapturer.getSources({ types: [msg.channel === "GET_WINDOWS" ? "window" : "screen"] }).then(async (sources) => {
       const screens: any[] = []
+      console.log(sources)
+      // , display_id: source.display_id
       sources.map((source) => screens.push({ name: source.name, id: source.id }))
       msg.data = screens
       toApp(MAIN, msg)
@@ -409,8 +420,9 @@ let outputPosition: any = null
 // create output
 ipcMain.on(OUTPUT, (_e, msg: any) => {
   if (msg.channel === "DISPLAY") {
-    if (msg.data.enabled) {
-      let outputScreen: any = null
+    let outputScreen: any = null
+
+    if (!outputPosition || msg.data.reset) {
       if (msg.data.screen) {
         outputScreen =
           displays.find((display) => {
@@ -426,43 +438,49 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       }
       // outputScreenId = outputScreen ? outputScreen.id.toString() : null
 
-      if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
+      outputPosition = outputScreen.bounds || null
+      toApp(OUTPUT, { channel: "POSITION", data: outputPosition })
+    }
 
-      if (outputScreen && (msg.data.force || (outputScreen.bounds.x - mainWindow!.getBounds().x > 10 && outputScreen.bounds.y - mainWindow!.getBounds().y > 10))) {
-        if (outputPosition === null) outputPosition = outputWindow?.getBounds()
-        if (JSON.stringify(outputPosition) !== JSON.stringify(outputScreen.bounds) || msg.data.reset) {
-          outputWindow?.setBounds(outputScreen.bounds)
-          outputPosition = outputScreen.bounds
-          toApp(OUTPUT, { channel: "POSITION", data: outputPosition })
-        }
-        // TODO: output task bar
-        // outputWindow?.setVisibleOnAllWorkspaces(true)
-        outputWindow?.showInactive()
-        // outputWindow?.show()
-        // outputWindow?.maximize()
-        // outputWindow?.blur()
-        // mainWindow?.focus()
-        // outputWindow?.setFullScreen(true)
-        // outputWindow?.setAlwaysOnTop(true, "pop-up-menu", 1)
-        // outputWindow?.setAlwaysOnTop(true, "pop-up-menu")
-        // outputWindow?.setFullScreenable(false)
-        // outputWindow?.setAlwaysOnTop(true, "screen-saver", 1)
-        outputWindow?.moveTop()
-        // outputWindow?.maximize()
+    if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
 
+    // && JSON.stringify(outputPosition) !== JSON.stringify(outputWindow?.getBounds())
+    if (outputPosition) outputWindow?.setBounds(outputPosition)
+    let xDif = outputPosition.x - mainWindow!.getBounds().x
+    let yDif = outputPosition.y - mainWindow!.getBounds().y
+
+    if (msg.data.enabled && outputPosition && (msg.data.force || xDif > 50 || (xDif < -50 && yDif > 50) || yDif < -50)) {
+      // TODO: output task bar
+      // outputWindow?.setVisibleOnAllWorkspaces(true)
+      outputWindow?.showInactive()
+      // outputWindow?.show()
+      // outputWindow?.maximize()
+      // outputWindow?.blur()
+      // mainWindow?.focus()
+      // outputWindow?.setFullScreen(true)
+      // outputWindow?.setAlwaysOnTop(true, "pop-up-menu", 1)
+      // outputWindow?.setAlwaysOnTop(true, "pop-up-menu")
+      // outputWindow?.setFullScreenable(false)
+      // outputWindow?.setAlwaysOnTop(true, "screen-saver", 1)
+      if (process.platform === "darwin") outputWindow?.maximize()
+      outputWindow?.moveTop()
+
+      setTimeout(() => {
         // focus on mac
         mainWindow?.focus()
-      } else {
-        outputWindow?.hide()
+      }, 10)
+    } else {
+      outputWindow?.hide()
+      if (process.platform === "darwin") outputWindow?.minimize()
+      if (msg.data.enabled) {
         msg.data.enabled = false
         toApp(MAIN, { channel: "ALERT", data: "error.display" })
       }
-    } else {
-      outputWindow?.hide()
     }
     toApp(OUTPUT, msg)
   } else if (msg.channel === "POSITION") {
-    outputWindow?.setBounds(msg.data)
+    outputPosition = msg.data
+    outputWindow?.setBounds(outputPosition)
   } else if (msg.channel.includes("MAIN")) toApp(OUTPUT, msg)
   else outputWindow?.webContents.send(OUTPUT, msg)
 })
@@ -478,7 +496,7 @@ function createOutputWindow() {
     alwaysOnTop: true, // keep window on top of other windows
     resizable: false, // disable resizing on mac and windows
     frame: false, // hide title/buttons
-    fullscreen: true,
+    // fullscreen: true,
     skipTaskbar: true, // hide taskbar
 
     // parent: mainWindow!,
@@ -504,6 +522,7 @@ function createOutputWindow() {
   })
 
   outputWindow.removeMenu() // hide menubar
+  if (process.platform === "darwin") outputWindow.minimize() // hide on mac
   outputWindow.setAlwaysOnTop(true, "pop-up-menu", 1)
   // outputWindow.setVisibleOnAllWorkspaces(true)
 
@@ -521,7 +540,7 @@ function createOutputWindow() {
 
   outputWindow.on("closed", () => (outputWindow = null))
   outputWindow.on("ready-to-show", () => {
-    outputWindow?.hide()
+    // outputWindow?.hide()
     mainWindow?.focus()
   })
 }

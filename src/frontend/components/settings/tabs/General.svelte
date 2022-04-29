@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { alertUpdates, displayMetadata, fullColors, groupNumbers, imageExtensions, labelsDisabled, screen, showsPath, videoExtensions } from "../../../stores"
+  import { alertUpdates, backgroundColor, displayMetadata, fullColors, groupNumbers, labelsDisabled, screen, showsPath } from "../../../stores"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
+  import Color from "../../inputs/Color.svelte"
   import Dropdown from "../../inputs/Dropdown.svelte"
   import FolderPicker from "../../inputs/FolderPicker.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
-  import TextInput from "../../inputs/TextInput.svelte"
   import LocaleSwitcher from "../LocaleSwitcher.svelte"
 
   const inputs: any = {
@@ -14,6 +14,7 @@
     labels: (e: any) => labelsDisabled.set(e.target.checked),
     colors: (e: any) => fullColors.set(e.target.checked),
     groupNumber: (e: any) => groupNumbers.set(e.target.checked),
+    backgroundColor: (e: any) => backgroundColor.set(e.target.value),
   }
 
   // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
@@ -25,8 +26,8 @@
     { id: "first_last", name: "$:show_at.first_last:$" },
   ]
 
-  const changeValue = (e: any, key: string) => (value[key] = e.target.value)
-  let value: any = { video: "", image: "" }
+  // const changeValue = (e: any, key: string) => (value[key] = e.target.value)
+  // let value: any = { video: "", image: "" }
 </script>
 
 <div>
@@ -107,7 +108,8 @@
     />
   </span>
 </div>
-<div>
+<!-- TODO: video / image extensions -->
+<!-- <div>
   <p><T id="settings.video_extensions" /></p>
   <span class="flex">
     <span style="text-transform: uppercase;margin-right: 10px;">
@@ -148,10 +150,16 @@
       <p><T id="settings.add" /></p>
     </Button>
   </span>
+</div> -->
+<div>
+  <p><T id="edit.background_color" /></p>
+  <span style="width: 200px;">
+    <Color bind:value={$backgroundColor} on:input={inputs.backgroundColor} />
+  </span>
 </div>
 <div>
   <p><T id="settings.show_location" /></p>
-  <span style="display: flex;align-items: center;">
+  <span style="display: flex;align-items: center;" title={$showsPath}>
     {$showsPath}
     <FolderPicker id="shows">
       <T id="inputs.change_folder" />
@@ -163,8 +171,8 @@
 <!-- <Button style="width: 100%;" center><T id="settings.export_settings" /></Button> -->
 <!-- <Button style="width: 100%;" center><T id="settings.import_all" /></Button>
 <Button style="width: 100%;" center><T id="settings.export_all" /></Button> -->
-<Button style="width: 100%;" center><T id="settings.reset_settings" /></Button>
-<Button style="width: 100%;" center><T id="settings.reset_all" /></Button>
+<Button style="width: 100%;" center disabled><T id="settings.reset_settings" /></Button>
+<Button style="width: 100%;" center disabled><T id="settings.reset_all" /></Button>
 
 <!-- project store location... -->
 <style>
@@ -175,7 +183,7 @@
     margin: 5px 0;
     height: 35px;
   }
-  .flex {
+  /* .flex {
     display: flex;
     align-items: center;
   }
@@ -186,7 +194,7 @@
   .hoverDelete:hover {
     color: #ff5050;
     text-decoration: line-through;
-  }
+  } */
 
   .inputs {
     display: flex;

@@ -6,6 +6,7 @@ export type SaveListSettings =
   | "alertUpdates"
   | "audioFolders"
   | "autoOutput"
+  | "backgroundColor"
   | "categories"
   | "defaultProjectName"
   | "displayMetadata"
