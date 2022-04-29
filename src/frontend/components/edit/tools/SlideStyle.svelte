@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { activeEdit, activeShow } from "../../../stores"
+  import { activeEdit, activeShow, backgroundColor, screen, showsCache } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
-  import Checkbox from "../../inputs/Checkbox.svelte"
   import Color from "../../inputs/Color.svelte"
+  import NumberInput from "../../inputs/NumberInput.svelte"
   import Panel from "../../system/Panel.svelte"
 
   // $: editSlide = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide) : null
@@ -17,20 +17,34 @@
       : null
   // get(showsCache)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]
 
-  $: background = editSlide?.settings?.background || false
-  $: color = editSlide?.settings?.color || "#000000"
-  // $: resolution = editSlide?.settings.resolution || []
-  // $: transition = editSlide?.settings.transition || {}
+  let settings: any = {}
+  showsCache.subscribe(setValues)
+  $: if (editSlide) setValues()
+  function setValues() {
+    settings = {
+      color: editSlide?.settings?.color || $backgroundColor || "#000000",
+      resolution: {
+        width: editSlide?.settings?.resolution?.width || $screen.resolution?.width,
+        height: editSlide?.settings?.resolution?.height || $screen.resolution?.height,
+      },
+    }
+  }
 
-  const inputChange = (e: any, key: string) => update(key, e.target.value)
+  const inputChange = (e: any, key: string) => {
+    settings[key] = e.target.value
+    update()
+  }
 
-  function update(id: string, value: any) {
-    let newData: any = { style: { ...editSlide?.settings } }
-    newData.style[id] = value
+  function update() {
+    let newData: any = { style: JSON.parse(JSON.stringify(settings)) }
+    if (JSON.stringify(newData.style.resolution) === JSON.stringify($screen.resolution)) {
+      delete newData.style.resolution
+    }
+    if (settings.color === $backgroundColor) delete settings.color
 
     history({
       id: "slideStyle",
-      oldData: editSlide?.settings,
+      oldData: { style: editSlide?.settings },
       newData,
       location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id },
     })
@@ -41,25 +55,37 @@
   <h6><T id="edit.style" /></h6>
   <div class="gap">
     <span class="titles">
-      <p><T id="edit.background" /></p>
-      <p><T id="edit.color" /></p>
+      <p><T id="edit.background_color" /></p>
     </span>
     <span style="flex: 1;">
-      <!-- <input type="checkbox" checked={background} /> -->
-      <Checkbox checked={background} />
-      <Color bind:value={color} on:input={(e) => inputChange(e, "background")} />
+      <Color bind:value={settings.color} on:input={(e) => inputChange(e, "background")} />
     </span>
   </div>
   <hr />
-  <h6><T id="edit.options" /></h6>
+  <h6><T id="settings.resolution" /></h6>
   <div class="gap">
     <span class="titles">
-      <p><T id="edit.resolution" /></p>
+      <p><T id="edit.width" /></p>
+      <p><T id="edit.height" /></p>
       <!-- <p><T id="edit.transition" /></p> -->
     </span>
     <span style="flex: 1;">
-      <!-- <input type="checkbox" checked={background} />
-      <Color bind:value={color} on:input={colorChange} /> -->
+      <NumberInput
+        value={settings.resolution.width}
+        max={100000}
+        on:change={(e) => {
+          settings.resolution.width = Number(e.detail)
+          update()
+        }}
+      />
+      <NumberInput
+        value={settings.resolution.height}
+        max={100000}
+        on:change={(e) => {
+          settings.resolution.height = Number(e.detail)
+          update()
+        }}
+      />
     </span>
   </div>
 </Panel>

@@ -386,6 +386,7 @@ export function history(obj: History, undo: null | boolean = null) {
           id = uid(12)
           obj.newData.id = id
         }
+        if (!obj.newData.show.name.length) obj.newData.show.name = id
         setShow(id, obj.newData.show)
 
         let as: any = { id, type: "show" }
@@ -1085,7 +1086,7 @@ export function history(obj: History, undo: null | boolean = null) {
                       let templateLine = item.lines?.[j] || item.lines?.[0]
                       line.align = templateLine?.align || ""
                       line.text.forEach((text: any, k: number) => {
-                        text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine.text[0].style || ""
+                        text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
                       })
                     })
                   } else {

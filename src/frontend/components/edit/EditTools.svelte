@@ -26,7 +26,10 @@
   $: tabs.text.icon = item?.type || "text"
 
   let slides: any[] = []
-  $: if (allSlideItems && ($activeEdit?.id || $activeShow?.id) && $activeEdit.slide !== null && $activeEdit.slide !== undefined)
+  $: if (
+    allSlideItems &&
+    (($activeEdit?.id && $activeEdit.slide !== null && $activeEdit.slide !== undefined) || ($activeShow && ($activeShow.type === undefined || $activeShow.type === "show")))
+  )
     slides = _show($activeEdit?.id || $activeShow?.id)
       .slides()
       .get()
@@ -44,10 +47,21 @@
   }
 
   // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
-  $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length <= $activeEdit.slide && GetLayout($activeShow?.id!).length > 0)
+  $: if (
+    $activeEdit.slide !== null &&
+    $activeEdit.slide !== undefined &&
+    $activeShow &&
+    ($activeShow?.type === undefined || $activeShow?.type === "show") &&
+    GetLayout($activeShow.id).length <= $activeEdit.slide &&
+    GetLayout($activeShow.id).length > 0
+  )
     activeEdit.set({ slide: 0, items: [] })
   $: allSlideItems =
-    $activeEdit.slide !== null && $activeEdit.slide !== undefined && GetLayout($activeShow?.id!).length > $activeEdit.slide
+    $activeEdit.slide !== null &&
+    $activeEdit.slide !== undefined &&
+    $activeShow &&
+    ($activeShow?.type === undefined || $activeShow?.type === "show") &&
+    GetLayout($activeShow.id).length > $activeEdit.slide
       ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items
       : []
   $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items
@@ -60,6 +74,16 @@
   $: item = items?.length ? items[items.length - 1] : null
 
   function reset() {
+    if (active === "slide") {
+      let slide = GetLayout()[$activeEdit.slide!].id
+      history({
+        id: "slideStyle",
+        oldData: { style: _show("active").slides([slide]).get("settings")[0] },
+        newData: { style: {} },
+        location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id },
+      })
+      return
+    }
     if (active !== "text") return
 
     let values: any = []
@@ -93,7 +117,7 @@
 
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
 <div class="main border editTools">
-  {#if (slides?.length && $activeShow && $activeEdit.slide !== null) || $activeEdit.id}
+  {#if (slides?.length && $activeShow && ($activeShow.type === undefined || $activeShow.type === "show") && $activeEdit.slide !== null) || $activeEdit.id}
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
@@ -123,13 +147,11 @@
     <!-- add shapes, text edit, arrange layers, transitions... -->
 
     <span style="display: flex;">
-      {#if active === "text" || active === "item"}
+      {#if active !== "items"}
         <Button style="flex: 1;" dark center disabled title="WIP">
           <Icon id="copy" right />
           <T id={"actions.to_all"} />
         </Button>
-      {/if}
-      {#if active !== "items"}
         <Button style="flex: 1;" on:click={reset} dark center>
           <Icon id="reset" right />
           <T id={"actions.reset"} />

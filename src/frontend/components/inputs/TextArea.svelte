@@ -1,4 +1,4 @@
-<textarea class="edit" value={$$props.value} style={$$props.style} class:center={$$props.center} on:input />
+<textarea class="edit" placeholder={$$props.placeholder || null} value={$$props.value} style={$$props.style} class:center={$$props.center} on:input />
 
 <!-- <div class="edit" style={$$props.style} class:center={$$props.center} contenteditable>
   {$$props.value}

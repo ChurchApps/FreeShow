@@ -7,7 +7,8 @@
     "unnamed": "Unnamed",
     "drop": "Drop here",
     "search": "Search",
-    "none": "None"
+    "none": "None",
+    "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
   },
   "languages": {
     "en": "English",
@@ -372,6 +373,7 @@
     "_title_underline": "Underline",
     "_title_strikethrough": "Strikethrough",
     "color": "Color",
+    "background_color": "Background color",
     "size": "Size",
     "auto_size": "Auto Size",
     "line_spacing": "Line Spacing",
@@ -464,7 +466,9 @@
     "calendar": "Calendar",
     "other": "Other",
     "language": "Language",
-    "hide_output_hint": "Double click on the output window to hide it",
+    "hide_output_hint": "Double click on the output window to hide it.",
+    "show_output_hint": "Hold ctrl/cmd while clicking the display button to force it to show over this monitor.",
+    "move_output_hint": "Don't find your display? Change the x/y values or drag up with three fingers on the mousepad and move it over manually.",
     "position": "Position",
     "alert_updates": "Alert when a new update is available",
     "disable_labels": "Disable labels",

@@ -25,7 +25,8 @@
         }
       }
     }
-    return results["en0"][0]
+
+    ip = results["en0"]?.[0] || results["Wi-Fi"]?.[0] || "IP"
   }
 </script>
 

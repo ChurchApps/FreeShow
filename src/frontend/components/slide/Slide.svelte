@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte"
+  import type { Resolution } from "../../../types/Settings"
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, overlays, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, activeTimers, backgroundColor, dictionary, fullColors, groupNumbers, groups, overlays, screen, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import Editbox from "../edit/Editbox.svelte"
   import { getItemText } from "../edit/scripts/textStyle"
@@ -74,7 +75,7 @@
       Object.entries(show.slides).forEach(([id, a]: any) => {
         if (added[a.group]) {
           added[a.group]++
-          if (id === slideID) name += " #" + added[a.group]
+          if (id === slideID) name += " " + added[a.group]
         } else added[a.group] = 1
       })
       // }
@@ -86,7 +87,7 @@
           if (a.type === "parent") {
             if (added[a.id]) {
               added[a.id]++
-              if (i === index) name += " " + added[a.id]
+              if (i === index) name += " (" + added[a.id] + ")"
             } else added[a.id] = 1
           }
         })
@@ -183,6 +184,8 @@
   function keyup() {
     altKeyPressed = false
   }
+
+  let resolution: Resolution = slide?.settings?.resolution || $screen.resolution
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} />
@@ -222,8 +225,9 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           </div>
         {/if}
         <Zoomed
-          background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? "black" : "transparent"}
+          background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || $backgroundColor || "black" : "transparent"}
           let:ratio
+          {resolution}
           zoom={$slidesOptions.mode !== "lyrics" || noQuickEdit}
           aspectRatio={$slidesOptions.mode !== "lyrics" || noQuickEdit}
           disableStyle={$slidesOptions.mode === "lyrics" && !noQuickEdit}

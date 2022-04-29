@@ -59,7 +59,7 @@ export function _show(id: any) {
       /** Get slides */
       get: (key: null | string = null, addId: boolean = true) => {
         let a: any[] = []
-        if (!slideIds.length) slideIds = Object.keys(shows[id].slides)
+        if (!slideIds.length && shows[id]?.slides) slideIds = Object.keys(shows[id].slides)
         slideIds.forEach((slideId) => {
           if (key) a.push(shows[id].slides[slideId][key])
           else {

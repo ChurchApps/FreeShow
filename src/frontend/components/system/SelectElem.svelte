@@ -33,6 +33,7 @@
     // e.dataTransfer.dropEffect = type
     // e.dataTransfer.setData("text", data)
 
+    // TODO: !$renameActive
     if (id === "folder" && $selected.data[0]?.id === "folder" && data.index < $selected.data[0].index) return
     if (id === "folder" && ($selected.data[0]?.id === "project" || data.index > $selected.data[0]?.index)) return
 

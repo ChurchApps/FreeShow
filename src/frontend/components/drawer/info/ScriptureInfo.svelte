@@ -101,6 +101,7 @@
             if (rangeJoined[rangeJoined.length - 1] && r - 1 === range[i - 1]) rangeJoined[rangeJoined.length - 1].push(r)
             else rangeJoined.push([r])
           })
+          console.log(rangeJoined)
           // TODO: sometimes only showing last verse number...
 
           let arr: any[] = []
@@ -114,6 +115,9 @@
         }
       })
       // TODO: last range is now full text....
+      // TODO: get correct verses at last slide
+      // let remainder = sorted.length % versesPerSlide
+
       addVerse(showVersion, showVerse, verseRange)
     } else slides = [[]]
   }

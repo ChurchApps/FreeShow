@@ -11,23 +11,25 @@ import { dictionary, language } from "../stores"
 
 // let rtls = ["ar"]
 const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
+const replace: any = {
+  no: ["nb", "nn"],
+  en: ["en-US"],
+}
 
 function setLanguage(locale: null | string = null) {
   if (!locale) {
-    let replace: any = {
-      no: ["nb", "nn"],
-      en: ["en-US"],
-    }
     // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
     // locale = window.navigator.userLanguage || window.navigator.language || 'en';
-    locale = window.navigator.language || "en"
+    locale = window.navigator.language
     Object.keys(replace).forEach((key) => {
       if (replace[key].includes(locale)) locale = key
       //   replace[key].forEach((l) => {
       //     if (locale === l) locale = key
       //   })
     })
+    // if (!exists) locale = "en"
   }
+  if (!replace[locale]) locale = "en"
   // console.log(locale);
 
   // const messsagesFileUrl = LANGUAGE_FILE_URL.replace('{locale}', locale);

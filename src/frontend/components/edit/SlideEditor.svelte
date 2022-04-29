@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { Resolution } from "../../../types/Settings"
-  import { activeEdit, activeShow, screen, showsCache } from "../../stores"
+  import { activeEdit, activeShow, backgroundColor, screen, showsCache } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
   import { _show } from "../helpers/shows"
@@ -13,9 +12,9 @@
   import Editbox from "./Editbox.svelte"
   import { autoSize } from "./scripts/autoSize"
 
-  $: currentShow = $activeShow!.id
+  $: currentShow = $activeShow?.id
   $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
-  $: ref = $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
+  $: ref = currentShow && $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
   $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show("active").slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
 
   // showsCache.subscribe((a) => {
@@ -56,7 +55,7 @@
 
   let width: number = 0
   let height: number = 0
-  let resolution: Resolution = Slide ? $showsCache[currentShow].settings.resolution! : $screen.resolution
+  $: resolution = Slide?.settings?.resolution || $screen.resolution
   // TODO: zoom more in...
 
   let ratio: number = 1
@@ -102,7 +101,14 @@
 
 <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
   {#if Slide}
-    <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
+    <Zoomed
+      background={Slide?.settings?.color || $backgroundColor || "black"}
+      {resolution}
+      style={getStyleResolution(resolution, width, height)}
+      bind:ratio
+      hideOverflow={false}
+      center
+    >
       <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
       {#each Slide.items as item, index}
         <Editbox {item} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />

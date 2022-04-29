@@ -27,11 +27,11 @@
           })
         }
       }
-      // check count
+      // add numbers to different slides with same name
       if (slide.group) {
         if (added[slide.group]) {
           added[slide.group]++
-          slide.group += " #" + added[slide.group]
+          slide.group += " " + added[slide.group]
         } else added[slide.group] = 1
       }
       return { id, ...slide }

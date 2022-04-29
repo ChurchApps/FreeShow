@@ -538,6 +538,8 @@ export const groups: Writable<any> = writable({
   outro: { name: "outro", default: true, color: "#5825f5" },
 })
 
+export const backgroundColor: Writable<string> = writable("#000000") // #000000
+
 // display
 export const screen = writable({
   // {default}

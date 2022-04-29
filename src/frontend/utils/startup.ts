@@ -1,5 +1,5 @@
 import { IMPORT } from "./../../types/Channels"
-import { activePopup, alertMessage, outputPosition } from "./../stores"
+import { activePopup, alertMessage, backgroundColor, displayMetadata, outputPosition, screen } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
@@ -126,6 +126,9 @@ const receiveOUTPUT: any = {
   SLIDE: (a: any) => outSlide.set(a),
   OVERLAYS: (a: any) => outOverlays.set(a),
   OVERLAY: (a: any) => overlays.set(a),
+  META: (a: any) => displayMetadata.set(a),
+  COLOR: (a: any) => backgroundColor.set(a),
+  SCREEN: (a: any) => screen.set(a),
   SHOWS: (a: any) => showsCache.set(a),
   DRAW: (a: any) => draw.set(a),
   DRAW_TOOL: (a: any) => drawTool.set(a),

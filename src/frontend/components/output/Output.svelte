@@ -1,9 +1,8 @@
 <script lang="ts">
   import { fade } from "svelte/transition"
   import { OUTPUT } from "../../../types/Channels"
-  import type { Resolution } from "../../../types/Settings"
   import type { Transition, TransitionType } from "../../../types/Show"
-  import { displayMetadata, outAudio, outBackground, outOverlays, currentWindow, outSlide, overlays, screen, shows, showsCache, transitionData } from "../../stores"
+  import { displayMetadata, outAudio, outBackground, outOverlays, currentWindow, outSlide, overlays, screen, showsCache, transitionData, backgroundColor } from "../../stores"
   import { receive } from "../../utils/request"
   import { transitions } from "../../utils/transitions"
   import Draw from "../draw/Draw.svelte"
@@ -27,8 +26,6 @@
 
   $: slideTransition = $showsCache && $outSlide ? _show($outSlide.id).layouts("active").ref()[0][$outSlide.index]?.data.transition : null
   $: transition = slideTransition ? slideTransition : $transitionData.text
-
-  let resolution: Resolution = $outSlide && $shows[$outSlide.id].settings?.resolution ? $shows[$outSlide.id].settings.resolution! : $screen.resolution
 
   const receiveOUTPUT = {
     VIDEO_DATA: (a: any) => {
@@ -54,12 +51,14 @@
   $: currentLayout = $outSlide ? _show($outSlide.id).layouts([$outSlide.layout]).ref()[0] : []
   $: currentSlide = $outSlide ? _show($outSlide.id).slides([currentLayout![$outSlide.index].id]).get()[0] : null
 
+  $: resolution = currentSlide?.settings?.resolution || $screen.resolution
+
   function custom(node: any, { type = "fade", duration = 500 }: any) {
     return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration }
   }
 </script>
 
-<Zoomed {center} {style} {resolution} bind:ratio>
+<Zoomed background={currentSlide?.settings?.color || $backgroundColor || "black"} {center} {style} {resolution} bind:ratio>
   {#if $outBackground !== null}
     <div style="zoom: {1 / ratio}">
       <MediaOutput {...$outBackground} {transition} bind:video bind:videoData bind:videoTime bind:title {mirror} />

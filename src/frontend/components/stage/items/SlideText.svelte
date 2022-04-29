@@ -8,7 +8,7 @@
   export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; id: string }
 
   $: index = $outSlide ? $outSlide.index + (next ? 1 : 0) : null
-  $: slideId = index !== null && $outSlide ? _show("active").layouts("active").ref()[0][index!].id : null
+  $: slideId = index !== null && $outSlide ? _show("active").layouts("active").ref()[0][index!]?.id || null : null
   $: slide = $outSlide && slideId ? $showsCache[$outSlide.id].slides[slideId] : null
 
   // $: {

@@ -7,7 +7,8 @@
     "unnamed": "Uten navn",
     "drop": "Slipp her",
     "search": "Søk",
-    "none": "Ingen"
+    "none": "Ingen",
+    "quick_example": "[Verse]\nLinje 1\nLinje 2\n\n[Chorus]\nLinje 1\nLinje 2\nx2"
   },
   "languages": {
     "en": "Engelsk",
@@ -372,6 +373,7 @@
     "_title_underline": "Understrek",
     "_title_strikethrough": "Gjennomstreking",
     "color": "Farge",
+    "background_color": "Bakgrunnsfarge",
     "size": "Størrelse",
     "auto_size": "Auto-størrele",
     "line_spacing": "Linjeavstant",
@@ -464,7 +466,9 @@
     "calendar": "Kalender",
     "other": "Annet",
     "language": "Språk",
-    "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den",
+    "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den.",
+    "show_output_hint": "Hold ctrl/cmd mens du trykker på \"vis utgangsskjerm\"-knappen for å tvinge visning over denne skjermen.",
+    "move_output_hint": "Finner ikke skjermen din? Endre x/y verdiene eller dra opp med tre fingre på styreplaten og flytt den over manuelt.",
     "position": "Posisjon",
     "alert_updates": "Varsle når en ny oppdatering er tilgjengelig",
     "disable_labels": "Deaktiver etiketter",
