@@ -7,6 +7,8 @@
 
   $: value = edit ? (value.endsWith(" ") ? removeWhitespace(value) + " " : removeWhitespace(value)) : value.trim()
 
+  $: console.log(edit, value)
+
   const removeWhitespace = (v: string) =>
     v
       .split(" ")
@@ -28,8 +30,6 @@
       activeRename.set(null)
     }
   }
-
-  $: console.log($activeRename, id)
 
   $: if ($activeRename === id) {
     edit = true

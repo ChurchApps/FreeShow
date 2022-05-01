@@ -201,7 +201,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     <Actions {columns} {index} actions={layoutSlide.actions || {}} />
   {/if}
   <div
-    class="slide context #slide"
+    class="slide context #{name === null ? 'slideChild' : 'slide'}"
     class:disabled={layoutSlide.disabled}
     class:afterEnd={endIndex !== null && index > endIndex}
     style="{$fullColors || ($slidesOptions.mode === 'lyrics' && !noQuickEdit) ? 'background-' : ''}color: {$slidesOptions.mode === 'lyrics' && !noQuickEdit
@@ -249,13 +249,15 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {#if slide.items}
             {#each slide.items as item}
               <!-- TODO: lyrics zoom on text -->
-              <Textbox
-                {item}
-                {ratio}
-                ref={{ showId: $activeShow?.id, id: layoutSlide.id }}
-                style={$slidesOptions.mode !== "lyrics" || noQuickEdit}
-                smallFontSize={$slidesOptions.mode === "lyrics" && !noQuickEdit}
-              />
+              {#if $slidesOptions.mode !== "lyrics" || item.type === undefined || item.type === "text" || item.type === "timer"}
+                <Textbox
+                  {item}
+                  {ratio}
+                  ref={{ showId: $activeShow?.id, id: layoutSlide.id }}
+                  style={$slidesOptions.mode !== "lyrics" || noQuickEdit}
+                  smallFontSize={$slidesOptions.mode === "lyrics" && !noQuickEdit}
+                />
+              {/if}
             {/each}
           {/if}
           {#if !altKeyPressed && layoutSlide.overlays?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}

@@ -20,10 +20,10 @@
     // c: () => (callClear = true),
     f: () => (fullscreen = !fullscreen),
     l: () => outLocked.set(!$outLocked),
-    // r: () => {
-    //   outSlide.set($outSlide)
-    //   outBackground.set($outBackground)
-    // }
+    r: () => {
+      outSlide.set($outSlide)
+      outBackground.set($outBackground)
+    },
   }
 
   const shortcuts: any = {
@@ -72,7 +72,10 @@
   }
 
   function keydown(e: any) {
-    if ((e.ctrlKey || e.metaKey || e.altKey) && !e.metaKey && ctrlShortcuts[e.key]) ctrlShortcuts[e.key]()
+    if ((e.ctrlKey || e.metaKey || e.altKey) && !e.metaKey && ctrlShortcuts[e.key]) {
+      e.preventDefault()
+      ctrlShortcuts[e.key]()
+    }
     if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow) return
 
     if (($activeShow?.type === "show" || $activeShow?.type === undefined) && shortcuts[e.key]) {

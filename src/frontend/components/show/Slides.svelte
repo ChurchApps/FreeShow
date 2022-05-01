@@ -88,7 +88,7 @@
 
   $: if (id && currentShow?.settings.template) {
     // update show by its template
-    history({ id: "template", newData: { template: currentShow.settings.template }, location: { page: "show", show: $activeShow! } })
+    history({ id: "template", save: false, newData: { template: currentShow.settings.template }, location: { page: "show", show: $activeShow! } })
   }
 </script>
 

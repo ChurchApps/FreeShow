@@ -46,7 +46,10 @@ app.on("ready", () => {
     if (outputMonitor.id === mainMonitor.id) {
       // if (outputScreenId === display.id.toString()) {
       outputWindow?.hide()
-      if (process.platform === "darwin") outputWindow?.minimize()
+      if (process.platform === "darwin") {
+        outputWindow?.minimize()
+        outputWindow?.setFullScreen(true)
+      }
       toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
     }
   })
@@ -105,7 +108,7 @@ const createWindow = () => {
     backgroundColor: "#2d313b",
     show: !isProd,
     titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
-    trafficLightPosition: { x: 10, y: 15 },
+    trafficLightPosition: { x: 10, y: 17 },
     webPreferences: {
       // beta dev tools
       devTools: !isProd || Number(app.getVersion()[0]) === 0,
@@ -162,11 +165,12 @@ const createWindow = () => {
 }
 
 // Mac ctrl+Q
-let quit = false
-app.on("before-quit", () => (quit = true))
+// let quit = false
+// app.on("before-quit", () => (quit = true))
 // macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin" || quit) {
+  // || quit
+  if (process.platform !== "darwin") {
     closeServers()
     app.quit()
   }
@@ -219,9 +223,12 @@ ipcMain.on(STORE, (e, msg) => {
 
 // save
 function save(data: any) {
-  Object.entries(data.settings).forEach(([key, value]: any) => {
-    if (JSON.stringify(settings.get(key)) !== JSON.stringify(value)) settings.set(key, value)
-  })
+  if (data.settings === null) settings.clear()
+  else {
+    Object.entries(data.settings).forEach(([key, value]: any) => {
+      if (JSON.stringify(settings.get(key)) !== JSON.stringify(value)) settings.set(key, value)
+    })
+  }
 
   if (data.shows && JSON.stringify(shows.store) !== JSON.stringify(data.shows)) {
     shows.clear()
@@ -259,14 +266,15 @@ function save(data: any) {
   }
 
   // SHOWS
-  Object.entries(data.showsCache).forEach(([id, value]: any) => {
-    let p: string = path.resolve(data.path, value.name + ".show")
-    if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
-      fs.writeFile(p, JSON.stringify([id, value]), (err): void => {
-        if (err) toApp(SHOW, { error: "no_write", err, id })
-      })
-    }
-  })
+  if (data.showsCache)
+    Object.entries(data.showsCache).forEach(([id, value]: any) => {
+      let p: string = path.resolve(data.path, value.name + ".show")
+      if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
+        fs.writeFile(p, JSON.stringify([id, value]), (err): void => {
+          if (err) toApp(SHOW, { error: "no_write", err, id })
+        })
+      }
+    })
 }
 
 // Custom .show file
@@ -445,7 +453,6 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
     if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
 
     // && JSON.stringify(outputPosition) !== JSON.stringify(outputWindow?.getBounds())
-    if (outputPosition) outputWindow?.setBounds(outputPosition)
     let xDif = outputPosition.x - mainWindow!.getBounds().x
     let yDif = outputPosition.y - mainWindow!.getBounds().y
 
@@ -462,7 +469,10 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       // outputWindow?.setAlwaysOnTop(true, "pop-up-menu")
       // outputWindow?.setFullScreenable(false)
       // outputWindow?.setAlwaysOnTop(true, "screen-saver", 1)
-      if (process.platform === "darwin") outputWindow?.maximize()
+      if (process.platform === "darwin") {
+        outputWindow?.maximize()
+        if (!msg.data.force) outputWindow?.setFullScreen(true)
+      }
       outputWindow?.moveTop()
 
       setTimeout(() => {
@@ -471,11 +481,21 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       }, 10)
     } else {
       outputWindow?.hide()
-      if (process.platform === "darwin") outputWindow?.minimize()
+      if (process.platform === "darwin") {
+        outputWindow?.setFullScreen(false)
+        outputWindow?.minimize()
+      }
       if (msg.data.enabled) {
         msg.data.enabled = false
         toApp(MAIN, { channel: "ALERT", data: "error.display" })
       }
+    }
+    if (outputPosition) {
+      outputWindow?.setBounds(outputPosition)
+      // has to be set twice to work first time
+      setTimeout(() => {
+        outputWindow?.setBounds(outputPosition)
+      }, 10)
     }
     toApp(OUTPUT, msg)
   } else if (msg.channel === "POSITION") {

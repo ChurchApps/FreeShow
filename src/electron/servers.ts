@@ -29,17 +29,17 @@ stageExpressApp.get("/", (_req: any, res: Response) => res.sendFile(join(__dirna
 remoteExpressApp.use(express.static(join(__dirname, "remote")))
 stageExpressApp.use(express.static(join(__dirname, "stage")))
 
-remoteServer.once("error", (err: any) => {
-  if (err.code === "EADDRINUSE") remoteServer.close()
-})
-stageServer.once("error", (err: any) => {
-  if (err.code === "EADDRINUSE") stageServer.close()
-})
-
 startServers()
 export function startServers() {
   remoteServer.listen(REMOTE_PORT, () => console.log("Remote on: " + REMOTE_PORT))
   stageServer.listen(STAGE_PORT, () => console.log("Stage on: " + STAGE_PORT))
+
+  remoteServer.once("error", (err: any) => {
+    if (err.code === "EADDRINUSE") remoteServer.close()
+  })
+  stageServer.once("error", (err: any) => {
+    if (err.code === "EADDRINUSE") stageServer.close()
+  })
 }
 
 export function closeServers() {

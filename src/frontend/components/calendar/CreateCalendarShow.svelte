@@ -1,7 +1,7 @@
 <script lang="ts">
   import { uid } from "uid"
   import { ShowObj } from "../../classes/Show"
-  import { activeDays, activeProject, dictionary, events } from "../../stores"
+  import { activeDays, activeProject, categories, dictionary, events } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { checkName } from "../helpers/show"
@@ -112,8 +112,16 @@
     if (currentEvents.length > 1) layouts[layouts.length - 1].end = true
 
     let layoutID = uid()
-    let show = new ShowObj(true, "info", layoutID)
-    // if (!$categories.event) createCategory()
+    let show = new ShowObj(true, "events", layoutID)
+
+    // add events category
+    if (!$categories.scripture) {
+      categories.update((a) => {
+        a.events = { name: "category.events", icon: "events", default: true }
+        return a
+      })
+    }
+
     // TODO: week?
     show.name = getDateString(from)
     if (sortedDays[0] - sortedDays[1] < 0) show.name += " - " + getDateString(to)

@@ -166,13 +166,16 @@
     "no_layouts": "Kunne ikke finne noen oppsett",
     "load": "Kunne ikke laste inn",
     "not_found": "Ikke funnet",
-    "display": "Kunne ikke vise utgangsvindu på nåværende skjerm"
+    "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
+    "keep_one_layout": "Du må ha minst ett oppsett"
   },
   "meta": {
     "title": "Tittel",
     "artist": "Artist",
     "author": "Låtskriver",
+    "composer": "Komponist",
     "publisher": "Utgiver",
+    "copyright": "Opphavsrett",
     "CCLI": "Lisens",
     "year": "År"
   },
@@ -228,9 +231,10 @@
     "unlabeled": "Umerket",
     "favorites": "Favoritter",
     "song": "Sanger",
-    "info": "Info",
-    "events": "Hendelser",
     "presentation": "Presentasjoner",
+    "info": "Info",
+    "scripture": "Bibelen",
+    "events": "Hendelser",
     "pictures": "Bilder",
     "videos": "Videoer",
     "offers": "Offer",
@@ -264,6 +268,8 @@
     "initialize": "Velkommen",
     "unsaved": "Du har ikke lagret enda! Er du sikker på at du vil avslutte?",
     "cancel": "Avbryt",
+    "continue": "Fortsett",
+    "reset_all": "Tilbakestill alt",
     "quit": "Avslutt uten å lagre",
     "save_quit": "Lagre og avslutt"
   },
@@ -320,6 +326,11 @@
     "home": "Hjem",
     "mute": "Slå av lyden",
     "unmute": "Slå på lyden",
+    "format": "Formater",
+    "uppercase": "Gjør tekst stor",
+    "lowercase": "Gjør tekst liten",
+    "capitalize": "Gjør første bokstav stor",
+    "trim": "Klipp",
     "actions": "Handlinger"
   },
   "export": {
@@ -496,7 +507,6 @@
     "max_connections": "Maks tilkoblinger",
     "allowed_connections": "Tillatte tilkoblinger",
     "reset_all": "Tilbakestill alt",
-    "reset_settings": "Tilbakestill innstillinger",
     "reset_colors": "Tilbakestill farger",
     "reset_themes": "Tilbakestill temaer",
     "export_all": "Eksporter alt"

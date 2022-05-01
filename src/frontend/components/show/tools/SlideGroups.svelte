@@ -38,7 +38,7 @@
     })
   }
 
-  $: sortedSlides = slides.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group.localeCompare(b.group))
+  $: sortedSlides = slides.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group?.localeCompare(b.group))
   // $: sortedSlides = slides.filter((a) => a.group !== null).sort((a: any, b: any) => (a.group > b.group ? 1 : b.group > a.group ? -1 : 0))
 
   $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
@@ -47,8 +47,7 @@
     return { group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
   })
 
-  // $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group.localeCompare(b.group))
-  $: sortedGroups = globalGroups
+  $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group.localeCompare(b.group))
 </script>
 
 <!-- TODO: tooltips... (Click or drag to add groups) -->

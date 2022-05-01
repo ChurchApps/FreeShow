@@ -16,6 +16,7 @@
   import Export from "./popups/Export.svelte"
   import Transition from "./popups/Transition.svelte"
   import Alert from "./popups/Alert.svelte"
+  import ResetAll from "./popups/ResetAll.svelte"
 
   const hide = (e: any) => {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -56,6 +57,8 @@
           <Shortcuts />
         {:else if $activePopup === "unsaved"}
           <Unsaved />
+        {:else if $activePopup === "reset_all"}
+          <ResetAll />
         {:else if $activePopup === "alert"}
           <Alert />
         {/if}

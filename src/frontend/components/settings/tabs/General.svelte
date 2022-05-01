@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { alertUpdates, backgroundColor, displayMetadata, fullColors, groupNumbers, labelsDisabled, screen, showsPath } from "../../../stores"
+  import { activePopup, alertUpdates, backgroundColor, displayMetadata, fullColors, groupNumbers, labelsDisabled, screen, showsPath } from "../../../stores"
+  import { setLanguage } from "../../../utils/language"
+  import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
@@ -26,8 +28,16 @@
     { id: "first_last", name: "$:show_at.first_last:$" },
   ]
 
-  // const changeValue = (e: any, key: string) => (value[key] = e.target.value)
-  // let value: any = { video: "", image: "" }
+  function reset() {
+    setLanguage(null)
+    alertUpdates.set(true)
+    labelsDisabled.set(false)
+    fullColors.set(true)
+    groupNumbers.set(true)
+    displayMetadata.set("never")
+    backgroundColor.set("#000000")
+    screen.set({ resolution: { width: 1920, height: 1080 } })
+  }
 </script>
 
 <div>
@@ -171,8 +181,13 @@
 <!-- <Button style="width: 100%;" center><T id="settings.export_settings" /></Button> -->
 <!-- <Button style="width: 100%;" center><T id="settings.import_all" /></Button>
 <Button style="width: 100%;" center><T id="settings.export_all" /></Button> -->
-<Button style="width: 100%;" center disabled><T id="settings.reset_settings" /></Button>
-<Button style="width: 100%;" center disabled><T id="settings.reset_all" /></Button>
+<Button style="width: 100%;" on:click={reset} center>
+  <Icon id="reset" right />
+  <T id="actions.reset" /></Button
+>
+<Button style="width: 100%;" on:click={() => activePopup.set("reset_all")} center>
+  <Icon id="reset" right /><T id="settings.reset_all" />
+</Button>
 
 <!-- project store location... -->
 <style>

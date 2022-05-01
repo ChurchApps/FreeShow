@@ -58,6 +58,13 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   edit: { label: "menu.edit", icon: "edit" },
   recolor: { label: "actions.recolor", icon: "color" },
   actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
+  // ITEM
+  format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
+  // formatting
+  uppercase: { label: "actions.uppercase" },
+  lowercase: { label: "actions.lowercase" },
+  capitalize: { label: "actions.capitalize" },
+  trim: { label: "actions.trim" },
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -107,8 +114,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // SHOWS
   // , "copy", "paste"
   slide: ["slideGroups", "actions", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
+  slideChild: ["slideGroups", "actions", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
-  global_group: ["rename", "recolor"],
+  global_group: ["edit"],
   // global_group: ["rename"],
   layout: ["rename", "remove", "duplicate"],
 
@@ -116,5 +124,5 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   stage_slide: ["rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
   // EDIT
-  edit_box: ["format?", "delete", "make stage exlusive", "SEPERATOR", "duplicate", "copy", "paste"],
+  edit_box: ["format", "delete", "make stage exlusive", "SEPERATOR", "duplicate", "copy", "paste"],
 }

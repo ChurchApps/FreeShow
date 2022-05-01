@@ -67,6 +67,7 @@ export type HistoryIDs =
   | "deleteSlides"
   | "deleteGroups"
   | "deletePlayerVideo"
+  | "deleteLayout"
   // add
   | "addShow"
   | "addLayout"
@@ -76,6 +77,7 @@ export type HistoryIDs =
   | "slide"
   | "changeSlide"
   | "showMedia"
+  | "changeLayoutsSlides"
   | "changeLayoutKey"
   | "changeLayout"
   | "changeLayouts"
@@ -98,6 +100,7 @@ export interface History {
   id: HistoryIDs
   oldData?: any
   newData?: any
+  save?: boolean
   location?: {
     page: HistoryPages
     project?: null | string
@@ -105,6 +108,7 @@ export interface History {
     show?: ShowRef
     shows?: any[]
     layout?: string
+    layouts?: string[]
     layoutSlide?: number
     slide?: string
     items?: any[]
@@ -114,7 +118,20 @@ export interface History {
 }
 
 // override previous history
-const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme", "changeLayouts"]
+const override = [
+  "textAlign",
+  "textStyle",
+  "deleteItem",
+  "setItems",
+  "setStyle",
+  "stageItemAlign",
+  "stageItemStyle",
+  "slideStyle",
+  "changeLayout",
+  "theme",
+  "changeLayouts",
+  "template",
+]
 
 export async function historyAwait(s: string[], obj: History) {
   loadShows(s)
@@ -257,7 +274,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     // show
     case "changeSlide":
-      old = { key: obj.newData.key, value: _show(showID).slides([obj.location!.slide!]).set(obj.newData) }
+      old = { key: obj.newData.key, value: _show(showID).slides([obj.location!.slide!]).set(obj.newData)[0] }
 
       // showsCache.update((a) => {
       //   if (!obj.oldData) obj.oldData = {}
@@ -897,6 +914,31 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
 
+    case "deleteLayout":
+      if (undo) {
+        old = { id: _show(showID).get("settings.activeLayout") }
+        // _show(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
+        _show(showID).layouts().add(obj.newData.id, obj.newData.layout)
+        _show(showID).set({ key: "settings.activeLayout", value: obj.newData.id })
+
+        // set active layout in project
+        if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!].shows[get(activeShow)!.index!]) {
+          projects.update((a) => {
+            a[get(activeProject)!].shows[get(activeShow)!.index!].layout = obj.newData.id
+            return a
+          })
+        }
+      } else {
+        obj.newData.active = _show(showID).get("settings.activeLayout")
+        if (obj.newData.active === obj.newData.id) {
+          obj.newData.active = Object.keys(get(showsCache)[showID].layouts)[0]
+          _show(showID).set({ key: "settings.activeLayout", value: obj.newData.active })
+        }
+        obj.oldData = { id: obj.newData.id, layout: _show(showID).layouts([obj.newData.id]).get()[0] }
+        _show(showID).layouts().remove(obj.newData.id)
+      }
+      break
+
     // ADD
     case "addShow":
       if (activeProject !== null) {
@@ -995,6 +1037,12 @@ export function history(obj: History, undo: null | boolean = null) {
       //   }
       //   return a
       // })
+      break
+    case "changeLayoutsSlides":
+      old = []
+      obj.location!.layouts!.forEach((layout: string, i: number) => {
+        old.push(_show(showID).layouts([layout]).set({ key: "slides", value: obj.newData[i] })[0].value)
+      })
       break
     case "changeLayoutKey":
       old = _show(showID).layouts([obj.location!.layout!]).set(obj.newData)[0]
@@ -1144,8 +1192,11 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "addGlobalGroup":
       groups.update((a: any) => {
-        if (obj.newData) a[obj.newData!.id!] = obj.newData.data
-        else delete a[obj.newData!.id!]
+        if (obj.newData?.data) a[obj.newData!.id!] = obj.newData.data
+        else {
+          // obj.newData.data = a[obj.oldData!.id!]
+          delete a[obj.oldData!.id!]
+        }
         return a
       })
       break
@@ -1168,6 +1219,7 @@ export function history(obj: History, undo: null | boolean = null) {
   // TODO: slide text edit, dont override different style keys!
 
   if (undo === null) redoHistory.set([])
+  if (obj.save === false) return
 
   if (undo) {
     redoHistory.update((rh: History[]) => {

@@ -76,24 +76,24 @@
   }
 
   function deselect(e: any) {
-    if (!e.target.closest(".editTools") && !e.target.closest(".drawer")) {
-      if (!e.ctrlKey && !e.metaKey && e.target.closest(".item") !== itemElem) {
-        if ($activeEdit.items.includes(index)) {
-          if (!e.target.closest(".item")) {
-            activeEdit.update((ae) => {
-              ae.items = []
-              return ae
-            })
-          }
+    if (e.target.closest(".editTools") || e.target.closest(".drawer") || e.target.closest(".contextMenu")) return
+
+    if (!e.ctrlKey && !e.metaKey && e.target.closest(".item") !== itemElem) {
+      if ($activeEdit.items.includes(index)) {
+        if (!e.target.closest(".item")) {
+          activeEdit.update((ae) => {
+            ae.items = []
+            return ae
+          })
         }
       }
+    }
 
-      //  && e.target.tagName !== "INPUT"
-      if (window.getSelection()) {
-        window.getSelection()?.removeAllRanges()
-        // } else if (document.selection) {
-        //   document.selection.empty()
-      }
+    //  && e.target.tagName !== "INPUT"
+    if (window.getSelection()) {
+      window.getSelection()?.removeAllRanges()
+      // } else if (document.selection) {
+      //   document.selection.empty()
     }
   }
 

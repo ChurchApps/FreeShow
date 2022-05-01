@@ -81,7 +81,6 @@
     o: () => {
       window.api.send(OUTPUT, { channel: "DISPLAY", data: { enabled: !$outputDisplay, screen: $outputScreen } })
     },
-    r: () => console.log("refresh"),
     s: () => save(),
     y: (e: any) => {
       if (!e.target.closest(".edit")) redo()

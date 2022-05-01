@@ -166,13 +166,16 @@
     "no_layouts": "Could not find any layouts",
     "load": "Cound not load",
     "not_found": "Not found",
-    "display": "Could not show output window on current display"
+    "display": "Could not show output window on current display",
+    "keep_one_layout": "You have to have at least one layout"
   },
   "meta": {
     "title": "Title",
     "artist": "Artist",
     "author": "Author",
+    "composer": "Composer",
     "publisher": "Publisher",
+    "copyright": "Copyright",
     "CCLI": "License",
     "year": "Year"
   },
@@ -228,9 +231,10 @@
     "unlabeled": "Unlabeled",
     "favorites": "Favorites",
     "song": "Songs",
-    "info": "Info",
-    "events": "Events",
     "presentation": "Presentations",
+    "info": "Info",
+    "scripture": "Scripture",
+    "events": "Events",
     "pictures": "Pictures",
     "videos": "Videos",
     "offers": "Offers",
@@ -264,6 +268,8 @@
     "initialize": "Welcome",
     "unsaved": "You have not saved yet! Are you sure you want to quit?",
     "cancel": "Cancel",
+    "continue": "Continue",
+    "reset_all": "Reset everything",
     "quit": "Quit without saving",
     "save_quit": "Save & Quit"
   },
@@ -320,6 +326,11 @@
     "home": "Home",
     "mute": "Mute",
     "unmute": "Unmute",
+    "format": "Format",
+    "uppercase": "Make uppercase",
+    "lowercase": "Make lowercase",
+    "capitalize": "Capitalize",
+    "trim": "Trim",
     "actions": "Actions"
   },
   "export": {
@@ -495,8 +506,7 @@
     "port": "port",
     "max_connections": "Max connections",
     "allowed_connections": "Allowed connections",
-    "reset_all": "Reset all",
-    "reset_settings": "Reset settings",
+    "reset_all": "Reset everything",
     "reset_colors": "Reset colors",
     "reset_themes": "Reset themes",
     "export_all": "Export everything"

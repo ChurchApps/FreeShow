@@ -4,8 +4,8 @@
   import T from "../../helpers/T.svelte"
   import Date from "../../system/Date.svelte"
 
-  $: show = $shows[$activeShow!.id]
-  $: fullShow = $showsCache[$activeShow!.id]
+  $: show = $activeShow?.id ? $shows[$activeShow.id] : null
+  $: fullShow = $activeShow?.id ? $showsCache[$activeShow.id] : null
 
   $: created = show?.timestamps.created || null
   $: modified = show?.timestamps.modified || null
