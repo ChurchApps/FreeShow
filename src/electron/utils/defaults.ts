@@ -11,6 +11,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   backgroundColor: "#000000",
   presenterControllerKeys: true,
   remotePassword: "",
+  ports: { remote: 5510, stage: 5511 },
+  maxConnections: 10,
   categories: {
     song: { name: "category.song", icon: "song", default: true },
     presentation: { name: "category.presentation", icon: "presentation", default: true },

@@ -85,7 +85,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   category_templates: ["newCategory"],
   category_media: ["newFolder"],
   category_audio: ["newFolder"],
-  category_shows_button: ["changeIcon", "delete"],
+  category_shows_button: ["rename", "changeIcon", "delete"],
   category_overlays_button: ["rename", "changeIcon", "delete"],
   category_templates_button: ["rename", "changeIcon", "delete"],
   category_media_button: ["rename", "delete"],
@@ -94,13 +94,18 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   drawer_show: ["newShowPopup", "newShow"],
   // , "changeCategory" ? edit with rename & categories...
   // , "convertToOverlay"
-  drawer_show_button: ["addToProject", "rename", "duplicate", "delete", "SEPERATOR", "export"],
+  // , "SEPERATOR", "export"
+  drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete"],
   // media / audio
-  media_card: ["edit", "add_to_project", "add_to_show"],
-  overlay_card: ["rename", "recolor", "addToFirstSlide", "edit", "SEPERATOR", "duplicate", "delete"],
-  template_card: ["rename", "recolor", "addToShow", "edit", "SEPERATOR", "duplicate", "delete"],
-  player_button: ["rename", "addToProject", "delete"],
-  live_card: ["addToFirstSlide"],
+  // , "addToShow"
+  media_card: ["addToProject", "SEPERATOR", "edit"],
+  // "addToFirstSlide",
+  overlay_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+  // "addToShow",
+  template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+  player_button: ["addToProject", "SEPERATOR", "rename", "delete"],
+  // "addToFirstSlide"
+  live_card: [],
 
   // PROJECT
   projects: ["newProject", "newFolder"],

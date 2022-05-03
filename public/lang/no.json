@@ -176,7 +176,7 @@
     "composer": "Komponist",
     "publisher": "Utgiver",
     "copyright": "Opphavsrett",
-    "CCLI": "Lisens",
+    "CCLI": "Lisens (CCLI)",
     "year": "År"
   },
   "show_at": {
@@ -270,6 +270,8 @@
     "cancel": "Avbryt",
     "continue": "Fortsett",
     "reset_all": "Tilbakestill alt",
+    "reset_all_confirm": "Er du sikker på at du vil tilbakestille alt?",
+    "reset_all_action": "Dette vil tilbakestille hele programmet, men ikke slette .show-filene i \"Shows\"-mappen din.",
     "quit": "Avslutt uten å lagre",
     "save_quit": "Lagre og avslutt"
   },
@@ -479,7 +481,7 @@
     "language": "Språk",
     "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den.",
     "show_output_hint": "Hold ctrl/cmd mens du trykker på \"vis utgangsskjerm\"-knappen for å tvinge visning over denne skjermen.",
-    "move_output_hint": "Finner ikke skjermen din? Endre x/y verdiene eller dra opp med tre fingre på styreplaten og flytt den over manuelt.",
+    "move_output_hint": "Finner ikke skjermen din? Endre posisjonen til vinduet viser på den andre skjermen.",
     "position": "Posisjon",
     "alert_updates": "Varsle når en ny oppdatering er tilgjengelig",
     "disable_labels": "Deaktiver etiketter",
@@ -504,10 +506,13 @@
     "device_name": "Enhetsnavn",
     "password": "passord",
     "port": "port",
+    "connections": "Tilkoblinger",
     "max_connections": "Maks tilkoblinger",
     "allowed_connections": "Tillatte tilkoblinger",
+    "connect": "Koble til ved å skrive inn dette i en nettleser",
+    "restart": "Start serverene på nytt",
     "reset_all": "Tilbakestill alt",
-    "reset_colors": "Tilbakestill farger",
+    "reset_theme": "Tilbakestill tema",
     "reset_themes": "Tilbakestill temaer",
     "export_all": "Eksporter alt"
   },

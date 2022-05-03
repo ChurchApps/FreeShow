@@ -12,8 +12,8 @@
     { name: "Text file", extensions: ["txt"], id: "txt" },
     { name: "PDF", extensions: ["pdf"], id: "pdf" },
     { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint" },
-    { name: "FreeShow", extensions: ["show"], id: "freeshow" }, // show / project
-    { tba: true, name: "FreeShow Project", extensions: ["shows"], id: "freeshow" }, // show / project
+    { name: "FreeShow", extensions: ["show"], id: "freeshow" },
+    { tba: true, name: "FreeShow Project", extensions: ["shows"], id: "freeshow_project", icon: "freeshow" },
     { name: "ProPresenter", extensions: ["pro6", "pro7"], id: "propresenter" },
     {
       name: "EasyWorship",
@@ -32,7 +32,7 @@
 <div>
   {#each formats as format}
     <Button
-      style="width: 100%;"
+      style="width: 25%;flex-direction: column;min-height: 180px;"
       on:click={() => {
         if (format.tba) {
           activePopup.set("alert")
@@ -58,13 +58,28 @@
       }}
       center
     >
-      {#if format.tba}
-        TBA:
-      {/if}
-      {format.name}
-      <!-- {#if format.extensions}
+      <img src="./import-logos/{format.icon || format.id}.png" alt="{format.id}-logo" />
+      <p>
+        {#if format.tba}
+          TBA:
+        {/if}
+        {format.name}
+        <!-- {#if format.extensions}
         ({format.extensions.map((a) => "*." + a).join(", ")})
       {/if} -->
+      </p>
     </Button>
   {/each}
 </div>
+
+<style>
+  div {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  img {
+    height: 100px;
+    padding: 10px;
+  }
+</style>

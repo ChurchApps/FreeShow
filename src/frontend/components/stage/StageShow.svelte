@@ -78,7 +78,7 @@
   </div>
   <div class="bar">
     <!-- TODO: get already connected... -->
-    Connections: {Object.keys($connections.STAGE).length}
+    <T id="settings.connections" />: {Object.keys($connections.STAGE).length}
   </div>
 </Main>
 

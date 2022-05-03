@@ -1,13 +1,13 @@
 import { Writable, writable } from "svelte/store"
+import type { Event } from "../types/Calendar"
+import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, DefaultProjectNames, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
-import type { ID, OutAudio, OutBackground, OutSlide, OutTransition, Overlays, Shows, Transition } from "../types/Show"
-import type { Event } from "../types/Calendar"
-import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
-import type { Templates } from "../types/Show"
+import type { ID, OutAudio, OutBackground, OutSlide, OutTransition, Overlays, Shows, Templates, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
 import type { Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
+import type { DrawerTabIds } from "./../types/Tabs"
 import type { History } from "./components/helpers/history"
 
 export const version: Writable<string> = writable("0.0.0")
@@ -53,6 +53,8 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
 // connections
 export const connections: Writable<{ [key: string]: any }> = writable({ REMOTE: {}, STAGE: {} })
 export const remotePassword: Writable<string> = writable("") // generate 4 numbers
+export const ports: Writable<any> = writable({ remote: 5510, stage: 5511 }) // {default}
+export const maxConnections: Writable<number> = writable(10) // 10
 
 // project
 export const projectView: Writable<boolean> = writable(false)
@@ -321,7 +323,7 @@ export const mediaOptions: Writable<SlidesOptions> = writable({
 })
 
 // DRAWER
-export const activeDrawerTab: Writable<string> = writable("shows")
+export const activeDrawerTab: Writable<DrawerTabIds> = writable("shows")
 export const drawerTabsData: Writable<DrawerTabs> = writable({
   // {default}
   shows: { enabled: true, activeSubTab: null },
@@ -547,9 +549,7 @@ export const screen = writable({
   // format 16:9
 })
 
-// connection
 export const os: Writable<any> = writable({ platform: "", name: "Computer" }) // "get"
-// export const password: Writable<string> = writable("show") // "generate"
 
 // HISTORY
 export const undoHistory: Writable<History[]> = writable([]) // [?]

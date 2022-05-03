@@ -8,7 +8,9 @@ import {
   activeProject,
   activeShow,
   alertMessage,
+  dictionary,
   drawerTabsData,
+  imageExtensions,
   projects,
   projectView,
   saved,
@@ -20,9 +22,10 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
-import { GetLayoutRef, GetLayout } from "../helpers/get"
+import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { _show } from "../helpers/shows"
+import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeRename } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = null) {
@@ -57,11 +60,11 @@ const actions: any = {
     if (obj.sel.id === "slide" || obj.sel.id === "group") activePopup.set("rename")
     else if (obj.sel.id === "show") activeRename.set("show_" + obj.sel.data[0].id + "#" + obj.sel.data[0].index)
     else if (obj.sel.id === "show_drawer") activeRename.set("show_drawer_" + obj.sel.data[0].id)
-    else if (obj.sel.id === "category") activeRename.set("category_" + get(activeDrawerTab) + "_" + obj.sel.data[0])
     else if (obj.sel.id === "project") activeRename.set("project_" + obj.sel.data[0].id)
     else if (obj.sel.id === "folder") activeRename.set("folder_" + obj.sel.data[0].id)
     else if (obj.sel.id === "layout") activeRename.set("layout_" + obj.sel.data[0])
     else if (obj.sel.id === "player") activeRename.set("player_" + obj.sel.data[0])
+    else if (obj.sel.id.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + obj.sel.data[0])
 
     // else if (obj.actionItem instanceof HTMLInputElement) {
     //   // obj.actionItem.focus()
@@ -153,7 +156,10 @@ const actions: any = {
       folder: "deleteFolder",
       project: "deleteProject",
       stage: "deleteStage",
-      category: "deleteShowsCategory",
+      category_shows: "deleteShowsCategory",
+      category_media: "deleteMediaCategory",
+      category_overlays: "deleteOverlaysCategory",
+      category_templates: "deleteTemplatesCategory",
       player: "deletePlayerVideo",
     }
     obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
@@ -183,7 +189,14 @@ const actions: any = {
     return m
   },
   addToProject: (obj: any) => {
-    if (obj.sel.id !== "show" || obj.sel.id !== "show_drawer" || !get(activeProject)) return
+    if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media") || !get(activeProject)) return
+    if (obj.sel.id === "player") obj.sel.data = obj.sel.data.map((id: string) => ({ id, type: "player" }))
+    else if (obj.sel.id === "media")
+      obj.sel.data = obj.sel.data.map(({ path, name }: any) => ({
+        id: path,
+        name,
+        type: get(imageExtensions).includes(path.slice(path.lastIndexOf(".") + 1, path.length)) ? "image" : "video",
+      }))
 
     projects.update((a) => {
       a[get(activeProject)!].shows.push(...obj.sel.data)
@@ -192,6 +205,8 @@ const actions: any = {
 
       //   a[get(activeProject)!].shows.push({ id: b.id })
       // })
+      console.log(a)
+
       return a
     })
   },
@@ -203,9 +218,21 @@ const actions: any = {
   newPrivateShow: () => history({ id: "newShow", newData: { private: true }, location: { page: "show", project: get(activeProject) } }),
   newProject: (obj: any) =>
     history({ id: "newProject", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
-  newFolder: (obj: any) =>
-    history({ id: "newFolder", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
+  newFolder: (obj: any) => {
+    if (obj.contextElem.classList.value.includes("#projects"))
+      history({ id: "newFolder", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } })
+    else if (obj.contextElem.classList.value.includes("#category_media")) window.api.send(OPEN_FOLDER, { id: "media", title: get(dictionary).new?.folder })
+  },
   newSlide: () => history({ id: "newSlide", location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } }),
+  newCategory: (obj: any) => {
+    const ids: any = {
+      shows: "newShowsCategory",
+      overlays: "newOverlaysCategory",
+      templates: "newTemplatesCategory",
+    }
+    let index = obj.contextElem.classList.value.indexOf("#category_")
+    history({ id: ids[obj.contextElem.classList.value.slice(index + 10, obj.contextElem.classList.value.indexOf(" ", index))] })
+  },
 
   // project
   close: (obj: any) => {

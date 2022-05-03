@@ -182,4 +182,4 @@ export function createData(paths: any) {
   save()
 }
 
-const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * to - from) + from
+const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from

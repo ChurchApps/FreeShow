@@ -24,8 +24,8 @@
   }
 </script>
 
-<p>Are you sure you want to reset everything?</p>
-<p>This will reset the application, but not the shows in your "Shows"-folder</p>
+<p><T id="popup.reset_all_confirm" /></p>
+<p><T id="popup.reset_all_action" /></p>
 
 <Button on:click={reset} center>
   <T id="popup.continue" />

@@ -122,6 +122,8 @@
       stored = null
     }
   }
+
+  $: tabs = Object.entries(drawerTabs).map(([id, tab]: any) => ({ id, ...tab }))
 </script>
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} on:keydown={keydown} />
@@ -130,17 +132,17 @@
 <section class="drawer" style="height: {height}px">
   <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click}>
     <span class="tabs">
-      {#each Object.entries(drawerTabs) as tab}
-        {#if $drawerTabsData[tab[0]].enabled}
+      {#each tabs as tab}
+        {#if $drawerTabsData[tab.id].enabled}
           <Button
-            on:click={() => activeDrawerTab.set(tab[0])}
-            active={$activeDrawerTab === tab[0]}
+            on:click={() => activeDrawerTab.set(tab.id)}
+            active={$activeDrawerTab === tab.id}
             class="context #drawer_top"
-            title={$labelsDisabled ? $dictionary[tab[1].name.split(".")[0]]?.[tab[1].name.split(".")[1]] : ""}
+            title={$labelsDisabled ? $dictionary[tab.name.split(".")[0]]?.[tab.name.split(".")[1]] : ""}
           >
-            <Icon id={tab[1].icon} size={1.3} />
+            <Icon id={tab.icon} size={1.3} />
             {#if !$labelsDisabled}
-              <span><T id={tab[1].name} /></span>
+              <span><T id={tab.name} /></span>
             {/if}
           </Button>
         {/if}

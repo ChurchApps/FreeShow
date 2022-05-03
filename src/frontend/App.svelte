@@ -2,7 +2,7 @@
   import { onMount } from "svelte"
   import { OUTPUT } from "../types/Channels"
   import type { Resolution } from "../types/Settings"
-  import type { TopViews } from "../types/Tabs"
+  import type { DrawerTabIds, TopViews } from "../types/Tabs"
   import Calendar from "./components/calendar/Calendar.svelte"
   import CreateCalendarShow from "./components/calendar/CreateCalendarShow.svelte"
   import Day from "./components/calendar/Day.svelte"
@@ -68,7 +68,7 @@
   let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution! : $screen.resolution
 
   const menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
-  const drawerMenus: string[] = ["shows", "media", "overlays", "audio", "scripture", "templates", "player", "live"]
+  const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "templates", "player", "live"]
   const ctrlKeys: any = {
     c: () => {
       if ($selected.id) copy($selected)

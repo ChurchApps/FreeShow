@@ -27,8 +27,8 @@ app.on("ready", () => {
   createWindow()
 
   displays = screen.getAllDisplays()
-  console.log("DISPLAYS")
-  console.log(displays)
+  // console.log("DISPLAYS")
+  // console.log(displays)
 
   // TODO: get this from settings...
   // externalDisplay =
@@ -169,15 +169,15 @@ const createWindow = () => {
 // app.on("before-quit", () => (quit = true))
 // macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
 app.on("window-all-closed", () => {
+  closeServers()
   // || quit
   if (process.platform !== "darwin") {
-    closeServers()
     app.quit()
   }
 })
 // mac activate
 app.on("activate", () => {
-  startServers()
+  // startServers()
   mainWindow?.show()
 })
 
@@ -360,6 +360,8 @@ ipcMain.on(MAIN, (e, msg) => {
   else if (msg.channel === "VERSION") data = app.getVersion()
   else if (msg.channel === "DISPLAY") data = outputWindow?.isVisible()
   else if (msg.channel === "URL") openURL(msg.data)
+  else if (msg.channel === "START") startServers(msg.data)
+  else if (msg.channel === "STOP") closeServers()
   else if (msg.channel === "IP") {
     data = os.networkInterfaces()
   } else if (msg.channel === "LANGUAGE") {

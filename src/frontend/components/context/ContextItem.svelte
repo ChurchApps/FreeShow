@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
+  import { activeProject, activeShow, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
   import { GetLayout, GetLayoutRef } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -41,6 +41,9 @@
     },
     redo: () => {
       if (!$redoHistory.length) disabled = true
+    },
+    addToProject: () => {
+      if (!$activeProject) disabled = true
     },
   }
   if (conditions[id]) conditions[id]()

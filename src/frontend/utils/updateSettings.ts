@@ -1,5 +1,5 @@
+import { maxConnections } from "./../stores"
 import { OUTPUT } from "./../../types/Channels"
-import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
 import {
   activePopup,
@@ -31,6 +31,7 @@ import {
   outputScreen,
   overlayCategories,
   playerVideos,
+  ports,
   presenterControllerKeys,
   projectView,
   remotePassword,
@@ -48,7 +49,16 @@ import type { SaveListSettings } from "./../../types/Save"
 import { send } from "./request"
 import { setLanguage } from "./language"
 
-export function updateSettings(data: any[]) {
+export function updateSettings(data: any) {
+  // output
+  if (data.autoOutput) {
+    send(OUTPUT, ["POSITION"], data.outputPosition)
+    send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
+  }
+
+  // remote
+  send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
+
   Object.entries(data).forEach(([key, value]: any) => {
     if (updateList[key as SaveListSettings]) updateList[key as SaveListSettings](value)
     else console.log("MISSING: ", key)
@@ -70,28 +80,16 @@ const updateList: { [key in SaveListSettings]: any } = {
     activeProject.set(v)
     if (v) projectView.set(false)
   },
-  autoOutput: (v: any) => {
-    autoOutput.set(v)
-    if (v && get(outputScreen)) {
-      send(OUTPUT, ["DISPLAY"], { enabled: true, screen: get(outputScreen) })
-    }
-  },
-  outputScreen: (v: any) => {
-    outputScreen.set(v)
-    if (get(autoOutput)) {
-      send(OUTPUT, ["DISPLAY"], { enabled: true, screen: v })
-    }
-  },
   showsPath: (v: any) => {
-    if (!v) window.api.send(MAIN, { channel: "SHOWS_PATH" })
+    if (!v) send(MAIN, ["SHOWS_PATH"])
     else showsPath.set(v)
   },
   exportPath: (v: any) => {
-    if (!v) window.api.send(MAIN, { channel: "EXPORT_PATH" })
+    if (!v) send(MAIN, ["EXPORT_PATH"])
     else exportPath.set(v)
   },
   os: (v: any) => {
-    if (!v.platform) window.api.send(MAIN, { channel: "GET_OS" })
+    if (!v.platform) send(MAIN, ["GET_OS"])
     os.set(v)
   },
   // TODO: get device lang
@@ -101,8 +99,12 @@ const updateList: { [key in SaveListSettings]: any } = {
   },
   // events: (v: any) => events.set(v),
   alertUpdates: (v: any) => alertUpdates.set(v === false ? false : true),
-  backgroundColor: (v: any) => backgroundColor.set(v),
+  autoOutput: (v: any) => autoOutput.set(v),
+  maxConnections: (v: any) => maxConnections.set(v),
+  ports: (v: any) => ports.set(v),
+  outputScreen: (v: any) => outputScreen.set(v),
   outputPosition: (v: any) => outputPosition.set(v),
+  backgroundColor: (v: any) => backgroundColor.set(v),
   remotePassword: (v: any) => remotePassword.set(v),
   audioFolders: (v: any) => audioFolders.set(v),
   defaultProjectName: (v: any) => defaultProjectName.set(v),
