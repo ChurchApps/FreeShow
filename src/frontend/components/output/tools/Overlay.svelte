@@ -12,7 +12,7 @@
 <span class="name" style="justify-content: space-between;">
   {#each activeOverlays as overlay}
     <Button on:click={() => removeOverlay(overlay.id)} center red>
-      {overlay.name}
+      {overlay.name || "—"}
     </Button>
   {/each}
 </span>

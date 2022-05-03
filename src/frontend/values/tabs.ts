@@ -1,11 +1,4 @@
-interface Tab {
-  [key: string]: {
-    name: string
-    icon: string
-  }
-}
-
-export const drawerTabs: Tab = {
+export const drawerTabs: any = {
   shows: { name: "tabs.shows", icon: "shows" },
   media: { name: "tabs.media", icon: "media" },
   overlays: { name: "tabs.overlays", icon: "overlays" },

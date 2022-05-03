@@ -10,7 +10,7 @@
   let values: any = {}
 
   $: {
-    values = { title: "", artist: "", author: "", publisher: "", CCLI: "", year: "" }
+    values = { title: "", artist: "", author: "", composer: "", publisher: "", copyright: "", CCLI: "", year: "" }
     Object.entries(meta).forEach(([key, value]) => {
       values[key] = value
     })

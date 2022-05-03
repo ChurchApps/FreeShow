@@ -37,10 +37,8 @@
 
   function update() {
     let newData: any = { style: JSON.parse(JSON.stringify(settings)) }
-    if (JSON.stringify(newData.style.resolution) === JSON.stringify($screen.resolution)) {
-      delete newData.style.resolution
-    }
-    if (settings.color === $backgroundColor) delete settings.color
+    if (JSON.stringify(newData.style.resolution) === JSON.stringify($screen.resolution)) delete newData.style.resolution
+    if (newData.style.color === $backgroundColor) delete newData.style.color
 
     history({
       id: "slideStyle",
@@ -58,7 +56,7 @@
       <p><T id="edit.background_color" /></p>
     </span>
     <span style="flex: 1;">
-      <Color bind:value={settings.color} on:input={(e) => inputChange(e, "background")} />
+      <Color bind:value={settings.color} on:input={(e) => inputChange(e, "color")} />
     </span>
   </div>
   <hr />

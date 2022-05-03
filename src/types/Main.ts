@@ -27,7 +27,15 @@ export type SelectIds =
   | "project"
   | "folder"
   | "files"
-  | "category"
+  | "category_shows"
+  | "category_media"
+  | "category_overlays"
+  | "category_audio"
+  | "category_scripture"
+  | "category_templates"
+  | "category_player"
+  | "category_live"
+  | "category_web"
   | "stage"
   | "media"
   | "overlay"
@@ -52,7 +60,7 @@ export interface ActiveEdit {
   items: number[]
 }
 
-export type Popups = "initialize" | "import" | "export" | "show" | "delete_show" | "icon" | "rename" | "transition" | "about" | "shortcuts" | "unsaved" | "alert"
+export type Popups = "initialize" | "import" | "export" | "show" | "delete_show" | "icon" | "rename" | "transition" | "about" | "shortcuts" | "unsaved" | "reset_all" | "alert"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

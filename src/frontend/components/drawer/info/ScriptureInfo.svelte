@@ -4,7 +4,7 @@
   import type { Resolution } from "../../../../types/Settings"
   import type { Item } from "../../../../types/Show"
   import { ShowObj } from "../../../classes/Show"
-  import { activeProject, screen } from "../../../stores"
+  import { activeProject, categories, screen } from "../../../stores"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
   import { checkName } from "../../helpers/show"
@@ -151,6 +151,14 @@
     let layoutID = uid()
     // TODO: private!!!?
     let show = new ShowObj(false, "scripture", layoutID)
+    // add scripture category
+    if (!$categories.scripture) {
+      categories.update((a) => {
+        a.scripture = { name: "category.scripture", icon: "scripture", default: true }
+        return a
+      })
+    }
+
     // TODO: if name exists create new layout!!
     // TODO: keep same chapter on same show (just add new layouts...?)
     show.name = checkName(bible.book + " " + bible.chapter + "," + verseRange)

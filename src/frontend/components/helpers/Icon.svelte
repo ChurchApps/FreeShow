@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activePopup } from "../../stores"
+  import { activePopup, selected } from "../../stores"
   import { customIcons } from "../main/customIcons"
   import icons from "./icons"
 
@@ -10,6 +10,7 @@
   export let fill: boolean = false
   export let custom: boolean = false
   export let select: boolean = false
+  export let selectData: any = null
 
   $: width = size + "rem"
   $: height = size + "rem"
@@ -18,7 +19,10 @@
   $: icon = custom ? customIcons[id] : icons[id]
 
   const click = () => {
-    if (select) activePopup.set("icon")
+    if (select) {
+      if (selectData && !$selected.data.includes(selectData.data[0])) selected.set(selectData)
+      activePopup.set("icon")
+    }
   }
 </script>
 

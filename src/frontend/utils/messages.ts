@@ -1,4 +1,4 @@
-import { alertUpdates, autoOutput, backgroundColor, outputPosition, transitionData } from "./../stores"
+import { alertUpdates, autoOutput, backgroundColor, maxConnections, outputPosition, ports, transitionData } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -156,6 +156,8 @@ const saveList: { [key in SaveList]: any } = {
   autoOutput: autoOutput,
   backgroundColor: backgroundColor,
   categories: categories,
+  maxConnections: maxConnections,
+  ports: ports,
   defaultProjectName: defaultProjectName,
   displayMetadata: displayMetadata,
   events: events,

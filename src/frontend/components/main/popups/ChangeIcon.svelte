@@ -1,21 +1,30 @@
 <script lang="ts">
-  import { activePopup, categories, selected } from "../../../stores"
+  import { activePopup, categories, mediaFolders, overlayCategories, selected, templateCategories } from "../../../stores"
   import { addItem } from "../../edit/scripts/addItem"
   import Icon from "../../helpers/Icon.svelte"
   import Button from "../../inputs/Button.svelte"
   import { customIcons } from "../customIcons"
 
+  const names: any = {
+    category_shows: (icon: string) => categories.update((a) => changeIcon(a, icon)),
+    category_media: (icon: string) => mediaFolders.update((a) => changeIcon(a, icon)),
+    category_overlays: (icon: string) => overlayCategories.update((a) => changeIcon(a, icon)),
+    category_templates: (icon: string) => templateCategories.update((a) => changeIcon(a, icon)),
+    slide: (icon: string) => addItem("icon", icon),
+  }
+
+  const changeIcon = (a: any, icon: string) => {
+    $selected.data.forEach((b) => {
+      if (b !== "all" && b !== "unlabeled") a[b].icon = icon
+    })
+    return a
+  }
+
   function click(icon: string) {
-    if ($selected.id === "category") {
-      categories.update((a) => {
-        $selected.data.forEach((b) => {
-          a[b].icon = icon
-        })
-        return a
-      })
-    } else if ($selected.id === "slide") {
-      addItem("icon", icon)
-    }
+    console.log($selected)
+    if ($selected.id && names[$selected.id]) names[$selected.id](icon)
+    else console.log("change icon " + $selected.id)
+
     activePopup.set(null)
   }
 </script>

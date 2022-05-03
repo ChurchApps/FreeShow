@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { MAIN } from "../../../types/Channels"
+
   import type { Category } from "../../../types/Tabs"
   import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, overlays, shows, templateCategories, templates, webFavorites } from "../../stores"
   import { keysToID, sortObject } from "../helpers/array"
@@ -12,7 +14,7 @@
   import SelectElem from "../system/SelectElem.svelte"
   import { getBibleVersions } from "./bible/getBible"
 
-  export let id: string
+  export let id: "shows" | "media" | "overlays" | "audio" | "scripture" | "templates" | "player" | "live" | "web"
 
   interface Button extends Category {
     id: string
@@ -124,6 +126,26 @@
       }
     }
   }
+
+  const nameCategories: any = {
+    shows: (c: any) => categories.update((a) => setName(a, c)),
+    media: (c: any) => mediaFolders.update((a) => setName(a, c)),
+    overlays: (c: any) => overlayCategories.update((a) => setName(a, c)),
+    templates: (c: any) => templateCategories.update((a) => setName(a, c)),
+  }
+  const setName = (a: any, { name, id }: any) => {
+    if (a[id].default) delete a[id].default
+    a[id].name = name
+    return a
+  }
+
+  function changeName(e: any, categoryId: string) {
+    if (nameCategories[id]) nameCategories[id]({ name: e.detail.value, id: categoryId })
+    else console.log("rename " + id)
+  }
+
+  let selectId: any = "category"
+  $: selectId = "category_" + id
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -136,9 +158,9 @@
           {#if category.id === "SEPERATOR"}
             <hr />
           {:else}
-            <SelectElem id="category" borders="center" trigger="column" data={category.id}>
+            <SelectElem id={selectId} borders="center" trigger="column" data={category.id}>
               <Button
-                class={category.id === "all" || category.id === "unlabeled" ? "" : `context #${category.default ? "" : "rename__"}category_${id}_button__category_${id}`}
+                class={category.id === "all" || category.id === "unlabeled" ? "" : `context #category_${id}_button__category_${id}`}
                 active={category.id === $drawerTabsData[id].activeSubTab}
                 on:click={(e) => {
                   if (!e.ctrlKey && !e.metaKey) setTab(category.id)
@@ -151,15 +173,20 @@
                     id={category.icon || "noIcon"}
                     custom={(id === "shows" || id === "overlays" || id === "templates") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
                     select={(id === "shows" || id === "overlays" || id === "templates") && category.id !== "all" && category.id !== "unlabeled"}
+                    selectData={{ id: selectId, data: [category.id] }}
                     right
                   />
                   <span id={category.id} style="width: 100%;text-align: left;">
                     {#if id === "scripture" || id === "player"}
                       <p style="margin: 5px;">{category.name}</p>
-                    {:else if category.default}
+                    {:else if category.id === "all" || category.id === "unlabeled"}
                       <p style="margin: 5px;"><T id={category.name} /></p>
                     {:else}
-                      <HiddenInput value={category.name} id={"category_" + id + "_" + category.id} />
+                      <HiddenInput
+                        value={category.default ? $dictionary[category.name.split(".")[0]]?.[category.name.split(".")[1]] : category.name}
+                        id={"category_" + id + "_" + category.id}
+                        on:edit={(e) => changeName(e, category.id)}
+                      />
                     {/if}
                   </span>
                 </span>
@@ -173,6 +200,9 @@
           {/if}
         {/each}
       {/key}
+      {#if id === "scripture"}
+        <a class="source" href="#void" on:click={() => window.api.send(MAIN, { channel: "URL", data: "https://scripture.api.bible/" })}> API.Bible </a>
+      {/if}
     </DropArea>
   </div>
   {#if id === "shows"}
@@ -240,5 +270,17 @@
     height: 2px;
     border: none;
     background-color: var(--primary-lighter);
+  }
+
+  .source {
+    display: flex;
+    justify-content: center;
+    color: var(--text);
+    opacity: 0.5;
+    padding: 10px;
+    font-weight: bold;
+  }
+  .source:hover {
+    opacity: 0.8;
   }
 </style>

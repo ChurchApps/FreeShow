@@ -9,7 +9,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
   let items: [string, ContextMenuItem][] = []
   switch (id) {
     case "enabled_drawer_tabs":
-      Object.entries(drawerTabs).forEach(([aID, a], i) => {
+      Object.entries(drawerTabs).forEach(([aID, a]: any, i) => {
         if (i >= 2) items.push([id, { id: aID, label: a.name, icon: a.icon, enabled: get(drawerTabsData)[aID].enabled }])
       })
       break

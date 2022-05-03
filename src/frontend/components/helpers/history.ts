@@ -6,7 +6,6 @@ import { activeEdit, activePage, activeStage, notFound, overlayCategories, playe
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
-  activeDrawerTab,
   activeProject,
   activeShow,
   categories,
@@ -28,6 +27,7 @@ import {
   theme,
   themes,
 } from "./../../stores"
+import { redoAddCategory, undoAddCategory } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { loadShows, setShow } from "./setShow"
 import { _show } from "./shows"
@@ -51,10 +51,10 @@ export type HistoryIDs =
   | "newShowDrawer"
   | "newShow"
   | "newShowsCategory"
-  | "newOverlay"
   | "newOverlaysCategory"
-  | "newTemplate"
   | "newTemplatesCategory"
+  | "newOverlay"
+  | "newTemplate"
   | "newSlide"
   | "newItem"
   | "newStageShow"
@@ -63,10 +63,14 @@ export type HistoryIDs =
   | "deleteProject"
   | "deleteStage"
   | "deleteShowsCategory"
+  | "deleteMediaCategory"
+  | "deleteOverlaysCategory"
+  | "deleteTemplatesCategory"
   | "removeSlides"
   | "deleteSlides"
   | "deleteGroups"
   | "deletePlayerVideo"
+  | "deleteLayout"
   // add
   | "addShow"
   | "addLayout"
@@ -76,6 +80,7 @@ export type HistoryIDs =
   | "slide"
   | "changeSlide"
   | "showMedia"
+  | "changeLayoutsSlides"
   | "changeLayoutKey"
   | "changeLayout"
   | "changeLayouts"
@@ -98,6 +103,7 @@ export interface History {
   id: HistoryIDs
   oldData?: any
   newData?: any
+  save?: boolean
   location?: {
     page: HistoryPages
     project?: null | string
@@ -105,6 +111,7 @@ export interface History {
     show?: ShowRef
     shows?: any[]
     layout?: string
+    layouts?: string[]
     layoutSlide?: number
     slide?: string
     items?: any[]
@@ -114,7 +121,20 @@ export interface History {
 }
 
 // override previous history
-const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "stageItemAlign", "stageItemStyle", "slideStyle", "changeLayout", "theme", "changeLayouts"]
+const override = [
+  "textAlign",
+  "textStyle",
+  "deleteItem",
+  "setItems",
+  "setStyle",
+  "stageItemAlign",
+  "stageItemStyle",
+  "slideStyle",
+  "changeLayout",
+  "theme",
+  "changeLayouts",
+  "template",
+]
 
 export async function historyAwait(s: string[], obj: History) {
   loadShows(s)
@@ -143,6 +163,7 @@ export function history(obj: History, undo: null | boolean = null) {
   let showID: any
   if (obj.location?.show?.id) showID = obj.location.show.id
   let old: any = null
+  let temp: any = {}
 
   switch (obj.id) {
     // EDIT
@@ -257,7 +278,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     // show
     case "changeSlide":
-      old = { key: obj.newData.key, value: _show(showID).slides([obj.location!.slide!]).set(obj.newData) }
+      old = { key: obj.newData.key, value: _show(showID).slides([obj.location!.slide!]).set(obj.newData)[0] }
 
       // showsCache.update((a) => {
       //   if (!obj.oldData) obj.oldData = {}
@@ -273,19 +294,6 @@ export function history(obj: History, undo: null | boolean = null) {
       // })
       break
     // NEW
-    case "newMediaFolder":
-      mediaFolders.update((a) => {
-        if (obj.newData.data === null) {
-          // remove folder
-          delete a[obj.newData.id]
-        } else a[obj.newData.id] = obj.newData.data
-        return a
-      })
-      drawerTabsData.update((a) => {
-        a.media.activeSubTab = obj.newData.id
-        return a
-      })
-      break
     case "newProject":
       if (undo) {
         projects.update((p) => {
@@ -452,19 +460,30 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "newShowsCategory":
       categories.update((a) => {
-        if (undo) delete a[obj.newData.id]
-        else {
-          if (!obj.newData) {
-            let id = uid()
-            let icon: null | string = null
-            let tab = get(drawerTabsData).shows.activeSubTab
-            if (tab !== "all" && tab !== "unlabeled") icon = get(drawerTabsData).shows.activeSubTab
-            obj.newData = { id, data: { name: "", icon } }
-            obj.oldData = { id }
-          }
-          a[obj.newData.id] = obj.newData.data
-        }
-        return a
+        if (undo) temp = undoAddCategory(obj, a, "shows")
+        else temp = redoAddCategory(obj, a, "shows")
+        return temp.data
+      })
+      break
+    case "newMediaFolder":
+      mediaFolders.update((a) => {
+        if (undo) temp = undoAddCategory(obj, a, "media")
+        else temp = redoAddCategory(obj, a, "media")
+        return temp.data
+      })
+      break
+    case "newOverlaysCategory":
+      overlayCategories.update((a) => {
+        if (undo) temp = undoAddCategory(obj, a, "overlays")
+        else temp = redoAddCategory(obj, a, "overlays")
+        return temp.data
+      })
+      break
+    case "newTemplatesCategory":
+      templateCategories.update((a) => {
+        if (undo) temp = undoAddCategory(obj, a, "templates")
+        else temp = redoAddCategory(obj, a, "templates")
+        return temp.data
       })
       break
     case "newOverlay":
@@ -498,23 +517,6 @@ export function history(obj: History, undo: null | boolean = null) {
         })
       }
       break
-    case "newOverlaysCategory":
-      overlayCategories.update((a) => {
-        if (undo) delete a[obj.newData.id]
-        else {
-          if (!obj.newData) {
-            let id = uid()
-            let icon: null | string = null
-            let tab = get(drawerTabsData).overlays.activeSubTab
-            if (tab !== "all" && tab !== "unlabeled") icon = get(drawerTabsData).overlays.activeSubTab
-            obj.newData = { id, data: { name: "", icon } }
-            obj.oldData = { id }
-          }
-          a[obj.newData.id] = obj.newData.data
-        }
-        return a
-      })
-      break
     case "newTemplate":
       if (undo) {
         let id: string = obj.oldData.id
@@ -546,23 +548,6 @@ export function history(obj: History, undo: null | boolean = null) {
           return a
         })
       }
-      break
-    case "newTemplatesCategory":
-      templateCategories.update((a) => {
-        if (undo) delete a[obj.newData.id]
-        else {
-          if (!obj.newData) {
-            let id = uid()
-            let icon: null | string = null
-            let tab = get(drawerTabsData).templates.activeSubTab
-            if (tab !== "all" && tab !== "unlabeled") icon = get(drawerTabsData).templates.activeSubTab
-            obj.newData = { id, data: { name: "", icon } }
-            obj.oldData = { id }
-          }
-          a[obj.newData.id] = obj.newData.data
-        }
-        return a
-      })
       break
     case "newSlide":
       if (undo) {
@@ -786,34 +771,30 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "deleteShowsCategory":
       categories.update((a) => {
-        if (undo) {
-          a[obj.newData.id] = obj.newData.data
-          showsCache.update((a) => {
-            obj.newData.shows.forEach((id: string) => {
-              a[id].category = obj.newData.id
-            })
-            return a
-          })
-        } else {
-          obj.oldData = { id: obj.newData.id, data: a[obj.newData.id], shows: [] }
-          // remove shows
-          showsCache.update((b) => {
-            Object.entries(b).forEach(([id, c]: any) => {
-              if (c.category === obj.newData.id) {
-                obj.oldData.shows.push(id)
-                b[id].category = null
-              }
-            })
-            return b
-          })
-          if (get(drawerTabsData)[get(activeDrawerTab)].activeSubTab === obj.newData.id)
-            drawerTabsData.update((a) => {
-              a[get(activeDrawerTab)].activeSubTab = null
-              return a
-            })
-          delete a[obj.newData.id]
-        }
-        return a
+        if (undo) temp = redoAddCategory(obj, a, "shows")
+        else temp = undoAddCategory(obj, a, "shows")
+        return temp.data
+      })
+      break
+    case "deleteMediaCategory":
+      mediaFolders.update((a) => {
+        if (undo) temp = redoAddCategory(obj, a, "media")
+        else temp = undoAddCategory(obj, a, "media")
+        return temp.data
+      })
+      break
+    case "deleteOverlaysCategory":
+      overlayCategories.update((a) => {
+        if (undo) temp = redoAddCategory(obj, a, "overlays")
+        else temp = undoAddCategory(obj, a, "overlays")
+        return temp.data
+      })
+      break
+    case "deleteTemplatesCategory":
+      templateCategories.update((a) => {
+        if (undo) temp = redoAddCategory(obj, a, "templates")
+        else temp = undoAddCategory(obj, a, "templates")
+        return temp.data
       })
       break
     case "removeSlides":
@@ -895,6 +876,31 @@ export function history(obj: History, undo: null | boolean = null) {
         }
         return a
       })
+      break
+
+    case "deleteLayout":
+      if (undo) {
+        old = { id: _show(showID).get("settings.activeLayout") }
+        // _show(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
+        _show(showID).layouts().add(obj.newData.id, obj.newData.layout)
+        _show(showID).set({ key: "settings.activeLayout", value: obj.newData.id })
+
+        // set active layout in project
+        if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!].shows[get(activeShow)!.index!]) {
+          projects.update((a) => {
+            a[get(activeProject)!].shows[get(activeShow)!.index!].layout = obj.newData.id
+            return a
+          })
+        }
+      } else {
+        obj.newData.active = _show(showID).get("settings.activeLayout")
+        if (obj.newData.active === obj.newData.id) {
+          obj.newData.active = Object.keys(get(showsCache)[showID].layouts)[0]
+          _show(showID).set({ key: "settings.activeLayout", value: obj.newData.active })
+        }
+        obj.oldData = { id: obj.newData.id, layout: _show(showID).layouts([obj.newData.id]).get()[0] }
+        _show(showID).layouts().remove(obj.newData.id)
+      }
       break
 
     // ADD
@@ -995,6 +1001,12 @@ export function history(obj: History, undo: null | boolean = null) {
       //   }
       //   return a
       // })
+      break
+    case "changeLayoutsSlides":
+      old = []
+      obj.location!.layouts!.forEach((layout: string, i: number) => {
+        old.push(_show(showID).layouts([layout]).set({ key: "slides", value: obj.newData[i] })[0].value)
+      })
       break
     case "changeLayoutKey":
       old = _show(showID).layouts([obj.location!.layout!]).set(obj.newData)[0]
@@ -1121,10 +1133,11 @@ export function history(obj: History, undo: null | boolean = null) {
           else obj.oldData.value = a[obj.location!.theme!][obj.newData.key]
           if (obj.newData.key === "name" && a[obj.location!.theme!].default) obj.oldData.default = true
         }
-        if (obj.newData.default) a[obj.location!.theme!].default = true
-        else if (a[obj.location!.theme!].default) delete a[obj.location!.theme!].default
+        // if (obj.newData.default) a[obj.location!.theme!].default = true
+        // else if (a[obj.location!.theme!].default) delete a[obj.location!.theme!].default
         if (obj.newData.id) a[obj.location!.theme!][obj.newData.key][obj.newData.id] = obj.newData.value
         else a[obj.location!.theme!][obj.newData.key] = obj.newData.value
+        if (obj.newData.key === "name" && a[obj.location!.theme!].default) delete a[obj.location!.theme!].default
         // TODO: remove default if name change; if (a[obj.location!.theme!].default) groupValue
         let key = obj.newData.id || obj.newData.key
         if (obj.newData.key === "font") key = obj.newData.key + "-" + key
@@ -1134,9 +1147,15 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "addTheme":
       themes.update((a: any) => {
-        if (obj.newData) a[obj.location!.theme!] = obj.newData
-        else {
-          if (get(theme) === obj.location!.theme!) theme.set(Object.keys(a).find((a) => a !== obj.location!.theme!)!)
+        if (obj.newData) {
+          // name exists
+          // let index = 0
+          // while (Object.values(a).find((a: any) => a.name === obj.newData.name + (index > 0 ? " " + index : ""))) index++
+          // obj.newData.name = obj.newData.name + (index > 0 ? " " + index : "")
+          a[obj.location!.theme!] = obj.newData
+          theme.set(obj.location!.theme!)
+        } else {
+          if (get(theme) === obj.location!.theme!) theme.set("default")
           delete a[obj.location!.theme!]
         }
         return a
@@ -1144,8 +1163,11 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "addGlobalGroup":
       groups.update((a: any) => {
-        if (obj.newData) a[obj.newData!.id!] = obj.newData.data
-        else delete a[obj.newData!.id!]
+        if (obj.newData?.data) a[obj.newData!.id!] = obj.newData.data
+        else {
+          // obj.newData.data = a[obj.oldData!.id!]
+          delete a[obj.oldData!.id!]
+        }
         return a
       })
       break
@@ -1155,19 +1177,22 @@ export function history(obj: History, undo: null | boolean = null) {
       break
   }
 
+  if (temp.obj) obj = temp.obj
+
   // set old
   if (old && !undo && !obj.oldData) obj.oldData = old
 
   // TODO: go to location
-  if (obj.location.page === "drawer") {
+  if (obj.location!.page === "drawer") {
     // TODO: open drawer
-  } else activePage.set(obj.location.page)
+  } else activePage.set(obj.location!.page)
 
   // TODO: remove history obj if oldData is exactly the same as newdata
 
   // TODO: slide text edit, dont override different style keys!
 
   if (undo === null) redoHistory.set([])
+  if (obj.save === false) return
 
   if (undo) {
     redoHistory.update((rh: History[]) => {

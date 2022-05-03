@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import { MAIN } from "../../../../types/Channels"
-  import { os, remotePassword } from "../../../stores"
+  import { connections, maxConnections, os, ports, remotePassword } from "../../../stores"
   import { receive, send } from "../../../utils/request"
+  import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
+  import Button from "../../inputs/Button.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
 
@@ -28,9 +30,25 @@
 
     ip = results["en0"]?.[0] || results["Wi-Fi"]?.[0] || "IP"
   }
+
+  function reset() {
+    remotePassword.set(randomNumber(1000, 9999).toString())
+    ports.set({ remote: 5510, stage: 5511 })
+    maxConnections.set(10)
+  }
+
+  const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
 </script>
 
 <!-- TODO: connection -->
+<div style="justify-content: center;">
+  <p><T id="settings.connect" />:&nbsp;</p>
+  <b style="font-size: 1.2em;">{ip}:[<T id="settings.port" />]</b>
+</div>
+<div style="justify-content: center;">
+  <p><T id="settings.connections" />: {Object.keys($connections.REMOTE).length + Object.keys($connections.STAGE).length}</p>
+</div>
+<br />
 <div>
   <p><T id="settings.device_name" /></p>
   <TextInput style="max-width: 50%;" value={$os.name} light />
@@ -39,35 +57,69 @@
   <p>RemoteShow <T id="settings.password" /></p>
   <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
 </div>
-<!-- TODO: change -->
-WIP VV
 <div>
   <p>RemoteShow <T id="settings.port" /></p>
-  <NumberInput value={5510} min={1000} max={10000} buttons={false} />
+  <NumberInput
+    value={$ports.remote}
+    on:change={(e) =>
+      ports.update((a) => {
+        let port = Number(e.detail)
+        if (port === a.stage) port--
+        a.remote = port
+        return a
+      })}
+    min={1000}
+    max={10000}
+    buttons={false}
+  />
 </div>
 <div>
   <p>StageShow <T id="settings.port" /></p>
-  <NumberInput value={5511} min={1000} max={10000} buttons={false} />
+  <NumberInput
+    value={$ports.stage}
+    on:change={(e) =>
+      ports.update((a) => {
+        let port = Number(e.detail)
+        if (port === a.remote) port--
+        a.stage = port
+        return a
+      })}
+    min={1000}
+    max={10000}
+    buttons={false}
+  />
 </div>
 <div>
   <p><T id="settings.max_connections" /></p>
-  <NumberInput value={10} />
-</div>
-<div>
-  <p><T id="settings.allowed_connections" /></p>
-  <span>(all, only phones, (laptops), ...)</span>
-</div>
-<br /><br />
-<div style="justify-content: center;">
-  <p>Connect using:&nbsp;</p>
-  <b style="font-size: 1.2em;">{ip}:[port]</b>
+  <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
 </div>
 
+<hr />
+<Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections })} center>
+  <Icon id="restart" right />
+  <T id="settings.restart" />
+</Button>
+<Button style="width: 100%;" on:click={reset} center>
+  <Icon id="reset" right />
+  <T id="actions.reset" />
+</Button>
+
+<!-- <div>
+  <p><T id="settings.allowed_connections" /></p>
+  <span>(all, only phones, (laptops), ...)</span>
+</div> -->
 <style>
   div:not(.scroll) {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin: 5px 0;
+  }
+
+  hr {
+    margin: 20px 0;
+    border: none;
+    height: 2px;
+    background-color: var(--primary-lighter);
   }
 </style>

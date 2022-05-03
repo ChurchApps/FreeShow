@@ -1,7 +1,6 @@
 <script lang="ts">
   import { get } from "svelte/store"
   import { OUTPUT } from "../../../../types/Channels"
-
   import type { TransitionType } from "../../../../types/Show"
   import { activeShow, selected, showsCache, transitionData } from "../../../stores"
   import { history } from "../../helpers/history"
@@ -16,12 +15,15 @@
   function changeTransition(id: "text" | "media", key: "type" | "duration", value: any) {
     if (key === "duration") value = Number(value)
     if (slideTransition) {
+      slideTransition[key] = value
+      value = { ...(slideTransition || {}), [key]: value }
+      if (value.type === "fade" && value.duration === 500) value = null
+
       history({
         id: "changeLayout",
-        newData: { key: "transition", value: { ...(slideTransition || {}), [key]: value } },
+        newData: { key: "transition", value },
         location: { page: "show", show: $activeShow!, layoutSlide: $selected.data[0].index, layout: _show("active").get("settings.activeLayout") },
       })
-      slideTransition[key] = value
       setTimeout(() => {
         window.api.send(OUTPUT, { channel: "SHOWS", data: get(showsCache) })
       }, 1000)
@@ -55,5 +57,25 @@
     <T id="transition.{type}" />
   </Button>
 {/each}
+<hr />
+<Button
+  on:click={() => {
+    changeTransition("text", "duration", 500)
+    changeTransition("text", "type", "fade")
+  }}
+  center
+  style={"flex: 1;"}
+>
+  <Icon id="reset" size={1.2} right />
+  <T id="actions.reset" />
+</Button>
 
 <!-- TODO: media transition -->
+<style>
+  hr {
+    height: 3px;
+    background-color: var(--primary-lighter);
+    margin: 5px 0;
+    border: none;
+  }
+</style>

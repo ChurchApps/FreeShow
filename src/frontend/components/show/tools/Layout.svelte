@@ -25,11 +25,11 @@
           slide.color = $groups[slide.globalGroup].color
         }
 
-        // check count
+        // different slides with same name
         if (slide.group) {
           if (added[slide.group]) {
             added[slide.group]++
-            slide.group += " #" + added[slide.group]
+            slide.group += " " + added[slide.group]
           } else added[slide.group] = 1
         }
         return slide
@@ -43,7 +43,7 @@
           if (ref[i].type === "parent") {
             if (added[a.id]) {
               added[a.id]++
-              a.count = added[a.id]
+              a.count = "(" + added[a.id] + ")"
             } else added[a.id] = 1
           }
         })
@@ -126,7 +126,7 @@
             <span style="margin: 10px 5px;min-width: 20px;text-align: center;opacity: 0.8;">{i + 1}</span>
             <SelectElem id="slide" data={{ index: i }} draggable trigger="column" style="height: 100%;flex: 3;">
               <p class="group context #slide" style="background-color: inherit;border-bottom: 3px solid {slide.color || 'unset'};{$fullColors ? '' : `color: ${slide.color};`}">
-                {show.slides[slide.id].group || ""}{slide.count ? " " + slide.count : ""}
+                {show.slides[slide.id].group === null ? "" : show.slides[slide.id].group || "—"}{slide.count ? " " + slide.count : ""}
               </p>
             </SelectElem>
             <!-- transition -->

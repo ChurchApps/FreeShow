@@ -138,7 +138,8 @@ export function _show(id: any) {
         },
         /** Set slides items: {key: value} */
         set: ({ key, values }: any) => {
-          let prev: any = { key, values: [] }
+          let prev: any = { values: [] }
+          if (key) prev.key = key
           showsCache.update((a: any) => {
             if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
             slideIds.forEach((slideId) => {
@@ -357,7 +358,8 @@ export function _show(id: any) {
               if (!indexes.length) indexes = Object.keys(shows[id].layouts[layoutId].slides)
               indexes.forEach((index: number) => {
                 prev[i].push(a[id].layouts[layoutId].slides[index][key])
-                a[id].layouts[layoutId].slides[index][key] = value
+                if (value === null) delete a[id].layouts[layoutId].slides[index][key]
+                else a[id].layouts[layoutId].slides[index][key] = value
               })
             })
             return a

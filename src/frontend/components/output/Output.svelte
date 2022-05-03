@@ -24,7 +24,7 @@
   export let center: boolean = false
   export let ratio: number = 0
 
-  $: slideTransition = $showsCache && $outSlide ? _show($outSlide.id).layouts("active").ref()[0][$outSlide.index]?.data.transition : null
+  $: slideTransition = $showsCache && $outSlide ? _show($outSlide.id).layouts("active").ref()[0]?.[$outSlide.index]?.data.transition : null
   $: transition = slideTransition ? slideTransition : $transitionData.text
 
   const receiveOUTPUT = {
@@ -76,7 +76,7 @@
     {/key}
     {#if $displayMetadata === "always" || ($displayMetadata.includes("first") && $outSlide.index === 0) || ($displayMetadata.includes("last") && $outSlide.index === currentLayout.length - 1)}
       <span
-        transition:fade={transition}
+        transition:custom={transition}
         style="font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);position: absolute;left: {resolution.width / 2}px;bottom: 20px;transform: translateX(-50%);opacity: 0.8;"
       >
         {Object.values($showsCache[$outSlide.id].meta || {})

@@ -6,9 +6,6 @@ import { Server } from "socket.io"
 import { REMOTE, STAGE } from "../types/Channels"
 import { toApp } from "./index"
 
-// TODO: get
-var REMOTE_PORT: number = 5510
-var STAGE_PORT: number = 5511
 var REMOTE_MAX: number = 10
 var STAGE_MAX: number = 10
 var connections: { [key: string]: any } = {
@@ -29,20 +26,25 @@ stageExpressApp.get("/", (_req: any, res: Response) => res.sendFile(join(__dirna
 remoteExpressApp.use(express.static(join(__dirname, "remote")))
 stageExpressApp.use(express.static(join(__dirname, "stage")))
 
-remoteServer.once("error", (err: any) => {
-  if (err.code === "EADDRINUSE") remoteServer.close()
-})
-stageServer.once("error", (err: any) => {
-  if (err.code === "EADDRINUSE") stageServer.close()
-})
+var started: boolean = false
+export function startServers({ ports, max }: any) {
+  if (started) closeServers()
+  started = true
+  remoteServer.listen(ports.remote, () => console.log("Remote on: " + ports.remote))
+  stageServer.listen(ports.stage, () => console.log("Stage on: " + ports.stage))
+  REMOTE_MAX = max
+  STAGE_MAX = max
 
-startServers()
-export function startServers() {
-  remoteServer.listen(REMOTE_PORT, () => console.log("Remote on: " + REMOTE_PORT))
-  stageServer.listen(STAGE_PORT, () => console.log("Stage on: " + STAGE_PORT))
+  remoteServer.once("error", (err: any) => {
+    if (err.code === "EADDRINUSE") remoteServer.close()
+  })
+  stageServer.once("error", (err: any) => {
+    if (err.code === "EADDRINUSE") stageServer.close()
+  })
 }
 
 export function closeServers() {
+  started = false
   remoteServer.close()
   stageServer.close()
 }
@@ -52,7 +54,7 @@ export function closeServers() {
 // let clients = await ioRemote.sockets.allSockets();
 // ioRemote.sockets.socket.forEach(socket, s => console.log(s.id));
 ioRemote.on("connection", (socket) => {
-  if (Object.keys(connections.REMOTE).length > REMOTE_MAX) {
+  if (Object.keys(connections.REMOTE).length >= REMOTE_MAX) {
     ioStage.emit(REMOTE, { channel: "ERROR", id: "overLimit", data: REMOTE_MAX })
     socket.disconnect()
   } else {
@@ -69,7 +71,7 @@ ipcMain.on(REMOTE, (_e, msg) => {
 // STAGE
 
 ioStage.on("connection", (socket) => {
-  if (Object.keys(connections.STAGE).length > STAGE_MAX) {
+  if (Object.keys(connections.STAGE).length >= STAGE_MAX) {
     ioStage.emit(STAGE, { channel: "ERROR", id: "overLimit", data: STAGE_MAX })
     socket.disconnect()
   } else {
