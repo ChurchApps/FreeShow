@@ -289,6 +289,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
       {@html html}
     </div> -->
     <div class="quickEdit">
+      <!-- {#key slide.items} -->
       {#if slide.items}
         {#each slide.items as item, index}
           {#if item.lines}
@@ -296,6 +297,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {/if}
         {/each}
       {/if}
+      <!-- {/key} -->
     </div>
   {/if}
 </div>

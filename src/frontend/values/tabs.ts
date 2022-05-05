@@ -6,7 +6,7 @@ export const drawerTabs: any = {
   scripture: { name: "tabs.scripture", icon: "scripture" },
   templates: { name: "tabs.templates", icon: "templates" },
   // timers: { name: "tabs.timers", icon: "timers" },
-  player: { name: "tabs.player", icon: "play" },
+  player: { name: "tabs.player", icon: "player" },
   // web: { name: "tabs.web", icon: "web" },
   live: { name: "tabs.live", icon: "camera" },
 }

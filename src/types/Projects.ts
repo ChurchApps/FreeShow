@@ -40,4 +40,6 @@ export interface Folder {
 
 export interface Tree extends Folder {
   shows?: []
+  index?: number
+  path?: string
 }

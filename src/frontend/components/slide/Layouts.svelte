@@ -46,6 +46,8 @@
       })
     }
   }
+
+  let edit: boolean = false
 </script>
 
 <div>
@@ -53,8 +55,14 @@
     <span style="display: flex;overflow-x: auto;">
       {#each Object.entries(layouts) as [id, layout]}
         <SelectElem id="layout" data={id} borders="edges" trigger="row" draggable>
-          <Button class="context #layout" on:click={() => setLayout(id)} active={activeLayout === id}>
-            <HiddenInput value={layout.name} id={"layout_" + id} on:edit={changeName} />
+          <Button
+            class="context #layout"
+            on:click={() => {
+              if (!edit) setLayout(id)
+            }}
+            active={activeLayout === id}
+          >
+            <HiddenInput value={layout.name} id={"layout_" + id} on:edit={changeName} bind:edit />
           </Button>
         </SelectElem>
       {/each}

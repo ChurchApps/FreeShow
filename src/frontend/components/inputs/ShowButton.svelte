@@ -49,8 +49,7 @@
           iconID = $categories[$shows[show.id].category || ""].icon || null
         } else iconID = "noIcon"
       }
-      // else if (type === "player" && data && $playerVideos[data].type) iconID = $playerVideos[data].type!
-      else if (type === "player") iconID = "play"
+      // else if (type === "player") iconID = "live"
       else iconID = type
     }
   }
@@ -64,7 +63,10 @@
   // $: icon = check()
   $: active = index !== null ? $activeShow?.index === index : $activeShow?.id === id
 
+  let editActive: boolean = false
   function click(e: any) {
+    if (editActive) return
+
     // set active show
     let pos = index
     if (index === null && $activeProject !== null) {
@@ -95,17 +97,15 @@
   }
 
   function doubleClick(e: any) {
-    if (!$outLocked && !e.target.closest("input")) {
-      console.log($showsCache, $shows, id)
+    if (editActive || $outLocked || e.target.closest("input")) return
 
-      if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length)
-        outSlide.set({ id, layout: $showsCache[id].settings.activeLayout, index: 0 })
-      else if (type === "image" || type === "video") {
-        let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: "media" }
-        if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
-        outBackground.set(out)
-      } else if (type === "player") outBackground.set({ id, type: "player" })
-    }
+    if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length)
+      outSlide.set({ id, layout: $showsCache[id].settings.activeLayout, index: 0 })
+    else if (type === "image" || type === "video") {
+      let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: "media" }
+      if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
+      outBackground.set(out)
+    } else if (type === "player") outBackground.set({ id, type: "player" })
   }
 
   function edit(e: any) {
@@ -122,7 +122,7 @@
         <Icon id={iconID} {custom} right />
       {/if}
       <!-- <p style="margin: 5px;">{newName}</p> -->
-      <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} />
+      <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} bind:edit={editActive} allowEmpty={false} />
     </span>
 
     {#if match}

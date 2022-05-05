@@ -41,38 +41,39 @@
   }
 
   function edit(e: any) {
-    history({ id: "updateProject", newData: { key: "name", value: e.detail.value }, location: { page: "show", project: id } })
+    if (!editActive) history({ id: "updateProject", newData: { key: "name", value: e.detail.value }, location: { page: "show", project: id } })
   }
+
+  let editActive: boolean = false
 </script>
 
-<!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{name}</span> -->
 <button on:click={click} on:dblclick={dblclick} data-parent={parent} class="context #project_button__projects" class:active>
-  <Icon id="project" />
-  <HiddenInput value={name} id={"project_" + id} on:edit={edit} />
+  <Icon id="project" right />
+  <HiddenInput value={name} id={"project_" + id} on:edit={edit} bind:edit={editActive} />
 </button>
 
-<!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->
 <style>
   button {
     width: 100%;
-    padding: 0 0.3em;
-    background-color: inherit;
-    color: inherit;
+    /* padding: 0.2em 0.8em; */
+    padding: 0.1em 0.8em;
     font-size: 0.9em;
-    border: 2px solid var(--secondary);
+    /* border: 2px solid var(--secondary); */
+    border: 0;
+    background-color: inherit;
+    color: var(--text);
 
     display: flex;
     align-items: center;
-    /* background-color: rgb(255 255 255 / .05); */
     cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  button:hover,
+  button:active {
+    background-color: rgb(255 255 255 / 0.06);
   }
   button.active {
     background-color: var(--secondary-opacity);
     color: var(--secondary-text);
-  }
-  /* hover */
-  button :global(svg) {
-    padding: 0 10px;
-    box-sizing: content-box;
   }
 </style>

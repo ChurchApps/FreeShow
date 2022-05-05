@@ -580,8 +580,8 @@ export function history(obj: History, undo: null | boolean = null) {
 
             _show(showID).slides([parent.id]).set({ key: "children", value })
           }
-          console.log(ref.length && index)
-          if (ref.length && index - 1 > 0) {
+          // get previous slide layout
+          if (ref.length && index - 1 >= 0) {
             items = JSON.parse(
               JSON.stringify(
                 _show(showID)
@@ -593,12 +593,16 @@ export function history(obj: History, undo: null | boolean = null) {
             // remove values
             items = items.map((item: any) => {
               if (item.lines) {
-                item.lines.forEach((line: any, i: number) => {
-                  line.text?.forEach((_text: any, j: number) => {
-                    item.lines[i].text[j].value = ""
-                  })
-                })
+                item.lines = [item.lines[0]]
+                item.lines[0].text = [{ style: item.lines[0].text[0]?.style || "", value: "" }]
               }
+              // {
+              //   item.lines.forEach((line: any, i: number) => {
+              //     line.text?.forEach((_text: any, j: number) => {
+              //       item.lines[i].text[j].value = ""
+              //     })
+              //   })
+              // }
               return item
             })
           }
@@ -1082,9 +1086,10 @@ export function history(obj: History, undo: null | boolean = null) {
           a[showID].slides = obj.newData.slides
           a[showID].settings.template = obj.newData.template
         } else {
-          let slides = a[showID].slides
+          let slides: any = a[showID].slides
           if (!obj.oldData) obj.oldData = { template: a[showID].settings.template, slides: JSON.parse(JSON.stringify(slides)) }
           if (obj.location!.layoutSlide === undefined) a[showID].settings.template = obj.newData.template
+          else a[showID].settings.template = null
           let template = get(templates)[obj.newData.template]
           if (template.items.length) {
             let slideId = obj.location!.layoutSlide === undefined ? null : _show(obj.location!.show!.id).layouts([obj.location!.layout]).ref()[0][obj.location!.layoutSlide!].id

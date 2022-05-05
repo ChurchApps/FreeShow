@@ -167,9 +167,9 @@
           })
         } else if (ref.id) {
           showsCache.update((a) => {
-            console.log("NEW", newLines)
-
             // let lines = a[active].slides[slide].items[index].lines
+            // console.log(a, active, ref.id, index, a[active!].slides[ref.id].items[index].lines, newLines)
+
             a[active!].slides[ref.id].items[index].lines = newLines
             return a
           })

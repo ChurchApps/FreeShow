@@ -72,14 +72,16 @@
     let values: any[] = []
     active.forEach((id) => {
       let item = items[id]
-      let styles: any = getStyles(item.style)
-      let textStyles: string = ""
+      if (item) {
+        let styles: any = getStyles(item.style)
+        let textStyles: string = ""
 
-      Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
-      Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+        Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+        Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
-      // TODO: move multiple!
-      values.push(textStyles)
+        // TODO: move multiple!
+        values.push(textStyles)
+      }
     })
 
     history({

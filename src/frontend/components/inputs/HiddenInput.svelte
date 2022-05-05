@@ -4,10 +4,11 @@
 
   export let value: string = ""
   export let id: string
+  export let allowEmpty: boolean = true
 
   $: value = edit ? (value.endsWith(" ") ? removeWhitespace(value) + " " : removeWhitespace(value)) : value.trim()
 
-  $: console.log(edit, value)
+  $: console.log(edit, value, value.endsWith(" "), removeWhitespace(value))
 
   const removeWhitespace = (v: string) =>
     v
@@ -16,7 +17,7 @@
       .join(" ")
 
   let nameElem: HTMLParagraphElement, inputElem: HTMLInputElement
-  let edit: boolean = false
+  export let edit: boolean = false
   let prevVal: string = ""
   $: if (!edit && !value.length && prevVal.length) value = prevVal
   const click = (e: any) => {
@@ -52,9 +53,7 @@
   const dispatch = createEventDispatcher()
   function change(e: any) {
     let value = e.target.value
-    if (value.length) {
-      dispatch("edit", { value })
-    }
+    if (allowEmpty || value.length) dispatch("edit", { value })
   }
 </script>
 

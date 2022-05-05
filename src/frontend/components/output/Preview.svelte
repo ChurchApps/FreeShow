@@ -21,8 +21,10 @@
     f: () => (fullscreen = !fullscreen),
     l: () => outLocked.set(!$outLocked),
     r: () => {
-      outSlide.set($outSlide)
-      outBackground.set($outBackground)
+      if (!$outLocked) {
+        outSlide.set($outSlide)
+        outBackground.set($outBackground)
+      }
     },
   }
 
@@ -33,10 +35,18 @@
       if ($presenterControllerKeys) callClear = true
       else if (fullscreen) fullscreen = false
     },
-    F1: () => outBackground.set(null),
-    F2: () => outSlide.set(null),
-    F3: () => outOverlays.set([]),
-    F4: () => outAudio.set([]),
+    F1: () => {
+      if (!$outLocked) outBackground.set(null)
+    },
+    F2: () => {
+      if (!$outLocked) outSlide.set(null)
+    },
+    F3: () => {
+      if (!$outLocked) outOverlays.set([])
+    },
+    F4: () => {
+      if (!$outLocked) outAudio.set([])
+    },
     ".": () => {
       // if ($presenterControllerKeys)
       callClear = true

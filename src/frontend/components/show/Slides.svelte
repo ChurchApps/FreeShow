@@ -49,38 +49,19 @@
 
   function slideClick(e: any, index: number) {
     // TODO: duplicate function of "preview:126 - updateOut"
-    if (!$outLocked && !e.ctrlKey && !e.metaKey) {
-      outSlide.set({ id, layout: activeLayout, index })
-      updateOut(index, _show("active").layouts("active").ref()[0], !e.altKey)
-      // _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
+    if ($outLocked || e.ctrlKey || e.metaKey) return
 
-      // activeEdit.set({ slide: index, items: [] })
+    updateOut(index, _show("active").layouts("active").ref()[0], !e.altKey)
 
-      // // background
-      // if (slide.background) {
-      //   let bg = currentShow.media[slide.background]
-      //   outBackground.set({ type: bg.type || "media", path: bg.path, muted: bg.muted !== false, loop: bg.loop !== false })
-      // }
-
-      // // overlays
-      // if (slide.overlays?.length) {
-      //   outOverlays.set([...new Set([...$outOverlays, ...slide.overlays])])
-      // }
-
-      // // transition
-      // let t = slide.transition
-      // if (t && t.duration > 0) {
-      //   t.action = "nextSlide"
-      //   outTransition.set(t)
-      // } else outTransition.set(null)
-    }
+    if ($outSlide?.id === id && $outSlide?.index === index) return
+    outSlide.set({ id, layout: activeLayout, index })
   }
 
   // disable slides that is after end (only visual)
   let endIndex: null | number = null
   $: {
     if (layoutSlides.length) {
-      let index = layoutSlides.findIndex((a) => a.end === true)
+      let index = layoutSlides.findIndex((a) => a.end === true && a.disabled !== true)
       if (index >= 0) endIndex = index
       else endIndex = null
     } else endIndex = null

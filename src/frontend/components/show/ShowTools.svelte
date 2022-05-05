@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
-  import { activeShow, showsCache } from "../../stores"
+  import { activeShow, labelsDisabled, showsCache } from "../../stores"
   import { _show } from "../helpers/shows"
   import Tabs from "../main/Tabs.svelte"
   import Audio from "./tools/Audio.svelte"
@@ -39,7 +39,7 @@
 
 <svelte:window on:mousedown={updateNote} />
 
-<div class="main border">
+<div class="main border" class:labels={!$labelsDisabled}>
   <Tabs {tabs} bind:active />
 
   {#if showId && $showsCache[showId]}
@@ -86,7 +86,7 @@
     overflow-x: hidden;
   }
 
-  .main :global(.tabs button) {
+  .main.labels :global(.tabs button) {
     min-width: 50%;
   }
 </style>
