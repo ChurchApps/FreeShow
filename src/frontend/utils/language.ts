@@ -14,6 +14,7 @@ const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
 const replace: any = {
   no: ["nb", "nn"],
   en: ["en-US"],
+  sk: ["sk-SK"],
 }
 
 function setLanguage(locale: null | string = null) {
