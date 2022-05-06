@@ -12,7 +12,8 @@
   },
   "languages": {
     "en": "English",
-    "no": "Norwegian"
+    "no": "Norwegian",
+    "sk": "Slovak"
   },
   "about": {
     "check_updates": "Look for updates",
@@ -554,7 +555,7 @@
     "microphones": "Microphones"
   },
   "transition": {
-    "current_slide": "for current silde",
+    "current_slide": "for current slide",
     "text": "Text transition",
     "media": "Media transition",
     "none": "None",
@@ -590,7 +591,7 @@
     "created": "Created",
     "modified": "Modified",
     "used": "Used",
-    "changed": "Used",
+    "changed": "Changed",
     "extension": "File extension",
     "size": "Size",
     "slides": "Slides",

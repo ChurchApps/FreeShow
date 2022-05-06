@@ -6,6 +6,7 @@
   const languages: any = {
     en: "English",
     no: "Norsk",
+    sk: "Slovak",
   }
 
   let options: any[] = []
@@ -20,6 +21,7 @@
 <!-- <div class="select"> <select value={value} on:change|preventDefault={e => setLanguage(e.target.value)}>
       <option value="en">English</option>
       <option value="no">Norsk</option>
+      <option value="sk">Slovak</option>
       <option value="ar">عربي</option>
     </select>
   </div> -->
