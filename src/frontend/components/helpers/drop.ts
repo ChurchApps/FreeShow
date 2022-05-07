@@ -18,7 +18,7 @@ const areas: any = {
   // media_drawer: ["file"],
 }
 const areaChildren: any = {
-  projects: ["folder"],
+  projects: ["folder", "project"],
   project: ["show", "media", "show_drawer", "player"],
   slides: ["slide", "group", "global_group", "camera", "media", "show"],
   all_slides: [],
@@ -64,13 +64,13 @@ export function ondrop(e: any, id: string) {
 
   switch (id) {
     case "projects":
-      if (sel.id === "folder" && (!data.type || data.type === "folder")) {
+      if ((sel.id === "folder" || sel.id === "project") && (!data.type || data.type === "folder")) {
         location.page = "show"
         // TODO: move multiple
-        // TODO: folder selection..... (css)
+        let parents = data.path?.split("/") || [""]
         sel.data.forEach((selData) => {
-          // check to see that its not itself OR a child of itself...
-          if (selData.id !== data.id && (!selData.index || !data.index || selData.index >= data.index)) {
+          // check to see that its not itself OR a child of itself
+          if ((selData.id !== data.id && (parents[0] === "" || selData.path === data.path || !parents.includes(selData.id))) || selData.type !== data.type) {
             if (selData.type === "folder") {
               historyID = "updateProjectFolder"
               location.folder = selData.id
@@ -78,9 +78,9 @@ export function ondrop(e: any, id: string) {
               historyID = "updateProject"
               location.project = selData.id
             }
-            newData = { key: "parent", value: data.id || "/" }
           }
         })
+        newData = { key: "parent", value: data.id || "/" }
       }
       break
     case "project":
@@ -93,7 +93,8 @@ export function ondrop(e: any, id: string) {
       if (sel.id === "media" || sel.id === "files") {
         tempData = tempData
           .map((a: any) => {
-            let name: string = a.name.includes(".") ? a.name : a.path.substring(a.path.lastIndexOf("\\") + 1)
+            // let name: string = a.name.includes(".") ? a.name : a.path.substring(a.path.lastIndexOf("\\") + 1)
+            let name: string = a.name.includes(".") ? a.name : a.path.substring((a.path.lastIndexOf("\\") > -1 ? a.path.lastIndexOf("\\") : a.path.lastIndexOf("/")) + 1)
             const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
             let type = a.type || "image"
             if (get(videoExtensions).includes(extension.substring(1))) type = "video"
@@ -237,7 +238,7 @@ export function ondrop(e: any, id: string) {
           .slides([ref.type === "parent" ? ref.index : ref.parent.index])
           .get()[0][0]
         if (ref.type === "child") slide = slide.children[ref.index]
-        let value: any[] = [...new Set([...(slide.overlays || []), ...sel.data])]
+        let value: any[] = [...new Set([...(slide?.overlays || []), ...sel.data])]
         newData = { key: "overlays", value }
       }
       break

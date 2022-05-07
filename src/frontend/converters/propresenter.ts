@@ -1,4 +1,4 @@
-import { drawerTabsData, activePopup, groups as globalGroups } from "./../stores"
+import { drawerTabsData, activePopup, groups as globalGroups, dictionary } from "./../stores"
 import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
@@ -196,7 +196,11 @@ export function convertProPresenter(data: any) {
     show.slides = slides
     show.layouts = {}
     layouts.forEach((layout: any, i: number) => {
-      show.layouts[i === 0 ? layoutID : layout.id] = { name: layout.name, notes: i === 0 ? song.metadata.notes || "" : "", slides: layout.slides }
+      show.layouts[i === 0 ? layoutID : layout.id] = {
+        name: layout.name || get(dictionary).example?.default || "",
+        notes: i === 0 ? song.metadata.notes || "" : "",
+        slides: layout.slides,
+      }
     })
 
     history({ id: "newShow", newData: { show }, location: { page: "show" } })

@@ -11,9 +11,9 @@
     border: 2px solid var(--primary-darker);
     transition: background-color 0.2s;
   }
-  div:hover {
+  /* div:hover {
     filter: brightness(1.2);
-  }
+  } */
   input[type="color"] {
     opacity: 0;
     width: 100%;

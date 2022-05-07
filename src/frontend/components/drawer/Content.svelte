@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { drawerTabsData } from "../../stores"
+  import { drawerTabsData, mediaOptions } from "../../stores"
   import Cameras from "./live/Cameras.svelte"
   import Microphones from "./live/Microphones.svelte"
   import Windows from "./live/Windows.svelte"
@@ -48,6 +48,10 @@
       })
     })
   }
+
+  function wheel(e: any) {
+    if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
+  }
 </script>
 
 <div class="main">
@@ -68,7 +72,7 @@
   {:else if id === "web"}
     <Web {active} {searchValue} />
   {:else if id === "live"}
-    <div class="grid">
+    <div class="grid" on:wheel={wheel}>
       <!-- live -->
       <!-- screens -->
       {#if active === "screens"}

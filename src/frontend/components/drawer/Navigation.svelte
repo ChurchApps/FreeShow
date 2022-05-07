@@ -1,6 +1,5 @@
 <script lang="ts">
   import { MAIN } from "../../../types/Channels"
-
   import type { Category } from "../../../types/Tabs"
   import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, overlays, shows, templateCategories, templates, webFavorites } from "../../stores"
   import { keysToID, sortObject } from "../helpers/array"
@@ -9,10 +8,10 @@
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import FolderPicker from "../inputs/FolderPicker.svelte"
-  import HiddenInput from "../inputs/HiddenInput.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import { getBibleVersions } from "./bible/getBible"
+  import NavigationButton from "./NavigationButton.svelte"
 
   export let id: "shows" | "media" | "overlays" | "audio" | "scripture" | "templates" | "player" | "live" | "web"
 
@@ -127,23 +126,6 @@
     }
   }
 
-  const nameCategories: any = {
-    shows: (c: any) => categories.update((a) => setName(a, c)),
-    media: (c: any) => mediaFolders.update((a) => setName(a, c)),
-    overlays: (c: any) => overlayCategories.update((a) => setName(a, c)),
-    templates: (c: any) => templateCategories.update((a) => setName(a, c)),
-  }
-  const setName = (a: any, { name, id }: any) => {
-    if (a[id].default) delete a[id].default
-    a[id].name = name
-    return a
-  }
-
-  function changeName(e: any, categoryId: string) {
-    if (nameCategories[id]) nameCategories[id]({ name: e.detail.value, id: categoryId })
-    else console.log("rename " + id)
-  }
-
   let selectId: any = "category"
   $: selectId = "category_" + id
 </script>
@@ -159,43 +141,7 @@
             <hr />
           {:else}
             <SelectElem id={selectId} borders="center" trigger="column" data={category.id}>
-              <Button
-                class={category.id === "all" || category.id === "unlabeled" ? "" : `context #category_${id}_button__category_${id}`}
-                active={category.id === $drawerTabsData[id].activeSubTab}
-                on:click={(e) => {
-                  if (!e.ctrlKey && !e.metaKey) setTab(category.id)
-                }}
-                bold={false}
-                title={category.description ? category.description : category.path ? category.path : ""}
-              >
-                <span style="display: flex;align-items: center;width: 100%;">
-                  <Icon
-                    id={category.icon || "noIcon"}
-                    custom={(id === "shows" || id === "overlays" || id === "templates") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
-                    select={(id === "shows" || id === "overlays" || id === "templates") && category.id !== "all" && category.id !== "unlabeled"}
-                    selectData={{ id: selectId, data: [category.id] }}
-                    right
-                  />
-                  <span id={category.id} style="width: 100%;text-align: left;">
-                    {#if id === "scripture" || id === "player"}
-                      <p style="margin: 5px;">{category.name}</p>
-                    {:else if category.id === "all" || category.id === "unlabeled"}
-                      <p style="margin: 5px;"><T id={category.name} /></p>
-                    {:else}
-                      <HiddenInput
-                        value={category.default ? $dictionary[category.name.split(".")[0]]?.[category.name.split(".")[1]] : category.name}
-                        id={"category_" + id + "_" + category.id}
-                        on:edit={(e) => changeName(e, category.id)}
-                      />
-                    {/if}
-                  </span>
-                </span>
-                {#if length[category.id]}
-                  <span style="opacity: 0.5;">
-                    {length[category.id]}
-                  </span>
-                {/if}
-              </Button>
+              <NavigationButton {id} {category} {length} />
             </SelectElem>
           {/if}
         {/each}

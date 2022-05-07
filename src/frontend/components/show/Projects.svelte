@@ -7,20 +7,37 @@
   import { checkInput } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
-  import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
+  // import ProjectsFolder from "../inputs/ProjectsFolder.svelte"
   import ShowButton from "../inputs/ShowButton.svelte"
   import { autoscroll } from "../system/autoscroll"
   import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
+  import ProjectList from "./ProjectList.svelte"
   import ProjectTools from "./ProjectTools.svelte"
 
   let tree: Tree[] = []
+  $: f = Object.entries($folders).map(([id, folder]) => ({ ...folder, id, type: "folder" as "folder" }))
+  $: p = Object.entries($projects).map(([id, project]) => ({ ...project, id, shows: [] as any }))
   $: {
-    tree = []
-    Object.entries($folders).forEach(([id, folder]) => tree.push({ ...folder, id, type: "folder" }))
-    Object.entries($projects).forEach(([id, project]) => tree.push({ ...project, id, shows: [] }))
+    tree = [...f.sort((a, b) => a.name.localeCompare(b.name)), ...p.sort((a, b) => a.name.localeCompare(b.name))]
+
+    folderSorted = []
+    sortFolders()
+    console.log(folderSorted)
+    tree = folderSorted
+  }
+
+  let folderSorted: Tree[] = []
+  function sortFolders(parent: string = "/", index: number = 0, path: string = "") {
+    let filtered = tree.filter((a: any) => a.parent === parent).map((a) => ({ ...a, index, path }))
+    filtered.forEach((folder) => {
+      folderSorted.push(folder)
+      if (folder.type === "folder") {
+        sortFolders(folder.id, index + 1, path + folder.id + "/")
+      }
+    })
   }
 
   // autoscroll
@@ -30,14 +47,15 @@
 
   $: {
     // get pos if clicked in drawer
-    if ($activeShow && $activeProject) findShowInProject()
+    if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject!].shows[$activeShow.index].id !== $activeShow?.id) findShowInProject()
   }
 
   function findShowInProject() {
     let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
     let pos: number = i > -1 ? i : $activeShow?.index || -1
 
-    if (($activeShow?.type !== "video" && $activeShow?.type !== "image") || pos < 0 || $activeShow.index === pos) return
+    // ($activeShow?.type !== "video" && $activeShow?.type !== "image")
+    if (pos < 0 || $activeShow?.index === pos) return
 
     activeShow.update((a) => {
       a!.index = pos
@@ -85,13 +103,10 @@
     <button onClick={() => setProject(false)} style={{width: '50%', backgroundColor: (project ? '' : 'transparent'), color: (project ? '' : 'var(--secondary)')}}>Timeline</button> -->
   </span>
   {#if $projectView}
-    <div class="list context #projects" id="/">
+    <div class="list context #projects" style="overflow: auto;">
       <DropArea id="projects">
-        <!-- All Projects: -->
-
-        <ProjectsFolder id="/" name="All Projects" {tree} opened index={1} />
-
-        <!-- <button class="listItem" on:click={() => setFreeShow({...freeShow, project: i})} onDoubleClick={() => {setProject(false); setFreeShow({...freeShow, activeSong: projects[i].timeline[0].name})}}>{project.name}</button> -->
+        <ProjectList {tree} />
+        <!-- <ProjectsFolder id="/" name="All Projects" {tree} opened index={0} /> -->
       </DropArea>
     </div>
     <div class="tabs">

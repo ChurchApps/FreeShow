@@ -14,8 +14,11 @@
     other: ["chords", "message"],
   }
 
-  $: enabledItems = $stageShows[$activeStage.id!].items
+  let enabledItems: any
+  $: enabledItems = $activeStage.id ? $stageShows[$activeStage.id].items : []
   function click(item: string) {
+    if (!$activeStage.id) return
+
     stageShows.update((ss) => {
       if (!enabledItems[item]) enabledItems[item] = { enabled: true, style: "width: 200px;height: 100px;", align: "" }
       else if (enabledItems[item].enabled) enabledItems[item].enabled = false

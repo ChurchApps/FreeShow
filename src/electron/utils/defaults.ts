@@ -89,7 +89,10 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],
   imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"],
   theme: "default",
-  groupCount: true,
+  transitionData: {
+    text: { type: "fade", duration: 500 },
+    media: { type: "fade", duration: 500 },
+  },
   groups: {
     break: { name: "break", default: true, color: "#f5255e" },
     bridge: { name: "bridge", default: true, color: "#f52598" },

@@ -6,7 +6,8 @@
   import Date from "../../system/Date.svelte"
 
   $: name = $activeShow!.name || ""
-  $: if ($activeShow?.id) window.api.send(FILE_INFO, $activeShow!.id)
+  $: if ($activeShow?.id) window.api.send(FILE_INFO, $activeShow?.id)
+
   let info: any = {}
   window.api.receive(FILE_INFO, (data: any) => {
     info = { ...data.stat, extension: data.extension }

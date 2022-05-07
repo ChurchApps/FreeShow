@@ -68,7 +68,8 @@
   // dynamic counter
   function getGroupName(slideID: string) {
     let name = group
-    if (name) {
+    if (name !== null) {
+      if (!name.length) name = "—"
       let added: any = {}
       // if ($groupCount) {
       // different slides with same name
@@ -197,7 +198,7 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:active style="width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%">
   {#if icons && !altKeyPressed}
-    <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} />
+    <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""} />
     <Actions {columns} {index} actions={layoutSlide.actions || {}} />
   {/if}
   <div
@@ -289,6 +290,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
       {@html html}
     </div> -->
     <div class="quickEdit">
+      <!-- {#key slide.items} -->
       {#if slide.items}
         {#each slide.items as item, index}
           {#if item.lines}
@@ -296,6 +298,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {/if}
         {/each}
       {/if}
+      <!-- {/key} -->
     </div>
   {/if}
 </div>

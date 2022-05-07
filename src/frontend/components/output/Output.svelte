@@ -20,12 +20,14 @@
   // TODO: showing slide upon clear fade out will show black output (Transition bug!)
   // TODO: dont show transition upon no change!s
   export let transition: Transition = $transitionData.text
+  export let mediaTransition: Transition = $transitionData.media
   export let style = ""
   export let center: boolean = false
   export let ratio: number = 0
 
   $: slideTransition = $showsCache && $outSlide ? _show($outSlide.id).layouts("active").ref()[0]?.[$outSlide.index]?.data.transition : null
   $: transition = slideTransition ? slideTransition : $transitionData.text
+  $: mediaTransition = $transitionData.media
 
   const receiveOUTPUT = {
     VIDEO_DATA: (a: any) => {
@@ -61,7 +63,7 @@
 <Zoomed background={currentSlide?.settings?.color || $backgroundColor || "black"} {center} {style} {resolution} bind:ratio>
   {#if $outBackground !== null}
     <div style="zoom: {1 / ratio}">
-      <MediaOutput {...$outBackground} {transition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
+      <MediaOutput {...$outBackground} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
     </div>
   {/if}
   {#if $outSlide}

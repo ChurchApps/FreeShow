@@ -15,21 +15,13 @@
   }
 </script>
 
-{#if $activeShow}
-  {#if $activeShow.type === "video"}
-    <!--  -->
-  {:else if $activeShow.type === "image"}
-    <!--  -->
-  {:else if $activeShow.type === "audio"}
-    <!--  -->
-  {:else}
-    <Slides />
-    <!-- style="background-color: var(--primary-darkest);" -->
-    <Button center on:click={addSlide}>
-      <Icon id="add" right />
-      <T id="new.slide" />
-    </Button>
-  {/if}
+{#if $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")}
+  <Slides />
+  <!-- style="background-color: var(--primary-darkest);" -->
+  <Button center on:click={addSlide}>
+    <Icon id="add" right />
+    <T id="new.slide" />
+  </Button>
 {:else}
   <Center faded>
     <T id="empty.show" />

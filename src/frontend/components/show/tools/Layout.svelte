@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activePopup, activeShow, dictionary, fullColors, groupCount, groups, selected, showsCache } from "../../../stores"
+  import { activePopup, activeShow, dictionary, fullColors, groupNumbers, groups, selected, showsCache } from "../../../stores"
   import { GetLayout, GetLayoutRef } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
@@ -36,7 +36,7 @@
       })
 
       // same group count
-      if ($groupCount) {
+      if ($groupNumbers) {
         added = {}
         let ref: any = GetLayoutRef()
         slides.forEach((a: any, i: number) => {
@@ -125,7 +125,7 @@
           <div class="slide" class:disabled={slide.disabled}>
             <span style="margin: 10px 5px;min-width: 20px;text-align: center;opacity: 0.8;">{i + 1}</span>
             <SelectElem id="slide" data={{ index: i }} draggable trigger="column" style="height: 100%;flex: 3;">
-              <p class="group context #slide" style="background-color: inherit;border-bottom: 3px solid {slide.color || 'unset'};{$fullColors ? '' : `color: ${slide.color};`}">
+              <p class="group context #slide" style="border-bottom: {slide.color ? '2px solid ' + slide.color : 'unset'};{$fullColors ? '' : `color: ${slide.color};`}">
                 {show.slides[slide.id].group === null ? "" : show.slides[slide.id].group || "—"}{slide.count ? " " + slide.count : ""}
               </p>
             </SelectElem>
@@ -210,6 +210,7 @@
     justify-content: center;
     font-size: 0.8em;
     font-weight: bold;
-    background-color: var(--primary-lighter);
+    /* background-color: inherit; */
+    background-color: var(--primary-darker);
   }
 </style>

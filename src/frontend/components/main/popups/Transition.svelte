@@ -39,6 +39,7 @@
 </script>
 
 <p>
+  <Icon id="text" size={1.2} />
   <T id="transition.text" />{#if slideTransition}&nbsp;<T id="transition.current_slide" />{/if}:
 </p>
 <NumberInput
@@ -57,11 +58,38 @@
     <T id="transition.{type}" />
   </Button>
 {/each}
+
+{#if !slideTransition}
+  <hr />
+  <p>
+    <Icon id="image" size={1.2} />
+    <T id="transition.media" />{#if slideTransition}&nbsp;<T id="transition.current_slide" />{/if}:
+  </p>
+  <NumberInput
+    disabled={$transitionData.media.type === "none"}
+    value={$transitionData.media.duration}
+    max={20000}
+    fixed={1}
+    decimals={3}
+    step={100}
+    inputMultiplier={0.001}
+    on:change={(e) => changeTransition("media", "duration", e.detail)}
+  />
+  {#each types as type}
+    <Button on:click={() => changeTransition("media", "type", type)} active={$transitionData.media.type === type} center style={"flex: 1;"}>
+      <Icon id={type} size={1.2} right />
+      <T id="transition.{type}" />
+    </Button>
+  {/each}
+{/if}
+
 <hr />
 <Button
   on:click={() => {
     changeTransition("text", "duration", 500)
     changeTransition("text", "type", "fade")
+    changeTransition("media", "duration", 500)
+    changeTransition("media", "type", "fade")
   }}
   center
   style={"flex: 1;"}
@@ -70,7 +98,6 @@
   <T id="actions.reset" />
 </Button>
 
-<!-- TODO: media transition -->
 <style>
   hr {
     height: 3px;

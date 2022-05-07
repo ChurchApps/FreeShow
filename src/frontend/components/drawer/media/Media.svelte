@@ -16,7 +16,11 @@
   $: rootPath = active === "all" ? "" : active !== null ? $mediaFolders[active].path! : ""
   $: path = active === "all" ? "" : rootPath
   $: name =
-    rootPath === path ? (active !== "all" && active !== null ? $mediaFolders[active].name : "category.all") : path.substring((path.lastIndexOf("\\") || path.lastIndexOf("/")) + 1)
+    rootPath === path
+      ? active !== "all" && active !== null
+        ? $mediaFolders[active].name
+        : "category.all"
+      : path.substring((path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")) + 1)
 
   // get list of files & folders
   let prevActive: null | string = null
@@ -111,7 +115,7 @@
   }
 
   function goBack() {
-    const lastSlash = path.lastIndexOf("/") > -1 ? path.lastIndexOf("/") : path.lastIndexOf("\\")
+    const lastSlash = path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")
     const folder = path.slice(0, lastSlash)
     path = folder.length > rootPath.length ? folder : rootPath
   }

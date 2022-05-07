@@ -13,6 +13,7 @@
     font-size: inherit;
     font-weight: inherit;
     border: 0;
+    padding: 10px;
     outline-offset: -2px;
     resize: none;
   }
@@ -21,5 +22,10 @@
   }
   textarea:hover {
     background-color: var(--hover);
+  }
+
+  textarea::placeholder {
+    color: var(--text);
+    opacity: 0.3;
   }
 </style>

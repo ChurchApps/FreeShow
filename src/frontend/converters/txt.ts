@@ -4,7 +4,7 @@ import type { Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { activeProject, groups } from "../stores"
+import { activeProject, dictionary, groups } from "../stores"
 
 export function convertText({ name = "", category = null, text }: any) {
   console.log(name, category, text)
@@ -36,7 +36,7 @@ export function convertText({ name = "", category = null, text }: any) {
   show.meta = meta
   let { slides, layouts } = createSlides(labeled)
   show.slides = slides
-  show.layouts = { [layoutID]: { name: "", notes: "", slides: layouts } }
+  show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
   // let newData: any = {name, category, settings: {}, meta}
   history({ id: "newShow", newData: { show }, location: { page: "show", project: get(activeProject) } })
 }

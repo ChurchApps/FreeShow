@@ -6,6 +6,7 @@
   import T from "../../helpers/T.svelte"
   import Color from "../../inputs/Color.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
+  import Notes from "../../show/tools/Notes.svelte"
   import Panel from "../../system/Panel.svelte"
 
   // $: editSlide = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide) : null
@@ -47,6 +48,18 @@
       location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id },
     })
   }
+
+  let note: string = ""
+  $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) note = editSlide.notes
+
+  function edit(e: any) {
+    if (editSlide.notes === e.detail) return
+    console.log(e.detail)
+    console.log(GetLayout()[$activeEdit.slide!].id)
+
+    _show($activeShow!.id).slides([GetLayout()[$activeEdit.slide!].id]).set({ key: "notes", value: e.detail })
+    console.log(_show($activeShow!.id).slides([GetLayout()[$activeEdit.slide!].id]).get())
+  }
 </script>
 
 <Panel>
@@ -86,4 +99,21 @@
       />
     </span>
   </div>
+  <hr />
+  <h6><T id="tools.notes" /></h6>
+  <div class="notes">
+    <Notes value={note} on:edit={edit} update />
+  </div>
 </Panel>
+
+<style>
+  .notes :global(div) {
+    display: block !important;
+  }
+
+  .notes :global(div.paper) {
+    position: relative;
+    display: block;
+    background: var(--primary-darker);
+  }
+</style>

@@ -12,7 +12,8 @@
   },
   "languages": {
     "en": "English",
-    "no": "Norwegian"
+    "no": "Norwegian",
+    "sk": "Slovak"
   },
   "about": {
     "check_updates": "Look for updates",
@@ -37,7 +38,9 @@
     "text": "Edit the content of all selected items.",
     "item": "Edit all selected items.",
     "items": "Add and arrange items.",
-    "slide": "Edit current slide."
+    "slide": "Edit current slide.",
+    "filters": "Change the look of the selected element.",
+    "options": "More options."
   },
   "setup": {
     "good_luck": "I hope you find this software useful. Good luck showing! :)",
@@ -108,6 +111,7 @@
     "play": "Play",
     "pause": "Pause",
     "show": "Show",
+    "flip": "Flip",
     "all": "Folders, images & videos",
     "folder": "Only folders",
     "image": "Only images",
@@ -554,7 +558,7 @@
     "microphones": "Microphones"
   },
   "transition": {
-    "current_slide": "for current silde",
+    "current_slide": "for current slide",
     "text": "Text transition",
     "media": "Media transition",
     "none": "None",
@@ -590,7 +594,7 @@
     "created": "Created",
     "modified": "Modified",
     "used": "Used",
-    "changed": "Used",
+    "changed": "Changed",
     "extension": "File extension",
     "size": "Size",
     "slides": "Slides",

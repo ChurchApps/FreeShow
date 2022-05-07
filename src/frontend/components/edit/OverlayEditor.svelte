@@ -1,9 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-
   import type { Resolution } from "../../../types/Settings"
   import { activeEdit, overlays, screen } from "../../stores"
-  import { _show } from "../helpers/shows"
   import { getStyles } from "../helpers/style"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -72,7 +70,7 @@
     <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
       <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
       {#each Slide.items as item, index}
-        <Editbox items={Slide.items} ref={{ type: "overlay", id: currentId }} {item} {index} {ratio} bind:mouse />
+        <Editbox ref={{ type: "overlay", id: currentId }} {item} {index} {ratio} bind:mouse />
       {/each}
     </Zoomed>
   {:else}

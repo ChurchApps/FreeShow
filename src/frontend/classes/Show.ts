@@ -1,5 +1,7 @@
+import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
+import { dictionary } from "../stores"
 
 export class ShowObj implements Show {
   name: string
@@ -28,7 +30,7 @@ export class ShowObj implements Show {
     }
     this.meta = {}
     this.slides = {}
-    this.layouts = { [layoutID]: { name: "", notes: "", slides: [] } }
+    this.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: [] } }
     this.media = {}
   }
 }

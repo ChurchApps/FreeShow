@@ -14,6 +14,7 @@
   export let duration: any
   export let columns: number
   export let index: number
+  export let style: string
 
   $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
   $: notMuted = background?.muted === false
@@ -43,7 +44,7 @@
 </script>
 
 <!-- TODO: check if exists -->
-<div class="icons" style="zoom: {4 / columns};">
+<div class="icons" style="zoom: {4 / columns};{style}">
   {#if timer.length}
     <div>
       <div class="button">

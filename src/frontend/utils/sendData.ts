@@ -166,7 +166,7 @@ function getStage(msg: ClientMessage) {
       msg.data = []
       if (out && get(activeShow)) {
         let layout = GetLayout(out.id, out.layout)
-        let slides = get(showsCache)[out.id].slides
+        let slides = get(showsCache)[out.id]?.slides
         if (layout[out.index]) {
           msg.data = [slides[layout[out.index].id]]
           let index = out.index + 1

@@ -1,20 +1,18 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Slide, Template } from "../../../types/Show"
+import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeEdit, activePage, activeStage, notFound, overlayCategories, playerVideos, shows, templateCategories, undoHistory } from "../../stores"
+import { activeEdit, activePage, activeStage, notFound, playerVideos, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
   activeProject,
   activeShow,
-  categories,
   defaultProjectName,
   drawerTabsData,
   events,
   folders,
   groups,
-  mediaFolders,
   openedFolders,
   outOverlays,
   overlays,
@@ -27,7 +25,7 @@ import {
   theme,
   themes,
 } from "./../../stores"
-import { redoAddCategory, undoAddCategory } from "./historyHelpers"
+import { redoAddCategory, redoAddOverlayOrTemplate, undoAddCategory, undoAddOverlayOrTemplate } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { loadShows, setShow } from "./setShow"
 import { _show } from "./shows"
@@ -62,8 +60,10 @@ export type HistoryIDs =
   | "deleteFolder"
   | "deleteProject"
   | "deleteStage"
+  | "deleteOverlay"
+  | "deleteTemplate"
   | "deleteShowsCategory"
-  | "deleteMediaCategory"
+  | "deleteMediaFolder"
   | "deleteOverlaysCategory"
   | "deleteTemplatesCategory"
   | "removeSlides"
@@ -411,7 +411,11 @@ export function history(obj: History, undo: null | boolean = null) {
     case "deleteShow":
       if (undo) {
         let id: string = obj.newData.id
-        setShow(id, obj.newData.show)
+        shows.update((a) => {
+          a[id] = obj.newData.show
+          return a
+        })
+        // setShow(id, obj.newData.show)
 
         projects.update((a) => {
           obj.newData.projects.forEach((b: any) => {
@@ -459,95 +463,16 @@ export function history(obj: History, undo: null | boolean = null) {
       }
       break
     case "newShowsCategory":
-      categories.update((a) => {
-        if (undo) temp = undoAddCategory(obj, a, "shows")
-        else temp = redoAddCategory(obj, a, "shows")
-        return temp.data
-      })
-      break
     case "newMediaFolder":
-      mediaFolders.update((a) => {
-        if (undo) temp = undoAddCategory(obj, a, "media")
-        else temp = redoAddCategory(obj, a, "media")
-        return temp.data
-      })
-      break
     case "newOverlaysCategory":
-      overlayCategories.update((a) => {
-        if (undo) temp = undoAddCategory(obj, a, "overlays")
-        else temp = redoAddCategory(obj, a, "overlays")
-        return temp.data
-      })
-      break
     case "newTemplatesCategory":
-      templateCategories.update((a) => {
-        if (undo) temp = undoAddCategory(obj, a, "templates")
-        else temp = redoAddCategory(obj, a, "templates")
-        return temp.data
-      })
+      if (undo) obj = undoAddCategory(obj)
+      else obj = redoAddCategory(obj)
       break
     case "newOverlay":
-      if (undo) {
-        let id: string = obj.oldData.id
-        if (get(outOverlays).includes(id)) outOverlays.set(get(outOverlays).filter((a) => a !== id))
-        overlays.update((a) => {
-          delete a[id]
-          return a
-        })
-      } else {
-        let category: null | string = null
-        if (get(drawerTabsData).overlays.activeSubTab !== "all") category = get(drawerTabsData).overlays.activeSubTab
-        let overlay = {
-          name: "",
-          color: null,
-          category,
-          items: [],
-        }
-        if (!obj.newData?.overlay) obj.newData = { overlay }
-
-        let id: string = obj.newData.id
-        if (!id) {
-          id = uid()
-          obj.newData.id = id
-        }
-
-        overlays.update((a) => {
-          a[id] = overlay
-          return a
-        })
-      }
-      break
     case "newTemplate":
-      if (undo) {
-        let id: string = obj.oldData.id
-        templates.update((a) => {
-          delete a[id]
-          return a
-        })
-      } else {
-        // TODO: check for duplicates!!!!
-        let category: null | string = null
-        if (get(drawerTabsData).templates.activeSubTab !== "all" && get(drawerTabsData).templates.activeSubTab !== "unlabeled")
-          category = get(drawerTabsData).templates.activeSubTab
-        let template: Template = obj.newData?.template || {
-          name: "",
-          color: null,
-          category,
-          items: [],
-        }
-        // if (!obj.newData?.template) obj.newData = { template }
-
-        let id: string = obj.newData.id
-        if (!id) {
-          id = uid()
-          obj.newData.id = id
-        }
-
-        templates.update((a) => {
-          a[id] = template
-          return a
-        })
-      }
+      if (undo) obj = undoAddOverlayOrTemplate(obj)
+      else obj = redoAddOverlayOrTemplate(obj)
       break
     case "newSlide":
       if (undo) {
@@ -580,8 +505,8 @@ export function history(obj: History, undo: null | boolean = null) {
 
             _show(showID).slides([parent.id]).set({ key: "children", value })
           }
-          console.log(ref.length && index)
-          if (ref.length && index - 1 > 0) {
+          // get previous slide layout
+          if (ref.length && index - 1 >= 0) {
             items = JSON.parse(
               JSON.stringify(
                 _show(showID)
@@ -593,12 +518,16 @@ export function history(obj: History, undo: null | boolean = null) {
             // remove values
             items = items.map((item: any) => {
               if (item.lines) {
-                item.lines.forEach((line: any, i: number) => {
-                  line.text?.forEach((_text: any, j: number) => {
-                    item.lines[i].text[j].value = ""
-                  })
-                })
+                item.lines = [item.lines[0]]
+                item.lines[0].text = [{ style: item.lines[0].text[0]?.style || "", value: "" }]
               }
+              // {
+              //   item.lines.forEach((line: any, i: number) => {
+              //     line.text?.forEach((_text: any, j: number) => {
+              //       item.lines[i].text[j].value = ""
+              //     })
+              //   })
+              // }
               return item
             })
           }
@@ -764,38 +693,23 @@ export function history(obj: History, undo: null | boolean = null) {
           a[obj.newData.id] = obj.newData.data
         } else {
           obj.oldData = { id: obj.newData.id, data: a[obj.newData.id] }
+          if (get(activeStage).id === obj.newData.id) activeStage.set({ id: null, items: [] })
           delete a[obj.newData.id]
         }
         return a
       })
       break
+    case "deleteOverlay":
+    case "deleteTemplate":
+      if (undo) obj = redoAddOverlayOrTemplate(obj)
+      else obj = undoAddOverlayOrTemplate(obj)
+      break
     case "deleteShowsCategory":
-      categories.update((a) => {
-        if (undo) temp = redoAddCategory(obj, a, "shows")
-        else temp = undoAddCategory(obj, a, "shows")
-        return temp.data
-      })
-      break
-    case "deleteMediaCategory":
-      mediaFolders.update((a) => {
-        if (undo) temp = redoAddCategory(obj, a, "media")
-        else temp = undoAddCategory(obj, a, "media")
-        return temp.data
-      })
-      break
+    case "deleteMediaFolder":
     case "deleteOverlaysCategory":
-      overlayCategories.update((a) => {
-        if (undo) temp = redoAddCategory(obj, a, "overlays")
-        else temp = undoAddCategory(obj, a, "overlays")
-        return temp.data
-      })
-      break
     case "deleteTemplatesCategory":
-      templateCategories.update((a) => {
-        if (undo) temp = redoAddCategory(obj, a, "templates")
-        else temp = undoAddCategory(obj, a, "templates")
-        return temp.data
-      })
+      if (undo) obj = redoAddCategory(obj)
+      else obj = undoAddCategory(obj)
       break
     case "removeSlides":
       if (undo) {
@@ -1082,11 +996,14 @@ export function history(obj: History, undo: null | boolean = null) {
           a[showID].slides = obj.newData.slides
           a[showID].settings.template = obj.newData.template
         } else {
-          let slides = a[showID].slides
+          console.log(a[showID]?.slides)
+
+          let slides: any = a[showID].slides
           if (!obj.oldData) obj.oldData = { template: a[showID].settings.template, slides: JSON.parse(JSON.stringify(slides)) }
           if (obj.location!.layoutSlide === undefined) a[showID].settings.template = obj.newData.template
+          else a[showID].settings.template = null
           let template = get(templates)[obj.newData.template]
-          if (template.items.length) {
+          if (template?.items.length) {
             let slideId = obj.location!.layoutSlide === undefined ? null : _show(obj.location!.show!.id).layouts([obj.location!.layout]).ref()[0][obj.location!.layoutSlide!].id
             Object.entries(slides).forEach(([id, slide]: any) => {
               if (!slideId || id === slideId) {
@@ -1101,7 +1018,7 @@ export function history(obj: History, undo: null | boolean = null) {
                         text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
                       })
                     })
-                  } else {
+                  } else if (obj.newData.createItems) {
                     // TODO: remove text?
                     slide.items.push(item)
                   }

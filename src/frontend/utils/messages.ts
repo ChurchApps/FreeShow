@@ -17,7 +17,6 @@ import {
   events,
   folders,
   fullColors,
-  groupCount,
   groupNumbers,
   groups,
   imageExtensions,
@@ -168,7 +167,6 @@ const saveList: { [key in SaveList]: any } = {
   drawSettings: drawSettings,
   groupNumbers: groupNumbers,
   fullColors: fullColors,
-  groupCount: groupCount,
   groups: groups,
   imageExtensions: imageExtensions,
   labelsDisabled: labelsDisabled,
@@ -191,6 +189,7 @@ const saveList: { [key in SaveList]: any } = {
   templates: templates,
   theme: theme,
   themes: themes,
+  transitionData: transitionData,
   videoExtensions: videoExtensions,
   webFavorites: webFavorites,
 }
