@@ -1,6 +1,5 @@
 <script lang="ts">
   import { activeShow, dictionary, fullColors, groups, selected, showsCache } from "../../../stores"
-  import { getContrast } from "../../helpers/color"
   import { ondrop } from "../../helpers/drop"
   import { history } from "../../helpers/history"
   import T from "../../helpers/T.svelte"
@@ -58,9 +57,10 @@
     {#if sortedSlides.length}
       {#each sortedSlides as slide}
         <SelectElem id="group" data={{ id: slide.id }} draggable>
+          <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
           <div
             class="slide context #group"
-            style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}"
+            style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
             on:click={(e) => {
               if (!e.ctrlKey && !e.metaKey) {
                 selected.set({ id: "group", data: [{ id: slide.id }] })
@@ -87,9 +87,10 @@
     {#if sortedGroups.length}
       {#each sortedGroups as slide}
         <SelectElem id="global_group" data={slide} draggable>
+          <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
           <div
             class="slide context #global_group"
-            style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}"
+            style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
             on:click={(e) => {
               if (!e.ctrlKey && !e.metaKey && $activeShow) {
                 history({
@@ -129,7 +130,7 @@
     justify-content: center;
     font-size: 0.8em;
     font-weight: bold;
-    background-color: var(--primary-lighter);
+    background-color: var(--primary-darker);
     cursor: pointer;
     padding: 0 5px;
   }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { dictionary, outLocked, outOverlays, outSlide, overlays, screen, showsCache } from "../../stores"
+  import { dictionary, mediaOptions, outLocked, outOverlays, outSlide, overlays, screen, showsCache } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -19,9 +19,13 @@
   $: filteredOverlays = Object.keys($overlays)
     .map((id) => ({ id, ...$overlays[id] }))
     .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
+
+  function wheel(e: any) {
+    if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
+  }
 </script>
 
-<div style="position: relative;height: 100%;overflow-y: auto;">
+<div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
   <DropArea id="overlays">
     <div class="grid">
       {#each filteredOverlays as overlay}

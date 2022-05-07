@@ -6,6 +6,8 @@
 
   export let name: any = ""
   export let path: string
+  export let filter: any = ""
+  export let flipped: boolean = false
   export let type: null | "media" | "image" | "video" | "camera" | "screen" = null
   export let hover: boolean = false
   export let loaded: boolean = type === "image"
@@ -18,8 +20,8 @@
   // type
   $: {
     if (type === null) {
-      const [extension] = path.substring(path.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]
-      if ($videoExtensions.includes(extension.substring(1))) type = "video"
+      const extension = path.slice(path.lastIndexOf(".") + 1, path.length) || ""
+      if ($videoExtensions.includes(extension)) type = "video"
     }
   }
 
@@ -50,7 +52,7 @@
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
   {#key path}
     {#if type === "video"}
-      <div class="video">
+      <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">
         <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
         {#if !loaded || hover}
           <video style="position: absolute;" bind:this={videoElem} src={path} on:canplaythrough={ready}>
@@ -70,7 +72,7 @@
       </div>
     {:else}
       <!-- <img loading="lazy" src={path} alt={name} /> -->
-      <Image src={path} alt={name} />
+      <Image src={path} alt={name} style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" />
     {/if}
   {/key}
 </div>

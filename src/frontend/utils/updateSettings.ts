@@ -1,4 +1,4 @@
-import { maxConnections } from "./../stores"
+import { maxConnections, transitionData } from "./../stores"
 import { OUTPUT } from "./../../types/Channels"
 import { MAIN } from "../../types/Channels"
 import {
@@ -16,7 +16,6 @@ import {
   drawSettings,
   exportPath,
   fullColors,
-  groupCount,
   groupNumbers,
   groups,
   imageExtensions,
@@ -115,7 +114,6 @@ const updateList: { [key in SaveListSettings]: any } = {
   drawSettings: (v: any) => drawSettings.set(v),
   groupNumbers: (v: any) => groupNumbers.set(v),
   fullColors: (v: any) => fullColors.set(v),
-  groupCount: (v: any) => groupCount.set(v),
   groups: (v: any) => groups.set(v),
   imageExtensions: (v: any) => imageExtensions.set(v),
   labelsDisabled: (v: any) => labelsDisabled.set(v),
@@ -132,6 +130,7 @@ const updateList: { [key in SaveListSettings]: any } = {
   templateCategories: (v: any) => templateCategories.set(v),
   // templates: (v: any) => templates.set(v),
   theme: (v: any) => theme.set(v),
+  transitionData: (v: any) => transitionData.set(v),
   // themes: (v: any) => themes.set(v),
   videoExtensions: (v: any) => videoExtensions.set(v),
   webFavorites: (v: any) => webFavorites.set(v),

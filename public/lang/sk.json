@@ -38,7 +38,9 @@
     "text": "Upraví obsah všetkých vybratých položiek.",
     "item": "Upraví všetky vybraté položky.",
     "items": "Pridá a zoradí položky.",
-    "slide": "Upraví aktuálny snímok."
+    "slide": "Upraví aktuálny snímok.",
+    "filters": "Change the look of the selected element.",
+    "options": "More options."
   },
   "setup": {
     "good_luck": "Dúfam, že vám tento softvér bude užitočný. Veľa šťastia pri prezentácii! :)",
@@ -109,6 +111,7 @@
     "play": "Prehrať",
     "pause": "Pauza",
     "show": "Zobraziť",
+    "flip": "Flip",
     "all": "Priečinky, obrázky a videá",
     "folder": "Len priečinky",
     "image": "Len obrázky",

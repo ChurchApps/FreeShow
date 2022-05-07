@@ -11,9 +11,9 @@
   import DrawTools from "./components/draw/DrawTools.svelte"
   import Slide from "./components/draw/Slide.svelte"
   import Drawer from "./components/drawer/Drawer.svelte"
-  import MediaTools from "./components/drawer/media/MediaTools.svelte"
   import Editor from "./components/edit/Editor.svelte"
   import EditTools from "./components/edit/EditTools.svelte"
+  import MediaTools from "./components/edit/MediaTools.svelte"
   import Navigation from "./components/edit/Navigation.svelte"
   import Pdf from "./components/export/Pdf.svelte"
   import { copy, paste } from "./components/helpers/clipboard"
@@ -222,14 +222,16 @@
           <Resizeable id="mainRight" let:width side="right">
             <div class="right" class:row={width > 600}>
               <Preview />
-              {#if page === "show" && $activeShow}
-                {#if $activeShow.type === "show" || $activeShow.type === undefined}
+              {#if page === "show"}
+                {#if $activeShow && ($activeShow.type === "show" || $activeShow.type === undefined)}
                   <ShowTools />
-                {:else if $activeShow.type === "image" || $activeShow.type === "video"}
-                  <MediaTools />
                 {/if}
               {:else if page === "edit"}
-                <EditTools />
+                {#if ($activeShow && ($activeShow.type === "image" || $activeShow.type === "video")) || $activeEdit.type === "media"}
+                  <MediaTools />
+                {:else}
+                  <EditTools />
+                {/if}
               {:else if page === "draw"}
                 <DrawSettings />
               {:else if page === "stage" && $activeStage.id}

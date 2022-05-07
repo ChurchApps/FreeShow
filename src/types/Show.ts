@@ -151,6 +151,7 @@ export interface OutBackground {
   muted?: boolean
   loop?: boolean
   filter?: string
+  flipped?: boolean
   // name?: string
   type?: MediaType
 }

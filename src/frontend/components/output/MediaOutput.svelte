@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { fade } from "svelte/transition"
   import { OUTPUT } from "../../../types/Channels"
-  import type { Transition } from "../../../types/Show"
+  import type { Transition, TransitionType } from "../../../types/Show"
   import { mediaFolders, outBackground, currentWindow, videoExtensions } from "../../stores"
+  import { transitions } from "../../utils/transitions"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Player from "../system/Player.svelte"
   import Camera from "./Camera.svelte"
@@ -31,6 +31,7 @@
   let width: number = 0
   let height: number = 0
   let filter: string = ""
+  let flipped: boolean = false
 
   let hasLoaded: boolean = false
   let autoMute: boolean = false
@@ -80,19 +81,29 @@
       filter = temp.filter
       delete temp.filter
     }
+    if (temp.flipped !== undefined) {
+      flipped = temp.flipped
+      delete temp.flipped
+    }
 
     if (oldFilter === filter) videoTime = 0
     else oldFilter = filter
+  }
+
+  function custom(node: any, { type = "fade", duration = 500 }: any) {
+    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration }
   }
 </script>
 
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
   {#if isVideo}
-    <div transition:fade={transition} bind:clientWidth={width} bind:clientHeight={height}>
+    <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
       <video
         class="media"
-        style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};filter: {filter};"
+        style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};filter: {filter};{flipped
+          ? 'transform: scaleX(-1);'
+          : ''}"
         bind:this={video}
         on:loadedmetadata={loaded}
         on:playing={playing}
@@ -109,27 +120,27 @@
     </div>
   {:else}
     {#key path}
-      <div transition:fade={transition}>
+      <div transition:custom={transition}>
         <!-- style={getStyleResolution({ width: image?.naturalWidth || 0, height: image?.naturalHeight || 0 }, width, height, "cover")} -->
-        <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};" src={path} {alt} />
+        <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" src={path} {alt} />
       </div>
     {/key}
   {/if}
 {:else if type === "screen"}
   {#key id}
-    <div transition:fade={transition} bind:clientWidth={width} bind:clientHeight={height}>
+    <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
       <Window {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" />
     </div>
   {/key}
 {:else if type === "camera"}
   {#key id}
-    <div transition:fade={transition} bind:clientWidth={width} bind:clientHeight={height}>
+    <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
       <Camera {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem={video} />
     </div>
   {/key}
 {:else if type === "player"}
   {#key id}
-    <div transition:fade={transition}>
+    <div transition:custom={transition}>
       <!-- remove when finished -->
       <!-- TODO: this has to be disabled to get rid of ads! -->
       {#if !$currentWindow}

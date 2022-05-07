@@ -1,4 +1,4 @@
-import { drawerTabsData, activePopup, groups, alertMessage } from "./../stores"
+import { drawerTabsData, activePopup, groups, alertMessage, dictionary } from "./../stores"
 import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
@@ -57,7 +57,7 @@ export function convertEasyWorship(data: any) {
     let { slides, layout }: any = createSlides(words)
 
     show.slides = slides
-    show.layouts = { [layoutID]: { name: "", notes: song?.description || "", slides: layout } }
+    show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song?.description || "", slides: layout } }
     show.name = checkName(song?.title || (Object.values(slides) as any)[0].items[0].lines?.[0].text?.[0].value)
 
     history({ id: "newShow", newData: { show }, location: { page: "show" } })

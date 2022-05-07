@@ -1,7 +1,7 @@
 import { Writable, writable } from "svelte/store"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
-import type { ActiveEdit, DefaultProjectNames, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
+import type { ActiveEdit, DefaultProjectNames, Media, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
 import type { ID, OutAudio, OutBackground, OutSlide, OutTransition, Overlays, Shows, Templates, Transition } from "../types/Show"
@@ -187,6 +187,9 @@ export const templates: Writable<Templates> = writable({
     ],
   },
 })
+
+// MEDIA
+export const media: Writable<Media> = writable({}) // {}
 
 // backgrounds
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
@@ -527,7 +530,6 @@ export const themes: Writable<{ [key: string]: Themes }> = writable({
 // })
 
 // show
-export const groupCount: Writable<boolean> = writable(true) // true
 export const groups: Writable<any> = writable({
   // {default}
   intro: { name: "intro", default: true, color: "#f5255e" },

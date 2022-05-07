@@ -6,8 +6,6 @@
   import Button from "../../inputs/Button.svelte"
 </script>
 
-<T id="popup.unsaved" />
-<!-- WIP -->
 <div style="display: flex;justify-content: space-around;">
   <Button
     on:click={() => {
@@ -18,17 +16,26 @@
   </Button>
   <Button
     on:click={() => {
-      save()
-      window.api.send(MAIN, { channel: "CLOSE" })
-    }}
-  >
-    <T id="popup.save_quit" />
-  </Button>
-  <Button
-    on:click={() => {
       window.api.send(MAIN, { channel: "CLOSE" })
     }}
   >
     <T id="popup.quit" />
   </Button>
+  <Button
+    on:click={() => {
+      save()
+      setTimeout(() => {
+        window.api.send(MAIN, { channel: "CLOSE" })
+      }, 200)
+    }}
+    dark
+  >
+    <T id="popup.save_quit" />
+  </Button>
 </div>
+
+<style>
+  div :global(button) {
+    text-transform: uppercase;
+  }
+</style>

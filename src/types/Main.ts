@@ -1,5 +1,6 @@
 export interface Option {
   name: string
+  extra?: string
   id?: string
 }
 
@@ -58,6 +59,14 @@ export interface ActiveEdit {
   id?: string
   slide?: null | number
   items: number[]
+}
+
+export interface Media {
+  [key: string]: {
+    fill?: "fill" | "fit"
+    filter: any
+    flipped?: boolean
+  }
 }
 
 export type Popups = "initialize" | "import" | "export" | "show" | "delete_show" | "icon" | "rename" | "transition" | "about" | "shortcuts" | "unsaved" | "reset_all" | "alert"

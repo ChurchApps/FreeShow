@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { activeShow, dictionary, outSlide, screen, showsCache, templates } from "../../stores"
+  import { activeShow, dictionary, mediaOptions, outSlide, screen, showsCache, templates } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -28,9 +28,13 @@
       .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
       .sort((a, b) => (a.name < b.name ? -1 : 1))
   }
+
+  function wheel(e: any) {
+    if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
+  }
 </script>
 
-<div style="position: relative;height: 100%;overflow-y: auto;">
+<div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
   <DropArea id="templates">
     <div class="grid">
       {#each filteredTemplates as template}
@@ -42,7 +46,7 @@
           {resolution}
           on:click={() => {
             if (($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show")
-              history({ id: "template", newData: { template: template.id }, location: { page: "show", show: $activeShow } })
+              history({ id: "template", newData: { template: template.id, createItems: true }, location: { page: "show", show: $activeShow } })
           }}
         >
           <SelectElem id="template" data={template.id} fill draggable>

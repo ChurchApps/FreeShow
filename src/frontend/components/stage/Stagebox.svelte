@@ -3,6 +3,7 @@
   import T from "../helpers/T.svelte"
   import Clock from "../system/Clock.svelte"
   import Movebox from "../system/Movebox.svelte"
+  import SlideNotes from "./items/SlideNotes.svelte"
   import SlideText from "./items/SlideText.svelte"
 
   export let id: string
@@ -101,6 +102,8 @@
     <div>
       {#if id.split("#")[0] === "countdowns"}
         <!--  -->
+      {:else if id.includes("notes")}
+        <SlideNotes next={id.includes("next")} />
       {:else if id.includes("slide_text")}
         <SlideText next={id.includes("next")} ref={{ type: "stage", id }} />
       {:else if id.includes("slide")}

@@ -13,7 +13,7 @@
   "languages": {
     "en": "Engelsk",
     "no": "Norsk",
-    "sk": "Slowaak"
+    "sk": "Slovakisk"
   },
   "about": {
     "check_updates": "Se etter oppdateringer",
@@ -38,7 +38,9 @@
     "text": "Rediger innholdet til alle valgte elementer.",
     "item": "Rediger alle valgte elementer.",
     "items": "Legg til eller ordne elementer.",
-    "slide": "Rediger valgt lysbilde."
+    "slide": "Rediger valgt lysbilde.",
+    "filters": "Endre utseendet for det valgte elementet.",
+    "options": "Flere alternativer."
   },
   "setup": {
     "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
@@ -109,6 +111,7 @@
     "play": "Spill av",
     "pause": "Sett på pause",
     "show": "Vis",
+    "flip": "Vend",
     "all": "Mapper, bilder og videoer",
     "folder": "Bare mapper",
     "image": "Bare bilder",

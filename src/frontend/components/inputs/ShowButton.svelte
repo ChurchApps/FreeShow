@@ -79,13 +79,16 @@
       if (pos !== null) {
         show.index = pos
 
-        // set active layout in project
-        if ($projects[$activeProject!].shows[pos].layout) {
-          showsCache.update((a) => {
-            a[id].settings.activeLayout = $projects[$activeProject!].shows[pos!].layout!
-            return a
-          })
-        } else if ($showsCache[id]) {
+        if ($showsCache[id]) {
+          // set active layout from project
+          if ($projects[$activeProject!].shows[pos].layout) {
+            showsCache.update((a) => {
+              a[id].settings.activeLayout = $projects[$activeProject!].shows[pos!].layout!
+              return a
+            })
+          }
+
+          // set project layout
           projects.update((a) => {
             a[$activeProject!].shows[pos!].layout = $showsCache[id].settings.activeLayout
             return a

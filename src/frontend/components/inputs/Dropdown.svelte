@@ -49,6 +49,9 @@
           class:active={option.name === value}
         >
           {translate(option.name, { parts: true }) || option.name}
+          {#if option.extra}
+            ({option.extra})
+          {/if}
           <!-- <T id={option.name} /> -->
         </span>
         <!-- {/if} -->

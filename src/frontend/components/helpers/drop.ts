@@ -93,7 +93,8 @@ export function ondrop(e: any, id: string) {
       if (sel.id === "media" || sel.id === "files") {
         tempData = tempData
           .map((a: any) => {
-            let name: string = a.name.includes(".") ? a.name : a.path.substring(a.path.lastIndexOf("\\") + 1)
+            // let name: string = a.name.includes(".") ? a.name : a.path.substring(a.path.lastIndexOf("\\") + 1)
+            let name: string = a.name.includes(".") ? a.name : a.path.substring((a.path.lastIndexOf("\\") > -1 ? a.path.lastIndexOf("\\") : a.path.lastIndexOf("/")) + 1)
             const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
             let type = a.type || "image"
             if (get(videoExtensions).includes(extension.substring(1))) type = "video"

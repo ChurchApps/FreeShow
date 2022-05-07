@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, mediaOptions, outBackground, outLocked } from "../../../stores"
+  import { activeEdit, activePage, activeShow, media, mediaOptions, outBackground, outLocked } from "../../../stores"
   import SelectElem from "../../system/SelectElem.svelte"
   import Card from "../Card.svelte"
   import IntersectionObserver from "./IntersectionObserver.svelte"
@@ -33,7 +33,13 @@
   function click(e: any) {
     if (!e.ctrlKey && !e.metaKey) activeFile = index
   }
-  $: if (activeFile !== null && allFiles[activeFile] === path) activeShow.set({ id: path, name, type })
+  $: if (activeFile !== null && allFiles[activeFile] === path) {
+    if ($activePage === "edit" && $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")) activeEdit.set({ id: path, type: "media", items: [] })
+    else {
+      activeEdit.set({ items: [] })
+      activeShow.set({ id: path, name, type })
+    }
+  }
 
   function dblclick(e: any) {
     if (!e.ctrlKey && !e.metaKey && !$outLocked) outBackground.set({ path: path, type })
@@ -43,12 +49,29 @@
   function keydown(e: any) {
     if (e.key === "Enter") dblclick(e)
   }
+
+  let filter = ""
+  let flipped = false
+
+  $: {
+    if ($media[path]) {
+      let style = ""
+      Object.entries($media[path].filter).forEach(([id, a]: any) => (style += ` ${id}(${a})`))
+      filter = style
+      flipped = $media[path].flipped || false
+    } else {
+      filter = ""
+      flipped = false
+    }
+  }
 </script>
 
 <Card
   {loaded}
   class="context #media_card"
   style="width: {$mediaOptions.mode === 'grid' ? 100 : 100 / $mediaOptions.columns}%;"
+  mode={$mediaOptions.mode}
+  changed={!!filter.length || flipped}
   preview={$activeShow?.id === path}
   active={$outBackground?.path === path}
   label={name}
@@ -64,7 +87,7 @@
   <SelectElem id="media" data={{ name, path }} draggable fill>
     <IntersectionObserver class="observer" once let:intersecting>
       {#if intersecting}
-        <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} />
+        <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} />
       {/if}
     </IntersectionObserver>
   </SelectElem>

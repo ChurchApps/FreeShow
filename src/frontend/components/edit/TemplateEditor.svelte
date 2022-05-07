@@ -69,7 +69,7 @@
     <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
       <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
       {#each Slide.items as item, index}
-        <Editbox items={Slide.items} ref={{ type: "template", id: currentId }} {item} {index} {ratio} bind:mouse />
+        <Editbox ref={{ type: "template", id: currentId }} {item} {index} {ratio} bind:mouse />
       {/each}
     </Zoomed>
   {:else}

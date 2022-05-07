@@ -11,6 +11,8 @@
   export let icon: null | string = null
   export let color: null | string = null
   export let white: boolean = true
+  export let changed: boolean = false
+  export let mode: "grid" | "list" | "lyrics" = "grid"
   export let resolution: Resolution = $screen.resolution
 </script>
 
@@ -18,13 +20,14 @@
 <!-- display: table; -->
 <div
   class="main {$$props.class}"
-  style="flex-direction: {$mediaOptions.mode === 'grid' ? 'column' : 'row'};width: {$mediaOptions.mode === 'grid' ? 100 / $mediaOptions.columns : 100}%;"
+  style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mode === 'grid' ? 100 / $mediaOptions.columns : 100}%;"
   class:preview
   class:active
+  class:changed
   on:click
   on:dblclick
 >
-  <div class="over" style="flex-direction: {$mediaOptions.mode === 'grid' ? 'column' : 'row'};width: 100%;">
+  <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;">
     {#if preview}
       <div class="overlay" />
     {:else}
@@ -93,6 +96,11 @@
     /* outline: 3px solid var(--secondary);
     outline-offset: -2px;
     outline-offset: -5px; */
+  }
+
+  .main.changed {
+    font-style: italic;
+    color: var(--secondary);
   }
 
   .main :global(video),

@@ -1,4 +1,4 @@
-import { drawerTabsData, activePopup, groups } from "./../stores"
+import { drawerTabsData, activePopup, groups, dictionary } from "./../stores"
 import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
@@ -67,7 +67,7 @@ export function convertVideopsalm(data: any) {
 
       let { slides, layout }: any = createSlides(song)
       show.slides = slides
-      show.layouts = { [layoutID]: { name: "", notes: "", slides: layout } }
+      show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
 
       history({ id: "newShow", newData: { show }, location: { page: "show" } })
     })

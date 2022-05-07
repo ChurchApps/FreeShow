@@ -127,7 +127,7 @@
     if (sortedDays[0] - sortedDays[1] < 0) show.name += " - " + getDateString(to)
     show.name = checkName(show.name)
     show.slides = slides
-    show.layouts = { [layoutID]: { name: "", notes: "", slides: layouts } }
+    show.layouts = { [layoutID]: { name: $dictionary.example?.default || "", notes: "", slides: layouts } }
     return { show }
   }
 

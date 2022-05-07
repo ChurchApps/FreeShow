@@ -4,7 +4,7 @@ import type { Show, Slide } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { activeProject } from "../stores"
+import { activeProject, dictionary } from "../stores"
 
 export function convertPowerpoint({ name, content }: any) {
   let slides: string[][] = []
@@ -47,7 +47,7 @@ export function convertPowerpoint({ name, content }: any) {
   }
   let { slidesObj, layouts } = createSlides(slides)
   show.slides = slidesObj
-  show.layouts = { [layoutID]: { name: "", notes: "", slides: layouts } }
+  show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
   // let newData: any = {name, category, settings: {}, meta}
   history({ id: "newShow", newData: { show }, location: { page: "show", project: get(activeProject) } })
 

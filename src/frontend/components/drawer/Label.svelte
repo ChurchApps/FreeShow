@@ -8,7 +8,7 @@
   export let white: boolean = false
 </script>
 
-<div class="label" class:list={!$mediaOptions.grid} style={color ? "background-color:" + color : ""}>
+<div class="label" class:list={$mediaOptions.mode !== "grid"} style={color ? "background-color:" + color : ""}>
   {#if icon}
     <Icon id={icon} class="icon" size={1.2} {white} />
   {/if}

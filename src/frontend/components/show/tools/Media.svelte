@@ -30,8 +30,8 @@
         let id = show.media[a].path || show.media[a].id!
 
         let type = "image"
-        const [extension] = id.substring(id.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]
-        if ($videoExtensions.includes(extension.substring(1))) type = "video"
+        const extension = id.slice(id.lastIndexOf(".") + 1, id.length) || ""
+        if ($videoExtensions.includes(extension)) type = "video"
 
         if (backgrounds[id]) backgrounds[id].count++
         else backgrounds[id] = { id: a, ...show.media[a], type, count: 1 }

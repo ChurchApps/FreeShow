@@ -4,7 +4,7 @@ import { uid } from "uid"
 import { checkName } from "../components/helpers/show"
 import type { Show, Slide } from "../../types/Show"
 import { history } from "../components/helpers/history"
-import { activeProject } from "../stores"
+import { activeProject, dictionary } from "../stores"
 export function convertPDF({ name, path, pages }: any) {
   // create show
   let layoutID = uid()
@@ -31,7 +31,7 @@ export function convertPDF({ name, path, pages }: any) {
   })
   show.media = media
   show.slides = slides
-  show.layouts = { [layoutID]: { name: "", notes: "", slides: layouts } }
+  show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
   // let newData: any = {name, category, settings: {}, meta}
   history({ id: "newShow", newData: { show }, location: { page: "show", project: get(activeProject) } })
 }

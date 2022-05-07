@@ -157,10 +157,12 @@ const actions: any = {
       project: "deleteProject",
       stage: "deleteStage",
       category_shows: "deleteShowsCategory",
-      category_media: "deleteMediaCategory",
+      category_media: "deleteMediaFolder",
       category_overlays: "deleteOverlaysCategory",
       category_templates: "deleteTemplatesCategory",
       player: "deletePlayerVideo",
+      overlay: "deleteOverlay",
+      template: "deleteTemplate",
     }
     obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
   },
@@ -302,11 +304,14 @@ const actions: any = {
     if (obj.sel.id === "slide") {
       activeEdit.set({ slide: obj.sel.data[0].index, items: [] })
       activePage.set("edit")
+    } else if (obj.sel.id === "media") {
+      activeEdit.set({ type: "media", id: obj.sel.data[0].path, items: [] })
+      activePage.set("edit")
     } else if (obj.sel.id === "overlay") {
-      activeEdit.set({ type: "overlay", id: obj.sel.data, items: [] })
+      activeEdit.set({ type: "overlay", id: obj.sel.data[0], items: [] })
       activePage.set("edit")
     } else if (obj.sel.id === "template") {
-      activeEdit.set({ type: "template", id: obj.sel.data, items: [] })
+      activeEdit.set({ type: "template", id: obj.sel.data[0], items: [] })
       activePage.set("edit")
     } else if (obj.sel.id === "global_group") {
       settingsTab.set("groups")

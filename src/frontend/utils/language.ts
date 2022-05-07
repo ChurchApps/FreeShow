@@ -1,8 +1,7 @@
-import { REMOTE } from "../../types/Channels"
-import { get } from "svelte/store"
-import { derived } from "svelte/store"
-import { MAIN } from "../../types/Channels"
+import { derived, get } from "svelte/store"
+import { MAIN, REMOTE } from "../../types/Channels"
 import { dictionary, language } from "../stores"
+import { replace } from "./languageData"
 // import { dictionary, locale, _} from 'svelte-i18n';
 // const LANGUAGE_FILE_URL = './lang/{locale}.json';
 // let cachedLocale;
@@ -11,11 +10,6 @@ import { dictionary, language } from "../stores"
 
 // let rtls = ["ar"]
 const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
-const replace: any = {
-  no: ["nb", "nn"],
-  en: ["en-US"],
-  sk: ["sk-SK"],
-}
 
 function setLanguage(locale: null | string = null) {
   if (!locale) {
@@ -24,14 +18,9 @@ function setLanguage(locale: null | string = null) {
     locale = window.navigator.language
     Object.keys(replace).forEach((key) => {
       if (replace[key].includes(locale)) locale = key
-      //   replace[key].forEach((l) => {
-      //     if (locale === l) locale = key
-      //   })
     })
-    // if (!exists) locale = "en"
   }
   if (!replace[locale]) locale = "en"
-  // console.log(locale);
 
   // const messsagesFileUrl = LANGUAGE_FILE_URL.replace('{locale}', locale);
   const url = "./lang/" + locale + ".json"
@@ -42,9 +31,7 @@ function setLanguage(locale: null | string = null) {
       dictionary.set(messages)
       window.api.send(MAIN, { channel: "LANGUAGE", data: { lang: locale, strings: messages } })
       window.api.send(REMOTE, { channel: "LANGUAGE", data: { lang: locale, strings: messages } })
-      // cachedLocale = locale;
       language.set(locale!)
-      // console.log(messages);
     })
 }
 
@@ -80,19 +67,9 @@ const translate = (id: string, { data = {}, parts = false } = {}) => {
     } else string = id
   } else {
     let key = id.split(".")
-
     string = d[key[0]]?.[key[1]]
-    // let category = id.slice(0, id.indexOf('.'));
-    // let key = id.slice(id.indexOf('.') + 1, id.length);
-    // string = d[category]?.[key];
-    // if (!string) string = `[${id}]`
   }
 
-  // replace data {name} = 'Name'
-
-  // console.log(lang);
-  // console.log(d);
-  // console.log(string);
   return string
 }
 

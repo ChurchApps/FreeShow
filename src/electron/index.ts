@@ -6,7 +6,7 @@ import { URL } from "url"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE, EXPORT } from "../types/Channels"
 import { closeServers, startServers } from "./servers"
 import { template } from "./utils/menuTemplate"
-import { electronSettings, events, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
+import { electronSettings, events, media, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 // import checkForUpdates from "./utils/updater"
 import { createPDFWindow, exportTXT } from "./utils/export"
 import { importShow } from "./utils/import"
@@ -47,8 +47,10 @@ app.on("ready", () => {
       // if (outputScreenId === display.id.toString()) {
       outputWindow?.hide()
       if (process.platform === "darwin") {
-        outputWindow?.minimize()
-        outputWindow?.setFullScreen(true)
+        outputWindow?.setFullScreen(false)
+        setTimeout(() => {
+          outputWindow?.minimize()
+        }, 100)
       }
       toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
     }
@@ -218,6 +220,7 @@ ipcMain.on(STORE, (e, msg) => {
   else if (msg.channel === "OVERLAYS") e.reply(STORE, { channel: "OVERLAYS", data: overlays.store })
   else if (msg.channel === "TEMPLATES") e.reply(STORE, { channel: "TEMPLATES", data: templates.store })
   else if (msg.channel === "EVENTS") e.reply(STORE, { channel: "EVENTS", data: events.store })
+  else if (msg.channel === "MEDIA") e.reply(STORE, { channel: "MEDIA", data: media.store })
   else if (msg.channel === "THEMES") e.reply(STORE, { channel: "THEMES", data: themes.store })
 })
 
@@ -253,6 +256,10 @@ function save(data: any) {
   if (data.events && JSON.stringify(events.store) !== JSON.stringify(data.events)) {
     events.clear()
     events.set(data.events)
+  }
+  if (data.media && JSON.stringify(media.store) !== JSON.stringify(data.media)) {
+    media.clear()
+    media.set(data.media)
   }
   if (data.themes && JSON.stringify(themes.store) !== JSON.stringify(data.themes)) {
     themes.clear()
@@ -298,7 +305,7 @@ function save(data: any) {
 // IMPORT
 ipcMain.on(IMPORT, (_e, msg) => {
   let files = dialog.showOpenDialogSync(mainWindow!, { properties: ["openFile", "multiSelections"], filters: [{ name: msg.data.name, extensions: msg.data.extensions }] })
-  let name = files ? files[0].slice((files[0].lastIndexOf("\\") || files[0].lastIndexOf("/")) + 1, files[0].lastIndexOf(".")) : ""
+  let name = files ? path.basename(files[0]).slice(0, path.basename(files[0]).lastIndexOf(".")) : ""
   if ((os.platform() !== "linux" || msg.channel !== "pdf") && (!msg.data.extensions || files?.length)) {
     let outputPath: string | undefined
     if (msg.channel === "pdf") outputPath = updateOutputPath(path.resolve(app.getPath("documents"), "Shows", name))
@@ -333,7 +340,11 @@ ipcMain.on(SHOW, (e, msg) => {
   let show: any = "{}"
   let p: string = path.resolve(msg.path, msg.name + ".show")
   if (fs.existsSync(p)) {
-    show = JSON.parse(fs.readFileSync(p, "utf8"))
+    try {
+      show = JSON.parse(fs.readFileSync(p, "utf8"))
+    } catch (err) {
+      console.log(err)
+    }
     if (show[0] === msg.id) {
       e.reply(SHOW, { id: msg.id, show })
     } else e.reply(SHOW, { error: "not_found", id: msg.id, file_id: show[0] })
@@ -485,7 +496,9 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       outputWindow?.hide()
       if (process.platform === "darwin") {
         outputWindow?.setFullScreen(false)
-        outputWindow?.minimize()
+        setTimeout(() => {
+          outputWindow?.minimize()
+        }, 100)
       }
       if (msg.data.enabled) {
         msg.data.enabled = false
@@ -590,6 +603,6 @@ ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {
 
 ipcMain.on(FILE_INFO, (_e, filePath: string) => {
   const stat = fs.statSync(filePath)
-  const [extension] = filePath.substring(filePath.lastIndexOf("\\") + 1).match(/\.[0-9a-z]+$/i) || [""]
-  toApp(FILE_INFO, { path: filePath, stat, extension: extension.substring(1) })
+  const extension = path.extname(filePath).substring(1)
+  toApp(FILE_INFO, { path: filePath, stat, extension })
 })

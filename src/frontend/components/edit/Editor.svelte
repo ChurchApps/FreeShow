@@ -1,8 +1,9 @@
 <script lang="ts">
   import { activeEdit, activeShow } from "../../stores"
-  import SlideEditor from "../edit/SlideEditor.svelte"
   import OverlayEditor from "../edit/OverlayEditor.svelte"
+  import SlideEditor from "../edit/SlideEditor.svelte"
   import Splash from "../main/Splash.svelte"
+  import MediaEditor from "./MediaEditor.svelte"
   import TemplateEditor from "./TemplateEditor.svelte"
 
   // $: if ($activeShow && $activeEdit.id) activeEdit.set({ slide: 0, items: [] })
@@ -16,9 +17,9 @@
   <OverlayEditor />
 {:else if $activeEdit.type === "template"}
   <TemplateEditor />
-{:else if $activeEdit.type === "media" || $activeShow?.type === "video" || $activeShow?.type === "image"}
-  <!--  -->
-{:else if $activeEdit.type === "audio" || $activeShow?.type === "audio"}
+{:else if $activeShow?.type === "image" || $activeShow?.type === "video" || $activeEdit.type === "media"}
+  <MediaEditor />
+{:else if $activeEdit.type === "audio"}
   <!--  -->
 {:else if $activeEdit.slide !== undefined && $activeEdit.slide !== null}
   <SlideEditor />

@@ -47,14 +47,15 @@
 
   $: {
     // get pos if clicked in drawer
-    if ($activeShow && $activeProject) findShowInProject()
+    if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject!].shows[$activeShow.index].id !== $activeShow?.id) findShowInProject()
   }
 
   function findShowInProject() {
     let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
     let pos: number = i > -1 ? i : $activeShow?.index || -1
 
-    if (($activeShow?.type !== "video" && $activeShow?.type !== "image") || pos < 0 || $activeShow.index === pos) return
+    // ($activeShow?.type !== "video" && $activeShow?.type !== "image")
+    if (pos < 0 || $activeShow?.index === pos) return
 
     activeShow.update((a) => {
       a!.index = pos

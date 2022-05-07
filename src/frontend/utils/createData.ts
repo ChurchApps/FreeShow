@@ -35,7 +35,7 @@ export function createData(paths: any) {
       },
       layouts: {
         default: {
-          name: "",
+          name: get(dictionary).example?.default || "",
           notes: "",
           slides: [{ id: "1" }],
         },

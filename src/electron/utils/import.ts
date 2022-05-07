@@ -1,3 +1,4 @@
+import path from "path"
 import { readdir, readFileSync } from "fs"
 import { toApp } from ".."
 import { IMPORT } from "./../../types/Channels"
@@ -66,7 +67,7 @@ export async function importShow(id: any, name: string, files: string[] | null, 
     let data: any[] = []
     files.forEach((filePath) => {
       let content = readFileSync(filePath, "utf8").toString()
-      let name = files ? filePath.slice((filePath.lastIndexOf("\\") || filePath.lastIndexOf("/")) + 1, filePath.lastIndexOf(".")) : ""
+      let name = files ? path.basename(files[0]).slice(0, path.basename(files[0]).lastIndexOf(".")) : ""
       data.push({ content, name })
     })
     toApp(IMPORT, { channel: id, data: data })
