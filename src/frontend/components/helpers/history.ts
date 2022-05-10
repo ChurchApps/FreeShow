@@ -42,6 +42,9 @@ export type HistoryIDs =
   // stage
   | "stageItemAlign"
   | "stageItemStyle"
+  // template
+  | "updateTemplate"
+  | "updateOverlay"
   // new
   | "newMediaFolder"
   | "newProject"
@@ -106,6 +109,7 @@ export interface History {
   save?: boolean
   location?: {
     page: HistoryPages
+    id?: string
     project?: null | string
     folder?: string
     show?: ShowRef
@@ -134,6 +138,8 @@ const override = [
   "theme",
   "changeLayouts",
   "template",
+  "updateTemplate",
+  "updateOverlay",
 ]
 
 export async function historyAwait(s: string[], obj: History) {
@@ -250,6 +256,34 @@ export function history(obj: History, undo: null | boolean = null) {
       folders.update((a: any) => {
         if (!obj.oldData) obj.oldData = { key: obj.newData.key, value: a[obj.location?.folder!][obj.newData.key] }
         a[obj.location?.folder!][obj.newData.key] = obj.newData.value
+        return a
+      })
+      break
+    // TEMPLATE
+    case "updateTemplate":
+      templates.update((a: any) => {
+        if (obj.newData.key === "items") {
+          let items = a[obj.location!.id!][obj.newData.key]
+          obj.location!.items!.forEach((index, i) => {
+            items[index].style = obj.newData.data[i]
+          })
+        } else {
+          a[obj.location!.id!][obj.newData.key] = obj.newData.data
+        }
+        return a
+      })
+      break
+    // OVERLAY
+    case "updateOverlay":
+      overlays.update((a: any) => {
+        if (obj.newData.key === "items" && obj.location!.items) {
+          let items = a[obj.location!.id!][obj.newData.key]
+          obj.location!.items!.forEach((index, i) => {
+            items[index].style = obj.newData.data[i]
+          })
+        } else {
+          a[obj.location!.id!][obj.newData.key] = obj.newData.data
+        }
         return a
       })
       break

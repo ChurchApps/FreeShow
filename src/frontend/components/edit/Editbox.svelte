@@ -37,19 +37,20 @@
       e.altKey ||
       e.buttons === 4
     ) {
-      let item = e.target.closest(".item")
+      let target = e.target.closest(".item")
       mouse = {
         x: e.clientX,
         y: e.clientY,
-        width: item.offsetWidth,
-        height: item.offsetHeight,
+        width: target.offsetWidth,
+        height: target.offsetHeight,
         offset: {
-          x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - item.offsetLeft,
-          y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - item.offsetTop,
-          width: e.clientX / ratio - item.offsetWidth,
-          height: e.clientY / ratio - item.offsetHeight,
+          x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
+          y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
+          width: e.clientX / ratio - target.offsetWidth,
+          height: e.clientY / ratio - target.offsetHeight,
         },
         item,
+        // item: target,
         e: e,
       }
     }

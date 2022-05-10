@@ -15,6 +15,7 @@
 
   $: currentId = $activeEdit.id!
   $: Slide = $overlays[currentId]
+  overlays.subscribe((a) => (Slide = a[currentId]))
 
   let lines: [string, number][] = []
   let mouse: any = null

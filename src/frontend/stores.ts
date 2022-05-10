@@ -151,42 +151,8 @@ export const overlayCategories: Writable<Categories> = writable({}) // {default}
 export const overlays: Writable<Overlays> = writable({}) // {default}
 
 // templates
-export const templateCategories: Writable<Categories> = writable({
-  // {default}
-  song: { name: "category.song", icon: "song", default: true },
-})
-export const templates: Writable<Templates> = writable({
-  // {default}
-  tiesl: {
-    name: "Default",
-    color: "purple",
-    category: "song",
-    items: [
-      {
-        style: "",
-        text: [{ value: "Her er jeg Gud,\nmed mine byrder", style: "color: red; text-align: center;" }],
-      },
-      {
-        style: "color: blue; top: 50px; left: 100px; height: 100px; width: 40px;",
-      },
-    ],
-  },
-  fsioøføjesi: {
-    name: "",
-    color: null,
-    category: null,
-    items: [
-      {
-        style: "top: 400px; left: 180px; height: 220px; width: 1500px; text-align: center;",
-        text: [{ value: "Velkommen!", style: "font-size: 180px; font-weight: bold; font-family: Tahoma;" }],
-      },
-      {
-        style: "top: 0px; left: 10px; height: 80px; width: 300px;",
-        text: [{ value: "Impuls", style: "" }],
-      },
-    ],
-  },
-})
+export const templateCategories: Writable<Categories> = writable({}) // {default}
+export const templates: Writable<Templates> = writable({}) // {default}
 
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}

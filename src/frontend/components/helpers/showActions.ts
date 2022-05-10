@@ -67,7 +67,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     console.log(id, layout, index)
     outSlide.set({ id, layout: _show(id).get("settings.activeLayout"), index })
-    updateOut(index, layout)
+    updateOut(slide ? slide.id : "active", index, layout)
     return
   }
 
@@ -78,7 +78,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
   if (index !== null) {
     outSlide.set({ ...slide, index })
-    updateOut(index, layout)
+    updateOut(slide ? slide.id : "active", index, layout)
   }
 }
 
@@ -100,7 +100,7 @@ export function previousSlide() {
   if (slide) outSlide.set({ ...slide, index })
   else if (get(activeShow)) outSlide.set({ id: get(activeShow)!.id, layout: activeLayout, index })
 
-  updateOut(index, layout)
+  updateOut(slide ? slide.id : "active", index, layout)
 }
 
 function getNextEnabled(index: null | number, end: boolean = false): null | number {
@@ -127,9 +127,11 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
   return index
 }
 
-export function updateOut(index: number, layout: any, extra: boolean = true) {
-  activeEdit.set({ slide: index, items: [] })
-  _show(get(activeShow)!.id).set({ key: "timestamps.used", value: new Date().getTime() })
+export function updateOut(id: string, index: number, layout: any, extra: boolean = true) {
+  if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
+  console.log(id)
+
+  _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
   let data = layout[index].data
 
   // holding "alt" key will disable all extra features
@@ -137,8 +139,8 @@ export function updateOut(index: number, layout: any, extra: boolean = true) {
 
   // background
   if (data.background) {
-    let bg = get(showsCache)[get(outSlide)?.id || get(activeShow)!.id].media[data.background!]
-    outBackground.set({ name: bg.name, type: bg.type || "media", path: bg.path, id: bg.id, muted: bg.muted !== false, loop: bg.loop !== false })
+    let bg = _show(id).get("media")[data.background!]
+    if (bg) outBackground.set({ name: bg.name, type: bg.type || "media", path: bg.path, id: bg.id, muted: bg.muted !== false, loop: bg.loop !== false })
   }
 
   // overlays
@@ -148,7 +150,7 @@ export function updateOut(index: number, layout: any, extra: boolean = true) {
 
   // audio
   // if (data.audio) {
-  //   let a = get(showsCache)[get(outSlide)?.id || get(activeShow)!.id].audio[data.audio!]
+  //   let a = _show(id).get("audio")[data.audio!]
   //   outBackground.set({ path: a.path, volume: a.volume })
   // }
 

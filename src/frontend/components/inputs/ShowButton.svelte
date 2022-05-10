@@ -3,6 +3,8 @@
   import { historyAwait } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { checkName } from "../helpers/show"
+  import { updateOut } from "../helpers/showActions"
+  import { _show } from "../helpers/shows"
   import Button from "./Button.svelte"
   import HiddenInput from "./HiddenInput.svelte"
 
@@ -102,9 +104,11 @@
   function doubleClick(e: any) {
     if (editActive || $outLocked || e.target.closest("input")) return
 
-    if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length)
+    if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length) {
+      updateOut("active", 0, _show("active").layouts("active").ref()[0], !e.altKey)
+      if ($outSlide?.id === id && $outSlide?.index === 0 && $outSlide?.layout === $showsCache[id].settings.activeLayout) return
       outSlide.set({ id, layout: $showsCache[id].settings.activeLayout, index: 0 })
-    else if (type === "image" || type === "video") {
+    } else if (type === "image" || type === "video") {
       let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: "media" }
       if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
       outBackground.set(out)
@@ -119,7 +123,17 @@
 <div {id} class="main">
   <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{newName}</span> -->
   <!-- WIP padding-left: 0.8em; -->
-  <Button on:click={click} on:dblclick={doubleClick} {active} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
+  <Button
+    on:click={click}
+    on:dblclick={doubleClick}
+    {active}
+    outline={id === $outSlide?.id || id === ($outBackground?.id || $outBackground?.path)}
+    class="context {$$props.class}"
+    {style}
+    bold={false}
+    border
+    red={$notFound.show?.includes(id)}
+  >
     <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
       {#if iconID}
         <Icon id={iconID} {custom} right />

@@ -15,7 +15,7 @@
   export let videoElem: any = null
 
   // TODO: update
-  $: if (type === "image") duration = 0
+  $: if (!type || type === "image") duration = 0
 
   // type
   $: {

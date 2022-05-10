@@ -60,6 +60,7 @@
               on:click={() => activeShow.set({ id: video.rid, type: "player" })}
               on:dblclick={() => outBackground.set({ id: video.rid, type: "player" })}
               active={$activeShow?.id === video.rid}
+              outline={$outBackground?.id === video.rid}
               bold={false}
               border
             >

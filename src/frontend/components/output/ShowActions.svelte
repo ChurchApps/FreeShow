@@ -2,7 +2,8 @@
   import { activeEdit, activePage, activeProject, activeShow, dictionary, outBackground, outLocked, outSlide, projects, showsCache } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
-  import { nextSlide, previousSlide } from "../helpers/showActions"
+  import { nextSlide, previousSlide, updateOut } from "../helpers/showActions"
+  import { _show } from "../helpers/shows"
   import Button from "../inputs/Button.svelte"
 
   function previousShow() {
@@ -57,14 +58,14 @@
   </Button>
   {#if ($activePage === "edit" && $outSlide?.index !== $activeEdit.slide) || !$outSlide || $outSlide.id !== $activeShow?.id || $outSlide.layout !== $showsCache[$activeShow.id].settings.activeLayout}
     <Button
-      on:click={() => {
+      on:click={(e) => {
         if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null && $activeEdit.slide !== undefined)
           outSlide.set({ id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: $activeEdit.slide })
         else if ($activeShow && GetLayout().length) {
           outSlide.set({ id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: 0 })
           // TODO: nextSlide(null)
         }
-        // TODO: activeEdit && play media
+        updateOut("active", $activeEdit.slide || 0, _show("active").layouts("active").ref()[0], !e.altKey)
       }}
       title={$dictionary.preview?._start}
       disabled={$outLocked || !$activeShow || !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length}

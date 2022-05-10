@@ -1,4 +1,5 @@
-import { maxConnections, transitionData } from "./../stores"
+import { get } from "svelte/store"
+import { maxConnections, themes, transitionData } from "./../stores"
 import { OUTPUT } from "./../../types/Channels"
 import { MAIN } from "../../types/Channels"
 import {
@@ -57,6 +58,12 @@ export function updateSettings(data: any) {
 
   // remote
   send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
+
+  // theme
+  if (get(themes)[data.theme]) {
+    Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
+    Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
+  }
 
   Object.entries(data).forEach(([key, value]: any) => {
     if (updateList[key as SaveListSettings]) updateList[key as SaveListSettings](value)

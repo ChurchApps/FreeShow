@@ -241,7 +241,7 @@
     "events": "Hendelser",
     "pictures": "Bilder",
     "videos": "Videoer",
-    "offers": "Offer",
+    "offers": "Kollekt",
     "notice": "Merk",
     "visuals": "Visuelt"
   },
@@ -429,7 +429,8 @@
     "video": "Video",
     "live": "Direkte",
     "audio": "Lyd",
-    "timer": "Nedtelling"
+    "timer": "Nedtelling",
+    "icon": "Ikon"
   },
   "borders": {
     "solid": "Hel",

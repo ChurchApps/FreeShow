@@ -37,7 +37,8 @@
     active = "items"
     tabs.text.disabled = true
   } else if ((item?.lines || item?.type === "timer") && tabs.text.disabled) {
-    active = "text"
+    // TODO: false triggers (arranging items)
+    // active = "text"
     tabs.text.disabled = false
   }
   $: if (!allSlideItems.length && !tabs.item.disabled) {

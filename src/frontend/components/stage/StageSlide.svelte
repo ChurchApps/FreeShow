@@ -59,8 +59,7 @@
     width: 100%;
   }
   .main.active {
-    /* outline: 3px solid var(--secondary); */
-    outline: 2px solid var(--secondary);
+    outline: 2px solid var(--secondary-opacity);
     outline-offset: -1px;
     z-index: 2;
   }

@@ -429,7 +429,8 @@
     "video": "Video",
     "live": "Naživo",
     "audio": "Audio",
-    "timer": "Časovač"
+    "timer": "Časovač",
+    "icon": "Icon"
   },
   "borders": {
     "solid": "Plná",
