@@ -429,7 +429,8 @@
     "video": "Video",
     "live": "Live",
     "audio": "Audio",
-    "timer": "Timer"
+    "timer": "Timer",
+    "icon": "Icon"
   },
   "borders": {
     "solid": "Solid",

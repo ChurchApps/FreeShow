@@ -22,7 +22,7 @@
     top: 0,
     width: 300,
     height: 150,
-    transform: null,
+    transform: 0,
     // border
     "border-color": "#FFFFFF",
     "border-width": 0,
@@ -58,6 +58,7 @@
   }
 
   const inputChange = (e: any, key: string) => update(key, e.target.value)
+  const rotate = (key: string) => update("transform", "rotate(" + key + "deg)")
 
   function update(key: string, style: any) {
     if (key.includes("shadow")) {
@@ -99,12 +100,23 @@
       values.push(addStyleString(allSlideItems[itemIndex].style, [key, style]))
     })
 
-    history({
-      id: "setItems",
-      oldData: { style: { key: "style", values: oldValues } },
-      newData: { style: { key: "style", values } },
-      location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
-    })
+    if (!values.length) return
+
+    if ($activeEdit.id) {
+      history({
+        id: $activeEdit.type === "template" ? "updateTemplate" : "updateOverlay",
+        oldData: { key: "items", data: oldValues },
+        newData: { key: "items", data: values },
+        location: { page: "edit", id: $activeEdit.id, items: allItems },
+      })
+    } else {
+      history({
+        id: "setItems",
+        oldData: { style: { key: "style", values: oldValues } },
+        newData: { style: { key: "style", values } },
+        location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
+      })
+    }
   }
 </script>
 
@@ -125,7 +137,7 @@
       <NumberInput value={data["top"]} on:change={(e) => update("top", e.detail)} />
       <NumberInput value={data["width"]} on:change={(e) => update("width", e.detail)} />
       <NumberInput value={data["height"]} on:change={(e) => update("height", e.detail)} />
-      <NumberInput value={data["transform"]} on:change={(e) => update("transform", e.detail)} />
+      <NumberInput value={data["transform"]} on:change={(e) => rotate(e.detail)} />
     </span>
   </div>
   <hr />

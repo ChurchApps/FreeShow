@@ -58,7 +58,7 @@
   {#if bgs.length}
     {#each bgs as background}
       <SelectElem id="media" data={{ ...background }} draggable>
-        <div class="item" title={background.path} class:active={$outBackground?.path === background.path}>
+        <div class="item" class:active={$outBackground?.path === background.path}>
           <HoverButton
             style="flex: 2;height: 50px;"
             icon="play"
@@ -69,11 +69,15 @@
             title={$dictionary.media?.play}
           >
             <!-- <div style="flex: 2;height: 50px;"> -->
-            <MediaLoader name={background.name} path={background.path} type={background.type} />
+            {#key background.path}
+              <MediaLoader name={background.name} path={background.path} type={background.type} />
+            {/key}
             <!-- </div> -->
           </HoverButton>
-          <p style="flex: 3;">{background.name}</p>
-          <span style="color: var(--secondary);">{background.count}</span>
+          <p style="flex: 3;" title={background.path}>{background.name}</p>
+          {#if background.count > 1}
+            <span style="color: var(--secondary);">{background.count}</span>
+          {/if}
           <!-- TODO: filters -->
           {#if background.type === "video"}
             <!-- TODO: mute for each bakcground........ -->
@@ -128,7 +132,7 @@
   p,
   span {
     padding: 0 10px;
-    text-align: center;
+    /* text-align: center; */
   }
 
   .main :global(img),
@@ -137,8 +141,14 @@
     height: 100%;
     object-fit: cover;
     z-index: -1;
+    padding: 2px;
   }
   .main :global(video) {
     height: 100%;
+  }
+
+  .main :global(.video),
+  .main :global(.main) {
+    display: block;
   }
 </style>

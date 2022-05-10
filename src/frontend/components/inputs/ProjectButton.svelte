@@ -73,7 +73,8 @@
     background-color: rgb(255 255 255 / 0.06);
   }
   button.active {
-    background-color: var(--secondary-opacity);
-    color: var(--secondary-text);
+    background-color: var(--primary-darker);
+    outline-offset: -2px;
+    outline: 2px solid var(--primary-lighter);
   }
 </style>

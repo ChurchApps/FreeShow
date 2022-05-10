@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { showsCache, activeShow, activeEdit } from "../../stores"
+  import { showsCache, activeShow, activeEdit, outSlide } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import T from "../helpers/T.svelte"
   import Slide from "../slide/Slide.svelte"
@@ -89,7 +89,8 @@
           layoutSlide={slide}
           index={i}
           color={slide.color}
-          active={$activeEdit.slide === i}
+          active={$outSlide?.index === i && $outSlide?.id === $activeShow?.id && $outSlide?.layout === activeLayout}
+          focused={$activeEdit.slide === i}
           noQuickEdit
           {columns}
           on:click={(e) => {

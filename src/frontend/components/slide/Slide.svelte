@@ -21,6 +21,7 @@
   export let index: number
   export let columns: number = 1
   export let active: boolean = false
+  export let focused: boolean = false
   export let list: boolean = false
   export let endIndex: null | number = null
   export let icons: boolean = false
@@ -196,7 +197,7 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div class="main" class:active style="width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%">
+<div class="main" class:active class:focused style="width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%">
   {#if icons && !altKeyPressed}
     <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""} />
     <Actions {columns} {index} actions={layoutSlide.actions || {}} />
@@ -324,12 +325,18 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     /* height: fit-content; */
     /* border: 2px solid var(--primary-lighter); */
   }
+  .main.focused {
+    outline: 2px solid var(--secondary-opacity);
+    outline-offset: -1px;
+    z-index: 2;
+  }
   .main.active {
     /* outline: 3px solid var(--secondary); */
     outline: 2px solid var(--secondary);
     outline-offset: -1px;
     z-index: 2;
   }
+
   .slide.afterEnd {
     opacity: 0.7;
   }

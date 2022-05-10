@@ -15,6 +15,7 @@
 
   $: currentId = $activeEdit.id!
   $: Slide = $templates[currentId]
+  templates.subscribe((a) => (Slide = a[currentId]))
 
   let lines: [string, number][] = []
   let mouse: any = null
@@ -62,6 +63,8 @@
     let items = Slide.items
     if (items) autoSize(active, items)
   }
+
+  $: console.log(Slide)
 </script>
 
 <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>

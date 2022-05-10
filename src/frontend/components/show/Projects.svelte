@@ -47,7 +47,7 @@
 
   $: {
     // get pos if clicked in drawer
-    if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject!].shows[$activeShow.index].id !== $activeShow?.id) findShowInProject()
+    if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject!].shows[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
   }
 
   function findShowInProject() {

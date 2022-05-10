@@ -8,8 +8,6 @@
 
   $: value = edit ? (value.endsWith(" ") ? removeWhitespace(value) + " " : removeWhitespace(value)) : value.trim()
 
-  $: console.log(edit, value, value.endsWith(" "), removeWhitespace(value))
-
   const removeWhitespace = (v: string) =>
     v
       .split(" ")

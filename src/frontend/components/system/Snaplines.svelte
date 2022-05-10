@@ -19,6 +19,7 @@
       if (
         mouse.e.target.closest(".line") ||
         (!mouse.e.target.closest(".edit") && !mouse.e.target.closest(".square")) ||
+        // mouse.item.type === "icon" ||
         mouse.e.ctrlKey ||
         mouse.e.metaKey ||
         mouse.e.buttons === 4 ||

@@ -51,9 +51,9 @@
     // TODO: duplicate function of "preview:126 - updateOut"
     if ($outLocked || e.ctrlKey || e.metaKey) return
 
-    updateOut(index, _show("active").layouts("active").ref()[0], !e.altKey)
+    updateOut("active", index, _show("active").layouts("active").ref()[0], !e.altKey)
 
-    if ($outSlide?.id === id && $outSlide?.index === index) return
+    if ($outSlide?.id === id && $outSlide?.index === index && $outSlide?.layout === activeLayout) return
     outSlide.set({ id, layout: activeLayout, index })
   }
 

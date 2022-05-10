@@ -2,6 +2,7 @@
   import { fade } from "svelte/transition"
 
   export let active: boolean = false
+  export let outline: boolean = false
   export let title: string = ""
   export let center: boolean = false
   export let border: boolean = false
@@ -47,6 +48,7 @@
   id={$$props.id}
   style={$$props.style}
   class:active
+  class:outline
   class:center
   class:border
   class:bold
@@ -141,6 +143,11 @@
     outline-offset: -2px;
     /* outline: 2px solid var(--secondary); */
     outline: 2px solid var(--primary-lighter);
+  }
+
+  button.outline {
+    outline-offset: -2px;
+    outline: 2px solid var(--secondary) !important;
   }
 
   button :global(div) {
