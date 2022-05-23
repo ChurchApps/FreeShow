@@ -1,16 +1,29 @@
 <script lang="ts">
-  import { MAIN } from "../../../types/Channels"
   import type { Category } from "../../../types/Tabs"
-  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, overlays, shows, templateCategories, templates, webFavorites } from "../../stores"
+  import {
+    activePopup,
+    audioFolders,
+    categories,
+    dictionary,
+    drawerTabsData,
+    mediaFolders,
+    overlayCategories,
+    overlays,
+    scriptures,
+    shows,
+    templateCategories,
+    templates,
+    webFavorites,
+  } from "../../stores"
   import { keysToID, sortObject } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import FolderPicker from "../inputs/FolderPicker.svelte"
+  import Center from "../system/Center.svelte"
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
-  import { getBibleVersions } from "./bible/getBible"
   import NavigationButton from "./NavigationButton.svelte"
 
   export let id: "shows" | "media" | "overlays" | "audio" | "scripture" | "templates" | "player" | "live" | "web"
@@ -53,7 +66,7 @@
     } else if (id === "audio") {
       buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, { id: "SEPERATOR", name: "" }, ...(sortObject(keysToID($audioFolders), "name") as Button[])]
     } else if (id === "scripture") {
-      buttons = [...keysToID(getBibleVersions())]
+      buttons = getBibleVersions()
     } else if (id === "player") {
       buttons = [
         { id: "youtube", name: "YouTube", icon: "youtube" },
@@ -77,7 +90,7 @@
 
   // TODO: scroll down to selected
   $: {
-    if ($drawerTabsData[id].activeSubTab === null) {
+    if (buttons.length && $drawerTabsData[id].activeSubTab === null) {
       setTab(buttons[0].id)
     }
   }
@@ -88,6 +101,14 @@
       return dt
     })
   }
+
+  $: if (id === "scripture") {
+    scriptures.subscribe(() => {
+      buttons = getBibleVersions()
+    })
+  }
+
+  const getBibleVersions = () => keysToID($scriptures).sort((a: any, b: any) => a.name.localeCompare(b.name))
 
   let length: any = {}
   if (id) length = {}
@@ -136,19 +157,25 @@
   <div class="categories context #category_{id}">
     <DropArea id="navigation" selectChildren>
       {#key buttons}
-        {#each buttons as category}
-          {#if category.id === "SEPERATOR"}
-            <hr />
-          {:else}
-            <SelectElem id={selectId} borders="center" trigger="column" data={category.id}>
-              <NavigationButton {id} {category} {length} />
-            </SelectElem>
-          {/if}
-        {/each}
+        {#if buttons.length}
+          {#each buttons as category}
+            {#if category.id === "SEPERATOR"}
+              <hr />
+            {:else}
+              <SelectElem id={selectId} borders="center" trigger="column" data={category.id}>
+                <NavigationButton {id} {category} {length} />
+              </SelectElem>
+            {/if}
+          {/each}
+        {:else}
+          <Center faded>
+            <T id="empty.general" />
+          </Center>
+        {/if}
       {/key}
-      {#if id === "scripture"}
+      <!-- {#if id === "scripture"}
         <a class="source" href="#void" on:click={() => window.api.send(MAIN, { channel: "URL", data: "https://scripture.api.bible/" })}> API.Bible </a>
-      {/if}
+      {/if} -->
     </DropArea>
   </div>
   {#if id === "shows"}
@@ -182,6 +209,15 @@
         <Icon id="all" right />
         <span style="color: var(--secondary);">
           <T id="new.category" />
+        </span>
+      </Button>
+    </div>
+  {:else if id === "scripture"}
+    <div class="tabs">
+      <Button on:click={() => activePopup.set("import_scripture")} center title={$dictionary.new?.scripture}>
+        <Icon id="scripture" right />
+        <span style="color: var(--secondary);">
+          <T id="new.scripture" />
         </span>
       </Button>
     </div>

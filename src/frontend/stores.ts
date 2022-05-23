@@ -271,6 +271,23 @@ export const events: Writable<{ [key: string]: Event }> = writable({
   },
 })
 
+// SCRIPTURE
+export const scriptures: Writable<Categories> = writable({
+  kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
+  asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },
+  web: { name: "World English Bible", api: true, id: "9879dbb7cfe39e4d-04" },
+  wmb: { name: "World Messianic Bible", api: true, id: "f72b840c855f362c-04" },
+  bsb: { name: "Berean Study Bible", api: true, id: "bba9f40183526463-01" },
+}) // {default}
+
+export const scriptureSettings: Writable<any> = writable({
+  template: "scripture",
+  versesPerSlide: 3,
+  verseNumbers: false,
+  showVersion: false,
+  showVerse: true,
+})
+
 // UI STATE
 export const resized: Writable<NumberObject> = writable({
   // {default}
@@ -300,7 +317,7 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({
   overlays: { enabled: true, activeSubTab: null },
   templates: { enabled: true, activeSubTab: null },
   audio: { enabled: true, activeSubTab: null },
-  scripture: { enabled: true, activeSubTab: "de4e12af7f28f599-02" },
+  scripture: { enabled: true, activeSubTab: null },
   timers: { enabled: true, activeSubTab: null },
   player: { enabled: true, activeSubTab: null },
   web: { enabled: true, activeSubTab: null },
@@ -317,6 +334,7 @@ export const alertUpdates: Writable<boolean> = writable(true) // true
 export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
+export const splitLines: Writable<number> = writable(2) // 2
 export const displayMetadata: Writable<string> = writable("never") // "never"
 export const showsPath: Writable<null | string> = writable(null) // null
 export const exportPath: Writable<null | string> = writable(null) // null

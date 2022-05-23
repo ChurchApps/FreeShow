@@ -4,13 +4,14 @@
   import type { Resolution } from "../../../../types/Settings"
   import type { Item } from "../../../../types/Show"
   import { ShowObj } from "../../../classes/Show"
-  import { activeProject, categories, screen } from "../../../stores"
+  import { activeProject, categories, screen, scriptureSettings, templates } from "../../../stores"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
   import { checkName } from "../../helpers/show"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
+  import Dropdown from "../../inputs/Dropdown.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Textbox from "../../slide/Textbox.svelte"
   import Zoomed from "../../slide/Zoomed.svelte"
@@ -61,40 +62,41 @@
   }
 
   // settings
-  let verseNumbers: boolean = false
-  let versesPerSlide: number = 3
-  let showVersion: boolean = false
-  let showVerse: boolean = true
-  let redJesus: boolean = false // red jesus words
-  // TODO: break slide on text overflow!
+  // let verseNumbers: boolean = false
+  // let versesPerSlide: number = 3
+  // let showVersion: boolean = false
+  // let showVerse: boolean = true
+  // let redJesus: boolean = false // red jesus words
 
   let slides: Item[][] = [[]]
   // let slides: any = {}
   // let values: any[][] = []
   // let itemStyle = "top: 150px;left: 50px;width: " + (resolution.width - 100) + "px;height: " + (resolution.height - 300) + "px;"
-  let itemStyle = "top: 150px;left: 50px;width: " + (resolution.width - 100) + "px;height: " + (resolution.height - 300) + "px;"
+  $: template = $templates[$scriptureSettings.template]?.items || []
+  $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: " + (resolution.width - 100) + "px;height: " + (resolution.height - 300) + "px;"
   $: {
     if (sorted.length) {
-      slides = [[{ lines: [{ text: [], align: "text-align: justify;" }], style: itemStyle }]]
+      slides = [[{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }]]
       sorted.forEach((s, i: number) => {
         let slideArr = slides[slides.length - 1][slides[slides.length - 1].length - 1]
-        if (verseNumbers) {
+        if ($scriptureSettings.verseNumbers) {
           let size = 50
           if (i === 0) size *= 2
-          slideArr.lines![0].text.push({ value: bible.verses[s][0] + " ", style: "font-size: " + size + "px;color: gray;" })
+          slideArr.lines![0].text.push({ value: bible.verses[s][0] + " ", style: "font-size: " + size + "px;color: gray;" + template[0]?.lines?.[0].text?.[0].style || "" })
         }
         // TODO: use template
         // TODO: html in {bible.verses[s][1]}
         let text = bible.verses[s][1]
-        if (redJesus) {
-          // TODO: formatting (already function in Scripture.svelte)
-          text = text
-        } else text = text.replace(/(<([^>]+)>)/gi, "")
+        // if (redJesus) {
+        //   // TODO: formatting (already function in Scripture.svelte)
+        //   text = text
+        // } else
+        text = text.replace(/(<([^>]+)>)/gi, "")
         if (text.charAt(text.length - 1) !== " ") text += " "
-        slideArr.lines![0].text.push({ value: text, style: "font-size: 80px;" })
-        let verseCount = slideArr.lines![0].text.length / (verseNumbers ? 2 : 1)
-        if (verseCount >= versesPerSlide && sorted[i + 1]) {
-          let range: any[] = [...Array(versesPerSlide)].map((_a, j) => sorted[i - j]).sort((a, b) => a - b)
+        slideArr.lines![0].text.push({ value: text, style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;" })
+        let verseCount = slideArr.lines![0].text.length / ($scriptureSettings.verseNumbers ? 2 : 1)
+        if (verseCount >= $scriptureSettings.versesPerSlide && sorted[i + 1]) {
+          let range: any[] = [...Array($scriptureSettings.versesPerSlide)].map((_a, j) => sorted[i - j]).sort((a, b) => a - b)
 
           let rangeJoined: any[][] = []
           range.forEach((r, i) => {
@@ -110,24 +112,28 @@
             else arr.push(bible.verses[r[0]][0] + "-" + bible.verses[r[r.length - 1]][0])
           })
 
-          addVerse(showVersion, showVerse, arr.join("+"))
-          slides.push([{ lines: [{ text: [], align: "text-align: justify;" }], style: itemStyle }])
+          addVerse($scriptureSettings.showVersion, $scriptureSettings.showVerse, arr.join("+"))
+          slides.push([{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }])
         }
       })
       // TODO: last range is now full text....
       // TODO: get correct verses at last slide
       // let remainder = sorted.length % versesPerSlide
 
-      addVerse(showVersion, showVerse, verseRange)
+      addVerse($scriptureSettings.showVersion, $scriptureSettings.showVerse, verseRange)
     } else slides = [[]]
   }
 
   function addVerse(showVersion: boolean, showVerse: boolean, range: string) {
     let lines = []
-    if (showVersion && bible.version) lines.push({ text: [{ value: bible.version, style: "font-size: 50px;" }], align: "" })
-    if (showVerse) lines.push({ text: [{ value: bible.book + " " + bible.chapter + ":" + range, style: "font-size: 50px;" }], align: "" })
+    let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
+    if (showVersion && bible.version) lines.push({ text: [{ value: bible.version, style: verseStyle }], align: "" })
+    if (showVerse) lines.push({ text: [{ value: bible.book + " " + bible.chapter + ":" + range, style: verseStyle }], align: "" })
     if ((showVersion && bible.version) || showVerse)
-      slides[slides.length - 1].push({ lines, style: "left: 50px;height: 150px;top: " + (resolution.height - 170) + "px;width: " + (resolution.width - 100) + "px;opacity: 0.8;" })
+      slides[slides.length - 1].push({
+        lines,
+        style: template[1]?.style || "left: 50px;height: 150px;top: " + (resolution.height - 170) + "px;width: " + (resolution.width - 100) + "px;opacity: 0.8;",
+      })
   }
 
   function createShow() {
@@ -170,10 +176,17 @@
   const checked = (e: any) => {
     let val = e.target.checked
     let id = e.target.id
-    if (id === "verse_numbers") verseNumbers = val
-    else if (id === "show_version") showVersion = val
-    else if (id === "show_verse") showVerse = val
-    else if (id === "red_jesus") redJesus = val
+    update(id, val)
+  }
+
+  let templateList: any[] = []
+  $: templateList = Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name }))
+
+  function update(id: string, value: any) {
+    scriptureSettings.update((a) => {
+      a[id] = value
+      return a
+    })
   }
 </script>
 
@@ -197,26 +210,29 @@
 <!-- settings -->
 <div class="settings">
   <span>
+    <p><T id="info.template" /></p>
+    <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 50%;" />
+  </span>
+  <span>
     <p><T id="scripture.max_verses" /></p>
-    <NumberInput value={versesPerSlide} min={1} max={20} on:change={(e) => (versesPerSlide = e.detail)} />
-    <!-- font size... -->
+    <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={20} on:change={(e) => update("versesPerSlide", e.detail)} />
   </span>
   <span>
     <p><T id="scripture.verse_numbers" /></p>
-    <Checkbox id="verse_numbers" checked={verseNumbers} on:change={checked} />
+    <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
   </span>
   <span>
     <p><T id="scripture.version" /></p>
-    <Checkbox id="show_version" checked={showVersion} on:change={checked} />
+    <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
   </span>
   <span>
     <p><T id="scripture.reference" /></p>
-    <Checkbox id="show_verse" checked={showVerse} on:change={checked} />
+    <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
   </span>
-  <span>
+  <!-- <span>
     <p><T id="scripture.red_jesus" /> (WIP)</p>
-    <Checkbox id="red_jesus" checked={redJesus} on:change={checked} />
-  </span>
+    <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
+  </span> -->
 </div>
 
 <Button on:click={createShow} disabled={!verseRange} dark center>
@@ -237,5 +253,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .settings :global(.dropdown) {
+    position: absolute;
+    width: 100% !important;
   }
 </style>

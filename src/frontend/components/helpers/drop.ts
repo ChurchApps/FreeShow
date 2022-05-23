@@ -84,9 +84,10 @@ export function ondrop(e: any, id: string) {
       }
       break
     case "project":
-      historyID = "project"
+      historyID = "addShowToProject"
       location.page = "show"
-      let projectShows = get(projects)[get(activeProject)!].shows
+      location.project = get(activeProject)
+      let projectShows = get(projects)[location.project].shows
       if (index === undefined) index = projectShows.length
 
       let tempData: any[] = sel.data
@@ -112,9 +113,9 @@ export function ondrop(e: any, id: string) {
         tempData = tempData.map((a: any) => ({ id: a, type: "player" }))
       }
 
-      oldData = [...projectShows]
-      if (sel.id === "show") newData = mover(projectShows, getIndexes(tempData), index)
-      else newData = addToPos(projectShows, tempData, index)
+      oldData = JSON.stringify({ shows: projectShows })
+      if (sel.id === "show") newData = { shows: mover(projectShows, getIndexes(tempData), index) }
+      else newData = { shows: addToPos(projectShows, tempData, index) }
       break
     case "slide":
     case "slides":

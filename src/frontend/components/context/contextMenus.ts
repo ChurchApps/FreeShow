@@ -35,6 +35,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   // DRAWER
   enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
   newCategory: { label: "context.newCategory", icon: "all" },
+  newScripture: { label: "new.scripture", icon: "scripture" },
   changeIcon: { label: "context.changeIcon", icon: "noIcon" },
   // PROJECT
   close: { label: "actions.close", icon: "close" },
@@ -85,11 +86,13 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   category_templates: ["newCategory"],
   category_media: ["newFolder"],
   category_audio: ["newFolder"],
+  category_scripture: ["newScripture"],
   category_shows_button: ["rename", "changeIcon", "delete"],
   category_overlays_button: ["rename", "changeIcon", "delete"],
   category_templates_button: ["rename", "changeIcon", "delete"],
   category_media_button: ["rename", "delete"],
   category_audio_button: ["rename", "delete"],
+  category_scripture_button: ["delete"],
   // CONTENT
   drawer_show: ["newShowPopup", "newShow"],
   // , "changeCategory" ? edit with rename & categories...

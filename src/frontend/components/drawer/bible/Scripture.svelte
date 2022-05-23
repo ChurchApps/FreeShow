@@ -3,7 +3,9 @@
   import Loader from "../../main/Loader.svelte"
   import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
   import type { StringObject } from "../../../../types/Main"
-  import { versions } from "./versions"
+  import Center from "../../system/Center.svelte"
+  import T from "../../helpers/T.svelte"
+  import { scriptures } from "../../../stores"
 
   export let active: any
   export let bible: Bible
@@ -119,10 +121,13 @@
   onMount(async () => {
     fetchBible("books")
   })
+
   $: {
     if (active) {
-      versions.forEach((v) => {
-        if (v.id === active) bible.version = v.name
+      console.log($scriptures, active)
+
+      Object.values($scriptures).forEach((scripture) => {
+        if (scripture.id === active) bible.version = scripture.name
       })
       verses = null
       fetchBible("books")
@@ -189,7 +194,9 @@
 
 <div class="main">
   {#if error}
-    {error}
+    <Center faded>
+      <T id="error.bible_api" />
+    </Center>
   {:else}
     <div class:center={!books.length}>
       {#if books.length}

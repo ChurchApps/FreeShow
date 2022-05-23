@@ -8,12 +8,13 @@
   export let name: string
   export let path: string
   export let type: any
+
   $: name = name.slice(0, name.lastIndexOf("."))
 
   export let activeFile: null | number
   export let allFiles: string[]
 
-  let loaded: boolean = type === "image"
+  let loaded: boolean = true
   let videoElem: any
   let hover: boolean = false
   let duration: number = 0
@@ -42,7 +43,7 @@
   }
 
   function dblclick(e: any) {
-    if (!e.ctrlKey && !e.metaKey && !$outLocked) outBackground.set({ path: path, type })
+    if (!e.ctrlKey && !e.metaKey && !$outLocked) outBackground.set({ path: path, type, loop: false, filter, flipped })
   }
 
   // TODO: Enter play media

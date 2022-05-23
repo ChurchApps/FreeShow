@@ -17,6 +17,7 @@
   import Transition from "./popups/Transition.svelte"
   import Alert from "./popups/Alert.svelte"
   import ResetAll from "./popups/ResetAll.svelte"
+  import ImportScripture from "./popups/ImportScripture.svelte"
 
   const hide = (e: any) => {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -51,6 +52,8 @@
           <Rename />
         {:else if $activePopup === "transition"}
           <Transition />
+        {:else if $activePopup === "import_scripture"}
+          <ImportScripture />
         {:else if $activePopup === "about"}
           <About />
         {:else if $activePopup === "shortcuts"}

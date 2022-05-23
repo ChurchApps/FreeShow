@@ -46,7 +46,7 @@
     return { group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
   })
 
-  $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group.localeCompare(b.group))
+  $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group?.localeCompare(b.group))
 </script>
 
 <!-- TODO: tooltips... (Click or drag to add groups) -->

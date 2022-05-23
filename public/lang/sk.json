@@ -134,6 +134,7 @@
     "_title_display_stop": "Zastaví prezentáciu"
   },
   "empty": {
+    "general": "Nothing here",
     "project_select": "Vybrať projekt",
     "show": "Nie je vybratá žiadna prezentácia",
     "shows": "Žiadne prezentácie",
@@ -169,6 +170,7 @@
     "no_show": "Nenašla sa prezentácia",
     "no_layouts": "Nenašli sa rozloženia",
     "load": "Nepodarilo sa načítať",
+    "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
     "not_found": "Nenašlo sa",
     "display": "Nepodarilo sa zobraziť výstupné okno na aktuálnej obrazovke",
     "keep_one_layout": "Musíte mať aspoň jedno rozloženie"
@@ -266,6 +268,7 @@
     "change_name": "Premenovať",
     "import": "Import",
     "export": "Export",
+    "import_scripture": "Import scripture",
     "about": "Viac info",
     "shortcuts": "Skratky",
     "icon": "Ikony",
@@ -289,6 +292,7 @@
     "slide": "Nový snímok",
     "overlay": "Nový prekryv",
     "template": "Nová šablóna",
+    "scripture": "New scripture",
     "event": "Nová udalosť"
   },
   "show": {
@@ -494,6 +498,7 @@
     "full_colors": "Plné farby skupín snímok",
     "auto_output": "Zobraziť výstupné okno pri spustení",
     "display_metadata": "Zobrazova metadata pri prezentácii",
+    "split_lines": "Numbers of lines when creating a show",
     "default_project_name": "Predvolený názov projektu",
     "resolution": "Rozlíšenie",
     "video_extensions": "Prípony videí",
@@ -534,6 +539,8 @@
     "today": "Dnes"
   },
   "scripture": {
+    "bibles": "Bibles from API.Bible",
+    "custom": "Or import your own",
     "max_verses": "Maximum veršov na snímok",
     "verse_numbers": "Čísla veršov",
     "version": "Zobraziť preklad",

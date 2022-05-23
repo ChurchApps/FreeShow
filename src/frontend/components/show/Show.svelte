@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { OutBackground } from "../../../types/Show"
-  import { activeProject, activeShow, dictionary, outBackground, outLocked, outSlide, projects } from "../../stores"
+  import { activeProject, activeShow, dictionary, media, outBackground, outLocked, outSlide, projects } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
@@ -23,21 +23,6 @@
 
   let hasLoaded: boolean = false
   let autoPause: boolean = false
-  let filter: string = ""
-
-  // activeShow.subscribe((a) => {
-  //   if (a?.id) {
-  //     videoTime = 0
-  //     // TODO: back to beginning
-  //     // if (!videoData.paused) {
-  //     //   videoData.paused = true
-  //     //   setTimeout(() => {
-  //     //     videoTime = 0
-  //     //     videoData.paused = false
-  //     //   }, 50)
-  //     // }
-  //   }
-  // })
 
   outBackground.subscribe(backgroundChanged)
   function backgroundChanged(a: null | OutBackground) {
@@ -73,13 +58,12 @@
   function onVideoClick(e: any) {
     if ($outLocked) return
 
-    let bg: any = { type: show!.type, startAt: e.ctrlKey || e.metaKey ? videoTime : 0 }
+    let bg: any = { type: show!.type, startAt: e.ctrlKey || e.metaKey ? videoTime : 0, loop: false, filter, flipped }
 
     if (show!.type === "player") bg.id = show!.id
     else {
       bg.path = show!.id
-      // let data: any = setData()
-      // bg = {...bg, ...data}
+      // if (filter) data.filter = filter
     }
 
     autoPause = true
@@ -89,22 +73,26 @@
     outBackground.set(bg)
   }
 
-  // function setData() {
-  //   let data = { muted: false, loop: false, filter: "" }
-  //   if (!$activeProject || $activeShow?.index === undefined) return data
+  let filter = ""
+  let flipped = false
 
-  //   data.muted = $projects[$activeProject].shows[$activeShow.index].muted || false
-  //   data.loop = $projects[$activeProject].shows[$activeShow.index].loop || false
-  //   if (filter) data.filter = filter
-  //   return data
+  // $: {
+  //   if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject].shows[$activeShow.index]?.filter) {
+  //     let style = ""
+  //     Object.entries($projects[$activeProject].shows[$activeShow.index].filter!).forEach(([id, a]: any) => (style += ` ${id}(${a})`))
+  //     filter = style
+  //   } else filter = ""
   // }
-
   $: {
-    if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject].shows[$activeShow.index]?.filter) {
+    if (show && $media[show.id]) {
       let style = ""
-      Object.entries($projects[$activeProject].shows[$activeShow.index].filter!).forEach(([id, a]: any) => (style += ` ${id}(${a})`))
+      Object.entries($media[show.id].filter).forEach(([id, a]: any) => (style += ` ${id}(${a})`))
       filter = style
-    } else filter = ""
+      flipped = $media[show.id].flipped || false
+    } else {
+      filter = ""
+      flipped = false
+    }
   }
 </script>
 
@@ -123,7 +111,7 @@
                   <Player id={show.id} bind:videoData bind:videoTime preview />
                 {:else}
                   <video
-                    style="width: 100%;height: 100%;filter: {filter};"
+                    style="width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}"
                     src={show.id}
                     on:loadedmetadata={onLoad}
                     on:playing={onPlay}

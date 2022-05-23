@@ -14,6 +14,7 @@ import {
   projects,
   projectView,
   saved,
+  scriptures,
   selected,
   settingsTab,
   shows,
@@ -151,6 +152,18 @@ const actions: any = {
       removeSlide(obj)
       return
     }
+    if (obj.sel.id === "category_scripture") {
+      scriptures.update((a: any) => {
+        let key: string | null = null
+        Object.entries(a).forEach(([sId, value]: any) => {
+          if (value.id === obj.sel.data[0]) key = sId
+        })
+
+        if (key) delete a[key]
+        return a
+      })
+      return
+    }
 
     const deleteIDs: any = {
       folder: "deleteFolder",
@@ -235,6 +248,7 @@ const actions: any = {
     let index = obj.contextElem.classList.value.indexOf("#category_")
     history({ id: ids[obj.contextElem.classList.value.slice(index + 10, obj.contextElem.classList.value.indexOf(" ", index))] })
   },
+  newScripture: () => activePopup.set("import_scripture"),
 
   // project
   close: (obj: any) => {

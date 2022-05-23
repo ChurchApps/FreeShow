@@ -33,12 +33,16 @@ export function _show(id: any) {
           prev = a[id][key]
           a[id][key] = value
         }
+
+        a[id].timestamps.modified = new Date().getTime()
         return a
       })
       allShows.update((a: any) => {
         let double = key.split(".")
         if (double.length > 1 && a[id][double[0]]?.[double[1]]) a[id][double[0]][double[1]] = value
         else if (a[id][key]) a[id][key] = value
+
+        a[id].timestamps.modified = new Date().getTime()
         return a
       })
       return prev
@@ -49,6 +53,8 @@ export function _show(id: any) {
       showsCache.update((a: any) => {
         prev = a[id][key]
         delete a[id][key]
+
+        a[id].timestamps.modified = new Date().getTime()
         return a
       })
       return prev
@@ -79,6 +85,8 @@ export function _show(id: any) {
             if (value === undefined) delete a[id].slides[slideId][key]
             else a[id].slides[slideId][key] = value
           })
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         return prev
@@ -97,6 +105,8 @@ export function _show(id: any) {
 
             a[id].slides[slideId] = slide![i] || slide![0]
           })
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         // ADD TO LAYOUT......????
@@ -112,6 +122,8 @@ export function _show(id: any) {
             slides.slides.push(a[id].slides[slideId])
             delete a[id].slides[slideId]
           })
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         return slides
@@ -153,6 +165,8 @@ export function _show(id: any) {
                 }
               })
             })
+
+            a[id].timestamps.modified = new Date().getTime()
             return a
           })
           return prev
@@ -165,6 +179,8 @@ export function _show(id: any) {
                 a[id].slides[slideId].items.push(item)
               })
             })
+
+            a[id].timestamps.modified = new Date().getTime()
             return a
           })
         },
@@ -179,6 +195,8 @@ export function _show(id: any) {
                 a[id].slides[slideId].items.splice(index, 1)
               })
             })
+
+            a[id].timestamps.modified = new Date().getTime()
             return a
           })
           return prev
@@ -223,6 +241,8 @@ export function _show(id: any) {
                   })
                 })
               })
+
+              a[id].timestamps.modified = new Date().getTime()
               return a
             })
             return prev
@@ -238,6 +258,8 @@ export function _show(id: any) {
                   })
                 })
               })
+
+              a[id].timestamps.modified = new Date().getTime()
               return a
             })
           },
@@ -256,6 +278,8 @@ export function _show(id: any) {
                   })
                 })
               })
+
+              a[id].timestamps.modified = new Date().getTime()
               return a
             })
             return prev
@@ -308,6 +332,8 @@ export function _show(id: any) {
             prev.push({ key, value: a[id].layouts[layoutId][key] })
             a[id].layouts[layoutId][key] = value
           })
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         return prev
@@ -316,6 +342,8 @@ export function _show(id: any) {
       add: (layoutId: string = uid(), layout: any = null) => {
         showsCache.update((a: any) => {
           a[id].layouts[layoutId] = layout || { name: "", notes: "", slides: [] }
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         return layoutId
@@ -325,6 +353,8 @@ export function _show(id: any) {
         showsCache.update((a: any) => {
           prev.push(a[id].layouts[layoutId])
           delete a[id].layouts[layoutId]
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         return prev
@@ -362,6 +392,8 @@ export function _show(id: any) {
                 else a[id].layouts[layoutId].slides[index][key] = value
               })
             })
+
+            a[id].timestamps.modified = new Date().getTime()
             return a
           })
           return prev
@@ -404,6 +436,8 @@ export function _show(id: any) {
                 // })
               }
             })
+
+            a[id].timestamps.modified = new Date().getTime()
             return a
           })
         },
@@ -429,6 +463,8 @@ export function _show(id: any) {
                   a[id].layouts[layoutId].slides.splice(index, 1)
                 })
             })
+
+            a[id].timestamps.modified = new Date().getTime()
             return a
           })
           return prev
@@ -452,6 +488,8 @@ export function _show(id: any) {
                   })
                 })
               })
+
+              a[id].timestamps.modified = new Date().getTime()
               return a
             })
             return prev
@@ -481,6 +519,8 @@ export function _show(id: any) {
             if (value === undefined) delete a[id].media[mediaId][key]
             else a[id].media[mediaId][key] = value
           })
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         // return prev
@@ -490,6 +530,8 @@ export function _show(id: any) {
         let bgid: string = uid()
         showsCache.update((a: any) => {
           a[id].media[bgid] = object
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         return bgid
@@ -504,6 +546,8 @@ export function _show(id: any) {
             media[i].push(a[id].media[mediaId])
             delete a[id].media[mediaId]
           })
+
+          a[id].timestamps.modified = new Date().getTime()
           return a
         })
         return media

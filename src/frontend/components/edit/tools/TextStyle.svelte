@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Item } from "../../../../types/Show"
-  import { activeEdit, activeShow, dictionary } from "../../../stores"
+  import { activeEdit, activeShow, dictionary, overlays, templates } from "../../../stores"
   import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import { getStyles } from "../../helpers/style"
@@ -16,12 +16,6 @@
   export let allSlideItems: Item[]
   export let item: Item | null
 
-  // get style of last text or at caret pos
-  // $: style = item?.lines
-  //   ? selection !== null && selection[selection.length - 1]?.end - selection[selection.length - 1]?.start >= 0
-  //     ? getItemStyleAtPos(item.lines, selection)
-  //     : item.lines[item.lines.length - 1].text[item.lines[item.lines.length - 1].text.length - 1].style
-  //   : ""
   $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : ""
   $: lineAlignStyle = item?.lines && selection?.length ? getLastLineAlign() : ""
   $: alignStyle = item?.align ? item.align : null
@@ -101,7 +95,6 @@
     let aligns = getStyles(alignStyle)
     align["align-items"] = aligns["align-items"]?.length ? aligns["align-items"] : defaultAligns["align-items"]
     align["text-align"] = lineAlignStyle?.length ? lineAlignStyle : defaultAligns["text-align"]
-    console.log(align)
   }
 
   const inputChange = (e: any, key: string) => update(key, e.target.value)
@@ -206,6 +199,24 @@
     // TODO: remove unused (if default)
     if (newData.length && $activeEdit.id) {
       // update layout
+      if ($activeEdit.type === "overlay") {
+        overlays.update((a) => {
+          let lines: any = a[$activeEdit.id!].items[allItems[0]].lines
+          lines?.forEach((_a: any, i: number) => {
+            a[$activeEdit.id!].items[allItems[0]].lines![i][aligns ? "align" : "text"] = newData[0][i]
+          })
+          return a
+        })
+      } else if ($activeEdit.type === "template") {
+        templates.update((a) => {
+          let lines: any = a[$activeEdit.id!].items[allItems[0]].lines
+          // console.log(lines, newData)
+          lines?.forEach((_a: any, i: number) => {
+            a[$activeEdit.id!].items[allItems[0]].lines![i][aligns ? "align" : "text"] = newData[0][i]
+          })
+          return a
+        })
+      }
     } else if (newData.length) {
       history({
         // WIP

@@ -29,7 +29,6 @@ interface Song {
 
 export function convertOpenSong(data: any) {
   data?.forEach(({ content }: any) => {
-    console.log(content)
     let song = XMLtoObject(content)
     console.log(song)
 
@@ -43,7 +42,7 @@ export function convertOpenSong(data: any) {
       title: show.name,
       author: song.author,
       copyright: song.copyright,
-      ccli: song.ccli,
+      CCLI: song.ccli,
     }
 
     let { slides, layout }: any = createSlides(song)
@@ -96,25 +95,25 @@ function XMLtoObject(xml: string) {
   let song = parser.parseFromString(xml, "text/xml").children[0]
 
   let object: Song = {
-    title: song.getElementsByTagName("title")[0].textContent!,
-    author: song.getElementsByTagName("author")[0].textContent!,
-    copyright: song.getElementsByTagName("copyright")[0].textContent!,
-    // presentation: song.getElementsByTagName("presentation")[0].textContent!,
-    // capo: song.getElementsByTagName("capo")[0].textContent!,
-    // tempo: song.getElementsByTagName("tempo")[0].textContent!,
-    ccli: song.getElementsByTagName("ccli")[0].textContent!,
-    // theme: song.getElementsByTagName("theme")[0].textContent!,
-    // user1: song.getElementsByTagName("user1")[0].textContent!,
-    // user2: song.getElementsByTagName("user2")[0].textContent!,
-    // user3: song.getElementsByTagName("user3")[0].textContent!,
-    lyrics: song.getElementsByTagName("lyrics")[0].textContent!.split("\n\n"),
-    hymn_number: song.getElementsByTagName("hymn_number")[0].textContent!,
-    key: song.getElementsByTagName("key")[0].textContent!,
-    // aka: song.getElementsByTagName("aka")[0].textContent!,
-    // key_line: song.getElementsByTagName("key_line")[0].textContent!,
-    // linked_songs: song.getElementsByTagName("linked_songs")[0].textContent!,
-    time_sig: song.getElementsByTagName("time_sig")[0].textContent!,
-    backgrounds: song.getElementsByTagName("backgrounds")[0].textContent!,
+    title: song.getElementsByTagName("title")[0]?.textContent!,
+    author: song.getElementsByTagName("author")[0]?.textContent!,
+    copyright: song.getElementsByTagName("copyright")[0]?.textContent!,
+    // presentation: song.getElementsByTagName("presentation")[0]?.textContent!,
+    // capo: song.getElementsByTagName("capo")[0]?.textContent!,
+    // tempo: song.getElementsByTagName("tempo")[0]?.textContent!,
+    ccli: song.getElementsByTagName("ccli")[0]?.textContent!,
+    // theme: song.getElementsByTagName("theme")[0]?.textContent!,
+    // user1: song.getElementsByTagName("user1")[0]?.textContent!,
+    // user2: song.getElementsByTagName("user2")[0]?.textContent!,
+    // user3: song.getElementsByTagName("user3")[0]?.textContent!,
+    lyrics: song.getElementsByTagName("lyrics")[0]?.textContent!.split("\n\n"),
+    hymn_number: song.getElementsByTagName("hymn_number")[0]?.textContent!,
+    key: song.getElementsByTagName("key")[0]?.textContent!,
+    // aka: song.getElementsByTagName("aka")[0]?.textContent!,
+    // key_line: song.getElementsByTagName("key_line")[0]?.textContent!,
+    // linked_songs: song.getElementsByTagName("linked_songs")[0]?.textContent!,
+    time_sig: song.getElementsByTagName("time_sig")[0]?.textContent!,
+    backgrounds: song.getElementsByTagName("backgrounds")[0]?.textContent!,
   }
 
   return object

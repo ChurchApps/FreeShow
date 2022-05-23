@@ -69,7 +69,21 @@ export interface Media {
   }
 }
 
-export type Popups = "initialize" | "import" | "export" | "show" | "delete_show" | "icon" | "rename" | "transition" | "about" | "shortcuts" | "unsaved" | "reset_all" | "alert"
+export type Popups =
+  | "initialize"
+  | "import"
+  | "export"
+  | "show"
+  | "delete_show"
+  | "icon"
+  | "rename"
+  | "transition"
+  | "import_scripture"
+  | "about"
+  | "shortcuts"
+  | "unsaved"
+  | "reset_all"
+  | "alert"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

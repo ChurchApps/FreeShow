@@ -100,17 +100,10 @@
       if ($activePopup !== null) activePopup.set(null)
       // blur focused elements
       else if (document.activeElement !== document.body) (document.activeElement as HTMLElement).blur()
-      // "blur" edit items
-      else if ($activeEdit.items.length) {
-        activeEdit.update((a) => {
-          a.items = []
-          return a
-        })
-        // } else {
-        //   // hide / show drawer
-        //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
-        //   else drawer.set({ height: 40, stored: $drawer.height })
-      }
+      // else {
+      //   // hide / show drawer
+      //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+      //   else drawer.set({ height: 40, stored: $drawer.height })
     },
     // Enter: (e: any) => {
     //   if (!e.target.closest(".edit")) {

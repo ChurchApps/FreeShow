@@ -9,6 +9,8 @@
   export let name: string
   export let path: string
 
+  // $: if (slowLoader === index) slowLoader += 5
+
   let files: any[] = []
   let items: number = 0
 

@@ -51,6 +51,9 @@
       )
 
       filterFiles()
+
+      slowLoader = 10
+      increaseLoading()
     }
   })
 
@@ -122,6 +125,20 @@
 
   const slidesViews: any = { grid: "list", list: "grid" }
   const nextActiveView: any = { all: "folder", folder: "image", image: "video", video: "all" }
+
+  // TODO: temporary loading preformance test
+  let slowLoader: number = 10
+  let timeout: any = null
+  function increaseLoading() {
+    if (timeout) clearTimeout(timeout)
+    if (slowLoader < filteredFiles.length) {
+      setTimeout(() => {
+        slowLoader += 1
+        console.log(slowLoader + "/" + filteredFiles.length)
+        increaseLoading()
+      }, 200)
+    }
+  }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -134,10 +151,10 @@
     {#if filteredFiles.length}
       {#key rootPath}
         {#key path}
-          {#each filteredFiles as file}
+          {#each filteredFiles as file, i}
             {#if file.folder}
               <Folder bind:rootPath={path} name={file.name} path={file.path} />
-            {:else}
+            {:else if slowLoader > i}
               <Media name={file.name} path={file.path} type={$videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} />
             {/if}
           {/each}

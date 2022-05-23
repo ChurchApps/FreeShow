@@ -134,6 +134,7 @@
     "_title_display_stop": "Stopp presentatsjon"
   },
   "empty": {
+    "general": "Ingenting her",
     "project_select": "Velg et prosjekt",
     "show": "Ingen show valgt",
     "shows": "Ingen show",
@@ -169,6 +170,7 @@
     "no_show": "Kunne ikke finne noen show",
     "no_layouts": "Kunne ikke finne noen oppsett",
     "load": "Kunne ikke laste inn",
+    "bible_api": "Kunne ikke laste inn bibel fra API.Bible, har du en internettforbindelse?",
     "not_found": "Ikke funnet",
     "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
     "keep_one_layout": "Du må ha minst ett oppsett"
@@ -266,6 +268,7 @@
     "change_name": "Endre navn på",
     "import": "Importer",
     "export": "Eksporter",
+    "import_scripture": "Importer en bibel",
     "about": "Om",
     "shortcuts": "Hurtigtaster",
     "icon": "Ikoner",
@@ -289,6 +292,7 @@
     "slide": "Nytt lysbilde",
     "overlay": "Nytt overlegg",
     "template": "Ny mal",
+    "scripture": "Ny bibel",
     "event": "Nytt arrangement"
   },
   "show": {
@@ -494,6 +498,7 @@
     "full_colors": "Full lysbilde gruppefarger",
     "auto_output": "Vis utgangsskjerm ved oppstart",
     "display_metadata": "Vis metadata under presentering",
+    "split_lines": "Antall linjer ved oppretting av show",
     "default_project_name": "Standard prosjektnavn",
     "resolution": "Oppløsning",
     "video_extensions": "Videoutvidelse",
@@ -534,6 +539,8 @@
     "today": "I dag"
   },
   "scripture": {
+    "bibles": "Bibler fra API.Bible",
+    "custom": "Eller importer dine egene",
     "max_verses": "Maks vers per lysbilde",
     "verse_numbers": "Versnummer",
     "version": "Vis versjon",

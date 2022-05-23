@@ -21,6 +21,7 @@ if (!electronSettings.get("loaded")) console.error("Could not get stored data!")
 
 // keep a global reference of the window object to prevent it closing automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow | null
+let dialogClose: boolean = false
 
 app.on("ready", () => {
   createLoading()
@@ -79,7 +80,7 @@ const createLoading = () => {
     alwaysOnTop: true,
     resizable: false,
     // show: false,
-    icon: "public/icon.ico",
+    icon: "public/icon.png",
     webPreferences: { nodeIntegration: true, contextIsolation: false, enableRemoteModule: true },
   })
   loadingWindow.loadFile("public/loading.html")
@@ -104,7 +105,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width,
     height,
-    icon: "public/icon.ico",
+    icon: "public/icon.png",
     frame: !isProd || process.platform !== "win32",
     autoHideMenuBar: isProd && process.platform === "win32",
     backgroundColor: "#2d313b",
@@ -154,8 +155,16 @@ const createWindow = () => {
   //   }
   // })
 
+  mainWindow.on("close", (e) => {
+    if (!dialogClose) {
+      e.preventDefault()
+      toApp(MAIN, { channel: "CLOSE" })
+    }
+  })
+
   mainWindow.on("closed", () => {
     mainWindow = null
+    dialogClose = false
     outputWindow?.close()
   })
   mainWindow.once("ready-to-show", createOutputWindow)
@@ -414,6 +423,7 @@ ipcMain.on(MAIN, (e, msg) => {
     // e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
     data = e.sender.id === outputWindow?.webContents.id ? "true" : "false"
   } else if (msg.channel === "CLOSE") {
+    dialogClose = true
     mainWindow?.close()
   } else if (msg.channel === "MAXIMIZE") {
     if (mainWindow?.isMaximized()) mainWindow?.unmaximize()

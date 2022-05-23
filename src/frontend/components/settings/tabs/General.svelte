@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activePopup, alertUpdates, backgroundColor, displayMetadata, fullColors, groupNumbers, labelsDisabled, screen, showsPath } from "../../../stores"
+  import { activePopup, alertUpdates, backgroundColor, displayMetadata, fullColors, groupNumbers, labelsDisabled, screen, showsPath, splitLines } from "../../../stores"
   import { setLanguage } from "../../../utils/language"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
@@ -70,6 +70,16 @@
     style="width: 200px;"
     on:click={(e) => {
       displayMetadata.set(e.detail.id)
+    }}
+  />
+</div>
+<div>
+  <p><T id="settings.split_lines" /></p>
+  <NumberInput
+    value={$splitLines}
+    max={100}
+    on:change={(e) => {
+      splitLines.set(e.detail)
     }}
   />
 </div>
