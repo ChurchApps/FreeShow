@@ -4,7 +4,7 @@ import type { Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { activeProject, dictionary, groups } from "../stores"
+import { activeProject, dictionary, groups, splitLines } from "../stores"
 
 export function convertText({ name = "", category = null, text }: any) {
   console.log(name, category, text)
@@ -63,17 +63,9 @@ function createSlides(labeled: any) {
       let allLines: string[] = [text]
       let lines = text.split("\n").filter((a) => a.length)
 
-      let length: number = text.replaceAll("\n", "").length
-      if ((length < 20 && lines.length >= 6) || (length >= 20 && lines.length >= 4)) {
+      if (lines.length > get(splitLines)) {
         allLines = []
-        let divided = Math.floor(lines.length / 2)
-        if (lines.length < 7) divided = Math.ceil(lines.length / 2)
-        // while (divided > 4) divided = Math.floor(divided / 2)
-        while (lines.length) {
-          allLines.push(lines.splice(0, divided).join("\n"))
-          if (lines.length > 4) divided = Math.ceil(lines.length / 2)
-          // allLines.push(lines.splice(0, Math.max(2, Math.floor(lines.length / 2))).join("\n"))
-        }
+        while (lines.length) allLines.push(lines.splice(0, get(splitLines)).join("\n"))
       }
 
       let children: string[] = []

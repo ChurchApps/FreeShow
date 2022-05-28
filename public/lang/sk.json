@@ -29,7 +29,7 @@
   },
   "tooltip": {
     "project": "Vytvorí projekt, kde môžete pridávať a upravovať prezentácie.",
-    "show": "Vytvorí nové prezentácie, kde môžete pridávať texty piestí, prezentácie a médiá. Podržaním Ctrl sa vytvorí prázdne.",
+    "show": "Vytvorí nové prezentácie, kde môžete pridávať texty piestí, prezentácie a médiá. Podržaním Ctrl/Cmd sa vytvorí prázdne.",
     "groups": "Všetky skupiny v aktuálnej prezentácii a všetkých globálnych skupinách. Kliknutím alebo presunutím ich pridáte do aktuálneho rozloženia.",
     "layout": "Pridá prechody a časovače do snímkov v aktuálnom rozložení.",
     "media": "Všetky médiá v aktuálnej prezentácii. Môžete ich zobraziť alebo presunúť do aktuálneho rozloženia.",
@@ -40,7 +40,8 @@
     "items": "Pridá a zoradí položky.",
     "slide": "Upraví aktuálny snímok.",
     "filters": "Change the look of the selected element.",
-    "options": "More options."
+    "options": "More options.",
+    "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses."
   },
   "setup": {
     "good_luck": "Dúfam, že vám tento softvér bude užitočný. Veľa šťastia pri prezentácii! :)",
@@ -134,6 +135,7 @@
     "_title_display_stop": "Zastaví prezentáciu"
   },
   "empty": {
+    "general": "Nothing here",
     "project_select": "Vybrať projekt",
     "show": "Nie je vybratá žiadna prezentácia",
     "shows": "Žiadne prezentácie",
@@ -148,7 +150,7 @@
     "groups": "Žiadne skupiny",
     "events": "Žiadne udalosti",
     "text": "Niečo napíšte",
-    "timers": "Žiadne časovače v prezentácii v tomto projekte"
+    "timers": "No global timers or private in the shows in this project"
   },
   "remote": {
     "projects": "Projekty",
@@ -169,6 +171,8 @@
     "no_show": "Nenašla sa prezentácia",
     "no_layouts": "Nenašli sa rozloženia",
     "load": "Nepodarilo sa načítať",
+    "bible": "Could not find local scripture",
+    "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
     "not_found": "Nenašlo sa",
     "display": "Nepodarilo sa zobraziť výstupné okno na aktuálnej obrazovke",
     "keep_one_layout": "Musíte mať aspoň jedno rozloženie"
@@ -260,12 +264,14 @@
   "popup": {
     "show": "Nová prezentácia",
     "rename": "Premenovať",
+    "timer": "Timer",
     "transition": "Prechod",
     "delete_show": "Odstrániť prezentáciu",
     "delete_show_confirmation": "Naozaj ju chcete odstrániť?",
     "change_name": "Premenovať",
     "import": "Import",
     "export": "Export",
+    "import_scripture": "Import scripture",
     "about": "Viac info",
     "shortcuts": "Skratky",
     "icon": "Ikony",
@@ -283,12 +289,14 @@
     "show": "Nová prezentácia",
     "empty_show": "Nová prázdna prezentácia",
     "project": "Nový projekt",
+    "timer": "New timer",
     "category": "Nová kategória",
     "private": "Nová súkromná prezentácia",
     "folder": "Nový priečinok",
     "slide": "Nový snímok",
     "overlay": "Nový prekryv",
     "template": "Nová šablóna",
+    "scripture": "New scripture",
     "event": "Nová udalosť"
   },
   "show": {
@@ -462,11 +470,11 @@
     "next_slide_text": "Text aktuálneho snímku",
     "next_slide": "Ďalší snímok",
     "next_slide_notes": "Poznámky ďalšieho snímku",
-    "timers": "Časovače",
+    "time": "Time",
     "system_clock": "Systémové hodiny",
     "video_time": "Video čas",
     "video_countdown": "Video odpočet",
-    "project_timers": "Projektové časovače",
+    "global_timers": "Global timers",
     "other": "Iné",
     "chords": "Akordy",
     "message": "Správa",
@@ -494,6 +502,7 @@
     "full_colors": "Plné farby skupín snímok",
     "auto_output": "Zobraziť výstupné okno pri spustení",
     "display_metadata": "Zobrazova metadata pri prezentácii",
+    "split_lines": "Numbers of lines when creating a show",
     "default_project_name": "Predvolený názov projektu",
     "resolution": "Rozlíšenie",
     "video_extensions": "Prípony videí",
@@ -534,6 +543,8 @@
     "today": "Dnes"
   },
   "scripture": {
+    "bibles": "Bibles from API.Bible",
+    "custom": "Or import your own",
     "max_verses": "Maximum veršov na snímok",
     "verse_numbers": "Čísla veršov",
     "version": "Zobraziť preklad",

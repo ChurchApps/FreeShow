@@ -158,8 +158,9 @@ export interface OutBackground {
 
 export interface OutSlide {
   id: ID
-  layout: ID
-  index: number
+  layout?: ID
+  index?: number
+  tempItems?: Item[]
   // layout: ID ?
   // type?: ShowType
   // private?: boolean

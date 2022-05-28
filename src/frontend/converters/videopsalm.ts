@@ -62,7 +62,7 @@ export function convertVideopsalm(data: any) {
         author: song.Author || "",
         composer: song.Composer || "",
         copyright: song.Copyright || "",
-        license: song.CCLI || "",
+        CCLI: song.CCLI || "",
       }
 
       let { slides, layout }: any = createSlides(song)

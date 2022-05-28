@@ -1,4 +1,5 @@
 import { Writable, writable } from "svelte/store"
+import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, DefaultProjectNames, Media, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
@@ -6,7 +7,7 @@ import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
 import type { ID, OutAudio, OutBackground, OutSlide, OutTransition, Overlays, Shows, Templates, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
-import type { Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
+import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { History } from "./components/helpers/history"
 
@@ -21,13 +22,14 @@ export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
 export const outputDisplay: Writable<boolean> = writable(false)
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const dictionary: Writable<Dictionary> = writable({})
-export const notFound: Writable<any> = writable({ show: [] })
+export const notFound: Writable<any> = writable({ show: [], bible: [] })
 export const saved: Writable<boolean> = writable(true)
 export const audioSource: Writable<any> = writable(null)
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
 export const alertMessage: Writable<string> = writable("")
 export const clipboard: Writable<{ id: null | string; data: any[] }> = writable({ id: null, data: [] })
+export const timers: Writable<{ [key: string]: any }> = writable({}) // {}
 
 export const exportOptions: Writable<any> = writable({
   pdf: {
@@ -271,6 +273,27 @@ export const events: Writable<{ [key: string]: Event }> = writable({
   },
 })
 
+// SCRIPTURE
+interface BibleCategories extends Category {
+  api?: boolean
+}
+export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({
+  kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
+  asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },
+  web: { name: "World English Bible", api: true, id: "9879dbb7cfe39e4d-04" },
+  wmb: { name: "World Messianic Bible", api: true, id: "f72b840c855f362c-04" },
+  bsb: { name: "Berean Study Bible", api: true, id: "bba9f40183526463-01" },
+}) // {default}
+export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({})
+
+export const scriptureSettings: Writable<any> = writable({
+  template: "scripture",
+  versesPerSlide: 3,
+  verseNumbers: false,
+  showVersion: false,
+  showVerse: true,
+})
+
 // UI STATE
 export const resized: Writable<NumberObject> = writable({
   // {default}
@@ -300,7 +323,7 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({
   overlays: { enabled: true, activeSubTab: null },
   templates: { enabled: true, activeSubTab: null },
   audio: { enabled: true, activeSubTab: null },
-  scripture: { enabled: true, activeSubTab: "de4e12af7f28f599-02" },
+  scripture: { enabled: true, activeSubTab: null },
   timers: { enabled: true, activeSubTab: null },
   player: { enabled: true, activeSubTab: null },
   web: { enabled: true, activeSubTab: null },
@@ -317,6 +340,7 @@ export const alertUpdates: Writable<boolean> = writable(true) // true
 export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
+export const splitLines: Writable<number> = writable(2) // 2
 export const displayMetadata: Writable<string> = writable("never") // "never"
 export const showsPath: Writable<null | string> = writable(null) // null
 export const exportPath: Writable<null | string> = writable(null) // null

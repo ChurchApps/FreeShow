@@ -17,6 +17,8 @@
   import Transition from "./popups/Transition.svelte"
   import Alert from "./popups/Alert.svelte"
   import ResetAll from "./popups/ResetAll.svelte"
+  import ImportScripture from "./popups/ImportScripture.svelte"
+  import Timer from "./popups/Timer.svelte"
 
   const hide = (e: any) => {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -25,7 +27,7 @@
 
 {#if $activePopup !== null}
   <div style={$os.platform === "win32" ? "height: calc(100% - 30px);" : null} class="popup" transition:fade={{ duration: 100 }} on:click={hide}>
-    <div class="card" transition:scale={{ duration: 200 }}>
+    <div class="card" class:fill={$activePopup === "import_scripture"} transition:scale={{ duration: 200 }}>
       <div style="position: relative;">
         {#if $activePopup !== "alert"}
           <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{$activePopup}" /></h2>
@@ -49,8 +51,12 @@
           <ChangeIcon />
         {:else if $activePopup === "rename"}
           <Rename />
+        {:else if $activePopup === "timer"}
+          <Timer />
         {:else if $activePopup === "transition"}
           <Transition />
+        {:else if $activePopup === "import_scripture"}
+          <ImportScripture />
         {:else if $activePopup === "about"}
           <About />
         {:else if $activePopup === "shortcuts"}
@@ -92,5 +98,10 @@
     min-height: 50px;
     max-width: 100%;
     max-height: 100%;
+  }
+
+  .fill {
+    width: 100%;
+    height: 100%;
   }
 </style>

@@ -25,7 +25,7 @@
   export let center: boolean = false
   export let ratio: number = 0
 
-  $: slideTransition = $showsCache && $outSlide ? _show($outSlide.id).layouts("active").ref()[0]?.[$outSlide.index]?.data.transition : null
+  $: slideTransition = $showsCache && $outSlide && $outSlide.id !== "temp" ? _show($outSlide.id).layouts("active").ref()[0]?.[$outSlide.index!]?.data.transition : null
   $: transition = slideTransition ? slideTransition : $transitionData.text
   $: mediaTransition = $transitionData.media
 
@@ -51,7 +51,7 @@
   if ($currentWindow === "output" || mirror) receive(OUTPUT, receiveOUTPUT)
 
   $: currentLayout = $outSlide ? _show($outSlide.id).layouts([$outSlide.layout]).ref()[0] : []
-  $: currentSlide = $outSlide ? _show($outSlide.id).slides([currentLayout![$outSlide.index].id]).get()[0] : null
+  $: currentSlide = $outSlide ? ($outSlide.id === "temp" ? { items: $outSlide.tempItems } : _show($outSlide.id).slides([currentLayout![$outSlide.index!].id]).get()[0]) : null
 
   $: resolution = currentSlide?.settings?.resolution || $screen.resolution
 

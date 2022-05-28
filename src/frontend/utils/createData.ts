@@ -1,3 +1,4 @@
+import { templateCategories } from "./../stores"
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
 import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, showsPath, templates } from "../stores"
@@ -98,7 +99,32 @@ export function createData(paths: any) {
   })
 
   // TODO: translate templates
+  setExampleTemplates()
+  mediaFolders.update((a) => {
+    a.pictures = { name: "category.pictures", icon: "folder", path: paths.pictures, default: true }
+    a.videos = { name: "category.videos", icon: "folder", path: paths.videos, default: true }
+    return a
+  })
+  audioFolders.update((a) => {
+    a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
+    return a
+  })
+  showsPath.set(paths.shows)
+
+  remotePassword.set(randomNumber(1000, 9999).toString())
+
+  save()
+}
+
+const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
+
+export function setExampleTemplates() {
+  templateCategories.update((a) => {
+    a.scripture = { default: true, name: "category.scripture", icon: "scripture" }
+    return a
+  })
   templates.update((a) => {
+    // presentation
     a.header = {
       name: get(dictionary).example?.header || "Header",
       color: null,
@@ -128,8 +154,10 @@ export function createData(paths: any) {
         },
       ],
     }
+
+    // lyrics
     a.big = {
-      name: get(dictionary).example?.big || "big",
+      name: get(dictionary).example?.big || "Big",
       color: null,
       category: "song",
       items: [
@@ -141,7 +169,7 @@ export function createData(paths: any) {
       ],
     }
     a.default = {
-      name: get(dictionary).example?.default || "default",
+      name: get(dictionary).example?.default || "Default",
       color: null,
       category: "song",
       items: [
@@ -153,7 +181,7 @@ export function createData(paths: any) {
       ],
     }
     a.small = {
-      name: get(dictionary).example?.small || "small",
+      name: get(dictionary).example?.small || "Small",
       color: null,
       category: "song",
       items: [
@@ -164,22 +192,90 @@ export function createData(paths: any) {
         },
       ],
     }
-    return a
-  })
-  mediaFolders.update((a) => {
-    a.pictures = { name: "category.pictures", icon: "folder", path: paths.pictures, default: true }
-    a.videos = { name: "category.videos", icon: "folder", path: paths.videos, default: true }
-    return a
-  })
-  audioFolders.update((a) => {
-    a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
-    return a
-  })
-  showsPath.set(paths.shows)
+    a.box = {
+      name: "Box",
+      color: null,
+      category: "song",
+      items: [
+        {
+          style: "top:387.50px;left:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);outline: 8px solid rgb(255 255 255);",
+          align: "",
+          lines: [
+            { align: "", text: [{ value: "1", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+            { align: "", text: [{ value: "2", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+            { align: "", text: [{ value: "3", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+          ],
+        },
+      ],
+    }
 
-  remotePassword.set(randomNumber(1000, 9999).toString())
-
-  save()
+    // scripture
+    ;(a.scripture = {
+      name: get(dictionary).category?.scripture || "Sciprture",
+      color: "#876543",
+      category: "scripture",
+      items: [
+        { style: "top: 150px;left: 50px;width: 1820px;height: 780px;", align: "", lines: [{ align: "text-align: justify;", text: [{ value: "1", style: "font-size: 80px;" }] }] },
+        {
+          style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+          align: "",
+          lines: [{ align: "", text: [{ value: "2", style: "font-size: 50px;" }] }],
+        },
+      ],
+    }),
+      // blue theme
+      (a.blueHeader = {
+        name: "Blue Header",
+        color: "#2957ff",
+        category: "presentation",
+        items: [
+          // 1080 x 1920
+          {
+            style: "left:720px;top:640px;width:1130px;height:210px;",
+            align: "",
+            lines: [{ align: "text-align: left", text: [{ value: "1", style: "font-weight:bold;font-family:Arial;line-height:1.2em;font-size:120px;" }] }],
+          },
+          {
+            style: "left:720px;top:850px;width:1130px;height:60px;",
+            align: "",
+            lines: [{ align: "text-align: left", text: [{ value: "2", style: "color:#ffffff;font-size:50px;" }] }],
+          },
+          {
+            style: "left:-850px;top:-600px;width:1600px;height:1600px;background-color:#2957ff;transform:rotate(30deg);",
+            align: "",
+            lines: [{ align: "", text: [{ value: "", style: "" }] }],
+          },
+        ],
+      })
+    a.blueMain = {
+      name: "Blue Content",
+      color: "#2957ff",
+      category: "presentation",
+      items: [
+        // 1080 x 1920
+        {
+          style: "left:550px;top:50px;width:1320px;height:980px;",
+          align: "",
+          lines: [
+            { align: "text-align: left", text: [{ value: "1", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
+            { align: "text-align: left", text: [{ value: "2", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
+            { align: "text-align: left", text: [{ value: "3", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
+            { align: "text-align: left", text: [{ value: "4", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
+            { align: "text-align: left", text: [{ value: "5", style: "font-weight:bold;font-family:Arial;font-size:80px;line-height:1.2em;" }] },
+          ],
+        },
+        {
+          style: "left:0px;top:0px;width:500px;height:1080px;background-color: #2957ff;",
+          align: "",
+          lines: [{ align: "", text: [{ value: "", style: "" }] }],
+        },
+        // {
+        //   style: "left:500px;top:0px;width:1420px;height:1080px;background-color: #ffffff;",
+        //   align: "",
+        //   lines: [{ align: "", text: [{ value: "", style: "" }] }],
+        // },
+      ],
+    }
+    return a
+  })
 }
-
-const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from

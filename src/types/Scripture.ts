@@ -1,5 +1,7 @@
 export interface Bible {
+  api?: boolean
   version: null | string
+  id?: string
   book: null | string
   chapter: null | string
   verses: string[][]

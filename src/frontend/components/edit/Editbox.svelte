@@ -1,16 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte"
+  import { uid } from "uid"
   import type { Item, Line } from "../../../types/Show"
   import { activeEdit, activeShow, overlays, showsCache, templates } from "../../stores"
-  import { GetLayoutRef } from "../helpers/get"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { addToPos } from "../helpers/mover"
   import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Timer from "../slide/views/Timer.svelte"
   import Movebox from "../system/Movebox.svelte"
+  import { getSelectionRange } from "./scripts/textStyle"
 
-  // export let items: Item[] | null = null
   export let item: Item
   export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
   export let index: number
@@ -30,72 +31,127 @@
       return ae
     })
 
-    if (
-      (e.target.closest(".line") && !e.ctrlKey && !e.metaKey) ||
-      e.target.closest(".square") ||
-      ((e.ctrlKey || e.metaKey) && !e.target.closest(".line")) ||
-      e.altKey ||
-      e.buttons === 4
-    ) {
-      let target = e.target.closest(".item")
-      mouse = {
-        x: e.clientX,
-        y: e.clientY,
-        width: target.offsetWidth,
-        height: target.offsetHeight,
-        offset: {
-          x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
-          y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
-          width: e.clientX / ratio - target.offsetWidth,
-          height: e.clientY / ratio - target.offsetHeight,
-        },
-        item,
-        // item: target,
-        e: e,
-      }
+    let target = e.target.closest(".item")
+    mouse = {
+      x: e.clientX,
+      y: e.clientY,
+      width: target.offsetWidth,
+      height: target.offsetHeight,
+      top: target.offsetTop,
+      left: target.offsetLeft,
+      offset: {
+        x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
+        y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
+        width: e.clientX / ratio - target.offsetWidth,
+        height: e.clientY / ratio - target.offsetHeight,
+      },
+      item,
+      e: e,
     }
   }
 
   $: active = $activeShow?.id
   $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
-  // export let slide: string = ""
-  $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
+  // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
   function keydown(e: any) {
-    // TODO: exlude.....
-    if (e.key === "Backspace" && $activeEdit.items.includes(index) && !document.activeElement?.closest(".item") && !document.activeElement?.closest("input")) {
-      // if (!items && active) items = $showsCache[active].slides[slide].items
-      // let newItems = [...(items || [])]
-      // newItems.splice(index, 1)
+    if (e.key === "Enter" && e.altKey) {
+      // split
+      let sel = getSelectionRange()
+      if (!sel) return
 
-      // TODO: not working properly
+      // if (sel.start === sel.end) {
+      let lines: Line[] = getNewLines()
+      let firstLines: Line[] = []
+      let secondLines: Line[] = []
+      let currentIndex = 0,
+        textPos = 0
+      let start = -1
+      lines.forEach((line, i) => {
+        if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
+        else firstLines.push({ align: line.align, text: [] })
 
-      history({ id: "deleteItem", location: { page: "edit", show: $activeShow!, items: $activeEdit.items, layout: layout, slide: slide } })
+        textPos = 0
+        line.text.forEach((text) => {
+          currentIndex += text.value.length
+          if (sel[i]?.start !== undefined) start = sel[i].start
 
-      _show($activeShow!.id).set({ key: "timestamps.modified", value: new Date().getTime() })
+          if (start > -1 && currentIndex >= start) {
+            if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
+            let pos = sel[i].start - textPos
+            if (pos > 0) firstLines[firstLines.length - 1].text.push({ style: text.style, value: text.value.slice(0, pos) })
+            secondLines[secondLines.length - 1].text.push({ style: text.style, value: text.value.slice(pos, text.value.length) })
+          } else {
+            firstLines[firstLines.length - 1].text.push({ style: text.style, value: text.value })
+          }
+          textPos += text.value.length
+        })
+      })
+
+      let defaultLine = [{ align: lines[0].align || "", text: [{ style: lines[0].text[0]?.style || "", value: "" }] }]
+      if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
+      if (!secondLines.length) secondLines = defaultLine
+
+      let slideRef: any = _show("active").layouts("active").ref()[0][$activeEdit.slide!]
+
+      // create new slide
+      let newSlide = { ..._show("active").slides([ref.id]).get()[0] }
+      newSlide.items[$activeEdit.items[0] || 0].lines = secondLines
+      delete newSlide.id
+      delete newSlide.globalGroup
+      newSlide.group = null
+      newSlide.color = null
+
+      // add new slide
+      let id = uid()
+      _show("active")
+        .slides([id])
+        .add([JSON.parse(JSON.stringify(newSlide))])
+
+      // update slide
+      _show("active")
+        .slides([ref.id])
+        .items([index])
+        .set({ key: "lines", values: [firstLines] })
+
+      // set child
+      let parentId = slideRef.type === "child" ? slideRef.parent.id : slideRef.id
+      let children = _show("active").slides([parentId]).get("children")[0] || []
+      let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
+      children = addToPos(children, [id], slideIndex)
+      _show("active").slides([parentId]).set({ key: "children", value: children })
+
+      activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
+    }
+
+    if (e.key === "Escape") {
+      ;(document.activeElement as HTMLElement).blur()
+      window.getSelection()?.removeAllRanges()
+      if ($activeEdit.items.length) {
+        activeEdit.update((a) => {
+          a.items = []
+          return a
+        })
+      }
+    }
+
+    if (!$activeEdit.items.includes(index) || document.activeElement?.closest(".item") || document.activeElement?.closest("input")) return
+
+    if (e.key === "Backspace" || e.key === "Delete") {
+      history({ id: "deleteItem", location: { page: "edit", show: $activeShow!, items: $activeEdit.items, layout: layout, slide: ref.id } })
     }
   }
 
   function deselect(e: any) {
     if (e.target.closest(".editTools") || e.target.closest(".drawer") || e.target.closest(".contextMenu")) return
+    if (e.ctrlKey || e.metaKey || e.target.closest(".item") === itemElem || !$activeEdit.items.includes(index) || e.target.closest(".item")) return
 
-    if (!e.ctrlKey && !e.metaKey && e.target.closest(".item") !== itemElem) {
-      if ($activeEdit.items.includes(index)) {
-        if (!e.target.closest(".item")) {
-          activeEdit.update((ae) => {
-            ae.items = []
-            return ae
-          })
-        }
-      }
-    }
+    if (window.getSelection()) window.getSelection()?.removeAllRanges()
 
-    //  && e.target.tagName !== "INPUT"
-    if (window.getSelection()) {
-      window.getSelection()?.removeAllRanges()
-      // } else if (document.selection) {
-      //   document.selection.empty()
-    }
+    activeEdit.update((ae) => {
+      ae.items = []
+      return ae
+    })
   }
 
   let textElem: any
@@ -103,15 +159,16 @@
   let previousHTML: string = ""
   let currentStyle: string = ""
 
-  onMount(update)
+  onMount(getStyle)
   let currentSlide: number = -1
   $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide) {
     currentSlide = $activeEdit.slide
-    console.log($activeEdit.slide)
-    setTimeout(update, 10)
-    // update()
+    setTimeout(getStyle, 10)
   }
+
   $: {
+    console.log("ITEM", JSON.parse(JSON.stringify(item)))
+
     let s = ""
     item?.lines?.forEach((line) => {
       s += line.align
@@ -121,63 +178,51 @@
     })
 
     console.log(currentStyle, s)
-    if (currentStyle !== s) update()
+    if (currentStyle !== s) getStyle()
   }
 
-  function update() {
-    if (plain || $activeEdit.slide !== null) {
-      console.log(item)
-      // html = `<div class="align" style="${item.align}">`
-      html = ""
-      currentStyle = ""
-      item?.lines?.forEach((line) => {
-        // TODO: break ...:
-        currentStyle += line.align
-        let style = line.align ? 'style="' + line.align + '"' : ""
-        html += `<div class="break" ${plain ? "" : style}>`
-        line.text?.forEach((a) => {
-          currentStyle += a.style
-          let style = a.style ? 'style="' + a.style + '"' : ""
-          html += `<span ${plain ? "" : style}>` + a.value + "</span>"
-        })
-        html += "</div>"
+  function getStyle() {
+    if (!plain && $activeEdit.slide === null) return
+
+    html = ""
+    currentStyle = ""
+    item?.lines?.forEach((line) => {
+      // TODO: break ...:
+      currentStyle += line.align
+      let style = line.align ? 'style="' + line.align + '"' : ""
+      html += `<div class="break" ${plain ? "" : style}>`
+      line.text?.forEach((a) => {
+        currentStyle += a.style
+        let style = a.style ? 'style="' + a.style + '"' : ""
+        html += `<span ${plain ? "" : style}>` + a.value + "</span>"
       })
-      // html += "</div>"
-      previousHTML = html
-    }
+      html += "</div>"
+    })
+    previousHTML = html
   }
 
   // let sel = getSelectionRange()
 
-  $: {
-    if (textElem && html !== previousHTML) {
-      previousHTML = html
-      // let pos = getCaretCharacterOffsetWithin(textElem)
-      setTimeout(() => {
-        let newLines: Line[] = getNewLines()
-        console.log("NEW", newLines)
-        if ($activeEdit.type === "overlay") {
-          overlays.update((a) => {
-            a[$activeEdit.id!].items[index].lines = newLines
-            return a
-          })
-        } else if ($activeEdit.type === "template") {
-          templates.update((a) => {
-            a[$activeEdit.id!].items[index].lines = newLines
-            return a
-          })
-        } else if (ref.id) {
-          showsCache.update((a) => {
-            // let lines = a[active].slides[slide].items[index].lines
-            // console.log(a, active, ref.id, index, a[active!].slides[ref.id].items[index].lines, newLines)
+  $: if (textElem && html !== previousHTML) {
+    previousHTML = html
+    // let pos = getCaretCharacterOffsetWithin(textElem)
+    setTimeout(updateLines, 10)
+  }
 
-            a[active!].slides[ref.id].items[index].lines = newLines
-            return a
-          })
+  function updateLines() {
+    let newLines: Line[] = getNewLines()
+    if ($activeEdit.type === "overlay") overlays.update(setNewLines)
+    else if ($activeEdit.type === "template") templates.update(setNewLines)
+    else if (ref.id) {
+      _show("active")
+        .slides([ref.id])
+        .items([index])
+        .set({ key: "lines", values: [newLines] })
+    }
 
-          _show(active).set({ key: "timestamps.modified", value: new Date().getTime() })
-        }
-      }, 10)
+    function setNewLines(a: any) {
+      a[$activeEdit.id!].items[index].lines = newLines
+      return a
     }
   }
 
@@ -198,6 +243,10 @@
     })
     return newLines
   }
+
+  // timer
+  let today = new Date()
+  setInterval(() => (today = new Date()), 1000)
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -212,7 +261,6 @@
   {#if !plain}
     <Movebox {ratio} active={$activeEdit.items.includes(index)} />
   {/if}
-  <!-- on:input={updateText} -->
   {#if item?.lines}
     <!-- TODO: remove align..... -->
     <div class="align" class:plain style={plain ? null : item.align || null}>
@@ -221,26 +269,17 @@
           <T id="empty.text" />
         </span>
       {/if}
-      <!-- {#each item.lines as line}
-        <div class="align" style={line.align}> -->
-      <!-- on:keydown={textkey} -->
       <div
         bind:this={textElem}
         class="edit"
         contenteditable
         bind:innerHTML={html}
         style={plain ? null : item.align ? item.align.replace("align-items", "justify-content") : null}
-        class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0].value.length}
-      >
-        <!-- {#each item.text as text}
-            <span style={text.style}>{@html text.value}</span>
-          {/each} -->
-      </div>
-      <!-- </div>
-      {/each} -->
+        class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
+      />
     </div>
   {:else if item?.type === "timer"}
-    <Timer {item} {ref} />
+    <Timer {item} {ref} {today} />
   {:else if item?.type === "icon"}
     <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}

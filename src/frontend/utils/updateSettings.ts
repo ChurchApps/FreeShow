@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { maxConnections, themes, transitionData } from "./../stores"
+import { maxConnections, scriptures, scriptureSettings, splitLines, themes, transitionData } from "./../stores"
 import { OUTPUT } from "./../../types/Channels"
 import { MAIN } from "../../types/Channels"
 import {
@@ -133,7 +133,10 @@ const updateList: { [key in SaveListSettings]: any } = {
   playerVideos: (v: any) => playerVideos.set(v),
   resized: (v: any) => resized.set(v),
   screen: (v: any) => screen.set(v),
+  scriptures: (v: any) => scriptures.set(v),
+  scriptureSettings: (v: any) => scriptureSettings.set(v),
   slidesOptions: (v: any) => slidesOptions.set(v),
+  splitLines: (v: any) => splitLines.set(v),
   templateCategories: (v: any) => templateCategories.set(v),
   // templates: (v: any) => templates.set(v),
   theme: (v: any) => theme.set(v),

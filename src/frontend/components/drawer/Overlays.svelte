@@ -13,7 +13,7 @@
 
   export let active: string | null
 
-  let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
+  let resolution: Resolution = $outSlide && $outSlide.id !== "temp" ? $showsCache[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
 
   let filteredOverlays: any
   $: filteredOverlays = Object.keys($overlays)

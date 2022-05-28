@@ -77,7 +77,8 @@
   setUpdater()
   function setUpdater() {
     let temp: any = { ...$outBackground }
-    if (temp.filter !== undefined) {
+    filter = ""
+    if (temp.filter !== undefined && temp.filter.length) {
       filter = temp.filter
       delete temp.filter
     }

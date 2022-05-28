@@ -77,13 +77,16 @@
   }
 
   function edit(event: any) {
+    let from: Date = new Date(event.from)
+    let to: Date = new Date(event.to)
+
     createNew = true
     editEvent = event
     editEvent.id = event.id
-    editEvent.isoFrom = getISO(event.from)
-    editEvent.isoTo = getISO(event.to)
-    editEvent.fromTime = getTime(event.from)
-    editEvent.toTime = getTime(event.to)
+    editEvent.isoFrom = getISO(from)
+    editEvent.isoTo = getISO(to)
+    editEvent.fromTime = getTime(from)
+    editEvent.toTime = getTime(to)
     stored = JSON.stringify(editEvent)
   }
 
@@ -156,7 +159,7 @@
     dark
     center
   >
-    <Icon id="save" />
+    <Icon id="save" right />
     {#if stored === JSON.stringify(editEvent)}
       <T id="actions.close" />
     {:else}

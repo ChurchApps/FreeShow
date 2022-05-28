@@ -69,7 +69,7 @@
   // dynamic counter
   function getGroupName(slideID: string) {
     let name = group
-    if (name !== null) {
+    if (name !== null && name !== undefined) {
       if (!name.length) name = "—"
       let added: any = {}
       // if ($groupCount) {

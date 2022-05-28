@@ -4,9 +4,11 @@ export const getStyles = (str: string | null | undefined, removeText: boolean = 
   if (str?.length) {
     str.split(";").forEach((s) => {
       if (s.length) {
+        let key: string = s.slice(0, s.indexOf(":")).trim()
         let style: string = s.slice(s.indexOf(":") + 1, s.length).trim()
-        if (removeText && style.length > style.replace(/[^0-9.-]/g, "").length && style.replace(/[^0-9.-]/g, "").length > 0) style = style.replace(/[^0-9.-]/g, "")
-        styles[s.slice(0, s.indexOf(":")).trim()] = style
+        if (!key.includes("color") && removeText && style.length > style.replace(/[^0-9.-]/g, "").length && style.replace(/[^0-9.-]/g, "").length > 0)
+          style = style.replace(/[^0-9.-]/g, "")
+        styles[key] = style
       }
     })
   }

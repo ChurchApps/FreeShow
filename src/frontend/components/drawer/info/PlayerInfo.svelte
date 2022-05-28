@@ -9,7 +9,7 @@
 </script>
 
 {#if active === "youtube"}
-  <Button on:click={() => send(OUTPUT, ["CLOSE_AD"])}>
+  <Button on:click={() => send(OUTPUT, ["CLOSE_AD"])} center dark>
     <T id="inputs.close_ad" />
   </Button>
 {/if}

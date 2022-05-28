@@ -75,7 +75,7 @@ export type HistoryIDs =
   | "deletePlayerVideo"
   | "deleteLayout"
   // add
-  | "addShow"
+  | "addShowToProject"
   | "addLayout"
   // show
   | "deleteShow"
@@ -90,7 +90,7 @@ export type HistoryIDs =
   // project
   | "updateProject"
   | "updateProjectFolder"
-  | "project"
+  // | "project"
   | "projects"
   | "drawer"
   // other
@@ -175,11 +175,9 @@ export function history(obj: History, undo: null | boolean = null) {
     // EDIT
     // style
     case "deleteItem":
-      if (undo) {
-        _show(showID).slides([obj.location!.slide!]).items(obj.location!.items!).add(obj.newData.items)
-      } else {
-        old = { items: _show(showID).slides([obj.location!.slide!]).items(obj.location!.items!).remove() }
-      }
+      if (undo) _show(showID).slides([obj.location!.slide!]).items(obj.location!.items!).add(obj.newData.items)
+      else old = { items: _show(showID).slides([obj.location!.slide!]).items(obj.location!.items!).remove() }
+      _show(showID).set({ key: "timestamps.modified", value: new Date().getTime() })
       break
     // case "textStyle":
     // TODO: wip
@@ -215,6 +213,7 @@ export function history(obj: History, undo: null | boolean = null) {
       if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
       if (old.template) _show(showID).set(old.template)
       console.log(old)
+      // _show(showID).set({ key: "timestamps.modified", value: new Date().getTime() })
       break
     case "setItems":
     case "setStyle":
@@ -222,6 +221,7 @@ export function history(obj: History, undo: null | boolean = null) {
       if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
       if (old.template) _show(showID).set(old.template)
       console.log(old)
+      // _show(showID).set({ key: "timestamps.modified", value: new Date().getTime() })
       break
     case "stageItemStyle":
     case "stageItemAlign":
@@ -231,6 +231,7 @@ export function history(obj: History, undo: null | boolean = null) {
         })
         return s
       })
+      // _show(showID).set({ key: "timestamps.modified", value: new Date().getTime() })
       break
     case "slideStyle":
       old = { style: _show(showID).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData.style }) }
@@ -241,6 +242,7 @@ export function history(obj: History, undo: null | boolean = null) {
       //   slide.settings = obj.newData
       //   return s
       // })
+      // _show(showID).set({ key: "timestamps.modified", value: new Date().getTime() })
       break
     //
     case "updateProject":
@@ -288,13 +290,13 @@ export function history(obj: History, undo: null | boolean = null) {
       })
       break
     // MOVE
-    case "project": // projecList
-      projects.update((p) => {
-        p[get(activeProject)!].shows = obj.newData
-        // TODO: p[obj.location!.project].shows = obj.newData
-        return p
-      })
-      break
+    // case "project": // projecList
+    //   projects.update((p) => {
+    //     p[get(activeProject)!].shows = obj.newData
+    //     // TODO: p[obj.location!.project].shows = obj.newData
+    //     return p
+    //   })
+    //   break
     case "slide":
       if (undo) {
       } else {
@@ -852,21 +854,17 @@ export function history(obj: History, undo: null | boolean = null) {
       break
 
     // ADD
-    case "addShow":
-      if (activeProject !== null) {
-        console.log(undo)
-        // TODO: clear slide if active!
-
-        if (obj.oldData === null) obj.oldData = [get(activeProject), [...get(projects)[get(activeProject)!].shows]]
-        console.log(obj.oldData)
-        projects.update((p) => {
-          if (typeof obj.newData === "string") p[obj.oldData[0]].shows = [...p[obj.oldData[0]].shows, { id: obj.newData }]
-          else p[obj.newData[0]].shows = obj.newData[1]
-          console.log(p)
-          return p
-        })
-        console.log([...obj.newData], [...obj.oldData])
-      }
+    case "addShowToProject":
+      projects.update((p) => {
+        if (undo) {
+          p[obj.location!.project!].shows = JSON.parse(obj.newData.shows)
+        } else {
+          if (!obj.oldData?.shows) obj.oldData = { shows: JSON.stringify(p[obj.location!.project!].shows) }
+          if (obj.newData.id) p[obj.location!.project!].shows.push(obj.newData)
+          else p[obj.location!.project!].shows = obj.newData.shows
+        }
+        return p
+      })
       break
     case "addLayout":
       if (undo) {
@@ -1153,7 +1151,7 @@ export function history(obj: History, undo: null | boolean = null) {
   } else {
     undoHistory.update((uh: History[]) => {
       // if id and location is equal push new data to previous stored
-      // not: project | newProject | newFolder | addShow | slide
+      // not: project | newProject | newFolder | addShowToProject | slide
       if (
         undo === null &&
         uh[uh.length - 1]?.id === obj.id &&

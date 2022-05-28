@@ -1,4 +1,4 @@
-import { alertUpdates, autoOutput, backgroundColor, maxConnections, outputPosition, ports, transitionData } from "./../stores"
+import { alertUpdates, autoOutput, backgroundColor, maxConnections, outputPosition, ports, scriptures, scriptureSettings, splitLines, transitionData } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -184,7 +184,10 @@ const saveList: { [key in SaveList]: any } = {
   remotePassword: remotePassword,
   resized: resized,
   screen: screen,
+  scriptures: scriptures,
+  scriptureSettings: scriptureSettings,
   slidesOptions: slidesOptions,
+  splitLines: splitLines,
   templateCategories: templateCategories,
   templates: templates,
   theme: theme,

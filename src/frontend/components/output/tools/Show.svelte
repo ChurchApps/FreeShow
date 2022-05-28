@@ -8,10 +8,13 @@
   $: {
     if ($outSlide?.id) {
       length = 0
-      $showsCache[$outSlide.id]?.layouts[$outSlide.layout]?.slides.forEach((s: any) => {
-        length++
-        if ($showsCache[$outSlide!.id].slides[s.id].children) length += $showsCache[$outSlide!.id].slides[s.id].children!.length
-      })
+      if ($outSlide?.id === "temp") length = 1
+      else {
+        $showsCache[$outSlide.id]?.layouts[$outSlide.layout!]?.slides.forEach((s: any) => {
+          length++
+          if ($showsCache[$outSlide!.id].slides[s.id].children) length += $showsCache[$outSlide!.id].slides[s.id].children!.length
+        })
+      }
     }
   }
 </script>
@@ -26,7 +29,7 @@
       {/if}
     </p>
     <!-- TODO: update -->
-    <span style="opacity: 0.6;">{$outSlide.index + 1}/{length}</span>
+    <span style="opacity: 0.6;">{($outSlide.index || 0) + 1}/{length}</span>
   </span>
 {/if}
 

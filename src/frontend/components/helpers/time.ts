@@ -1,9 +1,10 @@
 import type { Time } from "../../../types/Main"
 
 export function secondsToTime(seconds: number): Time {
-  let h: any = Math.floor(seconds / 3600)
-  let m: any = Math.floor((seconds - h * 3600) / 60)
-  let s: any = Math.round(seconds - h * 3600 - m * 60)
+  let d: any = Math.floor(seconds / (3600 * 24))
+  let h: any = Math.floor(seconds / 3600 - d * 24)
+  let m: any = Math.floor((seconds - d * 3600 * 24 - h * 3600) / 60)
+  let s: any = Math.round(seconds - d * 3600 * 24 - h * 3600 - m * 60)
   // TODO: ms
   // let ms: any = Math.round(seconds - h * 3600 - m * 60 - s * 60)
   let ms: any = 0
@@ -13,7 +14,7 @@ export function secondsToTime(seconds: number): Time {
   if (s < 10) s = "0" + s
   if (ms < 10) ms = "0" + ms
 
-  return { ms, s, m, h }
+  return { ms, s, m, h, d }
 }
 
 export function joinTime(time: Time, ms: boolean = false): string {

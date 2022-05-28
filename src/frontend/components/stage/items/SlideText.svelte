@@ -7,7 +7,7 @@
   export let style: boolean = false
   export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; id: string }
 
-  $: index = $outSlide ? $outSlide.index + (next ? 1 : 0) : null
+  $: index = $outSlide && $outSlide.id !== "temp" ? $outSlide.index! + (next ? 1 : 0) : null
   $: slideId = index !== null && $outSlide ? _show($outSlide.id).layouts("active").ref()[0][index!]?.id || null : null
   $: slide = $outSlide && slideId ? $showsCache[$outSlide.id].slides[slideId] : null
 </script>

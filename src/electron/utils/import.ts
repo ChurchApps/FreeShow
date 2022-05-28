@@ -63,11 +63,11 @@ export async function importShow(id: any, name: string, files: string[] | null, 
       toApp(IMPORT, { channel: id, data: data })
     }, 100)
   } else {
-    // FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong
+    // FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
     let data: any[] = []
     files.forEach((filePath) => {
       let content = readFileSync(filePath, "utf8").toString()
-      let name = files ? path.basename(files[0]).slice(0, path.basename(files[0]).lastIndexOf(".")) : ""
+      let name = files ? path.basename(filePath).slice(0, path.basename(filePath).lastIndexOf(".")) : ""
       data.push({ content, name })
     })
     toApp(IMPORT, { channel: id, data: data })

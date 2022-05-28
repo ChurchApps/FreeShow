@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Bible } from "../../../types/Scripture"
-  import { activeDrawerTab, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, projects } from "../../stores"
+  import { activeDrawerTab, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, projects } from "../../stores"
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
   import Navigation from "../drawer/Navigation.svelte"
@@ -103,7 +103,7 @@
 
       console.log(firstMatch)
       searchElem.select()
-      history({ id: $activeDrawerTab === "shows" ? "addShow" : "addShow", newData: firstMatch.id })
+      if ($activePage === "show") history({ id: "addShowToProject", newData: { id: firstMatch.id }, location: { page: "show", project: $activeProject } })
       activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
       searchValue = ""
 

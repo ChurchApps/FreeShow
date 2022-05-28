@@ -71,10 +71,10 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     return
   }
 
-  if (!slide) return
+  if (!slide || slide.id === "temp") return
 
   // TODO: Check for loop to beginning slide...
-  index = getNextEnabled(slide.index, end)
+  index = getNextEnabled(slide.index!, end)
 
   if (index !== null) {
     outSlide.set({ ...slide, index })

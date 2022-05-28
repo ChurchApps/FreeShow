@@ -1,6 +1,7 @@
 export const MAIN: Main = "MAIN"
 export const STORE: Store = "STORE"
 export const SHOW: Show = "SHOW"
+export const BIBLE: Bible = "BIBLE"
 export const OUTPUT: OutputData = "OUTPUT"
 export const IMPORT: Import = "IMPORT"
 export const EXPORT: Export = "EXPORT"
@@ -14,6 +15,7 @@ export const STAGE: Stage = "STAGE"
 export type Main = "MAIN"
 export type Store = "STORE"
 export type Show = "SHOW"
+export type Bible = "BIBLE"
 export type OutputData = "OUTPUT"
 export type Import = "IMPORT"
 export type Export = "EXPORT"
@@ -24,7 +26,7 @@ export type FileInfo = "FILE_INFO"
 export type Remote = "REMOTE"
 export type Stage = "STAGE"
 
-export type ValidChannels = Main | Store | Show | OutputData | Import | Export | OpenFile | OpenFolder | ReadFolder | Remote | Stage
+export type ValidChannels = Main | Store | Show | Bible | OutputData | Import | Export | OpenFile | OpenFolder | ReadFolder | Remote | Stage
 
 export type Data = string | DataObject
 export interface DataObject {

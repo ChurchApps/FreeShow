@@ -1,6 +1,5 @@
 <script lang="ts">
   import { activeEdit, activeShow, backgroundColor, screen, showsCache } from "../../stores"
-  import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
   import { _show } from "../helpers/shows"
   import { getStyles } from "../helpers/style"
@@ -16,37 +15,6 @@
   $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
   $: ref = currentShow && $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
   $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show("active").slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
-
-  // showsCache.subscribe((a) => {
-  //   console.log(a)
-
-  //   if (
-  //     $activeEdit.slide !== null &&
-  //     JSON.stringify(Slide) !==
-  //       JSON.stringify(
-  //         _show([currentShow])
-  //           .slides([_show([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
-  //           .get()[0]
-  //       )
-  //   )
-  //     Slide = _show([currentShow])
-  //       .slides([_show([currentShow]).layouts("active").ref()[0][$activeEdit.slide]?.id])
-  //       .get()[0]
-  // })
-
-  // interface Mouse {
-  //   x: number
-  //   y: number
-  //   offset: {
-  //     x: number
-  //     y: number
-  //     width: number
-  //     height: number
-  //   }
-  //   // offsetWidth: number
-  //   // offsetHeight: number
-  //   e: any
-  // }
 
   let lines: [string, number][] = []
   let mouse: any = null
@@ -68,7 +36,7 @@
   function updateStyles() {
     if (!Object.keys(newStyles).length) return
 
-    let items = $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
+    let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!]?.id].items
     let values: any[] = []
     active.forEach((id) => {
       let item = items[id]
@@ -79,7 +47,6 @@
         Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
         Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
-        // TODO: move multiple!
         values.push(textStyles)
       }
     })
@@ -88,15 +55,12 @@
       id: "setStyle",
       newData: { style: { key: "style", values } },
       location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: active },
-      // location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: active },
     })
-
-    _show($activeShow!.id).set({ key: "timestamps.modified", value: new Date().getTime() })
   }
 
   $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
-    let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
-    // let items = $showsCache[$activeShow?.id!].slides[GetLayout($activeShow?.id!)[$activeEdit.slide!]?.id].items
+    // let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
+    let items = _show("active").slides([ref[$activeEdit.slide!].id]).items().get()[0]
     if (items) autoSize(active, items)
   }
 </script>

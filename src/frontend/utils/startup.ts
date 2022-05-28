@@ -1,14 +1,27 @@
-import { IMPORT } from "./../../types/Channels"
-import { activePopup, alertMessage, backgroundColor, displayMetadata, outputPosition, screen } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
+import { history } from "../components/helpers/history"
 import { loadShows } from "../components/helpers/setShow"
+import { checkName } from "../components/helpers/show"
+import { convertEasyWorship } from "../converters/easyworship"
+import { convertOpenLP } from "../converters/openlp"
+import { convertOpenSong } from "../converters/opensong"
+import { convertPDF } from "../converters/pdf"
+import { convertPowerpoint } from "../converters/powerpoint"
+import { convertProPresenter } from "../converters/propresenter"
+import { convertText } from "../converters/txt"
+import { convertVideopsalm } from "../converters/videopsalm"
+import { convertXmlBible } from "../converters/xmlBible"
 import {
+  activePopup,
   activeShow,
   activeTimers,
+  alertMessage,
   autoOutput,
+  backgroundColor,
   currentWindow,
+  displayMetadata,
   draw,
   drawSettings,
   drawTool,
@@ -20,10 +33,13 @@ import {
   outBackground,
   outOverlays,
   outputDisplay,
+  outputPosition,
   outputScreen,
   outSlide,
   overlays,
   projects,
+  saved,
+  screen,
   shows,
   showsCache,
   showsPath,
@@ -33,22 +49,13 @@ import {
   transitionData,
   version,
 } from "../stores"
+import { IMPORT } from "./../../types/Channels"
+import { checkForUpdates } from "./checkForUpdates"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
 import { listen } from "./messages"
 import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
-import { convertPowerpoint } from "../converters/powerpoint"
-import { convertPDF } from "../converters/pdf"
-import { convertText } from "../converters/txt"
-import { checkForUpdates } from "./checkForUpdates"
-import { convertVideopsalm } from "../converters/videopsalm"
-import { convertEasyWorship } from "../converters/easyworship"
-import { history } from "../components/helpers/history"
-import { convertOpenLP } from "../converters/openlp"
-import { checkName } from "../components/helpers/show"
-import { convertOpenSong } from "../converters/opensong"
-import { convertProPresenter } from "../converters/propresenter"
 
 export function startup() {
   if (!get(currentWindow)) {
@@ -98,6 +105,10 @@ const receiveMAIN: any = {
   ALERT: (a: any) => {
     alertMessage.set(a)
     activePopup.set("alert")
+  },
+  CLOSE: () => {
+    if (get(saved)) window.api.send(MAIN, { channel: "CLOSE" })
+    else activePopup.set("unsaved")
   },
   OUTPUT: (a: any) => {
     if (a === "true") currentWindow.set("output")
@@ -155,6 +166,7 @@ const receiveIMPORT: any = {
   powerpoint: (a: any) => convertPowerpoint(a),
   freeshow: (a: any) => importShow(a),
   easyworship: (a: any) => convertEasyWorship(a),
+  xml_bible: (a: any) => convertXmlBible(a),
   videopsalm: (a: any) => convertVideopsalm(a),
   openlp: (a: any) => convertOpenLP(a),
   opensong: (a: any) => convertOpenSong(a),
