@@ -9,7 +9,7 @@
   export let options: Option[]
   let active: boolean = false
   export let value: any
-  if (!value) value = options[0].name || "Select"
+  if (!value) value = options[0]?.name || "—"
   $: updater = [value, $language]
   // TODO: disable active on click anywhere
 

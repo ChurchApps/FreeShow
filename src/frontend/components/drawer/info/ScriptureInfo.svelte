@@ -1,10 +1,9 @@
 <script lang="ts">
   import { uid } from "uid"
   import type { Bible } from "../../../../types/Scripture"
-  import type { Resolution } from "../../../../types/Settings"
   import type { Item } from "../../../../types/Show"
   import { ShowObj } from "../../../classes/Show"
-  import { activeProject, categories, screen, scriptureSettings, templates } from "../../../stores"
+  import { activeProject, categories, scriptureSettings, templates } from "../../../stores"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
   import { checkName } from "../../helpers/show"
@@ -20,21 +19,17 @@
   $: sorted = bible.activeVerses.sort((a, b) => a - b)
   let range: any[][] = [[null, null]]
 
-  // let slideWidth: number = 300 - 20 - 5
-  let resolution: Resolution = $screen.resolution
-  // $: zoom = slideWidth / resolution.width
-
   $: {
-    console.log(bible.activeVerses.length)
+    // console.log(bible.activeVerses.length)
     if (bible.activeVerses.length) {
-      console.log(bible.activeVerses)
-      console.log(sorted)
+      // console.log(bible.activeVerses)
+      // console.log(sorted)
       range = [[sorted[0], null]]
       let prev: null | number = null
       let index = 0
       sorted.forEach((i) => {
         if (range[index][1] === null || i > range[index][1]) {
-          console.log(prev, i)
+          // console.log(prev, i)
 
           if (prev !== null && prev + 1 !== i) {
             index++
@@ -44,7 +39,7 @@
           prev = i
         }
       })
-      console.log(range)
+      // console.log(range)
     }
   }
 
@@ -73,7 +68,7 @@
   // let values: any[][] = []
   // let itemStyle = "top: 150px;left: 50px;width: " + (resolution.width - 100) + "px;height: " + (resolution.height - 300) + "px;"
   $: template = $templates[$scriptureSettings.template]?.items || []
-  $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: " + (resolution.width - 100) + "px;height: " + (resolution.height - 300) + "px;"
+  $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
   $: {
     if (sorted.length) {
       slides = [[{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }]]
@@ -103,7 +98,7 @@
             if (rangeJoined[rangeJoined.length - 1] && r - 1 === range[i - 1]) rangeJoined[rangeJoined.length - 1].push(r)
             else rangeJoined.push([r])
           })
-          console.log(rangeJoined)
+          // console.log(rangeJoined)
           // TODO: sometimes only showing last verse number...
 
           let arr: any[] = []
@@ -132,7 +127,7 @@
     if ((showVersion && bible.version) || showVerse)
       slides[slides.length - 1].push({
         lines,
-        style: template[1]?.style || "left: 50px;height: 150px;top: " + (resolution.height - 170) + "px;width: " + (resolution.width - 100) + "px;opacity: 0.8;",
+        style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
       })
   }
 
@@ -215,7 +210,7 @@
   </span>
   <span>
     <p><T id="scripture.max_verses" /></p>
-    <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={20} on:change={(e) => update("versesPerSlide", e.detail)} />
+    <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={25} on:change={(e) => update("versesPerSlide", e.detail)} />
   </span>
   <span>
     <p><T id="scripture.verse_numbers" /></p>

@@ -12,6 +12,7 @@ import { convertPowerpoint } from "../converters/powerpoint"
 import { convertProPresenter } from "../converters/propresenter"
 import { convertText } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
+import { convertXmlBible } from "../converters/xmlBible"
 import {
   activePopup,
   activeShow,
@@ -165,6 +166,7 @@ const receiveIMPORT: any = {
   powerpoint: (a: any) => convertPowerpoint(a),
   freeshow: (a: any) => importShow(a),
   easyworship: (a: any) => convertEasyWorship(a),
+  xml_bible: (a: any) => convertXmlBible(a),
   videopsalm: (a: any) => convertVideopsalm(a),
   openlp: (a: any) => convertOpenLP(a),
   opensong: (a: any) => convertOpenSong(a),

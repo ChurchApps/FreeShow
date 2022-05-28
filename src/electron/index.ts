@@ -1,4 +1,4 @@
-import { IMPORT } from "./../types/Channels"
+import { BIBLE, IMPORT } from "./../types/Channels"
 import { app, BrowserWindow, desktopCapturer, dialog, Display, ipcMain, Menu, screen } from "electron"
 import fs from "fs"
 import path, { join } from "path"
@@ -281,8 +281,26 @@ function save(data: any) {
     toApp(MAIN, { channel: "SHOWS_PATH", data: data.path })
   }
 
+  // SCRIPTURES
+  if (data.scripturesCache) {
+    Object.entries(data.scripturesCache).forEach(([id, value]: any) => {
+      let p: string = path.resolve(app.getPath("documents"), "Bibles")
+      // create folder
+      if (!fs.existsSync(p)) {
+        fs.mkdirSync(p, { recursive: true })
+        p = path.resolve(app.getPath("documents"), "Bibles", value.name + ".fsb")
+      }
+      // create or update file
+      if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
+        fs.writeFile(p, JSON.stringify([id, value]), (err): void => {
+          if (err) toApp(SHOW, { error: "no_write", err, id })
+        })
+      }
+    })
+  }
+
   // SHOWS
-  if (data.showsCache)
+  if (data.showsCache) {
     Object.entries(data.showsCache).forEach(([id, value]: any) => {
       let p: string = path.resolve(data.path, value.name + ".show")
       if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
@@ -291,6 +309,7 @@ function save(data: any) {
         })
       }
     })
+  }
 }
 
 // Custom .show file
@@ -336,6 +355,22 @@ ipcMain.on(EXPORT, (_e, msg) => {
       else if (msg.data.type === "txt") exportTXT(msg.data)
     }
   }
+})
+
+// BIBLE
+ipcMain.on(BIBLE, (e, msg) => {
+  let bible: any = "{}"
+  let p: string = path.resolve(app.getPath("documents"), "Bibles", msg.name + ".fsb")
+  if (fs.existsSync(p)) {
+    try {
+      bible = JSON.parse(fs.readFileSync(p, "utf8"))
+    } catch (err) {
+      console.log(err)
+    }
+    if (bible[0] === msg.id) {
+      e.reply(BIBLE, { id: msg.id, bible })
+    } else e.reply(BIBLE, { error: "not_found", id: msg.id, file_id: bible[0] })
+  } else e.reply(BIBLE, { error: "not_found", id: msg.id })
 })
 
 // SHOW

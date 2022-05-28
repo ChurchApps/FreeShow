@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, templateCategories } from "../../stores"
+  import { categories, dictionary, drawerTabsData, mediaFolders, notFound, overlayCategories, templateCategories } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
@@ -34,11 +34,14 @@
   }
 
   let editActive: boolean = false
+
+  $: red = id === "scripture" && $notFound.bible.find((a: any) => a.id === category.id)
 </script>
 
 <Button
   class={category.id === "all" || category.id === "unlabeled" ? "" : `context #category_${id}_button__category_${id}`}
   active={category.id === $drawerTabsData[id].activeSubTab}
+  {red}
   on:click={(e) => {
     if (!editActive && !e.ctrlKey && !e.metaKey) setTab(category.id)
   }}

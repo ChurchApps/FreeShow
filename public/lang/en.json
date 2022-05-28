@@ -29,7 +29,7 @@
   },
   "tooltip": {
     "project": "Create a new project where you can add and arange shows.",
-    "show": "Create a new show where you can add song lyrics, presentations and media. Hold ctrl to create empty.",
+    "show": "Create a new show where you can add song lyrics, presentations and media. Hold Ctrl/Cmd to create empty.",
     "groups": "All the groups in the current show and all the global groups. Click or drag them to add them to the current layout.",
     "layout": "Add transitions and next timers to slides in current layout.",
     "media": "All media in current show. Show them, or drag them to current layout.",
@@ -40,7 +40,8 @@
     "items": "Add and arrange items.",
     "slide": "Edit current slide.",
     "filters": "Change the look of the selected element.",
-    "options": "More options."
+    "options": "More options.",
+    "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses."
   },
   "setup": {
     "good_luck": "I hope you find this software useful. Good luck showing! :)",
@@ -149,7 +150,7 @@
     "groups": "No groups",
     "events": "No events",
     "text": "Type something",
-    "timers": "No timers in the shows in this project"
+    "timers": "No global timers or private in the shows in this project"
   },
   "remote": {
     "projects": "Projects",
@@ -170,6 +171,7 @@
     "no_show": "Could not find show",
     "no_layouts": "Could not find any layouts",
     "load": "Could not load",
+    "bible": "Could not find local scripture",
     "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
     "not_found": "Not found",
     "display": "Could not show output window on current display",
@@ -262,6 +264,7 @@
   "popup": {
     "show": "New show",
     "rename": "Rename",
+    "timer": "Timer",
     "transition": "Transition",
     "delete_show": "Delete show",
     "delete_show_confirmation": "Are you sure you want to delete",
@@ -286,6 +289,7 @@
     "show": "New show",
     "empty_show": "New empty show",
     "project": "New project",
+    "timer": "New timer",
     "category": "New category",
     "private": "New private show",
     "folder": "New folder",
@@ -466,11 +470,11 @@
     "next_slide_text": "Next slide text",
     "next_slide": "Next slide",
     "next_slide_notes": "Next slide notes",
-    "timers": "Timers",
+    "time": "Time",
     "system_clock": "System clock",
     "video_time": "Video time",
     "video_countdown": "Video countdown",
-    "project_timers": "Project timers",
+    "global_timers": "Global timers",
     "other": "Other",
     "chords": "Chords",
     "message": "Message",

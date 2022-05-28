@@ -106,7 +106,7 @@ async function getRemote(msg: ClientMessage) {
         msg.data = null
       } else {
         msg.data = { slide: out ? out.index : null, layout: out?.layout || null }
-        if (out && out.id !== oldOutSlide) {
+        if (out && out.id !== "temp" && out.id !== oldOutSlide) {
           id = out.id
           oldOutSlide = id
           msg.data.show = get(showsCache)[id]
@@ -164,12 +164,12 @@ function getStage(msg: ClientMessage) {
     case "SLIDES":
       let out = get(outSlide)
       msg.data = []
-      if (out && get(activeShow)) {
+      if (out && out.id !== "temp" && get(activeShow)) {
         let layout = GetLayout(out.id, out.layout)
         let slides = get(showsCache)[out.id]?.slides
-        if (layout[out.index]) {
-          msg.data = [slides[layout[out.index].id]]
-          let index = out.index + 1
+        if (layout[out.index!]) {
+          msg.data = [slides[layout[out.index!].id]]
+          let index = out.index! + 1
           while (index < layout.length && layout[index].disabled === true) index++
           if (index < layout.length && !layout[index].disabled) msg.data.push(slides[layout[index].id])
           else msg.data.push(null)

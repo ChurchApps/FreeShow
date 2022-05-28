@@ -7,6 +7,7 @@
   import PlayerInfo from "./PlayerInfo.svelte"
   import ScriptureInfo from "./ScriptureInfo.svelte"
   import ShowInfo from "./ShowInfo.svelte"
+  import TemplateInfo from "./TemplateInfo.svelte"
 
   export let id: string
   export let bible: any
@@ -20,6 +21,8 @@
       <ShowInfo />
     {:else if id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
       <MediaInfo />
+    {:else if id === "templates"}
+      <TemplateInfo />
     {:else if id === "scripture"}
       <ScriptureInfo {bible} />
     {:else if id === "player"}

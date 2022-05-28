@@ -25,10 +25,13 @@
   $: {
     if ($outSlide?.id) {
       length = 0
-      $showsCache[$outSlide.id]?.layouts[$outSlide.layout]?.slides.forEach((s: any) => {
-        length++
-        if ($showsCache[$outSlide!.id].slides[s.id].children) length += $showsCache[$outSlide!.id].slides[s.id].children!.length
-      })
+      if ($outSlide?.id === "temp") length = 1
+      else {
+        $showsCache[$outSlide.id]?.layouts[$outSlide.layout!]?.slides.forEach((s: any) => {
+          length++
+          if ($showsCache[$outSlide!.id].slides[s.id].children) length += $showsCache[$outSlide!.id].slides[s.id].children!.length
+        })
+      }
     }
   }
 </script>
@@ -48,7 +51,10 @@
   <Button
     on:click={previousSlide}
     title={$dictionary.preview?._previous_slide}
-    disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index < 1 : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
+    disabled={$outLocked ||
+      !$activeShow ||
+      $outSlide?.id === "temp" ||
+      ($outSlide ? ($outSlide.index || 0) < 1 : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
     center
   >
     <Icon id="previous" size={1.2} />
@@ -89,7 +95,10 @@
   <Button
     on:click={nextSlide}
     title={$dictionary.preview?._next_slide}
-    disabled={$outLocked || !$activeShow || ($outSlide ? $outSlide.index + 1 >= length : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
+    disabled={$outLocked ||
+      !$activeShow ||
+      $outSlide?.id === "temp" ||
+      ($outSlide ? ($outSlide.index || 0) + 1 >= length : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
     center
   >
     <Icon id="next" size={1.2} />

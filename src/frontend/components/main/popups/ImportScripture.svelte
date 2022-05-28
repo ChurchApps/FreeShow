@@ -1,8 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import { uid } from "uid"
-  import { language, scriptures } from "../../../stores"
+  import { IMPORT } from "../../../../types/Channels"
+  import { activePopup, alertMessage, language, scriptures } from "../../../stores"
   import { replace } from "../../../utils/languageData"
+  import { send } from "../../../utils/request"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -69,6 +71,19 @@
       return a
     })
   }
+
+  const formats: any = [
+    { name: "XML", extensions: ["xml"], id: "xml" },
+    // {
+    //   name: "EasyWorship",
+    //   extensions: ["ewb"],
+    //   id: "easyworship",
+    //   // tutorial: "Import the SongsWords.db file from the Data folder<br>Optionally select Songs.db to import title/metadata)",
+    // },
+    // { name: "VideoPsalm", extensions: ["json"], id: "videopsalm", tutorial: "Find the Songbook.vpc file(s)<br>Add .zip to the end<br>Extract it & import the .json file" },
+    // { name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },
+    // { name: "OpenSong", extensions: [], id: "opensong" },
+  ]
 </script>
 
 <!-- TODO: search -->
@@ -113,8 +128,22 @@
 </h2>
 
 <span>
-  (TBA...)
-  <!-- TODO: other sources (.ewb, ++) -->
+  {#each formats as format}
+    <Button
+      style="width: 25%;flex-direction: column;min-height: 180px;"
+      on:click={() => {
+        send(IMPORT, [format.id + "_bible"], format)
+        if (format.tutorial) {
+          alertMessage.set(format.tutorial)
+          activePopup.set("alert")
+        } else activePopup.set(null)
+      }}
+      center
+    >
+      <img src="./import-logos/{format.icon || format.id}.png" alt="{format.id}-logo" />
+      <p>{format.name}</p>
+    </Button>
+  {/each}
 </span>
 
 <style>
@@ -149,5 +178,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  img {
+    height: 100px;
+    padding: 10px;
   }
 </style>

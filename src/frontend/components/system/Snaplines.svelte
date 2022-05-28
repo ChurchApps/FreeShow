@@ -28,7 +28,7 @@
       mouse.e.altKey
 
     let square = e.altKey
-    if (notTextBox) square = true
+    if (mouse.item.type === "icon") square = true
 
     if (moveCondition) [styles, lines] = moveBox(e, mouse, ratio, active, lines)
     else if (mouse.e.target.closest(".square")) {

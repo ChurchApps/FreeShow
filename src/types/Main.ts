@@ -16,6 +16,7 @@ export interface Time {
   s: string
   m: string
   h: string
+  d: string
 }
 
 export type SelectIds =
@@ -77,6 +78,7 @@ export type Popups =
   | "delete_show"
   | "icon"
   | "rename"
+  | "timer"
   | "transition"
   | "import_scripture"
   | "about"

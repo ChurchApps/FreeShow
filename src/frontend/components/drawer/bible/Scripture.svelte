@@ -2,10 +2,12 @@
   import { onMount } from "svelte"
   import Loader from "../../main/Loader.svelte"
   import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
+  // import type { Bible } from "../../../../types/Bible"
   import type { StringObject } from "../../../../types/Main"
   import Center from "../../system/Center.svelte"
   import T from "../../helpers/T.svelte"
-  import { scriptures } from "../../../stores"
+  import { dictionary, notFound, outLocked, outSlide, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
+  import { BIBLE } from "../../../../types/Channels"
 
   export let active: any
   export let bible: Bible
@@ -40,7 +42,6 @@
     fetch(urls[id], { headers: { "api-key": key } })
       .then((response) => response.json())
       .then((data) => {
-        console.log({ ...data.data })
         let hasId = false
         switch (id) {
           case "books":
@@ -69,7 +70,6 @@
         }
       })
       .catch((e) => {
-        console.log(e)
         error = e
       })
   }
@@ -119,41 +119,96 @@
   }
 
   onMount(async () => {
-    fetchBible("books")
+    if (bible.api) fetchBible("books")
   })
 
-  $: {
-    if (active) {
-      console.log($scriptures, active)
-
-      Object.values($scriptures).forEach((scripture) => {
-        if (scripture.id === active) bible.version = scripture.name
+  let notLoaded: boolean = false
+  window.api.receive(BIBLE, (data: any) => {
+    if (data.error === "not_found") {
+      notLoaded = true
+      notFound.update((a) => {
+        a.bible.push({ id: data.id })
+        return a
       })
-      verses = null
-      fetchBible("books")
+    } else {
+      scripturesCache.update((a) => {
+        a[data.bible[0]] = data.bible[1]
+        return a
+      })
+
+      bible.version = data.bible[1].name
+      bible.id = data.bible[0]
+      books = data.bible[1].books as any
+      if (typeof bookId === "string") bookId = 0
+    }
+  })
+
+  $: if (active) getBible()
+  $: if (books.length && bookId !== undefined) getBook()
+  $: if (chapters.length && chapterId !== undefined) getChapter()
+  $: if (versesList.length) getVerses()
+  $: if (!bible.api && bible.activeVerses) getVerses()
+
+  function getBible() {
+    notLoaded = false
+    error = null
+
+    Object.entries($scriptures).forEach(([id, scripture]: any) => {
+      if (scripture.id === active || id === active) {
+        if (scripture.api) {
+          bible.api = true
+          bible.version = scripture.name
+        } else {
+          if ($scripturesCache[id]) {
+            bible.version = scripture.name
+            bible.id = id
+          } else window.api.send(BIBLE, { name: scripture.name, id: scripture.id })
+          delete bible.api
+        }
+      }
+    })
+    verses = null
+    if (bible.version) {
+      if (bible.api) fetchBible("books")
+      else {
+        books = $scripturesCache[bible.id!].books as any
+        bookId = 0
+      }
     }
   }
 
-  $: {
-    if (books.length && bookId) {
+  function getBook() {
+    if (bible.api) {
       books.forEach((b) => {
         if (b.id === bookId) bible.book = b.name
       })
       fetchBible("chapters")
+    } else {
+      bible.book = books[bookId].name
+      chapters = (books[bookId] as any).chapters
+      chapterId = 0
     }
   }
-  $: {
-    if (chapters.length && chapterId) {
+
+  function getChapter() {
+    if (bible.api) {
       chapters.forEach((c) => {
         if (c.id === chapterId) bible.chapter = c.number
       })
       fetchBible("verses")
+    } else {
+      bible.chapter = chapters[chapterId].number
+      verses = { content: (chapters[chapterId] as any).verses.map((a: any) => [a.number, a.value]) } as any
     }
   }
-  $: {
-    if (versesList.length) {
+
+  function getVerses() {
+    // console.log(versesList)
+    if (bible.api) {
       verses = null
       fetchBible("versesText")
+    } else {
+      bible.verses = verses?.content as any
     }
   }
 
@@ -188,12 +243,52 @@
 
     bible.activeVerses = activeVerses
   }
+
+  $: template = $templates[$scriptureSettings.template]?.items || []
+  $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
+  function showVerse(index: number) {
+    if ($outLocked) return
+
+    let verse = verses?.content[index][1] || ""
+    verse = verse.replace(/(<([^>]+)>)/gi, "")
+    let text = []
+
+    if ($scriptureSettings.verseNumbers) {
+      text.push({ value: bible.verses[index][0] + " ", style: "font-size: 100px;color: gray;" + template[0]?.lines?.[0].text?.[0].style || "" })
+    }
+
+    text.push({ style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;", value: verse })
+
+    let tempItems = []
+    tempItems.push({
+      style: itemStyle,
+      align: "",
+      lines: [{ align: template[0]?.lines?.[0].align || "text-align: justify;", text }],
+    })
+
+    // add data
+    let lines = []
+    let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
+    if ($scriptureSettings.showVersion && bible.version) lines.push({ text: [{ value: bible.version, style: verseStyle }], align: "" })
+    if ($scriptureSettings.showVerse) lines.push({ text: [{ value: bible.book + " " + bible.chapter + ":" + (index + 1), style: verseStyle }], align: "" })
+    if (($scriptureSettings.showVersion && bible.version) || showVerse)
+      tempItems.push({
+        lines,
+        style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+      })
+
+    outSlide.set({ id: "temp", tempItems })
+  }
 </script>
 
 <!-- TODO: search (https://scripture.api.bible/docs#searching) -->
 
 <div class="main">
-  {#if error}
+  {#if notLoaded}
+    <Center faded>
+      <T id="error.bible" />
+    </Center>
+  {:else if error}
     <Center faded>
       <T id="error.bible_api" />
     </Center>
@@ -201,8 +296,8 @@
     <div class:center={!books.length}>
       {#if books.length}
         {#key books}
-          {#each books as book}
-            <span on:click={() => (bookId = book.id)} class:active={bookId === book.id}>
+          {#each books as book, i}
+            <span on:click={() => (bible.api ? (bookId = book.id) : (bookId = i))} class:active={bible.api ? bookId === book.id : bookId === i}>
               {book.name}
             </span>
           {/each}
@@ -213,8 +308,8 @@
     </div>
     <div style="text-align: center;" class:center={!chapters.length}>
       {#if chapters.length}
-        {#each chapters as chapter}
-          <span on:click={() => (chapterId = chapter.id)} class:active={chapterId === chapter.id}>
+        {#each chapters as chapter, i}
+          <span on:click={() => (bible.api ? (chapterId = chapter.id) : (chapterId = i))} class:active={bible.api ? chapterId === chapter.id : chapterId === i}>
             {chapter.number}
           </span>
         {/each}
@@ -225,13 +320,15 @@
     <div class="verses" class:center={!verses}>
       {#if verses}
         {#each verses.content as content, i}
-          <p on:mousedown={(e) => selectVerse(e, i)} class:active={activeVerses.includes(i)}>
+          <p on:mousedown={(e) => selectVerse(e, i)} on:dblclick={() => showVerse(i)} class:active={activeVerses.includes(i)} title={$dictionary.tooltip.scripture}>
             <span class="v">{content[0]}</span>{@html content[1]}
           </p>
         {/each}
-        <copy>
-          {verses.copyright}
-        </copy>
+        {#if verses.copyright}
+          <copy>
+            {verses.copyright}
+          </copy>
+        {/if}
       {:else}
         <Loader />
       {/if}

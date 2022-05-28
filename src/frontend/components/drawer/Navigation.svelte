@@ -108,7 +108,10 @@
     })
   }
 
-  const getBibleVersions = () => keysToID($scriptures).sort((a: any, b: any) => a.name.localeCompare(b.name))
+  const getBibleVersions = () =>
+    keysToID($scriptures)
+      .map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : "scripture" }))
+      .sort((a: any, b: any) => a.name.localeCompare(b.name))
 
   let length: any = {}
   if (id) length = {}

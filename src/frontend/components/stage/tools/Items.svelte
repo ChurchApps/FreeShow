@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { activeProject, activeStage, projects, stageShows } from "../../../stores"
+  import { activeStage, stageShows, timers } from "../../../stores"
+  import { keysToID } from "../../helpers/array"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
-  import { getTimers } from "../../show/tools/timers"
   import Panel from "../../system/Panel.svelte"
   import { updateStageShow } from "../stage"
 
   const titles = {
     slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
-    timers: ["system_clock", "video_time", "video_countdown"],
-    project_timers: ["{timers}"],
+    time: ["system_clock", "video_time", "video_countdown"],
+    global_timers: ["{timers}"],
     other: ["chords", "message"],
   }
 
@@ -37,15 +37,8 @@
 
   let timeout: any = null
 
-  $: showsList = $activeProject ? $projects[$activeProject].shows : []
-  let timers: any[] = []
-
-  $: if (showsList.length) loadTimers()
-  async function loadTimers() {
-    showsList.forEach(async (a) => {
-      timers = [...timers, ...(await getTimers(a))]
-    })
-  }
+  let timersList: any[] = []
+  $: if (Object.keys($timers).length) timersList = keysToID($timers)
 </script>
 
 <div class="main">
@@ -54,11 +47,11 @@
       {#if i > 0}<hr />{/if}
       <h6><T id="stage.{title}" /></h6>
 
-      {#if title === "project_timers"}
-        {#each timers as item}
-          <Button on:click={() => click(title + "#" + item.timer.name)} active={enabledItems[title + "#" + item.timer.name]?.enabled} style="width: 100%;">
+      {#if title === "global_timers"}
+        {#each timersList as timer}
+          <Button on:click={() => click(title + "#" + timer.name)} active={enabledItems[title + "#" + timer.name]?.enabled} style="width: 100%;">
             <Icon id="timer" right />
-            <span class="overflow">{item.timer.name}</span>
+            <span class="overflow">{timer.name}</span>
           </Button>
         {/each}
       {:else}

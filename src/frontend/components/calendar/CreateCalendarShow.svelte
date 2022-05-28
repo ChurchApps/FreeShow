@@ -115,9 +115,9 @@
     let show = new ShowObj(true, "events", layoutID)
 
     // add events category
-    if (!$categories.scripture) {
+    if (!$categories.events) {
       categories.update((a) => {
-        a.events = { name: "category.events", icon: "events", default: true }
+        a.events = { name: "category.events", icon: "event", default: true }
         return a
       })
     }

@@ -243,6 +243,10 @@
     })
     return newLines
   }
+
+  // timer
+  let today = new Date()
+  setInterval(() => (today = new Date()), 1000)
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -271,11 +275,11 @@
         contenteditable
         bind:innerHTML={html}
         style={plain ? null : item.align ? item.align.replace("align-items", "justify-content") : null}
-        class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0].value.length}
+        class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
       />
     </div>
   {:else if item?.type === "timer"}
-    <Timer {item} {ref} />
+    <Timer {item} {ref} {today} />
   {:else if item?.type === "icon"}
     <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}

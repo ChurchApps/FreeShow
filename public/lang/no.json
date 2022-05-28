@@ -29,7 +29,7 @@
   },
   "tooltip": {
     "project": "Opprett ett nytt prosjekt hvor du kan legge til og organisere show.",
-    "show": "Opprett ett nytt show hvor du kan legge til sangtekster, presentasjoner og medier. Hold ctrl for å opprette tomt.",
+    "show": "Opprett ett nytt show hvor du kan legge til sangtekster, presentasjoner og medier. Hold Ctrl/Cmd for å opprette tomt.",
     "groups": "Alle gruppene i valgt show og alle globale grupper. Klikk eller dra dem for å legge dem til i valgt oppsett.",
     "layout": "Legg til overganger og tid til neste til lysbilder i valgt oppsett.",
     "media": "Alle medier i valgt show. Vis dem, eller dra dem til nåværende oppsett.",
@@ -40,7 +40,8 @@
     "items": "Legg til eller ordne elementer.",
     "slide": "Rediger valgt lysbilde.",
     "filters": "Endre utseendet for det valgte elementet.",
-    "options": "Flere alternativer."
+    "options": "Flere alternativer.",
+    "scripture": "Hold Ctrl/Cmd eller Shift for å velge flere vers."
   },
   "setup": {
     "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
@@ -149,7 +150,7 @@
     "groups": "Ingen grupper",
     "events": "Ingen arrangement",
     "text": "Skriv noe",
-    "timers": "Ingen nedtellinger i noen show i dette prosjektet"
+    "timers": "Ingen globale nedtellinger, eller private i noen show i dette prosjektet"
   },
   "remote": {
     "projects": "Prosjekter",
@@ -170,6 +171,7 @@
     "no_show": "Kunne ikke finne noen show",
     "no_layouts": "Kunne ikke finne noen oppsett",
     "load": "Kunne ikke laste inn",
+    "bible": "Kunne ikke finne lokal bibel",
     "bible_api": "Kunne ikke laste inn bibel fra API.Bible, har du en internettforbindelse?",
     "not_found": "Ikke funnet",
     "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
@@ -262,6 +264,7 @@
   "popup": {
     "show": "Nytt show",
     "rename": "Gi nytt navn",
+    "timer": "Nedtelling",
     "transition": "Overgang",
     "delete_show": "Slett show",
     "delete_show_confirmation": "Er du sikker på at du vil slette",
@@ -286,6 +289,7 @@
     "show": "Nytt show",
     "empty_show": "Nytt tomt show",
     "project": "Nytt prosjekt",
+    "timer": "Ny nedtelling",
     "category": "Ny kategori",
     "private": "Nytt privat show",
     "folder": "Ny mappe",
@@ -466,11 +470,11 @@
     "next_slide": "Neste lysbilde",
     "next_slide_text": "Neste lysbilde tekst",
     "next_slide_notes": "Neste lysbilde notater",
-    "timers": "Tid",
+    "time": "Tid",
     "system_clock": "Systemklokke",
     "video_time": "Videotid",
     "video_countdown": "Video nedtelling",
-    "project_timers": "Prosjekt-nedtellinger",
+    "global_timers": "Globale nedtellinger",
     "other": "Andre",
     "chords": "Akkorder",
     "message": "Melding",
