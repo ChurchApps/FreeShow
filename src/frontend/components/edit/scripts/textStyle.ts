@@ -126,7 +126,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
 
               if ((child === startNode && child !== endNode) || selection!.containsNode(child)) {
                 if (end === null) end = count
-                end += child.innerText.length
+                end += child.innerText?.length || 0
                 sel[line].end = end
               } else {
                 end = count + endOffset
@@ -134,7 +134,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
               }
             }
           }
-          count += child.innerText.length
+          count += child.innerText?.length || 0
         })
       })
     }

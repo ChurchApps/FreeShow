@@ -13,7 +13,8 @@
   "languages": {
     "en": "Angličtina",
     "no": "Nórština",
-    "sk": "Slovenčina"
+    "sk": "Slovenčina",
+    "es": "Spanish"
   },
   "about": {
     "check_updates": "Skontrolovať aktualizácie",
@@ -271,6 +272,7 @@
     "change_name": "Premenovať",
     "import": "Import",
     "export": "Export",
+    "importing": "Importing",
     "import_scripture": "Import scripture",
     "about": "Viac info",
     "shortcuts": "Skratky",

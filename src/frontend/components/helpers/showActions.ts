@@ -132,10 +132,10 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   console.log(id)
 
   _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
-  let data = layout[index].data
+  let data = layout[index]?.data
 
   // holding "alt" key will disable all extra features
-  if (!extra) return
+  if (!extra || !data) return
 
   // background
   if (data.background) {

@@ -81,6 +81,11 @@ body {
   background: rgb(255 255 255 / 0.5);
 }
 
+/* selection */
+::selection {
+  background-color: var(--secondary-opacity);
+}
+
 h1,
 h2,
 h3,

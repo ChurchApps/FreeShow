@@ -65,7 +65,7 @@
 <br />
 <!-- TODO: show example? -->
 <span><T id="show.quick_lyrics" /></span>
-<TextArea placeholder={$dictionary.main.quick_example} style="height: 250px;" value={values.text} on:input={(e) => changeValue(e)} />
+<TextArea placeholder={$dictionary.main?.quick_example} style="height: 250px;" value={values.text} on:input={(e) => changeValue(e)} />
 <Button on:click={textToShow} style="width: 100%;margin-top: 10px;color: var(--secondary);" dark center>
   {#if values.text.trim().length > 0}
     <T id="new.show" />

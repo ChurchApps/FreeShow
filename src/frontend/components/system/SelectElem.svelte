@@ -10,6 +10,7 @@
   export let trigger: null | "row" | "column" = null
   export let fileOver: boolean = false
   export let borders: "all" | "center" | "edges" = "all"
+  let elem: any
 
   function enter(e: any) {
     if (e.buttons && !dragActive) {
@@ -86,6 +87,7 @@
   class="selectElem"
   class:fill
   class:isSelected={$selected.id === id && arrayHasData($selected.data, data)}
+  bind:this={elem}
   on:mouseenter={enter}
   on:mousedown={mousedown}
   on:dragstart={(e) => mousedown(e, true)}
@@ -105,7 +107,7 @@
       {/if}
     </div>
   {/if}
-  <slot />
+  <slot {elem} />
 </div>
 
 <style>

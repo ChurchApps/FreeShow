@@ -68,6 +68,7 @@
   // TODO: better search! (not seperated by comma...)
   let searchValue = ""
   $: searchValue = searchValue.endsWith(" ") ? removeWhitespace(searchValue) + " " : removeWhitespace(searchValue)
+  $: if ($activeDrawerTab) searchValue = ""
   const removeWhitespace = (v: string) =>
     v
       .split(" ")
@@ -154,7 +155,7 @@
     <Resizeable id={"drawerNavigation"}>
       <Navigation id={$activeDrawerTab} />
     </Resizeable>
-    <Content id={$activeDrawerTab} {searchValue} bind:firstMatch bind:bible />
+    <Content id={$activeDrawerTab} bind:searchValue bind:firstMatch bind:bible />
     <Resizeable id={"drawerInfo"} side="right">
       <Info id={$activeDrawerTab} {bible} />
     </Resizeable>

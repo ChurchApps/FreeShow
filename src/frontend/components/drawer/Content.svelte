@@ -66,7 +66,7 @@
   {:else if id === "audio"}
     <Center>WIP</Center>
   {:else if id === "scripture"}
-    <Scripture {active} bind:bible />
+    <Scripture {active} bind:searchValue bind:bible />
   {:else if id === "player"}
     <Player {active} />
   {:else if id === "web"}

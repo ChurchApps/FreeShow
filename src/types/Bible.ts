@@ -1,5 +1,6 @@
 export interface Bible {
   name: string
+  copyright: string
   books: {
     number: number
     name: string

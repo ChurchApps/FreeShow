@@ -24,6 +24,11 @@ let mainWindow: BrowserWindow | null
 let dialogClose: boolean = false
 
 app.on("ready", () => {
+  if (isProd) startApp()
+  else setTimeout(startApp, 5000)
+})
+
+function startApp() {
   createLoading()
   createWindow()
 
@@ -66,7 +71,7 @@ app.on("ready", () => {
 
   // check for updates
   // if (isProd) checkForUpdates()
-})
+}
 
 // LOADING WINDOW
 
@@ -102,14 +107,16 @@ const createWindow = () => {
   let width: number = electronSettings.get("width")
   let height: number = electronSettings.get("height")
 
+  let screenBounds = screen.getPrimaryDisplay().bounds
+
   mainWindow = new BrowserWindow({
-    width,
-    height,
+    width: width === 800 ? screenBounds.width : width,
+    height: height === 600 ? screenBounds.height : height,
     icon: "public/icon.png",
     frame: !isProd || process.platform !== "win32",
     autoHideMenuBar: isProd && process.platform === "win32",
     backgroundColor: "#2d313b",
-    show: !isProd,
+    show: false, // !isProd,
     titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
     trafficLightPosition: { x: 10, y: 17 },
     webPreferences: {
@@ -616,7 +623,7 @@ function createOutputWindow() {
   // toOutput("MAIN", { channel: "OUTPUT", data: "true" })
   // outputWindow.webContents.send("MAIN", { channel: "OUTPUT" })
 
-  if (!isProd) outputWindow.webContents.openDevTools()
+  // if (!isProd) outputWindow.webContents.openDevTools()
 
   outputWindow.on("closed", () => (outputWindow = null))
   outputWindow.on("ready-to-show", () => {

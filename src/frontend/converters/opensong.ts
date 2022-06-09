@@ -1,4 +1,5 @@
-import { drawerTabsData, activePopup, groups, dictionary } from "./../stores"
+import type { Bible } from "./../../types/Bible"
+import { drawerTabsData, activePopup, groups, dictionary, scripturesCache, scriptures } from "./../stores"
 import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
@@ -118,3 +119,58 @@ function XMLtoObject(xml: string) {
 
   return object
 }
+
+export function convertOpenSongBible(data: any[]) {
+  data.forEach((bible) => {
+    let obj: Bible = XMLtoBible(bible.content)
+    obj.name = bible.name || ""
+
+    let id = uid()
+    // create folder & file
+    scripturesCache.update((a) => {
+      a[id] = obj
+      return a
+    })
+
+    scriptures.update((a) => {
+      a[id] = { name: obj.name, id }
+      return a
+    })
+  })
+}
+
+function XMLtoBible(xml: string): Bible {
+  let parser = new DOMParser()
+  // remove first line (standalone attribute): <?xml version="1.0"?>
+  xml = xml.split("\n").slice(1, xml.split("\n").length).join("\n")
+  let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
+
+  let booksObj = getChildren(xmlDoc, "b")
+  let books: any[] = []
+
+  ;[...booksObj].forEach((book: any, i: number) => {
+    let length = 0
+    let name = book.getAttribute("n")
+    let number = i + 1
+    let chapters: any[] = []
+    ;[...getChildren(book, "c")].forEach((chapter: any) => {
+      let number = chapter.getAttribute("n")
+      let verses: any[] = []
+      ;[...getChildren(chapter, "v")].forEach((verse: any) => {
+        // remove [1]
+        let value = verse.innerHTML
+          .toString()
+          .replace(/ *\[[^\]]*]/g, "")
+          .trim()
+        length += value.length
+        if (value.length) verses.push({ number: verse.getAttribute("n"), value })
+      })
+      chapters.push({ number, verses })
+    })
+    if (length) books.push({ name, number, chapters })
+  })
+
+  return { name: "", copyright: "", books }
+}
+
+const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)

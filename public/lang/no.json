@@ -13,7 +13,8 @@
   "languages": {
     "en": "Engelsk",
     "no": "Norsk",
-    "sk": "Slovakisk"
+    "sk": "Slovakisk",
+    "es": "Spansk"
   },
   "about": {
     "check_updates": "Se etter oppdateringer",
@@ -271,6 +272,7 @@
     "change_name": "Endre navn på",
     "import": "Importer",
     "export": "Eksporter",
+    "importing": "Importerer",
     "import_scripture": "Importer en bibel",
     "about": "Om",
     "shortcuts": "Hurtigtaster",
