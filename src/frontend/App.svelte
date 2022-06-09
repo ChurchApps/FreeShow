@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte"
   import { OUTPUT } from "../types/Channels"
   import type { Resolution } from "../types/Settings"
   import type { DrawerTabIds, TopViews } from "../types/Tabs"
@@ -60,7 +59,6 @@
   import { startup } from "./utils/startup"
 
   startup()
-  onMount(() => window.api.send("LOADED"))
   $: page = $activePage
 
   let width: number = 0

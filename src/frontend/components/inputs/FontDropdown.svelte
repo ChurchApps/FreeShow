@@ -29,6 +29,14 @@
   export let value: string
   let active: boolean = false
   let self: HTMLDivElement
+
+  function wheel(e: any) {
+    e.preventDefault()
+    let index = fonts.findIndex((a) => a === value)
+    if (e.deltaY > 0) index = Math.min(fonts.length - 1, index + 1)
+    else index = Math.max(0, index - 1)
+    dispatch("click", fonts[index])
+  }
 </script>
 
 <svelte:window
@@ -41,7 +49,7 @@
 
 <div bind:this={self} class="dropdownElem" style="position: relative;{$$props.style}">
   <!-- style="font-family: {value};" -->
-  <button on:click={() => (active = !active)}>
+  <button on:click={() => (active = !active)} on:wheel={wheel}>
     {value}
   </button>
   {#if active}

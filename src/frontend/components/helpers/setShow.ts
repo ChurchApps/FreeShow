@@ -65,7 +65,7 @@ export async function loadShows(s: string[]) {
           return a
         })
         // resolve("not_found")
-      } else {
+      } else if (!get(showsCache)[msg.id]) {
         if (get(notFound).show.includes(msg.id)) {
           notFound.update((a) => {
             a.show.splice(a.show.indexOf(msg.id), 1)

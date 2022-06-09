@@ -19,7 +19,7 @@
       name: "EasyWorship",
       extensions: ["db"],
       id: "easyworship",
-      tutorial: "Import the SongsWords.db file from the Data folder<br>Optionally select Songs.db to import title/metadata)",
+      tutorial: "Import the SongsWords.db file from the Data folder<br>Optionally select Songs.db to import title/metadata",
     },
     { name: "VideoPsalm", extensions: ["json"], id: "videopsalm", tutorial: "Find the Songbook.vpc file(s)<br>Add .zip to the end<br>Extract it & import the .json file" },
     { name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },

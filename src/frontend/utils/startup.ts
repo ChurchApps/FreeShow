@@ -4,15 +4,16 @@ import { menuClick } from "../components/context/menuClick"
 import { history } from "../components/helpers/history"
 import { loadShows } from "../components/helpers/setShow"
 import { checkName } from "../components/helpers/show"
+import { convertBebliaBible } from "../converters/bebliaBible"
 import { convertEasyWorship } from "../converters/easyworship"
 import { convertOpenLP } from "../converters/openlp"
-import { convertOpenSong } from "../converters/opensong"
+import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
 import { convertPDF } from "../converters/pdf"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { convertProPresenter } from "../converters/propresenter"
 import { convertText } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
-import { convertXmlBible } from "../converters/xmlBible"
+import { convertZefaniaBible } from "../converters/zefaniaBible"
 import {
   activePopup,
   activeShow,
@@ -166,7 +167,9 @@ const receiveIMPORT: any = {
   powerpoint: (a: any) => convertPowerpoint(a),
   freeshow: (a: any) => importShow(a),
   easyworship: (a: any) => convertEasyWorship(a),
-  xml_bible: (a: any) => convertXmlBible(a),
+  beblia_bible: (a: any) => convertBebliaBible(a),
+  zefania_bible: (a: any) => convertZefaniaBible(a),
+  opensong_bible: (a: any) => convertOpenSongBible(a),
   videopsalm: (a: any) => convertVideopsalm(a),
   openlp: (a: any) => convertOpenLP(a),
   opensong: (a: any) => convertOpenSong(a),

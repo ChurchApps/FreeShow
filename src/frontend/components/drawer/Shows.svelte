@@ -42,7 +42,7 @@
 
         if ($showsCache[obj.id]) {
           let lines: any[] = _show(obj.id).slides().items().lines().get()[0]
-          lines.forEach((line) => {
+          lines?.forEach((line) => {
             let text = line.text?.map((t: any) => t.value)[0]
             if (text?.length) {
               if (searchEquals(text, sv)) match[i] += 20
@@ -128,15 +128,28 @@
       if (id) activeShow.set({ id, type: "show" })
     }
   }
+
+  // let timeout: any = null
+  // let hidden: boolean = false
+  // drawer.subscribe((a) => {
+  //   hidden = true
+  //   if (timeout) clearTimeout(timeout)
+  //   timeout = setTimeout(() => {
+  //     if (a.height > 40) hidden = false
+  //   }, 100)
+  // })
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
+  <!-- class:hidden -->
   <div class="column context #drawer_show">
+    <!-- && $drawer.height > 40 -->
     {#if filteredShows.length}
       {#each filteredShows as show}
         <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
+          <!--  && (!elem || (elem.offsetTop > offset && elem.offsetTop < offset + 500)) -->
           {#if searchValue.length <= 1 || show.match}
             <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true, $dictionary)} class="#drawer_show_button__drawer_show" match={show.match || null} />
           {/if}
@@ -181,4 +194,8 @@
     display: flex;
     background-color: var(--primary-darkest);
   }
+
+  /* .column.hidden :global(button) {
+    display: none;
+  } */
 </style>

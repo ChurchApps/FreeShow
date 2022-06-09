@@ -13,7 +13,8 @@
   "languages": {
     "en": "English",
     "no": "Norwegian",
-    "sk": "Slovak"
+    "sk": "Slovak",
+    "es": "Spanish"
   },
   "about": {
     "check_updates": "Look for updates",
@@ -271,6 +272,7 @@
     "change_name": "Change name on",
     "import": "Import",
     "export": "Export",
+    "importing": "Importing",
     "import_scripture": "Import scripture",
     "about": "About",
     "shortcuts": "Shortcuts",

@@ -10,7 +10,7 @@
 
 <p>
   {#key msg}
-    {#if msg?.length - msg?.replaceAll(".", "").length === 1}
+    {#if !msg.includes("<") && msg?.length - msg?.replaceAll(".", "").length === 1}
       <T id={msg} />
     {:else}
       {@html msg}

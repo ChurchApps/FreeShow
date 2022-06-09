@@ -73,16 +73,9 @@
   }
 
   const formats: any = [
-    { name: "XML", extensions: ["xml"], id: "xml" },
-    // {
-    //   name: "EasyWorship",
-    //   extensions: ["ewb"],
-    //   id: "easyworship",
-    //   // tutorial: "Import the SongsWords.db file from the Data folder<br>Optionally select Songs.db to import title/metadata)",
-    // },
-    // { name: "VideoPsalm", extensions: ["json"], id: "videopsalm", tutorial: "Find the Songbook.vpc file(s)<br>Add .zip to the end<br>Extract it & import the .json file" },
-    // { name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },
-    // { name: "OpenSong", extensions: [], id: "opensong" },
+    { name: "Zefania", extensions: ["xml"], id: "zefania" }, // OSIS
+    { name: "OpenSong", extensions: ["xml", "xmm"], id: "opensong" },
+    { name: "beblia.com", extensions: ["xml"], id: "beblia" },
   ]
 </script>
 
@@ -127,7 +120,7 @@
   <T id="scripture.custom" />
 </h2>
 
-<span>
+<span style="display: flex;">
   {#each formats as format}
     <Button
       style="width: 25%;flex-direction: column;min-height: 180px;"

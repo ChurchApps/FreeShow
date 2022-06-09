@@ -70,6 +70,7 @@ export function updateSettings(data: any) {
     else console.log("MISSING: ", key)
   })
 
+  window.api.send("LOADED")
   setTimeout(() => {
     saved.set(true)
   }, 100)

@@ -20,13 +20,13 @@
   import ImportScripture from "./popups/ImportScripture.svelte"
   import Timer from "./popups/Timer.svelte"
 
-  const hide = (e: any) => {
+  function mousedown(e: any) {
     if (e.target.classList.contains("popup")) activePopup.set(null)
   }
 </script>
 
 {#if $activePopup !== null}
-  <div style={$os.platform === "win32" ? "height: calc(100% - 30px);" : null} class="popup" transition:fade={{ duration: 100 }} on:click={hide}>
+  <div style={$os.platform === "win32" ? "height: calc(100% - 30px);" : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
     <div class="card" class:fill={$activePopup === "import_scripture"} transition:scale={{ duration: 200 }}>
       <div style="position: relative;">
         {#if $activePopup !== "alert"}

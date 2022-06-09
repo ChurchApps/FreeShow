@@ -11,7 +11,7 @@ interface ElectronSettings {
 export const electronSettings = new Store<ElectronSettings>({
   defaults: {
     loaded: false,
-    maximized: false,
+    maximized: true,
     width: 800,
     height: 600,
   },

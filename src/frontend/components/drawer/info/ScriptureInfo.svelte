@@ -3,7 +3,7 @@
   import type { Bible } from "../../../../types/Scripture"
   import type { Item } from "../../../../types/Show"
   import { ShowObj } from "../../../classes/Show"
-  import { activeProject, categories, scriptureSettings, templates } from "../../../stores"
+  import { activeProject, categories, outLocked, outSlide, scriptureSettings, templates } from "../../../stores"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
   import { checkName } from "../../helpers/show"
@@ -16,44 +16,30 @@
   import Zoomed from "../../slide/Zoomed.svelte"
 
   export let bible: Bible
-  $: sorted = bible.activeVerses.sort((a, b) => a - b)
-  let range: any[][] = [[null, null]]
+  $: sorted = bible.activeVerses.sort((a, b) => Number(a) - Number(b))
 
+  let verseRange = ""
   $: {
-    // console.log(bible.activeVerses.length)
-    if (bible.activeVerses.length) {
-      // console.log(bible.activeVerses)
-      // console.log(sorted)
-      range = [[sorted[0], null]]
-      let prev: null | number = null
-      let index = 0
-      sorted.forEach((i) => {
-        if (range[index][1] === null || i > range[index][1]) {
-          // console.log(prev, i)
-
-          if (prev !== null && prev + 1 !== i) {
-            index++
-            range.push([i, null])
-          }
-          range[index][1] = i
-          prev = i
-        }
-      })
-      // console.log(range)
-    }
+    if (sorted.length) verseRange = joinRange(sorted)
+    else verseRange = ""
   }
 
-  // TODO: update....
-  let verseRange: string = ""
-  $: {
-    if (range[0][0] !== null) {
-      let arr: string[] = []
-      range.forEach((r) => {
-        if (bible.verses[r[0]][0] === bible.verses[r[1]][0]) arr.push(bible.verses[r[0]][0])
-        else arr.push(bible.verses[r[0]][0] + "-" + bible.verses[r[1]][0])
-      })
-      verseRange = arr.join("+")
-    }
+  function joinRange(array: string[]) {
+    let prev: number = -1
+    let range: string = ""
+    array.forEach((a: string, i: number) => {
+      if (Number(a) - 1 === prev) {
+        if (i + 1 === array.length) range += "-" + a
+      } else {
+        if (range.length) {
+          if (prev !== Number(range[range.length - 1])) range += "-" + prev
+          range += "+"
+        }
+        range += a
+      }
+      prev = Number(a)
+    })
+    return range
   }
 
   // settings
@@ -70,56 +56,42 @@
   $: template = $templates[$scriptureSettings.template]?.items || []
   $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
   $: {
-    if (sorted.length) {
-      slides = [[{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }]]
-      sorted.forEach((s, i: number) => {
-        let slideArr = slides[slides.length - 1][slides[slides.length - 1].length - 1]
-        if ($scriptureSettings.verseNumbers) {
-          let size = 50
-          if (i === 0) size *= 2
-          slideArr.lines![0].text.push({ value: bible.verses[s][0] + " ", style: "font-size: " + size + "px;color: gray;" + template[0]?.lines?.[0].text?.[0].style || "" })
-        }
-        // TODO: use template
-        // TODO: html in {bible.verses[s][1]}
-        let text = bible.verses[s][1]
-        // if (redJesus) {
-        //   // TODO: formatting (already function in Scripture.svelte)
-        //   text = text
-        // } else
-        text = text.replace(/(<([^>]+)>)/gi, "")
-        if (text.charAt(text.length - 1) !== " ") text += " "
-        slideArr.lines![0].text.push({ value: text, style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;" })
-        let verseCount = slideArr.lines![0].text.length / ($scriptureSettings.verseNumbers ? 2 : 1)
-        if (verseCount >= $scriptureSettings.versesPerSlide && sorted[i + 1]) {
-          let range: any[] = [...Array($scriptureSettings.versesPerSlide)].map((_a, j) => sorted[i - j]).sort((a, b) => a - b)
+    if (sorted.length || $scriptureSettings) getSlides()
+    else slides = [[]]
+  }
+  function getSlides() {
+    slides = [[{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }]]
 
-          let rangeJoined: any[][] = []
-          range.forEach((r, i) => {
-            if (rangeJoined[rangeJoined.length - 1] && r - 1 === range[i - 1]) rangeJoined[rangeJoined.length - 1].push(r)
-            else rangeJoined.push([r])
-          })
-          // console.log(rangeJoined)
-          // TODO: sometimes only showing last verse number...
+    sorted.forEach((s: any, i: number) => {
+      let slideArr = slides[slides.length - 1][slides[slides.length - 1].length - 1]
 
-          let arr: any[] = []
-          rangeJoined.forEach((r) => {
-            if (bible.verses[r[0]][0] === bible.verses[r[r.length - 1]][0]) arr.push(bible.verses[r[0]][0])
-            else arr.push(bible.verses[r[0]][0] + "-" + bible.verses[r[r.length - 1]][0])
-          })
+      if ($scriptureSettings.verseNumbers) {
+        let size = 50
+        if (i === 0) size *= 2
+        slideArr.lines![0].text.push({ value: s + " ", style: "font-size: " + size + "px;color: gray;" + template[0]?.lines?.[0].text?.[0].style || "" })
+      }
 
-          addVerse($scriptureSettings.showVersion, $scriptureSettings.showVerse, arr.join("+"))
-          slides.push([{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }])
-        }
-      })
-      // TODO: last range is now full text....
-      // TODO: get correct verses at last slide
-      // let remainder = sorted.length % versesPerSlide
+      let text: string = bible.verses[s] || ""
+      // TODO: formatting (already function in Scripture.svelte)
+      // if (redJesus) {
+      //   text = text
+      // } else
+      text = text.replace(/(<([^>]+)>)/gi, "")
+      if (text.charAt(text.length - 1) !== " ") text += " "
+      slideArr.lines![0].text.push({ value: text, style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;" })
 
-      addVerse($scriptureSettings.showVersion, $scriptureSettings.showVerse, verseRange)
-    } else slides = [[]]
+      if ((i + 1) % $scriptureSettings.versesPerSlide === 0) {
+        let range: any[] = sorted.slice(i - $scriptureSettings.versesPerSlide + 1, i + 1)
+        addMeta($scriptureSettings.showVersion, $scriptureSettings.showVerse, joinRange(range))
+        if (i + 1 < sorted.length) slides.push([{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }])
+      }
+    })
+    let remainder = sorted.length % $scriptureSettings.versesPerSlide
+    let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
+    if (remainder) addMeta($scriptureSettings.showVersion, $scriptureSettings.showVerse, joinRange(range))
   }
 
-  function addVerse(showVersion: boolean, showVerse: boolean, range: string) {
+  function addMeta(showVersion: boolean, showVerse: boolean, range: string) {
     let lines = []
     let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
     if (showVersion && bible.version) lines.push({ text: [{ value: bible.version, style: verseStyle }], align: "" })
@@ -183,7 +155,20 @@
       return a
     })
   }
+
+  function showVerse() {
+    if ($outLocked) return
+    let tempItems: Item[] = slides[0] || []
+    outSlide.set({ id: "temp", tempItems })
+  }
+
+  // show on enter
+  function keydown(e: any) {
+    if (e.key === "Enter") showVerse()
+  }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <Zoomed style="width: 100%;">
   {#if bible.activeVerses}

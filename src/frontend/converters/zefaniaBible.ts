@@ -2,7 +2,7 @@ import { scriptures, scripturesCache } from "./../stores"
 import type { Bible } from "../../types/Bible"
 import { uid } from "uid"
 
-export function convertXmlBible(data: any[]) {
+export function convertZefaniaBible(data: any[]) {
   data.forEach((bible) => {
     let obj: Bible = XMLtoObject(bible.content)
 
@@ -22,14 +22,15 @@ export function convertXmlBible(data: any[]) {
 
 function XMLtoObject(xml: string): Bible {
   let parser = new DOMParser()
-  // remove first line (standalone attribute): <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  // remove first line to ensure correct xml
   xml = xml.split("\n").slice(1, xml.split("\n").length).join("\n")
   let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
 
+  let info = xmlDoc.querySelector("INFORMATION")
+  console.log(info)
   let booksObj = getChildren(xmlDoc, "BIBLEBOOK")
   let books: any[] = []
 
-  console.log(booksObj)
   ;[...booksObj].forEach((book: any) => {
     let name = book.getAttribute("bname")
     let number = book.getAttribute("bnumber")
@@ -46,7 +47,7 @@ function XMLtoObject(xml: string): Bible {
     books.push({ name, number, chapters })
   })
 
-  return { name: xmlDoc.getAttribute("biblename") || "", books }
+  return { name: info?.querySelector("title")?.innerHTML || xmlDoc.getAttribute("biblename") || "", copyright: info?.querySelector("publisher")?.innerHTML || "", books }
 }
 
 const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)
