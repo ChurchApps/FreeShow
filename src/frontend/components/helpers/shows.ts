@@ -227,14 +227,21 @@ export function _show(id: any) {
             showsCache.update((a: any) => {
               if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
               slideIds.forEach((slideId) => {
+                if (!indexes.length) indexes = a[id].slides[slideId].items.map((_: any, i: number) => i)
                 indexes.forEach((index, i) => {
                   if (!lines?.length) lines = Object.keys(a[id].slides[slideId].items[index].lines)
                   lines.forEach((line, lineIndex) => {
                     if (key) {
                       if (a[id].slides[slideId].items[index].lines[line]) {
                         console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
-                        prev.values.push(a[id].slides[slideId].items[index][key] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])) : null)
-                        a[id].slides[slideId].items[index].lines[line][key] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
+                        if (a[id].slides[slideId].items[index].lines[line][key]) {
+                          prev.values.push(JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])))
+                          a[id].slides[slideId].items[index].lines[line][key] = values[i]
+                            ? values[i][lineIndex] !== undefined
+                              ? values[i][lineIndex]
+                              : values[i][0]
+                            : values[0][0]
+                        } else prev.values.push(null)
                       } else prev.values.push(null)
                     } else {
                       prev.values.push(a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line])) : null)
@@ -313,8 +320,8 @@ export function _show(id: any) {
             a.push([])
             shows[id].layouts[layoutId].slides.forEach((layoutSlide: any, index: number) => {
               let slide = shows[id].slides[layoutSlide.id]
-              a[i].push({ type: "parent", index, id: layoutSlide.id, children: slide.children || [], data: layoutSlide })
-              if (slide.children) {
+              a[i].push({ type: "parent", index, id: layoutSlide.id, children: slide?.children || [], data: layoutSlide })
+              if (slide?.children) {
                 slide.children.forEach((childId: string, jndex: number) => {
                   a[i].push({ type: "child", index: jndex, id: childId, parent: { id: layoutSlide.id, index }, data: layoutSlide.children?.[childId] || {} })
                 })

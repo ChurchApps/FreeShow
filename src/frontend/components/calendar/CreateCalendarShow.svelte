@@ -15,6 +15,7 @@
 
   let currentEvents: any[] = []
   activeDays.subscribe(updateEvents)
+  events.subscribe(updateEvents)
 
   function updateEvents() {
     let temp: any[] = []
@@ -34,8 +35,13 @@
     }
 
     // sort
-    // TODO: sort
-    currentEvents = temp.filter((a) => a.events.length).sort((a, b) => a.date - b.date)
+    temp = temp
+      .filter((a) => a.events.length)
+      .map((a) => {
+        a.events = a.events.sort((a: any, b: any) => new Date(a.from).getTime() - new Date(b.from).getTime())
+        return a
+      })
+    currentEvents = temp.sort((a, b) => a.date - b.date)
     console.log(currentEvents)
   }
 
@@ -54,16 +60,34 @@
     currentEvents.forEach((day: any) => {
       let id = uid()
       let textDay = new Date(day.date).getDate() + ". " + $dictionary.month[new Date(day.date).getMonth() + 1]
+      let group: string = textDay
       day.events[0].from = new Date(day.events[0].from)
       day.events[0].to = new Date(day.events[0].to)
+
+      // event over multiple days
       if (!sameDay(day.events[0].from, day.events[0].to)) {
         if (day.events[0].from.getFullYear() !== day.events[0].to.getFullYear()) textDay += " " + day.events[0].from.getFullYear()
         if (day.events[0].from.getMonth() === day.events[0].to.getMonth() && day.events[0].from.getFullYear() === day.events[0].to.getFullYear()) {
           textDay = new Date(day.date).getDate() + ".-" + day.events[0].to.getDate() + ". " + $dictionary.month[day.events[0].to.getMonth() + 1]
         } else textDay += " - " + day.events[0].to.getDate() + ". " + $dictionary.month[day.events[0].to.getMonth() + 1]
         if (day.events[0].from.getFullYear() !== day.events[0].to.getFullYear()) textDay += " " + day.events[0].to.getFullYear()
+        group = textDay
+      } else {
+        // event this week
+        const MILLISECONDS_IN_A_DAY = 86400000
+        let today = new Date()
+        let todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+        let daysUntilEvent = Math.floor((new Date(day.date).getTime() - todayWithoutTime.getTime()) / MILLISECONDS_IN_A_DAY)
+        if (daysUntilEvent === 0 && $dictionary.calendar.today) textDay = $dictionary.calendar.today
+        else if (daysUntilEvent === 1 && $dictionary.calendar.tomorrow) textDay = $dictionary.calendar.tomorrow
+        else if (daysUntilEvent < 7 && daysUntilEvent > 0 && $dictionary.weekday["1"]) {
+          let weekDay = new Date(day.date).getDay()
+          if (weekDay === 0) weekDay = 7
+          let dayString = $dictionary.weekday[weekDay]
+          dayString = dayString[0].toUpperCase() + dayString.slice(1, dayString.length)
+          textDay = dayString
+        }
       }
-      let group: string = textDay
       // only one event or all events have the same color
       let color: any = day.events.length === 1 || [...new Set(day.events.map((a: any) => a.color))].length === 1 ? day.events[0].color : null
 
@@ -73,15 +97,15 @@
       let totalLength: number = 0
 
       // TODO: align clocks (another font?)
-      let values: any[][] = [[{ value: textDay, style: "font-weight: bold;" }], [{ value: "", style: "font-size:30px;" }]]
+      let values: any[][] = [[{ value: textDay, style: "font-weight: bold;line-height:1.5em;" }]] // , [{ value: "", style: "font-size:30px;" }]
       day.events
         .sort((a: any, b: any) => a.from - b.from)
         .forEach((event: any) => {
           let v: any[] = []
           if (event.time) {
-            let time = getTime(event.from)
+            let time = getTime(new Date(event.from))
             // TODO: event.to (if days are different?)
-            // if (event.to.getTime() - event.from.getTime() > 0) time += " - " + getTime(event.to)
+            // if (event.to.getTime() - event.from.getTime() > 0) time += " - " + getTime(new Date(event.to))
             v.push({ value: time + " ", style: "font-weight: bold;font-size:70px;font-family:calibri;" })
           }
           v.push({ value: event.name, style: "font-size:80px;" })
@@ -101,6 +125,7 @@
         },
       ]
 
+      // TODO: split in half if lines.length > 8
       slides[id] = { group, color, settings: {}, notes: "", items }
       let l: any = { id }
       if (currentEvents.length > 1) {
@@ -154,30 +179,35 @@
 </script>
 
 <div class="main border">
-  <span>
-    {from.getDate()}. {$dictionary.month[from.getMonth() + 1]}
+  <span style="opacity: 0.8;text-align: center;font-size: 1.2em;">
+    {from.getDate()}. {$dictionary.month?.[from.getMonth() + 1]}
     {from.getFullYear()}
     {#if sortedDays[0] - sortedDays[1] < 0}
-      - {to.getDate()}. {$dictionary.month[to.getMonth() + 1]}
+      - {to.getDate()}. {$dictionary.month?.[to.getMonth() + 1]}
       {to.getFullYear()}
     {/if}
   </span>
+  <br />
   {#if currentEvents.length}
     {#each currentEvents as day}
-      <p>{new Date(day.date).getDate()}. {$dictionary.month[new Date(day.date).getMonth() + 1]}</p>
-      {#each day.events as event}
-        <div class="event" style="color: {event.color || 'unset'}">
-          <p>
-            {#if event.name}
-              {event.name}
-            {:else}
-              <span style="opacity: 0.5;">
-                <T id="main.unnamed" />
-              </span>
-            {/if}
-          </p>
-        </div>
-      {/each}
+      {#if currentEvents.length > 1}
+        <b style="margin-top: 10px;">{new Date(day.date).getDate()}. {$dictionary.month?.[new Date(day.date).getMonth() + 1]}</b>
+      {/if}
+      <ul style="list-style-position: inside;">
+        {#each day.events as event}
+          <li class="event">
+            <p style="display: inline;color: {event.color || 'unset'}">
+              {#if event.name}
+                {event.name}
+              {:else}
+                <span style="opacity: 0.5;">
+                  <T id="main.unnamed" />
+                </span>
+              {/if}
+            </p>
+          </li>
+        {/each}
+      </ul>
     {/each}
   {:else}
     <Center faded>
@@ -185,11 +215,17 @@
     </Center>
   {/if}
 </div>
-<Button on:click={createShow} dark center>
+<Button on:click={createShow} disabled={!currentEvents.length} dark center>
   <Icon id="show" right />
   <T id="new.show" />
+  {#if currentEvents.length > 1}
+    <span style="opacity: 0.5;margin-left: 0.5em;">({currentEvents.length})</span>
+  {/if}
 </Button>
 
+<!-- TODO: settings -->
+
+<!-- add transition, replace near dates with weekday, display position & notes -->
 <style>
   .main {
     display: flex;

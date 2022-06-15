@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import { MAIN } from "../../../types/Channels"
 import {
   activeDrawerTab,
@@ -6,10 +7,13 @@ import {
   activePage,
   activePopup,
   activeProject,
+  activeRename,
   activeShow,
   alertMessage,
   dictionary,
   drawerTabsData,
+  eventEdit,
+  events,
   imageExtensions,
   projects,
   projectView,
@@ -23,11 +27,12 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
+import { copy, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
+import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
-import { activeRename } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = null) {
   if (actions[id]) return actions[id]({ sel, actionItem, enabled, contextElem, menu })
@@ -164,6 +169,9 @@ const actions: any = {
       })
       return
     }
+    if (obj.contextElem.classList.contains("#event")) {
+      history({ id: "deleteEvent", newData: { id: obj.contextElem.id } })
+    }
 
     const deleteIDs: any = {
       folder: "deleteFolder",
@@ -181,17 +189,27 @@ const actions: any = {
   },
   duplicate: (obj: any) => {
     if (obj.sel.id === "show" || obj.sel.id === "show_drawer") {
-      obj.sel.data.forEach((a: any) => {
-        let show = { ...get(showsCache)[a.id] }
-        show.name += " #2"
-        show.timestamps.modified = new Date().getTime()
-        console.log(show)
-        history({ id: "newShow", newData: { show }, location: { page: "show", project: obj.sel.id === "show" ? get(activeProject) : null } })
-      })
+      duplicateShows(obj.sel)
       return
     }
     if (obj.sel.id === "slide") {
-      // TODO: duplicate slide....
+      copy(obj.sel)
+      paste()
+      return
+    }
+    if (get(activeEdit).items) {
+      copy({ id: "item", data: get(activeEdit) })
+      paste()
+      return
+    }
+    if (obj.contextElem.classList.contains("#event")) {
+      let event = JSON.parse(JSON.stringify(get(events)[obj.contextElem.id]))
+      event.name += " (2)"
+      event.repeat = false
+      delete event.group
+      delete event.repeatData
+      history({ id: "newEvent", newData: { id: uid(), data: event } })
+      return
     }
   },
   // drawer
@@ -330,6 +348,9 @@ const actions: any = {
     } else if (obj.sel.id === "global_group") {
       settingsTab.set("groups")
       activePage.set("settings")
+    } else if (obj.contextElem.classList.contains("#event")) {
+      eventEdit.set(obj.contextElem.id)
+      activePopup.set("edit_event")
     }
   },
 
@@ -364,10 +385,10 @@ const actions: any = {
   },
 
   // formats
-  uppercase: () => format("uppercase"),
-  lowercase: () => format("lowercase"),
-  capitalize: () => format("capitalize"),
-  trim: () => format("trim"),
+  uppercase: (obj: any) => format("uppercase", obj),
+  lowercase: (obj: any) => format("lowercase", obj),
+  capitalize: (obj: any) => format("capitalize", obj),
+  trim: (obj: any) => format("trim", obj),
 }
 
 function changeSlideAction(obj: any, id: string) {
@@ -382,7 +403,7 @@ function changeSlideAction(obj: any, id: string) {
   })
 }
 
-function removeSlide(obj: any) {
+export function removeSlide(obj: any) {
   let location: any = { page: get(activePage) as any, show: get(activeShow)!, layout: _show("active").get("settings.activeLayout") }
   // console.log(location)
   let ref = _show(location.show.id).layouts([location.layout]).ref()[0]
@@ -412,24 +433,36 @@ function removeSlide(obj: any) {
   }
 }
 
-function format(id: string) {
-  let ref: any = _show("active").layouts("active").ref()[0][get(activeEdit).slide!]
-  let slide: any = _show("active").slides([ref.id]).get()[0].id
-  let items: any = _show("active").slides([slide]).items(get(activeEdit).items).get()[0]
-  let newData: any = { style: { values: [] } }
+function format(id: string, obj: any) {
+  let slides: any[] = []
+  let ref: any = _show("active").layouts("active").ref()[0]
+  if (obj.sel.id?.includes("slide")) {
+    slides = obj.sel.data.map((a: any) => ref[a.index].id)
+  } else {
+    slides = [
+      _show("active")
+        .slides([ref[get(activeEdit).slide!].id])
+        .get()[0].id,
+    ]
+  }
 
-  let newItems: any[] = []
-  items.forEach((item: any) => {
-    item.lines?.forEach((line: any, j: number) => {
-      line.text?.forEach((text: any, k: number) => {
-        item.lines[j].text[k].value = formatting[id](text.value)
+  slides.forEach((slide) => {
+    let items: any = _show("active").slides([slide]).items(get(activeEdit).items).get()[0]
+    let newData: any = { style: { values: [] } }
+
+    let newItems: any[] = []
+    items.forEach((item: any) => {
+      item.lines?.forEach((line: any, j: number) => {
+        line.text?.forEach((text: any, k: number) => {
+          item.lines[j].text[k].value = formatting[id](text.value)
+        })
       })
+      newItems.push(item)
     })
-    newItems.push(item)
-  })
-  newData.style.values = newItems
+    newData.style.values = newItems
 
-  history({ id: "setItems", newData, location: { page: "edit", show: get(activeShow)!, items: get(activeEdit).items, slide: slide } })
+    history({ id: "setItems", newData, location: { page: get(activePage) as any, show: get(activeShow)!, items: get(activeEdit).items, slide: slide } })
+  })
 }
 
 const formatting: any = {
@@ -437,4 +470,14 @@ const formatting: any = {
   lowercase: (t: string) => t.toLowerCase(),
   capitalize: (t: string) => t[0].toUpperCase() + t.slice(1, t.length).toLowerCase(),
   trim: (t: string) => t.replace(/[.,!]*$/g, "").trim(),
+}
+
+async function duplicateShows(selected: any) {
+  await loadShows(selected.data.map((a: any) => a.id))
+  selected.data.forEach((a: any) => {
+    let show = JSON.parse(JSON.stringify(get(showsCache)[a.id]))
+    show.name += " (2)"
+    show.timestamps.modified = new Date().getTime()
+    history({ id: "newShow", newData: { show }, location: { page: "show", project: selected.id === "show" ? get(activeProject) : null } })
+  })
 }

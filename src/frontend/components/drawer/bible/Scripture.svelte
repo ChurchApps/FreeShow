@@ -286,7 +286,7 @@
     let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
     if ($scriptureSettings.showVersion && bible.version) lines.push({ text: [{ value: bible.version, style: verseStyle }], align: "" })
     if ($scriptureSettings.showVerse) lines.push({ text: [{ value: bible.book + " " + bible.chapter + ":" + id, style: verseStyle }], align: "" })
-    if (($scriptureSettings.showVersion && bible.version) || showVerse)
+    if (($scriptureSettings.showVersion && bible.version) || $scriptureSettings.showVerse)
       tempItems.push({
         lines,
         style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
@@ -299,7 +299,14 @@
   let auto: boolean = false
   $: if (searchValue) auto = true
   $: split = searchValue.split(" ")
-  $: split2 = split[1]?.includes(":") ? split[1].split(":") : split[1]?.split(",")
+  // split chapter / verse range with ":" or "," or "." or " "
+  $: split2 = split[1]?.includes(":")
+    ? split[1].split(":")
+    : split[1]?.includes(",")
+    ? split[1]?.split(",")
+    : split[1]?.includes(".")
+    ? split[1]?.split(".")
+    : [split[1] || "", split[2] || ""]
 
   // book
   $: book = split[0]
@@ -428,7 +435,7 @@
     align-content: flex-start;
   }
   .main div:not(.verses) {
-    border-right: 4px solid var(--primary-lighter);
+    border-right: 2px solid var(--primary-lighter);
   }
   .main .verses {
     flex: 1;

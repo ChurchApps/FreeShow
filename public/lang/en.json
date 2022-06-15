@@ -274,6 +274,7 @@
     "export": "Export",
     "importing": "Importing",
     "import_scripture": "Import scripture",
+    "edit_event": "Edit event",
     "about": "About",
     "shortcuts": "Shortcuts",
     "icon": "Icons",
@@ -533,6 +534,9 @@
     "export_all": "Export everything"
   },
   "calendar": {
+    "type": "Type",
+    "event": "Event",
+    "show": "Schedule show",
     "name": "Name",
     "color": "Color",
     "time": "Time",
@@ -542,7 +546,19 @@
     "to_time": "To time",
     "location": "Location",
     "notes": "Notes",
-    "today": "Today"
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "repeat": "Repeat",
+    "repeat_every": "Repeat every",
+    "repeat_until": "until",
+    "day": "day",
+    "week": "week",
+    "month": "month",
+    "year": "year",
+    "ending_the": "the",
+    "ending_repeated": "repeated",
+    "ending_times": "times",
+    "save_all": "Save and update all"
   },
   "scripture": {
     "bibles": "Bibles from API.Bible",

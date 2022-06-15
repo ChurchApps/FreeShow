@@ -2,7 +2,7 @@
   export let value: any = "#FFF"
 </script>
 
-<div style={"background-color: " + value + ";" + $$props.style}>
+<div style={"background-color: " + value + ";" + ($$props.style || "")}>
   <input type="color" bind:value on:input />
 </div>
 

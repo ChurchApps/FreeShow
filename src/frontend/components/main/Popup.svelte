@@ -19,6 +19,7 @@
   import ResetAll from "./popups/ResetAll.svelte"
   import ImportScripture from "./popups/ImportScripture.svelte"
   import Timer from "./popups/Timer.svelte"
+  import EditEvent from "./popups/EditEvent.svelte"
 
   function mousedown(e: any) {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -57,6 +58,8 @@
           <Transition />
         {:else if $activePopup === "import_scripture"}
           <ImportScripture />
+        {:else if $activePopup === "edit_event"}
+          <EditEvent />
         {:else if $activePopup === "about"}
           <About />
         {:else if $activePopup === "shortcuts"}

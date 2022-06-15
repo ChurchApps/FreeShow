@@ -81,6 +81,7 @@ export type Popups =
   | "timer"
   | "transition"
   | "import_scripture"
+  | "edit_event"
   | "about"
   | "shortcuts"
   | "unsaved"

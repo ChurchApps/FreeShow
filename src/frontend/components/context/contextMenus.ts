@@ -121,8 +121,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
   // SHOWS
   // , "copy", "paste"
-  slide: ["slideGroups", "actions", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
-  slideChild: ["slideGroups", "actions", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
+  slide: ["slideGroups", "actions", "format", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
+  slideChild: ["slideGroups", "actions", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["edit"],
   // global_group: ["rename"],
@@ -133,4 +133,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
   // EDIT
   edit_box: ["format", "delete", "make stage exlusive", "SEPERATOR", "duplicate", "copy", "paste"],
+
+  // CALENDAR
+  event: ["edit", "duplicate", "delete"],
 }

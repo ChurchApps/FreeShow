@@ -97,6 +97,7 @@
     currentEvents.forEach((a) => {
       if (a.to ? isBetween(new Date(a.from), new Date(a.to), copy(day)) : sameDay(new Date(a.from), day)) events.push(a)
     })
+    events.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
     return events
   }
 
@@ -161,7 +162,8 @@
     </div>
     {#each weekdays as weekday}
       <div class="weekday">
-        {weekday.slice(0, 3)}
+        {weekday}
+        <!-- {weekday.slice(0, 3)} -->
       </div>
     {/each}
   </div>

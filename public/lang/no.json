@@ -149,7 +149,7 @@
     "stage_shows": "Ingen sceneshow",
     "player": "Ingen videoer",
     "groups": "Ingen grupper",
-    "events": "Ingen arrangement",
+    "events": "Ingen hendelser",
     "text": "Skriv noe",
     "timers": "Ingen globale nedtellinger, eller private i noen show i dette prosjektet"
   },
@@ -274,6 +274,7 @@
     "export": "Eksporter",
     "importing": "Importerer",
     "import_scripture": "Importer en bibel",
+    "edit_event": "Rediger hendelse",
     "about": "Om",
     "shortcuts": "Hurtigtaster",
     "icon": "Ikoner",
@@ -299,7 +300,7 @@
     "overlay": "Nytt overlegg",
     "template": "Ny mal",
     "scripture": "Ny bibel",
-    "event": "Nytt arrangement"
+    "event": "Ny hendelse"
   },
   "show": {
     "name": "Navn",
@@ -402,8 +403,8 @@
     "color": "Farge",
     "background_color": "Bakgrunnsfarge",
     "size": "Størrelse",
-    "auto_size": "Auto-størrele",
-    "line_spacing": "Linjeavstant",
+    "auto_size": "Auto-størrelse",
+    "line_spacing": "Linjeavstand",
     "letter_spacing": "Bokstavasvsand",
     "word_spacing": "Ordavstand",
     "align": "Justering",
@@ -533,6 +534,9 @@
     "export_all": "Eksporter alt"
   },
   "calendar": {
+    "type": "Type",
+    "event": "Arrangement",
+    "show": "Planlegg show",
     "name": "Navn",
     "color": "Farge",
     "time": "Tid",
@@ -542,7 +546,19 @@
     "to_time": "Til tid",
     "location": "Posisjon",
     "notes": "Notater",
-    "today": "I dag"
+    "today": "I dag",
+    "tomorrow": "I morgen",
+    "repeat": "Gjenta",
+    "repeat_every": "Gjenta hver",
+    "repeat_until": "frem til",
+    "day": "dag",
+    "week": "uke",
+    "month": "måned",
+    "year": "år",
+    "ending_the": "den",
+    "ending_repeated": "gjentatt",
+    "ending_times": "ganger",
+    "save_all": "Lagre og oppdater alle"
   },
   "scripture": {
     "bibles": "Bibler fra API.Bible",

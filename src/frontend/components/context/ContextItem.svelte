@@ -32,10 +32,6 @@
       // WIP
       if ($selected.id === "slide") disabled = true
     },
-    duplicate: () => {
-      // WIP
-      disabled = true
-    },
     undo: () => {
       if (!$undoHistory.length) disabled = true
     },

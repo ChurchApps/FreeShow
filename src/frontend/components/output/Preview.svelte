@@ -2,7 +2,7 @@
   import { OUTPUT } from "../../../types/Channels"
 
   import type { Resolution } from "../../../types/Settings"
-  import { activePage, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, presenterControllerKeys, screen } from "../../stores"
+  import { activePage, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, presenterControllerKeys, screen, showsCache } from "../../stores"
   import { nextSlide, previousSlide } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -71,7 +71,7 @@
       previousSlide()
     },
     " ": (e: any) => {
-      if ($outSlide?.id !== $activeShow?.id) nextSlide(e, true)
+      if ($outSlide?.id !== $activeShow?.id || ($activeShow && $outSlide?.layout !== $showsCache[$activeShow.id].settings.activeLayout)) nextSlide(e, true)
       else {
         if (e.shiftKey) previousSlide()
         else nextSlide(e)
