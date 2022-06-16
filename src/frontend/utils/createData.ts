@@ -162,7 +162,7 @@ export function setExampleTemplates() {
       category: "song",
       items: [
         {
-          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          style: "top:120px;left:50px;height:840px;width:1820px;",
           align: "",
           lines: [{ align: "", text: [{ value: get(dictionary).example?.big || "big", style: "font-size: 120px;" }] }],
         },
@@ -174,7 +174,7 @@ export function setExampleTemplates() {
       category: "song",
       items: [
         {
-          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          style: "top:120px;left:50px;height:840px;width:1820px;",
           align: "",
           lines: [{ align: "", text: [{ value: get(dictionary).example?.default || "default", style: "font-size: 100px;" }] }],
         },
@@ -186,7 +186,7 @@ export function setExampleTemplates() {
       category: "song",
       items: [
         {
-          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          style: "top:120px;left:50px;height:840px;width:1820px;",
           align: "",
           lines: [{ align: "", text: [{ value: get(dictionary).example?.small || "small", style: "font-size: 80px;" }] }],
         },

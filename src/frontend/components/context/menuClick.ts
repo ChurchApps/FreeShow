@@ -63,7 +63,7 @@ const actions: any = {
   rename: (obj: any) => {
     console.log(obj)
 
-    if (obj.sel.id === "slide" || obj.sel.id === "group") activePopup.set("rename")
+    if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("rename")
     else if (obj.sel.id === "show") activeRename.set("show_" + obj.sel.data[0].id + "#" + obj.sel.data[0].index)
     else if (obj.sel.id === "show_drawer") activeRename.set("show_drawer_" + obj.sel.data[0].id)
     else if (obj.sel.id === "project") activeRename.set("project_" + obj.sel.data[0].id)
@@ -129,6 +129,9 @@ const actions: any = {
       }
     }
   },
+  recolor: (obj: any) => {
+    if (obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
+  },
   remove_slide: (obj: any) => removeSlide(obj),
   delete: (obj: any) => {
     if (obj.sel.id === "show_drawer") {
@@ -188,6 +191,15 @@ const actions: any = {
     obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
   },
   duplicate: (obj: any) => {
+    if (obj.contextElem.classList.contains("#event")) {
+      let event = JSON.parse(JSON.stringify(get(events)[obj.contextElem.id]))
+      event.name += " 2"
+      event.repeat = false
+      delete event.group
+      delete event.repeatData
+      history({ id: "newEvent", newData: { id: uid(), data: event } })
+      return
+    }
     if (obj.sel.id === "show" || obj.sel.id === "show_drawer") {
       duplicateShows(obj.sel)
       return
@@ -197,18 +209,10 @@ const actions: any = {
       paste()
       return
     }
+    // overlay, template
     if (get(activeEdit).items) {
       copy({ id: "item", data: get(activeEdit) })
       paste()
-      return
-    }
-    if (obj.contextElem.classList.contains("#event")) {
-      let event = JSON.parse(JSON.stringify(get(events)[obj.contextElem.id]))
-      event.name += " (2)"
-      event.repeat = false
-      delete event.group
-      delete event.repeatData
-      history({ id: "newEvent", newData: { id: uid(), data: event } })
       return
     }
   },
@@ -476,7 +480,7 @@ async function duplicateShows(selected: any) {
   await loadShows(selected.data.map((a: any) => a.id))
   selected.data.forEach((a: any) => {
     let show = JSON.parse(JSON.stringify(get(showsCache)[a.id]))
-    show.name += " (2)"
+    show.name += " 2"
     show.timestamps.modified = new Date().getTime()
     history({ id: "newShow", newData: { show }, location: { page: "show", project: selected.id === "show" ? get(activeProject) : null } })
   })

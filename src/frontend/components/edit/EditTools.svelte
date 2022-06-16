@@ -78,6 +78,7 @@
     if (active === "text") {
       // get current text style
       let style = item?.lines?.[0].text?.[0].style
+      let isAuto = item?.auto
 
       _show("active")
         .slides()
@@ -103,21 +104,77 @@
             newData: { style: { key: "text", values } },
             location: { page: "edit", show: $activeShow!, slide: slide.id, items },
           })
+          history({
+            id: "setItems",
+            newData: { style: { key: "auto", values: [isAuto] } },
+            location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+          })
         })
+      return
+    }
+
+    if (active === "item") {
+      // get current item style
+      let style = item?.style
+
+      _show("active")
+        .slides()
+        .get()
+        .forEach((slide) => {
+          history({
+            id: "setStyle",
+            newData: { style: { key: "style", values: [style] } },
+            location: { page: "edit", show: $activeShow!, slide: slide.id, items: [] },
+          })
+        })
+      return
+    }
+
+    if (active === "slide") {
+      let ref = _show("active").layouts("active").ref()[0]
+      let slideStyle = _show("active").slides([ref[$activeEdit.slide!].id]).get("settings")[0]
+
+      _show("active")
+        .slides()
+        .get()
+        .forEach((slide) => {
+          let oldData = { style: slide.settings }
+
+          history({
+            id: "slideStyle",
+            oldData,
+            newData: { style: slideStyle },
+            location: { page: "edit", show: $activeShow!, slide: slide.id },
+          })
+        })
+      return
     }
   }
 
   function reset() {
+    let ref = _show("active").layouts("active").ref()[0]
+    let slide = _show("active").slides([ref[$activeEdit.slide!].id]).get("id")[0]
+    // let slide = GetLayout()[$activeEdit.slide!].id
+
+    if (active === "item") {
+      history({
+        id: "setStyle",
+        newData: { style: { key: "style", values: ["top:120px;left:50px;height:840px;width:1820px;"] } },
+        location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items },
+      })
+      return
+    }
+
     if (active === "slide") {
-      let slide = GetLayout()[$activeEdit.slide!].id
       history({
         id: "slideStyle",
         oldData: { style: _show("active").slides([slide]).get("settings")[0] },
         newData: { style: {} },
-        location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id },
+        location: { page: "edit", show: $activeShow!, slide },
       })
       return
     }
+
     if (active !== "text") return
 
     let values: any = []
@@ -135,16 +192,21 @@
 
     if (!values.length) return
 
-    console.log(values)
+    // let selectedItems = $activeEdit.items.length ? $activeEdit.items : Object.keys(allSlideItems)
     history({
       id: "textStyle",
       newData: { style: { key: "text", values } },
       location: {
         page: "edit",
         show: $activeShow!,
-        slide: GetLayout()[$activeEdit.slide!].id,
-        items: $activeEdit.items.length ? $activeEdit.items : Object.keys(allSlideItems),
+        slide,
+        items: $activeEdit.items,
       },
+    })
+    history({
+      id: "setItems",
+      newData: { style: { key: "auto", values: [false] } },
+      location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items },
     })
   }
 </script>

@@ -265,6 +265,7 @@
   "popup": {
     "show": "Nová prezentácia",
     "rename": "Premenovať",
+    "color": "Farba",
     "timer": "Timer",
     "transition": "Prechod",
     "delete_show": "Odstrániť prezentáciu",

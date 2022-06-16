@@ -8,7 +8,8 @@ const copyData: any = {
   item: (data: any) => {
     let ref = _show(data.id || "active")
       .layouts("active")
-      .ref()?.[0][data.slide!]
+      .ref()?.[0]?.[data.slide!]
+    if (!ref) return null
     return _show(data.id || "active")
       .slides([ref.id])
       .items()
@@ -27,7 +28,7 @@ export function copy({ id, data }: any, getData: boolean = true) {
 
   if (getData && copyData[id]) data = copyData[id](data)
 
-  clipboard.set({ id, data })
+  if (data) clipboard.set({ id, data })
 
   console.log("COPIED:", id)
   console.log("CLIPBOARD", get(clipboard))

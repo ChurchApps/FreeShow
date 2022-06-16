@@ -1,5 +1,6 @@
 <script lang="ts">
   import { mediaOptions } from "../../stores"
+  import { getContrast } from "../helpers/color"
   import Icon from "../helpers/Icon.svelte"
 
   export let label: string
@@ -8,7 +9,7 @@
   export let white: boolean = false
 </script>
 
-<div class="label" class:list={$mediaOptions.mode !== "grid"} style={color ? "background-color:" + color : ""}>
+<div class="label" class:list={$mediaOptions.mode !== "grid"} style={color ? "color: " + getContrast(color) + ";background-color:" + color : ""}>
   {#if icon}
     <Icon id={icon} class="icon" size={1.2} {white} />
   {/if}

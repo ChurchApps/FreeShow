@@ -19,6 +19,7 @@
   $: filteredOverlays = Object.keys($overlays)
     .map((id) => ({ id, ...$overlays[id] }))
     .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   function wheel(e: any) {
     if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })

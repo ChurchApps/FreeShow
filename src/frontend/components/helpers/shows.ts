@@ -155,6 +155,7 @@ export function _show(id: any) {
           showsCache.update((a: any) => {
             if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
             slideIds.forEach((slideId) => {
+              if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
               indexes.forEach((index, i) => {
                 if (key) {
                   prev.values.push(a[id].slides[slideId].items[index][key] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index][key])) : null)
@@ -234,7 +235,7 @@ export function _show(id: any) {
                     if (key) {
                       if (a[id].slides[slideId].items[index].lines[line]) {
                         console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
-                        if (a[id].slides[slideId].items[index].lines[line][key]) {
+                        if (a[id].slides[slideId].items[index].lines[line][key] !== undefined) {
                           prev.values.push(JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])))
                           a[id].slides[slideId].items[index].lines[line][key] = values[i]
                             ? values[i][lineIndex] !== undefined

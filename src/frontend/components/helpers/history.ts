@@ -271,6 +271,7 @@ export function history(obj: History, undo: null | boolean = null) {
             items[index].style = obj.newData.data[i]
           })
         } else {
+          if (!obj.oldData) obj.oldData = { key: obj.newData.key, data: a[obj.location!.id!][obj.newData.key] }
           a[obj.location!.id!][obj.newData.key] = obj.newData.data
         }
         return a
@@ -285,6 +286,7 @@ export function history(obj: History, undo: null | boolean = null) {
             items[index].style = obj.newData.data[i]
           })
         } else {
+          if (!obj.oldData) obj.oldData = { key: obj.newData.key, data: a[obj.location!.id!][obj.newData.key] }
           a[obj.location!.id!][obj.newData.key] = obj.newData.data
         }
         return a

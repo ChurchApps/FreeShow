@@ -1,9 +1,10 @@
 <script lang="ts">
   export let value: any = "#FFF"
+  export let height: number = 0
 </script>
 
-<div style={"background-color: " + value + ";" + ($$props.style || "")}>
-  <input type="color" bind:value on:input />
+<div style={(height ? "height: " + height + "px;" : "") + "background-color: " + value + ";" + ($$props.style || "")}>
+  <input style={height ? "height: " + height + "px;" : ""} type="color" bind:value on:input />
 </div>
 
 <style>
@@ -17,9 +18,6 @@
   input[type="color"] {
     opacity: 0;
     width: 100%;
-    /* display: block; */
-    /* width: 32px;
-    height: 32px; */
     border: none;
   }
 </style>

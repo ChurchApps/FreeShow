@@ -265,6 +265,7 @@
   "popup": {
     "show": "New show",
     "rename": "Rename",
+    "color": "Color",
     "timer": "Timer",
     "transition": "Transition",
     "delete_show": "Delete show",

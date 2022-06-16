@@ -265,6 +265,7 @@
   "popup": {
     "show": "Nuevo programa",
     "rename": "Renombrar",
+    "color": "Color",
     "timer": "Timer",
     "transition": "Transición",
     "delete_show": "Eliminar programa",

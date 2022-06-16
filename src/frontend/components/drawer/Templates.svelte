@@ -26,7 +26,7 @@
     filteredTemplates = Object.keys($templates)
       .map((id) => ({ id, ...$templates[id] }))
       .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
-      .sort((a, b) => (a.name < b.name ? -1 : 1))
+      .sort((a, b) => a.name.localeCompare(b.name))
   }
 
   function wheel(e: any) {

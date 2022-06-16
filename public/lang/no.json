@@ -265,6 +265,7 @@
   "popup": {
     "show": "Nytt show",
     "rename": "Gi nytt navn",
+    "color": "Farge",
     "timer": "Nedtelling",
     "transition": "Overgang",
     "delete_show": "Slett show",

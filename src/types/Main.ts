@@ -78,6 +78,7 @@ export type Popups =
   | "delete_show"
   | "icon"
   | "rename"
+  | "color"
   | "timer"
   | "transition"
   | "import_scripture"

@@ -94,6 +94,9 @@ export function listen() {
   drawSettings.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "DRAW_SETTINGS", data })
   })
+  playerVideos.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "PLAYER_VIDEOS", data })
+  })
 
   // FROM CLIENT
   window.api.receive(REMOTE, (msg: ClientMessage) => client(REMOTE, msg))
