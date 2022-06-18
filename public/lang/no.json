@@ -63,7 +63,8 @@
     "text": "Tekst",
     "big": "Stor",
     "default": "Standard",
-    "small": "Liten"
+    "small": "Liten",
+    "bold": "Fet"
   },
   "titlebar": {
     "file": "Fil",
@@ -176,7 +177,8 @@
     "bible_api": "Kunne ikke laste inn bibel fra API.Bible, har du en internettforbindelse?",
     "not_found": "Ikke funnet",
     "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
-    "keep_one_layout": "Du må ha minst ett oppsett"
+    "keep_one_layout": "Du må ha minst ett oppsett",
+    "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen."
   },
   "meta": {
     "title": "Tittel",
@@ -349,6 +351,10 @@
     "lowercase": "Gjør tekst liten",
     "capitalize": "Gjør første bokstav stor",
     "trim": "Klipp",
+    "fullscreen_preview": "Veksle fullskjerm forhåndsvisning",
+    "toggle_output": "Veksle utgangsskjerm",
+    "change_tab": "Endre fane",
+    "change_drawer_tab": "Endre fane i skuffen",
     "actions": "Handlinger"
   },
   "export": {
@@ -374,8 +380,8 @@
     "columns": "Kolonner"
   },
   "context": {
-    "enabledTabs": "Vis/Skjul Faner",
-    "addToProject": "Legg til prosjekt",
+    "enabledTabs": "Veksle faner",
+    "addToProject": "Legg til i prosjekt",
     "newCategory": "Ny kategori",
     "changeIcon": "Endre ikon",
     "changeGroup": "Endre gruppe",

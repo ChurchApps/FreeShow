@@ -75,7 +75,11 @@ const createLoading = () => {
     resizable: false,
     // show: false,
     icon: "public/icon.png",
-    webPreferences: { nodeIntegration: true, contextIsolation: false, enableRemoteModule: true },
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      // , enableRemoteModule: true
+    },
   })
   loadingWindow.loadFile("public/loading.html")
   // loadingWindow.once("ready-to-show", () => loadingWindow!.showInactive())
@@ -114,7 +118,6 @@ const createWindow = () => {
       webSecurity: isProd, // load local files
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
       allowRunningInsecureContent: false,
     },
   })
@@ -268,10 +271,9 @@ function save(data: any) {
     Object.entries(data.scripturesCache).forEach(([id, value]: any) => {
       let p: string = path.resolve(app.getPath("documents"), "Bibles")
       // create folder
-      if (!fs.existsSync(p)) {
-        fs.mkdirSync(p, { recursive: true })
-        p = path.resolve(app.getPath("documents"), "Bibles", value.name + ".fsb")
-      }
+      if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true })
+      p = path.resolve(p, value.name + ".fsb")
+
       // create or update file
       if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
         fs.writeFile(p, JSON.stringify([id, value]), (err): void => {
@@ -577,7 +579,6 @@ function createOutputWindow() {
       devTools: !isProd || Number(app.getVersion()[0]) === 0,
       preload: join(__dirname, "preload"), // use a preload script
       contextIsolation: true,
-      enableRemoteModule: false,
       webSecurity: isProd, // get local files
       allowRunningInsecureContent: false,
     },

@@ -63,7 +63,8 @@
     "text": "Texto",
     "big": "Grande",
     "default": "Estándar",
-    "small": "Pequeño"
+    "small": "Pequeño",
+    "bold": "Bold"
   },
   "titlebar": {
     "file": "Carpeta",
@@ -176,7 +177,8 @@
     "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
     "not_found": "No encontrado",
     "display": "Ventana de resultado no puede mostrarse en esta vista",
-    "keep_one_layout": "Usted debe tener al menos un diseño"
+    "keep_one_layout": "Usted debe tener al menos un diseño",
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
   },
   "meta": {
     "title": "Título",
@@ -349,6 +351,10 @@
     "lowercase": "Minúscula",
     "capitalize": "Capital",
     "trim": "Ajustar",
+    "fullscreen_preview": "Toggle fullscreen preview",
+    "toggle_output": "Toggle output screen",
+    "change_tab": "Change tab",
+    "change_drawer_tab": "Change drawer tab",
     "actions": "Acciones"
   },
   "export": {
@@ -374,7 +380,7 @@
     "columns": "Columnas"
   },
   "context": {
-    "enabledTabs": "Mostrar/Ocultar Pestañas",
+    "enabledTabs": "Mostrar/ocultar pestañas",
     "addToProject": "Agregar al proyecto",
     "newCategory": "Nueva categoría",
     "changeIcon": "Cambiar ícono",

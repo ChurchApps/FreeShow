@@ -14,6 +14,7 @@ export function _show(id: any) {
     /** Get key value in shows of leave blank for full show */
     get: (key: string | null = null) => {
       let a: any = shows[id]
+      if (!a) return null
       if (key) {
         let double = key.split(".")
         if (double.length > 1) a = shows[id][double[0]][double[1]]
@@ -228,6 +229,7 @@ export function _show(id: any) {
             showsCache.update((a: any) => {
               if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
               slideIds.forEach((slideId) => {
+                prev.values.push([])
                 if (!indexes.length) indexes = a[id].slides[slideId].items.map((_: any, i: number) => i)
                 indexes.forEach((index, i) => {
                   if (!lines?.length) lines = Object.keys(a[id].slides[slideId].items[index].lines)
@@ -235,17 +237,21 @@ export function _show(id: any) {
                     if (key) {
                       if (a[id].slides[slideId].items[index].lines[line]) {
                         console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
+                        console.log(a[id].slides[slideId].items[index].lines[line][key][0]?.style)
+
                         if (a[id].slides[slideId].items[index].lines[line][key] !== undefined) {
-                          prev.values.push(JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])))
+                          prev.values[prev.values.length - 1].push(JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])))
                           a[id].slides[slideId].items[index].lines[line][key] = values[i]
                             ? values[i][lineIndex] !== undefined
                               ? values[i][lineIndex]
                               : values[i][0]
                             : values[0][0]
-                        } else prev.values.push(null)
-                      } else prev.values.push(null)
+                        } else prev.values[prev.values.length - 1].push(null)
+                      } else prev.values[prev.values.length - 1].push(null)
                     } else {
-                      prev.values.push(a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line])) : null)
+                      prev.values[prev.values.length - 1].push(
+                        a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line])) : null
+                      )
                       a[id].slides[slideId].items[index].lines[line] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                     }
                   })

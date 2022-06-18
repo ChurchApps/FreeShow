@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { activeEdit, activeShow, clipboard, showsCache } from "../../stores"
+import { activeEdit, activeShow, clipboard, overlays, showsCache, templates } from "../../stores"
 import { history } from "./history"
 import { _show } from "./shows"
 
@@ -20,6 +20,12 @@ const copyData: any = {
     let ref = _show("active").layouts("active").ref()?.[0]
     let ids = data.map((a: any) => ref[a.index].id)
     return _show("active").slides(ids).get(null)
+  },
+  overlay: (data: any) => {
+    return data.map((id: string) => get(overlays)[id])
+  },
+  template: (data: any) => {
+    return data.map((id: string) => get(templates)[id])
   },
 }
 
@@ -75,6 +81,20 @@ const paster: any = {
     })
     history({ id: "newSlide", newData: { slides: data }, location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } })
     setTimeout(() => console.log(get(showsCache)), 1000)
+  },
+  overlay: (data: any) => {
+    data.forEach((slide: any) => {
+      slide = JSON.parse(JSON.stringify(slide))
+      slide.name += " 2"
+      history({ id: "newOverlay", newData: { data: slide } })
+    })
+  },
+  template: (data: any) => {
+    data.forEach((slide: any) => {
+      slide = JSON.parse(JSON.stringify(slide))
+      slide.name += " 2"
+      history({ id: "newTemplate", newData: { data: slide } })
+    })
   },
 }
 

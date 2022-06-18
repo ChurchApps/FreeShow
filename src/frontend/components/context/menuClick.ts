@@ -54,6 +54,11 @@ const actions: any = {
   // edit
   undo: () => undo(),
   redo: () => redo(),
+  copy: () => {
+    if (get(selected).id) copy(get(selected))
+    else if (get(activeEdit).items) copy({ id: "item", data: get(activeEdit) })
+  },
+  paste: () => paste(),
   // view
   // help
   docs: () => window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" }),
@@ -130,7 +135,7 @@ const actions: any = {
     }
   },
   recolor: (obj: any) => {
-    if (obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
+    if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
   },
   remove_slide: (obj: any) => removeSlide(obj),
   delete: (obj: any) => {
@@ -147,7 +152,7 @@ const actions: any = {
       })
       return
     }
-    if (obj.contextElem.classList.value.includes("#edit_box")) {
+    if (obj.contextElem?.classList.value.includes("#edit_box")) {
       let ref: any = _show("active").layouts("active").ref()[0][get(activeEdit).slide!]
       let slide: any = _show("active").slides([ref.id]).get()[0].id
       history({
@@ -162,17 +167,19 @@ const actions: any = {
     }
     if (obj.sel.id === "category_scripture") {
       scriptures.update((a: any) => {
-        let key: string | null = null
-        Object.entries(a).forEach(([sId, value]: any) => {
-          if (value.id === obj.sel.data[0]) key = sId
-        })
+        obj.sel.data.forEach((id: string) => {
+          let key: string | null = null
+          Object.entries(a).forEach(([sId, value]: any) => {
+            if (value.id === id) key = sId
+          })
 
-        if (key) delete a[key]
+          if (key) delete a[key]
+        })
         return a
       })
       return
     }
-    if (obj.contextElem.classList.contains("#event")) {
+    if (obj.contextElem?.classList.value.contains("#event")) {
       history({ id: "deleteEvent", newData: { id: obj.contextElem.id } })
     }
 
@@ -191,7 +198,7 @@ const actions: any = {
     obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
   },
   duplicate: (obj: any) => {
-    if (obj.contextElem.classList.contains("#event")) {
+    if (obj.contextElem?.classList.value.contains("#event")) {
       let event = JSON.parse(JSON.stringify(get(events)[obj.contextElem.id]))
       event.name += " 2"
       event.repeat = false
@@ -204,7 +211,7 @@ const actions: any = {
       duplicateShows(obj.sel)
       return
     }
-    if (obj.sel.id === "slide") {
+    if (obj.sel.id === "slide" || obj.sel.id === "overlay" || obj.sel.id === "template") {
       copy(obj.sel)
       paste()
       return
@@ -256,9 +263,9 @@ const actions: any = {
   newProject: (obj: any) =>
     history({ id: "newProject", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
   newFolder: (obj: any) => {
-    if (obj.contextElem.classList.value.includes("#projects"))
+    if (obj.contextElem.classList.includes("#projects"))
       history({ id: "newFolder", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } })
-    else if (obj.contextElem.classList.value.includes("#category_media")) window.api.send(OPEN_FOLDER, { id: "media", title: get(dictionary).new?.folder })
+    else if (obj.contextElem.classList.includes("#category_media")) window.api.send(OPEN_FOLDER, { id: "media", title: get(dictionary).new?.folder })
   },
   newSlide: () => history({ id: "newSlide", location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } }),
   newCategory: (obj: any) => {
@@ -267,8 +274,8 @@ const actions: any = {
       overlays: "newOverlaysCategory",
       templates: "newTemplatesCategory",
     }
-    let index = obj.contextElem.classList.value.indexOf("#category_")
-    history({ id: ids[obj.contextElem.classList.value.slice(index + 10, obj.contextElem.classList.value.indexOf(" ", index))] })
+    let index = obj.contextElem.classList.indexOf("#category_")
+    history({ id: ids[obj.contextElem.classList.slice(index + 10, obj.contextElem.classList.indexOf(" ", index))] })
   },
   newScripture: () => activePopup.set("import_scripture"),
 
@@ -352,7 +359,7 @@ const actions: any = {
     } else if (obj.sel.id === "global_group") {
       settingsTab.set("groups")
       activePage.set("settings")
-    } else if (obj.contextElem.classList.contains("#event")) {
+    } else if (obj.contextElem?.classList.value.contains("#event")) {
       eventEdit.set(obj.contextElem.id)
       activePopup.set("edit_event")
     }

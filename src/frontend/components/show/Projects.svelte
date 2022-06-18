@@ -21,7 +21,7 @@
   $: f = Object.entries($folders).map(([id, folder]) => ({ ...folder, id, type: "folder" as "folder" }))
   $: p = Object.entries($projects).map(([id, project]) => ({ ...project, id, shows: [] as any }))
   $: {
-    tree = [...f.sort((a, b) => a.name.localeCompare(b.name)), ...p.sort((a, b) => a.name.localeCompare(b.name))]
+    tree = [...f.sort((a, b) => a.name?.localeCompare(b.name)), ...p.sort((a, b) => a.name?.localeCompare(b.name))]
 
     folderSorted = []
     sortFolders()

@@ -200,6 +200,8 @@
       }
     })
 
+    // TODO: style gets applied before history (no undo) (only font)
+
     // TODO: remove unused (if default)
     if (newData.length && $activeEdit.id) {
       // update layout

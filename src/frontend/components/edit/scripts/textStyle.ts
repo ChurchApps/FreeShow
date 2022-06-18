@@ -104,6 +104,8 @@ export function getSelectionRange(): { start: number; end: number }[] {
     let startOffset = selection.anchorOffset
     let endOffset = selection.focusOffset
 
+    // TODO: can't select empty lines
+
     if (parent) {
       new Array(...parent.childNodes).forEach((br: any, line: number) => {
         if (!sel[line]) sel[line] = {}

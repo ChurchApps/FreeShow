@@ -11,7 +11,8 @@
   export let title
   export let startAt = 0
 
-  $: id = id.includes("=") ? id.slice(id.lastIndexOf("=") + 1, id.length) : id
+  // $: id = id.includes("=") ? id.slice(id.lastIndexOf("=") + 1, id.length) : id
+  $: id = id.slice(-11)
   $: id = id.length === 11 ? id : ""
 
   const options = {
@@ -31,10 +32,6 @@
   let player = null
   let loaded = false
   function onReady(e) {
-    // access to player in all event handlers via event.target
-    // console.log(e, video)
-    // console.log("READY")
-    // console.log(e.detail.target)
     player = e.detail.target
     if (videoData.muted || (!preview && $currentWindow !== "output")) player.mute()
     // videoData.paused = false
@@ -92,18 +89,11 @@
 
     setTimeout(() => (loopStop = false), 50)
   }
-
-  // $: if (videoTime) player.seekTo()
 </script>
 
 <div class="main" class:hide={!id}>
-  <!-- https://www.youtube.com/watch?v=rfxnmIPCzIc -->
   {#if id}
     <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} />
-    <!-- {:else}
-    [[[Type video url/id into search area!]]] -->
-    <!-- {:else}
-    <YouTube class="yt" videoId={id} {options} on:ready={onReady} /> -->
   {/if}
 </div>
 

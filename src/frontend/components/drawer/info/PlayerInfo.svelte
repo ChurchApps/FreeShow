@@ -12,6 +12,18 @@
   <Button on:click={() => send(OUTPUT, ["CLOSE_AD"])} center dark>
     <T id="inputs.close_ad" />
   </Button>
+
+  <hr />
+
+  <T id="error.video_unavailable" />
 {/if}
 
 <!-- TODO: change quality / resolution -->
+<style>
+  hr {
+    border: none;
+    height: 2px;
+    margin: 20px 0;
+    background-color: var(--primary-lighter);
+  }
+</style>

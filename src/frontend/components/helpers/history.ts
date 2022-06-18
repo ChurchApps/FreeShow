@@ -135,6 +135,7 @@ const override = [
   "stageItemAlign",
   "stageItemStyle",
   "slideStyle",
+  // "changeSlide",
   "changeLayout",
   "theme",
   "changeLayouts",
@@ -211,6 +212,7 @@ export function history(obj: History, undo: null | boolean = null) {
           .lines(obj.location!.lines! || [])
           .set(obj.newData.style),
       }
+      console.log(old.style)
       if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
       if (old.template) _show(showID).set(old.template)
       console.log(old)
