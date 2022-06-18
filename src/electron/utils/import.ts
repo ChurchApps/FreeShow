@@ -59,9 +59,15 @@ export async function importShow(id: any, name: string, files: string[] | null, 
         if (!err) data.push({ content: all })
       })
     })
+
     setTimeout(() => {
-      toApp(IMPORT, { channel: id, data: data })
-    }, 100)
+      if (data.find((a) => a.content.word)) toApp(IMPORT, { channel: id, data: data })
+      else
+        setTimeout(() => {
+          // wait a second longer just in case
+          toApp(IMPORT, { channel: id, data: data })
+        }, 1000)
+    }, 500)
   } else {
     // FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
     let data: any[] = []

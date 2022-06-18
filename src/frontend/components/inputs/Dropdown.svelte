@@ -70,6 +70,8 @@
   }
 
   .dropdown {
+    max-height: 300px;
+    overflow: auto;
     /* position: absolute;
     width: 100%; */
     position: fixed;
@@ -91,6 +93,7 @@
 
   button,
   span {
+    display: table;
     width: 100%;
     padding: 8px 12px;
     background-color: transparent;

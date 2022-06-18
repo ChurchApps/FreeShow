@@ -30,14 +30,14 @@
     // shadow
     "box-shadow": null,
   }
-  const shadows: { [key: string]: any } = {
+  const defaultShadow: { [key: string]: any } = {
     "shadow-x": 0,
     "shadow-y": 0,
     "shadow-blur": 0,
     "shadow-spread": 0,
     "shadow-color": "#000000",
   }
-  const shadowsInset: { [key: string]: any } = {
+  const defaultShadowInset: { [key: string]: any } = {
     "ishadow-x": 0,
     "ishadow-y": 0,
     "ishadow-blur": 0,
@@ -46,6 +46,8 @@
   }
 
   let data: { [key: string]: any } = {}
+  let shadow: { [key: string]: any } = {}
+  let shadowInset: { [key: string]: any } = {}
 
   $: {
     if (item?.style || item === null) setText() //  || selection === null
@@ -54,7 +56,24 @@
   setText()
   function setText() {
     let styles = getStyles(item?.style, true)
-    Object.entries(defaults).forEach(([key, value]) => (data[key] = styles[key]?.length ? styles[key] : value))
+
+    shadow = JSON.parse(JSON.stringify(defaultShadow))
+    shadowInset = JSON.parse(JSON.stringify(defaultShadowInset))
+    Object.entries(defaults).forEach(([key, value]) => {
+      if (key === "box-shadow" && styles[key]) {
+        let s = styles[key].split(", inset ")
+        let v = s[0].split(" ")
+        let vi = s[1]?.split(" ") || []
+        Object.keys(defaultShadow).forEach((shadowKey, i) => {
+          let value: any = v[i]
+          let valuei: any = vi[i]
+          if (value?.includes("px")) value = Number(value.replace("px", ""))
+          if (valuei?.includes("px")) valuei = Number(valuei.replace("px", ""))
+          shadow[shadowKey] = value || defaultShadow[shadowKey]
+          if (valuei) shadowInset[Object.keys(defaultShadowInset)[i]] = valuei || defaultShadowInset[shadowKey]
+        })
+      } else data[key] = styles[key]?.length ? styles[key] : value
+    })
   }
 
   const inputChange = (e: any, key: string) => update(key, e.target.value)
@@ -64,17 +83,19 @@
     if (key.includes("shadow")) {
       let v: string[] = []
       let vi: string[] = []
-      Object.entries(shadows).forEach(([shadowKey, shadowStyle]) => {
+      Object.entries(shadow).forEach(([shadowKey, shadowStyle]) => {
         if (shadowKey === key) v.push(style)
         else v.push(shadowStyle)
       })
-      Object.entries(shadowsInset).forEach(([shadowKey, shadowStyle]) => {
+      Object.entries(shadowInset).forEach(([shadowKey, shadowStyle]) => {
+        console.log(shadowKey, shadowStyle)
+
         if (shadowKey === key) vi.push(style)
         else vi.push(shadowStyle)
       })
 
-      if (key.includes("ishadow")) shadowsInset[key] = style
-      else shadows[key] = style
+      if (key.includes("ishadow")) shadowInset[key] = style
+      else shadow[key] = style
       style = v.join("px ") + ", inset " + vi.join("px ")
       key = "box-shadow"
       data[key] = style
@@ -201,11 +222,11 @@
       <p><T id="edit.length" /></p>
     </span>
     <span>
-      <Color value={shadows["shadow-color"]} on:input={(e) => inputChange(e, "shadow-color")} />
-      <NumberInput value={shadows["shadow-x"]} min={-1000} on:change={(e) => update("shadow-x", e.detail)} />
-      <NumberInput value={shadows["shadow-y"]} min={-1000} on:change={(e) => update("shadow-y", e.detail)} />
-      <NumberInput value={shadows["shadow-blur"]} on:change={(e) => update("shadow-blur", e.detail)} />
-      <NumberInput value={shadows["shadow-spread"]} min={-100} on:change={(e) => update("shadow-spread", e.detail)} />
+      <Color value={shadow["shadow-color"]} on:input={(e) => inputChange(e, "shadow-color")} />
+      <NumberInput value={shadow["shadow-x"]} min={-1000} on:change={(e) => update("shadow-x", e.detail)} />
+      <NumberInput value={shadow["shadow-y"]} min={-1000} on:change={(e) => update("shadow-y", e.detail)} />
+      <NumberInput value={shadow["shadow-blur"]} on:change={(e) => update("shadow-blur", e.detail)} />
+      <NumberInput value={shadow["shadow-spread"]} min={-100} on:change={(e) => update("shadow-spread", e.detail)} />
     </span>
   </div>
   <hr />
@@ -222,11 +243,11 @@
       <p><T id="edit.length" /></p>
     </span>
     <span>
-      <Color value={shadowsInset["ishadow-color"]} on:input={(e) => inputChange(e, "ishadow-color")} />
-      <NumberInput value={shadowsInset["ishadow-x"]} min={-1000} on:change={(e) => update("ishadow-x", e.detail)} />
-      <NumberInput value={shadowsInset["ishadow-y"]} min={-1000} on:change={(e) => update("ishadow-y", e.detail)} />
-      <NumberInput value={shadowsInset["ishadow-blur"]} on:change={(e) => update("ishadow-blur", e.detail)} />
-      <NumberInput value={shadowsInset["ishadow-spread"]} min={-100} on:change={(e) => update("ishadow-spread", e.detail)} />
+      <Color value={shadowInset["ishadow-color"]} on:input={(e) => inputChange(e, "ishadow-color")} />
+      <NumberInput value={shadowInset["ishadow-x"]} min={-1000} on:change={(e) => update("ishadow-x", e.detail)} />
+      <NumberInput value={shadowInset["ishadow-y"]} min={-1000} on:change={(e) => update("ishadow-y", e.detail)} />
+      <NumberInput value={shadowInset["ishadow-blur"]} on:change={(e) => update("ishadow-blur", e.detail)} />
+      <NumberInput value={shadowInset["ishadow-spread"]} min={-100} on:change={(e) => update("ishadow-spread", e.detail)} />
     </span>
   </div>
 </Panel>

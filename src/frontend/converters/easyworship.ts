@@ -1,4 +1,4 @@
-import { drawerTabsData, activePopup, groups, alertMessage, dictionary } from "./../stores"
+import { drawerTabsData, activePopup, groups, alertMessage, dictionary, drawer } from "./../stores"
 import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
@@ -33,6 +33,9 @@ interface Words {
 }
 
 export function convertEasyWorship(data: any) {
+  // close drawer to prevent loading songs
+  drawer.set({ height: 40, stored: null })
+
   let songs = data.find((a: any) => a.content.song)?.content.song
   let songsWords = data.find((a: any) => a.content.word)?.content.word
   if (!songsWords) {
@@ -43,8 +46,6 @@ export function convertEasyWorship(data: any) {
   // TODO: promise
   let i = 0
   let importingText = get(dictionary)?.popup.importing || "Importing"
-
-  console.log(songsWords, songs)
 
   asyncLoop()
   // songsWords.forEach(asyncLoop);
@@ -214,7 +215,9 @@ function createSlides({ words }: Words) {
   splitted.forEach((text: any) => {
     // if (text.includes("plainf1fntnamaut")) {
     // let sliced: string = text.slice(text.indexOf("t ") + 2, text.lastIndexOf("par"))
-    let sliced: string = text.slice(text.indexOf(" "), text.indexOf("par")).trim()
+    // <SIDESKIFT>
+    // sdewtemplatestyle101
+    let sliced: string = text.slice(text.indexOf(" "), text.indexOf("par")).replaceAll("plainf1fntnamaut ", "").trim()
 
     // console.log(text.includes("plainf") && sliced.length, sliced)
     if (sliced.length) {

@@ -62,8 +62,9 @@
     "header": "Header",
     "text": "Text",
     "big": "Big",
-    "default": "Standard",
-    "small": "Small"
+    "default": "Default",
+    "small": "Small",
+    "bold": "Bold"
   },
   "titlebar": {
     "file": "File",
@@ -176,7 +177,8 @@
     "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
     "not_found": "Not found",
     "display": "Could not show output window on current display",
-    "keep_one_layout": "You have to have at least one layout"
+    "keep_one_layout": "You have to have at least one layout",
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
   },
   "meta": {
     "title": "Title",
@@ -265,6 +267,7 @@
   "popup": {
     "show": "New show",
     "rename": "Rename",
+    "color": "Color",
     "timer": "Timer",
     "transition": "Transition",
     "delete_show": "Delete show",
@@ -274,6 +277,7 @@
     "export": "Export",
     "importing": "Importing",
     "import_scripture": "Import scripture",
+    "edit_event": "Edit event",
     "about": "About",
     "shortcuts": "Shortcuts",
     "icon": "Icons",
@@ -347,6 +351,10 @@
     "lowercase": "Make lowercase",
     "capitalize": "Capitalize",
     "trim": "Trim",
+    "fullscreen_preview": "Toggle fullscreen preview",
+    "toggle_output": "Toggle output screen",
+    "change_tab": "Change tab",
+    "change_drawer_tab": "Change drawer tab",
     "actions": "Actions"
   },
   "export": {
@@ -372,7 +380,7 @@
     "columns": "Columns"
   },
   "context": {
-    "enabledTabs": "Show/Hide Tabs",
+    "enabledTabs": "Toggle tabs",
     "addToProject": "Add to project",
     "newCategory": "New category",
     "changeIcon": "Change icon",
@@ -533,6 +541,9 @@
     "export_all": "Export everything"
   },
   "calendar": {
+    "type": "Type",
+    "event": "Event",
+    "show": "Schedule show",
     "name": "Name",
     "color": "Color",
     "time": "Time",
@@ -542,7 +553,19 @@
     "to_time": "To time",
     "location": "Location",
     "notes": "Notes",
-    "today": "Today"
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "repeat": "Repeat",
+    "repeat_every": "Repeat every",
+    "repeat_until": "until",
+    "day": "day",
+    "week": "week",
+    "month": "month",
+    "year": "year",
+    "ending_the": "the",
+    "ending_repeated": "repeated",
+    "ending_times": "times",
+    "save_all": "Save and update all"
   },
   "scripture": {
     "bibles": "Bibles from API.Bible",

@@ -38,6 +38,7 @@ import {
   outputScreen,
   outSlide,
   overlays,
+  playerVideos,
   projects,
   saved,
   screen,
@@ -149,6 +150,7 @@ const receiveOUTPUT: any = {
   ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
   DISPLAY: (a: any) => outputDisplay.set(a.enabled),
   POSITION: (a: any) => outputPosition.set(a),
+  PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
   SCREEN_ADDED: (a: any) => {
     if (get(autoOutput) && !get(outputDisplay)) {
       send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })

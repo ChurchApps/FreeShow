@@ -32,7 +32,9 @@
         a[uid()] = { ...data, type: active }
         return a
       })
-    data = { name: "", id: "" }
+    setTimeout(() => {
+      data = { name: "", id: "" }
+    }, 10)
   }
 
   function changeName(name: string, id: string) {
@@ -46,6 +48,13 @@
     .map(([id, video]: any) => ({ rid: id, ...video }))
     .filter((a) => a.type === active)
     .sort((a, b) => (a.name < b.name ? -1 : 1))
+
+  function keydown(e: any) {
+    if (e.key === "Enter") {
+      ;(document.activeElement as any).blur()
+      add()
+    }
+  }
 </script>
 
 <!-- TODO: loading -->
@@ -76,7 +85,7 @@
       {/if}
     </div>
   </div>
-  <div class="add">
+  <div class="add" on:keydown={keydown}>
     <TextInput value={data.name} on:change={(e) => setValue(e, "name")} placeholder={$dictionary.inputs?.name} />
     <TextInput value={data.id} on:change={(e) => setValue(e, "id")} placeholder={$dictionary.inputs?.video_id} />
     <Button on:click={add} style="white-space: nowrap;">

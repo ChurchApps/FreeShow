@@ -17,13 +17,13 @@
   export let item: Item | null
 
   $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : ""
-  $: lineAlignStyle = item?.lines && selection?.length ? getLastLineAlign() : ""
+  $: lineAlignStyle = item?.lines ? getLastLineAlign(selection) : ""
   $: alignStyle = item?.align ? item.align : null
 
-  function getLastLineAlign() {
+  function getLastLineAlign(selection: any) {
     let last = ""
     item?.lines!.forEach((line: any, i: number) => {
-      if (selection![i]?.start) last = line.align.length ? line.align.split(":")[1].replaceAll(";", "").trim() : ""
+      if (!selection || selection[i]?.start) last = line.align.length ? line.align.split(":")[1].replaceAll(";", "").trim() : ""
     })
     return last
   }
@@ -61,7 +61,7 @@
     // shadow
     "text-shadow": "2px 2px 10px #000000",
   }
-  const shadows: { [key: string]: any } = {
+  const defaultShadow: { [key: string]: any } = {
     "shadow-x": 2,
     "shadow-y": 2,
     "shadow-blur": 10,
@@ -73,6 +73,7 @@
   }
 
   let text: { [key: string]: any } = {}
+  let shadow: { [key: string]: any } = {}
   let align: { [key: string]: any } = {}
 
   $: {
@@ -82,16 +83,22 @@
   setText()
   function setText() {
     let styles = getStyles(style, true)
+    console.log(styles)
 
+    shadow = JSON.parse(JSON.stringify(defaultShadow))
     Object.entries(defaults).forEach(([key, value]) => {
-      if (key === "text-shadow" && value !== null) {
-        let v = value.split(" ")
-        Object.keys(shadows).forEach((shadowKey, i) => {
-          text[shadowKey] = v[i]
+      // console.log(key, value, styles[key])
+
+      if (key === "text-shadow" && styles[key]) {
+        let v = styles[key].split(" ")
+        Object.keys(defaultShadow).forEach((shadowKey, i) => {
+          let value: any = v[i]
+          if (value?.includes("px")) value = Number(value.replace("px", ""))
+          shadow[shadowKey] = value || defaultShadow[shadowKey]
         })
       } else text[key] = styles[key]?.length ? styles[key] : value
     })
-    // TODO: better aligns....
+
     let aligns = getStyles(alignStyle)
     align["align-items"] = aligns["align-items"]?.length ? aligns["align-items"] : defaultAligns["align-items"]
     align["text-align"] = lineAlignStyle?.length ? lineAlignStyle : defaultAligns["text-align"]
@@ -113,7 +120,10 @@
 
   // auto
   let isAuto: boolean = false
-  $: if (item?.auto) isAuto = true
+  $: {
+    if (item?.auto) isAuto = true
+    else if (!item?.auto) isAuto = false
+  }
   const auto = (e: any) => {
     isAuto = e.target.checked
     let allItems: number[] = $activeEdit.items
@@ -123,11 +133,6 @@
       allSlideItems.forEach((_item, i) => allItems.push(i))
     }
     let fullItems = allItems.map((a) => allSlideItems[a])
-    console.log({
-      id: "setItems",
-      newData: { style: { key: "auto", values: [isAuto] } },
-      location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
-    })
     history({
       id: "setItems",
       newData: { style: { key: "auto", values: [isAuto] } },
@@ -144,11 +149,11 @@
     } else {
       if (key.includes("shadow")) {
         let v: string[] = []
-        Object.entries(shadows).forEach(([shadowKey, shadowStyle]) => {
+        Object.entries(shadow).forEach(([shadowKey, shadowStyle]) => {
           if (shadowKey === key) v.push(style)
           else v.push(shadowStyle)
         })
-        shadows[key] = style
+        shadow[key] = style
         style = v.join("px ")
         key = "text-shadow"
         text[key] = style
@@ -171,9 +176,8 @@
     // let oldData: any = []
     // loop through all items
     allItems.forEach((itemIndex) => {
-      // oldData.push({ ...allSlideItems[itemIndex] })
       let selected = selection
-      if (!selected?.length) {
+      if (!selected?.length || !selected?.filter((a) => a.start !== a.end).length) {
         selected = []
         allSlideItems[itemIndex].lines?.forEach((line) => {
           selected!.push({ start: 0, end: getLineText(line).length })
@@ -195,6 +199,8 @@
         )
       }
     })
+
+    // TODO: style gets applied before history (no undo) (only font)
 
     // TODO: remove unused (if default)
     if (newData.length && $activeEdit.id) {
@@ -222,7 +228,7 @@
         // WIP
         id: key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
         // oldData: { key: aligns ? "align" : "style", values: oldData },
-        newData: { style: { key: aligns ? "align" : "text", values: newData } },
+        newData: { style: { key: key === "text-align" || aligns ? "align" : "text", values: newData } },
         location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
       })
     }
@@ -324,10 +330,10 @@
       <p>Radius</p> -->
     </span>
     <span>
-      <Color value={shadows["shadow-color"]} on:input={(e) => inputChange(e, "shadow-color")} />
-      <NumberInput value={shadows["shadow-x"]} min={-1000} on:change={(e) => update("shadow-x", e.detail)} />
-      <NumberInput value={shadows["shadow-y"]} min={-1000} on:change={(e) => update("shadow-y", e.detail)} />
-      <NumberInput value={shadows["shadow-blur"]} on:change={(e) => update("shadow-blur", e.detail)} />
+      <Color value={shadow["shadow-color"]} on:input={(e) => inputChange(e, "shadow-color")} />
+      <NumberInput value={shadow["shadow-x"]} min={-1000} on:change={(e) => update("shadow-x", e.detail)} />
+      <NumberInput value={shadow["shadow-y"]} min={-1000} on:change={(e) => update("shadow-y", e.detail)} />
+      <NumberInput value={shadow["shadow-blur"]} on:change={(e) => update("shadow-blur", e.detail)} />
     </span>
   </div>
 </Panel>

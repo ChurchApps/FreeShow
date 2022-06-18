@@ -2,7 +2,7 @@
   import { OUTPUT } from "../../../types/Channels"
 
   import type { Resolution } from "../../../types/Settings"
-  import { activePage, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, presenterControllerKeys, screen } from "../../stores"
+  import { activePage, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, presenterControllerKeys, screen, showsCache } from "../../stores"
   import { nextSlide, previousSlide } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -56,29 +56,40 @@
       else outTransition.set(null)
     },
     PageDown: (e: any) => {
+      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
       if ($presenterControllerKeys) nextSlide(e)
     },
     PageUp: () => {
+      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
       if ($presenterControllerKeys) previousSlide()
     },
 
     ArrowRight: (e: any) => {
+      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
       if ($outLocked || e.ctrlKey || e.metaKey) return
       nextSlide(e)
     },
     ArrowLeft: (e: any) => {
+      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
       if ($outLocked || e.ctrlKey || e.metaKey) return
       previousSlide()
     },
     " ": (e: any) => {
-      if ($outSlide?.id !== $activeShow?.id) nextSlide(e, true)
+      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+      if ($outSlide?.id !== $activeShow?.id || ($activeShow && $outSlide?.layout !== $showsCache[$activeShow.id].settings.activeLayout)) nextSlide(e, true)
       else {
         if (e.shiftKey) previousSlide()
         else nextSlide(e)
       }
     },
-    Home: (e: any) => nextSlide(e, true),
-    End: (e: any) => nextSlide(e, false, true),
+    Home: (e: any) => {
+      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+      nextSlide(e, true)
+    },
+    End: (e: any) => {
+      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+      nextSlide(e, false, true)
+    },
   }
 
   function keydown(e: any) {
@@ -88,7 +99,8 @@
     }
     if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow) return
 
-    if (($activeShow?.type === "show" || $activeShow?.type === undefined) && shortcuts[e.key]) {
+    // ($activeShow?.type === "show" || $activeShow?.type === undefined) &&
+    if (shortcuts[e.key]) {
       e.preventDefault()
       shortcuts[e.key](e)
       return

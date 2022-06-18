@@ -56,6 +56,7 @@
       !e.ctrlKey &&
       !e.metaKey &&
       $selected.id === id &&
+      !e.target.closest(".menus") &&
       !e.target.closest(".selectElem") &&
       !e.target.closest(".popup") &&
       !e.target.closest(".edit") &&

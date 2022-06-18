@@ -7,7 +7,7 @@
   export let preview: boolean = false
 
   $: video = $playerVideos[id]
-  $: console.log(video?.id)
+  $: console.log(video)
 
   export let videoData = { muted: true, paused: false, loop: false, duration: 0 }
   export let videoTime: number = 0

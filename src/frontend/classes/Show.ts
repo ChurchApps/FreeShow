@@ -1,7 +1,8 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
-import { dictionary } from "../stores"
+import { _show } from "../components/helpers/shows"
+import { dictionary, templates } from "../stores"
 
 export class ShowObj implements Show {
   name: string
@@ -14,15 +15,15 @@ export class ShowObj implements Show {
   layouts: any
   media: any
   constructor(isPrivate: boolean = false, category: null | string = null, layoutID: string = uid(), created: number = new Date().getTime()) {
+    let template = _show("active").get("settings.template") || null
+    if (!template && get(templates).default) template = "default"
+
     // private?: boolean,
     this.name = ""
     this.private = isPrivate
     // this.private = private
     this.category = category
-    this.settings = {
-      activeLayout: layoutID,
-      template: null,
-    }
+    this.settings = { activeLayout: layoutID, template }
     this.timestamps = {
       created,
       modified: null,

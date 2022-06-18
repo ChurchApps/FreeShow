@@ -43,7 +43,7 @@ export function template(lang: any): any {
         { label: lang.actions?.undo || "Undo", accelerator: "CmdOrCtrl+Z", click: () => mc("undo") },
         { label: lang.actions?.redo || "Redo", accelerator: "CmdOrCtrl+Y", click: () => mc("redo") },
         { type: "separator" },
-        { label: lang.actions?.cut || "Cut", role: "cut" },
+        // { label: lang.actions?.cut || "Cut", role: "cut" },
         { label: lang.actions?.copy || "Copy", role: "copy" },
         { label: lang.actions?.paste || "Paste", role: "paste" },
         ...(isMac

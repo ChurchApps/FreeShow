@@ -6,6 +6,7 @@
   import CreateCalendarShow from "./components/calendar/CreateCalendarShow.svelte"
   import Day from "./components/calendar/Day.svelte"
   import ContextMenu from "./components/context/ContextMenu.svelte"
+  import { removeSlide } from "./components/context/menuClick"
   import DrawSettings from "./components/draw/DrawSettings.svelte"
   import DrawTools from "./components/draw/DrawTools.svelte"
   import Slide from "./components/draw/Slide.svelte"
@@ -68,6 +69,18 @@
   const menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
   const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "templates", "player", "live"]
   const ctrlKeys: any = {
+    a: () => {
+      if ($activeShow?.id && ($activeShow.type === undefined || $activeShow.type === "show")) {
+        if ($activePage === "show") {
+          // select all slides
+          let ref = _show("active").layouts("active").ref()[0]
+          let selection = ref.map((_: any, index: number) => ({ index }))
+          selected.set({ id: "slide", data: selection })
+        } else if ($activePage === "edit") {
+          // select all elements...
+        }
+      }
+    },
     c: () => {
       if ($selected.id) copy($selected)
       else if ($activeEdit.items) copy({ id: "item", data: $activeEdit })
@@ -103,6 +116,10 @@
       //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
       //   else drawer.set({ height: 40, stored: $drawer.height })
     },
+    Backspace: () => {
+      if ($selected.id === "slide") removeSlide({ sel: $selected })
+    },
+    Delete: () => keys.Backspace(),
     // Enter: (e: any) => {
     //   if (!e.target.closest(".edit")) {
     //     // hide / show drawer

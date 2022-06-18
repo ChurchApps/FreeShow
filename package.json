@@ -1,6 +1,6 @@
 {
   "name": "freeshow",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "private": true,
   "main": "build/electron/index.js",
   "description": "An application for showing song lyrics and more for free!",
@@ -88,7 +88,7 @@
     "@types/express": "^4.17.13",
     "@types/sqlite3": "^3.1.8",
     "@types/vimeo__player": "^2.16.2",
-    "electron": "^13.6.7",
+    "electron": "^19.0.4",
     "electron-builder": "^22.5.1",
     "rollup": "^2.63.0",
     "rollup-plugin-css-only": "^3.1.0",

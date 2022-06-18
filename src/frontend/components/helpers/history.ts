@@ -96,6 +96,7 @@ export type HistoryIDs =
   // other
   | "slideToOverlay"
   | "newEvent"
+  | "deleteEvent"
   | "template"
   // settings
   | "theme"
@@ -134,6 +135,7 @@ const override = [
   "stageItemAlign",
   "stageItemStyle",
   "slideStyle",
+  // "changeSlide",
   "changeLayout",
   "theme",
   "changeLayouts",
@@ -210,6 +212,7 @@ export function history(obj: History, undo: null | boolean = null) {
           .lines(obj.location!.lines! || [])
           .set(obj.newData.style),
       }
+      console.log(old.style)
       if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
       if (old.template) _show(showID).set(old.template)
       console.log(old)
@@ -270,6 +273,7 @@ export function history(obj: History, undo: null | boolean = null) {
             items[index].style = obj.newData.data[i]
           })
         } else {
+          if (!obj.oldData) obj.oldData = { key: obj.newData.key, data: a[obj.location!.id!][obj.newData.key] }
           a[obj.location!.id!][obj.newData.key] = obj.newData.data
         }
         return a
@@ -284,6 +288,7 @@ export function history(obj: History, undo: null | boolean = null) {
             items[index].style = obj.newData.data[i]
           })
         } else {
+          if (!obj.oldData) obj.oldData = { key: obj.newData.key, data: a[obj.location!.id!][obj.newData.key] }
           a[obj.location!.id!][obj.newData.key] = obj.newData.data
         }
         return a
@@ -591,6 +596,7 @@ export function history(obj: History, undo: null | boolean = null) {
                   if (JSON.stringify(a) === JSON.stringify(slide)) id = slide.id
                 })
             // add custom
+            if (slide.id) id = _show(showID).slides([slide.id]).add([slide], true)
             if (!id.length) id = _show(showID).slides().add([slide], true)
 
             let l: any = { id }
@@ -610,7 +616,7 @@ export function history(obj: History, undo: null | boolean = null) {
             // })
             // [newIndex]
 
-            _show(showID).layouts("active").slides().add([l])
+            if (slide.group !== null) _show(showID).layouts("active").slides().add([l])
           })
         }
 
@@ -1019,6 +1025,18 @@ export function history(obj: History, undo: null | boolean = null) {
           if (!obj.newData) delete a[obj.oldData.id]
           else a[obj.oldData.id] = obj.newData
         } else a[obj.newData.id] = obj.newData.data
+        return a
+      })
+      break
+    case "deleteEvent":
+      events.update((a) => {
+        if (undo) {
+          a[obj.newData.id] = obj.newData.data
+        } else {
+          obj.oldData = obj.newData
+          if (!obj.oldData.data) obj.oldData.data = get(events)[obj.newData.id]
+          delete a[obj.newData.id]
+        }
         return a
       })
       break

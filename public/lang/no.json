@@ -63,7 +63,8 @@
     "text": "Tekst",
     "big": "Stor",
     "default": "Standard",
-    "small": "Liten"
+    "small": "Liten",
+    "bold": "Fet"
   },
   "titlebar": {
     "file": "Fil",
@@ -149,7 +150,7 @@
     "stage_shows": "Ingen sceneshow",
     "player": "Ingen videoer",
     "groups": "Ingen grupper",
-    "events": "Ingen arrangement",
+    "events": "Ingen hendelser",
     "text": "Skriv noe",
     "timers": "Ingen globale nedtellinger, eller private i noen show i dette prosjektet"
   },
@@ -176,7 +177,8 @@
     "bible_api": "Kunne ikke laste inn bibel fra API.Bible, har du en internettforbindelse?",
     "not_found": "Ikke funnet",
     "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
-    "keep_one_layout": "Du må ha minst ett oppsett"
+    "keep_one_layout": "Du må ha minst ett oppsett",
+    "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen."
   },
   "meta": {
     "title": "Tittel",
@@ -265,6 +267,7 @@
   "popup": {
     "show": "Nytt show",
     "rename": "Gi nytt navn",
+    "color": "Farge",
     "timer": "Nedtelling",
     "transition": "Overgang",
     "delete_show": "Slett show",
@@ -274,6 +277,7 @@
     "export": "Eksporter",
     "importing": "Importerer",
     "import_scripture": "Importer en bibel",
+    "edit_event": "Rediger hendelse",
     "about": "Om",
     "shortcuts": "Hurtigtaster",
     "icon": "Ikoner",
@@ -299,7 +303,7 @@
     "overlay": "Nytt overlegg",
     "template": "Ny mal",
     "scripture": "Ny bibel",
-    "event": "Nytt arrangement"
+    "event": "Ny hendelse"
   },
   "show": {
     "name": "Navn",
@@ -347,6 +351,10 @@
     "lowercase": "Gjør tekst liten",
     "capitalize": "Gjør første bokstav stor",
     "trim": "Klipp",
+    "fullscreen_preview": "Veksle fullskjerm forhåndsvisning",
+    "toggle_output": "Veksle utgangsskjerm",
+    "change_tab": "Endre fane",
+    "change_drawer_tab": "Endre fane i skuffen",
     "actions": "Handlinger"
   },
   "export": {
@@ -372,8 +380,8 @@
     "columns": "Kolonner"
   },
   "context": {
-    "enabledTabs": "Vis/Skjul Faner",
-    "addToProject": "Legg til prosjekt",
+    "enabledTabs": "Veksle faner",
+    "addToProject": "Legg til i prosjekt",
     "newCategory": "Ny kategori",
     "changeIcon": "Endre ikon",
     "changeGroup": "Endre gruppe",
@@ -402,8 +410,8 @@
     "color": "Farge",
     "background_color": "Bakgrunnsfarge",
     "size": "Størrelse",
-    "auto_size": "Auto-størrele",
-    "line_spacing": "Linjeavstant",
+    "auto_size": "Auto-størrelse",
+    "line_spacing": "Linjeavstand",
     "letter_spacing": "Bokstavasvsand",
     "word_spacing": "Ordavstand",
     "align": "Justering",
@@ -533,6 +541,9 @@
     "export_all": "Eksporter alt"
   },
   "calendar": {
+    "type": "Type",
+    "event": "Arrangement",
+    "show": "Planlegg show",
     "name": "Navn",
     "color": "Farge",
     "time": "Tid",
@@ -542,7 +553,19 @@
     "to_time": "Til tid",
     "location": "Posisjon",
     "notes": "Notater",
-    "today": "I dag"
+    "today": "I dag",
+    "tomorrow": "I morgen",
+    "repeat": "Gjenta",
+    "repeat_every": "Gjenta hver",
+    "repeat_until": "frem til",
+    "day": "dag",
+    "week": "uke",
+    "month": "måned",
+    "year": "år",
+    "ending_the": "den",
+    "ending_repeated": "gjentatt",
+    "ending_times": "ganger",
+    "save_all": "Lagre og oppdater alle"
   },
   "scripture": {
     "bibles": "Bibler fra API.Bible",

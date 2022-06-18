@@ -162,9 +162,9 @@ export function setExampleTemplates() {
       category: "song",
       items: [
         {
-          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          style: "top:120px;left:50px;height:840px;width:1820px;",
           align: "",
-          lines: [{ align: "", text: [{ value: get(dictionary).example?.big || "big", style: "font-size: 120px;" }] }],
+          lines: [{ align: "", text: [{ value: get(dictionary).example?.big || "Big", style: "font-size: 120px;" }] }],
         },
       ],
     }
@@ -174,9 +174,9 @@ export function setExampleTemplates() {
       category: "song",
       items: [
         {
-          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          style: "top:120px;left:50px;height:840px;width:1820px;",
           align: "",
-          lines: [{ align: "", text: [{ value: get(dictionary).example?.default || "default", style: "font-size: 100px;" }] }],
+          lines: [{ align: "", text: [{ value: get(dictionary).example?.default || "Default", style: "font-size: 100px;" }] }],
         },
       ],
     }
@@ -186,9 +186,72 @@ export function setExampleTemplates() {
       category: "song",
       items: [
         {
-          style: "top:121px;left:50.5px;height:840px;width:1820px;",
+          style: "top:120px;left:50px;height:840px;width:1820px;",
           align: "",
-          lines: [{ align: "", text: [{ value: get(dictionary).example?.small || "small", style: "font-size: 80px;" }] }],
+          lines: [{ align: "", text: [{ value: get(dictionary).example?.small || "Small", style: "font-size: 80px;" }] }],
+        },
+      ],
+    }
+    a.bigBold = {
+      name: get(dictionary).example ? get(dictionary).example?.big + " " + get(dictionary).example?.bold : "Big Bold",
+      color: null,
+      category: "song",
+      items: [
+        {
+          style: "top:120px;left:50px;height:840px;width:1820px;",
+          align: "",
+          lines: [
+            {
+              align: "",
+              text: [
+                { value: get(dictionary).example ? get(dictionary).example?.big + " " + get(dictionary).example?.bold : "Big Bold", style: "font-size: 120px;font-weight: bold;" },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    a.defaultBold = {
+      name: get(dictionary).example ? get(dictionary).example?.default + " " + get(dictionary).example?.bold : "Default Bold",
+      color: null,
+      category: "song",
+      items: [
+        {
+          style: "top:120px;left:50px;height:840px;width:1820px;",
+          align: "",
+          lines: [
+            {
+              align: "",
+              text: [
+                {
+                  value: get(dictionary).example ? get(dictionary).example?.default + " " + get(dictionary).example?.bold : "Default Bold",
+                  style: "font-size: 100px;font-weight: bold;",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    a.smallBold = {
+      name: get(dictionary).example ? get(dictionary).example?.small + " " + get(dictionary).example?.bold : "Small Bold",
+      color: null,
+      category: "song",
+      items: [
+        {
+          style: "top:120px;left:50px;height:840px;width:1820px;",
+          align: "",
+          lines: [
+            {
+              align: "",
+              text: [
+                {
+                  value: get(dictionary).example ? get(dictionary).example?.small + " " + get(dictionary).example?.bold : "Small Bold",
+                  style: "font-size: 80px;font-weight: bold;",
+                },
+              ],
+            },
+          ],
         },
       ],
     }

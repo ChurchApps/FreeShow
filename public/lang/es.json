@@ -63,7 +63,8 @@
     "text": "Texto",
     "big": "Grande",
     "default": "Estándar",
-    "small": "Pequeño"
+    "small": "Pequeño",
+    "bold": "Bold"
   },
   "titlebar": {
     "file": "Carpeta",
@@ -176,7 +177,8 @@
     "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
     "not_found": "No encontrado",
     "display": "Ventana de resultado no puede mostrarse en esta vista",
-    "keep_one_layout": "Usted debe tener al menos un diseño"
+    "keep_one_layout": "Usted debe tener al menos un diseño",
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
   },
   "meta": {
     "title": "Título",
@@ -265,6 +267,7 @@
   "popup": {
     "show": "Nuevo programa",
     "rename": "Renombrar",
+    "color": "Color",
     "timer": "Timer",
     "transition": "Transición",
     "delete_show": "Eliminar programa",
@@ -274,6 +277,7 @@
     "export": "Exportar",
     "importing": "Importing",
     "import_scripture": "Import scripture",
+    "edit_event": "Edit event",
     "about": "Acerca de",
     "shortcuts": "Atajos",
     "icon": "Íconos",
@@ -347,6 +351,10 @@
     "lowercase": "Minúscula",
     "capitalize": "Capital",
     "trim": "Ajustar",
+    "fullscreen_preview": "Toggle fullscreen preview",
+    "toggle_output": "Toggle output screen",
+    "change_tab": "Change tab",
+    "change_drawer_tab": "Change drawer tab",
     "actions": "Acciones"
   },
   "export": {
@@ -372,7 +380,7 @@
     "columns": "Columnas"
   },
   "context": {
-    "enabledTabs": "Mostrar/Ocultar Pestañas",
+    "enabledTabs": "Mostrar/ocultar pestañas",
     "addToProject": "Agregar al proyecto",
     "newCategory": "Nueva categoría",
     "changeIcon": "Cambiar ícono",
@@ -533,6 +541,9 @@
     "export_all": "Exportar todo"
   },
   "calendar": {
+    "type": "Type",
+    "event": "Event",
+    "show": "Schedule show",
     "name": "Nombre",
     "color": "Color",
     "time": "Hora",
@@ -542,7 +553,19 @@
     "to_time": "Hasta la hora",
     "location": "Ubicación",
     "notes": "Notas",
-    "today": "Hoy"
+    "today": "Hoy",
+    "tomorrow": "Tomorrow",
+    "repeat": "Repeat",
+    "repeat_every": "Repeat every",
+    "repeat_until": "until",
+    "day": "day",
+    "week": "week",
+    "month": "month",
+    "year": "year",
+    "ending_the": "the",
+    "ending_repeated": "repeated",
+    "ending_times": "times",
+    "save_all": "Save and update all"
   },
   "scripture": {
     "bibles": "Bibles from API.Bible",

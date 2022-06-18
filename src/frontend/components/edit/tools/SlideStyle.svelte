@@ -1,6 +1,5 @@
 <script lang="ts">
   import { activeEdit, activeShow, backgroundColor, screen, showsCache } from "../../../stores"
-  import { GetLayout } from "../../helpers/get"
   import { history } from "../../helpers/history"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
@@ -9,14 +8,8 @@
   import Notes from "../../show/tools/Notes.svelte"
   import Panel from "../../system/Panel.svelte"
 
-  // $: editSlide = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide) : null
-  $: editSlide =
-    $activeEdit.slide !== null
-      ? _show("active")
-          .slides([_show("active").layouts("active").slides([$activeEdit.slide]).get()[0][0]?.id])
-          .get()[0]
-      : null
-  // get(showsCache)[out.id].slides[GetLayout(out.id, out.layout)[out.index]?.id]
+  $: slideId = _show("active").layouts("active").ref()[0][$activeEdit.slide || 0]?.id
+  $: editSlide = $activeEdit.slide !== null ? _show("active").slides([slideId]).get()[0] : null
 
   let settings: any = {}
   showsCache.subscribe(setValues)
@@ -45,20 +38,16 @@
       id: "slideStyle",
       oldData: { style: editSlide?.settings },
       newData,
-      location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id },
+      location: { page: "edit", show: $activeShow!, slide: slideId },
     })
   }
 
   let note: string = ""
-  $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) note = editSlide.notes
+  $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) note = editSlide?.notes || ""
 
   function edit(e: any) {
     if (editSlide.notes === e.detail) return
-    console.log(e.detail)
-    console.log(GetLayout()[$activeEdit.slide!].id)
-
-    _show($activeShow!.id).slides([GetLayout()[$activeEdit.slide!].id]).set({ key: "notes", value: e.detail })
-    console.log(_show($activeShow!.id).slides([GetLayout()[$activeEdit.slide!].id]).get())
+    _show($activeShow!.id).slides([slideId]).set({ key: "notes", value: e.detail })
   }
 </script>
 

@@ -11,9 +11,6 @@ import { electronSettings, events, media, overlays, projects, settings, shows, s
 import { createPDFWindow, exportTXT } from "./utils/export"
 import { importShow } from "./utils/import"
 
-// WIP: Tray / push notifications
-// https://www.webtips.dev/how-to-make-your-very-first-desktop-app-with-electron-and-svelte
-
 const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
 electronSettings.set("loaded", true)
@@ -25,7 +22,7 @@ let dialogClose: boolean = false
 
 app.on("ready", () => {
   if (isProd) startApp()
-  else setTimeout(startApp, 5000)
+  else setTimeout(startApp, 8000)
 })
 
 function startApp() {
@@ -33,14 +30,6 @@ function startApp() {
   createWindow()
 
   displays = screen.getAllDisplays()
-  // console.log("DISPLAYS")
-  // console.log(displays)
-
-  // TODO: get this from settings...
-  // externalDisplay =
-  //   displays.find((display) => {
-  //     return display.bounds.x !== 0 || display.bounds.y !== 0
-  //   }) || null
 
   // SCREEN LISTENERS
   screen.on("display-added", (_e: any, display) => {
@@ -86,11 +75,14 @@ const createLoading = () => {
     resizable: false,
     // show: false,
     icon: "public/icon.png",
-    webPreferences: { nodeIntegration: true, contextIsolation: false, enableRemoteModule: true },
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      // , enableRemoteModule: true
+    },
   })
   loadingWindow.loadFile("public/loading.html")
   // loadingWindow.once("ready-to-show", () => loadingWindow!.showInactive())
-  // if (!isProd) loadingWindow.webContents.openDevTools()
 
   loadingWindow.on("closed", () => (loadingWindow = null))
 }
@@ -116,7 +108,7 @@ const createWindow = () => {
     frame: !isProd || process.platform !== "win32",
     autoHideMenuBar: isProd && process.platform === "win32",
     backgroundColor: "#2d313b",
-    show: false, // !isProd,
+    show: false,
     titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
     trafficLightPosition: { x: 10, y: 17 },
     webPreferences: {
@@ -126,7 +118,6 @@ const createWindow = () => {
       webSecurity: isProd, // load local files
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
       allowRunningInsecureContent: false,
     },
   })
@@ -148,19 +139,6 @@ const createWindow = () => {
     electronSettings.set("width", width)
     electronSettings.set("height", height)
   })
-
-  // let focused: boolean = false
-  // mainWindow.on("focus", () => {
-  //   // WIP hide task bar on second screen
-  //   if (process.platform === "win32" && !focused) {
-  //     focused = true
-  //     outputWindow?.focus()
-  //     mainWindow?.focus()
-  //     setTimeout(() => {
-  //       focused = false
-  //     }, 100)
-  //   }
-  // })
 
   mainWindow.on("close", (e) => {
     if (!dialogClose) {
@@ -293,10 +271,9 @@ function save(data: any) {
     Object.entries(data.scripturesCache).forEach(([id, value]: any) => {
       let p: string = path.resolve(app.getPath("documents"), "Bibles")
       // create folder
-      if (!fs.existsSync(p)) {
-        fs.mkdirSync(p, { recursive: true })
-        p = path.resolve(app.getPath("documents"), "Bibles", value.name + ".fsb")
-      }
+      if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true })
+      p = path.resolve(p, value.name + ".fsb")
+
       // create or update file
       if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
         fs.writeFile(p, JSON.stringify([id, value]), (err): void => {
@@ -602,7 +579,6 @@ function createOutputWindow() {
       devTools: !isProd || Number(app.getVersion()[0]) === 0,
       preload: join(__dirname, "preload"), // use a preload script
       contextIsolation: true,
-      enableRemoteModule: false,
       webSecurity: isProd, // get local files
       allowRunningInsecureContent: false,
     },

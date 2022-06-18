@@ -16,7 +16,7 @@
 <!-- TODO: info tabs: clock, quick settings (master volume), local info -->
 
 <div class="main">
-  <div class="padding">
+  <div class:padding={id !== "scripture"}>
     {#if id === "shows" && $activeShow !== null && ($activeShow.type === undefined || $activeShow.type === "show")}
       <ShowInfo />
     {:else if id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
@@ -37,7 +37,7 @@
 </div>
 
 <style>
-  .main {
+  div {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -45,9 +45,6 @@
   }
 
   .padding {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
     padding: 10px;
   }
 </style>

@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import { MAIN } from "../../../types/Channels"
 import {
   activeDrawerTab,
@@ -6,10 +7,13 @@ import {
   activePage,
   activePopup,
   activeProject,
+  activeRename,
   activeShow,
   alertMessage,
   dictionary,
   drawerTabsData,
+  eventEdit,
+  events,
   imageExtensions,
   projects,
   projectView,
@@ -23,11 +27,12 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
+import { copy, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
+import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
-import { activeRename } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = null) {
   if (actions[id]) return actions[id]({ sel, actionItem, enabled, contextElem, menu })
@@ -49,6 +54,11 @@ const actions: any = {
   // edit
   undo: () => undo(),
   redo: () => redo(),
+  copy: () => {
+    if (get(selected).id) copy(get(selected))
+    else if (get(activeEdit).items) copy({ id: "item", data: get(activeEdit) })
+  },
+  paste: () => paste(),
   // view
   // help
   docs: () => window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" }),
@@ -58,7 +68,7 @@ const actions: any = {
   rename: (obj: any) => {
     console.log(obj)
 
-    if (obj.sel.id === "slide" || obj.sel.id === "group") activePopup.set("rename")
+    if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("rename")
     else if (obj.sel.id === "show") activeRename.set("show_" + obj.sel.data[0].id + "#" + obj.sel.data[0].index)
     else if (obj.sel.id === "show_drawer") activeRename.set("show_drawer_" + obj.sel.data[0].id)
     else if (obj.sel.id === "project") activeRename.set("project_" + obj.sel.data[0].id)
@@ -124,6 +134,9 @@ const actions: any = {
       }
     }
   },
+  recolor: (obj: any) => {
+    if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
+  },
   remove_slide: (obj: any) => removeSlide(obj),
   delete: (obj: any) => {
     if (obj.sel.id === "show_drawer") {
@@ -139,7 +152,7 @@ const actions: any = {
       })
       return
     }
-    if (obj.contextElem.classList.value.includes("#edit_box")) {
+    if (obj.contextElem?.classList.value.includes("#edit_box")) {
       let ref: any = _show("active").layouts("active").ref()[0][get(activeEdit).slide!]
       let slide: any = _show("active").slides([ref.id]).get()[0].id
       history({
@@ -154,15 +167,20 @@ const actions: any = {
     }
     if (obj.sel.id === "category_scripture") {
       scriptures.update((a: any) => {
-        let key: string | null = null
-        Object.entries(a).forEach(([sId, value]: any) => {
-          if (value.id === obj.sel.data[0]) key = sId
-        })
+        obj.sel.data.forEach((id: string) => {
+          let key: string | null = null
+          Object.entries(a).forEach(([sId, value]: any) => {
+            if (value.id === id) key = sId
+          })
 
-        if (key) delete a[key]
+          if (key) delete a[key]
+        })
         return a
       })
       return
+    }
+    if (obj.contextElem?.classList.value.contains("#event")) {
+      history({ id: "deleteEvent", newData: { id: obj.contextElem.id } })
     }
 
     const deleteIDs: any = {
@@ -180,18 +198,29 @@ const actions: any = {
     obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
   },
   duplicate: (obj: any) => {
-    if (obj.sel.id === "show" || obj.sel.id === "show_drawer") {
-      obj.sel.data.forEach((a: any) => {
-        let show = { ...get(showsCache)[a.id] }
-        show.name += " #2"
-        show.timestamps.modified = new Date().getTime()
-        console.log(show)
-        history({ id: "newShow", newData: { show }, location: { page: "show", project: obj.sel.id === "show" ? get(activeProject) : null } })
-      })
+    if (obj.contextElem?.classList.value.contains("#event")) {
+      let event = JSON.parse(JSON.stringify(get(events)[obj.contextElem.id]))
+      event.name += " 2"
+      event.repeat = false
+      delete event.group
+      delete event.repeatData
+      history({ id: "newEvent", newData: { id: uid(), data: event } })
       return
     }
-    if (obj.sel.id === "slide") {
-      // TODO: duplicate slide....
+    if (obj.sel.id === "show" || obj.sel.id === "show_drawer") {
+      duplicateShows(obj.sel)
+      return
+    }
+    if (obj.sel.id === "slide" || obj.sel.id === "overlay" || obj.sel.id === "template") {
+      copy(obj.sel)
+      paste()
+      return
+    }
+    // overlay, template
+    if (get(activeEdit).items) {
+      copy({ id: "item", data: get(activeEdit) })
+      paste()
+      return
     }
   },
   // drawer
@@ -234,9 +263,9 @@ const actions: any = {
   newProject: (obj: any) =>
     history({ id: "newProject", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
   newFolder: (obj: any) => {
-    if (obj.contextElem.classList.value.includes("#projects"))
+    if (obj.contextElem.classList.includes("#projects"))
       history({ id: "newFolder", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } })
-    else if (obj.contextElem.classList.value.includes("#category_media")) window.api.send(OPEN_FOLDER, { id: "media", title: get(dictionary).new?.folder })
+    else if (obj.contextElem.classList.includes("#category_media")) window.api.send(OPEN_FOLDER, { id: "media", title: get(dictionary).new?.folder })
   },
   newSlide: () => history({ id: "newSlide", location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } }),
   newCategory: (obj: any) => {
@@ -245,8 +274,8 @@ const actions: any = {
       overlays: "newOverlaysCategory",
       templates: "newTemplatesCategory",
     }
-    let index = obj.contextElem.classList.value.indexOf("#category_")
-    history({ id: ids[obj.contextElem.classList.value.slice(index + 10, obj.contextElem.classList.value.indexOf(" ", index))] })
+    let index = obj.contextElem.classList.indexOf("#category_")
+    history({ id: ids[obj.contextElem.classList.slice(index + 10, obj.contextElem.classList.indexOf(" ", index))] })
   },
   newScripture: () => activePopup.set("import_scripture"),
 
@@ -330,6 +359,9 @@ const actions: any = {
     } else if (obj.sel.id === "global_group") {
       settingsTab.set("groups")
       activePage.set("settings")
+    } else if (obj.contextElem?.classList.value.contains("#event")) {
+      eventEdit.set(obj.contextElem.id)
+      activePopup.set("edit_event")
     }
   },
 
@@ -364,10 +396,10 @@ const actions: any = {
   },
 
   // formats
-  uppercase: () => format("uppercase"),
-  lowercase: () => format("lowercase"),
-  capitalize: () => format("capitalize"),
-  trim: () => format("trim"),
+  uppercase: (obj: any) => format("uppercase", obj),
+  lowercase: (obj: any) => format("lowercase", obj),
+  capitalize: (obj: any) => format("capitalize", obj),
+  trim: (obj: any) => format("trim", obj),
 }
 
 function changeSlideAction(obj: any, id: string) {
@@ -382,7 +414,7 @@ function changeSlideAction(obj: any, id: string) {
   })
 }
 
-function removeSlide(obj: any) {
+export function removeSlide(obj: any) {
   let location: any = { page: get(activePage) as any, show: get(activeShow)!, layout: _show("active").get("settings.activeLayout") }
   // console.log(location)
   let ref = _show(location.show.id).layouts([location.layout]).ref()[0]
@@ -412,24 +444,36 @@ function removeSlide(obj: any) {
   }
 }
 
-function format(id: string) {
-  let ref: any = _show("active").layouts("active").ref()[0][get(activeEdit).slide!]
-  let slide: any = _show("active").slides([ref.id]).get()[0].id
-  let items: any = _show("active").slides([slide]).items(get(activeEdit).items).get()[0]
-  let newData: any = { style: { values: [] } }
+function format(id: string, obj: any) {
+  let slides: any[] = []
+  let ref: any = _show("active").layouts("active").ref()[0]
+  if (obj.sel.id?.includes("slide")) {
+    slides = obj.sel.data.map((a: any) => ref[a.index].id)
+  } else {
+    slides = [
+      _show("active")
+        .slides([ref[get(activeEdit).slide!].id])
+        .get()[0].id,
+    ]
+  }
 
-  let newItems: any[] = []
-  items.forEach((item: any) => {
-    item.lines?.forEach((line: any, j: number) => {
-      line.text?.forEach((text: any, k: number) => {
-        item.lines[j].text[k].value = formatting[id](text.value)
+  slides.forEach((slide) => {
+    let items: any = _show("active").slides([slide]).items(get(activeEdit).items).get()[0]
+    let newData: any = { style: { values: [] } }
+
+    let newItems: any[] = []
+    items.forEach((item: any) => {
+      item.lines?.forEach((line: any, j: number) => {
+        line.text?.forEach((text: any, k: number) => {
+          item.lines[j].text[k].value = formatting[id](text.value)
+        })
       })
+      newItems.push(item)
     })
-    newItems.push(item)
-  })
-  newData.style.values = newItems
+    newData.style.values = newItems
 
-  history({ id: "setItems", newData, location: { page: "edit", show: get(activeShow)!, items: get(activeEdit).items, slide: slide } })
+    history({ id: "setItems", newData, location: { page: get(activePage) as any, show: get(activeShow)!, items: get(activeEdit).items, slide: slide } })
+  })
 }
 
 const formatting: any = {
@@ -437,4 +481,14 @@ const formatting: any = {
   lowercase: (t: string) => t.toLowerCase(),
   capitalize: (t: string) => t[0].toUpperCase() + t.slice(1, t.length).toLowerCase(),
   trim: (t: string) => t.replace(/[.,!]*$/g, "").trim(),
+}
+
+async function duplicateShows(selected: any) {
+  await loadShows(selected.data.map((a: any) => a.id))
+  selected.data.forEach((a: any) => {
+    let show = JSON.parse(JSON.stringify(get(showsCache)[a.id]))
+    show.name += " 2"
+    show.timestamps.modified = new Date().getTime()
+    history({ id: "newShow", newData: { show }, location: { page: "show", project: selected.id === "show" ? get(activeProject) : null } })
+  })
 }

@@ -109,10 +109,7 @@
         .add([JSON.parse(JSON.stringify(newSlide))])
 
       // update slide
-      _show("active")
-        .slides([ref.id])
-        .items([index])
-        .set({ key: "lines", values: [firstLines] })
+      updateLines(firstLines)
 
       // set child
       let parentId = slideRef.type === "child" ? slideRef.parent.id : slideRef.id
@@ -209,8 +206,8 @@
     setTimeout(updateLines, 10)
   }
 
-  function updateLines() {
-    let newLines: Line[] = getNewLines()
+  function updateLines(newLines: Line[]) {
+    if (!newLines) newLines = getNewLines()
     if ($activeEdit.type === "overlay") overlays.update(setNewLines)
     else if ($activeEdit.type === "template") templates.update(setNewLines)
     else if (ref.id) {
@@ -247,6 +244,37 @@
   // timer
   let today = new Date()
   setInterval(() => (today = new Date()), 1000)
+
+  // paste
+  function paste(e: any) {
+    e.preventDefault()
+    let clipboard = e.clipboardData.getData("text/plain")
+    console.log(clipboard)
+
+    let sel = getSelectionRange()
+    let lines: Line[] = getNewLines()
+
+    sel.forEach((lineSel, i) => {
+      console.log(lineSel)
+      if (lineSel.start !== undefined) {
+        let pos = 0
+        let pasted = false
+        lines[i].text.forEach(({ value }, j) => {
+          console.log(pos, lineSel.start, value)
+          if (!pasted && pos + value.length >= lineSel.start) {
+            let caretPos = lineSel.start - pos
+            lines[i].text[j].value = value.slice(0, caretPos) + clipboard + value.slice(caretPos, value.length)
+            pasted = true
+          }
+          pos += value.length
+        })
+      }
+    })
+
+    updateLines(lines)
+    getStyle()
+    // TODO: set caret position
+  }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -273,6 +301,7 @@
         bind:this={textElem}
         class="edit"
         contenteditable
+        on:paste={paste}
         bind:innerHTML={html}
         style={plain ? null : item.align ? item.align.replace("align-items", "justify-content") : null}
         class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}

@@ -170,64 +170,78 @@
 
 <svelte:window on:keydown={keydown} />
 
-<Zoomed style="width: 100%;">
-  {#if bible.activeVerses}
-    <!-- {#each slides as items} -->
-    {#each slides[0] as item}
-      <Textbox {item} ref={{ id: "scripture" }} />
-    {/each}
-    <!-- {/each} -->
-  {/if}
-</Zoomed>
+<div class="scroll">
+  <Zoomed style="width: 100%;">
+    {#if bible.activeVerses}
+      <!-- {#each slides as items} -->
+      {#each slides[0] as item}
+        <Textbox {item} ref={{ id: "scripture" }} />
+      {/each}
+      <!-- {/each} -->
+    {/if}
+  </Zoomed>
 
-{bible.version}
-<br />
-{bible.book}
-{bible.chapter}{#if verseRange.length}:{verseRange}{/if}
-<!-- TODO: drag&drop slide(s) -->
+  <div style="text-align: center;opacity: 0.8;padding: 8px 0;">
+    <!-- {bible.version}
+    <br /> -->
+    {bible.book}
+    {bible.chapter}{#if verseRange.length}:{verseRange}{/if}
+  </div>
 
-<!-- settings: red jw, verse numbers, verse break, max verses per slide, show version, show book&chapter&verse, text formatting -->
-<!-- settings -->
-<div class="settings">
-  <span>
-    <p><T id="info.template" /></p>
-    <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 50%;" />
-  </span>
-  <span>
-    <p><T id="scripture.max_verses" /></p>
-    <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={25} on:change={(e) => update("versesPerSlide", e.detail)} />
-  </span>
-  <span>
-    <p><T id="scripture.verse_numbers" /></p>
-    <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
-  </span>
-  <span>
-    <p><T id="scripture.version" /></p>
-    <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
-  </span>
-  <span>
-    <p><T id="scripture.reference" /></p>
-    <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
-  </span>
-  <!-- <span>
-    <p><T id="scripture.red_jesus" /> (WIP)</p>
-    <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
-  </span> -->
+  <!-- TODO: drag&drop slide(s) -->
+
+  <!-- settings: red jw, verse numbers, verse break, max verses per slide, show version, show book&chapter&verse, text formatting -->
+  <!-- settings -->
+  <div class="settings">
+    <span>
+      <p><T id="info.template" /></p>
+      <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 50%;" />
+    </span>
+    <span>
+      <p><T id="scripture.max_verses" /></p>
+      <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={25} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
+    </span>
+    <span>
+      <p><T id="scripture.verse_numbers" /></p>
+      <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
+    </span>
+    <span>
+      <p><T id="scripture.version" /></p>
+      <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
+    </span>
+    <span>
+      <p><T id="scripture.reference" /></p>
+      <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
+    </span>
+    <!-- <span>
+      <p><T id="scripture.red_jesus" /> (WIP)</p>
+      <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
+    </span> -->
+  </div>
 </div>
 
-<Button on:click={createShow} disabled={!verseRange} dark center>
+<Button on:click={createShow} style="width: 100%;" disabled={!verseRange} dark center>
   <Icon id="show" right />
-  <T id="new.show" /><span style="opacity: 0.6;margin-left: 10px;">({slides.length})</span>
+  <T id="new.show" />
+  {#if slides.length > 1}
+    <span style="opacity: 0.5;margin-left: 0.5em;">({slides.length})</span>
+  {/if}
 </Button>
 
 <style>
-  .settings {
+  .scroll {
     display: flex;
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+  }
+  .settings {
+    display: flex;
+    flex-direction: column;
     gap: 5px;
+    padding: 10px;
+    padding-top: 0;
   }
   .settings span {
     display: flex;
@@ -238,5 +252,9 @@
   .settings :global(.dropdown) {
     position: absolute;
     width: 100% !important;
+  }
+
+  .settings :global(.numberInput) {
+    width: 50px;
   }
 </style>

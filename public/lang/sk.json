@@ -63,7 +63,8 @@
     "text": "Text",
     "big": "Veľké",
     "default": "Normálne",
-    "small": "Malé"
+    "small": "Malé",
+    "bold": "Bold"
   },
   "titlebar": {
     "file": "Súbor",
@@ -176,7 +177,8 @@
     "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
     "not_found": "Nenašlo sa",
     "display": "Nepodarilo sa zobraziť výstupné okno na aktuálnej obrazovke",
-    "keep_one_layout": "Musíte mať aspoň jedno rozloženie"
+    "keep_one_layout": "Musíte mať aspoň jedno rozloženie",
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
   },
   "meta": {
     "title": "Názov",
@@ -265,6 +267,7 @@
   "popup": {
     "show": "Nová prezentácia",
     "rename": "Premenovať",
+    "color": "Farba",
     "timer": "Timer",
     "transition": "Prechod",
     "delete_show": "Odstrániť prezentáciu",
@@ -274,6 +277,7 @@
     "export": "Export",
     "importing": "Importing",
     "import_scripture": "Import scripture",
+    "edit_event": "Edit event",
     "about": "Viac info",
     "shortcuts": "Skratky",
     "icon": "Ikony",
@@ -347,6 +351,10 @@
     "lowercase": "Malé písmená",
     "capitalize": "Kapitálky",
     "trim": "Orezať",
+    "fullscreen_preview": "Toggle fullscreen preview",
+    "toggle_output": "Toggle output screen",
+    "change_tab": "Change tab",
+    "change_drawer_tab": "Change drawer tab",
     "actions": "Akcie"
   },
   "export": {
@@ -533,6 +541,9 @@
     "export_all": "Exportovať všetko"
   },
   "calendar": {
+    "type": "Type",
+    "event": "Event",
+    "show": "Schedule show",
     "name": "Názov",
     "color": "Farba",
     "time": "Čas",
@@ -542,7 +553,19 @@
     "to_time": "Po čas",
     "location": "Miesto",
     "notes": "Poznámky",
-    "today": "Dnes"
+    "today": "Dnes",
+    "tomorrow": "Tomorrow",
+    "repeat": "Repeat",
+    "repeat_every": "Repeat every",
+    "repeat_until": "until",
+    "day": "day",
+    "week": "week",
+    "month": "month",
+    "year": "year",
+    "ending_the": "the",
+    "ending_repeated": "repeated",
+    "ending_times": "times",
+    "save_all": "Save and update all"
   },
   "scripture": {
     "bibles": "Bibles from API.Bible",

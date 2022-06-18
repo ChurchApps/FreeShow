@@ -53,14 +53,14 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
   if (
     get(activePage) === "show" &&
     get(activeShow) &&
-    (start || !slide || e?.ctrlKey || (isLastSlide && get(activeShow)!.id !== slide?.id && get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout))
+    (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))
   ) {
     let id = loop ? slide!.id : get(activeShow)!.id
     if (!id) return
 
     // layout = GetLayout()
     layout = _show(id).layouts("active").ref()[0]
-    if (!layout.filter((a) => !a.data.disabled).length) return
+    if (!layout?.filter((a) => !a.data.disabled).length) return
 
     index = 0
     while (layout[index].data.disabled) index++

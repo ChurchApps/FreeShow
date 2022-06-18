@@ -1,6 +1,6 @@
 <script lang="ts">
   import { activeProject, activeShow, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
-  import { GetLayout, GetLayoutRef } from "../helpers/get"
+  import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import { ContextMenuItem, contextMenuItems } from "./contextMenus"
@@ -26,15 +26,9 @@
       else if ($selected.id === "stage") enabled = $stageShows[$selected.data[0].id]?.disabled
     },
     remove: () => {
-      if ($selected.id === "slide" && ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child")) disabled = true
-    },
-    recolor: () => {
       // WIP
+      // if ($selected.id === "slide" && ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child")) disabled = true
       if ($selected.id === "slide") disabled = true
-    },
-    duplicate: () => {
-      // WIP
-      disabled = true
     },
     undo: () => {
       if (!$undoHistory.length) disabled = true

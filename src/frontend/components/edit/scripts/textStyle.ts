@@ -80,7 +80,7 @@ export function addStyleString(oldStyle: string, style: any[]): string {
   if (!array[array.length - 1].length) array.pop()
   // remove old styles
   array.forEach((s, i) => {
-    if (s.split(":")[0].includes(style[0]) || !s.length) array.splice(i, 1)
+    if (s.split(":")[0].trim() === style[0] || !s.length) array.splice(i, 1)
   })
   // add new style
   if (style[1] !== null) array.push(style.join(":"))
@@ -103,6 +103,8 @@ export function getSelectionRange(): { start: number; end: number }[] {
     let endNode = selection.focusNode?.parentNode
     let startOffset = selection.anchorOffset
     let endOffset = selection.focusOffset
+
+    // TODO: can't select empty lines
 
     if (parent) {
       new Array(...parent.childNodes).forEach((br: any, line: number) => {
