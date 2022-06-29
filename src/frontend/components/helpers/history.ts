@@ -809,8 +809,10 @@ export function history(obj: History, undo: null | boolean = null) {
       } else {
         let refs: any[] = _show(showID).layouts().ref()
         let slides: any[][] = refs.map((a) => a.filter((a: any) => obj.newData.ids.includes(a.id)).map((a: any) => a.index))
+        // TODO: removing all slides if slides is empty
+        console.log(slides)
         old = {
-          layouts: _show(showID).layouts().slides(slides).remove(),
+          layouts: _show(showID).layouts().slides(slides).remove(null, false),
           slides: _show(showID).slides(obj.newData.ids).remove(),
         }
       }

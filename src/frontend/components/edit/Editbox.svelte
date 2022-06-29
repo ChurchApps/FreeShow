@@ -32,6 +32,8 @@
     })
 
     let target = e.target.closest(".item")
+    if (!target) return
+
     mouse = {
       x: e.clientX,
       y: e.clientY,
@@ -55,7 +57,8 @@
   // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
   function keydown(e: any) {
-    if (e.key === "Enter" && e.altKey) {
+    // TODO: get working in list view
+    if (e.key === "Enter" && e.altKey && e.target.closest(".item")) {
       // split
       let sel = getSelectionRange()
       if (!sel) return

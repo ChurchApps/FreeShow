@@ -17,6 +17,7 @@
     $selected.data.forEach((a) => {
       history({ id: "deleteShow", oldData: { id: a.id, show: $shows[a.id] } })
     })
+    selected.set({ id: null, data: [] })
     activePopup.set(null)
   }}
   red

@@ -8,13 +8,13 @@ const keys: any = {
     // change active show in project
     if (index === null) return 0
     index = shows.findIndex((_a: any, i: number) => i - 1 === index)
-    return index === null || index < 0 ? 0 : index
+    return index === null || index < 0 ? null : index
   },
   ArrowUp: (index: number | null, shows: any) => {
     // change active show in project
     if (index === null) return shows.length - 1
     index = shows.findIndex((_a: any, i: number) => i + 1 === index)
-    return index === null || index < 0 ? shows.length - 1 : index
+    return index === null || index < 0 ? null : index
   },
 }
 
@@ -29,7 +29,7 @@ export function checkInput(e: any) {
     let newIndex: number = keys[e.key](index, shows)
 
     // Set active show in project list
-    if (newIndex !== index) activeShow.set({ ...shows[newIndex], index: newIndex })
+    if (newIndex !== null && newIndex !== index) activeShow.set({ ...shows[newIndex], index: newIndex })
   }
 }
 

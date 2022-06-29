@@ -62,6 +62,8 @@ export function ondrop(e: any, id: string) {
   console.log("DRAG: ", sel.id, sel.data)
   console.log("DROP: ", id, data, trigger)
 
+  // TODO: clean
+
   switch (id) {
     case "projects":
       if ((sel.id === "folder" || sel.id === "project") && (!data.type || data.type === "folder")) {
@@ -175,8 +177,20 @@ export function ondrop(e: any, id: string) {
         // create a sorted layout
         let sortedLayout: any[] = []
 
+        // TODO: clean (check global_group)
+
         if (sel.id === "slide") {
           let selected: number[] = getIndexes(sel.data)
+
+          // select children if parent is selected
+          selected.forEach((index) => {
+            if (ref[index].type === "parent") {
+              let children = slides[ref[index].id].children
+              children?.map((_, childIndex) => {
+                if (!selected.includes(index + childIndex + 1)) selected.push(index + childIndex + 1)
+              })
+            }
+          })
 
           ref = ref.filter((a: any, i: number) => {
             if (selected.includes(i)) {
@@ -227,8 +241,29 @@ export function ondrop(e: any, id: string) {
           delete location.layout
           newData = { key: "globalGroup", value: sel.data[0].globalGroup }
         } else {
-          historyID = "newSlide"
-          newData = { slides: sel.data, index }
+          historyID = "slide"
+
+          let layoutId = _show("active").get("settings.activeLayout")
+
+          let slides: any = get(showsCache)[get(activeShow)!.id].slides
+          let ref: any = _show("active").layouts([layoutId]).ref()[0]
+          let layout: any[] = _show("active").layouts([layoutId]).slides().get()[0]
+
+          if (index === undefined) index = layout.length
+          let newIndex: number = index
+
+          sel.data.forEach((slide: any) => {
+            let id = uid()
+            slides[id] = slide
+
+            let parent = ref[newIndex - 1]
+            if (parent.type === "child") parent = parent.parent
+
+            layout = addToPos(layout, [{ id }], parent.index + 1)
+          })
+
+          newData = { slides, layout }
+          location.layout = layoutId
         }
       } else if (sel.id === "overlay") {
         historyID = "changeLayout"

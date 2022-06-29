@@ -167,9 +167,10 @@ const createWindow = () => {
 app.on("window-all-closed", () => {
   closeServers()
   // || quit
-  if (process.platform !== "darwin") {
-    app.quit()
-  }
+  // TODO: mac should not quit
+  // if (process.platform !== "darwin") {
+  app.quit()
+  // }
 })
 // mac activate
 app.on("activate", () => {
@@ -317,11 +318,8 @@ function save(data: any) {
 // IMPORT
 ipcMain.on(IMPORT, (_e, msg) => {
   let files = dialog.showOpenDialogSync(mainWindow!, { properties: ["openFile", "multiSelections"], filters: [{ name: msg.data.name, extensions: msg.data.extensions }] })
-  let name = files ? path.basename(files[0]).slice(0, path.basename(files[0]).lastIndexOf(".")) : ""
   if ((os.platform() !== "linux" || msg.channel !== "pdf") && (!msg.data.extensions || files?.length)) {
-    let outputPath: string | undefined
-    if (msg.channel === "pdf") outputPath = updateOutputPath(path.resolve(app.getPath("documents"), "Shows", name))
-    importShow(msg.channel, name, files || null, outputPath)
+    importShow(msg.channel, files || null)
   }
 })
 
@@ -381,7 +379,7 @@ ipcMain.on(SHOW, (e, msg) => {
 
 export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContents.send(channel, ...args)
 
-const updateOutputPath = (p: any = null, name: string = "Shows") => {
+export const updateOutputPath = (p: any = null, name: string = "Shows") => {
   if (!p) p = path.resolve(app.getPath("documents"), name)
   if (!fs.existsSync(p)) p = fs.mkdirSync(p, { recursive: true })
   return p
@@ -512,8 +510,14 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       // outputWindow?.setFullScreenable(false)
       // outputWindow?.setAlwaysOnTop(true, "screen-saver", 1)
       if (process.platform === "darwin") {
-        outputWindow?.maximize()
-        if (!msg.data.force) outputWindow?.setFullScreen(true)
+        setTimeout(() => {
+          outputWindow?.maximize()
+        }, 100)
+        if (!msg.data.force) {
+          setTimeout(() => {
+            outputWindow?.setFullScreen(true)
+          }, 500)
+        }
       }
       outputWindow?.moveTop()
 

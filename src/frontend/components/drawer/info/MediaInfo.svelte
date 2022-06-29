@@ -21,6 +21,7 @@
   $: changed = info.ctime || null
 </script>
 
+<main style="overflow-y: auto;">
 <h2 style="text-align: center" title={name}>
   {#if name.length}
     {name}
@@ -63,8 +64,14 @@
     <span>-</span>
   {/if}
 </p>
+</main>
 
 <style>
+  main {
+    overflow-y: auto;
+    padding: 10px;
+  }
+  
   p {
     display: flex;
     justify-content: space-between;

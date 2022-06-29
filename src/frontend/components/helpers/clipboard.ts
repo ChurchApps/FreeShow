@@ -79,6 +79,8 @@ const paster: any = {
       }
       return slide
     })
+    // TODO: add at index
+
     history({ id: "newSlide", newData: { slides: data }, location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } })
     setTimeout(() => console.log(get(showsCache)), 1000)
   },

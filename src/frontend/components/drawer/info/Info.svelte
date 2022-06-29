@@ -16,24 +16,22 @@
 <!-- TODO: info tabs: clock, quick settings (master volume), local info -->
 
 <div class="main">
-  <div class:padding={id !== "scripture"}>
-    {#if id === "shows" && $activeShow !== null && ($activeShow.type === undefined || $activeShow.type === "show")}
-      <ShowInfo />
-    {:else if id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
-      <MediaInfo />
-    {:else if id === "templates"}
-      <TemplateInfo />
-    {:else if id === "scripture"}
-      <ScriptureInfo {bible} />
-    {:else if id === "player"}
-      <PlayerInfo />
-    {:else}
-      <Center>
-        <Clock />
-        <Date />
-      </Center>
-    {/if}
-  </div>
+  {#if id === "shows" && $activeShow !== null && ($activeShow.type === undefined || $activeShow.type === "show")}
+    <ShowInfo />
+  {:else if id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
+    <MediaInfo />
+  {:else if id === "templates"}
+    <TemplateInfo />
+  {:else if id === "scripture"}
+    <ScriptureInfo {bible} />
+  {:else if id === "player"}
+    <PlayerInfo />
+  {:else}
+    <Center>
+      <Clock />
+      <Date />
+    </Center>
+  {/if}
 </div>
 
 <style>
@@ -42,9 +40,5 @@
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
-  }
-
-  .padding {
-    padding: 10px;
   }
 </style>
