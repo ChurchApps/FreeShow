@@ -50,9 +50,9 @@
   <div class="grid">
     <IconButton title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
     <IconButton title={$dictionary.items?.image} disabled icon="image" />
-    <IconButton title={$dictionary.items?.video} disabled icon="video" />
-    <IconButton title={$dictionary.items?.live} disabled icon="camera" />
+    <!-- <IconButton title={$dictionary.items?.video} disabled icon="video" /> -->
     <IconButton title={$dictionary.items?.audio} disabled icon="audio" />
+    <IconButton title={$dictionary.items?.live} disabled icon="camera" />
     <IconButton title={$dictionary.items?.timer} icon="timer" on:click={() => addItem("timer")} />
   </div>
   <div>
@@ -124,10 +124,15 @@
     /* gap: 10px; */
     flex-wrap: wrap;
   }
+
   .grid :global(#icon) {
+    min-width: 33%;
     flex: 1;
     background-color: var(--primary-darker);
     padding: 20px;
+  }
+  .grid :global(#icon:hover) {
+    background-color: var(--primary-lighter);
   }
 
   .items p {

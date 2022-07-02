@@ -188,6 +188,7 @@ const replaceCodes: any = {
   "u253?": "ý",
   "u254?": "þ",
   "u255?": "ÿ",
+  // "u8211?": "," ?
 }
 
 function createSlides({ words }: Words) {

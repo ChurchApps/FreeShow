@@ -458,7 +458,7 @@ export function _show(id: any) {
           })
         },
         /** Remove slides in layouts */
-        remove: (key: null | string = null) => {
+        remove: (key: null | string = null, deleteAll: boolean = true) => {
           // let prev: any = { indexes: [], layouts: [] }
           let prev: any = {}
           showsCache.update((a: any) => {
@@ -466,7 +466,7 @@ export function _show(id: any) {
             else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
             layoutIds.forEach((layoutId: any, i: number) => {
               prev[layoutId] = { indexes: [], layouts: [] }
-              if (!indexes[i]?.length) indexes[i] = Object.keys(shows[id].layouts[layoutId].slides)
+              if (!indexes[i]?.length && deleteAll) indexes[i] = Object.keys(shows[id].layouts[layoutId].slides)
               indexes[i]
                 .sort((a: any, b: any) => b - a)
                 .forEach((index: number) => {

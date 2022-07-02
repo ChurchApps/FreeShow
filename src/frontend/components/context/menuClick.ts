@@ -179,7 +179,7 @@ const actions: any = {
       })
       return
     }
-    if (obj.contextElem?.classList.value.contains("#event")) {
+    if (obj.contextElem?.classList.value.includes("#event")) {
       history({ id: "deleteEvent", newData: { id: obj.contextElem.id } })
     }
 
@@ -198,7 +198,7 @@ const actions: any = {
     obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
   },
   duplicate: (obj: any) => {
-    if (obj.contextElem?.classList.value.contains("#event")) {
+    if (obj.contextElem?.classList.value.includes("#event")) {
       let event = JSON.parse(JSON.stringify(get(events)[obj.contextElem.id]))
       event.name += " 2"
       event.repeat = false
@@ -359,7 +359,7 @@ const actions: any = {
     } else if (obj.sel.id === "global_group") {
       settingsTab.set("groups")
       activePage.set("settings")
-    } else if (obj.contextElem?.classList.value.contains("#event")) {
+    } else if (obj.contextElem?.classList.value.includes("#event")) {
       eventEdit.set(obj.contextElem.id)
       activePopup.set("edit_event")
     }
@@ -479,7 +479,7 @@ function format(id: string, obj: any) {
 const formatting: any = {
   uppercase: (t: string) => t.toUpperCase(),
   lowercase: (t: string) => t.toLowerCase(),
-  capitalize: (t: string) => t[0].toUpperCase() + t.slice(1, t.length).toLowerCase(),
+  capitalize: (t: string) => (t.length > 1 ? t[0].toUpperCase() + t.slice(1, t.length).toLowerCase() : t.toUpperCase()),
   trim: (t: string) => t.replace(/[.,!]*$/g, "").trim(),
 }
 

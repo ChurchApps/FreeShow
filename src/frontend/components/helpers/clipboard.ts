@@ -19,6 +19,7 @@ const copyData: any = {
   slide: (data: any) => {
     let ref = _show("active").layouts("active").ref()?.[0]
     let ids = data.map((a: any) => ref[a.index].id)
+    // TODO: copy media too
     return _show("active").slides(ids).get(null)
   },
   overlay: (data: any) => {
@@ -79,6 +80,8 @@ const paster: any = {
       }
       return slide
     })
+    // TODO: add at index
+
     history({ id: "newSlide", newData: { slides: data }, location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } })
     setTimeout(() => console.log(get(showsCache)), 1000)
   },

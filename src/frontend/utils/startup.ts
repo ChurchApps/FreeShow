@@ -11,7 +11,7 @@ import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
 import { convertPDF } from "../converters/pdf"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { convertProPresenter } from "../converters/propresenter"
-import { convertText } from "../converters/txt"
+import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
 import {
@@ -164,7 +164,7 @@ const receiveOUTPUT: any = {
 // }
 
 const receiveIMPORT: any = {
-  txt: (a: any) => convertText(a),
+  txt: (a: any) => convertTexts(a),
   pdf: (a: any) => convertPDF(a),
   powerpoint: (a: any) => convertPowerpoint(a),
   freeshow: (a: any) => importShow(a),

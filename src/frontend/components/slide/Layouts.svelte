@@ -13,6 +13,10 @@
   $: layouts = $showsCache[active]?.layouts
   $: activeLayout = $showsCache[active]?.settings?.activeLayout
 
+  $: sortedLayouts = Object.entries(layouts || {})
+    .map(([id, layout]: any) => ({ id, ...layout }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+
   function addLayout(e: any) {
     let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
     if (e.ctrlKey || e.metaKey) {
@@ -52,17 +56,22 @@
 
 <div>
   {#if layouts}
+    <!-- TODO: rename clitching -->
     <span style="display: flex;overflow-x: auto;">
-      {#each Object.entries(layouts) as [id, layout]}
-        <SelectElem id="layout" data={id} borders="edges" trigger="row" draggable>
+      <!-- width: 100%; -->
+      {#each sortedLayouts as layout}
+        <!-- <SelectElem id="layout" data={id} borders="edges" trigger="row" draggable fill> -->
+        <SelectElem id="layout" data={layout.id} fill>
           <Button
             class="context #layout"
             on:click={() => {
-              if (!edit) setLayout(id)
+              if (!edit) setLayout(layout.id)
             }}
-            active={activeLayout === id}
+            active={activeLayout === layout.id}
+            center
           >
-            <HiddenInput value={layout.name} id={"layout_" + id} on:edit={changeName} bind:edit />
+            <!-- style="width: 100%;" -->
+            <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit />
           </Button>
         </SelectElem>
       {/each}

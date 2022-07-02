@@ -9,17 +9,23 @@
 </script>
 
 {#if active === "youtube"}
-  <Button on:click={() => send(OUTPUT, ["CLOSE_AD"])} center dark>
-    <T id="inputs.close_ad" />
-  </Button>
+  <main>
+    <Button on:click={() => send(OUTPUT, ["CLOSE_AD"])} center dark>
+      <T id="inputs.close_ad" />
+    </Button>
 
-  <hr />
+    <hr />
 
-  <T id="error.video_unavailable" />
+    <T id="error.video_unavailable" />
+  </main>
 {/if}
 
 <!-- TODO: change quality / resolution -->
 <style>
+  main {
+    padding: 10px;
+  }
+
   hr {
     border: none;
     height: 2px;

@@ -46,14 +46,19 @@
 
   let socket = io()
   let id: null | string = null
+  let rememberPassword: boolean = false
 
   socket.on("connect", () => {
     id = socket.id
-    console.log(id)
-    socket.emit("REMOTE", { id, channel: "PASSWORD" })
+    console.log("ID:", id)
+    if (localStorage.password) {
+      rememberPassword = true
+      password = localStorage.password
+      submit()
+    } else send("PASSWORD")
   })
 
-  const send = (channel: string, data: any) => socket.emit("REMOTE", { id, channel, data })
+  const send = (channel: string, data: any = null) => socket.emit("REMOTE", { id, channel, data })
   let connected: boolean = false
 
   let shows: any[] = []
@@ -91,14 +96,6 @@
     send("ACCESS", password)
   }
 
-  // local storage
-  let remember: boolean = false
-  if (localStorage.password) {
-    remember = true
-    password = localStorage.password
-    submit()
-  }
-
   // error
   let errors: string[] = []
   const setError = (err: string) => {
@@ -116,8 +113,11 @@
         isPassword = msg.data.password
         break
       case "ERROR":
-        if (msg.data === "wrongPass") setError(dictionary.remote.wrong_password)
-        else setError(msg.data)
+        if (msg.data === "wrongPass") {
+          setError(dictionary.remote.wrong_password)
+          localStorage.removeItem("password")
+          isPassword = true
+        } else setError(msg.data)
         break
       case "LANGUAGE":
         Object.keys(dictionary).forEach((a) => {
@@ -127,48 +127,58 @@
         })
         break
       case "PROJECTS":
-        projects = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
+        if (connected) projects = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
+        break
+      case "ACCESS":
+        console.log("ACCESSED")
+        if (rememberPassword && password.length) localStorage.password = password
+        connected = true
         break
       case "SHOWS":
-        // TODO: move this...
-        if (remember && password.length) localStorage.password = password
-        connected = true
         shows = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
         break
       // case "SHOWS_CACHE":
       //   showsCache = msg.data
       //   break
       case "SHOW":
-        if (!activeShow) activeTab = "show"
-        // if (activeTab === "shows" || activeTab === "project" || activeTab === "projects") activeTab = "show"
-        // shows[msg.data.id] = msg.data
-        // activeShow = msg.data.id
-        activeShow = msg.data
-        console.log(activeTab)
+        if (connected) {
+          if (!activeShow) activeTab = "show"
+          // if (activeTab === "shows" || activeTab === "project" || activeTab === "projects") activeTab = "show"
+          // shows[msg.data.id] = msg.data
+          // activeShow = msg.data.id
+          activeShow = msg.data
+          console.log(activeTab)
+        }
         break
       case "OUT":
-        outSlide = msg.data.slide
-        if (msg.data.layout) outLayout = msg.data.layout
-        if (outSlide === null) outShow = null
-        else if (msg.data.show) {
-          outShow = msg.data.show
-          if (!activeShow) activeTab = "slide"
-          if (!activeShow) activeShow = outShow
+        if (connected) {
+          outSlide = msg.data.slide
+          if (msg.data.layout) outLayout = msg.data.layout
+          if (outSlide === null) outShow = null
+          else if (msg.data.show) {
+            outShow = msg.data.show
+            if (!activeShow) activeTab = "slide"
+            if (!activeShow) activeShow = outShow
+          }
+          console.log(outShow)
         }
-        console.log(outShow)
 
         break
       case "FOLDERS":
-        folders = msg.data.folders
-        if (!openedFolders.length) openedFolders = msg.data.opened
-        console.log(folders)
+        if (connected) {
+          folders = msg.data.folders
+          if (!openedFolders.length) openedFolders = msg.data.opened
+          console.log(folders)
+        }
         break
       case "PROJECTS":
-        if (!projects) activeTab = "projects"
-        projects = msg.data
+        if (connected) {
+          if (!projects) activeTab = "projects"
+          projects = msg.data
+        }
         break
       case "PROJECT":
-        if (!project && msg.data) {
+        if (!project && msg.data && connected) {
           project = msg.data
           if (!activeShow) activeTab = "project"
         }
@@ -259,27 +269,30 @@
     sva.forEach((sv: any, i: number) => {
       if (sv.length > 1) {
         match[i] = 0
+
         if (searchEquals(obj.name, sv)) match[i] = 100
         else if (searchIncludes(obj.name, sv)) match[i] += 25
         // if (obj.category !== null && searchIncludes($categories[obj.category].name, sv)) match[i] += 10
 
-        Object.values(obj.slides).forEach((slide: any) => {
-          slide.items.forEach((item: any) => {
-            let text = ""
-            item.text?.forEach((box: any) => {
-              text += box.value
-            })
-            if (text.length) {
-              if (searchEquals(text, sv)) match[i] += 20
-              else if (searchIncludes(text, sv)) {
-                // TODO: more specific match
-                // console.log(sv, filter(text))
-                // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
-                match[i] += 10
+        if (obj.slides) {
+          Object.values(obj.slides).forEach((slide: any) => {
+            slide.items.forEach((item: any) => {
+              let text = ""
+              item.text?.forEach((box: any) => {
+                text += box.value
+              })
+              if (text.length) {
+                if (searchEquals(text, sv)) match[i] += 20
+                else if (searchIncludes(text, sv)) {
+                  // TODO: more specific match
+                  // console.log(sv, filter(text))
+                  // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
+                  match[i] += 10
+                }
               }
-            }
+            })
           })
-        })
+        }
       }
     })
 
@@ -348,15 +361,17 @@
             <h2>{activeProject.name}</h2>
             <div class="scroll">
               {#each activeProject.shows as show}
-                <ShowButton
-                  on:click={(e) => {
-                    send("SHOW", e.detail)
-                    activeTab = "show"
-                  }}
-                  {activeShow}
-                  show={shows.find((s) => s.id === show.id)}
-                  icon={shows.find((s) => s.id === show.id).private ? "private" : shows.find((s) => s.id === show.id).type ? shows.find((s) => s.id === show.id).type : "noIcon"}
-                />
+                {#if shows.find((s) => s.id === show.id)}
+                  <ShowButton
+                    on:click={(e) => {
+                      send("SHOW", e.detail)
+                      activeTab = "show"
+                    }}
+                    {activeShow}
+                    show={shows.find((s) => s.id === show.id)}
+                    icon={shows.find((s) => s.id === show.id).private ? "private" : shows.find((s) => s.id === show.id).type ? shows.find((s) => s.id === show.id).type : "noIcon"}
+                  />
+                {/if}
               {/each}
             </div>
           {:else}
@@ -410,7 +425,7 @@
               {outSlide}
             />
           </div>
-          {#if outSlide}
+          {#if outSlide !== null}
             <div class="buttons" style="display: flex;width: 100%;">
               <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
               <Button style="flex: 1;" on:click={previous} disabled={outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
@@ -517,7 +532,9 @@
         bind:value={password}
       />
       <Button on:click={submit} style="color: var(--secondary);" bold dark center>{dictionary.remote.submit}</Button>
-      <span style="text-align: center;"><input type="checkbox" bind:checked={remember} /><span style="opacity: 0.6;padding-left: 10px;">{dictionary.remote.remember}</span></span>
+      <span style="text-align: center;"
+        ><input type="checkbox" bind:checked={rememberPassword} /><span style="opacity: 0.6;padding-left: 10px;">{dictionary.remote.remember}</span></span
+      >
     </div>
   </div>
 {:else}

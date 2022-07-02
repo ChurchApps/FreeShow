@@ -12,8 +12,9 @@
   export let startAt = 0
 
   // $: id = id.includes("=") ? id.slice(id.lastIndexOf("=") + 1, id.length) : id
+  $: id = id.includes("?list") ? id.slice(0, id.indexOf("?list")) : id
   $: id = id.slice(-11)
-  $: id = id.length === 11 ? id : ""
+  // $: id = id.length === 11 ? id : ""
 
   const options = {
     // height: "390",

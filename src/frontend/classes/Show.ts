@@ -14,9 +14,11 @@ export class ShowObj implements Show {
   slides: any
   layouts: any
   media: any
-  constructor(isPrivate: boolean = false, category: null | string = null, layoutID: string = uid(), created: number = new Date().getTime()) {
-    let template = _show("active").get("settings.template") || null
-    if (!template && get(templates).default) template = "default"
+  constructor(isPrivate: boolean = false, category: null | string = null, layoutID: string = uid(), created: number = new Date().getTime(), template: string | boolean = true) {
+    if (template !== false) {
+      template = _show("active").get("settings.template") || null
+      if (!template && get(templates).default) template = "default"
+    }
 
     // private?: boolean,
     this.name = ""

@@ -35,18 +35,22 @@
     // e.dataTransfer.setData("text", data)
 
     // TODO: !$renameActive
-    if (id === "folder" && $selected.data[0]?.id === "folder" && data.index < $selected.data[0].index) return
-    if (id === "folder" && ($selected.data[0]?.id === "project" || data.index > $selected.data[0]?.index)) return
+    // if (id === "folder" && $selected.data[0]?.id === "folder" && data.index < $selected.data[0].index) return
+    // if (id === "folder" && ($selected.data[0]?.id === "project" || data.index > $selected.data[0]?.index)) return
 
     let newData: any
 
     if ((dragged || e.buttons === 2) && ($selected.id !== id || !arrayHasData($selected.data, data))) {
       newData = [data]
     } else if (!dragged && (e.ctrlKey || e.metaKey)) {
-      if ($selected.id === id && arrayHasData($selected.data, data)) newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
-      else if ($selected.id === id) newData = [...$selected.data, data]
+      if ($selected.id === id && arrayHasData($selected.data, data)) {
+        newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
+        if (!newData.length) newData = [data]
+      } else if ($selected.id === id) newData = [...$selected.data, data]
       else newData = [data]
     }
+    // TODO: holding ctrl + context menu will deselect element
+    // } else newData = []
 
     if (newData) selected.set({ id, data: newData })
   }

@@ -1,81 +1,96 @@
 import path from "path"
 import { readdir, readFileSync } from "fs"
-import { toApp } from ".."
+import { toApp, updateOutputPath } from ".."
 import { IMPORT } from "./../../types/Channels"
 import PPTX2Json from "pptx2json"
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
+import { app } from "electron"
 
-export async function importShow(id: any, name: string, files: string[] | null, output: string | undefined) {
+export async function importShow(id: any, files: string[] | null) {
   if (!files?.length) return
-  if (id === "txt") {
-    try {
-      var data = readFileSync(files[0], "utf8")
-      toApp(IMPORT, { channel: id, data: { name, text: data.toString() } })
-    } catch (err) {
-      console.log("Error:", err.stack)
+
+  let data: any[] = []
+  if (id === "powerpoint") {
+    for await (const filePath of files) {
+      const pptx2json = new PPTX2Json()
+      const json = await pptx2json.toJson(filePath)
+      data.push({ name: getFileName(filePath), content: json })
     }
-  } else if (id === "powerpoint") {
-    const pptx2json = new PPTX2Json()
-    const json = await pptx2json.toJson(files[0])
-    toApp(IMPORT, { channel: id, data: { name, content: json } })
   } else if (id === "pdf") {
-    if (output) {
-      console.log(output)
-      let opts = {
-        format: "png",
-        scale: 1920,
-        out_dir: output,
-        out_prefix: "img",
-        page: null,
-      }
-
-      // TODO: linux don't support pdf-poppler!
-      const pdf = require("pdf-poppler")
-
-      pdf
-        .convert(files[0], opts)
-        .then(() => {
-          readdir(output, (err: any, files: any) => {
-            //handling error
-            if (err) {
-              return console.log("Unable to scan directory: " + err)
-            }
-
-            toApp(IMPORT, { channel: "pdf", data: { name, path: output, pages: files.length } })
-          })
-        })
-        .catch((err: any) => {
-          console.error(err)
-        })
+    let opts: any = {
+      format: "png",
+      scale: 1920,
+      out_prefix: "img",
+      page: null,
     }
-  } else if (id === "easyworship") {
-    let data: any[] = []
-    files.forEach((filePath) => {
-      const exporter = new SqliteToJson({
-        client: new sqlite3.Database(filePath),
-      })
-      exporter.all((err: any, all: any) => {
-        if (!err) data.push({ content: all })
-      })
-    })
 
-    setTimeout(() => {
-      if (data.find((a) => a.content.word)) toApp(IMPORT, { channel: id, data: data })
-      else
-        setTimeout(() => {
-          // wait a second longer just in case
-          toApp(IMPORT, { channel: id, data: data })
-        }, 1000)
-    }, 500)
+    // TODO: linux don't support pdf-poppler!
+    const pdf = require("pdf-poppler")
+
+    await Promise.all(
+      files.map((filePath: string) => {
+        let name = getFileName(filePath)
+        let output = updateOutputPath(path.resolve(app.getPath("documents"), "Imports", name))
+        opts.out_dir = output
+        return new Promise((resolve) => {
+          pdf
+            .convert(filePath, opts)
+            .then(() => {
+              readdir(output, (err: any, files: any) => {
+                if (err) return console.error("Could not read directory:", err)
+                data.push({ name, path: output, pages: files.length })
+                resolve(true)
+              })
+            })
+            .catch((err: any) => {
+              console.error(err)
+              resolve(err)
+            })
+        })
+      })
+    )
+  } else if (id === "easyworship") {
+    await Promise.all(
+      files.map((filePath: string) => {
+        const exporter = new SqliteToJson({
+          client: new sqlite3.Database(filePath),
+        })
+
+        exporter.all((err: any, all: any) => {
+          if (!err) data.push({ content: all })
+        })
+      })
+    )
+
+    // setTimeout(() => {
+    //   if (data.find((a) => a.content.word)) toApp(IMPORT, { channel: id, data })
+    //   else
+    //     setTimeout(() => {
+    //       // wait a second longer just in case
+    //       toApp(IMPORT, { channel: id, data })
+    //     }, 1000)
+    // }, 500)
   } else {
-    // FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
-    let data: any[] = []
-    files.forEach((filePath) => {
-      let content = readFileSync(filePath, "utf8").toString()
-      let name = files ? path.basename(filePath).slice(0, path.basename(filePath).lastIndexOf(".")) : ""
-      data.push({ content, name })
+    // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
+    files.forEach((filePath: string) => {
+      data.push(readFile(filePath))
     })
-    toApp(IMPORT, { channel: id, data: data })
   }
+
+  if (data.length) toApp(IMPORT, { channel: id, data })
 }
+
+function readFile(filePath: string) {
+  let content: string = ""
+  let name: string = ""
+  try {
+    content = readFileSync(filePath, "utf8").toString()
+    name = getFileName(filePath) || ""
+  } catch (err) {
+    console.error("Error reading file:", err.stack)
+  }
+  return { content, name }
+}
+
+const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.basename(filePath).lastIndexOf("."))

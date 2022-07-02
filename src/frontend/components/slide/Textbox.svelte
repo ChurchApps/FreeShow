@@ -8,16 +8,19 @@
   export let smallFontSize: boolean = false
   export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; id: string }
   export let style: boolean = true
+
+  let height: number = 0
+  $: autoSize = item.lines ? height / (item.lines.length + 3) : 0
 </script>
 
-<div class="item" style={style ? item?.style : null}>
+<div class="item" style={style ? item?.style : null} bind:offsetHeight={height}>
   {#if item?.lines}
     <div class="align" style={style ? item.align : null}>
       <div class="lines">
         {#each item.lines as line}
           <div class="break" class:smallFontSize style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
             {#each line.text as text}
-              <span style={style ? text.style : null}>{@html text.value}</span>
+              <span style={style ? text.style : ref.type === "stage" ? "font-size: " + autoSize + "px;" : null}>{@html text.value}</span>
             {/each}
           </div>
         {/each}
@@ -68,6 +71,8 @@
 
   .break :global(span) {
     font-size: 100px;
+    min-height: 50px;
+    /* display: inline-block; */
   }
   .break.smallFontSize :global(span) {
     font-size: 30px;

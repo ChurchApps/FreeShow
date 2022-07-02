@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { outSlide, showsCache } from "../../../stores"
+  import { activeShow, outSlide, showsCache } from "../../../stores"
   import T from "../../helpers/T.svelte"
 
   $: name = $outSlide && $showsCache[$outSlide.id] ? $showsCache[$outSlide.id].name : "—"
@@ -17,10 +17,22 @@
       }
     }
   }
+
+  function openShow() {
+    if (!$outSlide) return
+
+    if ($outSlide?.layout)
+      showsCache.update((a: any) => {
+        a[$outSlide!.id].settings.activeLayout = $outSlide?.layout
+        return a
+      })
+
+    activeShow.set({ id: $outSlide.id })
+  }
 </script>
 
 {#if $outSlide}
-  <span class="name" style="justify-content: space-between;">
+  <span class="name" style="justify-content: space-between;" on:click={openShow}>
     <p>
       {#if name.length}
         {name}
@@ -39,5 +51,11 @@
     justify-content: center;
     padding: 10px;
     opacity: 0.8;
+
+    cursor: pointer;
+  }
+
+  .name:hover {
+    background-color: var(--primary-darker);
   }
 </style>

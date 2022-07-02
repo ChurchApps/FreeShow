@@ -24,6 +24,8 @@
     current = new Date($activeDays[0])
     let temp: any[] = []
 
+    // current = new Date(current.toLocaleString("en-US", { timeZone: "Europe/London" }))
+
     // if ($activeDays[0]) {
     Object.entries($events).forEach(([id, a]) => {
       if (isBetween(new Date(a.from), new Date(a.to), copy(current))) temp.push({ id, ...a })

@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { videoExtensions } from "../../../stores"
+  import type { Resolution } from "../../../../types/Settings"
+
+  import { screen, videoExtensions } from "../../../stores"
   import Camera from "../../output/Camera.svelte"
   import { getStyleResolution } from "../../slide/getStyleResolution"
   import Image from "./Image.svelte"
@@ -47,9 +49,11 @@
 
   let width: number = 0
   let height: number = 0
+
+  let resolution: Resolution = $screen.resolution
 </script>
 
-<div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
+<div class="main" style="aspect-ratio: {resolution.width}/{resolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
   {#key path}
     {#if type === "video"}
       <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">

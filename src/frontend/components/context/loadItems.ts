@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { drawerTabsData, groups, selected } from "../../stores"
+import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { GetLayoutRef } from "../helpers/get"
 import { _show } from "../helpers/shows"
@@ -19,6 +20,11 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
         .get("globalGroup")[0]
       Object.entries(get(groups)).forEach(([aID, a]: any) => {
         items.push([id, { id: aID, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: a.default, enabled: aID === currentGroup }])
+      })
+      items = items.sort((a, b) => {
+        let aName = a[1].translate ? translate(a[1].label) : a[1].label
+        let bName = b[1].translate ? translate(b[1].label) : b[1].label
+        return aName.localeCompare(bName)
       })
       break
     case "actions":

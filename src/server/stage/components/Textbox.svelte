@@ -3,16 +3,19 @@
 
   export let item: Item
   export let style: boolean = true
+
+  let height: number = 0
+  $: autoSize = item.lines ? height / (item.lines.length + 3) : 0
 </script>
 
-<div class="item" style={style ? item.style : null}>
+<div class="item" style={style ? item.style : null} bind:offsetHeight={height}>
   {#if item.lines}
     <div class="align" style={style ? item.align : null}>
       <div class="lines">
         {#each item.lines as line}
           <div class="break" style={style ? line.align : null} class:height={!line.text[0].value.length}>
             {#each line.text as text}
-              <span style={style ? text.style : null}>{@html text.value}</span>
+              <span style={style ? text.style : "font-size: " + autoSize + "px;"}>{@html text.value}</span>
             {/each}
           </div>
         {/each}

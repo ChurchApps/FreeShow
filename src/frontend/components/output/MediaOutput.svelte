@@ -1,10 +1,12 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
   import type { Transition, TransitionType } from "../../../types/Show"
-  import { mediaFolders, outBackground, currentWindow, videoExtensions } from "../../stores"
+  import { audioSource, currentWindow, mediaFolders, outBackground, videoExtensions } from "../../stores"
+  import { send } from "../../utils/request"
   import { transitions } from "../../utils/transitions"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Player from "../system/Player.svelte"
+  import { audioAnalyser } from "./audioAnalyser"
   import Camera from "./Camera.svelte"
   import Window from "./Window.svelte"
 
@@ -93,6 +95,54 @@
 
   function custom(node: any, { type = "fade", duration = 500 }: any) {
     return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration }
+  }
+
+  // AUDIO ANALYZER
+
+  let audioChannels: any = { left: 0, right: 0 }
+
+  // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API
+  // https://ui.dev/web-audio-api/
+
+  $: if ((!$outBackground || videoData.paused) && interval) {
+    audioChannels = { left: 0, right: 0 }
+    clearInterval(interval)
+    analyser = null
+  }
+
+  let interval: any = null
+  $: {
+    if (!videoData.paused && video !== null && $audioSource !== video && $currentWindow === "output") {
+      audioSource.set(video)
+      analyse()
+    }
+  }
+
+  let analyser: any = null
+  $: if (videoData.paused && analyser) startInterval()
+
+  function startInterval() {
+    setInterval(() => {
+      audioChannels = audioAnalyser(analyser)
+      send(OUTPUT, ["AUDIO_MAIN"], { channels: audioChannels })
+    }, 100)
+  }
+
+  async function analyse() {
+    console.log(0)
+    // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
+    let ac = new AudioContext()
+    let source = ac.createMediaElementSource(video)
+
+    analyser = ac.createAnalyser() //we create an analyser
+    analyser.smoothingTimeConstant = 0.9
+    analyser.fftSize = 512 //the total samples are half the fft size.
+
+    source.connect(analyser)
+    analyser.connect(ac.destination)
+
+    if (interval) clearInterval(interval)
+    startInterval()
   }
 </script>
 

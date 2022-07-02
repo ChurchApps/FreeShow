@@ -3,4 +3,12 @@
   import Button from "../../inputs/Button.svelte"
 </script>
 
-<Button on:click={setExampleTemplates} center dark>Refresh example temlates</Button>
+<main>
+  <Button style="width: 100%;" on:click={setExampleTemplates} center dark>Refresh example temlates</Button>
+</main>
+
+<style>
+  main {
+    padding: 10px;
+  }
+</style>

@@ -6,6 +6,12 @@ import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
 import { activeProject, dictionary, groups, splitLines } from "../stores"
 
+export function convertTexts(files: any[]) {
+  files.forEach((file) => {
+    convertText({ name: file.name, text: file.content })
+  })
+}
+
 export function convertText({ name = "", category = null, text }: any) {
   console.log(name, category, text)
   text = text.replaceAll("\r", "")
