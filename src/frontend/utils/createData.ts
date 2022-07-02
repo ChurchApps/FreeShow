@@ -339,6 +339,46 @@ export function setExampleTemplates() {
         // },
       ],
     }
+    a.bullets = {
+      name: "Bullets",
+      color: "#747680",
+      category: "presentation",
+      items: [
+        {
+          style: "top:120px;left:50px;height:840px;width:1820px;",
+          align: "",
+          lines: [
+            {
+              align: "text-align: left",
+              text: [
+                {
+                  value: "• Bullet 1",
+                  style: "font-size: 100px;font-weight: bold;line-height:1.2em;",
+                },
+              ],
+            },
+            {
+              align: "text-align: left",
+              text: [
+                {
+                  value: "• Bullet 2",
+                  style: "font-size: 100px;font-weight: bold;line-height:1.2em;",
+                },
+              ],
+            },
+            {
+              align: "text-align: left",
+              text: [
+                {
+                  value: "• Bullet 3",
+                  style: "font-size: 100px;font-weight: bold;line-height:1.2em;",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
     return a
   })
 }

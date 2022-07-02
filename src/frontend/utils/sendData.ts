@@ -8,129 +8,247 @@ import { loadShows } from "../components/helpers/setShow"
 
 // REMOTE
 
-async function getRemote(msg: ClientMessage) {
-  // let initialize: ClientMessage = {
-  //   id: msg.id,
-  //   channel: "DATA",
-  //   data: {
-  //     name: get(name) || "Computer",
-  //     lang: get(language),
-  //     // activeShow: get(activeShow),
-  //     // activeProject: get(activeProject),
-  //     // projects: get(projects),
-  //     // folders: get(folders),
-  //   },
-  // }
-  // window.api.send(REMOTE, initialize)
-  // window.api.send(REMOTE, { id: msg.id, channel: "ACTIVE_SHOW", data: "" })
-  // window.api.send(REMOTE, { id: msg.id, channel: "PROJECT", data: "" })
-  // window.api.send(REMOTE, { id: msg.id, channel: "PROJECTS", data: "" })
-  // window.api.send(REMOTE, { id: msg.id, channel: "FOLDERS", data: "" })
-  switch (msg.channel) {
-    case "PASSWORD":
-      msg.data = { dictionary: get(dictionary) }
-      msg.data.password = get(remotePassword).length ? true : false
-      if (!msg.data.password) {
-        // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
-        msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
+const receiveREMOTE: any = {
+  PASSWORD: (msg: any) => {
+    msg.data = {
+      dictionary: get(dictionary),
+      password: !!get(remotePassword).length,
+    }
+    if (msg.data.password) return msg
 
-        sendData(REMOTE, { channel: "PROJECTS", data: get(projects) })
-        window.api.send(REMOTE, { channel: "SHOWS", data: get(shows) })
-        window.api.send(REMOTE, { channel: "FOLDERS", data: get(folders) })
-        window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
+    connections.update((a: any) => {
+      a.REMOTE[msg.id].entered = true
+      return a
+    })
 
-        let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null, layout: get(outSlide)?.layout || null }
-        if (out.slide !== null) {
-          oldOutSlide = get(outSlide)!.id
-          out.show = get(showsCache)[oldOutSlide]
-        }
-        window.api.send(REMOTE, { channel: "OUT", data: out })
-      }
-      break
-    case "ACCESS":
-      if (!get(remotePassword).length || msg.data === get(remotePassword)) {
-        // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
-        msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
+    // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
+    msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
+    initializeRemote(msg.id)
 
-        sendData(REMOTE, { channel: "PROJECTS", data: get(projects) })
-        window.api.send(REMOTE, { channel: "FOLDERS", data: { folders: get(folders), opened: get(openedFolders) } })
-        window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
+    return msg
+  },
+  ACCESS: (msg: any) => {
+    if (get(remotePassword).length && msg.data !== get(remotePassword)) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
 
-        let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null, layout: get(outSlide)?.layout || null }
-        if (out.slide !== null) {
-          oldOutSlide = get(outSlide)!.id
-          out.show = get(showsCache)[oldOutSlide]
-        }
-        window.api.send(REMOTE, { channel: "OUT", data: out })
-      } else msg = { id: msg.id, channel: "ERROR", data: "wrongPass" }
-      break
-    // case "SHOWS":
-    //   msg.data: filterObjectArray(get(shows), ["name"])
-    //   break
-    case "SHOW":
-      // msg.data = filterObjectArray(get(shows)[msg.data], [""])
-      let showID: string = msg.data
-      console.log(msg)
+    connections.update((a: any) => {
+      console.log(a, msg.id)
+      a.REMOTE[msg.id].entered = true
+      return a
+    })
 
-      await loadShows([showID])
-      msg.data = { id: showID, ...get(showsCache)[showID] }
+    // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
+    msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
+    initializeRemote(msg.id)
 
-      if (msg.id) {
-        connections.update((a) => {
-          if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
-          a.REMOTE[msg.id!].active = showID
-          return a
+    return msg
+  },
+  // SHOWS: (msg: any) => {
+  //   msg.data = filterObjectArray(get(shows), ["name"])
+  //   return msg
+  // },
+  SHOW: async (msg: any) => {
+    // msg.data = filterObjectArray(get(shows)[msg.data], [""])
+    let showID: string = msg.data
+    console.log(msg)
+
+    await loadShows([showID])
+    msg.data = { id: showID, ...get(showsCache)[showID] }
+
+    if (msg.id) {
+      connections.update((a) => {
+        if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
+        a.REMOTE[msg.id!].active = showID
+        return a
+      })
+    }
+
+    return msg
+  },
+  OUT: async (msg: any) => {
+    let out = get(outSlide)
+    let id: string = ""
+    if (msg.data === "clear") {
+      outSlide.set(null)
+    } else if (msg.data?.id) {
+      id = msg.data.id
+      await loadShows([id])
+      let layout = GetLayout(id)
+      if (msg.data.index < layout.length && msg.data.index >= 0) outSlide.update(() => msg.data)
+      msg.data = null
+    } else if (msg.data !== null && msg.data !== undefined && out) {
+      id = out.id
+      let layout = GetLayout(id)
+      if (msg.data < layout.length && msg.data >= 0) {
+        outSlide.update((o) => {
+          o!.index = msg.data
+          return o
         })
       }
-      break
-    case "OUT":
-      let out = get(outSlide)
-      let id: string = ""
-      if (msg.data === "clear") {
-        outSlide.set(null)
-      } else if (msg.data?.id) {
-        id = msg.data.id
-        await loadShows([id])
-        let layout = GetLayout(id)
-        if (msg.data.index < layout.length && msg.data.index >= 0) outSlide.update(() => msg.data)
-        msg.data = null
-      } else if (msg.data !== null && msg.data !== undefined && out) {
+      msg.data = null
+    } else {
+      msg.data = { slide: out ? out.index : null, layout: out?.layout || null }
+      if (out && out.id !== "temp" && out.id !== oldOutSlide) {
         id = out.id
-        let layout = GetLayout(id)
-        if (msg.data < layout.length && msg.data >= 0) {
-          outSlide.update((o) => {
-            o!.index = msg.data
-            return o
-          })
-        }
-        msg.data = null
-      } else {
-        msg.data = { slide: out ? out.index : null, layout: out?.layout || null }
-        if (out && out.id !== "temp" && out.id !== oldOutSlide) {
-          id = out.id
-          oldOutSlide = id
-          msg.data.show = get(showsCache)[id]
-          msg.data.show.id = id
-        }
+        oldOutSlide = id
+        msg.data.show = get(showsCache)[id]
+        msg.data.show.id = id
       }
-      if (id.length && msg.id) {
-        connections.update((a) => {
-          if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
-          a.REMOTE[msg.id!].active = id
-          return a
-        })
-      }
-      break
-    case "PROJECTS":
-      // msg.data = filterObjectArray(get(projects), ["name", "parent", "shows"])
-      msg.data = get(projects)
-      break
-    // case "PROJECT":
-    //   msg.data = filterObjectArray(get(projects), ["name", "parent"])
-    //   break
-  }
-  return msg
+    }
+    if (id.length && msg.id) {
+      connections.update((a) => {
+        if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
+        a.REMOTE[msg.id!].active = id
+        return a
+      })
+    }
+
+    return msg
+  },
+  PROJECTS: (msg: any) => {
+    msg.data = get(projects)
+    return msg
+  },
 }
+
+function initializeRemote(id: string) {
+  console.log(id)
+  window.api.send(REMOTE, { channel: "ACCESS" })
+
+  sendData(REMOTE, { channel: "PROJECTS", data: get(projects) })
+  window.api.send(REMOTE, { channel: "FOLDERS", data: { folders: get(folders), opened: get(openedFolders) } })
+  window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
+
+  let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null, layout: get(outSlide)?.layout || null }
+  if (out.slide !== null) {
+    oldOutSlide = get(outSlide)!.id
+    out.show = get(showsCache)[oldOutSlide]
+  }
+  window.api.send(REMOTE, { channel: "OUT", data: out })
+}
+
+// async function getRemote(msg: ClientMessage) {
+//   // let initialize: ClientMessage = {
+//   //   id: msg.id,
+//   //   channel: "DATA",
+//   //   data: {
+//   //     name: get(name) || "Computer",
+//   //     lang: get(language),
+//   //     // activeShow: get(activeShow),
+//   //     // activeProject: get(activeProject),
+//   //     // projects: get(projects),
+//   //     // folders: get(folders),
+//   //   },
+//   // }
+//   // window.api.send(REMOTE, initialize)
+//   // window.api.send(REMOTE, { id: msg.id, channel: "ACTIVE_SHOW", data: "" })
+//   // window.api.send(REMOTE, { id: msg.id, channel: "PROJECT", data: "" })
+//   // window.api.send(REMOTE, { id: msg.id, channel: "PROJECTS", data: "" })
+//   // window.api.send(REMOTE, { id: msg.id, channel: "FOLDERS", data: "" })
+//   switch (msg.channel) {
+//     case "PASSWORD":
+//       msg.data = { dictionary: get(dictionary) }
+//       msg.data.password = get(remotePassword).length ? true : false
+//       if (!msg.data.password) {
+//         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
+//         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
+
+//         sendData(REMOTE, { id: msg.id, channel: "PROJECTS", data: get(projects) })
+//         // window.api.send(REMOTE, { id: msg.id, channel: "SHOWS", data: get(shows) })
+//         window.api.send(REMOTE, { id: msg.id, channel: "FOLDERS", data: get(folders) })
+//         window.api.send(REMOTE, { id: msg.id, channel: "PROJECT", data: get(activeProject) })
+
+//         let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null, layout: get(outSlide)?.layout || null }
+//         if (out.slide !== null) {
+//           oldOutSlide = get(outSlide)!.id
+//           out.show = get(showsCache)[oldOutSlide]
+//         }
+//         window.api.send(REMOTE, { id: msg.id, channel: "OUT", data: out })
+//       }
+//       break
+//     case "ACCESS":
+//       if (!get(remotePassword).length || msg.data === get(remotePassword)) {
+//         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
+//         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
+
+//         sendData(REMOTE, { id: msg.id, channel: "PROJECTS", data: get(projects) })
+//         window.api.send(REMOTE, { id: msg.id, channel: "FOLDERS", data: { folders: get(folders), opened: get(openedFolders) } })
+//         window.api.send(REMOTE, { id: msg.id, channel: "PROJECT", data: get(activeProject) })
+
+//         let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null, layout: get(outSlide)?.layout || null }
+//         if (out.slide !== null) {
+//           oldOutSlide = get(outSlide)!.id
+//           out.show = get(showsCache)[oldOutSlide]
+//         }
+//         window.api.send(REMOTE, { id: msg.id, channel: "OUT", data: out })
+//       } else msg = { id: msg.id, channel: "ERROR", data: "wrongPass" }
+//       break
+//     // case "SHOWS":
+//     //   msg.data: filterObjectArray(get(shows), ["name"])
+//     //   break
+//     case "SHOW":
+//       // msg.data = filterObjectArray(get(shows)[msg.data], [""])
+//       let showID: string = msg.data
+//       console.log(msg)
+
+//       await loadShows([showID])
+//       msg.data = { id: showID, ...get(showsCache)[showID] }
+
+//       if (msg.id) {
+//         connections.update((a) => {
+//           if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
+//           a.REMOTE[msg.id!].active = showID
+//           return a
+//         })
+//       }
+//       break
+//     case "OUT":
+//       let out = get(outSlide)
+//       let id: string = ""
+//       if (msg.data === "clear") {
+//         outSlide.set(null)
+//       } else if (msg.data?.id) {
+//         id = msg.data.id
+//         await loadShows([id])
+//         let layout = GetLayout(id)
+//         if (msg.data.index < layout.length && msg.data.index >= 0) outSlide.update(() => msg.data)
+//         msg.data = null
+//       } else if (msg.data !== null && msg.data !== undefined && out) {
+//         id = out.id
+//         let layout = GetLayout(id)
+//         if (msg.data < layout.length && msg.data >= 0) {
+//           outSlide.update((o) => {
+//             o!.index = msg.data
+//             return o
+//           })
+//         }
+//         msg.data = null
+//       } else {
+//         msg.data = { slide: out ? out.index : null, layout: out?.layout || null }
+//         if (out && out.id !== "temp" && out.id !== oldOutSlide) {
+//           id = out.id
+//           oldOutSlide = id
+//           msg.data.show = get(showsCache)[id]
+//           msg.data.show.id = id
+//         }
+//       }
+//       if (id.length && msg.id) {
+//         connections.update((a) => {
+//           if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
+//           a.REMOTE[msg.id!].active = id
+//           return a
+//         })
+//       }
+//       break
+//     case "PROJECTS":
+//       // msg.data = filterObjectArray(get(projects), ["name", "parent", "shows"])
+//       msg.data = get(projects)
+//       break
+//     // case "PROJECT":
+//     //   msg.data = filterObjectArray(get(projects), ["name", "parent"])
+//     //   break
+//   }
+//   return msg
+// }
 let oldOutSlide = ""
 
 // STAGE
@@ -227,7 +345,7 @@ function turnIntoBoolean(array: any[], key: string) {
 export function client(id: "REMOTE" | "STAGE", msg: ClientMessage) {
   if (msg.channel === "CONNECTION") {
     connections.update((c: any) => {
-      c[id][msg.id!] = msg.data
+      c[id][msg.id!] = { entered: false, ...msg.data }
       return c
     })
     console.log(msg.id + " connected")
@@ -242,9 +360,20 @@ export function client(id: "REMOTE" | "STAGE", msg: ClientMessage) {
 
 // send data to client
 export async function sendData(id: "REMOTE" | "STAGE", msg: ClientMessage, check: boolean = false) {
-  if (id === REMOTE) msg = await getRemote(msg)
-  else if (id === STAGE) msg = getStage(msg)
-  if (msg.data !== null && (!check || !checkSent(id, msg))) window.api.send(id, msg)
+  // if (id === REMOTE) msg = await getRemote(msg)
+  if (id === REMOTE) {
+    if (!receiveREMOTE[msg.channel]) console.log("UNKNOWN CHANNEL:", msg.channel)
+    else msg = await receiveREMOTE[msg.channel](msg)
+  } else if (id === STAGE) msg = getStage(msg)
+  // let ids: string[] = []
+  // if (msg.id) ids = [msg.id]
+  // else ids = Object.keys(get(connections).REMOTE)
+  if (msg.data !== null && (!check || !checkSent(id, msg))) {
+    window.api.send(id, msg)
+    // ids.forEach((id) => {
+    // window.api.send(id, { id, ...msg })
+    // })
+  }
 }
 
 // limit data sent per second

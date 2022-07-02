@@ -184,6 +184,10 @@
   function getStyle() {
     if (!plain && $activeEdit.slide === null) return
 
+    // TODO: empty lines
+    // console.log(html)
+    // console.log(item?.lines)
+
     html = ""
     currentStyle = ""
     item?.lines?.forEach((line) => {
@@ -346,6 +350,11 @@
   }
   .align.plain {
     text-align: left;
+  }
+
+  .edit :global(.break span) {
+    min-height: 50px;
+    /* display: inline-block; */
   }
 
   .edit {

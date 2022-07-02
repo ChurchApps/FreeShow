@@ -46,7 +46,7 @@
   onMount(() => {
     Object.entries($events).forEach(addEvent)
     eventList = eventList.sort((a, b) => (new Date(a).getTime() > new Date(b).getTime() ? 1 : -1))
-    event = eventList[0]
+    event = eventList[0] || {}
   })
 
   const addEvent = ([id, event]: any) => {

@@ -137,7 +137,7 @@
     if (currentEvents.length > 1) layouts[layouts.length - 1].end = true
 
     let layoutID = uid()
-    let show = new ShowObj(true, "events", layoutID)
+    let show = new ShowObj(true, "events", layoutID, new Date().getTime(), false)
 
     // add events category
     if (!$categories.events) {

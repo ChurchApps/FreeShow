@@ -176,7 +176,7 @@
         console.log($outSlide?.index)
         outTransition.set(null)
 
-        nextSlide(null, false, false, true)
+        nextSlide(null, false, false, true, true)
         // timer = { time: 0, paused: false }
       }, a.duration * 1000)
       sliderTime()
@@ -269,7 +269,7 @@
       />
       <!-- <RecordedOutput /> -->
     </div>
-    <AudioMeter {video} />
+    <AudioMeter />
     <!-- {#if $activePage === 'live'}
     {/if} -->
   </div>

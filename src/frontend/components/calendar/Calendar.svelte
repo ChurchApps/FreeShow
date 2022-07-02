@@ -9,7 +9,8 @@
   $: month = current.getMonth()
   const MILLISECONDS_IN_A_DAY = 86400000
 
-  const copy = (date: Date, add: number = 0) => new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate() + add))
+  // const copy = (date: Date, add: number = 0) => new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate() + add))
+  const copy = (date: Date, add: number = 0) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + add)
   const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthIndex(month), 0).getDate()
   const getMonthIndex = (month: number) => (month + 1 > 12 ? month + 1 : 0)
   const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -22,9 +23,11 @@
     d = copy(d)
     // Set to nearest Thursday: current date + 4 - current day number
     // Make Sunday's day number 7
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+    // d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7))
     // Get first day of year
-    let firstDay = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+    // let firstDay = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+    let firstDay = new Date(d.getFullYear(), 0, 1)
     // Calculate full weeks to nearest Thursday
     let weekNumber = Math.ceil(((d.getTime() - firstDay.getTime()) / MILLISECONDS_IN_A_DAY + 1) / 7)
     return weekNumber

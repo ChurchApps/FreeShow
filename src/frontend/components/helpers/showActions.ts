@@ -33,10 +33,10 @@ export function checkInput(e: any) {
   }
 }
 
-export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false) {
+export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false) {
   console.log(get(outSlide))
 
-  if (get(outLocked)) return
+  if (get(outLocked) && !bypassLock) return
   if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
   let slide: null | OutSlide = get(outSlide)

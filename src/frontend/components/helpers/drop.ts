@@ -288,7 +288,7 @@ export function ondrop(e: any, id: string) {
         // TODO: add slide
         // if (trigger) location.layoutSlide = index
         if (center) location.layoutSlide = index
-        newData = { template: sel.data[0] }
+        newData = { template: sel.data[0], createItems: true }
 
         // location.layoutSlide = index
         // let newData = {template: sel.data[0]}

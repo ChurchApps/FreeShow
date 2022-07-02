@@ -6,10 +6,11 @@ const maxInterval: number = 1000
 const channels: ValidChannels[] = ["STAGE", "REMOTE"]
 // let timeout: any = null
 let ready: boolean = true
+let debug: boolean = true
 contextBridge.exposeInMainWorld("api", {
   send: (channel: ValidChannels, data: any) => {
     console.log("TO ELECTRON [" + channel + "]: ", data)
-    if (!channels.includes(channel) || ready) {
+    if (!channels.includes(channel) || data.id || ready || debug) {
       ipcRenderer.send(channel, data)
       ready = false
       setTimeout(() => {

@@ -153,7 +153,7 @@
 {/if}
 
 <div style="display: flex;flex-wrap: wrap;">
-  <Button style="flex: 1;white-space: nowrap;" on:click={() => activePopup.set("timer")} center title={$dictionary.new?.timer} dark>
+  <Button disabled style="flex: 1;white-space: nowrap;" on:click={() => activePopup.set("timer")} center title={$dictionary.new?.timer} dark>
     <Icon id="timer" right />
     <T id="new.timer" />
   </Button>

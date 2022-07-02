@@ -19,6 +19,7 @@ const copyData: any = {
   slide: (data: any) => {
     let ref = _show("active").layouts("active").ref()?.[0]
     let ids = data.map((a: any) => ref[a.index].id)
+    // TODO: copy media too
     return _show("active").slides(ids).get(null)
   },
   overlay: (data: any) => {

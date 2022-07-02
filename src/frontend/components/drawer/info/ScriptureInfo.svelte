@@ -123,7 +123,7 @@
 
     let layoutID = uid()
     // TODO: private!!!?
-    let show = new ShowObj(false, "scripture", layoutID)
+    let show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), false)
     // add scripture category
     if (!$categories.scripture) {
       categories.update((a) => {

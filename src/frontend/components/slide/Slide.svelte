@@ -190,7 +190,7 @@
   let resolution: Resolution = slide?.settings?.resolution || $screen.resolution
 </script>
 
-<svelte:window on:keydown={keydown} on:keyup={keyup} />
+<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
 <!-- TODO: noQuickEdit -->
 <!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->

@@ -486,7 +486,7 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       }
       // outputScreenId = outputScreen ? outputScreen.id.toString() : null
 
-      outputPosition = outputScreen.bounds || null
+      outputPosition = outputScreen?.bounds || null
       toApp(OUTPUT, { channel: "POSITION", data: outputPosition })
     }
 
