@@ -99,8 +99,9 @@ export function ondrop(e: any, id: string) {
             // let name: string = a.name.includes(".") ? a.name : a.path.substring(a.path.lastIndexOf("\\") + 1)
             let name: string = a.name.includes(".") ? a.name : a.path.substring((a.path.lastIndexOf("\\") > -1 ? a.path.lastIndexOf("\\") : a.path.lastIndexOf("/")) + 1)
             const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
-            let type = a.type || "image"
+            let type = "image"
             if (get(videoExtensions).includes(extension.substring(1))) type = "video"
+            console.log(type)
             let out: any = { name: null, id: a.path, type }
             if (sel.id === "files" && !files[id].includes(extension.substring(1))) out = null
             // name.slice(0, name.lastIndexOf("."))

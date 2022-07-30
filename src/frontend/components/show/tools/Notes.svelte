@@ -3,37 +3,33 @@
   import T from "../../helpers/T.svelte"
 
   export let value: string
-  export let update: any = false
+  // convert from old value
+  value = value.replaceAll("<br>", "\n")
 
   const TIME = 100
   let dispatch = createEventDispatcher()
   let timeout: any = null
 
-  let content: any
-  let updatedValue: string = value
-
-  $: if (update) updatedValue = value
-
-  function keydown(e: any) {
+  function input() {
     if (timeout !== null) return
-
     timeout = setTimeout(() => {
-      dispatch("edit", e.target.innerHTML)
+      dispatch("edit", value)
       timeout = null
     }, TIME)
   }
+
+  function change() {
+    dispatch("change", value)
+  }
 </script>
 
-<!-- bind:innerHTML={value} -->
 <div class="paper">
-  {#if !updatedValue.length}
+  {#if !value.length}
     <div class="empty">
       <T id="empty.text" />...
     </div>
   {/if}
-  <div bind:this={content} class="edit" contenteditable="true" on:keydown={keydown} on:keyup={() => (updatedValue = content.innerText)}>
-    {@html value}
-  </div>
+  <textarea class="edit" name="" id="" cols="1" rows="4" bind:value on:input={input} on:change={change} />
 </div>
 
 <style>
@@ -44,13 +40,21 @@
     /* display: flex; */
     flex: 1;
     height: 100%;
+    overflow: hidden;
     /* box-shadow: inset 0 0 10px 0px rgb(0 0 0 / 30%); */
   }
 
   .edit {
     height: 100%;
+    width: 100%;
     padding: 10px;
     outline: none;
+    border: none;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    background-color: inherit;
+    resize: none;
   }
 
   .empty {

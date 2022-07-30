@@ -112,6 +112,7 @@
   "media": {
     "_loop": "Slučka",
     "play": "Prehrať",
+    "play_no_filters": "Play without filters",
     "pause": "Pauza",
     "show": "Zobraziť",
     "flip": "Flip",
@@ -152,7 +153,7 @@
     "groups": "Žiadne skupiny",
     "events": "Žiadne udalosti",
     "text": "Niečo napíšte",
-    "timers": "No global timers or private in the shows in this project"
+    "timers": "No global timers and no timers in the shows in this project"
   },
   "remote": {
     "projects": "Projekty",
@@ -323,6 +324,7 @@
     "export": "Export",
     "duplicate": "Duplikovať",
     "delete": "Zmazať",
+    "delete_all": "Delete all",
     "close": "Zavrieť",
     "save": "Uložiť",
     "disable": "Vypnúť",
@@ -465,12 +467,15 @@
     "pointer": "Pointer",
     "fill": "Výplň",
     "paint": "Maľba",
+    "particles": "Particles",
     "color": "Farba",
     "opacity": "Priehľadnosť",
     "size": "Veľkosť",
     "glow": "Žiara",
     "hold": "Hold",
-    "rainbow": "Dúha"
+    "rainbow": "Dúha",
+    "threed": "3D",
+    "dots": "Dots"
   },
   "stage": {
     "slide": "Snímok",
@@ -602,7 +607,8 @@
     "fade": "Prelínanie",
     "blur": "Rozostrenia",
     "scale": "Zväčšenie",
-    "spin": "Točenie"
+    "spin": "Točenie",
+    "slide": "Slide"
   },
   "month": {
     "1": "Január",

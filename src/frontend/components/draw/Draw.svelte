@@ -1,5 +1,7 @@
 <script lang="ts">
   import { draw, drawSettings, drawTool } from "../../stores"
+  import Paint from "./Paint.svelte"
+  import Particles from "./Particles.svelte"
 
   $: tool = $drawTool
   $: settings = $drawSettings[tool]
@@ -30,6 +32,8 @@
 
 {#if tool === "fill"}
   <div class="fill" style="background-color: {rainbow || settings?.color};opacity: {settings?.opacity};" />
+{:else if tool === "paint"}
+  <Paint {settings} />
 {:else if $draw !== null}
   {#if tool === "focus"}
     <div
@@ -45,6 +49,8 @@
         ? `box-shadow: 0 0 ${settings?.size / 5}px ${settings?.size / 20}px ${settings?.color}`
         : ''}"
     />
+  {:else if tool === "particles"}
+    <Particles {settings} />
   {/if}
 {/if}
 

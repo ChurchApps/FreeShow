@@ -106,8 +106,12 @@
 
   $: if ((!$outBackground || videoData.paused) && interval) {
     audioChannels = { left: 0, right: 0 }
+    send(OUTPUT, ["AUDIO_MAIN"], { channels: audioChannels })
     clearInterval(interval)
+  }
+  $: if (!$outBackground) {
     analyser = null
+    audioSource.set(null)
   }
 
   let interval: any = null
@@ -119,10 +123,10 @@
   }
 
   let analyser: any = null
-  $: if (videoData.paused && analyser) startInterval()
+  $: if (!videoData.paused && analyser) startInterval()
 
   function startInterval() {
-    setInterval(() => {
+    interval = setInterval(() => {
       audioChannels = audioAnalyser(analyser)
       send(OUTPUT, ["AUDIO_MAIN"], { channels: audioChannels })
     }, 100)
@@ -173,7 +177,7 @@
     {#key path}
       <div transition:custom={transition}>
         <!-- style={getStyleResolution({ width: image?.naturalWidth || 0, height: image?.naturalHeight || 0 }, width, height, "cover")} -->
-        <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" src={path} {alt} />
+        <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" src={path} {alt} draggable="false" />
       </div>
     {/key}
   {/if}

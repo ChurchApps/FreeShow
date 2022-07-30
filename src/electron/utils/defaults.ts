@@ -39,6 +39,13 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
       rainbow: false,
     },
     paint: {},
+    particles: {
+      color: "#1e1eb4",
+      opacity: 0.8,
+      size: 100,
+      glow: true,
+      hold: false,
+    },
   },
   overlayCategories: {
     offers: { name: "category.offers", icon: "cash", default: true },

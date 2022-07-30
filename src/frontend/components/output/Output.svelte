@@ -25,9 +25,11 @@
   export let center: boolean = false
   export let ratio: number = 0
 
-  $: slideTransition = $showsCache && $outSlide && $outSlide.id !== "temp" ? _show($outSlide.id).layouts("active").ref()[0]?.[$outSlide.index!]?.data.transition : null
-  $: transition = slideTransition ? slideTransition : $transitionData.text
-  $: mediaTransition = $transitionData.media
+  $: slideData = $showsCache && $outSlide && $outSlide.id !== "temp" ? _show($outSlide.id).layouts("active").ref()[0]?.[$outSlide.index!]?.data : null
+  $: slideTextTransition = slideData ? slideData.transition : null
+  $: slideMediaTransition = slideData ? slideData.mediaTransition : null
+  $: transition = slideTextTransition ? slideTextTransition : $transitionData.text
+  $: mediaTransition = slideMediaTransition ? slideMediaTransition : $transitionData.media
 
   const receiveOUTPUT = {
     VIDEO_DATA: (a: any) => {

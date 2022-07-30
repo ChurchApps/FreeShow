@@ -139,7 +139,14 @@
         <Icon id={iconID} {custom} right />
       {/if}
       <!-- <p style="margin: 5px;">{newName}</p> -->
-      <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} bind:edit={editActive} allowEmpty={false} />
+      <HiddenInput
+        value={newName}
+        id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id}
+        on:edit={edit}
+        bind:edit={editActive}
+        allowEmpty={false}
+        allowEdit={!show.type || show.type === "show"}
+      />
     </span>
 
     {#if match}

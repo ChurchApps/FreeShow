@@ -112,6 +112,7 @@
   "media": {
     "_loop": "Loop",
     "play": "Play",
+    "play_no_filters": "Play without filters",
     "pause": "Pause",
     "show": "Show",
     "flip": "Flip",
@@ -152,7 +153,7 @@
     "groups": "No groups",
     "events": "No events",
     "text": "Type something",
-    "timers": "No global timers or private in the shows in this project"
+    "timers": "No global timers and no timers in the shows in this project"
   },
   "remote": {
     "projects": "Projects",
@@ -323,6 +324,7 @@
     "export": "Export",
     "duplicate": "Duplicate",
     "delete": "Delete",
+    "delete_all": "Delete all",
     "close": "Close",
     "save": "Save",
     "disable": "Disable",
@@ -465,12 +467,15 @@
     "pointer": "Pointer",
     "fill": "Fill",
     "paint": "Paint",
+    "particles": "Particles",
     "color": "Color",
     "opacity": "Opacity",
     "size": "Size",
     "glow": "Glow",
     "hold": "Hold",
-    "rainbow": "Rainbow"
+    "rainbow": "Rainbow",
+    "threed": "3D",
+    "dots": "Dots"
   },
   "stage": {
     "slide": "Slide",
@@ -602,7 +607,8 @@
     "fade": "Fade",
     "blur": "Blur",
     "scale": "Scale",
-    "spin": "Spin"
+    "spin": "Spin",
+    "slide": "Slide"
   },
   "month": {
     "1": "January",

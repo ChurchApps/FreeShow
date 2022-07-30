@@ -112,6 +112,7 @@
   "media": {
     "_loop": "Gjenta",
     "play": "Spill av",
+    "play_no_filters": "Spill av uten filtre",
     "pause": "Sett på pause",
     "show": "Vis",
     "flip": "Vend",
@@ -152,7 +153,7 @@
     "groups": "Ingen grupper",
     "events": "Ingen hendelser",
     "text": "Skriv noe",
-    "timers": "Ingen globale nedtellinger, eller private i noen show i dette prosjektet"
+    "timers": "Ingen globale nedtellinger, og ingen i noen show i dette prosjektet"
   },
   "remote": {
     "projects": "Prosjekter",
@@ -323,6 +324,7 @@
     "export": "Eksporter",
     "duplicate": "Dupliser",
     "delete": "Slett",
+    "delete_all": "Slett alle",
     "close": "Lukk",
     "save": "Lagre",
     "disable": "Deaktiver",
@@ -465,12 +467,15 @@
     "pointer": "Peker",
     "fill": "Fyll",
     "paint": "Maling",
+    "particles": "Partikler",
     "color": "Farge",
     "opacity": "Gjennomsiktighet",
     "size": "Størrelse",
     "glow": "Glød",
     "hold": "Hold",
-    "rainbow": "Regnbue"
+    "rainbow": "Regnbue",
+    "threed": "3D",
+    "dots": "Prikker"
   },
   "stage": {
     "slide": "Lysbilde",
@@ -602,7 +607,8 @@
     "fade": "Falme",
     "blur": "Uklart",
     "scale": "Skalere",
-    "spin": "Spinn"
+    "spin": "Spinn",
+    "slide": "Skli"
   },
   "month": {
     "1": "januar",

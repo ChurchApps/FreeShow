@@ -59,3 +59,12 @@ export function keysToID(object: { [key: string]: {} }): any {
 export function removeValues(object: {}[], key: string, value: any): {}[] {
   return object.filter((o: any) => o[key] !== value)
 }
+
+// change values from one object to another
+export function changeValues(object: any, values: { [key: string]: any }) {
+  Object.entries(values).forEach(([key, value]: any) => {
+    object[key] = value
+    if (value === undefined) delete object[key]
+  })
+  return object
+}

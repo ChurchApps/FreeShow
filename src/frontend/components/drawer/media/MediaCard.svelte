@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { activeEdit, activePage, activeShow, media, mediaOptions, outBackground, outLocked } from "../../../stores"
+  import { OUTPUT } from "../../../../types/Channels"
+
+  import { activeEdit, activePage, activeShow, mediaOptions, outBackground, outLocked } from "../../../stores"
+  import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
   import SelectElem from "../../system/SelectElem.svelte"
   import Card from "../Card.svelte"
   import IntersectionObserver from "./IntersectionObserver.svelte"
@@ -43,7 +46,12 @@
   }
 
   function dblclick(e: any) {
-    if (!e.ctrlKey && !e.metaKey && !$outLocked) outBackground.set({ path: path, type, loop: false, filter, flipped })
+    if (!e.ctrlKey && !e.metaKey && !$outLocked) {
+      outBackground.set({ path: path, type, loop: true, muted: false, filter, flipped })
+      // TODO: get actual data
+      // TODO: output/preview control does not always match
+      window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
+    }
   }
 
   // TODO: Enter play media
@@ -54,16 +62,9 @@
   let filter = ""
   let flipped = false
 
-  $: {
-    if ($media[path]) {
-      let style = ""
-      Object.entries($media[path].filter).forEach(([id, a]: any) => (style += ` ${id}(${a})`))
-      filter = style
-      flipped = $media[path].flipped || false
-    } else {
-      filter = ""
-      flipped = false
-    }
+  $: if (path) {
+    filter = getMediaFilter(path)
+    flipped = getMediaFlipped(path)
   }
 </script>
 

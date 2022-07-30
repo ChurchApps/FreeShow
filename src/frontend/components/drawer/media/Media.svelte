@@ -52,7 +52,7 @@
 
       filterFiles()
 
-      slowLoader = 10
+      slowLoader = 20
       increaseLoading()
     }
   })
@@ -92,7 +92,7 @@
   }
 
   function wheel(e: any) {
-    if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + e.deltaY / 100)) })
+    if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
   }
 
   const shortcuts: any = {
@@ -127,13 +127,14 @@
   const nextActiveView: any = { all: "folder", folder: "image", image: "video", video: "all" }
 
   // TODO: temporary loading preformance test
-  let slowLoader: number = 10
+  let slowLoader: number = 20 // 10
   let timeout: any = null
   function increaseLoading() {
     if (timeout) clearTimeout(timeout)
     if (slowLoader < filteredFiles.length) {
       setTimeout(() => {
-        slowLoader += 1
+        // slowLoader += 1
+        slowLoader += 20
         console.log(slowLoader + "/" + filteredFiles.length)
         increaseLoading()
       }, 200)

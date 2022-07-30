@@ -72,11 +72,13 @@ export const categories: Writable<Categories> = writable({}) // {default}
 export const activeShow: Writable<null | ShowRef> = writable(null) // null
 export const shows: Writable<any> = writable({}) // {default}
 export const showsCache: Writable<Shows> = writable({}) // {default}
+export const previousShow: Writable<any> = writable(null)
 
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
 export const draw: Writable<null | Draw> = writable(null)
 export const drawSettings: Writable<DrawSettings> = writable({}) // {default}
+export const paintCache: Writable<any[]> = writable([])
 
 // STAGE
 // message...
@@ -160,6 +162,7 @@ export const templates: Writable<Templates> = writable({}) // {default}
 
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}
+export const mediaCache: Writable<any> = writable({}) // {}
 
 // backgrounds
 export const mediaFolders: Writable<Categories> = writable({}) // {default}

@@ -29,6 +29,8 @@ import {
   events,
   exportPath,
   folders,
+  media,
+  mediaCache,
   mediaFolders,
   os,
   outBackground,
@@ -62,7 +64,7 @@ import { updateSettings } from "./updateSettings"
 export function startup() {
   if (!get(currentWindow)) {
     send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
-    send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "THEMES", "SETTINGS"])
+    send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "CACHE", "SETTINGS"])
   }
 
   receive(MAIN, receiveMAIN)
@@ -130,7 +132,9 @@ const receiveSTORE: any = {
   OVERLAYS: (a: any) => overlays.set(a),
   TEMPLATES: (a: any) => templates.set(a),
   EVENTS: (a: any) => events.set(a),
+  MEDIA: (a: any) => media.set(a),
   THEMES: (a: any) => themes.set(a),
+  CACHE: (a: any) => mediaCache.set(a.media || {}),
 }
 
 const receiveOUTPUT: any = {

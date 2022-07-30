@@ -19,15 +19,13 @@
 <!-- TODO: use global resolution .... -->
 <!-- display: table; -->
 <div
-  class="main {$$props.class}"
+  class="main {$$props.class || ''}"
   style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mode === 'grid' ? 100 / $mediaOptions.columns : 100}%;"
   class:preview
   class:active
   class:changed
-  on:click
-  on:dblclick
 >
-  <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;">
+  <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:click on:dblclick>
     {#if preview}
       <div class="overlay" />
     {:else}

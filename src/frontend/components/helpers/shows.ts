@@ -307,13 +307,15 @@ export function _show(id: any) {
     /** string[] | "active" */
     layouts: (layoutIds: any = []) => ({
       /** Get layouts */
-      get: (key: string | null = null) => {
+      get: (key: string | null = null, includeId: boolean = false) => {
         let a: any[] = []
         if (layoutIds === "active") layoutIds = shows[id]?.settings?.activeLayout ? [shows[id].settings.activeLayout] : []
         else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
         layoutIds.forEach((layoutId: any) => {
-          if (key) a.push(shows[id]?.layouts[layoutId][key])
-          else a.push(shows[id]?.layouts[layoutId])
+          let layout = shows[id]?.layouts[layoutId]
+          if (key) layout = layout[key]
+          if (includeId) layout = { layoutId, ...layout }
+          a.push(layout)
         })
         return a
       },
@@ -325,12 +327,15 @@ export function _show(id: any) {
           else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
           layoutIds.forEach((layoutId: any, i: number) => {
             a.push([])
+            let layoutIndex: number = -1
             shows[id].layouts[layoutId].slides.forEach((layoutSlide: any, index: number) => {
+              layoutIndex++
               let slide = shows[id].slides[layoutSlide.id]
-              a[i].push({ type: "parent", index, id: layoutSlide.id, children: slide?.children || [], data: layoutSlide })
+              a[i].push({ type: "parent", index, layoutIndex, id: layoutSlide.id, children: slide?.children || [], data: layoutSlide })
               if (slide?.children) {
                 slide.children.forEach((childId: string, jndex: number) => {
-                  a[i].push({ type: "child", index: jndex, id: childId, parent: { id: layoutSlide.id, index }, data: layoutSlide.children?.[childId] || {} })
+                  layoutIndex++
+                  a[i].push({ type: "child", index: jndex, layoutIndex, id: childId, parent: { id: layoutSlide.id, index }, data: layoutSlide.children?.[childId] || {} })
                 })
               }
             })

@@ -1,7 +1,10 @@
 <script lang="ts">
+  import { OUTPUT } from "../../../../types/Channels"
+
   import { activeShow, dictionary, outBackground, outLocked, showsCache, videoExtensions } from "../../../stores"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import Icon from "../../helpers/Icon.svelte"
+  import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import HoverButton from "../../inputs/HoverButton.svelte"
@@ -57,20 +60,25 @@
 <div class="main">
   {#if bgs.length}
     {#each bgs as background}
+      {@const filter = getMediaFilter(background.path)}
+      {@const flipped = getMediaFlipped(background.path)}
       <SelectElem id="media" data={{ ...background }} draggable>
-        <div class="item" class:active={$outBackground?.path === background.path}>
+        <div class="item context #show_media" class:active={$outBackground?.path === background.path}>
           <HoverButton
             style="flex: 2;height: 50px;"
             icon="play"
             size={3}
             on:click={() => {
-              if (!$outLocked) outBackground.set({ path: background.path, muted: background.muted !== false })
+              if (!$outLocked) {
+                outBackground.set({ path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped })
+                window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
+              }
             }}
             title={$dictionary.media?.play}
           >
             <!-- <div style="flex: 2;height: 50px;"> -->
             {#key background.path}
-              <MediaLoader name={background.name} path={background.path} type={background.type} />
+              <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} />
             {/key}
             <!-- </div> -->
           </HoverButton>

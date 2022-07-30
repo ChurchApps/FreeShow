@@ -16,8 +16,8 @@
   export let disabled: boolean = false
 
   const dispatch = createEventDispatcher()
-  const increment = () => dispatch("change", Math.min(Number(value) + step, max).toFixed(decimals))
-  const decrement = () => dispatch("change", Math.max(Number(value) - step, min).toFixed(decimals))
+  const increment = (customStep: number = step) => dispatch("change", Math.min(Number(value) + customStep, max).toFixed(decimals))
+  const decrement = (customStep: number = step) => dispatch("change", Math.max(Number(value) - customStep, min).toFixed(decimals))
   // TODO: reset if not number....
   const input = (e: any) => {
     let newVaule = Math.max(Math.min(e.target.value, max * inputMultiplier), min * inputMultiplier) / inputMultiplier
@@ -43,8 +43,8 @@
   function wheel(e: any) {
     if (disabled) return
     e.preventDefault()
-    if (e.deltaY > 0) decrement()
-    else increment()
+    if (e.deltaY > 0) decrement(e.ctrlKey ? step * 10 : step)
+    else increment(e.ctrlKey ? step * 10 : step)
   }
 </script>
 
@@ -59,7 +59,7 @@
 
 <span class="numberInput" on:mousedown={mousedown} on:wheel={wheel} class:disabled>
   {#if buttons}
-    <Button id="decrement" on:click={decrement} center style={"flex: 1;"} disabled={disabled || Number(value) - step < min}>
+    <Button id="decrement" on:click={() => decrement()} center style={"flex: 1;"} disabled={disabled || Number(value) - step < min}>
       <Icon id="remove" size={1.2} white />
     </Button>
   {/if}
@@ -67,7 +67,7 @@
     <TextInput {disabled} value={(value * inputMultiplier).toFixed(fixed)} on:change={input} center />
   </span>
   {#if buttons}
-    <Button id="increment" on:click={increment} center style={"flex: 1;"} disabled={disabled || Number(value) + step > max}>
+    <Button id="increment" on:click={() => increment()} center style={"flex: 1;"} disabled={disabled || Number(value) + step > max}>
       <Icon id="add" size={1.2} white />
     </Button>
   {/if}

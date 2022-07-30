@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeProject, activeShow, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
+  import { activeProject, activeShow, events, media, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -38,6 +38,16 @@
     },
     addToProject: () => {
       if (!$activeProject) disabled = true
+    },
+    play_no_filters: () => {
+      let path = $selected.data[0]?.path || $selected.data[0]?.id
+      if (!path || !$media[path]?.filter) disabled = true
+    },
+    delete_all: () => {
+      if (contextElem?.classList.value.includes("#event")) {
+        let group: any = $events[contextElem.id].group
+        if (!group || !Object.entries($events).find(([id, event]: any) => id !== contextElem.id && event.group === group)) disabled = true
+      }
     },
   }
   if (conditions[id]) conditions[id]()

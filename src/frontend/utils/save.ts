@@ -23,6 +23,7 @@ import {
   language,
   maxConnections,
   media,
+  mediaCache,
   mediaFolders,
   mediaOptions,
   openedFolders,
@@ -117,18 +118,21 @@ export function save() {
   window.api.send(STORE, {
     channel: "SAVE",
     data: {
-      settings,
-      shows: get(shows),
+      // SETTINGS
+      SETTINGS: settings,
+      // CACHES (SAVED TO MULTIPLE FILES)
       showsCache: get(showsCache),
       scripturesCache: get(scripturesCache),
-      stageShows: get(stageShows),
-      projects: { projects: get(projects), folders: get(folders) },
-      overlays: get(overlays),
-      templates: get(templates),
-      events: get(events),
-      media: get(media),
-      themes: get(themes),
-      // path: get(showsPath),
+      // STORES
+      SHOWS: get(shows),
+      STAGE_SHOWS: get(stageShows),
+      PROJECTS: { projects: get(projects), folders: get(folders) },
+      OVERLAYS: get(overlays),
+      TEMPLATES: get(templates),
+      EVENTS: get(events),
+      MEDIA: get(media),
+      THEMES: get(themes),
+      CACHE: { media: get(mediaCache) },
     },
   })
 

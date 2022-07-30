@@ -112,6 +112,7 @@
   "media": {
     "_loop": "Ciclo",
     "play": "Encender",
+    "play_no_filters": "Play without filters",
     "pause": "Pausar",
     "show": "Mostrar",
     "flip": "Flip",
@@ -152,7 +153,7 @@
     "groups": "Sin eventos",
     "events": "Escribir algo",
     "text": "Sin temporizadores en los programas de este proyecto",
-    "timers": "No global timers or private in the shows in this project"
+    "timers": "No global timers and no timers in the shows in this project"
   },
   "remote": {
     "projects": "Proyectos",
@@ -323,6 +324,7 @@
     "export": "Exportar",
     "duplicate": "Repetir",
     "delete": "Eliminar",
+    "delete_all": "Delete all",
     "close": "Cerrar",
     "save": "Guardar",
     "disable": "Desactivar",
@@ -465,12 +467,15 @@
     "pointer": "Puntero",
     "fill": "Rellenar",
     "paint": "Pintar",
+    "particles": "Particles",
     "color": "Color",
     "opacity": "Resolución",
     "size": "Tamaño",
     "glow": "Brillo",
     "hold": "Fijar",
-    "rainbow": "Arco iris"
+    "rainbow": "Arco iris",
+    "threed": "3D",
+    "dots": "Dots"
   },
   "stage": {
     "slide": "Diapositiva",
@@ -602,7 +607,8 @@
     "fade": "Desvanecer",
     "blur": "Desenfocar",
     "scale": "Escalar",
-    "spin": "Rotar"
+    "spin": "Rotar",
+    "slide": "Slide"
   },
   "month": {
     "1": "Enero",

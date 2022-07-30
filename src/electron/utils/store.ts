@@ -24,5 +24,6 @@ export const projects = new Store<any>({ name: "projects", defaults: { projects:
 export const overlays = new Store<any>({ name: "overlays", defaults: {} })
 export const templates = new Store<any>({ name: "templates", defaults: {} })
 export const events = new Store<any>({ name: "events", defaults: {} })
-export const media = new Store<any>({ name: "media", defaults: {} })
+export const media = new Store<any>({ name: "media", defaults: {}, accessPropertiesByDotNotation: false })
 export const themes = new Store<any>({ name: "themes", defaults: defaultThemes })
+export const cache = new Store<any>({ name: "cache", defaults: {} })

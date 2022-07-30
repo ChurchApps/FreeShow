@@ -104,7 +104,7 @@
       <div style="display: flex;flex-direction: column;height: 100%;">
         {#if show.type === "video" || show.type === "player"}
           {#key show.id}
-            <div class="media" style="flex: 1;overflow: hidden;">
+            <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
               <!-- TODO: info about: CTRL click to play at current pos -->
               <HoverButton icon="play" size={10} on:click={onVideoClick} title={$dictionary.media?.play}>
                 {#if show.type === "player"}
@@ -141,7 +141,7 @@
             </div>
           {/key}
         {:else}
-          <div class="media" style="flex: 1;overflow: hidden;">
+          <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
             <HoverButton
               icon="play"
               size={10}

@@ -18,7 +18,7 @@
   }
 </script>
 
-<div style="justify-content: center;flex-direction: column;">
+<div style="justify-content: center;flex-direction: column;font-style: italic;">
   <p><T id="settings.hide_output_hint" /></p>
   <p><T id="settings.show_output_hint" /></p>
   <p><T id="settings.move_output_hint" /></p>
@@ -30,20 +30,20 @@
 </div>
 <div>
   <p><T id="settings.position" /></p>
-  <span style="display: flex;">
-    <p style="width: 80px;text-align: right;"><T id="edit.x" /></p>
-    <NumberInput value={$outputPosition.x} max={100000} on:change={(e) => changeOutputPosition(e, "x")} />
-    <p style="width: 80px;text-align: right;"><T id="edit.y" /></p>
-    <NumberInput value={$outputPosition.y} max={100000} on:change={(e) => changeOutputPosition(e, "y")} />
+  <span style="display: flex;gap: 10px;">
+    <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.x" /></p>
+    <NumberInput value={$outputPosition.x} max={100000} on:change={(e) => changeOutputPosition(e, "x")} buttons={false} />
+    <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.y" /></p>
+    <NumberInput value={$outputPosition.y} max={100000} on:change={(e) => changeOutputPosition(e, "y")} buttons={false} />
   </span>
 </div>
 <div>
   <p><T id="edit.size" /></p>
-  <span style="display: flex;">
-    <p style="width: 80px;text-align: right;"><T id="edit.width" /></p>
-    <NumberInput value={$outputPosition.width} max={100000} on:change={(e) => changeOutputPosition(e, "width")} />
-    <p style="width: 80px;text-align: right;"><T id="edit.height" /></p>
-    <NumberInput value={$outputPosition.height} max={100000} on:change={(e) => changeOutputPosition(e, "height")} />
+  <span style="display: flex;gap: 10px;">
+    <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.width" /></p>
+    <NumberInput value={$outputPosition.width} max={100000} on:change={(e) => changeOutputPosition(e, "width")} buttons={false} />
+    <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.height" /></p>
+    <NumberInput value={$outputPosition.height} max={100000} on:change={(e) => changeOutputPosition(e, "height")} buttons={false} />
   </span>
 </div>
 <!-- TODO: display... -->
@@ -58,5 +58,13 @@
     align-items: center;
     justify-content: space-between;
     margin: 5px 0;
+  }
+
+  div :global(.numberInput) {
+    width: 80px;
+  }
+
+  p {
+    align-self: center;
   }
 </style>

@@ -6,7 +6,7 @@
   import { getStyleResolution } from "../slide/getStyleResolution"
 
   $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
-  $: Slide = $outSlide !== null && ref ? _show("active").slides([ref[$outSlide.index]?.id]) : null
+  $: Slide = $outSlide !== null && ref ? _show("active").slides([ref[$outSlide.index!]?.id]) : null
 
   let width: number = 0
   let height: number = 0
@@ -39,7 +39,14 @@
     if (draw === null || !$drawSettings[$drawTool]?.size || e.target.closest(".parent") !== parent || !e.target.closest(".slide")) return
 
     drawSettings.update((a) => {
-      a[$drawTool].size = Math.max(0, Math.min(2000, a[$drawTool].size - e.deltaY / (e.ctrlKey || e.metaKey ? 10 : e.altKey ? 100 : 25)))
+      let direction: number = e.deltaY > 0 ? -1 : 1
+      let newSize = 10
+      if (e.altKey) newSize = 1
+      if (e.ctrlKey || e.metaKey) newSize = 25
+      newSize = Math.max(1, Math.min(2000, a[$drawTool].size - newSize * direction))
+      let sizeDiff = newSize - a[$drawTool].size
+      a[$drawTool].size = newSize
+      if ($draw) draw.set({ x: $draw.x - sizeDiff / 2, y: $draw.y - sizeDiff / 2 })
       return a
     })
   }
@@ -66,7 +73,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    /* padding: 10px; */
     overflow: auto;
   }
 </style>

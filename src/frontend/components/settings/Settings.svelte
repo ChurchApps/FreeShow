@@ -36,7 +36,6 @@
   main {
     display: flex;
     flex-direction: column;
-    margin: 0 100px;
     height: 100%;
   }
 
@@ -50,6 +49,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     height: 100%;
+    padding: 0 100px;
   }
 
   div:not(.scroll) {

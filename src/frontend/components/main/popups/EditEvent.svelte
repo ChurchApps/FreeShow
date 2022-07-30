@@ -6,6 +6,7 @@
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
+  import { changeTime } from "../../helpers/time"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
   import Color from "../../inputs/Color.svelte"
@@ -100,10 +101,12 @@
     events.update((a: any) => {
       Object.entries(a).forEach(([eventId, event]: any) => {
         if (event.group === editEvent.group) {
+          let newFromTime = changeTime(event.from, data.from).toString()
+          let newToTime = changeTime(event.to, data.to).toString()
           a[eventId] = {
             ...data,
-            from: event.from,
-            to: event.to,
+            from: newFromTime,
+            to: newToTime,
           }
         }
       })
@@ -148,8 +151,10 @@
     data.type = selectedType.id
     oldData.type = selectedType.id
 
+    console.log(data.from, editEvent.fromTime)
+
     // to has to be after from
-    if (data.to.getTime() - data.from.getTime() < 0) {
+    if (data.to.getTime() - data.from.getTime() <= 0) {
       activePopup.set(null)
       return { data: null, oldData: null, id }
     }
@@ -164,6 +169,8 @@
     delete oldData.isoTo
     delete oldData.fromTime
     delete oldData.toTime
+
+    console.log(data)
 
     return { data, oldData, id }
   }
