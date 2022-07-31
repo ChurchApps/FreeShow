@@ -16,6 +16,7 @@ import {
   exportPath,
   folders,
   fullColors,
+  formatNewShow,
   groupNumbers,
   groups,
   imageExtensions,
@@ -57,6 +58,7 @@ import {
   transitionData,
   videoExtensions,
   webFavorites,
+  textCache,
 } from "../stores"
 import type { SaveListSettings } from "./../../types/Save"
 
@@ -83,6 +85,7 @@ export function save() {
     drawSettings: get(drawSettings),
     groupNumbers: get(groupNumbers),
     fullColors: get(fullColors),
+    formatNewShow: get(formatNewShow),
     groups: get(groups),
     imageExtensions: get(imageExtensions),
     labelsDisabled: get(labelsDisabled),
@@ -132,7 +135,7 @@ export function save() {
       EVENTS: get(events),
       MEDIA: get(media),
       THEMES: get(themes),
-      CACHE: { media: get(mediaCache) },
+      CACHE: { media: get(mediaCache), text: get(textCache) },
     },
   })
 

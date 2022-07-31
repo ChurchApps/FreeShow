@@ -107,12 +107,14 @@
     "audio": "Eliminar audio",
     "nextTimer": "Eliminar temporizador de siguiente diapositiva",
     "to_start": "Eliminar inicio",
-    "timer": "Eliminar temporizador"
+    "timer": "Eliminar temporizador",
+    "transition": "Remove transition"
   },
   "media": {
     "_loop": "Ciclo",
     "play": "Encender",
     "play_no_filters": "Play without filters",
+    "favourite": "Favourite",
     "pause": "Pausar",
     "show": "Mostrar",
     "flip": "Flip",
@@ -179,7 +181,8 @@
     "not_found": "No encontrado",
     "display": "Ventana de resultado no puede mostrarse en esta vista",
     "keep_one_layout": "Usted debe tener al menos un diseño",
-    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
+    "folder_exists": "This folder does already exist"
   },
   "meta": {
     "title": "Título",
@@ -241,7 +244,7 @@
   "category": {
     "all": "Todo",
     "unlabeled": "Sin identificar",
-    "favorites": "Favoritos",
+    "favourites": "Favoritos",
     "song": "Canción",
     "presentation": "Presentación",
     "info": "Información",
@@ -249,6 +252,7 @@
     "events": "Eventos",
     "pictures": "Imágenes",
     "videos": "Videos",
+    "music": "Music",
     "offers": "Ofertas",
     "notice": "Noticia",
     "visuals": "Ilustraciones"
@@ -471,7 +475,9 @@
     "color": "Color",
     "opacity": "Resolución",
     "size": "Tamaño",
+    "radius": "Radius",
     "glow": "Brillo",
+    "hollow": "Hollow",
     "hold": "Fijar",
     "rainbow": "Arco iris",
     "threed": "3D",
@@ -502,6 +508,7 @@
     "general": "General",
     "theme": "Tema",
     "groups": "Grupos",
+    "output": "Output",
     "display": "Visualización",
     "connection": "Conexión",
     "calendar": "Calendario",
@@ -515,6 +522,7 @@
     "disable_labels": "Etiquetas desactivadas",
     "group_numbers": "Números de grupo",
     "full_colors": "Despliega todos los grupos de colores",
+    "format_new_show": "Format text when creating show",
     "auto_output": "Muestra la ventana de salida en la pantalla de inicio",
     "display_metadata": "Visualizar metadatos mientras se están mostrando",
     "split_lines": "Numbers of lines when creating a show",
@@ -609,6 +617,15 @@
     "scale": "Escalar",
     "spin": "Rotar",
     "slide": "Slide"
+  },
+  "easings": {
+    "linear": "Linear",
+    "elastic": "Elastic",
+    "bounce": "Bounce",
+    "back": "Jump",
+    "circ": "Circular",
+    "cubic": "Cubic",
+    "sine": "Flow"
   },
   "month": {
     "1": "Enero",

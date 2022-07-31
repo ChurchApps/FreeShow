@@ -5,7 +5,7 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, DefaultProjectNames, Media, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
-import type { ID, OutAudio, OutBackground, OutSlide, OutTransition, Overlays, Shows, Templates, Transition } from "../types/Show"
+import type { ID, OutBackground, OutSlide, OutTransition, Overlays, Shows, Templates, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
 import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { DrawerTabIds } from "./../types/Tabs"
@@ -47,11 +47,10 @@ export const outLocked: Writable<boolean> = writable(false) // false
 export const outBackground: Writable<null | OutBackground> = writable(null)
 export const outSlide: Writable<null | OutSlide> = writable(null)
 export const outOverlays: Writable<string[]> = writable([])
-export const outAudio: Writable<OutAudio[]> = writable([])
 export const outTransition: Writable<null | OutTransition> = writable(null)
 export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
-  text: { type: "fade", duration: 500 },
-  media: { type: "fade", duration: 500 },
+  text: { type: "fade", duration: 500, easing: "linear" },
+  media: { type: "fade", duration: 500, easing: "linear" },
 }) // {default}
 
 // connections
@@ -73,11 +72,12 @@ export const activeShow: Writable<null | ShowRef> = writable(null) // null
 export const shows: Writable<any> = writable({}) // {default}
 export const showsCache: Writable<Shows> = writable({}) // {default}
 export const previousShow: Writable<any> = writable(null)
+export const textCache: Writable<any> = writable({}) // {}
 
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
 export const draw: Writable<null | Draw> = writable(null)
-export const drawSettings: Writable<DrawSettings> = writable({}) // {default}
+export const drawSettings: Writable<DrawSettings> = writable({}) // {}
 export const paintCache: Writable<any[]> = writable([])
 
 // STAGE
@@ -169,10 +169,8 @@ export const mediaFolders: Writable<Categories> = writable({}) // {default}
 
 // audio
 export const audioFolders: Writable<Categories> = writable({}) // {default}
-// export const audio = writable({ // {}
-//   terd: { type: "music", name: "Song", location: "song" },
-//   fese: { type: "audio", name: "Info", location: "info" },
-// })
+export const audioChannels: Writable<{ left: number; right: number }> = writable({ left: 0, right: 0 })
+export const playingAudio: Writable<{ [key: string]: any }> = writable({})
 
 // web
 export const webFavorites: Writable<Categories> = writable({
@@ -260,6 +258,7 @@ export const alertUpdates: Writable<boolean> = writable(true) // true
 export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
+export const formatNewShow: Writable<boolean> = writable(true) // true
 export const splitLines: Writable<number> = writable(2) // 2
 export const displayMetadata: Writable<string> = writable("never") // "never"
 export const showsPath: Writable<null | string> = writable(null) // null
@@ -276,7 +275,8 @@ export const defaultProjectName: Writable<DefaultProjectNames> = writable("date"
 
 // media
 export const videoExtensions: Writable<string[]> = writable(["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"]) // [default]
-export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"]) // [default]
+export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp"]) // [default]
+export const audioExtensions: Writable<string[]> = writable(["mp3", "wav", "m4a", "flac", "wma", "aac", "ogg", "weba", "aiff"]) // [default]
 
 // theme
 /* --primary: #333e58;

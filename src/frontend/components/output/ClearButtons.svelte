@@ -1,11 +1,11 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-  import { dictionary, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition } from "../../stores"
+  import { dictionary, outBackground, outLocked, outOverlays, outSlide, outTransition, playingAudio } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
-  $: allCleared = !$outBackground && !$outSlide && !$outOverlays.length && !$outAudio.length && !$outTransition
+  $: allCleared = !$outBackground && !$outSlide && !$outOverlays.length && !Object.keys($playingAudio).length && !$outTransition
 
   export let autoChange: any
   export let activeClear: any
@@ -49,10 +49,17 @@
     outBackground.set(null)
     outSlide.set(null)
     outOverlays.set([])
-    outAudio.set([])
+    clearAudio()
     outTransition.set(null)
     allCleared = true
     autoChange = true
+  }
+
+  function clearAudio() {
+    Object.values($playingAudio).forEach((a: any) => {
+      a.audio.pause()
+    })
+    playingAudio.set({})
   }
 </script>
 
@@ -123,7 +130,7 @@
       <Icon id="overlays" size={1.2} />
     </Button>
     <Button
-      disabled={($outLocked && activeClear === "audio") || !$outAudio.length}
+      disabled={($outLocked && activeClear === "audio") || !Object.keys($playingAudio).length}
       on:click={() => {
         if (activeClear !== "audio") {
           // previousActive = activeClear
@@ -131,7 +138,7 @@
           activeClear = "audio"
         } else if (!$outLocked) {
           autoChange = true
-          outAudio.set([])
+          clearAudio()
         }
       }}
       title={activeClear === "audio" ? $dictionary.clear?.audio : $dictionary.preview?.audio}

@@ -19,7 +19,7 @@
 <!-- TODO: use global resolution .... -->
 <!-- display: table; -->
 <div
-  class="main {$$props.class || ''}"
+  class="main"
   style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mode === 'grid' ? 100 / $mediaOptions.columns : 100}%;"
   class:preview
   class:active
@@ -31,7 +31,7 @@
     {:else}
       <div class="hover overlay" />
     {/if}
-    <div class="card" style="{$$props.style || ''};aspect-ratio: {resolution.width}/{resolution.height};" on:mouseenter on:mouseleave on:mousemove>
+    <div class="card {$$props.class || ''}" style="{$$props.style || ''};aspect-ratio: {resolution.width}/{resolution.height};" on:mouseenter on:mouseleave on:mousemove>
       {#if !loaded}
         <div class="loader">
           <Loader />
@@ -39,7 +39,7 @@
       {/if}
       <slot />
     </div>
-    <Label {label} {icon} {white} {color} />
+    <Label {label} {icon} {white} {color} {mode} />
   </div>
 </div>
 

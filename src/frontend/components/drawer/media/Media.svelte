@@ -1,6 +1,6 @@
 <script lang="ts">
   import { READ_FOLDER } from "../../../../types/Channels"
-  import { activeShow, dictionary, imageExtensions, mediaFolders, mediaOptions, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, imageExtensions, media, mediaFolders, mediaOptions, videoExtensions } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -9,15 +9,16 @@
   import Media from "./MediaCard.svelte"
 
   export let active: string | null
+  export let searchValue: string = ""
 
   let files: any[] = []
   let extensions: string[] = [...$videoExtensions, ...$imageExtensions]
 
-  $: rootPath = active === "all" ? "" : active !== null ? $mediaFolders[active].path! : ""
-  $: path = active === "all" ? "" : rootPath
+  $: rootPath = active === "all" || active === "favourites" ? "" : active !== null ? $mediaFolders[active].path! : ""
+  $: path = active === "all" || active === "favourites" ? "" : rootPath
   $: name =
     rootPath === path
-      ? active !== "all" && active !== null
+      ? active !== "all" && active !== "favourites" && active !== null
         ? $mediaFolders[active].name
         : "category.all"
       : path.substring((path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")) + 1)
@@ -25,7 +26,20 @@
   // get list of files & folders
   let prevActive: null | string = null
   $: {
-    if (active === "all") {
+    if (active === "favourites") {
+      prevActive = active
+      files = Object.entries($media)
+        .map(([path, a]: any) => {
+          let name = path.slice((path.lastIndexOf("\\") || path.lastIndexOf("//")) + 1, path.length)
+          const extension = name.slice(name.lastIndexOf(".") + 1, name.length)
+          return { path, favourite: a.favourite === true, name, extension, audio: a.audio === true }
+        })
+        .filter((a) => a.favourite === true && a.audio !== true)
+
+      filterFiles()
+      slowLoader = 50
+      increaseLoading()
+    } else if (active === "all") {
       if (active !== prevActive) {
         prevActive = active
         files = []
@@ -52,7 +66,7 @@
 
       filterFiles()
 
-      slowLoader = 20
+      slowLoader = 50
       increaseLoading()
     }
   })
@@ -72,6 +86,7 @@
   let activeView: "all" | "folder" | "image" | "video" = "all"
   let filteredFiles: any[] = []
   $: if (activeView) filterFiles()
+  $: if (searchValue !== undefined) filterSearch()
 
   function filterFiles() {
     // filter files
@@ -87,8 +102,18 @@
     else activeFile = null
     content = allFiles.length
 
+    filterSearch()
+
     // scroll to top
     scrollElem?.scrollTo(0, 0)
+  }
+
+  // search
+  const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
+  let fullFilteredFiles: any[] = []
+  function filterSearch() {
+    fullFilteredFiles = JSON.parse(JSON.stringify(filteredFiles))
+    if (searchValue.length > 1) fullFilteredFiles = fullFilteredFiles.filter((a) => filter(a.name).includes(searchValue))
   }
 
   function wheel(e: any) {
@@ -109,9 +134,18 @@
   }
 
   function keydown(e: any) {
-    if (e.target.closest("input") || e.target.closest(".edit") || !e.ctrlKey || !allFiles.length) return
+    if (e.key === "Enter" && searchValue.length > 1 && e.target.closest(".search")) {
+      if (fullFilteredFiles.length) {
+        let file = fullFilteredFiles[0]
+        activeShow.set({ id: file.path, name: file.name, type: $videoExtensions.includes(file.extension) ? "video" : "image" })
+        activeFile = filteredFiles.findIndex((a) => a.path === file.path)
+        if (activeFile < 0) activeFile = null
+      }
+    }
 
-    if (shortcuts[e.key]) {
+    if (e.target.closest("input") || e.target.closest(".edit") || !allFiles.length) return
+
+    if (e.ctrlKey && shortcuts[e.key]) {
       // e.preventDefault()
       shortcuts[e.key]()
     }
@@ -127,14 +161,14 @@
   const nextActiveView: any = { all: "folder", folder: "image", image: "video", video: "all" }
 
   // TODO: temporary loading preformance test
-  let slowLoader: number = 20 // 10
+  let slowLoader: number = 50 // 10
   let timeout: any = null
   function increaseLoading() {
     if (timeout) clearTimeout(timeout)
     if (slowLoader < filteredFiles.length) {
       setTimeout(() => {
         // slowLoader += 1
-        slowLoader += 20
+        slowLoader += 50
         console.log(slowLoader + "/" + filteredFiles.length)
         increaseLoading()
       }, 200)
@@ -149,14 +183,14 @@
 <!-- TODO: ctrl+arrow keys change drawer item... -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
   <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
-    {#if filteredFiles.length}
+    {#if fullFilteredFiles.length}
       {#key rootPath}
         {#key path}
-          {#each filteredFiles as file, i}
+          {#each fullFilteredFiles as file, i}
             {#if file.folder}
-              <Folder bind:rootPath={path} name={file.name} path={file.path} />
+              <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
             {:else if slowLoader > i}
-              <Media name={file.name} path={file.path} type={$videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} />
+              <Media name={file.name} path={file.path} type={$videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} {active} />
             {/if}
           {/each}
         {/key}

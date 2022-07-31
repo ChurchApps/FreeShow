@@ -1,7 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
 
-  import { activeEdit, activePage, activeShow, mediaOptions, outBackground, outLocked } from "../../../stores"
+  import { activeEdit, activePage, activeShow, media, mediaOptions, outBackground, outLocked } from "../../../stores"
   import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
   import SelectElem from "../../system/SelectElem.svelte"
   import Card from "../Card.svelte"
@@ -11,6 +11,7 @@
   export let name: string
   export let path: string
   export let type: any
+  export let active: string | null
 
   $: name = name.slice(0, name.lastIndexOf("."))
 
@@ -77,7 +78,7 @@
   preview={$activeShow?.id === path}
   active={$outBackground?.path === path}
   label={name}
-  icon={type === "video" ? "movie" : "image"}
+  icon={active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"}
   white={type === "image"}
   on:click={click}
   on:dblclick={dblclick}

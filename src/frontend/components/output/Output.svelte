@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { fade } from "svelte/transition"
+  import { linear } from "svelte/easing"
   import { OUTPUT } from "../../../types/Channels"
   import type { Transition, TransitionType } from "../../../types/Show"
-  import { displayMetadata, outAudio, outBackground, outOverlays, currentWindow, outSlide, overlays, screen, showsCache, transitionData, backgroundColor } from "../../stores"
+  import { backgroundColor, currentWindow, displayMetadata, outBackground, outOverlays, outSlide, overlays, screen, showsCache, transitionData } from "../../stores"
   import { receive } from "../../utils/request"
-  import { transitions } from "../../utils/transitions"
+  import { easings, transitions } from "../../utils/transitions"
   import Draw from "../draw/Draw.svelte"
   import { _show } from "../helpers/shows"
   import Textbox from "../slide/Textbox.svelte"
@@ -43,6 +43,13 @@
       //   videoData.paused = false
       // }
       videoTime = a
+      // if (mirror && !videoData.paused) {
+      //   videoData.paused = true
+      //   setTimeout(() => {
+      //     videoTime = a
+      //     videoData.paused = false
+      //   }, 50)
+      // }
     },
     BACKGROUND: (a: any) => {
       if (a?.muted) videoData.muted = a.muted
@@ -57,8 +64,8 @@
 
   $: resolution = currentSlide?.settings?.resolution || $screen.resolution
 
-  function custom(node: any, { type = "fade", duration = 500 }: any) {
-    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration }
+  function custom(node: any, { type = "fade", duration = 500, easing = "linear" }: any) {
+    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing).data || linear }
   }
 </script>
 
@@ -70,6 +77,7 @@
   {/if}
   {#if $outSlide}
     {#key $outSlide}
+      <!-- TODO: svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
       <span transition:custom={transition} style="pointer-events: none;display: block;">
         {#if currentSlide}
           {#each currentSlide?.items as item}
@@ -92,7 +100,7 @@
   {#if $outOverlays.length}
     {#each $outOverlays as id}
       {#if $overlays[id]}
-        <div transition:fade={transition}>
+        <div transition:custom={$transitionData.text}>
           <div>
             {#each $overlays[id].items as item}
               <Textbox {item} ref={{ type: "overlay", id }} />
@@ -104,6 +112,3 @@
   {/if}
   <Draw />
 </Zoomed>
-{#if $outAudio.length}
-  <!--  -->
-{/if}

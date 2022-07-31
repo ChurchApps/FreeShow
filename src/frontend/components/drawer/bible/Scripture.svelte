@@ -52,7 +52,7 @@
               })
               if (!hasId) bookId = data.data[0].id
 
-              console.trace(data.data)
+              // console.trace(data.data)
               books = data.data
             }
             break
@@ -298,6 +298,7 @@
   // search
   let auto: boolean = false
   $: if (searchValue) auto = true
+  let previousBook = ""
   $: split = searchValue.split(" ")
   // split chapter / verse range with ":" or "," or "." or " "
   $: split2 = split[1]?.includes(":")
@@ -314,19 +315,21 @@
     let newBooks = JSON.parse(JSON.stringify(books)).map((b: any, i: number) => ({ ...b, id: b.id || i }))
     let matches = newBooks.filter((a: any) => a.name.toLowerCase().includes(book.toLowerCase()))
     let exactMatch = matches.find((a: any) => a.name.toLowerCase() === book.toLowerCase())
-    if ((matches.length === 1 || exactMatch) && !split[1]?.length) {
+    if ((matches.length === 1 || exactMatch) && !split[1]?.length && split[0].length >= previousBook.length) {
       updateSearchValue(matches[0].name + " ")
+      previousBook = matches[0].name + " "
 
       if (bookId !== matches[0].id) {
         bookId = matches[0].id
         getBook()
       }
     }
-  }
+  } else previousBook = ""
   const updateSearchValue = (v: string) => (searchValue = v)
 
   // chapter
   $: chapter = split2?.[0]?.length ? split2?.[0] : null
+  $: if (chapter) updateSearchValue(book + " " + chapter.replace(/[^0-9:.,]/g, ""))
   $: if (chapter && chapter !== chapterId && auto) {
     // GEN.1 || 0
     chapters.forEach((c, i) => {
@@ -338,6 +341,7 @@
 
   // verses
   $: verse = split2?.[1]?.length ? split2?.[1] : null
+  $: if (verse) updateSearchValue(book + " " + chapter + ":" + verse.replace(/[^0-9-+]/g, ""))
   $: if (verse && auto) {
     // select range (GEN.1.1 || "1")
     activeVerses = []

@@ -2,7 +2,7 @@
   import { OUTPUT } from "../../../types/Channels"
 
   import type { Resolution } from "../../../types/Settings"
-  import { activePage, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, presenterControllerKeys, screen, showsCache } from "../../stores"
+  import { activePage, activeShow, outBackground, outLocked, outOverlays, outSlide, outTransition, playingAudio, presenterControllerKeys, screen, showsCache } from "../../stores"
   import { nextSlide, previousSlide } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -10,10 +10,11 @@
   import ClearButtons from "./ClearButtons.svelte"
   import Output from "./Output.svelte"
   import ShowActions from "./ShowActions.svelte"
+  import Audio from "./tools/Audio.svelte"
   import Media from "./tools/Media.svelte"
+  import NextTimer from "./tools/NextTimer.svelte"
   import Overlay from "./tools/Overlay.svelte"
   import Show from "./tools/Show.svelte"
-  import NextTimer from "./tools/NextTimer.svelte"
 
   let callClear: boolean = false
   const ctrlShortcuts: any = {
@@ -45,7 +46,7 @@
       if (!$outLocked) outOverlays.set([])
     },
     F4: () => {
-      if (!$outLocked) outAudio.set([])
+      if (!$outLocked) playingAudio.set({})
     },
     ".": () => {
       // if ($presenterControllerKeys)
@@ -137,14 +138,14 @@
   let autoChange: boolean = true
   $: {
     if (autoChange) {
-      let active = getActiveClear($outTransition, $outAudio, $outOverlays, $outSlide, $outBackground)
+      let active = getActiveClear($outTransition, $playingAudio, $outOverlays, $outSlide, $outBackground)
       if (active !== activeClear) activeClear = active
     }
   }
 
   function getActiveClear(nextTimer: any, audio: any, overlays: any, slide: any, background: any) {
     if (nextTimer) return "nextTimer"
-    if (audio.length) return "audio"
+    if (Object.keys(audio).length) return "audio"
     if (overlays.length) return "overlays"
     if (slide?.id) return "slide"
     if (background) return "background"
@@ -289,8 +290,8 @@
       <Show />
     {:else if activeClear === "overlays" && $outOverlays.length}
       <Overlay />
-    {:else if activeClear === "audio" && $outAudio.length}
-      <!-- <Audio /> -->
+    {:else if activeClear === "audio" && Object.keys($playingAudio).length}
+      <Audio />
     {:else if $outTransition && activeClear === "nextTimer" && $outTransition}
       <NextTimer bind:timer {timerMax} {timeObj} />
     {/if}
@@ -315,7 +316,7 @@
 
   .fullscreen {
     position: fixed;
-    background-color: var(--primary);
+    background-color: var(--primary-darkest);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);

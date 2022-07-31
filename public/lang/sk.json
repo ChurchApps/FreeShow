@@ -107,12 +107,14 @@
     "audio": "Odstrániť audio",
     "nextTimer": "Odstrániť časovač ďalšieho snímku",
     "to_start": "Odstrániť Prejsť na začiatok",
-    "timer": "Odstrániť časovač"
+    "timer": "Odstrániť časovač",
+    "transition": "Remove transition"
   },
   "media": {
     "_loop": "Slučka",
     "play": "Prehrať",
     "play_no_filters": "Play without filters",
+    "favourite": "Favourite",
     "pause": "Pauza",
     "show": "Zobraziť",
     "flip": "Flip",
@@ -179,7 +181,8 @@
     "not_found": "Nenašlo sa",
     "display": "Nepodarilo sa zobraziť výstupné okno na aktuálnej obrazovke",
     "keep_one_layout": "Musíte mať aspoň jedno rozloženie",
-    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
+    "folder_exists": "This folder does already exist"
   },
   "meta": {
     "title": "Názov",
@@ -241,7 +244,7 @@
   "category": {
     "all": "Všetko",
     "unlabeled": "Neoznačené",
-    "favorites": "Obľúbené",
+    "favourites": "Obľúbené",
     "song": "Piesne",
     "presentation": "Presentácie",
     "info": "Info",
@@ -249,6 +252,7 @@
     "events": "Udalosti",
     "pictures": "Obrázky",
     "videos": "Videá",
+    "music": "Music",
     "offers": "Ponuky",
     "notice": "Oznamy",
     "visuals": "Vizuály"
@@ -471,7 +475,9 @@
     "color": "Farba",
     "opacity": "Priehľadnosť",
     "size": "Veľkosť",
+    "radius": "Radius",
     "glow": "Žiara",
+    "hollow": "Hollow",
     "hold": "Hold",
     "rainbow": "Dúha",
     "threed": "3D",
@@ -502,6 +508,7 @@
     "general": "Všeobecné",
     "theme": "Téma",
     "groups": "Skupiny",
+    "output": "Output",
     "display": "Obrazovka",
     "connection": "Pripojenia",
     "calendar": "Kalendár",
@@ -515,6 +522,7 @@
     "disable_labels": "Vypnúť popisky",
     "group_numbers": "Čísla skupín",
     "full_colors": "Plné farby skupín snímok",
+    "format_new_show": "Format text when creating show",
     "auto_output": "Zobraziť výstupné okno pri spustení",
     "display_metadata": "Zobrazova metadata pri prezentácii",
     "split_lines": "Numbers of lines when creating a show",
@@ -609,6 +617,15 @@
     "scale": "Zväčšenie",
     "spin": "Točenie",
     "slide": "Slide"
+  },
+  "easings": {
+    "linear": "Linear",
+    "elastic": "Elastic",
+    "bounce": "Bounce",
+    "back": "Jump",
+    "circ": "Circular",
+    "cubic": "Cubic",
+    "sine": "Flow"
   },
   "month": {
     "1": "Január",

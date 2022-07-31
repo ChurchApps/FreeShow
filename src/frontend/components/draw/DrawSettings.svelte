@@ -13,15 +13,26 @@
       color: "#000000",
       opacity: 0.8,
       size: 300,
+      radius: 50,
       glow: true,
       hold: false,
     },
     pointer: {
       color: "#FF0000",
       opacity: 0.8,
-      size: 50,
-      // type: "circle",
-      glow: true,
+      size: 100,
+      radius: 50,
+      glow: false,
+      hollow: true,
+      hold: false,
+    },
+    particles: {
+      color: "#1e1eb4",
+      opacity: 0.8,
+      size: 20,
+      radius: 25,
+      glow: false,
+      hollow: false,
       hold: false,
     },
     fill: {
@@ -32,16 +43,9 @@
     paint: {
       color: "#ffffff",
       size: 10,
-      hold: true,
       threed: false,
       dots: false,
-    },
-    particles: {
-      color: "#1e1eb4",
-      opacity: 0.8,
-      size: 100,
-      glow: true,
-      hold: false,
+      hold: true,
     },
   }
 
@@ -71,13 +75,15 @@
       <h6><T id="draw.{$drawTool}" /></h6>
       <div style="display: flex;gap: 10px;">
         <span class="titles">
-          {#if $drawSettings[$drawTool]}
-            {#each Object.keys($drawSettings[$drawTool]) as key}
-              {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
-                <p><T id="draw.{key}" /></p>
-              {/if}
-            {/each}
-          {/if}
+          {#key $drawSettings}
+            {#if $drawSettings[$drawTool]}
+              {#each Object.keys($drawSettings[$drawTool]) as key}
+                {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
+                  <p><T id="draw.{key}" /></p>
+                {/if}
+              {/each}
+            {/if}
+          {/key}
         </span>
 
         <span style="display: flex;flex-direction: column;justify-content: space-around;align-items: end;">
@@ -85,10 +91,12 @@
             {#each Object.entries($drawSettings[$drawTool]) as [key, value]}
               {#if key === "color"}
                 <Color {value} on:input={(e) => input(e, key)} style="width: 100%;" />
-              {:else if (key !== "hold" || $drawTool !== "paint") && ["glow", "hold", "rainbow", "dots", "threed"].includes(key)}
+              {:else if (key !== "hold" || $drawTool !== "paint") && ["glow", "hold", "rainbow", "hollow", "dots", "threed"].includes(key)}
                 <Checkbox checked={value} on:change={(e) => check(e, key)} />
               {:else if key === "opacity"}
                 <NumberInput {value} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => change(e, key)} />
+              {:else if key === "radius"}
+                <NumberInput {value} step={0.5} decimals={1} max={50} inputMultiplier={2} on:change={(e) => change(e, key)} />
               {:else if key !== "clear" && key !== "hold"}
                 <NumberInput {value} min={1} max={2000} on:change={(e) => change(e, key)} />
               {/if}

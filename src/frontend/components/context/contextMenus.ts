@@ -70,6 +70,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   // MEDIA
   play: { label: "media.play", icon: "play" },
   play_no_filters: { label: "media.play_no_filters", icon: "play" },
+  favourite: { label: "media.favourite", icon: "star" },
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -111,7 +112,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   show_media: ["play", "play_no_filters", "SEPERATOR", "edit"],
   // , "addToShow"
   // show_in_explorer!!
-  media_card: ["play", "play_no_filters", "addToProject", "SEPERATOR", "edit"],
+  media_card: ["play", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
   // "addToFirstSlide",
   overlay_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
   // "addToShow",

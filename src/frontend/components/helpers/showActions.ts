@@ -6,12 +6,12 @@ import {
   activeProject,
   activeShow,
   media,
-  outAudio,
   outBackground,
   outLocked,
   outOverlays,
   outSlide,
   outTransition,
+  playingAudio,
   projects,
   showsCache,
 } from "./../../stores"
@@ -191,6 +191,6 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   if (data.actions) {
     if (data.actions.clearBackground) outBackground.set(null)
     if (data.actions.clearOverlays) outOverlays.set([])
-    if (data.actions.clearAudio) outAudio.set([])
+    if (data.actions.clearAudio) playingAudio.set({})
   }
 }

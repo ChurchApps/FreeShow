@@ -6,6 +6,7 @@
   import Display from "./tabs/Display.svelte"
   import General from "./tabs/General.svelte"
   import Groups from "./tabs/Groups.svelte"
+  import Output from "./tabs/Output.svelte"
   import Theme from "./tabs/Theme.svelte"
 </script>
 
@@ -22,6 +23,8 @@
       <Theme />
     {:else if $settingsTab === "groups"}
       <Groups />
+    {:else if $settingsTab === "output"}
+      <Output />
     {:else if $settingsTab === "display"}
       <Display />
     {:else if $settingsTab === "connection"}
@@ -42,7 +45,7 @@
   h2 {
     text-align: center;
     font-size: 1.8em;
-    margin: 20px 0;
+    padding: 20px 0;
   }
 
   .scroll {

@@ -38,14 +38,15 @@
   {#if tool === "focus"}
     <div
       class="focus"
-      style="left: {$draw.x}px;top: {$draw.y}px;opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;box-shadow: 0 0 0 50000px {settings?.color}{settings?.glow
+      style="left: {$draw.x}px;top: {$draw.y}px;opacity: {settings?.opacity};border-radius: {settings?.radius}%;width: {settings?.size}px;height: {settings?.size}px;box-shadow: 0 0 0 50000px {settings?.color}{settings?.glow
         ? `, inset 0 0 ${settings?.size / 3}px ${settings?.color}`
         : ''};"
     />
   {:else if tool === "pointer"}
     <div
       class="point"
-      style="left: {$draw.x}px;top: {$draw.y}px;background-color: {settings?.color};opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;{settings?.glow
+      class:hollow={settings.hollow === true}
+      style="left: {$draw.x}px;top: {$draw.y}px;--color: {settings?.color};border-radius: {settings?.radius}%;opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;{settings?.glow
         ? `box-shadow: 0 0 ${settings?.size / 5}px ${settings?.size / 20}px ${settings?.color}`
         : ''}"
     />
@@ -56,12 +57,17 @@
 
 <style>
   .point {
+    --color: red;
     position: absolute;
     width: 50px;
     height: 50px;
-    background-color: red;
+    background-color: var(--color);
+    border: 4px solid var(--color);
     border-radius: 50%;
     opacity: 0.8;
+  }
+  .point.hollow {
+    background-color: transparent;
   }
 
   .focus {

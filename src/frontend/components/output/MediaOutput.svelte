@@ -1,9 +1,10 @@
 <script lang="ts">
+  import { linear } from "svelte/easing"
   import { OUTPUT } from "../../../types/Channels"
   import type { Transition, TransitionType } from "../../../types/Show"
   import { audioSource, currentWindow, mediaFolders, outBackground, videoExtensions } from "../../stores"
   import { send } from "../../utils/request"
-  import { transitions } from "../../utils/transitions"
+  import { easings, transitions } from "../../utils/transitions"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Player from "../system/Player.svelte"
   import { audioAnalyser } from "./audioAnalyser"
@@ -58,8 +59,13 @@
     videoData.paused = true
     setTimeout(() => {
       videoTime = startAt || 0
-      window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
-      setTimeout(() => window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime }), 100)
+      if (!mirror) {
+        window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+        setTimeout(() => window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime }), 100)
+
+        // TODO: draw get time
+        // sendCurrentTime()
+      }
 
       if (autoMute && !mirror) {
         autoMute = false
@@ -71,30 +77,42 @@
     hasLoaded = false
   }
 
+  // let timeout: any = null
+  // function sendCurrentTime() {
+  //   if (timeout) clearTimeout()
+  //   timeout = setTimeout(() => {
+  //     if (!videoData.paused) window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+  //     sendCurrentTime()
+  //   }, 1000)
+  // }
+
   $: console.log(mirror, videoData.muted)
 
-  $: if ($outBackground) setUpdater()
+  function updateFilter() {
+    let temp: any = { ...$outBackground }
+    filter = ""
+    // if (temp.filter !== undefined && temp.filter.length) {
+    filter = temp.filter
+    //   delete temp.filter
+    // }
+    // if (temp.flipped !== undefined) {
+    flipped = temp.flipped
+    //   delete temp.flipped
+    // }
+  }
+
+  $: if ($outBackground !== null) updateFilter()
+  $: if ($outBackground?.type === "video") setUpdater()
   // let bg: any = null
   let oldFilter: string = ""
   setUpdater()
   function setUpdater() {
-    let temp: any = { ...$outBackground }
-    filter = ""
-    if (temp.filter !== undefined && temp.filter.length) {
-      filter = temp.filter
-      delete temp.filter
-    }
-    if (temp.flipped !== undefined) {
-      flipped = temp.flipped
-      delete temp.flipped
-    }
-
     if (oldFilter === filter) videoTime = 0
     else oldFilter = filter
   }
 
-  function custom(node: any, { type = "fade", duration = 500 }: any) {
-    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration }
+  function custom(node: any, { type = "fade", duration = 500, easing = "linear" }: any) {
+    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing).data || linear }
   }
 
   // AUDIO ANALYZER
@@ -104,12 +122,12 @@
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API
   // https://ui.dev/web-audio-api/
 
-  $: if ((!$outBackground || videoData.paused) && interval) {
+  $: if (($outBackground?.type !== "video" || videoData.paused) && interval && !mirror) {
     audioChannels = { left: 0, right: 0 }
     send(OUTPUT, ["AUDIO_MAIN"], { channels: audioChannels })
     clearInterval(interval)
   }
-  $: if (!$outBackground) {
+  $: if ($outBackground?.type !== "video") {
     analyser = null
     audioSource.set(null)
   }

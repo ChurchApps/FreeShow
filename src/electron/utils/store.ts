@@ -6,6 +6,8 @@ interface ElectronSettings {
   maximized: boolean
   width: number
   height: number
+  x: number
+  y: number
 }
 
 export const electronSettings = new Store<ElectronSettings>({
@@ -14,6 +16,8 @@ export const electronSettings = new Store<ElectronSettings>({
     maximized: true,
     width: 800,
     height: 600,
+    x: 0,
+    y: 0,
   },
 })
 

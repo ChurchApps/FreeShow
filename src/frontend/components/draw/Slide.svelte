@@ -62,7 +62,7 @@
 <div class="parent" bind:this={parent} bind:offsetWidth={width} bind:offsetHeight={height}>
   <div style="width: 100%;height: 100%;display: flex;flex-direction: column;justify-content: center;" on:mousedown={onMouseMove} on:wheel={wheel}>
     <!-- TODO: draw get video time! -->
-    <Output bind:ratio center style={getStyleResolution(resolution, width, height)} transition={{ type: "fade", duration: 0 }} mirror />
+    <Output bind:ratio center style={getStyleResolution(resolution, width, height)} transition={{ type: "fade", duration: 0, easing: "linear" }} mirror />
   </div>
 </div>
 

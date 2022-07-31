@@ -551,6 +551,17 @@ const actions: any = {
     if (!path) return
     if (!get(outLocked)) outBackground.set({ path })
   },
+  favourite: (obj: any) => {
+    let favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id].favourite !== true
+    obj.sel.data.forEach((card: any) => {
+      let path = card.path || card.id
+      media.update((a) => {
+        if (!a[path]) a[path] = { filter: "" }
+        a[path].favourite = favourite
+        return a
+      })
+    })
+  },
 
   // drawer navigation
   changeIcon: () => activePopup.set("icon"),

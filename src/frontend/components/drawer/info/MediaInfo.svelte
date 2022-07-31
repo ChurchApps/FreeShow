@@ -11,8 +11,8 @@
   let info: any = {}
   window.api.receive(FILE_INFO, (data: any) => {
     info = { ...data.stat, extension: data.extension }
+    if (!name) name = data.path?.slice((data.path.lastIndexOf("\\") || data.path.lastIndexOf("//")) + 1, data.path.lastIndexOf(".")) || ""
   })
-  $: console.log(info)
 
   $: size = info.size || 0
   $: created = info.birthtime || null
@@ -22,48 +22,48 @@
 </script>
 
 <main style="overflow-y: auto;">
-<h2 style="text-align: center" title={name}>
-  {#if name.length}
-    {name}
-  {:else}
-    <span style="opacity: 0.5">
-      <T id={"main.unnamed"} />
-    </span>
-  {/if}
-</h2>
-<p>
-  <span class="title"><T id={"info.extension"} /></span>
-  <span style="text-transform: uppercase;">{info.extension || "-"}</span>
-</p>
-<p>
-  <span class="title"><T id={"info.size"} /></span>
-  <span>{formatBytes(size)}</span>
-</p>
-<p>
-  <span class="title"><T id={"info.created"} /></span>
-  {#if created}
-    <Date d={created} />
-  {:else}
-    <span>-</span>
-  {/if}
-</p>
-<p>
-  <span class="title"><T id={"info.modified"} /></span>
-  {#if modified}
-    <Date d={modified} />
-  {:else}
-    <span>-</span>
-  {/if}
-</p>
-<p>
-  <span class="title"><T id={"info.changed"} /></span>
-  {#if changed}
-    <!-- format="d,m,y" -->
-    <Date d={changed} />
-  {:else}
-    <span>-</span>
-  {/if}
-</p>
+  <h2 style="text-align: center" title={name}>
+    {#if name.length}
+      {name}
+    {:else}
+      <span style="opacity: 0.5">
+        <T id={"main.unnamed"} />
+      </span>
+    {/if}
+  </h2>
+  <p>
+    <span class="title"><T id={"info.extension"} /></span>
+    <span style="text-transform: uppercase;">{info.extension || "-"}</span>
+  </p>
+  <p>
+    <span class="title"><T id={"info.size"} /></span>
+    <span>{formatBytes(size)}</span>
+  </p>
+  <p>
+    <span class="title"><T id={"info.created"} /></span>
+    {#if created}
+      <Date d={created} />
+    {:else}
+      <span>-</span>
+    {/if}
+  </p>
+  <p>
+    <span class="title"><T id={"info.modified"} /></span>
+    {#if modified}
+      <Date d={modified} />
+    {:else}
+      <span>-</span>
+    {/if}
+  </p>
+  <p>
+    <span class="title"><T id={"info.changed"} /></span>
+    {#if changed}
+      <!-- format="d,m,y" -->
+      <Date d={changed} />
+    {:else}
+      <span>-</span>
+    {/if}
+  </p>
 </main>
 
 <style>
@@ -71,7 +71,7 @@
     overflow-y: auto;
     padding: 10px;
   }
-  
+
   p {
     display: flex;
     justify-content: space-between;

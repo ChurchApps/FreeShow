@@ -109,7 +109,7 @@
       if ($outSlide?.id === id && $outSlide?.index === 0 && $outSlide?.layout === $showsCache[id].settings.activeLayout) return
       outSlide.set({ id, layout: $showsCache[id].settings.activeLayout, index: 0 })
     } else if (type === "image" || type === "video") {
-      let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: "media" }
+      let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: type }
       if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
       outBackground.set(out)
     } else if (type === "player") outBackground.set({ id, type: "player" })
@@ -127,7 +127,7 @@
     on:click={click}
     on:dblclick={doubleClick}
     {active}
-    outline={id === $outSlide?.id || id === ($outBackground?.id || $outBackground?.path)}
+    outline={id === $outSlide?.id || id === ($outBackground?.path || $outBackground?.id)}
     class="context {$$props.class}"
     {style}
     bold={false}

@@ -49,6 +49,10 @@
         if (!group || !Object.entries($events).find(([id, event]: any) => id !== contextElem.id && event.group === group)) disabled = true
       }
     },
+    favourite: () => {
+      let path = $selected.data[0]?.path || $selected.data[0]?.id
+      if (path && $media[path]?.favourite === true) enabled = true
+    },
   }
   if (conditions[id]) conditions[id]()
 

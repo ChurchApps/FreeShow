@@ -17,6 +17,7 @@ import {
   drawSettings,
   exportPath,
   fullColors,
+  formatNewShow,
   groupNumbers,
   groups,
   imageExtensions,
@@ -51,10 +52,8 @@ import { setLanguage } from "./language"
 
 export function updateSettings(data: any) {
   // output
-  if (data.autoOutput) {
-    send(OUTPUT, ["POSITION"], data.outputPosition)
-    send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
-  }
+  if (data.outputPosition) send(OUTPUT, ["POSITION"], data.outputPosition)
+  if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
 
   // remote
   send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
@@ -122,6 +121,7 @@ const updateList: { [key in SaveListSettings]: any } = {
   drawSettings: (v: any) => drawSettings.set(v),
   groupNumbers: (v: any) => groupNumbers.set(v),
   fullColors: (v: any) => fullColors.set(v),
+  formatNewShow: (v: any) => formatNewShow.set(v),
   groups: (v: any) => groups.set(v),
   imageExtensions: (v: any) => imageExtensions.set(v),
   labelsDisabled: (v: any) => labelsDisabled.set(v),

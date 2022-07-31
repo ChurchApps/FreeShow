@@ -29,21 +29,29 @@
 {#each particles as p}
   <div
     class="particle"
-    style="--color: {settings.color || '#1e1eb4'};opacity: {settings.opacity || 0.8};top: {p.y}px;left: {p.x}px;height: {p.size}px;width: {p.size}px;"
-    class:glow={settings.glow !== false}
+    style="--color: {settings.color || '#1e1eb4'};opacity: {settings.opacity ||
+      0.8};border-radius: {settings.radius}%;top: {p.y}px;left: {p.x}px;height: {p.size}px;width: {p.size}px;"
+    class:glow={settings.glow === true}
+    class:hollow={settings.hollow === true}
   />
 {/each}
 
 <style>
   .particle {
     --color: #1e1eb4;
-    border-radius: 100%;
+    border-radius: 50%;
+    opacity: 0;
+
     position: absolute;
     pointer-events: none;
     background: var(--color);
+    border: 2px solid var(--color);
     transform: translate(-50%, -50%);
     animation: fade 0.8s infinite;
-    opacity: 0;
+  }
+
+  .particle.hollow {
+    background: none;
   }
 
   .particle.glow {

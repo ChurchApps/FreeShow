@@ -9,7 +9,7 @@
   export let path: string
   export let filter: any = ""
   export let flipped: boolean = false
-  export let type: null | "media" | "image" | "video" | "camera" | "screen" = null
+  export let type: null | "media" | "image" | "video" | "camera" | "screen" | "audio" = null
   export let hover: boolean = false
   export let loaded: boolean = type === "image"
   export let duration: number = 0
@@ -62,26 +62,26 @@
       x = (thumbnailSize.width - width) / 2
     }
 
-    console.log("DRAW")
     // canvas?.getContext("2d").drawImage(img, 0, 0, 160, 90)
-    canvas?.getContext("2d").drawImage(img, x, y, width, height)
     setTimeout(() => {
-      if (canvas) {
-        mediaCache.update((a) => {
-          a[path] = { data: canvas.toDataURL() }
-          // a[path] = { data: canvas.toDataURL(), width, height, x, y }
-          return a
-        })
-        // canvas?.getContext("2d").clearRect(0, 0, 160, 90)
-        // canvas?.getContext("2d").drawImage(img, x, y, width, height)
-      }
-    }, 100)
+      canvas?.getContext("2d").drawImage(img, x, y, width, height)
+      setTimeout(() => {
+        if (canvas) {
+          mediaCache.update((a) => {
+            a[path] = { data: canvas.toDataURL() }
+            // a[path] = { data: canvas.toDataURL(), width, height, x, y }
+            return a
+          })
+          // canvas?.getContext("2d").clearRect(0, 0, 160, 90)
+          // canvas?.getContext("2d").drawImage(img, x, y, width, height)
+        }
+      }, 100)
+    }, 50)
   }
 
   function checkIfCacheLoaded(): any {
     if (!img.complete) return setTimeout(checkIfCacheLoaded, 100)
 
-    console.log("DRAW")
     // let cache = $mediaCache[path]
     // canvas?.getContext("2d").drawImage(img, cache.x, cache.y, cache.width, cache.height)
     canvas?.getContext("2d").drawImage(img, 0, 0, 160, 90)
@@ -108,14 +108,13 @@
     if (cache) {
       // TODO: cache
       var img = new window.Image()
-      console.log(cache)
+      // console.log(cache)
       img.src = cache.data
 
-      console.log(img)
       canvas.width = cache.width
       canvas.height = cache.height
       setTimeout(() => {
-        canvas.getContext("2d").drawImage(img, 0, 0, cache.width, cache.height)
+        canvas?.getContext("2d").drawImage(img, 0, 0, cache.width, cache.height)
         // canvas.getContext("2d").drawImage(videoElem, 0, 0, cache.width, cache.height)
       }, 200)
 

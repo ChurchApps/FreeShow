@@ -34,7 +34,7 @@
       {#if $outputDisplay}
         <Icon id="cancelDisplay" size={1.8} white />
       {:else}
-        <Icon id="display" size={1.8} white />
+        <Icon id="output" size={1.8} white />
       {/if}
     </Button>
   </span>

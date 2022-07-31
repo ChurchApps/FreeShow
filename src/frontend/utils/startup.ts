@@ -49,6 +49,7 @@ import {
   showsPath,
   stageShows,
   templates,
+  textCache,
   themes,
   transitionData,
   version,
@@ -134,7 +135,10 @@ const receiveSTORE: any = {
   EVENTS: (a: any) => events.set(a),
   MEDIA: (a: any) => media.set(a),
   THEMES: (a: any) => themes.set(a),
-  CACHE: (a: any) => mediaCache.set(a.media || {}),
+  CACHE: (a: any) => {
+    mediaCache.set(a.media || {})
+    textCache.set(a.text || {})
+  },
 }
 
 const receiveOUTPUT: any = {

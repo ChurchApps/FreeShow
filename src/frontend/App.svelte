@@ -44,7 +44,6 @@
     activeStage,
     drawer,
     os,
-    outAudio,
     outBackground,
     outOverlays,
     outputDisplay,
@@ -55,6 +54,7 @@
     showsCache,
     outputScreen,
     selected,
+    playingAudio,
   } from "./stores"
   import { save } from "./utils/save"
   import { startup } from "./utils/startup"
@@ -105,7 +105,7 @@
   }
   const keys: any = {
     Escape: () => {
-      if ($outBackground || $outSlide || $outOverlays.length || $outAudio.length || $outTransition) return
+      if ($outBackground || $outSlide || $outOverlays.length || Object.keys($playingAudio).length || $outTransition) return
 
       // close popup
       if ($activePopup !== null) activePopup.set(null)
@@ -181,7 +181,14 @@
   <main style={!$currentWindow && $os.platform === "win32" ? "height: calc(100% - 30px);" : ""} class:closeAd>
     {#if $currentWindow === "output"}
       <!-- TODO: mac center  -->
-      <div class="fill" bind:offsetWidth={width} bind:offsetHeight={height} on:dblclick={() => hideDisplay()} on:click={(e) => hideDisplay(e.ctrlKey || e.metaKey)}>
+      <div
+        class="fill"
+        style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') ? 'row' : 'column'}"
+        bind:offsetWidth={width}
+        bind:offsetHeight={height}
+        on:dblclick={() => hideDisplay()}
+        on:click={(e) => hideDisplay(e.ctrlKey || e.metaKey)}
+      >
         <!-- Mac: width: 100%; -->
         <Output style={getStyleResolution(resolution, width, height, "fit")} center />
       </div>
@@ -318,6 +325,10 @@
     /* cursor: none; */
     height: 100%;
     width: 100%;
+
+    display: flex;
+    background: var(--primary-darkest);
+
     /* TODO: change electron window resolution...?? */
     /* background-color: black; */
   }

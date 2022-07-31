@@ -32,18 +32,18 @@
   <p><T id="settings.position" /></p>
   <span style="display: flex;gap: 10px;">
     <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.x" /></p>
-    <NumberInput value={$outputPosition.x} max={100000} on:change={(e) => changeOutputPosition(e, "x")} buttons={false} />
+    <NumberInput value={$outputPosition?.x || 0} min={-10000} max={100000} on:change={(e) => changeOutputPosition(e, "x")} buttons={false} outline />
     <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.y" /></p>
-    <NumberInput value={$outputPosition.y} max={100000} on:change={(e) => changeOutputPosition(e, "y")} buttons={false} />
+    <NumberInput value={$outputPosition?.y || 0} min={-10000} max={100000} on:change={(e) => changeOutputPosition(e, "y")} buttons={false} outline />
   </span>
 </div>
 <div>
   <p><T id="edit.size" /></p>
   <span style="display: flex;gap: 10px;">
     <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.width" /></p>
-    <NumberInput value={$outputPosition.width} max={100000} on:change={(e) => changeOutputPosition(e, "width")} buttons={false} />
+    <NumberInput value={$outputPosition?.width || 0} min={40} max={100000} on:change={(e) => changeOutputPosition(e, "width")} buttons={false} outline />
     <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.height" /></p>
-    <NumberInput value={$outputPosition.height} max={100000} on:change={(e) => changeOutputPosition(e, "height")} buttons={false} />
+    <NumberInput value={$outputPosition?.height || 0} min={40} max={100000} on:change={(e) => changeOutputPosition(e, "height")} buttons={false} outline />
   </span>
 </div>
 <!-- TODO: display... -->

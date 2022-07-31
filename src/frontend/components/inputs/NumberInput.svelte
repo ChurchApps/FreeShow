@@ -12,6 +12,7 @@
   export let min: number = 0
   export let max: number = 1000
   export let fixed: number = 0
+  export let outline: boolean = false
   export let buttons: boolean = true
   export let disabled: boolean = false
 
@@ -57,7 +58,7 @@
   }}
 />
 
-<span class="numberInput" on:mousedown={mousedown} on:wheel={wheel} class:disabled>
+<span class="numberInput" on:mousedown={mousedown} on:wheel={wheel} class:disabled class:outline>
   {#if buttons}
     <Button id="decrement" on:click={() => decrement()} center style={"flex: 1;"} disabled={disabled || Number(value) - step < min}>
       <Icon id="remove" size={1.2} white />
@@ -80,6 +81,12 @@
     background-color: var(--primary-darker);
     flex-flow: wrap;
     transition: opacity 0.3s;
+  }
+
+  .numberInput.outline,
+  .outline :global(input) {
+    /* border: 2px solid var(--primary-lighter); */
+    background-color: var(--primary);
   }
 
   .disabled {

@@ -17,6 +17,7 @@ export type SaveListSettings =
   | "drawSettings"
   | "groupNumbers"
   | "fullColors"
+  | "formatNewShow"
   | "groups"
   | "imageExtensions"
   | "labelsDisabled"

@@ -1,7 +1,7 @@
+import { blur, fade, fly, scale, slide } from "svelte/transition"
 import type { TransitionType } from "./../../types/Show"
-import { blur, fade, scale, slide, fly } from "svelte/transition"
 // import { quintInOut } from "svelte/easing"
-import { elasticInOut } from "svelte/easing"
+import { backInOut, bounceInOut, circInOut, cubicInOut, elasticInOut, linear, sineInOut } from "svelte/easing"
 
 export const transitions: { [key in TransitionType]: any } = {
   none: () => {},
@@ -13,10 +13,24 @@ export const transitions: { [key in TransitionType]: any } = {
   spin: (node: any) => {
     const o = +getComputedStyle(node).opacity
     return {
-      easing: elasticInOut,
+      // easing: elasticInOut,
       // css: (t: any) => `transform: translateX(${t}%);`,
       // scale(${t})
       css: (t: any) => `opacity: ${t * o}; transform: rotate(${t * 360}deg);`,
     }
   },
 }
+
+export const easings: any[] = [
+  { id: "linear", name: "$:easings.linear:$", data: linear },
+  { id: "back", name: "$:easings.back:$", data: backInOut },
+  { id: "sine", name: "$:easings.sine:$", data: sineInOut },
+  { id: "circ", name: "$:easings.circ:$", data: circInOut },
+  { id: "cubic", name: "$:easings.cubic:$", data: cubicInOut },
+  { id: "elastic", name: "$:easings.elastic:$", data: elasticInOut },
+  { id: "bounce", name: "$:easings.bounce:$", data: bounceInOut },
+  // { id: "expo", name: "$:easings.expo:$", data: expoInOut },
+  // { id: "quad", name: "$:easings.quad:$", data: quadInOut },
+  // { id: "quart", name: "$:easings.quart:$", data: quartInOut },
+  // { id: "quint", name: "$:easings.quint:$", data: quintInOut },
+]

@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { activePopup, alertUpdates, backgroundColor, displayMetadata, fullColors, groupNumbers, labelsDisabled, screen, showsPath, splitLines } from "../../../stores"
+  import { activePopup, alertUpdates, fullColors, groupNumbers, formatNewShow, labelsDisabled, showsPath, splitLines } from "../../../stores"
   import { setLanguage } from "../../../utils/language"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
-  import Color from "../../inputs/Color.svelte"
-  import Dropdown from "../../inputs/Dropdown.svelte"
   import FolderPicker from "../../inputs/FolderPicker.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import LocaleSwitcher from "../LocaleSwitcher.svelte"
@@ -15,18 +13,11 @@
     updates: (e: any) => alertUpdates.set(e.target.checked),
     labels: (e: any) => labelsDisabled.set(e.target.checked),
     colors: (e: any) => fullColors.set(e.target.checked),
+    formatNewShow: (e: any) => formatNewShow.set(e.target.checked),
     groupNumber: (e: any) => groupNumbers.set(e.target.checked),
-    backgroundColor: (e: any) => backgroundColor.set(e.target.value),
   }
 
   // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
-  const meta: any[] = [
-    { id: "never", name: "$:show_at.never:$" },
-    { id: "always", name: "$:show_at.always:$" },
-    { id: "first", name: "$:show_at.first:$" },
-    { id: "last", name: "$:show_at.last:$" },
-    { id: "first_last", name: "$:show_at.first_last:$" },
-  ]
 
   function reset() {
     setLanguage(null)
@@ -34,9 +25,6 @@
     labelsDisabled.set(false)
     fullColors.set(true)
     groupNumbers.set(true)
-    displayMetadata.set("never")
-    backgroundColor.set("#000000")
-    screen.set({ resolution: { width: 1920, height: 1080 } })
   }
 </script>
 
@@ -54,6 +42,7 @@
   <!-- style="width: 200px;" -->
   <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
 </div>
+<hr />
 <div>
   <p><T id="settings.group_numbers" /></p>
   <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
@@ -63,21 +52,15 @@
   <Checkbox checked={$fullColors} on:change={inputs.colors} />
 </div>
 <div>
-  <p><T id="settings.display_metadata" /></p>
-  <Dropdown
-    options={meta}
-    value={meta.find((a) => a.id === $displayMetadata)?.name || "—"}
-    style="width: 200px;"
-    on:click={(e) => {
-      displayMetadata.set(e.detail.id)
-    }}
-  />
+  <p><T id="settings.format_new_show" /></p>
+  <Checkbox checked={$formatNewShow} on:change={inputs.formatNewShow} />
 </div>
 <div>
   <p><T id="settings.split_lines" /></p>
   <NumberInput
     value={$splitLines}
     max={100}
+    outline
     on:change={(e) => {
       splitLines.set(e.detail)
     }}
@@ -95,39 +78,7 @@
     }}
   />
 </div> -->
-<div>
-  <p><T id="settings.resolution" /></p>
-  <span class="inputs">
-    <!-- defaults dropdown -->
-    <!-- custom... -->
-    <T id="screen.width" />:
-    <NumberInput
-      value={$screen.resolution.width}
-      min={100}
-      max={10000}
-      buttons={false}
-      on:change={(e) => {
-        screen.update((a) => {
-          a.resolution.width = e.detail
-          return a
-        })
-      }}
-    />
-    <T id="screen.height" />:
-    <NumberInput
-      value={$screen.resolution.height}
-      min={100}
-      max={10000}
-      buttons={false}
-      on:change={(e) => {
-        screen.update((a) => {
-          a.resolution.height = e.detail
-          return a
-        })
-      }}
-    />
-  </span>
-</div>
+
 <!-- TODO: video / image extensions -->
 <!-- <div>
   <p><T id="settings.video_extensions" /></p>
@@ -172,12 +123,6 @@
   </span>
 </div> -->
 <div>
-  <p><T id="edit.background_color" /></p>
-  <span style="width: 200px;">
-    <Color bind:value={$backgroundColor} on:input={inputs.backgroundColor} />
-  </span>
-</div>
-<div>
   <p><T id="settings.show_location" /></p>
   <span style="display: flex;align-items: center;" title={$showsPath}>
     {$showsPath}
@@ -193,8 +138,8 @@
 <Button style="width: 100%;" center><T id="settings.export_all" /></Button> -->
 <Button style="width: 100%;" on:click={reset} center>
   <Icon id="reset" right />
-  <T id="actions.reset" /></Button
->
+  <T id="actions.reset" />
+</Button>
 <Button style="width: 100%;" on:click={() => activePopup.set("reset_all")} center>
   <Icon id="reset" right /><T id="settings.reset_all" />
 </Button>
@@ -220,14 +165,6 @@
     color: #ff5050;
     text-decoration: line-through;
   } */
-
-  .inputs {
-    display: flex;
-    align-items: center;
-  }
-  .inputs :global(input) {
-    width: 100px;
-  }
 
   hr {
     margin: 20px 0;

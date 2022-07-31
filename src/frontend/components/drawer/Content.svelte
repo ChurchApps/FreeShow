@@ -1,17 +1,17 @@
 <script lang="ts">
   import { drawerTabsData, mediaOptions } from "../../stores"
+  import Audio from "./audio/Audio.svelte"
+  import Scripture from "./bible/Scripture.svelte"
   import Cameras from "./live/Cameras.svelte"
   import Microphones from "./live/Microphones.svelte"
-  import Windows from "./live/Windows.svelte"
-  import Overlays from "./Overlays.svelte"
-  import Scripture from "./bible/Scripture.svelte"
-  import Shows from "./Shows.svelte"
-  import Web from "./Web.svelte"
-  import Player from "./player/Player.svelte"
   import Screens from "./live/Screens.svelte"
-  import Center from "../system/Center.svelte"
-  import Templates from "./Templates.svelte"
+  import Windows from "./live/Windows.svelte"
   import Media from "./media/Media.svelte"
+  import Overlays from "./Overlays.svelte"
+  import Player from "./player/Player.svelte"
+  import Shows from "./Shows.svelte"
+  import Templates from "./Templates.svelte"
+  import Web from "./Web.svelte"
 
   export let id: string
   export let bible: any
@@ -38,7 +38,7 @@
     //     })
     //   })
 
-    console.log("STOP")
+    // console.log("STOP")
 
     streams.forEach((stream: any) => {
       stream.getTracks().forEach((track: any) => {
@@ -58,17 +58,17 @@
   {#if id === "shows"}
     <Shows {id} {active} {searchValue} bind:firstMatch />
   {:else if id === "media"}
-    <Media {active} />
+    <Media {active} {searchValue} />
   {:else if id === "overlays"}
-    <Overlays {active} />
-  {:else if id === "templates"}
-    <Templates {active} />
+    <Overlays {active} {searchValue} />
   {:else if id === "audio"}
-    <Center>WIP</Center>
+    <Audio {active} {searchValue} />
   {:else if id === "scripture"}
     <Scripture {active} bind:searchValue bind:bible />
+  {:else if id === "templates"}
+    <Templates {active} {searchValue} />
   {:else if id === "player"}
-    <Player {active} />
+    <Player {active} {searchValue} />
   {:else if id === "web"}
     <Web {active} {searchValue} />
   {:else if id === "live"}
@@ -78,7 +78,7 @@
       {#if active === "screens"}
         <Screens bind:streams />
       {:else if active === "windows"}
-        <Windows bind:streams />
+        <Windows bind:streams {searchValue} />
       {:else if active === "cameras"}
         <Cameras />
       {:else if active === "microphones"}

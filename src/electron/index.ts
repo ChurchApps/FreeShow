@@ -34,6 +34,9 @@ function startApp() {
   // SCREEN LISTENERS
   screen.on("display-added", (_e: any, display) => {
     if (!outputWindow?.isEnabled()) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
+
+    displays = screen.getAllDisplays()
+    toApp(OUTPUT, { channel: "GET_DISPLAYS", data: displays })
   })
   screen.on("display-removed", (_e: any) => {
     let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
@@ -49,6 +52,9 @@ function startApp() {
       }
       toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
     }
+
+    displays = screen.getAllDisplays()
+    toApp(OUTPUT, { channel: "GET_DISPLAYS", data: displays })
   })
 
   // https://gist.github.com/maximilian-lindsey/a446a7ee87838a62099d
@@ -98,12 +104,16 @@ ipcMain.once("LOADED", () => {
 const createWindow = () => {
   let width: number = electronSettings.get("width")
   let height: number = electronSettings.get("height")
+  let x: number = electronSettings.get("x")
+  let y: number = electronSettings.get("y")
 
   let screenBounds = screen.getPrimaryDisplay().bounds
 
   mainWindow = new BrowserWindow({
     width: width === 800 ? screenBounds.width : width,
     height: height === 600 ? screenBounds.height : height,
+    x: x === 0 ? screenBounds.x : x,
+    y: y === 0 ? screenBounds.y : y,
     icon: "public/icon.png",
     frame: !isProd || process.platform !== "win32",
     autoHideMenuBar: isProd && process.platform === "win32",
@@ -138,6 +148,11 @@ const createWindow = () => {
     let { width, height } = mainWindow!.getBounds()
     electronSettings.set("width", width)
     electronSettings.set("height", height)
+  })
+  mainWindow.on("move", () => {
+    let { x, y } = mainWindow!.getBounds()
+    electronSettings.set("x", x)
+    electronSettings.set("y", y)
   })
 
   mainWindow.on("close", (e) => {
@@ -401,12 +416,13 @@ ipcMain.on(MAIN, (e, msg) => {
       toApp(MAIN, msg)
     })
   } else if (msg.channel === "GET_DISPLAYS") {
-    let outputScreens: any[] = []
-    let mainInternal: boolean = screen.getDisplayMatching(mainWindow!.getBounds()).internal
-    displays.forEach((display) => {
-      if (!mainInternal || !display.internal) outputScreens.push(display)
-    })
-    data = outputScreens
+    // let outputScreens: any[] = []
+    // let mainInternal: boolean = screen.getDisplayMatching(mainWindow!.getBounds()).internal
+    // displays.forEach((display) => {
+    //   if (!mainInternal || !display.internal) outputScreens.push(display)
+    // })
+    // data = outputScreens
+    data = displays
   } else if (msg.channel === "GET_PATHS") {
     data = {
       documents: app.getPath("documents"),
@@ -453,7 +469,7 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
   if (msg.channel === "DISPLAY") {
     let outputScreen: any = null
 
-    if (!outputPosition || msg.data.reset) {
+    if (!outputPosition || (outputPosition?.width === 0 && outputPosition?.height === 0) || msg.data.reset) {
       if (msg.data.screen) {
         outputScreen =
           displays.find((display) => {

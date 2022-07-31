@@ -3,16 +3,18 @@
   import { OUTPUT } from "../../../../types/Channels"
   import type { TransitionType } from "../../../../types/Show"
   import { activeShow, selected, showsCache, transitionData } from "../../../stores"
+  import { easings } from "../../../utils/transitions"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
+  import Dropdown from "../../inputs/Dropdown.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
 
   const types: TransitionType[] = ["none", "fade", "blur", "scale", "spin", "slide"]
 
-  function changeTransition(id: "text" | "media", key: "type" | "duration", value: any) {
+  function changeTransition(id: "text" | "media", key: "type" | "duration" | "easing", value: any) {
     if (key === "duration") value = Number(value)
     if (isSlide) {
       if (id === "text") {
@@ -22,7 +24,7 @@
         slideMediaTransition[key] = value
         value = { ...(slideMediaTransition || {}), [key]: value }
       }
-      if (value.type === "fade" && value.duration === 500) value = null
+      if (value.type === "fade" && value.duration === 500 && value.easing === "linear") value = null
 
       history({
         id: "changeLayout",
@@ -61,6 +63,12 @@
       inputMultiplier={0.001}
       on:change={(e) => changeTransition("text", "duration", e.detail)}
     />
+    <Dropdown
+      disabled={(isSlide ? slideTextTransition.type : $transitionData.text.type) === "none"}
+      options={easings}
+      value={easings.find((a) => a.id === (isSlide ? slideTextTransition.easing : $transitionData.text.easing))?.name || "$:easings.linear:$"}
+      on:click={(e) => changeTransition("text", "easing", e.detail.id)}
+    />
     {#each types as type}
       <Button
         on:click={() => changeTransition("text", "type", type)}
@@ -91,6 +99,12 @@
       inputMultiplier={0.001}
       on:change={(e) => changeTransition("media", "duration", e.detail)}
     />
+    <Dropdown
+      disabled={(isSlide ? slideMediaTransition.type : $transitionData.media.type) === "none"}
+      options={easings}
+      value={easings.find((a) => a.id === (isSlide ? slideMediaTransition.easing : $transitionData.media.easing))?.name || "$:easings.linear:$"}
+      on:click={(e) => changeTransition("media", "easing", e.detail.id)}
+    />
     {#each types as type}
       <Button
         on:click={() => changeTransition("media", "type", type)}
@@ -112,8 +126,10 @@
   on:click={() => {
     changeTransition("text", "duration", 500)
     changeTransition("text", "type", "fade")
+    changeTransition("text", "easing", "linear")
     changeTransition("media", "duration", 500)
     changeTransition("media", "type", "fade")
+    changeTransition("media", "easing", "linear")
   }}
   center
 >

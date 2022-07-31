@@ -49,7 +49,7 @@
     /* justify-content: center; */
   }
   .screens {
-    zoom: 0.1;
+    zoom: 0.08;
     font-size: 20em;
     overflow: visible;
     position: relative;

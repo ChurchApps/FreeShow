@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { mediaOptions } from "../../stores"
   import { getContrast } from "../helpers/color"
   import Icon from "../helpers/Icon.svelte"
 
@@ -7,9 +6,10 @@
   export let icon: null | string = null
   export let color: null | string = null
   export let white: boolean = false
+  export let mode: "grid" | "list" | "lyrics" = "grid"
 </script>
 
-<div class="label" class:list={$mediaOptions.mode !== "grid"} style={color ? "color: " + getContrast(color) + ";background-color:" + color : ""}>
+<div class="label" class:list={mode !== "grid"} style={color ? "color: " + getContrast(color) + ";background-color:" + color : ""}>
   {#if icon}
     <Icon id={icon} class="icon" size={1.2} {white} />
   {/if}

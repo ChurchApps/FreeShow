@@ -107,12 +107,14 @@
     "audio": "Fjern lyd",
     "nextTimer": "Fjern Tid til neste lysbilde",
     "to_start": "Fjern Gå til start",
-    "timer": "Fjern nedtelling"
+    "timer": "Fjern nedtelling",
+    "transition": "Fjern overgang"
   },
   "media": {
     "_loop": "Gjenta",
     "play": "Spill av",
     "play_no_filters": "Spill av uten filtre",
+    "favourite": "Favoritt",
     "pause": "Sett på pause",
     "show": "Vis",
     "flip": "Vend",
@@ -179,7 +181,8 @@
     "not_found": "Ikke funnet",
     "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
     "keep_one_layout": "Du må ha minst ett oppsett",
-    "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen."
+    "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen.",
+    "folder_exists": "Denne mappen eksisterer allerede"
   },
   "meta": {
     "title": "Tittel",
@@ -241,7 +244,7 @@
   "category": {
     "all": "Alt",
     "unlabeled": "Umerket",
-    "favorites": "Favoritter",
+    "favourites": "Favoritter",
     "song": "Sanger",
     "presentation": "Presentasjoner",
     "info": "Info",
@@ -249,6 +252,7 @@
     "events": "Hendelser",
     "pictures": "Bilder",
     "videos": "Videoer",
+    "music": "Musikk",
     "offers": "Kollekt",
     "notice": "Merk",
     "visuals": "Visuelt"
@@ -471,7 +475,9 @@
     "color": "Farge",
     "opacity": "Gjennomsiktighet",
     "size": "Størrelse",
+    "radius": "Radius",
     "glow": "Glød",
+    "hollow": "Hul",
     "hold": "Hold",
     "rainbow": "Regnbue",
     "threed": "3D",
@@ -502,6 +508,7 @@
     "general": "Generelt",
     "theme": "Tema",
     "groups": "Grupper",
+    "output": "Utgang",
     "display": "Skjerm",
     "connection": "Tilkobling",
     "calendar": "Kalender",
@@ -514,7 +521,8 @@
     "alert_updates": "Varsle når en ny oppdatering er tilgjengelig",
     "disable_labels": "Deaktiver etiketter",
     "group_numbers": "Gruppenummer",
-    "full_colors": "Full lysbilde gruppefarger",
+    "full_colors": "Full farge på lysbildegruppe",
+    "format_new_show": "Formater tekst ved oppretting av show",
     "auto_output": "Vis utgangsskjerm ved oppstart",
     "display_metadata": "Vis metadata under presentering",
     "split_lines": "Antall linjer ved oppretting av show",
@@ -609,6 +617,15 @@
     "scale": "Skalere",
     "spin": "Spinn",
     "slide": "Skli"
+  },
+  "easings": {
+    "linear": "Lineær",
+    "elastic": "Elastisk",
+    "bounce": "Sprett",
+    "back": "Hopp",
+    "circ": "Sirkulær",
+    "cubic": "Kubikk",
+    "sine": "Flyt"
   },
   "month": {
     "1": "januar",

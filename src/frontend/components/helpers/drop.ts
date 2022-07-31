@@ -1,5 +1,6 @@
+import { audioExtensions } from "./../../stores"
 import { GetLayout, GetLayoutRef, GetSlideLayout, GetSlideLayoutRef } from "./get"
-import { projects, activeProject, selected, activeShow, showsCache, videoExtensions, imageExtensions, activePage, activeDrawerTab, drawerTabsData } from "../../stores"
+import { projects, activeProject, selected, activeShow, showsCache, videoExtensions, imageExtensions, activePage, activeDrawerTab, drawerTabsData, media } from "../../stores"
 import { getIndexes, mover, addToPos } from "./mover"
 import { HistoryIDs, history, historyAwait } from "./history"
 import { get } from "svelte/store"
@@ -9,7 +10,7 @@ import { _show } from "./shows"
 // TODO: file...
 const areas: any = {
   all_slides: ["template"],
-  slides: ["media", "overlay", "sound", "camera", "show"], // group
+  slides: ["media", "audio", "overlay", "sound", "camera", "show"], // group
   // slide: ["overlay", "sound", "camera"], // "media",
   // projects: ["folder"],
   project: ["show_drawer", "media", "player"],
@@ -20,14 +21,14 @@ const areas: any = {
 const areaChildren: any = {
   projects: ["folder", "project"],
   project: ["show", "media", "show_drawer", "player"],
-  slides: ["slide", "group", "global_group", "camera", "media", "show"],
+  slides: ["slide", "group", "global_group", "camera", "media", "audio", "show"],
   all_slides: [],
-  navigation: ["show", "show_drawer"],
+  navigation: ["show", "show_drawer", "media", "overlay", "template"],
 }
 const files: any = {
-  project: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
-  slides: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
-  slide: ["frs", ...get(imageExtensions), ...get(videoExtensions)],
+  project: ["frs", ...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)],
+  slides: ["frs", ...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)],
+  slide: ["frs", ...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)],
 }
 
 export function validateDrop(id: string, selected: any, children: boolean = false): boolean {
@@ -162,6 +163,27 @@ export function ondrop(e: any, id: string) {
         //   historyID = "camera"
         //   location.layoutSlide = index
         //   newData = sel.data
+      } else if (sel.id === "audio") {
+        let data: any[] = sel.data
+        // historyID = "showAudio"
+
+        console.log(data)
+
+        if (trigger?.includes("end")) index!--
+        location.layoutSlide = index
+        // check files
+        // if (sel.id === "files") {
+        //   data = []
+        //   sel.data.forEach((a: any) => {
+        //     const [extension] = a.name.match(/\.[0-9a-z]+$/i) || [""]
+        //     if (files[id].includes(extension.substring(1)))
+        //       data.push({ path: a.path, name: a.name, type: get(imageExtensions).includes(extension.substring(1)) ? "image" : "video" })
+        //   })
+        // } else
+        sel.data.forEach((audio) => {
+          history({ id: "showAudio", newData: { ...audio, type: "audio" }, location })
+        })
+        // newData = data[0]
       } else if (sel.id === "slide" || sel.id === "group") {
         historyID = "slide"
         let ref: any[] = GetLayoutRef()
@@ -320,6 +342,7 @@ export function ondrop(e: any, id: string) {
       newData = { id: uid(), slide: { name, color, items: slide.items, category } }
       break
     case "navigation":
+      console.log(sel, data)
       if (data !== "all" && get(activeDrawerTab) && (sel.id === "show" || sel.id === "show_drawer")) {
         newData = { key: "category", values: [data === "unlabeled" ? null : data] }
         location = { page: sel.id === "show" ? "show" : "drawer", shows: sel.data }
@@ -327,6 +350,23 @@ export function ondrop(e: any, id: string) {
           sel.data.map((a: any) => a.id),
           { id: "updateShow", newData, location }
         )
+      } else if (data === "favourites" && sel.id === "media") {
+        sel.data.forEach((card) => {
+          let path = card.path || card.id
+          media.update((a) => {
+            if (!a[path]) a[path] = { filter: "" }
+            a[path].favourite = true
+            return a
+          })
+        })
+      } else if (data !== "all" && (sel.id === "overlay" || sel.id === "template")) {
+        sel.data.forEach((id) => {
+          history({
+            id: sel.id === "overlay" ? "updateOverlay" : "updateTemplate",
+            newData: { key: "category", data: data === "unlabeled" ? null : data },
+            location: { page: "drawer", id },
+          })
+        })
       }
       break
     case "templates":

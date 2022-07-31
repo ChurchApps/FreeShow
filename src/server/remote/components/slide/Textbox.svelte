@@ -9,7 +9,7 @@
     <div class="align" style={item.align}>
       <div class="lines">
         {#each item.lines as line}
-          <div class="break" style={line.align} class:height={!line.text[0].value.length}>
+          <div class="break" style={line.align} class:height={!line.text[0]?.value.length}>
             {#each line.text as text}
               <span style={text.style}>{@html text.value}</span>
             {/each}

@@ -112,6 +112,7 @@
     decimals={1}
     min={0.5}
     max={2}
+    outline
     on:change={(e) => updateTheme(e.detail + "em", "size", "font")}
   />
 </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { uid } from "uid"
   import { OPEN_FOLDER } from "../../../types/Channels"
-  import { exportPath, mediaFolders, showsPath } from "../../stores"
+  import { activePopup, alertMessage, audioFolders, exportPath, mediaFolders, showsPath } from "../../stores"
   import { history } from "../helpers/history"
   import Button from "./Button.svelte"
 
@@ -13,17 +13,20 @@
   }
 
   window.api.receive(OPEN_FOLDER, (msg: { id: string; path: any }) => {
-    if (id === "media") {
+    if (id === "media" || id === "audio") {
       // check if folder already exists
       let path: string = msg.path
-      let exists = Object.values($mediaFolders).find((a) => a.path === path)
-      // TODO: alert exists
-      if (exists) return
-      let id = uid()
+      let exists = Object.values(id === "media" ? $mediaFolders : $audioFolders).find((a) => a.path === path)
+      if (exists) {
+        alertMessage.set("error.folder_exists")
+        activePopup.set("alert")
+        return
+      }
+      let folderId = uid()
       history({
-        id: "newMediaFolder",
-        oldData: { id: id, data: null },
-        newData: { id: id, data: { name: path.substring(path.lastIndexOf("\\") + 1), icon: "folder", path: path } },
+        id: id === "media" ? "newMediaFolder" : "newAudioFolder",
+        oldData: { id: folderId, data: null },
+        newData: { id: folderId, data: { name: path.substring(path.lastIndexOf("\\") + 1), icon: "folder", path: path } },
         location: { page: "drawer" },
       })
     } else if (id === "shows") {

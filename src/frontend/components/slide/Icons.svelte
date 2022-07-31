@@ -16,10 +16,13 @@
   export let index: number
   export let style: string
 
+  $: console.log(layoutSlide.audio)
+
   $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
   $: notMuted = background?.muted === false
 
   $: nextTimer = (layoutSlide.nextTimer || 0) > 0 ? (layoutSlide.nextTimer > 59 ? joinTime(secondsToTime(layoutSlide.nextTimer)) : layoutSlide.nextTimer + "s") : null
+  $: transition = layoutSlide?.transition || layoutSlide?.mediaTransition
 
   function removeLayout(key: string) {
     history({
@@ -76,6 +79,23 @@
       </div>
     </div>
   {/if}
+  {#if transition}
+    <div>
+      <div class="button">
+        <Button
+          style="padding: 5px;"
+          redHover
+          title={$dictionary.remove?.transition}
+          on:click={() => {
+            removeLayout("transition")
+            removeLayout("mediaTransition")
+          }}
+        >
+          <Icon id="transition" white />
+        </Button>
+      </div>
+    </div>
+  {/if}
   {#if background}
     <div>
       <div class="button">
@@ -118,7 +138,15 @@
           <Icon id="audio" white />
         </Button>
       </div>
-      <span><p>03:32</p></span>
+      <span>
+        <!-- TODO: get duration -->
+        <!-- {#if layoutSlide.audio.length === 1}
+        <p>00:00</p>
+        {:else} -->
+        {#if layoutSlide.audio.length > 1}
+          <p>{layoutSlide.audio.length}</p>
+        {/if}
+      </span>
     </div>
   {/if}
 </div>

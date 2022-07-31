@@ -1,7 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
 
-  import { activeShow, dictionary, outBackground, outLocked, showsCache, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, outBackground, outLocked, playingAudio, showsCache, videoExtensions } from "../../../stores"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import Icon from "../../helpers/Icon.svelte"
   import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
@@ -13,11 +13,19 @@
 
   $: show = $showsCache[$activeShow!.id]
   let layoutBackgrounds: any[] = []
+  let layoutAudio: any[] = []
   $: {
     if (show) {
       layoutBackgrounds = []
+      layoutAudio = []
       Object.values(show.layouts).forEach((a: any) => {
         layoutBackgrounds.push(...a.slides.map((a: any) => a.background).filter((a: any) => a !== undefined))
+        layoutAudio.push(
+          ...a.slides
+            .map((a: any) => a.audio)
+            .filter((a: any) => a !== undefined)
+            .flat()
+        )
       })
     }
   }
@@ -25,23 +33,36 @@
   let backgrounds: any = {}
   let bgs: any = []
 
-  $: {
-    if (layoutBackgrounds.length) {
-      backgrounds = []
-      bgs = []
-      layoutBackgrounds.forEach((a: any) => {
-        let id = show.media[a].path || show.media[a].id!
+  $: if (layoutBackgrounds.length) {
+    backgrounds = {}
+    bgs = []
+    layoutBackgrounds.forEach((a: any) => {
+      let id = show.media[a].path || show.media[a].id!
 
-        let type = "image"
-        const extension = id.slice(id.lastIndexOf(".") + 1, id.length) || ""
-        if ($videoExtensions.includes(extension)) type = "video"
+      let type = "image"
+      const extension = id.slice(id.lastIndexOf(".") + 1, id.length) || ""
+      if ($videoExtensions.includes(extension)) type = "video"
 
-        if (backgrounds[id]) backgrounds[id].count++
-        else backgrounds[id] = { id: a, ...show.media[a], type, count: 1 }
-      })
-      Object.values(backgrounds).forEach((a) => bgs.push(a))
-    } else bgs = []
-  }
+      if (backgrounds[id]) backgrounds[id].count++
+      else backgrounds[id] = { id: a, ...show.media[a], type, count: 1 }
+    })
+    Object.values(backgrounds).forEach((a) => bgs.push(a))
+  } else bgs = []
+
+  let audio: any = {}
+  $: if (layoutAudio.length) {
+    audio = {}
+    // TODO: count...
+    layoutAudio.forEach((a: any) => {
+      let id = show.media[a].path!
+      let type = "audio"
+
+      if (audio[id]) audio[id].count++
+      else audio[id] = { id: a, ...show.media[a], type, count: 1 }
+    })
+
+    audio = Object.values(audio)
+  } else audio = {}
 
   function setBG(id: string, key: string, value: boolean) {
     showsCache.update((a: any) => {
@@ -58,14 +79,14 @@
 <!-- TODO: transition type & duration -->
 
 <div class="main">
-  {#if bgs.length}
+  {#if bgs.length || audio.length}
     {#each bgs as background}
       {@const filter = getMediaFilter(background.path)}
       {@const flipped = getMediaFlipped(background.path)}
       <SelectElem id="media" data={{ ...background }} draggable>
         <div class="item context #show_media" class:active={$outBackground?.path === background.path}>
           <HoverButton
-            style="flex: 2;height: 50px;"
+            style="flex: 2;height: 50px;max-width: 100px;"
             icon="play"
             size={3}
             on:click={() => {
@@ -97,6 +118,19 @@
             </Button>
           {/if}
         </div>
+      </SelectElem>
+    {/each}
+    {#each audio as file}
+      <SelectElem id="audio" data={{ path: file.path, name: file.name }} draggable>
+        <!-- TODO: on:click={() => playAudio(file)} -->
+        <Button outline={$playingAudio[file.path]} style="width: 100%;" title={file.path} bold={false}>
+          <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
+          <p>{file.name.slice(0, file.name.lastIndexOf("."))}</p>
+
+          {#if file.count > 1}
+            <span style="color: var(--secondary);">{file.count}</span>
+          {/if}
+        </Button>
       </SelectElem>
     {/each}
   {:else}

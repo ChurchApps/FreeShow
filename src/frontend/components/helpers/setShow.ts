@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
-import { notFound, shows, showsCache, showsPath } from "../../stores"
+import { notFound, shows, showsCache, showsPath, textCache } from "../../stores"
 
 export function setShow(id: string, value: "delete" | Show): Show {
   let previousValue: Show
@@ -9,7 +9,10 @@ export function setShow(id: string, value: "delete" | Show): Show {
   showsCache.update((a) => {
     previousValue = a[id]
     if (value === "delete") delete a[id]
-    else a[id] = value
+    else {
+      saveTextCache(id, value)
+      a[id] = value
+    }
     return a
   })
 
@@ -84,5 +87,38 @@ export async function loadShows(s: string[]) {
       }
     })
     if (count >= s.length) resolve("loaded")
+  })
+}
+
+export function saveTextCache(id: string, show: Show) {
+  if (!show) return
+
+  // get text
+  let txt = ""
+  Object.values(show.slides).forEach((slide) => {
+    slide.items.forEach((item) => {
+      item.lines?.forEach((line) => {
+        line.text?.forEach((text) => {
+          txt += text.value
+        })
+        txt += " "
+      })
+      // txt += " - LINE - "
+    })
+  })
+
+  // trim
+  txt = txt.toLowerCase()
+  // txt = txt.toLowerCase().replace(/[^a-z0-9 ]+/g, "")
+
+  // encode
+  // txt = window.btoa(txt)
+  // txt = Buffer.from(txt).toString("base64")
+  // Buffer.from(encode, 'base64').toString('utf-8')
+  // window.atob(encode)
+
+  textCache.update((a) => {
+    a[id] = txt
+    return a
   })
 }
