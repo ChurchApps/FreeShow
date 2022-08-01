@@ -35,6 +35,7 @@
           return { path, favourite: a.favourite === true, name, extension, audio: a.audio === true }
         })
         .filter((a) => a.favourite === true && a.audio !== true)
+        .sort((a: any, b: any) => a.name.localeCompare(b.name))
 
       filterFiles()
       slowLoader = 50
@@ -57,12 +58,8 @@
   // receive files
   window.api.receive(READ_FOLDER, (msg: any) => {
     if (active === "all" || msg.path === path) {
-      files.push(
-        ...msg.files
-          .filter((file: any) => extensions.includes(file.extension) || file.folder)
-          // .sort((a: any, b: any) => a.name < b.name)
-          .sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
-      )
+      files.push(...msg.files.filter((file: any) => extensions.includes(file.extension) || file.folder))
+      files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
       filterFiles()
 
@@ -197,7 +194,7 @@
       {/key}
     {:else}
       <Center>
-        <Icon id="noImage" size={5} />
+        <Icon id="noImage" size={5} white />
       </Center>
     {/if}
   </div>

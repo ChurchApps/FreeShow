@@ -361,7 +361,8 @@
     "toggle_output": "Toggle output screen",
     "change_tab": "Change tab",
     "change_drawer_tab": "Change drawer tab",
-    "actions": "Akcie"
+    "actions": "Akcie",
+    "remove_media": "Remove media"
   },
   "export": {
     "export": "Export",

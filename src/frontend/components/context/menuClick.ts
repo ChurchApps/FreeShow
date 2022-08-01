@@ -248,8 +248,9 @@ const actions: any = {
     return m
   },
   addToProject: (obj: any) => {
-    if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media") || !get(activeProject)) return
+    if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
     if (obj.sel.id === "player") obj.sel.data = obj.sel.data.map((id: string) => ({ id, type: "player" }))
+    else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.map(({ path, name }: any) => ({ id: path, name, type: "audio" }))
     else if (obj.sel.id === "media")
       obj.sel.data = obj.sel.data.map(({ path, name }: any) => ({
         id: path,
@@ -537,6 +538,31 @@ const actions: any = {
   },
 
   actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
+  remove_media: (obj: any) => {
+    let type: "image" | "overlays" | "audio" = obj.menu.icon
+    let slide: number = obj.sel.data[0].index
+    let newData: any = null
+    let location: any = { page: "show", show: get(activeShow), layout: _show("active").get("settings.activeLayout"), layoutSlide: slide }
+
+    let layoutSlide = _show("active").layouts("active").ref()[0][slide].data
+    if (type === "image") {
+      newData = { key: "background", value: null }
+      // TODO: remove from show media if last one?
+    } else if (type === "overlays") {
+      let ol = layoutSlide.overlays
+      // remove clicked
+      ol.splice(ol.indexOf(obj.menu.id), 1)
+      newData = { key: "overlays", value: ol }
+    } else if (type === "audio") {
+      let audio = layoutSlide.audio
+      // remove clicked
+      audio.splice(audio.indexOf(obj.menu.id), 1)
+      newData = { key: "audio", value: audio }
+      // TODO: remove from show media if last one?
+    }
+
+    if (newData) history({ id: "changeLayout", newData, location })
+  },
 
   // media
   play: (obj: any) => {
@@ -552,11 +578,12 @@ const actions: any = {
     if (!get(outLocked)) outBackground.set({ path })
   },
   favourite: (obj: any) => {
-    let favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id].favourite !== true
+    let favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true
     obj.sel.data.forEach((card: any) => {
       let path = card.path || card.id
       media.update((a) => {
         if (!a[path]) a[path] = { filter: "" }
+        if (obj.sel.id === "audio") a[path].audio = true
         a[path].favourite = favourite
         return a
       })

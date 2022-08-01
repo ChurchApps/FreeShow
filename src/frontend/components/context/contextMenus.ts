@@ -60,6 +60,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   edit: { label: "menu.edit", icon: "edit" },
   recolor: { label: "actions.recolor", icon: "color" },
   actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
+  remove_media: { label: "actions.remove_media", icon: "media", items: ["LOAD_remove_media"] },
   // ITEM
   format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
   // formatting
@@ -118,6 +119,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // "addToShow",
   template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
   player_button: ["addToProject", "SEPERATOR", "rename", "delete"],
+  audio_button: ["favourite", "addToProject"],
   // "addToFirstSlide"
   live_card: [],
 
@@ -135,7 +137,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
   // SHOWS
   // , "copy", "paste"
-  slide: ["slideGroups", "actions", "format", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
+  slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
   slideChild: ["slideGroups", "actions", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["edit"],

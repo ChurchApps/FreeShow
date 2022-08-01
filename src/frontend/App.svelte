@@ -66,8 +66,8 @@
   let height: number = 0
   let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution! : $screen.resolution
 
-  const menus: TopViews[] = ["show", "edit", "stage", "draw", "calendar", "settings"]
-  const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "templates", "player", "live"]
+  const menus: TopViews[] = ["show", "edit", "calendar", "draw", "stage", "settings"]
+  const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "player", "live", "templates"]
   const ctrlKeys: any = {
     a: () => {
       if ($activeShow?.id && ($activeShow.type === undefined || $activeShow.type === "show")) {

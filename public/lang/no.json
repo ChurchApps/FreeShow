@@ -361,7 +361,8 @@
     "toggle_output": "Veksle utgangsskjerm",
     "change_tab": "Endre fane",
     "change_drawer_tab": "Endre fane i skuffen",
-    "actions": "Handlinger"
+    "actions": "Handlinger",
+    "remove_media": "Fjern media"
   },
   "export": {
     "export": "Eksporter",

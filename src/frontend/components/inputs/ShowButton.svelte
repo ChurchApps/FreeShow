@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { activeProject, activeShow, categories, notFound, outBackground, outLocked, outSlide, playerVideos, projects, shows, showsCache } from "../../stores"
+  import { activeProject, activeShow, categories, notFound, outBackground, outLocked, outSlide, playerVideos, playingAudio, projects, shows, showsCache } from "../../stores"
+  import { playAudio } from "../helpers/audio"
   import { historyAwait } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { checkName } from "../helpers/show"
@@ -50,7 +51,7 @@
           custom = true
           iconID = $categories[$shows[show.id].category || ""].icon || null
         } else iconID = "noIcon"
-      }
+      } else if (type === "audio") iconID = "music"
       // else if (type === "player") iconID = "live"
       else iconID = type
     }
@@ -68,6 +69,11 @@
   let editActive: boolean = false
   function click(e: any) {
     if (editActive) return
+
+    if (type === "audio") {
+      playAudio({ path: id, name: show.name })
+      return
+    }
 
     // set active show
     let pos = index
@@ -112,6 +118,7 @@
       let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: type }
       if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
       outBackground.set(out)
+      // } else if (type === "audio") playAudio()
     } else if (type === "player") outBackground.set({ id, type: "player" })
   }
 
@@ -127,7 +134,7 @@
     on:click={click}
     on:dblclick={doubleClick}
     {active}
-    outline={id === $outSlide?.id || id === ($outBackground?.path || $outBackground?.id)}
+    outline={id === $outSlide?.id || id === ($outBackground?.path || $outBackground?.id) || $playingAudio[id]}
     class="context {$$props.class}"
     {style}
     bold={false}

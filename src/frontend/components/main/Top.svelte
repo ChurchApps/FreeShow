@@ -19,9 +19,9 @@
   <span>
     <TopButton id="show" />
     <TopButton id="edit" />
-    <TopButton id="stage" />
-    <TopButton id="draw" />
     <TopButton id="calendar" />
+    <TopButton id="draw" />
+    <TopButton id="stage" />
   </span>
   <span style="width: 300px;justify-content: flex-end;">
     <TopButton id="settings" hideLabel />

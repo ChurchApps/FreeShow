@@ -13,14 +13,14 @@ const areas: any = {
   slides: ["media", "audio", "overlay", "sound", "camera", "show"], // group
   // slide: ["overlay", "sound", "camera"], // "media",
   // projects: ["folder"],
-  project: ["show_drawer", "media", "player"],
+  project: ["show_drawer", "media", "audio", "player"],
   overlays: ["slide"],
   templates: ["slide"],
   // media_drawer: ["file"],
 }
 const areaChildren: any = {
   projects: ["folder", "project"],
-  project: ["show", "media", "show_drawer", "player"],
+  project: ["show", "media", "audio", "show_drawer", "player"],
   slides: ["slide", "group", "global_group", "camera", "media", "audio", "show"],
   all_slides: [],
   navigation: ["show", "show_drawer", "media", "overlay", "template"],
@@ -109,6 +109,12 @@ export function ondrop(e: any, id: string) {
             return out
           })
           .filter((a: any) => a)
+      } else if (sel.id === "audio") {
+        tempData = tempData.map((a: any) => {
+          let name = a.name
+          if (name.indexOf(".")) name = name.slice(0, name.lastIndexOf("."))
+          return { id: a.path, name, type: "audio" }
+        })
       } else if (sel.id === "player") {
         // tempData = tempData.map(a => {
         //   let d = get(playerVideos)[a]

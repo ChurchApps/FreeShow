@@ -982,7 +982,7 @@ export function history(obj: History, undo: null | boolean = null) {
         _show(showID)
           .layouts([obj.location!.layout!])
           .slides([[obj.location!.layoutSlide!]])
-          .get()[0][0].audio || []
+          .get()[0]?.[0]?.audio || []
 
       if (undo) {
         _show(showID).media([obj.newData.path]).remove()

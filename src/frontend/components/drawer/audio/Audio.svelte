@@ -1,10 +1,11 @@
 <script lang="ts">
   import { READ_FOLDER } from "../../../../types/Channels"
-  import { audioChannels, audioExtensions, audioFolders, audioSource, dictionary, media, playingAudio } from "../../../stores"
+  import { audioExtensions, audioFolders, dictionary, media, playingAudio } from "../../../stores"
+  import { getAudioDuration, playAudio } from "../../helpers/audio"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
+  import { joinTime, secondsToTime } from "../../helpers/time"
   import Button from "../../inputs/Button.svelte"
-  import { audioAnalyser } from "../../output/audioAnalyser"
   import Center from "../../system/Center.svelte"
   import SelectElem from "../../system/SelectElem.svelte"
   import Folder from "../media/Folder.svelte"
@@ -58,12 +59,8 @@
   // receive files
   window.api.receive(READ_FOLDER, (msg: any) => {
     if (active === "all" || msg.path === path) {
-      files.push(
-        ...msg.files
-          .filter((file: any) => extensions.includes(file.extension) || (active !== "all" && file.folder))
-          // .sort((a: any, b: any) => a.name < b.name)
-          .sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
-      )
+      files.push(...msg.files.filter((file: any) => extensions.includes(file.extension) || (active !== "all" && file.folder)))
+      files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
       console.log(files)
       files = files
@@ -106,60 +103,60 @@
     path = folder.length > rootPath.length ? folder : rootPath
   }
 
-  function playAudio(file: any) {
-    if ($playingAudio[file.path]) {
-      playingAudio.update((a) => {
-        let paused = a[file.path].paused
-        a[file.path].paused = !paused
-        if (paused) a[file.path].audio.play()
-        else a[file.path].audio.pause()
-        return a
-      })
-      return
-    }
+  // function playAudio(file: any) {
+  //   if ($playingAudio[file.path]) {
+  //     playingAudio.update((a) => {
+  //       let paused = a[file.path].paused
+  //       a[file.path].paused = !paused
+  //       if (paused) a[file.path].audio.play()
+  //       else a[file.path].audio.pause()
+  //       return a
+  //     })
+  //     return
+  //   }
 
-    let audio = new Audio(file.path)
-    playingAudio.update((a) => {
-      a[file.path] = {
-        name: file.name.slice(0, file.name.lastIndexOf(".")),
-        paused: false,
-        audio,
-      }
-      return a
-    })
+  //   let audio = new Audio(file.path)
+  //   playingAudio.update((a) => {
+  //     a[file.path] = {
+  //       name: file.name.slice(0, file.name.lastIndexOf(".")),
+  //       paused: false,
+  //       audio,
+  //     }
+  //     return a
+  //   })
 
-    audioSource.set(audio)
-    analyse()
-    audio.play()
-  }
+  //   audioSource.set(audio)
+  //   analyse()
+  //   audio.play()
+  // }
 
   // ANALYSER
-  let analyser: any = null
-  let interval: any = null
-  $: if (analyser) startInterval()
+  // let analyser: any = null
+  // let interval: any = null
+  // $: if (analyser) startInterval()
 
-  function startInterval() {
-    interval = setInterval(() => {
-      audioChannels.set(audioAnalyser(analyser))
-    }, 100)
-  }
+  // function startInterval() {
+  //   interval = setInterval(() => {
+  //     audioChannels.set(audioAnalyser(analyser))
+  //   }, 100)
+  // }
 
-  async function analyse() {
-    console.log(0)
-    // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
-    let ac = new AudioContext()
-    let source = ac.createMediaElementSource($audioSource)
+  // async function analyse() {
+  //   console.log(0)
+  //   // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
+  //   let ac = new AudioContext()
+  //   let source = ac.createMediaElementSource($audioSource)
 
-    analyser = ac.createAnalyser() //we create an analyser
-    analyser.smoothingTimeConstant = 0.9
-    analyser.fftSize = 512 //the total samples are half the fft size.
+  //   analyser = ac.createAnalyser() //we create an analyser
+  //   analyser.smoothingTimeConstant = 0.9
+  //   analyser.fftSize = 512 //the total samples are half the fft size.
 
-    source.connect(analyser)
-    analyser.connect(ac.destination)
+  //   source.connect(analyser)
+  //   analyser.connect(ac.destination)
 
-    if (interval) clearInterval(interval)
-    startInterval()
-  }
+  //   if (interval) clearInterval(interval)
+  //   startInterval()
+  // }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -174,9 +171,27 @@
               <Folder bind:rootPath={path} name={file.name} path={file.path} mode="list" />
             {:else}
               <SelectElem id="audio" data={{ path: file.path, name: file.name }} draggable>
-                <Button outline={$playingAudio[file.path]} style="width: 100%;" title={file.path} bold={false} on:click={() => playAudio(file)}>
-                  <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
-                  <p>{file.name.slice(0, file.name.lastIndexOf("."))}</p>
+                <Button class="context #audio_button" outline={$playingAudio[file.path]} style="width: 100%;" title={file.path} bold={false} on:click={() => playAudio(file)}>
+                  <span>
+                    <Icon
+                      id={$playingAudio[file.path]?.paused === true
+                        ? "play"
+                        : $playingAudio[file.path]?.paused === false
+                        ? "pause"
+                        : $media[file.path]?.favourite === true && active !== "favourites"
+                        ? "star"
+                        : "music"}
+                      right
+                    />
+                    <p>{file.name.slice(0, file.name.lastIndexOf("."))}</p>
+                  </span>
+                  <span style="opacity: 0.8;">
+                    {#await getAudioDuration(file.path)}
+                      <p>00:00</p>
+                    {:then duration}
+                      <p>{joinTime(secondsToTime(duration))}</p>
+                    {/await}
+                  </span>
                 </Button>
               </SelectElem>
             {/if}
@@ -185,7 +200,7 @@
       {/key}
     {:else}
       <Center>
-        <Icon id="noAudio" size={5} />
+        <Icon id="noAudio" size={5} white />
       </Center>
     {/if}
   </div>
@@ -227,7 +242,13 @@
   }
 
   .grid :global(button) {
-    font-size: 1em;
+    /* font-size: 1em; */
     padding: 8px 15px;
+
+    justify-content: space-between;
+  }
+  .grid span {
+    display: flex;
+    gap: 5px;
   }
 </style>

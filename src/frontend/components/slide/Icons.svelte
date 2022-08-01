@@ -2,6 +2,7 @@
   import { OUTPUT } from "../../../types/Channels"
   import { activeShow, activeTimers, dictionary, showsCache } from "../../stores"
   import { send } from "../../utils/request"
+  import { getAudioDuration } from "../helpers/audio"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { _show } from "../helpers/shows"
@@ -139,11 +140,13 @@
         </Button>
       </div>
       <span>
-        <!-- TODO: get duration -->
-        <!-- {#if layoutSlide.audio.length === 1}
-        <p>00:00</p>
-        {:else} -->
-        {#if layoutSlide.audio.length > 1}
+        {#if layoutSlide.audio.length === 1}
+          {#await getAudioDuration(_show("active").get().media[layoutSlide.audio[0]].path)}
+            <p>00:00</p>
+          {:then duration}
+            <p>{joinTime(secondsToTime(duration))}</p>
+          {/await}
+        {:else}
           <p>{layoutSlide.audio.length}</p>
         {/if}
       </span>

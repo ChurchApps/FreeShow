@@ -3,8 +3,10 @@
 
   import { activeShow, dictionary, outBackground, outLocked, playingAudio, showsCache, videoExtensions } from "../../../stores"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
+  import { playAudio } from "../../helpers/audio"
   import Icon from "../../helpers/Icon.svelte"
   import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
+  import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import HoverButton from "../../inputs/HoverButton.svelte"
@@ -18,11 +20,12 @@
     if (show) {
       layoutBackgrounds = []
       layoutAudio = []
-      Object.values(show.layouts).forEach((a: any) => {
-        layoutBackgrounds.push(...a.slides.map((a: any) => a.background).filter((a: any) => a !== undefined))
+      let refs = _show("active").layouts().ref()
+      refs.forEach((slides: any) => {
+        layoutBackgrounds.push(...slides.map((a: any) => a.data.background).filter((a: any) => a !== undefined))
         layoutAudio.push(
-          ...a.slides
-            .map((a: any) => a.audio)
+          ...slides
+            .map((a: any) => a.data.audio)
             .filter((a: any) => a !== undefined)
             .flat()
         )
@@ -49,7 +52,7 @@
     Object.values(backgrounds).forEach((a) => bgs.push(a))
   } else bgs = []
 
-  let audio: any = {}
+  let audio: any = []
   $: if (layoutAudio.length) {
     audio = {}
     // TODO: count...
@@ -62,7 +65,8 @@
     })
 
     audio = Object.values(audio)
-  } else audio = {}
+    console.log(audio)
+  } else audio = []
 
   function setBG(id: string, key: string, value: boolean) {
     showsCache.update((a: any) => {
@@ -103,7 +107,7 @@
             {/key}
             <!-- </div> -->
           </HoverButton>
-          <p style="flex: 3;" title={background.path}>{background.name}</p>
+          <p on:click={() => activeShow.set({ id: background.path, name: background.name, type: background.type })} title={background.path}>{background.name}</p>
           {#if background.count > 1}
             <span style="color: var(--secondary);">{background.count}</span>
           {/if}
@@ -120,19 +124,20 @@
         </div>
       </SelectElem>
     {/each}
-    {#each audio as file}
-      <SelectElem id="audio" data={{ path: file.path, name: file.name }} draggable>
-        <!-- TODO: on:click={() => playAudio(file)} -->
-        <Button outline={$playingAudio[file.path]} style="width: 100%;" title={file.path} bold={false}>
-          <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
-          <p>{file.name.slice(0, file.name.lastIndexOf("."))}</p>
+    {#if audio.length}
+      {#each audio as file}
+        <SelectElem id="audio" data={{ path: file.path, name: file.name }} draggable>
+          <Button on:click={() => playAudio(file)} outline={$playingAudio[file.path]} style="width: 100%;" title={file.path} bold={false}>
+            <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
+            <p>{file.name.slice(0, file.name.lastIndexOf("."))}</p>
 
-          {#if file.count > 1}
-            <span style="color: var(--secondary);">{file.count}</span>
-          {/if}
-        </Button>
-      </SelectElem>
-    {/each}
+            {#if file.count > 1}
+              <span style="color: var(--secondary);">{file.count}</span>
+            {/if}
+          </Button>
+        </SelectElem>
+      {/each}
+    {/if}
   {:else}
     <Center faded>
       <T id="empty.media" />
@@ -158,11 +163,17 @@
     /* justify-content: center; */
     align-items: center;
   }
-  .item:hover {
+
+  .item p {
+    padding: 10px;
+    flex: 3;
+    cursor: pointer;
+  }
+  .item p:hover {
     background-color: var(--hover);
   }
-  .item:active,
-  .item:focus {
+  .item p:active,
+  .item p:focus {
     background-color: var(--focus);
   }
 

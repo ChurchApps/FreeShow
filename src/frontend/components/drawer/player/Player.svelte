@@ -48,7 +48,7 @@
   $: videos = Object.entries($playerVideos)
     .map(([id, video]: any) => ({ rid: id, ...video }))
     .filter((a) => a.type === active)
-    .sort((a, b) => (a.name < b.name ? -1 : 1))
+    .sort((a: any, b: any) => a.name.localeCompare(b.name))
 
   // search
   $: if (videos || searchValue !== undefined) filterSearch()

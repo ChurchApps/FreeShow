@@ -11,10 +11,11 @@ import {
   outOverlays,
   outSlide,
   outTransition,
-  playingAudio,
   projects,
   showsCache,
+  videoExtensions,
 } from "./../../stores"
+import { clearAudio, playAudio } from "./audio"
 import { _show } from "./shows"
 
 const keys: any = {
@@ -167,7 +168,16 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     if (bg) {
       let filter = getMediaFilter(bg.path)
       let flipped = getMediaFlipped(bg.path)
-      outBackground.set({ name: bg.name, type: bg.type || "media", path: bg.path, id: bg.id, muted: bg.muted !== false, loop: bg.loop !== false, filter, flipped })
+      outBackground.set({
+        name: bg.name,
+        type: bg.type || get(videoExtensions).includes(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)) ? "video" : "image",
+        path: bg.path,
+        id: bg.id,
+        muted: bg.muted !== false,
+        loop: bg.loop !== false,
+        filter,
+        flipped,
+      })
     }
   }
 
@@ -177,10 +187,10 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   }
 
   // audio
-  // if (data.audio) {
-  //   let a = _show(id).get("audio")[data.audio!]
-  //   outBackground.set({ path: a.path, volume: a.volume })
-  // }
+  if (data.audio) {
+    let a = _show(id).get("media")[data.audio!]
+    playAudio(a)
+  }
 
   // nextTimer
   if ((data.nextTimer || 0) > 0) {
@@ -191,6 +201,6 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   if (data.actions) {
     if (data.actions.clearBackground) outBackground.set(null)
     if (data.actions.clearOverlays) outOverlays.set([])
-    if (data.actions.clearAudio) playingAudio.set({})
+    if (data.actions.clearAudio) clearAudio()
   }
 }

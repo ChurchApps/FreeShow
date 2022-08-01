@@ -91,10 +91,10 @@
   <span style="display: flex;align-items: center;gap: 10px;">
     {#if menu?.icon}<Icon id={menu.icon} />{/if}
     {#if menu?.translate === false}
-      {menu?.label}
+      <p>{menu?.label}</p>
     {:else}
       {#key menu}
-        <T id={menu?.label || id} />
+        <p><T id={menu?.label || id} /></p>
       {/key}
     {/if}
   </span>
@@ -121,6 +121,10 @@
   div.disabled {
     opacity: 0.5;
     cursor: default;
+  }
+
+  p {
+    max-width: 300px;
   }
 
   .enabled {

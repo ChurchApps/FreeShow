@@ -25,6 +25,12 @@
     console.log($outBackground)
     activeShow.set({ id: ($outBackground.path || $outBackground.id)!, type: ($outBackground.type || "image") as any })
   }
+
+  // auto clear video on finish
+  $: if (videoTime && videoData.duration && !videoData.paused && videoTime >= videoData.duration && !videoData.loop) {
+    outBackground.set(null)
+    videoTime = 0
+  }
 </script>
 
 {#if $outBackground?.type === "player"}

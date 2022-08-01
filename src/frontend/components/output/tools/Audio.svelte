@@ -14,7 +14,7 @@
 <span class="name" style="justify-content: space-between;">
   {#each Object.entries($playingAudio) as [id, audio]}
     <Button on:click={() => clearAudio(id)} center red>
-      {audio.name || "—"}
+      <p>{audio.name || "—"}</p>
     </Button>
   {/each}
 </span>

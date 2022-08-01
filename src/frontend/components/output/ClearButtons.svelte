@@ -1,6 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
   import { dictionary, outBackground, outLocked, outOverlays, outSlide, outTransition, playingAudio } from "../../stores"
+  import { clearAudio } from "../helpers/audio"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
@@ -53,13 +54,6 @@
     outTransition.set(null)
     allCleared = true
     autoChange = true
-  }
-
-  function clearAudio() {
-    Object.values($playingAudio).forEach((a: any) => {
-      a.audio.pause()
-    })
-    playingAudio.set({})
   }
 </script>
 
