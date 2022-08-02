@@ -57,7 +57,7 @@
   <p>RemoteShow <T id="settings.password" /></p>
   <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
 </div>
-<div>
+<div class="input">
   <p>RemoteShow <T id="settings.port" /></p>
   <NumberInput
     value={$ports.remote}
@@ -71,9 +71,10 @@
     min={1000}
     max={10000}
     buttons={false}
+    outline
   />
 </div>
-<div>
+<div class="input">
   <p>StageShow <T id="settings.port" /></p>
   <NumberInput
     value={$ports.stage}
@@ -87,11 +88,12 @@
     min={1000}
     max={10000}
     buttons={false}
+    outline
   />
 </div>
 <div>
   <p><T id="settings.max_connections" /></p>
-  <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
+  <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} outline />
 </div>
 
 <hr />
@@ -114,6 +116,10 @@
     align-items: center;
     justify-content: space-between;
     margin: 5px 0;
+  }
+
+  .input :global(input) {
+    width: 80px;
   }
 
   hr {

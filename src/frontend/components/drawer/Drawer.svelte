@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Bible } from "../../../types/Scripture"
-  import { activeDrawerTab, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, projects } from "../../stores"
+  import { activeDrawerTab, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, previousShow, projects } from "../../stores"
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
   import Navigation from "../drawer/Navigation.svelte"
@@ -115,13 +115,12 @@
     }
   }
 
-  let stored: any = null
   $: {
-    if ($activeDrawerTab === "media" && ($activeShow?.type === undefined || $activeShow?.type === "show")) stored = JSON.stringify($activeShow)
-    else if ($activeDrawerTab === "shows" && stored !== null) {
-      activeShow.set(JSON.parse(stored))
-      stored = null
-    }
+    if ($activeShow?.type === undefined || $activeShow?.type === "show") previousShow.set(JSON.stringify($activeShow))
+    // else if ($activeDrawerTab === "shows" && $previousShow !== null) {
+    //   activeShow.set(JSON.parse($previousShow))
+    //   previousShow.set(null)
+    // }
   }
 
   $: tabs = Object.entries(drawerTabs).map(([id, tab]: any) => ({ id, ...tab }))

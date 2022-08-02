@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { drawerTabsData, groups, selected } from "../../stores"
+import { drawerTabsData, groups, overlays, selected } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { GetLayoutRef } from "../helpers/get"
@@ -28,13 +28,46 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
       })
       break
     case "actions":
-      let currentActions: any = _show("active").layouts("active").ref()[0][get(selected).data[0]?.index].data.actions
+      let currentActions: any = _show("active").layouts("active").ref()[0][get(selected).data[0]?.index]?.data?.actions
       let actions = [
         { id: "clearBackground", label: "clear.background", icon: "background", enabled: currentActions?.clearBackground || false },
         { id: "clearOverlays", label: "clear.overlays", icon: "overlays", enabled: currentActions?.clearOverlays || false },
         { id: "clearAudio", label: "clear.audio", icon: "audio", enabled: currentActions?.clearAudio || false },
       ]
       actions.forEach((action: any) => items.push([id, action]))
+      break
+    case "remove_media":
+      let data: any = _show("active").layouts("active").ref()[0][get(selected).data[0]?.index]?.data
+      if (!data) return []
+      let showMedia: any = _show("active").get().media
+      let media: any[] = []
+
+      // get background
+      let bg = data.background
+      if (bg)
+        media.push({
+          id: bg,
+          label: showMedia[bg].name.indexOf(".") > -1 ? showMedia[bg].name.slice(0, showMedia[bg].name.lastIndexOf(".")) : showMedia[bg].name,
+          translate: false,
+          icon: "image",
+        })
+      // get overlays
+      let ol = data.overlays || []
+      if (ol.length) media.push(...ol.map((id: string) => ({ id, label: get(overlays)[id].name, translate: false, icon: "overlays" })))
+      // get audio
+      let audio = data.audio || []
+      if (audio.length)
+        media.push(
+          ...audio.map((id: string) => ({
+            id,
+            label: showMedia[bg].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name,
+            translate: false,
+            icon: "audio",
+          }))
+        )
+
+      if (media.length) media.forEach((action: any) => items.push([id, action]))
+      else items = [[id, { label: "empty.general" }]]
       break
   }
   return items

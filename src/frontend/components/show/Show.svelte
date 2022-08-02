@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { OutBackground } from "../../../types/Show"
-  import { activeProject, activeShow, dictionary, media, outBackground, outLocked, outSlide, projects } from "../../stores"
+  import { activeProject, activeShow, dictionary, media, outBackground, outLocked, outSlide, playingVideos, projects, volume } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
+  import { analyseAudio, getAnalyser } from "../helpers/audio"
   import Icon from "../helpers/Icon.svelte"
   import Button from "../inputs/Button.svelte"
   import HoverButton from "../inputs/HoverButton.svelte"
@@ -9,6 +10,7 @@
   import VideoSlider from "../output/VideoSlider.svelte"
   import Layouts from "../slide/Layouts.svelte"
   import Player from "../system/Player.svelte"
+  import AudioPreview from "./AudioPreview.svelte"
   import Slides from "./Slides.svelte"
 
   $: show = $activeShow
@@ -38,12 +40,30 @@
     else videoTime = 0
   }
 
-  function onPlay() {
+  let video: any
+  async function onPlay() {
     autoPause = false
     if (hasLoaded) {
       videoTime = 0
       hasLoaded = false
+
+      let analyser = await getAnalyser(video)
+      playingVideos.update((a) => {
+        a.push({ id: show!.id, location: "preview", analyser })
+        return a
+      })
+      analyseAudio()
     }
+  }
+  $: if (videoData) {
+    playingVideos.update((a) => {
+      let existing = a.findIndex((a) => a.id === show!.id && a.location === "preview")
+      if (existing > -1) {
+        a[existing].paused = videoData.muted ? true : videoData.paused
+        if (!a[existing].paused) analyseAudio()
+      }
+      return a
+    })
   }
 
   function keydown(e: any) {
@@ -104,7 +124,7 @@
       <div style="display: flex;flex-direction: column;height: 100%;">
         {#if show.type === "video" || show.type === "player"}
           {#key show.id}
-            <div class="media" style="flex: 1;overflow: hidden;">
+            <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
               <!-- TODO: info about: CTRL click to play at current pos -->
               <HoverButton icon="play" size={10} on:click={onVideoClick} title={$dictionary.media?.play}>
                 {#if show.type === "player"}
@@ -115,10 +135,12 @@
                     src={show.id}
                     on:loadedmetadata={onLoad}
                     on:playing={onPlay}
+                    bind:this={video}
                     bind:currentTime={videoTime}
                     bind:paused={videoData.paused}
                     bind:duration={videoData.duration}
                     bind:muted={videoData.muted}
+                    bind:volume={$volume}
                   >
                     <track kind="captions" />
                   </video>
@@ -141,7 +163,7 @@
             </div>
           {/key}
         {:else}
-          <div class="media" style="flex: 1;overflow: hidden;">
+          <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
             <HoverButton
               icon="play"
               size={10}
@@ -156,7 +178,7 @@
         {/if}
       </div>
     {:else if show.type === "audio"}
-      <!--  -->
+      <AudioPreview />
     {:else}
       <Slides />
       <Layouts />

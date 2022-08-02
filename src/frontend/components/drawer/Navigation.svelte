@@ -44,8 +44,7 @@
     } else if (id === "media") {
       buttons = [
         { id: "all", name: "category.all", default: true, icon: "all" },
-        // TODO: media favorites
-        // { id: "favorites", name: "category.favorites", default: true, icon: "star" },
+        { id: "favourites", name: "category.favourites", default: true, icon: "star" },
         { id: "SEPERATOR", name: "" },
         ...(sortObject(keysToID($mediaFolders), "name") as Button[]),
       ]
@@ -64,7 +63,12 @@
         ...(sortObject(keysToID($templateCategories), "name") as Button[]),
       ]
     } else if (id === "audio") {
-      buttons = [{ id: "all", name: "category.all", default: true, icon: "all" }, { id: "SEPERATOR", name: "" }, ...(sortObject(keysToID($audioFolders), "name") as Button[])]
+      buttons = [
+        { id: "all", name: "category.all", default: true, icon: "all" },
+        { id: "favourites", name: "category.favourites", default: true, icon: "star" },
+        { id: "SEPERATOR", name: "" },
+        ...(sortObject(keysToID($audioFolders), "name") as Button[]),
+      ]
     } else if (id === "scripture") {
       buttons = getBibleVersions()
     } else if (id === "player") {
@@ -190,8 +194,8 @@
         </span>
       </Button>
     </div>
-  {:else if id === "media"}
-    <FolderPicker id="media" title={$dictionary.new?.folder}>
+  {:else if id === "media" || id === "audio"}
+    <FolderPicker {id} title={$dictionary.new?.folder}>
       <Icon id="folder" right />
       <span style="color: var(--secondary);">
         <T id="new.folder" />

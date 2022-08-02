@@ -40,6 +40,7 @@ export type SelectIds =
   | "category_web"
   | "stage"
   | "media"
+  | "audio"
   | "overlay"
   | "template"
   | "camera"
@@ -67,6 +68,8 @@ export interface Media {
     fill?: "fill" | "fit"
     filter: any
     flipped?: boolean
+    favourite?: boolean
+    audio?: boolean
   }
 }
 

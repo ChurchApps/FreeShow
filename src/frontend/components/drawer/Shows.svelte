@@ -1,10 +1,9 @@
 <script lang="ts">
   import type { Show } from "../../../types/Show"
-  import { activePopup, activeProject, activeShow, dictionary, shows, showsCache } from "../../stores"
+  import { activePopup, activeProject, activeShow, dictionary, shows, textCache } from "../../stores"
   import { keysToID, removeValues, sortObject, sortObjectNumbers } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
-  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import { dateToString } from "../helpers/time"
   import Button from "../inputs/Button.svelte"
@@ -21,8 +20,13 @@
   $: sva = searchValue
     .toLowerCase()
     // .replace(/[^\w\s,]/g, "")
-    .replace(/[.\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    .split(",")
+    .replace(/[.\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
+    .split(" ")
+  // $: sva = searchValue
+  //   .toLowerCase()
+  //   .replace(/[.\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
+  //   .split(",")
+
   // .replace(/[^\w\s]/g, "")
   const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
   const searchIncludes = (s: string, sv: string): boolean => filter(s).includes(sv)
@@ -40,21 +44,31 @@
         else if (searchIncludes(obj.name, sv)) match[i] += 25
         // if (obj.category !== null && searchIncludes($categories[obj.category].name, sv)) match[i] += 10
 
-        if ($showsCache[obj.id]) {
-          let lines: any[] = _show(obj.id).slides().items().lines().get()[0]
-          lines?.forEach((line) => {
-            let text = line.text?.map((t: any) => t.value)[0]
-            if (text?.length) {
-              if (searchEquals(text, sv)) match[i] += 20
-              else if (searchIncludes(text, sv)) {
-                // TODO: more specific match
-                // console.log(sv, filter(text))
-                // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
-                match[i] += 10
-              }
+        let cache = $textCache[obj.id]
+        if (cache) {
+          cache.split(".").forEach((text: string) => {
+            if (searchEquals(text, sv)) match[i] += 20
+            else if (searchIncludes(text, sv)) {
+              match[i] += 10
             }
           })
         }
+
+        // if ($showsCache[obj.id]) {
+        //   let lines: any[] = _show(obj.id).slides().items().lines().get()[0]
+        //   lines?.forEach((line) => {
+        //     let text = line.text?.map((t: any) => t.value)[0]
+        //     if (text?.length) {
+        //       if (searchEquals(text, sv)) match[i] += 20
+        //       else if (searchIncludes(text, sv)) {
+        //         // TODO: more specific match
+        //         // console.log(sv, filter(text))
+        //         // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
+        //         match[i] += 10
+        //       }
+        //     }
+        //   })
+        // }
       }
     })
 
@@ -157,10 +171,10 @@
       {/each}
       <!-- TODO: not updating values on activeSubTab change -->
       {#if searchValue.length > 1 && totalMatch === 0}
-        <Center size={1.5} faded><T id="empty.search" /></Center>
+        <Center size={1.2} faded><T id="empty.search" /></Center>
       {/if}
     {:else}
-      <Center size={1.5} faded><T id="empty.shows" /></Center>
+      <Center size={1.2} faded><T id="empty.shows" /></Center>
     {/if}
   </div>
 </Autoscroll>

@@ -7,6 +7,7 @@
 
   const dispatch = createEventDispatcher()
   export let options: Option[]
+  export let disabled: boolean = false
   let active: boolean = false
   export let value: any
   if (!value) value = options[0]?.name || "—"
@@ -16,6 +17,7 @@
   let self: HTMLDivElement
 
   function wheel(e: any) {
+    if (disabled) return
     e.preventDefault()
     let index = options.findIndex((a) => a.name === (value.name || value))
     if (e.deltaY > 0) index = Math.min(options.length - 1, index + 1)
@@ -32,8 +34,8 @@
   }}
 />
 
-<div bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
-  <button on:click={() => (active = !active)} on:wheel={wheel}>
+<div class:disabled bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
+  <button on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
     {translate(updater[0], { parts: true }) || value}
     <!-- <T id={value} /> -->
   </button>
@@ -43,6 +45,7 @@
         <!-- {#if option.name !== value} -->
         <span
           on:click={() => {
+            if (disabled) return
             dispatch("click", option)
             active = false
           }}
@@ -67,6 +70,10 @@
     background-color: var(--primary-darker);
     color: var(--text);
     /* position: relative; */
+  }
+
+  div.disabled {
+    opacity: 0.5;
   }
 
   .dropdown {
@@ -105,8 +112,8 @@
     text-overflow: ellipsis;
   }
 
-  button:hover,
-  span:hover {
+  button:hover:not(.disabled button),
+  span:hover:not(.disabled span) {
     background-color: var(--hover);
   }
   span.active {

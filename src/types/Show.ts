@@ -106,6 +106,7 @@ export interface SlideData {
 export interface Transition {
   type: TransitionType
   duration: number
+  easing: string
 }
 
 export interface Media {
@@ -166,11 +167,6 @@ export interface OutSlide {
   // private?: boolean
 }
 
-export interface OutAudio {
-  id: ID
-  name: string
-}
-
 export interface OutTransition {
   // action: string
   // slide?: number
@@ -183,4 +179,4 @@ export type ID = string
 export type ItemType = "text" | "shape" | "image" | "video" | "audio" | "icon" | "timer"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
-export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player"
+export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

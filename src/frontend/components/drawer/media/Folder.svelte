@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { mediaOptions } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import Card from "../Card.svelte"
   import Image from "./Image.svelte"
@@ -8,6 +7,7 @@
   export let rootPath: string
   export let name: string
   export let path: string
+  export let mode: "grid" | "list" | "lyrics"
 
   // $: if (slowLoader === index) slowLoader += 5
 
@@ -28,12 +28,7 @@
   // })
 </script>
 
-<Card
-  on:click={() => (rootPath = path)}
-  label="{name}{items ? { items } : ''}"
-  icon={$mediaOptions.mode === "grid" ? "folder" : null}
-  color={$mediaOptions.mode === "grid" ? "var(--secondary);" : ""}
->
+<Card on:click={() => (rootPath = path)} label="{name}{items ? { items } : ''}" icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
   <div class="flex" style="width: 100%;height: 100%;">
     <div class="grid">
       {#key path}

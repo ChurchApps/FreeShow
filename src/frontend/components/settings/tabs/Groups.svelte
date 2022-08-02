@@ -108,5 +108,6 @@
     align-items: center;
     justify-content: space-between;
     margin: 5px 0;
+    gap: 5px;
   }
 </style>

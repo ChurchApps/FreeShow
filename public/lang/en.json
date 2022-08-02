@@ -107,12 +107,17 @@
     "audio": "Remove audio",
     "nextTimer": "Remove Next slide timer",
     "to_start": "Remove Go to start",
-    "timer": "Remove timer"
+    "timer": "Remove timer",
+    "transition": "Remove transition"
   },
   "media": {
     "_loop": "Loop",
     "play": "Play",
+    "play_no_filters": "Play without filters",
+    "favourite": "Favourite",
     "pause": "Pause",
+    "stop": "Stop",
+    "volume": "Volume",
     "show": "Show",
     "flip": "Flip",
     "all": "Folders, images & videos",
@@ -152,7 +157,7 @@
     "groups": "No groups",
     "events": "No events",
     "text": "Type something",
-    "timers": "No global timers or private in the shows in this project"
+    "timers": "No global timers and no timers in the shows in this project"
   },
   "remote": {
     "projects": "Projects",
@@ -178,7 +183,8 @@
     "not_found": "Not found",
     "display": "Could not show output window on current display",
     "keep_one_layout": "You have to have at least one layout",
-    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
+    "folder_exists": "This folder does already exist"
   },
   "meta": {
     "title": "Title",
@@ -240,7 +246,7 @@
   "category": {
     "all": "All",
     "unlabeled": "Unlabeled",
-    "favorites": "Favorites",
+    "favourites": "Favourites",
     "song": "Songs",
     "presentation": "Presentations",
     "info": "Info",
@@ -248,6 +254,7 @@
     "events": "Events",
     "pictures": "Pictures",
     "videos": "Videos",
+    "music": "Music",
     "offers": "Offers",
     "notice": "Notice",
     "visuals": "Visuals"
@@ -323,6 +330,7 @@
     "export": "Export",
     "duplicate": "Duplicate",
     "delete": "Delete",
+    "delete_all": "Delete all",
     "close": "Close",
     "save": "Save",
     "disable": "Disable",
@@ -355,7 +363,8 @@
     "toggle_output": "Toggle output screen",
     "change_tab": "Change tab",
     "change_drawer_tab": "Change drawer tab",
-    "actions": "Actions"
+    "actions": "Actions",
+    "remove_media": "Remove media"
   },
   "export": {
     "export": "Export",
@@ -465,12 +474,17 @@
     "pointer": "Pointer",
     "fill": "Fill",
     "paint": "Paint",
+    "particles": "Particles",
     "color": "Color",
     "opacity": "Opacity",
     "size": "Size",
+    "radius": "Radius",
     "glow": "Glow",
+    "hollow": "Hollow",
     "hold": "Hold",
-    "rainbow": "Rainbow"
+    "rainbow": "Rainbow",
+    "threed": "3D",
+    "dots": "Dots"
   },
   "stage": {
     "slide": "Slide",
@@ -497,6 +511,7 @@
     "general": "General",
     "theme": "Theme",
     "groups": "Groups",
+    "output": "Output",
     "display": "Display",
     "connection": "Connection",
     "calendar": "Calendar",
@@ -510,6 +525,7 @@
     "disable_labels": "Disable labels",
     "group_numbers": "Group numbers",
     "full_colors": "Full slide group colors",
+    "format_new_show": "Format text when creating show",
     "auto_output": "Show output screen on startup",
     "display_metadata": "Display metadata while showing",
     "split_lines": "Numbers of lines when creating a show",
@@ -602,7 +618,17 @@
     "fade": "Fade",
     "blur": "Blur",
     "scale": "Scale",
-    "spin": "Spin"
+    "spin": "Spin",
+    "slide": "Slide"
+  },
+  "easings": {
+    "linear": "Linear",
+    "elastic": "Elastic",
+    "bounce": "Bounce",
+    "back": "Jump",
+    "circ": "Circular",
+    "cubic": "Cubic",
+    "sine": "Flow"
   },
   "month": {
     "1": "January",

@@ -107,12 +107,17 @@
     "audio": "Fjern lyd",
     "nextTimer": "Fjern Tid til neste lysbilde",
     "to_start": "Fjern Gå til start",
-    "timer": "Fjern nedtelling"
+    "timer": "Fjern nedtelling",
+    "transition": "Fjern overgang"
   },
   "media": {
     "_loop": "Gjenta",
     "play": "Spill av",
+    "play_no_filters": "Spill av uten filtre",
+    "favourite": "Favoritt",
     "pause": "Sett på pause",
+    "stop": "Stopp",
+    "volume": "Volum",
     "show": "Vis",
     "flip": "Vend",
     "all": "Mapper, bilder og videoer",
@@ -152,7 +157,7 @@
     "groups": "Ingen grupper",
     "events": "Ingen hendelser",
     "text": "Skriv noe",
-    "timers": "Ingen globale nedtellinger, eller private i noen show i dette prosjektet"
+    "timers": "Ingen globale nedtellinger, og ingen i noen show i dette prosjektet"
   },
   "remote": {
     "projects": "Prosjekter",
@@ -178,7 +183,8 @@
     "not_found": "Ikke funnet",
     "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
     "keep_one_layout": "Du må ha minst ett oppsett",
-    "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen."
+    "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen.",
+    "folder_exists": "Denne mappen eksisterer allerede"
   },
   "meta": {
     "title": "Tittel",
@@ -240,7 +246,7 @@
   "category": {
     "all": "Alt",
     "unlabeled": "Umerket",
-    "favorites": "Favoritter",
+    "favourites": "Favoritter",
     "song": "Sanger",
     "presentation": "Presentasjoner",
     "info": "Info",
@@ -248,6 +254,7 @@
     "events": "Hendelser",
     "pictures": "Bilder",
     "videos": "Videoer",
+    "music": "Musikk",
     "offers": "Kollekt",
     "notice": "Merk",
     "visuals": "Visuelt"
@@ -323,6 +330,7 @@
     "export": "Eksporter",
     "duplicate": "Dupliser",
     "delete": "Slett",
+    "delete_all": "Slett alle",
     "close": "Lukk",
     "save": "Lagre",
     "disable": "Deaktiver",
@@ -355,7 +363,8 @@
     "toggle_output": "Veksle utgangsskjerm",
     "change_tab": "Endre fane",
     "change_drawer_tab": "Endre fane i skuffen",
-    "actions": "Handlinger"
+    "actions": "Handlinger",
+    "remove_media": "Fjern media"
   },
   "export": {
     "export": "Eksporter",
@@ -465,12 +474,17 @@
     "pointer": "Peker",
     "fill": "Fyll",
     "paint": "Maling",
+    "particles": "Partikler",
     "color": "Farge",
     "opacity": "Gjennomsiktighet",
     "size": "Størrelse",
+    "radius": "Radius",
     "glow": "Glød",
+    "hollow": "Hul",
     "hold": "Hold",
-    "rainbow": "Regnbue"
+    "rainbow": "Regnbue",
+    "threed": "3D",
+    "dots": "Prikker"
   },
   "stage": {
     "slide": "Lysbilde",
@@ -497,6 +511,7 @@
     "general": "Generelt",
     "theme": "Tema",
     "groups": "Grupper",
+    "output": "Utgang",
     "display": "Skjerm",
     "connection": "Tilkobling",
     "calendar": "Kalender",
@@ -509,7 +524,8 @@
     "alert_updates": "Varsle når en ny oppdatering er tilgjengelig",
     "disable_labels": "Deaktiver etiketter",
     "group_numbers": "Gruppenummer",
-    "full_colors": "Full lysbilde gruppefarger",
+    "full_colors": "Full farge på lysbildegruppe",
+    "format_new_show": "Formater tekst ved oppretting av show",
     "auto_output": "Vis utgangsskjerm ved oppstart",
     "display_metadata": "Vis metadata under presentering",
     "split_lines": "Antall linjer ved oppretting av show",
@@ -602,7 +618,17 @@
     "fade": "Falme",
     "blur": "Uklart",
     "scale": "Skalere",
-    "spin": "Spinn"
+    "spin": "Spinn",
+    "slide": "Skli"
+  },
+  "easings": {
+    "linear": "Lineær",
+    "elastic": "Elastisk",
+    "bounce": "Sprett",
+    "back": "Hopp",
+    "circ": "Sirkulær",
+    "cubic": "Kubikk",
+    "sine": "Flyt"
   },
   "month": {
     "1": "januar",

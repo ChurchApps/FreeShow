@@ -32,7 +32,9 @@
     <div class="card" class:fill={$activePopup === "import_scripture"} transition:scale={{ duration: 200 }}>
       <div style="position: relative;">
         {#if $activePopup !== "alert"}
-          <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{$activePopup}" /></h2>
+          {#key $activePopup}
+            <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{$activePopup}" /></h2>
+          {/key}
         {/if}
         <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 30px;" on:click={() => activePopup.set(null)}>
           <Icon id="close" size={2} />

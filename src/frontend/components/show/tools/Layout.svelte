@@ -124,7 +124,7 @@
         {#each slides as slide, i}
           <div class="slide" class:disabled={slide.disabled}>
             <span style="margin: 10px 5px;min-width: 20px;text-align: center;opacity: 0.8;">{i + 1}</span>
-            <SelectElem id="slide" data={{ index: i }} draggable trigger="column" style="height: 100%;flex: 3;">
+            <SelectElem id="slide" data={{ index: i }} draggable trigger="column" style="height: 100%;flex: 3;max-width: 50%;">
               <p class="group context #slide" style="border-bottom: {slide.color ? '2px solid ' + slide.color : 'unset'};{$fullColors ? '' : `color: ${slide.color};`}">
                 {show.slides[slide.id].group === null ? "" : show.slides[slide.id].group || "—"}{slide.count ? " " + slide.count : ""}
               </p>
@@ -138,7 +138,7 @@
                 activePopup.set("transition")
               }}
             >
-              <Icon id="transition" white={!slide?.transition} />
+              <Icon id="transition" white={!slide?.transition && !slide?.mediaTransition} />
             </Button>
             <!-- next timer -->
             <!-- empty or 0 === disabled -->
@@ -203,11 +203,17 @@
   }
 
   .group {
+    /* width: 100%; */
+    /* overflow-x: hidden;
+    text-overflow: ellipsis; */
+    /* justify-content: flex-start; */
+
     flex: 3;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0 8px;
     font-size: 0.8em;
     font-weight: bold;
     /* background-color: inherit; */

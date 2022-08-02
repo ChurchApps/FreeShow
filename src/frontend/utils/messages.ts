@@ -1,4 +1,4 @@
-import { alertUpdates, autoOutput, backgroundColor, maxConnections, outputPosition, ports, scriptures, scriptureSettings, splitLines, transitionData } from "./../stores"
+import { alertUpdates, autoOutput, backgroundColor, maxConnections, outputPosition, ports, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -17,6 +17,7 @@ import {
   events,
   folders,
   fullColors,
+  formatNewShow,
   groupNumbers,
   groups,
   imageExtensions,
@@ -97,6 +98,9 @@ export function listen() {
   playerVideos.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "PLAYER_VIDEOS", data })
   })
+  volume.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "VOLUME", data })
+  })
 
   // FROM CLIENT
   window.api.receive(REMOTE, (msg: ClientMessage) => client(REMOTE, msg))
@@ -170,6 +174,7 @@ const saveList: { [key in SaveList]: any } = {
   drawSettings: drawSettings,
   groupNumbers: groupNumbers,
   fullColors: fullColors,
+  formatNewShow: formatNewShow,
   groups: groups,
   imageExtensions: imageExtensions,
   labelsDisabled: labelsDisabled,
@@ -198,4 +203,5 @@ const saveList: { [key in SaveList]: any } = {
   transitionData: transitionData,
   videoExtensions: videoExtensions,
   webFavorites: webFavorites,
+  volume: volume,
 }

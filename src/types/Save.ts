@@ -17,6 +17,7 @@ export type SaveListSettings =
   | "drawSettings"
   | "groupNumbers"
   | "fullColors"
+  | "formatNewShow"
   | "groups"
   | "imageExtensions"
   | "labelsDisabled"
@@ -45,3 +46,4 @@ export type SaveListSettings =
   | "transitionData"
   | "videoExtensions"
   | "webFavorites"
+  | "volume"

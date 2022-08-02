@@ -4,7 +4,7 @@ import type { Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { activeProject, dictionary, groups, splitLines } from "../stores"
+import { activeProject, dictionary, groups, formatNewShow, splitLines } from "../stores"
 
 export function convertTexts(files: any[]) {
   files.forEach((file) => {
@@ -116,7 +116,7 @@ function repeat(labeled: any[]) {
 }
 
 function fixText(text: string): string {
-  text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
+  if (get(formatNewShow)) text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
   // let splittedCommas = text.replaceAll(",", "\n")
   let newText = ""
   text.split("\n").forEach((t: any) => {
@@ -125,7 +125,8 @@ function fixText(text: string): string {
     t.split(",").forEach((a: any, i: number) => {
       console.log(a)
       newLineText += a
-      if (i < t.split(",").length - 1 && newLineText.length < 10 && (a.length < 10 || t.split(",")[i]?.length < 10)) newLineText += ","
+      // TODO: better comma splitting
+      if (i < t.split(",").length - 1 && (!get(formatNewShow) || (newLineText.length < 10 && (a.length < 10 || t.split(",")[i]?.length < 10)))) newLineText += ","
       else newLineText += "\n"
     })
     newText += newLineText
@@ -145,14 +146,15 @@ function fixText(text: string): string {
   if (get(groups)[label]) splitted = splitted.slice(1, splitted.length)
   text = splitted.join("\n")
 
-  text = text
-    .split("\n")
-    .map((a) => {
-      a = a.trim()
-      a = (a[0]?.toUpperCase() || "") + a.slice(1, a.length)
-      return a
-    })
-    .join("\n")
+  if (get(formatNewShow))
+    text = text
+      .split("\n")
+      .map((a) => {
+        a = a.trim()
+        a = (a[0]?.toUpperCase() || "") + a.slice(1, a.length)
+        return a
+      })
+      .join("\n")
   return text
 }
 

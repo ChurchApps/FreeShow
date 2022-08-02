@@ -1,12 +1,13 @@
 <script lang="ts">
+  import { linear } from "svelte/easing"
   import { OUTPUT } from "../../../types/Channels"
   import type { Transition, TransitionType } from "../../../types/Show"
-  import { audioSource, currentWindow, mediaFolders, outBackground, videoExtensions } from "../../stores"
+  import { audioChannels, currentWindow, mediaFolders, outBackground, playingVideos, videoExtensions, volume } from "../../stores"
   import { send } from "../../utils/request"
-  import { transitions } from "../../utils/transitions"
+  import { easings, transitions } from "../../utils/transitions"
+  import { analyseAudio, getAnalyser } from "../helpers/audio"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Player from "../system/Player.svelte"
-  import { audioAnalyser } from "./audioAnalyser"
   import Camera from "./Camera.svelte"
   import Window from "./Window.svelte"
 
@@ -58,8 +59,13 @@
     videoData.paused = true
     setTimeout(() => {
       videoTime = startAt || 0
-      window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
-      setTimeout(() => window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime }), 100)
+      if (!mirror) {
+        window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+        setTimeout(() => window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime }), 100)
+
+        // TODO: draw get time
+        // sendCurrentTime()
+      }
 
       if (autoMute && !mirror) {
         autoMute = false
@@ -71,79 +77,95 @@
     hasLoaded = false
   }
 
+  // let timeout: any = null
+  // function sendCurrentTime() {
+  //   if (timeout) clearTimeout()
+  //   timeout = setTimeout(() => {
+  //     if (!videoData.paused) window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+  //     sendCurrentTime()
+  //   }, 1000)
+  // }
+
   $: console.log(mirror, videoData.muted)
 
-  $: if ($outBackground) setUpdater()
+  function updateFilter() {
+    let temp: any = { ...$outBackground }
+    filter = ""
+    // if (temp.filter !== undefined && temp.filter.length) {
+    filter = temp.filter
+    //   delete temp.filter
+    // }
+    // if (temp.flipped !== undefined) {
+    flipped = temp.flipped
+    //   delete temp.flipped
+    // }
+  }
+
+  $: if ($outBackground !== null) updateFilter()
+  $: if ($outBackground?.type === "video") setUpdater()
   // let bg: any = null
   let oldFilter: string = ""
   setUpdater()
   function setUpdater() {
-    let temp: any = { ...$outBackground }
-    filter = ""
-    if (temp.filter !== undefined && temp.filter.length) {
-      filter = temp.filter
-      delete temp.filter
-    }
-    if (temp.flipped !== undefined) {
-      flipped = temp.flipped
-      delete temp.flipped
-    }
-
     if (oldFilter === filter) videoTime = 0
     else oldFilter = filter
   }
 
-  function custom(node: any, { type = "fade", duration = 500 }: any) {
-    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration }
+  function custom(node: any, { type = "fade", duration = 500, easing = "linear" }: any) {
+    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing).data || linear }
   }
 
   // AUDIO ANALYZER
 
-  let audioChannels: any = { left: 0, right: 0 }
+  // let audioChannels: any = { left: 0, right: 0 }
 
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API
   // https://ui.dev/web-audio-api/
 
-  $: if ((!$outBackground || videoData.paused) && interval) {
-    audioChannels = { left: 0, right: 0 }
-    clearInterval(interval)
-    analyser = null
-  }
+  // $: if (($outBackground?.type !== "video" || videoData.paused) && !mirror) {
+  //   audioChannels.set({ left: 0, right: 0 })
+  //   send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: $audioChannels })
+  // }
+  // $: if ($outBackground?.type !== "video" && $currentWindow === "output") playingVideos.set([])
 
-  let interval: any = null
-  $: {
-    if (!videoData.paused && video !== null && $audioSource !== video && $currentWindow === "output") {
-      audioSource.set(video)
-      analyse()
+  // let interval: any = null
+  // $: if (!videoData.paused && video !== null && $currentWindow === "output") analyseVideo()
+
+  // only output window
+  let currentAnalysedElem: any = null
+  let currentAnalyser: any = null
+  async function analyseVideo() {
+    // if ($playingVideos[0]?.video === video) return
+    // Failed to execute 'createMediaElementSource' on 'AudioContext': HTMLMediaElement already connected previously to a different MediaElementSourceNode.
+    if (currentAnalysedElem !== video) {
+      currentAnalyser = await getAnalyser(video)
+      currentAnalysedElem = video
     }
+    playingVideos.set([{ analyser: currentAnalyser }])
+    analyseAudio()
   }
 
-  let analyser: any = null
-  $: if (videoData.paused && analyser) startInterval()
+  $: if ($currentWindow === "output" && $audioChannels) send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: $audioChannels })
+  $: if ($currentWindow === "output" && (video === null || videoData.paused === true)) playingVideos.set([])
+  $: if ($currentWindow === "output" && video !== null && videoData.paused === false) analyseVideo()
 
-  function startInterval() {
-    setInterval(() => {
-      audioChannels = audioAnalyser(analyser)
-      send(OUTPUT, ["AUDIO_MAIN"], { channels: audioChannels })
-    }, 100)
-  }
+  // $: if ($currentWindow === "output" && $audioChannels) send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: $audioChannels })
+  // $: if ($currentWindow === "output" && videoData && $playingVideos.length) {
+  //   let analyser = $playingVideos[0]
+  //   playingVideos.set([{ analyser, paused: videoData.paused }])
+  //   analyseAudio()
+  // }
+  // $: if ($currentWindow === "output" && video === null) playingVideos.set([])
 
-  async function analyse() {
-    console.log(0)
-    // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
-    let ac = new AudioContext()
-    let source = ac.createMediaElementSource(video)
+  // let analyser: any = null
+  // $: if (!videoData.paused && analyser) startInterval()
 
-    analyser = ac.createAnalyser() //we create an analyser
-    analyser.smoothingTimeConstant = 0.9
-    analyser.fftSize = 512 //the total samples are half the fft size.
-
-    source.connect(analyser)
-    analyser.connect(ac.destination)
-
-    if (interval) clearInterval(interval)
-    startInterval()
-  }
+  // function startInterval() {
+  //   interval = setInterval(() => {
+  //     audioChannels = audioAnalyser(analyser)
+  //     send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: audioChannels })
+  //   }, 100)
+  // }
 </script>
 
 <!-- TODO: display image stretch / scale -->
@@ -161,6 +183,7 @@
         bind:currentTime={videoTime}
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
+        bind:volume={$volume}
         muted={$currentWindow !== "output" ? true : videoData.muted}
         src={path}
         autoplay
@@ -173,7 +196,7 @@
     {#key path}
       <div transition:custom={transition}>
         <!-- style={getStyleResolution({ width: image?.naturalWidth || 0, height: image?.naturalHeight || 0 }, width, height, "cover")} -->
-        <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" src={path} {alt} />
+        <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" src={path} {alt} draggable="false" />
       </div>
     {/key}
   {/if}

@@ -10,6 +10,7 @@
   import SelectElem from "../../system/SelectElem.svelte"
 
   export let active: any
+  export let searchValue: string = ""
 
   // const urls: any = {
   //   youtube: "https://youtube.com/v/3020988",
@@ -47,7 +48,16 @@
   $: videos = Object.entries($playerVideos)
     .map(([id, video]: any) => ({ rid: id, ...video }))
     .filter((a) => a.type === active)
-    .sort((a, b) => (a.name < b.name ? -1 : 1))
+    .sort((a: any, b: any) => a.name.localeCompare(b.name))
+
+  // search
+  $: if (videos || searchValue !== undefined) filterSearch()
+  const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
+  let fullFilteredVideos: any[] = []
+  function filterSearch() {
+    fullFilteredVideos = JSON.parse(JSON.stringify(videos))
+    if (searchValue.length > 1) fullFilteredVideos = fullFilteredVideos.filter((a) => filter(a.name).includes(searchValue))
+  }
 
   function keydown(e: any) {
     if (e.key === "Enter") {
@@ -61,8 +71,8 @@
 <div class="main">
   <div class="scroll">
     <div class="content" style="height: 100%;">
-      {#if videos.length}
-        {#each videos as video}
+      {#if fullFilteredVideos.length}
+        {#each fullFilteredVideos as video}
           <SelectElem id="player" data={video.rid} draggable>
             <Button
               class="context #player_button"
@@ -79,8 +89,12 @@
           </SelectElem>
         {/each}
       {:else}
-        <Center faded>
-          <T id="empty.player" />
+        <Center size={1.2} faded>
+          {#if videos.length}
+            <T id="empty.search" />
+          {:else}
+            <T id="empty.player" />
+          {/if}
         </Center>
       {/if}
     </div>

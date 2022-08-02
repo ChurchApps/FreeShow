@@ -5,7 +5,7 @@
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
-  const tools: DrawTools[] = ["focus", "pointer", "fill", "paint"]
+  const tools: DrawTools[] = ["focus", "pointer", "particles", "fill", "paint"]
 </script>
 
 <div class="main">

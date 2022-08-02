@@ -1,6 +1,21 @@
 import { get } from "svelte/store"
 import type { OutSlide } from "../../../types/Show"
-import { activeEdit, activePage, activeProject, activeShow, outAudio, outBackground, outLocked, outOverlays, outSlide, outTransition, projects, showsCache } from "./../../stores"
+import {
+  activeEdit,
+  activePage,
+  activeProject,
+  activeShow,
+  media,
+  outBackground,
+  outLocked,
+  outOverlays,
+  outSlide,
+  outTransition,
+  projects,
+  showsCache,
+  videoExtensions,
+} from "./../../stores"
+import { clearAudio, playAudio } from "./audio"
 import { _show } from "./shows"
 
 const keys: any = {
@@ -44,7 +59,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
   let layout: any[] = _show(slide ? slide.id : "active")
     .layouts(slide ? [slide.layout] : "active")
     .ref()[0]
-  let isLastSlide: boolean = slide ? slide.index === layout.length - 1 && !layout[slide.index].end : false
+  let isLastSlide: boolean = slide && layout ? slide.index === layout.length - 1 && !layout[slide.index].end : false
   let index: null | number = null
 
   // TODO: active show slide index on delete......
@@ -67,7 +82,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     console.log(id, layout, index)
     outSlide.set({ id, layout: _show(id).get("settings.activeLayout"), index })
-    updateOut(slide ? slide.id : "active", index, layout)
+    updateOut(id, index, layout)
     return
   }
 
@@ -127,6 +142,16 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
   return index
 }
 
+export function getMediaFilter(bakgroundPath: string) {
+  let filter = ""
+  let mediaFilter = get(media)[bakgroundPath]?.filter
+  if (mediaFilter) Object.entries(mediaFilter).forEach(([id, a]: any) => (filter += ` ${id}(${a})`))
+  return filter
+}
+export function getMediaFlipped(bakgroundPath: string) {
+  return get(media)[bakgroundPath]?.flipped || false
+}
+
 export function updateOut(id: string, index: number, layout: any, extra: boolean = true) {
   if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
   console.log(id)
@@ -140,7 +165,20 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   // background
   if (data.background) {
     let bg = _show(id).get("media")[data.background!]
-    if (bg) outBackground.set({ name: bg.name, type: bg.type || "media", path: bg.path, id: bg.id, muted: bg.muted !== false, loop: bg.loop !== false })
+    if (bg) {
+      let filter = getMediaFilter(bg.path)
+      let flipped = getMediaFlipped(bg.path)
+      outBackground.set({
+        name: bg.name,
+        type: bg.type || get(videoExtensions).includes(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)) ? "video" : "image",
+        path: bg.path,
+        id: bg.id,
+        muted: bg.muted !== false,
+        loop: bg.loop !== false,
+        filter,
+        flipped,
+      })
+    }
   }
 
   // overlays
@@ -149,10 +187,10 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   }
 
   // audio
-  // if (data.audio) {
-  //   let a = _show(id).get("audio")[data.audio!]
-  //   outBackground.set({ path: a.path, volume: a.volume })
-  // }
+  if (data.audio) {
+    let a = _show(id).get("media")[data.audio!]
+    playAudio(a)
+  }
 
   // nextTimer
   if ((data.nextTimer || 0) > 0) {
@@ -163,6 +201,6 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   if (data.actions) {
     if (data.actions.clearBackground) outBackground.set(null)
     if (data.actions.clearOverlays) outOverlays.set([])
-    if (data.actions.clearAudio) outAudio.set([])
+    if (data.actions.clearAudio) clearAudio()
   }
 }

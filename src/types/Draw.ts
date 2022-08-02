@@ -1,4 +1,4 @@
-export type DrawTools = "focus" | "pointer" | "fill" | "paint"
+export type DrawTools = "focus" | "pointer" | "particles" | "fill" | "paint"
 
 export interface Draw {
   x: number

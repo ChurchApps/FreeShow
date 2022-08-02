@@ -16,6 +16,7 @@ import {
   exportPath,
   folders,
   fullColors,
+  formatNewShow,
   groupNumbers,
   groups,
   imageExtensions,
@@ -23,6 +24,7 @@ import {
   language,
   maxConnections,
   media,
+  mediaCache,
   mediaFolders,
   mediaOptions,
   openedFolders,
@@ -56,6 +58,8 @@ import {
   transitionData,
   videoExtensions,
   webFavorites,
+  textCache,
+  volume,
 } from "../stores"
 import type { SaveListSettings } from "./../../types/Save"
 
@@ -82,6 +86,7 @@ export function save() {
     drawSettings: get(drawSettings),
     groupNumbers: get(groupNumbers),
     fullColors: get(fullColors),
+    formatNewShow: get(formatNewShow),
     groups: get(groups),
     imageExtensions: get(imageExtensions),
     labelsDisabled: get(labelsDisabled),
@@ -110,6 +115,7 @@ export function save() {
     // themes: get(themes),
     videoExtensions: get(videoExtensions),
     webFavorites: get(webFavorites),
+    volume: get(volume),
   }
   // save settings & shows
   // , shows: get(shows)
@@ -117,18 +123,21 @@ export function save() {
   window.api.send(STORE, {
     channel: "SAVE",
     data: {
-      settings,
-      shows: get(shows),
+      // SETTINGS
+      SETTINGS: settings,
+      // CACHES (SAVED TO MULTIPLE FILES)
       showsCache: get(showsCache),
       scripturesCache: get(scripturesCache),
-      stageShows: get(stageShows),
-      projects: { projects: get(projects), folders: get(folders) },
-      overlays: get(overlays),
-      templates: get(templates),
-      events: get(events),
-      media: get(media),
-      themes: get(themes),
-      // path: get(showsPath),
+      // STORES
+      SHOWS: get(shows),
+      STAGE_SHOWS: get(stageShows),
+      PROJECTS: { projects: get(projects), folders: get(folders) },
+      OVERLAYS: get(overlays),
+      TEMPLATES: get(templates),
+      EVENTS: get(events),
+      MEDIA: get(media),
+      THEMES: get(themes),
+      CACHE: { media: get(mediaCache), text: get(textCache) },
     },
   })
 

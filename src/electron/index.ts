@@ -6,7 +6,7 @@ import { URL } from "url"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE, EXPORT } from "../types/Channels"
 import { closeServers, startServers } from "./servers"
 import { template } from "./utils/menuTemplate"
-import { electronSettings, events, media, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
+import { cache, electronSettings, events, media, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 // import checkForUpdates from "./utils/updater"
 import { createPDFWindow, exportTXT } from "./utils/export"
 import { importShow } from "./utils/import"
@@ -34,6 +34,9 @@ function startApp() {
   // SCREEN LISTENERS
   screen.on("display-added", (_e: any, display) => {
     if (!outputWindow?.isEnabled()) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
+
+    displays = screen.getAllDisplays()
+    toApp(OUTPUT, { channel: "GET_DISPLAYS", data: displays })
   })
   screen.on("display-removed", (_e: any) => {
     let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
@@ -49,6 +52,9 @@ function startApp() {
       }
       toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
     }
+
+    displays = screen.getAllDisplays()
+    toApp(OUTPUT, { channel: "GET_DISPLAYS", data: displays })
   })
 
   // https://gist.github.com/maximilian-lindsey/a446a7ee87838a62099d
@@ -98,12 +104,16 @@ ipcMain.once("LOADED", () => {
 const createWindow = () => {
   let width: number = electronSettings.get("width")
   let height: number = electronSettings.get("height")
+  let x: number = electronSettings.get("x")
+  let y: number = electronSettings.get("y")
 
   let screenBounds = screen.getPrimaryDisplay().bounds
 
   mainWindow = new BrowserWindow({
     width: width === 800 ? screenBounds.width : width,
     height: height === 600 ? screenBounds.height : height,
+    x: x === 0 ? screenBounds.x : x,
+    y: y === 0 ? screenBounds.y : y,
     icon: "public/icon.png",
     frame: !isProd || process.platform !== "win32",
     autoHideMenuBar: isProd && process.platform === "win32",
@@ -139,6 +149,11 @@ const createWindow = () => {
     electronSettings.set("width", width)
     electronSettings.set("height", height)
   })
+  mainWindow.on("move", () => {
+    let { x, y } = mainWindow!.getBounds()
+    electronSettings.set("x", x)
+    electronSettings.set("y", y)
+  })
 
   mainWindow.on("close", (e) => {
     if (!dialogClose) {
@@ -164,19 +179,22 @@ const createWindow = () => {
 // let quit = false
 // app.on("before-quit", () => (quit = true))
 // macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
+// https://stackoverflow.com/a/45156004
 app.on("window-all-closed", () => {
   closeServers()
   // || quit
   // TODO: mac should not quit
   // if (process.platform !== "darwin") {
   app.quit()
-  // }
+  if (process.platform === "darwin") {
+    app.exit()
+  }
 })
 // mac activate
-app.on("activate", () => {
-  // startServers()
-  mainWindow?.show()
-})
+// app.on("activate", () => {
+//   // startServers()
+//   mainWindow?.show()
+// })
 
 app.on("web-contents-created", (_e, contents) => {
   // console.info(e)
@@ -205,61 +223,41 @@ app.on("web-contents-created", (_e, contents) => {
   })
 })
 
+const stores: any = {
+  SETTINGS: settings,
+  SHOWS: shows,
+  STAGE_SHOWS: stageShows,
+  PROJECTS: projects,
+  OVERLAYS: overlays,
+  TEMPLATES: templates,
+  EVENTS: events,
+  MEDIA: media,
+  THEMES: themes,
+  CACHE: cache,
+}
+
 // STORE
 ipcMain.on(STORE, (e, msg) => {
   if (msg.channel === "SAVE") save(msg.data)
-  else if (msg.channel === "SETTINGS") e.reply(STORE, { channel: "SETTINGS", data: settings.store })
-  else if (msg.channel === "SHOWS") e.reply(STORE, { channel: "SHOWS", data: shows.store })
-  else if (msg.channel === "STAGE_SHOWS") e.reply(STORE, { channel: "SHOW", data: stageShows.store })
-  else if (msg.channel === "PROJECTS") e.reply(STORE, { channel: "PROJECTS", data: projects.store })
-  else if (msg.channel === "OVERLAYS") e.reply(STORE, { channel: "OVERLAYS", data: overlays.store })
-  else if (msg.channel === "TEMPLATES") e.reply(STORE, { channel: "TEMPLATES", data: templates.store })
-  else if (msg.channel === "EVENTS") e.reply(STORE, { channel: "EVENTS", data: events.store })
-  else if (msg.channel === "MEDIA") e.reply(STORE, { channel: "MEDIA", data: media.store })
-  else if (msg.channel === "THEMES") e.reply(STORE, { channel: "THEMES", data: themes.store })
+  else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
 })
 
 // save
 function save(data: any) {
-  if (data.settings === null) settings.clear()
+  if (data.SETTINGS === null) settings.clear()
   else {
-    Object.entries(data.settings).forEach(([key, value]: any) => {
+    Object.entries(data.SETTINGS).forEach(([key, value]: any) => {
       if (JSON.stringify(settings.get(key)) !== JSON.stringify(value)) settings.set(key, value)
     })
   }
 
-  if (data.shows && JSON.stringify(shows.store) !== JSON.stringify(data.shows)) {
-    shows.clear()
-    shows.set(data.shows)
-  }
-  if (data.stageShows && JSON.stringify(stageShows.store) !== JSON.stringify(data.stageShows)) {
-    stageShows.clear()
-    stageShows.set(data.stageShows)
-  }
-  if (data.projects && JSON.stringify(projects.store) !== JSON.stringify(data.projects)) {
-    projects.clear()
-    projects.set(data.projects)
-  }
-  if (data.overlays && JSON.stringify(overlays.store) !== JSON.stringify(data.overlays)) {
-    overlays.clear()
-    overlays.set(data.overlays)
-  }
-  if (data.templates && JSON.stringify(templates.store) !== JSON.stringify(data.templates)) {
-    templates.clear()
-    templates.set(data.templates)
-  }
-  if (data.events && JSON.stringify(events.store) !== JSON.stringify(data.events)) {
-    events.clear()
-    events.set(data.events)
-  }
-  if (data.media && JSON.stringify(media.store) !== JSON.stringify(data.media)) {
-    media.clear()
-    media.set(data.media)
-  }
-  if (data.themes && JSON.stringify(themes.store) !== JSON.stringify(data.themes)) {
-    themes.clear()
-    themes.set(data.themes)
-  }
+  // save to files
+  Object.entries(stores).forEach(([key, store]: any) => {
+    if (data[key] && JSON.stringify(store.store) !== JSON.stringify(data[key])) {
+      store.clear()
+      store.set(data[key])
+    }
+  })
 
   // check folder
   if (!fs.existsSync(data.path)) {
@@ -418,12 +416,13 @@ ipcMain.on(MAIN, (e, msg) => {
       toApp(MAIN, msg)
     })
   } else if (msg.channel === "GET_DISPLAYS") {
-    let outputScreens: any[] = []
-    let mainInternal: boolean = screen.getDisplayMatching(mainWindow!.getBounds()).internal
-    displays.forEach((display) => {
-      if (!mainInternal || !display.internal) outputScreens.push(display)
-    })
-    data = outputScreens
+    // let outputScreens: any[] = []
+    // let mainInternal: boolean = screen.getDisplayMatching(mainWindow!.getBounds()).internal
+    // displays.forEach((display) => {
+    //   if (!mainInternal || !display.internal) outputScreens.push(display)
+    // })
+    // data = outputScreens
+    data = displays
   } else if (msg.channel === "GET_PATHS") {
     data = {
       documents: app.getPath("documents"),
@@ -470,7 +469,7 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
   if (msg.channel === "DISPLAY") {
     let outputScreen: any = null
 
-    if (!outputPosition || msg.data.reset) {
+    if (!outputPosition || (outputPosition?.width === 0 && outputPosition?.height === 0) || msg.data.reset) {
       if (msg.data.screen) {
         outputScreen =
           displays.find((display) => {
@@ -493,8 +492,8 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
     if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
 
     // && JSON.stringify(outputPosition) !== JSON.stringify(outputWindow?.getBounds())
-    let xDif = outputPosition.x - mainWindow!.getBounds().x
-    let yDif = outputPosition.y - mainWindow!.getBounds().y
+    let xDif = outputPosition?.x - mainWindow!.getBounds().x
+    let yDif = outputPosition?.y - mainWindow!.getBounds().y
 
     if (msg.data.enabled && outputPosition && (msg.data.force || xDif > 50 || (xDif < -50 && yDif > 50) || yDif < -50)) {
       // TODO: output task bar
@@ -512,27 +511,24 @@ ipcMain.on(OUTPUT, (_e, msg: any) => {
       if (process.platform === "darwin") {
         setTimeout(() => {
           outputWindow?.maximize()
-        }, 100)
-        if (!msg.data.force) {
-          setTimeout(() => {
+          if (!msg.data.force) {
             outputWindow?.setFullScreen(true)
-          }, 500)
-        }
+            setTimeout(() => {
+              // focus on mac
+              mainWindow?.focus()
+            }, 10)
+          }
+        }, 100)
       }
       outputWindow?.moveTop()
-
-      setTimeout(() => {
-        // focus on mac
-        mainWindow?.focus()
-      }, 10)
     } else {
-      outputWindow?.hide()
       if (process.platform === "darwin") {
         outputWindow?.setFullScreen(false)
         setTimeout(() => {
           outputWindow?.minimize()
         }, 100)
       }
+      outputWindow?.hide()
       if (msg.data.enabled) {
         msg.data.enabled = false
         toApp(MAIN, { channel: "ALERT", data: "error.display" })

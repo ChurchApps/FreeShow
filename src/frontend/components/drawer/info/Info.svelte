@@ -3,6 +3,7 @@
   import Center from "../../system/Center.svelte"
   import Clock from "../../system/Clock.svelte"
   import Date from "../../system/Date.svelte"
+  import AudioMix from "./AudioMix.svelte"
   import MediaInfo from "./MediaInfo.svelte"
   import PlayerInfo from "./PlayerInfo.svelte"
   import ScriptureInfo from "./ScriptureInfo.svelte"
@@ -20,6 +21,8 @@
     <ShowInfo />
   {:else if id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
     <MediaInfo />
+  {:else if id === "audio"}
+    <AudioMix />
   {:else if id === "templates"}
     <TemplateInfo />
   {:else if id === "scripture"}

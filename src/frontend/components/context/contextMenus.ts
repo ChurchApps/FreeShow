@@ -31,6 +31,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   shortcuts: { label: "popup.shortcuts", icon: "shortcut" },
   rename: { label: "actions.rename", icon: "rename" },
   delete: { label: "actions.delete", icon: "delete" },
+  delete_all: { label: "actions.delete_all", icon: "delete" },
   export: { label: "actions.export", icon: "export" },
   // DRAWER
   enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
@@ -59,6 +60,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   edit: { label: "menu.edit", icon: "edit" },
   recolor: { label: "actions.recolor", icon: "color" },
   actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
+  remove_media: { label: "actions.remove_media", icon: "media", items: ["LOAD_remove_media"] },
   // ITEM
   format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
   // formatting
@@ -66,6 +68,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   lowercase: { label: "actions.lowercase" },
   capitalize: { label: "actions.capitalize" },
   trim: { label: "actions.trim" },
+  // MEDIA
+  play: { label: "media.play", icon: "play" },
+  play_no_filters: { label: "media.play_no_filters", icon: "play" },
+  favourite: { label: "media.favourite", icon: "star" },
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -77,6 +83,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // MAIN
   default: ["settings", "about", "SEPERATOR", "quit"],
   rename: ["rename"],
+  close: ["close"],
 
   // DRAWER
   drawer_top: ["enabledTabs"],
@@ -100,13 +107,19 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // , "SEPERATOR", "export"
   drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete"],
   // media / audio
+  // "play", "play_no_filters", "SEPERATOR", "edit",
+  media_preview: ["close"],
+  // , "delete_all"
+  show_media: ["play", "play_no_filters", "SEPERATOR", "edit"],
   // , "addToShow"
-  media_card: ["addToProject", "SEPERATOR", "edit"],
+  // show_in_explorer!!
+  media_card: ["play", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
   // "addToFirstSlide",
   overlay_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
   // "addToShow",
   template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
   player_button: ["addToProject", "SEPERATOR", "rename", "delete"],
+  audio_button: ["favourite", "addToProject"],
   // "addToFirstSlide"
   live_card: [],
 
@@ -116,12 +129,15 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   project: ["newShowPopup", "newShow"], // , "newPrivateShow"
   project_button: ["rename", "delete"],
   folder: ["rename", "delete"],
-  show: ["rename", "remove", "private", "duplicate"],
+  project_media: ["play", "play_no_filters", "remove"],
+  project_audio: ["remove"],
+  project_player: ["remove"],
+  project_show: ["rename", "remove", "private", "duplicate"],
   shows: ["newSlide", "selectAll"],
 
   // SHOWS
   // , "copy", "paste"
-  slide: ["slideGroups", "actions", "format", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
+  slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
   slideChild: ["slideGroups", "actions", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["edit"],
@@ -135,5 +151,5 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   edit_box: ["format", "delete", "make stage exlusive", "SEPERATOR", "duplicate", "copy", "paste"],
 
   // CALENDAR
-  event: ["edit", "duplicate", "delete"],
+  event: ["edit", "duplicate", "delete", "delete_all"],
 }

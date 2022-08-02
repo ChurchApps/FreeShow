@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { categories, dictionary, drawerTabsData, mediaFolders, notFound, overlayCategories, templateCategories } from "../../stores"
+  import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, notFound, overlayCategories, templateCategories } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
@@ -19,6 +19,7 @@
   const nameCategories: any = {
     shows: (c: any) => categories.update((a) => setName(a, c)),
     media: (c: any) => mediaFolders.update((a) => setName(a, c)),
+    audio: (c: any) => audioFolders.update((a) => setName(a, c)),
     overlays: (c: any) => overlayCategories.update((a) => setName(a, c)),
     templates: (c: any) => templateCategories.update((a) => setName(a, c)),
   }
@@ -39,7 +40,7 @@
 </script>
 
 <Button
-  class={category.id === "all" || category.id === "unlabeled" ? "" : `context #category_${id}_button__category_${id}`}
+  class={category.id === "all" || category.id === "unlabeled" || category.id === "favourites" ? "" : `context #category_${id}_button__category_${id}`}
   active={category.id === $drawerTabsData[id].activeSubTab}
   {red}
   on:click={(e) => {
@@ -52,14 +53,14 @@
     <Icon
       id={category.icon || "noIcon"}
       custom={(id === "shows" || id === "overlays" || id === "templates") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
-      select={(id === "shows" || id === "overlays" || id === "templates") && category.id !== "all" && category.id !== "unlabeled"}
+      select={(id === "shows" || id === "overlays" || id === "templates") && category.id !== "all" && category.id !== "unlabeled" && category.id !== "favourites"}
       selectData={{ id: "category_" + id, data: [category.id] }}
       right
     />
     <span id={category.id} style="width: 100%;text-align: left;">
       {#if id === "scripture" || id === "player"}
         <p style="margin: 5px;">{category.name}</p>
-      {:else if category.id === "all" || category.id === "unlabeled"}
+      {:else if category.id === "all" || category.id === "unlabeled" || category.id === "favourites"}
         <p style="margin: 5px;"><T id={category.name} /></p>
       {:else}
         <HiddenInput

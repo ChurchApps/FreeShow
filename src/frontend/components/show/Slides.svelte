@@ -71,9 +71,22 @@
     // update show by its template
     history({ id: "template", save: false, newData: { template: currentShow.settings.template }, location: { page: "show", show: $activeShow! } })
   }
+
+  let altKeyPressed: boolean = false
+  function keydown(e: any) {
+    if (e.altKey) {
+      e.preventDefault()
+      altKeyPressed = true
+    }
+  }
+  function keyup() {
+    altKeyPressed = false
+  }
 </script>
 
 <!-- TODO: tab enter not woring -->
+
+<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
 <Autoscroll on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
   <!-- on:drop={(e) => {
@@ -87,7 +100,7 @@
           <T id="error.no_show" />
         </Center>
       {:else}
-        <div class="grid context #shows">
+        <div class="grid context #shows__close">
           <!-- {#each Object.values($showsCache[id].slides) as slide, i} -->
           {#if layoutSlides.length}
             {#each layoutSlides as slide, i}
@@ -103,6 +116,7 @@
                   list={$slidesOptions.mode !== "grid"}
                   columns={$slidesOptions.columns}
                   icons
+                  {altKeyPressed}
                   on:click={(e) => slideClick(e, i)}
                 />
               {/if}

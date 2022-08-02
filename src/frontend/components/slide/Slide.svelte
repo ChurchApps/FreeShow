@@ -8,6 +8,7 @@
   import { getItemText } from "../edit/scripts/textStyle"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
+  import { getMediaFilter, getMediaFlipped } from "../helpers/showActions"
   import SelectElem from "../system/SelectElem.svelte"
   import Actions from "./Actions.svelte"
   import Icons from "./Icons.svelte"
@@ -26,6 +27,7 @@
   export let endIndex: null | number = null
   export let icons: boolean = false
   export let noQuickEdit: boolean = false
+  export let altKeyPressed: boolean = false
 
   // let longestText: string = ""
   // $: {
@@ -45,6 +47,13 @@
   let duration: number = 0
   // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
   // $: name = full_name.slice(0, full_name.lastIndexOf("."))
+  let filter: string = ""
+  let flipped: boolean = false
+  $: if (background?.path) {
+    // TODO: use show filter if existing
+    filter = getMediaFilter(background.path)
+    flipped = getMediaFlipped(background.path)
+  }
 
   $: group = slide.group
   $: {
@@ -176,21 +185,8 @@
     console.log(timer)
   }
 
-  let altKeyPressed: boolean = false
-  function keydown(e: any) {
-    if (e.altKey) {
-      e.preventDefault()
-      altKeyPressed = true
-    }
-  }
-  function keyup() {
-    altKeyPressed = false
-  }
-
   let resolution: Resolution = slide?.settings?.resolution || $screen.resolution
 </script>
-
-<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
 <!-- TODO: noQuickEdit -->
 <!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->
@@ -242,6 +238,8 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                   name={$dictionary.error?.load}
                   path={background.path || background.id || ""}
                   type={background.type !== "player" ? background.type : null}
+                  {filter}
+                  {flipped}
                   bind:duration
                 />
               </div>

@@ -1,5 +1,5 @@
 import { uid } from "uid"
-import { categories, mediaFolders, outOverlays, overlayCategories, shows, templateCategories, templates } from "./../../stores"
+import { audioFolders, categories, mediaFolders, outOverlays, overlayCategories, shows, templateCategories, templates } from "./../../stores"
 import { get } from "svelte/store"
 import { drawerTabsData, overlays } from "../../stores"
 import type { History } from "./history"
@@ -10,6 +10,7 @@ const updateStore: any = {
   shows: (f: any) => shows.update(f),
   categories: (f: any) => categories.update(f),
   mediaFolders: (f: any) => mediaFolders.update(f),
+  audioFolders: (f: any) => audioFolders.update(f),
   overlayCategories: (f: any) => overlayCategories.update(f),
   templateCategories: (f: any) => templateCategories.update(f),
 }
@@ -24,6 +25,10 @@ function getStoreNames(historyID: string) {
     case "newMediaFolder":
     case "deleteMediaFolder":
       s = { data: "media", store: "mediaFolders" }
+      break
+    case "newAudioFolder":
+    case "deleteAudioFolder":
+      s = { data: "audio", store: "audioFolders" }
       break
     case "newOverlaysCategory":
     case "deleteOverlaysCategory":

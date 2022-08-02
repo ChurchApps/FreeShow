@@ -90,9 +90,22 @@
     }
   }
 
+  let calendarElem: any
   function wheel(e: any) {
-    if (e.deltaY < 0) current = new Date(year, month, 0)
-    else current = new Date(year, month, 33)
+    if (!calendarElem) return
+
+    // forward
+    if (e.deltaY > 0) {
+      let bottom = calendarElem.scrollTop + 1 + calendarElem.offsetHeight >= calendarElem.scrollHeight
+      if (!bottom) return
+      current = new Date(year, month, 33)
+      return
+    }
+
+    // backward
+    let top = calendarElem.scrollTop === 0
+    if (!top) return
+    current = new Date(year, month, 0)
   }
 
   function getEvents(day: Date, currentEvents: any[]) {
@@ -144,7 +157,7 @@
   }
 </script>
 
-<div class="calendar" on:wheel={wheel}>
+<div class="calendar" on:wheel={wheel} bind:this={calendarElem}>
   <div class="week" style="flex: 1;">
     <div class="weekday" style="flex: 1;padding: 0;">
       <Button
@@ -152,10 +165,10 @@
           current = today
           activeDays.set([copy(today).getTime()])
         }}
-        active={!!$activeDays.length ||
-          !sameDay(new Date($activeDays[0]), today) ||
-          current.getMonth() !== new Date($activeDays[0]).getMonth() ||
-          current.getFullYear() !== new Date($activeDays[0]).getFullYear()}
+        active={!!$activeDays.length &&
+          sameDay(new Date($activeDays[0]), today) &&
+          current.getMonth() === new Date($activeDays[0]).getMonth() &&
+          current.getFullYear() === new Date($activeDays[0]).getFullYear()}
         title={$dictionary.calendar?.today}
         style="width: 100%;height: 100%;"
         center
@@ -223,6 +236,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    overflow-y: auto;
   }
 
   .grid {

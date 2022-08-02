@@ -3,7 +3,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   initialized: false,
   outLocked: false,
   outputScreen: null,
-  outputPosition: { x: 0, y: 0, width: 0, height: 0 },
+  outputPosition: null,
   openedFolders: [],
   activeProject: null,
   alertUpdates: true,
@@ -17,29 +17,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     song: { name: "category.song", icon: "song", default: true },
     presentation: { name: "category.presentation", icon: "presentation", default: true },
   },
-  drawSettings: {
-    focus: {
-      color: "#000000",
-      opacity: 0.8,
-      size: 300,
-      glow: true,
-      hold: false,
-    },
-    pointer: {
-      color: "#FF0000",
-      opacity: 0.8,
-      size: 50,
-      // type: "circle",
-      glow: true,
-      hold: false,
-    },
-    fill: {
-      color: "#000000",
-      opacity: 0.8,
-      rainbow: false,
-    },
-    paint: {},
-  },
+  drawSettings: {},
   overlayCategories: {
     offers: { name: "category.offers", icon: "cash", default: true },
     notice: { name: "category.notice", icon: "info", default: true },
@@ -83,6 +61,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   labelsDisabled: false,
   groupNumbers: true,
   fullColors: true,
+  formatNewShow: true,
   displayMetadata: "never",
   showsPath: null,
   exportPath: null,
@@ -123,6 +102,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     resolution: { width: 1920, height: 1080 },
   },
   os: { platform: "", name: "Computer" },
+  volume: 1,
 }
 
 export const defaultThemes: any = {

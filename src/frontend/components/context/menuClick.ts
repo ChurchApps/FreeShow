@@ -15,6 +15,10 @@ import {
   eventEdit,
   events,
   imageExtensions,
+  media,
+  outBackground,
+  outLocked,
+  previousShow,
   projects,
   projectView,
   saved,
@@ -27,9 +31,11 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
+import { changeValues } from "../helpers/array"
 import { copy, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
+import { addParents, cloneSlide, getCurrentLayout } from "../helpers/layout"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
@@ -197,6 +203,15 @@ const actions: any = {
     }
     obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
   },
+  delete_all: (obj: any) => {
+    if (obj.contextElem?.classList.value.includes("#event")) {
+      let group: any = get(events)[obj.contextElem.id].group
+      if (!group) return
+      Object.entries(get(events)).forEach(([id, event]: any) => {
+        if (event.group === group) history({ id: "deleteEvent", newData: { id } })
+      })
+    }
+  },
   duplicate: (obj: any) => {
     if (obj.contextElem?.classList.value.includes("#event")) {
       let event = JSON.parse(JSON.stringify(get(events)[obj.contextElem.id]))
@@ -233,8 +248,9 @@ const actions: any = {
     return m
   },
   addToProject: (obj: any) => {
-    if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media") || !get(activeProject)) return
+    if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
     if (obj.sel.id === "player") obj.sel.data = obj.sel.data.map((id: string) => ({ id, type: "player" }))
+    else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.map(({ path, name }: any) => ({ id: path, name, type: "audio" }))
     else if (obj.sel.id === "media")
       obj.sel.data = obj.sel.data.map(({ path, name }: any) => ({
         id: path,
@@ -281,6 +297,20 @@ const actions: any = {
 
   // project
   close: (obj: any) => {
+    if (obj.contextElem.classList.contains("media")) {
+      if (get(previousShow)) {
+        activeShow.set(JSON.parse(get(previousShow)))
+        previousShow.set(null)
+      }
+      return
+    }
+
+    // shows
+    if (obj.contextElem.classList.contains("grid")) {
+      activeShow.set(null)
+      return
+    }
+
     if (!obj.contextElem.classList.contains("#projectTab") || !get(activeProject)) return
     activeProject.set(null)
     projectView.set(true)
@@ -365,16 +395,200 @@ const actions: any = {
     }
   },
 
+  // change slide group
   slide_groups: (obj: any) => {
-    obj.sel.data.forEach((a: any) => {
-      let slide = GetLayoutRef()[a.index].id
-      // TODO: store group/color to redo
-      // TODO: change layout children & slide parent children
-      history({ id: "changeSlide", newData: { key: "globalGroup", value: obj.menu.id }, location: { page: "show", show: get(activeShow)!, slide } })
+    let slides: any[] = obj.sel.data.sort((a: any, b: any) => (a.index > b.index ? 1 : -1))
+    let ref: any[] = _show("active").layouts("active").ref()[0]
+    console.log(ref)
+    let activeLayout: string = _show("active").get("settings.activeLayout")
+    let newData: any = getCurrentLayout()
+
+    // slides next to each other will be one group
+    let groups: any[] = [{ globalGroup: obj.menu.id, slides: [] }]
+    let previousIndex: number = -1
+    slides.forEach((slide: any, i: number) => {
+      if (previousIndex + 1 === slide.index || i === 0) {
+        groups[groups.length - 1].slides.push(ref[slide.index])
+      } else groups.push({ globalGroup: obj.menu.id, slides: [ref[slide.index]] })
+      previousIndex = slide.index
     })
+
+    groups.forEach(({ slides }, i) => {
+      console.log(groups, slides)
+      // add children of parent if not selected
+      if (slides[0].type === "parent" && slides[0].children?.length && slides[1]?.id !== slides[0].children[0]) {
+        // let childIsSelected: boolean = false
+        // while (childIsSelected)
+        slides.push(...slides[0].children.map((_id: string, i: number) => ref[slides[0].index + i + 1]))
+        groups[i].slides = JSON.parse(JSON.stringify(slides))
+        console.log(slides[0])
+      }
+      console.log(slides)
+
+      // TODO: changing parent not working!! (should change all simular groups)
+
+      // add parent to own group if their child is changed
+
+      // let parentsToSelectedChilds: any[] = []
+      // find any non selected parents to selected childs or children to parents
+      let refs: any[] = slides.filter(
+        (slide: any) =>
+          !slides.find((a: any) => {
+            // console.log(slide, slide.id, newData.slides[slide.id].children, a, a.id, newData.slides[slide.id].children?.includes(a.id))
+            return slide.type === "child" ? a.id === slide.parent.id : newData.slides[slide.id].children?.length ? newData.slides[slide.id].children.includes(a.id) : true
+          })
+      )
+
+      // only 1 possible!
+      if (refs.length) {
+        console.log("FOUND", refs)
+        refs.forEach((slide) => {
+          let newSlides: any[] = []
+          // get the refs of related slides not selected
+          if (slide.type === "child") newSlides = [ref[slide.parent.index]]
+          else
+            newSlides = newData.slides[slide.id].children
+              .filter((id: string) => !slides.find((a: any) => a.id === id))
+              .map((id: string) => {
+                let index = newData.slides[slide.id].children.indexOf(id)
+                return { type: "child", index, layoutIndex: slide.index + index, id, parent: { id: slide.id, index: slide.index } }
+              })
+          console.log(newSlides)
+
+          // let parent = ref[slide.parent.index]
+          let s: any = { slides: newSlides }
+          let sId: string = newSlides[0].parent?.id || newSlides[0].id
+          if (newData.slides[sId].globalGroup) s.globalGroup = newData.slides[sId].globalGroup
+          else s.group = newData.slides[sId].group
+          groups.push(s)
+
+          // TODO: remove old child from the new parent clone
+          // newData.layout[slide.index].removeChild = slide.id
+        })
+      }
+    })
+
+    console.log(groups)
+
+    let layouts = _show("active").layouts("active").get(null, true)
+    let newParents: any[] = []
+    groups.forEach(({ globalGroup = null, group = "", slides }) => {
+      slides.forEach((slide: any, i: number) => {
+        // check if there are more slides
+        let otherSlides = layouts.find((layout) => {
+          let ref = _show("active").layouts([layout.layoutId]).ref()[0]
+          return ref.find((lslide: any) => lslide.id === slide.id && (lslide.index !== slide.index || layout.layoutId !== activeLayout || (i === 0 && slide.type === "child")))
+        })
+        let slideId = slide.id
+        console.log(slide, otherSlides)
+        if (otherSlides && (slide.type === "child" || slides.length > 1)) {
+          // clone current
+          slideId = uid()
+          newData = cloneSlide(newData, slide.id, slideId, i === 0)
+          slides[i].id = slideId
+          let end: boolean = true
+          if (slide.type === "child") newParents.push({ id: slideId, pos: slide.parent.index + (end ? 1 : 0) })
+          else newData.layout[slide.index].id = slideId
+        }
+
+        if (i === 0) {
+          if (slide.type === "child" && !otherSlides) {
+            newData.slides[slide.parent.id].children.splice(newData.slides[slide.parent.id].children.indexOf(slideId), 1)
+            let end: boolean = false
+            newParents.push({ id: slideId, pos: slide.parent.index + (end ? 1 : 0) })
+          }
+          changeValues(newData.slides[slideId], { globalGroup, group, color: "" })
+        } else {
+          if (slide.type === "parent") newData.layout[slide.index].remove = true
+          changeValues(newData.slides[slideId], { globalGroup: undefined, group: null, color: null }) // color: parent color
+          console.log("SLIDe", slideId, newData.slides[slideId])
+        }
+        // newData = JSON.parse(JSON.stringify(newData))
+      })
+    })
+
+    groups.forEach(({ slides }) => {
+      // remove exising children
+      newData.slides[slides[0].id].children = []
+      if (slides.length > 1) {
+        // if (!newData.slides[slides[0].id].children) newData.slides[slides[0].id].children = []
+        newData.slides[slides[0].id].children.push(...slides.slice(1, slides.length).map(({ id }: any) => id))
+      }
+    })
+
+    console.log(newParents, newData.layout)
+
+    // add new parents
+    newData = addParents(newData, newParents)
+
+    // remove old parents
+    newData.layout = newData.layout.filter((a: any) => !a.remove)
+
+    // find matches and combine duplicates
+    // TODO: combine duplicates
+
+    history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
+
+    // obj.sel.data.forEach((a: any) => {
+    //   let slide = GetLayoutRef()[a.index].id
+    //   // TODO: store group/color to redo
+    //   // TODO: change layout children & slide parent children
+    //   history({ id: "changeSlide", newData: { key: "globalGroup", value: obj.menu.id }, location: { page: "show", show: get(activeShow)!, slide } })
+    // })
   },
 
   actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
+  remove_media: (obj: any) => {
+    let type: "image" | "overlays" | "audio" = obj.menu.icon
+    let slide: number = obj.sel.data[0].index
+    let newData: any = null
+    let location: any = { page: "show", show: get(activeShow), layout: _show("active").get("settings.activeLayout"), layoutSlide: slide }
+
+    let layoutSlide = _show("active").layouts("active").ref()[0][slide].data
+    if (type === "image") {
+      newData = { key: "background", value: null }
+      // TODO: remove from show media if last one?
+    } else if (type === "overlays") {
+      let ol = layoutSlide.overlays
+      // remove clicked
+      ol.splice(ol.indexOf(obj.menu.id), 1)
+      newData = { key: "overlays", value: ol }
+    } else if (type === "audio") {
+      let audio = layoutSlide.audio
+      // remove clicked
+      audio.splice(audio.indexOf(obj.menu.id), 1)
+      newData = { key: "audio", value: audio }
+      // TODO: remove from show media if last one?
+    }
+
+    if (newData) history({ id: "changeLayout", newData, location })
+  },
+
+  // media
+  play: (obj: any) => {
+    let path = obj.sel.data[0].path || obj.sel.data[0].id
+    if (!path) return
+    let filter: string = ""
+    Object.entries(get(media)[path]?.filter || {}).forEach(([id, a]: any) => (filter += ` ${id}(${a})`))
+    if (!get(outLocked)) outBackground.set({ path, filter })
+  },
+  play_no_filters: (obj: any) => {
+    let path = obj.sel.data[0].path || obj.sel.data[0].id
+    if (!path) return
+    if (!get(outLocked)) outBackground.set({ path })
+  },
+  favourite: (obj: any) => {
+    let favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true
+    obj.sel.data.forEach((card: any) => {
+      let path = card.path || card.id
+      media.update((a) => {
+        if (!a[path]) a[path] = { filter: "" }
+        if (obj.sel.id === "audio") a[path].audio = true
+        a[path].favourite = favourite
+        return a
+      })
+    })
+  },
 
   // drawer navigation
   changeIcon: () => activePopup.set("icon"),

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeProject, activeShow, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
+  import { activeProject, activeShow, events, media, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -39,6 +39,20 @@
     addToProject: () => {
       if (!$activeProject) disabled = true
     },
+    play_no_filters: () => {
+      let path = $selected.data[0]?.path || $selected.data[0]?.id
+      if (!path || !$media[path]?.filter) disabled = true
+    },
+    delete_all: () => {
+      if (contextElem?.classList.value.includes("#event")) {
+        let group: any = $events[contextElem.id].group
+        if (!group || !Object.entries($events).find(([id, event]: any) => id !== contextElem.id && event.group === group)) disabled = true
+      }
+    },
+    favourite: () => {
+      let path = $selected.data[0]?.path || $selected.data[0]?.id
+      if (path && $media[path]?.favourite === true) enabled = true
+    },
   }
   if (conditions[id]) conditions[id]()
 
@@ -77,10 +91,10 @@
   <span style="display: flex;align-items: center;gap: 10px;">
     {#if menu?.icon}<Icon id={menu.icon} />{/if}
     {#if menu?.translate === false}
-      {menu?.label}
+      <p>{menu?.label}</p>
     {:else}
       {#key menu}
-        <T id={menu?.label || id} />
+        <p><T id={menu?.label || id} /></p>
       {/key}
     {/if}
   </span>
@@ -107,6 +121,10 @@
   div.disabled {
     opacity: 0.5;
     cursor: default;
+  }
+
+  p {
+    max-width: 300px;
   }
 
   .enabled {

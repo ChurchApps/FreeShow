@@ -5,6 +5,7 @@
   export let value: string = ""
   export let id: string
   export let allowEmpty: boolean = true
+  export let allowEdit: boolean = true
 
   $: value = edit ? (value.endsWith(" ") ? removeWhitespace(value) + " " : removeWhitespace(value)) : value.trim()
 
@@ -38,7 +39,7 @@
 
   let timeout: any
   function mousedown(e: any) {
-    if (e.target === nameElem) {
+    if (e.target === nameElem && allowEdit) {
       timeout = setTimeout(() => {
         click(e)
       }, 500)
@@ -68,7 +69,7 @@
 />
 <!-- on:contextmenu={click} -->
 
-{#if edit}
+{#if edit && allowEdit}
   <input bind:this={inputElem} on:change={change} class="edit nocontext _rename name" bind:value />
 {:else}
   <p bind:this={nameElem} class="_rename">

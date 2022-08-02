@@ -19,9 +19,9 @@
   <span>
     <TopButton id="show" />
     <TopButton id="edit" />
-    <TopButton id="stage" />
-    <TopButton id="draw" />
     <TopButton id="calendar" />
+    <TopButton id="draw" />
+    <TopButton id="stage" />
   </span>
   <span style="width: 300px;justify-content: flex-end;">
     <TopButton id="settings" hideLabel />
@@ -34,7 +34,7 @@
       {#if $outputDisplay}
         <Icon id="cancelDisplay" size={1.8} white />
       {:else}
-        <Icon id="display" size={1.8} white />
+        <Icon id="output" size={1.8} white />
       {/if}
     </Button>
   </span>

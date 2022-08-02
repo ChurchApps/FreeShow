@@ -71,3 +71,22 @@ export function format(t: string, { hours, minutes, seconds }: any) {
 
 const addZero = (a: number) => ("0" + a).slice(-2)
 // const clip = (a: number) => Math.max(0, Math.min(59, a))
+
+export function splitDate(time: Date) {
+  let date = time.getDate()
+  let month = time.getMonth()
+  let year = time.getFullYear()
+  let hours = time.getHours()
+  let minutes = time.getMinutes()
+
+  return { date, month, year, hours, minutes }
+}
+
+export function changeTime(date: string | Date, time: string | Date) {
+  date = new Date(date)
+  time = new Date(time)
+  let splittedDate = splitDate(date)
+  let splittedTime = splitDate(time)
+
+  return new Date(splittedDate.year, splittedDate.month, splittedDate.date, splittedTime.hours, splittedTime.minutes)
+}

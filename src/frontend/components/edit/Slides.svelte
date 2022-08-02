@@ -33,23 +33,28 @@
   $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
 
   function keydown(e: any) {
-    if (!(e.target instanceof HTMLTextAreaElement) && !e.target.closest(".edit")) {
-      if (e.key === "ArrowDown") {
-        // Arrow Down
-        e.preventDefault()
-        if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
-          activeEdit.set({ slide: 0, items: [] })
-        } else if ($activeEdit.slide < layoutSlides.length - 1) {
-          activeEdit.set({ slide: $activeEdit.slide + 1, items: [] })
-        }
-      } else if (e.key === "ArrowUp") {
-        // Arrow Up
-        e.preventDefault()
-        if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
-          activeEdit.set({ slide: layoutSlides.length - 1, items: [] })
-        } else if ($activeEdit.slide > 0) {
-          activeEdit.set({ slide: $activeEdit.slide - 1, items: [] })
-        }
+    if (e.altKey) {
+      e.preventDefault()
+      altKeyPressed = true
+    }
+
+    if (e.target instanceof HTMLTextAreaElement || e.target.closest(".edit")) return
+
+    if (e.key === "ArrowDown") {
+      // Arrow Down
+      e.preventDefault()
+      if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
+        activeEdit.set({ slide: 0, items: [] })
+      } else if ($activeEdit.slide < layoutSlides.length - 1) {
+        activeEdit.set({ slide: $activeEdit.slide + 1, items: [] })
+      }
+    } else if (e.key === "ArrowUp") {
+      // Arrow Up
+      e.preventDefault()
+      if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
+        activeEdit.set({ slide: layoutSlides.length - 1, items: [] })
+      } else if ($activeEdit.slide > 0) {
+        activeEdit.set({ slide: $activeEdit.slide - 1, items: [] })
       }
     }
   }
@@ -75,9 +80,14 @@
     if (e.ctrlKey || e.metaKey) columns = Math.max(1, Math.min(10, columns + e.deltaY / 100))
     // if (e.ctrlKey || e.metaKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
   }
+
+  let altKeyPressed: boolean = false
+  function keyup() {
+    altKeyPressed = false
+  }
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
 <Autoscroll {offset} bind:scrollElem style="display: flex;background-color: var(--primary-darker);">
   {#if layoutSlides.length}
@@ -92,6 +102,7 @@
           active={$outSlide?.index === i && $outSlide?.id === $activeShow?.id && $outSlide?.layout === activeLayout}
           focused={$activeEdit.slide === i}
           noQuickEdit
+          {altKeyPressed}
           {columns}
           on:click={(e) => {
             if (!e.ctrlKey && !e.metaKey) activeEdit.set({ slide: i, items: [] })

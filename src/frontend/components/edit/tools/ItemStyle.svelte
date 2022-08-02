@@ -8,6 +8,7 @@
   import Color from "../../inputs/Color.svelte"
   import Dropdown from "../../inputs/Dropdown.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
+  import Notes from "../../show/tools/Notes.svelte"
   import Panel from "../../system/Panel.svelte"
   import { addStyleString } from "../scripts/textStyle"
 
@@ -139,6 +140,42 @@
       })
     }
   }
+
+  function updateCSSStyle(value: string) {
+    value = value.replaceAll("\n", "")
+    // TODO: this messy code duplicate is temporary
+    let allItems: number[] = $activeEdit.items
+    // update all items if nothing is selected
+    if (!allItems.length) {
+      allItems = []
+      allSlideItems.forEach((_item, i) => allItems.push(i))
+    }
+    allItems = [allItems[0]]
+
+    let values: any = []
+    let oldValues: any = []
+    // loop through all items
+    allItems.forEach((itemIndex) => {
+      oldValues.push({ ...allSlideItems[itemIndex] })
+      values.push(value)
+    })
+
+    if ($activeEdit.id) {
+      history({
+        id: $activeEdit.type === "template" ? "updateTemplate" : "updateOverlay",
+        oldData: { key: "items", data: oldValues },
+        newData: { key: "items", data: values },
+        location: { page: "edit", id: $activeEdit.id, items: allItems },
+      })
+    } else {
+      history({
+        id: "setItems",
+        oldData: { style: { key: "style", values: oldValues } },
+        newData: { style: { key: "style", values } },
+        location: { page: "edit", show: $activeShow!, slide: GetLayout()[$activeEdit.slide!].id, items: allItems },
+      })
+    }
+  }
 </script>
 
 <Panel>
@@ -249,5 +286,10 @@
       <NumberInput value={shadowInset["ishadow-blur"]} on:change={(e) => update("ishadow-blur", e.detail)} />
       <NumberInput value={shadowInset["ishadow-spread"]} min={-100} on:change={(e) => update("ishadow-spread", e.detail)} />
     </span>
+  </div>
+  <hr />
+  <h6>CSS</h6>
+  <div class="items" style="display: flex;flex-direction: column;background: var(--primary-darker);">
+    <Notes value={item?.style.replaceAll(";", ";\n") || ""} on:change={(e) => updateCSSStyle(e.detail)} />
   </div>
 </Panel>

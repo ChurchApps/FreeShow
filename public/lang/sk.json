@@ -107,12 +107,17 @@
     "audio": "Odstrániť audio",
     "nextTimer": "Odstrániť časovač ďalšieho snímku",
     "to_start": "Odstrániť Prejsť na začiatok",
-    "timer": "Odstrániť časovač"
+    "timer": "Odstrániť časovač",
+    "transition": "Remove transition"
   },
   "media": {
     "_loop": "Slučka",
     "play": "Prehrať",
+    "play_no_filters": "Play without filters",
+    "favourite": "Favourite",
     "pause": "Pauza",
+    "stop": "Stop",
+    "volume": "Volume",
     "show": "Zobraziť",
     "flip": "Flip",
     "all": "Priečinky, obrázky a videá",
@@ -152,7 +157,7 @@
     "groups": "Žiadne skupiny",
     "events": "Žiadne udalosti",
     "text": "Niečo napíšte",
-    "timers": "No global timers or private in the shows in this project"
+    "timers": "No global timers and no timers in the shows in this project"
   },
   "remote": {
     "projects": "Projekty",
@@ -178,7 +183,8 @@
     "not_found": "Nenašlo sa",
     "display": "Nepodarilo sa zobraziť výstupné okno na aktuálnej obrazovke",
     "keep_one_layout": "Musíte mať aspoň jedno rozloženie",
-    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
+    "folder_exists": "This folder does already exist"
   },
   "meta": {
     "title": "Názov",
@@ -240,7 +246,7 @@
   "category": {
     "all": "Všetko",
     "unlabeled": "Neoznačené",
-    "favorites": "Obľúbené",
+    "favourites": "Obľúbené",
     "song": "Piesne",
     "presentation": "Presentácie",
     "info": "Info",
@@ -248,6 +254,7 @@
     "events": "Udalosti",
     "pictures": "Obrázky",
     "videos": "Videá",
+    "music": "Music",
     "offers": "Ponuky",
     "notice": "Oznamy",
     "visuals": "Vizuály"
@@ -323,6 +330,7 @@
     "export": "Export",
     "duplicate": "Duplikovať",
     "delete": "Zmazať",
+    "delete_all": "Delete all",
     "close": "Zavrieť",
     "save": "Uložiť",
     "disable": "Vypnúť",
@@ -355,7 +363,8 @@
     "toggle_output": "Toggle output screen",
     "change_tab": "Change tab",
     "change_drawer_tab": "Change drawer tab",
-    "actions": "Akcie"
+    "actions": "Akcie",
+    "remove_media": "Remove media"
   },
   "export": {
     "export": "Export",
@@ -465,12 +474,17 @@
     "pointer": "Pointer",
     "fill": "Výplň",
     "paint": "Maľba",
+    "particles": "Particles",
     "color": "Farba",
     "opacity": "Priehľadnosť",
     "size": "Veľkosť",
+    "radius": "Radius",
     "glow": "Žiara",
+    "hollow": "Hollow",
     "hold": "Hold",
-    "rainbow": "Dúha"
+    "rainbow": "Dúha",
+    "threed": "3D",
+    "dots": "Dots"
   },
   "stage": {
     "slide": "Snímok",
@@ -497,6 +511,7 @@
     "general": "Všeobecné",
     "theme": "Téma",
     "groups": "Skupiny",
+    "output": "Output",
     "display": "Obrazovka",
     "connection": "Pripojenia",
     "calendar": "Kalendár",
@@ -510,6 +525,7 @@
     "disable_labels": "Vypnúť popisky",
     "group_numbers": "Čísla skupín",
     "full_colors": "Plné farby skupín snímok",
+    "format_new_show": "Format text when creating show",
     "auto_output": "Zobraziť výstupné okno pri spustení",
     "display_metadata": "Zobrazova metadata pri prezentácii",
     "split_lines": "Numbers of lines when creating a show",
@@ -602,7 +618,17 @@
     "fade": "Prelínanie",
     "blur": "Rozostrenia",
     "scale": "Zväčšenie",
-    "spin": "Točenie"
+    "spin": "Točenie",
+    "slide": "Slide"
+  },
+  "easings": {
+    "linear": "Linear",
+    "elastic": "Elastic",
+    "bounce": "Bounce",
+    "back": "Jump",
+    "circ": "Circular",
+    "cubic": "Cubic",
+    "sine": "Flow"
   },
   "month": {
     "1": "Január",

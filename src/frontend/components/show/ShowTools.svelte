@@ -3,7 +3,6 @@
   import { activeShow, labelsDisabled, showsCache } from "../../stores"
   import { _show } from "../helpers/shows"
   import Tabs from "../main/Tabs.svelte"
-  import Audio from "./tools/Audio.svelte"
   import Layout from "./tools/Layout.svelte"
   import Media from "./tools/Media.svelte"
   import Metadata from "./tools/Metadata.svelte"
@@ -53,10 +52,10 @@
       <div class="content">
         <Media />
       </div>
-    {:else if active === "audio"}
+      <!-- {:else if active === "audio"}
       <div class="content">
         <Audio />
-      </div>
+      </div> -->
     {:else if active === "metadata"}
       <div class="content">
         <Metadata />

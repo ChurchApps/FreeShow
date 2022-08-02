@@ -2,6 +2,7 @@
   import { OUTPUT } from "../../../types/Channels"
   import { activeShow, activeTimers, dictionary, showsCache } from "../../stores"
   import { send } from "../../utils/request"
+  import { getAudioDuration } from "../helpers/audio"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { _show } from "../helpers/shows"
@@ -16,10 +17,13 @@
   export let index: number
   export let style: string
 
+  $: console.log(layoutSlide.audio)
+
   $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
   $: notMuted = background?.muted === false
 
   $: nextTimer = (layoutSlide.nextTimer || 0) > 0 ? (layoutSlide.nextTimer > 59 ? joinTime(secondsToTime(layoutSlide.nextTimer)) : layoutSlide.nextTimer + "s") : null
+  $: transition = layoutSlide?.transition || layoutSlide?.mediaTransition
 
   function removeLayout(key: string) {
     history({
@@ -76,6 +80,23 @@
       </div>
     </div>
   {/if}
+  {#if transition}
+    <div>
+      <div class="button">
+        <Button
+          style="padding: 5px;"
+          redHover
+          title={$dictionary.remove?.transition}
+          on:click={() => {
+            removeLayout("transition")
+            removeLayout("mediaTransition")
+          }}
+        >
+          <Icon id="transition" white />
+        </Button>
+      </div>
+    </div>
+  {/if}
   {#if background}
     <div>
       <div class="button">
@@ -118,7 +139,17 @@
           <Icon id="audio" white />
         </Button>
       </div>
-      <span><p>03:32</p></span>
+      <span>
+        {#if layoutSlide.audio.length === 1}
+          {#await getAudioDuration(_show("active").get().media[layoutSlide.audio[0]].path)}
+            <p>00:00</p>
+          {:then duration}
+            <p>{joinTime(secondsToTime(duration))}</p>
+          {/await}
+        {:else}
+          <p>{layoutSlide.audio.length}</p>
+        {/if}
+      </span>
     </div>
   {/if}
 </div>

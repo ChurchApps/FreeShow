@@ -1,6 +1,6 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-  import { dictionary, outBackground, outLocked, playerVideos, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, outBackground, outLocked, playerVideos, videoExtensions } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
   import Button from "../../inputs/Button.svelte"
   import VideoSlider from "../VideoSlider.svelte"
@@ -19,14 +19,26 @@
     window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
     window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
   }
+
+  function openPreview() {
+    if (!$outBackground) return
+    console.log($outBackground)
+    activeShow.set({ id: ($outBackground.path || $outBackground.id)!, type: ($outBackground.type || "image") as any })
+  }
+
+  // auto clear video on finish
+  $: if (videoTime && videoData.duration && !videoData.paused && videoTime >= videoData.duration && !videoData.loop) {
+    outBackground.set(null)
+    videoTime = 0
+  }
 </script>
 
 {#if $outBackground?.type === "player"}
-  <span class="name">
+  <span class="name" on:click={openPreview}>
     <p>{title.length ? title : $playerVideos[$outBackground?.id || ""].name}</p>
   </span>
 {:else}
-  <span class="name">
+  <span class="name" on:click={openPreview}>
     <p>{mediaName}</p>
   </span>
 {/if}
@@ -89,5 +101,11 @@
     justify-content: center;
     padding: 10px;
     opacity: 0.8;
+
+    cursor: pointer;
+  }
+
+  .name:hover {
+    background-color: var(--primary-darker);
   }
 </style>

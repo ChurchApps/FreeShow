@@ -107,12 +107,17 @@
     "audio": "Eliminar audio",
     "nextTimer": "Eliminar temporizador de siguiente diapositiva",
     "to_start": "Eliminar inicio",
-    "timer": "Eliminar temporizador"
+    "timer": "Eliminar temporizador",
+    "transition": "Remove transition"
   },
   "media": {
     "_loop": "Ciclo",
     "play": "Encender",
+    "play_no_filters": "Play without filters",
+    "favourite": "Favourite",
     "pause": "Pausar",
+    "stop": "Stop",
+    "volume": "Volume",
     "show": "Mostrar",
     "flip": "Flip",
     "all": "Carpetas, imágenes y videos",
@@ -152,7 +157,7 @@
     "groups": "Sin eventos",
     "events": "Escribir algo",
     "text": "Sin temporizadores en los programas de este proyecto",
-    "timers": "No global timers or private in the shows in this project"
+    "timers": "No global timers and no timers in the shows in this project"
   },
   "remote": {
     "projects": "Proyectos",
@@ -178,7 +183,8 @@
     "not_found": "No encontrado",
     "display": "Ventana de resultado no puede mostrarse en esta vista",
     "keep_one_layout": "Usted debe tener al menos un diseño",
-    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video."
+    "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
+    "folder_exists": "This folder does already exist"
   },
   "meta": {
     "title": "Título",
@@ -240,7 +246,7 @@
   "category": {
     "all": "Todo",
     "unlabeled": "Sin identificar",
-    "favorites": "Favoritos",
+    "favourites": "Favoritos",
     "song": "Canción",
     "presentation": "Presentación",
     "info": "Información",
@@ -248,6 +254,7 @@
     "events": "Eventos",
     "pictures": "Imágenes",
     "videos": "Videos",
+    "music": "Music",
     "offers": "Ofertas",
     "notice": "Noticia",
     "visuals": "Ilustraciones"
@@ -323,6 +330,7 @@
     "export": "Exportar",
     "duplicate": "Repetir",
     "delete": "Eliminar",
+    "delete_all": "Delete all",
     "close": "Cerrar",
     "save": "Guardar",
     "disable": "Desactivar",
@@ -355,7 +363,8 @@
     "toggle_output": "Toggle output screen",
     "change_tab": "Change tab",
     "change_drawer_tab": "Change drawer tab",
-    "actions": "Acciones"
+    "actions": "Acciones",
+    "remove_media": "Remove media"
   },
   "export": {
     "export": "Exportar",
@@ -465,12 +474,17 @@
     "pointer": "Puntero",
     "fill": "Rellenar",
     "paint": "Pintar",
+    "particles": "Particles",
     "color": "Color",
     "opacity": "Resolución",
     "size": "Tamaño",
+    "radius": "Radius",
     "glow": "Brillo",
+    "hollow": "Hollow",
     "hold": "Fijar",
-    "rainbow": "Arco iris"
+    "rainbow": "Arco iris",
+    "threed": "3D",
+    "dots": "Dots"
   },
   "stage": {
     "slide": "Diapositiva",
@@ -497,6 +511,7 @@
     "general": "General",
     "theme": "Tema",
     "groups": "Grupos",
+    "output": "Output",
     "display": "Visualización",
     "connection": "Conexión",
     "calendar": "Calendario",
@@ -510,6 +525,7 @@
     "disable_labels": "Etiquetas desactivadas",
     "group_numbers": "Números de grupo",
     "full_colors": "Despliega todos los grupos de colores",
+    "format_new_show": "Format text when creating show",
     "auto_output": "Muestra la ventana de salida en la pantalla de inicio",
     "display_metadata": "Visualizar metadatos mientras se están mostrando",
     "split_lines": "Numbers of lines when creating a show",
@@ -602,7 +618,17 @@
     "fade": "Desvanecer",
     "blur": "Desenfocar",
     "scale": "Escalar",
-    "spin": "Rotar"
+    "spin": "Rotar",
+    "slide": "Slide"
+  },
+  "easings": {
+    "linear": "Linear",
+    "elastic": "Elastic",
+    "bounce": "Bounce",
+    "back": "Jump",
+    "circ": "Circular",
+    "cubic": "Cubic",
+    "sine": "Flow"
   },
   "month": {
     "1": "Enero",

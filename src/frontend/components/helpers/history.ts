@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeEdit, activePage, activeStage, notFound, playerVideos, shows, undoHistory } from "../../stores"
+import { activeEdit, activePage, activeStage, dictionary, notFound, playerVideos, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -28,6 +28,7 @@ import {
 import { redoAddCategory, redoAddOverlayOrTemplate, undoAddCategory, undoAddOverlayOrTemplate } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { loadShows, setShow } from "./setShow"
+import { checkName } from "./show"
 import { _show } from "./shows"
 
 export type HistoryPages = "drawer" | "show" | "edit" | "stage" | "settings"
@@ -47,6 +48,7 @@ export type HistoryIDs =
   | "updateOverlay"
   // new
   | "newMediaFolder"
+  | "newAudioFolder"
   | "newProject"
   | "newFolder"
   | "newShowDrawer"
@@ -67,6 +69,7 @@ export type HistoryIDs =
   | "deleteTemplate"
   | "deleteShowsCategory"
   | "deleteMediaFolder"
+  | "deleteAudioFolder"
   | "deleteOverlaysCategory"
   | "deleteTemplatesCategory"
   | "removeSlides"
@@ -83,6 +86,7 @@ export type HistoryIDs =
   | "slide"
   | "changeSlide"
   | "showMedia"
+  | "showAudio"
   | "changeLayoutsSlides"
   | "changeLayoutKey"
   | "changeLayout"
@@ -435,7 +439,10 @@ export function history(obj: History, undo: null | boolean = null) {
           id = uid(12)
           obj.newData.id = id
         }
-        if (!obj.newData.show.name.length) obj.newData.show.name = id
+        if (!obj.newData.show.name.length) {
+          const defaultShowName: string = checkName(get(dictionary).main?.unnamed || "Unnamed")
+          obj.newData.show.name = defaultShowName
+        }
         setShow(id, obj.newData.show)
 
         let as: any = { id, type: "show" }
@@ -505,6 +512,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "newShowsCategory":
     case "newMediaFolder":
+    case "newAudioFolder":
     case "newOverlaysCategory":
     case "newTemplatesCategory":
       if (undo) obj = undoAddCategory(obj)
@@ -748,6 +756,7 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "deleteShowsCategory":
     case "deleteMediaFolder":
+    case "deleteAudioFolder":
     case "deleteOverlaysCategory":
     case "deleteTemplatesCategory":
       if (undo) obj = redoAddCategory(obj)
@@ -955,6 +964,46 @@ export function history(obj: History, undo: null | boolean = null) {
       //   }
       //   return a
       // })
+      break
+    case "showAudio":
+      // get existing show media id
+      let audioId: null | string = null
+      if (obj.newData.path) {
+        _show(showID)
+          .media()
+          .get()
+          .forEach((media: any) => {
+            if (media.path === obj.newData.path) audioId = media.key
+          })
+      }
+
+      // layout audio
+      let audio =
+        _show(showID)
+          .layouts([obj.location!.layout!])
+          .slides([[obj.location!.layoutSlide!]])
+          .get()[0]?.[0]?.audio || []
+
+      if (undo) {
+        _show(showID).media([obj.newData.path]).remove()
+        if (audioId) {
+          audio.splice(audioId, 1)
+          _show(showID)
+            .layouts([obj.location!.layout!])
+            .slides([[obj.location!.layoutSlide!]])
+            .set({ key: "audio", value: audio })
+        }
+      } else {
+        if (!audioId) audioId = _show(showID).media().add(obj.newData)
+
+        if (!audio.includes(audioId)) {
+          audio.push(audioId)
+
+          let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
+          if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "audio", value: audio })
+          else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "audio", value: audio })
+        }
+      }
       break
     case "changeLayoutsSlides":
       old = []

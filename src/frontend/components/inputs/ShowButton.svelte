@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { activeProject, activeShow, categories, notFound, outBackground, outLocked, outSlide, playerVideos, projects, shows, showsCache } from "../../stores"
+  import { activeProject, activeShow, categories, notFound, outBackground, outLocked, outSlide, playerVideos, playingAudio, projects, shows, showsCache } from "../../stores"
+  import { playAudio } from "../helpers/audio"
   import { historyAwait } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { checkName } from "../helpers/show"
@@ -50,7 +51,7 @@
           custom = true
           iconID = $categories[$shows[show.id].category || ""].icon || null
         } else iconID = "noIcon"
-      }
+      } else if (type === "audio") iconID = "music"
       // else if (type === "player") iconID = "live"
       else iconID = type
     }
@@ -76,29 +77,31 @@
       if (i > -1) pos = i
     }
 
-    if (!e.ctrlKey && !e.metaKey && !active && !e.target.closest("input")) {
-      let show: any = { id, type }
-      if (pos !== null) {
-        show.index = pos
+    if (e.ctrlKey || e.metaKey || active || e.target.closest("input")) return
 
-        if ($showsCache[id]) {
-          // set active layout from project
-          if ($projects[$activeProject!].shows[pos].layout) {
-            showsCache.update((a) => {
-              a[id].settings.activeLayout = $projects[$activeProject!].shows[pos!].layout!
-              return a
-            })
-          }
+    let newShow: any = { id, type }
 
-          // set project layout
-          projects.update((a) => {
-            a[$activeProject!].shows[pos!].layout = $showsCache[id].settings.activeLayout
+    if (pos !== null) {
+      newShow.index = pos
+      if (type === "audio") newShow.name = show.name
+      else if ($showsCache[id]) {
+        // set active layout from project
+        if ($projects[$activeProject!].shows[pos].layout) {
+          showsCache.update((a) => {
+            a[id].settings.activeLayout = $projects[$activeProject!].shows[pos!].layout!
             return a
           })
         }
+
+        // set project layout
+        projects.update((a) => {
+          a[$activeProject!].shows[pos!].layout = $showsCache[id].settings.activeLayout
+          return a
+        })
       }
-      activeShow.set(show)
     }
+
+    activeShow.set(newShow)
   }
 
   function doubleClick(e: any) {
@@ -109,10 +112,11 @@
       if ($outSlide?.id === id && $outSlide?.index === 0 && $outSlide?.layout === $showsCache[id].settings.activeLayout) return
       outSlide.set({ id, layout: $showsCache[id].settings.activeLayout, index: 0 })
     } else if (type === "image" || type === "video") {
-      let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: "media" }
+      let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: type }
       if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
       outBackground.set(out)
-    } else if (type === "player") outBackground.set({ id, type: "player" })
+    } else if (type === "audio") playAudio({ path: id, name: show.name })
+    else if (type === "player") outBackground.set({ id, type: "player" })
   }
 
   function edit(e: any) {
@@ -127,7 +131,7 @@
     on:click={click}
     on:dblclick={doubleClick}
     {active}
-    outline={id === $outSlide?.id || id === ($outBackground?.id || $outBackground?.path)}
+    outline={id === $outSlide?.id || id === ($outBackground?.path || $outBackground?.id) || $playingAudio[id]}
     class="context {$$props.class}"
     {style}
     bold={false}
@@ -139,7 +143,14 @@
         <Icon id={iconID} {custom} right />
       {/if}
       <!-- <p style="margin: 5px;">{newName}</p> -->
-      <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} bind:edit={editActive} allowEmpty={false} />
+      <HiddenInput
+        value={newName}
+        id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id}
+        on:edit={edit}
+        bind:edit={editActive}
+        allowEmpty={false}
+        allowEdit={!show.type || show.type === "show"}
+      />
     </span>
 
     {#if match}

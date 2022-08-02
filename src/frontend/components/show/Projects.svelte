@@ -127,7 +127,13 @@
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
               <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
               <SelectElem id="show" data={{ id: show.id, index, type: show.type }} {fileOver} borders="edges" trigger="column" draggable>
-                <ShowButton id={show.id} {show} {index} class="context #{show.type ? '' : 'show'}__project" icon />
+                <ShowButton
+                  id={show.id}
+                  {show}
+                  {index}
+                  class="context #project_{show.type ? (show.type === 'video' || show.type === 'image' ? 'media' : show.type) : 'show'}__project"
+                  icon
+                />
               </SelectElem>
               <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
             {/each}
