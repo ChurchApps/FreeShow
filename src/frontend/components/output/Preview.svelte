@@ -3,6 +3,7 @@
 
   import type { Resolution } from "../../../types/Settings"
   import { activePage, activeShow, outBackground, outLocked, outOverlays, outSlide, outTransition, playingAudio, presenterControllerKeys, screen, showsCache } from "../../stores"
+  import { clearAudio } from "../helpers/audio"
   import { nextSlide, previousSlide } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -46,7 +47,7 @@
       if (!$outLocked) outOverlays.set([])
     },
     F4: () => {
-      if (!$outLocked) playingAudio.set({})
+      if (!$outLocked) clearAudio()
     },
     ".": () => {
       // if ($presenterControllerKeys)

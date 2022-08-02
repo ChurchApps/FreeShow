@@ -1,6 +1,6 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-  import { dictionary, outBackground, outLocked, outOverlays, outSlide, outTransition, playingAudio } from "../../stores"
+  import { dictionary, outBackground, outLocked, outOverlays, outSlide, outTransition, playingAudio, playingVideos } from "../../stores"
   import { clearAudio } from "../helpers/audio"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -21,6 +21,13 @@
 
     setTimeout(() => {
       if (videoData.paused) {
+        // remove from playing
+        playingVideos.update((a) => {
+          let existing = a.findIndex((a) => a.location === "output")
+          if (existing > -1) a.splice(existing, 1)
+          return a
+        })
+
         video = null
         videoTime = 0
         videoData = {

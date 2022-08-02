@@ -55,4 +55,8 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  div.list :global(span) {
+    text-align: left;
+    padding: 0 10px;
+  }
 </style>

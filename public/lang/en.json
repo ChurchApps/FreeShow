@@ -116,6 +116,8 @@
     "play_no_filters": "Play without filters",
     "favourite": "Favourite",
     "pause": "Pause",
+    "stop": "Stop",
+    "volume": "Volume",
     "show": "Show",
     "flip": "Flip",
     "all": "Folders, images & videos",

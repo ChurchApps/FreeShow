@@ -59,6 +59,7 @@ import {
   videoExtensions,
   webFavorites,
   textCache,
+  volume,
 } from "../stores"
 import type { SaveListSettings } from "./../../types/Save"
 
@@ -114,6 +115,7 @@ export function save() {
     // themes: get(themes),
     videoExtensions: get(videoExtensions),
     webFavorites: get(webFavorites),
+    volume: get(volume),
   }
   // save settings & shows
   // , shows: get(shows)

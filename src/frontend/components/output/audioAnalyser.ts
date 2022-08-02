@@ -104,7 +104,8 @@ export function audioAnalyser(analyser: any) {
 }
 
 function channels(analyser: any) {
-  let audioChannels: { left: number; right: number } = { left: 0, right: 0 }
+  // let audioChannels: { left: number; right: number } = { left: 0, right: 0 }
+  let channel: number = 0
 
   // TODO: no interval?
   var array = new Uint8Array(analyser.fftSize)
@@ -123,9 +124,15 @@ function channels(analyser: any) {
 
   average /= array.length
 
-  const GAIN = 2
-  audioChannels.left = Math.min(100, (average / 128) * 100 * GAIN)
-  audioChannels.right = Math.min(100, (average / 128) * 100 * GAIN)
+  // const GAIN = 2
+  // audioChannels.left = Math.min(100, (average / 128) * 100 * GAIN)
+  // audioChannels.right = Math.min(100, (average / 128) * 100 * GAIN)
+  // channel = Math.min(100, (average / 128) * 100 * GAIN)
+  channel = (average / 256) * 100
+  // not sure about this
+  if (channel < 25) channel *= 3
+  else if (channel < 50) channel *= 2
+  else if (channel < 75) channel *= 1.2
 
   // console.log((average / 128) * 100)
 
@@ -138,5 +145,6 @@ function channels(analyser: any) {
   // ctx.fill()
 
   // requestAnimationFrame(draw)
-  return audioChannels
+  // return audioChannels
+  return channel
 }

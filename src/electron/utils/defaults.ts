@@ -102,6 +102,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     resolution: { width: 1920, height: 1080 },
   },
   os: { platform: "", name: "Computer" },
+  volume: 1,
 }
 
 export const defaultThemes: any = {

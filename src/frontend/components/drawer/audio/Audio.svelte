@@ -1,6 +1,6 @@
 <script lang="ts">
   import { READ_FOLDER } from "../../../../types/Channels"
-  import { audioExtensions, audioFolders, dictionary, media, playingAudio } from "../../../stores"
+  import { activeShow, audioExtensions, audioFolders, dictionary, media, playingAudio } from "../../../stores"
   import { getAudioDuration, playAudio } from "../../helpers/audio"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
@@ -72,7 +72,7 @@
 
   // search
   $: if (searchValue !== undefined || files) filterSearch()
-  const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
+  const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
   let fullFilteredFiles: any[] = []
   function filterSearch() {
     fullFilteredFiles = JSON.parse(JSON.stringify(files))
@@ -171,7 +171,17 @@
               <Folder bind:rootPath={path} name={file.name} path={file.path} mode="list" />
             {:else}
               <SelectElem id="audio" data={{ path: file.path, name: file.name }} draggable>
-                <Button class="context #audio_button" outline={$playingAudio[file.path]} style="width: 100%;" title={file.path} bold={false} on:click={() => playAudio(file)}>
+                <Button
+                  class="context #audio_button"
+                  outline={$playingAudio[file.path]}
+                  active={$activeShow?.id === file.path}
+                  border
+                  style="width: 100%;"
+                  title={file.path}
+                  bold={false}
+                  on:click={() => activeShow.set({ id: file.path, name: file.name, type: "audio" })}
+                  on:dblclick={() => playAudio({ path: file.path, name: file.name })}
+                >
                   <span>
                     <Icon
                       id={$playingAudio[file.path]?.paused === true
@@ -181,6 +191,7 @@
                         : $media[file.path]?.favourite === true && active !== "favourites"
                         ? "star"
                         : "music"}
+                      white={$playingAudio[file.path]?.paused === true || (!$playingAudio[file.path] && ($media[file.path]?.favourite !== true || active === "favourites"))}
                       right
                     />
                     <p>{file.name.slice(0, file.name.lastIndexOf("."))}</p>

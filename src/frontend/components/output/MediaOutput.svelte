@@ -2,12 +2,12 @@
   import { linear } from "svelte/easing"
   import { OUTPUT } from "../../../types/Channels"
   import type { Transition, TransitionType } from "../../../types/Show"
-  import { audioSource, currentWindow, mediaFolders, outBackground, videoExtensions } from "../../stores"
+  import { audioChannels, currentWindow, mediaFolders, outBackground, playingVideos, videoExtensions, volume } from "../../stores"
   import { send } from "../../utils/request"
   import { easings, transitions } from "../../utils/transitions"
+  import { analyseAudio, getAnalyser } from "../helpers/audio"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Player from "../system/Player.svelte"
-  import { audioAnalyser } from "./audioAnalyser"
   import Camera from "./Camera.svelte"
   import Window from "./Window.svelte"
 
@@ -117,55 +117,55 @@
 
   // AUDIO ANALYZER
 
-  let audioChannels: any = { left: 0, right: 0 }
+  // let audioChannels: any = { left: 0, right: 0 }
 
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API
   // https://ui.dev/web-audio-api/
 
-  $: if (($outBackground?.type !== "video" || videoData.paused) && interval && !mirror) {
-    audioChannels = { left: 0, right: 0 }
-    send(OUTPUT, ["AUDIO_MAIN"], { channels: audioChannels })
-    clearInterval(interval)
-  }
-  $: if ($outBackground?.type !== "video") {
-    analyser = null
-    audioSource.set(null)
-  }
+  // $: if (($outBackground?.type !== "video" || videoData.paused) && !mirror) {
+  //   audioChannels.set({ left: 0, right: 0 })
+  //   send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: $audioChannels })
+  // }
+  // $: if ($outBackground?.type !== "video" && $currentWindow === "output") playingVideos.set([])
 
-  let interval: any = null
-  $: {
-    if (!videoData.paused && video !== null && $audioSource !== video && $currentWindow === "output") {
-      audioSource.set(video)
-      analyse()
+  // let interval: any = null
+  // $: if (!videoData.paused && video !== null && $currentWindow === "output") analyseVideo()
+
+  // only output window
+  let currentAnalysedElem: any = null
+  let currentAnalyser: any = null
+  async function analyseVideo() {
+    // if ($playingVideos[0]?.video === video) return
+    // Failed to execute 'createMediaElementSource' on 'AudioContext': HTMLMediaElement already connected previously to a different MediaElementSourceNode.
+    if (currentAnalysedElem !== video) {
+      currentAnalyser = await getAnalyser(video)
+      currentAnalysedElem = video
     }
+    playingVideos.set([{ analyser: currentAnalyser }])
+    analyseAudio()
   }
 
-  let analyser: any = null
-  $: if (!videoData.paused && analyser) startInterval()
+  $: if ($currentWindow === "output" && $audioChannels) send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: $audioChannels })
+  $: if ($currentWindow === "output" && (video === null || videoData.paused === true)) playingVideos.set([])
+  $: if ($currentWindow === "output" && video !== null && videoData.paused === false) analyseVideo()
 
-  function startInterval() {
-    interval = setInterval(() => {
-      audioChannels = audioAnalyser(analyser)
-      send(OUTPUT, ["AUDIO_MAIN"], { channels: audioChannels })
-    }, 100)
-  }
+  // $: if ($currentWindow === "output" && $audioChannels) send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: $audioChannels })
+  // $: if ($currentWindow === "output" && videoData && $playingVideos.length) {
+  //   let analyser = $playingVideos[0]
+  //   playingVideos.set([{ analyser, paused: videoData.paused }])
+  //   analyseAudio()
+  // }
+  // $: if ($currentWindow === "output" && video === null) playingVideos.set([])
 
-  async function analyse() {
-    console.log(0)
-    // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
-    let ac = new AudioContext()
-    let source = ac.createMediaElementSource(video)
+  // let analyser: any = null
+  // $: if (!videoData.paused && analyser) startInterval()
 
-    analyser = ac.createAnalyser() //we create an analyser
-    analyser.smoothingTimeConstant = 0.9
-    analyser.fftSize = 512 //the total samples are half the fft size.
-
-    source.connect(analyser)
-    analyser.connect(ac.destination)
-
-    if (interval) clearInterval(interval)
-    startInterval()
-  }
+  // function startInterval() {
+  //   interval = setInterval(() => {
+  //     audioChannels = audioAnalyser(analyser)
+  //     send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: audioChannels })
+  //   }, 100)
+  // }
 </script>
 
 <!-- TODO: display image stretch / scale -->
@@ -183,6 +183,7 @@
         bind:currentTime={videoTime}
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
+        bind:volume={$volume}
         muted={$currentWindow !== "output" ? true : videoData.muted}
         src={path}
         autoplay

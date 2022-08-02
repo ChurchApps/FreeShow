@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
+import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { loadShows } from "../components/helpers/setShow"
 import { checkName } from "../components/helpers/show"
@@ -53,6 +54,7 @@ import {
   themes,
   transitionData,
   version,
+  playingVideos,
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
 import { checkForUpdates } from "./checkForUpdates"
@@ -159,6 +161,19 @@ const receiveOUTPUT: any = {
   DISPLAY: (a: any) => outputDisplay.set(a.enabled),
   POSITION: (a: any) => outputPosition.set(a),
   PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
+  AUDIO_MAIN: async (data: any) => {
+    // let analyser: any = await getAnalyser(video)
+    // TODO: remove when finished
+    playingVideos.update((a) => {
+      let existing = a.findIndex((a) => a.id === data.id && a.location === "output")
+      if (existing > -1) a[existing].channels = data.channels
+      else {
+        a.push({ location: "output", ...data })
+        analyseAudio()
+      }
+      return a
+    })
+  },
   SCREEN_ADDED: (a: any) => {
     if (get(autoOutput) && !get(outputDisplay)) {
       send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })

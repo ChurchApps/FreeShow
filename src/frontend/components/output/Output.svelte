@@ -2,7 +2,7 @@
   import { linear } from "svelte/easing"
   import { OUTPUT } from "../../../types/Channels"
   import type { Transition, TransitionType } from "../../../types/Show"
-  import { backgroundColor, currentWindow, displayMetadata, outBackground, outOverlays, outSlide, overlays, screen, showsCache, transitionData } from "../../stores"
+  import { backgroundColor, currentWindow, displayMetadata, outBackground, outOverlays, outSlide, overlays, screen, showsCache, transitionData, volume } from "../../stores"
   import { receive } from "../../utils/request"
   import { easings, transitions } from "../../utils/transitions"
   import Draw from "../draw/Draw.svelte"
@@ -55,6 +55,7 @@
       if (a?.muted) videoData.muted = a.muted
       if (a?.loop) videoData.loop = a.loop
     },
+    VOLUME: (a: any) => volume.set(a),
   }
 
   if ($currentWindow === "output" || mirror) receive(OUTPUT, receiveOUTPUT)

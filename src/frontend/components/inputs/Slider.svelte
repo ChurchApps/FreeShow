@@ -8,7 +8,7 @@
   style={$$props.style}
   min={$$props.min || 0}
   max={$$props.max || 100}
-  step={$$props.step}
+  step={$$props.step || 1}
   title={$$props.title}
   disabled={$$props.disabled}
   on:mouseenter

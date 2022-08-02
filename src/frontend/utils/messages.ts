@@ -1,4 +1,4 @@
-import { alertUpdates, autoOutput, backgroundColor, maxConnections, outputPosition, ports, scriptures, scriptureSettings, splitLines, transitionData } from "./../stores"
+import { alertUpdates, autoOutput, backgroundColor, maxConnections, outputPosition, ports, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -97,6 +97,9 @@ export function listen() {
   })
   playerVideos.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "PLAYER_VIDEOS", data })
+  })
+  volume.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "VOLUME", data })
   })
 
   // FROM CLIENT
@@ -200,4 +203,5 @@ const saveList: { [key in SaveList]: any } = {
   transitionData: transitionData,
   videoExtensions: videoExtensions,
   webFavorites: webFavorites,
+  volume: volume,
 }

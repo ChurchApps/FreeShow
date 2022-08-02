@@ -70,11 +70,6 @@
   function click(e: any) {
     if (editActive) return
 
-    if (type === "audio") {
-      playAudio({ path: id, name: show.name })
-      return
-    }
-
     // set active show
     let pos = index
     if (index === null && $activeProject !== null) {
@@ -82,29 +77,31 @@
       if (i > -1) pos = i
     }
 
-    if (!e.ctrlKey && !e.metaKey && !active && !e.target.closest("input")) {
-      let show: any = { id, type }
-      if (pos !== null) {
-        show.index = pos
+    if (e.ctrlKey || e.metaKey || active || e.target.closest("input")) return
 
-        if ($showsCache[id]) {
-          // set active layout from project
-          if ($projects[$activeProject!].shows[pos].layout) {
-            showsCache.update((a) => {
-              a[id].settings.activeLayout = $projects[$activeProject!].shows[pos!].layout!
-              return a
-            })
-          }
+    let newShow: any = { id, type }
 
-          // set project layout
-          projects.update((a) => {
-            a[$activeProject!].shows[pos!].layout = $showsCache[id].settings.activeLayout
+    if (pos !== null) {
+      newShow.index = pos
+      if (type === "audio") newShow.name = show.name
+      else if ($showsCache[id]) {
+        // set active layout from project
+        if ($projects[$activeProject!].shows[pos].layout) {
+          showsCache.update((a) => {
+            a[id].settings.activeLayout = $projects[$activeProject!].shows[pos!].layout!
             return a
           })
         }
+
+        // set project layout
+        projects.update((a) => {
+          a[$activeProject!].shows[pos!].layout = $showsCache[id].settings.activeLayout
+          return a
+        })
       }
-      activeShow.set(show)
     }
+
+    activeShow.set(newShow)
   }
 
   function doubleClick(e: any) {
@@ -118,8 +115,8 @@
       let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: type }
       if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
       outBackground.set(out)
-      // } else if (type === "audio") playAudio()
-    } else if (type === "player") outBackground.set({ id, type: "player" })
+    } else if (type === "audio") playAudio({ path: id, name: show.name })
+    else if (type === "player") outBackground.set({ id, type: "player" })
   }
 
   function edit(e: any) {

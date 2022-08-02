@@ -46,3 +46,4 @@ export type SaveListSettings =
   | "transitionData"
   | "videoExtensions"
   | "webFavorites"
+  | "volume"

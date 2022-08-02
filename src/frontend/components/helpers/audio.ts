@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
-import { audioChannels, playingAudio } from "../../stores"
+import { audioChannels, playingAudio, playingVideos, volume } from "../../stores"
 import { audioAnalyser } from "../output/audioAnalyser"
 
-export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolean = true) {
+export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolean = true, startAt: number = 0) {
   let existing: any = get(playingAudio)[path]
   if (existing) {
     if (!pauseIfPlaying) return
@@ -23,7 +23,7 @@ export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolea
   let analyser: any = await getAnalyser(audio)
   playingAudio.update((a) => {
     a[path] = {
-      name: name.indexOf(".") ? name.slice(0, name.lastIndexOf(".")) : name,
+      name: name.indexOf(".") > -1 ? name.slice(0, name.lastIndexOf(".")) : name,
       paused: false,
       analyser,
       audio,
@@ -31,6 +31,8 @@ export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolea
     return a
   })
 
+  audio.volume = get(volume)
+  if (startAt > 0) audio.currentTime = startAt
   audio.play()
   analyseAudio()
 }
@@ -38,10 +40,11 @@ export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolea
 // const audioUpdateInterval: number = 100 // ms
 const audioUpdateInterval: number = 50 // ms
 let interval: any = null
-function analyseAudio() {
+export function analyseAudio() {
   if (interval) return
 
-  let allAudio: any[] = Object.values(get(playingAudio)).filter((a) => a.paused === false)
+  let allAudio: any[] = Object.values(get(playingAudio)).filter((a) => a.paused === false && a.audio.volume)
+  if (get(volume) && get(playingVideos).length) get(playingVideos).map((a) => allAudio.push({ ...a }))
   let updateAudio: number = 0
   interval = setInterval(() => {
     // get new audio
@@ -61,7 +64,11 @@ function analyseAudio() {
             return false
           }
 
-          return audio.paused === false
+          return audio.paused === false && audio.audio.volume
+        })
+      if (get(volume) && get(playingVideos).length)
+        get(playingVideos).map((a) => {
+          if (!a.paused) allAudio.push({ ...a })
         })
     }
 
@@ -76,7 +83,9 @@ function analyseAudio() {
     let allLefts: number[] = []
     let allRights: number[] = []
     allAudio.forEach((a: any) => {
-      let aa = audioAnalyser(a.analyser)
+      let aa: any
+      if (a.channels !== undefined) aa = a.channels
+      else aa = { left: audioAnalyser(a.analyser.left), right: audioAnalyser(a.analyser.right) }
       if (aa.left > 0 || aa.right > 0) {
         allLefts.push(aa.left)
         allRights.push(aa.right)
@@ -104,20 +113,38 @@ export function clearAudio() {
 }
 
 // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
-async function getAnalyser(audio: any) {
-  let analyser: any = null
-
+export async function getAnalyser(elem: any) {
   let ac = new AudioContext()
-  let source = ac.createMediaElementSource(audio)
+  let source = ac.createMediaElementSource(elem)
 
-  analyser = ac.createAnalyser() //we create an analyser
-  analyser.smoothingTimeConstant = 0.9
-  analyser.fftSize = 512 //the total samples are half the fft size.
+  // let analyser = ac.createAnalyser()
+  // analyser.smoothingTimeConstant = 0.9
+  // // analyser.fftSize = 512 // the total samples are half the fft size
+  // analyser.fftSize = 256 // the total samples are half the fft size
 
-  source.connect(analyser)
-  analyser.connect(ac.destination)
+  // source.connect(analyser)
+  // analyser.connect(ac.destination)
 
-  return analyser
+  // split channels
+  // https://stackoverflow.com/questions/48930799/connecting-nodes-with-each-other-with-the-web-audio-api
+  let splitter = ac.createChannelSplitter(2)
+  let merger = ac.createChannelMerger(2)
+  source.connect(splitter)
+
+  let leftAnalyser = ac.createAnalyser()
+  let rightAnalyser = ac.createAnalyser()
+  leftAnalyser.smoothingTimeConstant = 0.9
+  rightAnalyser.smoothingTimeConstant = 0.9
+  leftAnalyser.fftSize = 256
+  rightAnalyser.fftSize = 256
+  splitter.connect(leftAnalyser, 0)
+  splitter.connect(rightAnalyser, 1)
+
+  splitter.connect(merger, 1, 1)
+  // merger.connect(gain);
+  merger.connect(ac.destination)
+
+  return { left: leftAnalyser, right: rightAnalyser }
 }
 
 export async function getAudioDuration(path: string) {

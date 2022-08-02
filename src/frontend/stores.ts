@@ -24,7 +24,6 @@ export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const dictionary: Writable<Dictionary> = writable({})
 export const notFound: Writable<any> = writable({ show: [], bible: [] })
 export const saved: Writable<boolean> = writable(true)
-export const audioSource: Writable<any> = writable(null)
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
 export const alertMessage: Writable<string> = writable("")
@@ -170,7 +169,9 @@ export const mediaFolders: Writable<Categories> = writable({}) // {default}
 // audio
 export const audioFolders: Writable<Categories> = writable({}) // {default}
 export const audioChannels: Writable<{ left: number; right: number }> = writable({ left: 0, right: 0 })
+export const playingVideos: Writable<any[]> = writable([])
 export const playingAudio: Writable<{ [key: string]: any }> = writable({})
+export const volume: Writable<number> = writable(100) // 100
 
 // web
 export const webFavorites: Writable<Categories> = writable({
