@@ -1,15 +1,16 @@
-import { BIBLE, IMPORT } from "./../types/Channels"
 import { app, BrowserWindow, desktopCapturer, dialog, Display, ipcMain, Menu, screen } from "electron"
 import fs from "fs"
 import path, { join } from "path"
 import { URL } from "url"
-import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE, EXPORT } from "../types/Channels"
+import { EXPORT, FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { BIBLE, IMPORT } from "./../types/Channels"
 import { closeServers, startServers } from "./servers"
 import { template } from "./utils/menuTemplate"
 import { cache, electronSettings, events, media, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
 // import checkForUpdates from "./utils/updater"
 import { createPDFWindow, exportTXT } from "./utils/export"
 import { importShow } from "./utils/import"
+import { closeAllOutputs, createOutput, displayOutput, sendToOutputWindow, updateBounds, updateOutput } from "./utils/output"
 
 const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
@@ -17,7 +18,7 @@ electronSettings.set("loaded", true)
 if (!electronSettings.get("loaded")) console.error("Could not get stored data!")
 
 // keep a global reference of the window object to prevent it closing automatically when the JavaScript object is garbage collected.
-let mainWindow: BrowserWindow | null
+export let mainWindow: BrowserWindow | null
 let dialogClose: boolean = false
 
 app.on("ready", () => {
@@ -33,25 +34,27 @@ function startApp() {
 
   // SCREEN LISTENERS
   screen.on("display-added", (_e: any, display) => {
-    if (!outputWindow?.isEnabled()) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
+    // TODO: !outputWindow?.isEnabled()
+    if (true) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
 
     displays = screen.getAllDisplays()
     toApp(OUTPUT, { channel: "GET_DISPLAYS", data: displays })
   })
   screen.on("display-removed", (_e: any) => {
-    let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
-    let mainMonitor = screen.getDisplayNearestPoint({ x: mainWindow!.getBounds().x, y: mainWindow!.getBounds().y })
-    if (outputMonitor.id === mainMonitor.id) {
-      // if (outputScreenId === display.id.toString()) {
-      outputWindow?.hide()
-      if (process.platform === "darwin") {
-        outputWindow?.setFullScreen(false)
-        setTimeout(() => {
-          outputWindow?.minimize()
-        }, 100)
-      }
-      toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
-    }
+    // TODO: ...
+    // let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
+    // let mainMonitor = screen.getDisplayNearestPoint({ x: mainWindow!.getBounds().x, y: mainWindow!.getBounds().y })
+    // if (outputMonitor.id === mainMonitor.id) {
+    //   // if (outputScreenId === display.id.toString()) {
+    //   outputWindow?.hide()
+    //   if (process.platform === "darwin") {
+    //     outputWindow?.setFullScreen(false)
+    //     setTimeout(() => {
+    //       outputWindow?.minimize()
+    //     }, 100)
+    //   }
+    //   toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
+    // }
 
     displays = screen.getAllDisplays()
     toApp(OUTPUT, { channel: "GET_DISPLAYS", data: displays })
@@ -165,9 +168,9 @@ const createWindow = () => {
   mainWindow.on("closed", () => {
     mainWindow = null
     dialogClose = false
-    outputWindow?.close()
+    closeAllOutputs()
   })
-  mainWindow.once("ready-to-show", createOutputWindow)
+  // mainWindow.once("ready-to-show", createOutputWindow)
 
   // MENU
   const menu = Menu.buildFromTemplate(template({}))
@@ -393,8 +396,10 @@ ipcMain.on(MAIN, (e, msg) => {
   let data: any
   if (msg.channel === "GET_OS") data = { platform: os.platform(), name: os.hostname() }
   else if (msg.channel === "VERSION") data = app.getVersion()
-  else if (msg.channel === "DISPLAY") data = outputWindow?.isVisible()
-  else if (msg.channel === "URL") openURL(msg.data)
+  else if (msg.channel === "DISPLAY") {
+    // TODO: ...
+    // data = outputWindow?.isVisible()
+  } else if (msg.channel === "URL") openURL(msg.data)
   else if (msg.channel === "START") startServers(msg.data)
   else if (msg.channel === "STOP") closeServers()
   else if (msg.channel === "IP") {
@@ -422,7 +427,9 @@ ipcMain.on(MAIN, (e, msg) => {
     //   if (!mainInternal || !display.internal) outputScreens.push(display)
     // })
     // data = outputScreens
-    data = displays
+
+    // data = displays
+    data = screen.getAllDisplays()
   } else if (msg.channel === "GET_PATHS") {
     data = {
       documents: app.getPath("documents"),
@@ -435,9 +442,7 @@ ipcMain.on(MAIN, (e, msg) => {
     // create documents/Shows
     updateOutputPath()
   } else if (msg.channel === "OUTPUT") {
-    // console.log(e.sender.id, outputWindow?.id, outputWindow?.webContents.id)
-    // e.reply(MAIN, { channel: "OUTPUT", data: e.sender.id === outputWindow?.webContents.id ? "true" : "false" })
-    data = e.sender.id === outputWindow?.webContents.id ? "true" : "false"
+    data = e.sender.id === mainWindow?.webContents.id ? "false" : "true"
   } else if (msg.channel === "CLOSE") {
     dialogClose = true
     mainWindow?.close()
@@ -461,152 +466,17 @@ ipcMain.on(MAIN, (e, msg) => {
 // OUTPUT WINDOW
 
 let displays: Display[] = []
-let outputPosition: any = null
-// let outputScreenId: string | null = null
 
 // create output
 ipcMain.on(OUTPUT, (_e, msg: any) => {
-  if (msg.channel === "DISPLAY") {
-    let outputScreen: any = null
-
-    if (!outputPosition || (outputPosition?.width === 0 && outputPosition?.height === 0) || msg.data.reset) {
-      if (msg.data.screen) {
-        outputScreen =
-          displays.find((display) => {
-            return display.id.toString() === msg.data.screen
-          }) || null
-      }
-      if (!outputScreen) {
-        outputScreen =
-          displays.find((display) => {
-            return display.bounds.x !== mainWindow?.getBounds().x || display.bounds.y !== mainWindow?.getBounds().y
-          }) || null
-        if (outputScreen) toApp(MAIN, { channel: "SET_SCREEN", data: outputScreen })
-      }
-      // outputScreenId = outputScreen ? outputScreen.id.toString() : null
-
-      outputPosition = outputScreen?.bounds || null
-      toApp(OUTPUT, { channel: "POSITION", data: outputPosition })
-    }
-
-    if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
-
-    // && JSON.stringify(outputPosition) !== JSON.stringify(outputWindow?.getBounds())
-    let xDif = outputPosition?.x - mainWindow!.getBounds().x
-    let yDif = outputPosition?.y - mainWindow!.getBounds().y
-
-    if (msg.data.enabled && outputPosition && (msg.data.force || xDif > 50 || (xDif < -50 && yDif > 50) || yDif < -50)) {
-      // TODO: output task bar
-      // outputWindow?.setVisibleOnAllWorkspaces(true)
-      outputWindow?.showInactive()
-      // outputWindow?.show()
-      // outputWindow?.maximize()
-      // outputWindow?.blur()
-      // mainWindow?.focus()
-      // outputWindow?.setFullScreen(true)
-      // outputWindow?.setAlwaysOnTop(true, "pop-up-menu", 1)
-      // outputWindow?.setAlwaysOnTop(true, "pop-up-menu")
-      // outputWindow?.setFullScreenable(false)
-      // outputWindow?.setAlwaysOnTop(true, "screen-saver", 1)
-      if (process.platform === "darwin") {
-        setTimeout(() => {
-          outputWindow?.maximize()
-          if (!msg.data.force) {
-            outputWindow?.setFullScreen(true)
-            setTimeout(() => {
-              // focus on mac
-              mainWindow?.focus()
-            }, 10)
-          }
-        }, 100)
-      }
-      outputWindow?.moveTop()
-    } else {
-      if (process.platform === "darwin") {
-        outputWindow?.setFullScreen(false)
-        setTimeout(() => {
-          outputWindow?.minimize()
-        }, 100)
-      }
-      outputWindow?.hide()
-      if (msg.data.enabled) {
-        msg.data.enabled = false
-        toApp(MAIN, { channel: "ALERT", data: "error.display" })
-      }
-    }
-    if (outputPosition) {
-      outputWindow?.setBounds(outputPosition)
-      // has to be set twice to work first time
-      setTimeout(() => {
-        outputWindow?.setBounds(outputPosition)
-      }, 10)
-    }
-    toApp(OUTPUT, msg)
-  } else if (msg.channel === "POSITION") {
-    outputPosition = msg.data
-    outputWindow?.setBounds(outputPosition)
-  } else if (msg.channel.includes("MAIN")) toApp(OUTPUT, msg)
-  else outputWindow?.webContents.send(OUTPUT, msg)
+  if (msg.channel === "CREATE") createOutput(msg.data)
+  else if (msg.channel === "DISPLAY") displayOutput(msg.data)
+  else if (msg.channel === "UPDATE") updateOutput(msg.data)
+  else if (msg.channel === "UPDATE_BOUNDS") updateBounds(msg.data)
+  // else if (msg.channel === "TOGGLE_KIOSK") toggleKiosk(msg.data)
+  else if (msg.channel.includes("MAIN")) toApp(OUTPUT, msg)
+  else sendToOutputWindow(msg)
 })
-
-let outputWindow: BrowserWindow | null = null
-function createOutputWindow() {
-  // https://www.electronjs.org/docs/latest/api/browser-window
-  outputWindow = new BrowserWindow({
-    width: 810,
-    height: 610,
-    x: 0,
-    y: 0,
-    alwaysOnTop: true, // keep window on top of other windows
-    resizable: false, // disable resizing on mac and windows
-    frame: false, // hide title/buttons
-    // fullscreen: true,
-    skipTaskbar: true, // hide taskbar
-
-    // parent: mainWindow!,
-    // modal: true,
-
-    // type: "toolbar", // hide from taskbar
-    // transparent: isProd, // disable interaction (resize)
-    // focusable: false, // makes non focusable
-    // titleBarStyle: "hidden", // hide titlebar
-    // kiosk: true,
-    // roundedCorners: false, // disable rounded corners on mac
-    backgroundColor: "#000000",
-    show: false,
-    webPreferences: {
-      // beta dev tools
-      devTools: !isProd || Number(app.getVersion()[0]) === 0,
-      preload: join(__dirname, "preload"), // use a preload script
-      contextIsolation: true,
-      webSecurity: isProd, // get local files
-      allowRunningInsecureContent: false,
-    },
-  })
-
-  outputWindow.removeMenu() // hide menubar
-  if (process.platform === "darwin") outputWindow.minimize() // hide on mac
-  outputWindow.setAlwaysOnTop(true, "pop-up-menu", 1)
-  // outputWindow.setVisibleOnAllWorkspaces(true)
-
-  const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
-
-  outputWindow.loadURL(url).catch((err) => {
-    console.error(JSON.stringify(err))
-    app.quit()
-  })
-
-  // toOutput("MAIN", { channel: "OUTPUT", data: "true" })
-  // outputWindow.webContents.send("MAIN", { channel: "OUTPUT" })
-
-  // if (!isProd) outputWindow.webContents.openDevTools()
-
-  outputWindow.on("closed", () => (outputWindow = null))
-  outputWindow.on("ready-to-show", () => {
-    // outputWindow?.hide()
-    mainWindow?.focus()
-  })
-}
 
 // LISTENERS
 

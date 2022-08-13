@@ -1,17 +1,16 @@
 <script lang="ts">
-  import type { Resolution } from "../../../types/Settings"
-  import { activeShow, draw, drawSettings, drawTool, outSlide, screen, showsCache } from "../../stores"
+  import { activeShow, draw, drawSettings, drawTool, outSlide } from "../../stores"
+  import { getResolution } from "../helpers/output"
   import { _show } from "../helpers/shows"
   import Output from "../output/Output.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
 
   $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
-  $: Slide = $outSlide !== null && ref ? _show("active").slides([ref[$outSlide.index!]?.id]) : null
+  $: Slide = $outSlide !== null && ref ? _show("active").slides([ref[$outSlide.index!]?.id]).get()[0] : null
 
   let width: number = 0
   let height: number = 0
-  // TODO: zoom more in...
-  let resolution: Resolution = Slide && $activeShow !== null ? $showsCache[$activeShow.id].settings.resolution! : $screen.resolution
+  $: resolution = getResolution(Slide?.settings?.resolution)
   let ratio: number = 0
 
   let parent: any

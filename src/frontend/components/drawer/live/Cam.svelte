@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte"
-  import { outBackground, screen } from "../../../stores"
+  import { outputs } from "../../../stores"
+  import { findMatchingOut, getResolution } from "../../helpers/output"
   import SelectElem from "../../system/SelectElem.svelte"
   import Card from "../Card.svelte"
 
@@ -11,7 +12,7 @@
   export let cam: Cam
 
   let loaded: boolean = false
-  $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
+  // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
 
   let videoElem: any
 
@@ -20,8 +21,8 @@
   let constraints: any = {
     video: {
       devideId: cam.id,
-      width: { ideal: $screen.resolution.width },
-      height: { ideal: $screen.resolution.height },
+      width: { ideal: getResolution().width },
+      height: { ideal: getResolution().height },
       // aspectRatio: 1.777777778,
       // frameRate: { max: 30 },
       // facingMode: { exact: "user" }
@@ -55,7 +56,16 @@
   })
 </script>
 
-<Card class="context #live_card" {loaded} {active} on:click label={cam.name} icon="camera" white={!cam.id.includes("cam")}>
+<Card
+  class="context #live_card"
+  {loaded}
+  outlineColor={findMatchingOut(cam.id, $outputs)}
+  active={findMatchingOut(cam.id, $outputs) !== null}
+  on:click
+  label={cam.name}
+  icon="camera"
+  white={!cam.id.includes("cam")}
+>
   <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name }} draggable>
     {#if error}
       <div class="error">

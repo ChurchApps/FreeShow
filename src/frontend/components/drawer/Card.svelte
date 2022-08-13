@@ -1,26 +1,30 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { mediaOptions, screen } from "../../stores"
+  import { mediaOptions, outputs } from "../../stores"
+  import { getResolution } from "../helpers/output"
   import Loader from "../main/Loader.svelte"
   import Label from "./Label.svelte"
 
   export let loaded: boolean = true
   export let preview: boolean = false
   export let active: boolean = false
+  export let outlineColor: string | null = null
   export let label: string
   export let icon: null | string = null
   export let color: null | string = null
   export let white: boolean = true
   export let changed: boolean = false
   export let mode: "grid" | "list" | "lyrics" = "grid"
-  export let resolution: Resolution = $screen.resolution
+  export let resolution: Resolution = getResolution(null, $outputs)
+  $: resolution = getResolution(resolution, $outputs)
 </script>
 
-<!-- TODO: use global resolution .... -->
 <!-- display: table; -->
 <div
   class="main"
-  style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mode === 'grid' ? 100 / $mediaOptions.columns : 100}%;"
+  style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mode === 'grid'
+    ? 100 / $mediaOptions.columns
+    : 100}%;"
   class:preview
   class:active
   class:changed

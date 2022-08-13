@@ -6,7 +6,7 @@
   import Button from "../inputs/Button.svelte"
 
   // , "calendar"
-  const tabs: SettingsTabs[] = ["general", "theme", "groups", "output", "display", "connection"]
+  const tabs: SettingsTabs[] = ["general", "theme", "groups", "outputs", "connection"]
 </script>
 
 <div class="main">

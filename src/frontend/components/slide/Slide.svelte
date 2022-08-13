@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte"
-  import type { Resolution } from "../../../types/Settings"
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { activeShow, activeTimers, backgroundColor, dictionary, fullColors, groupNumbers, groups, overlays, screen, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, outputs, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import Editbox from "../edit/Editbox.svelte"
   import { getItemText } from "../edit/scripts/textStyle"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
+  import { getActiveOutputs, getResolution } from "../helpers/output"
   import { getMediaFilter, getMediaFlipped } from "../helpers/showActions"
   import SelectElem from "../system/SelectElem.svelte"
   import Actions from "./Actions.svelte"
@@ -21,6 +21,7 @@
   export let color: string | null = slide.color
   export let index: number
   export let columns: number = 1
+  export let outColor: string = ""
   export let active: boolean = false
   export let focused: boolean = false
   export let list: boolean = false
@@ -185,7 +186,9 @@
     console.log(timer)
   }
 
-  let resolution: Resolution = slide?.settings?.resolution || $screen.resolution
+  $: resolution = getResolution(slide?.settings?.resolution, $outputs)
+
+  $: currentOutput = $outputs[getActiveOutputs()[0]]
 </script>
 
 <!-- TODO: noQuickEdit -->
@@ -193,7 +196,12 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div class="main" class:active class:focused style="width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%">
+<div
+  class="main"
+  class:active
+  class:focused
+  style="{outColor ? 'outline: 2px solid ' + outColor + ';' : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%;"
+>
   {#if icons && !altKeyPressed}
     <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""} />
     <Actions {columns} {index} actions={layoutSlide.actions || {}} />
@@ -223,7 +231,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           </div>
         {/if}
         <Zoomed
-          background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || $backgroundColor || "black" : "transparent"}
+          background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentOutput.show?.background || "black" : "transparent"}
           let:ratio
           {resolution}
           zoom={$slidesOptions.mode !== "lyrics" || noQuickEdit}

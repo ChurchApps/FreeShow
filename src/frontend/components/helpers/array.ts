@@ -68,3 +68,8 @@ export function changeValues(object: any, values: { [key: string]: any }) {
   })
   return object
 }
+
+// convert object to array and set keys as id
+export function convertObject(object: { [key: string]: any }) {
+  return Object.entries(object).map(([id, a]: any) => ({ id, ...a }))
+}

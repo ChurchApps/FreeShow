@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { Resolution } from "../../../types/Settings"
-  import { dictionary, mediaOptions, outLocked, outOverlays, outSlide, overlays, screen, showsCache } from "../../stores"
+  import { dictionary, mediaOptions, outLocked, outputs, overlays } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { findMatchingOut, getResolution, setOutput } from "../helpers/output"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Textbox from "../slide/Textbox.svelte"
@@ -15,7 +15,7 @@
   export let active: string | null
   export let searchValue: string = ""
 
-  let resolution: Resolution = $outSlide && $outSlide.id !== "temp" ? $showsCache[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
+  $: resolution = getResolution(null, $outputs)
 
   let filteredOverlays: any[] = []
   $: filteredOverlays = Object.keys($overlays)
@@ -44,18 +44,13 @@
         {#each fullFilteredOverlays as overlay}
           <Card
             class="context #overlay_card"
-            active={$outOverlays.includes(overlay.id)}
+            outlineColor={findMatchingOut(overlay.id, $outputs)}
+            active={findMatchingOut(overlay.id, $outputs) !== null}
             label={overlay.name || "—"}
             color={overlay.color}
             {resolution}
             on:click={() => {
-              if (!$outLocked) {
-                outOverlays.update((o) => {
-                  if ($outOverlays.includes(overlay.id)) o.splice($outOverlays.indexOf(overlay.id), 1)
-                  else o.push(overlay.id)
-                  return o
-                })
-              }
+              if (!$outLocked) setOutput("overlays", overlay.id, true)
             }}
           >
             <SelectElem id="overlay" data={overlay.id} fill draggable>

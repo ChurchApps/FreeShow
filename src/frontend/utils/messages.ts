@@ -1,4 +1,3 @@
-import { alertUpdates, autoOutput, backgroundColor, maxConnections, outputPosition, ports, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
@@ -15,9 +14,10 @@ import {
   drawSettings,
   drawTool,
   events,
+  exportPath,
   folders,
-  fullColors,
   formatNewShow,
+  fullColors,
   groupNumbers,
   groups,
   imageExtensions,
@@ -27,9 +27,7 @@ import {
   mediaOptions,
   openedFolders,
   os,
-  outBackground,
   outLocked,
-  outOverlays,
   outputScreen,
   outSlide,
   overlayCategories,
@@ -44,7 +42,6 @@ import {
   shows,
   showsCache,
   showsPath,
-  exportPath,
   slidesOptions,
   stageShows,
   templateCategories,
@@ -54,38 +51,58 @@ import {
   videoExtensions,
   webFavorites,
 } from "../stores"
+import {
+  alertUpdates,
+  autoOutput,
+  backgroundColor,
+  maxConnections,
+  outputPosition,
+  outputs,
+  ports,
+  scriptures,
+  scriptureSettings,
+  splitLines,
+  transitionData,
+  volume,
+} from "./../stores"
 import { arrayToObject, client, filterObjectArray, sendClientAll, sendData, timedout } from "./sendData"
 
 export function listen() {
   // TO OUTPUT
-  outBackground.subscribe((data) => {
-    window.api.send(OUTPUT, { channel: "BACKGROUND", data })
+  outputs.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "OUTPUTS", data })
   })
+  // outBackground.subscribe((data) => {
+  //   window.api.send(OUTPUT, { channel: "BACKGROUND", data })
+  // })
   transitionData.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "TRANSITION", data })
   })
-  outSlide.subscribe((data) => {
-    // TODO: send only current show!
-    // TODO: dont send if it already has data...?
-    if (data !== null) window.api.send(OUTPUT, { channel: "SHOWS", data: get(showsCache) })
-    window.api.send(OUTPUT, { channel: "SLIDE", data })
+  showsCache.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "SHOWS", data })
   })
-  outOverlays.subscribe((data) => {
-    if (data !== null) window.api.send(OUTPUT, { channel: "OVERLAY", data: get(overlays) })
-    window.api.send(OUTPUT, { channel: "OVERLAYS", data })
-  })
+  // outSlide.subscribe((data) => {
+  //   // TODO: send only current show!
+  //   // TODO: dont send if it already has data...?
+  //   if (data !== null) window.api.send(OUTPUT, { channel: "SHOWS", data: get(showsCache) })
+  //   window.api.send(OUTPUT, { channel: "SLIDE", data })
+  // })
+  // outOverlays.subscribe((data) => {
+  //   if (data !== null) window.api.send(OUTPUT, { channel: "OVERLAY", data: get(overlays) })
+  //   window.api.send(OUTPUT, { channel: "OVERLAYS", data })
+  // })
   mediaFolders.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "MEDIA", data })
   })
-  displayMetadata.subscribe((data) => {
-    window.api.send(OUTPUT, { channel: "META", data })
-  })
-  backgroundColor.subscribe((data) => {
-    window.api.send(OUTPUT, { channel: "COLOR", data })
-  })
-  screen.subscribe((data) => {
-    window.api.send(OUTPUT, { channel: "SCREEN", data })
-  })
+  // displayMetadata.subscribe((data) => {
+  //   window.api.send(OUTPUT, { channel: "META", data })
+  // })
+  // backgroundColor.subscribe((data) => {
+  //   window.api.send(OUTPUT, { channel: "COLOR", data })
+  // })
+  // screen.subscribe((data) => {
+  //   window.api.send(OUTPUT, { channel: "SCREEN", data })
+  // })
   draw.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "DRAW", data })
   })
@@ -101,6 +118,16 @@ export function listen() {
   volume.subscribe((data) => {
     window.api.send(OUTPUT, { channel: "VOLUME", data })
   })
+  //
+  templates.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "TEMPLATES", data })
+  })
+  overlays.subscribe((data) => {
+    window.api.send(OUTPUT, { channel: "OVERLAYS", data })
+  })
+  // media.subscribe((data) => {
+  //   window.api.send(OUTPUT, { channel: "MEDIA", data })
+  // })
 
   // FROM CLIENT
   window.api.receive(REMOTE, (msg: ClientMessage) => client(REMOTE, msg))
@@ -149,9 +176,12 @@ export function listen() {
   // SAVE
   // TODO: better saving!
   let s = { ...saveList, folders: folders, overlays: overlays, projects: projects, showsCache: showsCache, stageShows: stageShows }
-  Object.values(s).forEach((a) => {
-    if (a) a.subscribe(() => saved.set(false))
-  })
+  setTimeout(() => {
+    Object.values(s).forEach((a) => {
+      if (a) a.subscribe(() => saved.set(false))
+    })
+    saved.set(true)
+  }, 5000)
 }
 
 const saveList: { [key in SaveList]: any } = {
@@ -184,6 +214,7 @@ const saveList: { [key in SaveList]: any } = {
   openedFolders: openedFolders,
   os: os,
   outLocked: outLocked,
+  outputs: outputs,
   outputScreen: outputScreen,
   outputPosition: outputPosition,
   overlayCategories: overlayCategories,

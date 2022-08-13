@@ -18,6 +18,7 @@
   import Pdf from "./components/export/Pdf.svelte"
   import { copy, paste } from "./components/helpers/clipboard"
   import { redo, undo } from "./components/helpers/history"
+  import { getResolution } from "./components/helpers/output"
   import { _show } from "./components/helpers/shows"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
@@ -42,19 +43,18 @@
     activePopup,
     activeShow,
     activeStage,
+    currentWindow,
     drawer,
     os,
     outBackground,
     outOverlays,
     outputDisplay,
-    currentWindow,
+    outputs,
+    outputScreen,
     outSlide,
     outTransition,
-    screen,
-    showsCache,
-    outputScreen,
-    selected,
     playingAudio,
+    selected,
   } from "./stores"
   import { save } from "./utils/save"
   import { startup } from "./utils/startup"
@@ -64,7 +64,8 @@
 
   let width: number = 0
   let height: number = 0
-  let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution! : $screen.resolution
+  let resolution: Resolution = getResolution()
+  $: resolution = getResolution(null, $outputs)
 
   const menus: TopViews[] = ["show", "edit", "calendar", "draw", "stage", "settings"]
   const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "player", "live", "templates"]

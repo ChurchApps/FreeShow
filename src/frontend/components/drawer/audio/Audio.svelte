@@ -180,7 +180,7 @@
                   title={file.path}
                   bold={false}
                   on:click={() => activeShow.set({ id: file.path, name: file.name, type: "audio" })}
-                  on:dblclick={() => playAudio({ path: file.path, name: file.name })}
+                  on:dblclick={() => playAudio({ path: file.path, name: file.name }, false)}
                 >
                   <span>
                     <Icon

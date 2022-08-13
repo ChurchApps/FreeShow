@@ -6,7 +6,7 @@
   import Display from "./tabs/Display.svelte"
   import General from "./tabs/General.svelte"
   import Groups from "./tabs/Groups.svelte"
-  import Output from "./tabs/Output.svelte"
+  import Outputs from "./tabs/Outputs.svelte"
   import Theme from "./tabs/Theme.svelte"
 </script>
 
@@ -23,8 +23,8 @@
       <Theme />
     {:else if $settingsTab === "groups"}
       <Groups />
-    {:else if $settingsTab === "output"}
-      <Output />
+    {:else if $settingsTab === "outputs"}
+      <Outputs />
     {:else if $settingsTab === "display"}
       <Display />
     {:else if $settingsTab === "connection"}

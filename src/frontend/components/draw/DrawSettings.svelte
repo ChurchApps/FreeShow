@@ -43,6 +43,7 @@
     paint: {
       color: "#ffffff",
       size: 10,
+      // TODO: not saved:
       threed: false,
       dots: false,
       hold: true,

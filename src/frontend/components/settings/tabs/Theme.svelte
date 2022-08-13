@@ -17,27 +17,63 @@
     "primary-lighter",
     "primary-darker",
     "primary-darkest",
-    "text",
-    "textInvert",
-    "secondary-text",
     "secondary",
-    "secondary-opacity",
-    "hover",
-    "focus",
+    "secondary-text",
+    "text",
+    // "textInvert",
+    // "secondary-opacity",
+    // "hover",
+    // "focus",
   ]
 
   function updateTheme(e: any, id: null | string, key: string = "colors") {
     if ($theme === "default") {
       // duplicate
       let thisTheme: any = $themes[$theme]
+      let newData: any = {
+        ...thisTheme,
+        default: false,
+        name: themeValue + " 2",
+        [key]: { ...thisTheme[key], [id!]: e.target?.value || e },
+      }
       history({
         id: "addTheme",
-        newData: { ...thisTheme, default: false, name: themeValue + " 2", [key]: { ...thisTheme[key], [id!]: e.target?.value || e } },
+        newData,
         location: { page: "settings", theme: uid() },
       })
     } else {
-      history({ id: "theme", newData: { key, id, value: e.target?.value || e }, location: { page: "settings", theme: $theme } })
+      let value: string = e.target?.value || e
+      history({ id: "theme", newData: { key, id, value }, location: { page: "settings", theme: $theme } })
+      converts[id!]?.forEach((newValue: any) => {
+        let rgba: string | null = makeTransparent(value, newValue.opacity)
+        if (rgba) history({ id: "theme", newData: { key: "colors", id: newValue.id, value: rgba }, location: { page: "settings", theme: $theme } })
+      })
     }
+  }
+
+  const converts: any = {
+    secondary: [{ id: "secondary-opacity", opacity: 0.5 }],
+    text: [
+      { id: "hover", opacity: 0.05 },
+      { id: "focus", opacity: 0.1 },
+    ],
+  }
+
+  function makeTransparent(value: string, amount: number = 0.5) {
+    let rgb = hexToRgb(value)
+    if (!rgb) return null
+    let newValue: string = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${amount})`
+    return newValue
+  }
+  function hexToRgb(hex: string) {
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null
   }
 
   const changeValue = (e: any) => (themeValue = e.target.value)
@@ -135,6 +171,14 @@
 </Button>
 
 <style>
+  div:not(.scroll) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 5px 0;
+    min-height: 38px;
+  }
+
   h3 {
     text-align: center;
     font-size: 1.8em;
@@ -148,19 +192,12 @@
     background-color: var(--primary-lighter);
     border: none;
     height: 2px;
-    width: 100%;
     margin: 20px 0;
-  }
-
-  div:not(.scroll) {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 5px 0;
   }
 
   .flex {
     display: flex;
     align-items: center;
+    gap: 5px;
   }
 </style>

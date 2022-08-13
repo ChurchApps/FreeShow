@@ -41,12 +41,11 @@
 </script>
 
 <!-- TODO: connection -->
-<div style="justify-content: center;">
-  <p><T id="settings.connect" />:&nbsp;</p>
-  <b style="font-size: 1.2em;">{ip}:[<T id="settings.port" />]</b>
+<div style="min-height: initial;justify-content: center;">
+  <p><T id="settings.connect" />: <strong style="font-size: 1.2em;">{ip}:[<T id="settings.port" />]</strong></p>
 </div>
-<div style="justify-content: center;">
-  <p><T id="settings.connections" />: {Object.keys($connections.REMOTE).length + Object.keys($connections.STAGE).length}</p>
+<div style="min-height: initial;justify-content: center;">
+  <p><T id="settings.connections" />: <strong>{Object.keys($connections.REMOTE).length + Object.keys($connections.STAGE).length}</strong></p>
 </div>
 <br />
 <div>
@@ -116,6 +115,7 @@
     align-items: center;
     justify-content: space-between;
     margin: 5px 0;
+    min-height: 38px;
   }
 
   .input :global(input) {

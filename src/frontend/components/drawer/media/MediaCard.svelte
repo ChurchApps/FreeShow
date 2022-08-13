@@ -1,7 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-
-  import { activeEdit, activePage, activeShow, media, mediaOptions, outBackground, outLocked } from "../../../stores"
+  import { activeEdit, activePage, activeShow, media, mediaOptions, outLocked, outputs } from "../../../stores"
+  import { findMatchingOut, setOutput } from "../../helpers/output"
   import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
   import SelectElem from "../../system/SelectElem.svelte"
   import Card from "../Card.svelte"
@@ -48,7 +48,7 @@
 
   function dblclick(e: any) {
     if (!e.ctrlKey && !e.metaKey && !$outLocked) {
-      outBackground.set({ path: path, type, loop: true, muted: false, filter, flipped })
+      setOutput("background", { path: path, type, loop: true, muted: false, filter, flipped })
       // TODO: get actual data
       // TODO: output/preview control does not always match
       window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
@@ -76,7 +76,8 @@
   mode={$mediaOptions.mode}
   changed={!!filter.length || flipped}
   preview={$activeShow?.id === path}
-  active={$outBackground?.path === path}
+  outlineColor={findMatchingOut(path, $outputs)}
+  active={findMatchingOut(path, $outputs) !== null}
   label={name}
   icon={active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"}
   white={type === "image"}

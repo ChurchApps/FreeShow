@@ -60,6 +60,7 @@ import {
   webFavorites,
   textCache,
   volume,
+  outputs,
 } from "../stores"
 import type { SaveListSettings } from "./../../types/Save"
 
@@ -96,6 +97,7 @@ export function save() {
     openedFolders: get(openedFolders),
     os: get(os),
     outLocked: get(outLocked),
+    outputs: get(outputs),
     outputScreen: get(outputScreen),
     outputPosition: get(outputPosition),
     overlayCategories: get(overlayCategories),

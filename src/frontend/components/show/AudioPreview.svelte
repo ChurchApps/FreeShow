@@ -16,7 +16,7 @@
   $: if (path) getDuration()
   async function getDuration() {
     duration = await getAudioDuration(path)
-    currentTime = 0
+    currentTime = playing.audio?.currentTime || 0
   }
 
   $: if (!paused && path) startUpdater()

@@ -1,13 +1,12 @@
 <script lang="ts">
   import { MAIN } from "../../../../types/Channels"
-  import { activePopup, autoOutput, showsPath } from "../../../stores"
+  import { activePopup, showsPath } from "../../../stores"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
-  import Checkbox from "../../inputs/Checkbox.svelte"
   import FolderPicker from "../../inputs/FolderPicker.svelte"
   import LocaleSwitcher from "../../settings/LocaleSwitcher.svelte"
 
-  const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
+  // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
 
   function create(e: any) {
     if (e.target.closest(".main") && !e.target.closest(".start")) return
@@ -39,10 +38,10 @@
       </FolderPicker>
     </span>
   </div>
-  <div>
+  <!-- <div>
     <p><T id="settings.auto_output" /></p>
     <Checkbox checked={$autoOutput} on:change={setAutoOutput} />
-  </div>
+  </div> -->
 
   <br />
   <Button class="start" on:click={create} style="font-size: 2em;" border center>

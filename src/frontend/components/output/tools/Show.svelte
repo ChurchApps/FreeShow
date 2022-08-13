@@ -1,37 +1,44 @@
 <script lang="ts">
-  import { activeShow, outSlide, showsCache } from "../../../stores"
+  import { activeShow, showsCache } from "../../../stores"
   import T from "../../helpers/T.svelte"
 
-  $: name = $outSlide && $showsCache[$outSlide.id] ? $showsCache[$outSlide.id].name : "—"
+  export let currentOutput: any
+
+  // $: if (!currentOutput?.out?.slide) {
+  //   let outs = getActiveOutputs().map((id) => $outputs[id])
+  //   currentOutput = outs.find((output) => output.out?.slide)
+  // }
+
+  $: name = currentOutput?.out?.slide && $showsCache[currentOutput?.out?.slide?.id] ? $showsCache[currentOutput.out?.slide?.id].name : "—"
 
   let length: number = 0
   $: {
-    if ($outSlide?.id) {
+    if (currentOutput?.out?.slide?.id) {
       length = 0
-      if ($outSlide?.id === "temp") length = 1
+      if (currentOutput.out?.slide?.id === "temp") length = 1
       else {
-        $showsCache[$outSlide.id]?.layouts[$outSlide.layout!]?.slides.forEach((s: any) => {
+        $showsCache[currentOutput.out?.slide?.id]?.layouts[currentOutput.out?.slide?.layout!]?.slides.forEach((s: any) => {
           length++
-          if ($showsCache[$outSlide!.id].slides[s.id].children) length += $showsCache[$outSlide!.id].slides[s.id].children!.length
+          if ($showsCache[currentOutput.out?.slide?.id].slides[s.id].children) length += $showsCache[currentOutput.out.slide.id].slides[s.id].children!.length
         })
       }
     }
   }
 
   function openShow() {
-    if (!$outSlide) return
+    if (!currentOutput?.out?.slide) return
 
-    if ($outSlide?.layout)
+    if (currentOutput.out?.slide?.layout)
       showsCache.update((a: any) => {
-        a[$outSlide!.id].settings.activeLayout = $outSlide?.layout
+        a[currentOutput.out?.slide!.id].settings.activeLayout = currentOutput.out?.slide?.layout
         return a
       })
 
-    activeShow.set({ id: $outSlide.id })
+    activeShow.set({ id: currentOutput.out?.slide?.id })
   }
 </script>
 
-{#if $outSlide}
+{#if currentOutput?.out?.slide}
   <span class="name" style="justify-content: space-between;" on:click={openShow}>
     <p>
       {#if name.length}
@@ -41,7 +48,7 @@
       {/if}
     </p>
     <!-- TODO: update -->
-    <span style="opacity: 0.6;">{($outSlide.index || 0) + 1}/{length}</span>
+    <span style="opacity: 0.6;">{(currentOutput.out?.slide?.index || 0) + 1}/{length}</span>
   </span>
 {/if}
 

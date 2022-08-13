@@ -27,6 +27,7 @@ export type SaveListSettings =
   | "mediaOptions"
   | "openedFolders"
   | "os"
+  | "outputs"
   | "outputScreen"
   | "outputPosition"
   | "outLocked"

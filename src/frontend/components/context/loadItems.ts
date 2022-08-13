@@ -60,9 +60,9 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
         media.push(
           ...audio.map((id: string) => ({
             id,
-            label: showMedia[bg].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name,
+            label: showMedia[id].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name,
             translate: false,
-            icon: "audio",
+            icon: "music",
           }))
         )
 

@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { activeEdit, activeShow, backgroundColor, screen, showsCache } from "../../stores"
+  import { activeEdit, activeShow, backgroundColor, outputs, showsCache } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import { history } from "../helpers/history"
+  import { getResolution } from "../helpers/output"
   import { getMediaFilter, getMediaFlipped } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
   import { getStyles } from "../helpers/style"
@@ -25,7 +26,7 @@
 
   let width: number = 0
   let height: number = 0
-  $: resolution = Slide?.settings?.resolution || $screen.resolution
+  $: resolution = getResolution(Slide?.settings?.resolution, $outputs)
   // TODO: zoom more in...
 
   let ratio: number = 1

@@ -2,6 +2,20 @@ import type { SaveListSettings } from "./../../types/Save"
 export const defaultSettings: { [key in SaveListSettings]: any } = {
   initialized: false,
   outLocked: false,
+  outputs: {
+    default: {
+      enabled: true,
+      active: true,
+      name: "Primary",
+      color: "#ffffff",
+      window: {
+        // position: { x: 0, y: 0 },
+        // size: { width: 1920, height: 1080 },
+        // screen: null,
+      },
+      show: {},
+    },
+  },
   outputScreen: null,
   outputPosition: null,
   openedFolders: [],

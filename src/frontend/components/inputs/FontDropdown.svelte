@@ -11,6 +11,7 @@
     "Verdana",
     "Helvetica",
     "Tahoma",
+    "sans-serif",
     "Trebuchet MS",
     "Times New Roman",
     "Georgia",
@@ -25,6 +26,24 @@
     "Papyrus",
   ]
   // , "Sans-serif"
+
+  // TODO: local fonts
+  // getLocalFonts()
+  // async function getLocalFonts() {
+  //   console.log(1)
+  //   try {
+  //     const availableFonts = await (window as any).queryLocalFonts()
+  //     console.log(availableFonts)
+  //     for (const fontData of availableFonts) {
+  //       console.log(fontData.postscriptName)
+  //       console.log(fontData.fullName)
+  //       console.log(fontData.family)
+  //       console.log(fontData.style)
+  //     }
+  //   } catch (err: any) {
+  //     console.error(err.name, err.message)
+  //   }
+  // }
 
   export let value: string
   let active: boolean = false

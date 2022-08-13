@@ -1,21 +1,8 @@
 import { get } from "svelte/store"
 import type { OutSlide } from "../../../types/Show"
-import {
-  activeEdit,
-  activePage,
-  activeProject,
-  activeShow,
-  media,
-  outBackground,
-  outLocked,
-  outOverlays,
-  outSlide,
-  outTransition,
-  projects,
-  showsCache,
-  videoExtensions,
-} from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, media, outLocked, outputs, projects, showsCache, videoExtensions } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
+import { getActiveOutputs, setOutput } from "./output"
 import { _show } from "./shows"
 
 const keys: any = {
@@ -48,13 +35,16 @@ export function checkInput(e: any) {
   }
 }
 
-export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false) {
-  console.log(get(outSlide))
-
+export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, outputId: string | null = null) {
   if (get(outLocked) && !bypassLock) return
   if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-  let slide: null | OutSlide = get(outSlide)
+  let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+  if (outputId) currentOutput = get(outputs)[outputId]
+  console.log(currentOutput)
+  let slide: null | OutSlide = currentOutput.out?.slide || null
+  console.log(slide)
+
   // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
   let layout: any[] = _show(slide ? slide.id : "active")
     .layouts(slide ? [slide.layout] : "active")
@@ -81,8 +71,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     while (layout[index].data.disabled) index++
 
     console.log(id, layout, index)
-    outSlide.set({ id, layout: _show(id).get("settings.activeLayout"), index })
-    updateOut(id, index, layout)
+    setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, outputId)
+    updateOut(id, index, layout, true, outputId)
     return
   }
 
@@ -92,8 +82,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
   index = getNextEnabled(slide.index!, end)
 
   if (index !== null) {
-    outSlide.set({ ...slide, index })
-    updateOut(slide ? slide.id : "active", index, layout)
+    setOutput("slide", { ...slide, index }, false, outputId)
+    updateOut(slide ? slide.id : "active", index, layout, true, outputId)
   }
 }
 
@@ -101,7 +91,8 @@ export function previousSlide() {
   if (get(outLocked)) return
   if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-  let slide: null | OutSlide = get(outSlide)
+  let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+  let slide: null | OutSlide = currentOutput.out?.slide || null
   // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
   let layout: any[] = _show(slide ? slide.id : "active")
     .layouts(slide ? [slide.layout] : "active")
@@ -112,8 +103,8 @@ export function previousSlide() {
   if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) return
   while (layout[index].data.disabled) index--
 
-  if (slide) outSlide.set({ ...slide, index })
-  else if (get(activeShow)) outSlide.set({ id: get(activeShow)!.id, layout: activeLayout, index })
+  if (slide) setOutput("slide", { ...slide, index })
+  else if (get(activeShow)) setOutput("slide", { id: get(activeShow)!.id, layout: activeLayout, index })
 
   updateOut(slide ? slide.id : "active", index, layout)
 }
@@ -123,7 +114,8 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
 
   index++
 
-  let slide: null | OutSlide = get(outSlide)
+  let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+  let slide: null | OutSlide = currentOutput.out?.slide || null
   let layout: any[] = _show(slide ? slide.id : "active")
     .layouts(slide ? [slide.layout] : "active")
     .ref()[0]
@@ -152,7 +144,7 @@ export function getMediaFlipped(bakgroundPath: string) {
   return get(media)[bakgroundPath]?.flipped || false
 }
 
-export function updateOut(id: string, index: number, layout: any, extra: boolean = true) {
+export function updateOut(id: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
   if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
   console.log(id)
 
@@ -168,39 +160,46 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     if (bg) {
       let filter = getMediaFilter(bg.path)
       let flipped = getMediaFlipped(bg.path)
-      outBackground.set({
+      let bgData: any = {
         name: bg.name,
-        type: bg.type || get(videoExtensions).includes(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)) ? "video" : "image",
+        type: bg.type || (get(videoExtensions).includes(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)) ? "video" : "image"),
         path: bg.path,
         id: bg.id,
         muted: bg.muted !== false,
         loop: bg.loop !== false,
         filter,
         flipped,
-      })
+      }
+      // outBackground.set(bgData)
+      setOutput("background", bgData, false, outputId)
     }
   }
 
   // overlays
   if (data.overlays?.length) {
-    outOverlays.set([...new Set([...get(outOverlays), ...data.overlays])])
+    // outOverlays.set([...new Set([...get(outOverlays), ...data.overlays])])
+    setOutput("overlays", data.overlays, false, outputId)
   }
 
   // audio
   if (data.audio) {
     let a = _show(id).get("media")[data.audio!]
-    playAudio(a)
+    playAudio(a, false)
   }
 
   // nextTimer
   if ((data.nextTimer || 0) > 0) {
-    outTransition.set({ duration: data.nextTimer })
-  } else outTransition.set(null)
+    // outTransition.set({ duration: data.nextTimer })
+    setOutput("transition", { duration: data.nextTimer }, false, outputId)
+  } else {
+    // outTransition.set(null)
+    setOutput("transition", null, false, outputId)
+  }
 
   // actions
   if (data.actions) {
-    if (data.actions.clearBackground) outBackground.set(null)
-    if (data.actions.clearOverlays) outOverlays.set([])
+    if (data.actions.clearBackground) setOutput("background", null, false, outputId)
+    if (data.actions.clearOverlays) setOutput("overlays", [], false, outputId)
     if (data.actions.clearAudio) clearAudio()
   }
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Resolution } from "../../../../types/Settings"
-  import { mediaCache, screen, videoExtensions } from "../../../stores"
+  import { mediaCache, outputs, videoExtensions } from "../../../stores"
+  import { getResolution } from "../../helpers/output"
   import Camera from "../../output/Camera.svelte"
   import { getStyleResolution } from "../../slide/getStyleResolution"
   // import Image from "./Image.svelte"
@@ -152,7 +152,7 @@
   let width: number = 0
   let height: number = 0
 
-  let resolution: Resolution = $screen.resolution
+  $: resolution = getResolution(null, $outputs)
 </script>
 
 <div class="main" style="aspect-ratio: {resolution.width}/{resolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>

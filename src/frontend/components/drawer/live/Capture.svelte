@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { outBackground } from "../../../stores"
+  import { outputs } from "../../../stores"
+  import { findMatchingOut } from "../../helpers/output"
   import Card from "../Card.svelte"
 
   interface Screen {
@@ -10,7 +11,8 @@
   export let streams: any[]
 
   let loaded = false
-  $: active = $outBackground?.type === "screen" && $outBackground?.id === screen.id
+  // $: currentOutput = $outputs[getActiveOutputs()[0]]
+  // $: active = currentOutput.out?.background?.type === "screen" && currentOutput.out?.background?.id === screen.id
 
   let canvas: any
   let videoElem: any
@@ -59,7 +61,16 @@
   // }, timeout)
 </script>
 
-<Card class="context #live_card" {loaded} {active} on:click label={screen.name} icon={screen.id.includes("screen") ? "screen" : "window"} white={!screen.id.includes("screen")}>
+<Card
+  class="context #live_card"
+  {loaded}
+  outlineColor={findMatchingOut(screen.id, $outputs)}
+  active={findMatchingOut(screen.id, $outputs) !== null}
+  on:click
+  label={screen.name}
+  icon={screen.id.includes("screen") ? "screen" : "window"}
+  white={!screen.id.includes("screen")}
+>
   <canvas bind:this={canvas} />
   {#if !loaded}
     <video bind:this={videoElem}>

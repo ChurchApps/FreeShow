@@ -1,4 +1,4 @@
-import { drawerTabsData, activePopup, groups, dictionary } from "./../stores"
+import { drawerTabsData, activePopup, groups, dictionary, alertMessage } from "./../stores"
 import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
@@ -31,48 +31,83 @@ interface Song {
   Memo3: string
 }
 
+const keys = [
+  "Abbreviation",
+  "Guid",
+  "Songs",
+  "Text",
+  "Verses",
+  "Tag",
+  "ID",
+  "Sequence",
+  "VerseOrderIndex",
+  "Composer",
+  "Author",
+  "Copyright",
+  "CCLI",
+  "Theme",
+  "AudioFile",
+  "Memo1",
+  "Memo2",
+  "Memo3",
+]
 export function convertVideopsalm(data: any) {
-  data.forEach(({ content }: any) => {
-    let album: string = content?.Text
-    // add quotes to the invalid JSON formatting
-    if (content.length) {
-      content = content
-        .split(":")
-        .map((a: string) => {
-          let index = a.length - 1
-          while (a[index]?.match(/[a-z]/i) !== null && index > -1) index--
-          return index < 0 || index >= a.length - 1 ? a : a.slice(0, index + 1) + '"' + a.slice(index + 1, a.length) + '"'
-        })
-        .join(":")
-        .replaceAll("\n", "<br>")
-        .replaceAll("{<br>", "{")
-        .replaceAll(",<br>", ",")
-      content = JSON.parse(content || {}) as VideoPsalm
-    }
-    content.Songs?.forEach((song: Song) => {
-      let category = get(drawerTabsData).shows.activeSubTab
-      if (category === "all" || category === "unlabeled") category = null
+  alertMessage.set("popup.importing")
+  setTimeout(() => {
+    data.forEach(({ content }: any) => {
+      // add quotes to the invalid JSON formatting
+      if (content.length) {
+        content = content
+          .replaceAll("{\n", "{")
+          .replaceAll("\n", "<br>")
+          .split(":")
+          .map((a: string) => {
+            let index = a.length - 1
+            while (a[index]?.match(/[a-z]/i) !== null && index > -1) index--
+            let word: string = a.slice(index + 1, a.length)
+            let notKey = index < 0 || index >= a.length - 1 || !keys.includes(word)
+            if (word === "ID" && !notKey && !a.includes("{ID") && !a.includes(",ID")) notKey = true
+            return notKey ? a : a.slice(0, index + 1) + '"' + word + '"'
+          })
+          .join(":")
+          .replaceAll(',<br>"', ',"')
 
-      let layoutID = uid()
-      let show = new ShowObj(false, category || null, layoutID)
-      show.name = checkName(song.Text) || ""
-      show.meta = {
-        title: show.name,
-        artist: album || "",
-        author: song.Author || "",
-        composer: song.Composer || "",
-        copyright: song.Copyright || "",
-        CCLI: song.CCLI || "",
+        try {
+          content = JSON.parse(content || {}) as VideoPsalm
+        } catch (e: any) {
+          console.error(e)
+          let pos = Number(e.toString().replace(/\D+/g, "") || 50)
+          console.log(pos, content.slice(pos - 50, pos + 50))
+        }
       }
 
-      let { slides, layout }: any = createSlides(song)
-      show.slides = slides
-      show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+      let album: string = content?.Text
+      content.Songs?.forEach((song: Song) => {
+        let category = get(drawerTabsData).shows.activeSubTab
+        if (category === "all" || category === "unlabeled") category = null
 
-      history({ id: "newShow", newData: { show }, location: { page: "show" } })
+        let layoutID = uid()
+        let show = new ShowObj(false, category || null, layoutID)
+        show.name = checkName(song.Text) || ""
+        show.meta = {
+          title: show.name,
+          artist: album || "",
+          author: song.Author || "",
+          composer: song.Composer || "",
+          copyright: song.Copyright || "",
+          CCLI: song.CCLI || "",
+        }
+
+        let { slides, layout }: any = createSlides(song)
+        show.slides = slides
+        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+
+        history({ id: "newShow", newData: { show }, location: { page: "show" } })
+      })
     })
-  })
-  activePopup.set(null)
+
+    activePopup.set(null)
+  }, 10)
 }
 
 const VPgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
@@ -81,7 +116,7 @@ function createSlides({ Verses, Sequence, VerseOrderIndex }: Song) {
 
   let slides: any = {}
   let layout: any[] = []
-  let sequence: string[] = Sequence.split(" ")
+  let sequence: string[] = Sequence?.split(" ") || []
   let sequences: any = {}
   Verses.forEach((verse, i) => {
     if (verse.Text) {
@@ -102,7 +137,7 @@ function createSlides({ Verses, Sequence, VerseOrderIndex }: Song) {
         notes: "",
         items,
       }
-      let globalGroup = VPgroups[sequence[i].replace(/[0-9]/g, "")]
+      let globalGroup = sequence[i] ? VPgroups[sequence[i].replace(/[0-9]/g, "")] : "verse"
       if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
     }
   })

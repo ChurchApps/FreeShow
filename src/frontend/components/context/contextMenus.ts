@@ -85,6 +85,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   rename: ["rename"],
   close: ["close"],
 
+  // TOP
+  // TODO: output
+  output: ["force_output", "toggle_output", "output_settings"],
+
   // DRAWER
   drawer_top: ["enabledTabs"],
   // NAVIGATION

@@ -11,7 +11,6 @@
   import Player from "./player/Player.svelte"
   import Shows from "./Shows.svelte"
   import Templates from "./Templates.svelte"
-  import Web from "./Web.svelte"
 
   export let id: string
   export let bible: any
@@ -69,8 +68,8 @@
     <Templates {active} {searchValue} />
   {:else if id === "player"}
     <Player {active} {searchValue} />
-  {:else if id === "web"}
-    <Web {active} {searchValue} />
+    <!-- {:else if id === "web"}
+    <Web {active} {searchValue} /> -->
   {:else if id === "live"}
     <div class="grid" on:wheel={wheel}>
       <!-- live -->

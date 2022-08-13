@@ -2,6 +2,7 @@
   import { fade } from "svelte/transition"
 
   export let active: boolean = false
+  export let outlineColor: string | null = null
   export let outline: boolean = false
   export let title: string = ""
   export let center: boolean = false
@@ -46,7 +47,7 @@
   on:mousemove={mousemove}
   on:mouseleave={hideTooltip}
   id={$$props.id}
-  style={$$props.style}
+  style="{outlineColor ? 'outline-offset: -2px;outline: 2px solid ' + outlineColor + ' !important;' : ''}{$$props.style || ''}"
   class:active
   class:outline
   class:center
@@ -83,7 +84,7 @@
     align-items: center;
     padding: 0.2em 0.8em;
 
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, border 0.2s;
   }
   button.dark {
     background-color: var(--primary-darker);
