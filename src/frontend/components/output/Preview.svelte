@@ -1,21 +1,28 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-
-  import type { Resolution } from "../../../types/Settings"
-  import { activePage, activeShow, outBackground, outLocked, outOverlays, outSlide, outTransition, playingAudio, presenterControllerKeys, screen, showsCache } from "../../stores"
+  import { activePage, activeShow, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers } from "../../stores"
+  import { send } from "../../utils/request"
   import { clearAudio } from "../helpers/audio"
-  import { nextSlide, previousSlide } from "../helpers/showActions"
+  import { getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
+  import { getItemWithMostLines, nextSlide, previousSlide } from "../helpers/showActions"
+  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
+  import { newSlideTimer } from "../helpers/tick"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import AudioMeter from "./AudioMeter.svelte"
   import ClearButtons from "./ClearButtons.svelte"
   import Output from "./Output.svelte"
+  import PreviewOutputs from "./PreviewOutputs.svelte"
   import ShowActions from "./ShowActions.svelte"
   import Audio from "./tools/Audio.svelte"
   import Media from "./tools/Media.svelte"
   import NextTimer from "./tools/NextTimer.svelte"
   import Overlay from "./tools/Overlay.svelte"
   import Show from "./tools/Show.svelte"
+
+  $: outputId = getActiveOutputs($outputs)[0]
+  let currentOutput: any = {}
+  $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
   let callClear: boolean = false
   const ctrlShortcuts: any = {
@@ -24,8 +31,9 @@
     l: () => outLocked.set(!$outLocked),
     r: () => {
       if (!$outLocked) {
-        outSlide.set($outSlide)
-        outBackground.set($outBackground)
+        // outSlide.set($outSlide)
+        // outBackground.set($outBackground)
+        refreshOut()
       }
     },
   }
@@ -38,13 +46,13 @@
       else if (fullscreen) fullscreen = false
     },
     F1: () => {
-      if (!$outLocked) outBackground.set(null)
+      if (!$outLocked) setOutput("background", null)
     },
     F2: () => {
-      if (!$outLocked) outSlide.set(null)
+      if (!$outLocked) setOutput("slide", null)
     },
     F3: () => {
-      if (!$outLocked) outOverlays.set([])
+      if (!$outLocked) setOutput("overlays", [])
     },
     F4: () => {
       if (!$outLocked) clearAudio()
@@ -55,7 +63,7 @@
     },
     F5: () => {
       if ($presenterControllerKeys) nextSlide(null, true)
-      else outTransition.set(null)
+      else setOutput("transition", null)
     },
     PageDown: (e: any) => {
       if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
@@ -78,7 +86,9 @@
     },
     " ": (e: any) => {
       if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-      if ($outSlide?.id !== $activeShow?.id || ($activeShow && $outSlide?.layout !== $showsCache[$activeShow.id].settings.activeLayout)) nextSlide(e, true)
+      // TODO: ...
+      if (currentOutput.out?.slide?.id !== $activeShow?.id || ($activeShow && currentOutput.out?.slide?.layout !== $showsCache[$activeShow.id].settings.activeLayout))
+        nextSlide(e, true)
       else {
         if (e.shiftKey) previousSlide()
         else nextSlide(e)
@@ -108,18 +118,18 @@
       return
     }
 
-    if ($outBackground?.type === "media" || $outBackground?.type === "video" || $outBackground?.type === "player") {
+    if (["media", "video", "player"].includes(currentOutput.out?.background?.type || "")) {
       e.preventDefault()
       if (e.key === " ") {
         videoData.paused = !videoData.paused
-        window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
-        window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
+        // send(OUTPUT, ["UPDATE_VIDEO_TIME"], videoTime)
       }
     }
   }
 
   let fullscreen: boolean = false
-  let resolution: Resolution = $screen.resolution
+  $: resolution = getResolution(currentOutput.show?.resolution)
 
   // TODO: video gets ((removed)) if video is starting while another is fading out
   let video: any = null
@@ -138,120 +148,53 @@
   let activeClear: any = null
   let autoChange: boolean = true
   $: {
-    if (autoChange) {
-      let active = getActiveClear($outTransition, $playingAudio, $outOverlays, $outSlide, $outBackground)
+    if (autoChange && $outputs) {
+      // let active = getActiveClear(currentOutput.out?.transition, $playingAudio, currentOutput.out?.overlays, currentOutput.out?.slide, currentOutput.out?.background)
+      let active = getActiveClear(!isOutCleared("transition"), $playingAudio, !isOutCleared("overlays"), !isOutCleared("slide"), !isOutCleared("background"))
       if (active !== activeClear) activeClear = active
     }
   }
 
-  function getActiveClear(nextTimer: any, audio: any, overlays: any, slide: any, background: any) {
-    if (nextTimer) return "nextTimer"
+  $: if (outputId) autoChange = true
+
+  function getActiveClear(slideTimer: any, audio: any, overlays: any, slide: any, background: any) {
+    if (slideTimer) return "nextTimer"
     if (Object.keys(audio).length) return "audio"
-    if (overlays.length) return "overlays"
-    if (slide?.id) return "slide"
+    //   if (overlays?.length) return "overlays"
+    //   if (slide?.id) return "slide"
+    if (overlays) return "overlays"
+    if (slide) return "slide"
     if (background) return "background"
     return null
   }
 
-  // nextTimer
-  let timer = { time: 0, paused: true }
-  let timerMax: number = 0
-  let timeObj: any = null
-  let sliderTimer: any = null
-  let autoPlay: boolean = true
-
-  outTransition.subscribe((a) => {
-    timer = { time: 0, paused: true }
-    if (timeObj !== null) {
-      timeObj.clear()
-      timeObj = null
-    }
-
-    if (a && a.duration > 0) {
-      timerMax = a.duration
-      timeObj = new Timer(() => {
-        // if (timer.paused) {
-        //   timer = { time: 0, paused: true }
-        //   return
-        // }
-
-        console.log($outSlide?.index)
-        outTransition.set(null)
-
-        nextSlide(null, false, false, true, true)
-        // timer = { time: 0, paused: false }
-      }, a.duration * 1000)
-      sliderTime()
-    }
-  })
-
-  const Timer: any = function (this: any, callback: any, delay: number) {
-    let timeout: any,
-      start: number,
-      remaining = delay
-    timer.time = timerMax - remaining / 1000
-
-    this.clear = () => {
-      clearTimeout(timeout)
-      timeout = null
-    }
-
-    this.pause = () => {
-      clearTimeout(timeout)
-      clearTimeout(sliderTimer)
-      timeout = null
-      sliderTimer = null
-      autoPlay = false
-      remaining -= Date.now() - start
-      timer = { time: timerMax - remaining / 1000, paused: true }
-    }
-
-    this.resume = () => {
-      if (timeout) return
-      start = Date.now()
-      remaining = (timerMax - timer.time) * 1000
-      autoPlay = true
-      timeout = setTimeout(() => {
-        clearTimeout(timeout)
-        timeout = null
-        callback()
-      }, remaining)
-      timer.paused = false
-      sliderTime()
-    }
-
-    if (autoPlay) this.resume()
+  // slide timer
+  let timer: any = {}
+  $: timer = outputId && $slideTimers[outputId] ? $slideTimers[outputId] : {}
+  $: {
+    Object.entries($outputs).forEach(([id, output]: any) => {
+      if (output.enabled && output.out?.transition && !$slideTimers[id]) {
+        newSlideTimer(id, output.out.transition.duration)
+      }
+    })
   }
 
-  // function durationAction(action: string) {
-  //   if (timer.paused) return
-  //   switch (action) {
-  //     case "nextSlide":
-  //       nextSlide(null)
-  //       break
-  //   }
-  // }
-
-  // set timer
-  function sliderTime() {
-    console.log(timer)
-
-    if (!sliderTimer && timeObj && !timer.paused && autoPlay) {
-      sliderTimer = setTimeout(() => {
-        if (timeObj && !timer.paused) {
-          if (timer.time < timerMax) timer.time += 0.5
-          sliderTimer = null
-          sliderTime()
-        }
-      }, 500)
-    }
-  }
+  // lines
+  $: slide = currentOutput.out?.slide
+  $: ref = slide ? (slide?.id === "temp" ? [{ temp: true, items: slide.tempItems }] : _show(slide.id).layouts([slide.layout]).ref()[0]) : []
+  let linesIndex: null | number = null
+  let maxLines: null | number = null
+  $: amountOfLinesToShow = currentOutput.show?.lines !== undefined ? Number(currentOutput.show?.lines) : 0
+  $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
+  $: showSlide = slide?.index !== undefined ? _show(slide.id).slides([ref[slide.index].id]).get()[0] : null
+  $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
+  $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : slideLines - (amountOfLinesToShow % slideLines)) : null
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <div class="main">
-  <!-- hidden={$activePage === "live" ? false : true} -->
+  <PreviewOutputs bind:currentOutputId={outputId} />
   <div class="top">
     <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: 100%"}>
       {#if fullscreen}
@@ -263,7 +206,8 @@
       {/if}
       <Output
         center={fullscreen}
-        style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerWidth, "fit") : ""}
+        style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""}
+        mirror
         bind:video
         bind:videoData
         bind:videoTime
@@ -280,21 +224,21 @@
 
   <!-- TODO: title keyboard shortcuts -->
 
-  <ShowActions />
+  <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />
 
   {#if $activePage === "show"}
     <ClearButtons bind:autoChange bind:activeClear bind:video bind:videoData bind:videoTime bind:callClear />
 
-    {#if activeClear === "background" && $outBackground}
-      <Media {video} bind:videoData bind:videoTime bind:title />
-    {:else if activeClear === "slide" && $outSlide}
-      <Show />
-    {:else if activeClear === "overlays" && $outOverlays.length}
-      <Overlay />
+    {#if activeClear === "background"}
+      <Media {currentOutput} {outputId} {video} bind:videoData bind:videoTime bind:title />
+    {:else if activeClear === "slide"}
+      <Show {currentOutput} {ref} {linesIndex} {maxLines} />
+    {:else if activeClear === "overlays"}
+      <Overlay {currentOutput} />
     {:else if activeClear === "audio" && Object.keys($playingAudio).length}
       <Audio />
-    {:else if $outTransition && activeClear === "nextTimer" && $outTransition}
-      <NextTimer bind:timer {timerMax} {timeObj} />
+    {:else if activeClear === "nextTimer"}
+      <NextTimer {currentOutput} {timer} />
     {/if}
   {/if}
 </div>

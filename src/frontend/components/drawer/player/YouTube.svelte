@@ -56,7 +56,8 @@
   }
 
   setInterval(() => {
-    if (!$currentWindow && loaded && player.getPlayerState() === 1) videoTime = player.getCurrentTime()
+    // $currentWindow === "output" &&
+    if (loaded && player.getPlayerState() === 1) videoTime = player.getCurrentTime()
     // else player.seekTo(videoTime)
   }, 500)
   // $: console.log(player?.getCurrentTime(), videoTime)

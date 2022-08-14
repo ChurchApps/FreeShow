@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { OutBackground } from "../../../types/Show"
-  import { activeProject, activeShow, dictionary, media, outBackground, outLocked, outSlide, playingVideos, projects, volume } from "../../stores"
+  import { activeProject, activeShow, dictionary, media, outLocked, outputs, playingVideos, projects, volume } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import { analyseAudio, getAnalyser } from "../helpers/audio"
   import Icon from "../helpers/Icon.svelte"
+  import { getActiveOutputs, setOutput } from "../helpers/output"
   import Button from "../inputs/Button.svelte"
   import HoverButton from "../inputs/HoverButton.svelte"
   import Splash from "../main/Splash.svelte"
@@ -24,12 +24,24 @@
   }
 
   let hasLoaded: boolean = false
-  let autoPause: boolean = false
+  let autoPause: boolean = true
 
-  outBackground.subscribe(backgroundChanged)
-  function backgroundChanged(a: null | OutBackground) {
-    if (a === null || a.path !== show?.id || videoData.paused) return
-    if (a.type !== undefined || a.type !== "media") return
+  let prevId: string | undefined = show?.id
+  $: if (show?.id !== prevId) {
+    videoTime = 0
+    autoPause = true
+    prevId = show?.id
+  }
+
+  $: currentOutput = $outputs[getActiveOutputs()[0]]
+
+  // outBackground.subscribe(backgroundChanged)
+  $: background = currentOutput?.out?.background || {}
+  $: if (JSON.stringify(background) !== JSON.stringify(currentOutput?.out?.background || {})) backgroundChanged()
+  function backgroundChanged() {
+    background = currentOutput?.out?.background || {}
+    if (background === null || background.path !== show?.id || videoData.paused) return
+    if (background.type !== undefined || background.type !== "media") return
     autoPause = true
     videoData.paused = true
   }
@@ -42,7 +54,7 @@
 
   let video: any
   async function onPlay() {
-    autoPause = false
+    // autoPause = false
     if (hasLoaded) {
       videoTime = 0
       hasLoaded = false
@@ -57,7 +69,7 @@
   }
   $: if (videoData) {
     playingVideos.update((a) => {
-      let existing = a.findIndex((a) => a.id === show!.id && a.location === "preview")
+      let existing = a.findIndex((a) => a.id === show?.id && a.location === "preview")
       if (existing > -1) {
         a[existing].paused = videoData.muted ? true : videoData.paused
         if (!a[existing].paused) analyseAudio()
@@ -70,8 +82,9 @@
     if (e.target.closest("input") || e.target.closest(".edit")) return
     if (e.key === " " && show) {
       e.preventDefault()
-      if ((show!.type === "video" && $outBackground?.path !== show.id) || (show!.type === "player" && $outBackground?.id !== show.id)) onVideoClick(e)
-      else if (show!.type === "image" && !$outLocked) outBackground.set({ path: show?.id, filter })
+      if ((show!.type === "video" && getActiveOutputs()[0].out?.background?.path !== show.id) || (show!.type === "player" && getActiveOutputs()[0].out?.background?.id !== show.id))
+        onVideoClick(e)
+      else if (show!.type === "image" && !$outLocked) setOutput("background", { path: show?.id, filter })
     }
   }
 
@@ -86,12 +99,14 @@
       // if (filter) data.filter = filter
     }
 
-    autoPause = true
-    videoData.paused = true
+    // autoPause = true
+    // videoData.paused = true
 
-    if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === bg.path)) outSlide.set(null)
-    outBackground.set(bg)
+    if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === bg.path)) setOutput("slide", null)
+    setOutput("background", bg)
   }
+
+  $: if (background.path === show?.id && autoPause) videoData.paused = true
 
   let filter = ""
   let flipped = false
@@ -148,7 +163,15 @@
               </HoverButton>
             </div>
             <div class="buttons" style="display: flex;">
-              <Button style="flex: 0" center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => (videoData.paused = !videoData.paused)}>
+              <Button
+                style="flex: 0"
+                center
+                title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause}
+                on:click={() => {
+                  autoPause = false
+                  videoData.paused = !videoData.paused
+                }}
+              >
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
               </Button>
               <VideoSlider bind:videoData bind:videoTime />
@@ -168,7 +191,7 @@
               icon="play"
               size={10}
               on:click={() => {
-                if (!$outLocked) outBackground.set({ path: show?.id, filter })
+                if (!$outLocked) setOutput("background", { path: show?.id, filter })
               }}
               title={$dictionary.media?.show}
             >
@@ -194,7 +217,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
   }
 
   .buttons :global(.slider input) {

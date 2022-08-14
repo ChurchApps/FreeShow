@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte"
-  import type { Resolution } from "../../../types/Settings"
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { activeShow, activeTimers, backgroundColor, dictionary, fullColors, groupNumbers, groups, overlays, screen, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, outputs, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import Editbox from "../edit/Editbox.svelte"
   import { getItemText } from "../edit/scripts/textStyle"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
+  import { getActiveOutputs, getResolution } from "../helpers/output"
   import { getMediaFilter, getMediaFlipped } from "../helpers/showActions"
   import SelectElem from "../system/SelectElem.svelte"
   import Actions from "./Actions.svelte"
@@ -21,6 +21,7 @@
   export let color: string | null = slide.color
   export let index: number
   export let columns: number = 1
+  export let outColor: string | null = null
   export let active: boolean = false
   export let focused: boolean = false
   export let list: boolean = false
@@ -185,7 +186,19 @@
     console.log(timer)
   }
 
-  let resolution: Resolution = slide?.settings?.resolution || $screen.resolution
+  $: resolution = getResolution(slide?.settings?.resolution, $outputs)
+
+  $: currentOutput = $outputs[getActiveOutputs()[0]]
+
+  let style: string = ""
+  $: {
+    style = ""
+    // $fullColors &&
+    if ($slidesOptions.mode !== "lyrics" || noQuickEdit) style += `background-color: ${color};`
+    if (!$fullColors && ($slidesOptions.mode !== "lyrics" || noQuickEdit)) style += `color: ${color};`
+    if ($slidesOptions.mode === "lyrics" && !noQuickEdit) style += "font-weight: bold;background-color: transparent;"
+    if ($slidesOptions.mode !== "grid" && !noQuickEdit && $slidesOptions.mode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
+  }
 </script>
 
 <!-- TODO: noQuickEdit -->
@@ -193,7 +206,12 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div class="main" class:active class:focused style="width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%">
+<div
+  class="main"
+  class:active
+  class:focused
+  style="{outColor ? 'outline: 2px solid ' + outColor + ';' : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%;"
+>
   {#if icons && !altKeyPressed}
     <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""} />
     <Actions {columns} {index} actions={layoutSlide.actions || {}} />
@@ -202,11 +220,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     class="slide context #{name === null ? 'slideChild' : 'slide'}"
     class:disabled={layoutSlide.disabled}
     class:afterEnd={endIndex !== null && index > endIndex}
-    style="{$fullColors || ($slidesOptions.mode === 'lyrics' && !noQuickEdit) ? 'background-' : ''}color: {$slidesOptions.mode === 'lyrics' && !noQuickEdit
-      ? 'initial'
-      : color};{$slidesOptions.mode === 'lyrics' && !noQuickEdit ? 'font-weight: bold;' : ''}{$slidesOptions.mode === 'grid' || noQuickEdit || $slidesOptions.mode === 'lyrics'
-      ? ''
-      : `width: calc(${100 / columns}% - 6px)`}"
+    {style}
     tabindex={0}
     on:click
   >
@@ -217,13 +231,14 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <!-- TODO: tab select on enter -->
         <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
         {#if $slidesOptions.mode === "lyrics" && !noQuickEdit}
-          <div class="label" title={name || ""} style="color: {color};">
+          <!-- border-bottom: 1px dashed {color}; -->
+          <div class="label" title={name || ""} style="color: {color};margin-bottom: 5px;">
             <span style="position: absolute;display: contents;">{index + 1}</span>
             <span class="text">{name === null ? "" : name || "—"}</span>
           </div>
         {/if}
         <Zoomed
-          background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || $backgroundColor || "black" : "transparent"}
+          background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentOutput.show?.background || "black" : "transparent"}
           let:ratio
           {resolution}
           zoom={$slidesOptions.mode !== "lyrics" || noQuickEdit}
@@ -273,7 +288,8 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         {#if $slidesOptions.mode !== "lyrics" || noQuickEdit}
           <!-- TODO: BG: white, color: black -->
           <!-- style="width: {resolution.width * zoom}px;" -->
-          <div class="label" title={name || ""} style="color: {$fullColors && color ? getContrast(color) : 'unset'};">
+          <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
+            <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
             <!-- font-size: 0.8em; -->
             <span style="position: absolute;display: contents;">{index + 1}</span>
             <span class="text">{name === null ? "" : name || "—"}</span>
@@ -372,6 +388,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
   }
 
   .label {
+    background-color: var(--primary-darkest);
     display: flex;
     padding: 5px;
     padding-bottom: 3px;

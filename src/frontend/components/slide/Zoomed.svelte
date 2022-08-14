@@ -1,21 +1,24 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { activeShow, backgroundColor, screen, showsCache } from "../../stores"
+  import { outputs } from "../../stores"
+  import { getActiveOutputs, getResolution } from "../helpers/output"
 
-  export let background: string = $backgroundColor || "#000000"
+  export let background: string = $outputs[getActiveOutputs()[0]]?.show?.background || "#000000"
   export let center: boolean = false
   export let zoom: boolean = true
   export let disableStyle: boolean = false
   export let relative: boolean = false
   export let aspectRatio: boolean = true
   export let hideOverflow: boolean = true
-  export let resolution: Resolution = $activeShow?.id && $showsCache[$activeShow.id]?.settings.resolution ? $showsCache[$activeShow.id].settings.resolution! : $screen.resolution
+  export let resolution: Resolution = getResolution(null, $outputs)
+  $: resolution = getResolution(resolution, $outputs)
   let slideWidth: number = 0
   export let ratio: number = 1
   $: ratio = Math.max(0.01, slideWidth / resolution.width)
 </script>
 
-<div class:center style={$$props.style || "width: 100%;height: 100%;"}>
+<!-- $$props.style ||  -->
+<div class:center style="width: 100%;height: 100%;">
   <div
     bind:offsetWidth={slideWidth}
     class="slide"

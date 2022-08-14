@@ -25,7 +25,6 @@
 
     folderSorted = []
     sortFolders()
-    console.log(folderSorted)
     tree = folderSorted
   }
 

@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN } from "../../../types/Channels"
+import { MAIN, OUTPUT } from "../../../types/Channels"
 import {
   activeDrawerTab,
   activeEdit,
@@ -10,14 +10,15 @@ import {
   activeRename,
   activeShow,
   alertMessage,
+  currentOutputSettings,
   dictionary,
   drawerTabsData,
   eventEdit,
   events,
   imageExtensions,
   media,
-  outBackground,
   outLocked,
+  outputs,
   previousShow,
   projects,
   projectView,
@@ -36,6 +37,7 @@ import { copy, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { addParents, cloneSlide, getCurrentLayout } from "../helpers/layout"
+import { getActiveOutputs, setOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
@@ -271,6 +273,23 @@ const actions: any = {
     })
   },
 
+  // output
+  force_output: () => {
+    let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
+    enabledOutputs.forEach((id) => {
+      let output: any = { id, ...get(outputs)[id] }
+      // , force: e.ctrlKey || e.metaKey
+      send(OUTPUT, ["DISPLAY"], { enabled: true, output, force: true })
+    })
+  },
+  toggle_output: (obj: any) => {
+    let id: string = obj.contextElem.id
+    send(OUTPUT, ["DISPLAY"], { enabled: "toggle", one: true, output: { id, ...get(outputs)[id] } })
+  },
+  move_to_front: (obj: any) => {
+    send(OUTPUT, ["TO_FRONT"], obj.contextElem.id)
+  },
+
   // new
   newShowPopup: () => activePopup.set("show"),
 
@@ -392,6 +411,10 @@ const actions: any = {
     } else if (obj.contextElem?.classList.value.includes("#event")) {
       eventEdit.set(obj.contextElem.id)
       activePopup.set("edit_event")
+    } else if (obj.contextElem?.classList.value.includes("output_button")) {
+      currentOutputSettings.set(obj.contextElem.id)
+      settingsTab.set("outputs")
+      activePage.set("settings")
     }
   },
 
@@ -570,12 +593,12 @@ const actions: any = {
     if (!path) return
     let filter: string = ""
     Object.entries(get(media)[path]?.filter || {}).forEach(([id, a]: any) => (filter += ` ${id}(${a})`))
-    if (!get(outLocked)) outBackground.set({ path, filter })
+    if (!get(outLocked)) setOutput("background", { path, filter })
   },
   play_no_filters: (obj: any) => {
     let path = obj.sel.data[0].path || obj.sel.data[0].id
     if (!path) return
-    if (!get(outLocked)) outBackground.set({ path })
+    if (!get(outLocked)) setOutput("background", { path })
   },
   favourite: (obj: any) => {
     let favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true

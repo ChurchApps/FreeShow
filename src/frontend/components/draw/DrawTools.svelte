@@ -6,6 +6,7 @@
   import Button from "../inputs/Button.svelte"
 
   const tools: DrawTools[] = ["focus", "pointer", "particles", "fill", "paint"]
+  // TODO: zoom tool
 </script>
 
 <div class="main">

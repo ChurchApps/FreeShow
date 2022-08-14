@@ -35,8 +35,27 @@
   }
 </script>
 
-<!-- <hr>
-      <h3>Global Groups</h3> -->
+<!-- <h3><T id="settings.add_group" /></h3> -->
+<div>
+  <TextInput value={value.group} on:input={(e) => changeValue(e, "group")} light />
+  <Color value={value.groupColor} on:input={(e) => changeValue(e, "groupColor")} style="width: 200px;" />
+  <Button
+    style="white-space: nowrap;"
+    center
+    on:click={() => {
+      if (value.group.length) {
+        history({ id: "addGlobalGroup", newData: { id: uid(), data: { name: value.group, color: value.groupColor } } })
+        value.group = ""
+      }
+    }}
+  >
+    <Icon id="add" right />
+    <T id="settings.add" />
+  </Button>
+</div>
+
+<hr />
+
 {#each g as group}
   <div>
     <TextInput value={group.name} on:change={(e) => changeGroup(e, group.id)} light />
@@ -55,6 +74,7 @@
     </Button>
   </div>
 {/each}
+<hr />
 <Button
   style="width: 100%;"
   center
@@ -65,35 +85,16 @@
   <Icon id="reset" right />
   <T id="actions.reset" />
 </Button>
-<hr />
-<h3><T id="settings.add_group" /></h3>
-<div>
-  <TextInput value={value.group} on:input={(e) => changeValue(e, "group")} light />
-  <Color value={value.groupColor} on:input={(e) => changeValue(e, "groupColor")} style="width: 200px;" />
-</div>
-<Button
-  style="width: 100%;"
-  center
-  on:click={() => {
-    if (value.group.length) {
-      history({ id: "addGlobalGroup", newData: { id: uid(), data: { name: value.group, color: value.groupColor } } })
-      value.group = ""
-    }
-  }}
->
-  <Icon id="add" right />
-  <T id="settings.add" />
-</Button>
 
 <style>
-  h3 {
+  /* h3 {
     text-align: center;
     font-size: 1.8em;
     margin: 20px 0;
   }
   h3 {
     font-size: initial;
-  }
+  } */
 
   hr {
     background-color: var(--primary-lighter);

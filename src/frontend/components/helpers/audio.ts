@@ -5,7 +5,10 @@ import { audioAnalyser } from "../output/audioAnalyser"
 export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolean = true, startAt: number = 0) {
   let existing: any = get(playingAudio)[path]
   if (existing) {
-    if (!pauseIfPlaying) return
+    if (!pauseIfPlaying) {
+      get(playingAudio)[path].audio.currentTime = 0
+      return
+    }
 
     playingAudio.update((a) => {
       let isPaused: boolean = a[path].paused
@@ -91,7 +94,8 @@ export function analyseAudio() {
         allRights.push(aa.right)
       }
     })
-    let merged = { left: getHighestNumber(allLefts), right: getHighestNumber(allRights) }
+    let merged = { left: 0, right: 0 }
+    if (allLefts.length || allRights.length) merged = { left: getHighestNumber(allLefts), right: getHighestNumber(allRights) }
     audioChannels.set(merged)
   }, audioUpdateInterval)
 }

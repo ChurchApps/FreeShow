@@ -1,7 +1,8 @@
 <script lang="ts">
   import { uid } from "uid"
-  import { activeShow, dictionary, outBackground, playerVideos } from "../../../stores"
+  import { activeShow, dictionary, playerVideos } from "../../../stores"
   import Icon from "../../helpers/Icon.svelte"
+  import { findMatchingOut, setOutput } from "../../helpers/output"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import HiddenInput from "../../inputs/HiddenInput.svelte"
@@ -77,9 +78,10 @@
             <Button
               class="context #player_button"
               on:click={() => activeShow.set({ id: video.rid, type: "player" })}
-              on:dblclick={() => outBackground.set({ id: video.rid, type: "player" })}
+              on:dblclick={() => setOutput("background", { id: video.rid, type: "player" })}
               active={$activeShow?.id === video.rid}
-              outline={$outBackground?.id === video.rid}
+              outlineColor={findMatchingOut(video.rid)}
+              outline={findMatchingOut(video.rid) !== null}
               bold={false}
               border
             >

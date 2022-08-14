@@ -3,7 +3,7 @@ export const defaultThemes: any = {
     name: "default",
     default: true,
     font: {
-      family: "sans-serif",
+      family: "",
       size: "1em",
     },
     colors: {
@@ -45,7 +45,7 @@ export const defaultThemes: any = {
     name: "light",
     default: true,
     font: {
-      family: "sans-serif",
+      family: "",
       size: "1em",
     },
     colors: {
@@ -87,6 +87,66 @@ export const defaultThemes: any = {
     name: "black",
     default: true,
     font: {
+      family: "",
+      size: "1em",
+    },
+    colors: {
+      primary: "#000000",
+      "primary-lighter": "#424242",
+      "primary-darker": "#000000",
+      "primary-darkest": "#212121",
+      text: "#FFFFFF",
+      textInvert: "#131313",
+      "secondary-text": "#FFFFFF",
+      secondary: "#FF2E2E",
+      "secondary-opacity": "rgb(255 46 46 / 0.5)",
+      hover: "rgb(255 255 255 / 0.2)",
+      focus: "rgb(255 255 255 / 0.3)",
+    },
+  },
+  blue: {
+    name: "Blue",
+    font: {
+      family: "Trebuchet MS",
+      size: "1em",
+    },
+    colors: {
+      primary: "#323743",
+      "primary-lighter": "#454C5E",
+      "primary-darker": "#23242F",
+      "primary-darkest": "#191929",
+      text: "#F0F6FF",
+      textInvert: "#404154",
+      "secondary-text": "#F0F6FF",
+      secondary: "#338BFF",
+      "secondary-opacity": "rgba(51, 139, 255, 0.5)",
+      hover: "rgb(255 255 255 / 0.05)",
+      focus: "rgb(255 255 255 / 0.1)",
+    },
+  },
+  sea: {
+    name: "Sea",
+    font: {
+      family: "Georgia",
+      size: "1em",
+    },
+    colors: {
+      primary: "#ECF4FE",
+      "primary-lighter": "#E0E5FF",
+      "primary-darker": "#D5DFF1",
+      "primary-darkest": "#BFCBE3",
+      text: "#424861",
+      textInvert: "#f0f0ff",
+      "secondary-text": "#424861",
+      secondary: "#007DB3",
+      "secondary-opacity": "rgb(0 125 179 / 0.5)",
+      hover: "rgb(0 0 0 / 0.05)",
+      focus: "rgb(0 0 0 / 0.1)",
+    },
+  },
+  aqua: {
+    name: "Aqua",
+    font: {
       family: "sans-serif",
       size: "1em",
     },
@@ -102,6 +162,26 @@ export const defaultThemes: any = {
       "secondary-opacity": "rgb(0 255 190 / 0.5)",
       hover: "rgb(255 255 255 / 0.2)",
       focus: "rgb(255 255 255 / 0.3)",
+    },
+  },
+  papyrus: {
+    name: "Papyrus",
+    font: {
+      family: "Papyrus",
+      size: "0.9em",
+    },
+    colors: {
+      primary: "#EAC6A4",
+      "primary-lighter": "#D6B59A",
+      "primary-darker": "#FFD1B3",
+      "primary-darkest": "#D7B99D",
+      text: "#000242",
+      textInvert: "#000242",
+      "secondary-text": "#000242",
+      secondary: "#000242",
+      "secondary-opacity": "rgb(0 2 66 / 0.5)",
+      hover: "rgb(234 198 164 / 0.2)",
+      focus: "rgb(234 198 164 / 0.3)",
     },
   },
   terminal: {

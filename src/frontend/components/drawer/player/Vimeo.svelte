@@ -19,7 +19,7 @@
     autopause: false,
     loop: videoData.loop,
     muted: videoData.muted,
-    color: $themes[$theme].colors.secondary,
+    color: $themes[$theme]?.colors?.secondary,
     controls: false,
     // title: false,
     // byline: false,
@@ -109,6 +109,7 @@
   <!-- https://www.youtube.com/watch?v=rfxnmIPCzIc -->
   {#if id}
     <!-- <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} /> -->
+    <!-- TODO: looping vimeo video will reload the video -->
     <iframe
       bind:this={iframe}
       on:load={iframeLoaded}

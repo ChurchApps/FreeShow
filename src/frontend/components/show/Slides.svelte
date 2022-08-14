@@ -2,9 +2,10 @@
   // import {flip} from 'svelte/animate';
   // import type { Resolution } from "../../../types/Settings"
 
-  import { activeShow, outLocked, outSlide, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, outLocked, outputs, showsCache, slidesOptions } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import { history } from "../helpers/history"
+  import { getActiveOutputs, setOutput } from "../helpers/output"
   import { updateOut } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
@@ -32,9 +33,9 @@
   // let behaviour: string = ""
   // setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)
   $: {
-    if (scrollElem && $outSlide !== null && $activeShow!.id === $outSlide?.id && activeLayout === $outSlide?.layout) {
+    if (scrollElem && activeOutputs[0]?.out?.slide?.id !== null && $activeShow!.id === activeOutputs[0]?.out?.slide?.id && activeLayout === activeOutputs[0]?.out?.slide?.layout) {
       let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
-      let index = Math.max(0, $outSlide.index! - columns)
+      let index = Math.max(0, activeOutputs[0]?.out?.slide?.index - columns)
       offset = scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5 - 5
 
       // TODO: always show active slide....
@@ -53,8 +54,9 @@
 
     updateOut("active", index, _show("active").layouts("active").ref()[0], !e.altKey)
 
-    if ($outSlide?.id === id && $outSlide?.index === index && $outSlide?.layout === activeLayout) return
-    outSlide.set({ id, layout: activeLayout, index })
+    // if (activeOutputs[0]?.out?.slide?.id === id && activeOutputs[0]?.out?.slide?.index === index && activeOutputs[0]?.out?.slide?.layout === activeLayout) return
+    // outSlide.set({ id, layout: activeLayout, index })
+    setOutput("slide", { id, layout: activeLayout, index, line: 0 })
   }
 
   // disable slides that is after end (only visual)
@@ -81,6 +83,20 @@
   }
   function keyup() {
     altKeyPressed = false
+  }
+
+  $: activeOutputs = getActiveOutputs($outputs, false)
+
+  let activeSlides: any[] = []
+  $: {
+    activeSlides = []
+    activeOutputs.forEach((a) => {
+      let s: any = $outputs[a]?.out?.slide || {}
+      // console.log(s, slideIndex, id, activeLayout)
+      if (!activeSlides[s.index] && s.id === id && s.layout === activeLayout) {
+        activeSlides[s.index] = $outputs[a].color
+      }
+    })
   }
 </script>
 
@@ -111,7 +127,8 @@
                   layoutSlide={slide}
                   index={i}
                   color={slide.color}
-                  active={$outSlide?.index === i && $outSlide?.id === id && $outSlide?.layout === activeLayout}
+                  outColor={activeSlides[i]}
+                  active={activeSlides[i] !== undefined}
                   {endIndex}
                   list={$slidesOptions.mode !== "grid"}
                   columns={$slidesOptions.columns}

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Resolution } from "../../../../types/Settings"
-  import { mediaCache, screen, videoExtensions } from "../../../stores"
+  import { mediaCache, outputs, videoExtensions } from "../../../stores"
+  import { getResolution } from "../../helpers/output"
   import Camera from "../../output/Camera.svelte"
   import { getStyleResolution } from "../../slide/getStyleResolution"
   // import Image from "./Image.svelte"
@@ -52,7 +52,7 @@
     let x = 0
     let y = 0
 
-    if (width / height > 16 / 9) {
+    if (width / height > resolution.width / resolution.height) {
       height = height / (width / thumbnailSize.width)
       width = thumbnailSize.width
       y = (thumbnailSize.height - height) / 2
@@ -152,7 +152,7 @@
   let width: number = 0
   let height: number = 0
 
-  let resolution: Resolution = $screen.resolution
+  $: resolution = getResolution(null, $outputs)
 </script>
 
 <div class="main" style="aspect-ratio: {resolution.width}/{resolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>

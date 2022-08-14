@@ -18,6 +18,7 @@
   import Pdf from "./components/export/Pdf.svelte"
   import { copy, paste } from "./components/helpers/clipboard"
   import { redo, undo } from "./components/helpers/history"
+  import { getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
   import { _show } from "./components/helpers/shows"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
@@ -42,29 +43,41 @@
     activePopup,
     activeShow,
     activeStage,
+    currentWindow,
     drawer,
     os,
-    outBackground,
-    outOverlays,
     outputDisplay,
-    currentWindow,
-    outSlide,
-    outTransition,
-    screen,
-    showsCache,
-    outputScreen,
-    selected,
+    outputs,
     playingAudio,
+    selected,
   } from "./stores"
+  import { send } from "./utils/request"
   import { save } from "./utils/save"
   import { startup } from "./utils/startup"
 
   startup()
   $: page = $activePage
+  // let reloadPage: boolean = false
+  // let previousPage: string = ""
+  // $: if (page === "draw") {
+  //   previousPage = "draw"
+  //   reload()
+  // }
+  // $: if (page !== "draw" && previousPage === "draw") {
+  //   previousPage = ""
+  //   reload()
+  // }
+  // function reload() {
+  //   reloadPage = true
+  //   setTimeout(() => {
+  //     reloadPage = false
+  //   }, 2000)
+  // }
 
   let width: number = 0
   let height: number = 0
-  let resolution: Resolution = $outSlide ? $showsCache[$outSlide.id].settings.resolution! : $screen.resolution
+  let resolution: Resolution = getResolution()
+  $: resolution = getResolution(null, $outputs)
 
   const menus: TopViews[] = ["show", "edit", "calendar", "draw", "stage", "settings"]
   const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "player", "live", "templates"]
@@ -90,7 +103,12 @@
     i: () => activePopup.set("import"),
     n: () => activePopup.set("show"),
     o: () => {
-      window.api.send(OUTPUT, { channel: "DISPLAY", data: { enabled: !$outputDisplay, screen: $outputScreen } })
+      let enabledOutputs: any[] = getActiveOutputs($outputs, false)
+      enabledOutputs.forEach((id) => {
+        let output: any = { id, ...$outputs[id] }
+        // , force: e.ctrlKey || e.metaKey
+        send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, output })
+      })
     },
     s: () => save(),
     y: (e: any) => {
@@ -105,7 +123,7 @@
   }
   const keys: any = {
     Escape: () => {
-      if ($outBackground || $outSlide || $outOverlays.length || Object.keys($playingAudio).length || $outTransition) return
+      if (!isOutCleared() || Object.keys($playingAudio).length) return
 
       // close popup
       if ($activePopup !== null) activePopup.set(null)
@@ -218,6 +236,7 @@
             </div>
           </Resizeable>
 
+          <!-- {#if !reloadPage} -->
           <div class="center">
             {#if page === "show"}
               <Show />
@@ -233,6 +252,7 @@
               <Calendar />
             {/if}
           </div>
+          <!-- {/if} -->
 
           <Resizeable id="mainRight" let:width side="right">
             <div class="right" class:row={width > 600}>

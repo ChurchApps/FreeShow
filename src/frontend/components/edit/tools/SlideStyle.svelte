@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { activeEdit, activeShow, backgroundColor, screen, showsCache } from "../../../stores"
+  import { activeEdit, activeShow, outputs, showsCache } from "../../../stores"
   import { history } from "../../helpers/history"
+  import { getActiveOutputs, getResolution } from "../../helpers/output"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
   import Color from "../../inputs/Color.svelte"
@@ -10,16 +11,18 @@
 
   $: slideId = _show("active").layouts("active").ref()[0][$activeEdit.slide || 0]?.id
   $: editSlide = $activeEdit.slide !== null ? _show("active").slides([slideId]).get()[0] : null
+  $: backgroundColor = $outputs[getActiveOutputs()[0]]?.show?.background
 
   let settings: any = {}
   showsCache.subscribe(setValues)
   $: if (editSlide) setValues()
   function setValues() {
+    let res = getResolution(editSlide?.settings?.resolution)
     settings = {
-      color: editSlide?.settings?.color || $backgroundColor || "#000000",
+      color: editSlide?.settings?.color || backgroundColor || "#000000",
       resolution: {
-        width: editSlide?.settings?.resolution?.width || $screen.resolution?.width,
-        height: editSlide?.settings?.resolution?.height || $screen.resolution?.height,
+        width: res.width,
+        height: res.height,
       },
     }
   }
@@ -31,8 +34,8 @@
 
   function update() {
     let newData: any = { style: JSON.parse(JSON.stringify(settings)) }
-    if (JSON.stringify(newData.style.resolution) === JSON.stringify($screen.resolution)) delete newData.style.resolution
-    if (newData.style.color === $backgroundColor) delete newData.style.color
+    if (JSON.stringify(newData.style.resolution) === JSON.stringify(getResolution())) delete newData.style.resolution
+    if (newData.style.color === backgroundColor) delete newData.style.color
 
     history({
       id: "slideStyle",
@@ -91,7 +94,7 @@
   <hr />
   <h6><T id="tools.notes" /></h6>
   <div class="notes">
-    <Notes value={note} on:edit={edit} update />
+    <Notes value={note} on:edit={edit} />
   </div>
 </Panel>
 

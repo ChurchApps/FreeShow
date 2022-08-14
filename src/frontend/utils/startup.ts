@@ -21,9 +21,7 @@ import {
   activeTimers,
   alertMessage,
   autoOutput,
-  backgroundColor,
   currentWindow,
-  displayMetadata,
   draw,
   drawSettings,
   drawTool,
@@ -34,17 +32,13 @@ import {
   mediaCache,
   mediaFolders,
   os,
-  outBackground,
-  outOverlays,
   outputDisplay,
-  outputPosition,
-  outputScreen,
-  outSlide,
+  outputs,
   overlays,
   playerVideos,
+  playingVideos,
   projects,
   saved,
-  screen,
   shows,
   showsCache,
   showsPath,
@@ -54,7 +48,6 @@ import {
   themes,
   transitionData,
   version,
-  playingVideos,
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
 import { checkForUpdates } from "./checkForUpdates"
@@ -65,35 +58,32 @@ import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
 
 export function startup() {
-  if (!get(currentWindow)) {
-    send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
-    send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "CACHE", "SETTINGS"])
-  }
+  send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
+  setTimeout(() => send(STORE, ["SETTINGS"]), 500)
+
+  // DEBUG
+  // window.api.send("LOADED")
 
   receive(MAIN, receiveMAIN)
   receive(STORE, receiveSTORE)
   receive(OUTPUT, receiveOUTPUT)
   receive(IMPORT, receiveIMPORT)
-  // receive(OUTPUT, get(currentWindow) ? receiveOUTPUTasOutput : receiveOUTPUT)
-  // window.api.receive(OUTPUT, (msg: any) => {
-  //   if (!get(currentWindow) || ["DISPLAY"].includes(msg.channel)) {
-  //     if (receiveOUTPUT[msg.channel]) receiveMAIN[msg.channel](msg.data)
-  //   }
-  // })
 
-  setLanguage()
   loadShows(Object.keys(get(shows)))
-  // search (cache search text?...)
+}
 
-  // output
-  // if (get(autoOutput)) {
-  //   send(OUTPUT, ["DISPLAY"], { enabled: true, screen: get(outputScreen) })
-  // }
+function startupMain() {
+  send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "CACHE"])
+  setLanguage()
 
   // load new show on show change
   activeShow.subscribe((a) => {
     if (a && (a.type === undefined || a.type === "show")) loadShows([a.id])
   })
+
+  setTimeout(() => {
+    listen()
+  }, 3000)
 }
 
 // receivers
@@ -120,7 +110,7 @@ const receiveMAIN: any = {
   OUTPUT: (a: any) => {
     if (a === "true") currentWindow.set("output")
     else if (a === "pdf") currentWindow.set("pdf")
-    else listen()
+    else startupMain()
   },
 }
 
@@ -144,22 +134,27 @@ const receiveSTORE: any = {
 }
 
 const receiveOUTPUT: any = {
-  BACKGROUND: (a: any) => outBackground.set(a),
+  OUTPUTS: (a: any) => outputs.set(a),
+  // BACKGROUND: (a: any) => outBackground.set(a),
   TRANSITION: (a: any) => transitionData.set(a),
-  SLIDE: (a: any) => outSlide.set(a),
-  OVERLAYS: (a: any) => outOverlays.set(a),
-  OVERLAY: (a: any) => overlays.set(a),
-  META: (a: any) => displayMetadata.set(a),
-  COLOR: (a: any) => backgroundColor.set(a),
-  SCREEN: (a: any) => screen.set(a),
+  // SLIDE: (a: any) => outSlide.set(a),
+  // OVERLAYS: (a: any) => outOverlays.set(a),
+  // OVERLAY: (a: any) => overlays.set(a),
+  // META: (a: any) => displayMetadata.set(a),
+  // COLOR: (a: any) => backgroundColor.set(a),
+  // SCREEN: (a: any) => screen.set(a),
   SHOWS: (a: any) => showsCache.set(a),
+
+  TEMPLATES: (a: any) => templates.set(a),
+  OVERLAYS: (a: any) => overlays.set(a),
+
   DRAW: (a: any) => draw.set(a),
   DRAW_TOOL: (a: any) => drawTool.set(a),
   DRAW_SETTINGS: (a: any) => drawSettings.set(a),
   MEDIA: (a: any) => mediaFolders.set(a),
   ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
   DISPLAY: (a: any) => outputDisplay.set(a.enabled),
-  POSITION: (a: any) => outputPosition.set(a),
+  // POSITION: (a: any) => outputPosition.set(a),
   PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
   AUDIO_MAIN: async (data: any) => {
     // let analyser: any = await getAnalyser(video)
@@ -174,10 +169,11 @@ const receiveOUTPUT: any = {
       return a
     })
   },
-  SCREEN_ADDED: (a: any) => {
+  SCREEN_ADDED: () => {
     if (get(autoOutput) && !get(outputDisplay)) {
-      send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })
-      outputScreen.set(a)
+      // TODO: outputs...
+      // send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })
+      // outputScreen.set(a)
     }
   },
 }

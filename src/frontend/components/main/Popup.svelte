@@ -21,6 +21,7 @@
   import Timer from "./popups/Timer.svelte"
   import EditEvent from "./popups/EditEvent.svelte"
   import Color from "./popups/Color.svelte"
+  import ChooseScreen from "./popups/ChooseScreen.svelte"
 
   function mousedown(e: any) {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -65,6 +66,8 @@
           <ImportScripture />
         {:else if $activePopup === "edit_event"}
           <EditEvent />
+        {:else if $activePopup === "choose_screen"}
+          <ChooseScreen />
         {:else if $activePopup === "about"}
           <About />
         {:else if $activePopup === "shortcuts"}

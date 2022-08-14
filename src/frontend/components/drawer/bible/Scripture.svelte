@@ -1,13 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte"
-  import Loader from "../../main/Loader.svelte"
   import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
+  import Loader from "../../main/Loader.svelte"
   // import type { Bible } from "../../../../types/Bible"
-  import type { StringObject } from "../../../../types/Main"
-  import Center from "../../system/Center.svelte"
-  import T from "../../helpers/T.svelte"
-  import { dictionary, notFound, outLocked, outSlide, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
   import { BIBLE } from "../../../../types/Channels"
+  import type { StringObject } from "../../../../types/Main"
+  import { dictionary, notFound, outLocked, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
+  import { setOutput } from "../../helpers/output"
+  import T from "../../helpers/T.svelte"
+  import Center from "../../system/Center.svelte"
 
   export let active: any
   export let bible: Bible
@@ -292,7 +293,8 @@
         style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
       })
 
-    outSlide.set({ id: "temp", tempItems })
+    // TODO: outline on outputted verses
+    setOutput("slide", { id: "temp", tempItems })
   }
 
   // search

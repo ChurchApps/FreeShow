@@ -1,30 +1,33 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
   import { createEventDispatcher } from "svelte"
+  import { receive, send } from "../../utils/request"
+  import { MAIN } from "../../../types/Channels"
+
+  export let system: boolean = false
 
   const dispatch = createEventDispatcher()
 
-  const fonts = [
+  let fonts: string[] = [
     "CMGSans",
-    "Arial",
-    "Calibri",
-    "Verdana",
+    "Fantasy",
     "Helvetica",
-    "Tahoma",
-    "Trebuchet MS",
-    "Times New Roman",
-    "Georgia",
-    "Garamond",
-    "Courier New",
-    "Lucida Console",
-    "Monaco",
+    // "Monaco",
     "Monospace",
-    "Brush Script MT",
-    "Lucida Handwriting",
-    "Fantasy", // Copperplate
-    "Papyrus",
+    // "sans-serif",
   ]
-  // , "Sans-serif"
+
+  send(MAIN, ["GET_SYSTEM_FONTS"])
+  receive(MAIN, {
+    GET_SYSTEM_FONTS: (systemFonts: string[]) => {
+      // join and remove duplicates
+      fonts = [...new Set([...fonts, ...systemFonts])]
+      // sort
+      fonts = fonts.sort((a, b) => a.localeCompare(b))
+      // add default app font
+      if (system) fonts = ["", ...fonts]
+    },
+  })
 
   export let value: string
   let active: boolean = false
@@ -47,10 +50,9 @@
   }}
 />
 
-<div bind:this={self} class="dropdownElem" style="position: relative;{$$props.style}">
-  <!-- style="font-family: {value};" -->
-  <button on:click={() => (active = !active)} on:wheel={wheel}>
-    {value}
+<div bind:this={self} class="dropdownElem" style={$$props.style || ""}>
+  <button style="font-family: {value};" on:click={() => (active = !active)} on:wheel={wheel}>
+    <p>{value || "—"}</p>
   </button>
   {#if active}
     <div class="dropdown" transition:slide={{ duration: 200 }}>
@@ -63,7 +65,7 @@
           class:active={option === value}
           style="font-family: {option};"
         >
-          {option}
+          <p>{option || "—"}</p>
         </span>
       {/each}
     </div>
@@ -71,44 +73,59 @@
 </div>
 
 <style>
+  .dropdownElem {
+    position: relative;
+    /* display: grid; */
+  }
+
   div {
-    /* width: fit-content;
-    min-width: 200px; */
     background-color: var(--primary-darker);
     color: var(--text);
-    /* position: relative; */
   }
 
   .dropdown {
-    position: absolute;
-    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* position: absolute;
+    width: 100%; */
+    position: fixed;
     display: flex;
     flex-direction: column;
     border: 2px solid var(--primary-lighter);
     transform: translateY(-1px);
-    /* transform: translateX(-25%); */
     z-index: 10;
   }
 
   button {
-    /* width: 200px; */
     color: var(--text);
     border: 2px solid var(--primary-lighter);
-    /* font-weight: bold; */
     text-align: left;
   }
 
   button,
   span {
+    display: table;
     width: 100%;
     padding: 8px 12px;
     background-color: transparent;
     font-family: inherit;
-    /* text-transform: uppercase; */
     font-size: 1em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  span {
+    display: flex;
+    overflow-x: hidden;
+    padding: 12px 10px;
+  }
+  span p,
+  button p {
+    opacity: 1;
+    height: 20px;
+    align-self: center;
   }
 
   button:hover,

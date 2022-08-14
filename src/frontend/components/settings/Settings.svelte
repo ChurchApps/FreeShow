@@ -3,10 +3,9 @@
   import T from "../helpers/T.svelte"
   import Calendar from "./tabs/Calendar.svelte"
   import Connection from "./tabs/Connection.svelte"
-  import Display from "./tabs/Display.svelte"
   import General from "./tabs/General.svelte"
   import Groups from "./tabs/Groups.svelte"
-  import Output from "./tabs/Output.svelte"
+  import Outputs from "./tabs/Outputs.svelte"
   import Theme from "./tabs/Theme.svelte"
 </script>
 
@@ -23,10 +22,8 @@
       <Theme />
     {:else if $settingsTab === "groups"}
       <Groups />
-    {:else if $settingsTab === "output"}
-      <Output />
-    {:else if $settingsTab === "display"}
-      <Display />
+    {:else if $settingsTab === "outputs"}
+      <Outputs />
     {:else if $settingsTab === "connection"}
       <Connection />
     {:else if $settingsTab === "calendar"}
@@ -52,7 +49,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     height: 100%;
-    padding: 0 100px;
+    padding: 0 80px;
   }
 
   div:not(.scroll) {

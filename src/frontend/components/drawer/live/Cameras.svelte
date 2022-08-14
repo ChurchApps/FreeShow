@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { outBackground } from "../../../stores"
+  import { outputs } from "../../../stores"
+  import { getActiveOutputs, setOutput } from "../../helpers/output"
   import Cam from "./Cam.svelte"
 
   // export let streams: any[]
@@ -33,6 +34,8 @@
     //   if (d.kind === "videoinput") cams = [...cams, { name: d.label, id: d.deviceId, group: d.groupId }]
     // })
   })
+
+  $: currentOutput = $outputs[getActiveOutputs()[0]]
 </script>
 
 <!-- TODO: showing the same preview..... -->
@@ -40,8 +43,8 @@
   <Cam
     {cam}
     on:click={() => {
-      if ($outBackground?.id === cam.id) outBackground.set(null)
-      else outBackground.set({ name: cam.name, id: cam.id, type: "camera" })
+      if (currentOutput.out?.background?.id === cam.id) setOutput("background", null)
+      else setOutput("background", { name: cam.name, id: cam.id, type: "camera" })
     }}
   />
 {/each}

@@ -1,23 +1,20 @@
 import { get } from "svelte/store"
-import { maxConnections, scriptures, scriptureSettings, splitLines, themes, transitionData, volume } from "./../stores"
-import { OUTPUT } from "./../../types/Channels"
 import { MAIN } from "../../types/Channels"
+import { convertObject } from "../components/helpers/array"
 import {
   activePopup,
   activeProject,
   alertUpdates,
   audioFolders,
   autoOutput,
-  backgroundColor,
   categories,
   defaultProjectName,
-  displayMetadata,
   drawer,
   drawerTabsData,
   drawSettings,
   exportPath,
-  fullColors,
   formatNewShow,
+  fullColors,
   groupNumbers,
   groups,
   imageExtensions,
@@ -28,8 +25,6 @@ import {
   openedFolders,
   os,
   outLocked,
-  outputPosition,
-  outputScreen,
   overlayCategories,
   playerVideos,
   ports,
@@ -37,8 +32,6 @@ import {
   projectView,
   remotePassword,
   resized,
-  saved,
-  screen,
   showsPath,
   slidesOptions,
   templateCategories,
@@ -46,32 +39,40 @@ import {
   videoExtensions,
   webFavorites,
 } from "../stores"
+import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings } from "./../../types/Save"
-import { send } from "./request"
+import { currentWindow, maxConnections, outputs, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
+import { send } from "./request"
 
 export function updateSettings(data: any) {
-  // output
-  if (data.outputPosition) send(OUTPUT, ["POSITION"], data.outputPosition)
-  if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
-
-  // remote
-  send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
-
-  // theme
-  if (get(themes)[data.theme]) {
-    Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-    Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
-  }
-
   Object.entries(data).forEach(([key, value]: any) => {
     if (updateList[key as SaveListSettings]) updateList[key as SaveListSettings](value)
     else console.log("MISSING: ", key)
   })
 
-  window.api.send("LOADED")
+  if (get(currentWindow)) return
+
+  // output
+  if (data.outputs) {
+    convertObject(data.outputs).forEach((output: any) => {
+      if (output.enabled) send(OUTPUT, ["CREATE"], output)
+    })
+  }
+  // if (data.outputPosition) send(OUTPUT, ["POSITION"], data.outputPosition)
+  // if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
+
+  // remote
+  send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
+
+  // theme
+  // if (get(themes)[data.theme]) {
+  //   Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
+  //   Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
+  // }
+
   setTimeout(() => {
-    saved.set(true)
+    window.api.send("LOADED")
   }, 100)
 }
 
@@ -108,13 +109,15 @@ const updateList: { [key in SaveListSettings]: any } = {
   autoOutput: (v: any) => autoOutput.set(v),
   maxConnections: (v: any) => maxConnections.set(v),
   ports: (v: any) => ports.set(v),
-  outputScreen: (v: any) => outputScreen.set(v),
-  outputPosition: (v: any) => outputPosition.set(v),
-  backgroundColor: (v: any) => backgroundColor.set(v),
+  outputs: (v: any) => {
+    Object.keys(v).forEach((id: string) => {
+      delete v[id].out
+    })
+    outputs.set(v)
+  },
   remotePassword: (v: any) => remotePassword.set(v),
   audioFolders: (v: any) => audioFolders.set(v),
   defaultProjectName: (v: any) => defaultProjectName.set(v),
-  displayMetadata: (v: any) => displayMetadata.set(v),
   categories: (v: any) => categories.set(v),
   drawer: (v: any) => drawer.set(v),
   drawerTabsData: (v: any) => drawerTabsData.set(v),
@@ -133,7 +136,6 @@ const updateList: { [key in SaveListSettings]: any } = {
   presenterControllerKeys: (v: any) => presenterControllerKeys.set(v),
   playerVideos: (v: any) => playerVideos.set(v),
   resized: (v: any) => resized.set(v),
-  screen: (v: any) => screen.set(v),
   scriptures: (v: any) => scriptures.set(v),
   scriptureSettings: (v: any) => scriptureSettings.set(v),
   slidesOptions: (v: any) => slidesOptions.set(v),

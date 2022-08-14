@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { activeProject, activeShow, categories, notFound, outBackground, outLocked, outSlide, playerVideos, playingAudio, projects, shows, showsCache } from "../../stores"
+  import { activeProject, activeShow, categories, notFound, outLocked, outputs, playerVideos, playingAudio, projects, shows, showsCache } from "../../stores"
   import { playAudio } from "../helpers/audio"
   import { historyAwait } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
   import { checkName } from "../helpers/show"
   import { updateOut } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
@@ -107,21 +108,28 @@
   function doubleClick(e: any) {
     if (editActive || $outLocked || e.target.closest("input")) return
 
+    let currentOutput: any = getActiveOutputs()[0]
+    let slide: any = currentOutput.out?.slide || null
+
     if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length) {
       updateOut("active", 0, _show("active").layouts("active").ref()[0], !e.altKey)
-      if ($outSlide?.id === id && $outSlide?.index === 0 && $outSlide?.layout === $showsCache[id].settings.activeLayout) return
-      outSlide.set({ id, layout: $showsCache[id].settings.activeLayout, index: 0 })
+      if (slide?.id === id && slide?.index === 0 && slide?.layout === $showsCache[id].settings.activeLayout) return
+      setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: 0 })
     } else if (type === "image" || type === "video") {
       let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: type }
       if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
-      outBackground.set(out)
+      setOutput("background", out)
     } else if (type === "audio") playAudio({ path: id, name: show.name })
-    else if (type === "player") outBackground.set({ id, type: "player" })
+    else if (type === "player") setOutput("background", { id, type: "player" })
   }
 
   function edit(e: any) {
     historyAwait([id], { id: "updateShow", newData: { key: "name", values: [checkName(e.detail.value)] }, location: { page: index === null ? "drawer" : "show", shows: [{ id }] } })
   }
+
+  let activeOutput: any = null
+  $: if ($outputs) activeOutput = findMatchingOut(id)
+  // $: if (activeOutput) style += "outline-offset: -2px;outline: 2px solid " + activeOutput + ";"
 </script>
 
 <div {id} class="main">
@@ -131,7 +139,8 @@
     on:click={click}
     on:dblclick={doubleClick}
     {active}
-    outline={id === $outSlide?.id || id === ($outBackground?.path || $outBackground?.id) || $playingAudio[id]}
+    outlineColor={activeOutput}
+    outline={activeOutput !== null || $playingAudio[id]}
     class="context {$$props.class}"
     {style}
     bold={false}

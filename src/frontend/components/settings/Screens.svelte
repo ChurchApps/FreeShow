@@ -1,10 +1,14 @@
 <script lang="ts">
   import { MAIN, OUTPUT } from "../../../types/Channels"
-  import { outputDisplay, outputScreen } from "../../stores"
+  import { currentOutputSettings, outputDisplay, outputs } from "../../stores"
   import { receive, send } from "../../utils/request"
   import T from "../helpers/T.svelte"
 
   let screens: any[] = []
+
+  let screenId: string | null = null
+  $: screenId = $currentOutputSettings
+
   send(MAIN, ["GET_DISPLAYS"])
   // send(MAIN, ["GET_SCREENS"])
   receive(MAIN, {
@@ -12,14 +16,33 @@
       screens = d
     },
     SET_SCREEN: (d: any) => {
-      if (!$outputScreen) outputScreen.set(d.id.toString())
+      if (!$outputs[screenId!].screen) {
+        outputs.update((a) => {
+          a[screenId!].screen = d.id.toString()
+          return a
+        })
+      }
     },
     // GET_SCREENS: (d: any) => (screens = d),
   })
 
   function changeOutputScreen(e: any) {
-    outputScreen.set(e.detail.id.toString())
-    send(OUTPUT, ["DISPLAY"], { enabled: $outputDisplay, screen: $outputScreen, reset: true })
+    if (!screenId) return
+
+    let bounds = e.detail.bounds
+    outputs.update((a) => {
+      a[screenId!].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
+      a[screenId!].screen = e.detail.id.toString()
+      a[screenId!].kiosk = true
+      return a
+    })
+    setTimeout(() => {
+      send(OUTPUT, ["DISPLAY"], { enabled: $outputDisplay, output: { id: screenId, ...$outputs[screenId!] }, reset: true })
+      // send(OUTPUT, ["TOGGLE_KIOSK"], { id: screenId, enabled: true })
+      // setTimeout(() => {
+      send(OUTPUT, ["UPDATE_BOUNDS"], { id: screenId, ...$outputs[screenId!] })
+      // }, 100)
+    }, 100)
   }
 </script>
 
@@ -29,9 +52,9 @@
       {#each screens as screen, i}
         <div
           class="screen"
-          class:active={$outputScreen === screen.id.toString()}
+          class:active={$outputs[screenId || ""].screen === screen.id.toString()}
           style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.bounds.x}px;top: {screen.bounds.y}px;"
-          on:click={() => changeOutputScreen({ detail: { id: screen.id } })}
+          on:click={() => changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })}
         >
           {i + 1}
         </div>
@@ -44,9 +67,10 @@
 
 <style>
   .content {
-    width: 50%;
+    width: 100%;
     display: flex;
     /* justify-content: center; */
+    /* transform: translateX(-20%); */
   }
   .screens {
     zoom: 0.08;
@@ -54,15 +78,23 @@
     overflow: visible;
     position: relative;
     margin-top: auto;
+
+    /* width: 30%;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); */
   }
 
   .screen {
-    background-color: var(--primary);
     position: absolute;
+    /* transform: translateX(-50%); */
+
     display: flex;
     align-items: center;
     justify-content: center;
-    outline: 20px solid var(--primary-lighter);
+
+    background-color: var(--primary);
+    outline: 40px solid var(--primary-lighter);
     cursor: pointer;
     transition: background-color 0.1s;
   }

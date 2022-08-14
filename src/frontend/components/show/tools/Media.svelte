@@ -1,10 +1,11 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-
-  import { activeShow, dictionary, outBackground, outLocked, playingAudio, showsCache, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, outLocked, playingAudio, showsCache, videoExtensions } from "../../../stores"
+  import { send } from "../../../utils/request"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import { playAudio } from "../../helpers/audio"
   import Icon from "../../helpers/Icon.svelte"
+  import { findMatchingOut, setOutput } from "../../helpers/output"
   import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
@@ -88,15 +89,15 @@
       {@const filter = getMediaFilter(background.path)}
       {@const flipped = getMediaFlipped(background.path)}
       <SelectElem id="media" data={{ ...background }} draggable>
-        <div class="item context #show_media" class:active={$outBackground?.path === background.path}>
+        <div class="item context #show_media" class:active={findMatchingOut(background.path)}>
           <HoverButton
             style="flex: 2;height: 50px;max-width: 100px;"
             icon="play"
             size={3}
             on:click={() => {
               if (!$outLocked) {
-                outBackground.set({ path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped })
-                window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
+                setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped })
+                send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
               }
             }}
             title={$dictionary.media?.play}

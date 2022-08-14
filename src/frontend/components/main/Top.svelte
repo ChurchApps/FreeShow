@@ -1,18 +1,26 @@
 <script type="ts">
   import { OUTPUT } from "../../../types/Channels"
-  import { dictionary, outputDisplay, outputScreen } from "../../stores"
+  import { dictionary, os, outputDisplay, outputs, saved } from "../../stores"
   import { send } from "../../utils/request"
   import Icon from "../helpers/Icon.svelte"
+  import { getActiveOutputs } from "../helpers/output"
   import Button from "../inputs/Button.svelte"
   import TopButton from "../inputs/TopButton.svelte"
 
   function display(e: any) {
-    send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, screen: $outputScreen, force: e.ctrlKey || e.metaKey })
+    let enabledOutputs: any[] = getActiveOutputs($outputs, false)
+    enabledOutputs.forEach((id) => {
+      let output: any = { id, ...$outputs[id] }
+      send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, output, force: e.ctrlKey || e.metaKey })
+    })
   }
 </script>
 
 <div class="top">
   <span style="width: 300px;">
+    {#if !$saved && $os.platform !== "win32"}
+      <div class="unsaved" />
+    {/if}
     <!-- logo -->
     <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;">FreeShow</h1>
   </span>
@@ -28,13 +36,13 @@
     <Button
       title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display}
       on:click={display}
-      class="display {$outputDisplay ? 'on' : 'off'}"
+      class="context #output display {$outputDisplay ? 'on' : 'off'}"
       red={$outputDisplay}
     >
       {#if $outputDisplay}
         <Icon id="cancelDisplay" size={1.8} white />
       {:else}
-        <Icon id="output" size={1.8} white />
+        <Icon id="outputs" size={1.8} white />
       {/if}
     </Button>
   </span>
@@ -57,5 +65,13 @@
     display: flex;
     justify-content: center;
     min-width: 60px;
+  }
+
+  .unsaved {
+    position: absolute;
+    left: 0;
+    height: 100%;
+    width: 5px;
+    background-color: rgb(255 0 0 / 0.25);
   }
 </style>

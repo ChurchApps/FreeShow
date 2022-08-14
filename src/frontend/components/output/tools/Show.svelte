@@ -1,37 +1,36 @@
 <script lang="ts">
-  import { activeShow, outSlide, showsCache } from "../../../stores"
+  import { activeShow, showsCache } from "../../../stores"
   import T from "../../helpers/T.svelte"
 
-  $: name = $outSlide && $showsCache[$outSlide.id] ? $showsCache[$outSlide.id].name : "—"
+  export let currentOutput: any
+  export let ref: any[]
+  export let linesIndex: null | number
+  export let maxLines: null | number
 
-  let length: number = 0
-  $: {
-    if ($outSlide?.id) {
-      length = 0
-      if ($outSlide?.id === "temp") length = 1
-      else {
-        $showsCache[$outSlide.id]?.layouts[$outSlide.layout!]?.slides.forEach((s: any) => {
-          length++
-          if ($showsCache[$outSlide!.id].slides[s.id].children) length += $showsCache[$outSlide!.id].slides[s.id].children!.length
-        })
-      }
-    }
-  }
+  $: slide = currentOutput?.out?.slide
+
+  // $: if (!slide) {
+  //   let outs = getActiveOutputs().map((id) => $outputs[id])
+  //   currentOutput = outs.find((output) => output.out?.slide)
+  // }
+
+  $: name = slide && $showsCache[slide?.id] ? $showsCache[slide?.id].name : "—"
+  $: length = ref.length || 0
 
   function openShow() {
-    if (!$outSlide) return
+    if (!slide || slide.id === "temp") return
 
-    if ($outSlide?.layout)
+    if (slide?.layout)
       showsCache.update((a: any) => {
-        a[$outSlide!.id].settings.activeLayout = $outSlide?.layout
+        a[slide!.id].settings.activeLayout = slide?.layout
         return a
       })
 
-    activeShow.set({ id: $outSlide.id })
+    activeShow.set({ id: slide?.id })
   }
 </script>
 
-{#if $outSlide}
+{#if slide}
   <span class="name" style="justify-content: space-between;" on:click={openShow}>
     <p>
       {#if name.length}
@@ -41,7 +40,12 @@
       {/if}
     </p>
     <!-- TODO: update -->
-    <span style="opacity: 0.6;">{($outSlide.index || 0) + 1}/{length}</span>
+    <span style="opacity: 0.6;">
+      {(slide?.index || 0) + 1}/{length}
+      {#if linesIndex !== null && maxLines !== null}
+        ({linesIndex + 1}/{maxLines})
+      {/if}
+    </span>
   </span>
 {/if}
 

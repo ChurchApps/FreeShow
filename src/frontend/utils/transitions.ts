@@ -34,3 +34,7 @@ export const easings: any[] = [
   // { id: "quart", name: "$:easings.quart:$", data: quartInOut },
   // { id: "quint", name: "$:easings.quint:$", data: quintInOut },
 ]
+
+export function custom(node: any, { type = "fade", duration = 500, easing = "linear" }: any) {
+  return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing).data || linear }
+}

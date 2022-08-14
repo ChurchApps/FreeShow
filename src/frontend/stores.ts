@@ -5,9 +5,10 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, DefaultProjectNames, Media, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
-import type { ID, OutBackground, OutSlide, OutTransition, Overlays, Shows, Templates, Transition } from "../types/Show"
+import type { ID, Overlays, Shows, Templates, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
 import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
+import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { History } from "./components/helpers/history"
 
@@ -19,7 +20,6 @@ export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
 export const activeEdit: Writable<ActiveEdit> = writable({ items: [] })
 export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
-export const outputDisplay: Writable<boolean> = writable(false)
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const dictionary: Writable<Dictionary> = writable({})
 export const notFound: Writable<any> = writable({ show: [], bible: [] })
@@ -41,17 +41,6 @@ export const exportOptions: Writable<any> = writable({
   },
 })
 
-// output
-export const outLocked: Writable<boolean> = writable(false) // false
-export const outBackground: Writable<null | OutBackground> = writable(null)
-export const outSlide: Writable<null | OutSlide> = writable(null)
-export const outOverlays: Writable<string[]> = writable([])
-export const outTransition: Writable<null | OutTransition> = writable(null)
-export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
-  text: { type: "fade", duration: 500, easing: "linear" },
-  media: { type: "fade", duration: 500, easing: "linear" },
-}) // {default}
-
 // connections
 export const connections: Writable<{ [key: string]: any }> = writable({ REMOTE: {}, STAGE: {} })
 export const remotePassword: Writable<string> = writable("") // generate 4 numbers
@@ -72,6 +61,10 @@ export const shows: Writable<any> = writable({}) // {default}
 export const showsCache: Writable<Shows> = writable({}) // {default}
 export const previousShow: Writable<any> = writable(null)
 export const textCache: Writable<any> = writable({}) // {}
+export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
+  text: { type: "fade", duration: 500, easing: "linear" },
+  media: { type: "fade", duration: 500, easing: "linear" },
+}) // {default}
 
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
@@ -222,6 +215,7 @@ export const resized: Writable<NumberObject> = writable({
   rightPanelDrawer: 300,
   drawer: 200,
 })
+export const projectToolSize: Writable<number> = writable(150)
 export const slidesOptions: Writable<SlidesOptions> = writable({
   // {default}
   columns: 4,
@@ -261,15 +255,59 @@ export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
 export const formatNewShow: Writable<boolean> = writable(true) // true
 export const splitLines: Writable<number> = writable(2) // 2
-export const displayMetadata: Writable<string> = writable("never") // "never"
 export const showsPath: Writable<null | string> = writable(null) // null
 export const exportPath: Writable<null | string> = writable(null) // null
 export const presenterControllerKeys: Writable<boolean> = writable(true) // true
 
-// display
+// outputs
+export const outLocked: Writable<boolean> = writable(false) // false
+export const outputDisplay: Writable<boolean> = writable(false)
+export const currentOutputSettings: Writable<string | null> = writable(null)
 export const autoOutput: Writable<boolean> = writable(false) // false
-export const outputPosition: Writable<{ x: number; y: number; width: number; height: number }> = writable({ x: 0, y: 0, width: 0, height: 0 }) // {default}
-export const outputScreen: Writable<null | string> = writable(null) // null
+export const slideTimers: Writable<{ [key: string]: any }> = writable({}) // {}
+// activeOutputs ... [] ?
+export const outputs: Writable<Outputs> = writable({
+  // default: {
+  //   // show / force show button, always in settings
+  //   enabled: true, // show when clicking display
+  //   active: true, // is checked in display (always true if only one output)
+  //   name: "Primary",
+  //   color: "#e6349c",
+  //   bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+  //   screen: null, // set current screen (to hide/show window when screen removed/added)
+  //   kiosk: true,
+  //   show: {
+  //     lines: 0, // 1-99 (0 is disabled)
+  //     template: null, // override style
+  //     resolution: { width: 1920, height: 1080 }, // default: { width: 1920, height: 1080 }
+  //     background: "#000000",
+  //     displayMetadata: "never",
+  //     layers: ["background", "slide", "overlays"], // default: null | undefined
+  //   },
+  //   out: {
+  //     background: null,
+  //     slide: null,
+  //     overlays: [],
+  //     transition: null,
+  //   },
+  // },
+})
+
+// ! DELETE:
+// export const outputPosition: Writable<{ x: number; y: number; width: number; height: number }> = writable({ x: 0, y: 0, width: 0, height: 0 }) // {default}
+// export const outputScreen: Writable<null | string> = writable(null) // null
+// // output
+// export const outBackground: Writable<null | OutBackground> = writable(null)
+// export const outSlide: Writable<null | OutSlide> = writable(null)
+// export const outOverlays: Writable<string[]> = writable([])
+// export const outTransition: Writable<null | OutTransition> = writable(null)
+// export const backgroundColor: Writable<string> = writable("#000000") // #000000
+// export const screen = writable({
+//   // {default}
+//   resolution: { width: 1920, height: 1080 },
+//   // format 16:9
+// })
+// export const displayMetadata: Writable<string> = writable("never") // "never"
 
 // project
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"
@@ -308,15 +346,6 @@ export const groups: Writable<any> = writable({
   tag: { name: "tag", default: true, color: "#8825f5" },
   bridge: { name: "bridge", default: true, color: "#7525f5" },
   outro: { name: "outro", default: true, color: "#5825f5" },
-})
-
-export const backgroundColor: Writable<string> = writable("#000000") // #000000
-
-// display
-export const screen = writable({
-  // {default}
-  resolution: { width: 1920, height: 1080 },
-  // format 16:9
 })
 
 export const os: Writable<any> = writable({ platform: "", name: "Computer" }) // "get"

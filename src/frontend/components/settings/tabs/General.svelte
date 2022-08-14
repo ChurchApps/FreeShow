@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activePopup, alertUpdates, fullColors, groupNumbers, formatNewShow, labelsDisabled, showsPath, splitLines } from "../../../stores"
+  import { activePopup, alertUpdates, fullColors, groupNumbers, formatNewShow, labelsDisabled, showsPath, splitLines, autoOutput } from "../../../stores"
   import { setLanguage } from "../../../utils/language"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
@@ -15,6 +15,7 @@
     colors: (e: any) => fullColors.set(e.target.checked),
     formatNewShow: (e: any) => formatNewShow.set(e.target.checked),
     groupNumber: (e: any) => groupNumbers.set(e.target.checked),
+    autoOutput: (e: any) => autoOutput.set(e.target.checked),
   }
 
   // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
@@ -23,8 +24,9 @@
     setLanguage(null)
     alertUpdates.set(true)
     labelsDisabled.set(false)
-    fullColors.set(true)
+    fullColors.set(false)
     groupNumbers.set(true)
+    autoOutput.set(false)
   }
 </script>
 
@@ -36,6 +38,10 @@
   <p><T id="settings.alert_updates" /></p>
   <!-- style="width: 200px;" -->
   <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
+</div>
+<div>
+  <p><T id="settings.auto_output" /></p>
+  <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
 </div>
 <div>
   <p><T id="settings.disable_labels" /></p>
@@ -60,6 +66,7 @@
   <NumberInput
     value={$splitLines}
     max={100}
+    buttons={false}
     outline
     on:change={(e) => {
       splitLines.set(e.detail)
@@ -124,8 +131,8 @@
 </div> -->
 <div>
   <p><T id="settings.show_location" /></p>
-  <span style="display: flex;align-items: center;" title={$showsPath}>
-    {$showsPath}
+  <span class="shows_path" title={$showsPath}>
+    <p>{$showsPath}</p>
     <FolderPicker id="shows">
       <T id="inputs.change_folder" />
     </FolderPicker>
@@ -151,7 +158,8 @@
     align-items: center;
     justify-content: space-between;
     margin: 5px 0;
-    height: 35px;
+    /* height: 35px; */
+    min-height: 38px;
   }
   /* .flex {
     display: flex;
@@ -166,10 +174,23 @@
     text-decoration: line-through;
   } */
 
+  .shows_path {
+    display: flex;
+    align-items: center;
+    max-width: 70%;
+  }
+  .shows_path :global(button) {
+    white-space: nowrap;
+  }
+
   hr {
     margin: 20px 0;
     border: none;
     height: 2px;
     background-color: var(--primary-lighter);
+  }
+
+  div :global(.numberInput) {
+    width: 80px;
   }
 </style>

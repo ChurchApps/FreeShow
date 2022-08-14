@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
-  import { activeProject, projects } from "../../stores"
+  import { activeProject, projects, projectToolSize } from "../../stores"
   import Tabs from "../main/Tabs.svelte"
   import Resizeable from "../system/Resizeable.svelte"
   import Notes from "./tools/Notes.svelte"
@@ -31,11 +31,14 @@
       return a
     })
   }
+
+  let width = $projectToolSize
+  $: if (width !== $projectToolSize) projectToolSize.set(width)
 </script>
 
 <svelte:window on:mousedown={updateNote} />
 
-<Resizeable id="projectTools" side="bottom" width={150} maxWidth={window.innerHeight * 0.75}>
+<Resizeable id="projectTools" side="bottom" bind:width maxWidth={window.innerHeight * 0.75}>
   <!-- minWidth={80} -->
   <div class="main">
     <Tabs {tabs} bind:active />

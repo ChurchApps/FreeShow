@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { activeEdit, activeShow, media, outBackground } from "../../../stores"
+  import { activeEdit, activeShow, media, outputs } from "../../../stores"
+  import { getActiveOutputs, setOutput } from "../../helpers/output"
   import T from "../../helpers/T.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
   import Center from "../../system/Center.svelte"
@@ -14,11 +15,11 @@
       return a
     })
 
-    if ($outBackground && $outBackground.path === mediaId) {
-      outBackground.update((a: any) => {
-        a.flipped = flipped
-        return a
-      })
+    let currentOutput: any = $outputs[getActiveOutputs()[0]]
+    if (currentOutput.out?.background && currentOutput.out?.background.path === mediaId) {
+      let bg = currentOutput.out.background
+      bg.flipped = flipped
+      setOutput("background", bg)
     }
   }
 </script>

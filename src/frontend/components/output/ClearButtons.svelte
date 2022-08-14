@@ -1,12 +1,14 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-  import { dictionary, outBackground, outLocked, outOverlays, outSlide, outTransition, playingAudio, playingVideos } from "../../stores"
+  import { dictionary, outLocked, outputs, playingAudio, playingVideos, slideTimers } from "../../stores"
   import { clearAudio } from "../helpers/audio"
   import Icon from "../helpers/Icon.svelte"
+  import { getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
-  $: allCleared = !$outBackground && !$outSlide && !$outOverlays.length && !Object.keys($playingAudio).length && !$outTransition
+  // $: allCleared = !$outBackground && !$outSlide && !$outOverlays.length && !Object.keys($playingAudio).length && !$outTransition
+  $: allCleared = isOutCleared(null, $outputs) && !Object.keys($playingAudio).length
 
   export let autoChange: any
   export let activeClear: any
@@ -16,8 +18,8 @@
 
   function clearVideo() {
     videoData.paused = true
-    window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
-    window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+    window.api.send(OUTPUT, { channel: "UPDATE_VIDEO", data: videoData })
+    window.api.send(OUTPUT, { channel: "UPDATE_VIDEO_TIME", data: videoTime })
 
     setTimeout(() => {
       if (videoData.paused) {
@@ -37,11 +39,19 @@
           muted: false,
           loop: false,
         }
-        window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
-        window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
+        window.api.send(OUTPUT, { channel: "UPDATE_VIDEO", data: videoData })
+        window.api.send(OUTPUT, { channel: "UPDATE_VIDEO_TIME", data: videoTime })
       }
       // TODO: clear after transition out.....
     }, 500)
+  }
+
+  function clearTimers() {
+    setOutput("transition", null)
+    let outs = getActiveOutputs()
+    Object.keys($slideTimers).forEach((id) => {
+      if (outs.includes(id)) $slideTimers[id].timer?.clear()
+    })
   }
 
   export let callClear: boolean = false
@@ -54,11 +64,11 @@
     if ($outLocked) return
 
     clearVideo()
-    outBackground.set(null)
-    outSlide.set(null)
-    outOverlays.set([])
+    setOutput("background", null)
+    setOutput("slide", null)
+    setOutput("overlays", [])
     clearAudio()
-    outTransition.set(null)
+    clearTimers()
     allCleared = true
     autoChange = true
   }
@@ -73,7 +83,7 @@
   </span>
   <span class="group">
     <Button
-      disabled={($outLocked && activeClear === "background") || !$outBackground}
+      disabled={($outLocked && activeClear === "background") || isOutCleared("background", $outputs)}
       on:click={() => {
         if (activeClear !== "background") {
           // previousActive = activeClear
@@ -82,7 +92,7 @@
         } else if (!$outLocked) {
           autoChange = true
           clearVideo()
-          outBackground.set(null)
+          setOutput("background", null)
         }
       }}
       title={activeClear === "background" ? $dictionary.clear?.background : $dictionary.preview?.background}
@@ -93,7 +103,7 @@
       <Icon id="background" size={1.2} />
     </Button>
     <Button
-      disabled={($outLocked && activeClear === "slide") || !$outSlide}
+      disabled={($outLocked && activeClear === "slide") || isOutCleared("slide", $outputs)}
       on:click={() => {
         if (activeClear !== "slide") {
           // previousActive = activeClear
@@ -101,7 +111,7 @@
           activeClear = "slide"
         } else if (!$outLocked) {
           autoChange = true
-          outSlide.set(null)
+          setOutput("slide", null)
         }
       }}
       title={activeClear === "slide" ? $dictionary.clear?.slide : $dictionary.preview?.slide}
@@ -112,7 +122,7 @@
       <Icon id="slide" size={1.2} />
     </Button>
     <Button
-      disabled={($outLocked && activeClear === "overlays") || !$outOverlays.length}
+      disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs)}
       on:click={() => {
         if (activeClear !== "overlays") {
           // previousActive = activeClear
@@ -120,7 +130,7 @@
           activeClear = "overlays"
         } else if (!$outLocked) {
           autoChange = true
-          outOverlays.set([])
+          setOutput("overlays", [])
         }
       }}
       title={activeClear === "overlays" ? $dictionary.clear?.overlays : $dictionary.preview?.overlays}
@@ -150,7 +160,7 @@
       <Icon id="audio" size={1.2} />
     </Button>
     <Button
-      disabled={($outLocked && activeClear === "nextTimer") || !$outTransition}
+      disabled={($outLocked && activeClear === "nextTimer") || isOutCleared("transition", $outputs)}
       on:click={() => {
         if (activeClear !== "nextTimer") {
           // previousActive = activeClear
@@ -158,7 +168,7 @@
           activeClear = "nextTimer"
         } else if (!$outLocked) {
           autoChange = true
-          outTransition.set(null)
+          clearTimers()
         }
       }}
       title={activeClear === "nextTimer" ? $dictionary.clear?.nextTimer : $dictionary.preview?.nextTimer}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte"
-  import { screen } from "../../stores"
+  import { getResolution } from "../helpers/output"
 
   export let id: string
   let videoElem: any
@@ -8,8 +8,8 @@
   $: constraints = {
     video: {
       deviceId: id,
-      width: { ideal: $screen.resolution.width },
-      height: { ideal: $screen.resolution.height },
+      width: { ideal: getResolution().width },
+      height: { ideal: getResolution().height },
     },
   }
 

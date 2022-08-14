@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { Resolution } from "../../../types/Settings"
-  import { screen } from "../../stores"
+  import { outputs } from "../../stores"
+  import { getResolution } from "../helpers/output"
 
   export let slide: any = null
 
   let width: number = 0
   let height: number = 0
-  let resolution: Resolution = slide && slide.settings.resolution ? slide.settings.size : $screen.resolution
+  $: resolution = getResolution(slide?.settings?.resolution, $outputs)
 </script>
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>

@@ -2,6 +2,7 @@
   import { READ_FOLDER } from "../../../../types/Channels"
   import { activeShow, audioExtensions, audioFolders, dictionary, media, playingAudio } from "../../../stores"
   import { getAudioDuration, playAudio } from "../../helpers/audio"
+  import { splitPath } from "../../helpers/get"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import { joinTime, secondsToTime } from "../../helpers/time"
@@ -19,12 +20,7 @@
 
   $: rootPath = active === "all" || active === "favourites" ? "" : active !== null ? $audioFolders[active].path! : ""
   $: path = active === "all" || active === "favourites" ? "" : rootPath
-  $: name =
-    rootPath === path
-      ? active !== "all" && active !== "favourites" && active !== null
-        ? $audioFolders[active].name
-        : "category.all"
-      : path.substring((path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")) + 1)
+  $: name = rootPath === path ? (active !== "all" && active !== "favourites" && active !== null ? $audioFolders[active].name : "category.all") : splitPath(path).name
 
   // get list of files & folders
   let prevActive: null | string = null
@@ -33,9 +29,9 @@
       prevActive = active
       files = Object.entries($media)
         .map(([path, a]: any) => {
-          let name = path.slice((path.lastIndexOf("\\") || path.lastIndexOf("//")) + 1, path.length)
-          const extension = name.slice(name.lastIndexOf(".") + 1, name.length)
-          return { path, favourite: a.favourite === true, name, extension, audio: a.audio === true }
+          let p = splitPath(path)
+          name = p.name
+          return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
         })
         .filter((a) => a.favourite === true && a.audio === true)
 
@@ -180,7 +176,7 @@
                   title={file.path}
                   bold={false}
                   on:click={() => activeShow.set({ id: file.path, name: file.name, type: "audio" })}
-                  on:dblclick={() => playAudio({ path: file.path, name: file.name })}
+                  on:dblclick={() => playAudio({ path: file.path, name: file.name }, false)}
                 >
                   <span>
                     <Icon

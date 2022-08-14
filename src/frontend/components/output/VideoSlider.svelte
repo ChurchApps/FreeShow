@@ -1,10 +1,12 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
+  import { send } from "../../utils/request"
   import { joinTime, secondsToTime } from "../helpers/time"
   import Slider from "../inputs/Slider.svelte"
 
   export let videoData: any
   export let videoTime: any
+  export let outputId: string = ""
   export let toOutput: boolean = false
   export let disabled: boolean = false
 
@@ -32,21 +34,24 @@
   let timeout: any = null
   const sendToOutput = () => {
     if (!timeout) {
-      let time = videoTime
-      // videoData.paused = true
-      window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
-      window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
-      timeout = setTimeout(() => {
-        timeout = null
-        if (videoTime !== time) window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
-      }, 100)
+      // let time = videoTime
+
+      send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData, time: videoTime })
+
+      // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_TIME", data: videoTime })
+      // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_DATA", data: videoData })
+
+      // timeout = setTimeout(() => {
+      //   timeout = null
+      //   if (videoTime !== time) window.api.send(OUTPUT, { channel: "MAIN_VIDEO_TIME", data: videoTime })
+      // }, 100)
     }
   }
 
   let movePause: boolean = false
   function pauseAtMove(boolean: boolean = true) {
     movePause = videoData.paused = boolean
-    if (toOutput) window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: videoData })
+    if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
   }
 </script>
 
