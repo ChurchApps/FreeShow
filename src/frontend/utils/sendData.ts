@@ -1,10 +1,11 @@
-import { activeShow } from "./../stores"
-import { GetLayout } from "../components/helpers/get"
-import type { ClientMessage } from "../../types/Socket"
-import { REMOTE, STAGE } from "../../types/Channels"
 import { get } from "svelte/store"
-import { showsCache, outSlide, stageShows, connections, remotePassword, projects, folders, activeProject, dictionary, openedFolders, shows } from "../stores"
+import { REMOTE, STAGE } from "../../types/Channels"
+import type { ClientMessage } from "../../types/Socket"
+import { GetLayout } from "../components/helpers/get"
+import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
+import { activeProject, connections, dictionary, folders, openedFolders, outputs, projects, remotePassword, shows, showsCache } from "../stores"
+import { receiveSTAGE } from "./stageTalk"
 
 // REMOTE
 
@@ -65,24 +66,23 @@ const receiveREMOTE: any = {
     return msg
   },
   OUT: async (msg: any) => {
-    let out = get(outSlide)
+    let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    let out: any = currentOutput?.out?.slide || null
     let id: string = ""
     if (msg.data === "clear") {
-      outSlide.set(null)
+      setOutput("slide", null)
     } else if (msg.data?.id) {
       id = msg.data.id
       await loadShows([id])
       let layout = GetLayout(id)
-      if (msg.data.index < layout.length && msg.data.index >= 0) outSlide.update(() => msg.data)
+      if (msg.data.index < layout.length && msg.data.index >= 0) setOutput("slide", msg.data)
       msg.data = null
     } else if (msg.data !== null && msg.data !== undefined && out) {
       id = out.id
       let layout = GetLayout(id)
       if (msg.data < layout.length && msg.data >= 0) {
-        outSlide.update((o) => {
-          o!.index = msg.data
-          return o
-        })
+        let newOutSlide: any = { ...out, index: msg.data }
+        setOutput("slide", newOutSlide)
       }
       msg.data = null
     } else {
@@ -118,9 +118,10 @@ function initializeRemote(id: string) {
   window.api.send(REMOTE, { channel: "FOLDERS", data: { folders: get(folders), opened: get(openedFolders) } })
   window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
 
-  let out: any = { slide: get(outSlide) ? get(outSlide)!.index : null, layout: get(outSlide)?.layout || null }
+  let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+  let out: any = { slide: currentOutput?.out?.slide ? currentOutput.out.slide.index : null, layout: currentOutput.out?.slide?.layout || null }
   if (out.slide !== null) {
-    oldOutSlide = get(outSlide)!.id
+    oldOutSlide = out.slide.id
     out.show = get(showsCache)[oldOutSlide]
   }
   window.api.send(REMOTE, { channel: "OUT", data: out })
@@ -251,66 +252,6 @@ function initializeRemote(id: string) {
 // }
 let oldOutSlide = ""
 
-// STAGE
-
-function getStage(msg: ClientMessage) {
-  switch (msg.channel) {
-    case "SHOWS":
-      msg.data = turnIntoBoolean(
-        filterObjectArray(get(stageShows), ["disabled", "name", "password"]).filter((a: any) => !a.disabled),
-        "password"
-      )
-      break
-    case "SHOW":
-      if (msg.id) {
-        let show = get(stageShows)[msg.data.id]
-        if (!show.password.length || show.password === msg.data.password) {
-          // connection successfull
-          connections.update((a) => {
-            if (!a.STAGE[msg.id!]) a.STAGE[msg.id!] = {}
-            a.STAGE[msg.id!].active = msg.data.id
-            return a
-          })
-          show = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[msg.data.id]
-          if (!show.disabled) {
-            msg.data = show
-            sendData(STAGE, { channel: "SLIDES", data: [] })
-          } else msg = { id: msg.id, channel: "ERROR", data: "noShow" }
-        } else msg = { id: msg.id, channel: "ERROR", data: "wrongPass" }
-      } else msg = { id: msg.id, channel: "ERROR", data: "missingID" }
-      break
-    case "SLIDES":
-      let out = get(outSlide)
-      msg.data = []
-      if (out && out.id !== "temp" && get(activeShow)) {
-        let layout = GetLayout(out.id, out.layout)
-        let slides = get(showsCache)[out.id]?.slides
-        if (layout[out.index!]) {
-          msg.data = [slides[layout[out.index!].id]]
-          let index = out.index! + 1
-          while (index < layout.length && layout[index].disabled === true) index++
-          if (index < layout.length && !layout[index].disabled) msg.data.push(slides[layout[index].id])
-          else msg.data.push(null)
-        }
-      }
-
-      break
-    // case "SHOW":
-    //   data = getStageShow(message.data)
-    //   break
-    // case "BACKGROUND":
-    //   data = getOutBackground()
-    //   break
-    // case "SLIDE":
-    //   data = getOutSlide()
-    //   break
-    // case "OVERLAYS":
-    //   data = getOutOverlays()
-    //   break
-  }
-  return msg
-}
-
 export function filterObjectArray(object: any, keys: string[], filter: null | string = null) {
   return Object.entries(object)
     .map(([id, a]: any) => ({ id, ...keys.reduce((o, key) => ({ ...o, [key]: a[key] }), {}) }))
@@ -318,12 +259,6 @@ export function filterObjectArray(object: any, keys: string[], filter: null | st
 }
 export function arrayToObject(array: any[], key: string = "id") {
   return array.reduce((o, a) => ({ ...o, [a[key]]: a }), {})
-}
-function turnIntoBoolean(array: any[], key: string) {
-  return array.map((a) => {
-    a[key] = a[key].length ? true : false
-    return a
-  })
 }
 
 // function getStageShows() {
@@ -360,15 +295,18 @@ export function client(id: "REMOTE" | "STAGE", msg: ClientMessage) {
 
 // send data to client
 export async function sendData(id: "REMOTE" | "STAGE", msg: ClientMessage, check: boolean = false) {
-  // if (id === REMOTE) msg = await getRemote(msg)
   if (id === REMOTE) {
-    if (!receiveREMOTE[msg.channel]) console.log("UNKNOWN CHANNEL:", msg.channel)
-    else msg = await receiveREMOTE[msg.channel](msg)
-  } else if (id === STAGE) msg = getStage(msg)
+    if (!receiveREMOTE[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
+    msg = await receiveREMOTE[msg.channel](msg)
+  } else if (id === STAGE) {
+    if (!receiveSTAGE[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
+    msg = receiveSTAGE[msg.channel](msg)
+  }
+
   // let ids: string[] = []
   // if (msg.id) ids = [msg.id]
   // else ids = Object.keys(get(connections).REMOTE)
-  if (msg.data !== null && (!check || !checkSent(id, msg))) {
+  if (msg && msg.data !== null && (!check || !checkSent(id, msg))) {
     window.api.send(id, msg)
     // ids.forEach((id) => {
     // window.api.send(id, { id, ...msg })

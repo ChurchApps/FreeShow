@@ -3,9 +3,10 @@
   import type { Bible } from "../../../../types/Scripture"
   import type { Item } from "../../../../types/Show"
   import { ShowObj } from "../../../classes/Show"
-  import { activeProject, categories, outLocked, outSlide, scriptureSettings, templates } from "../../../stores"
+  import { activeProject, categories, outLocked, scriptureSettings, templates } from "../../../stores"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
+  import { setOutput } from "../../helpers/output"
   import { checkName } from "../../helpers/show"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -159,7 +160,7 @@
   function showVerse() {
     if ($outLocked) return
     let tempItems: Item[] = slides[0] || []
-    outSlide.set({ id: "temp", tempItems })
+    setOutput("slide", { id: "temp", tempItems })
   }
 
   // show on enter

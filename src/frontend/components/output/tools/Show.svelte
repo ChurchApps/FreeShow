@@ -3,42 +3,34 @@
   import T from "../../helpers/T.svelte"
 
   export let currentOutput: any
+  export let ref: any[]
+  export let linesIndex: null | number
+  export let maxLines: null | number
 
-  // $: if (!currentOutput?.out?.slide) {
+  $: slide = currentOutput?.out?.slide
+
+  // $: if (!slide) {
   //   let outs = getActiveOutputs().map((id) => $outputs[id])
   //   currentOutput = outs.find((output) => output.out?.slide)
   // }
 
-  $: name = currentOutput?.out?.slide && $showsCache[currentOutput?.out?.slide?.id] ? $showsCache[currentOutput.out?.slide?.id].name : "—"
-
-  let length: number = 0
-  $: {
-    if (currentOutput?.out?.slide?.id) {
-      length = 0
-      if (currentOutput.out?.slide?.id === "temp") length = 1
-      else {
-        $showsCache[currentOutput.out?.slide?.id]?.layouts[currentOutput.out?.slide?.layout!]?.slides.forEach((s: any) => {
-          length++
-          if ($showsCache[currentOutput.out?.slide?.id].slides[s.id].children) length += $showsCache[currentOutput.out.slide.id].slides[s.id].children!.length
-        })
-      }
-    }
-  }
+  $: name = slide && $showsCache[slide?.id] ? $showsCache[slide?.id].name : "—"
+  $: length = ref.length || 0
 
   function openShow() {
-    if (!currentOutput?.out?.slide) return
+    if (!slide || slide.id === "temp") return
 
-    if (currentOutput.out?.slide?.layout)
+    if (slide?.layout)
       showsCache.update((a: any) => {
-        a[currentOutput.out?.slide!.id].settings.activeLayout = currentOutput.out?.slide?.layout
+        a[slide!.id].settings.activeLayout = slide?.layout
         return a
       })
 
-    activeShow.set({ id: currentOutput.out?.slide?.id })
+    activeShow.set({ id: slide?.id })
   }
 </script>
 
-{#if currentOutput?.out?.slide}
+{#if slide}
   <span class="name" style="justify-content: space-between;" on:click={openShow}>
     <p>
       {#if name.length}
@@ -48,7 +40,12 @@
       {/if}
     </p>
     <!-- TODO: update -->
-    <span style="opacity: 0.6;">{(currentOutput.out?.slide?.index || 0) + 1}/{length}</span>
+    <span style="opacity: 0.6;">
+      {(slide?.index || 0) + 1}/{length}
+      {#if linesIndex !== null && maxLines !== null}
+        ({linesIndex + 1}/{maxLines})
+      {/if}
+    </span>
   </span>
 {/if}
 

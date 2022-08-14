@@ -3,8 +3,9 @@
   import { activePage, activeShow, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers } from "../../stores"
   import { send } from "../../utils/request"
   import { clearAudio } from "../helpers/audio"
-  import { getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
-  import { nextSlide, previousSlide } from "../helpers/showActions"
+  import { getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
+  import { getItemWithMostLines, nextSlide, previousSlide } from "../helpers/showActions"
+  import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import { newSlideTimer } from "../helpers/tick"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -19,7 +20,7 @@
   import Overlay from "./tools/Overlay.svelte"
   import Show from "./tools/Show.svelte"
 
-  let outputId: string = ""
+  $: outputId = getActiveOutputs($outputs)[0]
   let currentOutput: any = {}
   $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
@@ -177,6 +178,17 @@
       }
     })
   }
+
+  // lines
+  $: slide = currentOutput.out?.slide
+  $: ref = slide ? (slide?.id === "temp" ? [{ temp: true, items: slide.tempItems }] : _show(slide.id).layouts([slide.layout]).ref()[0]) : []
+  let linesIndex: null | number = null
+  let maxLines: null | number = null
+  $: amountOfLinesToShow = currentOutput.show?.lines !== undefined ? Number(currentOutput.show?.lines) : 0
+  $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
+  $: showSlide = slide?.index !== undefined ? _show(slide.id).slides([ref[slide.index].id]).get()[0] : null
+  $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
+  $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : slideLines - (amountOfLinesToShow % slideLines)) : null
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -194,7 +206,7 @@
       {/if}
       <Output
         center={fullscreen}
-        style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerWidth, "fit") : ""}
+        style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""}
         mirror
         bind:video
         bind:videoData
@@ -212,7 +224,7 @@
 
   <!-- TODO: title keyboard shortcuts -->
 
-  <ShowActions {currentOutput} />
+  <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />
 
   {#if $activePage === "show"}
     <ClearButtons bind:autoChange bind:activeClear bind:video bind:videoData bind:videoTime bind:callClear />
@@ -220,7 +232,7 @@
     {#if activeClear === "background"}
       <Media {currentOutput} {outputId} {video} bind:videoData bind:videoTime bind:title />
     {:else if activeClear === "slide"}
-      <Show {currentOutput} />
+      <Show {currentOutput} {ref} {linesIndex} {maxLines} />
     {:else if activeClear === "overlays"}
       <Overlay {currentOutput} />
     {:else if activeClear === "audio" && Object.keys($playingAudio).length}

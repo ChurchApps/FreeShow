@@ -1,7 +1,7 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
-  import type { Resolution } from "../../../types/Settings"
-  import { activeEdit, overlays, screen } from "../../stores"
+  import { activeEdit, outputs, overlays } from "../../stores"
+  import { getResolution } from "../helpers/output"
   import { getStyles } from "../helpers/style"
   import T from "../helpers/T.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
@@ -24,7 +24,7 @@
 
   let width: number = 0
   let height: number = 0
-  let resolution: Resolution = $screen.resolution
+  $: resolution = getResolution(null, $outputs)
 
   let ratio: number = 1
 

@@ -10,7 +10,8 @@ import { cache, electronSettings, events, media, overlays, projects, settings, s
 // import checkForUpdates from "./utils/updater"
 import { createPDFWindow, exportTXT } from "./utils/export"
 import { importShow } from "./utils/import"
-import { closeAllOutputs, createOutput, displayOutput, sendToOutputWindow, updateBounds, updateOutput } from "./utils/output"
+import { closeAllOutputs, createOutput, displayOutput, moveToFront, sendToOutputWindow, updateBounds, updateOutput } from "./utils/output"
+import { getFonts } from "font-list"
 
 const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
@@ -169,6 +170,9 @@ const createWindow = () => {
     mainWindow = null
     dialogClose = false
     closeAllOutputs()
+
+    closeServers()
+    app.quit()
   })
   // mainWindow.once("ready-to-show", createOutputWindow)
 
@@ -183,15 +187,19 @@ const createWindow = () => {
 // app.on("before-quit", () => (quit = true))
 // macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
 // https://stackoverflow.com/a/45156004
+// https://stackoverflow.com/a/58823019
 app.on("window-all-closed", () => {
-  closeServers()
+  // closeServers()
   // || quit
   // TODO: mac should not quit
   // if (process.platform !== "darwin") {
   app.quit()
-  if (process.platform === "darwin") {
-    app.exit()
-  }
+  // if (process.platform === "darwin") {
+  //   app.exit()
+  // }
+})
+app.on("will-quit", () => {
+  if (process.platform === "darwin") app.exit()
 })
 // mac activate
 // app.on("activate", () => {
@@ -395,6 +403,7 @@ const os = require("os")
 ipcMain.on(MAIN, (e, msg) => {
   let data: any
   if (msg.channel === "GET_OS") data = { platform: os.platform(), name: os.hostname() }
+  else if (msg.channel === "GET_SYSTEM_FONTS") loadFonts()
   else if (msg.channel === "VERSION") data = app.getVersion()
   else if (msg.channel === "DISPLAY") {
     // TODO: ...
@@ -463,17 +472,26 @@ ipcMain.on(MAIN, (e, msg) => {
   if (data !== undefined) e.reply(MAIN, { channel: msg.channel, data })
 })
 
+async function loadFonts() {
+  getFonts({ disableQuoting: true })
+    .then((fonts: string[]) => {
+      toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: fonts })
+    })
+    .catch((err: any) => {
+      console.log(err)
+    })
+}
+
 // OUTPUT WINDOW
 
 let displays: Display[] = []
 
-// create output
 ipcMain.on(OUTPUT, (_e, msg: any) => {
   if (msg.channel === "CREATE") createOutput(msg.data)
   else if (msg.channel === "DISPLAY") displayOutput(msg.data)
   else if (msg.channel === "UPDATE") updateOutput(msg.data)
   else if (msg.channel === "UPDATE_BOUNDS") updateBounds(msg.data)
-  // else if (msg.channel === "TOGGLE_KIOSK") toggleKiosk(msg.data)
+  else if (msg.channel === "TO_FRONT") moveToFront(msg.data)
   else if (msg.channel.includes("MAIN")) toApp(OUTPUT, msg)
   else sendToOutputWindow(msg)
 })
@@ -486,21 +504,45 @@ ipcMain.on(OPEN_FOLDER, (_e, msg: { id: string; title: string | undefined }) => 
 })
 
 ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {
-  const fileList: string[] = fs.readdirSync(folderPath)
+  let fileList: string[] = []
   let files: any[] = []
+  let error: any = null
+
+  try {
+    fs.readdirSync(folderPath)
+  } catch (e: any) {
+    error = e
+  }
 
   for (const name of fileList) {
     const pathToFile: string = path.join(folderPath, name)
-    const stat = fs.statSync(pathToFile)
-    const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
-    files.push({ path: pathToFile, name, folder: stat.isDirectory(), extension: extension.substring(1), stat })
+    const stat: any = null
+    try {
+      fs.statSync(pathToFile)
+    } catch (e: any) {
+      error = e
+    }
+    if (stat) {
+      // const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
+      const extension = name.slice(name.lastIndexOf(".") + 1, name.length)
+      files.push({ path: pathToFile, name, folder: stat.isDirectory(), extension: extension, stat })
+    }
   }
 
-  toApp(READ_FOLDER, { path: folderPath, files })
+  if (error !== null) toApp(MAIN, { channel: "ALERT", data: error })
+  else toApp(READ_FOLDER, { path: folderPath, files })
 })
 
 ipcMain.on(FILE_INFO, (_e, filePath: string) => {
-  const stat = fs.statSync(filePath)
+  let error: any = null
+  const stat: any = null
+  try {
+    fs.statSync(filePath)
+  } catch (e: any) {
+    error = e
+  }
   const extension = path.extname(filePath).substring(1)
-  toApp(FILE_INFO, { path: filePath, stat, extension })
+
+  if (error !== null) toApp(MAIN, { channel: "ALERT", data: error })
+  else toApp(FILE_INFO, { path: filePath, stat, extension })
 })

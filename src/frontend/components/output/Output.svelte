@@ -21,6 +21,7 @@
   // TODO: dont show transition upon no change!s
   export let transition: Transition = $transitionData.text
   export let mediaTransition: Transition = $transitionData.media
+  export let disableTransitions: boolean = false
   export let style = ""
   export let center: boolean = false
   export let ratio: number = 0
@@ -37,15 +38,16 @@
 
   $: if (JSON.stringify(layers) !== JSON.stringify(currentOutput?.show?.layers || defaultLayers)) layers = JSON.parse(JSON.stringify(currentOutput?.show?.layers || defaultLayers))
   $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = JSON.parse(JSON.stringify(currentOutput?.out || {}))
-  $: if (JSON.stringify(slide) !== JSON.stringify(out.slide || null)) slide = JSON.parse(JSON.stringify(out.slide || null))
-  $: if (JSON.stringify(background) !== JSON.stringify(out.background || null)) background = JSON.parse(JSON.stringify(out.background || null))
+  $: if (out.refresh || outputId || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) slide = JSON.parse(JSON.stringify(out.slide || null))
+  $: if (out.refresh || outputId || JSON.stringify(background) !== JSON.stringify(out.background || null)) background = JSON.parse(JSON.stringify(out.background || null))
 
   // transition
   $: slideData = $showsCache && slide && slide.id !== "temp" ? _show(slide.id).layouts("active").ref()[0]?.[slide.index!]?.data : null
   $: slideTextTransition = slideData ? slideData.transition : null
   $: slideMediaTransition = slideData ? slideData.mediaTransition : null
-  $: transition = slideTextTransition ? slideTextTransition : $transitionData.text
-  $: mediaTransition = slideMediaTransition ? slideMediaTransition : $transitionData.media
+  $: transition = disableTransitions ? { type: "none" } : slideTextTransition ? slideTextTransition : $transitionData.text
+  $: mediaTransition = disableTransitions ? { type: "none" } : slideMediaTransition ? slideMediaTransition : $transitionData.media
+  $: overlayTransition = disableTransitions ? { type: "none" } : $transitionData.text
 
   const receiveOUTPUT = {
     // MAIN_VIDEO_DATA: (a: any) => {
@@ -161,6 +163,14 @@
   }
 
   $: resolution = getResolution(currentSlide?.settings?.resolution, currentOutput)
+
+  // lines
+  let linesStart: null | number = null
+  let linesEnd: null | number = null
+  $: amountOfLinesToShow = currentOutput.show?.lines !== undefined ? Number(currentOutput.show?.lines) : 0
+  $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
+  $: linesStart = linesIndex !== null ? amountOfLinesToShow! * linesIndex : null
+  $: linesEnd = linesStart !== null ? linesStart + amountOfLinesToShow! : null
 </script>
 
 <Zoomed background={currentSlide?.settings?.color || currentOutput.show?.background || "black"} {center} {style} {resolution} bind:ratio>
@@ -175,7 +185,7 @@
       <span transition:custom={transition} style="pointer-events: none;display: block;">
         {#if currentSlide}
           {#each currentSlide?.items as item}
-            <Textbox {item} {ratio} ref={{ showId: slide.id, id: currentSlide.id }} />
+            <Textbox {item} {ratio} ref={{ showId: slide.id, id: currentSlide.id }} {linesStart} {linesEnd} />
           {/each}
         {/if}
       </span>
@@ -194,7 +204,7 @@
   {#if out.overlays?.length && layers.includes("overlays")}
     {#each out.overlays as id}
       {#if $overlays[id]}
-        <div transition:custom={$transitionData.text}>
+        <div transition:custom={overlayTransition}>
           <div>
             {#each $overlays[id].items as item}
               <Textbox {item} ref={{ type: "overlay", id }} />

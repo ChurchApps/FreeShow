@@ -56,7 +56,7 @@
 
     // if (activeOutputs[0]?.out?.slide?.id === id && activeOutputs[0]?.out?.slide?.index === index && activeOutputs[0]?.out?.slide?.layout === activeLayout) return
     // outSlide.set({ id, layout: activeLayout, index })
-    setOutput("slide", { id, layout: activeLayout, index })
+    setOutput("slide", { id, layout: activeLayout, index, line: 0 })
   }
 
   // disable slides that is after end (only visual)

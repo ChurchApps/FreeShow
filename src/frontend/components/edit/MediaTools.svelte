@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
-  import { activeEdit, activeShow, media, outBackground } from "../../stores"
+  import { activeEdit, activeShow, media, outputs } from "../../stores"
   import Icon from "../helpers/Icon.svelte"
+  import { getActiveOutputs, setOutput } from "../helpers/output"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Tabs from "../main/Tabs.svelte"
@@ -32,11 +33,11 @@
         return a
       })
 
-      if ($outBackground) {
-        outBackground.update((a) => {
-          delete a?.filter
-          return a
-        })
+      let currentOutput: any = $outputs[getActiveOutputs()[0]]
+      if (currentOutput.out?.background?.filter) {
+        let bg = currentOutput.out.background
+        delete bg.filter
+        setOutput("background", bg)
       }
     } else if (active === "options") {
       media.update((a: any) => {
@@ -44,11 +45,11 @@
         return a
       })
 
-      if ($outBackground) {
-        outBackground.update((a) => {
-          delete a?.flipped
-          return a
-        })
+      let currentOutput: any = $outputs[getActiveOutputs()[0]]
+      if (currentOutput.out?.background?.flipped) {
+        let bg = currentOutput.out.background
+        delete bg.flipped
+        setOutput("background", bg)
       }
     }
 

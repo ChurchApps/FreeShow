@@ -39,8 +39,10 @@
     {#each outs as output}
       <Button
         on:click={(e) => toggleOutput(e, output.id)}
+        id={output.id}
         active={output.active}
         style="flex: 1;{output.active ? 'border-bottom: 2px solid ' + output.color + ' !important;' : ''}"
+        class="output_button context #output_active_button"
         bold={false}
         center
         dark
@@ -54,7 +56,8 @@
 <style>
   div {
     display: flex;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    /* overflow-x: auto; */
   }
 
   div :global(button) {

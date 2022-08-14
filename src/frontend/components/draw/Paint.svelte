@@ -1,13 +1,19 @@
 <script lang="ts">
   import { onMount } from "svelte"
-  import { draw, drawSettings, outSlide, paintCache, screen } from "../../stores"
+  import { draw, drawSettings, outputs, paintCache } from "../../stores"
+  import { getActiveOutputs, getResolution } from "../helpers/output"
   import { _show } from "../helpers/shows"
 
   export let settings: any = {}
 
-  $: currentLayout = $outSlide ? _show($outSlide.id).layouts([$outSlide.layout]).ref()[0] : []
-  $: currentSlide = $outSlide ? ($outSlide.id === "temp" ? { items: $outSlide.tempItems } : _show($outSlide.id).slides([currentLayout![$outSlide.index!].id]).get()[0]) : null
-  $: resolution = currentSlide?.settings?.resolution || $screen.resolution
+  $: currentOutput = $outputs[getActiveOutputs()[0]]
+  $: currentLayout = currentOutput.out?.slide ? _show(currentOutput.out.slide.id).layouts([currentOutput.out.slide.layout]).ref()[0] : []
+  $: currentSlide = currentOutput.out?.slide
+    ? currentOutput.out.slide.id === "temp"
+      ? { items: currentOutput.out.slide.tempItems }
+      : _show(currentOutput.out.slide.id).slides([currentLayout![currentOutput.out.slide.index!].id]).get()[0]
+    : null
+  $: resolution = getResolution(currentSlide?.settings?.resolution, $outputs)
 
   let canvas: any = null
   let ctx: any = null

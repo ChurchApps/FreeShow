@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { Resolution } from "../../../types/Settings"
-  import { activeShow, dictionary, mediaOptions, outSlide, screen, showsCache, templates } from "../../stores"
+  import { activeShow, dictionary, mediaOptions, outputs, showsCache, templates } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { getResolution } from "../helpers/output"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Textbox from "../slide/Textbox.svelte"
@@ -15,7 +15,7 @@
   export let active: string | null
   export let searchValue: string = ""
 
-  let resolution: Resolution = $outSlide && $outSlide.id !== "temp" ? $showsCache[$outSlide.id].settings.resolution || $screen.resolution : $screen.resolution
+  $: resolution = getResolution(null, $outputs)
   let filteredTemplates: any
 
   $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings.template : null

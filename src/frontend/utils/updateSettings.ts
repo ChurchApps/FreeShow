@@ -7,10 +7,8 @@ import {
   alertUpdates,
   audioFolders,
   autoOutput,
-  backgroundColor,
   categories,
   defaultProjectName,
-  displayMetadata,
   drawer,
   drawerTabsData,
   drawSettings,
@@ -27,8 +25,6 @@ import {
   openedFolders,
   os,
   outLocked,
-  outputPosition,
-  outputScreen,
   overlayCategories,
   playerVideos,
   ports,
@@ -36,7 +32,6 @@ import {
   projectView,
   remotePassword,
   resized,
-  screen,
   showsPath,
   slidesOptions,
   templateCategories,
@@ -46,7 +41,7 @@ import {
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings } from "./../../types/Save"
-import { currentWindow, maxConnections, outputs, scriptures, scriptureSettings, splitLines, themes, transitionData, volume } from "./../stores"
+import { currentWindow, maxConnections, outputs, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
 
@@ -71,10 +66,10 @@ export function updateSettings(data: any) {
   send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
 
   // theme
-  if (get(themes)[data.theme]) {
-    Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-    Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
-  }
+  // if (get(themes)[data.theme]) {
+  //   Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
+  //   Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
+  // }
 
   setTimeout(() => {
     window.api.send("LOADED")
@@ -120,13 +115,9 @@ const updateList: { [key in SaveListSettings]: any } = {
     })
     outputs.set(v)
   },
-  outputScreen: (v: any) => outputScreen.set(v),
-  outputPosition: (v: any) => outputPosition.set(v),
-  backgroundColor: (v: any) => backgroundColor.set(v),
   remotePassword: (v: any) => remotePassword.set(v),
   audioFolders: (v: any) => audioFolders.set(v),
   defaultProjectName: (v: any) => defaultProjectName.set(v),
-  displayMetadata: (v: any) => displayMetadata.set(v),
   categories: (v: any) => categories.set(v),
   drawer: (v: any) => drawer.set(v),
   drawerTabsData: (v: any) => drawerTabsData.set(v),
@@ -145,7 +136,6 @@ const updateList: { [key in SaveListSettings]: any } = {
   presenterControllerKeys: (v: any) => presenterControllerKeys.set(v),
   playerVideos: (v: any) => playerVideos.set(v),
   resized: (v: any) => resized.set(v),
-  screen: (v: any) => screen.set(v),
   scriptures: (v: any) => scriptures.set(v),
   scriptureSettings: (v: any) => scriptureSettings.set(v),
   slidesOptions: (v: any) => slidesOptions.set(v),

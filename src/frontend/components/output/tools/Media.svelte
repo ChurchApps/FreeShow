@@ -2,6 +2,7 @@
   import { OUTPUT } from "../../../../types/Channels"
   import { activeShow, dictionary, outLocked, playerVideos, videoExtensions } from "../../../stores"
   import { send } from "../../../utils/request"
+  import { splitPath } from "../../helpers/get"
   import Icon from "../../helpers/Icon.svelte"
   import { setOutput } from "../../helpers/output"
   import Button from "../../inputs/Button.svelte"
@@ -21,7 +22,7 @@
   // }
 
   let mediaName: string = ""
-  $: outName = background?.path ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
+  $: outName = background?.path ? splitPath(background.path).name : ""
   $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
   const sendToOutput = () => {

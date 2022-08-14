@@ -3,7 +3,7 @@ export const defaultThemes: any = {
     name: "default",
     default: true,
     font: {
-      family: "sans-serif",
+      family: "",
       size: "1em",
     },
     colors: {
@@ -45,7 +45,7 @@ export const defaultThemes: any = {
     name: "light",
     default: true,
     font: {
-      family: "sans-serif",
+      family: "",
       size: "1em",
     },
     colors: {
@@ -87,7 +87,7 @@ export const defaultThemes: any = {
     name: "black",
     default: true,
     font: {
-      family: "sans-serif",
+      family: "",
       size: "1em",
     },
     colors: {

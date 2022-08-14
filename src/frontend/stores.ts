@@ -5,7 +5,7 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, DefaultProjectNames, Media, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
-import type { ID, OutBackground, OutSlide, OutTransition, Overlays, Shows, Templates, Transition } from "../types/Show"
+import type { ID, Overlays, Shows, Templates, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
 import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Outputs } from "./../types/Output"
@@ -267,47 +267,47 @@ export const autoOutput: Writable<boolean> = writable(false) // false
 export const slideTimers: Writable<{ [key: string]: any }> = writable({}) // {}
 // activeOutputs ... [] ?
 export const outputs: Writable<Outputs> = writable({
-  default: {
-    // show / force show button, always in settings
-    enabled: true, // show when clicking display
-    active: true, // is checked in display (always true if only one output)
-    name: "Primary",
-    color: "#e6349c",
-    bounds: { x: 0, y: 0, width: 1920, height: 1080 },
-    screen: null, // set current screen (to hide/show window when screen removed/added)
-    kiosk: true,
-    show: {
-      lines: 0, // 1-99 (0 is disabled)
-      template: null, // override style
-      resolution: { width: 1920, height: 1080 }, // default: { width: 1920, height: 1080 }
-      background: "#000000",
-      displayMetadata: "never",
-      layers: ["background", "slide", "overlays"], // default: null | undefined
-    },
-    out: {
-      background: null,
-      slide: null,
-      overlays: [],
-      transition: null,
-    },
-  },
+  // default: {
+  //   // show / force show button, always in settings
+  //   enabled: true, // show when clicking display
+  //   active: true, // is checked in display (always true if only one output)
+  //   name: "Primary",
+  //   color: "#e6349c",
+  //   bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+  //   screen: null, // set current screen (to hide/show window when screen removed/added)
+  //   kiosk: true,
+  //   show: {
+  //     lines: 0, // 1-99 (0 is disabled)
+  //     template: null, // override style
+  //     resolution: { width: 1920, height: 1080 }, // default: { width: 1920, height: 1080 }
+  //     background: "#000000",
+  //     displayMetadata: "never",
+  //     layers: ["background", "slide", "overlays"], // default: null | undefined
+  //   },
+  //   out: {
+  //     background: null,
+  //     slide: null,
+  //     overlays: [],
+  //     transition: null,
+  //   },
+  // },
 })
 
 // ! DELETE:
-export const outputPosition: Writable<{ x: number; y: number; width: number; height: number }> = writable({ x: 0, y: 0, width: 0, height: 0 }) // {default}
-export const outputScreen: Writable<null | string> = writable(null) // null
-// output
-export const outBackground: Writable<null | OutBackground> = writable(null)
-export const outSlide: Writable<null | OutSlide> = writable(null)
-export const outOverlays: Writable<string[]> = writable([])
-export const outTransition: Writable<null | OutTransition> = writable(null)
-export const backgroundColor: Writable<string> = writable("#000000") // #000000
-export const screen = writable({
-  // {default}
-  resolution: { width: 1920, height: 1080 },
-  // format 16:9
-})
-export const displayMetadata: Writable<string> = writable("never") // "never"
+// export const outputPosition: Writable<{ x: number; y: number; width: number; height: number }> = writable({ x: 0, y: 0, width: 0, height: 0 }) // {default}
+// export const outputScreen: Writable<null | string> = writable(null) // null
+// // output
+// export const outBackground: Writable<null | OutBackground> = writable(null)
+// export const outSlide: Writable<null | OutSlide> = writable(null)
+// export const outOverlays: Writable<string[]> = writable([])
+// export const outTransition: Writable<null | OutTransition> = writable(null)
+// export const backgroundColor: Writable<string> = writable("#000000") // #000000
+// export const screen = writable({
+//   // {default}
+//   resolution: { width: 1920, height: 1080 },
+//   // format 16:9
+// })
+// export const displayMetadata: Writable<string> = writable("never") // "never"
 
 // project
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"

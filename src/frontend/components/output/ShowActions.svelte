@@ -8,6 +8,11 @@
   import Button from "../inputs/Button.svelte"
 
   export let currentOutput: any
+  export let ref: any[]
+  export let linesIndex: null | number
+  export let maxLines: null | number
+
+  $: slide = currentOutput?.out?.slide
 
   function previousShow() {
     if ($activeProject) {
@@ -24,19 +29,7 @@
     }
   }
 
-  let length: number = 0
-  $: {
-    if (currentOutput.out?.slide?.id) {
-      length = 0
-      if (currentOutput.out?.slide?.id === "temp") length = 1
-      else {
-        $showsCache[currentOutput.out?.slide.id]?.layouts[currentOutput.out?.slide.layout!]?.slides.forEach((s: any) => {
-          length++
-          if ($showsCache[currentOutput.out?.slide!.id].slides[s.id].children) length += $showsCache[currentOutput.out?.slide!.id].slides[s.id].children!.length
-        })
-      }
-    }
-  }
+  $: length = ref.length || 0
 </script>
 
 <span class="group">
@@ -56,8 +49,8 @@
     title={$dictionary.preview?._previous_slide}
     disabled={$outLocked ||
       !$activeShow ||
-      currentOutput.out?.slide?.id === "temp" ||
-      (currentOutput.out?.slide ? (currentOutput.out?.slide.index || 0) < 1 : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
+      slide?.id === "temp" ||
+      (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
     center
   >
     <Icon id="previous" size={1.2} />
@@ -65,7 +58,7 @@
   <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
     <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
   </Button>
-  {#if ($activePage === "edit" && currentOutput.out?.slide?.index !== $activeEdit.slide) || !currentOutput.out?.slide || currentOutput.out?.slide.id !== $activeShow?.id || !$activeShow || currentOutput.out?.slide.layout !== $showsCache[$activeShow.id].settings.activeLayout}
+  {#if ($activePage === "edit" && slide?.index !== $activeEdit.slide) || !slide || slide.id !== $activeShow?.id || !$activeShow || slide.layout !== $showsCache[$activeShow.id].settings.activeLayout}
     <Button
       on:click={(e) => {
         if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null && $activeEdit.slide !== undefined)
@@ -86,11 +79,11 @@
     <Button
       on:click={() => {
         // outBackground.set($outBackground)
-        // setOutput("slide", currentOutput.out?.slide)
+        // setOutput("slide", slide)
         refreshOut()
       }}
       title={$dictionary.preview?._update}
-      disabled={!currentOutput.out?.slide || $outLocked}
+      disabled={!slide || $outLocked}
       center
     >
       <Icon id="refresh" size={1.2} />
@@ -101,8 +94,8 @@
     title={$dictionary.preview?._next_slide}
     disabled={$outLocked ||
       !$activeShow ||
-      currentOutput.out?.slide?.id === "temp" ||
-      (currentOutput.out?.slide ? (currentOutput.out?.slide.index || 0) + 1 >= length : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
+      slide?.id === "temp" ||
+      (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
     center
   >
     <Icon id="next" size={1.2} />

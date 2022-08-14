@@ -15,6 +15,7 @@ export interface Output {
   kiosk: boolean
   show: any
   out?: {
+    refresh?: boolean
     background?: null | OutBackground
     slide?: null | OutSlide
     overlays?: string[]

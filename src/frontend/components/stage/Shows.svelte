@@ -5,7 +5,6 @@
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
   import Center from "../system/Center.svelte"
-  import SelectElem from "../system/SelectElem.svelte"
   import StageSlide from "./StageSlide.svelte"
 
   function addSlide() {
@@ -17,20 +16,19 @@
   {#if Object.keys($stageShows).length}
     <div class="grid">
       {#each Object.entries($stageShows) as [id, show], index}
-        <SelectElem style="width: 100%;" id="stage" data={{ id }}>
-          <StageSlide
-            {show}
-            {index}
-            active={$activeStage.id === id}
-            on:click={(e) => {
-              if (!e.ctrlKey && !e.metaKey)
-                activeStage.update((as) => {
-                  as.id = id
-                  return as
-                })
-            }}
-          />
-        </SelectElem>
+        <StageSlide
+          {id}
+          {show}
+          {index}
+          active={$activeStage.id === id}
+          on:click={(e) => {
+            if (!e.ctrlKey && !e.metaKey)
+              activeStage.update((as) => {
+                as.id = id
+                return as
+              })
+          }}
+        />
       {/each}
     </div>
   {:else}

@@ -1,6 +1,11 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
+import { OUTPUT } from "../../../types/Channels"
+import type { Output } from "../../../types/Output"
 import type { Resolution } from "../../../types/Settings"
-import { outputs } from "../../stores"
+import { currentOutputSettings, outputDisplay, outputs, theme, themes } from "../../stores"
+import { sendInitialOutputData } from "../../utils/messages"
+import { send } from "../../utils/request"
 
 // background: null,
 // slide: null,
@@ -34,7 +39,10 @@ export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boo
 
   enabled = enabled.map((a) => a.id)
 
-  if (!enabled.length) enabled = [sortedOutputs[0].id]
+  if (!enabled.length) {
+    if (!sortedOutputs.length) addOutput(true)
+    if (sortedOutputs[0]) enabled = [sortedOutputs[0].id]
+  }
 
   return enabled
 }
@@ -47,6 +55,8 @@ export function findMatchingOut(id: string, updater: any = get(outputs)): string
   getActiveOutputs(updater, false).forEach((outputId: string) => {
     let output: any = updater[outputId]
     if (match === null && output.enabled) {
+      // TODO: index & layout: $outSlide?.index === i && $outSlide?.id === $activeShow?.id && $outSlide?.layout === activeLayout
+      // slides (edit) + slides
       if (output.out?.slide?.id === id) match = output.color
       else if ((output.out?.background?.path || output.out?.background?.id) === id) match = output.color
       else if (output.out?.overlays?.includes(id)) match = output.color
@@ -60,14 +70,19 @@ export function findMatchingOut(id: string, updater: any = get(outputs)): string
   return match
 }
 
-export function refreshOut() {
-  // TODO: (outputs not updating)
+export function refreshOut(refresh: boolean = true) {
   outputs.update((a) => {
     getActiveOutputs().forEach((id: string) => {
-      a[id].out = a[id].out
+      a[id].out = { ...a[id].out, refresh }
     })
     return a
   })
+
+  if (refresh) {
+    setTimeout(() => {
+      refreshOut(false)
+    }, 100)
+  }
 }
 
 // outputs is just for updates
@@ -92,5 +107,49 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
 
 export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null): Resolution {
   let currentOutput = get(outputs)[getActiveOutputs()[0]]
-  return initial || currentOutput.show?.resolution || { width: 1920, height: 1080 }
+  return initial || currentOutput?.show?.resolution || { width: 1920, height: 1080 }
+}
+
+// settings
+
+export const defaultOutput: Output = {
+  enabled: true,
+  active: true,
+  name: "Output",
+  color: "#e6349c",
+  bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+  screen: null,
+  kiosk: true,
+  show: {},
+}
+
+export function addOutput(onlyFirst: boolean = false) {
+  if (onlyFirst && get(outputs).length) return
+
+  outputs.update((output) => {
+    let id = uid()
+    if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)]?.colors?.secondary
+    output[id] = JSON.parse(JSON.stringify(defaultOutput))
+
+    // set name
+    let n = 0
+    while (Object.values(output).find((a) => a.name === output[id].name + (n ? " " + n : ""))) n++
+    if (n) output[id].name = output[id].name + " " + n
+    if (onlyFirst) output[id].name = "Primary"
+
+    // show
+    if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
+    if (!onlyFirst && get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
+    setTimeout(() => {
+      sendInitialOutputData()
+    }, 3000)
+
+    currentOutputSettings.set(id)
+    return output
+  })
+  // history({
+  //       id: "addTheme",
+  //       newData: { ...JSON.parse(JSON.stringify($themes[$theme])), default: false, name: themeValue + " 2" },
+  //       location: { page: "settings", theme: uid() },
+  //     })
 }

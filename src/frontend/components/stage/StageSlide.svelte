@@ -1,6 +1,7 @@
 <script lang="ts">
   import T from "../helpers/T.svelte"
   import Zoomed from "../slide/Zoomed.svelte"
+  import SelectElem from "../system/SelectElem.svelte"
   import Stagebox from "./Stagebox.svelte"
 
   // WIP
@@ -15,6 +16,7 @@
   }
   export let show: Show
   // export let title: string
+  export let id: string
   export let index: number
   export let columns: number = 1
   export let active: boolean = false
@@ -28,23 +30,25 @@
 <div class="main" class:active style="width: {100 / columns}%" class:list>
   <div class="slide context #stage_slide" class:disabled={show.disabled} style={show.settings.background ? `background-color: ${show.settings.color};` : ""} tabindex={0} on:click>
     <div style="width: 100%;">
-      <Zoomed background={show.items.length ? "black" : "transparent"} style="width: 100%;" disableStyle bind:ratio>
-        {#each Object.entries(show.items) as [id, item]}
-          {#if item.enabled !== false}
-            <Stagebox {id} {item} {ratio} {show} />
-          {/if}
-        {/each}
-      </Zoomed>
-      <div class="label" title={show.name}>
-        <span style="position: absolute;display: contents;">{index + 1}</span>
-        <span class="text">
-          {#if show.name}
-            {show.name}
-          {:else}
-            <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
-          {/if}
-        </span>
-      </div>
+      <SelectElem id="stage" data={{ id }}>
+        <Zoomed background={show.items.length ? "black" : "transparent"} style="width: 100%;" disableStyle bind:ratio>
+          {#each Object.entries(show.items) as [id, item]}
+            {#if item.enabled !== false}
+              <Stagebox {id} {item} {ratio} {show} />
+            {/if}
+          {/each}
+        </Zoomed>
+        <div class="label" title={show.name}>
+          <span style="position: absolute;display: contents;">{index + 1}</span>
+          <span class="text">
+            {#if show.name}
+              {show.name}
+            {:else}
+              <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
+            {/if}
+          </span>
+        </div>
+      </SelectElem>
     </div>
   </div>
 </div>

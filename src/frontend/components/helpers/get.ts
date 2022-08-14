@@ -4,6 +4,13 @@ import type { ID, Show, Shows, Slide, SlideData } from "../../../types/Show"
 import { activeProject, activeShow, projects, showsCache } from "../../stores"
 import type { ShowRef } from "../../../types/Projects"
 
+export function splitPath(path: string) {
+  const name: string = path.substring((path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")) + 1)
+  const extension: string = name.lastIndexOf(".") > -1 ? name.substring(name.lastIndexOf(".") + 1) : ""
+  const shortName: string = extension ? name.slice(0, name.indexOf(extension) - 1) : name
+  return { path, name, extension, shortName }
+}
+
 // export const getProject = (id: ID): Project => get(projects)[id]
 // export const getProjectShows = (id: ID): Project => getProject(id)[get(activeProject)].shows
 // export const getShow = (showID: ID): Show => get(showsCache)[showID]

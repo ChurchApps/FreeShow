@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Resolution } from "../../../types/Settings"
-  import { backgroundColor, outputs } from "../../stores"
-  import { getResolution } from "../helpers/output"
+  import { outputs } from "../../stores"
+  import { getActiveOutputs, getResolution } from "../helpers/output"
 
-  export let background: string = $backgroundColor || "#000000"
+  export let background: string = $outputs[getActiveOutputs()[0]]?.show?.background || "#000000"
   export let center: boolean = false
   export let zoom: boolean = true
   export let disableStyle: boolean = false
@@ -17,7 +17,8 @@
   $: ratio = Math.max(0.01, slideWidth / resolution.width)
 </script>
 
-<div class:center style={$$props.style || "width: 100%;height: 100%;"}>
+<!-- $$props.style ||  -->
+<div class:center style="width: 100%;height: 100%;">
   <div
     bind:offsetWidth={slideWidth}
     class="slide"

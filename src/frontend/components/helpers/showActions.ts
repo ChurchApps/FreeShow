@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import type { OutSlide } from "../../../types/Show"
+import type { OutSlide, Slide } from "../../../types/Show"
 import { activeEdit, activePage, activeProject, activeShow, media, outLocked, outputs, projects, showsCache, videoExtensions } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getActiveOutputs, setOutput } from "./output"
@@ -35,6 +35,23 @@ export function checkInput(e: any) {
   }
 }
 
+export function getItemWithMostLines(slide: Slide) {
+  let amount: number = 0
+  slide.items?.forEach((item) => {
+    console.log(item.lines)
+    let lines: number = item.lines?.filter((a) => a.text.filter((a) => a.value.length)?.length)?.length || 0
+    if (lines > amount) amount = lines
+  })
+  return amount
+}
+
+function getOutputWithLines() {
+  let outs = getActiveOutputs()
+  let l = outs.find((id: string) => get(outputs)[id].show?.lines)
+  l = get(outputs)[l]?.show?.lines
+  return Number(l) || 0
+}
+
 export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, outputId: string | null = null) {
   if (get(outLocked) && !bypassLock) return
   if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
@@ -51,6 +68,15 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     .ref()[0]
   let isLastSlide: boolean = slide && layout ? slide.index === layout.length - 1 && !layout[slide.index].end : false
   let index: null | number = null
+
+  // lines
+  let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
+  let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
+  let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout[slide.index].id]).get()[0] : null
+  let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
+  let currentLineStart: number = slideLines ? slideLines - (amountOfLinesToShow! % slideLines) : 0
+  let hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : slideLines <= amountOfLinesToShow || amountOfLinesToShow! * linesIndex >= currentLineStart
+  if (isLastSlide && !hasLinesEnded) isLastSlide = false
 
   // TODO: active show slide index on delete......
 
@@ -78,11 +104,18 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
   if (!slide || slide.id === "temp") return
 
-  // TODO: Check for loop to beginning slide...
-  index = getNextEnabled(slide.index!, end)
+  let newSlideOut: any = { ...slide, line: 0 }
+  if (!hasLinesEnded) {
+    index = slide.index!
+    newSlideOut.line = linesIndex! + 1
+  } else {
+    // TODO: Check for loop to beginning slide...
+    index = getNextEnabled(slide.index!, end)
+  }
+  newSlideOut.index = index
 
   if (index !== null) {
-    setOutput("slide", { ...slide, index }, false, outputId)
+    setOutput("slide", newSlideOut, false, outputId)
     updateOut(slide ? slide.id : "active", index, layout, true, outputId)
   }
 }
@@ -100,10 +133,26 @@ export function previousSlide() {
   let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
   let index: number = slide?.index !== undefined ? slide.index - 1 : layout.length - 1
 
-  if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) return
-  while (layout[index].data.disabled) index--
+  // lines
+  let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
+  let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
+  let hasLinesEnded: boolean = !slide || linesIndex === null || linesIndex < 1
 
-  if (slide) setOutput("slide", { ...slide, index })
+  let line: number = linesIndex || 0
+  if (hasLinesEnded) {
+    if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) return
+    while (layout[index].data.disabled) index--
+
+    // get slide line
+    let showSlide: any = _show(slide!.id).slides([layout[index].id]).get()[0]
+    let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
+    line = slideLines ? (amountOfLinesToShow >= slideLines ? 0 : slideLines - (amountOfLinesToShow % slideLines) - 1) : 0
+  } else {
+    index = slide!.index!
+    line--
+  }
+
+  if (slide) setOutput("slide", { ...slide, index, line })
   else if (get(activeShow)) setOutput("slide", { id: get(activeShow)!.id, layout: activeLayout, index })
 
   updateOut(slide ? slide.id : "active", index, layout)

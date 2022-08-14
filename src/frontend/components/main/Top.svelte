@@ -7,12 +7,11 @@
   import Button from "../inputs/Button.svelte"
   import TopButton from "../inputs/TopButton.svelte"
 
-  function display() {
+  function display(e: any) {
     let enabledOutputs: any[] = getActiveOutputs($outputs, false)
     enabledOutputs.forEach((id) => {
       let output: any = { id, ...$outputs[id] }
-      // , force: e.ctrlKey || e.metaKey
-      send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, output })
+      send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, output, force: e.ctrlKey || e.metaKey })
     })
   }
 </script>

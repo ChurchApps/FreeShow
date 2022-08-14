@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { outSlide, showsCache } from "../../../stores"
+  import { outputs, showsCache } from "../../../stores"
+  import { getActiveOutputs } from "../../helpers/output"
   import { _show } from "../../helpers/shows"
   import Textbox from "../../slide/Textbox.svelte"
 
@@ -7,9 +8,10 @@
   export let style: boolean = false
   export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; id: string }
 
-  $: index = $outSlide && $outSlide.id !== "temp" ? $outSlide.index! + (next ? 1 : 0) : null
-  $: slideId = index !== null && $outSlide ? _show($outSlide.id).layouts("active").ref()[0][index!]?.id || null : null
-  $: slide = $outSlide && slideId ? $showsCache[$outSlide.id].slides[slideId] : null
+  $: currentSlide = $outputs[getActiveOutputs()[0]].out?.slide
+  $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
+  $: slideId = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!]?.id || null : null
+  $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
 </script>
 
 {#if slide}

@@ -11,6 +11,7 @@ export const getStyles = (str: string | null | undefined, removeText: boolean = 
           key !== "text-decoration" &&
           key !== "text-shadow" &&
           key !== "box-shadow" &&
+          key !== "font-family" &&
           removeText &&
           style.length > style.replace(/[^0-9.-]/g, "").length &&
           style.replace(/[^0-9.-]/g, "").length > 0

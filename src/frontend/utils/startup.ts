@@ -33,9 +33,7 @@ import {
   mediaFolders,
   os,
   outputDisplay,
-  outputPosition,
   outputs,
-  outputScreen,
   overlays,
   playerVideos,
   playingVideos,
@@ -62,6 +60,9 @@ import { updateSettings } from "./updateSettings"
 export function startup() {
   send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
   setTimeout(() => send(STORE, ["SETTINGS"]), 500)
+
+  // DEBUG
+  // window.api.send("LOADED")
 
   receive(MAIN, receiveMAIN)
   receive(STORE, receiveSTORE)
@@ -153,7 +154,7 @@ const receiveOUTPUT: any = {
   MEDIA: (a: any) => mediaFolders.set(a),
   ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
   DISPLAY: (a: any) => outputDisplay.set(a.enabled),
-  POSITION: (a: any) => outputPosition.set(a),
+  // POSITION: (a: any) => outputPosition.set(a),
   PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
   AUDIO_MAIN: async (data: any) => {
     // let analyser: any = await getAnalyser(video)
@@ -168,11 +169,11 @@ const receiveOUTPUT: any = {
       return a
     })
   },
-  SCREEN_ADDED: (a: any) => {
+  SCREEN_ADDED: () => {
     if (get(autoOutput) && !get(outputDisplay)) {
       // TODO: outputs...
-      send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })
-      outputScreen.set(a)
+      // send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })
+      // outputScreen.set(a)
     }
   },
 }

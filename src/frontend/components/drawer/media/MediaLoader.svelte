@@ -52,7 +52,7 @@
     let x = 0
     let y = 0
 
-    if (width / height > 16 / 9) {
+    if (width / height > resolution.width / resolution.height) {
       height = height / (width / thumbnailSize.width)
       width = thumbnailSize.width
       y = (thumbnailSize.height - height) / 2

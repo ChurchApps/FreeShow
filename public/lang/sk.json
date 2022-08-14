@@ -396,7 +396,10 @@
     "changeIcon": "Zmeniť ikonu",
     "changeGroup": "Zmeniť skupiny",
     "createNew": "Vytvoriť nové",
-    "selectAll": "Vybrať všetky"
+    "selectAll": "Vybrať všetky",
+    "force_outputs": "Force outputs",
+    "toggle_output": "Toggle output",
+    "move_to_front": "Move to front"
   },
   "tools": {
     "notes": "Poznámky",

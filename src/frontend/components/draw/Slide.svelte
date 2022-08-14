@@ -1,16 +1,17 @@
 <script lang="ts">
-  import { activeShow, draw, drawSettings, drawTool, outSlide } from "../../stores"
-  import { getResolution } from "../helpers/output"
+  import { activeShow, draw, drawSettings, drawTool, outputs } from "../../stores"
+  import { getActiveOutputs, getResolution } from "../helpers/output"
   import { _show } from "../helpers/shows"
   import Output from "../output/Output.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
 
   $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
-  $: Slide = $outSlide !== null && ref ? _show("active").slides([ref[$outSlide.index!]?.id]).get()[0] : null
+  $: currentOutput = $outputs[getActiveOutputs()[0]]
+  $: Slide = currentOutput.out?.slide && ref ? _show("active").slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
 
   let width: number = 0
   let height: number = 0
-  $: resolution = getResolution(Slide?.settings?.resolution)
+  $: resolution = getResolution(Slide?.settings?.resolution, $outputs)
   let ratio: number = 0
 
   let parent: any
@@ -61,7 +62,8 @@
 <div class="parent" bind:this={parent} bind:offsetWidth={width} bind:offsetHeight={height}>
   <div style="width: 100%;height: 100%;display: flex;flex-direction: column;justify-content: center;" on:mousedown={onMouseMove} on:wheel={wheel}>
     <!-- TODO: draw get video time! -->
-    <Output bind:ratio center style={getStyleResolution(resolution, width, height)} transition={{ type: "fade", duration: 0, easing: "linear" }} mirror />
+    <!-- transition={{ type: "none", duration: 0, easing: "linear" }} -->
+    <Output bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror />
   </div>
 </div>
 

@@ -59,7 +59,8 @@
 <Main slide={$activeStage.id ? $stageShows[$activeStage.id] : null} let:width let:height let:resolution>
   <div class="parent">
     {#if $activeStage.id}
-      <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio disableStyle hideOverflow={false} center>
+      <!-- TODO: stage resolution... -->
+      <Zoomed style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
         <!-- TODO: snapping to top left... -->
         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
         <!-- {#key Slide} -->
@@ -89,7 +90,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    /* padding: 10px; */
     overflow: auto;
   }
 

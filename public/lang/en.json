@@ -396,7 +396,10 @@
     "changeIcon": "Change icon",
     "changeGroup": "Change group",
     "createNew": "Create new",
-    "selectAll": "Select all"
+    "selectAll": "Select all",
+    "force_outputs": "Force outputs",
+    "toggle_output": "Toggle output",
+    "move_to_front": "Move to front"
   },
   "tools": {
     "notes": "Notes",

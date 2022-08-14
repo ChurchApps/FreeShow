@@ -36,10 +36,10 @@
   $: currentOutput = $outputs[getActiveOutputs()[0]]
 
   // outBackground.subscribe(backgroundChanged)
-  $: background = currentOutput.out?.background || {}
-  $: if (JSON.stringify(background) !== JSON.stringify(currentOutput.out?.background || {})) backgroundChanged()
+  $: background = currentOutput?.out?.background || {}
+  $: if (JSON.stringify(background) !== JSON.stringify(currentOutput?.out?.background || {})) backgroundChanged()
   function backgroundChanged() {
-    background = currentOutput.out?.background || {}
+    background = currentOutput?.out?.background || {}
     if (background === null || background.path !== show?.id || videoData.paused) return
     if (background.type !== undefined || background.type !== "media") return
     autoPause = true

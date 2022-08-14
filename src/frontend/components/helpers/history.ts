@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeEdit, activePage, activeStage, dictionary, notFound, playerVideos, shows, undoHistory } from "../../stores"
+import { activeEdit, activePage, activeStage, dictionary, notFound, outputs, playerVideos, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -14,7 +14,6 @@ import {
   folders,
   groups,
   openedFolders,
-  outOverlays,
   overlays,
   projects,
   projectView,
@@ -27,6 +26,7 @@ import {
 } from "./../../stores"
 import { redoAddCategory, redoAddOverlayOrTemplate, undoAddCategory, undoAddOverlayOrTemplate } from "./historyHelpers"
 import { addToPos } from "./mover"
+import { isOutCleared } from "./output"
 import { loadShows, setShow } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
@@ -1064,7 +1064,18 @@ export function history(obj: History, undo: null | boolean = null) {
       overlays.update((a: any) => {
         if (undo) {
           let id: string = obj.oldData.id
-          if (get(outOverlays).includes(id)) outOverlays.set(get(outOverlays).filter((a: any) => a !== id))
+          // remove outputted
+          if (!isOutCleared("overlays")) {
+            outputs.update(a => {
+              Object.entries(a).forEach(([outputId, output]: any) => {
+                if (output.out?.overlays?.includes(id)) {
+                  a[outputId].out!.overlays = a[outputId].out!.overlays!.filter(a => a !== id)
+                }
+              })
+              return a
+            })
+          }
+
           delete a[id]
         } else a[obj.newData.id] = obj.newData.slide
         return a

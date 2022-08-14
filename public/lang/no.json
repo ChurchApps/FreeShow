@@ -396,7 +396,10 @@
     "changeIcon": "Endre ikon",
     "changeGroup": "Endre gruppe",
     "createNew": "Lag ny",
-    "selectAll": "Marker alt"
+    "selectAll": "Marker alt",
+    "force_outputs": "Tving visning av skjermer",
+    "toggle_output": "Veksle utgangsskjerm",
+    "move_to_front": "Flytt fremst"
   },
   "tools": {
     "notes": "Notater",

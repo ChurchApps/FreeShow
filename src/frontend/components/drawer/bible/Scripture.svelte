@@ -293,6 +293,7 @@
         style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
       })
 
+    // TODO: outline on outputted verses
     setOutput("slide", { id: "temp", tempItems })
   }
 

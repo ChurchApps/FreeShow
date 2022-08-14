@@ -38,6 +38,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   newCategory: { label: "context.newCategory", icon: "all" },
   newScripture: { label: "new.scripture", icon: "scripture" },
   changeIcon: { label: "context.changeIcon", icon: "noIcon" },
+  // OUTPUTS
+  force_output: { label: "context.force_outputs", icon: "outputs" },
+  toggle_output: { label: "context.toggle_output", icon: "outputs" },
+  move_to_front: { label: "context.move_to_front", icon: "toFront" },
   // PROJECT
   close: { label: "actions.close", icon: "close" },
   newProject: { label: "new.project", icon: "project" },
@@ -87,7 +91,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
   // TOP
   // TODO: output
-  output: ["force_output", "toggle_output", "output_settings"],
+  output: ["force_output"],
+
+  // OUTPUTS
+  output_active_button: ["toggle_output", "move_to_front", "edit"],
 
   // DRAWER
   drawer_top: ["enabledTabs"],

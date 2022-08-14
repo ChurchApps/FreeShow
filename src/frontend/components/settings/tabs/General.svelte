@@ -24,7 +24,7 @@
     setLanguage(null)
     alertUpdates.set(true)
     labelsDisabled.set(false)
-    fullColors.set(true)
+    fullColors.set(false)
     groupNumbers.set(true)
     autoOutput.set(false)
   }
@@ -66,6 +66,7 @@
   <NumberInput
     value={$splitLines}
     max={100}
+    buttons={false}
     outline
     on:change={(e) => {
       splitLines.set(e.detail)
@@ -130,8 +131,8 @@
 </div> -->
 <div>
   <p><T id="settings.show_location" /></p>
-  <span style="display: flex;align-items: center;" title={$showsPath}>
-    {$showsPath}
+  <span class="shows_path" title={$showsPath}>
+    <p>{$showsPath}</p>
     <FolderPicker id="shows">
       <T id="inputs.change_folder" />
     </FolderPicker>
@@ -173,10 +174,23 @@
     text-decoration: line-through;
   } */
 
+  .shows_path {
+    display: flex;
+    align-items: center;
+    max-width: 70%;
+  }
+  .shows_path :global(button) {
+    white-space: nowrap;
+  }
+
   hr {
     margin: 20px 0;
     border: none;
     height: 2px;
     background-color: var(--primary-lighter);
+  }
+
+  div :global(.numberInput) {
+    width: 80px;
   }
 </style>

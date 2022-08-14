@@ -13,7 +13,7 @@
     <div class="align" style={style ? item.align : null}>
       <div class="lines">
         {#each item.lines as line}
-          <div class="break" style={style ? line.align : null} class:height={!line.text[0].value.length}>
+          <div class="break" style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
             {#each line.text as text}
               <span style={style ? text.style : "font-size: " + autoSize + "px;"}>{@html text.value}</span>
             {/each}

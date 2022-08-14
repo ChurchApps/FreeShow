@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { uid } from "uid"
   import { OUTPUT } from "../../../../types/Channels"
-  import type { Output } from "../../../../types/Output"
-  import { activePopup, currentOutputSettings, labelsDisabled, outputDisplay, outputs, templates, theme, themes } from "../../../stores"
+  import { os, activePopup, currentOutputSettings, labelsDisabled, outputDisplay, outputs, templates } from "../../../stores"
   import { send } from "../../../utils/request"
   import Icon from "../../helpers/Icon.svelte"
-  import { getActiveOutputs } from "../../helpers/output"
+  import { addOutput, defaultOutput, getActiveOutputs } from "../../helpers/output"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
@@ -21,25 +19,6 @@
     { id: "last", name: "$:show_at.last:$" },
     { id: "first_last", name: "$:show_at.first_last:$" },
   ]
-
-  const defaultOutput: Output = {
-    enabled: true,
-    active: true,
-    name: "Output",
-    color: $themes[$theme]?.colors?.secondary || "#e6349c",
-    bounds: { x: 0, y: 0, width: 1920, height: 1080 },
-    screen: null,
-    kiosk: true,
-    show: {
-      lines: 0,
-    },
-    out: {
-      background: null,
-      slide: null,
-      overlays: [],
-      transition: null,
-    },
-  }
 
   function reset() {
     let n = currentOutput.name
@@ -65,7 +44,7 @@
     .map(([id, a]) => ({ id, ...a }))
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  $: if (options.length && !$currentOutputSettings) currentOutputSettings.set(options[0].id)
+  $: if (options.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(options[0].id)
 
   let currentOutput: any = {}
   $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
@@ -83,36 +62,13 @@
       if (key.includes(".")) {
         let split = key.split(".")
         a[currentOutput.id][split[0]][split[1]] = value
+        if (split[1] === "lines" && !Number(value)) delete a[currentOutput.id][split[0]][split[1]]
       } else {
         a[currentOutput.id][key] = value
       }
       currentOutputSettings.set(currentOutput.id)
       return a
     })
-  }
-
-  function addOutput() {
-    outputs.update((output) => {
-      let id = uid()
-      output[id] = JSON.parse(JSON.stringify(defaultOutput))
-
-      // set name
-      let n = 0
-      while (Object.values(output).find((a) => a.name === output[id].name + (n ? " " + n : ""))) n++
-      if (n) output[id].name = output[id].name + " " + n
-
-      // show
-      send(OUTPUT, ["CREATE"], { id, ...output[id] })
-      if ($outputDisplay) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
-
-      currentOutputSettings.set(id)
-      return output
-    })
-    // history({
-    //       id: "addTheme",
-    //       newData: { ...JSON.parse(JSON.stringify($themes[$theme])), default: false, name: themeValue + " 2" },
-    //       location: { page: "settings", theme: uid() },
-    //     })
   }
 
   function deleteOutput() {
@@ -153,7 +109,7 @@
     {/if}
   </Button>
 
-  <Button on:click={addOutput}>
+  <Button on:click={() => addOutput()}>
     <Icon id="add" right />
     {#if !$labelsDisabled}
       <T id="settings.new_output" />
@@ -196,18 +152,21 @@
 <!-- <div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;min-height: initial;">
   <p><T id="settings.move_output_hint" /></p>
 </div> -->
-<div>
-  <p><T id="settings.fixed" /></p>
-  <Checkbox
-    checked={currentOutput.kiosk}
-    on:change={(e) => {
-      updateOutput("kiosk", isChecked(e))
-      setTimeout(() => {
-        send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-      }, 10)
-    }}
-  />
-</div>
+<!-- disable on linux -->
+{#if $os.platform !== "linux"}
+  <div>
+    <p><T id="settings.fixed" /></p>
+    <Checkbox
+      checked={currentOutput.kiosk}
+      on:change={(e) => {
+        updateOutput("kiosk", isChecked(e))
+        setTimeout(() => {
+          send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
+        }, 10)
+      }}
+    />
+  </div>
+{/if}
 <div>
   <p><T id="settings.position" /></p>
   <span class="inputs">
@@ -295,6 +254,7 @@
 
 <!-- show -->
 <h3><T id="preview.slide" /></h3>
+<!-- TODO: use stage (dropdown) -->
 <div>
   <p><T id="edit.background_color" /></p>
   <span style="width: 200px;">
@@ -328,8 +288,7 @@
   </span>
 </div>
 
-<!-- TODO: lines -->
-<!-- <div>
+<div>
   <p><T id="settings.lines" /></p>
   <NumberInput
     value={currentOutput.show?.lines || 0}
@@ -341,7 +300,7 @@
       updateOutput("show.lines", e.detail)
     }}
   />
-</div> -->
+</div>
 <div>
   <p><T id="settings.override_with_template" /></p>
   <Dropdown
@@ -444,9 +403,6 @@
     gap: 10px;
     align-items: center;
   }
-  .inputs :global(input) {
-    width: 80px;
-  }
 
   hr {
     margin: 20px 0;
@@ -463,5 +419,9 @@
 
   .flex :global(button) {
     white-space: nowrap;
+  }
+
+  div :global(.numberInput) {
+    width: 80px;
   }
 </style>

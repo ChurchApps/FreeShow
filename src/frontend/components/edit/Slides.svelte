@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { showsCache, activeShow, activeEdit, outSlide } from "../../stores"
+  import { activeEdit, activeShow, showsCache } from "../../stores"
   import { GetLayout } from "../helpers/get"
+  import { findMatchingOut } from "../helpers/output"
   import T from "../helpers/T.svelte"
   import Slide from "../slide/Slide.svelte"
   import Autoscroll from "../system/Autoscroll.svelte"
@@ -65,7 +66,7 @@
     if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) {
       let index = $activeEdit.slide - 1
       setTimeout(() => {
-        if (index >= 0 && scrollElem) offset = scrollElem.querySelector(".grid").children[index].offsetTop - 5
+        if (index >= 0 && scrollElem) offset = scrollElem.querySelector(".grid").children[index]?.offsetTop || 5 - 5
       }, 10)
     }
   }
@@ -99,7 +100,8 @@
           layoutSlide={slide}
           index={i}
           color={slide.color}
-          active={$outSlide?.index === i && $outSlide?.id === $activeShow?.id && $outSlide?.layout === activeLayout}
+          outColor={findMatchingOut(slide.id)}
+          active={findMatchingOut(slide.id) !== null}
           focused={$activeEdit.slide === i}
           noQuickEdit
           {altKeyPressed}

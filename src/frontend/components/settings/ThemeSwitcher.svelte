@@ -5,7 +5,11 @@
 
   theme.subscribe((a: string) => {
     Object.entries($themes[a].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-    Object.entries($themes[a].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
+    Object.entries($themes[a].font).forEach(([key, value]: any) => {
+      if ((key === "family" && !value) || a === "default")
+        value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
+      document.documentElement.style.setProperty("--font-" + key, value)
+    })
   })
 
   $: themeNames = getThemesArray($themes)

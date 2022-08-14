@@ -137,7 +137,7 @@
 <div>
   <p><T id="settings.font_family" /></p>
   <!-- <Dropdown options={fonts} value={$themes[$theme].font.family} on:click={(e) => updateTheme(e.detail.name, "family", "font")} width="200px" /> -->
-  <FontDropdown value={$themes[$theme].font.family} on:click={(e) => updateTheme(e.detail, "family", "font")} style="width: 200px;" />
+  <FontDropdown system value={$theme === "default" ? "" : $themes[$theme].font.family} on:click={(e) => updateTheme(e.detail, "family", "font")} style="width: 200px;" />
 </div>
 <div>
   <p><T id="settings.font_size" /></p>

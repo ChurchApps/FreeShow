@@ -162,6 +162,7 @@ export interface OutSlide {
   layout?: ID
   index?: number
   tempItems?: Item[]
+  line?: number
   // layout: ID ?
   // type?: ShowType
   // private?: boolean

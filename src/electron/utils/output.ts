@@ -30,15 +30,10 @@ export function updateOutput(data: any) {
   // send() to output window
 }
 
-// export function toggleKiosk(data: any) {
-//   let window = outputWindows[data.id]
-//   if (!window) return
-//   window.setKiosk(data.enabled)
-// }
-
 export function removeOutput(id: string) {
+  if (!outputWindows[id]) return
   // close window
-  if (outputWindows[id].isVisible()) outputWindows[id].close()
+  outputWindows[id].close()
   delete outputWindows[id]
   // send to app ?
 }
@@ -101,6 +96,8 @@ function createOutputWindow(options: any) {
 export function displayOutput(data: any) {
   let window: BrowserWindow = outputWindows[data.output?.id]
 
+  if (data.enabled === "toggle") data.enabled = !window?.isVisible()
+
   if (!data.enabled) {
     // TODO: hide on double click
     console.log("hide")
@@ -113,7 +110,11 @@ export function displayOutput(data: any) {
     return
   }
 
-  if (!window) return
+  if (!window) {
+    if (!data.output) return
+    createOutput(data.output)
+    window = outputWindows[data.output.id]
+  }
 
   let bounds = data.output.bounds
   console.log(data.output.name)
@@ -215,10 +216,10 @@ function hideWindow(window: BrowserWindow) {
   if (!window) return
 
   if (process.platform === "darwin") {
-    window.setFullScreen(false)
-    setTimeout(() => {
-      window.minimize()
-    }, 100)
+    // window.setFullScreen(false)
+    // setTimeout(() => {
+    window.minimize()
+    // }, 100)
   }
   window.hide()
 }
@@ -227,11 +228,27 @@ export function updateBounds(data: any) {
   let window: BrowserWindow = outputWindows[data.id]
   if (!window) return
 
+  // let wasVisible: boolean = window.isVisible()
   window.setKiosk(data.kiosk)
-  window.setBounds({ ...data.bounds, height: data.bounds.height - 1 })
-  setTimeout(() => {
-    window.setBounds(data.bounds)
-  }, 10)
+  if (!data.kiosk) {
+    window.setBounds({ ...data.bounds, height: data.bounds.height - 1 })
+    setTimeout(() => {
+      window.setBounds(data.bounds)
+
+      // TODO: creating "ghost" window when kiosk is diasabled
+      // setTimeout(() => {
+      //   console.log(window.isVisible(), !wasVisible)
+      //   if (window.isVisible() && !wasVisible) hideWindow(window)
+      // }, 500)
+    }, 10)
+  } else window.setBounds(data.bounds)
+}
+
+export function moveToFront(id: string) {
+  let window: BrowserWindow = outputWindows[id]
+  if (!window) return
+
+  window.moveTop()
 }
 
 export function sendToOutputWindow(msg: any) {

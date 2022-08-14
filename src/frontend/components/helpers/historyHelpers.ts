@@ -1,8 +1,9 @@
-import { uid } from "uid"
-import { audioFolders, categories, mediaFolders, outOverlays, overlayCategories, shows, templateCategories, templates } from "./../../stores"
 import { get } from "svelte/store"
+import { uid } from "uid"
 import { drawerTabsData, overlays } from "../../stores"
+import { audioFolders, categories, mediaFolders, outputs, overlayCategories, shows, templateCategories, templates } from "./../../stores"
 import type { History } from "./history"
+import { isOutCleared } from "./output"
 
 const updateStore: any = {
   overlays: (f: any) => overlays.update(f),
@@ -131,7 +132,16 @@ export function undoAddOverlayOrTemplate(obj: History) {
 
   if (s.store === "overlays") {
     // remove outputted overlays
-    if (get(outOverlays).includes(slideId)) outOverlays.set(get(outOverlays).filter((a) => a !== slideId))
+    if (!isOutCleared("overlays")) {
+      outputs.update((a) => {
+        Object.entries(a).forEach(([id, output]: any) => {
+          if (output.out?.overlays?.includes(slideId)) {
+            a[id].out!.overlays = a[id].out!.overlays!.filter((a) => a !== slideId)
+          }
+        })
+        return a
+      })
+    }
   } else if (s.store === "templates") {
     // remove active template in shows with this template ?
   }

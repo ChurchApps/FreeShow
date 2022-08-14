@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { activeEdit, activeShow, backgroundColor, outputs, showsCache } from "../../stores"
+  import { activeEdit, activeShow, outputs, showsCache } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import { history } from "../helpers/history"
-  import { getResolution } from "../helpers/output"
+  import { getActiveOutputs, getResolution } from "../helpers/output"
   import { getMediaFilter, getMediaFlipped } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
   import { getStyles } from "../helpers/style"
@@ -97,9 +97,9 @@
 <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
   {#if Slide}
     <Zoomed
-      background={Slide?.settings?.color || $backgroundColor || "black"}
+      background={Slide?.settings?.color || $outputs[getActiveOutputs()[0]]?.show?.background || "black"}
       {resolution}
-      style={getStyleResolution(resolution, width, height)}
+      style={getStyleResolution(resolution, width, height, "fit")}
       bind:ratio
       hideOverflow={false}
       center
@@ -144,7 +144,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    /* padding: 10px; */
     overflow: auto;
   }
 </style>
