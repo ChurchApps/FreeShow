@@ -8,6 +8,7 @@ export function splitPath(path: string) {
   const name: string = path.substring((path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")) + 1)
   const extension: string = name.lastIndexOf(".") > -1 ? name.substring(name.lastIndexOf(".") + 1) : ""
   const shortName: string = extension ? name.slice(0, name.indexOf(extension) - 1) : name
+  console.log(path, name)
   return { path, name, extension, shortName }
 }
 

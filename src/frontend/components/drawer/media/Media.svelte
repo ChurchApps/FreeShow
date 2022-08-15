@@ -1,6 +1,7 @@
 <script lang="ts">
   import { READ_FOLDER } from "../../../../types/Channels"
   import { activeShow, dictionary, imageExtensions, media, mediaFolders, mediaOptions, videoExtensions } from "../../../stores"
+  import { splitPath } from "../../helpers/get"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -16,12 +17,7 @@
 
   $: rootPath = active === "all" || active === "favourites" ? "" : active !== null ? $mediaFolders[active].path! : ""
   $: path = active === "all" || active === "favourites" ? "" : rootPath
-  $: name =
-    rootPath === path
-      ? active !== "all" && active !== "favourites" && active !== null
-        ? $mediaFolders[active].name
-        : "category.all"
-      : path.substring((path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")) + 1)
+  $: name = rootPath === path ? (active !== "all" && active !== "favourites" && active !== null ? $mediaFolders[active].name : "category.all") : splitPath(path).name
 
   // get list of files & folders
   let prevActive: null | string = null
@@ -30,9 +26,9 @@
       prevActive = active
       files = Object.entries($media)
         .map(([path, a]: any) => {
-          let name = path.slice((path.lastIndexOf("\\") || path.lastIndexOf("//")) + 1, path.length)
-          const extension = name.slice(name.lastIndexOf(".") + 1, name.length)
-          return { path, favourite: a.favourite === true, name, extension, audio: a.audio === true }
+          let p = splitPath(path)
+          name = p.name
+          return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
         })
         .filter((a) => a.favourite === true && a.audio !== true)
         .sort((a: any, b: any) => a.name.localeCompare(b.name))
