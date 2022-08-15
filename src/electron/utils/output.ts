@@ -76,7 +76,7 @@ function createOutputWindow(options: any) {
   window.setAlwaysOnTop(true, "pop-up-menu", 1)
   // window.setVisibleOnAllWorkspaces(true)
 
-  const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
+  const url: string = isProd ? `file://${join(__dirname, "..", "..", "..", "public", "index.html")}` : "http://localhost:3000"
 
   window.loadURL(url).catch((err) => {
     console.error(JSON.stringify(err))
@@ -99,8 +99,6 @@ export function displayOutput(data: any) {
   if (data.enabled === "toggle") data.enabled = !window?.isVisible()
 
   if (!data.enabled) {
-    // TODO: hide on double click
-    console.log("hide")
     let windows = [window]
     if (!windows[0]) {
       windows = Object.values(outputWindows)
@@ -117,7 +115,6 @@ export function displayOutput(data: any) {
   }
 
   let bounds = data.output.bounds
-  console.log(data.output.name)
 
   // /////////////////////
 
@@ -149,20 +146,19 @@ export function displayOutput(data: any) {
 
   // TODO: set output screen + pos, if nothing set on startup
 
-  console.log("Display: ", bounds?.x, bounds?.y, bounds?.width, bounds?.height)
+  // console.log("Display: ", bounds?.x, bounds?.y, bounds?.width, bounds?.height)
 
   // && JSON.stringify(bounds) !== JSON.stringify(outputWindow?.getBounds())
   let xDif = bounds?.x - mainWindow!.getBounds().x
   let yDif = bounds?.y - mainWindow!.getBounds().y
 
   let windowNotCoveringMain: boolean = xDif > 50 || yDif < -50 || (xDif < -50 && yDif > 50)
-  console.log(bounds, xDif, yDif, windowNotCoveringMain)
+  // console.log(bounds, xDif, yDif, windowNotCoveringMain)
   if (bounds && (data.force || windowNotCoveringMain)) {
     showWindow(window, !data.force)
 
     if (bounds) {
       window?.setBounds(bounds)
-      console.log("set bounds")
       // has to be set twice to work first time
       setTimeout(() => {
         window?.setBounds(bounds)
@@ -208,8 +204,6 @@ function showWindow(window: BrowserWindow, fullscreen: boolean = false) {
   }
 
   window.moveTop()
-
-  console.log("showing", window.isVisible())
 }
 
 function hideWindow(window: BrowserWindow) {

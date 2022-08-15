@@ -137,6 +137,7 @@ const createWindow = () => {
   })
 
   // app.asar/build/~electron/public/index.html
+  console.log(`file://${join(__dirname, "..", "..", "public", "index.html")}`)
   const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
 
   mainWindow.loadURL(url).catch((err) => {
@@ -509,22 +510,23 @@ ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {
   let error: any = null
 
   try {
-    fs.readdirSync(folderPath)
+    fileList = fs.readdirSync(folderPath)
   } catch (e: any) {
     error = e
   }
 
   for (const name of fileList) {
     const pathToFile: string = path.join(folderPath, name)
-    const stat: any = null
+    let stat: any = null
     try {
-      fs.statSync(pathToFile)
+      stat = fs.statSync(pathToFile)
     } catch (e: any) {
       error = e
     }
     if (stat) {
       // const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
-      const extension = name.slice(name.lastIndexOf(".") + 1, name.length)
+      // const extension = path.extname(filePath).substring(1)
+      const extension = name.substring(name.lastIndexOf(".") + 1)
       files.push({ path: pathToFile, name, folder: stat.isDirectory(), extension: extension, stat })
     }
   }
@@ -535,9 +537,9 @@ ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {
 
 ipcMain.on(FILE_INFO, (_e, filePath: string) => {
   let error: any = null
-  const stat: any = null
+  let stat: any = null
   try {
-    fs.statSync(filePath)
+    stat = fs.statSync(filePath)
   } catch (e: any) {
     error = e
   }
