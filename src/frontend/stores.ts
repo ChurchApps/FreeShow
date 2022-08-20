@@ -5,7 +5,7 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, DefaultProjectNames, Media, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
-import type { ID, Overlays, Shows, Templates, Transition } from "../types/Show"
+import type { ID, Overlays, Shows, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
 import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Outputs } from "./../types/Output"
@@ -30,7 +30,7 @@ export const alertMessage: Writable<string> = writable("")
 export const clipboard: Writable<{ id: null | string; data: any[] }> = writable({ id: null, data: [] })
 export const eventEdit: Writable<null | string> = writable(null)
 
-export const timers: Writable<{ [key: string]: any }> = writable({}) // {}
+export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 
 export const exportOptions: Writable<any> = writable({
   pdf: {
@@ -243,6 +243,7 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({
   live: { enabled: true, activeSubTab: null },
 })
 export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null }) // {default}
+export const forceClock: Writable<boolean> = writable(false)
 
 // SETTINGS
 export const settingsTab: Writable<SettingsTabs> = writable("general")

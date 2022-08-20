@@ -185,7 +185,7 @@
       <span transition:custom={transition} style="pointer-events: none;display: block;">
         {#if currentSlide}
           {#each currentSlide?.items as item}
-            <Textbox {item} {ratio} ref={{ showId: slide.id, id: currentSlide.id }} {linesStart} {linesEnd} />
+            <Textbox {item} {ratio} ref={{ showId: slide.id, slideId: currentSlide.id, id: currentSlide.id }} {linesStart} {linesEnd} />
           {/each}
         {/if}
       </span>

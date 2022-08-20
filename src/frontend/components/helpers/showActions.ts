@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { OutSlide, Slide } from "../../../types/Show"
-import { activeEdit, activePage, activeProject, activeShow, media, outLocked, outputs, projects, showsCache, videoExtensions } from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, videoExtensions } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getActiveOutputs, setOutput } from "./output"
 import { _show } from "./shows"
@@ -96,7 +96,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     index = 0
     while (layout[index].data.disabled) index++
 
-    console.log(id, layout, index)
+    // console.log(id, layout, index)
     setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, outputId)
     updateOut(id, index, layout, true, outputId)
     return
@@ -113,6 +113,16 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     index = getNextEnabled(slide.index!, end)
   }
   newSlideOut.index = index
+
+  // go to next show if end
+  if (index === null && get(activeShow)!.id === slide.id && get(showsCache)[get(activeShow)!.id]?.settings.activeLayout === slide.layout) {
+    if (e.key === " " && get(activeProject)) {
+      let index: number = typeof get(activeShow)?.index === "number" ? get(activeShow)!.index! : -1
+      if (index + 1 < get(projects)[get(activeProject)!].shows.length) index++
+      if (index > -1 && index !== get(activeShow)?.index) activeShow.set({ ...get(projects)[get(activeProject)!].shows[index], index })
+    }
+    return
+  }
 
   if (index !== null) {
     setOutput("slide", newSlideOut, false, outputId)
@@ -203,6 +213,12 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   // holding "alt" key will disable all extra features
   if (!extra || !data) return
 
+  // get output slide
+  let outs = getActiveOutputs()
+  let l = outs.find((id: string) => get(outputs)[id].show?.lines)
+  // don't trigger actions if same slide, but different outputted line
+  if (l && get(outputs)[l]?.out?.slide?.line && get(outputs)[l].out!.slide!.line! > 0) return
+
   // background
   if (data.background) {
     let bg = _show(id).get("media")[data.background!]
@@ -226,8 +242,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
 
   // overlays
   if (data.overlays?.length) {
-    // outOverlays.set([...new Set([...get(outOverlays), ...data.overlays])])
-    setOutput("overlays", data.overlays, false, outputId)
+    setOutput("overlays", data.overlays, false, outputId, true)
   }
 
   // audio
@@ -237,6 +252,11 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   }
 
   // nextTimer
+  // clear any active slide timers
+  Object.keys(get(slideTimers)).forEach((id) => {
+    if (outs.includes(id)) get(slideTimers)[id].timer?.clear()
+  })
+
   if ((data.nextTimer || 0) > 0) {
     // outTransition.set({ duration: data.nextTimer })
     setOutput("transition", { duration: data.nextTimer }, false, outputId)
@@ -248,7 +268,14 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   // actions
   if (data.actions) {
     if (data.actions.clearBackground) setOutput("background", null, false, outputId)
-    if (data.actions.clearOverlays) setOutput("overlays", [], false, outputId)
+    if (data.actions.clearOverlays) clearOverlays()
     if (data.actions.clearAudio) clearAudio()
   }
+}
+
+export function clearOverlays() {
+  let outs = getActiveOutputs()
+  let outOverlays: string[] = get(outputs)[outs[0]]?.out?.overlays || []
+  outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
+  setOutput("overlays", outOverlays)
 }

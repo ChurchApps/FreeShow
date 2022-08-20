@@ -22,6 +22,7 @@
     duration: 0,
     loop: false,
   }
+  $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false }
 
   let hasLoaded: boolean = false
   let autoPause: boolean = true

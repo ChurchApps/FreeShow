@@ -33,7 +33,12 @@ export function updateOutput(data: any) {
 export function removeOutput(id: string) {
   if (!outputWindows[id]) return
   // close window
-  outputWindows[id].close()
+  try {
+    outputWindows[id].close()
+  } catch (error) {
+    console.log(error)
+  }
+
   delete outputWindows[id]
   // send to app ?
 }

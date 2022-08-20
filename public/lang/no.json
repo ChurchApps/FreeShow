@@ -91,7 +91,9 @@
     "overlays": "Overlegg",
     "audio": "Lyd",
     "to_start": "Gå til start",
-    "nextTimer": "Tid til neste lysbilde"
+    "nextTimer": "Tid til neste lysbilde",
+    "lock": "Lås",
+    "unlock": "Lås opp"
   },
   "clear": {
     "all": "Fjern alt",
@@ -396,10 +398,12 @@
     "changeIcon": "Endre ikon",
     "changeGroup": "Endre gruppe",
     "createNew": "Lag ny",
-    "selectAll": "Marker alt",
+    "selectAll": "Merk alt",
     "force_outputs": "Tving visning av skjermer",
     "toggle_output": "Veksle utgangsskjerm",
-    "move_to_front": "Flytt fremst"
+    "move_to_front": "Flytt fremst",
+    "lock_to_output": "Lås til utgang",
+    "toggle_clock": "Veksle klokke"
   },
   "tools": {
     "notes": "Notater",
@@ -472,6 +476,22 @@
     "outset": "Utover",
     "groove": "Riller",
     "ridge": "Rygg"
+  },
+  "timer": {
+    "from_to": "Fra start til slutt",
+    "to_time": "Til et klokkeslett",
+    "to_event": "Tid til arrangement",
+    "counter": "Nedtelling",
+    "time": "Tid",
+    "seconds": "Sekunder",
+    "from": "Fra",
+    "to": "Til",
+    "preview": "Forhåndsvisning",
+    "clock": "Klokke",
+    "event": "Hendelse",
+    "no_events": "Det er ingen fremtidige arrangement",
+    "edit": "Rediger",
+    "create": "Opprett"
   },
   "draw": {
     "focus": "Fokus",

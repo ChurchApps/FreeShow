@@ -38,6 +38,7 @@ export type SaveListSettings =
   | "slidesOptions"
   | "splitLines"
   | "templateCategories"
+  | "timers"
   | "theme"
   | "transitionData"
   | "videoExtensions"

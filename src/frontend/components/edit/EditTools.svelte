@@ -10,6 +10,7 @@
   import Button from "../inputs/Button.svelte"
   import Tabs from "../main/Tabs.svelte"
   import Center from "../system/Center.svelte"
+  import IconStyle from "./tools/IconStyle.svelte"
   import Items from "./tools/Items.svelte"
   import ItemStyle from "./tools/ItemStyle.svelte"
   import SlideStyle from "./tools/SlideStyle.svelte"
@@ -33,10 +34,10 @@
     slides = _show($activeEdit?.id || $activeShow?.id)
       .slides()
       .get()
-  $: if (!item?.lines && item?.type !== "timer" && !tabs.text.disabled) {
+  $: if (!item?.lines && item?.type !== "timer" && item?.type !== "icon" && !tabs.text.disabled) {
     active = "items"
     tabs.text.disabled = true
-  } else if ((item?.lines || item?.type === "timer") && tabs.text.disabled) {
+  } else if ((item?.lines || item?.type === "timer" || item?.type === "icon") && tabs.text.disabled) {
     // TODO: false triggers (arranging items)
     // active = "text"
     tabs.text.disabled = false
@@ -73,6 +74,8 @@
   $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
   // select last item
   $: item = items?.length ? items[items.length - 1] : null
+
+  $: index = allSlideItems.findIndex((a) => JSON.stringify(a) === JSON.stringify(item))
 
   function applyStyleToAllSlides() {
     if (active === "text") {
@@ -218,7 +221,9 @@
     {#if active === "text"}
       <div class="content">
         {#if item?.type === "timer"}
-          <TimerStyle bind:allSlideItems bind:item />
+          <TimerStyle bind:item {index} />
+        {:else if item?.type === "icon"}
+          <IconStyle bind:item {index} />
         {:else if item?.lines}
           <TextStyle bind:allSlideItems bind:item />
         {:else}

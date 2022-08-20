@@ -550,7 +550,7 @@ export function history(obj: History, undo: null | boolean = null) {
             // if (parentSlide.globalGroup) color = get(groups)[parentSlide.globalGroup].color
             // else color = parentSlide.color
 
-            if (slides.children) value = addToPos(slides.children, [value], index)
+            if (slides.children) value = addToPos(slides.children, [id], index)
 
             _show(showID).slides([parent.id]).set({ key: "children", value })
           }
@@ -565,20 +565,22 @@ export function history(obj: History, undo: null | boolean = null) {
               )
             )
             // remove values
-            items = items.map((item: any) => {
-              if (item.lines) {
-                item.lines = [item.lines[0]]
-                item.lines[0].text = [{ style: item.lines[0].text[0]?.style || "", value: "" }]
-              }
-              // {
-              //   item.lines.forEach((line: any, i: number) => {
-              //     line.text?.forEach((_text: any, j: number) => {
-              //       item.lines[i].text[j].value = ""
-              //     })
-              //   })
-              // }
-              return item
-            })
+            items = items
+              .filter((a: any) => !a.type || a.type === "text" || a.lines)
+              .map((item: any) => {
+                if (item.lines) {
+                  item.lines = [item.lines[0]]
+                  item.lines[0].text = [{ style: item.lines[0].text[0]?.style || "", value: "" }]
+                }
+                // {
+                //   item.lines.forEach((line: any, i: number) => {
+                //     line.text?.forEach((_text: any, j: number) => {
+                //       item.lines[i].text[j].value = ""
+                //     })
+                //   })
+                // }
+                return item
+              })
           }
           console.log(items)
           let slide: any = { group: isParent ? "" : null, color: null, settings: {}, notes: "", items }
@@ -1066,10 +1068,10 @@ export function history(obj: History, undo: null | boolean = null) {
           let id: string = obj.oldData.id
           // remove outputted
           if (!isOutCleared("overlays")) {
-            outputs.update(a => {
+            outputs.update((a) => {
               Object.entries(a).forEach(([outputId, output]: any) => {
                 if (output.out?.overlays?.includes(id)) {
-                  a[outputId].out!.overlays = a[outputId].out!.overlays!.filter(a => a !== id)
+                  a[outputId].out!.overlays = a[outputId].out!.overlays!.filter((a) => a !== id)
                 }
               })
               return a

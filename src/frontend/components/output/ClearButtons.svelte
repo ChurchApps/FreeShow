@@ -4,6 +4,7 @@
   import { clearAudio } from "../helpers/audio"
   import Icon from "../helpers/Icon.svelte"
   import { getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
+  import { clearOverlays } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
   import Button from "../inputs/Button.svelte"
 
@@ -66,7 +67,7 @@
     clearVideo()
     setOutput("background", null)
     setOutput("slide", null)
-    setOutput("overlays", [])
+    clearOverlays()
     clearAudio()
     clearTimers()
     allCleared = true
@@ -122,7 +123,7 @@
       <Icon id="slide" size={1.2} />
     </Button>
     <Button
-      disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs)}
+      disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs, true)}
       on:click={() => {
         if (activeClear !== "overlays") {
           // previousActive = activeClear
@@ -130,7 +131,7 @@
           activeClear = "overlays"
         } else if (!$outLocked) {
           autoChange = true
-          setOutput("overlays", [])
+          clearOverlays()
         }
       }}
       title={activeClear === "overlays" ? $dictionary.clear?.overlays : $dictionary.preview?.overlays}

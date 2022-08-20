@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { activeStage, stageShows } from "../../stores"
+  import { activeStage, stageShows, timers } from "../../stores"
   import T from "../helpers/T.svelte"
+  import Timer from "../slide/views/Timer.svelte"
   import Clock from "../system/Clock.svelte"
   import Movebox from "../system/Movebox.svelte"
   import SlideNotes from "./items/SlideNotes.svelte"
@@ -77,12 +78,22 @@
       }
     }
   }
+
+  // timer
+  let today = new Date()
+  setInterval(() => (today = new Date()), 1000)
+
+  let height: number = 0
+  let width: number = 0
+  $: autoSize = Math.min(height, width) / 2
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <div
   {id}
+  bind:offsetHeight={height}
+  bind:offsetWidth={width}
   class="stage_item item"
   class:outline={edit}
   class:selected={edit && $activeStage.items.includes(id)}
@@ -114,6 +125,10 @@
         </span>
       {:else if id.includes("clock")}
         <Clock />
+      {:else if id.includes("timers")}
+        {#if $timers[id.split("#")[1]]}
+          <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {autoSize}px;" />
+        {/if}
       {:else}
         {id}
       {/if}

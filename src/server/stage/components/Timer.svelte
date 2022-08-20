@@ -1,17 +1,15 @@
 <script lang="ts">
-  import type { Item } from "../../../../types/Show"
-  import { activeTimers, events } from "../../../stores"
-  // import { blur } from "svelte/transition"
-  import { secondsToTime } from "../../helpers/time"
+  import type { Item } from "../../../types/Show"
+  import { secondsToTime } from "../../remote/helpers/time"
+  import { activeTimers, events } from "../store"
 
   export let item: null | Item = null
   export let timer: any = item?.timer
   export let ref: { type?: "show" | "stage" | "overlay" | "template"; showId?: string; slideId?: string; id: string }
   export let today: Date
-  export let style: string = ""
+  export let style: string
 
   // TODO: timer stops when leaving window...
-  // TODO: update timer type (in editor)
 
   let times: string[] = []
   let timeValue: string = "00:00"

@@ -44,11 +44,12 @@
       activeEdit.set({ items: [] })
       activeShow.set({ id: path, name, type })
     }
+    activeFile = null
   }
 
   function dblclick(e: any) {
     if (!e.ctrlKey && !e.metaKey && !$outLocked) {
-      setOutput("background", { path: path, type, loop: true, muted: false, filter, flipped })
+      setOutput("background", { path, type, loop: true, muted: false, filter, flipped })
       // TODO: get actual data
       // TODO: output/preview control does not always match
       window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })

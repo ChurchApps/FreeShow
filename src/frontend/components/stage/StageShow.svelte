@@ -96,7 +96,8 @@
 
   .bar {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    padding: 2px;
     width: 100%;
     background-color: var(--primary);
     border-top: 2px solid var(--primary-lighter);

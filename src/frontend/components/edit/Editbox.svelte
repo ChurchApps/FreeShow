@@ -282,12 +282,20 @@
     getStyle()
     // TODO: set caret position
   }
+
+  let height: number = 0
+  let width: number = 0
+  // $: autoSize = item.lines ? height / (item.lines.length + 3) : height / 2
+  // $: autoSize = height < width ? height / 1.5 : width / 4
+  $: autoSize = Math.min(height, width) / 2
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <div
   bind:this={itemElem}
+  bind:offsetHeight={height}
+  bind:offsetWidth={width}
   class={plain ? "" : "item context #edit_box"}
   class:selected={$activeEdit.items.includes(index)}
   style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);`}
@@ -315,7 +323,7 @@
       />
     </div>
   {:else if item?.type === "timer"}
-    <Timer {item} {ref} {today} />
+    <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />
   {:else if item?.type === "icon"}
     <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}

@@ -95,7 +95,10 @@ const receiveMAIN: any = {
     checkForUpdates(a)
   },
   DISPLAY: (a: any) => outputDisplay.set(a),
-  GET_PATHS: (a: any) => createData(a),
+  GET_PATHS: (a: any) => {
+    // only on first startup
+    createData(a)
+  },
   MENU: (a: any) => menuClick(a),
   SHOWS_PATH: (a: any) => showsPath.set(a),
   EXPORT_PATH: (a: any) => exportPath.set(a),
@@ -147,6 +150,7 @@ const receiveOUTPUT: any = {
 
   TEMPLATES: (a: any) => templates.set(a),
   OVERLAYS: (a: any) => overlays.set(a),
+  EVENTS: (a: any) => events.set(a),
 
   DRAW: (a: any) => draw.set(a),
   DRAW_TOOL: (a: any) => drawTool.set(a),

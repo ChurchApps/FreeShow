@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeStage, dictionary, stageShows } from "../../../stores"
+  import { activeStage, dictionary, stageShows, timers } from "../../../stores"
   import { addStyleString } from "../../edit/scripts/textStyle"
   import { history } from "../../helpers/history"
   import { getStyles } from "../../helpers/style"
@@ -98,7 +98,17 @@
   {#if items.length}
     {#each items as id, i}
       {#if i > 0}<hr />{/if}
-      <h6><T id="stage.{id.split('#')[1]}" /></h6>
+      <h6>
+        {#if id.includes("timers")}
+          {#if $timers[id.split("#")[1]]?.name}
+            {$timers[id.split("#")[1]].name}
+          {:else}
+            <T id="items.timer" />
+          {/if}
+        {:else}
+          <T id="stage.{id.split('#')[1]}" />
+        {/if}
+      </h6>
       <div class="gap">
         <div class="titles">
           {#each getTitles(id) as title}

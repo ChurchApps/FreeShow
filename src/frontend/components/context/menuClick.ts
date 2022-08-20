@@ -15,10 +15,12 @@ import {
   drawerTabsData,
   eventEdit,
   events,
+  forceClock,
   imageExtensions,
   media,
   outLocked,
   outputs,
+  overlays,
   previousShow,
   projects,
   projectView,
@@ -42,7 +44,7 @@ import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 
-export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = null) {
+export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
   if (actions[id]) return actions[id]({ sel, actionItem, enabled, contextElem, menu })
   console.log("MISSING CONTEXT: ", id)
 }
@@ -271,6 +273,9 @@ const actions: any = {
 
       return a
     })
+  },
+  toggle_clock: () => {
+    forceClock.set(!get(forceClock))
   },
 
   // output
@@ -610,6 +615,19 @@ const actions: any = {
         a[path].favourite = favourite
         return a
       })
+    })
+  },
+
+  // overlays
+  lock_to_output: (obj: any) => {
+    if (obj.sel.id !== "overlay") return
+    let setLocked: boolean = !get(overlays)[obj.sel.data[0]]?.locked
+
+    overlays.update((a) => {
+      obj.sel.data.forEach((id: string) => {
+        a[id].locked = setLocked
+      })
+      return a
     })
   },
 

@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { activeShow } from "../../../stores"
+  import { activeShow, forceClock } from "../../../stores"
   import Center from "../../system/Center.svelte"
   import Clock from "../../system/Clock.svelte"
   import Date from "../../system/Date.svelte"
   import AudioMix from "./AudioMix.svelte"
   import MediaInfo from "./MediaInfo.svelte"
+  import OverlayInfo from "./OverlayInfo.svelte"
   import PlayerInfo from "./PlayerInfo.svelte"
   import ScriptureInfo from "./ScriptureInfo.svelte"
   import ShowInfo from "./ShowInfo.svelte"
@@ -16,18 +17,20 @@
 
 <!-- TODO: info tabs: clock, quick settings (master volume), local info -->
 
-<div class="main">
-  {#if id === "shows" && $activeShow !== null && ($activeShow.type === undefined || $activeShow.type === "show")}
+<div class="main context #drawer_info">
+  {#if !$forceClock && id === "shows" && $activeShow !== null && ($activeShow.type === undefined || $activeShow.type === "show")}
     <ShowInfo />
-  {:else if id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
+  {:else if !$forceClock && id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image")}
     <MediaInfo />
-  {:else if id === "audio"}
+  {:else if !$forceClock && id === "audio"}
     <AudioMix />
-  {:else if id === "templates"}
+  {:else if !$forceClock && id === "overlays"}
+    <OverlayInfo />
+  {:else if !$forceClock && id === "templates"}
     <TemplateInfo />
-  {:else if id === "scripture"}
+  {:else if !$forceClock && id === "scripture"}
     <ScriptureInfo {bible} />
-  {:else if id === "player"}
+  {:else if !$forceClock && id === "player"}
     <PlayerInfo />
   {:else}
     <Center>

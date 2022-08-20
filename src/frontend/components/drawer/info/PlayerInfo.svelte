@@ -23,6 +23,8 @@
 <!-- TODO: change quality / resolution -->
 <style>
   main {
+    display: flex;
+    flex-direction: column;
     padding: 10px;
   }
 

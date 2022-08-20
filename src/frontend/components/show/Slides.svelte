@@ -27,6 +27,7 @@
   $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
   // $: layoutSlides = GetLayout($activeShow!.id, activeLayout)
   $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts?.[activeLayout].slides, GetLayout($activeShow!.id)][1]
+  // $: layoutSlides = _show($activeShow!.id).layouts(activeLayout).ref()[0]
 
   let scrollElem: any
   let offset: number = -1

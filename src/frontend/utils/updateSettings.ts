@@ -36,6 +36,8 @@ import {
   slidesOptions,
   templateCategories,
   theme,
+  themes,
+  timers,
   videoExtensions,
   webFavorites,
 } from "../stores"
@@ -66,10 +68,10 @@ export function updateSettings(data: any) {
   send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
 
   // theme
-  // if (get(themes)[data.theme]) {
-  //   Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-  //   Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
-  // }
+  if (get(themes)[data.theme]) {
+    Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
+    Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
+  }
 
   setTimeout(() => {
     window.api.send("LOADED")
@@ -142,6 +144,7 @@ const updateList: { [key in SaveListSettings]: any } = {
   splitLines: (v: any) => splitLines.set(v),
   templateCategories: (v: any) => templateCategories.set(v),
   // templates: (v: any) => templates.set(v),
+  timers: (v: any) => timers.set(v),
   theme: (v: any) => theme.set(v),
   transitionData: (v: any) => transitionData.set(v),
   // themes: (v: any) => themes.set(v),

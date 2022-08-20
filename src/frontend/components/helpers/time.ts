@@ -4,7 +4,7 @@ export function secondsToTime(seconds: number): Time {
   let d: any = Math.floor(seconds / (3600 * 24))
   let h: any = Math.floor(seconds / 3600 - d * 24)
   let m: any = Math.floor((seconds - d * 3600 * 24 - h * 3600) / 60)
-  let s: any = Math.round(seconds - d * 3600 * 24 - h * 3600 - m * 60)
+  let s: any = Math.floor(seconds - d * 3600 * 24 - h * 3600 - m * 60)
   // TODO: ms
   // let ms: any = Math.round(seconds - h * 3600 - m * 60 - s * 60)
   let ms: any = 0

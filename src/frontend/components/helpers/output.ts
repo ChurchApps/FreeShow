@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution } from "../../../types/Settings"
-import { currentOutputSettings, outputDisplay, outputs, theme, themes } from "../../stores"
+import { currentOutputSettings, outputDisplay, outputs, overlays, theme, themes } from "../../stores"
 import { sendInitialOutputData } from "../../utils/messages"
 import { send } from "../../utils/request"
 
@@ -11,7 +11,7 @@ import { send } from "../../utils/request"
 // slide: null,
 // overlays: [],
 // transition: null,
-export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string | null = null) {
+export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string | null = null, add: boolean = false) {
   outputs.update((a: any) => {
     let outs = getActiveOutputs()
     if (outputId) outs = [outputId]
@@ -20,8 +20,9 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
       if (!output.out) a[id].out = {}
       if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
       if (key === "overlays" && data.length) {
-        if (toggle && a[id].out?.[key]?.includes(data)) a[id].out![key]!.splice(a[id].out![key]!.indexOf(data), 1)
-        else if (toggle) a[id].out![key] = [...new Set([...(a[id].out?.[key] || []), data])]
+        if (!Array.isArray(data)) data = [data]
+        if (toggle && a[id].out?.[key]?.includes(data[0])) a[id].out![key]!.splice(a[id].out![key]!.indexOf(data[0]), 1)
+        else if (toggle || add) a[id].out![key] = [...new Set([...(a[id].out?.[key] || []), ...data])]
         else a[id].out![key] = data
       } else a[id].out![key] = data
     })
@@ -86,7 +87,7 @@ export function refreshOut(refresh: boolean = true) {
 }
 
 // outputs is just for updates
-export function isOutCleared(key: string | null = null, updater: any = get(outputs)) {
+export function isOutCleared(key: string | null = null, updater: any = get(outputs), checkLocked: boolean = false) {
   let cleared: boolean = true
 
   getActiveOutputs().forEach((id: string) => {
@@ -96,7 +97,8 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
       // TODO:
       if (output.out?.[key]) {
         if (key === "overlays") {
-          if (output.out[key].length) cleared = false
+          if (checkLocked && output.out.overlays.length) cleared = false
+          else if (!checkLocked && output.out.overlays.filter((id: string) => !get(overlays)[id].locked).length) cleared = false
         } else if (output.out[key] !== null) cleared = false
       }
     })
@@ -117,7 +119,7 @@ export const defaultOutput: Output = {
   active: true,
   name: "Output",
   color: "#e6349c",
-  bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+  bounds: { x: 0, y: 0, width: 1920, height: 1080 }, // x: 1920 ?
   screen: null,
   kiosk: true,
   show: {},

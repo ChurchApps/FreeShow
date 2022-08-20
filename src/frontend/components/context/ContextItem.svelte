@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeProject, activeShow, events, media, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
+  import { activeProject, activeShow, events, forceClock, media, overlays, redoHistory, selected, shows, stageShows, undoHistory } from "../../stores"
   import { GetLayout } from "../helpers/get"
   import Icon from "../helpers/Icon.svelte"
   import T from "../helpers/T.svelte"
@@ -52,6 +52,13 @@
     favourite: () => {
       let path = $selected.data[0]?.path || $selected.data[0]?.id
       if (path && $media[path]?.favourite === true) enabled = true
+    },
+    lock_to_output: () => {
+      let id = $selected.data[0]
+      if ($overlays[id]?.locked) enabled = true
+    },
+    toggle_clock: () => {
+      if ($forceClock) enabled = true
     },
   }
   if (conditions[id]) conditions[id]()

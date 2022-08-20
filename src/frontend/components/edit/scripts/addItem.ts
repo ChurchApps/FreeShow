@@ -1,5 +1,5 @@
 import { GetLayout } from "./../../helpers/get"
-import { activeEdit, activeShow, overlays, showsCache, templates } from "../../../stores"
+import { activeEdit, activeShow, dictionary, overlays, showsCache, templates } from "../../../stores"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, ItemType } from "../../../../types/Show"
@@ -16,7 +16,8 @@ export function addItem(type: ItemType, id: any = null) {
   if (id) newData.id = id
 
   if (type === "text") newData.lines = [{ align: template?.[0].lines?.[0].align || "", text: [{ value: "", style: template?.[0].lines?.[0].text?.[0].style || "" }] }]
-  else if (type === "timer") newData.timer = { id: uid(), name: "", type: "countdown", start: 300, end: 0, format: "MM:SS" }
+  // else if (type === "timer") newData.timer = { id: uid(), name: "", type: "countdown", start: 300, end: 0, format: "MM:SS" }
+  else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
   console.log(newData)
 
   if (get(activeEdit).type === "overlay") {

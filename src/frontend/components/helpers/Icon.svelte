@@ -55,7 +55,8 @@
   }
 
   svg.white {
-    fill: var(--text);
+    /* fill: var(--text); */
+    fill: currentColor;
   }
 
   svg.right {
