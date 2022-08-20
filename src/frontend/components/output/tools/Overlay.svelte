@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { overlays } from "../../../stores"
+  import { dictionary, overlays } from "../../../stores"
+  import Icon from "../../helpers/Icon.svelte"
   import { setOutput } from "../../helpers/output"
   import Button from "../../inputs/Button.svelte"
 
@@ -19,14 +20,28 @@
       currentOutput.out.overlays.filter((a: any) => a !== id)
     )
   }
+
+  function setLocked(id: string, setLocked: boolean) {
+    overlays.update((a) => {
+      a[id].locked = setLocked
+      return a
+    })
+  }
 </script>
 
 {#if currentOutput?.out?.overlays?.length}
   <span class="name" style="justify-content: space-between;">
     {#each activeOverlays as overlay}
-      <Button on:click={() => removeOverlay(overlay.id)} center red>
-        <p>{overlay.name || "—"}</p>
-      </Button>
+      {@const locked = $overlays[overlay.id].locked}
+      <div class="overlay">
+        <!-- disabled={locked} red={!locked} -->
+        <Button style="flex: 1;" on:click={() => removeOverlay(overlay.id)} center red>
+          <p>{overlay.name || "—"}</p>
+        </Button>
+        <Button on:click={() => setLocked(overlay.id, !locked)} title={locked ? $dictionary.preview?.unlock : $dictionary.preview?.lock} red={locked}>
+          <Icon id={locked ? "locked" : "unlocked"} />
+        </Button>
+      </div>
     {/each}
   </span>
 {/if}
@@ -38,5 +53,9 @@
     justify-content: center;
     max-height: 50px;
     overflow-y: auto;
+  }
+
+  .overlay {
+    display: flex;
   }
 </style>

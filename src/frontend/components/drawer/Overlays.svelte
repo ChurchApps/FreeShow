@@ -48,6 +48,7 @@
             active={findMatchingOut(overlay.id, $outputs) !== null}
             label={overlay.name || "—"}
             color={overlay.color}
+            icon={overlay.locked ? "locked" : null}
             {resolution}
             on:click={() => {
               if (!$outLocked) setOutput("overlays", overlay.id, true)

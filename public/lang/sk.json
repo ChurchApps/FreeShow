@@ -91,7 +91,9 @@
     "overlays": "Prekryvy",
     "audio": "Audio",
     "to_start": "Prejsť a začiatok",
-    "nextTimer": "Časovač ďalšieho snímku"
+    "nextTimer": "Časovač ďalšieho snímku",
+    "lock": "Lock",
+    "unlock": "Unlock"
   },
   "clear": {
     "all": "Vyčistiť všetko",
@@ -399,7 +401,9 @@
     "selectAll": "Vybrať všetky",
     "force_outputs": "Force outputs",
     "toggle_output": "Toggle output",
-    "move_to_front": "Move to front"
+    "move_to_front": "Move to front",
+    "lock_to_output": "Lock to output",
+    "toggle_clock": "Toggle clock"
   },
   "tools": {
     "notes": "Poznámky",
@@ -473,6 +477,22 @@
     "groove": "Ryha",
     "ridge": "Vryp"
   },
+  "timer": {
+    "from_to": "From start to end",
+    "to_time": "Towards a time",
+    "to_event": "Time until event",
+    "counter": "Countdown",
+    "time": "Čas",
+    "seconds": "Seconds",
+    "from": "From",
+    "to": "To",
+    "preview": "Náhľad",
+    "clock": "Clock",
+    "event": "Nová udalosť",
+    "no_events": "There are no upcomming events",
+    "edit": "Upraviť",
+    "create": "Create"
+  },
   "draw": {
     "focus": "Focus",
     "pointer": "Pointer",
@@ -498,7 +518,7 @@
     "next_slide_text": "Text aktuálneho snímku",
     "next_slide": "Ďalší snímok",
     "next_slide_notes": "Poznámky ďalšieho snímku",
-    "time": "Time",
+    "time": "Čas",
     "system_clock": "Systémové hodiny",
     "video_time": "Video čas",
     "video_countdown": "Video odpočet",
@@ -571,7 +591,7 @@
   },
   "calendar": {
     "type": "Type",
-    "event": "Event",
+    "event": "Nová udalosť",
     "show": "Schedule show",
     "name": "Názov",
     "color": "Farba",

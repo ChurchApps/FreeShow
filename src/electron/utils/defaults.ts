@@ -66,6 +66,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     live: { enabled: true, activeSubTab: null },
   },
   drawer: { height: 300, stored: null },
+  timers: {},
   language: null,
   labelsDisabled: false,
   groupNumbers: true,

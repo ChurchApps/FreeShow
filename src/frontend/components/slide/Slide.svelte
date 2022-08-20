@@ -268,7 +268,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                 <Textbox
                   {item}
                   {ratio}
-                  ref={{ showId: $activeShow?.id, id: layoutSlide.id }}
+                  ref={{ showId: $activeShow?.id, slideId: layoutSlide.id, id: layoutSlide.id }}
                   style={$slidesOptions.mode !== "lyrics" || noQuickEdit}
                   smallFontSize={$slidesOptions.mode === "lyrics" && !noQuickEdit}
                 />

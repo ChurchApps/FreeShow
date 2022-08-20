@@ -298,12 +298,7 @@ export function ondrop(e: any, id: string) {
         historyID = "changeLayout"
         location.layoutSlide = index
         let ref = _show("active").layouts("active").ref()[0][index!]
-        let slide = _show("active")
-          .layouts("active")
-          .slides([ref.type === "parent" ? ref.index : ref.parent.index])
-          .get()[0][0]
-        if (ref.type === "child") slide = slide.children[ref.index]
-        let value: any[] = [...new Set([...(slide?.overlays || []), ...sel.data])]
+        let value: any[] = [...new Set([...(ref?.data?.overlays || []), ...sel.data])]
         newData = { key: "overlays", value }
       }
       break

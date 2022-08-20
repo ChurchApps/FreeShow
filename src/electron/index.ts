@@ -137,7 +137,6 @@ const createWindow = () => {
   })
 
   // app.asar/build/~electron/public/index.html
-  console.log(`file://${join(__dirname, "..", "..", "public", "index.html")}`)
   const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
 
   mainWindow.loadURL(url).catch((err) => {
@@ -525,8 +524,8 @@ ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {
     }
     if (stat) {
       // const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
-      // const extension = path.extname(filePath).substring(1)
-      const extension = name.substring(name.lastIndexOf(".") + 1)
+      const extension = path.extname(pathToFile).substring(1)
+      // const extension = name.substring(name.lastIndexOf(".") + 1)
       files.push({ path: pathToFile, name, folder: stat.isDirectory(), extension: extension, stat })
     }
   }

@@ -20,6 +20,7 @@
   import { redo, undo } from "./components/helpers/history"
   import { getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
   import { _show } from "./components/helpers/shows"
+  import { startTimer } from "./components/helpers/timerTick"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
   import Top from "./components/main/Top.svelte"
@@ -30,7 +31,6 @@
   import Projects from "./components/show/Projects.svelte"
   import Show from "./components/show/Show.svelte"
   import ShowTools from "./components/show/ShowTools.svelte"
-  import TimerInterval from "./components/show/tools/TimerInterval.svelte"
   import { getStyleResolution } from "./components/slide/getStyleResolution"
   import Shows from "./components/stage/Shows.svelte"
   import StageShow from "./components/stage/StageShow.svelte"
@@ -43,6 +43,7 @@
     activePopup,
     activeShow,
     activeStage,
+    activeTimers,
     currentWindow,
     drawer,
     os,
@@ -148,7 +149,7 @@
   }
 
   function keydown(e: any) {
-    if ($currentWindow === "output" || document.activeElement?.classList.contains("edit")) return
+    if ($currentWindow === "output") return
     if (e.ctrlKey || e.metaKey) {
       if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
         activeDrawerTab.set(drawerMenus[e.key - 1])
@@ -157,6 +158,8 @@
         return
       }
 
+      if (document.activeElement?.classList.contains("edit") && ["a", "c", "v", "z", "y", "Z"].includes(e.key)) return
+
       if (ctrlKeys[e.key]) {
         e.preventDefault()
         ctrlKeys[e.key](e)
@@ -164,6 +167,7 @@
       return
     }
 
+    if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
     if (document.activeElement === document.body && Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
 
     if (keys[e.key]) {
@@ -171,6 +175,9 @@
       keys[e.key](e)
     }
   }
+
+  // countdown timer tick
+  $: if ($activeTimers.length) startTimer()
 
   function hideDisplay(ctrlKey: boolean = true) {
     if (!ctrlKey) return
@@ -213,7 +220,6 @@
     {:else}
       <ContextMenu />
       <Popup />
-      <TimerInterval />
 
       <div class="column">
         <Top />

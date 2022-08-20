@@ -57,13 +57,15 @@ export interface Item {
 }
 
 export interface Timer {
-  id: string
+  id?: string
   name: string
-  type?: "countdown"
-  start: number
-  end: number
-  format: string
-  paused?: boolean
+  type: "counter" | "clock" | "event"
+  start?: number
+  end?: number
+  event?: string
+  time?: string
+  // format?: string
+  // paused?: boolean
 }
 
 export interface Line {
@@ -130,6 +132,7 @@ export interface Overlay {
   color: null | string
   category: null | string
   items: Item[]
+  locked?: boolean
 }
 
 export interface Templates {

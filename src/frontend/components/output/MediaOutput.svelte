@@ -26,10 +26,15 @@
   export let mirror: boolean = false
 
   $: if (type === "video" || type === "image" || type === undefined) type = "media"
-  $: if (type === "media" && !path?.length && $mediaFolders[id]) path = $mediaFolders[id].path + "/" + name || ""
+  $: if (type === "media" && !path?.length && $mediaFolders[id]?.path && name) {
+    // TODO: what's this for?
+    let seperator = "/"
+    if ($mediaFolders[id].path?.includes("\\")) seperator = "\\"
+    path = $mediaFolders[id].path + seperator + name || ""
+  }
   // $: extension = path?.match(/\.[0-9a-z]+$/i)?.[0]! || ""
   // $: isVideo = extension ? $videoExtensions.includes(extension.substring(1)) : false
-  $: extension = path ? path.slice(path.indexOf(".") + 1, path.length) : ""
+  $: extension = path ? path.substring(path.lastIndexOf(".") + 1) : ""
   $: isVideo = extension ? $videoExtensions.includes(extension) : false
 
   // $: if ($outputWindow && !videoData.muted) videoData.muted = $outputWindow
@@ -80,7 +85,7 @@
     setTimeout(() => {
       videoTime = startAt || 0
       send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime })
-      setTimeout(() => send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime }), 100)
+      setTimeout(() => send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime }), 100)
 
       // TODO: draw get time
       // sendCurrentTime()

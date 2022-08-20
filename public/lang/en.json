@@ -91,7 +91,9 @@
     "overlays": "Overlays",
     "audio": "Audio",
     "to_start": "Go to start",
-    "nextTimer": "Next slide timer"
+    "nextTimer": "Next slide timer",
+    "lock": "Lock",
+    "unlock": "Unlock"
   },
   "clear": {
     "all": "Clear all",
@@ -399,7 +401,9 @@
     "selectAll": "Select all",
     "force_outputs": "Force outputs",
     "toggle_output": "Toggle output",
-    "move_to_front": "Move to front"
+    "move_to_front": "Move to front",
+    "lock_to_output": "Lock to output",
+    "toggle_clock": "Toggle clock"
   },
   "tools": {
     "notes": "Notes",
@@ -472,6 +476,22 @@
     "outset": "Outset",
     "groove": "Groove",
     "ridge": "Ridge"
+  },
+  "timer": {
+    "from_to": "From start to end",
+    "to_time": "Towards a time",
+    "to_event": "Time until event",
+    "counter": "Countdown",
+    "time": "Time",
+    "seconds": "Seconds",
+    "from": "From",
+    "to": "To",
+    "preview": "Preview",
+    "clock": "Clock",
+    "event": "Event",
+    "no_events": "There are no upcomming events",
+    "edit": "Edit",
+    "create": "Create"
   },
   "draw": {
     "focus": "Focus",

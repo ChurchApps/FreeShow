@@ -1,15 +1,24 @@
 <script lang="ts">
   import Clock from "../items/Clock.svelte"
-
   import SlideText from "../items/SlideText.svelte"
+  import { timers } from "../store"
+  import Timer from "./Timer.svelte"
 
   export let show: any
   export let id: string
   export let item: any
   export let slides: any
+
+  // timer
+  let today = new Date()
+  setInterval(() => (today = new Date()), 1000)
+
+  let height: number = 0
+  let width: number = 0
+  $: autoSize = Math.min(height, width) / 2
 </script>
 
-<div class="item" style={item.style}>
+<div class="item" style={item.style} bind:offsetHeight={height} bind:offsetWidth={width}>
   {#if show?.settings.labels}
     <div class="label">
       {item.label}
@@ -28,6 +37,10 @@
         </span>
       {:else if id.includes("clock")}
         <Clock />
+      {:else if id.includes("timers")}
+        {#if $timers[id.split("#")[1]]}
+          <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {autoSize}px;" />
+        {/if}
       {:else}
         {id}
       {/if}

@@ -44,6 +44,7 @@ import {
   templates,
   theme,
   themes,
+  timers,
   videoExtensions,
   webFavorites,
 } from "../stores"
@@ -109,6 +110,9 @@ export function listen() {
   })
   overlays.subscribe((data) => {
     send(OUTPUT, ["OVERLAYS"], data)
+  })
+  events.subscribe((data) => {
+    send(OUTPUT, ["EVENTS"], data)
   })
   // media.subscribe((data) => {
   //   send(OUTPUT, ["MEDIA"], data )
@@ -215,6 +219,7 @@ const saveList: { [key in SaveList]: any } = {
   splitLines: splitLines,
   templateCategories: templateCategories,
   templates: templates,
+  timers: timers,
   theme: theme,
   themes: themes,
   transitionData: transitionData,

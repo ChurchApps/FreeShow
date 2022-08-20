@@ -49,7 +49,7 @@
 
       {#if title === "global_timers"}
         {#each timersList as timer}
-          <Button on:click={() => click(title + "#" + timer.name)} active={enabledItems[title + "#" + timer.name]?.enabled} style="width: 100%;">
+          <Button on:click={() => click(title + "#" + timer.id)} active={enabledItems[title + "#" + timer.id]?.enabled} style="width: 100%;">
             <Icon id="timer" right />
             <span class="overflow">{timer.name}</span>
           </Button>

@@ -44,23 +44,27 @@ export function template(lang: any): any {
         { label: lang.actions?.redo || "Redo", accelerator: "CmdOrCtrl+Y", click: () => mc("redo") },
         { type: "separator" },
         // { label: lang.actions?.cut || "Cut", role: "cut" },
-        { label: lang.actions?.copy || "Copy", role: "copy" },
-        { label: lang.actions?.paste || "Paste", role: "paste" },
+        { label: lang.actions?.copy || "Copy", accelerator: "CmdOrCtrl+C", click: () => mc("copy") },
+        { label: lang.actions?.paste || "Paste", accelerator: "CmdOrCtrl+V", click: () => mc("paste") },
         ...(isMac
           ? [
-              { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle" },
-              { label: lang.actions?.delete || "Delete", role: "delete" },
-              { label: lang.actions?.selectAll || "Select All", role: "selectAll" },
-              { type: "separator" },
-              {
-                label: lang.actions?.speech || "Speech",
-                submenu: [
-                  { label: lang.actions?.startSpeaking || "Start Speaking", role: "startSpeaking" },
-                  { label: lang.actions?.stopSpeaking || "Stop Speaking", role: "stopSpeaking" },
-                ],
-              },
+              // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
+              { label: lang.actions?.delete || "Delete", click: () => mc("delete") },
+              { label: lang.actions?.selectAll || "Select All", accelerator: "CmdOrCtrl+A", click: () => mc("selectAll") },
+              // { type: "separator" },
+              // {
+              //   label: lang.actions?.speech || "Speech",
+              //   submenu: [
+              //     { label: lang.actions?.startSpeaking || "Start Speaking", role: "startSpeaking" },
+              //     { label: lang.actions?.stopSpeaking || "Stop Speaking", role: "stopSpeaking" },
+              //   ],
+              // },
             ]
-          : [{ label: lang.actions?.delete || "delete", role: "Delete" }, { type: "separator" }, { label: lang.actions?.selectAll || "Select All", role: "selectAll" }]),
+          : [
+              { label: lang.actions?.delete || "delete", click: () => mc("delete") },
+              { type: "separator" },
+              { label: lang.actions?.selectAll || "Select All", accelerator: "CmdOrCtrl+A", click: () => mc("selectAll") },
+            ]),
       ],
     },
     {
@@ -68,9 +72,9 @@ export function template(lang: any): any {
       submenu: [
         ...(isProd ? [] : [{ role: "reload" }, { role: "toggleDevTools" }, { type: "separator" }]),
         { label: lang.actions?.fullscreen || "Toggle Fullscreen", role: "togglefullscreen" },
-        { label: lang.actions?.resetZoom || "Reset Zoom", role: "resetZoom" },
-        { label: lang.actions?.zoomIn || "Zoom In", role: "zoomIn" },
-        { label: lang.actions?.zoomOut || "Zoom Out", role: "zoomOut" },
+        // { label: lang.actions?.resetZoom || "Reset Zoom", role: "resetZoom" },
+        // { label: lang.actions?.zoomIn || "Zoom In", role: "zoomIn" },
+        // { label: lang.actions?.zoomOut || "Zoom Out", role: "zoomOut" },
       ],
     },
     {

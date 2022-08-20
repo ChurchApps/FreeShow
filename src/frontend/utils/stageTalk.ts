@@ -3,8 +3,9 @@ import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
-import { outputs, showsCache, stageShows } from "../stores"
+import { events, outputs, showsCache, stageShows, timers } from "../stores"
 import { connections } from "./../stores"
+import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendClientAll, sendData, timedout } from "./sendData"
 
 export function stageListen() {
@@ -18,6 +19,13 @@ export function stageListen() {
   })
   showsCache.subscribe(() => {
     sendData(STAGE, { channel: "SLIDES" })
+  })
+
+  timers.subscribe(() => {
+    send(STAGE, ["TIMERS"], get(timers))
+  })
+  events.subscribe(() => {
+    send(STAGE, ["EVENTS"], get(events))
   })
 }
 
@@ -43,6 +51,10 @@ export const receiveSTAGE: any = {
         if (!show.disabled) {
           msg.data = show
           sendData(STAGE, { channel: "SLIDES", data: [] })
+
+          // initial
+          window.api.send(STAGE, { id: msg.id, channel: "TIMERS", data: get(timers) })
+          window.api.send(STAGE, { id: msg.id, channel: "EVENTS", data: get(events) })
         } else msg = { id: msg.id, channel: "ERROR", data: "noShow" }
       } else msg = { id: msg.id, channel: "ERROR", data: "wrongPass" }
     } else msg = { id: msg.id, channel: "ERROR", data: "missingID" }

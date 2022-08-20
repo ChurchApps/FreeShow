@@ -38,6 +38,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   newCategory: { label: "context.newCategory", icon: "all" },
   newScripture: { label: "new.scripture", icon: "scripture" },
   changeIcon: { label: "context.changeIcon", icon: "noIcon" },
+  toggle_clock: { label: "context.toggle_clock", icon: "clock" },
   // OUTPUTS
   force_output: { label: "context.force_outputs", icon: "outputs" },
   toggle_output: { label: "context.toggle_output", icon: "outputs" },
@@ -76,13 +77,15 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   play: { label: "media.play", icon: "play" },
   play_no_filters: { label: "media.play_no_filters", icon: "play" },
   favourite: { label: "media.favourite", icon: "star" },
+  // OVERLAYS
+  lock_to_output: { label: "context.lock_to_output", icon: "locked" },
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
   // MENU
   file: ["save", "import", "export_more", "SEPERATOR", "quit"],
   edit: ["undo", "redo", "SEPERATOR", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
-  view: ["fullscreen", "resetZoom", "zoomIn", "zoomOut"],
+  view: ["fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
   help: ["shortcuts", "docs", "about"],
   // MAIN
   default: ["settings", "about", "SEPERATOR", "quit"],
@@ -98,6 +101,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
   // DRAWER
   drawer_top: ["enabledTabs"],
+  drawer_info: ["toggle_clock"],
   // NAVIGATION
   category_shows: ["newCategory"],
   category_overlays: ["newCategory"],
@@ -126,7 +130,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // show_in_explorer!!
   media_card: ["play", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
   // "addToFirstSlide",
-  overlay_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+  overlay_card: ["edit", "lock_to_output", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
   // "addToShow",
   template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
   player_button: ["addToProject", "SEPERATOR", "rename", "delete"],
@@ -149,7 +153,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // SHOWS
   // , "copy", "paste"
   slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
-  slideChild: ["slideGroups", "actions", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
+  slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["edit"],
   // global_group: ["rename"],
