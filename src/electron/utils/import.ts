@@ -1,11 +1,12 @@
 import path from "path"
 import { readdir, readFileSync } from "fs"
-import { toApp, updateOutputPath } from ".."
+import { toApp } from ".."
 import { IMPORT } from "./../../types/Channels"
 import PPTX2Json from "pptx2json"
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
 import { app } from "electron"
+import { getDocumentsFolder } from "./files"
 
 export async function importShow(id: any, files: string[] | null) {
   if (!files?.length) return
@@ -31,7 +32,7 @@ export async function importShow(id: any, files: string[] | null) {
     await Promise.all(
       files.map((filePath: string) => {
         let name = getFileName(filePath)
-        let output = updateOutputPath(path.resolve(app.getPath("documents"), "Imports", name))
+        let output = getDocumentsFolder(path.resolve(app.getPath("documents"), "Imports", name))
         opts.out_dir = output
         return new Promise((resolve) => {
           pdf

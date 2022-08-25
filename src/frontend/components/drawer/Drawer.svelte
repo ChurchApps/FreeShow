@@ -133,7 +133,7 @@
   <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click}>
     <span class="tabs">
       {#each tabs as tab}
-        {#if $drawerTabsData[tab.id].enabled}
+        {#if $drawerTabsData[tab.id]?.enabled}
           <Button
             on:click={() => activeDrawerTab.set(tab.id)}
             active={$activeDrawerTab === tab.id}

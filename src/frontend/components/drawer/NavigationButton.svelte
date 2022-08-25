@@ -41,7 +41,7 @@
 
 <Button
   class={category.id === "all" || category.id === "unlabeled" || category.id === "favourites" ? "" : `context #category_${id}_button__category_${id}`}
-  active={category.id === $drawerTabsData[id].activeSubTab}
+  active={category.id === $drawerTabsData[id]?.activeSubTab}
   {red}
   on:click={(e) => {
     if (!editActive && !e.ctrlKey && !e.metaKey) setTab(category.id)

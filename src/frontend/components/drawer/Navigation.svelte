@@ -94,7 +94,7 @@
 
   // TODO: scroll down to selected
   $: {
-    if (buttons.length && $drawerTabsData[id].activeSubTab === null) {
+    if (buttons.length && $drawerTabsData[id]?.activeSubTab === null) {
       setTab(buttons[0].id)
     }
   }

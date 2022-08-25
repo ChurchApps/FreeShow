@@ -1,4 +1,7 @@
 import type { SaveListSettings } from "./../../types/Save"
+
+export const defaultConfig: any = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 } }
+
 export const defaultSettings: { [key in SaveListSettings]: any } = {
   initialized: false,
   outLocked: false,
@@ -49,7 +52,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     rightPanel: 300,
     leftPanelDrawer: 300,
     rightPanelDrawer: 300,
-    drawer: 200,
   },
   slidesOptions: { columns: 4, mode: "grid" },
   mediaOptions: { columns: 5, mode: "grid" },
@@ -57,13 +59,12 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     shows: { enabled: true, activeSubTab: null },
     media: { enabled: true, activeSubTab: null },
     overlays: { enabled: true, activeSubTab: null },
-    templates: { enabled: true, activeSubTab: null },
     audio: { enabled: true, activeSubTab: null },
     scripture: { enabled: true, activeSubTab: null },
-    timers: { enabled: true, activeSubTab: null },
     player: { enabled: true, activeSubTab: null },
     web: { enabled: true, activeSubTab: null },
     live: { enabled: true, activeSubTab: null },
+    templates: { enabled: true, activeSubTab: null },
   },
   drawer: { height: 300, stored: null },
   timers: {},
@@ -94,8 +95,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"],
   theme: "default",
   transitionData: {
-    text: { type: "fade", duration: 500 },
-    media: { type: "fade", duration: 500 },
+    text: { type: "fade", duration: 500, easing: "linear" },
+    media: { type: "fade", duration: 500, easing: "linear" },
   },
   groups: {
     break: { name: "break", default: true, color: "#f5255e" },
