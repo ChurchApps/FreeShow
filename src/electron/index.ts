@@ -194,16 +194,17 @@ app.on("web-contents-created", (_e, contents) => {
     // }
   })
 
+  // disallow in app web redirects
   contents.on("will-navigate", (e, navigationUrl) => {
-    // const parsedURL = new URL(navigationUrl)
-    // // In dev mode allow Hot Module Replacement
-    // if (parsedURL.host !== "localhost:3000" && !isProd) {
-    //   console.warn("Stopped attempt to open: " + navigationUrl)
-    //   event.preventDefault()
-    // } else if (isProd) {
-    console.warn("Stopped attempt to open: " + navigationUrl)
-    e.preventDefault()
-    // }
+    const parsedURL = new URL(navigationUrl)
+    // In dev mode allow Hot Module Replacement
+    if (parsedURL.host !== "localhost:3000" && !isProd) {
+      console.warn("Stopped attempt to open: " + navigationUrl)
+      e.preventDefault()
+    } else if (isProd) {
+      console.warn("Stopped attempt to open: " + navigationUrl)
+      e.preventDefault()
+    }
   })
 })
 

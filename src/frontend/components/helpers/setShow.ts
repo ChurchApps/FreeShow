@@ -76,7 +76,7 @@ export async function loadShows(s: string[]) {
           })
         }
 
-        setShow(msg.show[0], msg.show[1])
+        setShow(msg.content[0], msg.content[1])
       }
       console.log(count, s, msg, "LOAD")
 

@@ -42,13 +42,12 @@ export function writeFile(path: string, content: string, id: string = "") {
   // don't know if it's necessary to check the file
   if (fileContentMatches(content, path)) return
 
-  try {
-    fs.writeFile(path, content, (err) => {
-      if (err) toApp(SHOW, { error: "no_write", err, id })
-    })
-  } catch (err) {
-    console.error("Error when writing to file: ", err)
-  }
+  fs.writeFile(path, content, (err) => {
+    if (err) {
+      toApp(SHOW, { error: "no_write", err, id })
+      console.error("Error when writing to file: ", err)
+    }
+  })
 }
 
 function getFileStats(p: string) {
@@ -111,7 +110,7 @@ export function loadFile(p: string, contentId: string = ""): any {
   content = JSON.parse(content)
   if (contentId && content[0] !== contentId) return { error: "not_found", id: contentId, file_id: content[0] }
 
-  return { id: contentId, bible: content }
+  return { id: contentId, content }
 }
 
 export function getPaths(): any {

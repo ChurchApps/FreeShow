@@ -56,11 +56,23 @@ export const outputOptions: any = {
   // roundedCorners: false, // disable rounded corners on mac
   show: false,
   webPreferences: {
-    preload: join(__dirname, "..", "preload"), // use a preload script
+    preload: join(__dirname, "..", "preload"),
     devTools: !isProd,
     webSecurity: isProd,
     // nodeIntegration: false,
     contextIsolation: true,
     allowRunningInsecureContent: false,
+  },
+}
+
+export const exportOptions: any = {
+  // show: !isProd,
+  show: false,
+  modal: true,
+  webPreferences: {
+    preload: join(__dirname, "..", "preload"),
+    nodeIntegration: true,
+    // contextIsolation: true,
+    // enableRemoteModule: false,
   },
 }
