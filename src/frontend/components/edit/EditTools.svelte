@@ -10,6 +10,7 @@
   import Button from "../inputs/Button.svelte"
   import Tabs from "../main/Tabs.svelte"
   import Center from "../system/Center.svelte"
+  import BoxStyle from "./tools/BoxStyle.svelte"
   import IconStyle from "./tools/IconStyle.svelte"
   import Items from "./tools/Items.svelte"
   import ItemStyle from "./tools/ItemStyle.svelte"
@@ -34,10 +35,12 @@
     slides = _show($activeEdit?.id || $activeShow?.id)
       .slides()
       .get()
-  $: if (!item?.lines && item?.type !== "timer" && item?.type !== "icon" && !tabs.text.disabled) {
+  // $: if (!item?.lines && item?.type !== "timer" && item?.type !== "icon" && !tabs.text.disabled) {
+  $: if (!item && !tabs.text.disabled) {
     active = "items"
     tabs.text.disabled = true
-  } else if ((item?.lines || item?.type === "timer" || item?.type === "icon") && tabs.text.disabled) {
+    // } else if ((item?.lines || item?.type === "timer" || item?.type === "icon") && tabs.text.disabled) {
+  } else if (item && tabs.text.disabled) {
     // TODO: false triggers (arranging items)
     // active = "text"
     tabs.text.disabled = false
@@ -178,6 +181,8 @@
       return
     }
 
+    // TODO: reset timer/icon/++ style
+
     if (active !== "text") return
 
     let values: any = []
@@ -220,12 +225,16 @@
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
-        {#if item?.type === "timer"}
+        {#if false}
+          <!-- TODO: deprecated components -->
+          <!-- item?.type === "timer" -->
           <TimerStyle bind:item {index} />
-        {:else if item?.type === "icon"}
+          <!-- item?.type === "icon" -->
           <IconStyle bind:item {index} />
-        {:else if item?.lines}
+          <!-- item?.lines -->
           <TextStyle bind:allSlideItems bind:item />
+        {:else if item}
+          <BoxStyle id={item?.type || "text"} bind:allSlideItems bind:item />
         {:else}
           <Center faded>
             <T id="empty.items" />

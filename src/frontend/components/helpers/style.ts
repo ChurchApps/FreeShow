@@ -1,4 +1,5 @@
 import type { StringObject } from "../../../types/Main"
+
 export const getStyles = (str: string | null | undefined, removeText: boolean = false) => {
   let styles: StringObject = {}
   if (str?.length) {
@@ -6,12 +7,10 @@ export const getStyles = (str: string | null | undefined, removeText: boolean = 
       if (s.length) {
         let key: string = s.slice(0, s.indexOf(":")).trim()
         let style: string = s.slice(s.indexOf(":") + 1, s.length).trim()
+        // remove text
         if (
           !key.includes("color") &&
-          key !== "text-decoration" &&
-          key !== "text-shadow" &&
-          key !== "box-shadow" &&
-          key !== "font-family" &&
+          !["text-decoration", "text-shadow", "box-shadow", "font-family"].includes(key) &&
           removeText &&
           style.length > style.replace(/[^0-9.-]/g, "").length &&
           style.replace(/[^0-9.-]/g, "").length > 0

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activePopup, alertUpdates, fullColors, groupNumbers, formatNewShow, labelsDisabled, showsPath, splitLines, autoOutput } from "../../../stores"
+  import { activePopup, alertUpdates, fullColors, groupNumbers, formatNewShow, labelsDisabled, showsPath, splitLines, autoOutput, timeFormat } from "../../../stores"
   import { setLanguage } from "../../../utils/language"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
@@ -10,6 +10,7 @@
   import LocaleSwitcher from "../LocaleSwitcher.svelte"
 
   const inputs: any = {
+    timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
     updates: (e: any) => alertUpdates.set(e.target.checked),
     labels: (e: any) => labelsDisabled.set(e.target.checked),
     colors: (e: any) => fullColors.set(e.target.checked),
@@ -33,6 +34,10 @@
 <div>
   <p><T id="settings.language" /></p>
   <LocaleSwitcher />
+</div>
+<div>
+  <p><T id="settings.use24hClock" /></p>
+  <Checkbox checked={$timeFormat === "24"} on:change={inputs.timeFormat} />
 </div>
 <div>
   <p><T id="settings.alert_updates" /></p>

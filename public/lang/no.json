@@ -14,7 +14,8 @@
     "en": "Engelsk",
     "no": "Norsk",
     "sk": "Slovakisk",
-    "es": "Spansk"
+    "es": "Spansk",
+    "pt_BR": "Brasiliansk portugisisk"
   },
   "about": {
     "check_updates": "Se etter oppdateringer",
@@ -541,6 +542,7 @@
     "calendar": "Kalender",
     "other": "Annet",
     "language": "Språk",
+    "use24hClock": "Bruk 24-timersklokke",
     "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den.",
     "show_output_hint": "Hold ctrl/cmd mens du trykker på \"vis utgangsskjerm\"-knappen for å tvinge visning over denne skjermen.",
     "move_output_hint": "Finner ikke skjermen din? Endre posisjonen til vinduet viser på den andre skjermen.",

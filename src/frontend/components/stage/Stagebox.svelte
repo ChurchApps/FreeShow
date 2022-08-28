@@ -124,7 +124,7 @@
           <SlideText next={id.includes("next")} ref={{ type: "stage", id }} style />
         </span>
       {:else if id.includes("clock")}
-        <Clock />
+        <Clock style={false} />
       {:else if id.includes("timers")}
         {#if $timers[id.split("#")[1]]}
           <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {autoSize}px;" />

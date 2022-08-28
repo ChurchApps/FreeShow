@@ -147,22 +147,30 @@ export function getSelectionRange(): { start: number; end: number }[] {
 
 // return item style at text length pos
 export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; end: number }[]) {
-  let currentPos: number = 0
   let style: string = ""
-
   ;(pos || lines).forEach((_a: any, i: number) => {
+    let currentPos: number = 0
     lines[i]?.text.some((text): any => {
-      currentPos += text.value.length
-
-      if (pos && currentPos >= pos[i].end) {
+      if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
+      if (pos && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
         style = text.style
         return true
       }
+      currentPos += text.value.length
     })
   })
   if (!style.length && lines.length) style = lines[lines.length - 1].text[lines[lines.length - 1].text.length - 1]?.style || ""
 
   return style
+}
+
+// get item align at selected pos
+export function getLastLineAlign(item: Item, selection: any): string {
+  let last: string = ""
+  item?.lines!.forEach((line: any, i: number) => {
+    if (!selection || selection[i]?.start) last = line.align
+  })
+  return last
 }
 
 // get text of item.text...

@@ -1,3 +1,4 @@
+import { OPEN_FILE } from "./../../types/Channels"
 // ----- FreeShow -----
 // Functions to interact with local files
 
@@ -62,8 +63,9 @@ function getFileStats(p: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(filters: any): string[] {
-  let options: any = { properties: ["openFile", "multiSelections"], filters: [{ name: filters.name, extensions: filters.extensions }] }
+export function selectFilesDialog(filters: any, multiple: boolean = true): string[] {
+  let options: any = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
+  if (multiple) options.properties.push("multiSelections")
   let files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
   return files
 }
@@ -147,6 +149,12 @@ export function getFolderContent(_e: any, folderPath: string) {
 export function selectFolder(e: any, msg: { id: string; title: string | undefined }) {
   let folder: any = selectFolderDialog(msg.title)
   if (folder) e.reply(OPEN_FOLDER, { id: msg.id, path: folder })
+}
+
+// OPEN_FILE
+export function selectFiles(e: any, msg: { filter: any; multiple: boolean }) {
+  let files: any = selectFilesDialog(msg.filter, msg.multiple === undefined ? true : msg.multiple)
+  if (files) e.reply(OPEN_FILE, { files })
 }
 
 // FILE_INFO

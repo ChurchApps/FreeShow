@@ -14,7 +14,8 @@
     "en": "Angličtina",
     "no": "Nórština",
     "sk": "Slovenčina",
-    "es": "Spanish"
+    "es": "Spanish",
+    "pt_BR": "Brazilian Portuguese"
   },
   "about": {
     "check_updates": "Skontrolovať aktualizácie",
@@ -541,6 +542,7 @@
     "calendar": "Kalendár",
     "other": "Iné",
     "language": "Jazyk",
+    "use24hClock": "Use 24-hour clock",
     "hide_output_hint": "Dvojklikom skryjete výstupné okno.",
     "show_output_hint": "Podržním ctrl/cmd pri kliknutí na tlačidlo Zobraziť sa zobrazí na túto obrazovku.",
     "move_output_hint": "Nenašli ste svoju obrazovku? Zmeňte pozíciu dokým sa okno neukáže na druhej obrazovke.",

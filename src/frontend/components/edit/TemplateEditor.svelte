@@ -68,7 +68,7 @@
 
 <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
   {#if Slide}
-    <Zoomed style={getStyleResolution(resolution, width, height)} bind:ratio hideOverflow={false} center>
+    <Zoomed style={getStyleResolution(resolution, width, height, "fit")} bind:ratio hideOverflow={false} center>
       <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
       {#each Slide.items as item, index}
         <Editbox ref={{ type: "template", id: currentId }} {item} {index} {ratio} bind:mouse />
@@ -88,7 +88,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    /* padding: 10px; */
     overflow: auto;
   }
 </style>

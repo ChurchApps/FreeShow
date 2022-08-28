@@ -4,10 +4,10 @@
 import { app, BrowserWindow, desktopCapturer, ipcMain, Menu, Rectangle, screen, shell } from "electron"
 import { getFonts } from "font-list"
 import path from "path"
-import { EXPORT, FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { closeServers } from "./servers"
-import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, selectFolder, writeFile } from "./utils/files"
+import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./utils/output"
 import { loadScripture, loadShow, receiveMain, startExport, startImport } from "./utils/responses"
@@ -258,6 +258,7 @@ ipcMain.on(MAIN, receiveMain)
 ipcMain.on(OUTPUT, receiveOutput)
 ipcMain.on(READ_FOLDER, getFolderContent)
 ipcMain.on(OPEN_FOLDER, selectFolder)
+ipcMain.on(OPEN_FILE, selectFiles)
 ipcMain.on(FILE_INFO, getFileInfo)
 
 // ----- HELPERS -----

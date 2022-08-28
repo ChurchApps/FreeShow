@@ -2,14 +2,17 @@
   import { onMount } from "svelte"
   import { uid } from "uid"
   import type { Item, Line } from "../../../types/Show"
-  import { activeEdit, activeShow, overlays, showsCache, templates } from "../../stores"
+  import { activeEdit, activeShow, overlays, showsCache, templates, videoExtensions } from "../../stores"
+  import Image from "../drawer/media/Image.svelte"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { getExtension } from "../helpers/media"
   import { addToPos } from "../helpers/mover"
   import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
   import Timer from "../slide/views/Timer.svelte"
   import Movebox from "../system/Movebox.svelte"
+  import { getAutoSize } from "./scripts/autoSize"
   import { getSelectionRange } from "./scripts/textStyle"
 
   export let item: Item
@@ -169,15 +172,19 @@
   $: {
     console.log("ITEM", JSON.parse(JSON.stringify(item)))
 
+    // style hash
     let s = ""
     item?.lines?.forEach((line) => {
       s += line.align
       line.text?.forEach((a) => {
+        // + (item.auto ? autoSize : "")
         s += a.style
       })
     })
 
     console.log(currentStyle, s)
+    // dont replace while typing
+    // && (window.getSelection() === null || window.getSelection()!.type === "None")
     if (currentStyle !== s) getStyle()
   }
 
@@ -196,8 +203,12 @@
       let style = line.align ? 'style="' + line.align + '"' : ""
       html += `<div class="break" ${plain ? "" : style}>`
       line.text?.forEach((a) => {
+        // + (item.auto ? autoSize : "")
         currentStyle += a.style
-        let style = a.style ? 'style="' + a.style + '"' : ""
+
+        let auto: string = item.auto ? "font-size: " + autoSize + "px;" : ""
+        let style = a.style ? 'style="' + a.style + auto + '"' : ""
+
         html += `<span ${plain ? "" : style}>` + a.value + "</span>"
       })
       html += "</div>"
@@ -283,19 +294,20 @@
     // TODO: set caret position
   }
 
-  let height: number = 0
-  let width: number = 0
+  // let height: number = 0
+  // let width: number = 0
   // $: autoSize = item.lines ? height / (item.lines.length + 3) : height / 2
   // $: autoSize = height < width ? height / 1.5 : width / 4
-  $: autoSize = Math.min(height, width) / 2
+  // $: autoSize = Math.min(height, width) / 2
+  $: autoSize = getAutoSize(item)
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
+<!-- bind:offsetHeight={height}
+bind:offsetWidth={width} -->
 <div
   bind:this={itemElem}
-  bind:offsetHeight={height}
-  bind:offsetWidth={width}
   class={plain ? "" : "item context #edit_box"}
   class:selected={$activeEdit.items.includes(index)}
   style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);`}
@@ -322,6 +334,17 @@
         class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
       />
     </div>
+  {:else if item?.type === "media"}
+    {#if item.src}
+      {#if $videoExtensions.includes(getExtension(item.src))}
+        <!-- video -->
+        <video src={item.src} muted={true}>
+          <track kind="captions" />
+        </video>
+      {:else}
+        <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};" />
+      {/if}
+    {/if}
   {:else if item?.type === "timer"}
     <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />
   {:else if item?.type === "icon"}

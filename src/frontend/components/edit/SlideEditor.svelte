@@ -12,7 +12,6 @@
   import Center from "../system/Center.svelte"
   import Snaplines from "../system/Snaplines.svelte"
   import Editbox from "./Editbox.svelte"
-  import { autoSize } from "./scripts/autoSize"
 
   $: currentShow = $activeShow?.id
   $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
@@ -74,11 +73,11 @@
     })
   }
 
-  $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
-    // let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
-    let items = _show("active").slides([ref[$activeEdit.slide!].id]).items().get()[0]
-    if (items) autoSize(active, items)
-  }
+  // $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
+  //   // let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
+  //   let items = _show("active").slides([ref[$activeEdit.slide!].id]).items().get()[0]
+  //   if (items) autoSize(active, items)
+  // }
 
   let altKeyPressed: boolean = false
   function keydown(e: any) {

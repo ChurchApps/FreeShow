@@ -191,11 +191,11 @@
     </span>
     <!-- overflow-x: hidden; -->
     <span style="flex: 1;">
-      <NumberInput value={data["left"]} on:change={(e) => update("left", e.detail)} />
-      <NumberInput value={data["top"]} on:change={(e) => update("top", e.detail)} />
-      <NumberInput value={data["width"]} on:change={(e) => update("width", e.detail)} />
-      <NumberInput value={data["height"]} on:change={(e) => update("height", e.detail)} />
-      <NumberInput value={data["transform"]} on:change={(e) => rotate(e.detail)} />
+      <NumberInput value={data["left"]} min={-100000} max={100000} on:change={(e) => update("left", e.detail)} />
+      <NumberInput value={data["top"]} min={-100000} max={100000} on:change={(e) => update("top", e.detail)} />
+      <NumberInput value={data["width"]} min={-100000} max={100000} on:change={(e) => update("width", e.detail)} />
+      <NumberInput value={data["height"]} min={-100000} max={100000} on:change={(e) => update("height", e.detail)} />
+      <NumberInput value={data["transform"]} max={360} on:change={(e) => rotate(e.detail)} />
     </span>
   </div>
   <hr />

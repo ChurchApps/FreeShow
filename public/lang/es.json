@@ -14,7 +14,8 @@
     "en": "Inglés",
     "no": "Noruego",
     "sk": "Eslovaco",
-    "es": "Español"
+    "es": "Español",
+    "pt_BR": "Brazilian Portuguese"
   },
   "about": {
     "check_updates": "Buscar actualizaciones",
@@ -114,11 +115,11 @@
   },
   "media": {
     "_loop": "Ciclo",
-    "play": "Encender",
+    "play": "Reproducir",
     "play_no_filters": "Play without filters",
-    "favourite": "Favourite",
+    "favourite": "Favoritos",
     "pause": "Pausar",
-    "stop": "Stop",
+    "stop": "Detener",
     "volume": "Volume",
     "show": "Mostrar",
     "flip": "Flip",
@@ -541,6 +542,7 @@
     "calendar": "Calendario",
     "other": "Otro",
     "language": "Idioma",
+    "use24hClock": "Use 24-hour clock",
     "hide_output_hint": "Doble click en la ventana de salida para ocultarlo.",
     "show_output_hint": "Presionar ctrl/cmd mientras hace click al botón de visualización para forzarlo a mostrarse delante de pantalla.",
     "move_output_hint": "No se visualiza? Cambiar la posición hasta que la ventana se muestre en una segunda pantalla.",

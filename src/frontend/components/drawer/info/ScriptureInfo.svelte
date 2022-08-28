@@ -11,6 +11,7 @@
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
+  import Color from "../../inputs/Color.svelte"
   import Dropdown from "../../inputs/Dropdown.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import Textbox from "../../slide/Textbox.svelte"
@@ -69,7 +70,10 @@
       if ($scriptureSettings.verseNumbers) {
         let size = 50
         if (i === 0) size *= 2
-        slideArr.lines![0].text.push({ value: s + " ", style: "font-size: " + size + "px;color: gray;" + template[0]?.lines?.[0].text?.[0].style || "" })
+        slideArr.lines![0].text.push({
+          value: s + " ",
+          style: "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[0]?.lines?.[0].text?.[0].style || "",
+        })
       }
 
       let text: string = bible.verses[s] || ""
@@ -150,6 +154,8 @@
   let templateList: any[] = []
   $: templateList = Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name }))
 
+  const updateColor = (e: any) => update("numberColor", e.target.value)
+
   function update(id: string, value: any) {
     scriptureSettings.update((a) => {
       a[id] = value
@@ -206,6 +212,12 @@
       <p><T id="scripture.verse_numbers" /></p>
       <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
     </span>
+    {#if $scriptureSettings.verseNumbers}
+      <span>
+        <p><T id="edit.color" /></p>
+        <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={updateColor} />
+      </span>
+    {/if}
     <span>
       <p><T id="scripture.version" /></p>
       <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
@@ -237,6 +249,11 @@
     overflow-y: auto;
     overflow-x: hidden;
   }
+
+  div :global(.zoomed) {
+    height: initial !important;
+  }
+
   .settings {
     display: flex;
     flex-direction: column;

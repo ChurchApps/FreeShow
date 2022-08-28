@@ -49,7 +49,10 @@
   <h6><T id="edit.add_items" /></h6>
   <div class="grid">
     <IconButton title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
-    <IconButton title={$dictionary.items?.image} disabled icon="image" />
+    <IconButton title={$dictionary.items?.image} icon="image" on:click={() => addItem("media")} />
+    <!-- TODO: mirror box (mirror other shows content on the same slide index) -->
+    <!-- mirror: set show, set template, set item index  -->
+    <!-- <IconButton title={$dictionary.items?.mirror} icon="mirror" on:click={() => addItem("mirror")} /> -->
     <!-- <IconButton title={$dictionary.items?.video} disabled icon="video" /> -->
     <!-- <IconButton title={$dictionary.items?.audio} disabled icon="audio" /> -->
     <IconButton title={$dictionary.items?.live} disabled icon="camera" />

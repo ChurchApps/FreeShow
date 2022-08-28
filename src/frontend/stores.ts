@@ -150,7 +150,7 @@ export const exportPath: Writable<null | string> = writable(null) // null
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale
-export const timeFormat: Writable<string> = writable("24") // "24" (WIP)
+export const timeFormat: Writable<string> = writable("24") // "24"
 export const alertUpdates: Writable<boolean> = writable(true) // true
 export const autoOutput: Writable<boolean> = writable(false) // false
 export const labelsDisabled: Writable<boolean> = writable(false) // false

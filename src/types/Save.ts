@@ -7,7 +7,7 @@ export type SaveListSettings =
   | "audioFolders"
   | "autoOutput"
   | "categories"
-  // | "timeFormat"
+  | "timeFormat"
   | "defaultProjectName"
   | "showsPath"
   | "exportPath"

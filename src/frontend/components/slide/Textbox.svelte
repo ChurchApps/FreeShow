@@ -1,7 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { Item } from "../../../types/Show"
+  import { videoExtensions } from "../../stores"
+  import Image from "../drawer/media/Image.svelte"
+  import { getAutoSize } from "../edit/scripts/autoSize"
   import Icon from "../helpers/Icon.svelte"
+  import { getExtension } from "../helpers/media"
   import Timer from "./views/Timer.svelte"
 
   export let item: Item
@@ -12,9 +16,11 @@
   export let linesStart: null | number = null
   export let linesEnd: null | number = null
 
-  let height: number = 0
-  let width: number = 0
-  $: autoSize = item.lines ? Math.min(height, width) / (item.lines.length + 3) : Math.min(height, width) / 2
+  // let height: number = 0
+  // let width: number = 0
+  // $: autoSize = item.lines ? Math.min(height, width) / (item.lines.length + 3) : Math.min(height, width) / 2
+  // TODO: get template auto size
+  $: autoSize = getAutoSize(item)
 
   $: lines = item?.lines
   $: if (linesStart !== null && linesEnd !== null && lines?.length) lines = lines.filter((a) => a.text.filter((a) => a.value.length)?.length)
@@ -29,7 +35,8 @@
   $: if (item.type === "timer") ref.id = item.timer!.id!
 </script>
 
-<div class="item" style={style ? item?.style : null} bind:offsetHeight={height} bind:offsetWidth={width}>
+<!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
+<div class="item" style={style ? item?.style : null}>
   {#if lines}
     <div class="align" style={style ? item.align : null}>
       <div class="lines">
@@ -37,13 +44,24 @@
           {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
             <div class="break" class:smallFontSize style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
               {#each line.text as text}
-                <span style={style ? text.style : ref.type === "stage" ? "font-size: " + autoSize + "px;" : null}>{@html text.value}</span>
+                <span style="{style ? text.style : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value}</span>
               {/each}
             </div>
           {/if}
         {/each}
       </div>
     </div>
+  {:else if item?.type === "media"}
+    {#if item.src}
+      {#if $videoExtensions.includes(getExtension(item.src))}
+        <!-- video -->
+        <video src={item.src} muted={true}>
+          <track kind="captions" />
+        </video>
+      {:else}
+        <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};" />
+      {/if}
+    {/if}
   {:else if item?.type === "timer"}
     {#key item.timer}
       <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />

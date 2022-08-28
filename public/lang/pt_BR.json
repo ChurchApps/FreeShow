@@ -542,6 +542,7 @@
     "calendar": "Calendário",
     "other": "Outro",
     "language": "Idioma",
+    "use24hClock": "Use 24-hour clock",
     "hide_output_hint": "Clique duas vezes na janela de saída para ocultá-la.",
     "show_output_hint": "Segure ctrl/cmd enquanto clica no botão de exibição para forçar a exibição neste monitor.",
     "move_output_hint": "Não encontra sua tela? Altere a posição até que a janela apareça na segunda tela.",

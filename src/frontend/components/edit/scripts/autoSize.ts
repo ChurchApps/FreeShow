@@ -5,6 +5,7 @@ import { _show } from "../../helpers/shows"
 import { getStyles } from "../../helpers/style"
 import { addStyleString, getItemLines } from "./textStyle"
 
+// TODO: deprecated function
 export function autoSize(items: number[], fullItems: any[], check: boolean = true) {
   let values: any[] = []
   fullItems.forEach((item, i) => {
@@ -13,7 +14,7 @@ export function autoSize(items: number[], fullItems: any[], check: boolean = tru
 
       let lines = getItemLines(item)
       let length = lines.sort((a, b) => b.length - a.length)[0].length
-      console.log(lines)
+      // console.log(lines)
       let size: any
       // TODO: letter spacing....?
       if (styles.height.replace(/\D.+/g, "") / lines.length / styles.width.replace(/\D.+/g, "") > 1.8 / length) {
@@ -40,4 +41,24 @@ export function autoSize(items: number[], fullItems: any[], check: boolean = tru
       .lines()
       .set({ key: "text", values: values })
   }
+}
+
+export function getAutoSize(item: any): number {
+  let size: number = 0
+
+  let styles: any = getStyles(item.style)
+
+  let lines: string[] = getItemLines(item)
+  if (!lines.length) lines = ["00:00"]
+  let length: number = lines.sort((a, b) => b.length - a.length)[0].length
+  // console.log(lines)
+
+  // TODO: letter spacing....?
+  if (styles.height.replace(/\D.+/g, "") / lines.length / styles.width.replace(/\D.+/g, "") > 1.8 / length) {
+    size = (styles.width.replace(/\D.+/g, "") / length) * 1.6
+  } else {
+    size = (styles.height.replace(/\D.+/g, "") / lines.length) * 0.9
+  }
+
+  return size
 }
