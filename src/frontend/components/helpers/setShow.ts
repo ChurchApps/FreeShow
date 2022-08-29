@@ -13,6 +13,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
       saveTextCache(id, value)
       a[id] = value
     }
+    // send(OUTPUT, ["SHOWS"], a)
     return a
   })
 

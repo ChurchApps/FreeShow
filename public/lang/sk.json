@@ -126,7 +126,11 @@
     "all": "Priečinky, obrázky a videá",
     "folder": "Len priečinky",
     "image": "Len obrázky",
-    "video": "Len videá"
+    "video": "Len videá",
+    "fit": "Fit",
+    "contain": "Contain",
+    "fill": "Fill",
+    "cover": "Cover"
   },
   "menu": {
     "show": "Prezentácia",
@@ -457,12 +461,15 @@
     "y": "Y",
     "add_items": "Pridať položky",
     "add_icons": "Pridať ikony",
-    "arrange_items": "Usporiadať položky"
+    "arrange_items": "Usporiadať položky",
+    "filters": "Filtre",
+    "choose_media": "Choose media"
   },
   "items": {
     "text": "Textbox",
     "image": "Obrázok",
     "video": "Video",
+    "mirror": "Mirror",
     "live": "Naživo",
     "audio": "Audio",
     "timer": "Časovač",
@@ -628,7 +635,6 @@
     "red_jesus": "Ježišove slová červeným"
   },
   "filter": {
-    "filters": "Filtre",
     "blur": "Rozostrenie",
     "brightness": "Svetlosť",
     "contrast": "Kontrast",

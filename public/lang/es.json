@@ -126,7 +126,11 @@
     "all": "Carpetas, imágenes y videos",
     "folder": "Solo carpetas",
     "image": "Solo imágenes",
-    "video": "Solo videos"
+    "video": "Solo videos",
+    "fit": "Fit",
+    "contain": "Contain",
+    "fill": "Fill",
+    "cover": "Cover"
   },
   "menu": {
     "show": "Programa",
@@ -457,12 +461,15 @@
     "y": "Y",
     "add_items": "Añadir elementos",
     "add_icons": "Añadir íconos",
-    "arrange_items": "Ordenar elementos"
+    "arrange_items": "Ordenar elementos",
+    "filters": "Filtros",
+    "choose_media": "Choose media"
   },
   "items": {
     "text": "Cuadro de texto",
     "image": "Imagen",
     "video": "Video",
+    "mirror": "Mirror",
     "live": "En vivo",
     "audio": "Audio",
     "timer": "Temporizador",
@@ -628,7 +635,6 @@
     "red_jesus": "Palabra Jesús en letras rojas"
   },
   "filter": {
-    "filters": "Filtros",
     "blur": "Oscurecer",
     "brightness": "Brillo",
     "contrast": "Contraste",

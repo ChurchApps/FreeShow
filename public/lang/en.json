@@ -126,7 +126,11 @@
     "all": "Folders, images & videos",
     "folder": "Only folders",
     "image": "Only images",
-    "video": "Only videos"
+    "video": "Only videos",
+    "fit": "Fit",
+    "contain": "Contain",
+    "fill": "Fill",
+    "cover": "Cover"
   },
   "menu": {
     "show": "Show",
@@ -457,12 +461,15 @@
     "y": "Y",
     "add_items": "Add items",
     "add_icons": "Add icons",
-    "arrange_items": "Arrange items"
+    "arrange_items": "Arrange items",
+    "filters": "Filters",
+    "choose_media": "Choose media"
   },
   "items": {
     "text": "Textbox",
     "image": "Image",
     "video": "Video",
+    "mirror": "Mirror",
     "live": "Live",
     "audio": "Audio",
     "timer": "Timer",
@@ -627,7 +634,6 @@
     "red_jesus": "Jesus words in red"
   },
   "filter": {
-    "filters": "Filters",
     "blur": "Blur",
     "brightness": "Brightness",
     "contrast": "Contrast",

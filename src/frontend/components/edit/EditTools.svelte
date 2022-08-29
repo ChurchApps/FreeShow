@@ -10,13 +10,11 @@
   import Button from "../inputs/Button.svelte"
   import Tabs from "../main/Tabs.svelte"
   import Center from "../system/Center.svelte"
+  import { boxes } from "./tools/boxes"
   import BoxStyle from "./tools/BoxStyle.svelte"
-  import IconStyle from "./tools/IconStyle.svelte"
   import Items from "./tools/Items.svelte"
   import ItemStyle from "./tools/ItemStyle.svelte"
   import SlideStyle from "./tools/SlideStyle.svelte"
-  import TextStyle from "./tools/TextStyle.svelte"
-  import TimerStyle from "./tools/TimerStyle.svelte"
 
   let tabs: TabsObj = {
     text: { name: "tools.text", icon: "text" },
@@ -25,7 +23,7 @@
     slide: { name: "tools.slide", icon: "options" }, // slide
   }
   let active: string = Object.keys(tabs)[0]
-  $: tabs.text.icon = item?.type || "text"
+  $: tabs.text.icon = item?.type && boxes[item.type] ? boxes[item.type]!.icon : "text"
 
   let slides: any[] = []
   $: if (
@@ -77,8 +75,6 @@
   $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
   // select last item
   $: item = items?.length ? items[items.length - 1] : null
-
-  $: index = allSlideItems.findIndex((a) => JSON.stringify(a) === JSON.stringify(item))
 
   function applyStyleToAllSlides() {
     if (active === "text") {
@@ -225,15 +221,7 @@
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
-        {#if false}
-          <!-- TODO: deprecated components -->
-          <!-- item?.type === "timer" -->
-          <TimerStyle bind:item {index} />
-          <!-- item?.type === "icon" -->
-          <IconStyle bind:item {index} />
-          <!-- item?.lines -->
-          <TextStyle bind:allSlideItems bind:item />
-        {:else if item}
+        {#if item}
           <BoxStyle id={item?.type || "text"} bind:allSlideItems bind:item />
         {:else}
           <Center faded>

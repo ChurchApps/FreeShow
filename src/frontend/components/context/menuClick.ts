@@ -30,7 +30,7 @@ import {
   settingsTab,
   shows,
   showsCache,
-  stageShows,
+  stageShows
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
@@ -64,10 +64,7 @@ const actions: any = {
   // edit
   undo: () => undo(),
   redo: () => redo(),
-  copy: () => {
-    if (get(selected).id) copy(get(selected))
-    else if (get(activeEdit).items) copy({ id: "item", data: get(activeEdit) })
-  },
+  copy: () => copy(),
   paste: () => paste(),
   // view
   // help

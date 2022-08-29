@@ -126,7 +126,11 @@
     "all": "Mapper, bilder og videoer",
     "folder": "Bare mapper",
     "image": "Bare bilder",
-    "video": "Bare videoer"
+    "video": "Bare videoer",
+    "fit": "Tilpass",
+    "contain": "Opprinnelig",
+    "fill": "Fyll",
+    "cover": "Dekk"
   },
   "menu": {
     "show": "Presenter",
@@ -457,12 +461,15 @@
     "y": "Y",
     "add_items": "Legg til elementer",
     "add_icons": "Legg til ikoner",
-    "arrange_items": "Ordne elementer"
+    "arrange_items": "Ordne elementer",
+    "filters": "Filtre",
+    "choose_media": "Velg media"
   },
   "items": {
     "text": "Tekstboks",
     "image": "Bilde",
     "video": "Video",
+    "mirror": "Speil",
     "live": "Direkte",
     "audio": "Lyd",
     "timer": "Nedtelling",
@@ -628,7 +635,6 @@
     "red_jesus": "Jesus ord i rødt"
   },
   "filter": {
-    "filters": "Filtre",
     "blur": "Uklarhet",
     "brightness": "Lysstyrke",
     "contrast": "Kontrast",

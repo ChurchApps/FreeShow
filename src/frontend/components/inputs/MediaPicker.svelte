@@ -17,6 +17,6 @@
   })
 </script>
 
-<Button on:click={pick} center dark>
+<Button style={$$props.style || null} on:click={pick} center dark>
   <slot />
 </Button>

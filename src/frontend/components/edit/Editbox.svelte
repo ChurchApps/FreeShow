@@ -2,14 +2,16 @@
   import { onMount } from "svelte"
   import { uid } from "uid"
   import type { Item, Line } from "../../../types/Show"
-  import { activeEdit, activeShow, overlays, showsCache, templates, videoExtensions } from "../../stores"
+  import { activeEdit, activeShow, currentWindow, overlays, showsCache, templates, videoExtensions } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { getExtension } from "../helpers/media"
   import { addToPos } from "../helpers/mover"
+  import { loadShows } from "../helpers/setShow"
   import { _show } from "../helpers/shows"
   import T from "../helpers/T.svelte"
+  import Textbox from "../slide/Textbox.svelte"
   import Timer from "../slide/views/Timer.svelte"
   import Movebox from "../system/Movebox.svelte"
   import { getAutoSize } from "./scripts/autoSize"
@@ -300,6 +302,17 @@
   // $: autoSize = height < width ? height / 1.5 : width / 4
   // $: autoSize = Math.min(height, width) / 2
   $: autoSize = getAutoSize(item)
+
+  function getMirroredItem() {
+    if (item.mirror!.show === ref.showId) return
+    let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[$activeEdit.slide!]
+    if (!newSlideRef) return
+    let slideId: any = newSlideRef.id
+    let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
+    if (!newItem) return
+    newItem.style = "width: 100%;height: 100%;pointer-events: none;"
+    return newItem
+  }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -342,11 +355,26 @@ bind:offsetWidth={width} -->
           <track kind="captions" />
         </video>
       {:else}
-        <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};" />
+        <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+        <!-- <MediaLoader path={item.src} /> -->
       {/if}
     {/if}
   {:else if item?.type === "timer"}
     <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />
+  {:else if item?.type === "mirror"}
+    {#if item.mirror?.show}
+      {#key item.mirror?.show}
+        {#if !ref.type || ref.type === "show"}
+          {#await loadShows([item.mirror.show])}
+            {#if !$currentWindow}Loading...{/if}
+          {:then}
+            {#if $activeEdit.slide !== undefined && $activeEdit.slide !== null && getMirroredItem()}
+              <Textbox item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId: _show("active").layouts("active").ref()[0][$activeEdit.slide].id, id: ref.id }} />
+            {/if}
+          {/await}
+        {/if}
+      {/key}
+    {/if}
   {:else if item?.type === "icon"}
     <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}

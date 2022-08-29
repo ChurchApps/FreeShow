@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { Item, ItemType } from "../../../../types/Show"
-  import { activeEdit, activeShow, overlays, templates } from "../../../stores"
+  import { activeEdit, activeShow, overlays, shows, templates } from "../../../stores"
   import { history } from "../../helpers/history"
   import { _show } from "../../helpers/shows"
   import { getStyles } from "../../helpers/style"
   import { getOriginalValue } from "../scripts/edit"
-  import { addStyle, addStyleString, getItemStyleAtPos, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
+  import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
   import { boxes } from "./boxes"
   import EditValues from "./EditValues.svelte"
 
@@ -54,6 +54,12 @@
   $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : {}
   $: alignStyle = item?.align ? getStyles(item.align) : {}
 
+  $: if (id === "mirror" && box)
+    box.edit.default[0].values.options = Object.entries($shows)
+      .map(([id, show]: any) => ({ id, name: show.name }))
+      .filter((a) => a.id !== $activeShow?.id)
+      .sort((a, b) => a.name?.localeCompare(b.name))
+
   function setValue(input: any) {
     let allItems: number[] = $activeEdit.items
     // update all items if nothing is selected
@@ -63,11 +69,15 @@
     }
     // let fullItems = allItems.map((a) => allSlideItems[a])
 
+    let value: any = input.value
+    if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
+    else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
+
     if ($activeEdit.id) {
       if ($activeEdit.type === "overlay") {
         overlays.update((a: any) => {
           allItems.forEach((i: number) => {
-            if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items[i][input.id] = input.value
+            if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items[i][input.id] = value
           })
           return a
         })
@@ -78,7 +88,7 @@
       if ($activeEdit.type === "template") {
         templates.update((a: any) => {
           allItems.forEach((i: number) => {
-            if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items[i][input.id] = input.value
+            if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items[i][input.id] = value
           })
           return a
         })
@@ -91,7 +101,7 @@
 
     history({
       id: "setItems",
-      newData: { style: { key: input.id, values: [input.value] } },
+      newData: { style: { key: input.id, values: [value] } },
       location: { page: "edit", show: $activeShow!, slide: _show("active").layouts("active").ref()[0][$activeEdit.slide!].id, items: allItems },
     })
   }
@@ -101,13 +111,12 @@
     console.log(input)
 
     if (input.input === "dropdown") input.value = input.value.id
+    if (input.extension) input.value += input.extension
 
     if (input.id !== "style") {
       setValue(input)
       return
     }
-
-    if (input.extension) input.value += input.extension
 
     // console.log("original", getOriginalValue(box!.edit, input.key))
 

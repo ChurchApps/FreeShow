@@ -126,7 +126,11 @@
     "all": "Diretórios, imagens e vídeos",
     "folder": "Apenas diretórios",
     "image": "Apenas imagens",
-    "video": "Apenas vídeos"
+    "video": "Apenas vídeos",
+    "fit": "Fit",
+    "contain": "Contain",
+    "fill": "Fill",
+    "cover": "Cover"
   },
   "menu": {
     "show": "Mostrar",
@@ -457,12 +461,15 @@
     "y": "Y",
     "add_items": "Adicionar itens",
     "add_icons": "Adicionar ícones",
-    "arrange_items": "Organizar itens"
+    "arrange_items": "Organizar itens",
+    "filters": "Filtros",
+    "choose_media": "Choose media"
   },
   "items": {
     "text": "Caixa de texto",
     "image": "Imagen",
     "video": "Vídeo",
+    "mirror": "Mirror",
     "live": "Ao vivo",
     "audio": "Áudio",
     "timer": "Temporizador",
@@ -627,7 +634,6 @@
     "red_jesus": "Palavras de Jesus em vermelho"
   },
   "filter": {
-    "filters": "Filtros",
     "blur": "Borrão",
     "brightness": "Brilho",
     "contrast": "Contraste",

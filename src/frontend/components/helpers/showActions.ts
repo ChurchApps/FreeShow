@@ -154,7 +154,9 @@ export function previousSlide() {
     while (layout[index].data.disabled) index--
 
     // get slide line
-    let showSlide: any = _show(slide!.id).slides([layout[index].id]).get()[0]
+    let showSlide: any = _show(slide ? slide.id : "active")
+      .slides([layout[index].id])
+      .get()[0]
     let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
     line = slideLines ? (amountOfLinesToShow >= slideLines ? 0 : slideLines - (amountOfLinesToShow % slideLines) - 1) : 0
   } else {

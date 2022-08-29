@@ -31,7 +31,7 @@
     else {
       let showId = $activeEdit?.id || $activeShow?.id
       let ref = _show(showId).layouts("active").ref()[0]
-      select("timer", { id: item.timer.id, showId, slideId: ref[$activeEdit?.slide || ""].id })
+      select("timer", { id: item.timer.id, showId, slideId: ref[$activeEdit?.slide ?? 0].id })
     }
     activePopup.set("timer")
   }}

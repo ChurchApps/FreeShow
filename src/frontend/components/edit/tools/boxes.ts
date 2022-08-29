@@ -59,19 +59,31 @@ export const boxes: Box = {
       default: [
         { id: "src", input: "media" },
         {
-          name: "fit",
+          name: "media.fit",
           id: "fit",
           input: "dropdown",
           value: "contain",
           values: {
             options: [
-              { id: "contain", name: "Contain" },
-              { id: "cover", name: "Cover" },
-              { id: "fill", name: "Fill" },
-              { id: "scale-down", name: "Scale down" },
+              { id: "contain", name: "$:media.contain:$", translate: true },
+              { id: "cover", name: "$:media.cover:$", translate: true },
+              { id: "fill", name: "$:media.fill:$", translate: true },
+              // { id: "scale-down", name: "Scale down" },
             ],
           },
         },
+        { name: "media.flip", id: "flipped", input: "checkbox", value: false },
+      ],
+      filters: [
+        { name: "filter.hue-rotate", id: "filter", key: "hue-rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
+        { name: "filter.invert", id: "filter", key: "invert", input: "number", value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.blur", id: "filter", key: "blur", input: "number", value: 0, values: { max: 100 }, extension: "px" },
+        { name: "filter.grayscale", id: "filter", key: "grayscale", input: "number", value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.sepia", id: "filter", key: "sepia", input: "number", value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.brightness", id: "filter", key: "brightness", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.contrast", id: "filter", key: "contrast", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.saturate", id: "filter", key: "saturate", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.opacity", id: "filter", key: "opacity", input: "number", value: 1, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
       ],
       // shadow: [
       //   { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
@@ -106,6 +118,15 @@ export const boxes: Box = {
       ],
     },
   },
+  // mirror other shows content on the same slide index
+  mirror: {
+    name: "settings.mirror",
+    icon: "mirror",
+    edit: {
+      default: [{ name: "remote.show", id: "mirror", key: "show", input: "dropdown", value: "", values: { options: [] } }],
+      // template, item index
+    },
+  },
   icon: {
     name: "settings.icon",
     icon: "icon",
@@ -113,4 +134,13 @@ export const boxes: Box = {
       default: [{ name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }],
     },
   },
+  // item: {
+  //   name: "settings.item",
+  //   icon: "item",
+  //   edit: {
+  //     element: [{
+
+  //     }]
+  //   }
+  // }
 }

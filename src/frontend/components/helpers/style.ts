@@ -22,3 +22,20 @@ export const getStyles = (str: string | null | undefined, removeText: boolean = 
   }
   return styles
 }
+
+export function getFilters(filter: string) {
+  let styles: StringObject = {}
+  if (!filter) return styles
+
+  filter.split(" ").forEach((s) => {
+    if (s.length) {
+      let key: string = s.slice(0, s.indexOf("(")).trim()
+      let style: string = s.slice(s.indexOf("(") + 1, s.indexOf(")")).trim()
+      // remove text
+      style = style.replace(/[^0-9.-]/g, "")
+      styles[key] = style
+    }
+  })
+
+  return styles
+}

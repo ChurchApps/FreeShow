@@ -90,6 +90,22 @@ export function addStyleString(oldStyle: string, style: any[]): string {
   return newStyle
 }
 
+// add new filter to string and remove old if existing
+export function addFilterString(oldFilter: string, filter: any[]): string {
+  let array: string[] = oldFilter.split(" ")
+  // remove last if empty
+  if (!array[array.length - 1].length) array.pop()
+  // remove old styles
+  array.forEach((s, i) => {
+    if (s.split("(")[0].replace(")", "").trim() === filter[0] || !s.length) array.splice(i, 1)
+  })
+  // add new filter
+  if (filter[1] !== null) array.push(filter.join("(") + ")")
+
+  let newFilter: string = array.join(" ")
+  return newFilter
+}
+
 // get selection range start to end or cursor pos
 export function getSelectionRange(): { start: number; end: number }[] {
   let selection: null | Selection = window.getSelection()

@@ -1,11 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { Item } from "../../../types/Show"
-  import { videoExtensions } from "../../stores"
+  import { currentWindow, outputs, videoExtensions } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import { getAutoSize } from "../edit/scripts/autoSize"
   import Icon from "../helpers/Icon.svelte"
   import { getExtension } from "../helpers/media"
+  import { getActiveOutputs } from "../helpers/output"
+  import { loadShows } from "../helpers/setShow"
+  import { _show } from "../helpers/shows"
   import Timer from "./views/Timer.svelte"
 
   export let item: Item
@@ -33,6 +36,27 @@
   })
 
   $: if (item.type === "timer") ref.id = item.timer!.id!
+
+  function getMirroredItem() {
+    if (item.mirror!.show === ref.showId) return
+
+    let outputId = getActiveOutputs($outputs)[0]
+    let currentOutput = $outputs[outputId] || {}
+
+    let currentSlideRef: any = _show(currentOutput?.out?.slide?.id || "active")
+      .layouts("active")
+      .ref()[0]
+      .find((a: any) => a.id === ref.slideId)
+
+    let currentSlideIndex: number = currentSlideRef.layoutIndex
+    let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[currentSlideIndex]
+    if (!newSlideRef) return
+    let slideId: any = newSlideRef.id
+    let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
+    if (!newItem) return
+    newItem.style = "width: 100%;height: 100%;"
+    return newItem
+  }
 </script>
 
 <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
@@ -59,13 +83,29 @@
           <track kind="captions" />
         </video>
       {:else}
-        <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};" />
+        <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+        <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
+        <!-- <MediaLoader path={item.src} /> -->
       {/if}
     {/if}
   {:else if item?.type === "timer"}
     {#key item.timer}
       <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />
     {/key}
+  {:else if item?.type === "mirror"}
+    {#if item.mirror?.show}
+      {#key item.mirror?.show}
+        {#if !ref.type || ref.type === "show"}
+          {#await loadShows([item.mirror.show])}
+            {#if !$currentWindow}Loading...{/if}
+          {:then}
+            {#if ref.slideId && getMirroredItem()}
+              <svelte:self item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId: ref.slideId, id: ref.id }} />
+            {/if}
+          {/await}
+        {/if}
+      {/key}
+    {/if}
   {:else if item?.type === "icon"}
     <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
   {/if}

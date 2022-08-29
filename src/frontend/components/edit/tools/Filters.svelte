@@ -86,7 +86,7 @@
   </h2> -->
   {#each Object.keys(filters) as id}
     <span style="display: flex;align-items: center;margin: 2px 0;">
-      <span style="flex: 1;"><T id="filter.{id}" /></span>
+      <span style="flex: 1;"><T id="edit.{id}" /></span>
       <NumberInput {...filters[id]} on:change={(e) => updateFilters(id, e.detail)} />
     </span>
   {/each}

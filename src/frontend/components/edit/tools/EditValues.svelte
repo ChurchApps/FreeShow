@@ -1,6 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte"
   import { dictionary, imageExtensions, videoExtensions } from "../../../stores"
+  import Icon from "../../helpers/Icon.svelte"
+  import { getFilters } from "../../helpers/style"
   import T from "../../helpers/T.svelte"
   import Checkbox from "../../inputs/Checkbox.svelte"
   import Color from "../../inputs/Color.svelte"
@@ -68,12 +70,21 @@
   function getValue(input: any, _updater: any) {
     // if (input.id === "auto" && isAuto) return true
     if (input.valueIndex !== undefined && styles[input.key]) return removeExtension(styles[input.key].split(" ")[input.valueIndex], input.extension)
-    if (input.input === "dropdown") return input.values.options.find((a: any) => a.id === (item?.[input.id] || input.value)).name
+    if (input.input === "dropdown") return input.values.options.find((a: any) => a.id === getKeyValue(input))?.name || "—"
+    if (input.id === "filter") return item.filter ? getFilters(item.filter || "")[input.key] || input.value : input.value
     return styles[input.key] || input.value
   }
+
+  function getKeyValue(input: any): string {
+    if (!item || !item[input.id]) return input.value
+    if (input.key && item[input.id][input.key]) return item[input.id][input.key]
+    return item[input.id]
+  }
+
+  $: console.log(edits)
 </script>
 
-{#each Object.keys(edits) as section, i}
+{#each Object.keys(edits || {}) as section, i}
   <div class="section" style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
     {#if i > 0}<hr />{/if}
     {#if section !== "default"}
@@ -83,8 +94,9 @@
       {#if input.input === "editTimer"}
         <EditTimer {item} />
       {:else if input.input === "media"}
-        <MediaPicker filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
-          <p>Choose media</p>
+        <MediaPicker style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
+          <Icon id="image" right />
+          <T id="edit.choose_media" />
         </MediaPicker>
       {:else if lineInputs[input.input]}
         <div class="line" style="margin-bottom: 5px;">
@@ -101,12 +113,12 @@
       {:else}
         {@const value = getValue(input, { styles, item })}
         <div class="input">
-          <p><T id="edit.{input.name}" /></p>
+          <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
           <svelte:component
             this={inputs[input.input]}
             {...input.values || {}}
             {value}
-            checked={item?.auto || false}
+            checked={item?.[input.id] || false}
             on:click={(e) => valueChange(e, input)}
             on:input={(e) => valueChange(e, input)}
             on:checked={(e) => valueChange(e, input)}
