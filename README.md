@@ -15,8 +15,8 @@
 
 ## Screenshots
 
-<img width="49%" src="https://user-images.githubusercontent.com/17619496/188235237-45212f56-8f36-4526-8033-20969eb92cf8.png">
-<img width="49%" src="https://user-images.githubusercontent.com/17619496/188235253-56448f25-7d5a-4bc1-a375-adf26e9ab96b.png">
+<img src="https://user-images.githubusercontent.com/17619496/188235237-45212f56-8f36-4526-8033-20969eb92cf8.png">
+<img src="https://user-images.githubusercontent.com/17619496/188235253-56448f25-7d5a-4bc1-a375-adf26e9ab96b.png">
 
 ## Short description
 
