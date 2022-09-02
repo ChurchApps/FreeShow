@@ -467,6 +467,7 @@
   },
   "items": {
     "text": "Caixa de texto",
+    "media": "Mídia",
     "image": "Imagen",
     "video": "Vídeo",
     "mirror": "Mirror",

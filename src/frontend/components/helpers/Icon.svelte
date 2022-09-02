@@ -33,7 +33,7 @@
   class:fill
   class:select
   on:click={click}
-  style="{$$props.style || ''} min-width: {width}"
+  style="{$$props.style || ''};min-width: {width}"
   {width}
   {height}
   viewBox="0 0 {box} {box}"

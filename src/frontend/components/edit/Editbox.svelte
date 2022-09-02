@@ -172,7 +172,7 @@
   }
 
   $: {
-    console.log("ITEM", JSON.parse(JSON.stringify(item)))
+    // console.log("ITEM", JSON.parse(JSON.stringify(item)))
 
     // style hash
     let s = ""
@@ -184,7 +184,6 @@
       })
     })
 
-    console.log(currentStyle, s)
     // dont replace while typing
     // && (window.getSelection() === null || window.getSelection()!.type === "None")
     if (currentStyle !== s) getStyle()

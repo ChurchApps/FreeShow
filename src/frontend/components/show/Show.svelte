@@ -92,7 +92,7 @@
   function onVideoClick(e: any) {
     if ($outLocked) return
 
-    let bg: any = { type: show!.type, startAt: e.ctrlKey || e.metaKey ? videoTime : 0, loop: false, filter, flipped }
+    let bg: any = { type: show!.type, startAt: e.ctrlKey || e.metaKey ? videoTime : 0, loop: false, filter, flipped, fit }
 
     if (show!.type === "player") bg.id = show!.id
     else {
@@ -111,24 +111,12 @@
 
   let filter = ""
   let flipped = false
+  let fit = "contain"
 
-  // $: {
-  //   if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject].shows[$activeShow.index]?.filter) {
-  //     let style = ""
-  //     Object.entries($projects[$activeProject].shows[$activeShow.index].filter!).forEach(([id, a]: any) => (style += ` ${id}(${a})`))
-  //     filter = style
-  //   } else filter = ""
-  // }
-  $: {
-    if (show && $media[show.id]) {
-      let style = ""
-      Object.entries($media[show.id].filter).forEach(([id, a]: any) => (style += ` ${id}(${a})`))
-      filter = style
-      flipped = $media[show.id].flipped || false
-    } else {
-      filter = ""
-      flipped = false
-    }
+  $: if (show) {
+    filter = $media[show.id]?.filter || ""
+    flipped = $media[show.id]?.flipped || false
+    fit = $media[show.id]?.fit || "contain"
   }
 </script>
 
@@ -192,11 +180,15 @@
               icon="play"
               size={10}
               on:click={() => {
-                if (!$outLocked) setOutput("background", { path: show?.id, filter })
+                if (!$outLocked) setOutput("background", { path: show?.id, filter, flipped, fit })
               }}
               title={$dictionary.media?.show}
             >
-              <Image style="width: 100%;height: 100%;object-fit: contain;filter: {filter};" src={show.id} alt={show.name || ""} />
+              <Image
+                style="width: 100%;height: 100%;object-fit: contain;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''};object-fit: {fit}"
+                src={show.id}
+                alt={show.name || ""}
+              />
             </HoverButton>
           </div>
         {/if}

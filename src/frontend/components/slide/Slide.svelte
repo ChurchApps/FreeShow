@@ -1,14 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte"
+  import type { MediaFit } from "../../../types/Main"
   import type { Show, Slide, SlideData } from "../../../types/Show"
-  import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, outputs, overlays, showsCache, slidesOptions } from "../../stores"
+  import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, media, outputs, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import Editbox from "../edit/Editbox.svelte"
   import { getItemText } from "../edit/scripts/textStyle"
   import { getContrast } from "../helpers/color"
   import { GetLayoutRef } from "../helpers/get"
   import { getActiveOutputs, getResolution } from "../helpers/output"
-  import { getMediaFilter, getMediaFlipped } from "../helpers/showActions"
+  import { getMediaFilter } from "../helpers/showActions"
   import SelectElem from "../system/SelectElem.svelte"
   import Actions from "./Actions.svelte"
   import Icons from "./Icons.svelte"
@@ -48,12 +49,16 @@
   let duration: number = 0
   // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
   // $: name = full_name.slice(0, full_name.lastIndexOf("."))
+
   let filter: string = ""
   let flipped: boolean = false
+  let fit: MediaFit = "contain"
+
   $: if (background?.path) {
     // TODO: use show filter if existing
     filter = getMediaFilter(background.path)
-    flipped = getMediaFlipped(background.path)
+    flipped = $media[background.path]?.flipped || false
+    fit = $media[background.path]?.fit || "contain"
   }
 
   $: group = slide.group
@@ -255,6 +260,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                   type={background.type !== "player" ? background.type : null}
                   {filter}
                   {flipped}
+                  {fit}
                   bind:duration
                 />
               </div>

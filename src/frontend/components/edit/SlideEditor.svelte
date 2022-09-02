@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { activeEdit, activeShow, outputs, showsCache } from "../../stores"
+  import type { MediaFit } from "../../../types/Main"
+
+  import { activeEdit, activeShow, media, outputs, showsCache } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import { history } from "../helpers/history"
   import { getActiveOutputs, getResolution } from "../helpers/output"
-  import { getMediaFilter, getMediaFlipped } from "../helpers/showActions"
+  import { getMediaFilter } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
   import { getStyles } from "../helpers/style"
   import T from "../helpers/T.svelte"
@@ -37,10 +39,13 @@
 
   let filter: string = ""
   let flipped: boolean = false
+  let fit: MediaFit = "contain"
+
   $: if (background?.path) {
     // TODO: use show filter if existing
     filter = getMediaFilter(background.path)
-    flipped = getMediaFlipped(background.path)
+    flipped = $media[background.path]?.flipped || false
+    fit = $media[background.path]?.fit || "contain"
   }
 
   $: {
@@ -107,7 +112,7 @@
       {#if !altKeyPressed && background}
         {#key background.path}
           <div class="background" style="zoom: {1 / ratio};opacity: 0.5;">
-            <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} />
+            <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
           </div>
         {/key}
       {/if}

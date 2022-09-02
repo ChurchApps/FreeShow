@@ -1,10 +1,12 @@
 <script lang="ts">
   import { OUTPUT } from "../../../types/Channels"
+  import type { MediaFit } from "../../../types/Main"
   import type { Transition } from "../../../types/Show"
-  import { audioChannels, mediaFolders, playingVideos, videoExtensions, volume } from "../../stores"
+  import { audioChannels, mediaFolders, playingVideos } from "../../stores"
   import { send } from "../../utils/request"
   import { custom } from "../../utils/transitions"
   import { analyseAudio, getAnalyser } from "../helpers/audio"
+  import Media from "../media/Media.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Player from "../system/Player.svelte"
   import Camera from "./Camera.svelte"
@@ -32,13 +34,14 @@
     if ($mediaFolders[id].path?.includes("\\")) seperator = "\\"
     path = $mediaFolders[id].path + seperator + name || ""
   }
-  // $: extension = path?.match(/\.[0-9a-z]+$/i)?.[0]! || ""
-  // $: isVideo = extension ? $videoExtensions.includes(extension.substring(1)) : false
-  $: extension = path ? path.substring(path.lastIndexOf(".") + 1) : ""
-  $: isVideo = extension ? $videoExtensions.includes(extension) : false
 
-  // $: if ($outputWindow && !videoData.muted) videoData.muted = $outputWindow
-  let alt = "Could not find image!"
+  // // $: extension = path?.match(/\.[0-9a-z]+$/i)?.[0]! || ""
+  // // $: isVideo = extension ? $videoExtensions.includes(extension.substring(1)) : false
+  // $: extension = getExtension(path)
+  // $: isVideo = extension ? $videoExtensions.includes(extension) : false
+
+  // // $: if ($outputWindow && !videoData.muted) videoData.muted = $outputWindow
+  // let alt = "Could not find image!"
 
   // $: outputId = getActiveOutputs($outputs)[0]
   // $: currentOutput = $outputs[outputId]
@@ -52,8 +55,6 @@
 
   let width: number = 0
   let height: number = 0
-  let filter: string = ""
-  let flipped: boolean = false
 
   let hasLoaded: boolean = false
   let autoMute: boolean = false
@@ -81,9 +82,7 @@
     hasLoaded = false
     console.log("PLAYING")
 
-    videoData.paused = true
     setTimeout(() => {
-      videoTime = startAt || 0
       send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime })
       setTimeout(() => send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime }), 100)
 
@@ -94,10 +93,7 @@
         autoMute = false
         videoData.muted = false
       }
-
-      videoData.paused = false
-      startAt = 0
-    }, 50)
+    }, 100)
   }
 
   // let timeout: any = null
@@ -111,21 +107,16 @@
 
   $: console.log(mirror, videoData.muted)
 
-  function updateFilter() {
-    let temp: any = { ...background }
-    filter = ""
-    filter = temp.filter
-    flipped = temp.flipped
-  }
+  let filter: string = ""
+  let flipped: boolean = false
+  let fit: MediaFit = "contain"
 
   $: if (background !== null) updateFilter()
-  $: if (type === "video") setUpdater()
-  // let bg: any = null
-  let oldFilter: string = ""
-  setUpdater()
-  function setUpdater() {
-    if (oldFilter === filter) videoTime = 0
-    else oldFilter = filter
+  function updateFilter() {
+    let temp: any = { ...background }
+    filter = temp.filter || ""
+    flipped = temp.flipped || false
+    fit = temp.fit || "contain"
   }
 
   // only output window
@@ -149,36 +140,9 @@
 
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
-  {#if isVideo}
-    <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
-      <video
-        class="media"
-        style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};filter: {filter};{flipped
-          ? 'transform: scaleX(-1);'
-          : ''}"
-        bind:this={video}
-        on:loadedmetadata={loaded}
-        on:playing={playing}
-        bind:currentTime={videoTime}
-        bind:paused={videoData.paused}
-        bind:duration={videoData.duration}
-        bind:volume={$volume}
-        muted={mirror ? true : videoData.muted}
-        src={path}
-        autoplay
-        loop={videoData.loop || false}
-      >
-        <track kind="captions" />
-      </video>
-    </div>
-  {:else}
-    {#key path}
-      <div transition:custom={transition}>
-        <!-- style={getStyleResolution({ width: image?.naturalWidth || 0, height: image?.naturalHeight || 0 }, width, height, "cover")} -->
-        <img class="media" style="object-fit: contain;width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" src={path} {alt} draggable="false" />
-      </div>
-    {/key}
-  {/if}
+  <div transition:custom={transition}>
+    <Media {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing={playing} on:loaded={loaded} />
+  </div>
 {:else if type === "screen"}
   {#key id}
     <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
@@ -205,13 +169,6 @@
 {/if}
 
 <style>
-  /* hide alt text */
-  img {
-    text-indent: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
   div {
     /* position: relative; */
     position: absolute;

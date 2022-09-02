@@ -64,11 +64,12 @@ export interface ActiveEdit {
   items: number[]
 }
 
+export type MediaFit = "contain" | "cover" | "fill"
 export interface Media {
   [key: string]: {
-    fill?: "fill" | "fit"
     filter: any
     flipped?: boolean
+    fit?: MediaFit
     favourite?: boolean
     audio?: boolean
   }

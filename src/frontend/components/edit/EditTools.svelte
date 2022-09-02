@@ -10,7 +10,7 @@
   import Button from "../inputs/Button.svelte"
   import Tabs from "../main/Tabs.svelte"
   import Center from "../system/Center.svelte"
-  import { boxes } from "./tools/boxes"
+  import { boxes } from "./values/boxes"
   import BoxStyle from "./tools/BoxStyle.svelte"
   import Items from "./tools/Items.svelte"
   import ItemStyle from "./tools/ItemStyle.svelte"
@@ -177,9 +177,9 @@
       return
     }
 
-    // TODO: reset timer/icon/++ style
-
     if (active !== "text") return
+
+    // TODO: reset timer/icon/media/mirror style
 
     let values: any = []
     items.forEach((item) => {

@@ -1,4 +1,4 @@
-import type { EditInput } from "../tools/boxes"
+import type { EditInput } from "../values/boxes"
 
 export function getOriginalValue(boxEdit: { [key: string]: EditInput[] }, key: string): string {
   let values: any[] = []
@@ -20,3 +20,7 @@ export function removeExtension(value: string | number | boolean, extension: str
   if (!extension || typeof value !== "string") return value
   return value.replace(/[^0-9.-]/g, "")
 }
+
+// export function editValue(id: "box" | "media", key: string, value: any) {
+
+// }

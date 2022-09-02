@@ -43,6 +43,12 @@
       </span>
     </div>
     <div style="display: flex;justify-content: space-between;">
+      <span>Icons8 (Icons)</span>
+      <span>
+        <a href="#void" on:click={() => openURL("https://icons8.com")}>https://icons8.com</a>
+      </span>
+    </div>
+    <div style="display: flex;justify-content: space-between;">
       <span>Electron (Cross-platform desktop apps)</span>
       <span>
         <a href="#void" on:click={() => openURL("https://www.electronjs.org/")}>https://www.electronjs.org/</a>

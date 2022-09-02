@@ -467,6 +467,7 @@
   },
   "items": {
     "text": "Cuadro de texto",
+    "media": "Medios",
     "image": "Imagen",
     "video": "Video",
     "mirror": "Mirror",

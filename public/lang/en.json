@@ -467,6 +467,7 @@
   },
   "items": {
     "text": "Textbox",
+    "media": "Media",
     "image": "Image",
     "video": "Video",
     "mirror": "Mirror",

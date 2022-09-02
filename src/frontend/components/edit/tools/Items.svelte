@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Item } from "../../../../types/Show"
+  import type { Item, ItemType } from "../../../../types/Show"
   import { activeEdit, activePopup, activeShow, dictionary, overlays, selected, showsCache, templates } from "../../../stores"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
@@ -9,6 +9,7 @@
   import IconButton from "../../inputs/IconButton.svelte"
   import Panel from "../../system/Panel.svelte"
   import { addItem } from "../scripts/addItem"
+  import { boxes } from "../values/boxes"
 
   export let allSlideItems: Item[]
   $: invertedItemList = JSON.parse(JSON.stringify(allSlideItems)).reverse()
@@ -43,6 +44,8 @@
       _show("active").slides([slideID]).set({ key: "items", value: items })
     }
   }
+
+  const getType = (item: any) => (item.type as ItemType) || "text"
 </script>
 
 <Panel>
@@ -77,6 +80,7 @@
   <div class="items" style="display: flex;flex-direction: column;">
     {#each invertedItemList as currentItem, i}
       {@const index = invertedItemList.length - i - 1}
+      {@const type = getType(currentItem)}
       <Button
         style="width: 100%;justify-content: space-between;"
         active={$activeEdit.items.includes(index)}
@@ -96,8 +100,8 @@
       >
         <span style="display: flex;">
           <p style="margin-right: 10px;">{i + 1}</p>
-          <Icon id={currentItem.type || "text"} />
-          <p style="margin-left: 10px;">{$dictionary.items?.[currentItem.type || "text"]}</p>
+          <Icon id={boxes[type]?.icon || "text"} />
+          <p style="margin-left: 10px;">{$dictionary.items?.[type]}</p>
         </span>
         <!-- {#if i < allSlideItems.length - 1}
           <Icon id="down" />

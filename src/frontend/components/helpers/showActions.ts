@@ -196,13 +196,11 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
 }
 
 export function getMediaFilter(bakgroundPath: string) {
-  let filter = ""
-  let mediaFilter = get(media)[bakgroundPath]?.filter
-  if (mediaFilter) Object.entries(mediaFilter).forEach(([id, a]: any) => (filter += ` ${id}(${a})`))
-  return filter
-}
-export function getMediaFlipped(bakgroundPath: string) {
-  return get(media)[bakgroundPath]?.flipped || false
+  // let filter = ""
+  // let mediaFilter = get(media)[bakgroundPath]?.filter
+  // if (mediaFilter) Object.entries(mediaFilter).forEach(([id, a]: any) => (filter += ` ${id}(${a})`))
+  // return filter
+  return get(media)[bakgroundPath]?.filter || ""
 }
 
 export function updateOut(id: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
@@ -225,8 +223,6 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   if (data.background) {
     let bg = _show(id).get("media")[data.background!]
     if (bg) {
-      let filter = getMediaFilter(bg.path)
-      let flipped = getMediaFlipped(bg.path)
       let bgData: any = {
         name: bg.name,
         type: bg.type || (get(videoExtensions).includes(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)) ? "video" : "image"),
@@ -234,8 +230,9 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
         id: bg.id,
         muted: bg.muted !== false,
         loop: bg.loop !== false,
-        filter,
-        flipped,
+        filter: getMediaFilter(bg.path),
+        flipped: get(media)[bg.path]?.flipped || false,
+        fit: get(media)[bg.path]?.fit || "contain",
       }
       // outBackground.set(bgData)
       setOutput("background", bgData, false, outputId)

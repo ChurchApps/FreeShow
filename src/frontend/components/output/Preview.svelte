@@ -42,6 +42,7 @@
     // presenter controller keys
     Escape: () => {
       // TODO: dont toggle drawer
+      if ($activePage !== "show") return
       if ($presenterControllerKeys) callClear = true
       else if (fullscreen) fullscreen = false
     },
@@ -58,6 +59,7 @@
       if (!$outLocked) clearAudio()
     },
     ".": () => {
+      if ($activePage !== "show") return
       // if ($presenterControllerKeys)
       callClear = true
     },

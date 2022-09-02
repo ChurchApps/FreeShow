@@ -4,9 +4,8 @@
   import { history } from "../../helpers/history"
   import { _show } from "../../helpers/shows"
   import { getStyles } from "../../helpers/style"
-  import { getOriginalValue } from "../scripts/edit"
   import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
-  import { boxes } from "./boxes"
+  import { boxes } from "../values/boxes"
   import EditValues from "./EditValues.svelte"
 
   export let id: ItemType
@@ -108,10 +107,7 @@
 
   function updateValue(e: any) {
     let input = e.detail
-    console.log(input)
-
-    if (input.input === "dropdown") input.value = input.value.id
-    if (input.extension) input.value += input.extension
+    // console.log(input)
 
     if (input.id !== "style") {
       setValue(input)
@@ -119,14 +115,6 @@
     }
 
     // console.log("original", getOriginalValue(box!.edit, input.key))
-
-    // the changed value is part af a larger string
-    if (input.valueIndex !== undefined) {
-      if (!box) return
-      let actualValue = (styles[input.key] || getOriginalValue(box.edit, input.key)).split(" ")
-      actualValue[input.valueIndex] = input.value
-      input.value = actualValue.join(" ")
-    }
     console.log(input.value)
 
     let allItems: number[] = $activeEdit.items
@@ -167,7 +155,7 @@
     // TODO: history
     // TODO: remove unused (if default)
 
-    console.log(newData, input)
+    // console.log(newData, input)
 
     if (!newData.length) return
 

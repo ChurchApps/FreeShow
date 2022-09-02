@@ -2,7 +2,7 @@ import type { ItemType } from "./../../../../types/Show"
 
 export type Box = {
   [key in ItemType]?: {
-    name: string
+    name?: string
     icon: string
     edit: {
       [key: string]: EditInput[]
@@ -22,15 +22,22 @@ export type EditInput = {
   values?: any
 }
 
+const mediaFitOptions: any[] = [
+  { id: "contain", name: "$:media.contain:$" },
+  { id: "cover", name: "$:media.cover:$" },
+  { id: "fill", name: "$:media.fill:$" },
+  // { id: "scale-down", name: "Scale down" },
+]
+
 export const boxes: Box = {
   text: {
-    name: "settings.text",
+    // name: "items.text",
     icon: "text",
     edit: {
       font: [
         { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
         { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-        { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "item.autoSize" },
+        { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px" }, // , disabled: "item.autoSize"
         { name: "auto_size", id: "auto", input: "checkbox", value: false },
       ],
       style: [
@@ -53,25 +60,11 @@ export const boxes: Box = {
     },
   },
   media: {
-    name: "settings.media",
     icon: "image",
     edit: {
       default: [
         { id: "src", input: "media" },
-        {
-          name: "media.fit",
-          id: "fit",
-          input: "dropdown",
-          value: "contain",
-          values: {
-            options: [
-              { id: "contain", name: "$:media.contain:$", translate: true },
-              { id: "cover", name: "$:media.cover:$", translate: true },
-              { id: "fill", name: "$:media.fill:$", translate: true },
-              // { id: "scale-down", name: "Scale down" },
-            ],
-          },
-        },
+        { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
         { name: "media.flip", id: "flipped", input: "checkbox", value: false },
       ],
       filters: [
@@ -94,7 +87,6 @@ export const boxes: Box = {
     },
   },
   timer: {
-    name: "settings.timer",
     icon: "timer",
     edit: {
       default: [{ input: "editTimer" }],
@@ -120,7 +112,6 @@ export const boxes: Box = {
   },
   // mirror other shows content on the same slide index
   mirror: {
-    name: "settings.mirror",
     icon: "mirror",
     edit: {
       default: [{ name: "remote.show", id: "mirror", key: "show", input: "dropdown", value: "", values: { options: [] } }],
@@ -128,14 +119,12 @@ export const boxes: Box = {
     },
   },
   icon: {
-    name: "settings.icon",
     icon: "icon",
     edit: {
       default: [{ name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }],
     },
   },
   // item: {
-  //   name: "settings.item",
   //   icon: "item",
   //   edit: {
   //     element: [{
