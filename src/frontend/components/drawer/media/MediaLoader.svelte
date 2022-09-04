@@ -1,4 +1,6 @@
 <script lang="ts">
+import type { MediaFit } from "../../../../types/Main";
+
   import { mediaCache, outputs, videoExtensions } from "../../../stores"
   import { getResolution } from "../../helpers/output"
   import Camera from "../../output/Camera.svelte"
@@ -9,11 +11,15 @@
   export let path: string
   export let filter: any = ""
   export let flipped: boolean = false
+  export let fit: MediaFit = "contain"
   export let type: null | "media" | "image" | "video" | "camera" | "screen" | "audio" = null
   export let hover: boolean = false
   export let loaded: boolean = type === "image"
   export let duration: number = 0
   export let videoElem: any = null
+
+// TODO: fit
+$: console.log(fit)
 
   // TODO: update
   $: if ((!type || type === "image") && canvas) {

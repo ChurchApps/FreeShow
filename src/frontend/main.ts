@@ -1,21 +1,9 @@
+// ----- FreeShow -----
+// Svelte app entry point
+
 import "svelte"
 import App from "./App.svelte"
 
-declare global {
-  interface Window {
-    api?: any
-  }
-  // TODO: remove
-  interface EventTarget {
-    play?: any // VideoStream
-    classList?: any // Folder
-    closest?: any // Dropdown
-  }
-}
-
-const app = new App({
-  target: document.body,
-  props: {},
-})
+const app = new App({ target: document.body })
 
 export default app

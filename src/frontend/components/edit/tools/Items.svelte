@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Item } from "../../../../types/Show"
+  import type { Item, ItemType } from "../../../../types/Show"
   import { activeEdit, activePopup, activeShow, dictionary, overlays, selected, showsCache, templates } from "../../../stores"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
@@ -9,6 +9,7 @@
   import IconButton from "../../inputs/IconButton.svelte"
   import Panel from "../../system/Panel.svelte"
   import { addItem } from "../scripts/addItem"
+  import { boxes } from "../values/boxes"
 
   export let allSlideItems: Item[]
   $: invertedItemList = JSON.parse(JSON.stringify(allSlideItems)).reverse()
@@ -43,16 +44,18 @@
       _show("active").slides([slideID]).set({ key: "items", value: items })
     }
   }
+
+  const getType = (item: any) => (item.type as ItemType) || "text"
 </script>
 
 <Panel>
   <h6><T id="edit.add_items" /></h6>
   <div class="grid">
     <IconButton title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
-    <IconButton title={$dictionary.items?.image} disabled icon="image" />
-    <!-- <IconButton title={$dictionary.items?.video} disabled icon="video" /> -->
-    <!-- <IconButton title={$dictionary.items?.audio} disabled icon="audio" /> -->
-    <IconButton title={$dictionary.items?.live} disabled icon="camera" />
+    <IconButton title={$dictionary.items?.image} icon="image" on:click={() => addItem("media")} />
+    <IconButton title={$dictionary.items?.mirror} icon="mirror" on:click={() => addItem("mirror")} />
+    <!-- TODO: camera box -->
+    <!-- <IconButton title={$dictionary.items?.live} disabled icon="camera" /> -->
     <IconButton title={$dictionary.items?.timer} icon="timer" on:click={() => addItem("timer")} />
   </div>
   <div>
@@ -77,6 +80,7 @@
   <div class="items" style="display: flex;flex-direction: column;">
     {#each invertedItemList as currentItem, i}
       {@const index = invertedItemList.length - i - 1}
+      {@const type = getType(currentItem)}
       <Button
         style="width: 100%;justify-content: space-between;"
         active={$activeEdit.items.includes(index)}
@@ -96,8 +100,8 @@
       >
         <span style="display: flex;">
           <p style="margin-right: 10px;">{i + 1}</p>
-          <Icon id={currentItem.type || "text"} />
-          <p style="margin-left: 10px;">{$dictionary.items?.[currentItem.type || "text"]}</p>
+          <Icon id={boxes[type]?.icon || "text"} />
+          <p style="margin-left: 10px;">{$dictionary.items?.[type]}</p>
         </span>
         <!-- {#if i < allSlideItems.length - 1}
           <Icon id="down" />

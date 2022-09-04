@@ -1,12 +1,12 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-  import { activeShow, dictionary, outLocked, playingAudio, showsCache, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, media, outLocked, playingAudio, showsCache, videoExtensions } from "../../../stores"
   import { send } from "../../../utils/request"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import { playAudio } from "../../helpers/audio"
   import Icon from "../../helpers/Icon.svelte"
   import { findMatchingOut, setOutput } from "../../helpers/output"
-  import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
+  import { getMediaFilter } from "../../helpers/showActions"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -87,7 +87,8 @@
   {#if bgs.length || audio.length}
     {#each bgs as background}
       {@const filter = getMediaFilter(background.path)}
-      {@const flipped = getMediaFlipped(background.path)}
+      {@const flipped = $media[background.path]?.flipped || false}
+      {@const fit = $media[background.path]?.fit || "contain"}
       <SelectElem id="media" data={{ ...background }} draggable>
         <div class="item context #show_media" class:active={findMatchingOut(background.path)}>
           <HoverButton
@@ -96,15 +97,16 @@
             size={3}
             on:click={() => {
               if (!$outLocked) {
-                setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped })
-                send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
+                setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped, fit })
+                if (background.type === "video")
+                  send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
               }
             }}
             title={$dictionary.media?.play}
           >
             <!-- <div style="flex: 2;height: 50px;"> -->
             {#key background.path}
-              <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} />
+              <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} {fit} />
             {/key}
             <!-- </div> -->
           </HoverButton>
@@ -112,9 +114,7 @@
           {#if background.count > 1}
             <span style="color: var(--secondary);">{background.count}</span>
           {/if}
-          <!-- TODO: filters -->
           {#if background.type === "video"}
-            <!-- TODO: mute for each bakcground........ -->
             <Button style="flex: 0" center title={background.muted !== false ? "Unmute" : "Mute"} on:click={() => setBG(background.id, "muted", background.muted === false)}>
               <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
             </Button>

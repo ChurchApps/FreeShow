@@ -98,8 +98,14 @@
     c: () => {
       if ($selected.id) copy($selected)
       else if ($activeEdit.items) copy({ id: "item", data: $activeEdit })
+      else if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
     },
     v: () => paste(),
+    x: () => {
+      copy()
+      // TODO: delete
+      if ($selected.id === "slide") removeSlide({ sel: $selected })
+    },
     e: () => activePopup.set("export"),
     i: () => activePopup.set("import"),
     n: () => activePopup.set("show"),

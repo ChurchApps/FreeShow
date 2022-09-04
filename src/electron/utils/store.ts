@@ -1,33 +1,41 @@
-import Store = require("electron-store")
-import { defaultSettings, defaultStage, defaultThemes } from "./defaults"
+// ----- FreeShow -----
+// Get all user configs
 
-interface ElectronSettings {
-  loaded: boolean
-  maximized: boolean
-  width: number
-  height: number
-  x: number
-  y: number
+import Store from "electron-store"
+import { defaultConfig, defaultSettings, defaultStage, defaultThemes } from "./defaults"
+
+// MAIN WINDOW
+export const config = new Store<any>({ defaults: defaultConfig })
+
+// SETTINGS
+const settings = new Store({ name: "settings", defaults: defaultSettings })
+const themes = new Store({ name: "themes", defaults: defaultThemes })
+
+// PROJECTS
+const projects = new Store({ name: "projects", defaults: { projects: {}, folders: {} } })
+
+// SLIDES
+const shows = new Store({ name: "shows", defaults: {} })
+const stageShows = new Store({ name: "stage", defaults: defaultStage })
+const overlays = new Store({ name: "overlays", defaults: {} })
+const templates = new Store({ name: "templates", defaults: {} })
+
+// CALENDAR
+const events = new Store({ name: "events", defaults: {} })
+
+// MEDIA
+const media = new Store({ name: "media", defaults: {}, accessPropertiesByDotNotation: false })
+const cache = new Store({ name: "cache", defaults: {} })
+
+export const stores: any = {
+  SETTINGS: settings,
+  THEMES: themes,
+  PROJECTS: projects,
+  SHOWS: shows,
+  STAGE_SHOWS: stageShows,
+  OVERLAYS: overlays,
+  TEMPLATES: templates,
+  EVENTS: events,
+  MEDIA: media,
+  CACHE: cache,
 }
-
-export const electronSettings = new Store<ElectronSettings>({
-  defaults: {
-    loaded: false,
-    maximized: true,
-    width: 800,
-    height: 600,
-    x: 0,
-    y: 0,
-  },
-})
-
-export const settings = new Store<any>({ name: "settings", defaults: defaultSettings })
-export const shows = new Store<any>({ name: "shows", defaults: {} })
-export const stageShows = new Store<any>({ name: "stage", defaults: defaultStage })
-export const projects = new Store<any>({ name: "projects", defaults: { projects: {}, folders: {} } })
-export const overlays = new Store<any>({ name: "overlays", defaults: {} })
-export const templates = new Store<any>({ name: "templates", defaults: {} })
-export const events = new Store<any>({ name: "events", defaults: {} })
-export const media = new Store<any>({ name: "media", defaults: {}, accessPropertiesByDotNotation: false })
-export const themes = new Store<any>({ name: "themes", defaults: defaultThemes })
-export const cache = new Store<any>({ name: "cache", defaults: {} })

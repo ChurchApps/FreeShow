@@ -10,12 +10,11 @@
   import Button from "../inputs/Button.svelte"
   import Tabs from "../main/Tabs.svelte"
   import Center from "../system/Center.svelte"
-  import IconStyle from "./tools/IconStyle.svelte"
+  import { boxes } from "./values/boxes"
+  import BoxStyle from "./tools/BoxStyle.svelte"
   import Items from "./tools/Items.svelte"
   import ItemStyle from "./tools/ItemStyle.svelte"
   import SlideStyle from "./tools/SlideStyle.svelte"
-  import TextStyle from "./tools/TextStyle.svelte"
-  import TimerStyle from "./tools/TimerStyle.svelte"
 
   let tabs: TabsObj = {
     text: { name: "tools.text", icon: "text" },
@@ -24,7 +23,7 @@
     slide: { name: "tools.slide", icon: "options" }, // slide
   }
   let active: string = Object.keys(tabs)[0]
-  $: tabs.text.icon = item?.type || "text"
+  $: tabs.text.icon = item?.type && boxes[item.type] ? boxes[item.type]!.icon : "text"
 
   let slides: any[] = []
   $: if (
@@ -34,10 +33,12 @@
     slides = _show($activeEdit?.id || $activeShow?.id)
       .slides()
       .get()
-  $: if (!item?.lines && item?.type !== "timer" && item?.type !== "icon" && !tabs.text.disabled) {
+  // $: if (!item?.lines && item?.type !== "timer" && item?.type !== "icon" && !tabs.text.disabled) {
+  $: if (!item && !tabs.text.disabled) {
     active = "items"
     tabs.text.disabled = true
-  } else if ((item?.lines || item?.type === "timer" || item?.type === "icon") && tabs.text.disabled) {
+    // } else if ((item?.lines || item?.type === "timer" || item?.type === "icon") && tabs.text.disabled) {
+  } else if (item && tabs.text.disabled) {
     // TODO: false triggers (arranging items)
     // active = "text"
     tabs.text.disabled = false
@@ -74,8 +75,6 @@
   $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
   // select last item
   $: item = items?.length ? items[items.length - 1] : null
-
-  $: index = allSlideItems.findIndex((a) => JSON.stringify(a) === JSON.stringify(item))
 
   function applyStyleToAllSlides() {
     if (active === "text") {
@@ -180,6 +179,8 @@
 
     if (active !== "text") return
 
+    // TODO: reset timer/icon/media/mirror style
+
     let values: any = []
     items.forEach((item) => {
       if (item.lines) {
@@ -220,12 +221,8 @@
     <Tabs {tabs} bind:active labels={false} />
     {#if active === "text"}
       <div class="content">
-        {#if item?.type === "timer"}
-          <TimerStyle bind:item {index} />
-        {:else if item?.type === "icon"}
-          <IconStyle bind:item {index} />
-        {:else if item?.lines}
-          <TextStyle bind:allSlideItems bind:item />
+        {#if item}
+          <BoxStyle id={item?.type || "text"} bind:allSlideItems bind:item />
         {:else}
           <Center faded>
             <T id="empty.items" />

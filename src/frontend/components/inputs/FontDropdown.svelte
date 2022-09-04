@@ -1,8 +1,9 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
-  import { createEventDispatcher } from "svelte"
+  import { createEventDispatcher, onMount } from "svelte"
   import { receive, send } from "../../utils/request"
   import { MAIN } from "../../../types/Channels"
+  import { systemFonts } from "../../stores"
 
   export let system: boolean = false
 
@@ -17,17 +18,26 @@
     // "sans-serif",
   ]
 
-  send(MAIN, ["GET_SYSTEM_FONTS"])
+  onMount(() => {
+    if ($systemFonts.length) addFonts($systemFonts)
+    else send(MAIN, ["GET_SYSTEM_FONTS"])
+  })
+
   receive(MAIN, {
-    GET_SYSTEM_FONTS: (systemFonts: string[]) => {
-      // join and remove duplicates
-      fonts = [...new Set([...fonts, ...systemFonts])]
-      // sort
-      fonts = fonts.sort((a, b) => a.localeCompare(b))
-      // add default app font
-      if (system) fonts = ["", ...fonts]
+    GET_SYSTEM_FONTS: (fonts: string[]) => {
+      systemFonts.set(fonts)
+      addFonts(fonts)
     },
   })
+
+  function addFonts(newFonts: string[]) {
+    // join and remove duplicates
+    fonts = [...new Set([...fonts, ...newFonts])]
+    // sort
+    fonts = fonts.sort((a, b) => a.localeCompare(b))
+    // add default app font
+    if (system) fonts = ["", ...fonts]
+  }
 
   export let value: string
   let active: boolean = false

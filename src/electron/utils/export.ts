@@ -1,8 +1,16 @@
-import { toApp } from "../index"
+// ----- FreeShow -----
+// Export as TXT or PDF
+// When exporting as PDF we create a new window and capture its content
+
+import { isProd, toApp } from "../index"
 import { join } from "path"
 import { BrowserWindow, ipcMain } from "electron"
 import fs from "fs"
 import { MAIN, EXPORT } from "../../types/Channels"
+import { exportOptions } from "./windowOptions"
+import { doesPathExist } from "./files"
+
+// ----- PDF -----
 
 const options: any = {
   marginsType: 1,
@@ -12,43 +20,31 @@ const options: any = {
   landscape: false,
 }
 
-export async function generatePDF(path: string) {
+export function generatePDF(path: string) {
   exportWindow?.webContents
     .printToPDF(options)
     .then((data: any) => {
       writeFile(path, ".pdf", data, undefined, (err: any) => {
-        if (err) exportError(err)
+        if (err) exportMessage(err)
         else exportWindow.webContents.send(EXPORT, { channel: "NEXT" })
       })
     })
-    .catch(exportError)
+    .catch(exportMessage)
 }
 
-function exportError(error: string[]) {
-  console.log(error)
-  toApp(MAIN, { channel: "ALERT", data: error })
+function exportMessage(message: string = "") {
+  toApp(MAIN, { channel: "ALERT", data: message })
   exportWindow?.close()
   exportWindow = null
 }
 
-const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
-
 let exportWindow: any = null
 export function createPDFWindow(data: any) {
-  exportWindow = new BrowserWindow({
-    // show: !isProd,
-    modal: true,
-    show: false,
-    webPreferences: {
-      nodeIntegration: true,
-      // contextIsolation: true,
-      // enableRemoteModule: false,
-      preload: join(__dirname, "..", "preload"), // use a preload script
-    },
-  })
+  exportWindow = new BrowserWindow(exportOptions)
 
-  const url: string = isProd ? `file://${join(__dirname, "..", "..", "..", "public", "index.html")}` : "http://localhost:3000"
-  exportWindow.loadURL(url)
+  // load path
+  if (isProd) exportWindow.loadFile("public/index.html")
+  else exportWindow.loadURL("http://localhost:3000")
 
   exportWindow.webContents.on("did-finish-load", () => {
     exportWindow.webContents.send(MAIN, { channel: "OUTPUT", data: "pdf" })
@@ -57,22 +53,14 @@ export function createPDFWindow(data: any) {
 }
 
 ipcMain.on(EXPORT, (_e, msg: any) => {
-  if (msg.channel === "DONE") {
-    toApp(MAIN, { channel: "ALERT", data: "export.exported" })
-    exportWindow?.close()
-    exportWindow = null
-  } else if (msg.channel === "EXPORT") {
-    toApp(MAIN, { channel: "ALERT", data: msg.data.name })
-    if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
-  }
+  if (msg.channel === "DONE") return exportMessage("export.exported")
+  if (msg.channel !== "EXPORT") return
+
+  toApp(MAIN, { channel: "ALERT", data: msg.data.name })
+  if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
 })
 
-function writeFile(path: string, extension: string, data: any, options: any = undefined, callback: any) {
-  let number = 0
-  console.log(path + (number ? "_" + number : "") + extension)
-  while (fs.existsSync(path + (number ? "_" + number : "") + extension)) number++
-  fs.writeFile(path + (number ? "_" + number : "") + extension, data, options, callback)
-}
+// ----- TXT -----
 
 export function exportTXT(data: any) {
   let msg: string = "export.exported"
@@ -84,6 +72,7 @@ export function exportTXT(data: any) {
   toApp(MAIN, { channel: "ALERT", data: msg })
 }
 
+// TODO: clean this
 function getSlidesText(show: any) {
   let text: string = ""
 
@@ -112,4 +101,17 @@ function getSlidesText(show: any) {
     })
   })
   return text
+}
+
+// ----- HELPERS -----
+
+function writeFile(path: string, extension: string, data: any, options: any = undefined, callback: any) {
+  let number = -1
+  do {
+    number++
+    path = path + (number ? "_" + number : "") + extension
+    // console.log(path)
+  } while (doesPathExist(path))
+
+  fs.writeFile(path, data, options, callback)
 }

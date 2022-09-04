@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { activeEdit, activeShow, clipboard, overlays, showsCache, templates } from "../../stores"
+import { activeEdit, activeShow, clipboard, overlays, selected, showsCache, templates } from "../../stores"
 import { history } from "./history"
 import { _show } from "./shows"
 
@@ -30,14 +30,19 @@ const copyData: any = {
   },
 }
 
-export function copy({ id, data }: any, getData: boolean = true) {
-  if (!id) return
+export function copy({ id, data }: any = {}, getData: boolean = true) {
+  let copy: any = { id, data }
+  if (get(selected).id) copy = get(selected)
+  else if (get(activeEdit).items.length) copy = { id: "item", data: get(activeEdit) }
+  else if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
 
-  if (getData && copyData[id]) data = copyData[id](data)
+  if (!copy) return
 
-  if (data) clipboard.set({ id, data })
+  if (getData && copyData[copy.id]) copy.data = copyData[copy.id](copy.data)
 
-  console.log("COPIED:", id)
+  if (copy.data) clipboard.set(copy)
+
+  console.log("COPIED:", copy.id)
   console.log("CLIPBOARD", get(clipboard))
 }
 
@@ -103,7 +108,16 @@ const paster: any = {
 
 export function paste() {
   let clip = get(clipboard)
-  if (clip.id === null) return
+  let activeElem: any = document.activeElement
+  if (clip.id === null || activeElem?.classList?.contains(".edit")) {
+    navigator.clipboard.readText().then((clipText: string) => {
+      // TODO: insert at caret pos
+      // TODO: paste in textbox
+      if (activeElem.nodeName === "INPUT" || activeElem.nodeName === "TEXTAREA") activeElem.value += clipText
+      else activeElem.innerHTML += clipText
+    })
+    return
+  }
 
   if (paster[clip.id]) {
     paster[clip.id](clip.data)

@@ -61,7 +61,7 @@
 <svelte:window on:mouseover={onMouseOver} />
 
 <div bind:this={elem} class="item" on:click={click} tabindex={0} on:keydown={keydown}>
-  <span style="display: flex;gap: 10px;">
+  <span style="display: flex;align-items: center;gap: 10px;">
     {#if menu?.icon}<Icon id={menu.icon} />{/if}
     {#key menu}
       <T id={menu?.label || id} />

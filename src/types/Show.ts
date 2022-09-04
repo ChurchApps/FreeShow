@@ -53,6 +53,12 @@ export interface Item {
   media?: any
   timer?: Timer
   type?: ItemType
+  mirror?: Mirror
+  src?: string
+  fit?: string
+  filter?: string
+  flipped?: boolean
+  // media: fit, startAt, endAt
   // tag?: string; // p, div????
 }
 
@@ -66,6 +72,10 @@ export interface Timer {
   time?: string
   // format?: string
   // paused?: boolean
+}
+
+export interface Mirror {
+  show?: string
 }
 
 export interface Line {
@@ -180,7 +190,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "shape" | "image" | "video" | "audio" | "icon" | "timer"
+export type ItemType = "text" | "shape" | "media" | "mirror" | "icon" | "timer" // "image" | "video"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

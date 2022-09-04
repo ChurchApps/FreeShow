@@ -99,4 +99,8 @@
     /* font-size: 1.5em; */
     /* font-weight: bold; */
   }
+
+  .input :global(input) {
+    padding: 5px;
+  }
 </style>

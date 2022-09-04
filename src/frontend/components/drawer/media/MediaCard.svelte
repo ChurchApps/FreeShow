@@ -1,8 +1,9 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
+  import type { MediaFit } from "../../../../types/Main"
   import { activeEdit, activePage, activeShow, media, mediaOptions, outLocked, outputs } from "../../../stores"
   import { findMatchingOut, setOutput } from "../../helpers/output"
-  import { getMediaFilter, getMediaFlipped } from "../../helpers/showActions"
+  import { getMediaFilter } from "../../helpers/showActions"
   import SelectElem from "../../system/SelectElem.svelte"
   import Card from "../Card.svelte"
   import IntersectionObserver from "./IntersectionObserver.svelte"
@@ -63,10 +64,12 @@
 
   let filter = ""
   let flipped = false
+  let fit: MediaFit = "contain"
 
   $: if (path) {
     filter = getMediaFilter(path)
-    flipped = getMediaFlipped(path)
+    flipped = $media[path]?.flipped || false
+    fit = $media[path]?.fit || "contain"
   }
 </script>
 
@@ -92,7 +95,7 @@
   <SelectElem id="media" data={{ name, path }} draggable fill>
     <IntersectionObserver class="observer" once let:intersecting>
       {#if intersecting}
-        <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} />
+        <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} />
       {/if}
     </IntersectionObserver>
   </SelectElem>

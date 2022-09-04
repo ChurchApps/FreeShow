@@ -1,8 +1,10 @@
-import { app, BrowserWindow } from "electron"
+import { BrowserWindow, screen } from "electron"
 import { join } from "path"
 import { mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
+import { Message } from "../../types/Socket"
 import { Output } from "./../../types/Output"
+import { outputOptions } from "./windowOptions"
 
 const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
@@ -43,38 +45,9 @@ export function removeOutput(id: string) {
   // send to app ?
 }
 
-let outputWindowSettings: any = {
-  alwaysOnTop: true, // keep window on top of other windows
-  resizable: false, // disable resizing on mac and windows
-  frame: false, // hide title/buttons
-  // fullscreen: true,
-  skipTaskbar: true, // hide taskbar
-
-  // parent: mainWindow!,
-  // modal: true,
-
-  // type: "toolbar", // hide from taskbar
-  // transparent: isProd, // disable interaction (resize)
-  // focusable: false, // makes non focusable
-  // titleBarStyle: "hidden", // hide titlebar
-  // kiosk: true, // fixed window over menu bar
-  // roundedCorners: false, // disable rounded corners on mac
-  backgroundColor: "#000000",
-  show: false,
-  webPreferences: {
-    // beta dev tools
-    devTools: !isProd || Number(app.getVersion()[0]) === 0,
-    preload: join(__dirname, "..", "preload"), // use a preload script
-    contextIsolation: true,
-    webSecurity: isProd, // get local files
-    allowRunningInsecureContent: false,
-  },
-}
 function createOutputWindow(options: any) {
-  // https://www.electronjs.org/docs/latest/api/browser-window
-
-  outputWindowSettings = { ...options.bounds, ...outputWindowSettings }
-  let window: BrowserWindow | null = new BrowserWindow(outputWindowSettings)
+  options = { ...options.bounds, ...outputOptions }
+  let window: BrowserWindow | null = new BrowserWindow(options)
 
   window.removeMenu() // hide menubar
   if (process.platform === "darwin") window.minimize() // hide on mac
@@ -264,4 +237,49 @@ export function sendToOutputWindow(msg: any) {
 
     window.webContents.send(OUTPUT, tempMsg)
   })
+}
+
+// RESPONSES
+
+const outputResponses: any = {
+  CREATE: (data: any) => createOutput(data),
+  DISPLAY: (data: any) => displayOutput(data),
+  UPDATE: (data: any) => updateOutput(data),
+  UPDATE_BOUNDS: (data: any) => updateBounds(data),
+  TO_FRONT: (data: any) => moveToFront(data),
+}
+
+export function receiveOutput(_e: any, msg: Message) {
+  if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)
+  if (outputResponses[msg.channel]) return outputResponses[msg.channel](msg.data)
+  sendToOutputWindow(msg)
+}
+
+// LISTENERS
+
+export function displayAdded(_e: any) {
+  // , display
+  // TODO: !outputWindow?.isEnabled()
+  // if (true) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
+
+  toApp(OUTPUT, { channel: "GET_DISPLAYS", data: screen.getAllDisplays() })
+}
+
+export function displayRemoved(_e: any) {
+  // TODO: ...
+  // let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
+  // let mainMonitor = screen.getDisplayNearestPoint({ x: mainWindow!.getBounds().x, y: mainWindow!.getBounds().y })
+  // if (outputMonitor.id === mainMonitor.id) {
+  //   // if (outputScreenId === display.id.toString()) {
+  //   outputWindow?.hide()
+  //   if (process.platform === "darwin") {
+  //     outputWindow?.setFullScreen(false)
+  //     setTimeout(() => {
+  //       outputWindow?.minimize()
+  //     }, 100)
+  //   }
+  //   toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
+  // }
+
+  toApp(OUTPUT, { channel: "GET_DISPLAYS", data: screen.getAllDisplays() })
 }

@@ -37,6 +37,7 @@ import {
   templateCategories,
   theme,
   themes,
+  timeFormat,
   timers,
   videoExtensions,
   webFavorites,
@@ -111,6 +112,7 @@ const updateList: { [key in SaveListSettings]: any } = {
   autoOutput: (v: any) => autoOutput.set(v),
   maxConnections: (v: any) => maxConnections.set(v),
   ports: (v: any) => ports.set(v),
+  timeFormat: (v: any) => timeFormat.set(v),
   outputs: (v: any) => {
     Object.keys(v).forEach((id: string) => {
       delete v[id].out

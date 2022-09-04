@@ -41,7 +41,7 @@
       // if (contextMenuLayouts[menus[1]]) {
       let menu: any[] = []
       menus.forEach((c2: string, i: number) => {
-        menu.push(...contextMenuLayouts[c2])
+        if (contextMenuLayouts[c2]) menu.push(...contextMenuLayouts[c2])
         if (i < menus.length - 1) menu.push("SEPERATOR")
       })
       return menu

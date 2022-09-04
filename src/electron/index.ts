@@ -1,27 +1,30 @@
-import { app, BrowserWindow, desktopCapturer, dialog, Display, ipcMain, Menu, screen } from "electron"
-import fs from "fs"
-import path, { join } from "path"
-import { URL } from "url"
-import { EXPORT, FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
-import { BIBLE, IMPORT } from "./../types/Channels"
-import { closeServers, startServers } from "./servers"
-import { template } from "./utils/menuTemplate"
-import { cache, electronSettings, events, media, overlays, projects, settings, shows, stageShows, templates, themes } from "./utils/store"
-// import checkForUpdates from "./utils/updater"
-import { createPDFWindow, exportTXT } from "./utils/export"
-import { importShow } from "./utils/import"
-import { closeAllOutputs, createOutput, displayOutput, moveToFront, sendToOutputWindow, updateBounds, updateOutput } from "./utils/output"
+// ----- FreeShow -----
+// This is the electron entry point
+
+import { app, BrowserWindow, desktopCapturer, ipcMain, Menu, Rectangle, screen, shell } from "electron"
 import { getFonts } from "font-list"
+import path from "path"
+import { EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { BIBLE, IMPORT } from "./../types/Channels"
+import { closeServers } from "./servers"
+import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { template } from "./utils/menuTemplate"
+import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./utils/output"
+import { loadScripture, loadShow, receiveMain, startExport, startImport } from "./utils/responses"
+import { config, stores } from "./utils/store"
+import { loadingOptions, mainOptions } from "./utils/windowOptions"
+// import checkForUpdates from "./utils/updater"
 
-const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
+// ----- STARTUP -----
 
-electronSettings.set("loaded", true)
-if (!electronSettings.get("loaded")) console.error("Could not get stored data!")
+// check if app's in production or not
+export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
-// keep a global reference of the window object to prevent it closing automatically when the JavaScript object is garbage collected.
-export let mainWindow: BrowserWindow | null
-let dialogClose: boolean = false
+// check if store works
+config.set("loaded", true)
+if (!config.get("loaded")) console.error("Could not get stored data!")
 
+// start when ready
 app.on("ready", () => {
   if (isProd) startApp()
   else setTimeout(startApp, 8000)
@@ -29,282 +32,31 @@ app.on("ready", () => {
 
 function startApp() {
   createLoading()
-  createWindow()
+  createMain()
 
-  displays = screen.getAllDisplays()
+  // listeners
+  screen.on("display-added", displayAdded)
+  screen.on("display-removed", displayRemoved)
 
-  // SCREEN LISTENERS
-  screen.on("display-added", (_e: any, display) => {
-    // TODO: !outputWindow?.isEnabled()
-    if (true) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
-
-    displays = screen.getAllDisplays()
-    toApp(OUTPUT, { channel: "GET_DISPLAYS", data: displays })
-  })
-  screen.on("display-removed", (_e: any) => {
-    // TODO: ...
-    // let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
-    // let mainMonitor = screen.getDisplayNearestPoint({ x: mainWindow!.getBounds().x, y: mainWindow!.getBounds().y })
-    // if (outputMonitor.id === mainMonitor.id) {
-    //   // if (outputScreenId === display.id.toString()) {
-    //   outputWindow?.hide()
-    //   if (process.platform === "darwin") {
-    //     outputWindow?.setFullScreen(false)
-    //     setTimeout(() => {
-    //       outputWindow?.minimize()
-    //     }, 100)
-    //   }
-    //   toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
-    // }
-
-    displays = screen.getAllDisplays()
-    toApp(OUTPUT, { channel: "GET_DISPLAYS", data: displays })
-  })
-
-  // https://gist.github.com/maximilian-lindsey/a446a7ee87838a62099d
-  // const LANserver =
+  // express
   require("./servers")
   // WIP: require("./webcam")
 
+  // set app title to app name on windows
   if (process.platform === "win32") app.setAppUserModelId(app.name)
 
-  // check for updates
+  // TODO: check for updates
   // if (isProd) checkForUpdates()
 }
 
-// LOADING WINDOW
-
-let loadingWindow: BrowserWindow | null = null
-const createLoading = () => {
-  loadingWindow = new BrowserWindow({
-    width: 500,
-    height: 300,
-    transparent: true,
-    frame: false,
-    alwaysOnTop: true,
-    resizable: false,
-    // show: false,
-    icon: "public/icon.png",
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      // , enableRemoteModule: true
-    },
-  })
-  loadingWindow.loadFile("public/loading.html")
-  // loadingWindow.once("ready-to-show", () => loadingWindow!.showInactive())
-
-  loadingWindow.on("closed", () => (loadingWindow = null))
-}
-
+// get LOADED message from frontend
 ipcMain.once("LOADED", () => {
-  if (electronSettings.get("maximized")) mainWindow!.maximize()
+  if (config.get("maximized")) mainWindow!.maximize()
   mainWindow?.show()
   loadingWindow?.close()
 })
 
-// MAIN WINDOW
-
-const createWindow = () => {
-  let width: number = electronSettings.get("width")
-  let height: number = electronSettings.get("height")
-  let x: number = electronSettings.get("x")
-  let y: number = electronSettings.get("y")
-
-  let screenBounds = screen.getPrimaryDisplay().bounds
-
-  mainWindow = new BrowserWindow({
-    width: width === 800 ? screenBounds.width : width,
-    height: height === 600 ? screenBounds.height : height,
-    x: x === 0 ? screenBounds.x : x,
-    y: y === 0 ? screenBounds.y : y,
-    icon: "public/icon.png",
-    frame: !isProd || process.platform !== "win32",
-    autoHideMenuBar: isProd && process.platform === "win32",
-    backgroundColor: "#2d313b",
-    show: false,
-    titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
-    trafficLightPosition: { x: 10, y: 17 },
-    webPreferences: {
-      // beta dev tools
-      devTools: !isProd || Number(app.getVersion()[0]) === 0,
-      preload: join(__dirname, "preload"), // use a preload script
-      webSecurity: isProd, // load local files
-      nodeIntegration: false,
-      contextIsolation: true,
-      allowRunningInsecureContent: false,
-    },
-  })
-
-  // app.asar/build/~electron/public/index.html
-  const url: string = isProd ? `file://${join(__dirname, "..", "..", "public", "index.html")}` : "http://localhost:3000"
-
-  mainWindow.loadURL(url).catch((err) => {
-    console.error("UNVALID URL:", JSON.stringify(err))
-    app.quit()
-  })
-
-  if (!isProd) mainWindow.webContents.openDevTools()
-
-  mainWindow.on("maximize", () => electronSettings.set("maximized", true))
-  mainWindow.on("unmaximize", () => electronSettings.set("maximized", false))
-  mainWindow.on("resize", () => {
-    let { width, height } = mainWindow!.getBounds()
-    electronSettings.set("width", width)
-    electronSettings.set("height", height)
-  })
-  mainWindow.on("move", () => {
-    let { x, y } = mainWindow!.getBounds()
-    electronSettings.set("x", x)
-    electronSettings.set("y", y)
-  })
-
-  mainWindow.on("close", (e) => {
-    if (!dialogClose) {
-      e.preventDefault()
-      toApp(MAIN, { channel: "CLOSE" })
-    }
-  })
-
-  mainWindow.on("closed", () => {
-    mainWindow = null
-    dialogClose = false
-    closeAllOutputs()
-
-    closeServers()
-    app.quit()
-  })
-  // mainWindow.once("ready-to-show", createOutputWindow)
-
-  // MENU
-  const menu = Menu.buildFromTemplate(template({}))
-  // mainWindow!.setMenu(menu)
-  Menu.setApplicationMenu(menu)
-}
-
-// Mac ctrl+Q
-// let quit = false
-// app.on("before-quit", () => (quit = true))
-// macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
-// https://stackoverflow.com/a/45156004
-// https://stackoverflow.com/a/58823019
-app.on("window-all-closed", () => {
-  // closeServers()
-  // || quit
-  // TODO: mac should not quit
-  // if (process.platform !== "darwin") {
-  app.quit()
-  // if (process.platform === "darwin") {
-  //   app.exit()
-  // }
-})
-app.on("will-quit", () => {
-  if (process.platform === "darwin") app.exit()
-})
-// mac activate
-// app.on("activate", () => {
-//   // startServers()
-//   mainWindow?.show()
-// })
-
-app.on("web-contents-created", (_e, contents) => {
-  // console.info(e)
-  // Security of webviews
-  contents.on("will-attach-webview", (_event, webPreferences, _params) => {
-    // console.info(event, params)
-    // Strip away preload scripts if unused or verify their location is legitimate
-    delete webPreferences.preload
-
-    // Verify URL being loaded
-    // if (!params.src.startsWith(`file://${join(__dirname)}`)) {
-    //   event.preventDefault(); // We do not open anything now
-    // }
-  })
-
-  contents.on("will-navigate", (event, navigationUrl) => {
-    const parsedURL = new URL(navigationUrl)
-    // In dev mode allow Hot Module Replacement
-    if (parsedURL.host !== "localhost:3000" && !isProd) {
-      console.warn("Stopped attempt to open: " + navigationUrl)
-      event.preventDefault()
-    } else if (isProd) {
-      console.warn("Stopped attempt to open: " + navigationUrl)
-      event.preventDefault()
-    }
-  })
-})
-
-const stores: any = {
-  SETTINGS: settings,
-  SHOWS: shows,
-  STAGE_SHOWS: stageShows,
-  PROJECTS: projects,
-  OVERLAYS: overlays,
-  TEMPLATES: templates,
-  EVENTS: events,
-  MEDIA: media,
-  THEMES: themes,
-  CACHE: cache,
-}
-
-// STORE
-ipcMain.on(STORE, (e, msg) => {
-  if (msg.channel === "SAVE") save(msg.data)
-  else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
-})
-
-// save
-function save(data: any) {
-  if (data.SETTINGS === null) settings.clear()
-  else {
-    Object.entries(data.SETTINGS).forEach(([key, value]: any) => {
-      if (JSON.stringify(settings.get(key)) !== JSON.stringify(value)) settings.set(key, value)
-    })
-  }
-
-  // save to files
-  Object.entries(stores).forEach(([key, store]: any) => {
-    if (data[key] && JSON.stringify(store.store) !== JSON.stringify(data[key])) {
-      store.clear()
-      store.set(data[key])
-    }
-  })
-
-  // check folder
-  if (!fs.existsSync(data.path)) {
-    data.path = updateOutputPath()
-    toApp(MAIN, { channel: "SHOWS_PATH", data: data.path })
-  }
-
-  // SCRIPTURES
-  if (data.scripturesCache) {
-    Object.entries(data.scripturesCache).forEach(([id, value]: any) => {
-      let p: string = path.resolve(app.getPath("documents"), "Bibles")
-      // create folder
-      if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true })
-      p = path.resolve(p, value.name + ".fsb")
-
-      // create or update file
-      if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
-        fs.writeFile(p, JSON.stringify([id, value]), (err): void => {
-          if (err) toApp(SHOW, { error: "no_write", err, id })
-        })
-      }
-    })
-  }
-
-  // SHOWS
-  if (data.showsCache) {
-    Object.entries(data.showsCache).forEach(([id, value]: any) => {
-      let p: string = path.resolve(data.path, value.name + ".show")
-      if (!fs.existsSync(p) || JSON.stringify([id, value]) !== fs.readFileSync(p, "utf8")) {
-        fs.writeFile(p, JSON.stringify([id, value]), (err): void => {
-          if (err) toApp(SHOW, { error: "no_write", err, id })
-        })
-      }
-    })
-  }
-}
+// ----- CUSTOM EXTENSION -----
 
 // Custom .show file
 
@@ -324,226 +76,219 @@ function save(data: any) {
 //   }
 // ],
 
-// IMPORT
-ipcMain.on(IMPORT, (_e, msg) => {
-  let files = dialog.showOpenDialogSync(mainWindow!, { properties: ["openFile", "multiSelections"], filters: [{ name: msg.data.name, extensions: msg.data.extensions }] })
-  if ((os.platform() !== "linux" || msg.channel !== "pdf") && (!msg.data.extensions || files?.length)) {
-    importShow(msg.channel, files || null)
-  }
-})
+// ----- LOADING WINDOW -----
 
-// EXPORT
-ipcMain.on(EXPORT, (_e, msg) => {
-  if (msg.channel === "GENERATE") {
-    // check folder
-    if (!msg.data.path) {
-      msg.data.path = dialog.showOpenDialogSync(mainWindow!, { properties: ["openDirectory"] })?.[0]
-      if (msg.data.path) toApp(MAIN, { channel: "EXPORT_PATH", data: msg.data.path })
-    }
-
-    if (msg.data.path) {
-      if (msg.data.type === "pdf") createPDFWindow(msg.data)
-      else if (msg.data.type === "txt") exportTXT(msg.data)
-    }
-  }
-})
-
-// BIBLE
-ipcMain.on(BIBLE, (e, msg) => {
-  let bible: any = "{}"
-  let p: string = path.resolve(app.getPath("documents"), "Bibles", msg.name + ".fsb")
-  if (fs.existsSync(p)) {
-    try {
-      bible = JSON.parse(fs.readFileSync(p, "utf8"))
-    } catch (err) {
-      console.log(err)
-    }
-    if (bible[0] === msg.id) {
-      e.reply(BIBLE, { id: msg.id, bible })
-    } else e.reply(BIBLE, { error: "not_found", id: msg.id, file_id: bible[0] })
-  } else e.reply(BIBLE, { error: "not_found", id: msg.id })
-})
-
-// SHOW
-ipcMain.on(SHOW, (e, msg) => {
-  // check folder
-  if (!fs.existsSync(msg.path)) {
-    msg.path = updateOutputPath()
-    toApp(MAIN, { channel: "SHOWS_PATH", data: msg.path })
-  }
-
-  let show: any = "{}"
-  let p: string = path.resolve(msg.path, msg.name + ".show")
-  if (fs.existsSync(p)) {
-    try {
-      show = JSON.parse(fs.readFileSync(p, "utf8"))
-    } catch (err) {
-      console.log(err)
-    }
-    if (show[0] === msg.id) {
-      e.reply(SHOW, { id: msg.id, show })
-    } else e.reply(SHOW, { error: "not_found", id: msg.id, file_id: show[0] })
-  } else e.reply(SHOW, { error: "not_found", id: msg.id })
-})
-
-export const toApp = (channel: string, ...args: any[]) => mainWindow?.webContents.send(channel, ...args)
-
-export const updateOutputPath = (p: any = null, name: string = "Shows") => {
-  if (!p) p = path.resolve(app.getPath("documents"), name)
-  if (!fs.existsSync(p)) p = fs.mkdirSync(p, { recursive: true })
-  return p
+let loadingWindow: BrowserWindow | null = null
+function createLoading() {
+  loadingWindow = new BrowserWindow(loadingOptions)
+  loadingWindow.loadFile("public/loading.html")
+  loadingWindow.on("closed", () => (loadingWindow = null))
 }
 
-export async function openURL(url: string) {
-  const { shell } = require("electron")
-  await shell.openExternal(url)
+// ----- MAIN WINDOW -----
+
+export let mainWindow: BrowserWindow | null = null
+let dialogClose: boolean = false // is unsaved
+function createMain() {
+  let bounds: Rectangle = config.get("bounds")
+  let screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
+
+  let options: any = {
+    width: !bounds.width || bounds.width === 800 ? screenBounds.width : bounds.width,
+    height: !bounds.height || bounds.height === 600 ? screenBounds.height : bounds.height,
+    x: !bounds.x ? screenBounds.x : bounds.x,
+    y: !bounds.y ? screenBounds.y : bounds.y,
+    frame: !isProd || process.platform !== "win32",
+    autoHideMenuBar: isProd && process.platform === "win32",
+  }
+
+  // create window
+  mainWindow = new BrowserWindow({ ...mainOptions, ...options })
+
+  // load path
+  if (isProd) mainWindow.loadFile("public/index.html").catch(err)
+  else mainWindow.loadURL("http://localhost:3000").catch(err)
+
+  function err(err: any) {
+    console.error("Something went wrong when loading index:", JSON.stringify(err))
+    app.quit()
+  }
+
+  // listeners
+  mainWindow.on("maximize", () => config.set("maximized", true))
+  mainWindow.on("unmaximize", () => config.set("maximized", false))
+  mainWindow.on("resize", () => config.set("bounds", mainWindow!.getBounds()))
+  mainWindow.on("move", () => config.set("bounds", mainWindow!.getBounds()))
+
+  mainWindow.on("close", (e) => {
+    if (!dialogClose) {
+      e.preventDefault()
+      toApp(MAIN, { channel: "CLOSE" })
+    }
+  })
+
+  mainWindow.on("closed", () => {
+    mainWindow = null
+    dialogClose = false
+    closeAllOutputs()
+    closeServers()
+    app.quit()
+  })
+
+  setGlobalMenu()
+
+  // open devtools
+  if (!isProd) mainWindow.webContents.openDevTools()
 }
 
-const os = require("os")
-ipcMain.on(MAIN, (e, msg) => {
-  let data: any
-  if (msg.channel === "GET_OS") data = { platform: os.platform(), name: os.hostname() }
-  else if (msg.channel === "GET_SYSTEM_FONTS") loadFonts()
-  else if (msg.channel === "VERSION") data = app.getVersion()
-  else if (msg.channel === "DISPLAY") {
-    // TODO: ...
-    // data = outputWindow?.isVisible()
-  } else if (msg.channel === "URL") openURL(msg.data)
-  else if (msg.channel === "START") startServers(msg.data)
-  else if (msg.channel === "STOP") closeServers()
-  else if (msg.channel === "IP") {
-    data = os.networkInterfaces()
-  } else if (msg.channel === "LANGUAGE") {
-    const menu = Menu.buildFromTemplate(template(msg.data.strings))
-    Menu.setApplicationMenu(menu)
-  } else if (msg.channel === "SHOWS_PATH") {
-    data = updateOutputPath()
-  } else if (msg.channel === "EXPORT_PATH") {
-    data = updateOutputPath(null, "Exports")
-  } else if (msg.channel === "GET_WINDOWS" || msg.channel === "GET_SCREENS") {
-    desktopCapturer.getSources({ types: [msg.channel === "GET_WINDOWS" ? "window" : "screen"] }).then(async (sources) => {
-      const screens: any[] = []
-      console.log(sources)
-      // , display_id: source.display_id
-      sources.map((source) => screens.push({ name: source.name, id: source.id }))
-      msg.data = screens
-      toApp(MAIN, msg)
-    })
-  } else if (msg.channel === "GET_DISPLAYS") {
-    // let outputScreens: any[] = []
-    // let mainInternal: boolean = screen.getDisplayMatching(mainWindow!.getBounds()).internal
-    // displays.forEach((display) => {
-    //   if (!mainInternal || !display.internal) outputScreens.push(display)
-    // })
-    // data = outputScreens
+export function closeMain() {
+  dialogClose = true
+  mainWindow?.close()
+}
 
-    // data = displays
-    data = screen.getAllDisplays()
-  } else if (msg.channel === "GET_PATHS") {
-    data = {
-      documents: app.getPath("documents"),
-      pictures: app.getPath("pictures"),
-      videos: app.getPath("videos"),
-      music: app.getPath("music"),
-      shows: path.resolve(app.getPath("documents"), "Shows"),
-    }
+export function maximizeMain() {
+  let isMaximized: boolean = !!mainWindow?.isMaximized()
+  toApp(MAIN, { channel: "MAXIMIZED", data: !isMaximized })
 
-    // create documents/Shows
-    updateOutputPath()
-  } else if (msg.channel === "OUTPUT") {
-    data = e.sender.id === mainWindow?.webContents.id ? "false" : "true"
-  } else if (msg.channel === "CLOSE") {
-    dialogClose = true
-    mainWindow?.close()
-  } else if (msg.channel === "MAXIMIZE") {
-    if (mainWindow?.isMaximized()) mainWindow?.unmaximize()
-    else mainWindow?.maximize()
-    msg.channel = "MAXIMIZED"
-    data = mainWindow?.isMaximized()
-  } else if (msg.channel === "MAXIMIZED") {
-    data = mainWindow?.isMaximized()
-  } else if (msg.channel === "MINIMIZE") {
-    mainWindow?.minimize()
-  } else if (msg.channel === "FULLSCREEN") {
-    mainWindow?.setFullScreen(!mainWindow?.isFullScreen())
-  } else {
-    data = msg
-  }
-  if (data !== undefined) e.reply(MAIN, { channel: msg.channel, data })
+  if (isMaximized) return mainWindow?.unmaximize()
+  mainWindow?.maximize()
+}
+
+// ----- GLOBAL LISTENERS -----
+
+// WIP: Mac ctrl+Q
+// let quit = false
+// app.on("before-quit", () => (quit = true))
+// macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
+// https://stackoverflow.com/a/45156004
+// https://stackoverflow.com/a/58823019
+
+// quit app when all windows have been closed
+app.on("window-all-closed", () => {
+  // closeServers()
+  app.quit()
 })
 
-async function loadFonts() {
+// close app completely on mac
+app.on("will-quit", () => {
+  if (process.platform === "darwin") app.exit()
+})
+
+// mac activate app after quit
+// app.on("activate", () => {
+//   // startServers()
+//   mainWindow?.show()
+// })
+
+app.on("web-contents-created", (_e, contents) => {
+  // console.info(e)
+  // Security of webviews
+  contents.on("will-attach-webview", (_event, webPreferences, _params) => {
+    // console.info(event, params)
+    // Strip away preload scripts if unused or verify their location is legitimate
+    delete webPreferences.preload
+
+    // Verify URL being loaded
+    // if (!params.src.startsWith(`file://${join(__dirname)}`)) {
+    //   event.preventDefault(); // We do not open anything now
+    // }
+  })
+
+  // disallow in app web redirects
+  contents.on("will-navigate", (e, navigationUrl) => {
+    const parsedURL = new URL(navigationUrl)
+    // In dev mode allow Hot Module Replacement
+    if (parsedURL.host !== "localhost:3000" && !isProd) {
+      console.warn("Stopped attempt to open: " + navigationUrl)
+      e.preventDefault()
+    } else if (isProd) {
+      console.warn("Stopped attempt to open: " + navigationUrl)
+      e.preventDefault()
+    }
+  })
+})
+
+// ----- STORE DATA -----
+
+ipcMain.on(STORE, (e, msg) => {
+  if (msg.channel === "SAVE") save(msg.data)
+  else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
+})
+
+function save(data: any) {
+  // settings
+  // if (data.SETTINGS === null) stores.settings.clear()
+  // else {
+  //   Object.entries(data.SETTINGS).forEach(([key, value]: any) => {
+  //     if (JSON.stringify(stores.settings.get(key)) !== JSON.stringify(value)) stores.settings.set(key, value)
+  //   })
+  // }
+
+  // save to files
+  Object.entries(stores).forEach(storeData)
+  function storeData([key, store]: any) {
+    if (!data[key] || JSON.stringify(store.store) === JSON.stringify(data[key])) return
+    store.clear()
+    store.set(data[key])
+  }
+
+  // shows
+  data.path = checkShowsFolder(data.path)
+  if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
+  function saveShow([id, value]: any) {
+    let p: string = path.resolve(data.path, value.name + ".show")
+    writeFile(p, JSON.stringify([id, value]), id)
+  }
+
+  // scriptures
+  if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
+  function saveScripture([id, value]: any) {
+    let p: string = path.resolve(getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
+    writeFile(p, JSON.stringify([id, value]), id)
+  }
+}
+
+// ----- LISTENERS -----
+
+ipcMain.on(IMPORT, startImport)
+ipcMain.on(EXPORT, startExport)
+ipcMain.on(BIBLE, loadScripture)
+ipcMain.on(SHOW, loadShow)
+ipcMain.on(MAIN, receiveMain)
+ipcMain.on(OUTPUT, receiveOutput)
+ipcMain.on(READ_FOLDER, getFolderContent)
+ipcMain.on(OPEN_FOLDER, selectFolder)
+ipcMain.on(OPEN_FILE, selectFiles)
+ipcMain.on(FILE_INFO, getFileInfo)
+
+// ----- HELPERS -----
+
+// send messages to main frontend
+export const toApp = (channel: string, ...args: any[]): void => mainWindow?.webContents.send(channel, ...args)
+
+// open url in default web browser
+export const openURL = (url: string) => shell.openExternal(url)
+
+// set/update global application menu
+export function setGlobalMenu(strings: any = {}) {
+  const menu: Menu = Menu.buildFromTemplate(template(strings))
+  Menu.setApplicationMenu(menu)
+}
+
+// get system fonts
+export function loadFonts() {
   getFonts({ disableQuoting: true })
-    .then((fonts: string[]) => {
-      toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: fonts })
-    })
-    .catch((err: any) => {
-      console.log(err)
-    })
+    .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: fonts }))
+    .catch((err: any) => console.log(err))
 }
 
-// OUTPUT WINDOW
-
-let displays: Display[] = []
-
-ipcMain.on(OUTPUT, (_e, msg: any) => {
-  if (msg.channel === "CREATE") createOutput(msg.data)
-  else if (msg.channel === "DISPLAY") displayOutput(msg.data)
-  else if (msg.channel === "UPDATE") updateOutput(msg.data)
-  else if (msg.channel === "UPDATE_BOUNDS") updateBounds(msg.data)
-  else if (msg.channel === "TO_FRONT") moveToFront(msg.data)
-  else if (msg.channel.includes("MAIN")) toApp(OUTPUT, msg)
-  else sendToOutputWindow(msg)
-})
-
-// LISTENERS
-
-ipcMain.on(OPEN_FOLDER, (_e, msg: { id: string; title: string | undefined }) => {
-  let folder: any = dialog.showOpenDialogSync(mainWindow!, { properties: ["openDirectory"], title: msg.title })
-  if (folder) toApp(OPEN_FOLDER, { id: msg.id, path: folder[0] })
-})
-
-ipcMain.on(READ_FOLDER, (_e, folderPath: string) => {
-  let fileList: string[] = []
-  let files: any[] = []
-  let error: any = null
-
-  try {
-    fileList = fs.readdirSync(folderPath)
-  } catch (e: any) {
-    error = e
-  }
-
-  for (const name of fileList) {
-    const pathToFile: string = path.join(folderPath, name)
-    let stat: any = null
-    try {
-      stat = fs.statSync(pathToFile)
-    } catch (e: any) {
-      error = e
-    }
-    if (stat) {
-      // const [extension] = name.match(/\.[0-9a-z]+$/i) || [""]
-      const extension = path.extname(pathToFile).substring(1)
-      // const extension = name.substring(name.lastIndexOf(".") + 1)
-      files.push({ path: pathToFile, name, folder: stat.isDirectory(), extension: extension, stat })
-    }
-  }
-
-  if (error !== null) toApp(MAIN, { channel: "ALERT", data: error })
-  else toApp(READ_FOLDER, { path: folderPath, files })
-})
-
-ipcMain.on(FILE_INFO, (_e, filePath: string) => {
-  let error: any = null
-  let stat: any = null
-  try {
-    stat = fs.statSync(filePath)
-  } catch (e: any) {
-    error = e
-  }
-  const extension = path.extname(filePath).substring(1)
-
-  if (error !== null) toApp(MAIN, { channel: "ALERT", data: error })
-  else toApp(FILE_INFO, { path: filePath, stat, extension })
-})
+// get screens/windows
+export function getScreens(type: "window" | "screen" = "screen") {
+  desktopCapturer.getSources({ types: [type] }).then(async (sources) => {
+    const screens: any[] = []
+    // console.log(sources)
+    sources.map((source) => screens.push({ name: source.name, id: source.id }))
+    // , display_id: source.display_id
+    toApp(MAIN, { channel: type === "window" ? "GET_WINDOWS" : "GET_SCREENS", data: screens })
+  })
+}

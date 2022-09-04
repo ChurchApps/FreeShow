@@ -12,10 +12,11 @@
   $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
   $: slideId = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!]?.id || null : null
   $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
+  $: items = slide ? slide.items.filter((item) => !item.type || item.type === "text") : []
 </script>
 
 {#if slide}
-  {#each slide.items as item}
+  {#each items as item}
     <Textbox {item} {style} {ref} />
   {/each}
 {/if}

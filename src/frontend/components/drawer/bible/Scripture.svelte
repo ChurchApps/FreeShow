@@ -132,15 +132,15 @@
       })
     } else {
       scripturesCache.update((a) => {
-        a[data.bible[0]] = data.bible[1]
+        a[data.content[0]] = data.content[1]
         return a
       })
 
-      bible.version = data.bible[1].name
-      bible.copyright = data.bible[1].copyright
-      bible.id = data.bible[0]
+      bible.version = data.content[1].name
+      bible.copyright = data.content[1].copyright
+      bible.id = data.content[0]
       console.log(bible)
-      books = data.bible[1].books as any
+      books = data.content[1].books as any
       console.log(books)
       if (typeof bookId === "string") bookId = 0
     }

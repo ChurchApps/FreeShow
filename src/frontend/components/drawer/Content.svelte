@@ -16,7 +16,7 @@
   export let bible: any
   export let searchValue: string
   export let firstMatch: null | string
-  $: active = $drawerTabsData[id].activeSubTab
+  $: active = $drawerTabsData[id]?.activeSubTab
 
   let streams: any = []
   $: {

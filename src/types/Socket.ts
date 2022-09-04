@@ -1,3 +1,12 @@
+export interface Message {
+  channel: string
+  data?: any
+  id?: string
+
+  name?: string
+  path?: string
+}
+
 export interface ClientMessage {
   channel: ClientChannels
   id?: DeviceID

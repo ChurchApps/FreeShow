@@ -14,7 +14,8 @@
     "en": "Engelsk",
     "no": "Norsk",
     "sk": "Slovakisk",
-    "es": "Spansk"
+    "es": "Spansk",
+    "pt_BR": "Brasiliansk portugisisk"
   },
   "about": {
     "check_updates": "Se etter oppdateringer",
@@ -125,7 +126,11 @@
     "all": "Mapper, bilder og videoer",
     "folder": "Bare mapper",
     "image": "Bare bilder",
-    "video": "Bare videoer"
+    "video": "Bare videoer",
+    "fit": "Tilpass",
+    "contain": "Opprinnelig",
+    "fill": "Fyll",
+    "cover": "Dekk"
   },
   "menu": {
     "show": "Presenter",
@@ -456,12 +461,16 @@
     "y": "Y",
     "add_items": "Legg til elementer",
     "add_icons": "Legg til ikoner",
-    "arrange_items": "Ordne elementer"
+    "arrange_items": "Ordne elementer",
+    "filters": "Filtre",
+    "choose_media": "Velg media"
   },
   "items": {
     "text": "Tekstboks",
+    "media": "Media",
     "image": "Bilde",
     "video": "Video",
+    "mirror": "Speil",
     "live": "Direkte",
     "audio": "Lyd",
     "timer": "Nedtelling",
@@ -541,6 +550,7 @@
     "calendar": "Kalender",
     "other": "Annet",
     "language": "Språk",
+    "use24hClock": "Bruk 24-timersklokke",
     "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den.",
     "show_output_hint": "Hold ctrl/cmd mens du trykker på \"vis utgangsskjerm\"-knappen for å tvinge visning over denne skjermen.",
     "move_output_hint": "Finner ikke skjermen din? Endre posisjonen til vinduet viser på den andre skjermen.",
@@ -626,7 +636,6 @@
     "red_jesus": "Jesus ord i rødt"
   },
   "filter": {
-    "filters": "Filtre",
     "blur": "Uklarhet",
     "brightness": "Lysstyrke",
     "contrast": "Kontrast",

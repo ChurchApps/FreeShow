@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { activeEdit, activeShow, outputs, showsCache } from "../../stores"
+  import type { MediaFit } from "../../../types/Main"
+
+  import { activeEdit, activeShow, media, outputs, showsCache } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import { history } from "../helpers/history"
   import { getActiveOutputs, getResolution } from "../helpers/output"
-  import { getMediaFilter, getMediaFlipped } from "../helpers/showActions"
+  import { getMediaFilter } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
   import { getStyles } from "../helpers/style"
   import T from "../helpers/T.svelte"
@@ -12,7 +14,6 @@
   import Center from "../system/Center.svelte"
   import Snaplines from "../system/Snaplines.svelte"
   import Editbox from "./Editbox.svelte"
-  import { autoSize } from "./scripts/autoSize"
 
   $: currentShow = $activeShow?.id
   $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
@@ -38,10 +39,13 @@
 
   let filter: string = ""
   let flipped: boolean = false
+  let fit: MediaFit = "contain"
+
   $: if (background?.path) {
     // TODO: use show filter if existing
     filter = getMediaFilter(background.path)
-    flipped = getMediaFlipped(background.path)
+    flipped = $media[background.path]?.flipped || false
+    fit = $media[background.path]?.fit || "contain"
   }
 
   $: {
@@ -74,11 +78,11 @@
     })
   }
 
-  $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
-    // let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
-    let items = _show("active").slides([ref[$activeEdit.slide!].id]).items().get()[0]
-    if (items) autoSize(active, items)
-  }
+  // $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
+  //   // let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
+  //   let items = _show("active").slides([ref[$activeEdit.slide!].id]).items().get()[0]
+  //   if (items) autoSize(active, items)
+  // }
 
   let altKeyPressed: boolean = false
   function keydown(e: any) {
@@ -108,7 +112,7 @@
       {#if !altKeyPressed && background}
         {#key background.path}
           <div class="background" style="zoom: {1 / ratio};opacity: 0.5;">
-            <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} />
+            <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
           </div>
         {/key}
       {/if}
