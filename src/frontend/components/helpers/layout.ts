@@ -1,14 +1,15 @@
 import { uid } from "uid"
+import { clone } from "./array"
 import { _show } from "./shows"
 
 export function getCurrentLayout() {
-  let slides: any = JSON.parse(JSON.stringify(_show("active").get().slides))
+  let slides: any = clone(_show("active").get().slides)
   let layout: any[] = _show("active").layouts("active").get()[0].slides
-  return JSON.parse(JSON.stringify({ slides, layout }))
+  return clone({ slides, layout })
 }
 
 export function cloneSlide(currentLayout: any, oldSlideId: string, newSlideId: string, keepChildren: boolean = true) {
-  let newSlide: any = JSON.parse(JSON.stringify(currentLayout.slides[oldSlideId]))
+  let newSlide: any = clone(currentLayout.slides[oldSlideId])
 
   // cloning a parent means that all its children must be cloned too
   if (newSlide.children) {
@@ -16,7 +17,7 @@ export function cloneSlide(currentLayout: any, oldSlideId: string, newSlideId: s
       // clone children
       let clonedChildren: any[] = []
       newSlide.children.forEach((childId: string) => {
-        let newChild: any = JSON.parse(JSON.stringify(currentLayout.slides[childId]))
+        let newChild: any = clone(currentLayout.slides[childId])
         let newChildId: string = uid()
         currentLayout.slides[newChildId] = newChild
         clonedChildren.push(newChildId)

@@ -126,6 +126,7 @@ export interface Media {
   id?: string
   name?: string
   path?: string
+  cameraGroup?: string
   type?: MediaType
   muted?: boolean
   loop?: boolean

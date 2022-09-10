@@ -175,7 +175,7 @@
 
 <Zoomed background={currentSlide?.settings?.color || currentOutput.show?.background || "black"} {center} {style} {resolution} bind:ratio>
   {#if background && layers.includes("background")}
-    <div style="zoom: {1 / ratio}">
+    <div style="height: 100%;zoom: {1 / ratio}">
       <MediaOutput {...background} {background} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
     </div>
   {/if}

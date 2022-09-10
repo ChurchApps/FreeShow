@@ -8,6 +8,7 @@
   interface Cam {
     id: string
     name: string
+    group: string
   }
   export let cam: Cam
 
@@ -16,11 +17,12 @@
 
   let videoElem: any
 
-  $: console.log(cam.id)
+  $: console.log(cam)
 
   let constraints: any = {
     video: {
       devideId: cam.id,
+      groupId: cam.group,
       width: { ideal: getResolution().width },
       height: { ideal: getResolution().height },
       // aspectRatio: 1.777777778,
@@ -35,9 +37,6 @@
     navigator.mediaDevices
       .getUserMedia(constraints)
       .then((mediaStream) => {
-        console.log(constraints)
-        console.log(mediaStream)
-
         videoElem.srcObject = mediaStream
         loaded = true
         videoElem.play()
@@ -66,7 +65,7 @@
   icon="camera"
   white={!cam.id.includes("cam")}
 >
-  <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name }} draggable>
+  <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name, cameraGroup: cam.group }} draggable>
     {#if error}
       <div class="error">
         {@html error}

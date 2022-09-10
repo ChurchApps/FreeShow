@@ -11,3 +11,14 @@ export function checkName(name: string = "") {
   while (Object.values(get(shows)).find((a: any) => a.name === (number > 1 ? name + " " + number : name))) number++
   return number > 1 ? name + " " + number : name
 }
+
+export function getLabelId(label: string) {
+  // TODO: disallow chars in labels: #:;!.,- ??
+  return label
+    .toLowerCase()
+    .replace(/x[0-9]/g, "")
+    .replace(/[[\]]/g, "")
+    .replace(/[0-9'"]/g, "")
+    .trim()
+    .replaceAll(" ", "_")
+}

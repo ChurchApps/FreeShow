@@ -89,6 +89,7 @@ export type Popups =
   | "import_scripture"
   | "edit_event"
   | "choose_screen"
+  | "advanced_settings"
   | "about"
   | "shortcuts"
   | "unsaved"

@@ -33,7 +33,7 @@ export class ShowObj implements Show {
     }
     this.meta = {}
     this.slides = {}
-    this.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: [] } }
+    this.layouts = { [layoutID]: { name: get(dictionary).example?.default || "Default", notes: "", slides: [] } }
     this.media = {}
   }
 }

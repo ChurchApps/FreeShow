@@ -53,18 +53,15 @@
   }
 
   let fileOver: boolean = false
-</script>
 
-<svelte:window
-  on:dragend={() => {
+  function endDrag() {
     selected.set({ id: null, data: [] })
     hover = false
     // fileOver = false
-  }}
-  on:dragstart={() => {
-    hover = active
-  }}
-/>
+  }
+</script>
+
+<svelte:window on:click={() => (hover = false)} on:dragend={endDrag} on:dragstart={() => (hover = active)} />
 <!-- on:mousemove={() => {
     if (fileOver) hover = true
   }}

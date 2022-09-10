@@ -71,6 +71,12 @@
 
   let dragover: null | "start" | "center" | "end" = null
   let dragActive: boolean = false
+
+  function endDrag() {
+    dragActive = false
+    dragover = null
+    if ($selected.id !== id) selected.set({ id, data: [] })
+  }
 </script>
 
 <svelte:window
@@ -78,10 +84,10 @@
   on:dragstart={() => {
     dragActive = true
   }}
-  on:dragend={() => {
+  on:dragend={endDrag}
+  on:click={() => {
     dragActive = false
     dragover = null
-    if ($selected.id !== id) selected.set({ id, data: [] })
   }}
 />
 

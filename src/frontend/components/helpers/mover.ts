@@ -14,7 +14,7 @@ export function mover(array: any[], selected: number[], pos: number): any[] {
     } else newArray.push(a)
   })
 
-  return [...newArray.slice(0, newPos), ...moved, ...newArray.slice(newPos, array.length)]
+  return addToPos(newArray, moved, newPos)
 }
 
 export function addToPos(array: any[], newArrays: any[], pos: number): any[] {

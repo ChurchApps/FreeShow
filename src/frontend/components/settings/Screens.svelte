@@ -8,6 +8,19 @@
 
   let screenId: string | null = null
   $: screenId = $currentOutputSettings
+  let currentScreen: any = {}
+  $: currentScreen = screenId ? $outputs[screenId] : {}
+
+  // find matching screen
+  $: if (!currentScreen.screen && screens.length) {
+    let match = screens.find((screen) => JSON.stringify(screen.bounds) === JSON.stringify(currentScreen.bounds))
+    if (match?.id) {
+      outputs.update((a: any) => {
+        a[screenId!].screen = match.id.toString()
+        return a
+      })
+    }
+  }
 
   send(MAIN, ["GET_DISPLAYS"])
   // send(MAIN, ["GET_SCREENS"])
@@ -16,7 +29,7 @@
       screens = d
     },
     SET_SCREEN: (d: any) => {
-      if (!$outputs[screenId!].screen) {
+      if (!currentScreen.screen) {
         outputs.update((a) => {
           a[screenId!].screen = d.id.toString()
           return a
@@ -27,20 +40,20 @@
   })
 
   function changeOutputScreen(e: any) {
-    if (!screenId) return
+    if (!currentScreen) return
 
     let bounds = e.detail.bounds
     outputs.update((a) => {
       a[screenId!].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
       a[screenId!].screen = e.detail.id.toString()
-      a[screenId!].kiosk = true
+      // a[screenId!].kiosk = true
       return a
     })
     setTimeout(() => {
-      send(OUTPUT, ["DISPLAY"], { enabled: $outputDisplay, output: { id: screenId, ...$outputs[screenId!] }, reset: true })
+      send(OUTPUT, ["DISPLAY"], { enabled: $outputDisplay, output: { id: screenId, ...currentScreen }, reset: true })
       // send(OUTPUT, ["TOGGLE_KIOSK"], { id: screenId, enabled: true })
       // setTimeout(() => {
-      send(OUTPUT, ["UPDATE_BOUNDS"], { id: screenId, ...$outputs[screenId!] })
+      send(OUTPUT, ["UPDATE_BOUNDS"], { id: screenId, ...currentScreen })
       // }, 100)
     }, 100)
   }

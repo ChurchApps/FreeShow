@@ -34,10 +34,13 @@
   // let behaviour: string = ""
   // setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)
   $: {
-    if (scrollElem && activeOutputs[0]?.out?.slide?.id !== null && $activeShow!.id === activeOutputs[0]?.out?.slide?.id && activeLayout === activeOutputs[0]?.out?.slide?.layout) {
+    // output.out?.slide?.id !== null &&
+    let output = $outputs[activeOutputs[0]] || {}
+    if (scrollElem && $activeShow!.id === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
       let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
-      let index = Math.max(0, activeOutputs[0]?.out?.slide?.index - columns)
-      offset = scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5 - 5
+      let index = Math.max(0, (output.out.slide.index || 0) - columns)
+      offset = (scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5) - 5
+      console.log(offset)
 
       // TODO: always show active slide....
       // console.log(offset, scrollElem.scrollTop, scrollElem.scrollTop + scrollElem.offsetHeight)

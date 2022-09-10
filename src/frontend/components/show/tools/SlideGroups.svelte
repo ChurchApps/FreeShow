@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeShow, dictionary, fullColors, groups, selected, showsCache } from "../../../stores"
+  import { activeShow, dictionary, fullColors, groupNumbers, groups, selected, showsCache } from "../../../stores"
   import { ondrop } from "../../helpers/drop"
   import { history } from "../../helpers/history"
   import T from "../../helpers/T.svelte"
@@ -27,7 +27,7 @@
         }
       }
       // add numbers to different slides with same name
-      if (slide.group) {
+      if (slide.group && $groupNumbers) {
         if (added[slide.group]) {
           added[slide.group]++
           slide.group += " " + added[slide.group]

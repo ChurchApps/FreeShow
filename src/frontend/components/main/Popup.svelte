@@ -22,6 +22,7 @@
   import EditEvent from "./popups/EditEvent.svelte"
   import Color from "./popups/Color.svelte"
   import ChooseScreen from "./popups/ChooseScreen.svelte"
+  import AdvancedScreen from "./popups/AdvancedScreen.svelte"
 
   function mousedown(e: any) {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -68,6 +69,8 @@
           <EditEvent />
         {:else if $activePopup === "choose_screen"}
           <ChooseScreen />
+        {:else if $activePopup === "advanced_settings"}
+          <AdvancedScreen />
         {:else if $activePopup === "about"}
           <About />
         {:else if $activePopup === "shortcuts"}

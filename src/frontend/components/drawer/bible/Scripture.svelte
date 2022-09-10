@@ -270,7 +270,7 @@
     let text = []
 
     if ($scriptureSettings.verseNumbers) {
-      text.push({ value: id + " ", style: "font-size: 100px;color: gray;" + template[0]?.lines?.[0].text?.[0].style || "" })
+      text.push({ value: id + " ", style: "font-size: 100px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[0]?.lines?.[0].text?.[0].style || "" })
     }
 
     text.push({ style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;", value })

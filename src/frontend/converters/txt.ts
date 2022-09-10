@@ -2,21 +2,21 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
+import { clone, removeEmpty } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
-import { checkName } from "../components/helpers/show"
-import { activeProject, dictionary, groups, formatNewShow, splitLines } from "../stores"
+import { checkName, getLabelId } from "../components/helpers/show"
+import { _show } from "../components/helpers/shows"
+import { activeProject, formatNewShow, groups, splitLines } from "../stores"
 
+// convert .txt files to shows
 export function convertTexts(files: any[]) {
-  files.forEach((file) => {
-    convertText({ name: file.name, text: file.content })
-  })
+  files.forEach(({ name, content }) => convertText({ name, text: content }))
 }
 
+// convert a plain text input into a show
 export function convertText({ name = "", category = null, text }: any) {
-  console.log(name, category, text)
   text = text.replaceAll("\r", "")
-  let sections = text.split("\n\n").filter((a: any) => a.length)
-  console.log(sections)
+  let sections: string[] = removeEmpty(text.split("\n\n"))
 
   let labeled: any[] = []
 
@@ -24,26 +24,18 @@ export function convertText({ name = "", category = null, text }: any) {
   let patterns = findPatterns(sections)
   sections = patterns.sections
   labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] }))
+  labeled = checkRepeats(labeled)
 
   if (!name) name = labeled[0].text.split("\n")[0]
-  // get active
-  let meta: any = {}
-  // if (metaData.length) {
-  //   let lines: string[] = metaData.split("\n")
-  //   meta.title = lines.splice(0, 1)[0]
-  //   if (meta.title.length) name = meta.title
-  //   if (lines.length) meta.artist = lines.splice(0, 1)[0]
-  //   if (lines.length) meta.other = lines.join("\n")
-  // }
 
-  let layoutID = uid()
+  let layoutID: string = uid()
   let show: Show = new ShowObj(false, category, layoutID)
-  show.name = checkName(name)
-  show.meta = meta
   let { slides, layouts } = createSlides(labeled)
+
+  show.name = checkName(name)
   show.slides = slides
-  show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
-  // let newData: any = {name, category, settings: {}, meta}
+  show.layouts[layoutID].slides = layouts
+
   history({ id: "newShow", newData: { show }, location: { page: "show", project: get(activeProject) } })
 }
 
@@ -51,55 +43,81 @@ function createSlides(labeled: any) {
   let slides: any = {}
   let layouts: any[] = []
   let stored: any = {}
-  repeat(labeled).forEach((a: any) => {
+
+  labeled.forEach(convertLabeledSlides)
+
+  return { slides, layouts }
+
+  function convertLabeledSlides(a: any): void {
     let id: any
     let text: string = fixText(a.text)
-    if (stored[a.type]) {
-      id = stored[a.type].find((b: any) => b.text === text)?.id
+    if (stored[a.type]) id = stored[a.type].find((b: any) => b.text === text)?.id
+
+    if (id) {
+      layouts.push({ id })
+      return
     }
 
-    if (!id) {
-      id = uid()
-      if (!stored[a.type]) stored[a.type] = []
-      stored[a.type].push({ id, text })
+    id = uid()
 
-      let group: string = a.type
-      let color: any = null
+    // remember this
+    if (!stored[a.type]) stored[a.type] = []
+    stored[a.type].push({ id, text })
 
-      let allLines: string[] = [text]
-      let lines = text.split("\n").filter((a) => a.length)
+    let group: string = a.type
+    let color: any = null
 
-      if (lines.length > get(splitLines)) {
-        allLines = []
-        while (lines.length) allLines.push(lines.splice(0, get(splitLines)).join("\n"))
-      }
+    let allLines: string[] = [text]
+    let lines: string[] = removeEmpty(text.split("\n"))
 
-      let children: string[] = []
-
-      allLines.forEach((lines: string, i: number) => {
-        // TODO: auto size
-        let style = "font-size: 80px;"
-        let items: any[] = [{ style: "left:50px;top:120px;width:1820px;height:840px;", lines: lines.split("\n").map((a) => ({ align: "", text: [{ style, value: a }] })) }]
-
-        let childID: any
-        if (i > 0) {
-          childID = uid(12)
-          children.push(childID)
-          slides[childID] = { group: null, color: null, settings: {}, notes: "", items }
-        } else {
-          // a.text.split("\n").forEach((text: string) => {})
-          slides[id] = { group, color, globalGroup: group, settings: {}, notes: "", items }
-        }
-      })
-      if (children.length) slides[id].children = children
+    // split lines into a set amount of lines
+    if (lines.length > get(splitLines)) {
+      allLines = []
+      while (lines.length) allLines.push(lines.splice(0, get(splitLines)).join("\n"))
     }
+
+    let children: string[] = []
+
+    allLines.forEach(createSlide)
+
+    if (children.length) slides[id].children = children
 
     layouts.push({ id })
-  })
-  return { slides, layouts }
+
+    function createSlide(lines: any, slideIndex: number) {
+      lines = lines.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+      let defaultItemStyle: string = "top:120px;left:50px;height:840px;width:1820px;"
+      let items: any[] = [{ style: defaultItemStyle, lines }] // auto: true
+
+      // get active show
+      if (_show().get()) {
+        let activeItems = clone(_show().slides().items().get()[0])
+
+        // replace values
+        items = items
+          // .filter((a: any) => !a.type || a.type === "text" || a.lines)
+          .map((item: any) => {
+            item.lines?.forEach((_: any, index: number) => {
+              item.lines[index].text[0].style = activeItems[0]?.lines[index]?.text[0]?.style || ""
+            })
+            return item
+          })
+      }
+
+      if (slideIndex > 0) {
+        let childId: string = uid()
+        children.push(childId)
+        slides[childId] = { group: null, color: null, settings: {}, notes: "", items }
+        return
+      }
+
+      // a.text.split("\n").forEach((text: string) => {})
+      slides[id] = { group, color, globalGroup: group, settings: {}, notes: "", items }
+    }
+  }
 }
 
-function repeat(labeled: any[]) {
+function checkRepeats(labeled: any[]) {
   let newLabels: any[] = []
   labeled.forEach((a: any) => {
     let match = a.text.match(/\nx[0-9]/)
@@ -116,45 +134,43 @@ function repeat(labeled: any[]) {
 }
 
 function fixText(text: string): string {
-  if (get(formatNewShow)) text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
-  // let splittedCommas = text.replaceAll(",", "\n")
-  let newText = ""
+  let formatText: boolean = get(formatNewShow)
+  if (formatText) text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
+
+  let newText: string = ""
   text.split("\n").forEach((t: any) => {
-    console.log(t)
-    let newLineText = ""
-    t.split(",").forEach((a: any, i: number) => {
-      console.log(a)
+    let newLineText: string = ""
+    if (formatText) {
+      // make first char uppercase
+      t = (t[0]?.toUpperCase() || "") + t.slice(1, t.length)
+      // replace at the end of the line
+      t = t.replace(/[.,!]*$/g, "").trim()
+    }
+
+    // commas inside line
+    let commas: string[] = removeEmpty(t.split(","))
+    commas.forEach((a: any, i: number) => {
       newLineText += a
-      // TODO: better comma splitting
-      if (i < t.split(",").length - 1 && (!get(formatNewShow) || (newLineText.length < 10 && (a.length < 10 || t.split(",")[i]?.length < 10)))) newLineText += ","
+
+      if (i >= commas.length - 1) newLineText += "\n"
+      else if (!formatText) newLineText += ","
+      else if (a.length < 10 || (commas[i + 1] && commas[i + 1].length < 10)) newLineText += ","
       else newLineText += "\n"
     })
+
     newText += newLineText
   })
+
   text = newText
 
-  let splitted = text.split("\n")
-  let label = splitted[0]
-    .toLowerCase()
-    .replace(/x[0-9]/g, "")
-    .replace(/[0-9]/g, "")
-    .replace(/[[\]]/g, "")
-    .trim()
-    .replaceAll(" ", "_")
-  console.log(label)
+  let lines: string[] = text.split("\n")
+  let label: string = getLabelId(lines[0])
 
-  if (get(groups)[label]) splitted = splitted.slice(1, splitted.length)
-  text = splitted.join("\n")
+  // remove first line if it's a label
+  if (get(groups)[label]) lines = lines.slice(1, lines.length)
 
-  if (get(formatNewShow))
-    text = text
-      .split("\n")
-      .map((a) => {
-        a = a.trim()
-        a = (a[0]?.toUpperCase() || "") + a.slice(1, a.length)
-        return a
-      })
-      .join("\n")
+  text = lines.join("\n")
+
   return text
 }
 
@@ -210,13 +226,7 @@ function findPatterns(sections: string[]) {
     if (find) return find.type
     if (!length) return "break"
     // TODO: group....
-    let name = splitted[0]
-      .toLowerCase()
-      .replace(/x[0-9]/g, "")
-      .replace(/[0-9]/g, "")
-      .replace(/[[\]]/g, "")
-      .trim()
-      .replaceAll(" ", "_")
+    let name = getLabelId(splitted[0])
     console.log(name)
     if (get(groups)[name]) return name
     // TODO: remove numbers....
@@ -271,6 +281,7 @@ function similarity(s1: string, s2: string) {
   }
   return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength)
 }
+
 function editDistance(s1: string, s2: string) {
   s1 = s1.toLowerCase()
   s2 = s2.toLowerCase()

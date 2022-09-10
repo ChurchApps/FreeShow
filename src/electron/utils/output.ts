@@ -49,8 +49,13 @@ function createOutputWindow(options: any) {
   options = { ...options.bounds, ...outputOptions }
   let window: BrowserWindow | null = new BrowserWindow(options)
 
-  window.removeMenu() // hide menubar
+  // only win & linux
+  // window.removeMenu() // hide menubar
+  // window.setAutoHideMenuBar(true) // hide menubar
+
+  window.setSkipTaskbar(true) // hide from taskbar
   if (process.platform === "darwin") window.minimize() // hide on mac
+
   window.setAlwaysOnTop(true, "pop-up-menu", 1)
   // window.setVisibleOnAllWorkspaces(true)
 
@@ -201,19 +206,47 @@ export function updateBounds(data: any) {
   if (!window) return
 
   // let wasVisible: boolean = window.isVisible()
-  window.setKiosk(data.kiosk)
-  if (!data.kiosk) {
-    window.setBounds({ ...data.bounds, height: data.bounds.height - 1 })
-    setTimeout(() => {
-      window.setBounds(data.bounds)
+  // window.setKiosk(data.kiosk)
+  // if (!data.kiosk) {
+  window.setBounds({ ...data.bounds, height: data.bounds.height - 1 })
+  // window.setAspectRatio(data.bounds.width / data.bounds.height)
+  setTimeout(() => {
+    window.setBounds(data.bounds)
 
-      // TODO: creating "ghost" window when kiosk is diasabled
-      // setTimeout(() => {
-      //   console.log(window.isVisible(), !wasVisible)
-      //   if (window.isVisible() && !wasVisible) hideWindow(window)
-      // }, 500)
-    }, 10)
-  } else window.setBounds(data.bounds)
+    // TODO: creating "ghost" window when kiosk is diasabled
+    // setTimeout(() => {
+    //   console.log(window.isVisible(), !wasVisible)
+    //   if (window.isVisible() && !wasVisible) hideWindow(window)
+    // }, 500)
+  }, 10)
+  // } else window.setBounds(data.bounds)
+}
+
+// temporary function to test on mac
+export function toggleValue({ id, key }: any) {
+  let window: BrowserWindow = outputWindows[id]
+  if (key === "maximize") window.isMaximized() ? window.unmaximize() : window.maximize()
+  else if (key === "minimize") window.isMinimized() ? false : window.minimize()
+  else if (key === "fullscreen") window.setFullScreen(!window.isFullScreen())
+  else if (key === "kiosk") window.setKiosk(window.isKiosk())
+  else if (key === "hide") window.isVisible() ? window.hide() : window.show()
+  else if (key === "disabled") window.setEnabled(!window.isEnabled())
+  else if (key === "menubar") window.setAutoHideMenuBar(!window.isMenuBarAutoHide())
+  else if (key === "workspaces") window.setVisibleOnAllWorkspaces(!window.isVisibleOnAllWorkspaces())
+  // else if (key === "alwaysontop") window.setAlwaysOnTop("")
+
+  let state = {
+    maximized: window.isMaximized(),
+    minimized: window.isMinimized(),
+    fullscreen: window.isFullScreen(),
+    kiosk: window.isKiosk(),
+    visible: window.isVisible(),
+    enabled: window.isEnabled(),
+    autoHideMenuBar: window.isMenuBarAutoHide(),
+    allWorkspaces: window.isVisibleOnAllWorkspaces(),
+  }
+
+  console.log("state", JSON.stringify(state))
 }
 
 export function moveToFront(id: string) {
@@ -246,6 +279,7 @@ const outputResponses: any = {
   DISPLAY: (data: any) => displayOutput(data),
   UPDATE: (data: any) => updateOutput(data),
   UPDATE_BOUNDS: (data: any) => updateBounds(data),
+  TOGGLE_VALUE: (data: any) => toggleValue(data),
   TO_FRONT: (data: any) => moveToFront(data),
 }
 

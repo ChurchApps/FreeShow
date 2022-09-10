@@ -152,6 +152,12 @@
   //     if (a.height > 40) hidden = false
   //   }, 100)
   // })
+
+  // let duplicated = false
+  // $: if (filteredShows.length && !duplicated) {
+  //   duplicated = true
+  //   filteredShows = [...filteredShows, ...filteredShows, ...filteredShows, ...filteredShows, ...filteredShows]
+  // }
 </script>
 
 <svelte:window on:keydown={keydown} />

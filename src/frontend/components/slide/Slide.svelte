@@ -87,18 +87,16 @@
     if (name !== null && name !== undefined) {
       if (!name.length) name = "—"
       let added: any = {}
-      // if ($groupCount) {
-      // different slides with same name
-      Object.entries(show.slides).forEach(([id, a]: any) => {
-        if (added[a.group]) {
-          added[a.group]++
-          if (id === slideID) name += " " + added[a.group]
-        } else added[a.group] = 1
-      })
-      // }
-
-      // same group count
       if ($groupNumbers) {
+        // different slides with same name
+        Object.entries(show.slides).forEach(([id, a]: any) => {
+          if (added[a.group]) {
+            added[a.group]++
+            if (id === slideID) name += " " + added[a.group]
+          } else added[a.group] = 1
+        })
+
+        // same group count
         added = {}
         GetLayoutRef().forEach((a: any, i: number) => {
           if (a.type === "parent") {
@@ -257,6 +255,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                 <MediaLoader
                   name={$dictionary.error?.load}
                   path={background.path || background.id || ""}
+                  cameraGroup={background.cameraGroup || ""}
                   type={background.type !== "player" ? background.type : null}
                   {filter}
                   {flipped}

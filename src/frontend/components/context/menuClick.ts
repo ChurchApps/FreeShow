@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OUTPUT } from "../../../types/Channels"
+import { changeSlideGroups } from "../../show/slides"
 import {
   activeDrawerTab,
   activeEdit,
@@ -30,15 +31,13 @@ import {
   settingsTab,
   shows,
   showsCache,
-  stageShows
+  stageShows,
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
-import { changeValues } from "../helpers/array"
 import { copy, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
-import { addParents, cloneSlide, getCurrentLayout } from "../helpers/layout"
 import { getActiveOutputs, setOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
@@ -73,8 +72,6 @@ const actions: any = {
   about: () => activePopup.set("about"),
   // main
   rename: (obj: any) => {
-    console.log(obj)
-
     if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("rename")
     else if (obj.sel.id === "show") activeRename.set("show_" + obj.sel.data[0].id + "#" + obj.sel.data[0].index)
     else if (obj.sel.id === "show_drawer") activeRename.set("show_drawer_" + obj.sel.data[0].id)
@@ -83,16 +80,7 @@ const actions: any = {
     else if (obj.sel.id === "layout") activeRename.set("layout_" + obj.sel.data[0])
     else if (obj.sel.id === "player") activeRename.set("player_" + obj.sel.data[0])
     else if (obj.sel.id.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + obj.sel.data[0])
-
-    // else if (obj.actionItem instanceof HTMLInputElement) {
-    //   // obj.actionItem.focus()
-    //   console.log(obj.actionItem.value)
-    //   // obj.actionItem!.dispatchEvent(new CustomEvent("doubleclick"))
-    // } else if (obj.actionItem) {
-    //   // obj.actionItem.click()
-    //   console.log(obj.actionItem.innerHTML)
-    //   // obj.actionItem.dispatchEvent(new CustomEvent("contextmenu"))
-    // }
+    else console.log("Missing rename", obj)
   },
   remove: (obj: any) => {
     if (obj.sel.id === "show" && get(activeProject)) {
@@ -421,146 +409,7 @@ const actions: any = {
   },
 
   // change slide group
-  slide_groups: (obj: any) => {
-    let slides: any[] = obj.sel.data.sort((a: any, b: any) => (a.index > b.index ? 1 : -1))
-    let ref: any[] = _show("active").layouts("active").ref()[0]
-    console.log(ref)
-    let activeLayout: string = _show("active").get("settings.activeLayout")
-    let newData: any = getCurrentLayout()
-
-    // slides next to each other will be one group
-    let groups: any[] = [{ globalGroup: obj.menu.id, slides: [] }]
-    let previousIndex: number = -1
-    slides.forEach((slide: any, i: number) => {
-      if (previousIndex + 1 === slide.index || i === 0) {
-        groups[groups.length - 1].slides.push(ref[slide.index])
-      } else groups.push({ globalGroup: obj.menu.id, slides: [ref[slide.index]] })
-      previousIndex = slide.index
-    })
-
-    groups.forEach(({ slides }, i) => {
-      console.log(groups, slides)
-      // add children of parent if not selected
-      if (slides[0].type === "parent" && slides[0].children?.length && slides[1]?.id !== slides[0].children[0]) {
-        // let childIsSelected: boolean = false
-        // while (childIsSelected)
-        slides.push(...slides[0].children.map((_id: string, i: number) => ref[slides[0].index + i + 1]))
-        groups[i].slides = JSON.parse(JSON.stringify(slides))
-        console.log(slides[0])
-      }
-      console.log(slides)
-
-      // TODO: changing parent not working!! (should change all simular groups)
-
-      // add parent to own group if their child is changed
-
-      // let parentsToSelectedChilds: any[] = []
-      // find any non selected parents to selected childs or children to parents
-      let refs: any[] = slides.filter(
-        (slide: any) =>
-          !slides.find((a: any) => {
-            // console.log(slide, slide.id, newData.slides[slide.id].children, a, a.id, newData.slides[slide.id].children?.includes(a.id))
-            return slide.type === "child" ? a.id === slide.parent.id : newData.slides[slide.id].children?.length ? newData.slides[slide.id].children.includes(a.id) : true
-          })
-      )
-
-      // only 1 possible!
-      if (refs.length) {
-        console.log("FOUND", refs)
-        refs.forEach((slide) => {
-          let newSlides: any[] = []
-          // get the refs of related slides not selected
-          if (slide.type === "child") newSlides = [ref[slide.parent.index]]
-          else
-            newSlides = newData.slides[slide.id].children
-              .filter((id: string) => !slides.find((a: any) => a.id === id))
-              .map((id: string) => {
-                let index = newData.slides[slide.id].children.indexOf(id)
-                return { type: "child", index, layoutIndex: slide.index + index, id, parent: { id: slide.id, index: slide.index } }
-              })
-          console.log(newSlides)
-
-          // let parent = ref[slide.parent.index]
-          let s: any = { slides: newSlides }
-          let sId: string = newSlides[0].parent?.id || newSlides[0].id
-          if (newData.slides[sId].globalGroup) s.globalGroup = newData.slides[sId].globalGroup
-          else s.group = newData.slides[sId].group
-          groups.push(s)
-
-          // TODO: remove old child from the new parent clone
-          // newData.layout[slide.index].removeChild = slide.id
-        })
-      }
-    })
-
-    console.log(groups)
-
-    let layouts = _show("active").layouts("active").get(null, true)
-    let newParents: any[] = []
-    groups.forEach(({ globalGroup = null, group = "", slides }) => {
-      slides.forEach((slide: any, i: number) => {
-        // check if there are more slides
-        let otherSlides = layouts.find((layout) => {
-          let ref = _show("active").layouts([layout.layoutId]).ref()[0]
-          return ref.find((lslide: any) => lslide.id === slide.id && (lslide.index !== slide.index || layout.layoutId !== activeLayout || (i === 0 && slide.type === "child")))
-        })
-        let slideId = slide.id
-        console.log(slide, otherSlides)
-        if (otherSlides && (slide.type === "child" || slides.length > 1)) {
-          // clone current
-          slideId = uid()
-          newData = cloneSlide(newData, slide.id, slideId, i === 0)
-          slides[i].id = slideId
-          let end: boolean = true
-          if (slide.type === "child") newParents.push({ id: slideId, pos: slide.parent.index + (end ? 1 : 0) })
-          else newData.layout[slide.index].id = slideId
-        }
-
-        if (i === 0) {
-          if (slide.type === "child" && !otherSlides) {
-            newData.slides[slide.parent.id].children.splice(newData.slides[slide.parent.id].children.indexOf(slideId), 1)
-            let end: boolean = false
-            newParents.push({ id: slideId, pos: slide.parent.index + (end ? 1 : 0) })
-          }
-          changeValues(newData.slides[slideId], { globalGroup, group, color: "" })
-        } else {
-          if (slide.type === "parent") newData.layout[slide.index].remove = true
-          changeValues(newData.slides[slideId], { globalGroup: undefined, group: null, color: null }) // color: parent color
-          console.log("SLIDe", slideId, newData.slides[slideId])
-        }
-        // newData = JSON.parse(JSON.stringify(newData))
-      })
-    })
-
-    groups.forEach(({ slides }) => {
-      // remove exising children
-      newData.slides[slides[0].id].children = []
-      if (slides.length > 1) {
-        // if (!newData.slides[slides[0].id].children) newData.slides[slides[0].id].children = []
-        newData.slides[slides[0].id].children.push(...slides.slice(1, slides.length).map(({ id }: any) => id))
-      }
-    })
-
-    console.log(newParents, newData.layout)
-
-    // add new parents
-    newData = addParents(newData, newParents)
-
-    // remove old parents
-    newData.layout = newData.layout.filter((a: any) => !a.remove)
-
-    // find matches and combine duplicates
-    // TODO: combine duplicates
-
-    history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
-
-    // obj.sel.data.forEach((a: any) => {
-    //   let slide = GetLayoutRef()[a.index].id
-    //   // TODO: store group/color to redo
-    //   // TODO: change layout children & slide parent children
-    //   history({ id: "changeSlide", newData: { key: "globalGroup", value: obj.menu.id }, location: { page: "show", show: get(activeShow)!, slide } })
-    // })
-  },
+  slide_groups: (obj: any) => changeSlideGroups(obj),
 
   actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
   remove_media: (obj: any) => {
