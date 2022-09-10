@@ -34,7 +34,8 @@
     "lint:svelte": "eslint -c eslint.svelte.json --ext .js,.ts src/frontend",
     "lint": "npm-run-all -s lint:electron lint:svelte",
     "prepublishOnly": "npm-run-all -s test lint",
-    "preversion": "npm-run-all -s"
+    "preversion": "npm-run-all -s",
+    "snap": "electron-builder --linux snap"
   },
   "build": {
     "appId": "com.github.vassbo.freeshow",
