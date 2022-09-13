@@ -1,20 +1,20 @@
 <script>
   import YouTube from "svelte-youtube"
   import { OUTPUT } from "../../../../types/Channels"
-  import { currentWindow } from "../../../stores"
+  import { currentWindow, playerVideos } from "../../../stores"
 
   export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
   export let videoTime = 0
+  export let playerId
   export let id
   export let preview
 
   export let title
   export let startAt = 0
 
-  // $: id = id.includes("=") ? id.slice(id.lastIndexOf("=") + 1, id.length) : id
+  // <= 0.5.4
   $: id = id.includes("?list") ? id.slice(0, id.indexOf("?list")) : id
   $: id = id.slice(-11)
-  // $: id = id.length === 11 ? id : ""
 
   const options = {
     // height: "390",
@@ -45,6 +45,15 @@
       videoData.paused = true
       player.seekTo(videoTime)
       title = player.getVideoData().title
+
+      // set name
+      if (title && $playerVideos[playerId].name === $playerVideos[playerId].id) {
+        playerVideos.update((a) => {
+          a[playerId].name = title
+          return a
+        })
+      }
+
       // console.log(player.getVideoData(), title)
       // console.log(player.playerInfo.videoData) // title | author
       setTimeout(() => {

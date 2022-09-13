@@ -31,7 +31,7 @@
 
   let dispatch = createEventDispatcher()
   function valueChange(e: any, input: any) {
-    let value = e.detail || e.target.value
+    let value = e.detail || e.target?.value || null
 
     if (input.input === "checkbox") value = e.target.checked
     else if (input.input === "dropdown") value = value.id

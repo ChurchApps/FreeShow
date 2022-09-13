@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { shows } from "../../stores"
+import { activeShow, shows } from "../../stores"
 
 // check if name axists and add number
 export function checkName(name: string = "") {
@@ -21,4 +21,12 @@ export function getLabelId(label: string) {
     .replace(/[0-9'"]/g, "")
     .trim()
     .replaceAll(" ", "_")
+}
+
+// mirror & events
+export function getListOfShows(removeCurrent: boolean = false) {
+  let list: any[] = Object.entries(get(shows)).map(([id, show]: any) => ({ id, name: show.name }))
+  if (removeCurrent) list = list.filter((a) => a.id !== get(activeShow)?.id)
+  list = list.sort((a, b) => a.name?.localeCompare(b.name))
+  return list
 }

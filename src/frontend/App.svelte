@@ -20,7 +20,7 @@
   import { redo, undo } from "./components/helpers/history"
   import { getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
   import { _show } from "./components/helpers/shows"
-  import { startTimer } from "./components/helpers/timerTick"
+  import { startEventTimer, startTimer } from "./components/helpers/timerTick"
   import MenuBar from "./components/main/MenuBar.svelte"
   import Popup from "./components/main/Popup.svelte"
   import Top from "./components/main/Top.svelte"
@@ -46,6 +46,7 @@
     activeTimers,
     currentWindow,
     drawer,
+    events,
     os,
     outputDisplay,
     outputs,
@@ -184,6 +185,9 @@
 
   // countdown timer tick
   $: if ($activeTimers.length) startTimer()
+
+  // check for show event
+  $: if (Object.keys($events).length) startEventTimer()
 
   function hideDisplay(ctrlKey: boolean = true) {
     if (!ctrlKey) return

@@ -23,22 +23,33 @@
   //   isPrivate = e.target.checked
   //   if (isPrivate) activeTimer = {}
   // }
+
+  function editTimer() {
+    if (!isPrivate && activeTimer) {
+      select("timer", { id: activeTimer.id })
+      return activePopup.set("timer")
+    }
+
+    if ($activeEdit?.id) {
+      // TODO: overlay/template timers...
+      if ($activeEdit.type === "overlay") {
+        select("timer", { id: item.timer.id, overlayId: $activeEdit.id })
+      } else if ($activeEdit.type === "template") {
+        select("timer", { id: item.timer.id, templateId: $activeEdit.id })
+      }
+
+      return activePopup.set("timer")
+    }
+
+    let showId = $activeEdit?.id || $activeShow?.id
+    let ref = _show(showId).layouts("active").ref()[0]
+    select("timer", { id: item.timer.id, showId, slideId: ref[$activeEdit?.slide ?? 0].id })
+
+    activePopup.set("timer")
+  }
 </script>
 
-<Button
-  on:click={() => {
-    if (!isPrivate && activeTimer) select("timer", { id: activeTimer.id })
-    else {
-      let showId = $activeEdit?.id || $activeShow?.id
-      let ref = _show(showId).layouts("active").ref()[0]
-      select("timer", { id: item.timer.id, showId, slideId: ref[$activeEdit?.slide ?? 0].id })
-    }
-    activePopup.set("timer")
-  }}
-  style="width: 100%;"
-  center
-  dark
->
+<Button on:click={editTimer} style="width: 100%;" center dark>
   <Icon id="edit" right />
   <T id="menu.edit" />
 </Button>

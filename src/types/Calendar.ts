@@ -5,6 +5,7 @@ export interface Event {
   color: null | string
   notes?: string
   location?: string
+  show?: string
   isoFrom?: string
   isoTo?: string
   fromTime?: string

@@ -157,6 +157,32 @@
     if (!$activeEdit.items.includes(index) || document.activeElement?.closest(".item") || document.activeElement?.closest("input")) return
 
     if (e.key === "Backspace" || e.key === "Delete") {
+      // TODO: history
+      if ($activeEdit.id) {
+        if ($activeEdit.type === "overlay") {
+          overlays.update((a: any) => {
+            $activeEdit.items.forEach((i: number) => {
+              if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items.splice(i, 1)
+            })
+            return a
+          })
+
+          return
+        }
+
+        if ($activeEdit.type === "template") {
+          templates.update((a: any) => {
+            $activeEdit.items.forEach((i: number) => {
+              if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items.splice(i, 1)
+            })
+            return a
+          })
+
+          return
+        }
+
+        return
+      }
       history({ id: "deleteItem", location: { page: "edit", show: $activeShow!, items: $activeEdit.items, layout: layout, slide: ref.id } })
     }
   }
@@ -289,19 +315,19 @@
   function paste(e: any) {
     e.preventDefault()
     let clipboard = e.clipboardData.getData("text/plain")
-    console.log(clipboard)
 
     let sel = getSelectionRange()
     let lines: Line[] = getNewLines()
 
+    let emptySelection: boolean = !sel.filter((a) => Object.keys(a).length).length
+
     sel.forEach((lineSel, i) => {
-      console.log(lineSel)
-      if (lineSel.start !== undefined) {
+      if (lineSel.start !== undefined || (emptySelection && i >= sel.length - 1)) {
         let pos = 0
         let pasted = false
         lines[i].text.forEach(({ value }, j) => {
-          console.log(pos, lineSel.start, value)
-          if (!pasted && pos + value.length >= lineSel.start) {
+          // console.log(pos, lineSel.start, value)
+          if (!pasted && (pos + value.length >= lineSel.start || (emptySelection && j >= lines[i].text.length - 1))) {
             let caretPos = lineSel.start - pos
             lines[i].text[j].value = value.slice(0, caretPos) + clipboard + value.slice(caretPos, value.length)
             pasted = true
@@ -323,11 +349,12 @@
   // $: autoSize = Math.min(height, width) / 2
   $: autoSize = getAutoSize(item)
 
+  let slideId: string = ""
   function getMirroredItem() {
     if (item.mirror!.show === ref.showId) return
-    let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[$activeEdit.slide!]
+    let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[$activeEdit.slide || 0]
     if (!newSlideRef) return
-    let slideId: any = newSlideRef.id
+    slideId = newSlideRef.id
     let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
     if (!newItem) return
     newItem.style = "width: 100%;height: 100%;pointer-events: none;"
@@ -387,15 +414,13 @@ bind:offsetWidth={width} -->
   {:else if item?.type === "mirror"}
     {#if item.mirror?.show}
       {#key item.mirror?.show}
-        {#if !ref.type || ref.type === "show"}
-          {#await loadShows([item.mirror.show])}
-            {#if !$currentWindow}Loading...{/if}
-          {:then}
-            {#if $activeEdit.slide !== undefined && $activeEdit.slide !== null && getMirroredItem()}
-              <Textbox item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId: _show().layouts("active").ref()[0][$activeEdit.slide].id, id: ref.id }} />
-            {/if}
-          {/await}
-        {/if}
+        {#await loadShows([item.mirror.show])}
+          {#if !$currentWindow}Loading...{/if}
+        {:then}
+          {#if getMirroredItem()}
+            <Textbox item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
+          {/if}
+        {/await}
       {/key}
     {/if}
   {:else if item?.type === "icon"}

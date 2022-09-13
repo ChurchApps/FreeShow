@@ -38,21 +38,26 @@
 
   $: if (item.type === "timer") ref.id = item.timer!.id!
 
+  $: slideId = ref.slideId || ""
   function getMirroredItem() {
     if (item.mirror!.show === ref.showId) return
 
     let outputId = getActiveOutputs($outputs)[0]
     let currentOutput = $outputs[outputId] || {}
 
-    let currentSlideRef: any = _show(currentOutput?.out?.slide?.id || "active")
-      .layouts("active")
-      .ref()[0]
-      .find((a: any) => a.id === ref.slideId)
+    let currentSlideIndex: number = 0
+    if (!ref.type || ref.type === "show") {
+      let currentSlideRef: any = _show(currentOutput?.out?.slide?.id || "active")
+        .layouts("active")
+        .ref()[0]
+        .find((a: any) => a.id === ref.slideId)
 
-    let currentSlideIndex: number = currentSlideRef.layoutIndex
+      currentSlideIndex = currentSlideRef.layoutIndex
+    }
+
     let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[currentSlideIndex]
     if (!newSlideRef) return
-    let slideId: any = newSlideRef.id
+    slideId = newSlideRef.id
     let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
     if (!newItem) return
     newItem.style = "width: 100%;height: 100%;"
@@ -98,15 +103,13 @@
   {:else if item?.type === "mirror"}
     {#if item.mirror?.show}
       {#key item.mirror?.show}
-        {#if !ref.type || ref.type === "show"}
-          {#await loadShows([item.mirror.show])}
-            {#if !$currentWindow}Loading...{/if}
-          {:then}
-            {#if ref.slideId && getMirroredItem()}
-              <svelte:self item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId: ref.slideId, id: ref.id }} />
-            {/if}
-          {/await}
-        {/if}
+        {#await loadShows([item.mirror.show])}
+          {#if !$currentWindow}Loading...{/if}
+        {:then}
+          {#if getMirroredItem()}
+            <svelte:self item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
+          {/if}
+        {/await}
       {/key}
     {/if}
   {:else if item?.type === "icon"}

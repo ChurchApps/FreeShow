@@ -205,9 +205,10 @@
                 {#if i >= 3}
                   <span class="dot" style="background-color: {event.color || 'unset'}" title={event.name} />
                 {:else}
-                  <p class="event" style="color: {event.color || 'unset'}" title={event.name}>
-                    {event.name}
-                  </p>
+                  <div class="event" style="color: {event.color || 'unset'}" title={event.name}>
+                    <Icon id={event.type === "event" ? "calendar" : event.type} right white />
+                    <p>{event.name}</p>
+                  </div>
                 {/if}
               {/each}
             </span>
@@ -305,6 +306,8 @@
     padding: 5px 10px;
     text-align: center;
     width: 100%;
+    display: flex;
+    align-items: center;
   }
   .dot {
     display: flex;

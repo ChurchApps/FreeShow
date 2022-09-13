@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Item, ItemType } from "../../../../types/Show"
-  import { activeEdit, activeShow, overlays, shows, templates } from "../../../stores"
+  import { activeEdit, activeShow, overlays, templates } from "../../../stores"
   import { history } from "../../helpers/history"
+  import { getListOfShows } from "../../helpers/show"
   import { _show } from "../../helpers/shows"
   import { getStyles } from "../../helpers/style"
   import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
@@ -53,11 +54,7 @@
   $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : {}
   $: alignStyle = item?.align ? getStyles(item.align) : {}
 
-  $: if (id === "mirror" && box)
-    box.edit.default[0].values.options = Object.entries($shows)
-      .map(([id, show]: any) => ({ id, name: show.name }))
-      .filter((a) => a.id !== $activeShow?.id)
-      .sort((a, b) => a.name?.localeCompare(b.name))
+  $: if (id === "mirror" && box) box.edit.default[0].values.options = getListOfShows(!$activeEdit.id)
 
   function setValue(input: any) {
     let allItems: number[] = $activeEdit.items
@@ -75,9 +72,20 @@
     // set nested value
     if (input.id.includes(".")) {
       let splitted = input.id.split(".")
-      let slideId = _show().layouts("active").ref()[0][$activeEdit.slide!].id
-      let slide = _show().slides([slideId]).get()[0]
-      let item = slide.items[allItems[0]]
+
+      let item: any = {}
+      if ($activeEdit.id) {
+        if ($activeEdit.type === "overlay") {
+          item = $overlays[$activeEdit.id].items[allItems[0]]
+        } else if ($activeEdit.type === "template") {
+          item = $templates[$activeEdit.id].items[allItems[0]]
+        }
+      } else {
+        let slideId = _show().layouts("active").ref()[0][$activeEdit.slide!].id
+        let slide = _show().slides([slideId]).get()[0]
+        item = slide.items[allItems[0]]
+      }
+
       if (item[splitted[0]]?.[splitted[1]] !== undefined) {
         input.id = splitted[0]
         value = item[splitted[0]]
