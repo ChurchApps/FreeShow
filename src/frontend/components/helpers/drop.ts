@@ -11,6 +11,7 @@ const areas: any = {
   project: ["show_drawer", "media", "audio", "player"],
   overlays: ["slide"],
   templates: ["slide"],
+  edit: ["media"],
   // media_drawer: ["file"],
 }
 const areaChildren: any = {

@@ -32,7 +32,7 @@
       <span style="padding-left: 10px;">{dictionary.clear.all}</span>
     </Button>
   </span>
-  <span class="group">
+  <!-- <span class="group">
     <Button
       disabled={locked || !outBackground}
       on:click={() => {
@@ -74,20 +74,7 @@
     >
       <Icon id="overlays" size={1.2} />
     </Button>
-    <Button
-      disabled={locked || !outAudio.length}
-      on:click={() => {
-        if (!locked) {
-          outAudio = []
-        }
-      }}
-      red
-      dark
-      center
-    >
-      <Icon id="audio" size={1.2} />
-    </Button>
-  </span>
+  </span> -->
 </div>
 
 <style>
@@ -101,7 +88,7 @@
     width: 100%;
     flex: 1;
   }
-  .group {
+  /* .group {
     display: flex;
-  }
+  } */
 </style>

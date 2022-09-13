@@ -7,7 +7,6 @@ import {
   activeEdit,
   activePage,
   activePopup,
-  activeProject,
   activeRename,
   activeShow,
   alertMessage,
@@ -35,6 +34,7 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
+import { exportProject } from "../export/project"
 import { copy, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
@@ -42,6 +42,7 @@ import { getActiveOutputs, setOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
+import { activeProject } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
   if (actions[id]) return actions[id]({ sel, actionItem, enabled, contextElem, menu })
@@ -216,6 +217,7 @@ const actions: any = {
       return
     }
     if (obj.sel.id === "slide" || obj.sel.id === "overlay" || obj.sel.id === "template") {
+      obj.sel.data = obj.sel.data.sort((a: any, b: any) => a.index - b.index)
       copy(obj.sel)
       paste()
       return
@@ -305,6 +307,12 @@ const actions: any = {
   newScripture: () => activePopup.set("import_scripture"),
 
   // project
+  export: (obj: any) => {
+    if (!obj.contextElem.classList.value.includes("project")) return
+    if (obj.sel.id !== "project" && !get(activeProject)) return
+    let projectId: string = obj.sel.data[0]?.id || get(activeProject)
+    exportProject(get(projects)[projectId])
+  },
   close: (obj: any) => {
     if (obj.contextElem.classList.contains("media")) {
       if (get(previousShow)) {

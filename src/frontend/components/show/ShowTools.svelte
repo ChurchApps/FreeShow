@@ -24,15 +24,20 @@
   let note: string = ""
   $: if (showId && $showsCache[showId]?.settings?.activeLayout !== currentLayout) updateNote()
 
+  let previousShow = showId
   function updateNote() {
     if (!showId) return
-    note = showId ? _show("active").layouts("active").get("notes")[0] : ""
+    note = showId ? _show().layouts("active").get("notes")[0] || "" : ""
     currentLayout = $showsCache[showId]?.settings?.activeLayout
+
+    if (note.length && active === "groups") active = "notes"
+    else if (!note.length && previousShow !== showId && active === "notes") active = "groups"
+    previousShow = showId
   }
 
   function edit(e: any) {
     if (!showId || $showsCache[showId].layouts[$showsCache[showId].settings.activeLayout].notes === e.detail) return
-    _show("active").layouts("active").set({ key: "notes", value: e.detail })
+    _show().layouts("active").set({ key: "notes", value: e.detail })
   }
 </script>
 

@@ -335,6 +335,10 @@ export function _show(id: any = "active") {
               if (slide?.children) {
                 slide.children.forEach((childId: string, jndex: number) => {
                   layoutIndex++
+
+                  // array bug
+                  if (Array.isArray(childId)) childId = childId[0]
+
                   a[i].push({
                     type: "child",
                     index: jndex,

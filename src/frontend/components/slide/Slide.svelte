@@ -309,12 +309,12 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     <!-- <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
       {@html html}
     </div> -->
-    <div class="quickEdit">
+    <div class="quickEdit" data-index={index}>
       <!-- {#key slide.items} -->
       {#if slide.items}
-        {#each slide.items as item, index}
+        {#each slide.items as item, itemIndex}
           {#if item.lines}
-            <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} {index} plain />
+            <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
           {/if}
         {/each}
       {/if}

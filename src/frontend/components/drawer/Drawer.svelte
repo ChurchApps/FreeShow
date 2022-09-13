@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Bible } from "../../../types/Scripture"
-  import { activeDrawerTab, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, previousShow, projects } from "../../stores"
+  import { activeDrawerTab, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
   import { drawerTabs } from "../../values/tabs"
   import Content from "../drawer/Content.svelte"
   import Navigation from "../drawer/Navigation.svelte"
@@ -35,6 +35,8 @@
 
     autoDrawer = false
     drawer.set({ height: getHeight(window.innerHeight - e.clientY - mouse.offsetY), stored: null })
+
+    selected.set({ id: null, data: [] })
   }
 
   function getHeight(height: any) {

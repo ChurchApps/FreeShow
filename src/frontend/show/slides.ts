@@ -216,6 +216,8 @@ export function changeLayout(layout: any, slides: any, ref: any, moved: any, ind
   }
 
   let parent: string = ref[0].id
+  let newChildrenOrder: any = {}
+
   ref.forEach((slideRef: any, i: number) => {
     let isParent: boolean = slideRef.newType ? slideRef.newType === "parent" : slideRef.type === "parent"
 
@@ -230,12 +232,23 @@ export function changeLayout(layout: any, slides: any, ref: any, moved: any, ind
     if (isParent) {
       newLayout.push({ ...layout[i].data, id: slideRef.id })
     } else {
+      // update children order
+      if (slideRef.layoutIndex !== i) {
+        if (!newChildrenOrder[parent]) newChildrenOrder[parent] = []
+        newChildrenOrder[parent].push(slideRef.id)
+      }
+
       // set new child data
       let index: number = newLayout.length - 1
       // if (!newLayout[index]) newLayout[index] = {}
       if (!newLayout[index].children) newLayout[index].children = {}
       newLayout[index].children[slideRef.id] = layout[i].data
     }
+  })
+
+  // update children order
+  Object.entries(newChildrenOrder).forEach(([id, children]: any) => {
+    slides[id].children = [...new Set(children)]
   })
 
   return { layout: newLayout, slides }

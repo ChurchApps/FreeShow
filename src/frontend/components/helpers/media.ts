@@ -16,3 +16,18 @@ export function getFileName(path: string): string {
   if (path.indexOf("/") > -1) return path.substring(path.lastIndexOf("/"))
   return path
 }
+
+// convert to base64
+export async function toDataURL(url: string) {
+  return new Promise((resolve: any) => {
+    var xhr = new XMLHttpRequest()
+    xhr.onload = () => {
+      var reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result)
+      reader.readAsDataURL(xhr.response)
+    }
+    xhr.open("GET", url)
+    xhr.responseType = "blob"
+    xhr.send()
+  })
+}

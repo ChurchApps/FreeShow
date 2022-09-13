@@ -72,6 +72,19 @@
     if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
     else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
+    // set nested value
+    if (input.id.includes(".")) {
+      let splitted = input.id.split(".")
+      let slideId = _show().layouts("active").ref()[0][$activeEdit.slide!].id
+      let slide = _show().slides([slideId]).get()[0]
+      let item = slide.items[allItems[0]]
+      if (item[splitted[0]]?.[splitted[1]] !== undefined) {
+        input.id = splitted[0]
+        value = item[splitted[0]]
+        value[splitted[1]] = input.value
+      }
+    }
+
     if ($activeEdit.id) {
       if ($activeEdit.type === "overlay") {
         overlays.update((a: any) => {
@@ -191,7 +204,7 @@
 
     let ref: any[] = _show("active").layouts("active").ref()[0]
 
-    if (id === "timer" || id === "icon") {
+    if (id === "timer" || id === "clock" || id === "icon") {
       history({
         id: "setItems",
         // oldData: { style: { key: "style", values: [oldData] } },

@@ -9,6 +9,7 @@
   import { getActiveOutputs } from "../helpers/output"
   import { loadShows } from "../helpers/setShow"
   import { _show } from "../helpers/shows"
+  import Clock from "../system/Clock.svelte"
   import Timer from "./views/Timer.svelte"
 
   export let item: Item
@@ -92,6 +93,8 @@
     {#key item.timer}
       <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />
     {/key}
+  {:else if item?.type === "clock"}
+    <Clock {autoSize} style={false} {...item.clock} />
   {:else if item?.type === "mirror"}
     {#if item.mirror?.show}
       {#key item.mirror?.show}

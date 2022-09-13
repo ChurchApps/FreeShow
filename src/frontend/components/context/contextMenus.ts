@@ -140,9 +140,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
   // PROJECT
   projects: ["newProject", "newFolder"],
-  projectTab: ["close"],
+  projectTab: ["export", "close"],
   project: ["newShowPopup", "newShow"], // , "newPrivateShow"
-  project_button: ["rename", "delete"],
+  project_button: ["rename", "delete", "export"],
   folder: ["rename", "delete"],
   project_media: ["play", "play_no_filters", "remove"],
   project_audio: ["remove"],

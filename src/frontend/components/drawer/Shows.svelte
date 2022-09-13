@@ -143,6 +143,8 @@
     }
   }
 
+  // DEBUG
+
   // let timeout: any = null
   // let hidden: boolean = false
   // drawer.subscribe((a) => {
@@ -153,10 +155,26 @@
   //   }, 100)
   // })
 
+  //
+
+  // it's very laggy with "just" 3500 songs
   // let duplicated = false
   // $: if (filteredShows.length && !duplicated) {
   //   duplicated = true
   //   filteredShows = [...filteredShows, ...filteredShows, ...filteredShows, ...filteredShows, ...filteredShows]
+  // }
+
+  //
+
+  // let textHTML = ""
+
+  // $: if (filteredShows.length) loopThrough()
+
+  // function loopThrough(index: number = 0) {
+  //   if (index === 0) textHTML = ""
+  //   textHTML += "<button>" + filteredShows[index].name + "</button>"
+  //   index++
+  //   if (index < filteredShows.length) loopThrough(index)
   // }
 </script>
 
@@ -167,10 +185,16 @@
   <div class="column context #drawer_show">
     <!-- && $drawer.height > 40 -->
     {#if filteredShows.length}
+      <!-- {@html textHTML} -->
+      <!-- plain buttons work much better... -->
+      <!-- TODO: optimize components -->
+      <!-- {#each filteredShows as show}
+        <button>{show.name}</button>
+      {/each} -->
       {#each filteredShows as show}
         <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
-          <!--  && (!elem || (elem.offsetTop > offset && elem.offsetTop < offset + 500)) -->
           {#if searchValue.length <= 1 || show.match}
+            <!-- <Button>{show.name}</Button> -->
             <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true, $dictionary)} class="#drawer_show_button__drawer_show" match={show.match || null} />
           {/if}
         </SelectElem>

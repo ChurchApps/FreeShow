@@ -85,10 +85,19 @@
 
   function getValue(input: any, _updater: any) {
     // if (input.id === "auto" && isAuto) return true
+    if (input.id.includes(".")) input.value = getItemValue(input)
+
     if (input.valueIndex !== undefined && styles[input.key]) return removeExtension(styles[input.key].split(" ")[input.valueIndex], input.extension)
     if (input.input === "dropdown") return input.values.options.find((a: any) => a.id === getKeyValue(input))?.name || "—"
     if (input.id === "filter") return item?.filter ? getFilters(item.filter || "")[input.key] || input.value : input.value
     return styles[input.key] || input.value
+  }
+
+  function getItemValue(input: any) {
+    // get nested value
+    let splitted = input.id.split(".")
+    let value = item[splitted[0]]?.[splitted[1]]
+    return value !== undefined ? value : input.value
   }
 
   function getKeyValue(input: any): string {
@@ -148,7 +157,7 @@
             this={inputs[input.input]}
             {...input.values || {}}
             {value}
-            checked={item?.[input.id] || false}
+            checked={item?.[input.id] || value || false}
             on:click={(e) => valueChange(e, input)}
             on:input={(e) => valueChange(e, input)}
             on:checked={(e) => valueChange(e, input)}

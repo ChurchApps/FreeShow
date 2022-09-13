@@ -4,6 +4,7 @@
   import type { Item, Line } from "../../../types/Show"
   import { activeEdit, activeShow, currentWindow, overlays, showsCache, templates, videoExtensions } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
+  import { clone } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { getExtension } from "../helpers/media"
@@ -13,6 +14,7 @@
   import T from "../helpers/T.svelte"
   import Textbox from "../slide/Textbox.svelte"
   import Timer from "../slide/views/Timer.svelte"
+  import Clock from "../system/Clock.svelte"
   import Movebox from "../system/Movebox.svelte"
   import { getAutoSize } from "./scripts/autoSize"
   import { getSelectionRange } from "./scripts/textStyle"
@@ -20,6 +22,7 @@
   export let item: Item
   export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
   export let index: number
+  export let editIndex: number = -1
   export let ratio: number = 1
   export let plain: boolean = false
 
@@ -63,10 +66,13 @@
 
   function keydown(e: any) {
     // TODO: get working in list view
-    if (e.key === "Enter" && e.altKey && e.target.closest(".item")) {
+    if (e.key === "Enter" && e.altKey && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
+      // incorrect editbox
+      if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
+
       // split
       let sel = getSelectionRange()
-      if (!sel) return
+      if (!sel?.length || (sel.length === 1 && !Object.keys(sel[0]).length)) return
 
       // if (sel.start === sel.end) {
       let lines: Line[] = getNewLines()
@@ -75,6 +81,7 @@
       let currentIndex = 0,
         textPos = 0
       let start = -1
+
       lines.forEach((line, i) => {
         if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
         else firstLines.push({ align: line.align, text: [] })
@@ -94,17 +101,23 @@
           }
           textPos += text.value.length
         })
+
+        if (!firstLines.at(-1)?.text.length) firstLines.pop()
       })
 
       let defaultLine = [{ align: lines[0].align || "", text: [{ style: lines[0].text[0]?.style || "", value: "" }] }]
       if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
       if (!secondLines.length) secondLines = defaultLine
 
-      let slideRef: any = _show("active").layouts("active").ref()[0][$activeEdit.slide!]
+      if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
+      let editItemIndex: number = $activeEdit.items[0] || Number(e.target.closest(".editItem").getAttribute("data-index")) || 0
+
+      let slideRef: any = _show().layouts("active").ref()[0][editIndex]
+      if (!slideRef) return
 
       // create new slide
-      let newSlide = { ..._show("active").slides([ref.id]).get()[0] }
-      newSlide.items[$activeEdit.items[0] || 0].lines = secondLines
+      let newSlide = { ..._show().slides([ref.id]).get()[0] }
+      newSlide.items[editItemIndex].lines = secondLines
       delete newSlide.id
       delete newSlide.globalGroup
       newSlide.group = null
@@ -112,21 +125,22 @@
 
       // add new slide
       let id = uid()
-      _show("active")
+      _show()
         .slides([id])
-        .add([JSON.parse(JSON.stringify(newSlide))])
+        .add([clone(newSlide)])
 
       // update slide
       updateLines(firstLines)
 
       // set child
       let parentId = slideRef.type === "child" ? slideRef.parent.id : slideRef.id
-      let children = _show("active").slides([parentId]).get("children")[0] || []
+      let children = _show().slides([parentId]).get("children")[0] || []
       let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
       children = addToPos(children, [id], slideIndex)
-      _show("active").slides([parentId]).set({ key: "children", value: children })
+      _show().slides([parentId]).set({ key: "children", value: children })
 
-      activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
+      if (e.target.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
+      else getStyle()
     }
 
     if (e.key === "Escape") {
@@ -171,8 +185,15 @@
     setTimeout(getStyle, 10)
   }
 
+  // // update text if slide added/removed (for quick edit)
+  // let slideLength = 0
+  // $: if (_show().get().slides.length > slideLength) {
+  //   slideLength = _show().get().slides.length
+  //   setTimeout(getStyle, 10)
+  // }
+
   $: {
-    // console.log("ITEM", JSON.parse(JSON.stringify(item)))
+    // console.log("ITEM", clone(item))
 
     // style hash
     let s = ""
@@ -230,7 +251,7 @@
     if ($activeEdit.type === "overlay") overlays.update(setNewLines)
     else if ($activeEdit.type === "template") templates.update(setNewLines)
     else if (ref.id) {
-      _show("active")
+      _show()
         .slides([ref.id])
         .items([index])
         .set({ key: "lines", values: [newLines] })
@@ -320,9 +341,10 @@
 bind:offsetWidth={width} -->
 <div
   bind:this={itemElem}
-  class={plain ? "" : "item context #edit_box"}
+  class={plain ? "editItem" : "editItem item context #edit_box"}
   class:selected={$activeEdit.items.includes(index)}
   style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);`}
+  data-index={index}
   on:mousedown={mousedown}
 >
   {#if !plain}
@@ -360,6 +382,8 @@ bind:offsetWidth={width} -->
     {/if}
   {:else if item?.type === "timer"}
     <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />
+  {:else if item?.type === "clock"}
+    <Clock {autoSize} style={false} {...item.clock} />
   {:else if item?.type === "mirror"}
     {#if item.mirror?.show}
       {#key item.mirror?.show}
@@ -368,7 +392,7 @@ bind:offsetWidth={width} -->
             {#if !$currentWindow}Loading...{/if}
           {:then}
             {#if $activeEdit.slide !== undefined && $activeEdit.slide !== null && getMirroredItem()}
-              <Textbox item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId: _show("active").layouts("active").ref()[0][$activeEdit.slide].id, id: ref.id }} />
+              <Textbox item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId: _show().layouts("active").ref()[0][$activeEdit.slide].id, id: ref.id }} />
             {/if}
           {/await}
         {/if}

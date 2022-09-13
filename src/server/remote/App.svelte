@@ -218,7 +218,6 @@
     if (index !== null) send("OUT", index)
   }
 
-  let category: string = "all"
   let searchValue: string = ""
   // sort shows in alphabeticly order
   let showsSorted: any
@@ -227,72 +226,54 @@
     // removeValues(sortObject(keysToID(s), "name"), "private", true)
   }
   let filteredShows: any[]
-  $: {
-    filteredStored = showsSorted.filter((s: any) => category === "all" || category === s.category || (category === "unlabeled" && s.category === null))
-  }
-  $: console.log(filteredStored)
-
   let filteredStored: any
+  $: filteredStored = showsSorted
+  // $: filteredStored = showsSorted.filter((s: any) => category === "all" || category === s.category || (category === "unlabeled" && s.category === null))
+  // $: console.log(filteredStored)
+
   export let firstMatch: null | string = null
   $: {
-    if (searchValue.length > 1) {
-      filteredShows = []
-      filteredStored.forEach((s: any) => {
-        let match = search(s)
-        if (match) filteredShows.push({ ...s, match })
-      })
-      // filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowId[]
-      filteredShows = filteredShows.sort((a: any, b: any) => (a.match < b.match ? -1 : a.match > b.match ? 1 : 0))
-      firstMatch = filteredShows[0]?.id || null
-    } else {
+    if (searchValue.length > 1) setTimeout(findMatches, 10)
+    else {
       filteredShows = filteredStored
       firstMatch = null
     }
   }
 
+  function findMatches() {
+    filteredShows = []
+    filteredStored.forEach((s: any) => {
+      let match = search(s)
+      console.log(s, match)
+      if (match) filteredShows.push({ ...s, match })
+    })
+    // filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowId[]
+    filteredShows = filteredShows.sort((a: any, b: any) => (a.match < b.match ? -1 : a.match > b.match ? 1 : 0))
+    console.log(filteredShows)
+    firstMatch = filteredShows[0]?.id || null
+  }
+
   $: sva = searchValue
     .toLowerCase()
-    // .replace(/[^\w\s,]/g, "")
-    .replace(/[.\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    .split(",")
-  // .replace(/[^\w\s]/g, "")
+    .replace(/[.\/#!?$%\^&\*;:{}=\-_`~(),]/g, "")
+    .split(" ")
   const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
   const searchIncludes = (s: string, sv: string): boolean => filter(s).includes(sv)
   const searchEquals = (s: string, sv: string): boolean => filter(s) === sv
 
-  // TODO: search
   let totalMatch: number = 0
   $: totalMatch = searchValue ? 0 : 0
   function search(obj: any): number {
     let match: any[] = []
 
+    console.log(sva)
+
     sva.forEach((sv: any, i: number) => {
       if (sv.length > 1) {
         match[i] = 0
 
-        if (searchEquals(obj.name, sv)) match[i] = 100
-        else if (searchIncludes(obj.name, sv)) match[i] += 25
-        // if (obj.category !== null && searchIncludes($categories[obj.category].name, sv)) match[i] += 10
-
-        if (obj.slides) {
-          Object.values(obj.slides).forEach((slide: any) => {
-            slide.items.forEach((item: any) => {
-              let text = ""
-              item.text?.forEach((box: any) => {
-                text += box.value
-              })
-              if (text.length) {
-                if (searchEquals(text, sv)) match[i] += 20
-                else if (searchIncludes(text, sv)) {
-                  // TODO: more specific match
-                  // console.log(sv, filter(text))
-                  // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
-                  match[i] += 10
-                }
-              }
-            })
-          })
-        }
+        if (searchEquals(obj.name.toLowerCase(), sv)) match[i] = 100
+        else if (searchIncludes(obj.name.toLowerCase(), sv)) match[i] += 25
       }
     })
 

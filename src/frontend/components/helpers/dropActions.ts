@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { changeLayout } from "../../show/slides"
 import { activeDrawerTab, activeProject, activeShow, audioExtensions, drawerTabsData, imageExtensions, media, projects, showsCache, videoExtensions } from "../../stores"
+import { addItem } from "../edit/scripts/addItem"
 import { clone } from "./array"
 import { history, historyAwait } from "./history"
 import { getExtension, getFileName, removeExtension } from "./media"
@@ -171,6 +172,10 @@ export const dropActions: any = {
     })
   },
   overlays: ({ drag, drop }: any) => dropActions.templates({ drag, drop }),
+  edit: ({ drag }: any) => {
+    if (drag.id !== "media") return
+    drag.data.forEach(({ path }: any) => addItem("media", null, { src: path }))
+  },
 }
 
 const files: any = {
@@ -280,6 +285,7 @@ const slideDrop: any = {
     // check if first slide child
     if (newLayoutRef[0].type === "child") newLayoutRef[0].newType = "parent"
 
+    console.log(sortedLayout, slides, clone(newLayoutRef), moved, newIndex)
     history.newData = changeLayout(sortedLayout, slides, clone(newLayoutRef), moved, newIndex)
     return history
   },

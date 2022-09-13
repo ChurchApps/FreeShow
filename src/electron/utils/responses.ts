@@ -8,7 +8,7 @@ import { closeMain, getScreens, loadFonts, mainWindow, maximizeMain, openURL, se
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
-import { createPDFWindow, exportTXT } from "./export"
+import { createPDFWindow, exportProject, exportTXT } from "./export"
 import { checkShowsFolder, getDocumentsFolder, getPaths, loadFile, selectFilesDialog, selectFolderDialog } from "./files"
 import { importShow } from "./import"
 
@@ -34,6 +34,7 @@ export function startExport(_e: any, msg: Message) {
 
   if (msg.data.type === "pdf") createPDFWindow(msg.data)
   else if (msg.data.type === "txt") exportTXT(msg.data)
+  else if (msg.data.type === "project") exportProject(msg.data)
 }
 
 // BIBLE

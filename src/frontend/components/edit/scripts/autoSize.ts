@@ -49,7 +49,7 @@ export function getAutoSize(item: any): number {
   let styles: any = getStyles(item.style, true)
 
   let lines: string[] = getItemLines(item)
-  if (!lines.length) lines = ["00:00"]
+  if (!lines.length) lines = ["000000"]
   let length: number = lines.sort((a, b) => b.length - a.length)[0].length
 
   // TODO: letter spacing....?

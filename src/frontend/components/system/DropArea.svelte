@@ -3,7 +3,7 @@
   import { ondrop, validateDrop } from "../helpers/drop"
   import T from "../helpers/T.svelte"
 
-  export let id: "all_slides" | "slides" | "slide" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation"
+  export let id: "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation"
   export let selectChildren: boolean = false
   export let hoverTimeout: number = 500
   export let file: boolean = false
@@ -70,6 +70,7 @@
     hover = false
   }} -->
 
+<!-- TODO: fix position -->
 <div
   class="droparea"
   class:hover

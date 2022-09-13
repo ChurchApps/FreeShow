@@ -53,10 +53,11 @@
   <div class="grid">
     <IconButton title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
     <IconButton title={$dictionary.items?.image} icon="image" on:click={() => addItem("media")} />
-    <IconButton title={$dictionary.items?.mirror} icon="mirror" on:click={() => addItem("mirror")} />
     <!-- TODO: camera box -->
     <!-- <IconButton title={$dictionary.items?.live} disabled icon="camera" /> -->
     <IconButton title={$dictionary.items?.timer} icon="timer" on:click={() => addItem("timer")} />
+    <IconButton title={$dictionary.items?.clock} icon="clock" on:click={() => addItem("clock")} />
+    <IconButton title={$dictionary.items?.mirror} icon="mirror" on:click={() => addItem("mirror")} />
   </div>
   <div>
     <!-- square, circle, triangle, star, heart, ... -->
