@@ -3,11 +3,13 @@
   import { getResolution } from "../helpers/output"
 
   export let id: string
+  export let groupId: string
   let videoElem: any
 
   $: constraints = {
     video: {
       deviceId: id,
+      groupId,
       width: { ideal: getResolution().width },
       height: { ideal: getResolution().height },
     },

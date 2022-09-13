@@ -103,15 +103,26 @@ function getSlidesText(show: any) {
   return text
 }
 
+// ----- PROJECT -----
+
+export function exportProject(data: any) {
+  let msg: string = "export.exported"
+  writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => {
+    if (err) msg = err
+  })
+  toApp(MAIN, { channel: "ALERT", data: msg })
+}
+
 // ----- HELPERS -----
 
 function writeFile(path: string, extension: string, data: any, options: any = undefined, callback: any) {
   let number = -1
+  let tempPath: string = path
+
   do {
     number++
-    path = path + (number ? "_" + number : "") + extension
-    // console.log(path)
-  } while (doesPathExist(path))
+    tempPath = path + (number ? "_" + number : "") + extension
+  } while (doesPathExist(tempPath))
 
-  fs.writeFile(path, data, options, callback)
+  fs.writeFile(tempPath, data, options, callback)
 }

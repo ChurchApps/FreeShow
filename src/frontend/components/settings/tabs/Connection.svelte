@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import { MAIN } from "../../../../types/Channels"
-  import { connections, maxConnections, os, ports, remotePassword } from "../../../stores"
+  import { connections, maxConnections, ports, remotePassword } from "../../../stores"
   import { receive, send } from "../../../utils/request"
   import Icon from "../../helpers/Icon.svelte"
   import T from "../../helpers/T.svelte"
@@ -48,10 +48,10 @@
   <p><T id="settings.connections" />: <strong>{Object.keys($connections.REMOTE).length + Object.keys($connections.STAGE).length}</strong></p>
 </div>
 <br />
-<div>
+<!-- <div>
   <p><T id="settings.device_name" /></p>
   <TextInput style="max-width: 50%;" value={$os.name} light />
-</div>
+</div> -->
 <div>
   <p>RemoteShow <T id="settings.password" /></p>
   <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />

@@ -17,6 +17,7 @@
   export let transition: Transition
   export let path: string = ""
   export let id: string = ""
+  export let cameraGroup: string = ""
   export let name: string = ""
   export let type: string = "media"
   export let startAt: number = 0
@@ -140,9 +141,7 @@
 
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
-  <div transition:custom={transition}>
-    <Media {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing={playing} on:loaded={loaded} />
-  </div>
+  <Media {path} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing={playing} on:loaded={loaded} />
 {:else if type === "screen"}
   {#key id}
     <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
@@ -152,7 +151,13 @@
 {:else if type === "camera"}
   {#key id}
     <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
-      <Camera {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem={video} />
+      <Camera
+        {id}
+        groupId={cameraGroup}
+        class="media"
+        style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};"
+        bind:videoElem={video}
+      />
     </div>
   {/key}
 {:else if type === "player"}

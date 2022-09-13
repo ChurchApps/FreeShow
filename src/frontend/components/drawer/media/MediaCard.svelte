@@ -96,6 +96,7 @@
     <IntersectionObserver class="observer" once let:intersecting>
       {#if intersecting}
         <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} />
+        <!-- <SyncMedia bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} /> -->
       {/if}
     </IntersectionObserver>
   </SelectElem>

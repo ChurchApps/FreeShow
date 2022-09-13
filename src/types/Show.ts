@@ -52,6 +52,7 @@ export interface Item {
   align?: string
   media?: any
   timer?: Timer
+  clock?: Clock
   type?: ItemType
   mirror?: Mirror
   src?: string
@@ -72,6 +73,11 @@ export interface Timer {
   time?: string
   // format?: string
   // paused?: boolean
+}
+
+export interface Clock {
+  type: "digital" | "analog"
+  seconds: boolean
 }
 
 export interface Mirror {
@@ -126,6 +132,7 @@ export interface Media {
   id?: string
   name?: string
   path?: string
+  cameraGroup?: string
   type?: MediaType
   muted?: boolean
   loop?: boolean
@@ -190,7 +197,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "shape" | "media" | "mirror" | "icon" | "timer" // "image" | "video"
+export type ItemType = "text" | "shape" | "media" | "mirror" | "icon" | "timer" | "clock" // "image" | "video"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

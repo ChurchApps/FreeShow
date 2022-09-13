@@ -110,6 +110,45 @@ export const boxes: Box = {
       ],
     },
   },
+  clock: {
+    icon: "clock",
+    edit: {
+      default: [
+        // TODO: clock = { type: "digital", seconds: false }
+        {
+          name: "clock.type",
+          input: "dropdown",
+          id: "clock.type",
+          value: "digital",
+          values: {
+            options: [
+              { id: "digital", name: "$:clock.digital:$" },
+              { id: "analog", name: "$:clock.analog:$" },
+            ],
+          },
+        },
+        { name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: false },
+      ],
+      font: [
+        { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
+        { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
+      ],
+      style: [
+        { input: "font-style" },
+        { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
+      ],
+      outline: [
+        { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
+        { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
+      ],
+      shadow: [
+        { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
+        { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
+        { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
+        { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
+      ],
+    },
+  },
   // mirror other shows content on the same slide index
   mirror: {
     icon: "mirror",

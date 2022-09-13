@@ -22,6 +22,8 @@
   import EditEvent from "./popups/EditEvent.svelte"
   import Color from "./popups/Color.svelte"
   import ChooseScreen from "./popups/ChooseScreen.svelte"
+  import AdvancedScreen from "./popups/AdvancedScreen.svelte"
+  import CreatePlayer from "./popups/CreatePlayer.svelte"
 
   function mousedown(e: any) {
     if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -54,6 +56,8 @@
           <DeleteShow />
         {:else if $activePopup === "icon"}
           <ChangeIcon />
+        {:else if $activePopup === "player"}
+          <CreatePlayer />
         {:else if $activePopup === "rename"}
           <Rename />
         {:else if $activePopup === "color"}
@@ -68,6 +72,8 @@
           <EditEvent />
         {:else if $activePopup === "choose_screen"}
           <ChooseScreen />
+        {:else if $activePopup === "advanced_settings"}
+          <AdvancedScreen />
         {:else if $activePopup === "about"}
           <About />
         {:else if $activePopup === "shortcuts"}

@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { MediaFit } from "../../../types/Main"
+  import type { Transition } from "../../../types/Show"
   import { activeEdit, activeShow, media, videoExtensions } from "../../stores"
+  import { custom } from "../../utils/transitions"
   import { getExtension } from "../helpers/media"
   import Image from "./Image.svelte"
   import MediaControls from "./MediaControls.svelte"
@@ -8,6 +10,7 @@
 
   export let path: string
   export let controls: boolean = false
+  export let transition: Transition = { type: "none", duration: 0, easing: "linear" }
 
   export let filter: string = ""
   export let flipped: boolean = false
@@ -33,12 +36,16 @@
 </script>
 
 {#if type === "video"}
-  <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing on:loaded />
+  <div style="height: 100%;" transition:custom={transition}>
+    <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing on:loaded />
+  </div>
   {#if controls}
     <MediaControls bind:videoData bind:videoTime />
   {/if}
 {:else}
   {#key path}
-    <Image {path} {filter} {flipped} {fit} />
+    <div style="height: 100%;" transition:custom={transition}>
+      <Image {path} {filter} {flipped} {fit} />
+    </div>
   {/key}
 {/if}

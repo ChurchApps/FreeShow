@@ -292,6 +292,7 @@
     "export": "Eksporter",
     "importing": "Importerer",
     "import_scripture": "Importer en bibel",
+    "player": "Spiller",
     "edit_event": "Rediger hendelse",
     "about": "Om",
     "shortcuts": "Hurtigtaster",
@@ -378,11 +379,12 @@
     "export": "Eksporter",
     "export_as": "Eksporter {} som",
     "exported": "Eksportert!",
-    "current_show": "Valgt show",
+    "oneFile": "En fil",
+    "selected_shows": "Valgte show",
     "current_project": "Valgt prosjekt",
-    "selected_shows": "Alle valgte show",
     "all_shows": "Alle show",
     "all_projects": "Alle prosjekter",
+    "project": "Prosjekt",
     "options": "Alternativer",
     "preview": "Forhåndsvisning",
     "title": "Tittel",
@@ -471,6 +473,7 @@
     "image": "Bilde",
     "video": "Video",
     "mirror": "Speil",
+    "clock": "Klokke",
     "live": "Direkte",
     "audio": "Lyd",
     "timer": "Nedtelling",
@@ -501,6 +504,12 @@
     "no_events": "Det er ingen fremtidige arrangement",
     "edit": "Rediger",
     "create": "Opprett"
+  },
+  "clock": {
+    "type": "Type",
+    "digital": "Digital",
+    "analog": "Analog",
+    "seconds": "Sekunder"
   },
   "draw": {
     "focus": "Fokus",

@@ -7,7 +7,6 @@
   export let preview: boolean = false
 
   $: video = $playerVideos[id]
-  $: console.log(video)
 
   export let videoData = { muted: true, paused: false, loop: false, duration: 0 }
   export let videoTime: number = 0
@@ -16,7 +15,7 @@
 </script>
 
 {#if video?.type === "youtube"}
-  <YouTube id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} />
+  <YouTube playerId={id} id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} />
 {:else if video?.type === "vimeo"}
   <Vimeo id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} />
 {/if}

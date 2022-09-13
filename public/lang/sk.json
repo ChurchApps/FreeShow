@@ -292,6 +292,7 @@
     "export": "Export",
     "importing": "Importovanie",
     "import_scripture": "Import biblie",
+    "player": "Prehrávač",
     "edit_event": "Upraviť udalosť",
     "about": "Viac info",
     "shortcuts": "Skratky",
@@ -378,11 +379,12 @@
     "export": "Export",
     "export_as": "Exportovať {} ako",
     "exported": "Exportované!",
-    "current_show": "Aktuálna prezentácia",
-    "current_project": "Aktuálny projekt",
+    "oneFile": "One file",
     "selected_shows": "Vybraté prezentácie",
+    "current_project": "Aktuálny projekt",
     "all_shows": "Všetky prezentácie",
     "all_projects": "Všetky projekty",
+    "project": "Projekt",
     "options": "Voľby",
     "preview": "Náhľad",
     "title": "Názov",
@@ -471,6 +473,7 @@
     "image": "Obrázok",
     "video": "Video",
     "mirror": "Mirror",
+    "clock": "Hodiny",
     "live": "Naživo",
     "audio": "Audio",
     "timer": "Časovač",
@@ -501,6 +504,12 @@
     "no_events": "Nie sú žiadne nadchádzajúce udalosti",
     "edit": "Upraviť",
     "create": "Vytvoriť"
+  },
+  "clock": {
+    "type": "Typ",
+    "digital": "Digital",
+    "analog": "Analog",
+    "seconds": "Sekundy"
   },
   "draw": {
     "focus": "Focus",

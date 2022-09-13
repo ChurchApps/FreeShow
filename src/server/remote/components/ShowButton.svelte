@@ -12,7 +12,6 @@
   // export let shows: any
 
   export let data: null | string = null
-  console.log(show)
 
   // export let page: "side" | "drawer" = "drawer"
   export let match: null | number = null

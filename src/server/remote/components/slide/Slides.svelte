@@ -22,7 +22,7 @@
   $: {
     if (scrollElem && outSlide !== null && outShow?.id === activeShow.id) {
       let index = Math.max(0, outSlide - columns)
-      let offset = scrollElem.querySelector(".grid").children[index].offsetTop - scrollElem.offsetTop - 4
+      let offset = scrollElem.querySelector(".grid").children[index]?.offsetTop - scrollElem.offsetTop - 4
       scrollElem.scrollTo(0, offset)
     }
   }

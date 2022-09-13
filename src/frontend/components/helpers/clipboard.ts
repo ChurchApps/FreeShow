@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { activeEdit, activeShow, clipboard, overlays, selected, showsCache, templates } from "../../stores"
+import { clone } from "./array"
 import { history } from "./history"
 import { _show } from "./shows"
 
@@ -57,37 +58,59 @@ const paster: any = {
   },
   slide: (data: any) => {
     // clone slides
-    data = JSON.parse(JSON.stringify(data))
+    data = clone(data)
 
     // get all slide ids & child ids
-    let copiedIds: string[] = []
-    let childs: any[] = []
-    data.forEach((slide: any) => {
-      copiedIds.push(slide.id)
-      if (slide.children?.length) childs.push(...slide.children)
-    })
+    let copiedIds: string[] = data.map((a: any) => a.id)
+    // let childs: any[] = []
+    // data.forEach((slide: any) => {
+    //   copiedIds.push(slide.id)
+    //   if (slide.children?.length) childs.push(...slide.children)
+    // })
+
+    let slides: any = _show().get().slides
+    let ref: any[] = _show().layouts("active").ref()[0]
+    let newSlides: any[] = []
 
     // remove children
-    data = data.map((slide: any) => {
-      // new slide
-      if (slide.group !== null) slide.id = uid()
-
+    data.map((slide: any) => {
       // has children
       if (slide.children) {
         let children: string[] = []
         children = slide.children.filter((child: string) => copiedIds.includes(child))
         // if (JSON.stringify(children) !== JSON.stringify(slide.children)) slide.id = uid()
-        slide.children = children
-      } else if (slide.group === null && !childs.includes(slide.id)) {
+        if (children.length && slide.children.length > children.length) slide.children = children
+
+        // clone children
+        let clonedChildren: string[] = []
+        slide.children.forEach((childId: string) => {
+          let childSlide: any = clone(slides[childId])
+          childSlide.id = uid()
+          clonedChildren.push(childSlide.id)
+          newSlides.push(childSlide)
+        })
+
+        slide.children = clonedChildren
+      } else if (slide.group === null && !copiedIds.includes(slide.id)) {
         // is child
-        slide.id = uid()
-        slide.group = ""
+        let slideRef = ref.find((a) => a.id === slide.id)
+        let parent: any = slides[slideRef.parent.id]
+        slide.group = parent.group || ""
+        slide.color = parent.color || ""
+        slide.globalGroup = parent.globalGroup || ""
       }
-      return slide
+
+      slide.id = uid()
+      newSlides.push(slide)
     })
+    // TODO: children next to each other should be grouped
     // TODO: add at index
 
-    history({ id: "newSlide", newData: { slides: data }, location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } })
+    history({
+      id: "newSlide",
+      newData: { slides: newSlides },
+      location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout },
+    })
     setTimeout(() => console.log(get(showsCache)), 1000)
   },
   overlay: (data: any) => {

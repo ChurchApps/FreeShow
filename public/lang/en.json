@@ -292,6 +292,7 @@
     "export": "Export",
     "importing": "Importing",
     "import_scripture": "Import scripture",
+    "player": "Player",
     "edit_event": "Edit event",
     "about": "About",
     "shortcuts": "Shortcuts",
@@ -378,11 +379,12 @@
     "export": "Export",
     "export_as": "Export {} as",
     "exported": "Exported!",
-    "current_show": "Current show",
-    "current_project": "Current project",
+    "oneFile": "One file",
     "selected_shows": "Selected shows",
+    "current_project": "Current project",
     "all_shows": "All shows",
     "all_projects": "All projects",
+    "project": "Project",
     "options": "Options",
     "preview": "Preview",
     "title": "Title",
@@ -471,6 +473,7 @@
     "image": "Image",
     "video": "Video",
     "mirror": "Mirror",
+    "clock": "Clock",
     "live": "Live",
     "audio": "Audio",
     "timer": "Timer",
@@ -501,6 +504,12 @@
     "no_events": "There are no upcomming events",
     "edit": "Edit",
     "create": "Create"
+  },
+  "clock": {
+    "type": "Type",
+    "digital": "Digital",
+    "analog": "Analog",
+    "seconds": "Seconds"
   },
   "draw": {
     "focus": "Focus",

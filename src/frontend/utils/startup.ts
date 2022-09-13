@@ -11,6 +11,7 @@ import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
 import { convertPDF } from "../converters/pdf"
 import { convertPowerpoint } from "../converters/powerpoint"
+import { importProject } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
 import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
@@ -191,6 +192,7 @@ const receiveIMPORT: any = {
   pdf: (a: any) => convertPDF(a),
   powerpoint: (a: any) => convertPowerpoint(a),
   freeshow: (a: any) => importShow(a),
+  freeshow_project: (a: any) => importProject(a),
   easyworship: (a: any) => convertEasyWorship(a),
   beblia_bible: (a: any) => convertBebliaBible(a),
   zefania_bible: (a: any) => convertZefaniaBible(a),

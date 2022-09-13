@@ -12,6 +12,7 @@
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Zoomed from "../slide/Zoomed.svelte"
   import Center from "../system/Center.svelte"
+  import DropArea from "../system/DropArea.svelte"
   import Snaplines from "../system/Snaplines.svelte"
   import Editbox from "./Editbox.svelte"
 
@@ -100,29 +101,30 @@
 
 <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
   {#if Slide}
-    <Zoomed
-      background={Slide?.settings?.color || $outputs[getActiveOutputs()[0]]?.show?.background || "black"}
-      {resolution}
-      style={getStyleResolution(resolution, width, height, "fit")}
-      bind:ratio
-      hideOverflow={false}
-      center
-    >
-      <!-- background -->
-      {#if !altKeyPressed && background}
-        {#key background.path}
-          <div class="background" style="zoom: {1 / ratio};opacity: 0.5;">
-            <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
-          </div>
-        {/key}
-      {/if}
-      <!-- edit -->
-      <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
-      {#each Slide.items as item, index}
-        <Editbox {item} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />
-      {/each}
-      <!-- overlays -->
-      <!-- {#if !altKeyPressed && slideOverlays?.length}
+    <DropArea id="edit">
+      <Zoomed
+        background={Slide?.settings?.color || $outputs[getActiveOutputs()[0]]?.show?.background || "black"}
+        {resolution}
+        style={getStyleResolution(resolution, width, height, "fit")}
+        bind:ratio
+        hideOverflow={false}
+        center
+      >
+        <!-- background -->
+        {#if !altKeyPressed && background}
+          {#key background.path}
+            <div class="background" style="zoom: {1 / ratio};opacity: 0.5;">
+              <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
+            </div>
+          {/key}
+        {/if}
+        <!-- edit -->
+        <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+        {#each Slide.items as item, index}
+          <Editbox {item} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />
+        {/each}
+        <!-- overlays -->
+        <!-- {#if !altKeyPressed && slideOverlays?.length}
         <div style="opacity: 0.5;pointer-events: none;">
           {#each slideOverlays as id}
             {#if $overlays[id]}
@@ -133,7 +135,8 @@
           {/each}
         </div>
       {/if} -->
-    </Zoomed>
+      </Zoomed>
+    </DropArea>
   {:else}
     <Center size={2} faded>
       <T id="empty.slide" />

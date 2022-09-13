@@ -134,6 +134,7 @@
                 {#if show.type === "player"}
                   <Player id={show.id} bind:videoData bind:videoTime preview />
                 {:else}
+                  <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
                   <video
                     style="width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}"
                     src={show.id}

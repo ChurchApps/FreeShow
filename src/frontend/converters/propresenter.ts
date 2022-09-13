@@ -1,9 +1,9 @@
-import { drawerTabsData, activePopup, groups as globalGroups, dictionary } from "./../stores"
 import { get } from "svelte/store"
-import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
+import { ShowObj } from "./../classes/Show"
+import { activePopup, dictionary, drawerTabsData, groups as globalGroups } from "./../stores"
 // import { Buffer } from "buffer"
 
 interface Song {
@@ -86,9 +86,7 @@ interface MediaCue {
   // rvXMLIvarName: string
   tags: string
   timeStamp: number
-  video?: {
-    [key: string]: VideoCue
-  }
+  video?: VideoCue
 }
 interface VideoCue {
   audioVolume: number
@@ -191,10 +189,12 @@ export function convertProPresenter(data: any) {
     //   used: null,
     // }
 
-    let { slides, layouts }: any = createSlides(song)
+    let { slides, layouts, media }: any = createSlides(song)
 
     show.slides = slides
     show.layouts = {}
+    show.media = media
+
     layouts.forEach((layout: any, i: number) => {
       show.layouts[i === 0 ? layoutID : layout.id] = {
         name: layout.name || get(dictionary).example?.default || "",
@@ -211,13 +211,18 @@ export function convertProPresenter(data: any) {
 function createSlides({ groups, arrangements }: Song) {
   let slides: any = {}
   let layouts: any[] = [{ id: null, name: "", slides: [] }]
+  let media: any = {}
   let sequences: any = {}
+
+  let backgrounds: any = {}
+
   Object.entries(groups).forEach(([groupId, group]) => {
     if (group.slides) {
       Object.values(group.slides).forEach((slide: Slide, i: number) => {
         let id: string = uid()
         let items: any[] = []
         // TODO: elements
+        console.log(slide)
         console.log(slide.displayElements)
         if (slide.displayElements[0]?.RTFData) {
           items = [
@@ -227,6 +232,7 @@ function createSlides({ groups, arrangements }: Song) {
             },
           ]
         }
+
         slides[id] = {
           group: null,
           color: null,
@@ -234,6 +240,13 @@ function createSlides({ groups, arrangements }: Song) {
           notes: "",
           items,
         }
+
+        // media
+        let media = slide.mediaCue
+        let path: string = media?.video?.source || ""
+        // , type: "video"
+        if (path) backgrounds[i] = { path, name: media.displayName }
+
         if (i === 0) {
           slides[id].group = group.name
           slides[id].color = getColor(group.color)
@@ -242,7 +255,23 @@ function createSlides({ groups, arrangements }: Song) {
           if (slide.enabled.toString() === "false") l.disabled = true
           layouts[0].slides.push(l)
 
-          let globalGroup = group.name?.replace(/[0-9]/g, "").trim().toLowerCase()
+          let globalGroup = (group.name || "")
+            .replaceAll("-", "_")
+            .replace(/[0-9-]/g, "")
+            .trim()
+            .toLowerCase()
+          if (globalGroup === "group") globalGroup = "verse"
+          if (!get(globalGroups)[globalGroup]) {
+            Object.entries(get(globalGroups)).find(([id, group]: any) => {
+              let name: string = group.name.toLowerCase()
+              if (name === globalGroup) return (globalGroup = id)
+
+              // is this necessary?
+              Object.entries(get(dictionary).groups).forEach(([id, tname]: any) => {
+                if (tname.toLowerCase() === globalGroup) globalGroup = id
+              })
+            })
+          }
           if (get(globalGroups)[globalGroup]) slides[id].globalGroup = globalGroup
         } else {
           let parentLayout = layouts[0].slides[layouts[0].slides.length - 1]
@@ -257,15 +286,24 @@ function createSlides({ groups, arrangements }: Song) {
       })
     }
   })
+
   if (Object.keys(arrangements).length) {
-    layouts = []
+    // layouts = []
     Object.values(arrangements).forEach((arrangement) => {
       let slides: any[] = arrangement.groupIDs.map((groupID) => ({ id: sequences[groupID] }))
       layouts.push({ id: uid(), name: arrangement.name, slides })
     })
   }
 
-  return { slides, layouts }
+  Object.values(backgrounds).forEach((background: any, i: number) => {
+    if (!background || !layouts[i]) return
+    if (!layouts[0].slides[i]) return
+    let id = uid()
+    layouts[0].slides[i].background = id
+    media[id] = background
+  })
+
+  return { slides, layouts, media }
 }
 
 function RVPresentationDocumentToObject(xml: string) {
@@ -344,13 +382,59 @@ function getSlides(elems: any[]) {
     let uuid = elem.getAttribute("UUID")
     let slide: Slide = setKeysFromAttributes(elem, ["backgroundColor", "drawingBackgroundColor", "enabled", "label", "notes"])
     slide.cues = elem.querySelector('[rvXMLIvarName="cues"]')
-    slide.mediaCue = elem.querySelector('[rvXMLIvarName="backgroundMediaCue"]')
+    slide.mediaCue = getMeidaCue(elem.querySelector('[rvXMLIvarName="backgroundMediaCue"]'))
     console.log(elem.querySelector('[rvXMLIvarName="displayElements"]')?.children || [])
 
     slide.displayElements = getDisplayElements([...(elem.querySelector('[rvXMLIvarName="displayElements"]')?.children || [])])
     slides[uuid] = slide
   })
   return slides
+}
+
+function getMeidaCue(elem: any) {
+  if (!elem) return elem
+  let media: MediaCue = setKeysFromAttributes(elem, ["actionType", "alignment", "behavior", "dateAdded", "delayTime", "displayName", "enabled", "nextCueUUID", "tags", "timeStamp"])
+
+  // TODO: image
+  let video = elem.querySelector("RVVideoElement")
+  if (!video) return media
+  media.video = setKeysFromAttributes(video, [
+    "audioVolume",
+    "bezelRadius",
+    "displayDelay",
+    "displayName",
+    "drawingFill",
+    "drawingShadow",
+    "drawingStroke",
+    "endPoint",
+    "fieldType",
+    "fillColor",
+    "flippedHorizontally",
+    "flippedVertically",
+    "format",
+    "frameRate",
+    "fromTemplate",
+    "imageOffset",
+    "inPoint",
+    "locked",
+    "manufactureName",
+    "manufactureURL",
+    "naturalSize",
+    "opacity",
+    "outPoint",
+    "persistent",
+    "playRate",
+    "playbackBehavior",
+    "rotation",
+    "rvXMLIvarName",
+    "scaleBehavior",
+    "scaleSize",
+    "source",
+    "timeScale",
+    "typeID",
+  ])
+
+  return media
 }
 
 function getDisplayElements(elems: any[]) {

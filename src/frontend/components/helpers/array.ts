@@ -26,6 +26,11 @@ export function arrayHasData(array: any[], data: any): boolean {
   return array.find((a) => JSON.stringify(a) === JSON.stringify(data)) !== undefined
 }
 
+// filter out all empty values in array
+export function removeEmpty(array: any[]): any[] {
+  return array.filter((a: any): number => a.length)
+}
+
 // OBJETS
 
 // sort objects in array alphabeticly
@@ -72,4 +77,9 @@ export function changeValues(object: any, values: { [key: string]: any }) {
 // convert object to array and set keys as id
 export function convertObject(object: { [key: string]: any }) {
   return Object.entries(object).map(([id, a]: any) => ({ id, ...a }))
+}
+
+// clone objects
+export function clone(object: any) {
+  return JSON.parse(JSON.stringify(object))
 }

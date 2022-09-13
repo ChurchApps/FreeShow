@@ -78,15 +78,18 @@
                 {/if}
               </span>
             {/if}
-            <p>
-              {#if event.name}
-                {event.name}
-              {:else}
-                <span style="opacity: 0.5;">
-                  <T id="main.unnamed" />
-                </span>
-              {/if}
-            </p>
+            <div style="display: flex;align-items: center;overflow: hidden;">
+              <p>
+                <Icon id={event.type === "event" ? "calendar" : event.type} right white />
+                {#if event.name}
+                  {event.name}
+                {:else}
+                  <span style="opacity: 0.5;">
+                    <T id="main.unnamed" />
+                  </span>
+                {/if}
+              </p>
+            </div>
           </div>
         {/each}
       {:else}

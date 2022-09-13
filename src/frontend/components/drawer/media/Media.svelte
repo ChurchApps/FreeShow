@@ -179,10 +179,11 @@
     {#if fullFilteredFiles.length}
       {#key rootPath}
         {#key path}
-          {#each fullFilteredFiles as file, i}
+          {#each fullFilteredFiles as file}
             {#if file.folder}
               <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
-            {:else if slowLoader > i}
+            {:else}
+              <!-- if slowLoader > i -->
               <Media name={file.name} path={file.path} type={$videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} {active} />
             {/if}
           {/each}

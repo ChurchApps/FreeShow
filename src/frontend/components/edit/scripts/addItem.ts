@@ -19,8 +19,9 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
   if (type === "text") newData.lines = [{ align: template?.[0].lines?.[0].align || "", text: [{ value: "", style: template?.[0].lines?.[0].text?.[0].style || "" }] }]
   // else if (type === "timer") newData.timer = { id: uid(), name: "", type: "countdown", start: 300, end: 0, format: "MM:SS" }
   else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
+  else if (type === "clock") newData.clock = { type: "digital", seconds: false }
   else if (type === "mirror") newData.mirror = {}
-  else if (type === "media") newData.src = ""
+  else if (type === "media") newData.src = options.src || ""
   else if (type === "icon" && options.color) {
     // make square and center
     let size: number = 300

@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { MediaFit } from "../../../../types/Main";
+  import type { MediaFit } from "../../../../types/Main"
 
   import { mediaCache, outputs, videoExtensions } from "../../../stores"
   import { getResolution } from "../../helpers/output"
@@ -9,17 +9,18 @@ import type { MediaFit } from "../../../../types/Main";
 
   export let name: any = ""
   export let path: string
+  export let cameraGroup: string = ""
   export let filter: any = ""
   export let flipped: boolean = false
   export let fit: MediaFit = "contain"
   export let type: null | "media" | "image" | "video" | "camera" | "screen" | "audio" = null
   export let hover: boolean = false
-  export let loaded: boolean = type === "image"
+  export let loaded: boolean = false
   export let duration: number = 0
   export let videoElem: any = null
 
-// TODO: fit
-$: console.log(fit)
+  // TODO: fit
+  $: console.log(fit)
 
   // TODO: update
   $: if ((!type || type === "image") && canvas) {
@@ -71,6 +72,7 @@ $: console.log(fit)
     // canvas?.getContext("2d").drawImage(img, 0, 0, 160, 90)
     setTimeout(() => {
       canvas?.getContext("2d").drawImage(img, x, y, width, height)
+      loaded = true
       setTimeout(() => {
         if (canvas) {
           mediaCache.update((a) => {
@@ -91,6 +93,7 @@ $: console.log(fit)
     // let cache = $mediaCache[path]
     // canvas?.getContext("2d").drawImage(img, cache.x, cache.y, cache.width, cache.height)
     canvas?.getContext("2d").drawImage(img, 0, 0, 160, 90)
+    loaded = true
   }
 
   // type
@@ -101,7 +104,7 @@ $: console.log(fit)
     }
   }
 
-  $: if (path && type === "video") loaded = false
+  $: if (path) loaded = false
 
   let canvas: any
 
@@ -163,6 +166,19 @@ $: console.log(fit)
 
 <div class="main" style="aspect-ratio: {resolution.width}/{resolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
   {#key path}
+    {#if type === "camera"}
+      <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">
+        <!-- TODO: media height -->
+        <Camera
+          id={path}
+          groupId={cameraGroup}
+          class="media"
+          style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};"
+          bind:videoElem
+        />
+      </div>
+    {/if}
+
     {#if type === "video"}
       <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">
         <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
@@ -171,16 +187,6 @@ $: console.log(fit)
             <track kind="captions" />
           </video>
         {/if}
-      </div>
-    {:else if type === "camera"}
-      <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">
-        <!-- TODO: media height -->
-        <Camera
-          id={path}
-          class="media"
-          style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};"
-          bind:videoElem
-        />
       </div>
     {:else}
       <!-- <img loading="lazy" src={path} alt={name} /> -->

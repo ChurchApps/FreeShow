@@ -1,19 +1,19 @@
 <script lang="ts">
   export let scrollElem: any = null
+  export let timeout: number = 0
   export let offset: number = -1
+
   let behaviour: string = ""
-  setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)
+  setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 800)
 
+  let t: any = null
   $: {
-    if (offset >= 0) scrollElem?.scrollTo(0, offset)
+    if (offset >= 0) {
+      if (t !== null) clearTimeout(t)
+      t = setTimeout(() => scrollElem?.scrollTo(0, offset), timeout)
+    }
   }
-
-  // function keydown(e: any) {
-  //   if (e.key.includes("Arrow")) e.preventDefault()
-  // }
 </script>
-
-<!-- <svelte:window on:keydown={keydown} /> -->
 
 <div class="scroll" on:wheel bind:this={scrollElem} style={($$props.style || "") + behaviour}>
   <slot />

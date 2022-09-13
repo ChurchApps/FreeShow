@@ -2,9 +2,11 @@
   import { onMount } from "svelte"
   import { uid } from "uid"
   import type { Event } from "../../../../types/Calendar"
-  import { activeDays, activePopup, dictionary, eventEdit, events } from "../../../stores"
+  import { activeDays, activePopup, dictionary, eventEdit, events, shows } from "../../../stores"
+  import { createRepeatedEvents, updateEventData } from "../../calendar/event"
   import { history } from "../../helpers/history"
   import Icon from "../../helpers/Icon.svelte"
+  import { getListOfShows } from "../../helpers/show"
   import T from "../../helpers/T.svelte"
   import { changeTime } from "../../helpers/time"
   import Button from "../../inputs/Button.svelte"
@@ -15,11 +17,30 @@
   import TextInput from "../../inputs/TextInput.svelte"
 
   let stored: string = ""
+
+  let defaultRepeatData: any = {
+    type: "day",
+    ending: "date",
+    count: 1,
+    endingDate: "",
+    afterRepeats: 10,
+  }
+
   interface EventWithData extends Event {
     id: string
     repeatData: any
   }
-  let editEvent: EventWithData
+  let editEvent: EventWithData = {
+    type: "event",
+    id: "",
+    name: "",
+    color: "#FFFFFF",
+    time: true,
+    from: "",
+    to: "",
+    repeat: false,
+    repeatData: defaultRepeatData,
+  }
 
   onMount(() => {
     if ($eventEdit) edit($events[$eventEdit])
@@ -36,18 +57,14 @@
     editEvent = { ...event, id: $eventEdit, isoFrom: getISO(from), isoTo: getISO(to), fromTime: getTime(from), toTime: getTime(to) }
     if (!editEvent.repeatData) editEvent.repeatData = defaultRepeatData
 
+    if (editEvent.show) selectedShow = showsList.find((a) => a.id === editEvent.show)
+
+    selectedType = types.find((a) => a.id === (editEvent.type || "event")) || types[0]
+
     stored = JSON.stringify(editEvent)
   }
 
-  let defaultRepeatData: any = {
-    type: "day",
-    ending: "date",
-    count: 1,
-    endingDate: "",
-    afterRepeats: 10,
-  }
-
-  $: if (selectedType) resetEdit()
+  $: if (!$eventEdit && selectedType) resetEdit()
   function resetEdit() {
     let selectedDate = new Date($activeDays[0])
 
@@ -95,7 +112,7 @@
 
   function saveAll() {
     // TODO: history
-    let { data } = updateEventData()
+    let { data } = updateEventData(editEvent, stored, { type: selectedType, show: selectedShow })
     if (!data) return
 
     events.update((a: any) => {
@@ -119,141 +136,24 @@
   }
 
   function save() {
-    if (!editEvent.name?.length || stored === JSON.stringify(editEvent)) {
-      activePopup.set(null)
-      return
-    }
+    if (selectedType.id === "event" && stored === JSON.stringify(editEvent)) return activePopup.set(null)
+    if (selectedType.id === "event" && !editEvent.name?.length) return activePopup.set(null)
+    if (selectedType.id === "show" && (!selectedShow || !$shows[selectedShow.id])) return activePopup.set(null)
 
-    let { data, oldData, id } = updateEventData()
+    let { data, oldData, id } = updateEventData(editEvent, stored, { type: selectedType, show: selectedShow })
     if (!data) return
 
     if (data.repeat && !data.group) {
       data.group = id
       createRepeatedEvents(data)
     }
+
     console.log(id, data)
 
     history({ id: "newEvent", newData: { id, data }, oldData })
     // activeDays.set([copy(data.from).getTime()])
     activePopup.set(null)
     eventEdit.set(null)
-  }
-
-  function updateEventData(): any {
-    let data = JSON.parse(JSON.stringify(editEvent))
-    let oldData = JSON.parse(stored)
-    let id = editEvent.id
-
-    data.from = new Date(editEvent.isoFrom + " " + (editEvent.time ? editEvent.fromTime : ""))
-    oldData.from = new Date(oldData.isoFrom + " " + (oldData.time ? oldData.fromTime : ""))
-    data.to = new Date(editEvent.isoTo + " " + (editEvent ? editEvent.toTime : ""))
-    oldData.to = new Date(oldData.isoTo + " " + (oldData ? oldData.toTime : ""))
-    data.type = selectedType.id
-    oldData.type = selectedType.id
-
-    console.log(data.from, editEvent.fromTime)
-
-    // to has to be after from
-    if (data.to.getTime() - data.from.getTime() <= 0) {
-      activePopup.set(null)
-      return { data: null, oldData: null, id }
-    }
-
-    delete data.id
-    delete data.isoFrom
-    delete data.isoTo
-    delete data.fromTime
-    delete data.toTime
-    delete oldData.id
-    delete oldData.isoFrom
-    delete oldData.isoTo
-    delete oldData.fromTime
-    delete oldData.toTime
-
-    console.log(data)
-
-    return { data, oldData, id }
-  }
-
-  function createRepeatedEvents(event: Event) {
-    // <!-- REPEAT EVERY: {1-10000}, {day, week, month, year} -->
-    // <!-- REPEAT ON: {MO,TH,WE,TH,FR,SA,SU} (if "week") -->
-    // <!-- ENDING: {date, after {10} times, never} -->
-
-    let data = event.repeatData!
-    let dates: string[][] = []
-
-    let currentFromDate = new Date(event.from)
-    let currentToDate = new Date(event.to)
-    let endingDate = new Date(data.endingDate || "")
-    endingDate = setDate(currentFromDate, { date: endingDate.getDate(), month: endingDate.getMonth(), year: endingDate.getFullYear() })
-
-    const increment = {
-      day: () => [currentFromDate.getDate() + Number(data.count), currentToDate.getDate() + Number(data.count)],
-      week: () => [currentFromDate.getDate() + 7 * Number(data.count), currentToDate.getDate() + 7 * Number(data.count)],
-      month: () => {
-        let newMonth: number[] = [currentFromDate.getMonth() + Number(data.count), currentToDate.getMonth() + Number(data.count)]
-        if (newMonth[0] > 11) {
-          currentFromDate = setDate(currentFromDate, { month: 0, year: currentFromDate.getFullYear() + 1 })
-          newMonth[0] = newMonth[0] - 12
-        }
-        if (newMonth[1] > 11) {
-          currentToDate = setDate(currentToDate, { month: 0, year: currentToDate.getFullYear() + 1 })
-          newMonth[1] = newMonth[1] - 12
-        }
-        return newMonth
-      },
-      year: () => [currentFromDate.getFullYear() + Number(data.count), currentToDate.getFullYear() + Number(data.count)],
-    }
-
-    // get dates array
-    // TODO: repeat on weekdays...
-    if (data.ending === "date") {
-      while (currentFromDate.getTime() <= endingDate.getTime()) {
-        let incremented = increment[data.type]()
-        console.log(currentFromDate, endingDate, data.count, incremented)
-
-        if (data.type === "day" || data.type === "week") {
-          currentFromDate.setDate(incremented[0])
-          currentToDate.setDate(incremented[1])
-        } else {
-          currentFromDate = setDate(currentFromDate, { [data.type]: incremented[0] })
-          currentToDate = setDate(currentToDate, { [data.type]: incremented[1] })
-        }
-
-        if (currentFromDate.getTime() <= endingDate.getTime()) {
-          dates.push([currentFromDate.toString(), currentToDate.toString()])
-        }
-      }
-    } else if (data.ending === "after") {
-      let count = 0
-      while (count < data.afterRepeats!) {
-        count++
-        let incremented = increment[data.type]()
-
-        if (data.type === "day" || data.type === "week") {
-          currentFromDate.setDate(incremented[0])
-          currentToDate.setDate(incremented[1])
-        } else {
-          currentFromDate = setDate(currentFromDate, { [data.type]: incremented[0] })
-          currentToDate = setDate(currentToDate, { [data.type]: incremented[1] })
-        }
-
-        if (count < data.afterRepeats!) {
-          dates.push([currentFromDate.toString(), currentToDate.toString()])
-        }
-      }
-    }
-
-    // create events
-    dates.forEach((date: string[]) => {
-      let newEvent = JSON.parse(JSON.stringify(event))
-
-      newEvent.from = date[0]
-      newEvent.to = date[1]
-
-      history({ id: "newEvent", newData: { id: uid(), data: newEvent } })
-    })
   }
 
   const setDate = (date: Date, options: any): Date => {
@@ -264,7 +164,7 @@
 
   const types = [
     { id: "event", name: "$:calendar.event:$" },
-    { id: "show", name: "$:calendar.show:$ (TBA)" },
+    { id: "show", name: "$:calendar.show:$" },
     // { id: "timer", name: "$:calendar.timer:$" },
   ]
   const repeats = [
@@ -302,6 +202,11 @@
   // let repeatCount: number = 1
   // let endingDate: string = ""
   // let afterRepeats: number = 10
+
+  // show
+
+  let showsList: any[] = getListOfShows()
+  let selectedShow: any = showsList[0]
 </script>
 
 <main>
@@ -422,8 +327,7 @@
         <TextInput value={editEvent.notes} style="width: 50%;" on:input={(e) => inputChange(e, "notes")} />
       </section>
     {:else if selectedType.id === "show"}
-      <!-- TODO: get shows -->
-      <Dropdown options={[]} value={"-"} />
+      <Dropdown options={showsList} value={selectedShow.name || "—"} on:click={(e) => (selectedShow = e.detail)} />
     {/if}
     <!-- TODO: timers -->
   </div>
@@ -432,12 +336,22 @@
 <hr />
 
 <!-- TODO: save current + save all events -->
-<Button on:click={save} disabled={!editEvent.name?.length || stored === JSON.stringify(editEvent)} dark center>
+<Button
+  on:click={save}
+  disabled={selectedType.id === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType.id === "show" ? !selectedShow : true}
+  dark
+  center
+>
   <Icon id="save" right />
   <T id="actions.save" />
 </Button>
 {#if editEvent.group}
-  <Button on:click={saveAll} disabled={!editEvent.name?.length || stored === JSON.stringify(editEvent)} dark center>
+  <Button
+    on:click={saveAll}
+    disabled={selectedType.id === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType.id === "show" ? !selectedShow : true}
+    dark
+    center
+  >
     <Icon id="save" right />
     <T id="calendar.save_all" />
   </Button>

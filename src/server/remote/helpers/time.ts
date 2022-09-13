@@ -25,7 +25,6 @@ export function joinTime(time: Time, ms: boolean = false): string {
 }
 
 export function dateToString(date: Date, full: boolean = false): string {
-  console.log(date)
   date = new Date(date)
 
   let year: any = date.getFullYear()

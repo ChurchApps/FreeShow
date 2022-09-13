@@ -1,8 +1,10 @@
 <script lang="ts">
   import { EXPORT } from "../../../../types/Channels"
+  import type { Project } from "../../../../types/Projects"
   import { activePopup, activeProject, activeShow, alertMessage, exportPath, os, projects, selected, showsCache } from "../../../stores"
   import { send } from "../../../utils/request"
   import Pdf from "../../export/Pdf.svelte"
+  import { exportProject } from "../../export/project"
   import { loadShows } from "../../helpers/setShow"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -14,18 +16,19 @@
   $: shows = []
 
   const getShows: any = {
-    current_show: () => ($activeShow ? [{ id: $activeShow.id, ...$showsCache[$activeShow.id] }] : []),
     project: () => ($activeProject ? $projects[$activeProject].shows.filter((a) => a.type === undefined || a.type === "show").map(({ id }) => ({ id, ...$showsCache[id] })) : []),
     selected_shows: () => {
-      if ($selected.id !== "show" && $selected.id !== "show_drawer") return []
+      if ($selected.id !== "show" && $selected.id !== "show_drawer") {
+        if (!$activeShow || $activeShow.type !== "show" || $activeShow.type !== undefined) return []
+        return [{ id: $activeShow.id, ...$showsCache[$activeShow.id] }]
+      }
       return $selected.data.map(({ id }) => ({ id, ...$showsCache[id] }))
     },
   }
 
   const whats: any[] = [
-    { name: "$:export.current_show:$", id: "current_show" },
-    { name: "$:export.current_project:$", id: "project" },
     { name: "$:export.selected_shows:$", id: "selected_shows" },
+    { name: "$:export.current_project:$", id: "project" },
     // {name: "export.all_shows", id: "all_shows"},
     // {name: "export.all_projects", id: "all_projects"}
   ]
@@ -41,6 +44,7 @@
   const formats: any[] = [
     { name: "TXT", id: "txt" },
     { name: "PDF", id: "pdf" },
+    { name: "$:export.project:$", id: "project" },
     // {name: "JSON", id: "json"},
     // {name: "SHOW", id: "show"},
     // {name: "SHOWS", id: "shows"},
@@ -73,7 +77,24 @@
       activePopup.set("alert")
       return
     }
-    send(EXPORT, ["GENERATE"], { type: format.id, path: $exportPath, shows, options: format.id === "pdf" ? pdfOptions : {} })
+
+    if (format.id === "project") {
+      let project: Project | null = what.id === "project" && $activeProject ? $projects[$activeProject] : null
+      if (!project) {
+        if (what.id !== "selected_shows" || !shows.length) return
+        let show: any = shows[0]
+        project = {
+          name: show.name,
+          notes: "",
+          created: show.timestamps.created,
+          parent: "/",
+          shows,
+        }
+      }
+      exportProject(project)
+    } else {
+      send(EXPORT, ["GENERATE"], { type: format.id, path: $exportPath, shows, options: format.id === "pdf" ? pdfOptions : {} })
+    }
     activePopup.set(null)
   }
 </script>
@@ -157,16 +178,16 @@
 </span>
 
 <!-- TODO: all as one file -->
-{#if shows.length > 1}
+<!-- {#if shows.length > 1 && format.id !== "project"}
   <span>
     <p><T id="export.oneFile" /></p>
     <Checkbox disabled={shows.length < 2} checked={pdfOptions.oneFile} on:change={(e) => updatePdfOptions(e, "oneFile")} />
   </span>
-{/if}
+{/if} -->
 
 <Button disabled={!shows.length} on:click={exportClick} center>
   <T id="export.export" />
-  {#if shows.length > 1}
+  {#if shows.length > 1 && format.id !== "project"}
     <span style="opacity: 0.5;padding-left: 10px;">({shows.length})</span>
   {/if}
 </Button>

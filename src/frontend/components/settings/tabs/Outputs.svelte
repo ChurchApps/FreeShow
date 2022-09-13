@@ -1,6 +1,6 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-  import { os, activePopup, currentOutputSettings, labelsDisabled, outputDisplay, outputs, templates } from "../../../stores"
+  import { activePopup, currentOutputSettings, labelsDisabled, outputDisplay, outputs, templates } from "../../../stores"
   import { send } from "../../../utils/request"
   import Icon from "../../helpers/Icon.svelte"
   import { addOutput, defaultOutput, getActiveOutputs } from "../../helpers/output"
@@ -152,21 +152,6 @@
 <!-- <div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;min-height: initial;">
   <p><T id="settings.move_output_hint" /></p>
 </div> -->
-<!-- disable on linux -->
-{#if $os.platform !== "linux"}
-  <div>
-    <p><T id="settings.fixed" /></p>
-    <Checkbox
-      checked={currentOutput.kiosk}
-      on:change={(e) => {
-        updateOutput("kiosk", isChecked(e))
-        setTimeout(() => {
-          send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-        }, 10)
-      }}
-    />
-  </div>
-{/if}
 <div>
   <p><T id="settings.position" /></p>
   <span class="inputs">
@@ -239,15 +224,33 @@
 </div>
 <div>
   <p><T id="settings.output_screen" /></p>
-  <Button
-    on:click={() => {
-      activePopup.set("choose_screen")
-    }}
-  >
+  <Button on:click={() => activePopup.set("choose_screen")}>
     <Icon id="screen" right />
     <p><T id="popup.choose_screen" /></p>
   </Button>
   <!-- <Screens /> -->
+</div>
+<!-- disable on linux -->
+<!-- {#if $os.platform !== "linux"}
+  <div>
+    <p><T id="settings.fixed" /></p>
+    <Checkbox
+      checked={currentOutput.kiosk}
+      on:change={(e) => {
+        updateOutput("kiosk", isChecked(e))
+        setTimeout(() => {
+          send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
+        }, 10)
+      }}
+    />
+  </div>
+{/if} -->
+<div>
+  <p>Advanced</p>
+  <Button on:click={() => activePopup.set("advanced_settings")}>
+    <Icon id="screen" right />
+    <p>Advanced settings</p>
+  </Button>
 </div>
 
 <hr />

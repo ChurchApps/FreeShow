@@ -292,6 +292,7 @@
     "export": "Exportar",
     "importing": "Importando",
     "import_scripture": "Importar bíblia",
+    "player": "Reprodutor",
     "edit_event": "Editar evento",
     "about": "Sobre",
     "shortcuts": "Atalhos",
@@ -378,11 +379,12 @@
     "export": "Exportar",
     "export_as": "Exportar {} como",
     "exported": "Exportado!",
-    "current_show": "Apresentação atual",
-    "current_project": "Projeto atual",
+    "oneFile": "One file",
     "selected_shows": "Apresentações selecionadas",
+    "current_project": "Projeto atual",
     "all_shows": "Todas as apresentações",
     "all_projects": "Todos os projetos",
+    "project": "Project",
     "options": "Opções",
     "preview": "Pré-visualização",
     "title": "Título",
@@ -471,6 +473,7 @@
     "image": "Imagen",
     "video": "Vídeo",
     "mirror": "Mirror",
+    "clock": "Relógio",
     "live": "Ao vivo",
     "audio": "Áudio",
     "timer": "Temporizador",
@@ -501,6 +504,12 @@
     "no_events": "Não há eventos futuros",
     "edit": "Editar",
     "create": "Criar"
+  },
+  "clock": {
+    "type": "Type",
+    "digital": "Digital",
+    "analog": "Analog",
+    "seconds": "Seconds"
   },
   "draw": {
     "focus": "Foco",

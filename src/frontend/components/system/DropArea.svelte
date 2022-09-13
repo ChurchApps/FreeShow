@@ -3,7 +3,7 @@
   import { ondrop, validateDrop } from "../helpers/drop"
   import T from "../helpers/T.svelte"
 
-  export let id: "all_slides" | "slides" | "slide" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation"
+  export let id: "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation"
   export let selectChildren: boolean = false
   export let hoverTimeout: number = 500
   export let file: boolean = false
@@ -53,18 +53,15 @@
   }
 
   let fileOver: boolean = false
-</script>
 
-<svelte:window
-  on:dragend={() => {
+  function endDrag() {
     selected.set({ id: null, data: [] })
     hover = false
     // fileOver = false
-  }}
-  on:dragstart={() => {
-    hover = active
-  }}
-/>
+  }
+</script>
+
+<svelte:window on:click={() => (hover = false)} on:dragend={endDrag} on:dragstart={() => (hover = active)} />
 <!-- on:mousemove={() => {
     if (fileOver) hover = true
   }}
@@ -73,6 +70,7 @@
     hover = false
   }} -->
 
+<!-- TODO: fix position -->
 <div
   class="droparea"
   class:hover

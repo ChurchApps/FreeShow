@@ -113,50 +113,58 @@ export function getSelectionRange(): { start: number; end: number }[] {
   let start: null | number = null
   let end: null | number = null
 
-  if (selection?.anchorNode) {
-    let parent: Element = selection.anchorNode.parentElement!.closest(".edit")!
-    let startNode = selection.anchorNode.parentNode
-    let endNode = selection.focusNode?.parentNode
-    let startOffset = selection.anchorOffset
-    let endOffset = selection.focusOffset
+  if (!selection?.anchorNode) return sel
 
-    // TODO: can't select empty lines
+  let parent: Element = selection.anchorNode.parentElement!.closest(".edit")!
+  let startNode = selection.anchorNode.parentNode
+  let endNode = selection.focusNode?.parentNode
+  let startOffset = selection.anchorOffset
+  let endOffset = selection.focusOffset
 
-    if (parent) {
-      new Array(...parent.childNodes).forEach((br: any, line: number) => {
-        if (!sel[line]) sel[line] = {}
-        let count: number = 0
-        new Array(...br.childNodes).forEach((child: any) => {
-          if (selection!.containsNode(child, true)) {
-            // if start not set & child is start & (child is not end or end is bigger than start)
-            if (start === null && child === startNode && (child !== endNode || endOffset > startOffset)) {
-              start = count + startOffset
-              sel[line].start = start
-            } else if ((start === null && child === endNode) || (child === startNode && startOffset > endOffset)) {
-              start = count + endOffset
-              sel[line].start = start
-              endNode = startNode
-              startNode = selection!.focusNode?.parentNode!
-              endOffset = startOffset
-            }
-            if (start !== null) {
-              if (!sel[line].start) sel[line].start = 0
+  // TODO: can't select empty lines
+  // empty lines don't work at all
+  // console.log(startNode, startOffset, endOffset)
+  // console.log(parent.childNodes)
 
-              if ((child === startNode && child !== endNode) || selection!.containsNode(child)) {
-                if (end === null) end = count
-                end += child.innerText?.length || 0
-                sel[line].end = end
-              } else {
-                end = count + endOffset
-                sel[line].end = end
-              }
-            }
+  if (!parent) return sel
+
+  new Array(...parent.childNodes).forEach((br: any, line: number) => {
+    if (!sel[line]) sel[line] = {}
+    let count: number = 0
+    new Array(...br.childNodes).forEach((child: any) => {
+      // console.log(child)
+      // console.log(selection)
+
+      if (selection!.containsNode(child, true)) {
+        // console.log("contains === true", start, child === endNode, child === startNode, startOffset > endOffset)
+
+        // if start not set & child is start & (child is not end or end is bigger than start)
+        if (start === null && child === startNode && (child !== endNode || endOffset > startOffset)) {
+          start = count + startOffset
+          sel[line].start = start
+        } else if ((start === null && child === endNode) || (child === startNode && startOffset > endOffset)) {
+          start = count + endOffset
+          sel[line].start = start
+          endNode = startNode
+          startNode = selection!.focusNode?.parentNode!
+          endOffset = startOffset
+        }
+        if (start !== null) {
+          if (!sel[line].start) sel[line].start = 0
+
+          if ((child === startNode && child !== endNode) || selection!.containsNode(child)) {
+            if (end === null) end = count
+            end += child.innerText?.length || 0
+            sel[line].end = end
+          } else {
+            end = count + endOffset
+            sel[line].end = end
           }
-          count += child.innerText?.length || 0
-        })
-      })
-    }
-  }
+        }
+      }
+      count += child.innerText?.length || 0
+    })
+  })
 
   return sel
 }
