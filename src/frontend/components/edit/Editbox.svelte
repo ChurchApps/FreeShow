@@ -2,12 +2,12 @@
   import { onMount } from "svelte"
   import { uid } from "uid"
   import type { Item, Line } from "../../../types/Show"
-  import { activeEdit, activeShow, currentWindow, overlays, showsCache, templates, videoExtensions } from "../../stores"
+  import { activeEdit, activeShow, currentWindow, overlays, showsCache, templates } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import { clone } from "../helpers/array"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
-  import { getExtension } from "../helpers/media"
+  import { getExtension, getMediaType } from "../helpers/media"
   import { addToPos } from "../helpers/mover"
   import { loadShows } from "../helpers/setShow"
   import { _show } from "../helpers/shows"
@@ -397,7 +397,7 @@ bind:offsetWidth={width} -->
     </div>
   {:else if item?.type === "media"}
     {#if item.src}
-      {#if $videoExtensions.includes(getExtension(item.src))}
+      {#if getMediaType(getExtension(item.src)) === "video"}
         <!-- video -->
         <video src={item.src} muted={true}>
           <track kind="captions" />

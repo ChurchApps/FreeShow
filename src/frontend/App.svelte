@@ -47,6 +47,7 @@
     currentWindow,
     drawer,
     events,
+    loaded,
     os,
     outputDisplay,
     outputs,
@@ -91,21 +92,28 @@
           let ref = _show("active").layouts("active").ref()[0]
           let selection = ref.map((_: any, index: number) => ({ index }))
           selected.set({ id: "slide", data: selection })
+          return true
         } else if ($activePage === "edit") {
           // select all elements...
         }
       }
+      return false
     },
     c: () => {
       if ($selected.id) copy($selected)
       else if ($activeEdit.items) copy({ id: "item", data: $activeEdit })
       else if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
+      return true
     },
-    v: () => paste(),
+    v: () => {
+      paste()
+      return true
+    },
     x: () => {
       copy()
       // TODO: delete
       if ($selected.id === "slide") removeSlide({ sel: $selected })
+      return true
     },
     e: () => activePopup.set("export"),
     i: () => activePopup.set("import"),
@@ -168,12 +176,12 @@
       if (document.activeElement?.classList.contains("edit") && ["a", "c", "v", "z", "y", "Z"].includes(e.key)) return
 
       if (ctrlKeys[e.key]) {
-        e.preventDefault()
-        ctrlKeys[e.key](e)
+        if (ctrlKeys[e.key](e)) e.preventDefault()
       }
       return
     }
 
+    if (e.altKey) return
     if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
     if (document.activeElement === document.body && Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
 
@@ -294,7 +302,7 @@
           </Resizeable>
         </div>
 
-        {#if page === "show" || page === "edit"}
+        {#if $loaded && (page === "show" || page === "edit")}
           <Drawer />
         {/if}
       </div>

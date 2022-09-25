@@ -4,7 +4,7 @@
 </script>
 
 <main>
-  <Button style="width: 100%;" on:click={setExampleTemplates} center dark>Refresh example temlates</Button>
+  <Button style="width: 100%;" on:click={setExampleTemplates} center dark>Refresh example templates</Button>
 </main>
 
 <style>

@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT, STORE } from "../../types/Channels"
+import { uid } from "uid"
+import { MAIN, OPEN_FOLDER, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
@@ -21,6 +22,7 @@ import {
   activeShow,
   activeTimers,
   alertMessage,
+  audioFolders,
   autoOutput,
   currentWindow,
   draw,
@@ -29,6 +31,7 @@ import {
   events,
   exportPath,
   folders,
+  loaded,
   media,
   mediaCache,
   mediaFolders,
@@ -59,6 +62,7 @@ import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
 
 export function startup() {
+  loaded.set(false)
   send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
   setTimeout(() => send(STORE, ["SETTINGS"]), 500)
 
@@ -69,8 +73,7 @@ export function startup() {
   receive(STORE, receiveSTORE)
   receive(OUTPUT, receiveOUTPUT)
   receive(IMPORT, receiveIMPORT)
-
-  loadShows(Object.keys(get(shows)))
+  receive(OPEN_FOLDER, receiveFOLDER)
 }
 
 function startupMain() {
@@ -186,6 +189,30 @@ const receiveOUTPUT: any = {
 // const receiveOUTPUTasOutput: any = {
 //   DISPLAY: receiveOUTPUT.DISPLAY,
 // }
+
+const receiveFOLDER: any = {
+  MEDIA: (a: any, id: string = "media") => {
+    // TODO: clean
+    // check if folder already exists
+    let path: string = a.path
+    let exists = Object.values(id === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
+    if (exists) {
+      alertMessage.set("error.folder_exists")
+      activePopup.set("alert")
+      return
+    }
+    let folderId = uid()
+    history({
+      id: id === "media" ? "newMediaFolder" : "newAudioFolder",
+      oldData: { id: folderId, data: null },
+      newData: { id: folderId, data: { name: path.substring(path.lastIndexOf("\\") + 1), icon: "folder", path: path } },
+      location: { page: "drawer" },
+    })
+  },
+  AUDIO: (a: any) => receiveFOLDER.media(a, "audio"),
+  SHOWS: (a: any) => showsPath.set(a.path),
+  EXPORT: (a: any) => exportPath.set(a.path),
+}
 
 const receiveIMPORT: any = {
   txt: (a: any) => convertTexts(a),

@@ -221,17 +221,21 @@ function createSlides({ groups, arrangements }: Song) {
       Object.values(group.slides).forEach((slide: Slide, i: number) => {
         let id: string = uid()
         let items: any[] = []
+        // TODO: use active show style...
+
         // TODO: elements
         console.log(slide)
         console.log(slide.displayElements)
-        if (slide.displayElements[0]?.RTFData) {
-          items = [
-            {
-              style: "left:50px;top:120px;width:1820px;height:840px;",
-              lines: formatRTF(slide.displayElements[0].RTFData),
-            },
-          ]
-        }
+        slide.displayElements.forEach((element: Element) => {
+          if (element?.RTFData) {
+            items = [
+              {
+                style: "left:50px;top:120px;width:1820px;height:840px;",
+                lines: formatRTF(element.RTFData),
+              },
+            ]
+          }
+        })
 
         slides[id] = {
           group: null,

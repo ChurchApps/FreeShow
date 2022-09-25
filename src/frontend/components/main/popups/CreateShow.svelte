@@ -29,6 +29,8 @@
     activePopup.set(null)
   }
 
+  $: console.log(values.text)
+
   const changeValue = (e: any, key: string = "text") => (values[key] = e.target.value)
   let values: any = {
     text: "",

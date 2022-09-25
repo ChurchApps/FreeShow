@@ -568,6 +568,7 @@
     "enabled": "Habilitado",
     "color_when_active": "Cor quando ativo",
     "fixed": "Fixado",
+    "choose_screen": "Selecionar tela",
     "lines": "Linhas",
     "override_with_template": "Substituir estilo com modelo",
     "active_layers": "Camadas ativas",

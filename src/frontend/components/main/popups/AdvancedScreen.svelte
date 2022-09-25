@@ -16,7 +16,7 @@
     })
   }
 
-  const toggleList: string[] = ["Maximize", "Minimize", "Fullscreen", "Kiosk", "Hide", "Disabled", "Menubar", "Workspaces"]
+  const toggleList: string[] = ["Maximize", "Minimize", "Fullscreen", "Kiosk", "Hide", "Disabled", "Menubar", "Workspaces", "AlwaysOnTop", "AlwaysOnTop2"]
 </script>
 
 <main>

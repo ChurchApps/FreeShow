@@ -6,6 +6,8 @@
   import { send } from "../../utils/request"
   import { custom } from "../../utils/transitions"
   import { analyseAudio, getAnalyser } from "../helpers/audio"
+  import { getExtension, getMediaType } from "../helpers/media"
+  import Image from "../media/Image.svelte"
   import Media from "../media/Media.svelte"
   import { getStyleResolution } from "../slide/getStyleResolution"
   import Player from "../system/Player.svelte"
@@ -141,7 +143,16 @@
 
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
-  <Media {path} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing={playing} on:loaded={loaded} />
+  {#if getMediaType(getExtension(path)) === "video"}
+    <Media {path} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing={playing} on:loaded={loaded} />
+  {:else}
+    {#key path}
+      <!-- don't know why this don't work in the Media component -->
+      <div style="height: 100%;" transition:custom={transition}>
+        <Image {path} {filter} {flipped} {fit} />
+      </div>
+    {/key}
+  {/if}
 {:else if type === "screen"}
   {#key id}
     <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>

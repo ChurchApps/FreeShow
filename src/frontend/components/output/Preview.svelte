@@ -77,12 +77,12 @@
     },
 
     ArrowRight: (e: any) => {
-      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+      // if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
       if ($outLocked || e.ctrlKey || e.metaKey) return
       nextSlide(e)
     },
     ArrowLeft: (e: any) => {
-      if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+      // if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
       if ($outLocked || e.ctrlKey || e.metaKey) return
       previousSlide()
     },

@@ -70,11 +70,11 @@
   {#if open}
     <div class="submenu" style="{side}: 0; transform: translate({transform}, -10px);">
       {#if menu.items?.length}
-        {#each menu.items as id}
-          {#if id === "SEPERATOR"}
+        {#each menu.items as itemId}
+          {#if itemId === "SEPERATOR"}
             <hr />
-          {:else if id.includes("LOAD_")}
-            {#each loadItems(id.slice(5, id.length)) as [id, menu]}
+          {:else if itemId.includes("LOAD_")}
+            {#each loadItems(itemId.slice(5, itemId.length)) as [id, menu]}
               <ContextItem {id} {contextElem} {menu} bind:contextActive />
             {/each}
           {:else}

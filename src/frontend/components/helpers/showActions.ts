@@ -1,7 +1,8 @@
 import { get } from "svelte/store"
 import type { OutSlide, Slide } from "../../../types/Show"
-import { activeEdit, activePage, activeProject, activeShow, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, videoExtensions } from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, media, outLocked, outputs, overlays, projects, showsCache, slideTimers } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
+import { getMediaType } from "./media"
 import { getActiveOutputs, setOutput } from "./output"
 import { _show } from "./shows"
 
@@ -141,7 +142,8 @@ export function previousSlide() {
     .layouts(slide ? [slide.layout] : "active")
     .ref()[0]
   let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
-  let index: number = slide?.index !== undefined ? slide.index - 1 : layout.length - 1
+  let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout ? layout.length - 1 : null
+  if (index === null) return
 
   // lines
   let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
@@ -225,7 +227,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     if (bg) {
       let bgData: any = {
         name: bg.name,
-        type: bg.type || (get(videoExtensions).includes(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)) ? "video" : "image"),
+        type: bg.type || getMediaType(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)),
         path: bg.path,
         id: bg.id,
         muted: bg.muted !== false,

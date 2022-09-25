@@ -18,12 +18,12 @@
 
   function move(index: number) {
     let items = []
-    let slideID = null
+    let slideID: null | string = null
     if ($activeEdit.type === "overlay") items = JSON.parse(JSON.stringify($overlays[$activeEdit.id!]?.items))
     else if ($activeEdit.type === "template") items = JSON.parse(JSON.stringify($templates[$activeEdit.id!]?.items))
     else {
       let slides = $showsCache[$activeShow?.id!]?.slides
-      slideID = _show("active").layouts("active").ref()[0][$activeEdit.slide!].id
+      slideID = _show("active").layouts("active").ref()[0][$activeEdit.slide!].id as string
       items = JSON.parse(JSON.stringify(slides[slideID].items))
     }
 
@@ -41,7 +41,7 @@
         location: { page: "edit", id: $activeEdit.id },
       })
     } else {
-      _show("active").slides([slideID]).set({ key: "items", value: items })
+      _show("active").slides([slideID!]).set({ key: "items", value: items })
     }
   }
 

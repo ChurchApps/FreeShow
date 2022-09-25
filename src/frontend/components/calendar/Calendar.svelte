@@ -138,7 +138,7 @@
         first = last
         last = $activeDays[$activeDays.length - 1]
       }
-      let temp = []
+      let temp: number[] = []
       let count = 0
 
       do {

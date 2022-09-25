@@ -1,9 +1,10 @@
 <script lang="ts">
   import { READ_FOLDER } from "../../../../types/Channels"
-  import { activeShow, audioExtensions, audioFolders, dictionary, media, playingAudio } from "../../../stores"
+  import { activeShow, audioFolders, dictionary, media, playingAudio } from "../../../stores"
   import { getAudioDuration, playAudio } from "../../helpers/audio"
   import { splitPath } from "../../helpers/get"
   import Icon from "../../helpers/Icon.svelte"
+  import { getMediaType } from "../../helpers/media"
   import T from "../../helpers/T.svelte"
   import { joinTime, secondsToTime } from "../../helpers/time"
   import Button from "../../inputs/Button.svelte"
@@ -15,7 +16,6 @@
   export let searchValue: string = ""
 
   let files: any[] = []
-  let extensions: string[] = $audioExtensions
   let scrollElem: any
 
   $: rootPath = active === "all" || active === "favourites" ? "" : active !== null ? $audioFolders[active].path! : ""
@@ -55,7 +55,7 @@
   // receive files
   window.api.receive(READ_FOLDER, (msg: any) => {
     if (active === "all" || msg.path === path) {
-      files.push(...msg.files.filter((file: any) => extensions.includes(file.extension) || (active !== "all" && file.folder)))
+      files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
       files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
       console.log(files)

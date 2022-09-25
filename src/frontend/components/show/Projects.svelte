@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Tree } from "../../../types/Projects"
-  import { activeProject, activeShow, dictionary, folders, projects, projectView } from "../../stores"
+  import { activeProject, activeShow, dictionary, folders, loaded, projects, projectView } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
   import { loadShows } from "../helpers/setShow"
@@ -70,7 +70,9 @@
       return
     }
 
-    loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
+    if ($loaded) {
+      loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
+    }
     // TODO: CHECK VIDEOS
   }
 </script>

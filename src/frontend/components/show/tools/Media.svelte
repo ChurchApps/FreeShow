@@ -1,10 +1,11 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-  import { activeShow, dictionary, media, outLocked, playingAudio, showsCache, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, media, outLocked, playingAudio, showsCache } from "../../../stores"
   import { send } from "../../../utils/request"
   import MediaLoader from "../../drawer/media/MediaLoader.svelte"
   import { playAudio } from "../../helpers/audio"
   import Icon from "../../helpers/Icon.svelte"
+  import { getMediaType } from "../../helpers/media"
   import { findMatchingOut, setOutput } from "../../helpers/output"
   import { getMediaFilter } from "../../helpers/showActions"
   import { _show } from "../../helpers/shows"
@@ -43,9 +44,8 @@
     layoutBackgrounds.forEach((a: any) => {
       let id = show.media[a].path || show.media[a].id!
 
-      let type = "image"
       const extension = id.slice(id.lastIndexOf(".") + 1, id.length) || ""
-      if ($videoExtensions.includes(extension)) type = "video"
+      let type = getMediaType(extension)
 
       if (backgrounds[id]) backgrounds[id].count++
       else backgrounds[id] = { id: a, ...show.media[a], type, count: 1 }

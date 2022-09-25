@@ -30,7 +30,7 @@
     note = showId ? _show().layouts("active").get("notes")[0] || "" : ""
     currentLayout = $showsCache[showId]?.settings?.activeLayout
 
-    if (note.length && active === "groups") active = "notes"
+    if (note.length && previousShow !== showId && active === "groups") active = "notes"
     else if (!note.length && previousShow !== showId && active === "notes") active = "groups"
     previousShow = showId
   }

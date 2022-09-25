@@ -31,63 +31,65 @@
 </script>
 
 {#if $activePopup !== null}
-  <div style={$os.platform === "win32" ? "height: calc(100% - 30px);" : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
-    <div class="card" class:fill={$activePopup === "import_scripture"} transition:scale={{ duration: 200 }}>
-      <div style="position: relative;">
-        {#if $activePopup !== "alert"}
-          {#key $activePopup}
-            <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{$activePopup}" /></h2>
-          {/key}
-        {/if}
-        <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 30px;" on:click={() => activePopup.set(null)}>
-          <Icon id="close" size={2} />
-        </Button>
-      </div>
-      <div style="display: flex;flex-direction: column;margin: 20px;">
-        {#if $activePopup === "initialize"}
-          <Initialize />
-        {:else if $activePopup === "import"}
-          <Import />
-        {:else if $activePopup === "export"}
-          <Export />
-        {:else if $activePopup === "show"}
-          <CreateShow />
-        {:else if $activePopup === "delete_show"}
-          <DeleteShow />
-        {:else if $activePopup === "icon"}
-          <ChangeIcon />
-        {:else if $activePopup === "player"}
-          <CreatePlayer />
-        {:else if $activePopup === "rename"}
-          <Rename />
-        {:else if $activePopup === "color"}
-          <Color />
-        {:else if $activePopup === "timer"}
-          <Timer />
-        {:else if $activePopup === "transition"}
-          <Transition />
-        {:else if $activePopup === "import_scripture"}
-          <ImportScripture />
-        {:else if $activePopup === "edit_event"}
-          <EditEvent />
-        {:else if $activePopup === "choose_screen"}
-          <ChooseScreen />
-        {:else if $activePopup === "advanced_settings"}
-          <AdvancedScreen />
-        {:else if $activePopup === "about"}
-          <About />
-        {:else if $activePopup === "shortcuts"}
-          <Shortcuts />
-        {:else if $activePopup === "unsaved"}
-          <Unsaved />
-        {:else if $activePopup === "reset_all"}
-          <ResetAll />
-        {:else if $activePopup === "alert"}
-          <Alert />
-        {/if}
+  {#key $activePopup}
+    <div style={$os.platform === "win32" ? "height: calc(100% - 30px);" : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
+      <div class="card" class:fill={$activePopup === "import_scripture"} transition:scale={{ duration: 200 }}>
+        <div style="position: relative;">
+          {#if $activePopup !== "alert"}
+            {#key $activePopup}
+              <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{$activePopup}" /></h2>
+            {/key}
+          {/if}
+          <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 30px;" on:click={() => activePopup.set(null)}>
+            <Icon id="close" size={2} />
+          </Button>
+        </div>
+        <div style="display: flex;flex-direction: column;margin: 20px;">
+          {#if $activePopup === "initialize"}
+            <Initialize />
+          {:else if $activePopup === "import"}
+            <Import />
+          {:else if $activePopup === "export"}
+            <Export />
+          {:else if $activePopup === "show"}
+            <CreateShow />
+          {:else if $activePopup === "delete_show"}
+            <DeleteShow />
+          {:else if $activePopup === "icon"}
+            <ChangeIcon />
+          {:else if $activePopup === "player"}
+            <CreatePlayer />
+          {:else if $activePopup === "rename"}
+            <Rename />
+          {:else if $activePopup === "color"}
+            <Color />
+          {:else if $activePopup === "timer"}
+            <Timer />
+          {:else if $activePopup === "transition"}
+            <Transition />
+          {:else if $activePopup === "import_scripture"}
+            <ImportScripture />
+          {:else if $activePopup === "edit_event"}
+            <EditEvent />
+          {:else if $activePopup === "choose_screen"}
+            <ChooseScreen />
+          {:else if $activePopup === "advanced_settings"}
+            <AdvancedScreen />
+          {:else if $activePopup === "about"}
+            <About />
+          {:else if $activePopup === "shortcuts"}
+            <Shortcuts />
+          {:else if $activePopup === "unsaved"}
+            <Unsaved />
+          {:else if $activePopup === "reset_all"}
+            <ResetAll />
+          {:else if $activePopup === "alert"}
+            <Alert />
+          {/if}
+        </div>
       </div>
     </div>
-  </div>
+  {/key}
 {/if}
 
 <style>

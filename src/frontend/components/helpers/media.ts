@@ -1,5 +1,9 @@
+import { get } from "svelte/store"
+import type { ShowType } from "../../../types/Show"
 // ----- FreeShow -----
 // This is for media/file functions
+
+import { audioExtensions, imageExtensions, videoExtensions } from "../../stores"
 
 export function getExtension(path: string): string {
   if (!path) return ""
@@ -9,6 +13,18 @@ export function getExtension(path: string): string {
 export function removeExtension(name: string): string {
   if (name.indexOf(".") < 0) return name
   return name.slice(0, name.lastIndexOf("."))
+}
+
+export function isMediaExtension(extension: string, audio: boolean = false): boolean {
+  let extensions: string[] = [...get(imageExtensions), ...get(videoExtensions)]
+  if (audio) extensions = get(audioExtensions)
+  return extensions.includes(extension.toLowerCase())
+}
+
+export function getMediaType(extension: string): ShowType {
+  if (get(audioExtensions).includes(extension.toLowerCase())) return "audio"
+  if (get(videoExtensions).includes(extension.toLowerCase())) return "video"
+  return "image"
 }
 
 export function getFileName(path: string): string {

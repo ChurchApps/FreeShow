@@ -22,7 +22,7 @@ import {
   stageShows,
   templates,
   theme,
-  themes
+  themes,
 } from "./../../stores"
 import { clone } from "./array"
 import { redoAddCategory, redoAddOverlayOrTemplate, undoAddCategory, undoAddOverlayOrTemplate } from "./historyHelpers"
@@ -537,7 +537,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
         if (!obj.newData.slide && !obj.newData.slides) {
           let isParent: boolean = true
-          let items = []
+          let items: any[] = []
           // add as child
           // TODO: add by template
           if (ref.length && !obj.newData.parent) {
@@ -556,7 +556,12 @@ export function history(obj: History, undo: null | boolean = null) {
           }
           // get previous slide layout
           if (ref.length && index - 1 >= 0) {
-            items = clone(_show(showID).slides([ref[index - 1].id]).items().get()[0])
+            items = clone(
+              _show(showID)
+                .slides([ref[index - 1].id])
+                .items()
+                .get()[0]
+            )
             // remove values
             items = items
               .filter((a: any) => !a.type || a.type === "text" || a.lines)
@@ -1114,7 +1119,7 @@ export function history(obj: History, undo: null | boolean = null) {
           if (!obj.oldData) obj.oldData = { template: a[showID].settings.template, slides: JSON.parse(JSON.stringify(slides)) }
           if (obj.location!.layoutSlide === undefined) a[showID].settings.template = obj.newData.template
           else a[showID].settings.template = null
-          let template = get(templates)[obj.newData.template]
+          let template = clone(get(templates)[obj.newData.template])
           if (template?.items.length) {
             let slideId = obj.location!.layoutSlide === undefined ? null : _show(obj.location!.show!.id).layouts([obj.location!.layout]).ref()[0][obj.location!.layoutSlide!].id
             Object.entries(slides).forEach(([id, slide]: any) => {
@@ -1144,6 +1149,7 @@ export function history(obj: History, undo: null | boolean = null) {
                 //   })
                 // })
               }
+              a[showID].slides[id] = clone(slide)
             })
             // } else {
             //   alertMessage.set("Empty template")

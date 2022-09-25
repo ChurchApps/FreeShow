@@ -33,7 +33,7 @@
     <p><T id="settings.show_location" /></p>
     <span>
       {$showsPath}
-      <FolderPicker id="shows">
+      <FolderPicker id="SHOWS">
         <T id="inputs.change_folder" />
       </FolderPicker>
     </span>

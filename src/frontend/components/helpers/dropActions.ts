@@ -5,7 +5,7 @@ import { activeDrawerTab, activeProject, activeShow, audioExtensions, drawerTabs
 import { addItem } from "../edit/scripts/addItem"
 import { clone } from "./array"
 import { history, historyAwait } from "./history"
-import { getExtension, getFileName, removeExtension } from "./media"
+import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { _show } from "./shows"
 
@@ -14,7 +14,7 @@ function getId(drag: any): string {
   console.log(drag)
   if (drag.id === "slide" || drag.id === "group") return "slide"
   const extension: string = getExtension(drag.data[0].name)
-  if (drag.id === "files" && get(audioExtensions).includes(extension)) return "audio"
+  if (drag.id === "files" && getMediaType(extension) === "audio") return "audio"
   if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera") return "media"
   // if (drag.id === "audio") return "audio"
   // if (drag.id === "global_group") return "global_group"
@@ -83,9 +83,7 @@ export const dropActions: any = {
           const extension: string = getExtension(a.path || a.name)
           if (drag.id === "files" && !files[drop.id].includes(extension)) return null
 
-          let type: string = "image"
-          if (get(videoExtensions).includes(extension)) type = "video"
-          else if (get(audioExtensions).includes(extension)) type = "audio"
+          let type: string = getMediaType(extension)
 
           let name: string = a.name || getFileName(a.path)
           return { name: removeExtension(name), id: a.path, type }
@@ -178,10 +176,13 @@ export const dropActions: any = {
   },
 }
 
+// "show", "project"
+const fileDropExtensions: any = [...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)]
+
 const files: any = {
-  project: ["frs", ...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)],
-  slides: ["frs", ...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)],
-  slide: ["frs", ...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)],
+  project: fileDropExtensions,
+  slides: fileDropExtensions,
+  slide: fileDropExtensions,
 }
 
 const slideDrop: any = {
@@ -198,7 +199,7 @@ const slideDrop: any = {
           data.push({
             path: a.path,
             name: removeExtension(a.name),
-            type: get(audioExtensions).includes(extension) ? "audio" : get(videoExtensions).includes(extension) ? "video" : "image",
+            type: getMediaType(extension),
           })
         }
       })
