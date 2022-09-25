@@ -71,7 +71,7 @@ function createSlides(labeled: any) {
     let lines: string[] = removeEmpty(text.split("\n"))
 
     // split lines into a set amount of lines
-    if (lines.length > get(splitLines)) {
+    if (Number(get(splitLines)) && lines.length > get(splitLines)) {
       allLines = []
       while (lines.length) allLines.push(lines.splice(0, get(splitLines)).join("\n"))
     }

@@ -79,7 +79,7 @@ export async function loadShows(s: string[]) {
 
         setShow(msg.content[0], msg.content[1])
       }
-      console.log(count, s, msg, "LOAD")
+      // console.log(count, s, msg, "LOAD")
 
       if (count >= s.length) {
         setTimeout(() => {

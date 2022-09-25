@@ -80,7 +80,7 @@ export function selectFolderDialog(title: string = ""): string {
 // DATA FOLDERS
 
 export function getDocumentsFolder(p: any = null, folderName: string = "Shows"): string {
-  if (!p) p = path.resolve(app.getPath("documents"), folderName)
+  if (!p) p = path.resolve(app.getPath("documents"), "FreeShow", folderName)
   if (!doesPathExist(p)) p = fs.mkdirSync(p, { recursive: true })
   return p
 }
@@ -109,7 +109,11 @@ export function loadFile(p: string, contentId: string = ""): any {
   content = readFile(p)
   if (!content) return { error: "not_found", id: contentId }
 
-  content = JSON.parse(content)
+  try {
+    content = JSON.parse(content)
+  } catch (error) {
+    return { error: "not_found", id: contentId }
+  }
   if (contentId && content[0] !== contentId) return { error: "not_found", id: contentId, file_id: content[0] }
 
   return { id: contentId, content }
@@ -146,9 +150,9 @@ export function getFolderContent(_e: any, folderPath: string) {
 }
 
 // OPEN_FOLDER
-export function selectFolder(e: any, msg: { id: string; title: string | undefined }) {
+export function selectFolder(e: any, msg: { channel: string; title: string | undefined }) {
   let folder: any = selectFolderDialog(msg.title)
-  if (folder) e.reply(OPEN_FOLDER, { id: msg.id, path: folder })
+  if (folder) e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
 }
 
 // OPEN_FILE

@@ -1,8 +1,9 @@
 <script lang="ts">
   import { READ_FOLDER } from "../../../../types/Channels"
-  import { activeShow, dictionary, imageExtensions, media, mediaFolders, mediaOptions, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, media, mediaFolders, mediaOptions } from "../../../stores"
   import { splitPath } from "../../helpers/get"
   import Icon from "../../helpers/Icon.svelte"
+  import { getMediaType, isMediaExtension } from "../../helpers/media"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Center from "../../system/Center.svelte"
@@ -13,7 +14,6 @@
   export let searchValue: string = ""
 
   let files: any[] = []
-  let extensions: string[] = [...$videoExtensions, ...$imageExtensions]
 
   $: rootPath = active === "all" || active === "favourites" ? "" : active !== null ? $mediaFolders[active].path! : ""
   $: path = active === "all" || active === "favourites" ? "" : rootPath
@@ -54,7 +54,7 @@
   // receive files
   window.api.receive(READ_FOLDER, (msg: any) => {
     if (active === "all" || msg.path === path) {
-      files.push(...msg.files.filter((file: any) => extensions.includes(file.extension) || file.folder))
+      files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
       files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
       filterFiles()
@@ -84,10 +84,7 @@
   function filterFiles() {
     // filter files
     if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
-    else
-      filteredFiles = files.filter(
-        (a) => (activeView === "folder" && active !== "all" && a.folder) || (!a.folder && activeView === ($videoExtensions.includes(a.extension) ? "video" : "image"))
-      )
+    else filteredFiles = files.filter((a) => (activeView === "folder" && active !== "all" && a.folder) || (!a.folder && activeView === getMediaType(a.extension)))
 
     // reset arrow selector
     allFiles = [...filteredFiles.filter((a) => !a.folder).map((a) => a.path)]
@@ -130,7 +127,7 @@
     if (e.key === "Enter" && searchValue.length > 1 && e.target.closest(".search")) {
       if (fullFilteredFiles.length) {
         let file = fullFilteredFiles[0]
-        activeShow.set({ id: file.path, name: file.name, type: $videoExtensions.includes(file.extension) ? "video" : "image" })
+        activeShow.set({ id: file.path, name: file.name, type: getMediaType(file.extension) })
         activeFile = filteredFiles.findIndex((a) => a.path === file.path)
         if (activeFile < 0) activeFile = null
       }
@@ -184,7 +181,7 @@
               <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
             {:else}
               <!-- if slowLoader > i -->
-              <Media name={file.name} path={file.path} type={$videoExtensions.includes(file.extension) ? "video" : "image"} bind:activeFile {allFiles} {active} />
+              <Media name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
             {/if}
           {/each}
         {/key}

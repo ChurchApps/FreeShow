@@ -1,9 +1,10 @@
 <script lang="ts">
   import { OUTPUT } from "../../../../types/Channels"
-  import { activeShow, dictionary, outLocked, playerVideos, videoExtensions } from "../../../stores"
+  import { activeShow, dictionary, outLocked, playerVideos } from "../../../stores"
   import { send } from "../../../utils/request"
   import { splitPath } from "../../helpers/get"
   import Icon from "../../helpers/Icon.svelte"
+  import { getMediaType } from "../../helpers/media"
   import { setOutput } from "../../helpers/output"
   import Button from "../../inputs/Button.svelte"
   import VideoSlider from "../VideoSlider.svelte"
@@ -56,7 +57,7 @@
       <p>{mediaName}</p>
     </span>
   {/if}
-  {#if (video && $videoExtensions.includes((outName?.match(/\.[0-9a-z]+$/i)?.[0] || "").substring(1))) || background?.type === "player"}
+  {#if (video && getMediaType((outName?.match(/\.[0-9a-z]+$/i)?.[0] || "").substring(1)) === "video") || background?.type === "player"}
     <span class="group">
       <Button
         style="flex: 0"

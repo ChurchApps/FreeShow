@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { Item } from "../../../types/Show"
-  import { currentWindow, outputs, videoExtensions } from "../../stores"
+  import { currentWindow, outputs } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import { getAutoSize } from "../edit/scripts/autoSize"
   import Icon from "../helpers/Icon.svelte"
-  import { getExtension } from "../helpers/media"
+  import { getExtension, getMediaType } from "../helpers/media"
   import { getActiveOutputs } from "../helpers/output"
   import { loadShows } from "../helpers/setShow"
   import { _show } from "../helpers/shows"
@@ -83,7 +83,7 @@
     </div>
   {:else if item?.type === "media"}
     {#if item.src}
-      {#if $videoExtensions.includes(getExtension(item.src))}
+      {#if getMediaType(getExtension(item.src)) === "video"}
         <!-- video -->
         <video src={item.src} muted={true}>
           <track kind="captions" />

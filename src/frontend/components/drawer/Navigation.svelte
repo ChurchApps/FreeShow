@@ -195,7 +195,7 @@
       </Button>
     </div>
   {:else if id === "media" || id === "audio"}
-    <FolderPicker {id} title={$dictionary.new?.folder}>
+    <FolderPicker id={id.toUpperCase()} title={$dictionary.new?.folder}>
       <Icon id="folder" right />
       <span style="color: var(--secondary);">
         <T id="new.folder" />

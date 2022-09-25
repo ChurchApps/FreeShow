@@ -39,8 +39,12 @@ export function startExport(_e: any, msg: Message) {
 
 // BIBLE
 export function loadScripture(e: any, msg: Message) {
-  let p: string = path.resolve(app.getPath("documents"), "Bibles", msg.name + ".fsb")
+  let p: string = path.resolve(app.getPath("documents"), "FreeShow", "Bibles", msg.name + ".fsb")
   let bible: any = loadFile(p, msg.id)
+
+  // pre v0.5.6
+  if (bible.error) p = path.resolve(app.getPath("documents"), "Bibles", msg.name + ".fsb")
+  bible = loadFile(p, msg.id)
 
   e.reply(BIBLE, bible)
 }

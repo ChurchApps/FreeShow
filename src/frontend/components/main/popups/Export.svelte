@@ -172,7 +172,7 @@
 
 <span style="display: flex;align-items: center;justify-content: space-between;">
   {$exportPath}
-  <FolderPicker id="export">
+  <FolderPicker id="EXPORT">
     <T id="inputs.change_folder" />
   </FolderPicker>
 </span>

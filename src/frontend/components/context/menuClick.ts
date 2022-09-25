@@ -16,7 +16,6 @@ import {
   eventEdit,
   events,
   forceClock,
-  imageExtensions,
   media,
   outLocked,
   outputs,
@@ -38,6 +37,7 @@ import { exportProject } from "../export/project"
 import { copy, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
+import { getMediaType } from "../helpers/media"
 import { getActiveOutputs, setOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
@@ -216,7 +216,7 @@ const actions: any = {
       duplicateShows(obj.sel)
       return
     }
-    if (obj.sel.id === "slide" || obj.sel.id === "overlay" || obj.sel.id === "template") {
+    if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") {
       obj.sel.data = obj.sel.data.sort((a: any, b: any) => a.index - b.index)
       copy(obj.sel)
       paste()
@@ -246,7 +246,7 @@ const actions: any = {
       obj.sel.data = obj.sel.data.map(({ path, name }: any) => ({
         id: path,
         name,
-        type: get(imageExtensions).includes(path.slice(path.lastIndexOf(".") + 1, path.length)) ? "image" : "video",
+        type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length)),
       }))
 
     projects.update((a) => {
@@ -290,9 +290,9 @@ const actions: any = {
   newProject: (obj: any) =>
     history({ id: "newProject", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
   newFolder: (obj: any) => {
-    if (obj.contextElem.classList.includes("#projects"))
+    if (obj.contextElem.classList.contains("#projects"))
       history({ id: "newFolder", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } })
-    else if (obj.contextElem.classList.includes("#category_media")) window.api.send(OPEN_FOLDER, { id: "media", title: get(dictionary).new?.folder })
+    else if (obj.contextElem.classList.contains("#category_media")) window.api.send(OPEN_FOLDER, { id: "media", title: get(dictionary).new?.folder })
   },
   newSlide: () => history({ id: "newSlide", location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } }),
   newCategory: (obj: any) => {
@@ -589,7 +589,11 @@ const formatting: any = {
   uppercase: (t: string) => t.toUpperCase(),
   lowercase: (t: string) => t.toLowerCase(),
   capitalize: (t: string) => (t.length > 1 ? t[0].toUpperCase() + t.slice(1, t.length).toLowerCase() : t.toUpperCase()),
-  trim: (t: string) => t.replace(/[.,!]*$/g, "").trim(),
+  trim: (t: string) =>
+    t
+      .trim()
+      .replace(/[.,!]*$/g, "")
+      .trim(),
 }
 
 async function duplicateShows(selected: any) {

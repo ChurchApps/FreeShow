@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { MediaFit } from "../../../types/Main"
   import type { Transition } from "../../../types/Show"
-  import { activeEdit, activeShow, media, videoExtensions } from "../../stores"
+  import { activeEdit, activeShow, media } from "../../stores"
   import { custom } from "../../utils/transitions"
-  import { getExtension } from "../helpers/media"
+  import { getExtension, getMediaType } from "../helpers/media"
   import Image from "./Image.svelte"
   import MediaControls from "./MediaControls.svelte"
   import Video from "./Video.svelte"
@@ -32,7 +32,7 @@
   }
 
   $: extension = getExtension(path)
-  $: type = $videoExtensions.includes(extension) ? "video" : "image"
+  $: type = getMediaType(extension)
 </script>
 
 {#if type === "video"}

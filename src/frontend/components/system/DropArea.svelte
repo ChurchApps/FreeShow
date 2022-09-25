@@ -34,7 +34,7 @@
   }
 
   function getFiles(e: any): any[] {
-    let files = []
+    let files: any[] = []
     // DataTransferItemList interface
     if (e.dataTransfer.items) {
       for (let i = 0; i < e.dataTransfer.items.length; i++) {

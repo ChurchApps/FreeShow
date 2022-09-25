@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from "electron"
 import { join } from "path"
-import { mainWindow, toApp } from ".."
+import { dialogClose, mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { Message } from "../../types/Socket"
 import { Output } from "./../../types/Output"
@@ -71,6 +71,11 @@ function createOutputWindow(options: any) {
 
   window.on("ready-to-show", () => {
     mainWindow?.focus()
+    window?.setMenu(null)
+  })
+
+  window.on("close", (e) => {
+    if (!dialogClose) e.preventDefault()
   })
 
   return window
@@ -138,7 +143,8 @@ export function displayOutput(data: any) {
   let windowNotCoveringMain: boolean = xDif > 50 || yDif < -50 || (xDif < -50 && yDif > 50)
   // console.log(bounds, xDif, yDif, windowNotCoveringMain)
   if (bounds && (data.force || windowNotCoveringMain)) {
-    showWindow(window, !data.force)
+    // , !data.force
+    showWindow(window)
 
     if (bounds) {
       window?.setBounds(bounds)
@@ -156,7 +162,8 @@ export function displayOutput(data: any) {
   toApp(OUTPUT, { channel: "DISPLAY", data })
 }
 
-function showWindow(window: BrowserWindow, fullscreen: boolean = false) {
+// , fullscreen: boolean = false
+function showWindow(window: BrowserWindow) {
   if (!window) return
   // TODO: output task bar
   // window.setVisibleOnAllWorkspaces(true)
@@ -172,19 +179,19 @@ function showWindow(window: BrowserWindow, fullscreen: boolean = false) {
   // window.setAlwaysOnTop(true, "screen-saver", 1)
   // window.setAlwaysOnTop(true, 'floating')
 
-  if (process.platform === "darwin") {
-    setTimeout(() => {
-      window.maximize()
-      if (fullscreen) {
-        // ... ??
-        // window.setFullScreen(true)
-      }
-      setTimeout(() => {
-        // focus on mac
-        mainWindow?.focus()
-      }, 10)
-    }, 100)
-  }
+  // if (process.platform === "darwin") {
+  //   setTimeout(() => {
+  //     window.maximize()
+  //     if (fullscreen) {
+  //       // ... ??
+  //       // window.setFullScreen(true)
+  //     }
+  //     setTimeout(() => {
+  //       // focus on mac
+  //       mainWindow?.focus()
+  //     }, 10)
+  //   }, 100)
+  // }
 
   window.moveTop()
 }
@@ -192,12 +199,12 @@ function showWindow(window: BrowserWindow, fullscreen: boolean = false) {
 function hideWindow(window: BrowserWindow) {
   if (!window) return
 
-  if (process.platform === "darwin") {
-    // window.setFullScreen(false)
-    // setTimeout(() => {
-    window.minimize()
-    // }, 100)
-  }
+  // if (process.platform === "darwin") {
+  //   // window.setFullScreen(false)
+  //   // setTimeout(() => {
+  //   window.minimize()
+  //   // }, 100)
+  // }
   window.hide()
 }
 
@@ -233,7 +240,9 @@ export function toggleValue({ id, key }: any) {
   else if (key === "disabled") window.setEnabled(!window.isEnabled())
   else if (key === "menubar") window.setAutoHideMenuBar(!window.isMenuBarAutoHide())
   else if (key === "workspaces") window.setVisibleOnAllWorkspaces(!window.isVisibleOnAllWorkspaces())
-  // else if (key === "alwaysontop") window.setAlwaysOnTop("")
+  else if (key === "alwaysontop") window.isAlwaysOnTop() ? window.setAlwaysOnTop(false) : window.setAlwaysOnTop(true, "screen-saver", 1)
+  else if (key === "alwaysontop2") window.isAlwaysOnTop() ? window.setAlwaysOnTop(false) : window.setAlwaysOnTop(true, "pop-up-menu", 1)
+  // window.setVisibleOnAllWorkspaces(true, {visibleOnFullScreen: true});
 
   let state = {
     maximized: window.isMaximized(),

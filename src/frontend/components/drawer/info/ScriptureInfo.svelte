@@ -97,7 +97,7 @@
   }
 
   function addMeta(showVersion: boolean, showVerse: boolean, range: string) {
-    let lines = []
+    let lines: any[] = []
     let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
     if (showVersion && bible.version) lines.push({ text: [{ value: bible.version, style: verseStyle }], align: "" })
     if (showVerse) lines.push({ text: [{ value: bible.book + " " + bible.chapter + ":" + range, style: verseStyle }], align: "" })

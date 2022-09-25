@@ -20,6 +20,7 @@ import {
   imageExtensions,
   labelsDisabled,
   language,
+  loaded,
   mediaFolders,
   mediaOptions,
   openedFolders,
@@ -73,6 +74,11 @@ export function updateSettings(data: any) {
     Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
     Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
   }
+
+  // load all shows
+  // loadShows(Object.keys(get(shows)))
+
+  loaded.set(true)
 
   setTimeout(() => {
     window.api.send("LOADED")

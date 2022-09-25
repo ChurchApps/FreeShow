@@ -119,6 +119,7 @@ export function save() {
   window.api.send(STORE, {
     channel: "SAVE",
     data: {
+      path: get(showsPath),
       // SETTINGS
       SETTINGS: settings,
       // CACHES (SAVED TO MULTIPLE FILES)

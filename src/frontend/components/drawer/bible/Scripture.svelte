@@ -5,10 +5,11 @@
   // import type { Bible } from "../../../../types/Bible"
   import { BIBLE } from "../../../../types/Channels"
   import type { StringObject } from "../../../../types/Main"
-  import { dictionary, notFound, outLocked, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
-  import { setOutput } from "../../helpers/output"
+  import { activeShow, dictionary, notFound, outLocked, outputs, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
+  import { getActiveOutputs, setOutput } from "../../helpers/output"
   import T from "../../helpers/T.svelte"
   import Center from "../../system/Center.svelte"
+  import type { OutSlide } from "../../../../types/Show"
 
   export let active: any
   export let bible: Bible
@@ -29,7 +30,7 @@
 
   async function fetchBible(id: string) {
     const api = "https://api.scripture.api.bible/v1/bibles/"
-    let versesId = null
+    let versesId: any = null
     if (versesList.length) {
       versesId = versesList[0].id + "-" + versesList[versesList.length - 1].id
       versesId = versesId.split("-")
@@ -267,7 +268,7 @@
 
     let value = verses[id] || ""
     value = value.replace(/(<([^>]+)>)/gi, "")
-    let text = []
+    let text: any[] = []
 
     if ($scriptureSettings.verseNumbers) {
       text.push({ value: id + " ", style: "font-size: 100px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[0]?.lines?.[0].text?.[0].style || "" })
@@ -275,7 +276,7 @@
 
     text.push({ style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;", value })
 
-    let tempItems = []
+    let tempItems: any[] = []
     tempItems.push({
       style: itemStyle,
       align: "",
@@ -283,7 +284,7 @@
     })
 
     // add data
-    let lines = []
+    let lines: any[] = []
     let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
     if ($scriptureSettings.showVersion && bible.version) lines.push({ text: [{ value: bible.version, style: verseStyle }], align: "" })
     if ($scriptureSettings.showVerse) lines.push({ text: [{ value: bible.book + " " + bible.chapter + ":" + id, style: verseStyle }], align: "" })
@@ -361,7 +362,35 @@
     activeVerses = [...new Set(activeVerses)]
     bible.activeVerses = activeVerses
   }
+
+  function keydown(e: any) {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
+    let currentOutput: any = $outputs[getActiveOutputs()[0]]
+    let slide: null | OutSlide = currentOutput.out?.slide || null
+    if ($activeShow && slide?.id !== "temp" && !e.ctrlKey && !e.metaKey) return
+
+    // go to next/previous verse
+    let left = e.key.includes("Left")
+    if (!activeVerses.length) {
+      activeVerses = [left ? versesList.length.toString() : "1"]
+      bible.activeVerses = activeVerses
+      return
+    }
+
+    let currentIndex: number = Number(left ? activeVerses[0] : activeVerses.at(-1))
+    let newSelection: string[] = []
+    ;[...Array(activeVerses.length)].map((_, i: number) => {
+      let newIndex: number = left ? currentIndex - i - 1 : currentIndex + i + 1
+      if (left ? newIndex > 0 : newIndex <= versesList.length) newSelection.push(newIndex.toString())
+    })
+    if (newSelection.length) {
+      activeVerses = newSelection.sort((a: any, b: any) => a - b)
+      bible.activeVerses = activeVerses
+    }
+  }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div class="main">
   {#if notLoaded}

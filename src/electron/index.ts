@@ -88,7 +88,7 @@ function createLoading() {
 // ----- MAIN WINDOW -----
 
 export let mainWindow: BrowserWindow | null = null
-let dialogClose: boolean = false // is unsaved
+export let dialogClose: boolean = false // is unsaved
 function createMain() {
   let bounds: Rectangle = config.get("bounds")
   let screenBounds: Rectangle = screen.getPrimaryDisplay().bounds

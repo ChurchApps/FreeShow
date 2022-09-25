@@ -56,9 +56,15 @@
     z-index: 30;
     min-height: 50px;
     height: 50px;
+
+    -webkit-app-region: drag;
   }
   .top span {
     display: flex;
+  }
+
+  .top :global(button) {
+    -webkit-app-region: no-drag;
   }
 
   div :global(button.display) {

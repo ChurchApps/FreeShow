@@ -22,6 +22,7 @@ export const version: Writable<string> = writable("0.0.0")
 export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)
+export const loaded: Writable<boolean> = writable(true)
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })

@@ -133,13 +133,13 @@
         </MediaPicker>
       {:else if lineInputs[input.input]}
         <div class="line" style="margin-bottom: 5px;">
-          {#each lineInputs[input.input] as input}
-            {@const currentStyle = input.key === "align-items" ? alignStyle : input.key === "text-align" ? lineAlignStyle : styles}
+          {#each lineInputs[input.input] as lineInput}
+            {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
             <IconButton
-              on:click={() => (input.toggle ? toggle(input) : dispatch("change", input))}
-              title={$dictionary.edit?.["_title_" + input.title || input.icon]}
-              icon={input.icon}
-              active={currentStyle[input.key] ? currentStyle[input.key]?.includes(input.value) : input.default}
+              on:click={() => (lineInput.toggle ? toggle(lineInput) : dispatch("change", lineInput))}
+              title={$dictionary.edit?.["_title_" + lineInput.title || lineInput.icon]}
+              icon={lineInput.icon}
+              active={currentStyle[lineInput.key] ? currentStyle[lineInput.key]?.includes(lineInput.value) : lineInput.default}
             />
           {/each}
         </div>
