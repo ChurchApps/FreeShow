@@ -15,7 +15,8 @@
     "no": "Noruego",
     "sk": "Eslovaco",
     "es": "Español",
-    "pt_BR": "Brazilian Portuguese"
+    "pt_BR": "Brazilian Portuguese",
+	"de": "German"
   },
   "about": {
     "check_updates": "Buscar actualizaciones",
