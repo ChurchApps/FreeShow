@@ -15,7 +15,8 @@
     "no": "Nórština",
     "sk": "Slovenčina",
     "es": "Spanish",
-    "pt_BR": "Brazilian Portuguese"
+    "pt_BR": "Brazilian Portuguese",
+	"de": "German"
   },
   "about": {
     "check_updates": "Skontrolovať aktualizácie",
