@@ -5,6 +5,7 @@
   import { send } from "../../../utils/request"
   import Pdf from "../../export/Pdf.svelte"
   import { exportProject } from "../../export/project"
+  import Icon from "../../helpers/Icon.svelte"
   import { loadShows } from "../../helpers/setShow"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -15,11 +16,13 @@
 
   $: shows = []
 
+  let paper: any
+
   const getShows: any = {
     project: () => ($activeProject ? $projects[$activeProject].shows.filter((a) => a.type === undefined || a.type === "show").map(({ id }) => ({ id, ...$showsCache[id] })) : []),
     selected_shows: () => {
       if ($selected.id !== "show" && $selected.id !== "show_drawer") {
-        if (!$activeShow || $activeShow.type !== "show" || $activeShow.type !== undefined) return []
+        if (!$activeShow || ($activeShow.type !== "show" && $activeShow.type !== undefined)) return []
         return [{ id: $activeShow.id, ...$showsCache[$activeShow.id] }]
       }
       return $selected.data.map(({ id }) => ({ id, ...$showsCache[id] }))
@@ -161,9 +164,14 @@
     </div>
     <div>
       <h4 style="text-align: center;"><T id="export.preview" /></h4>
-      <div class="paper">
+      <div class="paper" bind:this={paper}>
         <Pdf {shows} options={pdfOptions} />
       </div>
+    </div>
+    <div style="display: flex;flex-direction: column;">
+      <!-- aspect-ratio: 1/1.4142; -->
+      <Button style="flex: 1;" on:click={() => paper.scrollBy(0, -paper.offsetHeight + 9.6)}><Icon id="up" /></Button>
+      <Button style="flex: 1;" on:click={() => paper.scrollBy(0, paper.offsetHeight - 7.001)}><Icon id="down" /></Button>
     </div>
   </div>
 
@@ -195,7 +203,7 @@
 <style>
   .paper {
     background-color: white;
-    aspect-ratio: 1/1.4142;
+    aspect-ratio: 210/297;
     width: 800px;
     zoom: 0.4;
     overflow: auto;
