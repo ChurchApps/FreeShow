@@ -52,6 +52,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   newPrivateShow: { label: "new.private", icon: "private" },
   private: { label: "actions.private", icon: "private" },
   duplicate: { label: "actions.duplicate", icon: "duplicate" },
+  section: { label: "new.section", icon: "icon" },
   // SHOWS
   addToProject: { label: "context.addToProject", icon: "project" },
   remove: { label: "actions.remove", icon: "remove" },
@@ -141,14 +142,18 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // PROJECT
   projects: ["newProject", "newFolder"],
   projectTab: ["export", "close"],
-  project: ["newShowPopup", "newShow"], // , "newPrivateShow"
+  project: ["section", "SEPERATOR", "newShowPopup", "newShow"], // , "newPrivateShow"
   project_button: ["rename", "delete", "export"],
   folder: ["rename", "delete"],
   project_media: ["play", "play_no_filters", "remove"],
   project_audio: ["remove"],
   project_player: ["remove"],
   project_show: ["rename", "remove", "private", "duplicate"],
+  project_section: ["remove"],
   shows: ["newSlide", "selectAll"],
+  // TIMER
+  timer: ["play", "edit"], // , "reset"
+  global_timer: ["play", "edit", "SEPERATOR", "delete"], // , "reset"
 
   // SHOWS
   // , "copy", "paste"

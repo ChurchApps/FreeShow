@@ -39,8 +39,10 @@ import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { getMediaType } from "../helpers/media"
 import { getActiveOutputs, setOutput } from "../helpers/output"
+import { select } from "../helpers/select"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
+import { deleteTimer, playPause, playPauseGlobal } from "../show/tools/timers"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 
@@ -148,6 +150,15 @@ const actions: any = {
       })
       return
     }
+
+    if (obj.sel.id.includes("timer")) {
+      obj.sel.data.forEach((data) => {
+        let id = data.id || data.timer?.id
+        deleteTimer(id)
+      })
+      return
+    }
+
     if (obj.contextElem?.classList.value.includes("#edit_box")) {
       let ref: any = _show("active").layouts("active").ref()[0][get(activeEdit).slide!]
       let slide: any = _show("active").slides([ref.id]).get()[0].id
@@ -347,6 +358,14 @@ const actions: any = {
       return a
     })
   },
+  section: () => {
+    projects.update((a) => {
+      if (get(activeProject) !== null) {
+        a[get(activeProject)!].shows.push({ id: uid(5), type: "section", name: "", notes: "" })
+      }
+      return a
+    })
+  },
 
   // show
   disable: (obj: any) => {
@@ -406,6 +425,11 @@ const actions: any = {
     } else if (obj.sel.id === "global_group") {
       settingsTab.set("groups")
       activePage.set("settings")
+    } else if (obj.sel.id === "timer") {
+      activePopup.set("timer")
+    } else if (obj.sel.id === "global_timer") {
+      select("timer", { id: obj.sel.data[0].id })
+      activePopup.set("timer")
     } else if (obj.contextElem?.classList.value.includes("#event")) {
       eventEdit.set(obj.contextElem.id)
       activePopup.set("edit_event")
@@ -448,6 +472,15 @@ const actions: any = {
 
   // media
   play: (obj: any) => {
+    if (obj.sel.id.includes("timer")) {
+      obj.sel.data.forEach((data) => {
+        if (obj.sel.id === "timer") playPause(data.item)
+        else playPauseGlobal(data.id, data.timer)
+      })
+      return
+    }
+
+    // video
     let path = obj.sel.data[0].path || obj.sel.data[0].id
     if (!path) return
     let filter: string = ""

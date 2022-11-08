@@ -7,8 +7,7 @@
     "unnamed": "Sem nome",
     "drop": "Soltar aqui",
     "search": "Buscar",
-    "none": "Nenhum",
-    "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
+    "none": "Nenhum"
   },
   "languages": {
     "en": "Inglês",
@@ -16,7 +15,7 @@
     "sk": "Eslovaco",
     "es": "Espanhol",
     "pt_BR": "Português do Brasil",
-	"de": "German"
+    "de": "German"
   },
   "about": {
     "check_updates": "Verificar por atualizações",
@@ -78,6 +77,12 @@
     "width": "Largura",
     "height": "Altura",
     "pixels": "pixels"
+  },
+  "create_show": {
+    "more_options": "Mais opções",
+    "format_new_show": "Formatar texto",
+    "split_lines": "Números de linhas",
+    "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
   },
   "preview": {
     "_previous_show": "Apresentação anterior",
@@ -312,6 +317,7 @@
     "show": "Nova apresentação",
     "empty_show": "Nova apresentação em branco",
     "project": "Novo projeto",
+    "section": "New section",
     "timer": "Novo temporizador",
     "category": "Nova categoria",
     "private": "Nova apresentação privada",
@@ -344,6 +350,7 @@
     "close": "Fechar",
     "save": "Salvar",
     "disable": "Desabilitar",
+    "enable": "Enable",
     "undo": "Desfazer",
     "redo": "refazer",
     "cut": "Cortar",
@@ -569,7 +576,6 @@
     "enabled": "Habilitado",
     "color_when_active": "Cor quando ativo",
     "fixed": "Fixado",
-    "choose_screen": "Selecionar tela",
     "lines": "Linhas",
     "override_with_template": "Substituir estilo com modelo",
     "active_layers": "Camadas ativas",
@@ -578,10 +584,8 @@
     "disable_labels": "Desativar rótulos",
     "group_numbers": "Números do grupo",
     "full_colors": "Cores completas do grupo de slides",
-    "format_new_show": "Formatar texto ao criar apresentação",
     "auto_output": "Mostrar tela de saída na inicialização",
     "display_metadata": "Exibir metadados durante a exibição",
-    "split_lines": "Números de linhas ao criar uma apresentação",
     "default_project_name": "Nome do projeto padrão",
     "resolution": "Resolução",
     "video_extensions": "Extensões de vídeo",

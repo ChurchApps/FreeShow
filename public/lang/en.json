@@ -7,8 +7,7 @@
     "unnamed": "Unnamed",
     "drop": "Drop here",
     "search": "Search",
-    "none": "None",
-    "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
+    "none": "None"
   },
   "languages": {
     "en": "English",
@@ -16,7 +15,7 @@
     "sk": "Slovak",
     "es": "Spanish",
     "pt_BR": "Brazilian Portuguese",
-	"de": "German"
+    "de": "German"
   },
   "about": {
     "check_updates": "Look for updates",
@@ -78,6 +77,12 @@
     "width": "Width",
     "height": "Height",
     "pixels": "pixels"
+  },
+  "create_show": {
+    "more_options": "More options",
+    "format_new_show": "Format text",
+    "split_lines": "Numbers of lines",
+    "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
   },
   "preview": {
     "_previous_show": "Previous show",
@@ -312,6 +317,7 @@
     "show": "New show",
     "empty_show": "New empty show",
     "project": "New project",
+    "section": "New section",
     "timer": "New timer",
     "category": "New category",
     "private": "New private show",
@@ -344,6 +350,7 @@
     "close": "Close",
     "save": "Save",
     "disable": "Disable",
+    "enable": "Enable",
     "undo": "Undo",
     "redo": "Redo",
     "cut": "Cut",
@@ -577,10 +584,8 @@
     "disable_labels": "Disable labels",
     "group_numbers": "Group numbers",
     "full_colors": "Full slide group colors",
-    "format_new_show": "Format text when creating show",
     "auto_output": "Show output screen on startup",
     "display_metadata": "Display metadata while showing",
-    "split_lines": "Numbers of lines when creating a show",
     "default_project_name": "Default project name",
     "resolution": "Resolution",
     "video_extensions": "Video extensions",

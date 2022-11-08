@@ -11,6 +11,7 @@
   import Layouts from "../slide/Layouts.svelte"
   import Player from "../system/Player.svelte"
   import AudioPreview from "./AudioPreview.svelte"
+  import Section from "./Section.svelte"
   import Slides from "./Slides.svelte"
 
   $: show = $activeShow
@@ -196,6 +197,8 @@
       </div>
     {:else if show.type === "audio"}
       <AudioPreview />
+    {:else if show.type === "section"}
+      <Section section={show} />
     {:else}
       <Slides />
       <Layouts />

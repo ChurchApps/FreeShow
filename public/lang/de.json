@@ -7,8 +7,7 @@
     "unnamed": "Unbenannt",
     "drop": "Hier fallenlassen",
     "search": "Suche",
-    "none": "Nichts",
-    "quick_example": "[Strophe]\nZeile 1\nZeile 2\n\n[Refrain]\nZeile 1\nZeile 2\nx2"
+    "none": "Nichts"
   },
   "languages": {
     "en": "Englisch",
@@ -16,7 +15,7 @@
     "sk": "Slovakisch",
     "es": "Spanisch",
     "pt_BR": "Portugiesisch (Brasilien)",
-	"de": "Deutsch",
+    "de": "Deutsch"
   },
   "about": {
     "check_updates": "Auf Updates prüfen",
@@ -78,6 +77,12 @@
     "width": "Breite",
     "height": "Höhe",
     "pixels": "Pixel"
+  },
+  "create_show": {
+    "more_options": "Mehr Optionen",
+    "format_new_show": "Text formatieren",
+    "split_lines": "Anzahl der Zeilen",
+    "quick_example": "[Strophe]\nZeile 1\nZeile 2\n\n[Refrain]\nZeile 1\nZeile 2\nx2"
   },
   "preview": {
     "_previous_show": "Vorherige Show",
@@ -312,6 +317,7 @@
     "show": "Neue Show",
     "empty_show": "Neue, leere Show",
     "project": "Neues Projekt",
+    "section": "New section",
     "timer": "Neuer Timer",
     "category": "Neue Kategorie",
     "private": "Neue private Show",
@@ -344,6 +350,7 @@
     "close": "Schließen",
     "save": "Speichern",
     "disable": "Deaktivieren",
+    "enable": "Enable",
     "undo": "Rückgängig",
     "redo": "Wiederholen",
     "cut": "Ausschneiden",
@@ -577,10 +584,8 @@
     "disable_labels": "Beschriftungen deaktivieren",
     "group_numbers": "Gruppennummerierung",
     "full_colors": "Folien Gruppenfarbe",
-    "format_new_show": "Text formatieren, wenn Show erstellt wird",
     "auto_output": "Zeige Ausgabebildschirm beim Start",
     "display_metadata": "Zeige Metadaten während Anzeige",
-    "split_lines": "Anzahl der Zeilen, wenn Show erstellt wird",
     "default_project_name": "Standard Projektname",
     "resolution": "Auflösung",
     "video_extensions": "Video-Erweiterungen",

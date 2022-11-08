@@ -78,7 +78,7 @@
               <ContextItem {id} {contextElem} {menu} bind:contextActive />
             {/each}
           {:else}
-            <ContextItem {id} {contextElem} bind:contextActive />
+            <ContextItem id={itemId} {contextElem} bind:contextActive />
           {/if}
         {/each}
       {/if}

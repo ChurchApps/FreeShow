@@ -46,6 +46,7 @@ export type SelectIds =
   | "camera"
   | "player"
   | "timer"
+  | "global_timer"
 export interface Selected {
   id: null | SelectIds
   data: any[]

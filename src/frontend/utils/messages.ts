@@ -4,6 +4,7 @@ import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
   activeProject,
+  activeTimers,
   audioFolders,
   categories,
   defaultProjectName,
@@ -54,6 +55,11 @@ export function listen() {
   // TO OUTPUT
   outputs.subscribe((data) => {
     send(OUTPUT, ["OUTPUTS"], data)
+  })
+  activeTimers.subscribe((data) => {
+    // setTimeout(() => {
+    send(OUTPUT, ["ACTIVE_TIMERS"], data)
+    // }, 20)
   })
   // outBackground.subscribe((data) => {
   //   send(OUTPUT, ["BACKGROUND"], data )

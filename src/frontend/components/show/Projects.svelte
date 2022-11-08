@@ -128,13 +128,23 @@
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
               <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
               <SelectElem id="show" data={{ id: show.id, index, type: show.type }} {fileOver} borders="edges" trigger="column" draggable>
-                <ShowButton
-                  id={show.id}
-                  {show}
-                  {index}
-                  class="context #project_{show.type ? (show.type === 'video' || show.type === 'image' ? 'media' : show.type) : 'show'}__project"
-                  icon
-                />
+                {#if show.type === "section"}
+                  <div class:active={$activeShow?.id === show.id} class="section context #project_section__project" on:click={() => activeShow.set({ ...show, index })}>
+                    {#if show.name?.length}
+                      {show.name}
+                    {:else}
+                      <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
+                    {/if}
+                  </div>
+                {:else}
+                  <ShowButton
+                    id={show.id}
+                    {show}
+                    {index}
+                    class="context #project_{show.type ? (show.type === 'video' || show.type === 'image' ? 'media' : show.type) : 'show'}__project"
+                    icon
+                  />
+                {/if}
               </SelectElem>
               <!-- <button class="listItem" type={show.type} on:click={() => setFreeShow({...freeShow, activeSong: obj.name})} onDoubleClick={() => setLive({type: obj.type, name: obj.name, slide: 0})}>{show.name}</button> -->
             {/each}
@@ -193,5 +203,18 @@
     overflow-x: hidden; */
     overflow: hidden;
     height: 100%;
+  }
+
+  .section {
+    background-color: var(--primary-darker);
+    /* color: var(--secondary); */
+    padding: 4px 40px;
+    font-size: 0.8em;
+    text-align: center;
+    /* font-weight: bold; */
+  }
+  .section.active {
+    outline-offset: -2px;
+    outline: 2px solid var(--primary-lighter);
   }
 </style>

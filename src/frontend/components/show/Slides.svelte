@@ -128,6 +128,7 @@
                 <Slide
                   slide={currentShow.slides[slide.id]}
                   show={currentShow}
+                  {layoutSlides}
                   layoutSlide={slide}
                   index={i}
                   color={slide.color}

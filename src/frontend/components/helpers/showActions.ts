@@ -221,9 +221,21 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   // don't trigger actions if same slide, but different outputted line
   if (l && get(outputs)[l]?.out?.slide?.line && get(outputs)[l].out!.slide!.line! > 0) return
 
+  let background = data.background
+
+  // get ghost background
+  if (!background) {
+    layout.forEach((a, i) => {
+      if (i <= index) {
+        if (a.data.actions?.clearBackground) background = null
+        else if (a.data.background) background = a.data.background
+      }
+    })
+  }
+
   // background
-  if (data.background) {
-    let bg = _show(id).get("media")[data.background!]
+  if (background) {
+    let bg = _show(id).get("media")[background!]
     if (bg) {
       let bgData: any = {
         name: bg.name,

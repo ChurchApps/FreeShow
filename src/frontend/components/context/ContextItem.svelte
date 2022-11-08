@@ -18,8 +18,9 @@
       if ($shows[$selected.data[0]?.id]?.private) enabled = $shows[$selected.data[0].id].private!
     },
     disable: () => {
-      if ($selected.id === "slide" && $activeShow && GetLayout()[$selected.data[0]?.index]?.disabled) {
-        enabled = GetLayout()[$selected.data[0].index].disabled!
+      if ($selected.id === "slide" && $activeShow) {
+        enabled = GetLayout()[$selected.data[0].index].disabled! || false
+        menu.label = enabled ? "actions.enable" : "actions.disable"
         return
       }
       if ($selected.id === "group") enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!

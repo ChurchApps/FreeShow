@@ -198,6 +198,6 @@ export interface OutTransition {
 
 export type ID = string
 export type ItemType = "text" | "shape" | "media" | "mirror" | "icon" | "timer" | "clock" // "image" | "video"
-export type ShowType = "show" | "image" | "video" | "audio" | "player" // "private"
+export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

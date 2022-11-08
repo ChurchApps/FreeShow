@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { timers } from "../../../stores"
+import { activeTimers, timers } from "../../../stores"
 import { loadShows } from "../../helpers/setShow"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
@@ -78,3 +78,47 @@ export function updateShowTimer(ref: any, timer: any) {
 
 //   return { id: slideId, itemIndex }
 // }
+
+// ACTIONS
+
+export function playPause(item: any) {
+  let index = get(activeTimers).findIndex((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === item.id)
+
+  activeTimers.update((a) => {
+    if (index < 0) a.push({ showId: item.showId, slideId: item.slideId, ...item.timer, currentTime: item.timer.start, paused: false })
+    else a[index].paused = !a[index].paused
+    return a
+  })
+}
+
+export function playPauseGlobal(id: any, timer: any) {
+  let index = get(activeTimers).findIndex((a) => a.id === id)
+
+  activeTimers.update((a) => {
+    if (index < 0) a.push({ ...timer, id, currentTime: timer.start, paused: false })
+    else a[index].paused = !a[index].paused
+    return a
+  })
+
+  // send(OUTPUT, ["ACTIVE_TIMERS"], get(activeTimers))
+}
+
+export function resetTimer(id: string) {
+  activeTimers.set(get(activeTimers).filter((a: any) => a.id !== id))
+  // send(OUTPUT, ["ACTIVE_TIMERS"], get(activeTimers))
+}
+
+export function deleteTimer(id: string) {
+  let active = get(activeTimers).findIndex((a) => a.id === id)
+  if (active > -1) {
+    activeTimers.update((a) => {
+      a.splice(active, 1)
+      return a
+    })
+  }
+
+  timers.update((a) => {
+    delete a[id]
+    return a
+  })
+}

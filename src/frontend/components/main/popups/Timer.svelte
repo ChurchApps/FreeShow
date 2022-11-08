@@ -176,7 +176,7 @@
   {#if eventList.length}
     <Dropdown options={eventList} value={eventList.find((a) => a.id === timer.event)?.name || "—"} on:click={updateEvent} />
   {:else}
-    <T id="edit.no_events" />
+    <T id="timer.no_events" />
   {/if}
 
   <br />
