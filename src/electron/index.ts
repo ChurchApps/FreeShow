@@ -132,7 +132,11 @@ function createMain() {
     dialogClose = false
     closeAllOutputs()
     closeServers()
+
     app.quit()
+
+    // shouldn't need to use exit!
+    app.exit()
   })
 
   setGlobalMenu()
@@ -164,6 +168,7 @@ export function maximizeMain() {
 // https://stackoverflow.com/a/58823019
 
 // quit app when all windows have been closed
+// I think this is never called, because of the "will-quit" listener
 app.on("window-all-closed", () => {
   // closeServers()
   app.quit()
