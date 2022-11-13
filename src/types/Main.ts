@@ -46,6 +46,7 @@ export type SelectIds =
   | "camera"
   | "player"
   | "timer"
+  | "global_timer"
 export interface Selected {
   id: null | SelectIds
   data: any[]
@@ -53,7 +54,7 @@ export interface Selected {
 
 export interface SlidesOptions {
   columns: number
-  mode: "grid" | "list" | "lyrics"
+  mode: "grid" | "list" | "lyrics" | "text"
 }
 
 export interface ActiveEdit {

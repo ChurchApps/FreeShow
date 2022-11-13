@@ -7,15 +7,15 @@
     "unnamed": "Uten navn",
     "drop": "Slipp her",
     "search": "Søk",
-    "none": "Ingen",
-    "quick_example": "[Verse]\nLinje 1\nLinje 2\n\n[Chorus]\nLinje 1\nLinje 2\nx2"
+    "none": "Ingen"
   },
   "languages": {
     "en": "Engelsk",
     "no": "Norsk",
     "sk": "Slovakisk",
     "es": "Spansk",
-    "pt_BR": "Brasiliansk portugisisk"
+    "pt_BR": "Brasiliansk portugisisk",
+    "de": "German"
   },
   "about": {
     "check_updates": "Se etter oppdateringer",
@@ -77,6 +77,12 @@
     "width": "Bredde",
     "height": "Høyde",
     "pixels": "piksler"
+  },
+  "create_show": {
+    "more_options": "Flere alternativer",
+    "format_new_show": "Formater tekst",
+    "split_lines": "Antall linjer",
+    "quick_example": "[Verse]\nLinje 1\nLinje 2\n\n[Chorus]\nLinje 1\nLinje 2\nx2"
   },
   "preview": {
     "_previous_show": "Forrige show",
@@ -311,6 +317,7 @@
     "show": "Nytt show",
     "empty_show": "Nytt tomt show",
     "project": "Nytt prosjekt",
+    "section": "Ny seksjon",
     "timer": "Ny nedtelling",
     "category": "Ny kategori",
     "private": "Nytt privat show",
@@ -328,7 +335,8 @@
     "new_layout": "Nytt oppsett",
     "grid": "Rutenett",
     "list": "Listevisning",
-    "lyrics": "Tekstvisning"
+    "lyrics": "Tekstvisning",
+    "text": "Tekstredigering"
   },
   "actions": {
     "rename": "Endre navn",
@@ -343,6 +351,7 @@
     "close": "Lukk",
     "save": "Lagre",
     "disable": "Deaktiver",
+    "enable": "Aktiver",
     "undo": "Angre",
     "redo": "Gjør om",
     "cut": "Klipp ut",
@@ -568,7 +577,6 @@
     "enabled": "Aktivert",
     "color_when_active": "Farge når aktiv",
     "fixed": "Fikset",
-    "choose_screen": "Velg skjerm",
     "lines": "Linjer",
     "override_with_template": "Overskriv stil med mal",
     "active_layers": "Aktive lag",
@@ -577,10 +585,8 @@
     "disable_labels": "Deaktiver etiketter",
     "group_numbers": "Gruppenummer",
     "full_colors": "Full farge på lysbildegruppe",
-    "format_new_show": "Formater tekst ved oppretting av show",
     "auto_output": "Vis utgangsskjerm ved oppstart",
     "display_metadata": "Vis metadata under presentering",
-    "split_lines": "Antall linjer ved oppretting av show",
     "default_project_name": "Standard prosjektnavn",
     "resolution": "Oppløsning",
     "video_extensions": "Videoutvidelse",

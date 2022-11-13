@@ -31,7 +31,7 @@ export const mainOptions: any = {
     preload: join(__dirname, "..", "preload"), // use a preload script
     devTools: !isProd, // enable dev tools
     webSecurity: isProd, // get local files in dev
-    nodeIntegration: false,
+    nodeIntegration: !isProd,
     contextIsolation: true,
     allowRunningInsecureContent: false,
   },
@@ -59,7 +59,7 @@ export const outputOptions: any = {
     preload: join(__dirname, "..", "preload"),
     devTools: !isProd,
     webSecurity: isProd,
-    // nodeIntegration: false,
+    nodeIntegration: !isProd,
     contextIsolation: true,
     allowRunningInsecureContent: false,
   },

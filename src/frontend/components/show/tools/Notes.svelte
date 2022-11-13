@@ -29,7 +29,7 @@
       <T id="empty.text" />...
     </div>
   {/if}
-  <textarea class="edit" name="" id="" cols="1" rows="4" bind:value on:input={input} on:change={change} />
+  <textarea class="edit" name="" id="" cols="1" rows="4" style={$$props.style || ""} bind:value on:input={input} on:change={change} />
 </div>
 
 <style>

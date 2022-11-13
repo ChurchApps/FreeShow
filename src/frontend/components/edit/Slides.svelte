@@ -98,6 +98,7 @@
           slide={currentShow.slides[slide.id]}
           show={currentShow}
           layoutSlide={slide}
+          {layoutSlides}
           index={i}
           color={slide.color}
           outColor={findMatchingOut(slide.id)}

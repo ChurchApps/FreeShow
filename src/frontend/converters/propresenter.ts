@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
-import { activePopup, dictionary, drawerTabsData, groups as globalGroups } from "./../stores"
+import { activePopup, activeProject, dictionary, drawerTabsData, groups as globalGroups } from "./../stores"
 // import { Buffer } from "buffer"
 
 interface Song {
@@ -203,7 +203,9 @@ export function convertProPresenter(data: any) {
       }
     })
 
-    history({ id: "newShow", newData: { show }, location: { page: "show" } })
+    let location: any = { page: "show" }
+    if (data.length === 1) location.project = get(activeProject)
+    history({ id: "newShow", newData: { show }, location })
   })
   activePopup.set(null)
 }

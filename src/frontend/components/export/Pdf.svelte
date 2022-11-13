@@ -54,13 +54,10 @@
   function exportPDF() {
     setTimeout(() => {
       send(EXPORT, ["EXPORT"], { type: "pdf", path, name: shows[index].name })
-    }, 200)
+    }, 20 * (pages + 1) + 50)
   }
 
-  $: console.log(layoutSlides)
-
-  $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id].length / options.grid[1] / (options.text ? 1 : options.grid[0])) : 0
-  $: console.log(pages)
+  $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id].length / options.grid[1] / (options.text && options.slides ? 1 : options.slides ? options.grid[0] : 1.5)) : 0
 
   // dynamic counter
   function getGroupName(show: any, group: string, slideID: string) {
@@ -89,8 +86,9 @@
       <div
         class="slide"
         class:padding={options.text ? i === 0 : i < options.grid[0]}
-        style={options.slides ? `height: calc(842pt / ${options.grid[1]} - 0.5px);` + (options.text ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}
+        style={options.slides ? `height: calc(842pt / ${options.grid[1]} - 0.1px);` + (options.text ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}
       >
+        <!-- TODO: different slide heights! -->
         <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
         {#if options.groups}
           <p class="group" style={options.slides ? "" : "padding: 0 60px;margin-top: -6px;"}>
@@ -123,14 +121,14 @@
           </div>
         {/if}
       </div>
-      {#if options.pageNumbers && i > 0 && (options.text ? i : i / options.grid[0]) % pages === 0 && (options.text ? i : i / options.grid[0]) / pages <= pages}
-        <div class="page" style="top: calc(842pt * {(options.text ? i : i / options.grid[0]) / pages} - 30px)">
-          {(options.text ? i : i / options.grid[0]) / pages}/{pages}
+      {#if options.pageNumbers && i > 0 && i % options.grid[0] === 0 && i / options.grid[0] < pages}
+        <div class="page" style="top: calc(842pt * {i / options.grid[0] - 0.012} - 30px)">
+          {i / options.grid[0]}/{pages}
         </div>
       {/if}
     {/each}
     {#if options.pageNumbers && (layoutSlides[shows[index].id].length - 1) / (options.text ? 1 : options.grid[0]) / pages < pages}
-      <div class="page" style="top: calc(842pt * {pages} - 30px);">
+      <div class="page" style="top: calc(842pt * {pages - 0.012} - 30px);">
         {pages}/{pages}
       </div>
     {/if}

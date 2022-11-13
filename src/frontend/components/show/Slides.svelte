@@ -13,6 +13,7 @@
   import Autoscroll from "../system/Autoscroll.svelte"
   import Center from "../system/Center.svelte"
   import DropArea from "../system/DropArea.svelte"
+  import TextEditor from "./TextEditor.svelte"
   // import { GetLayout } from "../helpers/get"
 
   // let viewWidth: number = window.innerWidth / 3
@@ -119,6 +120,8 @@
         <Center faded>
           <T id="error.no_show" />
         </Center>
+      {:else if $slidesOptions.mode === "text"}
+        <TextEditor {currentShow} />
       {:else}
         <div class="grid context #shows__close">
           <!-- {#each Object.values($showsCache[id].slides) as slide, i} -->
@@ -128,6 +131,7 @@
                 <Slide
                   slide={currentShow.slides[slide.id]}
                   show={currentShow}
+                  {layoutSlides}
                   layoutSlide={slide}
                   index={i}
                   color={slide.color}

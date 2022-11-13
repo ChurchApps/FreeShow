@@ -141,10 +141,11 @@ export async function getAnalyser(elem: any) {
   rightAnalyser.smoothingTimeConstant = 0.9
   leftAnalyser.fftSize = 256
   rightAnalyser.fftSize = 256
-  splitter.connect(leftAnalyser, 0)
-  splitter.connect(rightAnalyser, 1)
+  splitter.connect(leftAnalyser, 0) // left analyzer
+  splitter.connect(rightAnalyser, 1) // right analyzer
 
-  splitter.connect(merger, 1, 1)
+  splitter.connect(merger, 0, 0) // left audio
+  splitter.connect(merger, 1, 1) // right audio
   // merger.connect(gain);
   merger.connect(ac.destination)
 

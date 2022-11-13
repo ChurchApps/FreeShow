@@ -12,12 +12,17 @@ interface VideoPsalm {
 }
 interface Song {
   Guid: string
+  IsCompressed: number
   Text: string
   Verses: {
     Tag: number
     ID: number
     Text: string
   }[]
+  Style: {
+    Body: any
+    Background: any
+  }
   Sequence: string
   VerseOrderIndex: number
   Composer: string
@@ -33,10 +38,14 @@ interface Song {
 
 const keys = [
   "Abbreviation",
+  "IsCompressed",
   "Guid",
   "Songs",
   "Text",
   "Verses",
+  "Style",
+  // "Body",
+  // "Background",
   "Tag",
   "ID",
   "Sequence",
@@ -60,17 +69,14 @@ export function convertVideopsalm(data: any) {
         content = content
           .replaceAll("{\n", "{")
           .replaceAll("\n", "<br>")
+          .split("Style:")
+          .map(removeStyle)
+          .join("Style:")
           .split(":")
-          .map((a: string) => {
-            let index = a.length - 1
-            while (a[index]?.match(/[a-z]/i) !== null && index > -1) index--
-            let word: string = a.slice(index + 1, a.length)
-            let notKey = index < 0 || index >= a.length - 1 || !keys.includes(word)
-            if (word === "ID" && !notKey && !a.includes("{ID") && !a.includes(",ID")) notKey = true
-            return notKey ? a : a.slice(0, index + 1) + '"' + word + '"'
-          })
+          .map(fixJSON)
           .join(":")
           .replaceAll(',<br>"', ',"')
+          .replaceAll("﻿", "") // remove this invisible character
 
         try {
           content = JSON.parse(content || {}) as VideoPsalm
@@ -108,6 +114,31 @@ export function convertVideopsalm(data: any) {
 
     activePopup.set(null)
   }, 10)
+}
+
+function removeStyle(s) {
+  if (s.includes("{Body:") || s.includes("{Background:")) {
+    let openCount = 0
+    let closeCount = 0
+    let index: number = -1
+    do {
+      index++
+      if (s[index] === "{") openCount++
+      else if (s[index] === "}") closeCount++
+    } while (openCount !== closeCount)
+
+    s = "{" + s.substring(index)
+  }
+  return s
+}
+
+function fixJSON(s: string) {
+  let index = s.length - 1
+  while (s[index]?.match(/[a-z]/i) !== null && index > -1) index--
+  let word: string = s.slice(index + 1, s.length)
+  let notKey = index < 0 || index >= s.length - 1 || !keys.includes(word)
+  if (word === "ID" && !notKey && !s.includes("{ID") && !s.includes(",ID")) notKey = true
+  return notKey ? s : s.slice(0, index + 1) + '"' + word + '"'
 }
 
 const VPgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }

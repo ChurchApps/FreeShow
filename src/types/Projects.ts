@@ -17,6 +17,7 @@ export interface ProjectShowRef extends ShowRef {
   muted?: boolean
   loop?: boolean
   filter?: any[]
+  notes?: string
 }
 
 export interface ShowRef {

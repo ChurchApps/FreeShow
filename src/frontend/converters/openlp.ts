@@ -1,4 +1,4 @@
-import { drawerTabsData, activePopup, groups, dictionary } from "./../stores"
+import { drawerTabsData, activePopup, groups, dictionary, activeProject } from "./../stores"
 import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
@@ -47,7 +47,9 @@ export function convertOpenLP(data: any) {
     show.slides = slides
     show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
 
-    history({ id: "newShow", newData: { show }, location: { page: "show" } })
+    let location: any = { page: "show" }
+    if (data.length === 1) location.project = get(activeProject)
+    history({ id: "newShow", newData: { show }, location })
   })
   activePopup.set(null)
 }

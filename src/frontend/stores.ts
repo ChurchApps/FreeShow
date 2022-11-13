@@ -159,7 +159,7 @@ export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(true) // true
 export const formatNewShow: Writable<boolean> = writable(true) // true
-export const splitLines: Writable<number> = writable(2) // 2
+export const splitLines: Writable<number> = writable(0) // 0
 export const showsPath: Writable<null | string> = writable(null) // null
 
 // THEME

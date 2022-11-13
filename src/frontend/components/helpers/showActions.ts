@@ -23,6 +23,7 @@ const keys: any = {
 
 export function checkInput(e: any) {
   if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+  // TODO: combine with ShowButton.svelte click()
 
   if (keys[e.key]) {
     if (get(activeProject) === null) return
@@ -30,6 +31,23 @@ export function checkInput(e: any) {
     let shows = get(projects)[get(activeProject)!].shows
     let index: null | number = get(activeShow)?.index !== undefined ? get(activeShow)!.index! : null
     let newIndex: number = keys[e.key](index, shows)
+
+    // show
+    if (get(showsCache)[shows[newIndex].id]) {
+      // set active layout from project
+      if (shows[newIndex].layout) {
+        showsCache.update((a) => {
+          a[shows[newIndex].id].settings.activeLayout = get(projects)[get(activeProject)!].shows[newIndex!].layout!
+          return a
+        })
+      }
+
+      // set project layout
+      projects.update((a) => {
+        a[get(activeProject)!].shows[newIndex!].layout = get(showsCache)[shows[newIndex].id].settings.activeLayout
+        return a
+      })
+    }
 
     // Set active show in project list
     if (newIndex !== null && newIndex !== index) activeShow.set({ ...shows[newIndex], index: newIndex })
@@ -221,9 +239,21 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   // don't trigger actions if same slide, but different outputted line
   if (l && get(outputs)[l]?.out?.slide?.line && get(outputs)[l].out!.slide!.line! > 0) return
 
+  let background = data.background
+
+  // get ghost background
+  if (!background) {
+    layout.forEach((a, i) => {
+      if (i <= index) {
+        if (a.data.actions?.clearBackground) background = null
+        else if (a.data.background) background = a.data.background
+      }
+    })
+  }
+
   // background
-  if (data.background) {
-    let bg = _show(id).get("media")[data.background!]
+  if (background) {
+    let bg = _show(id).get("media")[background!]
     if (bg) {
       let bgData: any = {
         name: bg.name,

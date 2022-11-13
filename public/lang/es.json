@@ -7,15 +7,15 @@
     "unnamed": "Sin nombre",
     "drop": "Soltar aquí",
     "search": "Buscar",
-    "none": "Ninguno",
-    "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
+    "none": "Ninguno"
   },
   "languages": {
     "en": "Inglés",
     "no": "Noruego",
     "sk": "Eslovaco",
     "es": "Español",
-    "pt_BR": "Brazilian Portuguese"
+    "pt_BR": "Brazilian Portuguese",
+    "de": "German"
   },
   "about": {
     "check_updates": "Buscar actualizaciones",
@@ -77,6 +77,12 @@
     "width": "Ancho",
     "height": "Altura",
     "pixels": "Píxeles"
+  },
+  "create_show": {
+    "more_options": "More options",
+    "format_new_show": "Dar formato al texto",
+    "split_lines": "Número de líneas",
+    "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
   },
   "preview": {
     "_previous_show": "Programa anterior",
@@ -311,6 +317,7 @@
     "show": "Nuevo programa",
     "empty_show": "Nuevo programa vacío",
     "project": "Nuevo proyecto",
+    "section": "New section",
     "timer": "Nuevo temporizador",
     "category": "Nueva categoría",
     "private": "Nuevo programa privado",
@@ -328,7 +335,8 @@
     "new_layout": "Nuevo diseño",
     "grid": "Ver cuadrícula",
     "list": "Ver lista",
-    "lyrics": "Ver letras"
+    "lyrics": "Ver letras",
+    "text": "Text edit"
   },
   "actions": {
     "rename": "Renombrar",
@@ -343,6 +351,7 @@
     "close": "Cerrar",
     "save": "Guardar",
     "disable": "Desactivar",
+    "enable": "Enable",
     "undo": "Deshacer",
     "redo": "Rehacer",
     "cut": "Cortar",
@@ -568,7 +577,6 @@
     "enabled": "Activado",
     "color_when_active": "Color cuando está activo",
     "fixed": "Fijar",
-    "choose_screen": "Elegir pantalla",
     "lines": "Lineas",
     "override_with_template": "Anular estilo con plantilla",
     "active_layers": "Capas activas",
@@ -577,10 +585,8 @@
     "disable_labels": "Etiquetas desactivadas",
     "group_numbers": "Números de grupo",
     "full_colors": "Despliega todos los grupos de colores",
-    "format_new_show": "Dar formato al texto al crear una presentación",
     "auto_output": "Muestra la ventana de salida en la pantalla de inicio",
     "display_metadata": "Visualizar metadatos mientras se están mostrando",
-    "split_lines": "Número de líneas al crear una presentación",
     "default_project_name": "Nombre predeterminado del proyecto",
     "resolution": "Solución",
     "video_extensions": "Extensiones de video",

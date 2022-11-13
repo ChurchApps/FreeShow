@@ -5,6 +5,7 @@ export const languages: any = {
   sk: "Slovenčina",
   es: "Español",
   pt_BR: "Português do Brasil",
+  de: "Deutsch",
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -17,4 +18,5 @@ export const replace: any = {
   sk: ["sk"],
   es: ["es"],
   pt_BR: ["pt-BR"],
+  de: ["de"],
 }

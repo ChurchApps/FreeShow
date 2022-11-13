@@ -1,13 +1,16 @@
 <script lang="ts">
   import { ShowObj } from "../../../classes/Show"
   import { convertText } from "../../../converters/txt"
-  import { activePopup, activeProject, categories, dictionary, drawerTabsData } from "../../../stores"
+  import { activePopup, activeProject, categories, dictionary, drawerTabsData, formatNewShow, splitLines } from "../../../stores"
   import { sortObject } from "../../helpers/array"
   import { history } from "../../helpers/history"
+  import Icon from "../../helpers/Icon.svelte"
   import { checkName } from "../../helpers/show"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
+  import Checkbox from "../../inputs/Checkbox.svelte"
   import Dropdown from "../../inputs/Dropdown.svelte"
+  import NumberInput from "../../inputs/NumberInput.svelte"
   import TextArea from "../../inputs/TextArea.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
 
@@ -52,6 +55,12 @@
   ]
   let selectedCategory: any =
     $drawerTabsData.shows.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab] ? cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab) : cats[0]
+
+  const inputs: any = {
+    formatNewShow: (e: any) => formatNewShow.set(e.target.checked),
+  }
+
+  let showMore: boolean = false
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -65,9 +74,34 @@
   <Dropdown options={cats} value={selectedCategory.name} on:click={(e) => (selectedCategory = e.detail)} style="width: 50%;" />
 </div>
 <br />
+
+<Button on:click={() => (showMore = !showMore)} dark center>
+  <Icon id="options" right />
+  <T id="create_show.more_options" />
+</Button>
+{#if showMore}
+  <div class="section">
+    <p><T id="create_show.format_new_show" /></p>
+    <Checkbox checked={$formatNewShow} on:change={inputs.formatNewShow} />
+  </div>
+  <div class="section">
+    <p><T id="create_show.split_lines" /></p>
+    <NumberInput
+      value={$splitLines}
+      max={100}
+      buttons={false}
+      outline
+      on:change={(e) => {
+        splitLines.set(e.detail)
+      }}
+    />
+  </div>
+{/if}
+
+<br />
 <!-- TODO: show example? -->
 <span><T id="show.quick_lyrics" /></span>
-<TextArea placeholder={$dictionary.main?.quick_example} style="height: 250px;" value={values.text} on:input={(e) => changeValue(e)} />
+<TextArea placeholder={$dictionary.create_show?.quick_example} style="height: 250px;min-width: 500px;" value={values.text} on:input={(e) => changeValue(e)} />
 <Button on:click={textToShow} style="width: 100%;margin-top: 10px;color: var(--secondary);" dark center>
   {#if values.text.trim().length > 0}
     <T id="new.show" />
@@ -81,10 +115,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: 3px 0;
   }
 
   .section :global(.dropdown) {
     position: absolute;
     width: 100% !important;
+  }
+
+  .section :global(.numberInput input) {
+    width: 80px;
+    background-color: var(--primary-darker);
   }
 </style>

@@ -25,7 +25,7 @@
     history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: $activeShow! } })
   }
 
-  const slidesViews: any = { grid: "list", list: "lyrics", lyrics: "grid" }
+  const slidesViews: any = { grid: "list", list: "lyrics", lyrics: "text", text: "grid" }
 
   function changeName(e: any) {
     history({ id: "changeLayoutKey", newData: { key: "name", value: e.detail.value }, location: { page: "show", show: $activeShow!, layout: activeLayout } })
@@ -92,7 +92,11 @@
     <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition}>
       <Icon size={1.3} id="transition" white />
     </Button>
-    <Button on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
+    <Button
+      class="context #slideViews"
+      on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })}
+      title={$dictionary.show?.[$slidesOptions.mode]}
+    >
       <Icon size={1.3} id={$slidesOptions.mode} white />
     </Button>
     <Button

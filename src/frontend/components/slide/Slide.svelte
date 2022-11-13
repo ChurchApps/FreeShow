@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { MediaFit } from "../../../types/Main"
-  import type { Show, Slide, SlideData } from "../../../types/Show"
+  import type { Media, Show, Slide, SlideData } from "../../../types/Show"
   import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, media, outputs, overlays, showsCache, slidesOptions } from "../../stores"
   import MediaLoader from "../drawer/media/MediaLoader.svelte"
   import Editbox from "../edit/Editbox.svelte"
@@ -18,6 +18,7 @@
 
   export let slide: Slide
   export let layoutSlide: SlideData
+  export let layoutSlides: any[] = []
   export let show: Show
   export let color: string | null = slide.color
   export let index: number
@@ -46,6 +47,18 @@
   // }
 
   $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
+
+  let ghostBackground: Media | null = null
+  $: if (!background) {
+    ghostBackground = null
+    layoutSlides.forEach((a, i) => {
+      if (i <= index) {
+        if (a.actions?.clearBackground) ghostBackground = null
+        else if (a.background) ghostBackground = show.media[a.background]
+      }
+    })
+  }
+
   let duration: number = 0
   // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
   // $: name = full_name.slice(0, full_name.lastIndexOf("."))
@@ -249,14 +262,14 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           disableStyle={$slidesOptions.mode === "lyrics" && !noQuickEdit}
           relative={$slidesOptions.mode === "lyrics" && !noQuickEdit}
         >
-          {#if !altKeyPressed && background && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
-            {#key background.path}
-              <div class="background" style="zoom: {1 / ratio}">
+          {#if !altKeyPressed && (background || ghostBackground) && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
+            {#key background?.path || ghostBackground?.path}
+              <div class="background" style="zoom: {1 / ratio}" class:ghost={!background}>
                 <MediaLoader
                   name={$dictionary.error?.load}
-                  path={background.path || background.id || ""}
-                  cameraGroup={background.cameraGroup || ""}
-                  type={background.type !== "player" ? background.type : null}
+                  path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
+                  cameraGroup={background?.cameraGroup || ghostBackground?.cameraGroup || ""}
+                  type={background?.type !== "player" ? background?.type : ghostBackground?.type !== "player" ? ghostBackground?.type : null}
                   {filter}
                   {flipped}
                   {fit}
@@ -309,7 +322,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     <!-- <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
       {@html html}
     </div> -->
-    <div class="quickEdit" data-index={index}>
+    <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
       <!-- {#key slide.items} -->
       {#if slide.items}
         {#each slide.items as item, itemIndex}
@@ -385,6 +398,9 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     height: 100%;
     position: absolute;
     top: 0;
+  }
+  .background.ghost {
+    opacity: 0.4;
   }
   .background :global(img) {
     width: 100%;

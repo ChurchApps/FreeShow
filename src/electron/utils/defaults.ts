@@ -76,7 +76,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
   formatNewShow: true,
   showsPath: null,
   exportPath: null,
-  splitLines: 2,
+  splitLines: 0,
   scriptures: {
     kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
     asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },

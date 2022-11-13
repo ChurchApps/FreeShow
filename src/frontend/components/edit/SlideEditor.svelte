@@ -35,6 +35,17 @@
 
   // get backgruond
   $: bgId = ref?.[$activeEdit.slide!]?.data.background
+
+  // get ghost background
+  $: if (!bgId) {
+    ref?.forEach((a, i) => {
+      if (i <= $activeEdit.slide!) {
+        if (a.data.actions?.clearBackground) bgId = null
+        else if (a.data.background) bgId = a.data.background
+      }
+    })
+  }
+
   $: background = bgId && currentShow ? $showsCache[currentShow].media[bgId] : null
   // $: slideOverlays = ref?.[$activeEdit.slide!]?.data.overlays || []
 

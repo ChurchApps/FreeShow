@@ -7,15 +7,15 @@
     "unnamed": "Bez názvu",
     "drop": "Pusti sem",
     "search": "Hľadať",
-    "none": "Nič",
-    "quick_example": "[Verse]\nRiadok 1\nRiadok 2\n\n[Chorus]\nRiadok 1\nRiadok 2\nx2"
+    "none": "Nič"
   },
   "languages": {
     "en": "Angličtina",
     "no": "Nórština",
     "sk": "Slovenčina",
     "es": "Spanish",
-    "pt_BR": "Brazilian Portuguese"
+    "pt_BR": "Brazilian Portuguese",
+    "de": "German"
   },
   "about": {
     "check_updates": "Skontrolovať aktualizácie",
@@ -77,6 +77,12 @@
     "width": "Šírka",
     "height": "Výška",
     "pixels": "pixelov"
+  },
+  "create_show": {
+    "more_options": "Viac možností",
+    "format_new_show": "Format text",
+    "split_lines": "Počty riadkov",
+    "quick_example": "[Verse]\nRiadok 1\nRiadok 2\n\n[Chorus]\nRiadok 1\nRiadok 2\nx2"
   },
   "preview": {
     "_previous_show": "Predchádzajúca prezentácia",
@@ -311,6 +317,7 @@
     "show": "Nová prezentácia",
     "empty_show": "Nová prázdna prezentácia",
     "project": "Nový projekt",
+    "section": "New section",
     "timer": "Nový časovač",
     "category": "Nová kategória",
     "private": "Nová súkromná prezentácia",
@@ -328,7 +335,8 @@
     "new_layout": "Nové rozloženie",
     "grid": "Zobrazenie v mriežke",
     "list": "Zobrazenei v zozname",
-    "lyrics": "Zobrazenie textov"
+    "lyrics": "Zobrazenie textov",
+    "text": "Text edit"
   },
   "actions": {
     "rename": "Premenovať",
@@ -343,6 +351,7 @@
     "close": "Zavrieť",
     "save": "Uložiť",
     "disable": "Vypnúť",
+    "enable": "Enable",
     "undo": "Späť",
     "redo": "Vrátiť",
     "cut": "Vystrihnúť",
@@ -568,7 +577,6 @@
     "enabled": "Zapnuté",
     "color_when_active": "Farba aktívneho",
     "fixed": "Fixed",
-    "choose_screen": "Vyberte obrazovku",
     "lines": "Čiary",
     "override_with_template": "Prepísať štýl zo šablóny",
     "active_layers": "Aktívne vrstvy",
@@ -577,10 +585,8 @@
     "disable_labels": "Vypnúť popisky",
     "group_numbers": "Čísla skupín",
     "full_colors": "Plné farby skupín snímok",
-    "format_new_show": "Format text when creating show",
     "auto_output": "Zobraziť výstupné okno pri spustení",
     "display_metadata": "Zobrazovať metadata pri prezentácii",
-    "split_lines": "Počty riadkov pri vytvorení prezentácie",
     "default_project_name": "Predvolený názov projektu",
     "resolution": "Rozlíšenie",
     "video_extensions": "Prípony videí",
