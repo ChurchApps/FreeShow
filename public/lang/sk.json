@@ -335,7 +335,8 @@
     "new_layout": "Nové rozloženie",
     "grid": "Zobrazenie v mriežke",
     "list": "Zobrazenei v zozname",
-    "lyrics": "Zobrazenie textov"
+    "lyrics": "Zobrazenie textov",
+    "text": "Text edit"
   },
   "actions": {
     "rename": "Premenovať",

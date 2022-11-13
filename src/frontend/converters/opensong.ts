@@ -1,5 +1,5 @@
 import type { Bible } from "./../../types/Bible"
-import { drawerTabsData, activePopup, groups, dictionary, scripturesCache, scriptures } from "./../stores"
+import { drawerTabsData, activePopup, groups, dictionary, scripturesCache, scriptures, activeProject } from "./../stores"
 import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
@@ -51,7 +51,9 @@ export function convertOpenSong(data: any) {
     show.slides = slides
     show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
 
-    history({ id: "newShow", newData: { show }, location: { page: "show" } })
+    let location: any = { page: "show" }
+    if (data.length === 1) location.project = get(activeProject)
+    history({ id: "newShow", newData: { show }, location })
   })
   activePopup.set(null)
 }

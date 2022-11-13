@@ -335,7 +335,8 @@
     "new_layout": "Nytt oppsett",
     "grid": "Rutenett",
     "list": "Listevisning",
-    "lyrics": "Tekstvisning"
+    "lyrics": "Tekstvisning",
+    "text": "Tekstredigering"
   },
   "actions": {
     "rename": "Endre navn",

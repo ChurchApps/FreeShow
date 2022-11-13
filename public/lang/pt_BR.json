@@ -335,7 +335,8 @@
     "new_layout": "Novo layout",
     "grid": "Visualização de grade",
     "list": "Visualização de lista",
-    "lyrics": "Visualização das letras"
+    "lyrics": "Visualização das letras",
+    "text": "Text edit"
   },
   "actions": {
     "rename": "Renomear",

@@ -106,15 +106,15 @@
             let time = getTime(new Date(event.from))
             // TODO: event.to (if days are different?)
             // if (event.to.getTime() - event.from.getTime() > 0) time += " - " + getTime(new Date(event.to))
-            v.push({ value: time + " ", style: "font-weight: bold;font-size:70px;font-family:calibri;" })
+            v.push({ value: time + " ", style: "font-weight: bold;font-size:60px;font-family:Arial;" })
           }
           v.push({ value: event.name, style: "font-size:80px;" })
-          if (event.location) v.push({ value: " - " + event.location, style: "font-size:80px;font-style:italic;" })
+          if (event.location) v.push({ value: " - " + event.location, style: "font-size:70px;font-style:italic;" })
           if (event.notes) v[v.length - 1].value += ":"
           values.push(v)
-          if (event.notes) values.push([{ value: "&nbsp;&nbsp;&nbsp;&nbsp;" + event.notes, style: "font-size:80px;" }])
+          if (event.notes) values.push([{ value: "&nbsp;&nbsp;&nbsp;&nbsp;" + event.notes, style: "font-size:60px;" }])
           values.push([{ value: "", style: "font-size:80px;" }])
-          totalLength += event.name.length + event.location.length + event.notes.length
+          totalLength += event.name.length + event.notes.length / 3 // + event.location.length
         })
       let items: any[] = [
         {
@@ -129,7 +129,7 @@
       slides[id] = { group, color, settings: {}, notes: "", items }
       let l: any = { id }
       if (currentEvents.length > 1) {
-        let duration = totalLength < 25 ? Math.max(5, totalLength * 0.6) : totalLength < 80 ? Math.max(10, totalLength * 0.3) : Math.max(25, totalLength * 0.2)
+        let duration = totalLength < 25 ? Math.max(5, totalLength * 0.5) : totalLength < 80 ? Math.max(10, totalLength * 0.3) : Math.max(25, totalLength * 0.2)
         l.nextTimer = Math.min(60, Math.floor(duration))
       }
       layouts.push(l)
@@ -179,7 +179,7 @@
 </script>
 
 <div class="main border">
-  <span style="opacity: 0.8;text-align: center;font-size: 1.2em;">
+  <!-- <span style="opacity: 0.8;text-align: center;font-size: 1.2em;">
     {from.getDate()}. {$dictionary.month?.[from.getMonth() + 1]}
     {from.getFullYear()}
     {#if sortedDays[0] - sortedDays[1] < 0}
@@ -187,7 +187,7 @@
       {to.getFullYear()}
     {/if}
   </span>
-  <br />
+  <br /> -->
   {#if currentEvents.length}
     {#each currentEvents as day}
       {#if currentEvents.length > 1}

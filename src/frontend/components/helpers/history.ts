@@ -1136,7 +1136,8 @@ export function history(obj: History, undo: null | boolean = null) {
                       })
                     })
                   } else if (obj.newData.createItems) {
-                    // TODO: remove text?
+                    // remove text
+                    if (item.lines) item.lines = item.lines.map((line) => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: "" }] }))
                     slide.items.push(item)
                   }
                 })

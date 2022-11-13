@@ -322,7 +322,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     <!-- <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
       {@html html}
     </div> -->
-    <div class="quickEdit" data-index={index}>
+    <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
       <!-- {#key slide.items} -->
       {#if slide.items}
         {#each slide.items as item, itemIndex}

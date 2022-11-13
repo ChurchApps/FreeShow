@@ -335,7 +335,8 @@
     "new_layout": "Nuevo diseño",
     "grid": "Ver cuadrícula",
     "list": "Ver lista",
-    "lyrics": "Ver letras"
+    "lyrics": "Ver letras",
+    "text": "Text edit"
   },
   "actions": {
     "rename": "Renombrar",

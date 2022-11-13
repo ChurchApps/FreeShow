@@ -34,6 +34,9 @@ export function convertPDF(PDFs: any[]) {
     show.slides = slides
     show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
     // let newData: any = {name, category, settings: {}, meta}
-    history({ id: "newShow", newData: { show }, location: { page: "show", project: get(activeProject) } })
+
+    let location: any = { page: "show" }
+    if (PDFs.length === 1) location.project = get(activeProject)
+    history({ id: "newShow", newData: { show }, location })
   })
 }

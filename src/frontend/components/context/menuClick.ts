@@ -29,6 +29,7 @@ import {
   settingsTab,
   shows,
   showsCache,
+  slidesOptions,
   stageShows,
 } from "../../stores"
 import { send } from "../../utils/request"
@@ -365,6 +366,20 @@ const actions: any = {
       }
       return a
     })
+  },
+
+  // slide views
+  view_grid: () => {
+    slidesOptions.set({ ...get(slidesOptions), mode: "grid" })
+  },
+  view_list: () => {
+    slidesOptions.set({ ...get(slidesOptions), mode: "list" })
+  },
+  view_lyrics: () => {
+    slidesOptions.set({ ...get(slidesOptions), mode: "lyrics" })
+  },
+  view_text: () => {
+    slidesOptions.set({ ...get(slidesOptions), mode: "text" })
   },
 
   // show

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import type { Item } from "../../../types/Show"
-  import { currentWindow, outputs } from "../../stores"
+  import { currentWindow, outputs, slidesOptions } from "../../stores"
   import Image from "../drawer/media/Image.svelte"
   import { getAutoSize } from "../edit/scripts/autoSize"
   import Icon from "../helpers/Icon.svelte"
@@ -69,7 +69,7 @@
 <div class="item" style={style ? item?.style : null}>
   {#if lines}
     <div class="align" style={style ? item.align : null}>
-      <div class="lines">
+      <div class="lines" style={smallFontSize ? "--font-size: " + (-1.1 * $slidesOptions.columns + 12) * 5 + "px;" : null}>
         {#each lines as line, i}
           {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
             <div class="break" class:smallFontSize style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
@@ -159,7 +159,8 @@
     /* display: inline-block; */
   }
   .break.smallFontSize :global(span) {
-    font-size: 30px;
+    /* font-size: 30px; */
+    font-size: var(--font-size);
   }
 
   .height {

@@ -335,7 +335,8 @@
     "new_layout": "Neues Layout",
     "grid": "Kachelanzeige",
     "list": "Listenanzeige",
-    "lyrics": "Liedtext-Anzeige"
+    "lyrics": "Liedtext-Anzeige",
+    "text": "Text edit"
   },
   "actions": {
     "rename": "Umbenennen",

@@ -335,7 +335,8 @@
     "new_layout": "New layout",
     "grid": "Grid view",
     "list": "List view",
-    "lyrics": "Lyrics view"
+    "lyrics": "Lyrics view",
+    "text": "Text edit"
   },
   "actions": {
     "rename": "Rename",

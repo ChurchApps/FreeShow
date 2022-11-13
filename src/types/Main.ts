@@ -54,7 +54,7 @@ export interface Selected {
 
 export interface SlidesOptions {
   columns: number
-  mode: "grid" | "list" | "lyrics"
+  mode: "grid" | "list" | "lyrics" | "text"
 }
 
 export interface ActiveEdit {

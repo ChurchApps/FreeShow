@@ -61,6 +61,11 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
   newSlide: { label: "new.slide", icon: "add" },
   // newGroup: { label: "context.createNew", icon: "add" },
+  // SLIDE VIEWS
+  view_grid: { label: "show.grid", icon: "grid" },
+  view_list: { label: "show.list", icon: "list" },
+  view_lyrics: { label: "show.lyrics", icon: "lyrics" },
+  view_text: { label: "show.text", icon: "text" },
   // SLIDE
   disable: { label: "actions.disable", icon: "disable" },
   edit: { label: "menu.edit", icon: "edit" },
@@ -163,6 +168,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   global_group: ["edit"],
   // global_group: ["rename"],
   layout: ["rename", "remove", "duplicate"],
+  slideViews: ["view_grid", "view_list", "view_lyrics", "view_text"],
 
   // STAGE
   stage_slide: ["rename", "disable", "SEPERATOR", "duplicate", "delete"],
