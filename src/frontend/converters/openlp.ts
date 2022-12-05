@@ -23,7 +23,7 @@ export function convertOpenLP(data: any) {
   data?.forEach(({ content }: any) => {
     let song = XMLtoObject(content)
 
-    let category = get(drawerTabsData).shows.activeSubTab
+    let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
 
     let layoutID = uid()

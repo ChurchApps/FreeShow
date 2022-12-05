@@ -249,11 +249,12 @@
     "shows": "Visualizações",
     "media": "Mídia",
     "overlays": "Sobreposições",
-    "templates": "Modelos",
     "audio": "Áudio",
     "scripture": "Bíblia",
     "player": "Reprodutor",
     "live": "Ao Vivo",
+    "timers": "Temporizadores",
+    "templates": "Modelos",
     "web": "Internet"
   },
   "category": {
@@ -423,7 +424,6 @@
   },
   "tools": {
     "notes": "Notas",
-    "timers": "Temporizadores",
     "--schedule": "Cronograma",
     "--actions": "Ações",
     "groups": "Grupos",

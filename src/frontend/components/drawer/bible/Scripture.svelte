@@ -299,6 +299,7 @@
   }
 
   // search
+  // TODO: what if it's spaces: 1 Peter, Songs of Solomon
   let auto: boolean = false
   $: if (searchValue) auto = true
   let previousBook = ""

@@ -15,7 +15,7 @@
     "sk": "Slovakisk",
     "es": "Spansk",
     "pt_BR": "Brasiliansk portugisisk",
-    "de": "German"
+    "de": "Tysk"
   },
   "about": {
     "check_updates": "Se etter oppdateringer",
@@ -249,12 +249,13 @@
     "shows": "Show",
     "media": "Medier",
     "overlays": "Overlegg",
-    "templates": "Maler",
     "audio": "Lyd",
     "scripture": "Bibelen",
     "player": "Spiller",
-    "web": "Nett",
-    "live": "Direkte"
+    "live": "Direkte",
+    "timers": "Tidtakere",
+    "templates": "Maler",
+    "web": "Nett"
   },
   "category": {
     "all": "Alt",
@@ -423,7 +424,6 @@
   },
   "tools": {
     "notes": "Notater",
-    "timers": "Nedtellinger",
     "--schedule": "Plan",
     "--actions": "Handlinger",
     "groups": "Grupper",

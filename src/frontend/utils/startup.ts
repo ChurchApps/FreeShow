@@ -4,6 +4,7 @@ import { MAIN, OPEN_FOLDER, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
+import { getFileName } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { checkName } from "../components/helpers/show"
 import { convertBebliaBible } from "../converters/bebliaBible"
@@ -205,11 +206,11 @@ const receiveFOLDER: any = {
     history({
       id: id === "media" ? "newMediaFolder" : "newAudioFolder",
       oldData: { id: folderId, data: null },
-      newData: { id: folderId, data: { name: path.substring(path.lastIndexOf("\\") + 1), icon: "folder", path: path } },
+      newData: { id: folderId, data: { name: getFileName(path), icon: "folder", path: path } },
       location: { page: "drawer" },
     })
   },
-  AUDIO: (a: any) => receiveFOLDER.media(a, "audio"),
+  AUDIO: (a: any) => receiveFOLDER.MEDIA(a, "audio"),
   SHOWS: (a: any) => showsPath.set(a.path),
   EXPORT: (a: any) => exportPath.set(a.path),
 }

@@ -7,6 +7,7 @@ import { audioExtensions, imageExtensions, videoExtensions } from "../../stores"
 
 export function getExtension(path: string): string {
   if (!path) return ""
+  if (path.indexOf(".") < 0) return path
   return path.substring(path.lastIndexOf(".") + 1)
 }
 
@@ -28,8 +29,8 @@ export function getMediaType(extension: string): ShowType {
 }
 
 export function getFileName(path: string): string {
-  if (path.indexOf("\\") > -1) return path.substring(path.lastIndexOf("\\"))
-  if (path.indexOf("/") > -1) return path.substring(path.lastIndexOf("/"))
+  if (path.indexOf("\\") > -1) return path.substring(path.lastIndexOf("\\") + 1)
+  if (path.indexOf("/") > -1) return path.substring(path.lastIndexOf("/") + 1)
   return path
 }
 

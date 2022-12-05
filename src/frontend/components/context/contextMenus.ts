@@ -52,7 +52,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   newPrivateShow: { label: "new.private", icon: "private" },
   private: { label: "actions.private", icon: "private" },
   duplicate: { label: "actions.duplicate", icon: "duplicate" },
-  section: { label: "new.section", icon: "icon" },
+  section: { label: "new.section", icon: "section" },
   // SHOWS
   addToProject: { label: "context.addToProject", icon: "project" },
   remove: { label: "actions.remove", icon: "remove" },
@@ -127,6 +127,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // , "convertToOverlay"
   // , "SEPERATOR", "export"
   drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete"],
+  drawer_new_show: ["newShowPopup", "newShow"],
   // media / audio
   // "play", "play_no_filters", "SEPERATOR", "edit",
   media_preview: ["close"],
@@ -147,7 +148,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   // PROJECT
   projects: ["newProject", "newFolder"],
   projectTab: ["export", "close"],
-  project: ["section", "SEPERATOR", "newShowPopup", "newShow"], // , "newPrivateShow"
+  project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
   project_button: ["rename", "delete", "export"],
   folder: ["rename", "delete"],
   project_media: ["play", "play_no_filters", "remove"],
@@ -174,7 +175,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   stage_slide: ["rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
   // EDIT
-  edit_box: ["format", "delete", "make stage exlusive", "SEPERATOR", "duplicate", "copy", "paste"],
+  edit_box: ["format", "delete", "SEPERATOR", "duplicate", "copy", "paste"], // TODO: "make stage exlusive"
 
   // CALENDAR
   event: ["edit", "duplicate", "delete", "delete_all"],

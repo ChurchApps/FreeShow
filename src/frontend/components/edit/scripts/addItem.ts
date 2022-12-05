@@ -7,7 +7,7 @@ import { history } from "../../helpers/history"
 import { getStyles, removeText } from "../../helpers/style"
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
-  let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!].settings.template : null
+  let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
   let template = activeTemplate ? get(templates)[activeTemplate].items : null
 
   let newData: Item = {

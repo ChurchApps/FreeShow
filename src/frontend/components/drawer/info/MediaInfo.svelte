@@ -2,6 +2,7 @@
   import { FILE_INFO } from "../../../../types/Channels"
   import { activeShow } from "../../../stores"
   import { formatBytes } from "../../helpers/bytes"
+  import { getFileName, removeExtension } from "../../helpers/media"
   import T from "../../helpers/T.svelte"
   import Date from "../../system/Date.svelte"
 
@@ -11,7 +12,7 @@
   let info: any = {}
   window.api.receive(FILE_INFO, (data: any) => {
     info = { ...data.stat, extension: data.extension }
-    if (!name) name = data.path?.slice((data.path.lastIndexOf("\\") || data.path.lastIndexOf("//")) + 1, data.path.lastIndexOf(".")) || ""
+    if (!name) name = removeExtension(getFileName(data.path))
   })
 
   $: size = info.size || 0

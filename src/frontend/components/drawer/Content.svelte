@@ -1,5 +1,6 @@
 <script lang="ts">
   import { drawerTabsData, mediaOptions } from "../../stores"
+  import Timers from "./timers/Timers.svelte"
   import Audio from "./audio/Audio.svelte"
   import Scripture from "./bible/Scripture.svelte"
   import Cameras from "./live/Cameras.svelte"
@@ -16,7 +17,7 @@
   export let bible: any
   export let searchValue: string
   export let firstMatch: null | string
-  $: active = $drawerTabsData[id]?.activeSubTab
+  $: active = $drawerTabsData[id]?.activeSubTab || null
 
   let streams: any = []
   $: {
@@ -68,6 +69,8 @@
     <Templates {active} {searchValue} />
   {:else if id === "player"}
     <Player {active} {searchValue} />
+  {:else if id === "timers"}
+    <Timers {active} {searchValue} />
     <!-- {:else if id === "web"}
     <Web {active} {searchValue} /> -->
   {:else if id === "live"}

@@ -63,7 +63,7 @@ export function convertEasyWorship(data: any) {
     let percentage: string = ((i / songsWords.length) * 100).toFixed()
     activePopup.set("alert")
     alertMessage.set(importingText + " " + i + "/" + songsWords.length + " (" + percentage + "%)" + "<br>" + (song?.title || ""))
-    let category = get(drawerTabsData).shows.activeSubTab
+    let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
 
     let layoutID = uid()

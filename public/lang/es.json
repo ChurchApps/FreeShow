@@ -249,11 +249,12 @@
     "shows": "Programas",
     "media": "Medios",
     "overlays": "Capas",
-    "templates": "Plantillas",
     "audio": "Audio",
     "scripture": "Escritura",
     "player": "Reproductor",
     "live": "En vivo",
+    "timers": "Temporizadores",
+    "templates": "Plantillas",
     "web": "Navegador"
   },
   "category": {
@@ -423,7 +424,6 @@
   },
   "tools": {
     "notes": "Notas",
-    "timers": "Temporizadores",
     "--salendario": "Calendario",
     "--acciones": "Acciones",
     "groups": "Grupos",

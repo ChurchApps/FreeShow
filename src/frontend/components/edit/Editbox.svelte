@@ -17,7 +17,7 @@
   import Clock from "../system/Clock.svelte"
   import Movebox from "../system/Movebox.svelte"
   import { getAutoSize } from "./scripts/autoSize"
-  import { getSelectionRange } from "./scripts/textStyle"
+  import { getSelectionRange, setCaret } from "./scripts/textStyle"
 
   export let item: Item
   export let ref: { type?: "show" | "overlay" | "template"; showId?: string; id: string }
@@ -321,6 +321,7 @@
 
     let emptySelection: boolean = !sel.filter((a) => Object.keys(a).length).length
 
+    let caret = { line: 0, pos: 0 }
     sel.forEach((lineSel, i) => {
       if (lineSel.start !== undefined || (emptySelection && i >= sel.length - 1)) {
         let pos = 0
@@ -329,7 +330,11 @@
           // console.log(pos, lineSel.start, value)
           if (!pasted && (pos + value.length >= lineSel.start || (emptySelection && j >= lines[i].text.length - 1))) {
             let caretPos = lineSel.start - pos
-            lines[i].text[j].value = value.slice(0, caretPos) + clipboard + value.slice(caretPos, value.length)
+            caret = { line: i, pos: caretPos + clipboard.length }
+            let removeText = lineSel.end - lineSel.start
+            removeText = removeText > 0 ? removeText : 0
+
+            lines[i].text[j].value = value.slice(0, caretPos) + clipboard + value.slice(caretPos + removeText, value.length)
             pasted = true
           }
           pos += value.length
@@ -339,7 +344,10 @@
 
     updateLines(lines)
     getStyle()
-    // TODO: set caret position
+    // set caret position back
+    setTimeout(() => {
+      setCaret(textElem, caret)
+    }, 10)
   }
 
   // let height: number = 0

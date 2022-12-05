@@ -67,11 +67,12 @@
   let flipped: boolean = false
   let fit: MediaFit = "contain"
 
-  $: if (background?.path) {
+  $: if (background?.path || ghostBackground?.path) {
     // TODO: use show filter if existing
-    filter = getMediaFilter(background.path)
-    flipped = $media[background.path]?.flipped || false
-    fit = $media[background.path]?.fit || "contain"
+    let path: string = background?.path || ghostBackground?.path!
+    filter = getMediaFilter(path)
+    flipped = $media[path]?.flipped || false
+    fit = $media[path]?.fit || "contain"
   }
 
   $: group = slide.group

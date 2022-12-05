@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { changeLayout } from "../../show/slides"
+import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activeProject, activeShow, audioExtensions, drawerTabsData, imageExtensions, media, projects, showsCache, videoExtensions } from "../../stores"
 import { addItem } from "../edit/scripts/addItem"
 import { clone } from "./array"
@@ -159,7 +159,7 @@ export const dropActions: any = {
       let ref: any = _show().layouts("active").ref()[0][index]
       let slides: any[] = _show().get().slides
       let slide: any = ref.type === "child" ? slides[ref.parent.id] : slides[ref.id]
-      let activeTab: string | null = get(drawerTabsData).templates.activeSubTab
+      let activeTab: string | null = get(drawerTabsData).templates?.activeSubTab
       let data: any = {
         name: slide.group || "",
         color: slide.color || "",
@@ -211,7 +211,10 @@ const slideDrop: any = {
 
       if (drop.trigger?.includes("end")) drop.index!--
       history.location.layoutSlide = drop.index
-      history.newData = data[0]
+      let newData = { ...data[0], path: data[0].path || data[0].id }
+      delete newData.index
+      delete newData.id
+      history.newData = newData
 
       return history
     }
@@ -294,15 +297,15 @@ const slideDrop: any = {
     let ref: any[] = _show().layouts("active").ref()[0]
 
     if (drop.center) {
-      history.id = "changeSlide"
-
       if (drop.trigger?.includes("end")) drop.index--
+      changeSlideGroups({ sel: { data: [{ index: drop.index }] }, menu: { id: drag.data[0].globalGroup } })
 
-      history.location.slide = ref[drop.index!].id
-      delete history.location.layout
-      history.newData = { key: "globalGroup", value: drag.data[0].globalGroup }
+      // history.id = "changeSlide"
+      // history.location.slide = ref[drop.index!].id
+      // delete history.location.layout
+      // history.newData = { key: "globalGroup", value: drag.data[0].globalGroup }
 
-      return history
+      return
     }
 
     history.id = "slide"

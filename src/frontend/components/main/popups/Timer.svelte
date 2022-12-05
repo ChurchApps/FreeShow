@@ -11,7 +11,7 @@
   import Dropdown from "../../inputs/Dropdown.svelte"
   import NumberInput from "../../inputs/NumberInput.svelte"
   import TextInput from "../../inputs/TextInput.svelte"
-  import { getTimer, updateShowTimer } from "../../show/tools/timers"
+  import { getTimer, updateShowTimer } from "../../drawer/timers/timers"
 
   let currentTimer = getSelected("timer", 0)
   let timer: Timer = {

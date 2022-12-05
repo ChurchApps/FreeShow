@@ -259,11 +259,20 @@ export function getCaretCharacterOffsetWithin(element: any) {
   return caretOffset
 }
 
-export function setCaret(element: any) {
+export function setCaret(element: any, { line = 0, pos = 0 }) {
   var range = document.createRange()
   var sel = window.getSelection()
 
-  range.setStart(element.childNodes[2], 5)
+  let lineElem = element.childNodes[line]
+  // get child elem
+  let childElem = -1
+  let currentTextLength = 0
+  lineElem.childNodes.forEach((elem, i) => {
+    currentTextLength += elem.innerText.length
+    if (pos <= currentTextLength && childElem < 0) childElem = i
+  })
+
+  range.setStart(element.childNodes[line].childNodes[childElem].childNodes[0], pos)
   range.collapse(true)
 
   sel?.removeAllRanges()

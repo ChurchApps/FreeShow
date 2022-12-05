@@ -49,12 +49,12 @@
   const cats: any = [
     { id: "", name: "—" },
     ...sortObject(
-      Object.keys($categories).map((id) => ({ id, name: "$:" + $categories[id].name + ":$" })),
+      Object.keys($categories).map((id) => ({ id, name: $categories[id].default ? `$:${$categories[id].name}:$` : $categories[id].name })),
       "name"
     ),
   ]
   let selectedCategory: any =
-    $drawerTabsData.shows.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab] ? cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab) : cats[0]
+    $drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab] ? cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab) : cats[0]
 
   const inputs: any = {
     formatNewShow: (e: any) => formatNewShow.set(e.target.checked),

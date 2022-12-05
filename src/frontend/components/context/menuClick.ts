@@ -43,7 +43,7 @@ import { getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
-import { deleteTimer, playPause, playPauseGlobal } from "../show/tools/timers"
+import { deleteTimer, playPause, playPauseGlobal } from "../drawer/timers/timers"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 
@@ -299,22 +299,34 @@ const actions: any = {
 
   newShow: () => history({ id: "newShow", location: { page: "show", project: get(activeProject) } }),
   newPrivateShow: () => history({ id: "newShow", newData: { private: true }, location: { page: "show", project: get(activeProject) } }),
-  newProject: (obj: any) =>
-    history({ id: "newProject", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } }),
+  newProject: (obj: any) => {
+    let parent: string = obj.sel.data[0].id || obj.contextElem.id // obj.contextElem.getAttribute("data-parent")
+    history({ id: "newProject", oldData: { id: parent }, location: { page: "show", project: get(activeProject) } })
+  },
   newFolder: (obj: any) => {
-    if (obj.contextElem.classList.contains("#projects"))
-      history({ id: "newFolder", oldData: obj.contextElem.getAttribute("data-parent") || obj.contextElem.id, location: { page: "show", project: get(activeProject) } })
-    else if (obj.contextElem.classList.contains("#category_media")) window.api.send(OPEN_FOLDER, { id: "media", title: get(dictionary).new?.folder })
+    console.log(obj.contextElem.classList)
+
+    if (obj.contextElem.classList.contains("#folder__projects")) {
+      let parent = obj.sel.data[0].id || obj.contextElem.id // obj.contextElem.getAttribute("data-parent")
+      history({ id: "newFolder", oldData: { id: parent }, location: { page: "show", project: get(activeProject) } })
+    } else if (obj.contextElem.classList.contains("#category_media_button__category_media")) window.api.send(OPEN_FOLDER, { channel: "MEDIA", title: get(dictionary).new?.folder })
+    else if (obj.contextElem.classList.contains("#category_audio")) window.api.send(OPEN_FOLDER, { channel: "AUDIO", title: get(dictionary).new?.folder })
   },
   newSlide: () => history({ id: "newSlide", location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } }),
   newCategory: (obj: any) => {
     const ids: any = {
-      shows: "newShowsCategory",
-      overlays: "newOverlaysCategory",
-      templates: "newTemplatesCategory",
+      // shows: "newShowsCategory",
+      // overlays: "newOverlaysCategory",
+      // templates: "newTemplatesCategory",
+      shows_button__category_shows: "newShowsCategory",
+      overlays_button__category_overlays: "newOverlaysCategory",
+      templates_button__category_templates: "newTemplatesCategory",
     }
-    let index = obj.contextElem.classList.indexOf("#category_")
-    history({ id: ids[obj.contextElem.classList.slice(index + 10, obj.contextElem.classList.indexOf(" ", index))] })
+
+    let classList = obj.contextElem.classList?.value || ""
+    let index = classList.indexOf("#category_")
+    let id = classList.slice(index + 10, classList.indexOf(" ", index))
+    history({ id: ids[id] })
   },
   newScripture: () => activePopup.set("import_scripture"),
 
@@ -359,13 +371,8 @@ const actions: any = {
       return a
     })
   },
-  section: () => {
-    projects.update((a) => {
-      if (get(activeProject) !== null) {
-        a[get(activeProject)!].shows.push({ id: uid(5), type: "section", name: "", notes: "" })
-      }
-      return a
-    })
+  section: (obj) => {
+    history({ id: "newSection", newData: { index: obj.sel.data[0].index + 1 }, location: { page: "show", project: get(activeProject) } })
   },
 
   // slide views
@@ -636,9 +643,10 @@ function format(id: string, obj: any) {
 const formatting: any = {
   uppercase: (t: string) => t.toUpperCase(),
   lowercase: (t: string) => t.toLowerCase(),
-  capitalize: (t: string) => (t.length > 1 ? t[0].toUpperCase() + t.slice(1, t.length).toLowerCase() : t.toUpperCase()),
+  capitalize: (t: string) => (t.length > 1 ? t[0].toUpperCase() + t.slice(1, t.length) : t.toUpperCase()),
   trim: (t: string) =>
     t
+      .trim()
       .trim()
       .replace(/[.,!]*$/g, "")
       .trim(),

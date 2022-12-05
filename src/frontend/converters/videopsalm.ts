@@ -89,7 +89,7 @@ export function convertVideopsalm(data: any) {
 
       let album: string = content?.Text
       content.Songs?.forEach((song: Song) => {
-        let category = get(drawerTabsData).shows.activeSubTab
+        let category = get(drawerTabsData).shows?.activeSubTab
         if (category === "all" || category === "unlabeled") category = null
 
         let layoutID = uid()

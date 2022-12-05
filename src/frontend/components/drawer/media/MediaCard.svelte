@@ -92,7 +92,7 @@
   on:mouseleave={() => (hover = false)}
   on:mousemove={move}
 >
-  <SelectElem id="media" data={{ name, path }} draggable fill>
+  <SelectElem id="media" data={{ name, path, type }} draggable fill>
     <IntersectionObserver class="observer" once let:intersecting>
       {#if intersecting}
         <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} />

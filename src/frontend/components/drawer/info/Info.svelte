@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { activeShow, forceClock } from "../../../stores"
+  import { activeShow, activeTimers, forceClock } from "../../../stores"
   import Center from "../../system/Center.svelte"
   import Clock from "../../system/Clock.svelte"
   import Date from "../../system/Date.svelte"
+  import TimerInfo from "../timers/TimerInfo.svelte"
   import AudioMix from "./AudioMix.svelte"
   import MediaInfo from "./MediaInfo.svelte"
   import OverlayInfo from "./OverlayInfo.svelte"
@@ -30,6 +31,8 @@
     <TemplateInfo />
   {:else if !$forceClock && id === "scripture"}
     <ScriptureInfo {bible} />
+  {:else if !$forceClock && id === "timers" && $activeTimers.length}
+    <TimerInfo />
   {:else if !$forceClock && id === "player"}
     <PlayerInfo />
   {:else}

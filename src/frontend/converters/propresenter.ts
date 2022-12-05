@@ -170,7 +170,7 @@ export function convertProPresenter(data: any) {
     let song = RVPresentationDocumentToObject(content)
     console.log(song)
 
-    let category = get(drawerTabsData).shows.activeSubTab
+    let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
 
     let layoutID = uid()

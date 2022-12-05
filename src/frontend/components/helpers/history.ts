@@ -51,7 +51,7 @@ export type HistoryIDs =
   | "newAudioFolder"
   | "newProject"
   | "newFolder"
-  | "newShowDrawer"
+  | "newSection"
   | "newShow"
   | "newShowsCategory"
   | "newOverlaysCategory"
@@ -307,13 +307,14 @@ export function history(obj: History, undo: null | boolean = null) {
     //   })
     //   break
     case "slide":
-      if (undo) {
-      } else {
-        old = {
-          slides: _show(showID).set({ key: "slides", value: obj.newData.slides }),
-          layout: _show(showID).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout }),
-        }
+      // if (undo) {
+      // } else {
+      old = {
+        slides: _show(showID).set({ key: "slides", value: obj.newData.slides }),
+        layout: _show(showID).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout })[0].value,
       }
+      // }
+
       // if (undo) old = null
       // showsCache.update((a) => {
       //   a[showID].slides = obj.newData.slides
@@ -358,7 +359,7 @@ export function history(obj: History, undo: null | boolean = null) {
           let name: string = ""
           let created: number = new Date().getTime()
           if (get(defaultProjectName) === "date") name = dateToString(created)
-          project = { name, notes: "", created, parent: id || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
+          project = { name, created, parent: id || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
           id = id || uid()
           obj.newData = project
           obj.oldData = { id }
@@ -386,24 +387,24 @@ export function history(obj: History, undo: null | boolean = null) {
       }
       break
     case "newFolder":
-      if (typeof obj.newData === "string") {
+      if (undo) {
         folders.update((p) => {
-          delete p[obj.newData]
+          delete p[obj.newData.id]
           return p
         })
-        if (get(openedFolders).includes(obj.newData)) {
+        if (get(openedFolders).includes(obj.newData.id)) {
           openedFolders.update((f) => {
-            return f.filter((id) => id !== obj.newData)
+            return f.filter((id) => id !== obj.newData.id)
           })
         }
       } else {
         let folder: Folder = obj.newData
-        let id: string = obj.oldData
+        let id: string = obj.oldData?.id
         if (obj.newData === null) {
           folder = { name: "", parent: id || get(folders)[get(projects)[get(activeProject)!]?.parent]?.parent || "/" }
           id = uid()
           obj.newData = folder
-          obj.oldData = id
+          obj.oldData = { id }
           // TODO: edit name...
         }
         openedFolders.update((f) => {
@@ -418,6 +419,21 @@ export function history(obj: History, undo: null | boolean = null) {
         })
       }
       break
+    case "newSection":
+      projects.update((a) => {
+        if (undo) {
+          let index = a[obj.location!.project!].shows.findIndex((a) => a.id === obj.oldData?.section?.id)
+          a[obj.location!.project!].shows.splice(index, 1)
+        } else {
+          if (obj.location?.project !== null) {
+            if (obj.newData.index < 0) obj.newData.index = a[obj.location!.project!].shows?.length || 0
+            if (!obj.newData.section?.id) obj.newData.section = { id: uid(5), type: "section", name: "", notes: "" }
+            a[obj.location!.project!].shows.splice(obj.newData.index, 0, obj.newData.section)
+          }
+        }
+        return a
+      })
+      break
     case "newShow":
       if (undo) {
         let id = obj.oldData.id
@@ -431,7 +447,7 @@ export function history(obj: History, undo: null | boolean = null) {
         setShow(id, "delete")
       } else {
         let category: null | string = null
-        if (get(drawerTabsData).shows.activeSubTab !== "all") category = get(drawerTabsData).shows.activeSubTab
+        if (get(drawerTabsData).shows?.activeSubTab !== "all") category = get(drawerTabsData).shows?.activeSubTab
         if (!obj.newData?.show) obj.newData = { show: new ShowObj(false, category) }
 
         let id: string = obj.newData.id
@@ -866,12 +882,14 @@ export function history(obj: History, undo: null | boolean = null) {
         }
       } else {
         obj.newData.active = _show(showID).get("settings.activeLayout")
+        obj.oldData = { id: obj.newData.id, layout: _show(showID).layouts([obj.newData.id]).get()[0] }
+        _show(showID).layouts().remove(obj.newData.id)
+
+        // change layout if current is deleted
         if (obj.newData.active === obj.newData.id) {
           obj.newData.active = Object.keys(get(showsCache)[showID].layouts)[0]
           _show(showID).set({ key: "settings.activeLayout", value: obj.newData.active })
         }
-        obj.oldData = { id: obj.newData.id, layout: _show(showID).layouts([obj.newData.id]).get()[0] }
-        _show(showID).layouts().remove(obj.newData.id)
       }
       break
 

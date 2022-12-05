@@ -50,7 +50,7 @@
 {#if background}
   {#if background?.type === "player"}
     <span class="name" on:click={openPreview}>
-      <p>{title.length ? title : $playerVideos[background?.id || ""].name}</p>
+      <p>{title?.length ? title : $playerVideos[background?.id || ""].name}</p>
     </span>
   {:else}
     <span class="name" on:click={openPreview}>

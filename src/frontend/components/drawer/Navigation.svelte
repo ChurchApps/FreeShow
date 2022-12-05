@@ -26,7 +26,7 @@
   import SelectElem from "../system/SelectElem.svelte"
   import NavigationButton from "./NavigationButton.svelte"
 
-  export let id: "shows" | "media" | "overlays" | "audio" | "scripture" | "templates" | "player" | "live" | "web"
+  export let id: "shows" | "media" | "overlays" | "audio" | "scripture" | "templates" | "player" | "live" | "timers" | "web"
 
   interface Button extends Category {
     id: string
@@ -76,6 +76,15 @@
         { id: "youtube", name: "YouTube", icon: "youtube" },
         { id: "vimeo", name: "Vimeo", icon: "vimeo" },
       ]
+    } else if (id === "timers") {
+      buttons = [
+        // { id: "all", name: "all", default: true, icon: "all" }, ???????
+        // TODO: split event timers to it's own space & create popup ???????
+        { id: "timer", name: "stage.global_timers", default: true, icon: "timer" },
+        // { id: "events", name: "event timers...", default: true, icon: "event" },
+        // TODO: all active in output, not project!!
+        { id: "project", name: "remote.project", default: true, icon: "project" },
+      ]
     } else if (id === "web") {
       buttons = [...(sortObject(keysToID($webFavorites), "name") as Button[])]
     } else if (id === "live") {
@@ -101,7 +110,7 @@
 
   function setTab(tabID: string) {
     drawerTabsData.update((dt) => {
-      dt[id].activeSubTab = tabID
+      dt[id] = { activeSubTab: tabID, enabled: dt[id]?.enabled !== false }
       return dt
     })
   }
@@ -144,11 +153,11 @@
     if (!e.target?.closest(".edit") && (e.ctrlKey || e.metaKey)) {
       if (e.key === "ArrowDown") {
         // Ctrl + Arrow Down = change active drawer sub tab
-        let index = buttons.findIndex((a) => a.id === $drawerTabsData[id].activeSubTab)
+        let index = buttons.findIndex((a) => a.id === $drawerTabsData[id]?.activeSubTab)
         if (index + 1 < buttons.length) setTab(buttons[index + 1].id)
       } else if (e.key === "ArrowUp") {
         // Ctrl + Arrow Up = change active drawer sub tab
-        let index = buttons.findIndex((a) => a.id === $drawerTabsData[id].activeSubTab)
+        let index = buttons.findIndex((a) => a.id === $drawerTabsData[id]?.activeSubTab)
         if (index - 1 >= 0) setTab(buttons[index - 1].id)
       }
     }

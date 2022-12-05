@@ -33,7 +33,7 @@ export function convertOpenSong(data: any) {
     let song = XMLtoObject(content)
     console.log(song)
 
-    let category = get(drawerTabsData).shows.activeSubTab
+    let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
 
     let layoutID = uid()

@@ -135,11 +135,11 @@ const paster: any = {
 export function paste() {
   let clip = get(clipboard)
   let activeElem: any = document.activeElement
+  console.log(activeElem?.classList)
   if (clip.id === null || activeElem?.classList?.contains(".edit")) {
     navigator.clipboard.readText().then((clipText: string) => {
       // TODO: insert at caret pos
-      // TODO: paste in textbox
-      // TODO: remove highlighted text
+      // TODO: paste properly in textbox
       if (activeElem.nodeName === "INPUT" || activeElem.nodeName === "TEXTAREA") activeElem.value += clipText
       else activeElem.innerHTML += clipText
     })
