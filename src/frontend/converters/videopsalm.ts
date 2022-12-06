@@ -108,7 +108,7 @@ export function convertVideopsalm(data: any) {
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
 
-        history({ id: "newShow", newData: { show }, location: { page: "show" } })
+        history({ id: "newShow", newData: { show, open: content.Songs.length < 2 }, location: { page: "show" } })
       })
     })
 

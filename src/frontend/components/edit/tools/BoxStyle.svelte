@@ -176,7 +176,8 @@
     // TODO: history
     // TODO: remove unused (if default)
 
-    // console.log(newData, input)
+    // TODO: template v-align
+    console.log(newData, input)
 
     if (!newData.length) return
 
@@ -184,10 +185,13 @@
     if ($activeEdit.id) {
       if ($activeEdit.type === "overlay") {
         overlays.update((a) => {
-          let lines: any = a[$activeEdit.id!].items[allItems[0]].lines
-          lines?.forEach((_a: any, i: number) => {
-            a[$activeEdit.id!].items[allItems[0]].lines![i][aligns ? "align" : "text"] = newData[0][i]
-          })
+          if (input.key === "align-items") a[$activeEdit.id!].items[allItems[0]].align = newData[0]
+          else {
+            let lines: any = a[$activeEdit.id!].items[allItems[0]].lines
+            lines?.forEach((_a: any, i: number) => {
+              a[$activeEdit.id!].items[allItems[0]].lines![i][aligns ? "align" : "text"] = newData[0][i]
+            })
+          }
           return a
         })
 
@@ -196,11 +200,14 @@
 
       if ($activeEdit.type === "template") {
         templates.update((a) => {
-          let lines: any = a[$activeEdit.id!].items[allItems[0]].lines
-          // console.log(lines, newData)
-          lines?.forEach((_a: any, i: number) => {
-            a[$activeEdit.id!].items[allItems[0]].lines![i][aligns ? "align" : "text"] = newData[0][i]
-          })
+          if (input.key === "align-items") a[$activeEdit.id!].items[allItems[0]].align = newData[0]
+          else {
+            let lines: any = a[$activeEdit.id!].items[allItems[0]].lines
+            // console.log(lines, newData)
+            lines?.forEach((_a: any, i: number) => {
+              a[$activeEdit.id!].items[allItems[0]].lines![i][aligns ? "align" : "text"] = newData[0][i]
+            })
+          }
           return a
         })
 

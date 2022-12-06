@@ -88,11 +88,12 @@ export function convertEasyWorship(data: any) {
     show.name = checkName(song?.title || (Object.values(slides) as any)[0].items[0].lines?.[0].text?.[0].value)
     show.settings.template = "default"
 
-    history({ id: "newShow", newData: { show }, location: { page: "show" } })
+    history({ id: "newShow", newData: { show, open: songs.length < 2 }, location: { page: "show" } })
 
     if (i + 1 < songsWords.length) {
-      // let nextTimer: number = 20
-      // if (i > 0 && i % 100 === 0) nextTimer = 2000
+      // wait 5 seconds every 100 seconds to catch up ??
+      // let nextTimer: number = 0
+      // if (i > 0 && i % 100 === 0) nextTimer = 5000
       i++
       // setTimeout(asyncLoop, nextTimer)
       requestAnimationFrame(asyncLoop)

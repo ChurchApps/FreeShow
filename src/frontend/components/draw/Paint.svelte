@@ -124,6 +124,8 @@
 <style>
   canvas {
     position: absolute;
+    top: 0;
+    left: 0;
     border: none;
     background-color: transparent;
     width: 100%;

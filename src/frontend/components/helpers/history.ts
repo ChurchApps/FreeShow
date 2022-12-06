@@ -469,7 +469,8 @@ export function history(obj: History, undo: null | boolean = null) {
           })
           as.index = get(projects)[obj.location!.project!].shows.length - 1
         }
-        activeShow.set(as)
+
+        if (obj.newData.open !== false) activeShow.set(as)
       }
       break
     case "deleteShow":
@@ -550,8 +551,10 @@ export function history(obj: History, undo: null | boolean = null) {
         let ref = _show(showID).layouts([obj.location!.layout]).ref()[0]
         let index: number = obj.newData.index !== undefined ? obj.newData.index : ref.length
         // let color: null | string = null
+        let count: number = 1
 
         if (!obj.newData.slide && !obj.newData.slides) {
+          let parent: any = null
           let isParent: boolean = true
           let items: any[] = []
           // add as child
@@ -559,14 +562,15 @@ export function history(obj: History, undo: null | boolean = null) {
           if (ref.length && !obj.newData.parent) {
             isParent = false
 
-            let parent = ref[index - 1].parent || ref[index - 1]
+            parent = ref[index - 1].parent || ref[index - 1]
             let slides = _show(showID).slides([parent.id]).get()[0]
             let value: string[] = [id]
             // let parentSlide: any = _show(showIDs).slides([parent.id]).get()[0]
             // if (parentSlide.globalGroup) color = get(groups)[parentSlide.globalGroup].color
             // else color = parentSlide.color
 
-            if (slides.children) value = addToPos(slides.children, [id], index)
+            let childIndex = parent.layoutIndex < index ? index - parent.layoutIndex - 1 : index
+            if (slides.children) value = addToPos(slides.children, [id], childIndex)
 
             _show(showID).slides([parent.id]).set({ key: "children", value })
           }
@@ -606,6 +610,14 @@ export function history(obj: History, undo: null | boolean = null) {
           let value: any = { id }
           if (isParent) {
             _show(showID).layouts("active").slides([index]).add([value])
+          } else if (parent) {
+            // increase index to move edit to if there are added more slides before this
+            count = -1
+            ref.forEach((slide) => {
+              if (slide.id === parent.id && slide.layoutIndex < index) count++
+            })
+            if (count > 0) index += count
+            else count = 1
           }
         } else {
           let slides = obj.newData.slides || [obj.newData.slide]
@@ -649,10 +661,28 @@ export function history(obj: History, undo: null | boolean = null) {
           })
         }
 
+        // move edit index
         activeEdit.update((a) => {
           a.slide = index
           return a
         })
+
+        // move outputs slide index
+        // TODO: not working when child outputted and added
+        // TODO: drag groups!
+        // console.log(count)
+        // outputs.update((a) => {
+        //   Object.keys(a).forEach((id: string) => {
+        //     let currentIndex = a[id].out?.slide?.index
+        //     console.log(currentIndex)
+        //     if (currentIndex !== undefined) {
+        //       a[id].out!.slide!.index! = a[id].out!.slide!.index! + count
+        //       console.log(a[id].out!.slide!.index!)
+        //     }
+        //   })
+        //   console.log(a)
+        //   return a
+        // })
 
         obj.newData.id = id
       }

@@ -250,7 +250,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   if (!background) {
     layout.forEach((a, i) => {
       if (i <= index) {
-        if (a.data.actions?.clearBackground) background = null
+        if (a.data.actions?.clearBackground || a.data.disabled) background = null
         else if (a.data.background) background = a.data.background
       }
     })

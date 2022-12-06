@@ -32,9 +32,9 @@ export async function importShow(id: any, files: string[] | null) {
     await Promise.all(
       files.map((filePath: string) => {
         let name = getFileName(filePath)
-        let output = getDocumentsFolder(path.resolve(app.getPath("documents"), "Imports", name))
+        let output = getDocumentsFolder(path.resolve(app.getPath("documents"), "FreeShow", "Imports", name))
         opts.out_dir = output
-        return new Promise((resolve) => {
+        return new Promise((resolve, error) => {
           pdf
             .convert(filePath, opts)
             .then(() => {
@@ -46,7 +46,7 @@ export async function importShow(id: any, files: string[] | null) {
             })
             .catch((err: any) => {
               console.error(err)
-              resolve(err)
+              error(err)
             })
         })
       })
@@ -58,20 +58,19 @@ export async function importShow(id: any, files: string[] | null) {
           client: new sqlite3.Database(filePath),
         })
 
-        exporter.all((err: any, all: any) => {
-          if (!err) data.push({ content: all })
+        return new Promise((resolve, error) => {
+          exporter.all((err: any, all: any) => {
+            if (err) {
+              error(err)
+              return
+            }
+
+            data.push({ content: all })
+            resolve(true)
+          })
         })
       })
     )
-
-    // setTimeout(() => {
-    //   if (data.find((a) => a.content.word)) toApp(IMPORT, { channel: id, data })
-    //   else
-    //     setTimeout(() => {
-    //       // wait a second longer just in case
-    //       toApp(IMPORT, { channel: id, data })
-    //     }, 1000)
-    // }, 500)
   } else {
     // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
     files.forEach((filePath: string) => {

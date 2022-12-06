@@ -53,7 +53,7 @@
     ghostBackground = null
     layoutSlides.forEach((a, i) => {
       if (i <= index) {
-        if (a.actions?.clearBackground) ghostBackground = null
+        if (a.actions?.clearBackground || a.disabled) ghostBackground = null
         else if (a.background) ghostBackground = show.media[a.background]
       }
     })
@@ -218,6 +218,7 @@
   }
 </script>
 
+<!-- TODO: faster loading ? lazy load images? -->
 <!-- TODO: noQuickEdit -->
 <!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->
 <!-- animate:flip -->

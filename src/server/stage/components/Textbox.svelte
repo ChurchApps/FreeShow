@@ -5,7 +5,15 @@
   export let style: boolean = true
 
   let height: number = 0
-  $: autoSize = item.lines ? height / (item.lines.length + 3) : 0
+  $: lineCount =
+    item.lines?.reduce((count, line) => {
+      let fullText = line.text.map((text) => text.value).join("")
+      let lineBreaks = Math.ceil(fullText.length / 40)
+      return count + lineBreaks
+    }, 0) || 0
+  // $: autoSize = item.lines ? height / (item.lines.length + 3) : 0
+  $: autoSize = item.lines ? height / (lineCount + 3) : 0
+  // TODO: use autoSize.ts
 </script>
 
 <div class="item" style={style ? item.style : null} bind:offsetHeight={height}>
