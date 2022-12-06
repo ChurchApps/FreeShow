@@ -99,7 +99,12 @@
   function keydown(e: any) {
     if (document.activeElement === document.body && !e.ctrlKey && !e.metaKey && !e.altKey) {
       // Alphabet upper case | Alphabet lower case
-      if (/^[A-Z]{1}$/i.test(e.key)) searchElem.focus()
+      if (/^[A-Z]{1}$/i.test(e.key)) {
+        searchElem.focus()
+
+        // change to "Show" when searching when drawer is closed
+        if ($drawer.height <= minHeight) activeDrawerTab.set("shows")
+      }
     } else if (e.key === "Enter") {
       // TODO: first match
       if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject) return
@@ -135,7 +140,7 @@
   <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click}>
     <span class="tabs">
       {#each tabs as tab}
-        {#if $drawerTabsData[tab.id]?.enabled}
+        {#if $drawerTabsData[tab.id]?.enabled !== false}
           <Button
             on:click={() => activeDrawerTab.set(tab.id)}
             active={$activeDrawerTab === tab.id}

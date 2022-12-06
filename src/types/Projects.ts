@@ -6,7 +6,7 @@ export interface Projects {
 export interface Project {
   id?: string
   name: string
-  notes: string
+  notes?: string // pre v0.6.1
   created: number
   parent: string
   shows: ProjectShowRef[]

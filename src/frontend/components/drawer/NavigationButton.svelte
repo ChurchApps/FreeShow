@@ -11,7 +11,7 @@
 
   function setTab(tabID: string) {
     drawerTabsData.update((dt) => {
-      dt[id].activeSubTab = tabID
+      dt[id] = { activeSubTab: tabID, enabled: dt[id]?.enabled !== false }
       return dt
     })
   }

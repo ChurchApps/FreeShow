@@ -5,7 +5,7 @@
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
 
-  $: active = $drawerTabsData.player.activeSubTab
+  $: active = $drawerTabsData.player?.activeSubTab
 </script>
 
 {#if active === "youtube"}

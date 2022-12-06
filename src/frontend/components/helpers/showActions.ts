@@ -33,25 +33,30 @@ export function checkInput(e: any) {
     let newIndex: number = keys[e.key](index, shows)
 
     // show
-    if (get(showsCache)[shows[newIndex].id]) {
-      // set active layout from project
-      if (shows[newIndex].layout) {
-        showsCache.update((a) => {
-          a[shows[newIndex].id].settings.activeLayout = get(projects)[get(activeProject)!].shows[newIndex!].layout!
-          return a
-        })
-      }
-
-      // set project layout
-      projects.update((a) => {
-        a[get(activeProject)!].shows[newIndex!].layout = get(showsCache)[shows[newIndex].id].settings.activeLayout
-        return a
-      })
-    }
+    if (get(showsCache)[shows[newIndex].id]) swichProjectItem(newIndex, shows[newIndex].id)
 
     // Set active show in project list
     if (newIndex !== null && newIndex !== index) activeShow.set({ ...shows[newIndex], index: newIndex })
   }
+}
+
+export function swichProjectItem(pos: number, id: string) {
+  let projectLayout: string = get(projects)[get(activeProject)!].shows[pos!].layout || ""
+
+  // set active layout from project if it exists
+  if (projectLayout) {
+    if (!get(showsCache)[id].layouts[projectLayout]) projectLayout = Object.keys(get(showsCache)[id].layouts)[0]
+    showsCache.update((a) => {
+      a[id].settings.activeLayout = projectLayout
+      return a
+    })
+  }
+
+  // set project layout
+  projects.update((a) => {
+    a[get(activeProject)!].shows[pos!].layout = get(showsCache)[id].settings.activeLayout
+    return a
+  })
 }
 
 export function getItemWithMostLines(slide: Slide) {
@@ -245,7 +250,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
   if (!background) {
     layout.forEach((a, i) => {
       if (i <= index) {
-        if (a.data.actions?.clearBackground) background = null
+        if (a.data.actions?.clearBackground || a.data.disabled) background = null
         else if (a.data.background) background = a.data.background
       }
     })
@@ -278,8 +283,11 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
 
   // audio
   if (data.audio) {
-    let a = _show(id).get("media")[data.audio!]
-    playAudio(a, false)
+    data.audio.forEach((audio: string) => {
+      console.log(audio)
+      let a = _show(id).get("media")[audio]
+      if (a) playAudio(a, false)
+    })
   }
 
   // nextTimer

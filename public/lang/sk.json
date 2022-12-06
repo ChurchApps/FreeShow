@@ -249,11 +249,12 @@
     "shows": "Prezentácie",
     "media": "Mediá",
     "overlays": "Vrstvy",
-    "templates": "Šablóny",
     "audio": "Audio",
     "scripture": "Biblia",
     "player": "Prehrávač",
     "live": "Naživo",
+    "timers": "Časovače",
+    "templates": "Šablóny",
     "web": "Web"
   },
   "category": {
@@ -423,7 +424,6 @@
   },
   "tools": {
     "notes": "Poznámky",
-    "timers": "Časovače",
     "--schedule": "Rozvrh",
     "--actions": "Akcie",
     "groups": "Skupiny",

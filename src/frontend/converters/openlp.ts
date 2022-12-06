@@ -23,7 +23,7 @@ export function convertOpenLP(data: any) {
   data?.forEach(({ content }: any) => {
     let song = XMLtoObject(content)
 
-    let category = get(drawerTabsData).shows.activeSubTab
+    let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
 
     let layoutID = uid()
@@ -49,7 +49,7 @@ export function convertOpenLP(data: any) {
 
     let location: any = { page: "show" }
     if (data.length === 1) location.project = get(activeProject)
-    history({ id: "newShow", newData: { show }, location })
+    history({ id: "newShow", newData: { show, open: data.length < 2 }, location })
   })
   activePopup.set(null)
 }

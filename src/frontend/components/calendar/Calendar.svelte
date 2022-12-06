@@ -159,7 +159,7 @@
 
 <div class="calendar" on:wheel={wheel} bind:this={calendarElem}>
   <div class="week" style="flex: 1;">
-    <div class="weekday" style="flex: 1;padding: 0;">
+    <div class="weekday" style="min-width: 25px;flex: 1;padding: 0;">
       <Button
         on:click={() => {
           current = today
@@ -221,7 +221,7 @@
     <Button style="width: 200px;" on:click={() => (current = new Date(year, month, 0))} center>
       <Icon id="previous" />
     </Button>
-    <span style="text-transform: capitalize;align-self: center;padding: 0 10px;">
+    <span style="text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
       {$dictionary.month?.[current.getMonth() + 1]}
       {current.getFullYear()}
     </span>
@@ -262,11 +262,13 @@
   }
 
   .weekday {
+    overflow: hidden;
     text-transform: capitalize;
     background-color: var(--primary-darkest);
   }
 
   .weeknumber {
+    min-width: 25px;
     flex: 1;
     color: var(--secondary);
     background-color: var(--primary-darkest);

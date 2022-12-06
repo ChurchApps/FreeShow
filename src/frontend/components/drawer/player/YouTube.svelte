@@ -47,7 +47,7 @@
       title = player.getVideoData().title
 
       // set name
-      if (title && $playerVideos[playerId].name === $playerVideos[playerId].id) {
+      if (title && (!$playerVideos[playerId].name || $playerVideos[playerId].name === $playerVideos[playerId].id)) {
         playerVideos.update((a) => {
           a[playerId].name = title
           return a

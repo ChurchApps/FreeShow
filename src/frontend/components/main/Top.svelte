@@ -17,7 +17,7 @@
 </script>
 
 <div class="top">
-  <span style="width: 300px;">
+  <span style="width: 300px;-webkit-app-region: no-drag;">
     {#if !$saved && $os.platform !== "win32"}
       <div class="unsaved" />
     {/if}

@@ -3,9 +3,10 @@
   import { playAudio } from "../helpers/audio"
   import { historyAwait } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { getFileName, removeExtension } from "../helpers/media"
   import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
   import { checkName } from "../helpers/show"
-  import { updateOut } from "../helpers/showActions"
+  import { swichProjectItem, updateOut } from "../helpers/showActions"
   import { _show } from "../helpers/shows"
   import Button from "./Button.svelte"
   import HiddenInput from "./HiddenInput.svelte"
@@ -30,12 +31,7 @@
     return id
   }
 
-  $: newName = name === null && (type === "image" || type === "video") ? getPathName(id) : name || ""
-
-  const getPathName = (path: string) => {
-    let name = path.substring(path.lastIndexOf("\\") + 1)
-    return name.slice(0, name.lastIndexOf(".")) || path
-  }
+  $: newName = name === null && (type === "image" || type === "video") ? removeExtension(getFileName(id)) : name || ""
 
   // export let location;
   // export let access;
@@ -85,21 +81,7 @@
     if (pos !== null) {
       newShow.index = pos
       if (type === "audio") newShow.name = show.name
-      else if ($showsCache[id]) {
-        // set active layout from project
-        if ($projects[$activeProject!].shows[pos].layout) {
-          showsCache.update((a) => {
-            a[id].settings.activeLayout = $projects[$activeProject!].shows[pos!].layout!
-            return a
-          })
-        }
-
-        // set project layout
-        projects.update((a) => {
-          a[$activeProject!].shows[pos!].layout = $showsCache[id].settings.activeLayout
-          return a
-        })
-      }
+      else if ($showsCache[id]) swichProjectItem(pos, id)
     }
 
     activeShow.set(newShow)

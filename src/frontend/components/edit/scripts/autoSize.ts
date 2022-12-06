@@ -43,6 +43,7 @@ export function autoSize(items: number[], fullItems: any[], check: boolean = tru
   }
 }
 
+// TODO: check line length
 export function getAutoSize(item: any): number {
   let size: number = 0
 

@@ -4,7 +4,7 @@
 
   export let value: string
   // convert from old value
-  value = value.replaceAll("<br>", "\n")
+  value = value?.replaceAll("<br>", "\n")
 
   const TIME = 100
   let dispatch = createEventDispatcher()
@@ -24,7 +24,7 @@
 </script>
 
 <div class="paper">
-  {#if !value.length}
+  {#if !value?.length}
     <div class="empty">
       <T id="empty.text" />...
     </div>

@@ -249,11 +249,12 @@
     "shows": "Shows",
     "media": "Media",
     "overlays": "Overlays",
-    "templates": "Templates",
     "audio": "Audio",
     "scripture": "Scripture",
     "player": "Player",
     "live": "Live",
+    "timers": "Timers",
+    "templates": "Templates",
     "web": "Web"
   },
   "category": {
@@ -423,7 +424,6 @@
   },
   "tools": {
     "notes": "Notes",
-    "timers": "Timers",
     "--schedule": "Schedule",
     "--actions": "Actions",
     "groups": "Groups",

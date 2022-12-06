@@ -53,7 +53,7 @@ export function convertPowerpoint(files: any[]) {
 
     let location: any = { page: "show" }
     if (files.length === 1) location.project = get(activeProject)
-    history({ id: "newShow", newData: { show }, location })
+    history({ id: "newShow", newData: { show, open: files.length < 2 }, location })
 
     // // meta
     // docProps/core.xml cp:coreProperties

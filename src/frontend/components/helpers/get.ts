@@ -3,12 +3,12 @@ import type { Project, Projects } from "../../../types/Projects"
 import type { ID, Show, Shows, Slide, SlideData } from "../../../types/Show"
 import { activeProject, activeShow, projects, showsCache } from "../../stores"
 import type { ShowRef } from "../../../types/Projects"
+import { getExtension, getFileName, removeExtension } from "./media"
 
 export function splitPath(path: string) {
-  const name: string = path.substring((path.lastIndexOf("\\") > -1 ? path.lastIndexOf("\\") : path.lastIndexOf("/")) + 1)
-  const extension: string = name.lastIndexOf(".") > -1 ? name.substring(name.lastIndexOf(".") + 1) : ""
-  const shortName: string = extension ? name.slice(0, name.indexOf(extension) - 1) : name
-  console.log(path, name)
+  const name: string = getFileName(path)
+  const extension: string = getExtension(name)
+  const shortName: string = removeExtension(name)
   return { path, name, extension, shortName }
 }
 
@@ -39,7 +39,7 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
   if (!layoutID) layoutID = currentShow?.settings?.activeLayout
   let layoutSlides: SlideData[] = []
   if (currentShow?.layouts) {
-    currentShow.layouts[layoutID].slides.forEach((ls) => {
+    currentShow.layouts[layoutID]?.slides?.forEach((ls) => {
       if (ls && currentShow.slides[ls.id]) {
         let slide: Slide = currentShow.slides[ls.id]
         let newLS = { ...ls }

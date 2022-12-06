@@ -54,10 +54,12 @@ export function createData(paths: any) {
   projects.update((a) => {
     a.default = {
       name: get(dictionary).example?.example || "Example",
-      notes: get(dictionary).example?.example_note || "Write notes here",
       created: new Date("2022-01-01").getTime(),
       parent: "default",
-      shows: [{ id: "default" }],
+      shows: [
+        { id: "default" },
+        { id: "section", type: "section", name: get(dictionary).example?.example || "Example", notes: get(dictionary).example?.example_note || "Write notes here" },
+      ],
     }
     return a
   })

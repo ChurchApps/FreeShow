@@ -53,7 +53,7 @@
     ghostBackground = null
     layoutSlides.forEach((a, i) => {
       if (i <= index) {
-        if (a.actions?.clearBackground) ghostBackground = null
+        if (a.actions?.clearBackground || a.disabled) ghostBackground = null
         else if (a.background) ghostBackground = show.media[a.background]
       }
     })
@@ -67,11 +67,12 @@
   let flipped: boolean = false
   let fit: MediaFit = "contain"
 
-  $: if (background?.path) {
+  $: if (background?.path || ghostBackground?.path) {
     // TODO: use show filter if existing
-    filter = getMediaFilter(background.path)
-    flipped = $media[background.path]?.flipped || false
-    fit = $media[background.path]?.fit || "contain"
+    let path: string = background?.path || ghostBackground?.path!
+    filter = getMediaFilter(path)
+    flipped = $media[path]?.flipped || false
+    fit = $media[path]?.fit || "contain"
   }
 
   $: group = slide.group
@@ -217,6 +218,7 @@
   }
 </script>
 
+<!-- TODO: faster loading ? lazy load images? -->
 <!-- TODO: noQuickEdit -->
 <!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->
 <!-- animate:flip -->

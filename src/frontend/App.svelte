@@ -17,7 +17,7 @@
   import Navigation from "./components/edit/Navigation.svelte"
   import Pdf from "./components/export/Pdf.svelte"
   import { copy, paste } from "./components/helpers/clipboard"
-  import { redo, undo } from "./components/helpers/history"
+  import { redo } from "./components/helpers/history"
   import { getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
   import { _show } from "./components/helpers/shows"
   import { startEventTimer, startTimer } from "./components/helpers/timerTick"
@@ -100,6 +100,7 @@
       return false
     },
     c: () => {
+      // TODO: slides don't get copied!!!!
       if ($selected.id) copy($selected)
       else if ($activeEdit.items) copy({ id: "item", data: $activeEdit })
       else if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
@@ -127,12 +128,13 @@
       })
     },
     s: () => save(),
-    y: (e: any) => {
-      if (!e.target.closest(".edit")) redo()
-    },
-    z: (e: any) => {
-      if (!e.target.closest(".edit")) undo()
-    },
+    // ATTENTION: THESE ARE CALLED BY SYSTEM (menuTemplate -> menuClick)
+    // y: (e: any) => {
+    //   if (!e.target.closest(".edit")) redo()
+    // },
+    // z: (e: any) => {
+    //   if (!e.target.closest(".edit")) undo()
+    // },
     Z: (e: any) => {
       if (!e.target.closest(".edit")) redo()
     },
@@ -173,7 +175,7 @@
         return
       }
 
-      if (document.activeElement?.classList.contains("edit") && ["a", "c", "v", "z", "y", "Z"].includes(e.key)) return
+      if (e.key !== "s" && document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key)) return
 
       if (ctrlKeys[e.key]) {
         if (ctrlKeys[e.key](e)) e.preventDefault()

@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
-import { activeTimers, timers } from "../../../stores"
+import type { Timer } from "../../../../types/Show"
+import { activeProject, activeTimers, events, projects, timers } from "../../../stores"
 import { loadShows } from "../../helpers/setShow"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
@@ -79,6 +80,40 @@ export function updateShowTimer(ref: any, timer: any) {
 //   return { id: slideId, itemIndex }
 // }
 
+// get all timers in project
+export async function loadProjectTimers(projectShows = get(projects)[get(activeProject)!].shows) {
+  let list: any[] = []
+
+  await Promise.all(
+    projectShows.map(async (a) => {
+      let timers: any[] = await getTimers(a)
+      if (timers) list.push(...timers)
+    })
+  )
+
+  // remove duplicates
+  list = list.filter((value, index, self) => index === self.findIndex((a) => a.id === value.id))
+  return list
+}
+
+export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, item: any = null) {
+  let currentTime: number = 0
+  if (timer.type === "counter") {
+    if (item) currentTime = get(activeTimers).filter((a) => a.showId === ref.showId && a.slideId === ref.slideId && a.id === ref.id)[0]?.currentTime
+    else currentTime = get(activeTimers).filter((a) => a.id === ref.id)[0]?.currentTime
+    if (typeof currentTime !== "number") currentTime = timer.start!
+  } else if (timer.type === "clock") {
+    let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
+    currentTime = todayTime.getTime() > today.getTime() ? (todayTime.getTime() - today.getTime()) / 1000 : 0
+  } else if (timer.type === "event") {
+    let eventTime = new Date(get(events)[timer.event!]?.from)?.getTime() || 0
+    currentTime = eventTime > today.getTime() ? (eventTime - today.getTime()) / 1000 : 0
+  }
+
+  console.log(currentTime)
+  return currentTime
+}
+
 // ACTIONS
 
 export function playPause(item: any) {
@@ -122,3 +157,22 @@ export function deleteTimer(id: string) {
     return a
   })
 }
+
+// export function getTimerNumber(time: string) {
+//   // let start = timer.start
+//   // let end = timer.end
+//   // let duration = timer.start - timer.end
+
+//   console.log(time)
+//   let split = time.split(":")
+//   split.reverse()
+//   let currentTime = 0
+//   split.forEach((timeString: string, i) => {
+//     let seconds = 60 * (i + 1) - 60
+//     console.log(seconds)
+//     currentTime += Number(timeString) / seconds
+//   })
+//   console.log(currentTime)
+
+//   return currentTime
+// }

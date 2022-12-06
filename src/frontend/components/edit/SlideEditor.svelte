@@ -40,7 +40,7 @@
   $: if (!bgId) {
     ref?.forEach((a, i) => {
       if (i <= $activeEdit.slide!) {
-        if (a.data.actions?.clearBackground) bgId = null
+        if (a.data.actions?.clearBackground || a.data.disabled) bgId = null
         else if (a.data.background) bgId = a.data.background
       }
     })

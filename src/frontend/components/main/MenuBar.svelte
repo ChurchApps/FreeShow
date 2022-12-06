@@ -106,7 +106,8 @@
     -webkit-app-region: drag;
   }
 
-  div {
+  div,
+  div :global(div) {
     display: flex;
     -webkit-app-region: no-drag;
   }

@@ -19,7 +19,9 @@ export function convertPDF(PDFs: any[]) {
     ;[...Array(pages)].map((_a, i: number) => {
       i++
       let mediaID = uid()
-      media[mediaID] = { name: "img-" + i + ".png", path: path + "/img-" + i + ".png", type: "image" }
+      let imageName = "img-" + getIndex(pages, i) + ".png"
+      console.log(imageName)
+      media[mediaID] = { name: imageName, path: path + "/" + imageName, type: "image" }
       let slideID = uid()
       slides[slideID] = {
         group: i.toString(),
@@ -39,4 +41,9 @@ export function convertPDF(PDFs: any[]) {
     if (PDFs.length === 1) location.project = get(activeProject)
     history({ id: "newShow", newData: { show }, location })
   })
+}
+
+function getIndex(pages: number, index: number) {
+  let temp: string = "0000000000" + index
+  return temp.slice(-pages.toString().length)
 }

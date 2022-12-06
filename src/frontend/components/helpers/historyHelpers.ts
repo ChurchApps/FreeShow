@@ -71,7 +71,7 @@ export function undoAddCategory(obj: History) {
   })
 
   // update active tab
-  if (get(drawerTabsData)[s.data].activeSubTab === obj.newData.id) {
+  if (get(drawerTabsData)[s.data]?.activeSubTab === obj.newData.id) {
     drawerTabsData.update((a) => {
       a[s.data].activeSubTab = null
       return a
@@ -116,7 +116,7 @@ export function redoAddCategory(obj: History) {
   }
 
   // update active tab
-  if (get(drawerTabsData)[s.data].activeSubTab !== obj.newData.id) {
+  if (get(drawerTabsData)[s.data]?.activeSubTab !== obj.newData.id) {
     drawerTabsData.update((a) => {
       a[s.data].activeSubTab = obj.newData.id
       return a
@@ -160,7 +160,7 @@ export function redoAddOverlayOrTemplate(obj: History) {
   // TODO: check for duplicates!!!!
 
   let category: null | string = null
-  if (get(drawerTabsData)[s.store].activeSubTab !== "all" && get(drawerTabsData).templates.activeSubTab !== "unlabeled") category = get(drawerTabsData)[s.store].activeSubTab
+  if (get(drawerTabsData)[s.store]?.activeSubTab !== "all" && get(drawerTabsData).templates?.activeSubTab !== "unlabeled") category = get(drawerTabsData)[s.store].activeSubTab
   let slide: any = obj.newData?.data || { name: "", color: null, category, items: [] }
 
   let slideId: string = obj.oldData?.id

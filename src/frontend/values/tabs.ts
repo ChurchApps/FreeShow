@@ -8,5 +8,6 @@ export const drawerTabs: any = {
   player: { name: "tabs.player", icon: "player" },
   // web: { name: "tabs.web", icon: "web" },
   live: { name: "tabs.live", icon: "camera" },
+  timers: { name: "tabs.timers", icon: "timer" },
   templates: { name: "tabs.templates", icon: "templates" },
 }

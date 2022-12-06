@@ -3,6 +3,7 @@
   import { activeProject, activeShow, dictionary, folders, loaded, projects, projectView } from "../../stores"
   import { history } from "../helpers/history"
   import Icon from "../helpers/Icon.svelte"
+  import { getFileName, removeExtension } from "../helpers/media"
   import { loadShows } from "../helpers/setShow"
   import { checkInput } from "../helpers/showActions"
   import T from "../helpers/T.svelte"
@@ -15,7 +16,6 @@
   import DropArea from "../system/DropArea.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import ProjectList from "./ProjectList.svelte"
-  import ProjectTools from "./ProjectTools.svelte"
 
   let tree: Tree[] = []
   $: f = Object.entries($folders).map(([id, folder]) => ({ ...folder, id, type: "folder" as "folder" }))
@@ -75,6 +75,22 @@
     }
     // TODO: CHECK VIDEOS
   }
+
+  // pre v0.6.1
+  $: if ($activeProject && $projects[$activeProject]?.notes !== undefined) moveNotes()
+  function moveNotes() {
+    projects.update((a) => {
+      let notes: string = a[$activeProject!].notes || ""
+      if (notes.length) a[$activeProject!].shows.splice(0, 0, { id: "notes", type: "section", name: "Notes", notes })
+
+      delete a[$activeProject!].notes
+      return a
+    })
+  }
+
+  function addSection() {
+    history({ id: "newSection", newData: { index: -1 }, location: { page: "show", project: $activeProject } })
+  }
 </script>
 
 <svelte:window on:keydown={checkInput} />
@@ -127,7 +143,14 @@
             {#each $projects[$activeProject]?.shows as show, index}
               <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
               <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-              <SelectElem id="show" data={{ id: show.id, index, type: show.type }} {fileOver} borders="edges" trigger="column" draggable>
+              <SelectElem
+                id="show"
+                data={{ id: show.id, name: show.name || removeExtension(getFileName(show.id)), index, type: show.type }}
+                {fileOver}
+                borders="edges"
+                trigger="column"
+                draggable
+              >
                 {#if show.type === "section"}
                   <div class:active={$activeShow?.id === show.id} class="section context #project_section__project" on:click={() => activeShow.set({ ...show, index })}>
                     {#if show.name?.length}
@@ -171,7 +194,18 @@
   {/if}
 </div>
 {#if $activeProject && !$projectView}
-  <ProjectTools />
+  <!-- <ProjectTools /> -->
+  <!-- TODO: add section button -->
+  <div class="tabs">
+    <!-- on:click={() => history({ id: "newSection" })} -->
+    <!-- title={$dictionary.new?.folder} -->
+    <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
+      <Icon id="section" />
+      <!-- <span style="color: var(--secondary);">
+        <T id="new.section" />
+      </span> -->
+    </Button>
+  </div>
 {/if}
 
 <style>

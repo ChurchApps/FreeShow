@@ -23,36 +23,43 @@ import { activeShow } from "../stores"
 export function changeSlideGroups(obj: any) {
   let ref: any[] = _show().layouts("active").ref()[0]
 
-  console.log(obj)
-
   let slides: any[] = sortObjectNumbers(obj.sel.data, "index")
   let groups: any[] = getConnectedGroups(obj.menu.id, slides, ref)
 
-  console.log(clone(groups))
+  // let onlyParents = slides.map(slide => slide.type === "parent")
+  // // if only parent slides
+  // if (onlyParents.length === slides.length) {
+  //   slides.forEach(slide => {
+  //     let index = slide.layoutIndex
+  //     history({id: "changeSlide", newData: { key: "globalGroup", value: groups[0].globalGroup }, location: {page: "show", slide: ref[index].id}})
+  //   })
+  //   return
+  // }
 
   let newData: any = getCurrentLayout()
   groups = updateChildren(groups, ref, newData)
 
-  console.log(clone(groups))
+  // console.log(newData)
+  // console.log(clone(groups))
 
   let updated = updateValues(groups, newData)
   groups = updated.groups
   newData = updated.newData
   let newParents: any[] = updated.newParents
 
-  console.log(updated)
+  // console.log(newData)
+  // console.log(clone(groups))
 
   // set new children
   groups.forEach(({ slides }) => {
     // remove exising children
     newData.slides[slides[0].id].children = []
     if (slides.length > 1) {
-      // if (!newData.slides[slides[0].id].children) newData.slides[slides[0].id].children = []
       newData.slides[slides[0].id].children.push(...slides.slice(1, slides.length).map(({ id }: any) => id))
     }
   })
 
-  console.log(newParents, newData.layout)
+  // console.log(newParents, newData.layout)
 
   // add new parents
   newData = addParents(newData, newParents)
@@ -99,17 +106,14 @@ function updateChildren(groups: any[], ref: any[], newData: any) {
     const state = {
       isParent: slides[0].type === "parent",
       hasChildren: slides[0].children?.length,
-      nextSlideIsChild: slides[1]?.id !== slides[0].children?.[0],
+      nextSlideIsChild: slides[0].children?.[0] === slides[1]?.id,
     }
 
     // add children of parent if not selected
     if (state.isParent && state.hasChildren && !state.nextSlideIsChild) {
-      slides.push(...slides[0].children.map((_id: string, i: number) => ref[slides[0].index + i + 1]))
+      slides.push(...slides[0].children.map((_id: string, i: number) => ref[slides[0].layoutIndex + i + 1]))
       groups[i].slides = clone(slides)
     }
-
-    // TODO: changing parent not working!! (should change all simular groups)
-    // add parent to own group if their child is changed
 
     // find any non selected parents to selected childs or children to parents
     let refs: any[] = slides.filter((slide: any) => !slides.find((checkSlide: any) => checkIfSlideIsChildOfCurrent(slide, checkSlide)))
@@ -125,6 +129,8 @@ function updateChildren(groups: any[], ref: any[], newData: any) {
       return true
     }
 
+    console.log(groups)
+
     // only 1 possible!
     if (!refs.length) return
     console.log("FOUND", refs)
@@ -133,7 +139,7 @@ function updateChildren(groups: any[], ref: any[], newData: any) {
       let newSlides: any[] = []
 
       // get the refs of related slides not selected
-      if (slide.type === "child") newSlides = [ref[slide.parent.layoutIndex]]
+      if (slide.type === "child") newSlides = [{ clone: true, ...ref[slide.parent.layoutIndex] }]
       else {
         let slideChildrenWithoutCurrent: any[] = newData.slides[slide.id].children.filter((id: string) => !slides.find((a: any) => a.id === id))
         newSlides = slideChildrenWithoutCurrent.map(getChildRef)
@@ -166,6 +172,9 @@ function updateValues(groups: any[], newData: any) {
   let activeLayout: string = _show("active").get("settings.activeLayout")
 
   groups.forEach(({ globalGroup = null, group = "", slides }) => {
+    let firstSlideChildren = slides.filter((slide, i) => (i === 0 ? slides[0].id === slide.id : slides[0].children?.includes(slide.id)))
+    let hasChanged = slides[0].clone || slides[0].type === "child" || firstSlideChildren.length !== slides.length
+
     slides.forEach((slide: any, i: number) => {
       // check if there are more slides
       let otherSlides = layouts.find((layout) => {
@@ -174,13 +183,14 @@ function updateValues(groups: any[], newData: any) {
       })
 
       let slideId = slide.id
-      if (otherSlides && (slide.type === "child" || slides.length > 1)) {
-        // clone current
+      if (otherSlides && hasChanged) {
+        // (hasChanged || slide.type === "child" || slides.length > 1)
+        // clone current if it's not exactly the same children
         slideId = uid()
         newData = cloneSlide(newData, slide.id, slideId, i === 0)
         slides[i].id = slideId
         let end: boolean = true
-        if (slide.type === "child") newParents.push({ id: slideId, pos: slide.parent.index + (end ? 1 : 0) })
+        if (slide.type === "child") newParents.push({ id: slideId, parent: slide.parent.id, pos: slide.parent.index + (end ? 1 : 0) })
         else newData.layout[slide.index].id = slideId
       }
 
@@ -191,7 +201,7 @@ function updateValues(groups: any[], newData: any) {
         if (slide.type === "child" && !otherSlides) {
           newData.slides[slide.parent.id].children.splice(newData.slides[slide.parent.id].children.indexOf(slideId), 1)
           let end: boolean = false
-          newParents.push({ id: slideId, pos: slide.parent.index + (end ? 1 : 0) })
+          newParents.push({ id: slideId, parent: slide.parent.id, pos: slide.parent.index + (end ? 1 : 0) })
         }
         changeValues(newData.slides[slideId], { globalGroup, group, color: "" })
       } else {

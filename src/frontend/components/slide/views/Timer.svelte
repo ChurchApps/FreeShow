@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Item } from "../../../../types/Show"
-  import { activeTimers, events } from "../../../stores"
+  import { getCurrentTimerValue } from "../../drawer/timers/timers"
   // import { blur } from "svelte/transition"
   import { secondsToTime } from "../../helpers/time"
 
@@ -19,19 +19,7 @@
   // $: currentTime = getCurrentTime()
   $: numberToText(typeof currentTime === "number" ? currentTime : 0)
 
-  $: {
-    if (timer.type === "counter") {
-      if (item) currentTime = $activeTimers.filter((a) => a.showId === ref.showId && a.slideId === ref.slideId && a.id === ref.id)[0]?.currentTime
-      else currentTime = $activeTimers.filter((a) => a.id === ref.id)[0]?.currentTime
-      if (typeof currentTime !== "number") currentTime = timer.start
-    } else if (timer.type === "clock") {
-      let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
-      currentTime = todayTime.getTime() > today.getTime() ? (todayTime.getTime() - today.getTime()) / 1000 : 0
-    } else if (timer.type === "event") {
-      let eventTime = new Date($events[timer.event]?.from)?.getTime() || 0
-      currentTime = eventTime > today.getTime() ? (eventTime - today.getTime()) / 1000 : 0
-    }
-  }
+  $: if (timer) currentTime = getCurrentTimerValue(timer, ref, today, item)
 
   function numberToText(time: number) {
     // let allTimes: any = secondsToTimes(time)
