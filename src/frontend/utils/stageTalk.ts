@@ -74,16 +74,17 @@ export const receiveSTAGE: any = {
     if (!ref[out.index!]) return
     msg.data = [slides[ref[out.index!].id]]
 
-    let index = out.index! + 1
-    while (index < ref.length && ref[index].disabled === true) index++
+    let nextIndex = out.index! + 1
+    while (nextIndex < ref.length && ref[nextIndex].data.disabled === true) nextIndex++
 
-    console.log(ref[index])
-    if (index < ref.length && !ref[index].disabled) msg.data.push(slides[ref[index].id])
+    console.log(ref[nextIndex])
+    if (nextIndex < ref.length && !ref[nextIndex].data.disabled) msg.data.push(slides[ref[nextIndex].id])
     else msg.data.push(null)
 
     console.log(msg.data)
     return msg
   },
+  // TODO: send data!
   // case "SHOW":
   //   data = getStageShow(message.data)
   //   break

@@ -1,6 +1,10 @@
 <script lang="ts">
+  import { getAutoSize } from "../helpers/autoSize"
+  import { getStyles } from "../helpers/style"
   import Clock from "../items/Clock.svelte"
+  import SlideNotes from "../items/SlideNotes.svelte"
   import SlideText from "../items/SlideText.svelte"
+  import VideoTime from "../items/VideoTime.svelte"
   import { timers } from "../store"
   import Timer from "./Timer.svelte"
 
@@ -15,7 +19,10 @@
 
   let height: number = 0
   let width: number = 0
-  $: autoSize = Math.min(height, width) / 2
+  $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0)
+
+  $: size = getAutoSize(item, { width, height })
+  $: autoSize = fontSize ? Math.min(fontSize, size) : size
 </script>
 
 <div class="item" style={item.style} bind:offsetHeight={height} bind:offsetWidth={width}>
@@ -29,14 +36,20 @@
     <div>
       {#if id.split("#")[0] === "countdowns"}
         <!--  -->
+      {:else if id.includes("notes")}
+        <SlideNotes notes="" />
       {:else if id.includes("slide_text")}
-        <SlideText {slides} next={id.includes("next")} />
+        {#key item}
+          <SlideText {slides} next={id.includes("next")} {autoSize} parent={{ width, height }} />
+        {/key}
       {:else if id.includes("slide")}
-        <span>
-          <SlideText {slides} next={id.includes("next")} style />
+        <span style="pointer-events: none;">
+          <SlideText {slides} next={id.includes("next")} parent={{ width, height }} style />
         </span>
       {:else if id.includes("clock")}
-        <Clock />
+        <Clock {autoSize} />
+      {:else if id.includes("video")}
+        <VideoTime {autoSize} />
       {:else if id.includes("timers")}
         {#if $timers[id.split("#")[1]]}
           <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {autoSize}px;" />

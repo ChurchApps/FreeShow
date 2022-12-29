@@ -3,20 +3,22 @@
 
   export let item: Item
   export let style: boolean = true
+  export let autoSize: number = 0
 
-  let height: number = 0
-  $: lineCount =
-    item.lines?.reduce((count, line) => {
-      let fullText = line.text.map((text) => text.value).join("")
-      let lineBreaks = Math.ceil(fullText.length / 40)
-      return count + lineBreaks
-    }, 0) || 0
-  // $: autoSize = item.lines ? height / (item.lines.length + 3) : 0
-  $: autoSize = item.lines ? height / (lineCount + 3) : 0
   // TODO: use autoSize.ts
+  // let height: number = 0
+  // $: lineCount =
+  //   item.lines?.reduce((count, line) => {
+  //     let fullText = line.text.map((text) => text.value).join("")
+  //     let lineBreaks = Math.ceil(fullText.length / 40)
+  //     return count + lineBreaks
+  //   }, 0) || 0
+  // // $: autoSize = item.lines ? height / (item.lines.length + 3) : 0
+  // $: autoSize = item.lines ? height / (lineCount + 3) : 0
 </script>
 
-<div class="item" style={style ? item.style : null} bind:offsetHeight={height}>
+<!-- bind:offsetHeight={height} -->
+<div class="item" style={style ? item.style : null}>
   {#if item.lines}
     <div class="align" style={style ? item.align : null}>
       <div class="lines">

@@ -7,11 +7,13 @@
   import Panel from "../../system/Panel.svelte"
   import { updateStageShow } from "../stage"
 
+  // TODO: more stage features
   const titles = {
+    // slide_background ++
     slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
-    time: ["system_clock", "video_time", "video_countdown"],
+    time: ["system_clock"], // , "video_time", "video_countdown"
     global_timers: ["{timers}"],
-    other: ["chords", "message"],
+    // other: ["chords", "message"],
   }
 
   let enabledItems: any

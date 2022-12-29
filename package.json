@@ -73,7 +73,7 @@
         "AppImage",
         "deb"
       ],
-      "icon": "build/public/icon.png"
+      "icon": "build/public"
     },
     "win": {
       "target": "NSIS",

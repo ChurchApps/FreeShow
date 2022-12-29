@@ -44,10 +44,10 @@ export function autoSize(items: number[], fullItems: any[], check: boolean = tru
 }
 
 // TODO: check line length
-export function getAutoSize(item: any): number {
+export function getAutoSize(item: any, styles: any = null): number {
   let size: number = 0
 
-  let styles: any = getStyles(item.style, true)
+  if (styles === null) styles = getStyles(item.style, true)
 
   let lines: string[] = getItemLines(item)
   if (!lines.length) lines = ["000000"]
@@ -55,9 +55,9 @@ export function getAutoSize(item: any): number {
 
   // TODO: letter spacing....?
   if (styles.height / lines.length / styles.width > 1.8 / length) {
-    size = (styles.width / length) * 1.6
+    size = (styles.width / length) * 1.8
   } else {
-    size = (styles.height / lines.length) * 0.9
+    size = (styles.height / lines.length) * 0.6
   }
 
   return size

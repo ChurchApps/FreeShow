@@ -8,6 +8,7 @@
   import Items from "./tools/Items.svelte"
   import SlideStyle from "./tools/SlideStyle.svelte"
   import { activeStage } from "../../stores"
+  import BoxStyle from "./tools/BoxStyle.svelte"
 
   // $: allSlideItems = $activeStage.id !== null ? $stageShows[$activeStage?.id!].items : []
   // // select active items or all items
@@ -16,21 +17,35 @@
   // $: item = items.length ? items[items.length - 1] : null
 
   const tabs: TabsObj = {
-    item: { name: "tools.item", icon: "item" },
+    text: { name: "tools.text", icon: "text", disabled: true },
+    item: { name: "tools.item", icon: "item", disabled: true },
     items: { name: "tools.items", icon: "items" },
-    slide: { name: "tools.slide", icon: "options" },
+    // TODO: stage
+    // slide: { name: "tools.slide", icon: "options" },
   }
+
   let active: string = $activeStage.items.length ? "item" : "items"
+  $: console.log($activeStage.items)
+  $: console.log(active)
 
   activeStage.subscribe((as) => {
-    if (as.items.length && active !== "item") active = "item"
-    else if (!as.items.length && active === "item") active = "items"
+    if (as.items.length && active !== "item" && active !== "text") {
+      tabs.text.disabled = tabs.item.disabled = false
+      active = "text"
+    } else if (!as.items.length && (active === "item" || active === "text")) {
+      tabs.text.disabled = tabs.item.disabled = true
+      active = "items"
+    }
   })
 </script>
 
 <div class="main border stageTools">
   <Tabs {tabs} bind:active labels={false} />
-  {#if active === "item"}
+  {#if active === "text"}
+    <div class="content">
+      <BoxStyle />
+    </div>
+  {:else if active === "item"}
     <div class="content">
       <ItemStyle />
     </div>

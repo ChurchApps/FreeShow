@@ -22,6 +22,8 @@ export const loadingOptions: any = {
 }
 
 export const mainOptions: any = {
+  // https://github.com/electron-userland/electron-builder/issues/2577
+  // icon: join(__dirname, "build", "public", "icon.png"), // linux ?
   icon: "public/icon.png",
   backgroundColor: "#2d313b",
   titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
