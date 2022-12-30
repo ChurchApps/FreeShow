@@ -1,6 +1,10 @@
 <script lang="ts">
+  import { getAutoSize } from "../helpers/autoSize"
+  import { getStyles } from "../helpers/style"
   import Clock from "../items/Clock.svelte"
+  import SlideNotes from "../items/SlideNotes.svelte"
   import SlideText from "../items/SlideText.svelte"
+  import VideoTime from "../items/VideoTime.svelte"
   import { timers } from "../store"
   import Timer from "./Timer.svelte"
 
@@ -15,10 +19,29 @@
 
   let height: number = 0
   let width: number = 0
-  $: autoSize = Math.min(height, width) / 2
+  let itemStyles: any = getStyles(item.style, true)
+  $: fontSize = Number(itemStyles?.["font-size"] || 0)
+
+  // dynamic resolution
+  let resolution = { width: window.innerWidth, height: window.innerHeight }
+  let style = item.style
+  // custom dynamic size
+  let newSizes = `;
+    top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
+    left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
+    width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
+    height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
+  `
+  style = style + newSizes
+
+  $: size = getAutoSize(item, { width, height })
+  $: autoSize = fontSize ? Math.min(fontSize, size) : size
+
+  $: next = id.includes("next")
+  $: slide = slides[next ? 1 : 0]
 </script>
 
-<div class="item" style={item.style} bind:offsetHeight={height} bind:offsetWidth={width}>
+<div class="item" {style} bind:offsetHeight={height} bind:offsetWidth={width}>
   {#if show?.settings.labels}
     <div class="label">
       {item.label}
@@ -29,14 +52,21 @@
     <div>
       {#if id.split("#")[0] === "countdowns"}
         <!--  -->
+      {:else if id.includes("notes")}
+        <SlideNotes notes={slide?.notes || ""} />
       {:else if id.includes("slide_text")}
-        <SlideText {slides} next={id.includes("next")} />
+        {#key item}
+          <SlideText {slide} {autoSize} parent={{ width, height }} />
+        {/key}
       {:else if id.includes("slide")}
-        <span>
-          <SlideText {slides} next={id.includes("next")} style />
+        <!-- TODO: show slide data (backgrounds, overlays) -->
+        <span style="pointer-events: none;">
+          <SlideText {slide} parent={{ width, height }} style />
         </span>
       {:else if id.includes("clock")}
-        <Clock />
+        <Clock {autoSize} />
+      {:else if id.includes("video")}
+        <VideoTime {autoSize} />
       {:else if id.includes("timers")}
         {#if $timers[id.split("#")[1]]}
           <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {autoSize}px;" />

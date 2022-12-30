@@ -22,7 +22,7 @@
           {index}
           active={$activeStage.id === id}
           on:click={(e) => {
-            if (!e.ctrlKey && !e.metaKey)
+            if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest(".edit"))
               activeStage.update((as) => {
                 as.id = id
                 return as

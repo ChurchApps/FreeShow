@@ -16,6 +16,7 @@
   let width: number = 0
   let height: number = 0
   let resolution: any = show && show.settings.resolution ? show.settings.size : { width: 1920, height: 1080 } // $screen.resolution
+
   // $: console.log(show.settings.resolution ? "contain" : "fill")
 </script>
 
@@ -24,7 +25,9 @@
     <Zoomed {show} style={getStyleResolution(resolution, width, height)} disableStyle>
       {#each Object.entries(show.items) as [id, item]}
         {#if item.enabled}
-          <Stagebox {show} {id} {item} {slides} />
+          {#key show}
+            <Stagebox {show} {id} {item} {slides} />
+          {/key}
         {/if}
       {/each}
     </Zoomed>
@@ -36,7 +39,8 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: var(--primary-darkest);
+    /* background: var(--primary-darkest); */
+    background: black;
   }
 
   .slide {

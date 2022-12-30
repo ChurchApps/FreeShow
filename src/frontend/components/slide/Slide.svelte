@@ -306,9 +306,11 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           {/if}
         </Zoomed>
         {#if $slidesOptions.mode !== "lyrics" || noQuickEdit}
+          <!-- show note -->
           <!-- TODO: BG: white, color: black -->
           <!-- style="width: {resolution.width * zoom}px;" -->
           <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
+            {#if slide.notes}<p class="notes">{slide.notes}</p>{/if}
             <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
             <!-- font-size: 0.8em; -->
             <span style="position: absolute;display: contents;">{index + 1}</span>
@@ -411,6 +413,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
   }
 
   .label {
+    position: relative;
     background-color: var(--primary-darkest);
     display: flex;
     padding: 5px;
@@ -419,6 +422,18 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     font-weight: bold;
     align-items: center;
     /* opacity: 0.8; */
+  }
+
+  .notes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateY(-100%);
+    width: 100%;
+    padding: 4px 8px;
+    background-color: rgb(0 0 0 / 0.5);
+    color: white;
+    font-weight: normal;
   }
 
   .label .text {

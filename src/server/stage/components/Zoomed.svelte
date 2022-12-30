@@ -7,6 +7,9 @@
   let slideWidth: number = 0
   let ratio: number = 1
   $: ratio = slideWidth / resolution.width
+
+  // dynamic resolution
+  resolution = { width: window.innerWidth, height: window.innerHeight }
 </script>
 
 <div class="center">

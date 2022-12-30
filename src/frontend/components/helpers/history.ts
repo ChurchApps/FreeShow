@@ -702,11 +702,13 @@ export function history(obj: History, undo: null | boolean = null) {
       break
     case "newStageShow":
       stageShows.update((a) => {
-        if (undo) delete a[obj.newData.id]
-        else {
+        if (undo) {
+          obj.oldData.data = clone(a[obj.newData.id])
+          delete a[obj.newData.id]
+        } else {
           let id = obj.oldData?.id
           if (!id) id = uid()
-          a[id] = {
+          a[id] = obj.newData?.data || {
             name: "",
             disabled: false,
             password: "",

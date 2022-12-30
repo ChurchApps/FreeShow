@@ -19,12 +19,14 @@
   export let style: boolean = true
   export let linesStart: null | number = null
   export let linesEnd: null | number = null
+  export let autoSize: number = 0
 
   // let height: number = 0
   // let width: number = 0
   // $: autoSize = item.lines ? Math.min(height, width) / (item.lines.length + 3) : Math.min(height, width) / 2
   // TODO: get template auto size
-  $: autoSize = getAutoSize(item)
+  // $: autoTextSize = autoSize ? autoSize * 0.8 : getAutoSize(item)
+  $: autoSize = autoSize || getAutoSize(item)
 
   $: lines = item?.lines
   $: if (linesStart !== null && linesEnd !== null && lines?.length) lines = lines.filter((a) => a.text.filter((a) => a.value.length)?.length)

@@ -420,7 +420,8 @@
     "toggle_output": "Toggle output",
     "move_to_front": "Move to front",
     "lock_to_output": "Lock to output",
-    "toggle_clock": "Toggle clock"
+    "toggle_clock": "Toggle clock",
+    "move_connections": "Move all connected to this"
   },
   "tools": {
     "notes": "Notas",

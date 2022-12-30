@@ -420,7 +420,8 @@
     "toggle_output": "Alterar saídas",
     "move_to_front": "Mover para frente",
     "lock_to_output": "Travar na saída",
-    "toggle_clock": "Alternar relógio"
+    "toggle_clock": "Alternar relógio",
+    "move_connections": "Move all connected to this"
   },
   "tools": {
     "notes": "Notas",

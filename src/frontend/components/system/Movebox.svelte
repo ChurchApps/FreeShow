@@ -8,10 +8,10 @@
 
 <section>
   {#each sides as line}
-    <div class="line {line}l" style="{line === 'n' || line === 's' ? 'height' : 'width'}: 10px;" />
+    <div class="line {line}l" style="{line === 'n' || line === 's' ? 'height' : 'width'}: 50px;" />
   {/each}
   {#each corners as square}
-    <div class="square {square}" class:active style="width: {8 / ratio}px; cursor: {square}-resize;" />
+    <div class="square {square}" class:active style="width: {10 / ratio}px; cursor: {square}-resize;" />
   {/each}
 </section>
 
@@ -23,6 +23,7 @@
     height: 15px; */
     aspect-ratio: 1/1;
     background-color: transparent;
+    z-index: 2;
     /* border: 5px solid transparent; */
     /* outline: 1px solid white; */
     /* border-radius: 50%; */
@@ -63,6 +64,7 @@
     position: absolute;
     background-color: transparent;
     cursor: move;
+    z-index: 1;
   }
   /* .line.invisible {
     background-color: transparent;

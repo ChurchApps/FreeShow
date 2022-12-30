@@ -12,6 +12,7 @@
       <p>Show Labels</p>
       <p>Flash</p>
       <p>Color</p>
+      <p>Pswd?</p>
     </div>
     <div style="flex: 1;">
       <!--  -->

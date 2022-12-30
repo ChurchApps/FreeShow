@@ -420,7 +420,8 @@
     "toggle_output": "Prepnúť výstup",
     "move_to_front": "Presunúť dopredu",
     "lock_to_output": "Zamknúť na výstup",
-    "toggle_clock": "Prepnúť hodiny"
+    "toggle_clock": "Prepnúť hodiny",
+    "move_connections": "Move all connected to this"
   },
   "tools": {
     "notes": "Poznámky",

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import T from "../helpers/T.svelte"
+  import { stageShows } from "../../stores"
+  import HiddenInput from "../inputs/HiddenInput.svelte"
   import Zoomed from "../slide/Zoomed.svelte"
   import SelectElem from "../system/SelectElem.svelte"
   import Stagebox from "./Stagebox.svelte"
@@ -25,6 +26,14 @@
   console.log(show)
 
   let ratio: number = 1
+
+  function edit(e: any) {
+    let name = e.detail.value
+    stageShows.update((a) => {
+      a[id].name = name
+      return a
+    })
+  }
 </script>
 
 <div class="main" class:active style="width: {100 / columns}%" class:list>
@@ -41,11 +50,12 @@
         <div class="label" title={show.name}>
           <span style="position: absolute;display: contents;">{index + 1}</span>
           <span class="text">
-            {#if show.name}
+            <!-- {#if show.name}
               {show.name}
             {:else}
               <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
-            {/if}
+            {/if} -->
+            <HiddenInput value={show.name} id={"stage_" + id} on:edit={edit} allowEmpty={false} />
           </span>
         </div>
       </SelectElem>
@@ -90,8 +100,8 @@
     background-color: var(--primary);
 
     display: flex;
-    padding: 5px;
-    padding-bottom: 3px;
+    padding: 0 5px;
+    /* padding-bottom: 2px; */
     font-size: 0.8em;
     font-weight: bold;
     align-items: center;
@@ -105,5 +115,9 @@
     overflow-x: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .text :global(p) {
+    margin: 4px;
   }
 </style>

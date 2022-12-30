@@ -1,11 +1,14 @@
 <script lang="ts">
   import { activeStage, stageShows, timers } from "../../stores"
+  import { getAutoSize } from "../edit/scripts/autoSize"
+  import { getStyles } from "../helpers/style"
   import T from "../helpers/T.svelte"
   import Timer from "../slide/views/Timer.svelte"
   import Clock from "../system/Clock.svelte"
   import Movebox from "../system/Movebox.svelte"
   import SlideNotes from "./items/SlideNotes.svelte"
   import SlideText from "./items/SlideText.svelte"
+  import VideoTime from "./items/VideoTime.svelte"
 
   export let id: string
   export let item: any
@@ -57,7 +60,7 @@
 
   function keydown(e: any) {
     if (edit) {
-      if (e.key === "Backspace" && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest("input")) {
+      if (e.key === "Backspace" && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
         // TODO: history??
         $stageShows[$activeStage.id!].items[id].enabled = false
         activeStage.set({ id: $activeStage.id, items: [] })
@@ -85,7 +88,12 @@
 
   let height: number = 0
   let width: number = 0
-  $: autoSize = Math.min(height, width) / 2
+  $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0)
+  $: console.log(fontSize)
+
+  $: size = getAutoSize(item, { width, height })
+  // $: size = Math.min(height, width) / 2
+  $: autoSize = fontSize ? Math.min(fontSize, size) : size
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -118,13 +126,15 @@
       {:else if id.includes("notes")}
         <SlideNotes next={id.includes("next")} />
       {:else if id.includes("slide_text")}
-        <SlideText next={id.includes("next")} ref={{ type: "stage", id }} />
+        <SlideText next={id.includes("next")} ref={{ type: "stage", id }} {autoSize} parent={{ width, height }} />
       {:else if id.includes("slide")}
         <span style="pointer-events: none;">
-          <SlideText next={id.includes("next")} ref={{ type: "stage", id }} style />
+          <SlideText next={id.includes("next")} ref={{ type: "stage", id }} parent={{ width, height }} style />
         </span>
       {:else if id.includes("clock")}
-        <Clock style={false} />
+        <Clock style={false} {autoSize} />
+      {:else if id.includes("video")}
+        <VideoTime {autoSize} reverse={id.includes("countdown")} />
       {:else if id.includes("timers")}
         {#if $timers[id.split("#")[1]]}
           <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {autoSize}px;" />
