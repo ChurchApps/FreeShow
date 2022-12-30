@@ -72,7 +72,7 @@ ipcMain.on(REMOTE, (_e, msg) => {
 
 ioStage.on("connection", (socket) => {
   if (Object.keys(connections.STAGE).length >= STAGE_MAX) {
-    ioStage.emit(STAGE, { channel: "ERROR", id: "overLimit", data: STAGE_MAX })
+    ioStage.emit(STAGE, { channel: "ERROR", data: "overLimit" })
     socket.disconnect()
   } else {
     initialize(STAGE, socket)

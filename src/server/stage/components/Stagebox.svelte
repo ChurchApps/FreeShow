@@ -19,13 +19,29 @@
 
   let height: number = 0
   let width: number = 0
-  $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0)
+  let itemStyles: any = getStyles(item.style, true)
+  $: fontSize = Number(itemStyles?.["font-size"] || 0)
+
+  // dynamic resolution
+  let resolution = { width: window.innerWidth, height: window.innerHeight }
+  let style = item.style
+  // custom dynamic size
+  let newSizes = `;
+    top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
+    left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
+    width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
+    height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
+  `
+  style = style + newSizes
 
   $: size = getAutoSize(item, { width, height })
   $: autoSize = fontSize ? Math.min(fontSize, size) : size
+
+  $: next = id.includes("next")
+  $: slide = slides[next ? 1 : 0]
 </script>
 
-<div class="item" style={item.style} bind:offsetHeight={height} bind:offsetWidth={width}>
+<div class="item" {style} bind:offsetHeight={height} bind:offsetWidth={width}>
   {#if show?.settings.labels}
     <div class="label">
       {item.label}
@@ -37,14 +53,15 @@
       {#if id.split("#")[0] === "countdowns"}
         <!--  -->
       {:else if id.includes("notes")}
-        <SlideNotes notes="" />
+        <SlideNotes notes={slide?.notes || ""} />
       {:else if id.includes("slide_text")}
         {#key item}
-          <SlideText {slides} next={id.includes("next")} {autoSize} parent={{ width, height }} />
+          <SlideText {slide} {autoSize} parent={{ width, height }} />
         {/key}
       {:else if id.includes("slide")}
+        <!-- TODO: show slide data (backgrounds, overlays) -->
         <span style="pointer-events: none;">
-          <SlideText {slides} next={id.includes("next")} parent={{ width, height }} style />
+          <SlideText {slide} parent={{ width, height }} style />
         </span>
       {:else if id.includes("clock")}
         <Clock {autoSize} />

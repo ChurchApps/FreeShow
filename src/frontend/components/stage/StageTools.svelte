@@ -1,14 +1,11 @@
 <script lang="ts">
   import type { TabsObj } from "../../../types/Tabs"
-  import ItemStyle from "./tools/ItemStyle.svelte"
-  import Button from "../inputs/Button.svelte"
-  import Tabs from "../main/Tabs.svelte"
-  import Icon from "../helpers/Icon.svelte"
-  import T from "../helpers/T.svelte"
-  import Items from "./tools/Items.svelte"
-  import SlideStyle from "./tools/SlideStyle.svelte"
   import { activeStage } from "../../stores"
+  import Tabs from "../main/Tabs.svelte"
   import BoxStyle from "./tools/BoxStyle.svelte"
+  import Items from "./tools/Items.svelte"
+  import ItemStyle from "./tools/ItemStyle.svelte"
+  import SlideStyle from "./tools/SlideStyle.svelte"
 
   // $: allSlideItems = $activeStage.id !== null ? $stageShows[$activeStage?.id!].items : []
   // // select active items or all items
@@ -59,14 +56,15 @@
     </div>
   {/if}
 
-  <span style="display: flex;">
+  <!-- TODO: reset stage -->
+  <!-- <span style="display: flex;">
     {#if active !== "items"}
       <Button style="flex: 1;" dark center>
         <Icon id="reset" right />
         <T id={"actions.reset"} />
       </Button>
     {/if}
-  </span>
+  </span> -->
 </div>
 
 <style>

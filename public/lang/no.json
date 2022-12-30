@@ -420,7 +420,8 @@
     "toggle_output": "Veksle utgangsskjerm",
     "move_to_front": "Flytt fremst",
     "lock_to_output": "Lås til utgang",
-    "toggle_clock": "Veksle klokke"
+    "toggle_clock": "Veksle klokke",
+    "move_connections": "Flytt alle tilkoblinger til denne"
   },
   "tools": {
     "notes": "Notater",

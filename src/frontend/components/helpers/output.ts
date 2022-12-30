@@ -25,6 +25,9 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         else if (toggle || add) a[id].out![key] = [...new Set([...(a[id].out?.[key] || []), ...data])]
         else a[id].out![key] = data
       } else a[id].out![key] = data
+
+      // WIP update bg (muted, loop, time)
+      if (key === "background" && data) send(OUTPUT, ["UPDATE_VIDEO"], { id, data: { muted: data.muted || false, loop: data.loop || false }, time: data.startAt || 0 })
     })
     return a
   })

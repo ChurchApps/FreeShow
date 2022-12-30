@@ -7,7 +7,7 @@ export function getAutoSize(item: any, styles: any = null): number {
   if (styles === null) styles = getStyles(item.style, true)
 
   let lines: string[] = item ? getItemLines(item) : []
-  if (!lines.length) lines = ["000000"]
+  if (!lines.length) lines = ["0000000"]
   // length of longest line
   let length: number = lines.sort((a, b) => b.length - a.length)[0].length
 
@@ -22,7 +22,7 @@ export function getAutoSize(item: any, styles: any = null): number {
   // console.log(styles.height / lines.length / styles.width)
   // console.log(length)
   if (styles.height / lines.length / styles.width > 1.8 / length) {
-    size = (styles.width / length) * 1.8
+    size = (styles.width / length) * 1.5
   } else {
     size = (styles.height / lines.length) * 0.6
   }

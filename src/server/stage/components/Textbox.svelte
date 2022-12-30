@@ -1,9 +1,23 @@
 <script lang="ts">
   import type { Item } from "../../../types/Show"
+  import { getStyles } from "../helpers/style"
 
   export let item: Item
   export let style: boolean = true
   export let autoSize: number = 0
+
+  // dynamic resolution
+  let resolution = { width: window.innerWidth, height: window.innerHeight }
+  let itemStyle = item.style
+  let itemStyles: any = getStyles(item.style, true)
+  // custom dynamic size
+  let newSizes = `;
+    top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
+    left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
+    width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
+    height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
+  `
+  itemStyle = itemStyle + newSizes
 
   // TODO: use autoSize.ts
   // let height: number = 0
@@ -18,7 +32,7 @@
 </script>
 
 <!-- bind:offsetHeight={height} -->
-<div class="item" style={style ? item.style : null}>
+<div class="item" style={style ? itemStyle : null}>
   {#if item.lines}
     <div class="align" style={style ? item.align : null}>
       <div class="lines">

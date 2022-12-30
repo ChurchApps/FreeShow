@@ -57,6 +57,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   addToProject: { label: "context.addToProject", icon: "project" },
   remove: { label: "actions.remove", icon: "remove" },
   remove_slide: { label: "actions.remove", icon: "remove" },
+  delete_slide: { label: "actions.delete", icon: "delete" },
   slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove", "SEPERATOR", "LOAD_slide_groups"] },
   selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
   newSlide: { label: "new.slide", icon: "add" },
@@ -85,6 +86,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
   favourite: { label: "media.favourite", icon: "star" },
   // OVERLAYS
   lock_to_output: { label: "context.lock_to_output", icon: "locked" },
+  // STAGE
+  move_connections: { label: "context.move_connections", icon: "up" },
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -163,7 +166,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
   // SHOWS
   // , "copy", "paste"
-  slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "remove_slide"],
+  slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
   slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
   group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
   global_group: ["edit"],
@@ -172,7 +175,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
   slideViews: ["view_grid", "view_list", "view_lyrics", "view_text"],
 
   // STAGE
-  stage_slide: ["rename", "disable", "SEPERATOR", "duplicate", "delete"],
+  stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
   // EDIT
   edit_box: ["format", "delete", "SEPERATOR", "duplicate", "copy", "paste"], // TODO: "make stage exlusive"

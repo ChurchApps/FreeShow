@@ -4,7 +4,7 @@
   import Button from "./components/Button.svelte"
   import Icon from "./components/Icon.svelte"
   import Slide from "./components/Slide.svelte"
-  import { activeTimers, events, timers } from "./store"
+  import { activeTimers, events, timeFormat, timers } from "./store"
 
   // TODO: translate
   const lang: any = {
@@ -15,6 +15,7 @@
       wrongPass: "Wrong password!",
       missingID: "Something went wrong, try again!",
       noShow: "Could not find active show!",
+      overLimit: "Maximum connections reached!",
     },
   }
 
@@ -65,6 +66,13 @@
         showRef = null
         delete localStorage.password
         delete localStorage.show
+        break
+      case "SWITCH":
+        if (show?.password) input = show
+        else showRef = { id: msg.data.id }
+        break
+      case "DATA":
+        if (msg.data.timeFormat) timeFormat.set(msg.data.timeFormat)
         break
       case "SHOWS":
         input = null
@@ -134,6 +142,14 @@
         timeout = null
       }, 3000)
     }
+  }
+
+  function toggleFullscreen() {
+    var doc = window.document
+    var docElem = doc.documentElement
+
+    if (!doc.fullscreenElement) docElem.requestFullscreen.call(docElem)
+    else doc.exitFullscreen.call(doc)
   }
 </script>
 
@@ -212,18 +228,23 @@
   {#if clicked}
     <div class="clicked">
       <h5 style="text-align: center;">{show.name}</h5>
-      <Button
-        on:click={() => {
-          delete localStorage.password
-          delete localStorage.show
-          input = null
-          showRef = null
-        }}
-        style="width: 100%;"
-        center
-      >
-        <Icon id="home" />
-      </Button>
+      <div style="display: flex;gap: 10px;">
+        <Button
+          on:click={() => {
+            delete localStorage.password
+            delete localStorage.show
+            input = null
+            showRef = null
+          }}
+          style="flex: 1;"
+          center
+        >
+          <Icon id="home" />
+        </Button>
+        <Button on:click={toggleFullscreen} center>
+          <Icon id="fullscreen" />
+        </Button>
+      </div>
     </div>
   {/if}
 {:else}

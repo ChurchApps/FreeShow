@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN, OUTPUT } from "../../../types/Channels"
+import { MAIN, OUTPUT, STAGE } from "../../../types/Channels"
 import { changeSlideGroups } from "../../show/slides"
 import {
   activeDrawerTab,
@@ -34,7 +34,9 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
+import { deleteTimer, playPause, playPauseGlobal } from "../drawer/timers/timers"
 import { exportProject } from "../export/project"
+import { clone } from "../helpers/array"
 import { copy, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
@@ -43,7 +45,6 @@ import { getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
-import { deleteTimer, playPause, playPauseGlobal } from "../drawer/timers/timers"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 
@@ -83,6 +84,7 @@ const actions: any = {
     else if (obj.sel.id === "folder") activeRename.set("folder_" + obj.sel.data[0].id)
     else if (obj.sel.id === "layout") activeRename.set("layout_" + obj.sel.data[0])
     else if (obj.sel.id === "player") activeRename.set("player_" + obj.sel.data[0])
+    else if (obj.sel.id === "stage") activeRename.set("stage_" + obj.sel.data[0].id)
     else if (obj.sel.id.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + obj.sel.data[0])
     else console.log("Missing rename", obj)
   },
@@ -136,6 +138,12 @@ const actions: any = {
   recolor: (obj: any) => {
     if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
   },
+  delete_slide: (obj: any) => {
+    let ref: any[] = _show().layouts("active").ref()[0]
+    let slideId: string = ref[obj.sel.data[0].index].id
+    obj.sel = { id: "group", data: [{ id: slideId }] }
+    actions.delete(obj)
+  },
   remove_slide: (obj: any) => removeSlide(obj),
   delete: (obj: any) => {
     if (obj.sel.id === "show_drawer") {
@@ -143,7 +151,6 @@ const actions: any = {
       return
     }
     if (obj.sel.id === "group") {
-      console.log(obj.sel.data)
       history({
         id: "deleteGroups",
         newData: { ids: obj.sel.data.map((a: any) => a.id) },
@@ -232,6 +239,12 @@ const actions: any = {
       obj.sel.data = obj.sel.data.sort((a: any, b: any) => a.index - b.index)
       copy(obj.sel)
       paste()
+      return
+    }
+    if (obj.sel.id === "stage") {
+      let stageId = obj.sel.data[0].id
+      let stage = get(stageShows)[stageId]
+      history({ id: "newStageShow", newData: { data: clone(stage) } })
       return
     }
     // overlay, template
@@ -538,6 +551,14 @@ const actions: any = {
       })
       return a
     })
+  },
+
+  // stage
+  move_connections: (obj: any) => {
+    console.log(obj)
+    let stageId = obj.sel.data[0].id
+    console.log(stageId)
+    window.api.send(STAGE, { channel: "SWITCH", data: { id: stageId } })
   },
 
   // drawer navigation

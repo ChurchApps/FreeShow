@@ -3,7 +3,7 @@ import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
-import { events, outputs, showsCache, stageShows, timers } from "../stores"
+import { events, outputs, showsCache, stageShows, timeFormat, timers } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendClientAll, sendData, timedout } from "./sendData"
@@ -21,11 +21,15 @@ export function stageListen() {
     sendData(STAGE, { channel: "SLIDES" })
   })
 
-  timers.subscribe(() => {
-    send(STAGE, ["TIMERS"], get(timers))
+  timers.subscribe((a) => {
+    send(STAGE, ["TIMERS"], a)
   })
-  events.subscribe(() => {
-    send(STAGE, ["EVENTS"], get(events))
+  events.subscribe((a) => {
+    send(STAGE, ["EVENTS"], a)
+  })
+
+  timeFormat.subscribe((a) => {
+    send(STAGE, ["DATA"], { timeFormat: a })
   })
 }
 
@@ -38,26 +42,28 @@ export const receiveSTAGE: any = {
     return msg
   },
   SHOW: (msg: ClientMessage) => {
-    if (msg.id) {
-      let show = get(stageShows)[msg.data.id]
-      if (!show.password.length || show.password === msg.data.password) {
-        // connection successfull
-        connections.update((a) => {
-          if (!a.STAGE[msg.id!]) a.STAGE[msg.id!] = {}
-          a.STAGE[msg.id!].active = msg.data.id
-          return a
-        })
-        show = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[msg.data.id]
-        if (!show.disabled) {
-          msg.data = show
-          sendData(STAGE, { channel: "SLIDES", data: [] })
+    if (!msg.id) return { id: msg.id, channel: "ERROR", data: "missingID" }
 
-          // initial
-          window.api.send(STAGE, { id: msg.id, channel: "TIMERS", data: get(timers) })
-          window.api.send(STAGE, { id: msg.id, channel: "EVENTS", data: get(events) })
-        } else msg = { id: msg.id, channel: "ERROR", data: "noShow" }
-      } else msg = { id: msg.id, channel: "ERROR", data: "wrongPass" }
-    } else msg = { id: msg.id, channel: "ERROR", data: "missingID" }
+    let show = get(stageShows)[msg.data.id]
+    if (!show || show.disabled) return { id: msg.id, channel: "ERROR", data: "noShow" }
+    if (show.password.length && show.password !== msg.data.password) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
+
+    // connection successfull
+    connections.update((a) => {
+      if (!a.STAGE[msg.id!]) a.STAGE[msg.id!] = {}
+      a.STAGE[msg.id!].active = msg.data.id
+      return a
+    })
+    show = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[msg.data.id]
+
+    // if (show.disabled) return { id: msg.id, channel: "ERROR", data: "noShow" }
+
+    msg.data = show
+    sendData(STAGE, { channel: "SLIDES", data: [] })
+
+    // initial
+    window.api.send(STAGE, { id: msg.id, channel: "TIMERS", data: get(timers) })
+    window.api.send(STAGE, { id: msg.id, channel: "EVENTS", data: get(events) })
     return msg
   },
   SLIDES: (msg: ClientMessage) => {
@@ -66,7 +72,7 @@ export const receiveSTAGE: any = {
     msg.data = []
     console.log(out)
 
-    if (!out || out.id === "temp") return
+    if (!out || out.id === "temp") return msg
     let ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
     let slides: any = _show(out.id).get().slides
     console.log(slides)

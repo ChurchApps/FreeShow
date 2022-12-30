@@ -2,6 +2,7 @@
   import { activeStage, stageShows, timers } from "../../../stores"
   import { keysToID } from "../../helpers/array"
   import Icon from "../../helpers/Icon.svelte"
+  import { getResolution } from "../../helpers/output"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
   import Panel from "../../system/Panel.svelte"
@@ -21,8 +22,16 @@
   function click(item: string) {
     if (!$activeStage.id) return
 
+    let resolution = getResolution()
+    let style = `
+      width: ${resolution.width / 2}px;
+      height: ${resolution.height / 2}px;
+      left: ${resolution.width / 4}px;
+      top: ${resolution.height / 4}px;
+    `
+
     stageShows.update((ss) => {
-      if (!enabledItems[item]) enabledItems[item] = { enabled: true, style: "width: 200px;height: 100px;", align: "" }
+      if (!enabledItems[item]) enabledItems[item] = { enabled: true, style, align: "" }
       else if (enabledItems[item].enabled) enabledItems[item].enabled = false
       else enabledItems[item].enabled = true
       return ss
