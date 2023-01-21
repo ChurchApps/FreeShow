@@ -98,7 +98,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     view: ["fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
     help: ["shortcuts", "docs", "about"],
     // MAIN
-    default: ["settings", "about", "SEPERATOR", "quit"],
+    default: ["settings", "history", "about", "SEPERATOR", "quit"],
     rename: ["rename"],
     close: ["close"],
 

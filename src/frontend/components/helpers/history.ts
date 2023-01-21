@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeEdit, activePage, activeStage, dictionary, notFound, playerVideos, shows, undoHistory } from "../../stores"
+import { activeEdit, activePage, activeStage, dictionary, historyCacheCount, notFound, playerVideos, shows, undoHistory } from "../../stores"
 import { dateToString } from "../helpers/time"
 import type { Folder, Project, ShowRef } from "./../../../types/Projects"
 import {
@@ -97,8 +97,6 @@ export type HistoryIDs =
     | "updateProject"
     | "updateProjectFolder"
     // | "project"
-    | "projects"
-    | "drawer"
     // other
     | "slideToOverlay"
     | "newEvent"
@@ -182,7 +180,8 @@ export function history(obj: History, undo: null | boolean = null) {
     let old: any = null
     let temp: any = {}
 
-    if (historyActions({ obj })[obj.id]) {
+    if (historyActions({})[obj.id]) {
+        historyActions({ obj, undo })[obj.id]()
         console.log("HISTORY ACTION")
     } else {
         switch (obj.id) {
@@ -1281,17 +1280,24 @@ export function history(obj: History, undo: null | boolean = null) {
     if (old && !undo && !obj.oldData) obj.oldData = old
 
     if (obj.save === false) return
+    if (undo === null) redoHistory.set([])
 
     // TODO: remove history obj if oldData is exactly the same as newdata
 
-    if (obj.id !== "SAVE") {
+    if (obj.id === "SAVE") {
+        // if (undo === null) {
+        //     // // remove all history "SAVE" in redo when saving
+        //     // redoHistory.set(get(redoHistory).filter((a) => a.id !== "SAVE"))
+        //     // return if exact match
+        //     if (JSON.stringify(get(undoHistory).at(-1)?.newData) === JSON.stringify(obj.newData)) return
+        // }
+    } else {
         // TODO: go to location
         if (obj.location!.page === "drawer") {
             // TODO: open drawer
         } else activePage.set(obj.location!.page)
 
         // TODO: slide text edit, dont override different style keys!
-        if (undo === null) redoHistory.set([])
     }
 
     if (undo) {
@@ -1306,7 +1312,7 @@ export function history(obj: History, undo: null | boolean = null) {
             if (
                 undo === null &&
                 uh[uh.length - 1]?.id === obj.id &&
-                JSON.stringify(Object.values(uh[uh.length - 1]?.location!)) === JSON.stringify(Object.values(obj.location!)) &&
+                JSON.stringify(Object.values(uh[uh.length - 1]?.location || {})) === JSON.stringify(Object.values(obj.location || {})) &&
                 override.includes(obj.id)
             ) {
                 uh[uh.length - 1].newData = obj.newData
@@ -1320,34 +1326,13 @@ export function history(obj: History, undo: null | boolean = null) {
         })
     }
 
-    // save to cache
-    // let cache = get(historyCache)
-    // if (!cache.undo) cache.undo = []
-    // if (!cache.redo) cache.redo = []
-    // console.log({ ...cache })
-    // cache.undo.push(...get(undoHistory))
-    // cache.redo.push(...get(redoHistory))
-    // // delete oldest if more than 100
-    // const DELETE_COUNT = 100
-    // console.log({ ...cache })
-    // cache.undo = cache.undo.slice(-DELETE_COUNT)
-    // cache.redo = cache.redo.slice(-DELETE_COUNT)
-    // historyCache.set(cache)
-    // console.log({ ...cache })
+    // delete oldest if more than set value
+    undoHistory.set(get(undoHistory).slice(-get(historyCacheCount)))
+    // redoHistory.set(get(redoHistory).slice(-get(historyCacheCount)))
 
     console.log("UNDO: ", [...get(undoHistory)])
     console.log("REDO: ", [...get(redoHistory)])
 }
-
-// redoHistory.subscribe((a) => {
-//     console.trace(a)
-// })
-
-// let undo = [1, 2, 3]
-// let redo = []
-
-// TODO: save history
-// TODO: save history (full history every save + auto save...)
 
 export const undo = () => {
     if (!get(undoHistory).length) return

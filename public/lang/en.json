@@ -588,7 +588,7 @@
         "disable_labels": "Disable labels",
         "group_numbers": "Group numbers",
         "full_colors": "Full slide group colors",
-        "auto_output": "Show output screen on startup",
+        "auto_output": "Activate output screen on startup",
         "display_metadata": "Display metadata while showing",
         "default_project_name": "Default project name",
         "resolution": "Resolution",

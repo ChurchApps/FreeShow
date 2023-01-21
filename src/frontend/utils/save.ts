@@ -22,6 +22,7 @@ import {
     imageExtensions,
     labelsDisabled,
     language,
+    lastSavedCache,
     maxConnections,
     media,
     mediaCache,
@@ -138,10 +139,19 @@ export function save() {
         scripturesCache: get(scripturesCache),
     }
 
-    // SAVE STATE
-    history({ id: "SAVE", newData: clone(allSavedData) })
+    // TODO: fix undefined when saving HISTORY... (maybe file is undefined?)
 
-    // CACHES (DON'T SAVE TO HISTORY)
+    // SAVE STATE
+    let savedAt: number = Date.now()
+    // only save if it's not the same as last save
+    if (JSON.stringify(allSavedData) !== get(lastSavedCache)) {
+        lastSavedCache.set(JSON.stringify(allSavedData))
+        history({ id: "SAVE", newData: { id: savedAt } })
+        // store saved data to it's own files
+        allSavedData.savedCache = { name: savedAt, data: clone(allSavedData) }
+    }
+
+    // CACHES
     allSavedData = {
         ...allSavedData,
         CACHE: { media: get(mediaCache), text: get(textCache) },

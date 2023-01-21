@@ -66,6 +66,7 @@ export const systemFonts: Writable<string[]> = writable([])
 export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)
 export const forceClock: Writable<boolean> = writable(false)
+export const lastSavedCache: Writable<any> = writable(null)
 
 // ----- SAVED VARIABLES -----
 
@@ -75,6 +76,7 @@ export const os: Writable<any> = writable({ platform: "", name: "Computer" }) //
 // HISTORY
 export const undoHistory: Writable<History[]> = writable([])
 export const redoHistory: Writable<History[]> = writable([])
+export const historyCacheCount: Writable<number> = writable(100)
 
 // SHOW
 export const shows: Writable<any> = writable({}) // {default}

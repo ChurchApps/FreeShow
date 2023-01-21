@@ -1,4 +1,4 @@
-import { undoHistory, redoHistory } from "./../stores"
+import { undoHistory, redoHistory, scripturesCache } from "./../stores"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OPEN_FOLDER, OUTPUT, STORE } from "../../types/Channels"
@@ -62,6 +62,7 @@ import { setLanguage } from "./language"
 import { listen } from "./messages"
 import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
+import { clone } from "../components/helpers/array"
 
 export function startup() {
     loaded.set(false)
@@ -109,6 +110,28 @@ const receiveMAIN: any = {
     MENU: (a: any) => menuClick(a),
     SHOWS_PATH: (a: any) => showsPath.set(a),
     EXPORT_PATH: (a: any) => exportPath.set(a),
+    READ_SAVED_CACHE: (a: any) => {
+        if (!a) return
+        Object.entries(JSON.parse(a)).forEach(([key, data]: any) => {
+            // TODO: undoing save is not working properly (seems like all saved are the same??)
+
+            if (key === "showsCache") console.log("SHOWS CACHE ---", clone(get(showsCache)), data)
+
+            // don't revert undo/redo history
+            if (key === "HISTORY") return
+            if (receiveSTORE[key]) receiveSTORE[key](data)
+            // if undo = { ...data, ...get(showsCache) } else { ...get(showsCache), ...data }
+            else if (key === "showsCache") showsCache.set({ ...data, ...get(showsCache) })
+            else if (key === "scripturesCache") scripturesCache.set(data)
+            else if (key === "path") showsPath.set(data)
+            else console.log("MISSING HISTORY RESTORE KEY:", key)
+        })
+
+        // save to files?
+        // window.api.send(STORE, { channel: "SAVE", data: allSavedData })
+
+        saved.set(true)
+    },
     ALERT: (a: any) => {
         alertMessage.set(a)
         activePopup.set("alert")

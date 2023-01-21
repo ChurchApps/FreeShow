@@ -51,6 +51,11 @@ export function dateToString(date: any, full: boolean = false, d: any = {}): str
     return string
 }
 
+export function getDateAndTimeString(time: number) {
+    let date = splitDate(new Date(time))
+    return dateToString(time) + " " + addZero(date.hours) + ":" + addZero(date.minutes)
+}
+
 export function secondsToTimes(time: number) {
     // let hours: number = Math.floor((time / (1000 * 60 * 60)) % 24);
     // let minutes: number = Math.floor((time / 1000 / 60) % 60);

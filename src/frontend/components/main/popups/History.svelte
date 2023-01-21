@@ -3,7 +3,7 @@
     import { redo, undo } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { dateToString, timeAgo } from "../../helpers/time"
+    import { getDateAndTimeString, timeAgo } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
 
@@ -11,31 +11,94 @@
     $: uHistory = [{ id: "initial", time: 0 }, ...$undoHistory].reverse()
 
     const historyIdToString = {
+        SAVE: "Saved",
+        initial: "Initial state",
+        // edit
+        textStyle: "Updated text style",
+        textAlign: "Updated text align",
+        deleteItem: "Deleted item",
+        setItems: "Changed item",
+        setStyle: "Changed item style",
+        slideStyle: "Changed slide style",
+        // stage
+        stageItemAlign: "Changed stage item align",
+        stageItemStyle: "Changed stage item style",
+        // template
+        updateTemplate: "Updated template",
+        updateOverlay: "Updated overlay",
+        // new
+        newMediaFolder: "Added media folder",
+        newAudioFolder: "Added audio folder",
+        newProject: "Added project",
+        newFolder: "Added folder in project",
+        newSection: "Added section in project",
+        newShow: "Created show",
+        newShowsCategory: "Added shows category",
+        newOverlaysCategory: "Added overlays category",
+        newTemplatesCategory: "Added templates category",
+        newOverlay: "Created overlay",
+        newTemplate: "Created template",
+        newSlide: "Added slide",
+        newItem: "Added item",
+        newStageShow: "Created stage show",
+        // delete
+        deleteFolder: "Deleted project folder",
+        deleteProject: "Deleted project",
+        deleteStage: "Deleted stage view",
+        deleteOverlay: "Deleted overlay",
+        deleteTemplate: "Deleted template",
+        deleteShowsCategory: "Deleted shows category",
+        deleteMediaFolder: "Deleted media folder",
+        deleteAudioFolder: "Deleted audio folder",
+        deleteOverlaysCategory: "Deleted overlays category",
+        deleteTemplatesCategory: "Deleted templates category",
         removeSlides: "Removed slide(s)",
         deleteSlides: "Deleted slide(s)",
         deleteGroups: "Deleted slide group(s)",
-        slide: "Added slide",
-        newSlide: "Added slide",
+        deletePlayerVideo: "Deleted player video",
+        deleteLayout: "Deleted layout",
+        // add
         addShowToProject: "Added show to project",
+        addLayout: "Added new layout",
+        // show
+        deleteShow: "Deleted show",
+        updateShow: "Updated show",
+        slide: "Added slide",
+        changeSlide: "Changed slide",
+        showMedia: "Added media to show",
+        showAudio: "Added audio to show",
+        changeLayoutsSlides: "Changed layout slides",
+        changeLayoutKey: "Changed layout key",
+        changeLayout: "Changed layout",
+        changeLayouts: "Changed layouts",
+        // project
         updateProject: "Changed project",
-        SAVE: "Saved",
-        initial: "Initial state",
+        updateProjectFolder: "Updated project folder",
+        // other
+        slideToOverlay: "Cloned slide to overlay",
+        newEvent: "Created event",
+        deleteEvent: "Deleted event",
+        template: "Changed show template",
+        // settings
+        theme: "Changed theme",
+        addTheme: "Added theme",
+        addGlobalGroup: "Added global group",
     }
 
     function callUndo(index) {
-        setTimeout(() => {
-            for (let i = 0; i <= index; i++) {
+        for (let i = 0; i <= index; i++) {
+            setTimeout(() => {
                 undo()
-            }
-        }, 10)
+            }, i * 300)
+        }
     }
 
     function callRedo(index) {
-        setTimeout(() => {
-            for (let i = rHistory.length - 1; i >= index; i--) {
+        for (let i = rHistory.length - 1; i >= index; i--) {
+            setTimeout(() => {
                 redo()
-            }
-        }, 10)
+            }, i * 300)
+        }
     }
 
     function clearHistory() {
@@ -52,7 +115,8 @@
                     {#if item.id === "SAVE"}<Icon id="save" />{/if}
                     {historyIdToString[item.id] || item.id}
                 </span>
-                <span class="time" title={dateToString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                <!-- TODO: get clock as well: -->
+                <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
             </p>
         </Button>
     {/each}
@@ -63,7 +127,7 @@
                     {#if item.id === "SAVE"}<Icon id="save" />{/if}
                     {historyIdToString[item.id] || item.id}
                 </span>
-                <span class="time" title={dateToString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
             </p>
         </Button>
     {/each}
@@ -74,6 +138,10 @@
         <Icon id="delete" right />
         <T id="actions.clear_history" />
     </Button>
+    <!-- <div>
+        <p>Delete oldest automaticly when more than</p>
+        <NumberInput value={$historyCacheCount} on:change={(e) => historyCacheCount.set(e.detail)} buttons={false} />
+    </div> -->
 {:else}
     <Center>
         <T id="empty.general" />

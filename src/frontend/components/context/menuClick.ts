@@ -581,8 +581,10 @@ const actions: any = {
                 })
             })
             selected.set({ id: "slide", data })
-        } else if (get(activeShow)) {
-            data = GetLayoutRef().map((_a, index) => ({ index }))
+        } else if (get(activeShow) && (get(activePage) === "show" || get(activePage) === "edit")) {
+            // select all slides
+            let ref = _show("active").layouts("active").ref()[0]
+            data = ref.map((_: any, index: number) => ({ index }))
         }
         selected.set({ id: "slide", data })
     },

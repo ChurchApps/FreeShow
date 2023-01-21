@@ -588,7 +588,7 @@
         "disable_labels": "Deaktiver etiketter",
         "group_numbers": "Gruppenummer",
         "full_colors": "Full farge på lysbildegruppe",
-        "auto_output": "Vis utgangsskjerm ved oppstart",
+        "auto_output": "Aktiver utgangsskjerm ved oppstart",
         "display_metadata": "Vis metadata under presentering",
         "default_project_name": "Standard prosjektnavn",
         "resolution": "Oppløsning",
