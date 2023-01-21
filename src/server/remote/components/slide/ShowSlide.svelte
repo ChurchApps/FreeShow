@@ -1,14 +1,17 @@
 <script lang="ts">
-  import Textbox from "./Textbox.svelte"
-  import Zoomed from "./Zoomed.svelte"
+    import Textbox from "./Textbox.svelte"
+    import Zoomed from "./Zoomed.svelte"
 
-  export let slide: any
-  export let layoutSlide: any
-  export let color: string | null = slide.color
-  export let index: number
-  export let columns: number = 1
-  export let active: boolean = false
-  export let resolution: any
+    export let slide: any
+    export let media: any
+    export let layoutSlide: any
+    export let color: string | null = slide.color
+    export let index: number
+    export let columns: number = 1
+    export let active: boolean = false
+    export let resolution: any
+
+    let ratio = 0
 </script>
 
 <!-- TODO: disabled -->
@@ -17,65 +20,86 @@
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
-  <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
-    <Zoomed {resolution} background={slide.items.length ? "black" : "transparent"}>
-      <!-- TODO: check if showid exists in shows -->
-      {#each slide.items as item}
-        <Textbox {item} />
-      {/each}
-    </Zoomed>
-    <!-- TODO: BG: white, color: black -->
-    <!-- style="width: {resolution.width * zoom}px;" -->
-    <div class="label" title={slide.group || ""}>
-      <!-- font-size: 0.8em; -->
-      <span style="position: absolute;display: contents;">{index + 1}</span>
-      <span class="text">{slide.group || ""}</span>
+    <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
+        <Zoomed {resolution} background={slide.items.length ? "black" : "transparent"} bind:ratio>
+            <!-- class:ghost={!background} -->
+            <div class="background" style="zoom: {1 / ratio}">
+                {#if media[layoutSlide.background]}
+                    <img src={media[layoutSlide.background].path} />
+                {/if}
+            </div>
+            <!-- TODO: check if showid exists in shows -->
+            {#each slide.items as item}
+                <Textbox {item} />
+            {/each}
+        </Zoomed>
+        <!-- TODO: BG: white, color: black -->
+        <!-- style="width: {resolution.width * zoom}px;" -->
+        <div class="label" title={slide.group || ""}>
+            <!-- font-size: 0.8em; -->
+            <span style="position: absolute;display: contents;">{index + 1}</span>
+            <span class="text">{slide.group || ""}</span>
+        </div>
     </div>
-  </div>
 </div>
 
 <style>
-  .main {
-    display: flex;
-    position: relative;
-    padding: 5px;
-  }
+    .main {
+        display: flex;
+        position: relative;
+        padding: 5px;
+    }
 
-  .slide {
-    /* padding: 3px; */
-    background-color: var(--primary);
-    z-index: 0;
-    outline-offset: 0;
-    width: 100%;
-    /* height: fit-content; */
-    /* border: 2px solid var(--primary-lighter); */
-  }
-  .slide.active {
-    /* outline: 2px solid var(--secondary);
+    .slide {
+        /* padding: 3px; */
+        background-color: var(--primary);
+        z-index: 0;
+        outline-offset: 0;
+        width: 100%;
+        /* height: fit-content; */
+        /* border: 2px solid var(--primary-lighter); */
+    }
+    .slide.active {
+        /* outline: 2px solid var(--secondary);
     outline-offset: 4px; */
-    outline: 3px solid var(--secondary);
-    outline-offset: 4px;
-  }
-  .slide.disabled {
-    opacity: 0.2;
-  }
+        outline: 3px solid var(--secondary);
+        outline-offset: 4px;
+    }
+    .slide.disabled {
+        opacity: 0.2;
+    }
 
-  .label {
-    display: flex;
-    padding: 5px;
-    padding-bottom: 3px;
-    font-size: 0.8em;
-    font-weight: bold;
-    align-items: center;
-    /* opacity: 0.8; */
-  }
+    .background {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+    }
+    /* .background.ghost {
+    opacity: 0.4;
+  } */
+    .background :global(img) {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
 
-  .label .text {
-    width: 100%;
-    margin: 0 20px;
-    text-align: center;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    .label {
+        display: flex;
+        padding: 5px;
+        padding-bottom: 3px;
+        font-size: 0.8em;
+        font-weight: bold;
+        align-items: center;
+        /* opacity: 0.8; */
+    }
+
+    .label .text {
+        width: 100%;
+        margin: 0 20px;
+        text-align: center;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 </style>

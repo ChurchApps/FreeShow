@@ -9,8 +9,8 @@ import { toApp } from "./index"
 var REMOTE_MAX: number = 10
 var STAGE_MAX: number = 10
 var connections: { [key: string]: any } = {
-  REMOTE: {},
-  STAGE: {},
+    REMOTE: {},
+    STAGE: {},
 }
 
 const remoteExpressApp = express()
@@ -28,25 +28,25 @@ stageExpressApp.use(express.static(join(__dirname, "stage")))
 
 var started: boolean = false
 export function startServers({ ports, max }: any) {
-  if (started) closeServers()
-  started = true
-  remoteServer.listen(ports.remote, () => console.log("Remote on: " + ports.remote))
-  stageServer.listen(ports.stage, () => console.log("Stage on: " + ports.stage))
-  REMOTE_MAX = max
-  STAGE_MAX = max
+    if (started) closeServers()
+    started = true
+    remoteServer.listen(ports.remote, () => console.log("Remote on: " + ports.remote))
+    stageServer.listen(ports.stage, () => console.log("Stage on: " + ports.stage))
+    REMOTE_MAX = max
+    STAGE_MAX = max
 
-  remoteServer.once("error", (err: any) => {
-    if (err.code === "EADDRINUSE") remoteServer.close()
-  })
-  stageServer.once("error", (err: any) => {
-    if (err.code === "EADDRINUSE") stageServer.close()
-  })
+    remoteServer.once("error", (err: any) => {
+        if (err.code === "EADDRINUSE") remoteServer.close()
+    })
+    stageServer.once("error", (err: any) => {
+        if (err.code === "EADDRINUSE") stageServer.close()
+    })
 }
 
 export function closeServers() {
-  started = false
-  remoteServer.close()
-  stageServer.close()
+    started = false
+    remoteServer.close()
+    stageServer.close()
 }
 
 // REMOTE
@@ -54,73 +54,86 @@ export function closeServers() {
 // let clients = await ioRemote.sockets.allSockets();
 // ioRemote.sockets.socket.forEach(socket, s => console.log(s.id));
 ioRemote.on("connection", (socket) => {
-  if (Object.keys(connections.REMOTE).length >= REMOTE_MAX) {
-    ioStage.emit(REMOTE, { channel: "ERROR", id: "overLimit", data: REMOTE_MAX })
-    socket.disconnect()
-  } else {
-    initialize(REMOTE, socket)
-  }
+    if (Object.keys(connections.REMOTE).length >= REMOTE_MAX) {
+        ioStage.emit(REMOTE, { channel: "ERROR", id: "overLimit", data: REMOTE_MAX })
+        socket.disconnect()
+    } else {
+        initialize(REMOTE, socket)
+    }
 })
+
+// DO SOMETHING WITH THE DATA BEFORE SENDING
+// const actions: any = {
+//     MEDIA: (data: any) => {
+//         let media: any = data.media
+//         let newMedia: any = {}
+//         Object.keys(media).forEach((id: string) => {
+//             newMedia[id] = readFile(media[id].path)
+//         })
+//         return newMedia
+//     },
+// }
 
 // SEND DATA FROM APP TO CLIENT
 ipcMain.on(REMOTE, (_e, msg) => {
-  if (msg.id) ioRemote.to(msg.id).emit(REMOTE, msg)
-  else ioRemote.emit(REMOTE, msg)
+    // if (actions[msg.channel]) msg.data = actions[msg.channel](msg.data)
+    if (msg.id) ioRemote.to(msg.id).emit(REMOTE, msg)
+    else ioRemote.emit(REMOTE, msg)
 })
 
 // STAGE
 
 ioStage.on("connection", (socket) => {
-  if (Object.keys(connections.STAGE).length >= STAGE_MAX) {
-    ioStage.emit(STAGE, { channel: "ERROR", data: "overLimit" })
-    socket.disconnect()
-  } else {
-    initialize(STAGE, socket)
-  }
+    if (Object.keys(connections.STAGE).length >= STAGE_MAX) {
+        ioStage.emit(STAGE, { channel: "ERROR", data: "overLimit" })
+        socket.disconnect()
+    } else {
+        initialize(STAGE, socket)
+    }
 })
 
 // SEND DATA FROM APP TO CLIENT
 ipcMain.on(STAGE, (_e, msg) => {
-  if (msg.id) ioStage.to(msg.id).emit(STAGE, msg)
-  else ioStage.emit(STAGE, msg)
+    if (msg.id) ioStage.to(msg.id).emit(STAGE, msg)
+    else ioStage.emit(STAGE, msg)
 })
 
 // FUNCTIONS
 
 function initialize(id: "REMOTE" | "STAGE", socket: any) {
-  // INITIALIZE
-  let name: string = getOS(socket.handshake.headers["user-agent"] || "")
-  toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })
-  connections[id][socket.id] = { name }
+    // INITIALIZE
+    let name: string = getOS(socket.handshake.headers["user-agent"] || "")
+    toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })
+    connections[id][socket.id] = { name }
 
-  // SEND DATA FROM CLIENT TO APP
-  socket.on(id, (msg: any) => toApp(id, msg))
+    // SEND DATA FROM CLIENT TO APP
+    socket.on(id, (msg: any) => toApp(id, msg))
 
-  // DISCONNECT
-  socket.on("disconnect", () => {
-    toApp(id, { channel: "DISCONNECT", id: socket.id })
-    delete connections[id][socket.id]
-  })
+    // DISCONNECT
+    socket.on("disconnect", () => {
+        toApp(id, { channel: "DISCONNECT", id: socket.id })
+        delete connections[id][socket.id]
+    })
 }
 
 export function getOS(ua: string) {
-  // https://stackoverflow.com/a/59706252
-  let os: string = "Unknown"
-  const device: { [key: string]: RegExp } = {
-    "Generic Linux": /Linux/i,
-    Android: /Android/i,
-    BlackBerry: /BlackBerry/i,
-    Bluebird: /EF500/i,
-    "Chrome OS": /CrOS/i,
-    Datalogic: /DL-AXIS/i,
-    Honeywell: /CT50/i,
-    iPad: /iPad/i,
-    iPhone: /iPhone/i,
-    iPod: /iPod/i,
-    macOS: /Macintosh/i,
-    Windows: /IEMobile|Windows/i,
-    Zebra: /TC70|TC55/i,
-  }
-  Object.keys(device).map((v) => ua.match(device[v]) && (os = v))
-  return os
+    // https://stackoverflow.com/a/59706252
+    let os: string = "Unknown"
+    const device: { [key: string]: RegExp } = {
+        "Generic Linux": /Linux/i,
+        Android: /Android/i,
+        BlackBerry: /BlackBerry/i,
+        Bluebird: /EF500/i,
+        "Chrome OS": /CrOS/i,
+        Datalogic: /DL-AXIS/i,
+        Honeywell: /CT50/i,
+        iPad: /iPad/i,
+        iPhone: /iPhone/i,
+        iPod: /iPod/i,
+        macOS: /Macintosh/i,
+        Windows: /IEMobile|Windows/i,
+        Zebra: /TC70|TC55/i,
+    }
+    Object.keys(device).map((v) => ua.match(device[v]) && (os = v))
+    return os
 }
