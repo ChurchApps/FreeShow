@@ -1,7 +1,11 @@
 <script lang="ts">
-  let canvas: any
-  let video: any
-  let context: any
+  // DOES NOT WORK ON HTTP
+  // https://stackoverflow.com/questions/60957829/navigator-mediadevices-is-undefined
+  // https://stackoverflow.com/questions/16835421/how-to-allow-chrome-to-access-my-camera-on-localhost
+
+  let canvas: any;
+  let video: any;
+  let context: any;
 
   // $: {
   //   if (canvas) {
@@ -16,20 +20,27 @@
   // }
 
   // let socket = io();
-  import { io } from "socket.io-client"
-  let socket = io()
+  import { io } from "socket.io-client";
+  let socket = io();
 
   function viewVideo(video: any, context: any) {
-    context.drawImage(video, 0, 0, context.width, context.height)
+    context.drawImage(video, 0, 0, context.width, context.height);
     // const base64 = this.result.replace(/.*base64,/, '');
-    socket.emit("WEBCAM", { channel: "STREAM", data: canvas.toDataURL("image/webp") })
+    socket.emit("CAM", {
+      channel: "STREAM",
+      data: canvas.toDataURL("image/webp"),
+    });
     // const base64 = canvas.toString("base64")
     // socket.emit("stream", base64)
   }
 
-  const constraints: any = { width: { min: 1024, ideal: 1280, max: 1920 }, height: { min: 576, ideal: 720, max: 1080 }, facingMode: "environment" }
+  const constraints: any = {
+    width: { min: 1024, ideal: 1280, max: 1920 },
+    height: { min: 576, ideal: 720, max: 1080 },
+    facingMode: "environment",
+  };
 
-  let errors: any[] = []
+  let errors: any[] = [];
 
   // ;(function () {
   //   // let navigator: any
@@ -58,25 +69,25 @@
   // })()
 
   //
-  main()
+  main();
   async function main() {
     // Set up front-facing camera
-    await setupCamera()
-    video.play()
+    await setupCamera();
+    video.play();
 
     // Set up canvas for livestreaming
     // canvas = document.getElementById('facecanvas');
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    context = canvas.getContext("2d")
-    context.width = canvas.width
-    context.height = canvas.height
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context = canvas.getContext("2d");
+    context.width = canvas.width;
+    context.height = canvas.height;
 
-    console.log("Camera setup done")
+    console.log("Camera setup done");
 
     setInterval(function () {
-      viewVideo(video, context)
-    }, 5)
+      viewVideo(video, context);
+    }, 5);
   }
 
   async function setupCamera() {
@@ -84,7 +95,9 @@
     // video = document.getElementById('video');
 
     // Request the front-facing camera of the device
-    console.log(constraints)
+    console.log(constraints);
+
+    console.log(navigator, navigator.mediaDevices);
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -93,15 +106,15 @@
         height: { ideal: 1920 },
         width: { ideal: 1920 },
       },
-    })
-    video.srcObject = stream
+    });
+    video.srcObject = stream;
 
     // Handle the video stream once it loads.
     return new Promise((resolve) => {
       video.onloadedmetadata = () => {
-        resolve(video)
-      }
-    })
+        resolve(video);
+      };
+    });
   }
 </script>
 

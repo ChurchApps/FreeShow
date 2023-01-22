@@ -54,6 +54,7 @@ export const receiveSTAGE: any = {
 
         // connection successfull
         connections.update((a) => {
+            if (!a.STAGE) a.STAGE = {}
             if (!a.STAGE[msg.id!]) a.STAGE[msg.id!] = {}
             a.STAGE[msg.id!].active = msg.data.id
             return a

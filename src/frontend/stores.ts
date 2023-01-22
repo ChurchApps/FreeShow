@@ -27,7 +27,7 @@ export const loaded: Writable<boolean> = writable(true)
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const clipboard: Writable<{ id: null | string; data: any[] }> = writable({ id: null, data: [] })
-export const connections: Writable<{ [key: string]: any }> = writable({ REMOTE: {}, STAGE: {} })
+export const connections: Writable<{ [key: string]: any }> = writable({})
 export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
 export const activeShow: Writable<null | ShowRef> = writable(null)
@@ -173,7 +173,7 @@ export const outputs: Writable<Outputs> = writable({}) // {default}
 export const outLocked: Writable<boolean> = writable(false) // false
 
 // CONNECTIONS
-export const ports: Writable<any> = writable({ remote: 5510, stage: 5511 }) // {default}
+export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512 }) // {default}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
 

@@ -60,6 +60,7 @@ export const receiveREMOTE: any = {
 
         if (msg.id) {
             connections.update((a) => {
+                if (!a.REMOTE) a.REMOTE = {}
                 if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
                 a.REMOTE[msg.id!].active = showID
                 return a
@@ -106,6 +107,7 @@ export const receiveREMOTE: any = {
         }
         if (id.length && msg.id) {
             connections.update((a) => {
+                if (!a.REMOTE) a.REMOTE = {}
                 if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
                 a.REMOTE[msg.id!].active = id
                 return a
@@ -207,6 +209,7 @@ export function initializeRemote(id: string) {
 
 //       if (msg.id) {
 //         connections.update((a) => {
+//           if (!a.REMOTE) a.REMOTE = {}
 //           if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
 //           a.REMOTE[msg.id!].active = showID
 //           return a
@@ -245,6 +248,7 @@ export function initializeRemote(id: string) {
 //       }
 //       if (id.length && msg.id) {
 //         connections.update((a) => {
+//           if (!a.REMOTE) a.REMOTE = {}
 //           if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
 //           a.REMOTE[msg.id!].active = id
 //           return a

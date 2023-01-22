@@ -1,9 +1,46 @@
+import { draw, drawSettings, drawTool } from "./../stores"
 import { get } from "svelte/store"
-import { REMOTE, STAGE } from "../../types/Channels"
-import type { ClientMessage } from "../../types/Socket"
+import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
+import type { ClientMessage, Clients } from "../../types/Socket"
+import { getResolution, setOutput } from "../components/helpers/output"
+import { nextSlide, previousSlide } from "../components/helpers/showActions"
 import { connections } from "../stores"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
+
+const receiveCONTROLLER = {
+    ACTION: ({ data }) => {
+        const actions = {
+            next: nextSlide,
+            previous: previousSlide,
+            clear: () => {
+                // TODO: combine this, remoteTalk and ClearButtons
+                setOutput("slide", null)
+                setOutput("background", null)
+                setOutput("overlays", [])
+            },
+        }
+        if (actions[data.id]) actions[data.id]()
+    },
+    FOCUS: ({ data }) => {
+        if (!data.offset) {
+            console.log(data)
+            draw.set(null)
+            return
+        }
+        let resolution = getResolution()
+        data.offset.x *= resolution.width
+        data.offset.y *= resolution.height
+        let tool = data.tool || "focus"
+        let settings = get(drawSettings)[tool]
+        if (settings) {
+            data.offset.x -= settings.size / 2
+            data.offset.y -= settings.size / 2
+        }
+        draw.set(data.offset)
+        drawTool.set(tool)
+    },
+}
 
 export function filterObjectArray(object: any, keys: string[], filter: null | string = null) {
     return Object.entries(object)
@@ -17,16 +54,17 @@ export function arrayToObject(array: any[], key: string = "id") {
 // FUNCTIONS
 
 // get data from client
-export function client(id: "REMOTE" | "STAGE", msg: ClientMessage) {
+export function client(id: Clients, msg: ClientMessage) {
     if (msg.channel === "CONNECTION") {
         connections.update((c: any) => {
+            if (!c[id]) c[id] = {}
             c[id][msg.id!] = { entered: false, ...msg.data }
             return c
         })
         console.log(msg.id + " connected")
     } else if (msg.channel === "DISCONNECT") {
         connections.update((c: any) => {
-            delete c[id][msg.id!]
+            if (c[id]) delete c[id][msg.id!]
             return c
         })
         console.log(msg.id + " disconnected")
@@ -34,18 +72,21 @@ export function client(id: "REMOTE" | "STAGE", msg: ClientMessage) {
 }
 
 // send data to client
-export async function sendData(id: "REMOTE" | "STAGE", msg: ClientMessage, check: boolean = false) {
+export async function sendData(id: Clients, msg: ClientMessage, check: boolean = false) {
     if (id === REMOTE) {
         if (!receiveREMOTE[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
         msg = await receiveREMOTE[msg.channel](msg)
     } else if (id === STAGE) {
         if (!receiveSTAGE[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
         msg = receiveSTAGE[msg.channel](msg)
+    } else if (id === CONTROLLER) {
+        if (!receiveCONTROLLER[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
+        msg = receiveCONTROLLER[msg.channel](msg)
     }
 
     // let ids: string[] = []
     // if (msg.id) ids = [msg.id]
-    // else ids = Object.keys(get(connections).REMOTE)
+    // else ids = Object.keys(get(connections).REMOTE || {})
     if (msg && msg.data !== null && (!check || !checkSent(id, msg))) {
         window.api.send(id, msg)
         // ids.forEach((id) => {
@@ -57,7 +98,7 @@ export async function sendData(id: "REMOTE" | "STAGE", msg: ClientMessage, check
 // limit data sent per second
 let timeouts: any = {}
 let time: number = 1000
-export function timedout(id: "REMOTE" | "STAGE", msg: ClientMessage, run: Function) {
+export function timedout(id: Clients, msg: ClientMessage, run: Function) {
     let timeID = id + msg.id || "" + msg.channel
     if (!timeouts[timeID]) {
         timeouts[timeID] = true
@@ -73,7 +114,7 @@ export function timedout(id: "REMOTE" | "STAGE", msg: ClientMessage, run: Functi
 
 // check previous
 var sent: any = { REMOTE: {}, STAGE: {} }
-function checkSent(id: "REMOTE" | "STAGE", msg: any): boolean {
+function checkSent(id: Clients, msg: any): boolean {
     let match: boolean = true
     if (sent[id][msg.channel] !== JSON.stringify(msg.data)) {
         sent[id][msg.channel] = JSON.stringify(msg.data)
@@ -83,8 +124,8 @@ function checkSent(id: "REMOTE" | "STAGE", msg: any): boolean {
 }
 
 // send data per connection to all
-export function eachConnection(id: "REMOTE" | "STAGE", channel: any, callback: any) {
-    Object.entries(get(connections)[id]).forEach(([clientID, value]: any) => {
+export function eachConnection(id: Clients, channel: any, callback: any) {
+    Object.entries(get(connections)[id] || {}).forEach(([clientID, value]: any) => {
         let data = callback(value)
         if (data) window.api.send(id, { id: clientID, channel, data })
     })

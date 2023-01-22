@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import { CONTROLLER, OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
@@ -122,9 +122,10 @@ export function listen() {
     //   send(OUTPUT, ["MEDIA"], data )
     // })
 
-    // FROM CLIENT
+    // FROM CLIENT (EXPRESS SERVERS)
     window.api.receive(REMOTE, (msg: ClientMessage) => client(REMOTE, msg))
     window.api.receive(STAGE, (msg: ClientMessage) => client(STAGE, msg))
+    window.api.receive(CONTROLLER, (msg: ClientMessage) => client(CONTROLLER, msg))
 
     // TO REMOTE
     // TODO: remote (out)

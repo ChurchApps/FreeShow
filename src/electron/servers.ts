@@ -3,64 +3,56 @@ import express, { Response } from "express"
 import http from "http"
 import { join } from "path"
 import { Server } from "socket.io"
-import { REMOTE, STAGE } from "../types/Channels"
 import { toApp } from "./index"
 
-var REMOTE_MAX: number = 10
-var STAGE_MAX: number = 10
-var connections: { [key: string]: any } = {
-    REMOTE: {},
-    STAGE: {},
+let servers: any = {
+    REMOTE: { port: 5510 },
+    STAGE: { port: 5511 },
+    CONTROLLER: { port: 5512 },
+    // CAM: { port: 5513 },
 }
 
-const remoteExpressApp = express()
-const stageExpressApp = express()
-const remoteServer = http.createServer(remoteExpressApp)
-const stageServer = http.createServer(stageExpressApp)
-const ioRemote = new Server(remoteServer)
-const ioStage = new Server(stageServer)
+// const app = express()
 
-remoteExpressApp.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, "remote", "index.html")))
-stageExpressApp.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, "stage", "index.html")))
-
-remoteExpressApp.use(express.static(join(__dirname, "remote")))
-stageExpressApp.use(express.static(join(__dirname, "stage")))
+createServers()
+function createServers() {
+    Object.keys(servers).forEach((id) => {
+        let app = express()
+        let server = http.createServer(app)
+        app.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
+        app.use(express.static(join(__dirname, id.toLowerCase())))
+        servers[id] = {
+            ...servers[id],
+            server,
+            io: new Server(server),
+            max: 10,
+            connections: {},
+        }
+        createBridge({ id, ...servers[id] })
+    })
+}
 
 var started: boolean = false
 export function startServers({ ports, max }: any) {
     if (started) closeServers()
     started = true
-    remoteServer.listen(ports.remote, () => console.log("Remote on: " + ports.remote))
-    stageServer.listen(ports.stage, () => console.log("Stage on: " + ports.stage))
-    REMOTE_MAX = max
-    STAGE_MAX = max
 
-    remoteServer.once("error", (err: any) => {
-        if (err.code === "EADDRINUSE") remoteServer.close()
-    })
-    stageServer.once("error", (err: any) => {
-        if (err.code === "EADDRINUSE") stageServer.close()
+    Object.keys(servers).forEach((id) => {
+        servers[id].max = max
+        if (ports[id.toLowerCase()]) servers[id].port = ports[id.toLowerCase()]
+        servers[id].server.listen(servers[id].port, () => console.log(id + " on: " + servers[id].port))
+        servers[id].server.once("error", (err: any) => {
+            if (err.code === "EADDRINUSE") servers[id].server.close()
+        })
     })
 }
 
 export function closeServers() {
     started = false
-    remoteServer.close()
-    stageServer.close()
+    Object.keys(servers).forEach((id) => {
+        servers[id].server.close()
+    })
 }
-
-// REMOTE
-
-// let clients = await ioRemote.sockets.allSockets();
-// ioRemote.sockets.socket.forEach(socket, s => console.log(s.id));
-ioRemote.on("connection", (socket) => {
-    if (Object.keys(connections.REMOTE).length >= REMOTE_MAX) {
-        ioStage.emit(REMOTE, { channel: "ERROR", id: "overLimit", data: REMOTE_MAX })
-        socket.disconnect()
-    } else {
-        initialize(REMOTE, socket)
-    }
-})
 
 // DO SOMETHING WITH THE DATA BEFORE SENDING
 // const actions: any = {
@@ -74,37 +66,32 @@ ioRemote.on("connection", (socket) => {
 //     },
 // }
 
-// SEND DATA FROM APP TO CLIENT
-ipcMain.on(REMOTE, (_e, msg) => {
-    // if (actions[msg.channel]) msg.data = actions[msg.channel](msg.data)
-    if (msg.id) ioRemote.to(msg.id).emit(REMOTE, msg)
-    else ioRemote.emit(REMOTE, msg)
-})
+function createBridge(server: any) {
+    // RECEIVE CONNECTION FROM CLIENT
+    server.io.on("connection", (socket: any) => {
+        if (Object.keys(server.connections).length >= server.max) {
+            server.io.emit(server.id, { channel: "ERROR", id: "overLimit", data: server.max })
+            socket.disconnect()
+        } else {
+            initialize(server.id, socket)
+        }
+    })
 
-// STAGE
-
-ioStage.on("connection", (socket) => {
-    if (Object.keys(connections.STAGE).length >= STAGE_MAX) {
-        ioStage.emit(STAGE, { channel: "ERROR", data: "overLimit" })
-        socket.disconnect()
-    } else {
-        initialize(STAGE, socket)
-    }
-})
-
-// SEND DATA FROM APP TO CLIENT
-ipcMain.on(STAGE, (_e, msg) => {
-    if (msg.id) ioStage.to(msg.id).emit(STAGE, msg)
-    else ioStage.emit(STAGE, msg)
-})
+    // SEND DATA FROM APP TO CLIENT
+    ipcMain.on(server.id, (_e, msg) => {
+        // if (actions[msg.channel]) msg.data = actions[msg.channel](msg.data)
+        if (msg.id) server.io.to(msg.id).emit(server.id, msg)
+        else server.io.emit(server.id, msg)
+    })
+}
 
 // FUNCTIONS
 
-function initialize(id: "REMOTE" | "STAGE", socket: any) {
+function initialize(id: "REMOTE" | "STAGE" | "CONTROLLER", socket: any) {
     // INITIALIZE
     let name: string = getOS(socket.handshake.headers["user-agent"] || "")
     toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })
-    connections[id][socket.id] = { name }
+    servers[id].connections[socket.id] = { name }
 
     // SEND DATA FROM CLIENT TO APP
     socket.on(id, (msg: any) => toApp(id, msg))
@@ -112,7 +99,7 @@ function initialize(id: "REMOTE" | "STAGE", socket: any) {
     // DISCONNECT
     socket.on("disconnect", () => {
         toApp(id, { channel: "DISCONNECT", id: socket.id })
-        delete connections[id][socket.id]
+        delete servers[id].connections[socket.id]
     })
 }
 

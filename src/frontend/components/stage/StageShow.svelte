@@ -1,66 +1,87 @@
 <script lang="ts">
-  import { activeStage, connections, stageShows } from "../../stores"
-  import { history } from "../helpers/history"
-  import { getStyles } from "../helpers/style"
-  import T from "../helpers/T.svelte"
-  import { getStyleResolution } from "../slide/getStyleResolution"
-  import Zoomed from "../slide/Zoomed.svelte"
-  import Center from "../system/Center.svelte"
-  import Main from "../system/Main.svelte"
-  import Snaplines from "../system/Snaplines.svelte"
-  import { updateStageShow } from "./stage"
-  import Stagebox from "./Stagebox.svelte"
+  import { activeStage, connections, stageShows } from "../../stores";
+  import { history } from "../helpers/history";
+  import { getStyles } from "../helpers/style";
+  import T from "../helpers/T.svelte";
+  import { getStyleResolution } from "../slide/getStyleResolution";
+  import Zoomed from "../slide/Zoomed.svelte";
+  import Center from "../system/Center.svelte";
+  import Main from "../system/Main.svelte";
+  import Snaplines from "../system/Snaplines.svelte";
+  import { updateStageShow } from "./stage";
+  import Stagebox from "./Stagebox.svelte";
 
-  let lines: [string, number][] = []
-  let mouse: any = null
-  let newStyles: any = {}
-  $: active = $activeStage.items
+  let lines: [string, number][] = [];
+  let mouse: any = null;
+  let newStyles: any = {};
+  $: active = $activeStage.items;
 
-  let ratio: number = 1
+  let ratio: number = 1;
 
   $: {
     if (active.length) {
-      if (Object.keys(newStyles).length) setStyles()
-    } else newStyles = {}
+      if (Object.keys(newStyles).length) setStyles();
+    } else newStyles = {};
   }
 
-  $: if ($activeStage.id === null && Object.keys($stageShows).length) activeStage.set({ id: Object.keys($stageShows)[0], items: [] })
+  $: if ($activeStage.id === null && Object.keys($stageShows).length)
+    activeStage.set({ id: Object.keys($stageShows)[0], items: [] });
 
   function setStyles() {
-    let items: any = $stageShows[$activeStage.id!].items
-    let newData: any[] = []
-    let oldData: any[] = []
+    let items: any = $stageShows[$activeStage.id!].items;
+    let newData: any[] = [];
+    let oldData: any[] = [];
 
     active.forEach((id) => {
-      let styles: any = getStyles(items[id].style)
-      Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+      let styles: any = getStyles(items[id].style);
+      Object.entries(newStyles).forEach(
+        ([key, value]: any) => (styles[key] = value)
+      );
 
-      let textStyles: string = ""
-      Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+      let textStyles: string = "";
+      Object.entries(styles).forEach(
+        (obj) => (textStyles += obj[0] + ":" + obj[1] + ";")
+      );
 
       // TODO: move multiple!
-      newData.push(textStyles)
-      oldData.push(items[id].style)
-    })
+      newData.push(textStyles);
+      oldData.push(items[id].style);
+    });
 
-    history({ id: "stageItemStyle", oldData, newData, location: { page: "stage", slide: $activeStage.id!, items: active } })
+    history({
+      id: "stageItemStyle",
+      oldData,
+      newData,
+      location: { page: "stage", slide: $activeStage.id!, items: active },
+    });
     if (!timeout) {
-      updateStageShow()
+      updateStageShow();
       timeout = setTimeout(() => {
-        updateStageShow()
-        timeout = null
-      }, 500)
+        updateStageShow();
+        timeout = null;
+      }, 500);
     }
   }
 
-  let timeout: any = null
+  let timeout: any = null;
 </script>
 
-<Main slide={$activeStage.id ? $stageShows[$activeStage.id] : null} let:width let:height let:resolution>
+<Main
+  slide={$activeStage.id ? $stageShows[$activeStage.id] : null}
+  let:width
+  let:height
+  let:resolution
+>
   <div class="parent">
     {#if $activeStage.id}
       <!-- TODO: stage resolution... -->
-      <Zoomed style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
+      <Zoomed
+        style={getStyleResolution(resolution, width, height, "fit")}
+        bind:ratio
+        disableStyle
+        hideOverflow={false}
+        center
+      >
         <!-- TODO: snapping to top left... -->
         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
         <!-- {#key Slide} -->
@@ -79,7 +100,8 @@
   </div>
   <div class="bar">
     <!-- TODO: get already connected... -->
-    <T id="settings.connections" />: {Object.keys($connections.STAGE).length}
+    <T id="settings.connections" />: {Object.keys($connections.STAGE || {})
+      .length}
   </div>
 </Main>
 
