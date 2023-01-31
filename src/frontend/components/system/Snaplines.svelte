@@ -1,60 +1,82 @@
 <script lang="ts">
-  import { moveBox, resizeBox } from "./textbox"
+  import { moveBox, resizeBox } from "./textbox";
 
-  export let lines: [string, number][]
-  export let mouse: any
-  export let newStyles: any
-  export let ratio: number
-  export let active: any
+  export let lines: [string, number][];
+  export let mouse: any;
+  export let newStyles: any;
+  export let ratio: number;
+  export let active: any;
 
-  let styles: any = {}
+  let styles: any = {};
   function mousemove(e: any) {
-    if (!mouse) return
+    if (!mouse) return;
 
-    let notTextBox: boolean = mouse.item.type !== undefined && mouse.item.type !== "text"
-    if (!notTextBox && !e.ctrlKey && !e.metaKey && !mouse.e.target.closest(".line") && !mouse.e.target.closest(".square")) return
+    let notTextBox: boolean =
+      mouse.item.type !== undefined && mouse.item.type !== "text";
+    if (
+      !notTextBox &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !mouse.e.target.closest(".line") &&
+      !mouse.e.target.closest(".square")
+    )
+      return;
 
-    e?.preventDefault()
-    styles = {}
+    e?.preventDefault();
+    styles = {};
 
     // TODO: move multiple!
 
     let moveCondition: boolean =
       mouse.e.target.closest(".line") ||
-      ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) && !mouse.e.target.closest(".square")) ||
+      ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) &&
+        !mouse.e.target.closest(".square")) ||
       mouse.e.ctrlKey ||
       mouse.e.metaKey ||
-      mouse.e.buttons === 4
+      mouse.e.buttons === 4;
 
-    let square = e.shiftKey
-    if (mouse.item.type === "icon") square = true
+    let square = e.shiftKey;
+    if (mouse.item.type === "icon") square = true;
 
-    if (moveCondition) [styles, lines] = moveBox(e, mouse, ratio, active, lines)
+    if (moveCondition)
+      [styles, lines] = moveBox(e, mouse, ratio, active, lines);
     else if (mouse.e.target.closest(".square")) {
-      styles = resizeBox(e, mouse, square, ratio)
-      if (!e.altKey) [styles, lines] = moveBox(null, mouse, ratio, active, lines, styles)
+      styles = resizeBox(e, mouse, square, ratio);
+      if (!e.altKey)
+        [styles, lines] = moveBox(null, mouse, ratio, active, lines, styles);
     }
 
     Object.keys(styles).forEach((key) => {
-      if (styles[key] === undefined || styles[key].toString().includes("px")) return
-      if (key === "width" || key === "height") styles[key] = Math.max(16 / ratio, styles[key])
-      styles[key] = styles[key].toFixed(2) + "px"
-    })
+      if (styles[key] === undefined || styles[key].toString().includes("px"))
+        return;
+      if (key === "width" || key === "height")
+        styles[key] = Math.max(16 / ratio, styles[key]);
+      styles[key] = styles[key].toFixed(2) + "px";
+    });
 
-    newStyles = styles
+    newStyles = styles;
   }
 
-  function mouseup() {
-    mouse = null
-    lines = []
-    newStyles = {}
+  function mouseup(e: any) {
+    if (e.target.closest(".chords")) return;
+
+    mouse = null;
+    lines = [];
+    newStyles = {};
   }
 </script>
 
 <svelte:window on:mousemove={mousemove} on:mouseup={mouseup} />
 
 {#each lines as line}
-  <div class="line {line[0]}" style="{line[0].includes('x') ? 'left' : 'top'}: {line[1]}px;transform:translate{line[0].includes('x') ? 'X' : 'Y'}(-50%);" />
+  <div
+    class="line {line[0]}"
+    style="{line[0].includes('x')
+      ? 'left'
+      : 'top'}: {line[1]}px;transform:translate{line[0].includes('x')
+      ? 'X'
+      : 'Y'}(-50%);"
+  />
 {/each}
 
 <style>

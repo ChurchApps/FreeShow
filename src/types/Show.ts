@@ -1,197 +1,205 @@
 import type { Resolution } from "./Settings"
 
 export interface Shows {
-  [key: string]: Show
+    [key: string]: Show
 }
 
 export interface Show {
-  name: string
-  private?: boolean
-  category: null | ID
-  settings: {
-    activeLayout: ID
-    resolution?: Resolution
-    template: null | ID
-  }
-  timestamps: {
-    created: number
-    modified: null | number
-    used: null | number
-  }
-  meta: {
-    title?: string
-    artist?: string
-    license?: string
-    key?: string
-  }
-  slides: { [key: ID]: Slide }
-  layouts: { [key: ID]: Layout }
-  media: { [key: ID]: Media }
+    name: string
+    private?: boolean
+    category: null | ID
+    settings: {
+        activeLayout: ID
+        resolution?: Resolution
+        template: null | ID
+    }
+    timestamps: {
+        created: number
+        modified: null | number
+        used: null | number
+    }
+    meta: {
+        title?: string
+        artist?: string
+        license?: string
+        key?: string
+    }
+    slides: { [key: ID]: Slide }
+    layouts: { [key: ID]: Layout }
+    media: { [key: ID]: Media }
 }
 
 export interface Slide {
-  group: null | string
-  color: null | string
-  globalGroup?: string
-  settings: {
-    background?: boolean
-    color?: string
-    resolution?: Resolution
-  }
-  children?: string[]
-  notes: string
-  items: Item[]
-  stageItems?: Item[]
+    group: null | string
+    color: null | string
+    globalGroup?: string
+    settings: {
+        background?: boolean
+        color?: string
+        resolution?: Resolution
+    }
+    children?: string[]
+    notes: string
+    items: Item[]
+    stageItems?: Item[]
 }
 
 export interface Item {
-  id?: string
-  lines?: Line[]
-  auto?: boolean
-  style: string
-  align?: string
-  media?: any
-  timer?: Timer
-  clock?: Clock
-  type?: ItemType
-  mirror?: Mirror
-  src?: string
-  fit?: string
-  filter?: string
-  flipped?: boolean
-  // media: fit, startAt, endAt
-  // tag?: string; // p, div????
+    id?: string
+    lines?: Line[]
+    auto?: boolean
+    style: string
+    align?: string
+    media?: any
+    timer?: Timer
+    clock?: Clock
+    type?: ItemType
+    mirror?: Mirror
+    src?: string
+    fit?: string
+    filter?: string
+    flipped?: boolean
+    chords?: boolean // stage
+    // media: fit, startAt, endAt
+    // tag?: string; // p, div????
 }
 
 export interface Timer {
-  id?: string
-  name: string
-  type: "counter" | "clock" | "event"
-  start?: number
-  end?: number
-  event?: string
-  time?: string
-  // format?: string
-  // paused?: boolean
+    id?: string
+    name: string
+    type: "counter" | "clock" | "event"
+    start?: number
+    end?: number
+    event?: string
+    time?: string
+    // format?: string
+    // paused?: boolean
 }
 
 export interface Clock {
-  type: "digital" | "analog"
-  seconds: boolean
+    type: "digital" | "analog"
+    seconds: boolean
 }
 
 export interface Mirror {
-  show?: string
+    show?: string
 }
 
 export interface Line {
-  align: string
-  text: {
-    value: string
-    style: string
-  }[]
+    align: string
+    text: {
+        value: string
+        style: string
+    }[]
+    chords?: Chords[]
+}
+
+export interface Chords {
+    id: string
+    pos: number
+    key: string
 }
 
 export interface Layout {
-  name: string
-  notes: string
-  slides: SlideData[]
+    name: string
+    notes: string
+    slides: SlideData[]
 }
 
 export interface SlideData {
-  id: ID
-  disabled?: boolean
-  parent?: ID // layout ref
-  children?: any // layout slide
-  color?: null | string
-  // TODO: this is next slide timer
-  nextTimer?: number
-  transition?: Transition
-  end?: boolean
-  timer?: number
-  background?: string // set backgorund action?
-  overlays?: string[]
-  audio?: string[]
+    id: ID
+    disabled?: boolean
+    parent?: ID // layout ref
+    children?: any // layout slide
+    color?: null | string
+    // TODO: this is next slide timer
+    nextTimer?: number
+    transition?: Transition
+    end?: boolean
+    timer?: number
+    background?: string // set backgorund action?
+    overlays?: string[]
+    audio?: string[]
 
-  actions?: {
-    clearBackground?: boolean
-    clearOverlays?: boolean
-    clearAudio?: boolean
-  }
-  // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
+    actions?: {
+        clearBackground?: boolean
+        clearOverlays?: boolean
+        clearAudio?: boolean
+    }
+    // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
 }
 
 export interface Transition {
-  type: TransitionType
-  duration: number
-  easing: string
+    type: TransitionType
+    duration: number
+    easing: string
 }
 
 export interface Media {
-  // name?: string
-  id?: string
-  name?: string
-  path?: string
-  cameraGroup?: string
-  type?: MediaType
-  muted?: boolean
-  loop?: boolean
-  filters?: string
+    // name?: string
+    id?: string
+    name?: string
+    path?: string
+    cameraGroup?: string
+    type?: MediaType
+    muted?: boolean
+    loop?: boolean
+    filters?: string
 }
 
 //
 
 export interface Overlays {
-  [key: ID]: Overlay
+    [key: ID]: Overlay
 }
 export interface Overlay {
-  name: string
-  color: null | string
-  category: null | string
-  items: Item[]
-  locked?: boolean
+    name: string
+    color: null | string
+    category: null | string
+    items: Item[]
+    locked?: boolean
 }
 
 export interface Templates {
-  [key: ID]: Template
+    [key: ID]: Template
 }
 export interface Template {
-  name: string
-  color: null | string
-  category: null | string
-  items: Item[]
+    name: string
+    color: null | string
+    category: null | string
+    items: Item[]
 }
 
 // output
 
 export interface OutBackground {
-  id?: ID
-  path?: string
-  name?: string
-  startAt?: number
-  muted?: boolean
-  loop?: boolean
-  filter?: string
-  flipped?: boolean
-  // name?: string
-  type?: MediaType
+    id?: ID
+    path?: string
+    name?: string
+    startAt?: number
+    muted?: boolean
+    loop?: boolean
+    filter?: string
+    flipped?: boolean
+    // name?: string
+    type?: MediaType
 }
 
 export interface OutSlide {
-  id: ID
-  layout?: ID
-  index?: number
-  tempItems?: Item[]
-  line?: number
-  // layout: ID ?
-  // type?: ShowType
-  // private?: boolean
+    id: ID
+    layout?: ID
+    index?: number
+    tempItems?: Item[]
+    line?: number
+    // layout: ID ?
+    // type?: ShowType
+    // private?: boolean
 }
 
 export interface OutTransition {
-  // action: string
-  // slide?: number
-  duration: number
+    // action: string
+    // slide?: number
+    duration: number
 }
 
 // types

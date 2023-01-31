@@ -35,6 +35,7 @@ import { _show } from "./shows"
 export type HistoryPages = "drawer" | "show" | "edit" | "stage" | "settings"
 export type HistoryIDs =
     | "SAVE"
+    | "STAGE"
     // edit
     | "textStyle"
     | "textAlign"
@@ -147,6 +148,7 @@ const override = [
     "template",
     "updateTemplate",
     "updateOverlay",
+    "STAGE",
 ]
 
 export async function historyAwait(s: string[], obj: History) {

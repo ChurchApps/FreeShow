@@ -1,36 +1,48 @@
 <script lang="ts">
-  import { onMount } from "svelte"
-  import type { MediaFit } from "../../../types/Main"
-  import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-  import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, media, outputs, overlays, showsCache, slidesOptions } from "../../stores"
-  import MediaLoader from "../drawer/media/MediaLoader.svelte"
-  import Editbox from "../edit/Editbox.svelte"
-  import { getItemText } from "../edit/scripts/textStyle"
-  import { getContrast } from "../helpers/color"
-  import { GetLayoutRef } from "../helpers/get"
-  import { getActiveOutputs, getResolution } from "../helpers/output"
-  import { getMediaFilter } from "../helpers/showActions"
-  import SelectElem from "../system/SelectElem.svelte"
-  import Actions from "./Actions.svelte"
-  import Icons from "./Icons.svelte"
-  import Textbox from "./Textbox.svelte"
-  import Zoomed from "./Zoomed.svelte"
+  import { onMount } from "svelte";
+  import type { MediaFit } from "../../../types/Main";
+  import type { Media, Show, Slide, SlideData } from "../../../types/Show";
+  import {
+    activeShow,
+    activeTimers,
+    dictionary,
+    fullColors,
+    groupNumbers,
+    groups,
+    media,
+    outputs,
+    overlays,
+    showsCache,
+    slidesOptions,
+  } from "../../stores";
+  import MediaLoader from "../drawer/media/MediaLoader.svelte";
+  import Editbox from "../edit/Editbox.svelte";
+  import { getItemText } from "../edit/scripts/textStyle";
+  import { getContrast } from "../helpers/color";
+  import { GetLayoutRef } from "../helpers/get";
+  import { getActiveOutputs, getResolution } from "../helpers/output";
+  import { getMediaFilter } from "../helpers/showActions";
+  import SelectElem from "../system/SelectElem.svelte";
+  import Actions from "./Actions.svelte";
+  import Icons from "./Icons.svelte";
+  import Textbox from "./Textbox.svelte";
+  import Zoomed from "./Zoomed.svelte";
 
-  export let slide: Slide
-  export let layoutSlide: SlideData
-  export let layoutSlides: any[] = []
-  export let show: Show
-  export let color: string | null = slide.color
-  export let index: number
-  export let columns: number = 1
-  export let outColor: string | null = null
-  export let active: boolean = false
-  export let focused: boolean = false
-  export let list: boolean = false
-  export let endIndex: null | number = null
-  export let icons: boolean = false
-  export let noQuickEdit: boolean = false
-  export let altKeyPressed: boolean = false
+  export let slide: Slide;
+  export let layoutSlide: SlideData;
+  export let layoutSlides: any[] = [];
+  export let show: Show;
+  export let color: string | null = slide.color;
+  export let index: number;
+  export let columns: number = 1;
+  export let outColor: string | null = null;
+  export let active: boolean = false;
+  export let focused: boolean = false;
+  export let list: boolean = false;
+  export let endIndex: null | number = null;
+  export let icons: boolean = false;
+  export let noQuickEdit: boolean = false;
+  export let altKeyPressed: boolean = false;
 
   // let longestText: string = ""
   // $: {
@@ -46,36 +58,38 @@
   //   })
   // }
 
-  $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
+  $: background = layoutSlide.background
+    ? show.media[layoutSlide.background]
+    : null;
 
-  let ghostBackground: Media | null = null
+  let ghostBackground: Media | null = null;
   $: if (!background) {
-    ghostBackground = null
+    ghostBackground = null;
     layoutSlides.forEach((a, i) => {
       if (i <= index) {
-        if (a.actions?.clearBackground || a.disabled) ghostBackground = null
-        else if (a.background) ghostBackground = show.media[a.background]
+        if (a.actions?.clearBackground || a.disabled) ghostBackground = null;
+        else if (a.background) ghostBackground = show.media[a.background];
       }
-    })
+    });
   }
 
-  let duration: number = 0
+  let duration: number = 0;
   // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
   // $: name = full_name.slice(0, full_name.lastIndexOf("."))
 
-  let filter: string = ""
-  let flipped: boolean = false
-  let fit: MediaFit = "contain"
+  let filter: string = "";
+  let flipped: boolean = false;
+  let fit: MediaFit = "contain";
 
   $: if (background?.path || ghostBackground?.path) {
     // TODO: use show filter if existing
-    let path: string = background?.path || ghostBackground?.path!
-    filter = getMediaFilter(path)
-    flipped = $media[path]?.flipped || false
-    fit = $media[path]?.fit || "contain"
+    let path: string = background?.path || ghostBackground?.path!;
+    filter = getMediaFilter(path);
+    flipped = $media[path]?.flipped || false;
+    fit = $media[path]?.fit || "contain";
   }
 
-  $: group = slide.group
+  $: group = slide.group;
   $: {
     if (slide.globalGroup && $groups[slide.globalGroup]) {
       // TODO: history
@@ -89,76 +103,78 @@
       //   newData: { key: "color", values: [$groups[slide.globalGroup].color] },
       //   location: { page: "show", show: $activeShow!, layout: $showsCache[$activeShow!.id].settings.activeLayout, slide: layoutSlide.id },
       // })
-      group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
-      color = $groups[slide.globalGroup].color
+      group = $groups[slide.globalGroup].default
+        ? $dictionary.groups?.[$groups[slide.globalGroup].name]
+        : $groups[slide.globalGroup].name;
+      color = $groups[slide.globalGroup].color;
     }
   }
 
-  $: name = getGroupName(layoutSlide.id)
+  $: name = getGroupName(layoutSlide.id);
   // dynamic counter
   function getGroupName(slideID: string) {
-    let name = group
+    let name = group;
     if (name !== null && name !== undefined) {
-      if (!name.length) name = "—"
-      let added: any = {}
+      if (!name.length) name = "—";
+      let added: any = {};
       if ($groupNumbers) {
         // different slides with same name
         Object.entries(show.slides).forEach(([id, a]: any) => {
           if (added[a.group]) {
-            added[a.group]++
-            if (id === slideID) name += " " + added[a.group]
-          } else added[a.group] = 1
-        })
+            added[a.group]++;
+            if (id === slideID) name += " " + added[a.group];
+          } else added[a.group] = 1;
+        });
 
         // same group count
-        added = {}
+        added = {};
         GetLayoutRef().forEach((a: any, i: number) => {
           if (a.type === "parent") {
             if (added[a.id]) {
-              added[a.id]++
-              if (i === index) name += " (" + added[a.id] + ")"
-            } else added[a.id] = 1
+              added[a.id]++;
+              if (i === index) name += " (" + added[a.id] + ")";
+            } else added[a.id] = 1;
           }
-        })
+        });
       }
     }
-    return name
+    return name;
   }
 
   // quick edit
-  let html: string = ""
-  let previousHTML: string = ""
-  let longest: any = null
+  let html: string = "";
+  let previousHTML: string = "";
+  let longest: any = null;
 
   onMount(() => {
-    let texts: any[] = slide.items?.map((item) => getItemText(item))
-    if (!texts) return
-    let prev: any = null
+    let texts: any[] = slide.items?.map((item) => getItemText(item));
+    if (!texts) return;
+    let prev: any = null;
     texts.forEach((a, i) => {
       if (!prev || a.length > prev) {
-        prev = a.length
-        longest = i
+        prev = a.length;
+        longest = i;
       }
-    })
-    if (longest !== null) update()
-  })
+    });
+    if (longest !== null) update();
+  });
 
   function update() {
     // html = `<div class="align" style="${item.align}">`
-    html = ""
+    html = "";
     slide.items[longest].lines?.forEach((line) => {
       line.text.forEach((a) => {
-        html += a.value
-      })
-    })
-    previousHTML = html
+        html += a.value;
+      });
+    });
+    previousHTML = html;
   }
 
   // || $showsCache[active].slides
-  let textElem: any
+  let textElem: any;
   $: {
     if (textElem && html !== previousHTML) {
-      previousHTML = html
+      previousHTML = html;
       setTimeout(() => {
         // console.log(html)
         // let text = _shows([active]).slides([slide]).items([index]).get("text")
@@ -167,54 +183,68 @@
         // if (textItems.length) values = text?.forEach((a, i) => (a.value = textItems[i]))
         // _shows([active]).slides([slide]).items([index]).set({key: "text", values})
         showsCache.update((a) => {
-          let lines = a[$activeShow!.id].slides[layoutSlide.id].items[longest].lines
-          let textItems = getItems(textElem.children)
+          let lines =
+            a[$activeShow!.id].slides[layoutSlide.id].items[longest].lines;
+          let textItems = getItems(textElem.children);
           if (textItems.length) {
             lines?.forEach((line) => {
-              line.text.forEach((a, i) => (a.value = textItems[i]))
-            })
+              line.text.forEach((a, i) => (a.value = textItems[i]));
+            });
           }
-          return a
-        })
-      }, 10)
+          return a;
+        });
+      }, 10);
     }
   }
 
   function getItems(children: any): any[] {
-    let textItems: any[] = []
+    let textItems: any[] = [];
     new Array(...children).forEach((child: any) => {
-      if (child.innerHTML) textItems.push(child.innerHTML)
-    })
-    return textItems
+      if (child.innerHTML) textItems.push(child.innerHTML);
+    });
+    return textItems;
   }
 
-  let timer: number[] = []
+  let timer: number[] = [];
   $: if ($activeTimers) {
-    timer = []
-    slide.items?.forEach(checkItem)
+    timer = [];
+    slide.items?.forEach(checkItem);
   }
   function checkItem(item: any) {
-    if (item.type !== "timer") return
-    console.log($activeTimers, item)
+    if (item.type !== "timer") return;
+    console.log($activeTimers, item);
 
     $activeTimers.forEach((a, i) => {
-      if (a.showId === $activeShow?.id && a.slideId === layoutSlide.id && a.id === item.timer.id) timer.push(i)
-    })
-    console.log(timer)
+      if (
+        a.showId === $activeShow?.id &&
+        a.slideId === layoutSlide.id &&
+        a.id === item.timer.id
+      )
+        timer.push(i);
+    });
+    console.log(timer);
   }
 
-  $: resolution = getResolution(slide?.settings?.resolution, $outputs)
+  $: resolution = getResolution(slide?.settings?.resolution, $outputs);
 
-  $: currentOutput = $outputs[getActiveOutputs()[0]]
+  $: currentOutput = $outputs[getActiveOutputs()[0]];
 
-  let style: string = ""
+  let style: string = "";
   $: {
-    style = ""
+    style = "";
     // $fullColors &&
-    if ($slidesOptions.mode !== "lyrics" || noQuickEdit) style += `background-color: ${color};`
-    if (!$fullColors && ($slidesOptions.mode !== "lyrics" || noQuickEdit)) style += `color: ${color};`
-    if ($slidesOptions.mode === "lyrics" && !noQuickEdit) style += "font-weight: bold;background-color: transparent;"
-    if ($slidesOptions.mode !== "grid" && !noQuickEdit && $slidesOptions.mode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
+    if ($slidesOptions.mode !== "lyrics" || noQuickEdit)
+      style += `background-color: ${color};`;
+    if (!$fullColors && ($slidesOptions.mode !== "lyrics" || noQuickEdit))
+      style += `color: ${color};`;
+    if ($slidesOptions.mode === "lyrics" && !noQuickEdit)
+      style += "font-weight: bold;background-color: transparent;";
+    if (
+      $slidesOptions.mode !== "grid" &&
+      !noQuickEdit &&
+      $slidesOptions.mode !== "lyrics"
+    )
+      style += `width: calc(${100 / columns}% - 6px)`;
   }
 </script>
 
@@ -228,10 +258,22 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
   class="main"
   class:active
   class:focused
-  style="{outColor ? 'outline: 2px solid ' + outColor + ';' : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%;"
+  style="{outColor
+    ? 'outline: 2px solid ' + outColor + ';'
+    : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit
+    ? 100 / columns
+    : 100}%;"
 >
   {#if icons && !altKeyPressed}
-    <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""} />
+    <Icons
+      {timer}
+      {layoutSlide}
+      {background}
+      {duration}
+      {columns}
+      {index}
+      style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""}
+    />
     <Actions {columns} {index} actions={layoutSlide.actions || {}} />
   {/if}
   <div
@@ -245,18 +287,32 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     <div class="hover overlay" />
     <!-- <DropArea id="slide" hoverTimeout={0} file> -->
     <div style="width: 100%;height: 100%;">
-      <SelectElem id="slide" data={{ index }} draggable trigger={list ? "column" : "row"}>
+      <SelectElem
+        id="slide"
+        data={{ index }}
+        draggable
+        trigger={list ? "column" : "row"}
+      >
         <!-- TODO: tab select on enter -->
         <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
         {#if $slidesOptions.mode === "lyrics" && !noQuickEdit}
           <!-- border-bottom: 1px dashed {color}; -->
-          <div class="label" title={name || ""} style="color: {color};margin-bottom: 5px;">
-            <span style="position: absolute;display: contents;">{index + 1}</span>
+          <div
+            class="label"
+            title={name || ""}
+            style="color: {color};margin-bottom: 5px;"
+          >
+            <span style="position: absolute;display: contents;"
+              >{index + 1}</span
+            >
             <span class="text">{name === null ? "" : name || "—"}</span>
           </div>
         {/if}
         <Zoomed
-          background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentOutput.show?.background || "black" : "transparent"}
+          background={slide.items?.length &&
+          ($slidesOptions.mode !== "lyrics" || noQuickEdit)
+            ? slide.settings.color || currentOutput.show?.background || "black"
+            : "transparent"}
           let:ratio
           {resolution}
           zoom={$slidesOptions.mode !== "lyrics" || noQuickEdit}
@@ -266,12 +322,26 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         >
           {#if !altKeyPressed && (background || ghostBackground) && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
             {#key background?.path || ghostBackground?.path}
-              <div class="background" style="zoom: {1 / ratio}" class:ghost={!background}>
+              <div
+                class="background"
+                style="zoom: {1 / ratio}"
+                class:ghost={!background}
+              >
                 <MediaLoader
                   name={$dictionary.error?.load}
-                  path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
-                  cameraGroup={background?.cameraGroup || ghostBackground?.cameraGroup || ""}
-                  type={background?.type !== "player" ? background?.type : ghostBackground?.type !== "player" ? ghostBackground?.type : null}
+                  path={background?.path ||
+                    background?.id ||
+                    ghostBackground?.path ||
+                    ghostBackground?.id ||
+                    ""}
+                  cameraGroup={background?.cameraGroup ||
+                    ghostBackground?.cameraGroup ||
+                    ""}
+                  type={background?.type !== "player"
+                    ? background?.type
+                    : ghostBackground?.type !== "player"
+                    ? ghostBackground?.type
+                    : null}
                   {filter}
                   {flipped}
                   {fit}
@@ -288,9 +358,14 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                 <Textbox
                   {item}
                   {ratio}
-                  ref={{ showId: $activeShow?.id, slideId: layoutSlide.id, id: layoutSlide.id }}
+                  ref={{
+                    showId: $activeShow?.id,
+                    slideId: layoutSlide.id,
+                    id: layoutSlide.id,
+                  }}
                   style={$slidesOptions.mode !== "lyrics" || noQuickEdit}
-                  smallFontSize={$slidesOptions.mode === "lyrics" && !noQuickEdit}
+                  smallFontSize={$slidesOptions.mode === "lyrics" &&
+                    !noQuickEdit}
                 />
               {/if}
             {/each}
@@ -309,11 +384,19 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
           <!-- show note -->
           <!-- TODO: BG: white, color: black -->
           <!-- style="width: {resolution.width * zoom}px;" -->
-          <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
+          <div
+            class="label"
+            title={name || ""}
+            style={$fullColors
+              ? `background-color: ${color};color: ${getContrast(color || "")};`
+              : `border-bottom: 2px solid ${color};`}
+          >
             {#if slide.notes}<p class="notes">{slide.notes}</p>{/if}
             <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
             <!-- font-size: 0.8em; -->
-            <span style="position: absolute;display: contents;">{index + 1}</span>
+            <span style="position: absolute;display: contents;"
+              >{index + 1}</span
+            >
             <span class="text">{name === null ? "" : name || "—"}</span>
           </div>
         {/if}
@@ -326,12 +409,22 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     <!-- <div bind:this={textElem} class="quickEdit edit" tabindex={0} contenteditable bind:innerHTML={html}>
       {@html html}
     </div> -->
-    <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
+    <div
+      class="quickEdit"
+      style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;"
+      data-index={index}
+    >
       <!-- {#key slide.items} -->
       {#if slide.items}
         {#each slide.items as item, itemIndex}
           {#if item.lines}
-            <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
+            <Editbox
+              {item}
+              ref={{ showId: $activeShow?.id, id: layoutSlide.id }}
+              editIndex={index}
+              index={itemIndex}
+              plain
+            />
           {/if}
         {/each}
       {/if}

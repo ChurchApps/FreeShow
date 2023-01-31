@@ -1,49 +1,52 @@
 <script lang="ts">
-  import { MAIN } from "../../../types/Channels"
-  import { activePopup, saved } from "../../stores"
-  import ContextChild from "../context/ContextChild.svelte"
-  import ContextItem from "../context/ContextItem.svelte"
-  import { contextMenuItems, contextMenuLayouts } from "../context/contextMenus"
-  import Icon from "../helpers/Icon.svelte"
-  import T from "../helpers/T.svelte"
-  import Button from "../inputs/Button.svelte"
+  import { MAIN } from "../../../types/Channels";
+  import { activePopup, saved } from "../../stores";
+  import ContextChild from "../context/ContextChild.svelte";
+  import ContextItem from "../context/ContextItem.svelte";
+  import {
+    contextMenuItems,
+    contextMenuLayouts,
+  } from "../context/contextMenus";
+  import Icon from "../helpers/Icon.svelte";
+  import T from "../helpers/T.svelte";
+  import Button from "../inputs/Button.svelte";
 
-  const menus: string[] = ["file", "edit", "view", "help"]
+  const menus: string[] = ["file", "edit", "view", "help"];
 
-  let maximized: boolean = false
-  let active: boolean = false
-  let activeID: null | string = null
-  let activeMenu: string[] = []
-  let x: number = 0
-  let y: number = 30
+  let maximized: boolean = false;
+  let active: boolean = false;
+  let activeID: null | string = null;
+  let activeMenu: string[] = [];
+  let x: number = 0;
+  let y: number = 30;
 
-  window.api.send(MAIN, { channel: "MAXIMIZED" })
+  window.api.send(MAIN, { channel: "MAXIMIZED" });
   window.api.receive(MAIN, (msg: any) => {
-    if (msg.channel === "MAXIMIZED") maximized = msg.data
-  })
+    if (msg.channel === "MAXIMIZED") maximized = msg.data;
+  });
 
   function menu(e: any) {
-    let id: string = e.target.id
-    active = activeID !== id
-    activeID = activeID === id ? null : id
+    let id: string = e.target.id;
+    active = activeID !== id;
+    activeID = activeID === id ? null : id;
 
-    if (activeID === null) return
-    x = e.target.offsetLeft
-    activeMenu = contextMenuLayouts[id]
+    if (activeID === null) return;
+    x = e.target.offsetLeft;
+    activeMenu = contextMenuLayouts[id];
   }
 
   const click = (e: MouseEvent) => {
-    if (e.target?.closest(".menu") || e.target?.closest(".menus")) return
+    if (e.target?.closest(".menu") || e.target?.closest(".menus")) return;
 
-    activeID = null
-    active = false
-  }
+    activeID = null;
+    active = false;
+  };
 
   const move = (e: any) => {
-    if (!active || activeID === e.target.id) return
-    ;(document.activeElement as any)?.blur()
-    menu(e)
-  }
+    if (!active || activeID === e.target.id) return;
+    (document.activeElement as any)?.blur();
+    menu(e);
+  };
 </script>
 
 <svelte:window on:click={click} on:contextmenu={click} />
@@ -65,25 +68,46 @@
     </div>
   {/if}
 
-  <div class="nocontext menus" on:mousemove={move} on:click={menu} on:contextmenu={menu}>
+  <div
+    class="nocontext menus"
+    on:mousemove={move}
+    on:click={menu}
+    on:contextmenu={menu}
+  >
     {#each menus as menu}
-      <Button id={menu} active={activeID === menu} dark red={menu === "file" && !$saved}>
+      <Button
+        id={menu}
+        active={activeID === menu}
+        dark
+        red={menu === "file" && !$saved}
+      >
         <T id="titlebar.{menu}" />
       </Button>
     {/each}
   </div>
   <div class="window">
-    <Button on:click={() => window.api.send(MAIN, { channel: "MINIMIZE" })} center>
+    <Button
+      on:click={() => window.api.send(MAIN, { channel: "MINIMIZE" })}
+      center
+    >
       <Icon id="remove" size={1.4} white />
     </Button>
-    <Button on:click={() => window.api.send(MAIN, { channel: "MAXIMIZE" })} style="transform: rotate(180deg);" center>
-      <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 1 : 1.1} white />
+    <Button
+      on:click={() => window.api.send(MAIN, { channel: "MAXIMIZE" })}
+      style="transform: rotate(180deg);"
+      center
+    >
+      <Icon
+        id={maximized ? "maximized" : "unmaximized"}
+        size={maximized ? 1 : 1.1}
+        white
+      />
     </Button>
     <Button
       id="close"
       on:click={() => {
-        if ($saved) window.api.send(MAIN, { channel: "CLOSE" })
-        else activePopup.set("unsaved")
+        if ($saved) window.api.send(MAIN, { channel: "CLOSE" });
+        else activePopup.set("unsaved");
       }}
       center
     >
@@ -94,8 +118,9 @@
 
 <style>
   main :global(button) {
-    opacity: 0.6;
-    cursor: default;
+    opacity: 0.7;
+    cursor: default !important;
+    font-weight: normal !important;
   }
 
   main {

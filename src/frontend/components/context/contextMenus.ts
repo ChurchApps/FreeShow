@@ -74,6 +74,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     recolor: { label: "actions.recolor", icon: "color" },
     actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
     remove_media: { label: "actions.remove_media", icon: "media", items: ["LOAD_remove_media"] },
+    set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
     // ITEM
     format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
     // formatting
@@ -174,6 +175,11 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // global_group: ["rename"],
     layout: ["rename", "remove", "duplicate"],
     slideViews: ["view_grid", "view_list", "view_lyrics", "view_text"],
+    // TODO: change chords (m, dim, sus, left, guitar, custom value, ...)
+    // chord notations
+    // https://jazz-library.com/articles/chord-symbols/
+    // https://www.musicnotes.com/now/tips/a-complete-guide-to-chord-symbols-in-music/
+    chord: ["set_key"],
 
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],

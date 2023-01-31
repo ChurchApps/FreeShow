@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { activeStage, stageShows } from "../../../stores"
-  import { addStyleString } from "../../edit/scripts/textStyle"
-  import EditValues from "../../edit/tools/EditValues.svelte"
-  import { history } from "../../helpers/history"
-  import { getStyles } from "../../helpers/style"
-  import T from "../../helpers/T.svelte"
-  import Center from "../../system/Center.svelte"
-  import { updateStageShow } from "../stage"
-  import { textEdits } from "../values/text"
+  import { activeStage, stageShows } from "../../../stores";
+  import { addStyleString } from "../../edit/scripts/textStyle";
+  import EditValues from "../../edit/tools/EditValues.svelte";
+  import { history } from "../../helpers/history";
+  import { getStyles } from "../../helpers/style";
+  import T from "../../helpers/T.svelte";
+  import Center from "../../system/Center.svelte";
+  import { updateStageShow } from "../stage";
+  import { textEdits } from "../values/text";
   // import { addStyleString } from "../../edit/scripts/textStyle"
   // import { history } from "../../helpers/history"
   // import Color from "../../inputs/Color.svelte"
@@ -97,16 +97,33 @@
 
   // ------------------------
 
-  $: items = $activeStage.items
-  $: stageItems = $stageShows[$activeStage.id!].items
-  $: item = items ? stageItems[items[0]] : null
+  $: items = $activeStage.items;
+  $: stageItems = $stageShows[$activeStage.id!].items;
+  $: item = items ? stageItems[items[0]] : null;
 
-  let data: { [key: string]: any } = {}
-  $: if (item?.style || item === null) data = getStyles(item?.style, true)
+  let data: { [key: string]: any } = {};
+  $: if (item?.style || item === null) data = getStyles(item?.style, true);
+
+  function setValue(input: any) {
+    let value: any = input.value;
+    // if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
+    // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
+
+    history({
+      id: "STAGE",
+      newData: [{ key: input.id, value }],
+      location: { page: "stage", id: $activeStage.id!, items },
+    });
+  }
 
   function updateStyle(e: any) {
-    let input = e.detail
-    console.log(input)
+    let input = e.detail;
+    console.log(input);
+
+    if (input.id !== "style") {
+      setValue(input);
+      return;
+    }
 
     // let textStyle = newStyle
     // if (key === "font-size") textStyle += "px"
@@ -129,32 +146,40 @@
     //   newData.push(aligns ? addStyleString(allItems[id].align, [key, textStyle]) : addStyleString(allItems[id].style, [key, textStyle]))
     // })
 
-    let value: string = addStyleString(item!.style, [input.key, input.value]) || ""
+    let value: string =
+      addStyleString(item!.style, [input.key, input.value]) || "";
 
-    if (input.id === "CSS") value = input.value.replaceAll("\n", "")
+    if (input.id === "CSS") value = input.value.replaceAll("\n", "");
 
-    if (!value) return
+    if (!value) return;
 
-    console.log(item?.style, value)
+    console.log(item?.style, value);
+
+    // history({
+    //   // id: aligns ? "stageItemAlign" : "stageItemStyle",
+    //   id: "stageItemStyle",
+    //   // oldData,
+    //   newData: [value],
+    //   location: { page: "stage", slide: $activeStage.id!, items },
+    // });
 
     history({
       // id: aligns ? "stageItemAlign" : "stageItemStyle",
-      id: "stageItemStyle",
-      // oldData,
-      newData: [value],
+      id: "STAGE",
+      newData: [{ key: "style", value }],
       location: { page: "stage", slide: $activeStage.id!, items },
-    })
+    });
 
     if (!timeout) {
-      updateStageShow()
+      updateStageShow();
       timeout = setTimeout(() => {
-        updateStageShow()
-        timeout = null
-      }, 500)
+        updateStageShow();
+        timeout = null;
+      }, 500);
     }
   }
 
-  let timeout: any = null
+  let timeout: any = null;
 </script>
 
 {#if item}

@@ -385,6 +385,7 @@
         "change_drawer_tab": "Change drawer tab",
         "actions": "Acciones",
         "clear_history": "Clear history",
+        "set_key": "Set key",
         "remove_media": "Remove media"
     },
     "export": {
@@ -439,6 +440,7 @@
         "font": "Fuente",
         "family": "Familia",
         "style": "Estilo",
+        "options": "Opciones",
         "_title_bold": "Negrita",
         "_title_italic": "Cursiva",
         "_title_underline": "Subrayado",
@@ -446,6 +448,7 @@
         "color": "Color",
         "background_color": "Color de fondo",
         "size": "Tamaño",
+        "chords": "Acordes",
         "auto_size": "Tamaño automático",
         "line_spacing": "Interlineado",
         "letter_spacing": "Espaciado entre letras",
@@ -554,7 +557,6 @@
         "video_countdown": "Cuenta regresiva de video",
         "global_timers": "Duración de proyecto",
         "other": "Otro",
-        "chords": "Acordes",
         "message": "Mensaje",
         "color": "Color",
         "font-size": "Tamaño de letra",

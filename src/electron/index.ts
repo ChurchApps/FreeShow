@@ -27,7 +27,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 8000)
+    else setTimeout(startApp, 12000)
 })
 
 function startApp() {

@@ -47,6 +47,7 @@ export type SelectIds =
     | "player"
     | "timer"
     | "global_timer"
+    | "chord"
 export interface Selected {
     id: null | SelectIds
     data: any[]

@@ -385,6 +385,7 @@
         "change_drawer_tab": "Zeichen-Tab wechseln",
         "actions": "Aktionen",
         "clear_history": "Clear history",
+        "set_key": "Set key",
         "remove_media": "Medien entfernen"
     },
     "export": {
@@ -439,6 +440,7 @@
         "font": "Schriftart",
         "family": "Schriftname",
         "style": "Style",
+        "options": "Optionen",
         "_title_bold": "Fett",
         "_title_italic": "Kursiv",
         "_title_underline": "Unterstrichen",
@@ -446,6 +448,7 @@
         "color": "Farbe",
         "background_color": "Hintergrundfarbe",
         "size": "Größe",
+        "chords": "Akkorde",
         "auto_size": "Automatische Größe",
         "line_spacing": "Zeilenabstand",
         "letter_spacing": "Zeichenabstand",
@@ -554,7 +557,6 @@
         "video_countdown": "Video Countdown",
         "global_timers": "Globale Timer",
         "other": "Andere",
-        "chords": "Akkorde",
         "message": "Mitteilung",
         "color": "Farbe",
         "font-size": "Schriftgröße",

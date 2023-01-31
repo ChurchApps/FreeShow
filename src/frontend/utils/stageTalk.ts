@@ -10,7 +10,7 @@ import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } 
 
 export function stageListen() {
     stageShows.subscribe((data: any) => {
-        data = arrayToObject(filterObjectArray(get(stageShows), ["enabled", "name", "settings", "items"], "enabled"))
+        data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
         timedout(STAGE, { channel: "SHOW", data }, () =>
             eachConnection(STAGE, "SHOW", (connection) => {
                 return connection.active ? data[connection.active] : null

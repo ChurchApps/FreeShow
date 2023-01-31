@@ -511,6 +511,26 @@ const actions: any = {
 
         if (newData) history({ id: "changeLayout", newData, location })
     },
+    keys: (obj: any) => {
+        if (get(selected).id !== "chord") return
+        let data = get(selected).data[0]
+
+        let item: any = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
+
+        let newLines: any = [...item.lines!]
+        if (data.chord) {
+            let currentChordIndex = newLines[data.index].chords.findIndex((a) => a.id === data.chord.id)
+            newLines[data.index].chords[currentChordIndex].key = obj.menu.id
+        } else {
+            if (!newLines[0].chords) newLines[0].chords = []
+            newLines[0].chords.push({ id: uid(), pos: 0, key: obj.menu.id })
+        }
+
+        _show()
+            .slides([data.slideId])
+            .items([data.itemIndex])
+            .set({ key: "lines", values: [newLines] })
+    },
 
     // media
     play: (obj: any) => {

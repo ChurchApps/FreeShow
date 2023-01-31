@@ -385,6 +385,7 @@
         "change_drawer_tab": "Alterar guia de desenho",
         "actions": "Ações",
         "clear_history": "Clear history",
+        "set_key": "Set key",
         "remove_media": "Remover mídia"
     },
     "export": {
@@ -439,6 +440,7 @@
         "font": "Fonte",
         "family": "Família",
         "style": "Estilo",
+        "options": "Opções",
         "_title_bold": "Bold",
         "_title_italic": "Itálico",
         "_title_underline": "Sublinhado",
@@ -446,6 +448,7 @@
         "color": "Cor",
         "background_color": "Cor de plano de fundo",
         "size": "Tamanho",
+        "chords": "Acordes",
         "auto_size": "Tamanho automático",
         "line_spacing": "Espaçamento entre linhas",
         "letter_spacing": "Espaçamento entre letras",
@@ -554,7 +557,6 @@
         "video_countdown": "Contagem regressiva de vídeo",
         "global_timers": "Temporizadores globais",
         "other": "Outro",
-        "chords": "Acordes",
         "message": "Mensagem",
         "color": "Cor",
         "font-size": "Tamanho da fonte",

@@ -385,6 +385,7 @@
         "change_drawer_tab": "Zmeniť tab zásuviek",
         "actions": "Akcie",
         "clear_history": "Clear history",
+        "set_key": "Set key",
         "remove_media": "Odstrániť médium"
     },
     "export": {
@@ -439,6 +440,7 @@
         "font": "Font",
         "family": "Family",
         "style": "Štýl",
+        "options": "Voľby",
         "_title_bold": "Tučné",
         "_title_italic": "Naklonené",
         "_title_underline": "Podčiarknuté",
@@ -446,6 +448,7 @@
         "color": "Farba",
         "background_color": "Farba pozadia",
         "size": "Veľkosť",
+        "chords": "Akordy",
         "auto_size": "Automatická veľkosť",
         "line_spacing": "Riadkovania",
         "letter_spacing": "Medzi písmenami",
@@ -554,7 +557,6 @@
         "video_countdown": "Video odpočet",
         "global_timers": "Global timers",
         "other": "Iné",
-        "chords": "Akordy",
         "message": "Správa",
         "color": "Farba",
         "font-size": "Veľkosť písma",

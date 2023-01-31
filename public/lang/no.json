@@ -385,6 +385,7 @@
         "change_drawer_tab": "Endre fane i skuffen",
         "actions": "Handlinger",
         "clear_history": "Fjern historie",
+        "set_key": "Sett toneart",
         "remove_media": "Fjern media"
     },
     "export": {
@@ -439,6 +440,7 @@
         "font": "Skrift",
         "family": "Type",
         "style": "Stil",
+        "options": "Alternativer",
         "_title_bold": "Fet",
         "_title_italic": "Kursiv",
         "_title_underline": "Understrek",
@@ -446,6 +448,7 @@
         "color": "Farge",
         "background_color": "Bakgrunnsfarge",
         "size": "Størrelse",
+        "chords": "Akkorder",
         "auto_size": "Auto-størrelse",
         "line_spacing": "Linjeavstand",
         "letter_spacing": "Bokstavasvsand",
@@ -554,7 +557,6 @@
         "video_countdown": "Video nedtelling",
         "global_timers": "Globale nedtellinger",
         "other": "Andre",
-        "chords": "Akkorder",
         "message": "Melding",
         "color": "Farge",
         "font-size": "Tekststørrelse",

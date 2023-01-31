@@ -385,6 +385,7 @@
         "change_drawer_tab": "Change drawer tab",
         "actions": "Actions",
         "clear_history": "Clear history",
+        "set_key": "Set key",
         "remove_media": "Remove media"
     },
     "export": {
@@ -439,6 +440,7 @@
         "font": "Font",
         "family": "Family",
         "style": "Style",
+        "options": "Options",
         "_title_bold": "Bold",
         "_title_italic": "Italic",
         "_title_underline": "Underline",
@@ -446,6 +448,7 @@
         "color": "Color",
         "background_color": "Background color",
         "size": "Size",
+        "chords": "Chords",
         "auto_size": "Auto Size",
         "line_spacing": "Line Spacing",
         "letter_spacing": "Letter Spacing",
@@ -554,7 +557,6 @@
         "video_countdown": "Video countdown",
         "global_timers": "Global timers",
         "other": "Other",
-        "chords": "Chords",
         "message": "Message",
         "color": "Color",
         "font-size": "Font Size",

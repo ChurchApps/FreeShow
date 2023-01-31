@@ -1,33 +1,34 @@
 <script lang="ts">
-  import Textbox from "../components/Textbox.svelte"
-  import { getAutoSize } from "../helpers/autoSize"
+  import Textbox from "../components/Textbox.svelte";
+  import { getAutoSize } from "../helpers/autoSize";
 
-  export let slide: any
-  export let parent: any
-  export let autoSize: number = 0
+  export let slide: any;
+  export let parent: any;
+  export let chords: boolean = false;
+  export let autoSize: number = 0;
 
-  export let style: boolean = false
+  export let style: boolean = false;
 
-  $: autoSize = autoSize && slide ? getAutoSize(slide.items[0], parent) : 1
+  $: autoSize = autoSize && slide ? getAutoSize(slide.items[0], parent) : 1;
 
-  $: items = style ? slide.items : combineSlideItems()
+  $: items = style ? slide.items : combineSlideItems();
 
   function combineSlideItems() {
-    let oneItem: any = null
-    if (!slide?.items) return []
+    let oneItem: any = null;
+    if (!slide?.items) return [];
     JSON.parse(JSON.stringify(slide.items)).forEach((item: any) => {
       if (item.lines) {
-        if (!oneItem) oneItem = item
-        else oneItem.lines.push(...item.lines)
+        if (!oneItem) oneItem = item;
+        else oneItem.lines.push(...item.lines);
       }
-    })
+    });
 
-    return oneItem ? [oneItem] : []
+    return oneItem ? [oneItem] : [];
   }
 </script>
 
 {#if slide}
   {#each items as item}
-    <Textbox {item} {style} {autoSize} />
+    <Textbox {item} {style} {chords} {autoSize} />
   {/each}
 {/if}
