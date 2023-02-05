@@ -113,6 +113,7 @@
     "dependencies": {
         "@vimeo/player": "^2.16.4",
         "cross-env": "^7.0.3",
+        "easymidi": "^3.0.1",
         "electron-store": "^8.0.1",
         "electron-updater": "^4.6.1",
         "express": "^4.17.2",

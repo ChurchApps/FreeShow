@@ -5,7 +5,7 @@ import { Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
-import type { ActiveEdit, DefaultProjectNames, Media, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
+import type { ActiveEdit, DefaultProjectNames, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
 import type { ID, Overlays, Shows, Templates, Timer, Transition } from "../types/Show"
@@ -62,6 +62,7 @@ export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })
 export const alertMessage: Writable<string> = writable("")
+export const popupData: Writable<any> = writable({})
 export const systemFonts: Writable<string[]> = writable([])
 export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)
@@ -146,7 +147,7 @@ export const scriptureSettings: Writable<any> = writable({ template: "scripture"
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
 export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null }) // {default}
-export const mediaOptions: Writable<SlidesOptions> = writable({ columns: 5, mode: "grid" }) // {default}
+export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode: "grid" }) // {default}
 
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 300, rightPanel: 300, leftPanelDrawer: 300, rightPanelDrawer: 300 }) // {default}

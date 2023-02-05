@@ -303,6 +303,7 @@
         "edit_event": "Edit event",
         "about": "About",
         "history": "History",
+        "midi": "MIDI",
         "shortcuts": "Shortcuts",
         "icon": "Icons",
         "initialize": "Welcome",
@@ -386,6 +387,7 @@
         "actions": "Actions",
         "clear_history": "Clear history",
         "set_key": "Set key",
+        "send_midi": "Send MIDI",
         "remove_media": "Remove media"
     },
     "export": {
@@ -525,6 +527,14 @@
         "digital": "Digital",
         "analog": "Analog",
         "seconds": "Seconds"
+    },
+    "midi": {
+        "name": "Name",
+        "output": "Output",
+        "type": "Type",
+        "note": "Note",
+        "velocity": "Velocity",
+        "channel": "Channel"
     },
     "draw": {
         "focus": "Focus",

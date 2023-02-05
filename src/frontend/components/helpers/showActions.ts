@@ -1,5 +1,7 @@
 import { get } from "svelte/store"
+import { MAIN } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
+import { send } from "../../utils/request"
 import { activeEdit, activePage, activeProject, activeShow, media, outLocked, outputs, overlays, projects, showsCache, slideTimers } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getMediaType } from "./media"
@@ -306,10 +308,15 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
 
     // actions
     if (data.actions) {
+        if (data.actions.sendMidi) sendMidi(data.actions.sendMidi)
         if (data.actions.clearBackground) setOutput("background", null, false, outputId)
         if (data.actions.clearOverlays) clearOverlays()
         if (data.actions.clearAudio) clearAudio()
     }
+}
+
+export function sendMidi(data: any) {
+    send(MAIN, ["SEND_MIDI"], data)
 }
 
 export function clearOverlays() {

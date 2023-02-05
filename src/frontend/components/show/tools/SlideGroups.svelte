@@ -139,6 +139,7 @@
     }
 
     h4 {
+        overflow: visible;
         text-align: center;
     }
 

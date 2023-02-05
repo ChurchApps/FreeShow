@@ -48,6 +48,8 @@ export type SelectIds =
     | "timer"
     | "global_timer"
     | "chord"
+    | "midi"
+
 export interface Selected {
     id: null | SelectIds
     data: any[]
@@ -56,6 +58,10 @@ export interface Selected {
 export interface SlidesOptions {
     columns: number
     mode: "grid" | "list" | "lyrics" | "text"
+}
+export interface MediaOptions {
+    columns: number
+    mode: "grid" | "list"
 }
 
 export interface ActiveEdit {
@@ -99,6 +105,7 @@ export type Popups =
     | "reset_all"
     | "alert"
     | "history"
+    | "midi"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

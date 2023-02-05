@@ -138,6 +138,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     media_preview: ["close"],
     // , "delete_all"
     show_media: ["play", "play_no_filters", "SEPERATOR", "edit"],
+    midi: ["play", "edit"],
     // , "addToShow"
     // show_in_explorer!!
     media_card: ["play", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],

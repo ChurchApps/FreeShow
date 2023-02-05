@@ -25,6 +25,7 @@
     import AdvancedScreen from "./popups/AdvancedScreen.svelte"
     import CreatePlayer from "./popups/CreatePlayer.svelte"
     import History from "./popups/History.svelte"
+    import Midi from "./popups/Midi.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -52,6 +53,7 @@
         reset_all: ResetAll,
         alert: Alert,
         history: History,
+        midi: Midi,
     }
 </script>
 

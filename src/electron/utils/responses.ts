@@ -11,6 +11,7 @@ import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
 import { checkShowsFolder, getDocumentsFolder, getPaths, loadFile, readFile, selectFilesDialog, selectFolderDialog } from "./files"
 import { importShow } from "./import"
+import { getMidiOutputs, sendMidi } from "./midi"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -72,6 +73,8 @@ const mainResponses: any = {
     EXPORT_PATH: (): string => getDocumentsFolder(null, "Exports"),
     READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
     DISPLAY: (): boolean => false,
+    SEND_MIDI: (data: any): void => sendMidi(data),
+    GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
     GET_SCREENS: (): void => getScreens(),
     GET_WINDOWS: (): void => getScreens("window"),
     GET_DISPLAYS: (): Display[] => screen.getAllDisplays(),
