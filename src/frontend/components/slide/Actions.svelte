@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeShow, dictionary, popupData } from "../../stores"
+    import { activeShow, dictionary } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
@@ -22,14 +22,11 @@
     {#if actions.sendMidi}
         <div>
             <div class="button white">
-                <Button
-                    style="padding: 5px;"
-                    title={$dictionary.actions?.send_midi}
-                    on:click={() => {
-                        popupData.set(index)
+                <Button style="padding: 5px;" redHover title={$dictionary.actions?.send_midi} on:click={() => changeSlideAction("sendMidi")}>
+                    <!-- on:click={() => {
+                        popupData.set({ id: actions.sendMidi })
                         activePopup.set("midi")
-                    }}
-                >
+                    }} -->
                     <Icon id="music" white />
                 </Button>
             </div>

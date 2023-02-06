@@ -63,6 +63,7 @@ import { listen } from "./messages"
 import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
 import { clone } from "../components/helpers/array"
+import { convertCalendar } from "../converters/calendar"
 
 export function startup() {
     loaded.set(false)
@@ -247,6 +248,7 @@ const receiveFOLDER: any = {
 const receiveIMPORT: any = {
     txt: (a: any) => convertTexts(a),
     pdf: (a: any) => convertPDF(a),
+    calendar: (a: any) => convertCalendar(a),
     powerpoint: (a: any) => convertPowerpoint(a),
     freeshow: (a: any) => importShow(a),
     freeshow_project: (a: any) => importProject(a),

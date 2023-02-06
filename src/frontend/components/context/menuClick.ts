@@ -174,6 +174,29 @@ const actions: any = {
             return
         }
 
+        if (obj.sel.id === "midi") {
+            let id: string = obj.sel.data[0].id
+
+            // remove from all layouts
+            let ref = _show().layouts("active").ref()[0]
+            ref.forEach((slideRef: any, i: number) => {
+                let actions = slideRef.data.actions || {}
+                if (actions.sendMidi !== id) return
+                delete actions.sendMidi
+                history({
+                    id: "changeLayout",
+                    newData: { key: "actions", value: actions },
+                    location: { page: "show", show: get(activeShow)!, layoutSlide: i, layout: _show().get("settings.activeLayout") },
+                })
+            })
+
+            // remove this
+            let showMidi = _show().get("midi") || {}
+            delete showMidi[id]
+            _show().set({ key: "midi", value: showMidi })
+            return
+        }
+
         if (obj.contextElem?.classList.value.includes("#edit_box")) {
             let ref: any = _show().layouts("active").ref()[0][get(activeEdit).slide!]
             let slide: any = _show().slides([ref.id]).get()[0].id
@@ -628,7 +651,19 @@ const actions: any = {
 
 function changeSlideAction(obj: any, id: string) {
     if (id === "sendMidi") {
-        popupData.set(obj.sel.data[0])
+        let midiId: string = uid()
+        let layoutSlide: number = obj.sel.data[0].index
+        let ref = _show().layouts("active").ref()[0]
+        let actions = ref[layoutSlide].data.actions || {}
+        actions.sendMidi = midiId
+        history({
+            id: "changeLayout",
+            newData: { key: "actions", value: actions },
+            location: { page: "show", show: get(activeShow)!, layoutSlide, layout: _show().get("settings.activeLayout") },
+        })
+
+        // popupData.set(obj.sel.data[0])
+        popupData.set({ id: midiId })
         activePopup.set("midi")
         return
     }

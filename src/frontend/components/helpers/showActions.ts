@@ -308,7 +308,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
 
     // actions
     if (data.actions) {
-        if (data.actions.sendMidi) sendMidi(data.actions.sendMidi)
+        if (data.actions.sendMidi) sendMidi(_show(id).get("midi")[data.actions.sendMidi])
         if (data.actions.clearBackground) setOutput("background", null, false, outputId)
         if (data.actions.clearOverlays) clearOverlays()
         if (data.actions.clearAudio) clearAudio()

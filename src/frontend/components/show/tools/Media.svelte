@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, media, outLocked, playingAudio, showsCache } from "../../../stores"
+    import { activePopup, activeShow, dictionary, media, outLocked, playingAudio, showsCache } from "../../../stores"
     import { send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import { playAudio } from "../../helpers/audio"
@@ -19,13 +19,11 @@
 
     let layoutBackgrounds: any[] = []
     let layoutAudio: any[] = []
-    let layoutMidi: any[] = []
 
     $: {
         if (show) {
             layoutBackgrounds = []
             layoutAudio = []
-            layoutMidi = []
             let refs = _show("active").layouts().ref()
             refs.forEach((slides: any) => {
                 layoutBackgrounds.push(...slides.map((a: any) => a.data.background).filter((a: any) => a !== undefined))
@@ -35,7 +33,6 @@
                         .filter((a: any) => a !== undefined)
                         .flat()
                 )
-                layoutMidi.push(...slides.map((a: any, i: number) => ({ index: i, ...a.data.actions?.sendMidi })).filter((a: any) => a.name !== undefined))
             })
         }
     }
@@ -83,7 +80,15 @@
         })
     }
 
-    // let midi: any[] = []
+    let midi: any[] = []
+    $: showMidi = show?.midi || {}
+    $: if ($activePopup !== "midi" && Object.values(showMidi).length) {
+        midi = []
+        Object.entries(showMidi).forEach(([id, value]: any) => {
+            midi.push({ id, ...value })
+        })
+        console.log(midi)
+    } else if (!Object.values(showMidi).length) midi = []
 
     // TODO: check if file exists!!!
 </script>
@@ -91,7 +96,7 @@
 <!-- TODO: transition type & duration -->
 
 <div class="main">
-    {#if bgs.length || audio.length || layoutMidi.length}
+    {#if bgs.length || audio.length || midi.length}
         {#if bgs.length}
             <h5><T id="tools.media" /></h5>
             {#each bgs as background}
@@ -157,9 +162,9 @@
             {/each}
         {/if}
 
-        {#if layoutMidi.length}
-            <h5>MIDI</h5>
-            {#each layoutMidi as midi}
+        {#if midi.length}
+            <h5><T id="popup.midi" /></h5>
+            {#each midi as midi}
                 <SelectElem id="midi" data={midi} draggable>
                     <Button class="context #midi" on:click={() => sendMidi(midi)} style="padding: 8px;width: 100%;" title={midi.name} bold={false}>
                         <Icon id="music" size={1.2} right />

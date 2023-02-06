@@ -1,22 +1,18 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activeShow, popupData } from "../../../stores"
+    import { popupData } from "../../../stores"
     import { receive, send } from "../../../utils/request"
-    import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
-    $: layoutSlideIndex = $popupData.index || 0
-    $: layoutSlideRef = _show().layouts("active").ref()[0][layoutSlideIndex]
-
-    // TODO: ID!!! (drag and drop to other slides...??)
-    // let id: string = uid()
+    let id: string = ""
+    $: if ($popupData.id) id = $popupData.id
 
     let midi: any = { name: "Send MIDI", output: "", type: "noteon", values: { note: 1, velocity: 1, channel: 1 } }
-    $: if (layoutSlideRef.data.actions?.sendMidi) midi = layoutSlideRef.data.actions?.sendMidi
+    $: if (id) midi = _show().get("midi")?.[id] || midi
 
     let types = [{ name: "noteon" }, { name: "noteoff" }]
 
@@ -32,18 +28,21 @@
     })
 
     // update show
-    $: if (midi) {
-        let actions = layoutSlideRef.data.actions || {}
-        actions.sendMidi = midi
-        history({
-            id: "changeLayout",
-            newData: { key: "actions", value: actions },
-            location: { page: "show", show: $activeShow!, layoutSlide: $popupData.index, layout: _show().get("settings.activeLayout") },
-        })
-    }
+    $: if (midi) saveMidi()
 
     function changeName(e: any) {
         midi.name = e.target.value
+    }
+
+    // TODO: midi input start slide...
+
+    // TODO: history!
+    function saveMidi() {
+        let showMidi = _show().get("midi") || {}
+        if (JSON.stringify(showMidi[id] || {}) === JSON.stringify(midi)) return
+        showMidi[id] = midi
+
+        _show().set({ key: "midi", value: showMidi })
     }
 </script>
 

@@ -1,10 +1,21 @@
 import easymidi from "easymidi"
 
-// const devices: any = {}
-
 // input.on('noteon', function (params) {
 //     // params = {note: ..., velocity: ..., channel: ...}
 //   });
+
+// not windows...
+// const virtualDevices: any = {}
+// export function createVirtualMidi() {
+//     virtualDevices.input = new easymidi.Input("FreeShow MIDI Input", true)
+//     virtualDevices.output = new easymidi.Output("FreeShow MIDI Output", true)
+//     console.log("Created MIDI devices")
+// }
+
+// export function closeVirtualMidi() {
+//     virtualDevices.input?.close()
+//     virtualDevices.output?.close()
+// }
 
 export function getMidiOutputs() {
     return easymidi.getOutputs()

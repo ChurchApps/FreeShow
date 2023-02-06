@@ -27,7 +27,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 12000)
+    else setTimeout(startApp, 15000)
 })
 
 function startApp() {
@@ -37,6 +37,9 @@ function startApp() {
     // listeners
     screen.on("display-added", displayAdded)
     screen.on("display-removed", displayRemoved)
+
+    // midi
+    // createVirtualMidi()
 
     // express
     require("./servers")
@@ -132,6 +135,9 @@ function createMain() {
         dialogClose = false
         closeAllOutputs()
         closeServers()
+
+        // midi
+        // closeVirtualMidi()
 
         app.quit()
 

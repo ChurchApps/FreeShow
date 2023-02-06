@@ -4,58 +4,58 @@ import { dropActions } from "./dropActions"
 import { history } from "./history"
 
 const areas: any = {
-  all_slides: ["template"],
-  slides: ["media", "audio", "overlay", "sound", "camera", "show"], // group
-  // slide: ["overlay", "sound", "camera"], // "media",
-  // projects: ["folder"],
-  project: ["show_drawer", "media", "audio", "player"],
-  overlays: ["slide"],
-  templates: ["slide"],
-  edit: ["media"],
-  // media_drawer: ["file"],
+    all_slides: ["template"],
+    slides: ["media", "audio", "overlay", "sound", "camera", "show", "midi"], // group
+    // slide: ["overlay", "sound", "camera"], // "media",
+    // projects: ["folder"],
+    project: ["show_drawer", "media", "audio", "player"],
+    overlays: ["slide"],
+    templates: ["slide"],
+    edit: ["media"],
+    // media_drawer: ["file"],
 }
 const areaChildren: any = {
-  projects: ["folder", "project"],
-  project: ["show", "media", "audio", "show_drawer", "player"],
-  slides: ["slide", "group", "global_group", "camera", "media", "audio", "show"],
-  all_slides: [],
-  navigation: ["show", "show_drawer", "media", "overlay", "template"],
+    projects: ["folder", "project"],
+    project: ["show", "media", "audio", "show_drawer", "player"],
+    slides: ["slide", "group", "global_group", "camera", "media", "audio", "show"],
+    all_slides: [],
+    navigation: ["show", "show_drawer", "media", "overlay", "template"],
 }
 
 export function validateDrop(id: string, selected: any, children: boolean = false): boolean {
-  return areas[id]?.includes(selected) || (children && areaChildren[id]?.includes(selected))
+    return areas[id]?.includes(selected) || (children && areaChildren[id]?.includes(selected))
 }
 
 export function ondrop(e: any, id: string) {
-  // let data: string = e.dataTransfer.getData("text")
-  let h: any = { id: null, location: { page: get(activePage) } }
-  let sel = get(selected)
+    // let data: string = e.dataTransfer.getData("text")
+    let h: any = { id: null, location: { page: get(activePage) } }
+    let sel = get(selected)
 
-  let elem: any = null
-  if (e !== null) {
-    // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
-    if (id === "project" || id === "projects" || id === "slides" || id === "all_slides" || id === "navigation") elem = e.target.closest(".selectElem")
-    else if (id === "slide") elem = e.target.querySelector(".selectElem")
-  }
+    let elem: any = null
+    if (e !== null) {
+        // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
+        if (id === "project" || id === "projects" || id === "slides" || id === "all_slides" || id === "navigation") elem = e.target.closest(".selectElem")
+        else if (id === "slide") elem = e.target.querySelector(".selectElem")
+    }
 
-  let trigger: undefined | string = e?.target.closest(".TriggerBlock")?.id
-  let data: any = JSON.parse(elem?.getAttribute("data") || "{}")
-  let index: undefined | number = data.index
-  let center: boolean = false
-  if (trigger?.includes("center")) center = true
-  if (index !== undefined && trigger?.includes("end") && areaChildren[id]?.includes(sel.id)) index++
+    let trigger: undefined | string = e?.target.closest(".TriggerBlock")?.id
+    let data: any = JSON.parse(elem?.getAttribute("data") || "{}")
+    let index: undefined | number = data.index
+    let center: boolean = false
+    if (trigger?.includes("center")) center = true
+    if (index !== undefined && trigger?.includes("end") && areaChildren[id]?.includes(sel.id)) index++
 
-  console.log("DRAG: ", sel)
-  console.log("DROP: ", id, data, trigger, center, index)
+    console.log("DRAG: ", sel)
+    console.log("DROP: ", id, data, trigger, center, index)
 
-  if (dropActions[id]) {
-    let dropData: any = { drag: sel, drop: { id, data, trigger, center, index } }
+    if (dropActions[id]) {
+        let dropData: any = { drag: sel, drop: { id, data, trigger, center, index } }
 
-    h = dropActions[id](dropData, h)
-    if (h && h.id) history(h)
-    selected.set({ id: null, data: [] })
-    return
-  }
+        h = dropActions[id](dropData, h)
+        if (h && h.id) history(h)
+        selected.set({ id: null, data: [] })
+        return
+    }
 
-  console.log("NOT ASSIGNED!", sel.id + " => " + id)
+    console.log("NOT ASSIGNED!", sel.id + " => " + id)
 }

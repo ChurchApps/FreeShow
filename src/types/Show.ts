@@ -21,12 +21,17 @@ export interface Show {
     meta: {
         title?: string
         artist?: string
-        license?: string
-        key?: string
+        author?: string
+        composer?: string
+        publisher?: string
+        copyright?: string
+        CCLI?: string
+        year?: string
     }
     slides: { [key: ID]: Slide }
     layouts: { [key: ID]: Layout }
     media: { [key: ID]: Media }
+    midi?: { [key: ID]: Midi }
 }
 
 export interface Slide {
@@ -145,6 +150,17 @@ export interface Media {
     muted?: boolean
     loop?: boolean
     filters?: string
+}
+
+export interface Midi {
+    name: string
+    output: string
+    type: "noteon" | "noteoff" | "cc"
+    values: {
+        note: number
+        velocity: number
+        channel: number
+    }
 }
 
 //
