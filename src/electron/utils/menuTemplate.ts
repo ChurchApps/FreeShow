@@ -29,28 +29,36 @@ export function template(strings: any): any {
         {
             label: strings.titlebar?.file || "File",
             submenu: [
-                { label: strings.actions?.save || "Save", accelerator: "CmdOrCtrl+S", click: () => mc("save") },
+                // , accelerator: "CmdOrCtrl+S"
+                { label: strings.actions?.save || "Save", click: () => mc("save") },
                 { label: strings.actions?.import || "Import", click: () => mc("import") },
                 { label: strings.actions?.export || "Export", click: () => mc("export_more") },
                 { type: "separator" },
-                { label: strings.main?.quit || "Quit", accelerator: isMac ? "CmdOrCtrl+Q" : "", click: () => mc("quit") },
+                // , accelerator: isMac ? "CmdOrCtrl+Q" : ""
+                { label: strings.main?.quit || "Quit", click: () => mc("quit") },
             ],
         },
+        // https://stackoverflow.com/questions/40776653/electron-menu-accelerator-not-working
         {
             label: strings.titlebar?.edit || "Edit",
             submenu: [
-                { label: strings.actions?.undo || "Undo", accelerator: "CmdOrCtrl+Z", click: () => mc("undo") },
-                { label: strings.actions?.redo || "Redo", accelerator: "CmdOrCtrl+Y", click: () => mc("redo") },
+                // , accelerator: "CmdOrCtrl+Z"
+                { label: strings.actions?.undo || "Undo", click: () => mc("undo") },
+                // , accelerator: "CmdOrCtrl+Y"
+                { label: strings.actions?.redo || "Redo", click: () => mc("redo") },
                 { label: strings.popup?.history || "History", click: () => mc("history") },
                 { type: "separator" },
                 // { label: lang.actions?.cut || "Cut", role: "cut" },
-                { label: strings.actions?.copy || "Copy", accelerator: "CmdOrCtrl+C", click: () => mc("copy") },
-                { label: strings.actions?.paste || "Paste", accelerator: "CmdOrCtrl+V", click: () => mc("paste") },
+                // , accelerator: "CmdOrCtrl+C"
+                { label: strings.actions?.copy || "Copy", click: () => mc("copy") },
+                // , accelerator: "CmdOrCtrl+V"
+                { label: strings.actions?.paste || "Paste", click: () => mc("paste") },
                 ...(isMac
                     ? [
                           // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
                           { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
-                          { label: strings.actions?.selectAll || "Select All", accelerator: "CmdOrCtrl+A", click: () => mc("selectAll") },
+                          //   , accelerator: "CmdOrCtrl+A"
+                          { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") },
                           // { type: "separator" },
                           // {
                           //   label: lang.actions?.speech || "Speech",
@@ -63,7 +71,8 @@ export function template(strings: any): any {
                     : [
                           { label: strings.actions?.delete || "delete", click: () => mc("delete") },
                           { type: "separator" },
-                          { label: strings.actions?.selectAll || "Select All", accelerator: "CmdOrCtrl+A", click: () => mc("selectAll") },
+                          //   , accelerator: "CmdOrCtrl+A"
+                          { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") },
                       ]),
             ],
         },

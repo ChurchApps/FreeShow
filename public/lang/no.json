@@ -387,6 +387,7 @@
         "actions": "Handlinger",
         "clear_history": "Fjern historie",
         "set_key": "Sett toneart",
+        "custom_key": "Skriv inn verdi",
         "send_midi": "Send MIDI",
         "remove_media": "Fjern media"
     },

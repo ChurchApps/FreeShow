@@ -75,6 +75,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
     remove_media: { label: "actions.remove_media", icon: "media", items: ["LOAD_remove_media"] },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
+    custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
     format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
     // formatting
@@ -180,7 +181,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // chord notations
     // https://jazz-library.com/articles/chord-symbols/
     // https://www.musicnotes.com/now/tips/a-complete-guide-to-chord-symbols-in-music/
-    chord: ["set_key"],
+    chord: ["set_key", "custom_key"],
 
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],

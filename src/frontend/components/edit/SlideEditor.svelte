@@ -1,141 +1,141 @@
 <script lang="ts">
-  import type { MediaFit } from "../../../types/Main"
+    import type { MediaFit } from "../../../types/Main"
 
-  import { activeEdit, activeShow, media, outputs, showsCache } from "../../stores"
-  import MediaLoader from "../drawer/media/MediaLoader.svelte"
-  import { history } from "../helpers/history"
-  import { getActiveOutputs, getResolution } from "../helpers/output"
-  import { getMediaFilter } from "../helpers/showActions"
-  import { _show } from "../helpers/shows"
-  import { getStyles } from "../helpers/style"
-  import T from "../helpers/T.svelte"
-  import { getStyleResolution } from "../slide/getStyleResolution"
-  import Zoomed from "../slide/Zoomed.svelte"
-  import Center from "../system/Center.svelte"
-  import DropArea from "../system/DropArea.svelte"
-  import Snaplines from "../system/Snaplines.svelte"
-  import Editbox from "./Editbox.svelte"
+    import { activeEdit, activeShow, media, outputs, showsCache } from "../../stores"
+    import MediaLoader from "../drawer/media/MediaLoader.svelte"
+    import { history } from "../helpers/history"
+    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { getMediaFilter } from "../helpers/showActions"
+    import { _show } from "../helpers/shows"
+    import { getStyles } from "../helpers/style"
+    import T from "../helpers/T.svelte"
+    import { getStyleResolution } from "../slide/getStyleResolution"
+    import Zoomed from "../slide/Zoomed.svelte"
+    import Center from "../system/Center.svelte"
+    import DropArea from "../system/DropArea.svelte"
+    import Snaplines from "../system/Snaplines.svelte"
+    import Editbox from "./Editbox.svelte"
 
-  $: currentShow = $activeShow?.id
-  $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
-  $: ref = currentShow && $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
-  $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show("active").slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
+    $: currentShow = $activeShow?.id
+    $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
+    $: ref = currentShow && $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
+    $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show("active").slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
 
-  let lines: [string, number][] = []
-  let mouse: any = null
-  let newStyles: any = {}
-  $: active = $activeEdit.items
+    let lines: [string, number][] = []
+    let mouse: any = null
+    let newStyles: any = {}
+    $: active = $activeEdit.items
 
-  let width: number = 0
-  let height: number = 0
-  $: resolution = getResolution(Slide?.settings?.resolution, $outputs)
-  // TODO: zoom more in...
+    let width: number = 0
+    let height: number = 0
+    $: resolution = getResolution(Slide?.settings?.resolution, $outputs)
+    // TODO: zoom more in...
 
-  let ratio: number = 1
+    let ratio: number = 1
 
-  // get backgruond
-  $: bgId = ref?.[$activeEdit.slide!]?.data.background
+    // get backgruond
+    $: bgId = ref?.[$activeEdit.slide!]?.data.background
 
-  // get ghost background
-  $: if (!bgId) {
-    ref?.forEach((a, i) => {
-      if (i <= $activeEdit.slide!) {
-        if (a.data.actions?.clearBackground || a.data.disabled) bgId = null
-        else if (a.data.background) bgId = a.data.background
-      }
-    })
-  }
-
-  $: background = bgId && currentShow ? $showsCache[currentShow].media[bgId] : null
-  // $: slideOverlays = ref?.[$activeEdit.slide!]?.data.overlays || []
-
-  let filter: string = ""
-  let flipped: boolean = false
-  let fit: MediaFit = "contain"
-
-  $: if (background?.path) {
-    // TODO: use show filter if existing
-    filter = getMediaFilter(background.path)
-    flipped = $media[background.path]?.flipped || false
-    fit = $media[background.path]?.fit || "contain"
-  }
-
-  $: {
-    if (active.length) updateStyles()
-    else newStyles = {}
-  }
-
-  function updateStyles() {
-    if (!Object.keys(newStyles).length) return
-
-    let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!]?.id].items
-    let values: any[] = []
-    active.forEach((id) => {
-      let item = items[id]
-      if (item) {
-        let styles: any = getStyles(item.style)
-        let textStyles: string = ""
-
-        Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
-        Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
-
-        values.push(textStyles)
-      }
-    })
-
-    history({
-      id: "setStyle",
-      newData: { style: { key: "style", values } },
-      location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: active },
-    })
-  }
-
-  // $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
-  //   // let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
-  //   let items = _show("active").slides([ref[$activeEdit.slide!].id]).items().get()[0]
-  //   if (items) autoSize(active, items)
-  // }
-
-  let altKeyPressed: boolean = false
-  function keydown(e: any) {
-    if (e.altKey) {
-      e.preventDefault()
-      altKeyPressed = true
+    // get ghost background
+    $: if (!bgId) {
+        ref?.forEach((a, i) => {
+            if (i <= $activeEdit.slide! && !a.data.disabled) {
+                if (a.data.actions?.clearBackground) bgId = null
+                else if (a.data.background) bgId = a.data.background
+            }
+        })
     }
-  }
-  function keyup() {
-    altKeyPressed = false
-  }
+
+    $: background = bgId && currentShow ? $showsCache[currentShow].media[bgId] : null
+    // $: slideOverlays = ref?.[$activeEdit.slide!]?.data.overlays || []
+
+    let filter: string = ""
+    let flipped: boolean = false
+    let fit: MediaFit = "contain"
+
+    $: if (background?.path) {
+        // TODO: use show filter if existing
+        filter = getMediaFilter(background.path)
+        flipped = $media[background.path]?.flipped || false
+        fit = $media[background.path]?.fit || "contain"
+    }
+
+    $: {
+        if (active.length) updateStyles()
+        else newStyles = {}
+    }
+
+    function updateStyles() {
+        if (!Object.keys(newStyles).length) return
+
+        let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!]?.id].items
+        let values: any[] = []
+        active.forEach((id) => {
+            let item = items[id]
+            if (item) {
+                let styles: any = getStyles(item.style)
+                let textStyles: string = ""
+
+                Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+                Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+
+                values.push(textStyles)
+            }
+        })
+
+        history({
+            id: "setStyle",
+            newData: { style: { key: "style", values } },
+            location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: active },
+        })
+    }
+
+    // $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
+    //   // let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
+    //   let items = _show("active").slides([ref[$activeEdit.slide!].id]).items().get()[0]
+    //   if (items) autoSize(active, items)
+    // }
+
+    let altKeyPressed: boolean = false
+    function keydown(e: any) {
+        if (e.altKey) {
+            e.preventDefault()
+            altKeyPressed = true
+        }
+    }
+    function keyup() {
+        altKeyPressed = false
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
 <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
-  {#if Slide}
-    <DropArea id="edit">
-      <Zoomed
-        background={Slide?.settings?.color || $outputs[getActiveOutputs()[0]]?.show?.background || "black"}
-        {resolution}
-        style={getStyleResolution(resolution, width, height, "fit")}
-        bind:ratio
-        hideOverflow={false}
-        center
-      >
-        <!-- background -->
-        {#if !altKeyPressed && background}
-          {#key background.path}
-            <div class="background" style="zoom: {1 / ratio};opacity: 0.5;">
-              <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
-            </div>
-          {/key}
-        {/if}
-        <!-- edit -->
-        <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
-        {#each Slide.items as item, index}
-          <Editbox {item} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />
-        {/each}
-        <!-- overlays -->
-        <!-- {#if !altKeyPressed && slideOverlays?.length}
+    {#if Slide}
+        <DropArea id="edit">
+            <Zoomed
+                background={Slide?.settings?.color || $outputs[getActiveOutputs()[0]]?.show?.background || "black"}
+                {resolution}
+                style={getStyleResolution(resolution, width, height, "fit")}
+                bind:ratio
+                hideOverflow={false}
+                center
+            >
+                <!-- background -->
+                {#if !altKeyPressed && background}
+                    {#key background.path}
+                        <div class="background" style="zoom: {1 / ratio};opacity: 0.5;">
+                            <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
+                        </div>
+                    {/key}
+                {/if}
+                <!-- edit -->
+                <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                {#each Slide.items as item, index}
+                    <Editbox {item} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />
+                {/each}
+                <!-- overlays -->
+                <!-- {#if !altKeyPressed && slideOverlays?.length}
         <div style="opacity: 0.5;pointer-events: none;">
           {#each slideOverlays as id}
             {#if $overlays[id]}
@@ -146,23 +146,23 @@
           {/each}
         </div>
       {/if} -->
-      </Zoomed>
-    </DropArea>
-  {:else}
-    <Center size={2} faded>
-      <T id="empty.slide" />
-    </Center>
-  {/if}
+            </Zoomed>
+        </DropArea>
+    {:else}
+        <Center size={2} faded>
+            <T id="empty.slide" />
+        </Center>
+    {/if}
 </div>
 
 <style>
-  .parent {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* padding: 10px; */
-    overflow: auto;
-  }
+    .parent {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* padding: 10px; */
+        overflow: auto;
+    }
 </style>

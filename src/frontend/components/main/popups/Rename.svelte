@@ -1,6 +1,8 @@
 <script lang="ts">
   import { activePopup, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
+    import { clone } from "../../helpers/array"
   import { history } from "../../helpers/history"
+    import Icon from "../../helpers/Icon.svelte"
   import { _show } from "../../helpers/shows"
   import T from "../../helpers/T.svelte"
   import Button from "../../inputs/Button.svelte"
@@ -89,6 +91,24 @@
         history({ id: "updateTemplate", newData: { key: "name", data: groupName }, location: { page: "drawer", id } })
       })
     },
+    chord: () => {
+      let chord = $selected.data[0]
+      let lines = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]
+
+      // create first
+      if (!chord.chord) return
+
+      let newLines = clone(lines)
+      let chords = newLines[chord.index].chords
+      chords.forEach((a: any, i: number) => {
+        if (a.id === chord.chord.id) newLines[chord.index].chords[i].key = groupName
+      })
+      
+      _show()
+      .slides([chord.slideId])
+      .items([chord.itemIndex])
+      .set({ key: "lines", values: [newLines] });
+    }
   }
 
   function rename() {
@@ -113,15 +133,20 @@
 
 <svelte:window on:keydown={keydown} />
 
+{#if list.length}
 <p><T id="popup.change_name" />:</p>
 <ul style="list-style-position: inside;">
   {#each list as text}
     <li style="font-weight: bold;">{text}</li>
   {/each}
 </ul>
+{/if}
+
 <div bind:this={element}>
   <TextInput autofocus value={groupName} {element} on:change={(e) => changeValue(e)} />
 </div>
-<Button style="height: auto;margin-top: 10px;" on:click={rename} center>
+
+<Button style="height: auto;margin-top: 10px;" on:click={rename} center dark>
+  <Icon id="edit" right />
   <T id="actions.rename" />
 </Button>

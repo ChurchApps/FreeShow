@@ -69,13 +69,14 @@ export function convertCalendar(data: any) {
             let newEvent: Event = {
                 type: "event",
                 name: event.SUMMARY,
-                color: null,
+                color: "#FF5733",
                 from: startDate,
                 to: endDate,
-                time: !fullDay,
+                time: startDate.length > 10 || fullDay,
                 repeat: false,
                 notes: event.DESCRIPTION?.trim() || "",
                 location: event.LOCATION || "",
+                id: event.UID,
             }
             if (!fullDay) {
                 newEvent.fromTime = from.hours + ":" + from.minutes
@@ -89,7 +90,9 @@ export function convertCalendar(data: any) {
         // TODO: history ?
         events.update((a) => {
             newEvents.forEach((event) => {
-                a[uid()] = event
+                let id: string = event.id || uid()
+                delete event.id
+                a[id] = event
             })
             return a
         })

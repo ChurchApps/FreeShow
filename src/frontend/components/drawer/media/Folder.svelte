@@ -44,7 +44,7 @@
                     <!-- {:else if items > 0}
         <Icon size={5} id="movie" /> -->
                 {:else}
-                    <Icon size={5} id="folder" />
+                    <Icon size={3} id="folder" />
                 {/if}
             {/key}
         </div>

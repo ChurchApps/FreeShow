@@ -36,6 +36,7 @@ import {
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
 import { deleteTimer, playPause, playPauseGlobal } from "../drawer/timers/timers"
+import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
 import { clone } from "../helpers/array"
 import { copy, paste } from "../helpers/clipboard"
@@ -166,7 +167,7 @@ const actions: any = {
             return
         }
 
-        if (obj.sel.id.includes("timer")) {
+        if (obj.sel.id?.includes("timer")) {
             obj.sel.data.forEach((data) => {
                 let id = data.id || data.timer?.id
                 deleteTimer(id)
@@ -416,7 +417,8 @@ const actions: any = {
         })
     },
     section: (obj) => {
-        history({ id: "newSection", newData: { index: obj.sel.data[0].index + 1 }, location: { page: "show", project: get(activeProject) } })
+        let index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
+        history({ id: "newSection", newData: { index }, location: { page: "show", project: get(activeProject) } })
     },
 
     // slide views
@@ -508,6 +510,20 @@ const actions: any = {
             settingsTab.set("outputs")
             activePage.set("settings")
         }
+    },
+
+    // chords
+    custom_key: (obj: any) => {
+        let data = obj.sel.data[0]
+        selected.set(obj.sel)
+
+        if (!data.chord) {
+            // create chord
+            let item = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
+            addChords(item, { showId: get(activeShow)!.id, id: data.slideId }, data.itemIndex)
+        }
+
+        activePopup.set("rename")
     },
 
     // change slide group

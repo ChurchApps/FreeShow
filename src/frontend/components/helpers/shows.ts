@@ -346,6 +346,17 @@ export function _show(id: any = "active") {
                                     // array bug
                                     if (Array.isArray(childId)) childId = childId[0]
 
+                                    // check if layout is a "real" slide
+                                    if (!shows[id].slides[childId]) {
+                                        // remove empty slide
+                                        showsCache.update((a) => {
+                                            a[id].slides[layoutSlide.id].children?.splice(jndex, 1)
+                                            delete a[id].layouts[layoutId].slides[index].children[childId]
+                                            return a
+                                        })
+                                        return
+                                    }
+
                                     a[i].push({
                                         type: "child",
                                         index: jndex,

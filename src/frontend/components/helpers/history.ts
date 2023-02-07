@@ -1203,14 +1203,21 @@ export function history(obj: History, undo: null | boolean = null) {
                                             slide.items.push(item)
                                         }
                                     })
-                                    // slide.items.forEach((item: any, i: number) => {
-                                    //   item.style = template.items[i] ? template.items[i].style || "" : template.items[0].style || ""
-                                    //   item.lines?.forEach((line: any, j: number) => {
-                                    //     line.text.forEach((text: any, k: number) => {
-                                    //       text.style = template.items[i].lines?.[j]?.text[k] ? template.items[i].lines?.[j].text[k].style || "" : template.items[i].lines?.[0].text[0].style || ""
-                                    //     })
-                                    //   })
-                                    // })
+
+                                    slide.items.forEach((item: any, i: number) => {
+                                        // remove item if template don't have it and it's empty
+                                        if (i < template.items.length) return
+                                        let text: number = item.lines?.reduce((value, line) => (value += line.text?.reduce((value, text) => (value += text.value.length), 0)), 0)
+                                        if (text) return
+                                        slide.items.splice(i, 1)
+
+                                        // item.style = template.items[i] ? template.items[i].style || "" : template.items[0].style || ""
+                                        // item.lines?.forEach((line: any, j: number) => {
+                                        //     line.text.forEach((text: any, k: number) => {
+                                        //     text.style = template.items[i].lines?.[j]?.text[k] ? template.items[i].lines?.[j].text[k].style || "" : template.items[i].lines?.[0].text[0].style || ""
+                                        //     })
+                                        // })
+                                    })
                                 }
                                 a[showID].slides[id] = clone(slide)
                             })

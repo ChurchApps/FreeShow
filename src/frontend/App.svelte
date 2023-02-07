@@ -17,7 +17,6 @@
     import Navigation from "./components/edit/Navigation.svelte"
     import Pdf from "./components/export/Pdf.svelte"
     import { copy } from "./components/helpers/clipboard"
-    import { redo } from "./components/helpers/history"
     import { getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
@@ -84,6 +83,8 @@
     const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "player", "live", "templates"]
     const ctrlKeys: any = {
         a: () => menuClick("selectAll"),
+        c: () => menuClick("copy"),
+        v: () => menuClick("paste"),
         // a: () => {
         //   if ($activeShow?.id && ($activeShow.type === undefined || $activeShow.type === "show")) {
         //     if ($activePage === "show") {
@@ -134,9 +135,13 @@
         // z: (e: any) => {
         //   if (!e.target.closest(".edit")) undo()
         // },
-        Z: (e: any) => {
-            if (!e.target.closest(".edit")) redo()
-        },
+        // Z: (e: any) => {
+        //     if (!e.target.closest(".edit")) redo()
+        // },
+        s: () => menuClick("save"),
+        y: () => menuClick("redo"),
+        z: () => menuClick("undo"),
+        Z: () => menuClick("redo"),
     }
     const keys: any = {
         Escape: () => {

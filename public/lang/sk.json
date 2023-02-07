@@ -387,6 +387,7 @@
         "actions": "Akcie",
         "clear_history": "Clear history",
         "set_key": "Set key",
+        "custom_key": "Set custom value",
         "send_midi": "Send MIDI",
         "remove_media": "Odstrániť médium"
     },

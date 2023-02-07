@@ -22,7 +22,15 @@ export function getMidiOutputs() {
 }
 
 export function sendMidi(data: any): void {
-    var output = new easymidi.Output(data.output)
+    let output: any = null
+
+    try {
+        output = new easymidi.Output(data.output)
+    } catch (error) {
+        console.error(error)
+    }
+
+    if (!output) return
 
     output.send(data.type, data.values)
     // cc: { controller: 37, value: 80, channel: 0 }

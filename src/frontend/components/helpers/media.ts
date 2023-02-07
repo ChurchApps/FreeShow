@@ -9,7 +9,7 @@ export function getExtension(path: string): string {
     if (!path) return ""
     if (path.indexOf(".") < 0) return path
     if (path.includes("?")) path = path.slice(0, path.indexOf("?"))
-    return path.substring(path.lastIndexOf(".") + 1)
+    return path.substring(path.lastIndexOf(".") + 1).toLowerCase()
 }
 
 export function removeExtension(name: string): string {

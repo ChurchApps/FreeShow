@@ -251,8 +251,8 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     // get ghost background
     if (!background) {
         layout.forEach((a, i) => {
-            if (i <= index) {
-                if (a.data.actions?.clearBackground || a.data.disabled) background = null
+            if (i <= index && !a.data.disabled) {
+                if (a.data.actions?.clearBackground) background = null
                 else if (a.data.background) background = a.data.background
             }
         })
