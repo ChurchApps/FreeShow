@@ -1,10 +1,5 @@
-import easymidi from "easymidi"
+import JZZ from "jzz"
 
-// input.on('noteon', function (params) {
-//     // params = {note: ..., velocity: ..., channel: ...}
-//   });
-
-// not windows...
 // const virtualDevices: any = {}
 // export function createVirtualMidi() {
 //     virtualDevices.input = new easymidi.Input("FreeShow MIDI Input", true)
@@ -17,24 +12,29 @@ import easymidi from "easymidi"
 //     virtualDevices.output?.close()
 // }
 
+// https://jazz-soft.net/doc/JZZ/jzz.html#info
+// https://jazz-soft.net/doc/JZZ/midiin.html#info
 export function getMidiOutputs() {
-    return easymidi.getOutputs()
+    return JZZ()
+        .info()
+        .outputs.map((a: any) => a.name)
 }
 
-export function sendMidi(data: any): void {
-    let output: any = null
+export async function sendMidi(data: any) {
+    let port: any = null
 
     try {
-        output = new easymidi.Output(data.output)
+        port = await JZZ().openMidiOut(data.output)
+        if (data.type === "noteon") {
+            await port.noteOn(data.values.channel, data.values.note, data.values.velocity)
+            // .wait(500).noteOff(data.values.channel, data.values.note)
+        } else if (data.type === "noteoff") {
+            await port.noteOff(data.values.channel, data.values.note, data.values.velocity)
+        }
     } catch (error) {
         console.error(error)
     }
 
-    if (!output) return
-
-    output.send(data.type, data.values)
-    // cc: { controller: 37, value: 80, channel: 0 }
-    // noteon: { note: 64, velocity: 127, channel: 3 }
-
-    output.close()
+    if (!port) return
+    port.close()
 }

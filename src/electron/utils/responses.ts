@@ -73,7 +73,6 @@ const mainResponses: any = {
     EXPORT_PATH: (): string => getDocumentsFolder(null, "Exports"),
     READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
     DISPLAY: (): boolean => false,
-    SEND_MIDI: (data: any): void => sendMidi(data),
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
     GET_SCREENS: (): void => getScreens(),
     GET_WINDOWS: (): void => getScreens("window"),
@@ -85,6 +84,9 @@ const mainResponses: any = {
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),
     MINIMIZE: (): void => mainWindow?.minimize(),
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
+    SEND_MIDI: (data: any): void => {
+        sendMidi(data)
+    },
 }
 
 export function receiveMain(e: any, msg: Message) {
