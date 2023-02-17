@@ -11,7 +11,7 @@ import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
 import { checkShowsFolder, getDocumentsFolder, getPaths, loadFile, readFile, selectFilesDialog, selectFolderDialog } from "./files"
 import { importShow } from "./import"
-import { getMidiOutputs, sendMidi } from "./midi"
+import { getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -74,6 +74,7 @@ const mainResponses: any = {
     READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
     DISPLAY: (): boolean => false,
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
+    GET_MIDI_INPUTS: (): string[] => getMidiInputs(),
     GET_SCREENS: (): void => getScreens(),
     GET_WINDOWS: (): void => getScreens("window"),
     GET_DISPLAYS: (): Display[] => screen.getAllDisplays(),
@@ -86,6 +87,10 @@ const mainResponses: any = {
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
     SEND_MIDI: (data: any): void => {
         sendMidi(data)
+    },
+    RECEIVE_MIDI: (data: any): void => {
+        console.log("LISTEN TO MIDI IN", data)
+        receiveMidi(data)
     },
 }
 

@@ -388,7 +388,8 @@
         "clear_history": "Fjern historie",
         "set_key": "Sett toneart",
         "custom_key": "Skriv inn verdi",
-        "send_midi": "Send MIDI",
+        "play_on_midi": "Spill av når MIDI inn",
+        "send_midi": "Send MIDI ut",
         "remove_media": "Fjern media"
     },
     "export": {
@@ -531,6 +532,7 @@
     },
     "midi": {
         "name": "Navn",
+        "input": "Inngang",
         "output": "Utgang",
         "type": "Type",
         "note": "Note",

@@ -388,7 +388,8 @@
         "clear_history": "Clear history",
         "set_key": "Set key",
         "custom_key": "Set custom value",
-        "send_midi": "Send MIDI",
+        "play_on_midi": "Play on MIDI in",
+        "send_midi": "Send MIDI out",
         "remove_media": "Odstrániť médium"
     },
     "export": {
@@ -531,6 +532,7 @@
     },
     "midi": {
         "name": "Name",
+        "input": "Input",
         "output": "Output",
         "type": "Type",
         "note": "Note",

@@ -154,13 +154,22 @@ export interface Media {
 
 export interface Midi {
     name: string
-    output: string
+    input?: string
+    output?: string
     type: "noteon" | "noteoff" | "cc"
     values: {
         note: number
         velocity: number
         channel: number
     }
+}
+
+export interface MidiIn extends Midi {
+    shows: {
+        id: string
+        // layoutId: string
+        // index: number
+    }[]
 }
 
 //

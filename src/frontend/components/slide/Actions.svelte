@@ -19,6 +19,15 @@
 </script>
 
 <div class="icons" style="zoom: {4 / columns};">
+    {#if actions.receiveMidi}
+        <div>
+            <div class="button white">
+                <Button style="padding: 5px;" redHover title={$dictionary.actions?.play_on_midi} on:click={() => changeSlideAction("receiveMidi")}>
+                    <Icon id="play" white />
+                </Button>
+            </div>
+        </div>
+    {/if}
     {#if actions.sendMidi}
         <div>
             <div class="button white">

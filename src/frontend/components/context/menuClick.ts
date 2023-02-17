@@ -666,20 +666,26 @@ const actions: any = {
 }
 
 function changeSlideAction(obj: any, id: string) {
-    if (id === "sendMidi") {
+    if (id.includes("Midi")) {
         let midiId: string = uid()
         let layoutSlide: number = obj.sel.data[0].index
         let ref = _show().layouts("active").ref()[0]
         let actions = ref[layoutSlide].data.actions || {}
-        actions.sendMidi = midiId
+
+        if (actions[id]) midiId = actions[id]
+        else actions[id] = midiId
+
         history({
             id: "changeLayout",
             newData: { key: "actions", value: actions },
             location: { page: "show", show: get(activeShow)!, layoutSlide, layout: _show().get("settings.activeLayout") },
         })
 
-        // popupData.set(obj.sel.data[0])
-        popupData.set({ id: midiId })
+        let data: any = { id: midiId }
+        // sendMidi | receiveMidi
+        if (id === "receiveMidi") data = { id: midiId, type: "in", index: obj.sel.data[0].index }
+
+        popupData.set(data)
         activePopup.set("midi")
         return
     }

@@ -31,6 +31,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
         case "actions":
             let currentActions: any = _show("active").layouts("active").ref()[0][get(selected).data[0]?.index]?.data?.actions
             let actions = [
+                { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
                 { id: "sendMidi", label: "actions.send_midi", icon: "music" },
                 { id: "clearBackground", label: "clear.background", icon: "background", enabled: currentActions?.clearBackground || false },
                 { id: "clearOverlays", label: "clear.overlays", icon: "overlays", enabled: currentActions?.clearOverlays || false },
