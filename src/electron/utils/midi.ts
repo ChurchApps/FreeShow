@@ -48,56 +48,41 @@ export async function sendMidi(data: any) {
     port.close()
 }
 
+let openedPorts: any = {}
+
+export function closeMidiInPorts(id: string = "") {
+    if (id) {
+        openedPorts[id].close()
+        delete openedPorts[id]
+        return
+    }
+
+    Object.values(openedPorts).forEach((port: any) => {
+        port.close()
+    })
+    openedPorts = {}
+}
+
 export async function receiveMidi(data: any) {
     // let port: any = null
     console.log("INPUT", data.input)
     if (!data.input) return
-
-    // this is for testing
-    console.log("Testing all inputs")
-    JZZ()
-        .info()
-        .inputs.forEach((input: any, index: number) => {
-            console.log(index, input)
-
-            JZZ()
-                .openMidiIn(index)
-                .or(index + ": Can't open!")
-        })
+    if (openedPorts[data.id]) return
 
     try {
-        JZZ()
-            .openMidiIn(data.input)
-            .or("MIDI-In: Cannot open!")
-            .and(function (test: any) {
-                console.log("MIDI-In:", test.name())
-            })
-            .connect(JZZ().openMidiOut()) // redirect to the default MIDI-Out port
-            .connect(function (msg: any) {
-                console.log(msg.toString())
-                toApp("RECEIVE_MIDI", msg)
-            }) // and log to the console
-            .wait(10000)
-            .close()
-            .and("Thank you!")
-
         // I want to connect to the input and listen for notes!
-        // port = await JZZ().openMidiIn(data.input).
-        // port.connect(function (msg: any) {
-        //     console.log(msg)
-        //     toApp("RECEIVE_MIDI", msg)
-        // })
+        let port = await JZZ().openMidiIn(data.input).or("MIDI-In: Cannot open!")
+        // console.log("MIDI-In:", port.name())
 
-        // if (data.type === "noteon") {
-        //     await port.noteOn(data.values.channel, data.values.note, data.values.velocity)
-        //     // .wait(500).noteOff(data.values.channel, data.values.note)
-        // } else if (data.type === "noteoff") {
-        //     await port.noteOff(data.values.channel, data.values.note, data.values.velocity)
-        // }
+        if (port.name()) openedPorts[data.id] = port
+
+        port.connect(function (msg: any) {
+            // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
+            let type = msg.toString().includes("Off") ? "noteoff" : "noteon"
+            let values = { note: msg["1"], velocity: msg["2"], channel: msg["0"] }
+            toApp("MAIN", { channel: "RECEIVE_MIDI", data: { id: data.id, values, type } })
+        })
     } catch (error) {
         console.error(error)
     }
-
-    // if (!port) return
-    // port.close()
 }

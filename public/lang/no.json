@@ -537,7 +537,9 @@
         "type": "Type",
         "note": "Note",
         "velocity": "Hastighet",
-        "channel": "Kanal"
+        "channel": "Kanal",
+        "start_action": "Start handling",
+        "tip": "Verdier oppdateres ved mottak av MIDI inngang. Sett hastighet til -1 for å deaktivere."
     },
     "draw": {
         "focus": "Fokus",
@@ -581,6 +583,7 @@
         "theme": "Tema",
         "groups": "Grupper",
         "outputs": "Utganger",
+        "actions": "Handlinger",
         "display": "Skjerm",
         "connection": "Tilkobling",
         "calendar": "Kalender",

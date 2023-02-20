@@ -9,6 +9,7 @@ import { BIBLE, IMPORT } from "./../types/Channels"
 import { closeServers } from "./servers"
 import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
+import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./utils/output"
 import { loadScripture, loadShow, receiveMain, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
@@ -138,6 +139,7 @@ function createMain() {
 
         // midi
         // closeVirtualMidi()
+        closeMidiInPorts()
 
         app.quit()
 

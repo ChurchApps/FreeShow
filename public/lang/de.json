@@ -537,7 +537,9 @@
         "type": "Type",
         "note": "Note",
         "velocity": "Velocity",
-        "channel": "Channel"
+        "channel": "Channel",
+        "start_action": "Start action",
+        "tip": "Values update when receiving a MIDI input. Set velocity to -1 to disable."
     },
     "draw": {
         "focus": "Fokus",
@@ -581,6 +583,7 @@
         "theme": "Design",
         "groups": "Gruppen",
         "outputs": "Ausgaben",
+        "actions": "Aktionen",
         "display": "Anzeige",
         "connection": "Verbindung",
         "calendar": "Kalendar",

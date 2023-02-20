@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary } from "../../stores"
+    import { activeShow, dictionary, midiIn } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
@@ -15,6 +15,11 @@
             newData: { key: "actions", value: { ...actions, [id]: actions[id] ? !actions[id] : true } },
             location: { page: "show", show: $activeShow!, layoutSlide: index, layout: _show("active").get("settings.activeLayout") },
         })
+    }
+
+    // delete receiveMidi if it don't exists
+    $: if (actions.receiveMidi && !$midiIn[actions.receiveMidi]) {
+        changeSlideAction("receiveMidi")
     }
 </script>
 

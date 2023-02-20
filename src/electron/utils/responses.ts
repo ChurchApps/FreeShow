@@ -11,7 +11,7 @@ import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
 import { checkShowsFolder, getDocumentsFolder, getPaths, loadFile, readFile, selectFilesDialog, selectFolderDialog } from "./files"
 import { importShow } from "./import"
-import { getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
+import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -89,8 +89,10 @@ const mainResponses: any = {
         sendMidi(data)
     },
     RECEIVE_MIDI: (data: any): void => {
-        console.log("LISTEN TO MIDI IN", data)
         receiveMidi(data)
+    },
+    CLOSE_MIDI: (data: any): void => {
+        closeMidiInPorts(data.id)
     },
 }
 

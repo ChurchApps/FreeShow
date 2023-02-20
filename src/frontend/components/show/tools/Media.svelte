@@ -1,6 +1,7 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activePopup, activeShow, dictionary, media, outLocked, playingAudio, showsCache } from "../../../stores"
+    import { activeShow, dictionary, media, midiIn, outLocked, playingAudio, showsCache } from "../../../stores"
+    import { playMidiIn } from "../../../utils/midi"
     import { send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import { playAudio } from "../../helpers/audio"
@@ -82,13 +83,16 @@
 
     let midi: any[] = []
     $: showMidi = show?.midi || {}
-    $: if ($activePopup !== "midi" && Object.values(showMidi).length) {
+    // $activePopup !== "midi" &&
+    $: if (Object.keys(showMidi).length || Object.keys($midiIn).length) {
         midi = []
         Object.entries(showMidi).forEach(([id, value]: any) => {
             midi.push({ id, ...value })
         })
-        console.log(midi)
-    } else if (!Object.values(showMidi).length) midi = []
+        Object.entries($midiIn).forEach(([id, value]: any) => {
+            midi.push({ id, ...value, type: "in" })
+        })
+    } else if (!Object.keys(showMidi).length) midi = []
 
     // TODO: check if file exists!!!
 </script>
@@ -166,8 +170,14 @@
             <h5><T id="popup.midi" /></h5>
             {#each midi as midi}
                 <SelectElem id="midi" data={midi} draggable>
-                    <Button class="context #midi" on:click={() => sendMidi(midi)} style="padding: 8px;width: 100%;" title={midi.name} bold={false}>
-                        <Icon id="music" size={1.2} right />
+                    <Button
+                        class="context #midi"
+                        on:click={() => (midi.type === "in" ? playMidiIn(midi) : sendMidi(midi))}
+                        style="padding: 8px;width: 100%;"
+                        title={midi.name}
+                        bold={false}
+                    >
+                        <Icon id={midi.type === "in" ? "play" : "music"} size={1.2} right />
                         <p>{midi.name}</p>
                     </Button>
                 </SelectElem>
@@ -196,6 +206,8 @@
         text-align: center;
         padding: 5px;
         background-color: var(--primary-darkest);
+        color: var(--text);
+        font-size: 0.8em;
         text-transform: uppercase;
     }
 

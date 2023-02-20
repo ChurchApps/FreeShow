@@ -156,6 +156,7 @@ export interface Midi {
     name: string
     input?: string
     output?: string
+    action?: string
     type: "noteon" | "noteoff" | "cc"
     values: {
         note: number

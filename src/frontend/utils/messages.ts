@@ -241,4 +241,5 @@ const saveList: { [key in SaveList]: any } = {
     videoExtensions: videoExtensions,
     webFavorites: webFavorites,
     volume: null,
+    midiIn: midiIn,
 }

@@ -1,14 +1,15 @@
-import { undoHistory, redoHistory, scripturesCache } from "./../stores"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OPEN_FOLDER, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
+import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { checkName } from "../components/helpers/show"
 import { convertBebliaBible } from "../converters/bebliaBible"
+import { convertCalendar } from "../converters/calendar"
 import { convertEasyWorship } from "../converters/easyworship"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
@@ -56,14 +57,14 @@ import {
     version,
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
+import { redoHistory, scripturesCache, undoHistory } from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
 import { listen } from "./messages"
+import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
-import { clone } from "../components/helpers/array"
-import { convertCalendar } from "../converters/calendar"
 
 export function startup() {
     loaded.set(false)
@@ -146,6 +147,7 @@ const receiveMAIN: any = {
         else if (a === "pdf") currentWindow.set("pdf")
         else startupMain()
     },
+    RECEIVE_MIDI: (msg) => playMidiIn(msg),
 }
 
 export const receiveSTORE: any = {

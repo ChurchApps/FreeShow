@@ -28,6 +28,7 @@ import {
     mediaCache,
     mediaFolders,
     mediaOptions,
+    midiIn,
     openedFolders,
     os,
     outLocked,
@@ -117,6 +118,7 @@ export function save() {
         videoExtensions: get(videoExtensions),
         webFavorites: get(webFavorites),
         volume: get(volume),
+        midiIn: get(midiIn),
     }
     // save settings & shows
     // , shows: get(shows)
