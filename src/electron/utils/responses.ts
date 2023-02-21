@@ -12,6 +12,7 @@ import { createPDFWindow, exportProject, exportTXT } from "./export"
 import { checkShowsFolder, getDocumentsFolder, getPaths, loadFile, readFile, selectFilesDialog, selectFolderDialog } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
+import lyricsFinder from "lyrics-finder"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -85,6 +86,9 @@ const mainResponses: any = {
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),
     MINIMIZE: (): void => mainWindow?.minimize(),
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
+    SEARCH_LYRICS: (data: any): void => {
+        searchLyrics(data)
+    },
     SEND_MIDI: (data: any): void => {
         sendMidi(data)
     },
@@ -101,4 +105,9 @@ export function receiveMain(e: any, msg: Message) {
     if (mainResponses[msg.channel]) data = mainResponses[msg.channel](msg.data, e)
 
     if (data !== undefined) e.reply(MAIN, { channel: msg.channel, data })
+}
+
+async function searchLyrics({ artist, title }: any) {
+    let lyrics: string = await lyricsFinder(artist, title)
+    toApp("MAIN", { channel: "SEARCH_LYRICS", data: { lyrics } })
 }

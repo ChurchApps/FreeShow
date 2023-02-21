@@ -179,8 +179,8 @@
                 return
             }
 
-            // TODO: test this!!!
-            // if (e.key !== "s" && document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key)) return
+            // e.key !== "s" &&
+            if (document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key)) return
 
             if (ctrlKeys[e.key]) {
                 if (ctrlKeys[e.key](e)) e.preventDefault()
