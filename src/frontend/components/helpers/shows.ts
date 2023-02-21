@@ -317,7 +317,7 @@ export function _show(id: any = "active") {
             get: (key: string | null = null, includeId: boolean = false) => {
                 let a: any[] = []
                 if (layoutIds === "active") layoutIds = shows[id]?.settings?.activeLayout ? [shows[id].settings.activeLayout] : []
-                else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
+                else if (!layoutIds.length) layoutIds = Object.keys(shows[id]?.layouts || {})
                 layoutIds.forEach((layoutId: any) => {
                     let layout = shows[id]?.layouts[layoutId]
                     if (key) layout = layout[key]
@@ -338,7 +338,7 @@ export function _show(id: any = "active") {
                         shows[id].layouts[layoutId].slides.forEach((layoutSlide: any, index: number) => {
                             layoutIndex++
                             let slide = shows[id].slides[layoutSlide.id]
-                            a[i].push({ type: "parent", index, layoutIndex, id: layoutSlide.id, children: slide?.children || [], data: layoutSlide })
+                            a[i].push({ type: "parent", layoutId, index, layoutIndex, id: layoutSlide.id, children: slide?.children || [], data: layoutSlide })
                             if (slide?.children) {
                                 slide.children.forEach((childId: string, jndex: number) => {
                                     layoutIndex++
@@ -359,6 +359,7 @@ export function _show(id: any = "active") {
 
                                     a[i].push({
                                         type: "child",
+                                        layoutId,
                                         index: jndex,
                                         layoutIndex,
                                         id: childId,

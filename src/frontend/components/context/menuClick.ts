@@ -17,6 +17,7 @@ import {
     events,
     forceClock,
     media,
+    midiIn,
     outLocked,
     outputs,
     overlays,
@@ -176,14 +177,17 @@ const actions: any = {
         }
 
         if (obj.sel.id === "midi") {
-            let id: string = obj.sel.data[0].id
+            let data = obj.sel.data[0]
+            let id: string = data.id
+
+            let key = data.type === "in" ? "receiveMidi" : "sendMidi"
 
             // remove from all layouts
             let ref = _show().layouts("active").ref()[0]
             ref.forEach((slideRef: any, i: number) => {
                 let actions = slideRef.data.actions || {}
-                if (actions.sendMidi !== id) return
-                delete actions.sendMidi
+                if (actions[key] !== id) return
+                delete actions[key]
                 history({
                     id: "changeLayout",
                     newData: { key: "actions", value: actions },
@@ -191,10 +195,19 @@ const actions: any = {
                 })
             })
 
+            if (data.type === "in") {
+                midiIn.update((a) => {
+                    delete a[id]
+                    return a
+                })
+                return
+            }
+
             // remove this
             let showMidi = _show().get("midi") || {}
             delete showMidi[id]
             _show().set({ key: "midi", value: showMidi })
+
             return
         }
 
@@ -666,20 +679,26 @@ const actions: any = {
 }
 
 function changeSlideAction(obj: any, id: string) {
-    if (id === "sendMidi") {
+    if (id.includes("Midi")) {
         let midiId: string = uid()
         let layoutSlide: number = obj.sel.data[0].index
         let ref = _show().layouts("active").ref()[0]
         let actions = ref[layoutSlide].data.actions || {}
-        actions.sendMidi = midiId
+
+        if (actions[id]) midiId = actions[id]
+        else actions[id] = midiId
+
         history({
             id: "changeLayout",
             newData: { key: "actions", value: actions },
             location: { page: "show", show: get(activeShow)!, layoutSlide, layout: _show().get("settings.activeLayout") },
         })
 
-        // popupData.set(obj.sel.data[0])
-        popupData.set({ id: midiId })
+        let data: any = { id: midiId }
+        // sendMidi | receiveMidi
+        if (id === "receiveMidi") data = { id: midiId, type: "in", index: obj.sel.data[0].index }
+
+        popupData.set(data)
         activePopup.set("midi")
         return
     }

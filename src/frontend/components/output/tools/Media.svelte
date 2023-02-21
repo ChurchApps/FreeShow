@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, outLocked, playerVideos } from "../../../stores"
+    import { activeShow, dictionary, outLocked, playerVideos, videoExtensions } from "../../../stores"
     import { send } from "../../../utils/request"
     import { splitPath } from "../../helpers/get"
     import Icon from "../../helpers/Icon.svelte"
@@ -36,7 +36,10 @@
     function openPreview() {
         if (!background) return
         console.log(background)
-        activeShow.set({ id: (background.path || background.id)!, type: (background.type || "image") as any })
+        let id = background.path || background.id
+        let type = background.type
+        if (!type) type = $videoExtensions.includes(getExtension(id)) ? "video" : "image"
+        activeShow.set({ id, type })
     }
 
     // auto clear video on finish

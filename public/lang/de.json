@@ -388,7 +388,8 @@
         "clear_history": "Clear history",
         "set_key": "Set key",
         "custom_key": "Set custom value",
-        "send_midi": "Send MIDI",
+        "play_on_midi": "Play on MIDI in",
+        "send_midi": "Send MIDI out",
         "remove_media": "Medien entfernen"
     },
     "export": {
@@ -531,11 +532,14 @@
     },
     "midi": {
         "name": "Name",
+        "input": "Input",
         "output": "Output",
         "type": "Type",
         "note": "Note",
         "velocity": "Velocity",
-        "channel": "Channel"
+        "channel": "Channel",
+        "start_action": "Start action",
+        "tip": "Values update when receiving a MIDI input. Set velocity to -1 to disable."
     },
     "draw": {
         "focus": "Fokus",
@@ -579,6 +583,7 @@
         "theme": "Design",
         "groups": "Gruppen",
         "outputs": "Ausgaben",
+        "actions": "Aktionen",
         "display": "Anzeige",
         "connection": "Verbindung",
         "calendar": "Kalendar",

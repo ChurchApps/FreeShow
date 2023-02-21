@@ -388,7 +388,8 @@
         "clear_history": "Fjern historie",
         "set_key": "Sett toneart",
         "custom_key": "Skriv inn verdi",
-        "send_midi": "Send MIDI",
+        "play_on_midi": "Spill av når MIDI inn",
+        "send_midi": "Send MIDI ut",
         "remove_media": "Fjern media"
     },
     "export": {
@@ -531,11 +532,14 @@
     },
     "midi": {
         "name": "Navn",
+        "input": "Inngang",
         "output": "Utgang",
         "type": "Type",
         "note": "Note",
         "velocity": "Hastighet",
-        "channel": "Kanal"
+        "channel": "Kanal",
+        "start_action": "Start handling",
+        "tip": "Verdier oppdateres ved mottak av MIDI inngang. Sett hastighet til -1 for å deaktivere."
     },
     "draw": {
         "focus": "Fokus",
@@ -579,6 +583,7 @@
         "theme": "Tema",
         "groups": "Grupper",
         "outputs": "Utganger",
+        "actions": "Handlinger",
         "display": "Skjerm",
         "connection": "Tilkobling",
         "calendar": "Kalender",

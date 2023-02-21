@@ -108,7 +108,6 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     // go to beginning if live mode & ctrl | no output | last slide active
     if (
-        get(activePage) === "show" &&
         get(activeShow) &&
         (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))
     ) {
@@ -324,4 +323,17 @@ export function clearOverlays() {
     let outOverlays: string[] = get(outputs)[outs[0]]?.out?.overlays || []
     outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
     setOutput("overlays", outOverlays)
+}
+
+// TODO: output/clearButtons
+export function clearAll() {
+    if (get(outLocked)) return
+
+    // clearVideo()
+    setOutput("background", null)
+    setOutput("slide", null)
+    clearOverlays()
+    clearAudio()
+    // clearTimers()
+    setOutput("transition", null)
 }

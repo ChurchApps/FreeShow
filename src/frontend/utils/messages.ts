@@ -23,6 +23,7 @@ import {
     language,
     mediaFolders,
     mediaOptions,
+    midiIn,
     openedFolders,
     os,
     overlayCategories,
@@ -47,6 +48,7 @@ import {
     webFavorites,
 } from "../stores"
 import { alertUpdates, autoOutput, maxConnections, outputs, ports, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
+import { midiInListen } from "./midi"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { client, eachConnection, sendData, timedout } from "./sendData"
@@ -167,6 +169,9 @@ export function listen() {
     // TO STAGE
     stageListen()
 
+    // MIDI IN
+    midiIn.subscribe(midiInListen)
+
     // SAVE
     // TODO: better saving!
     let s = { ...saveList, folders: folders, overlays: overlays, projects: projects, showsCache: showsCache, stageShows: stageShows }
@@ -236,4 +241,5 @@ const saveList: { [key in SaveList]: any } = {
     videoExtensions: videoExtensions,
     webFavorites: webFavorites,
     volume: null,
+    midiIn: midiIn,
 }

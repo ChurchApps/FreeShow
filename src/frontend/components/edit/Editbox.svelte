@@ -437,9 +437,11 @@ bind:offsetWidth={width} -->
                 })
             }}
         >
-            <Button on:click={toggleChords}>
-                <Icon id="chords" white={!chordsMode} />
-            </Button>
+            {#if !plain}
+                <Button on:click={toggleChords}>
+                    <Icon id="chords" white={!chordsMode} />
+                </Button>
+            {/if}
             {#if chordsMode}
                 <Button class="context #chord" on:click={() => addChords(item, ref, index)}>
                     <Icon id="add" white />

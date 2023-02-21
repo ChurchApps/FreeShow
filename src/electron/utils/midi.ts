@@ -1,10 +1,6 @@
-import easymidi from "easymidi"
+import JZZ from "jzz"
+import { toApp } from ".."
 
-// input.on('noteon', function (params) {
-//     // params = {note: ..., velocity: ..., channel: ...}
-//   });
-
-// not windows...
 // const virtualDevices: any = {}
 // export function createVirtualMidi() {
 //     virtualDevices.input = new easymidi.Input("FreeShow MIDI Input", true)
@@ -17,24 +13,76 @@ import easymidi from "easymidi"
 //     virtualDevices.output?.close()
 // }
 
+// https://jazz-soft.net/doc/JZZ/jzz.html#info
+// https://jazz-soft.net/doc/JZZ/midiin.html#info
 export function getMidiOutputs() {
-    return easymidi.getOutputs()
+    return JZZ()
+        .info()
+        .outputs.map((a: any) => a.name)
 }
 
-export function sendMidi(data: any): void {
-    let output: any = null
+export function getMidiInputs() {
+    return JZZ()
+        .info()
+        .inputs.map((a: any) => a.name)
+}
+
+export async function sendMidi(data: any) {
+    let port: any = null
+    console.log("OUTPUT", data.output)
 
     try {
-        output = new easymidi.Output(data.output)
+        port = await JZZ().openMidiOut(data.output).or("Could not connect to MIDI out!")
+        if (!port) return
+        if (data.type === "noteon") {
+            await port.noteOn(data.values.channel, data.values.note, data.values.velocity)
+            // .wait(500).noteOff(data.values.channel, data.values.note)
+        } else if (data.type === "noteoff") {
+            await port.noteOff(data.values.channel, data.values.note, data.values.velocity)
+        }
     } catch (error) {
         console.error(error)
     }
 
-    if (!output) return
+    if (!port) return
+    port.close()
+}
 
-    output.send(data.type, data.values)
-    // cc: { controller: 37, value: 80, channel: 0 }
-    // noteon: { note: 64, velocity: 127, channel: 3 }
+let openedPorts: any = {}
 
-    output.close()
+export function closeMidiInPorts(id: string = "") {
+    if (id) {
+        openedPorts[id].close()
+        delete openedPorts[id]
+        return
+    }
+
+    Object.values(openedPorts).forEach((port: any) => {
+        port.close()
+    })
+    openedPorts = {}
+}
+
+export async function receiveMidi(data: any) {
+    // let port: any = null
+    console.log("INPUT", data.input)
+    if (!data.input) return
+    if (openedPorts[data.id]) return
+
+    try {
+        // I want to connect to the input and listen for notes!
+        let port = await JZZ().openMidiIn(data.input).or("MIDI-In: Cannot open!")
+        // console.log("MIDI-In:", port.name())
+
+        if (port.name()) openedPorts[data.id] = port
+
+        port.connect(function (msg: any) {
+            // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
+            let type = msg.toString().includes("Off") ? "noteoff" : "noteon"
+            let values = { note: msg["1"], velocity: msg["2"], channel: msg["0"] }
+            toApp("MAIN", { channel: "RECEIVE_MIDI", data: { id: data.id, values, type } })
+        })
+    } catch (error) {
+        console.error(error)
+    }
 }

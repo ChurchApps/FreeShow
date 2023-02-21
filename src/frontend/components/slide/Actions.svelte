@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary } from "../../stores"
+    import { activeShow, dictionary, midiIn } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
@@ -16,9 +16,23 @@
             location: { page: "show", show: $activeShow!, layoutSlide: index, layout: _show("active").get("settings.activeLayout") },
         })
     }
+
+    // delete receiveMidi if it don't exists
+    $: if (actions.receiveMidi && !$midiIn[actions.receiveMidi]) {
+        changeSlideAction("receiveMidi")
+    }
 </script>
 
 <div class="icons" style="zoom: {4 / columns};">
+    {#if actions.receiveMidi}
+        <div>
+            <div class="button white">
+                <Button style="padding: 5px;" redHover title={$dictionary.actions?.play_on_midi} on:click={() => changeSlideAction("receiveMidi")}>
+                    <Icon id="play" white />
+                </Button>
+            </div>
+        </div>
+    {/if}
     {#if actions.sendMidi}
         <div>
             <div class="button white">
