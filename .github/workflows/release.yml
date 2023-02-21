@@ -1,49 +1,49 @@
 name: Release
 on:
-  push:
-    branches:
-      - "main"
+    push:
+        branches:
+            - "main"
 
 jobs:
-  publish:
-    name: "Publish"
-    runs-on: ${{ matrix.os }}
+    publish:
+        name: "Publish"
+        runs-on: ${{ matrix.os }}
 
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        strategy:
+            matrix:
+                os: [windows-latest, macos-latest, ubuntu-latest]
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@master
-        with:
-          node-version: 14
-      - name: install dependencies
-        run: npm ci
-      - name: build distributables
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run release
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@master
+              with:
+                  node-version: 18
+            - name: install dependencies
+              run: npm ci
+            - name: build distributables
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: npm run release
 
-  # release:
-  #   name: "Release"
-  #   needs: publish
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/download-artifact@v2
-  #     - name: List fetched artifacts
-  #       run: ls -R
-  #     - name: Emit a Github Release
-  #       uses: "marvinpinto/action-automatic-releases@latest"
-  #       with:
-  #         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-  #         automatic_release_tag: "latest"
-  #         prerelease: true
-  #         draft: true
-  #         files: |
-  #           *.exe
-  #           *.zip
-  #           *.dmg
-  #           *.deb
-  #           *.AppImage
-  #           LICENSE
+    # release:
+    #   name: "Release"
+    #   needs: publish
+    #   runs-on: ubuntu-latest
+    #   steps:
+    #     - uses: actions/download-artifact@v2
+    #     - name: List fetched artifacts
+    #       run: ls -R
+    #     - name: Emit a Github Release
+    #       uses: "marvinpinto/action-automatic-releases@latest"
+    #       with:
+    #         repo_token: "${{ secrets.GITHUB_TOKEN }}"
+    #         automatic_release_tag: "latest"
+    #         prerelease: true
+    #         draft: true
+    #         files: |
+    #           *.exe
+    #           *.zip
+    #           *.dmg
+    #           *.deb
+    #           *.AppImage
+    #           LICENSE
