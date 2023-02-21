@@ -20,6 +20,8 @@ jobs:
                   node-version: 18
             - name: install dependencies
               run: npm ci
+            - name: install dmg-license
+              run: npm i dmg-license
             - name: build distributables
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
