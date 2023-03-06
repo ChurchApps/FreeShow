@@ -50,7 +50,8 @@
     }
 
     function wheel(e: any) {
-        if (e.ctrlKey || e.metaKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
+        if (!e.ctrlKey && !e.metaKey) return
+        slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + (e.deltaY < 0 ? -1 : 1))) })
     }
 
     function slideClick(e: any, index: number) {

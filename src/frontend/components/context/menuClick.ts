@@ -40,7 +40,7 @@ import { deleteTimer, playPause, playPauseGlobal } from "../drawer/timers/timers
 import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
 import { clone } from "../helpers/array"
-import { copy, paste } from "../helpers/clipboard"
+import { copy, cut, paste } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { getMediaType } from "../helpers/media"
@@ -73,6 +73,7 @@ const actions: any = {
     undo: () => undo(),
     redo: () => redo(),
     history: () => activePopup.set("history"),
+    cut: () => cut(),
     copy: () => copy(),
     paste: () => paste(),
     // view
@@ -721,6 +722,8 @@ export function removeSlide(obj: any) {
     let ref = _show(location.show.id).layouts([location.layout]).ref()[0]
     let parents: any[] = []
     let childs: any[] = []
+
+    console.log(ref, obj)
 
     // remove parents and delete childs
     obj.sel.data.forEach((a: any) => {

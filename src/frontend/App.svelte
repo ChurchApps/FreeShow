@@ -16,7 +16,7 @@
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
     import Pdf from "./components/export/Pdf.svelte"
-    import { copy } from "./components/helpers/clipboard"
+    import { copy, cut } from "./components/helpers/clipboard"
     import { getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
@@ -111,10 +111,8 @@
         //   return true
         // },
         x: () => {
-            copy()
-            // TODO: delete
-            if ($selected.id === "slide") removeSlide({ sel: $selected })
-            return true
+            cut()
+            // return true
         },
         e: () => activePopup.set("export"),
         i: () => activePopup.set("import"),
@@ -179,8 +177,7 @@
                 return
             }
 
-            // e.key !== "s" &&
-            if (document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key)) return
+            if (e.key !== "s" && document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key)) return
 
             if (ctrlKeys[e.key]) {
                 if (ctrlKeys[e.key](e)) e.preventDefault()

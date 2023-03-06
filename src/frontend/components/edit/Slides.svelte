@@ -78,7 +78,10 @@
     // }
 
     function wheel(e: any) {
-        if (e.ctrlKey || e.metaKey) columns = Math.max(1, Math.min(10, columns + e.deltaY / 100))
+        if (!e.ctrlKey && !e.metaKey) return
+        e.preventDefault()
+        columns = Math.max(1, Math.min(4, columns + (e.deltaY < 0 ? -1 : 1)))
+        // if (e.ctrlKey || e.metaKey) columns = Math.max(1, Math.min(10, columns + e.deltaY / 100))
         // if (e.ctrlKey || e.metaKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
     }
 

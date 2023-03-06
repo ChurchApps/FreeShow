@@ -5,7 +5,7 @@
     import { activeEdit, activeShow, currentWindow, overlays, selected, showsCache, templates } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import { clone } from "../helpers/array"
-    import { history } from "../helpers/history"
+    import { deleteAction } from "../helpers/clipboard"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
     import { addToPos } from "../helpers/mover"
@@ -31,6 +31,7 @@
     export let editIndex: number = -1
     export let ratio: number = 1
     export let plain: boolean = false
+    export let chordsMode: boolean = false
 
     let itemElem: any
 
@@ -180,42 +181,7 @@
         if (!$activeEdit.items.includes(index) || document.activeElement?.closest(".item") || document.activeElement?.closest("input")) return
 
         if (e.key === "Backspace" || e.key === "Delete") {
-            // TODO: history
-            if ($activeEdit.id) {
-                if ($activeEdit.type === "overlay") {
-                    overlays.update((a: any) => {
-                        $activeEdit.items.forEach((i: number) => {
-                            if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items.splice(i, 1)
-                        })
-                        return a
-                    })
-
-                    return
-                }
-
-                if ($activeEdit.type === "template") {
-                    templates.update((a: any) => {
-                        $activeEdit.items.forEach((i: number) => {
-                            if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items.splice(i, 1)
-                        })
-                        return a
-                    })
-
-                    return
-                }
-
-                return
-            }
-            history({
-                id: "deleteItem",
-                location: {
-                    page: "edit",
-                    show: $activeShow!,
-                    items: $activeEdit.items,
-                    layout: layout,
-                    slide: ref.id,
-                },
-            })
+            deleteAction({ id: "item", data: { layout, slideId: ref.id } })
         }
     }
 
@@ -354,16 +320,17 @@
 
         let emptySelection: boolean = !sel.filter((a) => Object.keys(a).length).length
 
+        // get caret pos
         let caret = { line: 0, pos: 0 }
         sel.forEach((lineSel, i) => {
             if (lineSel.start !== undefined || (emptySelection && i >= sel.length - 1)) {
                 let pos = 0
                 let pasted = false
                 lines[i].text.forEach(({ value }, j) => {
-                    // console.log(pos, lineSel.start, value)
+                    console.log(pos, lineSel.start, value)
                     if (!pasted && (pos + value.length >= lineSel.start || (emptySelection && j >= lines[i].text.length - 1))) {
                         let caretPos = lineSel.start - pos
-                        caret = { line: i, pos: caretPos + clipboard.length }
+                        caret = { line: i, pos: lineSel.start + clipboard.length }
                         let removeText = lineSel.end - lineSel.start
                         removeText = removeText > 0 ? removeText : 0
 
@@ -374,6 +341,7 @@
                 })
             }
         })
+        console.log(caret)
 
         updateLines(lines)
         getStyle()
@@ -401,13 +369,6 @@
         newItem.style = "width: 100%;height: 100%;pointer-events: none;"
         return newItem
     }
-
-    // CHORDS
-
-    let chordsMode: boolean = false
-    function toggleChords() {
-        chordsMode = !chordsMode
-    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
@@ -418,7 +379,7 @@ bind:offsetWidth={width} -->
     bind:this={itemElem}
     class={plain ? "editItem" : "editItem item context #edit_box"}
     class:selected={$activeEdit.items.includes(index)}
-    style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);`}
+    style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1}`}
     data-index={index}
     on:mousedown={mousedown}
 >
@@ -437,11 +398,6 @@ bind:offsetWidth={width} -->
                 })
             }}
         >
-            {#if !plain}
-                <Button on:click={toggleChords}>
-                    <Icon id="chords" white={!chordsMode} />
-                </Button>
-            {/if}
             {#if chordsMode}
                 <Button class="context #chord" on:click={() => addChords(item, ref, index)}>
                     <Icon id="add" white />
@@ -549,8 +505,8 @@ bind:offsetWidth={width} -->
         transition: background-color 0.3s;
         /* cursor: text; */
     }
-    .item.selected {
-        outline: 5px solid var(--secondary);
+    .item.selected .align {
+        outline: 5px solid var(--secondary-opacity);
         overflow: visible;
     }
     .item .placeholder {
@@ -562,6 +518,7 @@ bind:offsetWidth={width} -->
     .item:hover {
         /* .item:hover > .edit { */
         background-color: rgb(255 255 255 / 0.05);
+        backdrop-filter: blur(20px);
     }
 
     .chordsButton {

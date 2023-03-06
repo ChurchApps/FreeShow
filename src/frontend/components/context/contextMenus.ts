@@ -96,7 +96,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
 export const contextMenuLayouts: { [key: string]: string[] } = {
     // MENU
     file: ["save", "import", "export_more", "SEPERATOR", "quit"],
-    edit: ["undo", "redo", "history", "SEPERATOR", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
+    edit: ["undo", "redo", "history", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
     view: ["fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
     help: ["shortcuts", "docs", "about"],
     // MAIN
