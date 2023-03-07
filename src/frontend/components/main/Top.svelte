@@ -1,19 +1,9 @@
 <script type="ts">
-    import { OUTPUT } from "../../../types/Channels"
-    import { dictionary, os, outputDisplay, outputs, saved } from "../../stores"
-    import { send } from "../../utils/request"
+    import { dictionary, os, outputDisplay, saved } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
-    import { getActiveOutputs } from "../helpers/output"
+    import { displayOutputs } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
-
-    function display(e: any) {
-        let enabledOutputs: any[] = getActiveOutputs($outputs, false)
-        enabledOutputs.forEach((id) => {
-            let output: any = { id, ...$outputs[id] }
-            send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, output, force: e.ctrlKey || e.metaKey })
-        })
-    }
 </script>
 
 <div class="top">
@@ -35,7 +25,7 @@
         <TopButton id="settings" hideLabel />
         <Button
             title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display}
-            on:click={display}
+            on:click={displayOutputs}
             class="context #output display {$outputDisplay ? 'on' : 'off'}"
             red={$outputDisplay}
         >

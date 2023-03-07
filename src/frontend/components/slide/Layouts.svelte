@@ -1,6 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { activePopup, activeProject, activeShow, dictionary, projects, showsCache, slidesOptions } from "../../stores"
+    import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -17,11 +18,10 @@
         .map(([id, layout]: any) => ({ id, ...layout }))
         .sort((a, b) => a.name.localeCompare(b.name))
 
-    function addLayout(e: any) {
+    function addLayout(e: any): any {
+        if (e.ctrlKey || e.metaKey) return duplicate({ id: "layout" })
+
         let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
-        if (e.ctrlKey || e.metaKey) {
-            newData.layout = { ...$showsCache[$activeShow!.id].layouts[$showsCache[$activeShow!.id].settings.activeLayout] }
-        }
         history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: $activeShow! } })
     }
 

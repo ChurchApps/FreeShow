@@ -123,7 +123,7 @@
                 // TODO: get new [verse] (child)
 
                 if (state === "removed") {
-                    removeSlide({ sel: { data: [{ index: i }] } })
+                    removeSlide([{ index: i }])
                     slidesData.splice(i, 1)
                     i--
                 } else if (state === "added") {

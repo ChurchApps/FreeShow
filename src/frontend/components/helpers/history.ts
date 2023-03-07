@@ -280,7 +280,7 @@ export function history(obj: History, undo: null | boolean = null) {
             // TEMPLATE
             case "updateTemplate":
                 templates.update((a: any) => {
-                    if (obj.newData.key === "items") {
+                    if (obj.newData.key === "items" && obj.location!.items) {
                         let items = a[obj.location!.id!][obj.newData.key]
                         obj.location!.items!.forEach((index, i) => {
                             items[index].style = obj.newData.data[i]
@@ -457,7 +457,7 @@ export function history(obj: History, undo: null | boolean = null) {
                 } else {
                     let category: null | string = null
                     if (get(drawerTabsData).shows?.activeSubTab !== "all") category = get(drawerTabsData).shows?.activeSubTab
-                    if (!obj.newData?.show) obj.newData = { show: new ShowObj(false, category) }
+                    if (!obj.newData?.show) obj.newData = { show: new ShowObj(obj.newData?.private || false, category) }
 
                     let id: string = obj.newData.id
                     if (!id) {

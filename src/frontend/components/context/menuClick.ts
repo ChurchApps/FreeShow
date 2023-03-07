@@ -9,7 +9,6 @@ import {
     activePopup,
     activeRename,
     activeShow,
-    alertMessage,
     currentOutputSettings,
     dictionary,
     drawerTabsData,
@@ -17,7 +16,6 @@ import {
     events,
     forceClock,
     media,
-    midiIn,
     outLocked,
     outputs,
     overlays,
@@ -26,7 +24,6 @@ import {
     projects,
     projectView,
     saved,
-    scriptures,
     selected,
     settingsTab,
     shows,
@@ -36,17 +33,15 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
-import { deleteTimer, playPause, playPauseGlobal } from "../drawer/timers/timers"
+import { playPause, playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
-import { clone } from "../helpers/array"
-import { copy, cut, paste } from "../helpers/clipboard"
+import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { GetLayout, GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { getMediaType } from "../helpers/media"
 import { getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
-import { loadShows } from "../helpers/setShow"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
@@ -95,55 +90,9 @@ const actions: any = {
         else console.log("Missing rename", obj)
     },
     remove: (obj: any) => {
-        if (obj.sel.id === "show" && get(activeProject)) {
-            let shows = get(projects)[get(activeProject)!].shows
-            let indexes = obj.sel.data.map((a: any) => a.index)
-            if (get(activeShow)?.index !== undefined && indexes.includes(get(activeShow)?.index)) {
-                activeShow.update((a) => {
-                    delete a!.index
-                    return a
-                })
-            }
-            history({
-                id: "updateProject",
-                newData: { key: "shows", value: shows.filter((_a, i) => !indexes.includes(i)) },
-                location: { page: "show", project: get(activeProject) },
-            })
-            // // TODO: don't remove private!!!!
-            // projects.update((a) => {
-            //   obj.sel.data.forEach((b: any) => {
-            //     a[get(activeProject)!].shows = a[get(activeProject)!].shows.filter((a) => a.id !== b.id)
+        if (deleteAction(obj.sel)) return
 
-            //     if (get(activeShow)?.index === b.index) {
-            //       activeShow.update((a) => {
-            //         delete a!.index
-            //         return a
-            //       })
-            //     }
-            //   })
-            //   return a
-            // })
-            return
-        }
-        if (obj.sel.id === "slide") {
-            obj.sel.data.forEach((a: any) => {
-                let slide = GetLayoutRef()[a.index].id
-                // TODO: change layout children & slide parent children
-                history({ id: "changeSlide", newData: { key: "group", value: null }, location: { page: "show", show: get(activeShow)!, slide } })
-                history({ id: "changeSlide", newData: { key: "color", value: null }, location: { page: "show", show: get(activeShow)!, slide } })
-                history({ id: "changeSlide", newData: { key: "globalGroup", value: null }, location: { page: "show", show: get(activeShow)!, slide } })
-            })
-        }
-        if (obj.sel.id === "layout") {
-            if (obj.sel.data.length < _show().layouts().get().length) {
-                obj.sel.data.forEach((id: string) => {
-                    history({ id: "deleteLayout", newData: { id }, location: { page: "show", show: get(activeShow)! } })
-                })
-            } else {
-                alertMessage.set("error.keep_one_layout")
-                activePopup.set("alert")
-            }
-        }
+        console.error("COULD NOT REMOVE", obj)
     },
     recolor: (obj: any) => {
         if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
@@ -154,108 +103,20 @@ const actions: any = {
         obj.sel = { id: "group", data: [{ id: slideId }] }
         actions.delete(obj)
     },
-    remove_slide: (obj: any) => removeSlide(obj),
+    remove_slide: (obj: any) => removeSlide(obj.sel.data),
     delete: (obj: any) => {
-        if (obj.sel.id === "show_drawer") {
-            activePopup.set("delete_show")
-            return
-        }
-        if (obj.sel.id === "group") {
-            history({
-                id: "deleteGroups",
-                newData: { ids: obj.sel.data.map((a: any) => a.id) },
-                location: { page: "show", show: get(activeShow)!, layout: _show().get("settings.activeLayout") },
-            })
-            return
-        }
-
-        if (obj.sel.id?.includes("timer")) {
-            obj.sel.data.forEach((data) => {
-                let id = data.id || data.timer?.id
-                deleteTimer(id)
-            })
-            return
-        }
-
-        if (obj.sel.id === "midi") {
-            let data = obj.sel.data[0]
-            let id: string = data.id
-
-            let key = data.type === "in" ? "receiveMidi" : "sendMidi"
-
-            // remove from all layouts
-            let ref = _show().layouts("active").ref()[0]
-            ref.forEach((slideRef: any, i: number) => {
-                let actions = slideRef.data.actions || {}
-                if (actions[key] !== id) return
-                delete actions[key]
-                history({
-                    id: "changeLayout",
-                    newData: { key: "actions", value: actions },
-                    location: { page: "show", show: get(activeShow)!, layoutSlide: i, layout: _show().get("settings.activeLayout") },
-                })
-            })
-
-            if (data.type === "in") {
-                midiIn.update((a) => {
-                    delete a[id]
-                    return a
-                })
-                return
-            }
-
-            // remove this
-            let showMidi = _show().get("midi") || {}
-            delete showMidi[id]
-            _show().set({ key: "midi", value: showMidi })
-
-            return
-        }
+        if (deleteAction(obj.sel)) return
 
         if (obj.contextElem?.classList.value.includes("#edit_box")) {
-            let ref: any = _show().layouts("active").ref()[0][get(activeEdit).slide!]
-            let slide: any = _show().slides([ref.id]).get()[0].id
-            history({
-                id: "deleteItem",
-                location: { page: "edit", show: get(activeShow)!, items: get(activeEdit).items, slide: slide },
-            })
-            return
-        }
-        if (obj.sel.id === "slide") {
-            removeSlide(obj)
-            return
-        }
-        if (obj.sel.id === "category_scripture") {
-            scriptures.update((a: any) => {
-                obj.sel.data.forEach((id: string) => {
-                    let key: string | null = null
-                    Object.entries(a).forEach(([sId, value]: any) => {
-                        if (value.id === id) key = sId
-                    })
-
-                    if (key) delete a[key]
-                })
-                return a
-            })
+            deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
             return
         }
         if (obj.contextElem?.classList.value.includes("#event")) {
-            history({ id: "deleteEvent", newData: { id: obj.contextElem.id } })
+            deleteAction({ id: "event", data: { id: obj.contextElem.id } })
+            return
         }
 
-        const deleteIDs: any = {
-            folder: "deleteFolder",
-            project: "deleteProject",
-            stage: "deleteStage",
-            category_shows: "deleteShowsCategory",
-            category_media: "deleteMediaFolder",
-            category_overlays: "deleteOverlaysCategory",
-            category_templates: "deleteTemplatesCategory",
-            player: "deletePlayerVideo",
-            overlay: "deleteOverlay",
-            template: "deleteTemplate",
-        }
-        obj.sel.data.forEach((a: any) => history({ id: deleteIDs[obj.sel.id] || obj.sel.id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
+        console.error("COULD NOT DELETE", obj)
     },
     delete_all: (obj: any) => {
         if (obj.contextElem?.classList.value.includes("#event")) {
@@ -267,35 +128,10 @@ const actions: any = {
         }
     },
     duplicate: (obj: any) => {
+        if (duplicate(obj.sel)) return
+
         if (obj.contextElem?.classList.value.includes("#event")) {
-            let event = JSON.parse(JSON.stringify(get(events)[obj.contextElem.id]))
-            event.name += " 2"
-            event.repeat = false
-            delete event.group
-            delete event.repeatData
-            history({ id: "newEvent", newData: { id: uid(), data: event } })
-            return
-        }
-        if (obj.sel.id === "show" || obj.sel.id === "show_drawer") {
-            duplicateShows(obj.sel)
-            return
-        }
-        if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") {
-            obj.sel.data = obj.sel.data.sort((a: any, b: any) => a.index - b.index)
-            copy(obj.sel)
-            paste()
-            return
-        }
-        if (obj.sel.id === "stage") {
-            let stageId = obj.sel.data[0].id
-            let stage = get(stageShows)[stageId]
-            history({ id: "newStageShow", newData: { data: clone(stage) } })
-            return
-        }
-        // overlay, template
-        if (get(activeEdit).items) {
-            copy({ id: "item", data: get(activeEdit) })
-            paste()
+            duplicate({ id: "event", data: { id: obj.contextElem.id } })
             return
         }
     },
@@ -310,6 +146,7 @@ const actions: any = {
     },
     addToProject: (obj: any) => {
         if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
+
         if (obj.sel.id === "player") obj.sel.data = obj.sel.data.map((id: string) => ({ id, type: "player" }))
         else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.map(({ path, name }: any) => ({ id: path, name, type: "audio" }))
         else if (obj.sel.id === "media")
@@ -321,13 +158,6 @@ const actions: any = {
 
         projects.update((a) => {
             a[get(activeProject)!].shows.push(...obj.sel.data)
-            // sel.data.forEach((b: any) => {
-            //   console.log(b, a[get(activeProject)!].shows)
-
-            //   a[get(activeProject)!].shows.push({ id: b.id })
-            // })
-            console.log(a)
-
             return a
         })
     },
@@ -362,14 +192,21 @@ const actions: any = {
         history({ id: "newProject", oldData: { id: parent }, location: { page: "show", project: get(activeProject) } })
     },
     newFolder: (obj: any) => {
-        console.log(obj.contextElem.classList)
-
         if (obj.contextElem.classList.contains("#folder__projects")) {
             let parent = obj.sel.data[0].id || obj.contextElem.id // obj.contextElem.getAttribute("data-parent")
             history({ id: "newFolder", oldData: { id: parent }, location: { page: "show", project: get(activeProject) } })
-        } else if (obj.contextElem.classList.contains("#category_media_button__category_media"))
+            return
+        }
+
+        if (obj.contextElem.classList.contains("#category_media_button__category_media")) {
             window.api.send(OPEN_FOLDER, { channel: "MEDIA", title: get(dictionary).new?.folder })
-        else if (obj.contextElem.classList.contains("#category_audio")) window.api.send(OPEN_FOLDER, { channel: "AUDIO", title: get(dictionary).new?.folder })
+            return
+        }
+
+        if (obj.contextElem.classList.contains("#category_audio")) {
+            window.api.send(OPEN_FOLDER, { channel: "AUDIO", title: get(dictionary).new?.folder })
+            return
+        }
     },
     newSlide: () => history({ id: "newSlide", location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } }),
     newCategory: (obj: any) => {
@@ -418,6 +255,7 @@ const actions: any = {
     private: (obj: any) => {
         showsCache.update((a: any) => {
             obj.sel.data.forEach((b: any) => {
+                if (!a[b.id]) return
                 a[b.id].private = !a[b.id].private
             })
             return a
@@ -654,23 +492,7 @@ const actions: any = {
     // drawer navigation
     changeIcon: () => activePopup.set("icon"),
 
-    selectAll: (obj: any) => {
-        let data: any[] = []
-        if (obj.sel.id === "group") {
-            let ref = GetLayoutRef()
-            obj.sel.data.forEach((a: any) => {
-                ref.forEach((b, i) => {
-                    if (b.type === "child" ? a.id === b.parent : a.id === b.id) data.push({ index: i })
-                })
-            })
-            selected.set({ id: "slide", data })
-        } else if (get(activeShow) && (get(activePage) === "show" || get(activePage) === "edit")) {
-            // select all slides
-            let ref = _show().layouts("active").ref()[0]
-            data = ref.map((_: any, index: number) => ({ index }))
-        }
-        selected.set({ id: "slide", data })
-    },
+    selectAll: (obj: any) => selectAll(obj.sel),
 
     // formats
     uppercase: (obj: any) => format("uppercase", obj),
@@ -716,17 +538,17 @@ function changeSlideAction(obj: any, id: string) {
     })
 }
 
-export function removeSlide(obj: any) {
+export function removeSlide(data: any) {
     let location: any = { page: get(activePage) as any, show: get(activeShow)!, layout: _show().get("settings.activeLayout") }
     // console.log(location)
     let ref = _show(location.show.id).layouts([location.layout]).ref()[0]
     let parents: any[] = []
     let childs: any[] = []
 
-    console.log(ref, obj)
+    console.log(ref, data)
 
     // remove parents and delete childs
-    obj.sel.data.forEach((a: any) => {
+    data.forEach((a: any) => {
         if (ref[a.index].type === "parent") parents.push(ref[a.index].index)
         else childs.push(ref[a.index].id)
     })
@@ -790,14 +612,4 @@ const formatting: any = {
             .trim()
             .replace(/[.,!]*$/g, "")
             .trim(),
-}
-
-async function duplicateShows(selected: any) {
-    await loadShows(selected.data.map((a: any) => a.id))
-    selected.data.forEach((a: any) => {
-        let show = JSON.parse(JSON.stringify(get(showsCache)[a.id]))
-        show.name += " 2"
-        show.timestamps.modified = new Date().getTime()
-        history({ id: "newShow", newData: { show }, location: { page: "show", project: selected.id === "show" ? get(activeProject) : null } })
-    })
 }

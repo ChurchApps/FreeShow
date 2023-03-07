@@ -155,7 +155,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // PROJECT
     projects: ["newProject", "newFolder"],
     projectTab: ["export", "close"],
-    project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
+    project: ["newShowPopup", "newPrivateShow", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["rename", "delete", "export"],
     folder: ["rename", "delete"],
     project_media: ["play", "play_no_filters", "remove"],
