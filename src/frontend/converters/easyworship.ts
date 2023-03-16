@@ -3,7 +3,7 @@ import { get } from "svelte/store"
 import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
 import { history } from "../components/helpers/history"
-import { checkName } from "../components/helpers/show"
+import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { save } from "../utils/save"
 
 interface Song {
@@ -292,8 +292,9 @@ function createSlides({ words }: Words) {
                 notes: "",
                 items,
             }
-            if (get(groups)[group]) slides[id].globalGroup = group
-            else slides[id].globalGroup = "verse"
+
+            let globalGroup = getGlobalGroup(group)
+            slides[id].globalGroup = globalGroup || "verse"
         }
     })
     // TODO: check for duplicates and create merges

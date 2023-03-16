@@ -1,534 +1,338 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import type { Item, Layout } from "../../types/Show"
 import { history } from "../components/helpers/history"
-import { checkName } from "../components/helpers/show"
+import { checkName, getGlobalGroup, initializeMetadata, newSlide } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
-import { activePopup, activeProject, dictionary, drawerTabsData, groups as globalGroups } from "./../stores"
-// import { Buffer } from "buffer"
-
-interface Song {
-  metadata: MetaData
-  timeline: Timeline
-  groups: {
-    [key: string]: Group
-  }
-  arrangements: {
-    [key: string]: Arrangement
-  }
-}
-
-interface MetaData {
-  CCLIArtistCredits: string
-  CCLIAuthor: string
-  CCLICopyrightYear: string
-  CCLIDisplay: boolean
-  CCLIPublisher: string
-  CCLISongNumber: number
-  CCLISongTitle: string
-  backgroundColor: string
-  buildNumber: string
-  category: string
-  chordChartPath: string
-  docType: number
-  drawingBackgroundColor: boolean
-  height: number
-  lastDateUsed: string
-  notes: string
-  os: number
-  resourcesDirectory: string
-  selectedArrangementID: string
-  usedCount: number
-  uuid: string
-  versionNumber: number
-  width: number
-}
-
-interface Timeline {
-  duration: number
-  loop: boolean
-  playBackRate: number
-  // selectedMediaTrackIndex: number
-  timeOffset: number
-  timeCues: any
-  mediaTracks: any
-}
-
-interface Group {
-  color: string
-  name: string
-  slides: {
-    [key: string]: Slide
-  }
-}
-interface Slide {
-  backgroundColor: string
-  // chordChartPath: string
-  drawingBackgroundColor: boolean
-  enabled: boolean
-  // highlightColor: string
-  // hotKey: string
-  label: string
-  notes: string
-  // socialItemCount: number
-  cues: any
-  mediaCue: MediaCue
-  displayElements: Element[]
-}
-interface MediaCue {
-  actionType: number
-  alignment: number
-  behavior: number
-  dateAdded: string
-  delayTime: number
-  displayName: string
-  enabled: boolean
-  nextCueUUID: string
-  // rvXMLIvarName: string
-  tags: string
-  timeStamp: number
-  video?: VideoCue
-}
-interface VideoCue {
-  audioVolume: number
-  bezelRadius: number
-  displayDelay: number
-  displayName: string
-  drawingFill: boolean
-  drawingShadow: boolean
-  drawingStroke: boolean
-  endPoint: number
-  fieldType: number
-  fillColor: string
-  flippedHorizontally: boolean
-  flippedVertically: boolean
-  format: string
-  frameRate: number
-  fromTemplate: boolean
-  imageOffset: string
-  inPoint: number
-  locked: boolean
-  manufactureName: string
-  manufactureURL: string
-  naturalSize: string
-  opacity: number
-  outPoint: number
-  persistent: boolean
-  playRate: number
-  playbackBehavior: number
-  rotation: number
-  rvXMLIvarName: string
-  scaleBehavior: number
-  scaleSize: string
-  source: string
-  timeScale: number
-  typeID: number
-}
-interface Element {
-  additionalLineFillHeight: number
-  adjustsHeightToFit: boolean
-  bezelRadius: number
-  displayDelay: number
-  displayName: string
-  drawLineBackground: boolean
-  drawingFill: boolean
-  drawingShadow: boolean
-  drawingStroke: boolean
-  fillColor: string
-  fromTemplate: boolean
-  lineBackgroundType: number
-  lineFillVerticalOffset: number
-  locked: boolean
-  opacity: number
-  persistent: boolean
-  revealType: number
-  rotation: number
-  source: string
-  textSourceRemoveLineReturnsOption: boolean
-  typeID: number
-  useAllCaps: boolean
-  verticalAlignment: number
-  position: {
-    top: number
-    left: number
-    rotation: number
-    width: number
-    height: number
-  }
-  shadow: any
-  stroke: any
-  RTFData: string
-}
-
-interface Arrangement {
-  color: string
-  name: string
-  groupIDs: string[]
-}
+import { activePopup, activeProject, dictionary, drawerTabsData, groups } from "./../stores"
+import { xml2json } from "./xml"
 
 export function convertProPresenter(data: any) {
-  data?.forEach(({ content, name }: any) => {
-    let song = RVPresentationDocumentToObject(content)
-    console.log(song)
+    data?.forEach(({ content, name, extension }: any) => {
+        let song: any = {}
 
-    let category = get(drawerTabsData).shows?.activeSubTab
-    if (category === "all" || category === "unlabeled") category = null
+        if (extension === "json") {
+            try {
+                song = JSON.parse(content)
+            } catch (err) {
+                console.error(err)
+            }
+        } else {
+            song = xml2json(content)?.RVPresentationDocument
+        }
 
-    let layoutID = uid()
-    let show = new ShowObj(false, category || null, layoutID)
-    show.name = checkName(name)
-    // if (song.authors) {
-    //   show.meta = {
-    //     title: show.name,
-    //     author: song.authors.find((a) => a.type === "words")?.name || "",
-    //     artist: song.authors.find((a) => a.type === "music")?.name || "",
-    //   }
-    // }
-    // show.timestamps = {
-    //   created: new Date().getTime(),
-    //   modified: new Date(song.modified).getTime(),
-    //   used: null,
-    // }
+        if (!song) return
 
-    let { slides, layouts, media }: any = createSlides(song)
+        let category = get(drawerTabsData).shows?.activeSubTab
+        if (category === "all" || category === "unlabeled") category = null
 
-    show.slides = slides
-    show.layouts = {}
-    show.media = media
+        let layoutID = uid()
+        let show = new ShowObj(false, category || null, layoutID)
+        show.name = checkName(name)
 
-    layouts.forEach((layout: any, i: number) => {
-      show.layouts[i === 0 ? layoutID : layout.id] = {
-        name: layout.name || get(dictionary).example?.default || "",
-        notes: i === 0 ? song.metadata.notes || "" : "",
-        slides: layout.slides,
-      }
-    })
+        let converted: any = {}
 
-    let location: any = { page: "show" }
-    if (data.length === 1) location.project = get(activeProject)
-    history({ id: "newShow", newData: { show, open: data.length < 2 }, location })
-  })
-  activePopup.set(null)
-}
+        if (extension === "json") {
+            converted = convertJSONToSlides(song)
+        } else {
+            converted = convertToSlides(song, extension)
+        }
 
-function createSlides({ groups, arrangements }: Song) {
-  let slides: any = {}
-  let layouts: any[] = [{ id: null, name: "", slides: [] }]
-  let media: any = {}
-  let sequences: any = {}
+        let { slides, layouts, media }: any = converted
 
-  let backgrounds: any = {}
+        show.slides = slides
+        show.layouts = {}
+        show.media = media
 
-  Object.entries(groups).forEach(([groupId, group]) => {
-    if (group.slides) {
-      Object.values(group.slides).forEach((slide: Slide, i: number) => {
-        let id: string = uid()
-        let items: any[] = []
-        // TODO: use active show style...
-
-        // TODO: elements
-        console.log(slide)
-        console.log(slide.displayElements)
-        slide.displayElements.forEach((element: Element) => {
-          if (element?.RTFData) {
-            items = [
-              {
-                style: "left:50px;top:120px;width:1820px;height:840px;",
-                lines: formatRTF(element.RTFData),
-              },
-            ]
-          }
+        show.meta = initializeMetadata({
+            title: song["@CCLISongTitle"],
+            artist: song["@CCLIArtistCredits"],
+            author: song["@CCLIAuthor"],
+            publisher: song["@CCLIPublisher"],
+            CCLI: song["@CCLISongNumber"],
+            year: song["@CCLICopyrightYear"],
         })
 
-        slides[id] = {
-          group: null,
-          color: null,
-          settings: {},
-          notes: "",
-          items,
-        }
+        layouts.forEach((layout: any, i: number) => {
+            show.layouts[i === 0 ? layoutID : layout.id] = {
+                name: layout.name || get(dictionary).example?.default || "",
+                notes: i === 0 ? song["@notes"] || "" : "",
+                slides: layout.slides,
+            }
+        })
 
-        // media
-        let media = slide.mediaCue
-        let path: string = media?.video?.source || ""
-        // , type: "video"
-        if (path) backgrounds[i] = { path, name: media.displayName }
-
-        if (i === 0) {
-          slides[id].group = group.name
-          slides[id].color = getColor(group.color)
-          sequences[groupId] = id
-          let l: any = { id }
-          if (slide.enabled.toString() === "false") l.disabled = true
-          layouts[0].slides.push(l)
-
-          let globalGroup = (group.name || "")
-            .replaceAll("-", "_")
-            .replace(/[0-9-]/g, "")
-            .trim()
-            .toLowerCase()
-          if (globalGroup === "group") globalGroup = "verse"
-          if (!get(globalGroups)[globalGroup]) {
-            Object.entries(get(globalGroups)).find(([id, group]: any) => {
-              let name: string = group.name.toLowerCase()
-              if (name === globalGroup) return (globalGroup = id)
-
-              // is this necessary?
-              Object.entries(get(dictionary).groups).forEach(([id, tname]: any) => {
-                if (tname.toLowerCase() === globalGroup) globalGroup = id
-              })
-            })
-          }
-          if (get(globalGroups)[globalGroup]) slides[id].globalGroup = globalGroup
-        } else {
-          let parentLayout = layouts[0].slides[layouts[0].slides.length - 1]
-          let parentSlide = slides[parentLayout.id]
-          if (!parentSlide.children) parentSlide.children = []
-          parentSlide.children.push(id)
-          if (slide.enabled.toString() === "false") {
-            if (!parentLayout.children) parentLayout.children = {}
-            parentLayout.children[id] = { disabled: true }
-          }
-        }
-      })
-    }
-  })
-
-  if (Object.keys(arrangements).length) {
-    // layouts = []
-    Object.values(arrangements).forEach((arrangement) => {
-      let slides: any[] = arrangement.groupIDs.map((groupID) => ({ id: sequences[groupID] }))
-      layouts.push({ id: uid(), name: arrangement.name, slides })
+        let location: any = { page: "show" }
+        if (data.length === 1) location.project = get(activeProject)
+        history({ id: "newShow", newData: { id: song["@uuid"] || uid(), show, open: data.length < 2 }, location })
     })
-  }
 
-  Object.values(backgrounds).forEach((background: any, i: number) => {
-    if (!background || !layouts[i]) return
-    if (!layouts[0].slides[i]) return
-    let id = uid()
-    layouts[0].slides[i].background = id
-    media[id] = background
-  })
-
-  return { slides, layouts, media }
+    activePopup.set(null)
 }
 
-function RVPresentationDocumentToObject(xml: string) {
-  let parser = new DOMParser()
-  let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
+const JSONgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
+function convertJSONToSlides(song: any) {
+    let slides: any = {}
+    let layoutSlides: any = []
 
-  let timelineElem = xmlDoc.querySelector('[rvXMLIvarName="timeline"]')
-  let groupsElem = xmlDoc.querySelector('[rvXMLIvarName="groups"]')
-  let arrangementsElem = xmlDoc.querySelector('[rvXMLIvarName="arrangements"]')
+    let initialSlidesList: string[] = song.verse_order_list || []
+    let slidesList: string[] = []
+    let slidesRef: any = {}
 
-  let metadata = setKeysFromAttributes(xmlDoc, [
-    "CCLIArtistCredits",
-    "CCLIAuthor",
-    "CCLICopyrightYear",
-    "CCLIDisplay",
-    "CCLIPublisher",
-    "CCLISongNumber",
-    "CCLISongTitle",
-    "backgroundColor",
-    "buildNumber",
-    "category",
-    "chordChartPath",
-    "docType",
-    "drawingBackgroundColor",
-    "height",
-    "lastDateUsed",
-    "notes",
-    "os",
-    "resourcesDirectory",
-    "selectedArrangementID",
-    "usedCount",
-    "uuid",
-    "versionNumber",
-    "width",
-  ])
+    song.verses.forEach(([text, label]) => {
+        if (!text) return
 
-  let timeline: Timeline = setKeysFromAttributes(timelineElem, ["duration", "loop", "playBackRate", "timeOffset", "timeCues", "mediaTracks"])
+        let id: string = uid()
+        slidesList.push(label)
+        slidesRef[label] = id
 
-  let groups: { [key: string]: Group } = {}
-  ;[...groupsElem!.children].forEach((groupElem) => {
-    let uuid = groupElem.getAttribute("uuid")!
-    let group: Group = setKeysFromAttributes(groupElem, ["color", "name"])
-    console.log(groupElem.querySelector('[rvXMLIvarName="slides"]')?.children || [])
+        layoutSlides.push({ id })
 
-    group.slides = getSlides([...(groupElem.querySelector('[rvXMLIvarName="slides"]')?.children || [])])
-    groups[uuid] = group
-  })
+        let items = [
+            {
+                style: "left:50px;top:120px;width:1820px;height:840px;",
+                lines: text.split("\n").map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
+            },
+        ]
 
-  let arrangements: { [key: string]: Arrangement } = {}
-  ;[...arrangementsElem!.children].forEach((elem) => {
-    let uuid = elem.getAttribute("uuid")!
-    let arrangement: Arrangement = setKeysFromAttributes(elem, ["color", "name"])
-    console.log(elem.querySelector('[rvXMLIvarName="groupIDs"]')?.children || [])
+        slides[id] = newSlide({ items })
 
-    arrangement.groupIDs = [...(elem.querySelector('[rvXMLIvarName="groupIDs"]')?.children || [])].map((a) => a.textContent!)
-    arrangements[uuid] = arrangement
-  })
+        let globalGroup = label ? JSONgroups[label.replace(/[0-9]/g, "").toUpperCase()] : "verse"
+        if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
+    })
 
-  console.log(timeline)
-  console.log(groups)
-  console.log(arrangements)
+    if (initialSlidesList.length) slidesList = initialSlidesList
+    if (slidesList.length) {
+        layoutSlides = []
+        slidesList.forEach((label) => {
+            if (slidesRef[label]) layoutSlides.push({ id: slidesRef[label] })
+        })
+    }
 
-  let object: Song = {
-    metadata,
-    timeline,
-    groups,
-    arrangements,
-  }
-
-  return object
+    let layouts = [{ id: uid(), name: "", notes: "", slides: layoutSlides }]
+    return { slides, layouts }
 }
 
-function getSlides(elems: any[]) {
-  let slides: any = {}
-  elems.forEach((elem) => {
-    let uuid = elem.getAttribute("UUID")
-    let slide: Slide = setKeysFromAttributes(elem, ["backgroundColor", "drawingBackgroundColor", "enabled", "label", "notes"])
-    slide.cues = elem.querySelector('[rvXMLIvarName="cues"]')
-    slide.mediaCue = getMeidaCue(elem.querySelector('[rvXMLIvarName="backgroundMediaCue"]'))
-    console.log(elem.querySelector('[rvXMLIvarName="displayElements"]')?.children || [])
+function convertToSlides(song: any, extension: string) {
+    let groups: any = []
+    if (extension === "pro4") groups = song.slides.RVDisplaySlide || []
+    if (extension === "pro5") groups = song.groups.RVSlideGrouping || []
+    if (extension === "pro6") groups = song.array[0].RVSlideGrouping || []
+    if (!Array.isArray(groups)) groups = [groups]
+    let arrangements = song.arrangements || song.array?.[1]?.RVSongArrangement || []
 
-    slide.displayElements = getDisplayElements([...(elem.querySelector('[rvXMLIvarName="displayElements"]')?.children || [])])
-    slides[uuid] = slide
-  })
-  return slides
+    let slides: any = {}
+    let layouts: any[] = [{ id: null, name: "", slides: [] }]
+    let media: any = {}
+    let sequences: any = {}
+
+    let backgrounds: any = []
+
+    groups.forEach((group) => {
+        let groupSlides = group
+        if (extension === "pro4") groupSlides = [groupSlides]
+        if (extension === "pro5") groupSlides = groupSlides.slides.RVDisplaySlide
+        if (extension === "pro6" && groupSlides.array) groupSlides = groupSlides.array.RVDisplaySlide
+        if (!Array.isArray(groupSlides)) groupSlides = [groupSlides]
+        if (!groupSlides?.length) return
+
+        groupSlides.forEach((slide, i) => {
+            let items: Item[] = getSlideItems(slide)
+            if (!items) return
+
+            let slideIsDisabled = slide["@enabled"] === "false"
+            let slideId: string = uid()
+
+            slides[slideId] = newSlide({ notes: slide["@notes"] || "", items })
+
+            // media
+            let media = slide.RVMediaCue
+
+            // TODO: images
+            let path: string = media?.RVVideoElement?.["@source"] || ""
+            if (path) backgrounds[i] = { path, name: media["@displayName"] || "" }
+
+            let isFirstSlide: boolean = i === 0
+            if (isFirstSlide) {
+                slides[slideId] = makeParentSlide(slides[slideId], {
+                    label: group["@name"] || slides[slideId]["@label"] || "",
+                    color: group["@color"] || slides[slideId]["@highlightColor"],
+                })
+
+                let groupId = group["@uuid"]
+                sequences[groupId] = slideId
+
+                let l: any = { id: slideId }
+                if (slideIsDisabled) l.disabled = true
+                layouts[0].slides.push(l)
+            } else {
+                // children
+                let parentLayout = layouts[0].slides[layouts[0].slides.length - 1]
+                let parentSlide = slides[parentLayout.id]
+                if (!parentSlide.children) parentSlide.children = []
+                parentSlide.children.push(slideId)
+
+                if (slideIsDisabled) {
+                    if (!parentLayout.children) parentLayout.children = {}
+                    parentLayout.children[slideId] = { disabled: true }
+                }
+            }
+        })
+    })
+
+    if (arrangements.length) {
+        let newLayouts = arrangeLayouts(arrangements, sequences)
+        // if (newLayouts.length) layouts = newLayouts
+        if (newLayouts.length) layouts.push(...newLayouts)
+    }
+
+    backgrounds.forEach((background: any, i: number) => {
+        if (!background || !layouts[i]) return
+        if (!layouts[0].slides[i]) return
+
+        let id = uid()
+        layouts[0].slides[i].background = id
+        media[id] = background
+    })
+
+    return { slides, layouts, media }
 }
 
-function getMeidaCue(elem: any) {
-  if (!elem) return elem
-  let media: MediaCue = setKeysFromAttributes(elem, ["actionType", "alignment", "behavior", "dateAdded", "delayTime", "displayName", "enabled", "nextCueUUID", "tags", "timeStamp"])
+function getSlideItems(slide: any): any[] {
+    let elements: any = null
+    if (slide.displayElements) elements = slide.displayElements
+    else elements = slide.array.find((a) => a["@rvXMLIvarName"] === "displayElements")
+    if (!elements) return []
 
-  // TODO: image
-  let video = elem.querySelector("RVVideoElement")
-  if (!video) return media
-  media.video = setKeysFromAttributes(video, [
-    "audioVolume",
-    "bezelRadius",
-    "displayDelay",
-    "displayName",
-    "drawingFill",
-    "drawingShadow",
-    "drawingStroke",
-    "endPoint",
-    "fieldType",
-    "fillColor",
-    "flippedHorizontally",
-    "flippedVertically",
-    "format",
-    "frameRate",
-    "fromTemplate",
-    "imageOffset",
-    "inPoint",
-    "locked",
-    "manufactureName",
-    "manufactureURL",
-    "naturalSize",
-    "opacity",
-    "outPoint",
-    "persistent",
-    "playRate",
-    "playbackBehavior",
-    "rotation",
-    "rvXMLIvarName",
-    "scaleBehavior",
-    "scaleSize",
-    "source",
-    "timeScale",
-    "typeID",
-  ])
+    if (!elements.RVTextElement) {
+        return []
+    }
 
-  return media
+    let items: any[] = []
+
+    // TODO: get active show template style
+    let itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
+
+    let itemStrings = elements.RVTextElement.NSString
+    if (!itemStrings) itemStrings = [elements.RVTextElement["@RTFData"]]
+    else if (itemStrings["#text"]) itemStrings = [itemStrings]
+    itemStrings.forEach((content: any) => {
+        let text = decodeBase64(content["#text"] || content)
+
+        if (content["@rvXMLIvarName"] && content["@rvXMLIvarName"] !== "RTFData") return
+        // text = convertFromRTFToPlain(text)
+        text = decodeHex(text)
+
+        items.push({ style: itemStyle, lines: splitTextToLines(text) })
+    })
+
+    return items
 }
 
-function getDisplayElements(elems: any[]) {
-  let elements: any = []
-  elems.forEach((elem) => {
-    let element: Element = setKeysFromAttributes(elem, [
-      "additionalLineFillHeight",
-      "adjustsHeightToFit",
-      "bezelRadius",
-      "displayDelay",
-      "displayName",
-      "drawLineBackground",
-      "drawingFill",
-      "drawingShadow",
-      "drawingStroke",
-      "fillColor",
-      "fromTemplate",
-      "lineBackgroundType",
-      "lineFillVerticalOffset",
-      "locked",
-      "opacity",
-      "persistent",
-      "revealType",
-      "rotation",
-      "source",
-      "textSourceRemoveLineReturnsOption",
-      "typeID",
-      "useAllCaps",
-      "verticalAlignment",
-    ])
-    let [top, left, rotation, width, height] = elem.querySelector('[rvXMLIvarName="position"]').textContent.replace(/[{}]/g, "").split(" ")
-    element.position = { top, left, rotation, width, height }
-    element.shadow = elem.querySelector('[rvXMLIvarName="shadow"]').textContent
-    element.shadow = elem.querySelector('[rvXMLIvarName="stroke"]').textContent
-    // element.RTFData = Buffer.from(elem.querySelector('[rvXMLIvarName="RTFData"]').textContent, "base64").toString()
-    element.RTFData = atob(elem.querySelector('[rvXMLIvarName="RTFData"]').textContent)
-    elements.push(element)
-  })
-  return elements
+function makeParentSlide(slide, { label, color = "" }) {
+    slide.group = label
+    if (color) slide.color = rgbStringToHex(color)
+
+    // set global group
+    if (label.toLowerCase() === "group") label = "verse"
+    let globalGroup = getGlobalGroup(label)
+    // if (globalGroup && !label)
+    slide.globalGroup = globalGroup || "verse"
+
+    return slide
 }
 
-function formatRTF(data: any) {
-  // better solution: https://stackoverflow.com/questions/29922771/convert-rtf-to-and-from-plain-text
-  let lines: any[] = []
-  data = data.split("\n\n")
-  console.log(data)
-  if (data[1]) {
-    data = data[1].split("\n")
-    lines = data.map((a: any) => ({ align: "", text: [{ style: "", value: decodeHex(a.slice(0, a.length - 1) || "") }] }))
-  }
-  return lines
+function arrangeLayouts(arrangements, sequences) {
+    let layouts: Layout[] = []
+    arrangements.forEach((arrangement) => {
+        let groupIds = arrangement.array?.NSString || []
+        if (!Array.isArray(groupIds)) groupIds = [groupIds]
+        if (!groupIds.length) return
+
+        let slides: any[] = groupIds.map((groupID) => ({ id: sequences[groupID] }))
+        layouts.push({ id: arrangement["@uuid"], name: arrangement["@name"], notes: "", slides })
+    })
+
+    return layouts
+}
+
+/////
+
+function splitTextToLines(text: string) {
+    let lines: any[] = []
+    let data = text.split("\n\n")
+    lines = data.map((text: any) => ({ align: "", text: [{ style: "", value: text }] }))
+
+    return lines
+}
+
+function decodeBase64(text: string) {
+    let b = 0,
+        l = 0,
+        r = ""
+    let m = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+    text.split("").forEach(function (v) {
+        b = (b << 6) + m.indexOf(v)
+        l += 6
+        if (l >= 8) r += String.fromCharCode((b >>> (l -= 8)) & 0xff)
+    })
+
+    return r
 }
 
 function decodeHex(input: string) {
-  var hex = input.split("\\'")
-  console.log(hex)
-  var str = ""
-  hex.map((txt, i) => {
-    let styles: any[] = []
-    let styleIndex = txt.indexOf("\\")
-    while (styleIndex >= 0) {
-      let nextSpace = txt.indexOf(" ", styleIndex) + 1
-      if (nextSpace < 1) nextSpace = txt.length
-      styles.push(txt.slice(styleIndex, nextSpace))
-      txt = txt.slice(0, styleIndex) + txt.slice(nextSpace, txt.length)
-      styleIndex = txt.indexOf("\\")
+    let textStart = input.indexOf("\\cf2\\ltrch")
+    // remove RTF before text
+    if (textStart > -1) {
+        input = input.slice(input.indexOf(" ", textStart), input.length)
+    } else {
+        // remove main RTF styles
+        let paragraphs: string[] = input.split("\n\n")
+        if (paragraphs[0].includes("rtf")) {
+            paragraphs = paragraphs.slice(1, paragraphs.length)
+            input = paragraphs.join("\n\n")
+            input = input.slice(0, input.length - 1)
+        }
     }
-    console.log(styles)
-    if (i === 0) str = txt
-    else {
-      str += String.fromCharCode(parseInt(txt.slice(0, 2), 16))
-      str += txt.slice(2, txt.length)
-    }
-  })
 
-  return str
+    input = input.replaceAll("\\\n", "<br>")
+    var hex = input.split("\\'")
+    var str = ""
+    hex.map((txt, i) => {
+        let styles: any[] = []
+        let styleIndex = txt.indexOf("\\")
+
+        while (styleIndex >= 0) {
+            let nextSpace = txt.indexOf(" ", styleIndex)
+            if (nextSpace < 1) nextSpace = txt.length
+            styles.push(txt.slice(styleIndex, nextSpace).trim())
+            txt = txt.slice(0, styleIndex) + txt.slice(nextSpace, txt.length)
+            styleIndex = txt.indexOf("\\")
+        }
+
+        if (i === 0) str = txt
+        else {
+            str += String.fromCharCode(parseInt(txt.slice(0, 2), 16))
+            str += txt.slice(2, txt.length)
+        }
+    })
+
+    // remove any {{ at the start
+    if (str.indexOf("{{") > -1 && str.indexOf("{{") < 3) str = str.slice(str.indexOf("{{") + 2, str.length)
+    // remove any } and special chars at the end
+    if (str.length - str.indexOf("}") < 3) str = str.slice(0, str.indexOf("}"))
+    // remove whitespace at start and end
+    str = str.trim()
+    // remove breaks at start
+    while (str.indexOf("<br>") === 0) str = str.slice(4, str.length)
+    return str
 }
 
-function getColor(rgbaString: string) {
-  let [r, g, b, a]: any = rgbaString.split(" ")
-  // TODO: alpha
-  console.log(a)
-  return `#${toHex(r * 255)}${toHex(g * 255)}${toHex(b * 255)}`
+function rgbStringToHex(rgbaString: string) {
+    let [r, g, b, a]: any = rgbaString.split(" ")
+    // TODO: alpha
+    if (isNaN(r) || isNaN(g) || isNaN(b)) console.warn(r, g, b, a)
+
+    return `#${toHex(r * 255)}${toHex(g * 255)}${toHex(b * 255)}`
 }
 const toHex = (c: number) => ("0" + Number(c.toFixed()).toString(16)).slice(-2)
-
-const setKeysFromAttributes = (elem: any, names: string[]) => {
-  let obj: any = {}
-  names.map((name) => (obj[name] = elem.getAttribute(name)))
-  return obj
-}

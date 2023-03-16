@@ -106,6 +106,7 @@ export interface Chords {
 }
 
 export interface Layout {
+    id?: string
     name: string
     notes: string
     slides: SlideData[]

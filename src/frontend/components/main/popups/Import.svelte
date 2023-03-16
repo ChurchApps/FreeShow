@@ -14,7 +14,7 @@
         { name: "PDF", extensions: ["pdf"], id: "pdf" },
         { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint" },
         { name: "FreeShow", extensions: ["show"], id: "freeshow" },
-        { name: "ProPresenter", extensions: ["pro6", "pro7"], id: "propresenter" },
+        { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "json"], id: "propresenter" }, // "pro"
         {
             name: "EasyWorship",
             extensions: ["db"],

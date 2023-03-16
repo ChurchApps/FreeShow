@@ -1,41 +1,65 @@
-<script>
-  import { MAIN } from "../../../../types/Channels"
-  import { activePopup } from "../../../stores"
-  import { save } from "../../../utils/save"
-  import T from "../../helpers/T.svelte"
-  import Button from "../../inputs/Button.svelte"
+<script lang="ts">
+    import { MAIN } from "../../../../types/Channels"
+    import { activePopup } from "../../../stores"
+    import { save } from "../../../utils/save"
+    import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
+
+    const closeApp = () => window.api.send(MAIN, { channel: "CLOSE" })
+
+    const actions = {
+        n: () => activePopup.set(null),
+        q: () => closeApp(),
+        y: () => {
+            save()
+            setTimeout(closeApp, 500)
+        },
+    }
+
+    function keydown(e: any) {
+        if (actions[e.key]) {
+            e.preventDefault()
+            actions[e.key]()
+        }
+    }
 </script>
 
-<div style="display: flex;justify-content: space-around;">
-  <Button
-    on:click={() => {
-      activePopup.set(null)
-    }}
-  >
-    <T id="popup.cancel" />
-  </Button>
-  <Button
-    on:click={() => {
-      window.api.send(MAIN, { channel: "CLOSE" })
-    }}
-  >
-    <T id="popup.quit" />
-  </Button>
-  <Button
-    on:click={() => {
-      save()
-      setTimeout(() => {
-        window.api.send(MAIN, { channel: "CLOSE" })
-      }, 200)
-    }}
-    dark
-  >
-    <T id="popup.save_quit" />
-  </Button>
+<svelte:window on:keydown={keydown} />
+
+<div>
+    <Button
+        on:click={() => {
+            activePopup.set(null)
+        }}
+        dark
+        center
+    >
+        <T id="popup.cancel" /> (n)
+    </Button>
+    <Button on:click={closeApp} dark center>
+        <T id="popup.quit" /> (q)
+    </Button>
+    <Button
+        on:click={() => {
+            save()
+            setTimeout(closeApp, 500)
+        }}
+        dark
+        center
+        style="color: var(--secondary);"
+    >
+        <T id="popup.save_quit" /> (y)
+    </Button>
 </div>
 
 <style>
-  div :global(button) {
-    text-transform: uppercase;
-  }
+    div {
+        display: flex;
+        gap: 10px;
+        justify-content: space-around;
+    }
+
+    div :global(button) {
+        flex: 1;
+    }
 </style>

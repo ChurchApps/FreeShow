@@ -1,9 +1,10 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Item } from "../../../types/Show"
-    import { dictionary, groups, slidesOptions } from "../../stores"
+    import { slidesOptions } from "../../stores"
     import { removeSlide } from "../context/menuClick"
     import { history } from "../helpers/history"
+    import { getGlobalGroup } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import Notes from "./tools/Notes.svelte"
 
@@ -55,7 +56,9 @@
 
         items.forEach((item) => {
             // console.log(item)
-            let filteredLines = item.lines.filter((line) => line.text?.filter((text) => text.value.length).length)
+            if (!item.lines) return
+
+            let filteredLines = item.lines?.filter((line) => line.text?.filter((text) => text.value.length).length)
             filteredLines.forEach((line, i) => {
                 let tempText = ""
                 line.text?.forEach((txt) => {
@@ -209,17 +212,6 @@
         })
 
         return items
-    }
-
-    function getGlobalGroup(group: string) {
-        let globalGroup: any = null
-        if ($groups[group.toLowerCase()]) globalGroup = group.toLowerCase()
-        else {
-            Object.entries($dictionary.groups).forEach(([groupId, name]) => {
-                if (name.toLowerCase() === group.toLowerCase()) globalGroup = groupId
-            })
-        }
-        return globalGroup
     }
 </script>
 

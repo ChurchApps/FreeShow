@@ -90,7 +90,9 @@
             midi.push({ id, ...value })
         })
         Object.entries($midiIn).forEach(([id, value]: any) => {
-            midi.push({ id, ...value, type: "in" })
+            if (value.shows.find((a) => a.id === $activeShow!.id)) {
+                midi.push({ id, ...value, type: "in" })
+            }
         })
     } else if (!Object.keys(showMidi).length) midi = []
 

@@ -2,11 +2,13 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item } from "../../../types/Show"
 import {
+    activeDays,
     activeEdit,
     activePage,
     activePopup,
     activeProject,
     activeShow,
+    activeStage,
     alertMessage,
     clipboard,
     events,
@@ -118,15 +120,67 @@ export function selectAll(data: any = {}) {
         return
     }
 
-    // select all slides
-    if (get(activeShow) && (get(activePage) === "show" || get(activePage) === "edit")) {
+    // select all item boxes in edit mode
+    if (get(activeEdit) && get(activePage) === "edit") {
+        let itemCount: number = 0
+
+        if (!get(activeEdit).type || get(activeEdit).type === "show") {
+            let ref = _show().layouts("active").ref()[0]
+            let editSlide = ref[get(activeEdit).slide!]
+            let items = _show().slides([editSlide.id]).get()[0].items
+            console.log(_show().slides([editSlide.id]).get())
+            console.log(items)
+            itemCount = items.length
+        } else if (get(activeEdit).id) {
+            if (get(activeEdit).type === "overlay") {
+                itemCount = get(overlays)[get(activeEdit).id!].items.length
+            } else if (get(activeEdit).type === "template") {
+                itemCount = get(templates)[get(activeEdit).id!].items.length
+            }
+        }
+
+        if (!itemCount) return
+        let items: number[] = [...Array(itemCount)].map((_, i) => i)
+
+        activeEdit.set({ ...get(activeEdit), items })
+        return
+    }
+
+    // select all item boxes in stage mode
+    if (get(activeStage) && get(activePage) === "stage") {
+        let items: string[] = Object.keys(get(stageShows)[get(activeStage).id!].items)
+
+        activeStage.set({ ...get(activeStage), items })
+        return
+    }
+
+    // select all slides in show mode
+    if (get(activeShow) && get(activePage) === "show") {
         let ref = _show().layouts("active").ref()[0]
         newSelection = ref.map((_: any, index: number) => ({ index }))
 
         selected.set({ id: "slide", data: newSelection })
         return
     }
+
+    // select all dates in current month
+    if (get(activePage) === "calendar") {
+        let currentDay = get(activeDays)[0]
+        if (!currentDay) return
+
+        let dayDate = new Date(currentDay)
+        let year = dayDate.getFullYear()
+        let month = dayDate.getMonth()
+
+        let daysList: any = []
+        for (let i = 1; i <= getDaysInMonth(year, month); i++) daysList.push(new Date(year, month, i).getTime())
+        activeDays.set(daysList)
+    }
 }
+
+// WIP duplicate of functions in Calendar.svelte
+const getMonthIndex = (month: number) => (month + 1 < 12 ? month + 1 : 0)
+const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthIndex(month), 0).getDate()
 
 /////
 
@@ -159,10 +213,29 @@ const copyActions: any = {
         return [...items]
     },
     slide: (data: any) => {
-        let ref = _show("active").layouts("active").ref()?.[0]
+        let ref = _show().layouts("active").ref()?.[0]
         let ids = data.map((a: any) => a.id || (a.index !== undefined ? ref[a.index].id : ""))
-        // TODO: copy media too
-        return _show("active").slides(ids).get(null)
+
+        let slides = clone(_show().slides(ids).get())
+        slides = slides.map((slide) => {
+            // make children parent
+            if (slide.group === null) {
+                // this should never be here
+                delete slide.children
+
+                let parent = ref.find((a) => a.id === slide.id)?.parent || ""
+                // check that parent is not copied
+                if (ids.includes(parent)) return slide
+
+                slide.group = ""
+            }
+
+            return slide
+        })
+
+        // TODO: copy layout (media) too
+
+        return slides
     },
     group: (data: any) => copyActions.slide(data),
     overlay: (data: any) => {
@@ -175,6 +248,8 @@ const copyActions: any = {
 
 const pasteActions: any = {
     item: (data: any) => {
+        if (!data) return
+
         if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {
                 let items = get(overlays)[get(activeEdit).id!].items
@@ -205,6 +280,8 @@ const pasteActions: any = {
         })
     },
     slide: (data: any) => {
+        if (!data) return
+
         // clone slides
         data = clone(data)
 
@@ -232,6 +309,7 @@ const pasteActions: any = {
                 // clone children
                 let clonedChildren: string[] = []
                 slide.children.forEach((childId: string) => {
+                    if (!slides[childId]) return
                     let childSlide: any = clone(slides[childId])
                     childSlide.id = uid()
                     clonedChildren.push(childSlide.id)
@@ -263,14 +341,14 @@ const pasteActions: any = {
     },
     group: (data: any) => pasteActions.slide(data),
     overlay: (data: any) => {
-        data.forEach((slide: any) => {
+        data?.forEach((slide: any) => {
             slide = JSON.parse(JSON.stringify(slide))
             slide.name += " 2"
             history({ id: "newOverlay", newData: { data: slide } })
         })
     },
     template: (data: any) => {
-        data.forEach((slide: any) => {
+        data?.forEach((slide: any) => {
             slide = JSON.parse(JSON.stringify(slide))
             slide.name += " 2"
             history({ id: "newTemplate", newData: { data: slide } })
