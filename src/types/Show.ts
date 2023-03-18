@@ -8,6 +8,10 @@ export interface Show {
     name: string
     private?: boolean
     category: null | ID
+    reference?: {
+        type: "calendar" | "scripture"
+        data: any
+    }
     settings: {
         activeLayout: ID
         resolution?: Resolution

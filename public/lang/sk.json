@@ -58,6 +58,7 @@
         "example_note": "Sem napíšte poznámky",
         "watermark": "Vodoznak",
         "recording": "Nahrávanie",
+        "clock": "Hodiny",
         "rounded": "Zaoblené",
         "call": "Videohovor",
         "header": "Hlavička",
@@ -329,6 +330,7 @@
         "overlay": "Nová vrstva",
         "template": "Nová šablóna",
         "scripture": "Nová biblia",
+        "collection": "New collection",
         "event": "Nová udalosť"
     },
     "show": {
@@ -339,7 +341,8 @@
         "grid": "Zobrazenie v mriežke",
         "list": "Zobrazenei v zozname",
         "lyrics": "Zobrazenie textov",
-        "text": "Text edit"
+        "text": "Text edit",
+        "update": "Update show"
     },
     "actions": {
         "rename": "Premenovať",
@@ -390,6 +393,8 @@
         "custom_key": "Set custom value",
         "play_on_midi": "Play on MIDI in",
         "send_midi": "Send MIDI out",
+        "start_timer": "Start timer",
+        "stop_timers": "Stop active timers",
         "remove_media": "Odstrániť médium"
     },
     "export": {

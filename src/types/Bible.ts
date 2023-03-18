@@ -1,15 +1,16 @@
 export interface Bible {
-  name: string
-  copyright: string
-  books: {
-    number: number
+    id?: string
     name: string
-    chapters: {
-      number: number
-      verses: {
+    copyright: string
+    books: {
         number: number
-        value: string
-      }[]
+        name: string
+        chapters: {
+            number: number
+            verses: {
+                number: number
+                value: string
+            }[]
+        }[]
     }[]
-  }[]
 }

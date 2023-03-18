@@ -58,6 +58,7 @@
         "example_note": "Skriv notater her",
         "watermark": "Vannmerke",
         "recording": "Opptak",
+        "clock": "Klokke",
         "rounded": "Avrundet",
         "call": "Videoanrop",
         "header": "Overskrift",
@@ -329,6 +330,7 @@
         "overlay": "Nytt overlegg",
         "template": "Ny mal",
         "scripture": "Ny bibel",
+        "collection": "Ny samling",
         "event": "Ny hendelse"
     },
     "show": {
@@ -339,7 +341,8 @@
         "grid": "Rutenett",
         "list": "Listevisning",
         "lyrics": "Tekstvisning",
-        "text": "Tekstredigering"
+        "text": "Tekstredigering",
+        "update": "Oppdater show"
     },
     "actions": {
         "rename": "Endre navn",
@@ -390,6 +393,8 @@
         "custom_key": "Skriv inn verdi",
         "play_on_midi": "Spill av når MIDI inn",
         "send_midi": "Send MIDI ut",
+        "start_timer": "Start tidtaker",
+        "stop_timers": "Stopp pågående tidtakere",
         "remove_media": "Fjern media"
     },
     "export": {

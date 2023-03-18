@@ -24,6 +24,7 @@ import {
     projects,
     projectView,
     saved,
+    scriptures,
     selected,
     settingsTab,
     shows,
@@ -225,6 +226,34 @@ const actions: any = {
         history({ id: ids[id] })
     },
     newScripture: () => activePopup.set("import_scripture"),
+
+    // scripture collection
+    createCollection: (obj: any) => {
+        if (obj.sel.id !== "category_scripture") return
+        let versions: string[] = obj.sel.data
+        // remove collections
+        versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
+        console.log(versions)
+        if (versions.length < 2) return
+
+        console.log(get(scriptures))
+
+        let name = ""
+        versions.forEach((id, i) => {
+            if (i > 0) name += " + "
+            let bibleName: string = Object.values(get(scriptures)).find((a) => a.id === id)?.name || ""
+            // shorten
+            bibleName = bibleName.replace(/[^a-zA-Z ]+/g, "").trim()
+            if (bibleName.split(" ").length < 2) bibleName = bibleName.slice(0, 3)
+            else bibleName = bibleName.split(" ").reduce((current, word) => (current += word[0]), "")
+            name += bibleName
+        })
+
+        scriptures.update((a) => {
+            a[uid()] = { name, collection: { versions } }
+            return a
+        })
+    },
 
     // project
     export: (obj: any) => {

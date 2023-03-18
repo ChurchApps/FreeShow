@@ -358,6 +358,8 @@ const pasteActions: any = {
 
 const deleteActions = {
     item: (data) => {
+        if (document.activeElement?.classList.contains("edit")) return
+
         // TODO: history
         if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {
@@ -430,7 +432,7 @@ const deleteActions = {
             data.forEach((id: string) => {
                 let key: string | null = null
                 Object.entries(a).forEach(([sId, value]: any) => {
-                    if (value.id === id) key = sId
+                    if (value.id === id || sId === id) key = sId
                 })
 
                 if (key) delete a[key]

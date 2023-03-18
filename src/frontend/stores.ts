@@ -139,6 +139,9 @@ export const stageShows: Writable<StageShows> = writable({}) // {default}
 // SCRIPTURE
 interface BibleCategories extends Category {
     api?: boolean
+    collection?: {
+        versions: string[]
+    }
 }
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}

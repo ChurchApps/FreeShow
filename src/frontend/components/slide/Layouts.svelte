@@ -9,6 +9,7 @@
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
+    import Reference from "./Reference.svelte"
 
     $: active = $activeShow!.id
     $: layouts = $showsCache[active]?.layouts
@@ -55,8 +56,10 @@
 </script>
 
 <div>
-    {#if layouts}
-        <!-- TODO: rename clitching -->
+    {#if $showsCache[active]?.reference}
+        <Reference show={$showsCache[active]} />
+    {:else if layouts}
+        <!-- TODO: rename glitching -->
         <span style="display: flex;overflow-x: auto;">
             <!-- width: 100%; -->
             {#each sortedLayouts as layout}
@@ -83,7 +86,7 @@
     {/if}
     <span style="display: flex; align-items: center;">
         <!-- TODO: CTRL click = copy current layout, also right click... -->
-        {#if layouts}
+        {#if layouts && !$showsCache[active]?.reference}
             <Button on:click={addLayout} title={$dictionary.show?.new_layout}>
                 <Icon size={1.3} id="add" />
             </Button>

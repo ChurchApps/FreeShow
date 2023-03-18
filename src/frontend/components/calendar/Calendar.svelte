@@ -2,6 +2,7 @@
     import { activeDays, dictionary, events } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import Button from "../inputs/Button.svelte"
+    import { isSameDay } from "./calendar"
 
     let today = new Date()
     $: current = new Date(today.getFullYear(), today.getMonth())
@@ -13,7 +14,6 @@
     const copy = (date: Date, add: number = 0) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + add)
     const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthIndex(month), 0).getDate()
     const getMonthIndex = (month: number) => (month + 1 > 12 ? month + 1 : 0)
-    const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
     const isBetween = (from: Date, to: Date, date: Date) => date >= copy(from) && date <= copy(to)
 
     activeDays.set([copy(today).getTime()])
@@ -111,7 +111,7 @@
     function getEvents(day: Date, currentEvents: any[]) {
         let events: any[] = []
         currentEvents.forEach((a) => {
-            if (a.to ? isBetween(new Date(a.from), new Date(a.to), copy(day)) : sameDay(new Date(a.from), day)) events.push(a)
+            if (a.to ? isBetween(new Date(a.from), new Date(a.to), copy(day)) : isSameDay(new Date(a.from), day)) events.push(a)
         })
         events.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
         return events
@@ -146,12 +146,12 @@
             let count = 0
 
             do {
-                console.log(temp[temp.length - 1], new Date(last), sameDay(new Date(temp[temp.length - 1]), new Date(last)))
+                console.log(temp[temp.length - 1], new Date(last), isSameDay(new Date(temp[temp.length - 1]), new Date(last)))
 
                 let time = copy(new Date(first + count * MILLISECONDS_IN_A_DAY)).getTime()
                 temp.push(time)
                 count++
-            } while (!sameDay(new Date(temp[temp.length - 1]), new Date(last)))
+            } while (!isSameDay(new Date(temp[temp.length - 1]), new Date(last)))
 
             console.log(temp)
             activeDays.set(temp)
@@ -179,7 +179,7 @@
                     activeDays.set([copy(today).getTime()])
                 }}
                 active={!!$activeDays.length &&
-                    sameDay(new Date($activeDays[0]), today) &&
+                    isSameDay(new Date($activeDays[0]), today) &&
                     current.getMonth() === new Date($activeDays[0]).getMonth() &&
                     current.getFullYear() === new Date($activeDays[0]).getFullYear()}
                 title={$dictionary.calendar?.today}
@@ -205,13 +205,13 @@
                 {#each week as day}
                     <div
                         class="day"
-                        class:today={sameDay(day, today)}
+                        class:today={isSameDay(day, today)}
                         class:faded={day.getMonth() !== month || day.getFullYear() !== year}
                         class:active={$activeDays.includes(copy(day).getTime())}
                         on:mousedown={(e) => dayClick(e, day)}
                         on:mousemove={(e) => move(e, day)}
                     >
-                        <!-- // sameDay(day, new Date($activeDays[0]))} -->
+                        <!-- // isSameDay(day, new Date($activeDays[0]))} -->
                         <span style="font-size: 2em;font-weight: bold;">{day.getDate()}</span>
                         <span class="events">
                             {#each getEvents(day, currentEvents) as event, i}

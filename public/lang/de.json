@@ -58,6 +58,7 @@
         "example_note": "Schreibe Notiz hier",
         "watermark": "Wasserzeichen",
         "recording": "Aufnahme",
+        "clock": "Uhr",
         "rounded": "Abgerundet",
         "call": "Videoanruf",
         "header": "Kopfzeile",
@@ -329,6 +330,7 @@
         "overlay": "Neue Überlagerung",
         "template": "Neue Vorlage",
         "scripture": "Neue Bibel",
+        "collection": "New collection",
         "event": "Neue Veranstaltung"
     },
     "show": {
@@ -339,7 +341,8 @@
         "grid": "Kachelanzeige",
         "list": "Listenanzeige",
         "lyrics": "Liedtext-Anzeige",
-        "text": "Text edit"
+        "text": "Text edit",
+        "update": "Update show"
     },
     "actions": {
         "rename": "Umbenennen",
@@ -390,6 +393,8 @@
         "custom_key": "Set custom value",
         "play_on_midi": "Play on MIDI in",
         "send_midi": "Send MIDI out",
+        "start_timer": "Start timer",
+        "stop_timers": "Stop active timers",
         "remove_media": "Medien entfernen"
     },
     "export": {
