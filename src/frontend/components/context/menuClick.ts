@@ -189,12 +189,12 @@ const actions: any = {
     newShow: () => history({ id: "newShow", location: { page: "show", project: get(activeProject) } }),
     newPrivateShow: () => history({ id: "newShow", newData: { private: true }, location: { page: "show", project: get(activeProject) } }),
     newProject: (obj: any) => {
-        let parent: string = obj.sel.data[0].id || obj.contextElem.id // obj.contextElem.getAttribute("data-parent")
-        history({ id: "newProject", oldData: { id: parent }, location: { page: "show", project: get(activeProject) } })
+        let parent: string = obj.sel.data[0]?.id || obj.contextElem.id || "/" // obj.contextElem.getAttribute("data-parent")
+        history({ id: "newProject", oldData: { parentId: parent }, location: { page: "show", project: get(activeProject) } })
     },
     newFolder: (obj: any) => {
-        if (obj.contextElem.classList.contains("#folder__projects")) {
-            let parent = obj.sel.data[0].id || obj.contextElem.id // obj.contextElem.getAttribute("data-parent")
+        if (obj.contextElem.classList.contains("#folder__projects") || obj.contextElem.classList.contains("#projects")) {
+            let parent = obj.sel.data[0]?.id || obj.contextElem.id || "/" // obj.contextElem.getAttribute("data-parent")
             history({ id: "newFolder", oldData: { id: parent }, location: { page: "show", project: get(activeProject) } })
             return
         }

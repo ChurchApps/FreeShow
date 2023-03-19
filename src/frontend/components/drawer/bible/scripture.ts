@@ -6,7 +6,7 @@ import { scriptures, scripturesCache } from "../../../stores"
 // API.Bible key. Will propably change in the future (Please don't abuse)
 let key: string = "320b5b593fa790ced135a98861de51a9"
 
-export async function fetchBible(id: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
+export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
     const api = "https://api.scripture.api.bible/v1/bibles/"
     let versesId: any = null
     if (ref.versesList.length) {
@@ -14,10 +14,6 @@ export async function fetchBible(id: string, active: string, ref: any = { verses
         versesId = versesId.split("-")
         versesId = versesId[0] + "-" + versesId[versesId.length - 1]
     }
-
-    // load the first scripture data if collection
-    let scriptureData = get(scriptures)[active]
-    if (scriptureData?.collection) active = scriptureData.collection.versions[0]
 
     const urls: StringObject = {
         books: `${api}${active}/books`,
@@ -27,7 +23,9 @@ export async function fetchBible(id: string, active: string, ref: any = { verses
     }
 
     return new Promise((resolve, reject) => {
-        fetch(urls[id], { headers: { "api-key": key } })
+        if (urls[load].includes("null")) return reject("Something went wrong!")
+
+        fetch(urls[load], { headers: { "api-key": key } })
             .then((response) => response.json())
             .then((data) => {
                 resolve(data.data)
@@ -38,19 +36,11 @@ export async function fetchBible(id: string, active: string, ref: any = { verses
     })
 }
 
-export function loadBible(active: string, bible: any) {
+export function loadBible(active: string, index: number = 0, bible: any) {
     Object.entries(get(scriptures)).forEach(([id, scripture]: any) => {
         if (scripture.id !== active && id !== active) return
         let name = scripture.name
         let isAPI = scripture.api
-
-        // load the first scripture for collections
-        if (scripture.collection) {
-            id = scripture.collection.versions?.[0] || ""
-            let firstScripture = Object.values(get(scriptures)).find((a) => a.id === id)
-            name = firstScripture?.name || ""
-            isAPI = firstScripture?.api
-        }
 
         if (isAPI) {
             bible.api = true
@@ -66,7 +56,7 @@ export function loadBible(active: string, bible: any) {
             return
         }
 
-        window.api.send(BIBLE, { name, id: scripture.id || id })
+        window.api.send(BIBLE, { name, id: scripture.id || id, data: { index } })
     })
 
     return bible

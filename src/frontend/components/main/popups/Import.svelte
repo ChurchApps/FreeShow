@@ -33,8 +33,8 @@
 
     const formats = [
         { name: "Project", extensions: ["project", "shows"], id: "freeshow_project", icon: "freeshow" },
-        // TODO: import calendar
         { name: "Calendar", extensions: ["ics"], id: "calendar" },
+        { name: "Scripture", id: "scripture" },
     ]
 </script>
 
@@ -52,7 +52,7 @@
                         alertMessage.set(format.tutorial)
                         activePopup.set("alert")
                     } else activePopup.set(null)
-                } else {
+                } else if (format.id === "clipboard") {
                     // clipboard
                     navigator.clipboard
                         .readText()
@@ -79,11 +79,15 @@
         <Button
             style="width: 25%;flex-direction: column;min-height: 180px;"
             on:click={() => {
-                send(IMPORT, [format.id], format)
-                if (format.tutorial) {
-                    alertMessage.set(format.tutorial)
-                    activePopup.set("alert")
-                } else activePopup.set(null)
+                if (format.extensions) {
+                    send(IMPORT, [format.id], format)
+                    if (format.tutorial) {
+                        alertMessage.set(format.tutorial)
+                        activePopup.set("alert")
+                    } else activePopup.set(null)
+                } else if (format.id === "scripture") {
+                    activePopup.set("import_scripture")
+                }
             }}
             center
         >

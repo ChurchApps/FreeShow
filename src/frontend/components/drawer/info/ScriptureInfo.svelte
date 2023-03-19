@@ -3,7 +3,8 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, categories, outLocked, scriptureSettings, templates } from "../../../stores"
+    import { activeProject, categories, drawerTabsData, outLocked, scriptureSettings, templates } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { setOutput } from "../../helpers/output"
@@ -17,8 +18,8 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
 
-    export let bible: Bible
-    $: sorted = bible.activeVerses.sort((a, b) => Number(a) - Number(b))
+    export let bibles: Bible[]
+    $: sorted = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
 
     let verseRange = ""
     $: {
@@ -55,56 +56,98 @@
     // let slides: any = {}
     // let values: any[][] = []
     // let itemStyle = "top: 150px;left: 50px;width: " + (resolution.width - 100) + "px;height: " + (resolution.height - 300) + "px;"
+
+    $: if ($drawerTabsData) setTimeout(checkTemplate, 100)
+    function checkTemplate() {
+        if (!$scriptureSettings.template.includes("scripture")) return
+
+        let templateId = "scripture_" + bibles.length
+        scriptureSettings.update((a) => {
+            a.template = $templates[templateId] ? templateId : "scripture"
+            return a
+        })
+    }
+
     $: template = $templates[$scriptureSettings.template]?.items || []
-    $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
     $: {
         if (sorted.length || $scriptureSettings) getSlides()
         else slides = [[]]
     }
     function getSlides() {
-        slides = [[{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }]]
+        slides = [[]]
 
-        sorted.forEach((s: any, i: number) => {
-            let slideArr = slides[slides.length - 1][slides[slides.length - 1].length - 1]
+        bibles.forEach((bible, bibleIndex) => {
+            let currentTemplate = template[bibleIndex] || template[0]
+            let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
+            let alignStyle = currentTemplate?.lines?.[0].align || "text-align: justify;"
+            let textStyle = currentTemplate?.lines?.[0].text?.[0].style || "font-size: 80px;"
+            let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle }
 
-            if ($scriptureSettings.verseNumbers) {
-                let size = 50
-                if (i === 0) size *= 2
-                slideArr.lines![0].text.push({
-                    value: s + " ",
-                    style: "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[0]?.lines?.[0].text?.[0].style || "",
-                })
-            }
+            let slideIndex: number = 0
+            slides[slideIndex].push(clone(emptyItem))
 
-            let text: string = bible.verses[s] || ""
-            // TODO: formatting (already function in Scripture.svelte)
-            // if (redJesus) {
-            //   text = text
-            // } else
-            text = text.replace(/(<([^>]+)>)/gi, "")
-            if (text.charAt(text.length - 1) !== " ") text += " "
-            slideArr.lines![0].text.push({ value: text, style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;" })
+            sorted.forEach((s: any, i: number) => {
+                let slideArr = slides[slideIndex][bibleIndex]
 
-            if ((i + 1) % $scriptureSettings.versesPerSlide === 0) {
-                let range: any[] = sorted.slice(i - $scriptureSettings.versesPerSlide + 1, i + 1)
-                addMeta($scriptureSettings.showVersion, $scriptureSettings.showVerse, joinRange(range))
-                if (i + 1 < sorted.length) slides.push([{ lines: [{ text: [], align: template[0]?.lines?.[0].align || "text-align: justify;" }], style: itemStyle }])
-            }
+                if ($scriptureSettings.verseNumbers) {
+                    let size = 50
+                    if (i === 0) size *= 2
+                    let verseNumberStyle =
+                        "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[bibleIndex]?.lines?.[0].text?.[0].style || ""
+
+                    slideArr.lines![0].text.push({
+                        value: s + " ",
+                        style: verseNumberStyle,
+                    })
+                }
+
+                let text: string = bible.verses[s] || ""
+                // TODO: formatting (already function in Scripture.svelte)
+                // if (redJesus) {
+                //   text = text
+                // } else
+                text = text.replace(/(<([^>]+)>)/gi, "")
+                if (text.charAt(text.length - 1) !== " ") text += " "
+                slideArr.lines![0].text.push({ value: text, style: textStyle })
+
+                // if (bibleIndex + 1 < bibles.length) return
+                if ((i + 1) % $scriptureSettings.versesPerSlide > 0) return
+
+                if (bibleIndex + 1 >= bibles.length) {
+                    let range: any[] = sorted.slice(i - $scriptureSettings.versesPerSlide + 1, i + 1)
+                    addMeta($scriptureSettings.showVersion, $scriptureSettings.showVerse, joinRange(range), { slideIndex, itemIndex: bibles.length })
+                }
+
+                if (i + 1 >= sorted.length) return
+
+                slideIndex++
+                if (!slides[slideIndex]) slides.push([clone(emptyItem)])
+                else slides[slideIndex].push(clone(emptyItem))
+            })
+
+            if (bibleIndex + 1 < bibles.length) return
+            let remainder = sorted.length % $scriptureSettings.versesPerSlide
+            let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
+            if (remainder) addMeta($scriptureSettings.showVersion, $scriptureSettings.showVerse, joinRange(range), { slideIndex, itemIndex: bibles.length })
         })
-        let remainder = sorted.length % $scriptureSettings.versesPerSlide
-        let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
-        if (remainder) addMeta($scriptureSettings.showVersion, $scriptureSettings.showVerse, joinRange(range))
+
+        console.log(slides)
     }
 
-    function addMeta(showVersion: boolean, showVerse: boolean, range: string) {
+    function addMeta(showVersion: boolean, showVerse: boolean, range: string, { slideIndex, itemIndex }) {
         let lines: any[] = []
-        let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
-        if (showVersion && bible.version) lines.push({ text: [{ value: bible.version, style: verseStyle }], align: "" })
-        if (showVerse) lines.push({ text: [{ value: bible.book + " " + bible.chapter + ":" + range, style: verseStyle }], align: "" })
-        if ((showVersion && bible.version) || showVerse)
-            slides[slides.length - 1].push({
+
+        let metaTemplate = template[itemIndex] || template[0]
+        let verseStyle = metaTemplate?.lines?.[0].text?.[0].style || "font-size: 50px;"
+        let versions = bibles.map((a) => a.version).join(" + ")
+        let books = [...new Set(bibles.map((a) => a.book))].join(" / ")
+        if (showVersion && versions.length) lines.push({ text: [{ value: versions, style: verseStyle }], align: "" })
+        if (showVerse) lines.push({ text: [{ value: books + " " + bibles[0].chapter + ":" + range, style: verseStyle }], align: "" })
+
+        if ((showVersion && versions.length) || showVerse)
+            slides[slideIndex].push({
                 lines,
-                style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
             })
     }
 
@@ -121,7 +164,7 @@
         slides.forEach((items: any) => {
             let id = uid()
             // TODO: group as verse numbers
-            slides2[id] = { group: items[0].lines[0].text[0].value.split(" ").slice(0, 4).join(" "), color: null, settings: {}, notes: "", items }
+            slides2[id] = { group: items[0].lines[0].text[0]?.value?.split(" ")?.slice(0, 4)?.join(" ") || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
             layouts.push(l)
         })
@@ -139,12 +182,12 @@
 
         // TODO: if name exists create new layout!!
         // TODO: keep same chapter on same show (just add new layouts...?)
-        show.name = checkName(bible.book + " " + bible.chapter + "," + verseRange)
+        show.name = checkName(bibles[0].book + " " + bibles[0].chapter + "," + verseRange)
         show.slides = slides2
-        show.layouts = { [layoutID]: { name: bible.version || "", notes: "", slides: layouts } }
+        show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
 
-        // TODO: multiple versions
-        show.reference = { type: "scripture", data: { bible, version: bible.version } }
+        let versions = bibles.map((a) => a.version).join(" + ")
+        show.reference = { type: "scripture", data: { collection: $drawerTabsData.scripture?.activeSubTab || "", version: versions } }
 
         return { show }
     }
@@ -183,7 +226,7 @@
 
 <div class="scroll">
     <Zoomed style="width: 100%;">
-        {#if bible.activeVerses}
+        {#if bibles[0]?.activeVerses}
             <!-- {#each slides as items} -->
             {#each slides[0] as item}
                 <Textbox {item} ref={{ id: "scripture" }} />
@@ -193,10 +236,10 @@
     </Zoomed>
 
     <div style="text-align: center;opacity: 0.8;padding: 8px 0;">
-        <!-- {bible.version}
+        <!-- {bibles[0].version}
     <br /> -->
-        {bible.book}
-        {bible.chapter}{#if verseRange.length}:{verseRange}{/if}
+        {bibles[0]?.book}
+        {bibles[0]?.chapter}{#if verseRange.length}:{verseRange}{/if}
     </div>
 
     <!-- TODO: drag&drop slide(s) -->

@@ -85,13 +85,7 @@
         // }
     }
 
-    let bible: Bible = {
-        version: null,
-        book: null,
-        chapter: null,
-        verses: [],
-        activeVerses: [],
-    }
+    let bibles: Bible[] = []
 
     let firstMatch: null | any = null
     let searchElem: any
@@ -145,7 +139,7 @@
                         on:click={() => {
                             activeDrawerTab.set(tab.id)
                             // remove focus for search function to work
-                            setTimeout(() => document.activeElement.blur(), 10)
+                            setTimeout(() => document.activeElement?.blur(), 10)
                         }}
                         active={$activeDrawerTab === tab.id}
                         class="context #drawer_top"
@@ -173,9 +167,9 @@
         <Resizeable id={"drawerNavigation"}>
             <Navigation id={$activeDrawerTab} />
         </Resizeable>
-        <Content id={$activeDrawerTab} bind:searchValue bind:firstMatch bind:bible />
+        <Content id={$activeDrawerTab} bind:searchValue bind:firstMatch bind:bibles />
         <Resizeable id={"drawerInfo"} side="right">
-            <Info id={$activeDrawerTab} {bible} />
+            <Info id={$activeDrawerTab} {bibles} />
         </Resizeable>
     </div>
 </section>

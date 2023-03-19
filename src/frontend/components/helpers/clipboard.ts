@@ -335,7 +335,7 @@ const pasteActions: any = {
         history({
             id: "newSlide",
             newData: { slides: newSlides },
-            location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout },
+            location: { page: get(activePage) as any, show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout },
         })
         setTimeout(() => console.log(get(showsCache)), 1000)
     },
@@ -529,9 +529,14 @@ const duplicateActions = {
         history({ id: "newEvent", newData: { id: uid(), data: event } })
     },
     show: (data: any) => {
-        duplicateShows(data)
+        if (!get(activeProject)) return
+        data = data.map((a) => ({ id: a.id, type: a.type || "show" }))
+        projects.update((a) => {
+            a[get(activeProject)!].shows.push(...data)
+            return a
+        })
     },
-    show_drawer: (data: any) => duplicateActions.show(data),
+    show_drawer: (data: any) => duplicateShows(data),
     stage: (data: any) => {
         let stageId = data[0].id
         let stage = get(stageShows)[stageId]

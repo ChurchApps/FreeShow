@@ -289,8 +289,8 @@ export function setExampleTemplates() {
         }
 
         // scripture
-        ;(a.scripture = {
-            name: get(dictionary).category?.scripture || "Sciprture",
+        a.scripture = {
+            name: get(dictionary).category?.scripture || "Scripture",
             color: "#876543",
             category: "scripture",
             items: [
@@ -302,34 +302,115 @@ export function setExampleTemplates() {
                 {
                     style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
                     align: "",
-                    lines: [{ align: "", text: [{ value: "2", style: "font-size: 50px;" }] }],
+                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },
             ],
-        }),
-            // blue theme
-            (a.blueHeader = {
-                name: "Blue Header",
-                color: "#2957ff",
-                category: "presentation",
-                items: [
-                    // 1080 x 1920
-                    {
-                        style: "left:720px;top:640px;width:1130px;height:210px;",
-                        align: "",
-                        lines: [{ align: "text-align: left", text: [{ value: "1", style: "font-weight:bold;font-family:Arial;line-height:1.2em;font-size:120px;" }] }],
-                    },
-                    {
-                        style: "left:720px;top:850px;width:1130px;height:60px;",
-                        align: "",
-                        lines: [{ align: "text-align: left", text: [{ value: "2", style: "color:#ffffff;font-size:50px;" }] }],
-                    },
-                    {
-                        style: "left:-850px;top:-600px;width:1600px;height:1600px;background-color:#2957ff;transform:rotate(30deg);",
-                        align: "",
-                        lines: [{ align: "", text: [{ value: "", style: "" }] }],
-                    },
-                ],
-            })
+        }
+        a.scripture_2 = {
+            name: (get(dictionary).category?.scripture || "Scripture") + " 2",
+            color: "#876543",
+            category: "scripture",
+            items: [
+                {
+                    style: "top: 40px;left: 50px;width: 1820px;height: 400px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "1", style: "font-size: 70px;" }] }],
+                },
+                {
+                    style: "top: 475px;left: 50px;width: 1820px;height: 400px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "2", style: "font-size: 70px;" }] }],
+                },
+                {
+                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
+                },
+            ],
+        }
+        a.scripture_3 = {
+            name: (get(dictionary).category?.scripture || "Scripture") + " 3",
+            color: "#876543",
+            category: "scripture",
+            items: [
+                {
+                    style: "top: 40px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "1", style: "font-size: 60px;" }] }],
+                },
+                {
+                    style: "top: 320px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "2", style: "font-size: 60px;" }] }],
+                },
+                {
+                    style: "top: 600px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "3", style: "font-size: 60px;" }] }],
+                },
+                {
+                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
+                },
+            ],
+        }
+        a.scripture_4 = {
+            name: (get(dictionary).category?.scripture || "Scripture") + " 4",
+            color: "#876543",
+            category: "scripture",
+            items: [
+                {
+                    style: "top: 40px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "1", style: "font-size: 60px;" }] }],
+                },
+                {
+                    style: "top: 250px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "2", style: "font-size: 60px;" }] }],
+                },
+                {
+                    style: "top: 460px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "3", style: "font-size: 60px;" }] }],
+                },
+                {
+                    style: "top: 670px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    align: "",
+                    lines: [{ align: "text-align: justify;", text: [{ value: "4", style: "font-size: 60px;" }] }],
+                },
+                {
+                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
+                },
+            ],
+        }
+        // blue theme
+        a.blueHeader = {
+            name: "Blue Header",
+            color: "#2957ff",
+            category: "presentation",
+            items: [
+                // 1080 x 1920
+                {
+                    style: "left:720px;top:640px;width:1130px;height:210px;",
+                    align: "",
+                    lines: [{ align: "text-align: left", text: [{ value: "1", style: "font-weight:bold;font-family:Arial;line-height:1.2em;font-size:120px;" }] }],
+                },
+                {
+                    style: "left:720px;top:850px;width:1130px;height:60px;",
+                    align: "",
+                    lines: [{ align: "text-align: left", text: [{ value: "2", style: "color:#ffffff;font-size:50px;" }] }],
+                },
+                {
+                    style: "left:-850px;top:-600px;width:1600px;height:1600px;background-color:#2957ff;transform:rotate(30deg);",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: "", style: "" }] }],
+                },
+            ],
+        }
         a.blueMain = {
             name: "Blue Content",
             color: "#2957ff",

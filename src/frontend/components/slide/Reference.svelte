@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
-    import { activeShow, showsCache } from "../../stores"
+    import { activeDrawerTab, activeShow, drawer, drawerTabsData, scriptures, showsCache } from "../../stores"
     import { createSlides, getDateString, getSelectedEvents, sortDays } from "../calendar/calendar"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -30,17 +30,34 @@
         if (sortedDays[0] - sortedDays[1] < 0) string += " - " + getDateString(to)
         return string
     }
+
+    function openTab() {
+        let collection = show.reference?.data?.collection
+        if (!collection || !$scriptures[collection]) return
+
+        drawerTabsData.update((a) => {
+            a.scripture.activeSubTab = collection
+            return a
+        })
+        activeDrawerTab.set("scripture")
+        // open drawer if closed
+        if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+    }
 </script>
 
 <div>
     {#if show.reference?.type === "calendar"}
-        <span><T id="menu.calendar" />: {getDaysString()}</span>
+        <p><T id="menu.calendar" />: {getDaysString()}</p>
         <Button on:click={updateCalendar} style="color: var(--secondary);" dark>
             <Icon id="calendar" right />
             <T id="show.update" />
         </Button>
     {:else if show.reference?.type === "scripture"}
-        <span><T id="tabs.scripture" />: {show.reference?.data?.version || ""}</span>
+        <p title={show.reference?.data?.version || ""}><T id="tabs.scripture" />: {show.reference?.data?.version || ""}</p>
+        <Button on:click={openTab} style="color: var(--secondary);white-space: nowrap;" dark>
+            <Icon id="scripture" right />
+            <T id="tabs.scripture" />
+        </Button>
     {/if}
 </div>
 
@@ -49,9 +66,10 @@
         display: flex;
         justify-content: space-between;
         width: 100%;
+        overflow: hidden;
     }
 
-    span {
+    p {
         padding: 0 10px;
     }
 </style>

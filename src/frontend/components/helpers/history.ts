@@ -362,14 +362,13 @@ export function history(obj: History, undo: null | boolean = null) {
                     console.log(obj.newData.id, get(projects))
                 } else {
                     let project: Project = obj.newData
-                    let id: string = obj.oldData?.id
+                    let id: string = obj.oldData?.id || uid()
 
                     if (obj.newData === null) {
                         let name: string = ""
                         let created: number = new Date().getTime()
                         if (get(defaultProjectName) === "date") name = dateToString(created)
-                        project = { name, created, parent: id || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
-                        id = id || uid()
+                        project = { name, created, parent: obj.oldData?.parentId || get(projects)[get(activeProject)!]?.parent || "/", shows: [] }
                         obj.newData = project
                         obj.oldData = { id }
                         // TODO: edit name...

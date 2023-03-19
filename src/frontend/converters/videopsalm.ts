@@ -167,7 +167,7 @@ function removeStyle(s) {
 
 function fixJSON(s: string) {
     let index = s.length - 1
-    while (s[index]?.match(/[a-z]/i) !== null && index > -1) index--
+    while (s[index]?.match(/[a-z0-9]/i) !== null && index > -1) index--
     let word: string = s.slice(index + 1, s.length)
     let notKey = index < 0 || index >= s.length - 1 || !keys.includes(word)
     if (word === "ID" && !notKey && !s.includes("{ID") && !s.includes(",ID")) notKey = true

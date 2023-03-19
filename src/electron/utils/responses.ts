@@ -48,6 +48,7 @@ export function loadScripture(e: any, msg: Message) {
     if (bible.error) p = path.resolve(app.getPath("documents"), "Bibles", msg.name + ".fsb")
     bible = loadFile(p, msg.id)
 
+    if (msg.data) bible.data = msg.data
     e.reply(BIBLE, bible)
 }
 
