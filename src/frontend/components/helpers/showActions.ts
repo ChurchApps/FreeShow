@@ -2,10 +2,11 @@ import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
-import { activeEdit, activePage, activeProject, activeShow, media, outLocked, outputs, overlays, projects, showsCache, slideTimers } from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, activeTimers, media, outLocked, outputs, overlays, projects, showsCache, slideTimers } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getMediaType } from "./media"
 import { getActiveOutputs, setOutput } from "./output"
+import { playPause } from "../drawer/timers/timers"
 import { _show } from "./shows"
 
 const keys: any = {
@@ -308,10 +309,30 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     // actions
     if (data.actions) {
         if (data.actions.sendMidi) sendMidi(_show(id).get("midi")[data.actions.sendMidi])
+        if (data.actions.startTimer) playSlideTimers({ showId: id, slideId: layout[index].id })
+        if (data.actions.stopTimers) activeTimers.set([])
         if (data.actions.clearBackground) setOutput("background", null, false, outputId)
         if (data.actions.clearOverlays) clearOverlays()
         if (data.actions.clearAudio) clearAudio()
     }
+}
+
+function playSlideTimers({ showId, slideId }) {
+    if (showId === "active") showId = get(activeShow)?.id
+    let showSlides: any[] = _show(showId).slides().get()
+
+    // find all timers in current slide
+    showSlides.forEach((slide) => {
+        if (slide.id !== slideId) return
+        let items = slide.items
+        items.forEach((item) => {
+            if (item.type === "timer") {
+                let itemRef = { showId, slideId, id: item.timer.id, ...item }
+                console.log(itemRef)
+                playPause(itemRef)
+            }
+        })
+    })
 }
 
 export function sendMidi(data: any) {

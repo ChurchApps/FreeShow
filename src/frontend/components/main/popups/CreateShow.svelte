@@ -95,7 +95,7 @@
             {#if loading}
                 <Loader />
             {:else}
-                <Button on:click={searchLyrics} title="Search the WEB">
+                <Button on:click={searchLyrics}>
                     <Icon id="search" size={1.2} white />
                 </Button>
             {/if}

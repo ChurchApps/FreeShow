@@ -58,6 +58,7 @@
         "example_note": "Write notes here",
         "watermark": "Watermark",
         "recording": "Recording",
+        "clock": "Clock",
         "rounded": "Rounded",
         "call": "Video call",
         "header": "Header",
@@ -329,6 +330,7 @@
         "overlay": "New overlay",
         "template": "New template",
         "scripture": "New scripture",
+        "collection": "New collection",
         "event": "New event"
     },
     "show": {
@@ -339,7 +341,8 @@
         "grid": "Grid view",
         "list": "List view",
         "lyrics": "Lyrics view",
-        "text": "Text edit"
+        "text": "Text edit",
+        "update": "Update show"
     },
     "actions": {
         "rename": "Rename",
@@ -390,6 +393,8 @@
         "custom_key": "Set custom value",
         "play_on_midi": "Play on MIDI in",
         "send_midi": "Send MIDI out",
+        "start_timer": "Start timer",
+        "stop_timers": "Stop active timers",
         "remove_media": "Remove media"
     },
     "export": {

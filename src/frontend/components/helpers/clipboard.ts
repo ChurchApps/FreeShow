@@ -1,153 +1,566 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { activeEdit, activeShow, clipboard, overlays, selected, showsCache, templates } from "../../stores"
+import type { Item } from "../../../types/Show"
+import {
+    activeDays,
+    activeEdit,
+    activePage,
+    activePopup,
+    activeProject,
+    activeShow,
+    activeStage,
+    alertMessage,
+    clipboard,
+    events,
+    midiIn,
+    overlays,
+    projects,
+    scriptures,
+    selected,
+    showsCache,
+    stageShows,
+    templates,
+} from "../../stores"
+import { removeSlide } from "../context/menuClick"
+import { deleteTimer } from "../drawer/timers/timers"
 import { clone } from "./array"
 import { history } from "./history"
+import { loadShows } from "./setShow"
 import { _show } from "./shows"
 
-const copyData: any = {
-  item: (data: any) => {
-    let ref = _show(data.id || "active")
-      .layouts("active")
-      .ref()?.[0]?.[data.slide!]
-    if (!ref) return null
-    let items = _show(data.id || "active")
-      .slides([ref.id])
-      .items()
-      .get(null, false)[0]
-      .filter((_a: any, i: number) => data.items.includes(i))
-    return [...items]
-  },
-  slide: (data: any) => {
-    let ref = _show("active").layouts("active").ref()?.[0]
-    let ids = data.map((a: any) => a.id || (a.index !== undefined ? ref[a.index].id : ""))
-    // TODO: copy media too
-    return _show("active").slides(ids).get(null)
-  },
-  group: (data: any) => copyData.slide(data),
-  overlay: (data: any) => {
-    return data.map((id: string) => get(overlays)[id])
-  },
-  template: (data: any) => {
-    return data.map((id: string) => get(templates)[id])
-  },
-}
-
 export function copy({ id, data }: any = {}, getData: boolean = true) {
-  let copy: any = { id, data }
-  if (get(selected).id) copy = get(selected)
-  else if (get(activeEdit).items.length) copy = { id: "item", data: get(activeEdit) }
-  else if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
+    let copy: any = { id, data }
+    if (get(selected).id) copy = get(selected)
+    else if (get(activeEdit).items.length) copy = { id: "item", data: get(activeEdit) }
+    else if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
 
-  if (!copy) return
+    if (!copy || !copyActions[copy.id]) return
 
-  if (getData && copyData[copy.id]) copy.data = copyData[copy.id](copy.data)
+    let copyObj = clone(copy)
+    if (getData && copyActions[copy.id]) copy.data = copyActions[copy.id](copy.data)
 
-  if (copy.data) clipboard.set(copy)
+    if (copy.data) clipboard.set(copy)
 
-  console.log("COPIED:", copy.id)
-  console.log("CLIPBOARD", get(clipboard))
+    console.log("COPIED:", copyObj)
+    console.log("CLIPBOARD:", get(clipboard))
+
+    return copyObj
 }
 
-const paster: any = {
-  item: (data: any) => {
-    let ref = _show(get(activeEdit).id || "active")
-      .layouts("active")
-      .ref()?.[0][get(activeEdit).slide!]
-    data.forEach((item: any) => {
-      history({ id: "newItem", newData: clone(item), location: { page: "edit", show: { id: get(activeEdit).id || get(activeShow)!.id }, slide: ref.id } })
-    })
-  },
-  slide: (data: any) => {
-    // clone slides
-    data = clone(data)
+// pasting text in editbox is it's own function
+export function paste() {
+    let clip = get(clipboard)
+    let activeElem: any = document.activeElement
+    console.log(activeElem?.classList)
+    // activeElem.tagName !== "BODY"
+    // if (clip.id === null || activeElem?.classList?.contains(".edit")) {
+    if (clip.id === null) {
+        if (!activeElem?.classList?.contains(".edit")) return
+        navigator.clipboard.readText().then((clipText: string) => {
+            // TODO: insert at caret pos
+            // TODO: paste properly in textbox
+            if (activeElem.nodeName === "INPUT" || activeElem.nodeName === "TEXTAREA") activeElem.value += clipText
+            else activeElem.innerHTML += clipText
+        })
+        return
+    }
 
-    // get all slide ids & child ids
-    let copiedIds: string[] = data.map((a: any) => a.id)
-    // let childs: any[] = []
-    // data.forEach((slide: any) => {
-    //   copiedIds.push(slide.id)
-    //   if (slide.children?.length) childs.push(...slide.children)
-    // })
+    if (!pasteActions[clip.id]) return
+    pasteActions[clip.id](clip.data)
 
-    let slides: any = _show().get().slides
-    let ref: any[] = _show().layouts("active").ref()[0]
-    let newSlides: any[] = []
+    console.log("PASTED:", clip)
+}
 
-    // remove children
-    data.map((slide: any) => {
-      // has children
-      if (slide.children) {
-        let children: string[] = []
-        children = slide.children.filter((child: string) => copiedIds.includes(child))
-        // if (JSON.stringify(children) !== JSON.stringify(slide.children)) slide.id = uid()
-        if (children.length && slide.children.length > children.length) slide.children = children
+export function cut(data: any = {}) {
+    data = copy(data)
+    if (!data) return
+    deleteAction(data)
 
-        // clone children
-        let clonedChildren: string[] = []
-        slide.children.forEach((childId: string) => {
-          let childSlide: any = clone(slides[childId])
-          childSlide.id = uid()
-          clonedChildren.push(childSlide.id)
-          newSlides.push(childSlide)
+    console.log("CUTTED:", data)
+}
+
+export function deleteAction({ id, data }) {
+    if (!deleteActions[id]) return false
+    deleteActions[id](data)
+
+    console.log("DELETED:", { id, data })
+    return true
+}
+
+export function duplicate(data: any = {}) {
+    if (duplicateActions[data.id]) {
+        duplicateActions[data.id](data.data)
+
+        console.log("DUPLICATED:", data)
+        return true
+    }
+
+    if (!copy(data)) return false
+    paste()
+
+    console.log("DUPLICATED:", data)
+    return true
+}
+
+export function selectAll(data: any = {}) {
+    let newSelection: any[] = []
+
+    if (!data.id && get(selected)) data = get(selected)
+
+    // select all slides with current group
+    if (data.id === "group") {
+        let ref = _show().layouts("active").ref()[0]
+        data.data.forEach(({ id }: any) => {
+            ref.forEach((b, i) => {
+                if (b.type === "child" ? id === b.parent.id : id === b.id) newSelection.push({ index: i })
+            })
         })
 
-        slide.children = clonedChildren
-      } else if (slide.group === null && !copiedIds.includes(slide.id)) {
-        // is child
-        let slideRef = ref.find((a) => a.id === slide.id)
-        let parent: any = slides[slideRef.parent.id]
-        slide.group = parent.group || ""
-        slide.color = parent.color || ""
-        slide.globalGroup = parent.globalGroup || ""
-      }
+        selected.set({ id: "slide", data: newSelection })
+        return
+    }
 
-      slide.id = uid()
-      newSlides.push(slide)
-    })
-    // TODO: children next to each other should be grouped
-    // TODO: add at index
+    // select all item boxes in edit mode
+    if (get(activeEdit) && get(activePage) === "edit") {
+        let itemCount: number = 0
 
-    history({
-      id: "newSlide",
-      newData: { slides: newSlides },
-      location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout },
-    })
-    setTimeout(() => console.log(get(showsCache)), 1000)
-  },
-  group: (data: any) => paster.slide(data),
-  overlay: (data: any) => {
-    data.forEach((slide: any) => {
-      slide = JSON.parse(JSON.stringify(slide))
-      slide.name += " 2"
-      history({ id: "newOverlay", newData: { data: slide } })
-    })
-  },
-  template: (data: any) => {
-    data.forEach((slide: any) => {
-      slide = JSON.parse(JSON.stringify(slide))
-      slide.name += " 2"
-      history({ id: "newTemplate", newData: { data: slide } })
-    })
-  },
+        if (!get(activeEdit).type || get(activeEdit).type === "show") {
+            let ref = _show().layouts("active").ref()[0]
+            let editSlide = ref[get(activeEdit).slide!]
+            let items = _show().slides([editSlide.id]).get()[0].items
+            console.log(_show().slides([editSlide.id]).get())
+            console.log(items)
+            itemCount = items.length
+        } else if (get(activeEdit).id) {
+            if (get(activeEdit).type === "overlay") {
+                itemCount = get(overlays)[get(activeEdit).id!].items.length
+            } else if (get(activeEdit).type === "template") {
+                itemCount = get(templates)[get(activeEdit).id!].items.length
+            }
+        }
+
+        if (!itemCount) return
+        let items: number[] = [...Array(itemCount)].map((_, i) => i)
+
+        activeEdit.set({ ...get(activeEdit), items })
+        return
+    }
+
+    // select all item boxes in stage mode
+    if (get(activeStage) && get(activePage) === "stage") {
+        let items: string[] = Object.keys(get(stageShows)[get(activeStage).id!].items)
+
+        activeStage.set({ ...get(activeStage), items })
+        return
+    }
+
+    // select all slides in show mode
+    if (get(activeShow) && get(activePage) === "show") {
+        let ref = _show().layouts("active").ref()[0]
+        newSelection = ref.map((_: any, index: number) => ({ index }))
+
+        selected.set({ id: "slide", data: newSelection })
+        return
+    }
+
+    // select all dates in current month
+    if (get(activePage) === "calendar") {
+        let currentDay = get(activeDays)[0]
+        if (!currentDay) return
+
+        let dayDate = new Date(currentDay)
+        let year = dayDate.getFullYear()
+        let month = dayDate.getMonth()
+
+        let daysList: any = []
+        for (let i = 1; i <= getDaysInMonth(year, month); i++) daysList.push(new Date(year, month, i).getTime())
+        activeDays.set(daysList)
+    }
 }
 
-export function paste() {
-  let clip = get(clipboard)
-  let activeElem: any = document.activeElement
-  console.log(activeElem?.classList)
-  if (clip.id === null || activeElem?.classList?.contains(".edit")) {
-    navigator.clipboard.readText().then((clipText: string) => {
-      // TODO: insert at caret pos
-      // TODO: paste properly in textbox
-      if (activeElem.nodeName === "INPUT" || activeElem.nodeName === "TEXTAREA") activeElem.value += clipText
-      else activeElem.innerHTML += clipText
-    })
-    return
-  }
+// WIP duplicate of functions in Calendar.svelte
+const getMonthIndex = (month: number) => (month + 1 < 12 ? month + 1 : 0)
+const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthIndex(month), 0).getDate()
 
-  if (paster[clip.id]) {
-    paster[clip.id](clip.data)
-    console.log("PASTED:", clip)
-  }
+/////
+
+const copyActions: any = {
+    item: (data: any) => {
+        // data = data.sort((a: any, b: any) => a.index - b.index)
+        let items: Item[] = []
+
+        if (data.id) {
+            if (data.type === "overlay") {
+                items = get(overlays)[data.id!].items
+            }
+
+            if (data.type === "template") {
+                items = get(templates)[data.id!].items
+            }
+        } else {
+            let ref = _show(data.id || "active")
+                .layouts("active")
+                .ref()?.[0]?.[data.slide!]
+            if (!ref) return null
+
+            items = _show(data.id || "active")
+                .slides([ref.id])
+                .items()
+                .get(null, false)[0]
+        }
+
+        items = items.filter((_a: any, i: number) => data.items.includes(i))
+        return [...items]
+    },
+    slide: (data: any) => {
+        let ref = _show().layouts("active").ref()?.[0]
+        let ids = data.map((a: any) => a.id || (a.index !== undefined ? ref[a.index].id : ""))
+
+        let slides = clone(_show().slides(ids).get())
+        slides = slides.map((slide) => {
+            // make children parent
+            if (slide.group === null) {
+                // this should never be here
+                delete slide.children
+
+                let parent = ref.find((a) => a.id === slide.id)?.parent || ""
+                // check that parent is not copied
+                if (ids.includes(parent)) return slide
+
+                slide.group = ""
+            }
+
+            return slide
+        })
+
+        // TODO: copy layout (media) too
+
+        return slides
+    },
+    group: (data: any) => copyActions.slide(data),
+    overlay: (data: any) => {
+        return data.map((id: string) => get(overlays)[id])
+    },
+    template: (data: any) => {
+        return data.map((id: string) => get(templates)[id])
+    },
+}
+
+const pasteActions: any = {
+    item: (data: any) => {
+        if (!data) return
+
+        if (get(activeEdit).id) {
+            if (get(activeEdit).type === "overlay") {
+                let items = get(overlays)[get(activeEdit).id!].items
+                data.forEach((item: any) => {
+                    items.push(clone(item))
+                })
+                history({ id: "updateOverlay", newData: { key: "items", data: items }, location: { page: "edit", id: get(activeEdit).id } })
+                return
+            }
+
+            if (get(activeEdit).type === "template") {
+                let items = get(templates)[get(activeEdit).id!].items
+                data.forEach((item: any) => {
+                    items.push(clone(item))
+                })
+                history({ id: "updateTemplate", newData: { key: "items", data: items }, location: { page: "edit", id: get(activeEdit).id } })
+                return
+            }
+
+            return
+        }
+
+        let ref = _show(get(activeEdit).id || "active")
+            .layouts("active")
+            .ref()?.[0][get(activeEdit).slide!]
+        data.forEach((item: any) => {
+            history({ id: "newItem", newData: clone(item), location: { page: "edit", show: { id: get(activeEdit).id || get(activeShow)!.id }, slide: ref.id } })
+        })
+    },
+    slide: (data: any) => {
+        if (!data) return
+
+        // clone slides
+        data = clone(data)
+
+        // get all slide ids & child ids
+        let copiedIds: string[] = data.map((a: any) => a.id)
+        // let childs: any[] = []
+        // data.forEach((slide: any) => {
+        //   copiedIds.push(slide.id)
+        //   if (slide.children?.length) childs.push(...slide.children)
+        // })
+
+        let slides: any = _show().get().slides
+        let ref: any[] = _show().layouts("active").ref()[0]
+        let newSlides: any[] = []
+
+        // remove children
+        data.map((slide: any) => {
+            // has children
+            if (slide.children) {
+                let children: string[] = []
+                children = slide.children.filter((child: string) => copiedIds.includes(child))
+                // if (JSON.stringify(children) !== JSON.stringify(slide.children)) slide.id = uid()
+                if (children.length && slide.children.length > children.length) slide.children = children
+
+                // clone children
+                let clonedChildren: string[] = []
+                slide.children.forEach((childId: string) => {
+                    if (!slides[childId]) return
+                    let childSlide: any = clone(slides[childId])
+                    childSlide.id = uid()
+                    clonedChildren.push(childSlide.id)
+                    newSlides.push(childSlide)
+                })
+
+                slide.children = clonedChildren
+            } else if (slide.group === null && !copiedIds.includes(slide.id)) {
+                // is child
+                let slideRef = ref.find((a) => a.id === slide.id)
+                let parent: any = slides[slideRef.parent.id]
+                slide.group = parent.group || ""
+                slide.color = parent.color || ""
+                slide.globalGroup = parent.globalGroup || ""
+            }
+
+            slide.id = uid()
+            newSlides.push(slide)
+        })
+        // TODO: children next to each other should be grouped
+        // TODO: add at index
+
+        history({
+            id: "newSlide",
+            newData: { slides: newSlides },
+            location: { page: get(activePage) as any, show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout },
+        })
+        setTimeout(() => console.log(get(showsCache)), 1000)
+    },
+    group: (data: any) => pasteActions.slide(data),
+    overlay: (data: any) => {
+        data?.forEach((slide: any) => {
+            slide = JSON.parse(JSON.stringify(slide))
+            slide.name += " 2"
+            history({ id: "newOverlay", newData: { data: slide } })
+        })
+    },
+    template: (data: any) => {
+        data?.forEach((slide: any) => {
+            slide = JSON.parse(JSON.stringify(slide))
+            slide.name += " 2"
+            history({ id: "newTemplate", newData: { data: slide } })
+        })
+    },
+}
+
+const deleteActions = {
+    item: (data) => {
+        if (document.activeElement?.classList.contains("edit")) return
+
+        // TODO: history
+        if (get(activeEdit).id) {
+            if (get(activeEdit).type === "overlay") {
+                overlays.update((a: any) => {
+                    get(activeEdit).items.forEach((i: number) => {
+                        if (a[get(activeEdit).id!].items[i]) a[get(activeEdit).id!].items.splice(i, 1)
+                    })
+                    return a
+                })
+
+                return
+            }
+
+            if (get(activeEdit).type === "template") {
+                templates.update((a: any) => {
+                    get(activeEdit).items.forEach((i: number) => {
+                        if (a[get(activeEdit).id!].items[i]) a[get(activeEdit).id!].items.splice(i, 1)
+                    })
+                    return a
+                })
+
+                return
+            }
+
+            return
+        }
+
+        let layout = data.layout || _show().get("settings.activeLayout")
+        let slide = data.slideId || _show().layouts("active").ref()[0][data.slide].id
+        history({
+            id: "deleteItem",
+            location: {
+                page: "edit",
+                show: get(activeShow)!,
+                items: get(activeEdit).items,
+                layout,
+                slide,
+            },
+        })
+    },
+    slide: (data) => {
+        removeSlide(data)
+    },
+    group: (data: any) => {
+        history({
+            id: "deleteGroups",
+            newData: { ids: data.map((a: any) => a.id) },
+            location: { page: "show", show: get(activeShow)!, layout: _show().get("settings.activeLayout") },
+        })
+    },
+    timer: (data: any) => {
+        data.forEach((a) => {
+            let id = a.id || a.timer?.id
+            deleteTimer(id)
+        })
+    },
+    global_timer: (data: any) => deleteActions.timer(data),
+    folder: (data: any) => historyDelete("deleteFolder", data),
+    project: (data: any) => historyDelete("deleteProject", data),
+    stage: (data: any) => historyDelete("deleteStage", data),
+    category_shows: (data: any) => historyDelete("deleteShowsCategory", data),
+    category_media: (data: any) => historyDelete("deleteMediaFolder", data),
+    category_overlays: (data: any) => historyDelete("deleteOverlaysCategory", data),
+    category_templates: (data: any) => historyDelete("deleteTemplatesCategory", data),
+    player: (data: any) => historyDelete("deletePlayerVideo", data),
+    overlay: (data: any) => historyDelete("deleteOverlay", data),
+    template: (data: any) => historyDelete("deleteTemplate", data),
+    category_scripture: (data: any) => {
+        scriptures.update((a: any) => {
+            data.forEach((id: string) => {
+                let key: string | null = null
+                Object.entries(a).forEach(([sId, value]: any) => {
+                    if (value.id === id || sId === id) key = sId
+                })
+
+                if (key) delete a[key]
+            })
+            return a
+        })
+    },
+    event: (data: any) => {
+        history({ id: "deleteEvent", newData: { id: data.id } })
+    },
+    midi: (data: any) => {
+        data = data[0]
+        let id: string = data.id
+
+        let key = data.type === "in" ? "receiveMidi" : "sendMidi"
+
+        // remove from all layouts
+        let ref = _show().layouts("active").ref()[0]
+        ref.forEach((slideRef: any, i: number) => {
+            let actions = slideRef.data.actions || {}
+            if (actions[key] !== id) return
+            delete actions[key]
+            history({
+                id: "changeLayout",
+                newData: { key: "actions", value: actions },
+                location: { page: "show", show: get(activeShow)!, layoutSlide: i, layout: _show().get("settings.activeLayout") },
+            })
+        })
+
+        if (data.type === "in") {
+            midiIn.update((a) => {
+                delete a[id]
+                return a
+            })
+            return
+        }
+
+        // remove this
+        let showMidi = _show().get("midi") || {}
+        delete showMidi[id]
+        _show().set({ key: "midi", value: showMidi })
+    },
+    show_drawer: () => {
+        activePopup.set("delete_show")
+    },
+    // "remove"
+    show: (data: any) => {
+        if (!get(activeProject)) return
+        let shows = get(projects)[get(activeProject)!].shows
+        let indexes: number[] = []
+
+        // don't remove private shows
+        data.forEach(({ index }) => {
+            let projectRef = shows[index]
+            if (projectRef.type === "show" || projectRef.type === undefined) {
+                let isPrivate = _show(projectRef.id).get("private")
+                if (isPrivate) return
+            }
+            indexes.push(index)
+        })
+
+        if (get(activeShow)?.index !== undefined && indexes.includes(get(activeShow)!.index!)) {
+            activeShow.update((a) => {
+                delete a!.index
+                return a
+            })
+        }
+
+        history({
+            id: "updateProject",
+            newData: { key: "shows", value: shows.filter((_a, i) => !indexes.includes(i)) },
+            location: { page: "show", project: get(activeProject) },
+        })
+    },
+    layout: (data: any) => {
+        if (data.length < _show().layouts().get().length) {
+            data.forEach((id: string) => {
+                history({ id: "deleteLayout", newData: { id }, location: { page: "show", show: get(activeShow)! } })
+            })
+        } else {
+            alertMessage.set("error.keep_one_layout")
+            activePopup.set("alert")
+        }
+    },
+}
+
+const duplicateActions = {
+    event: (data: any) => {
+        let event = JSON.parse(JSON.stringify(get(events)[data.id]))
+        event.name += " 2"
+        event.repeat = false
+        delete event.group
+        delete event.repeatData
+        history({ id: "newEvent", newData: { id: uid(), data: event } })
+    },
+    show: (data: any) => {
+        if (!get(activeProject)) return
+        data = data.map((a) => ({ id: a.id, type: a.type || "show" }))
+        projects.update((a) => {
+            a[get(activeProject)!].shows.push(...data)
+            return a
+        })
+    },
+    show_drawer: (data: any) => duplicateShows(data),
+    stage: (data: any) => {
+        let stageId = data[0].id
+        let stage = get(stageShows)[stageId]
+        history({ id: "newStageShow", newData: { data: clone(stage) } })
+    },
+    layout: () => {
+        let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
+        newData.layout = clone(get(showsCache)[get(activeShow)!.id].layouts[get(showsCache)[get(activeShow)!.id].settings.activeLayout])
+        history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: get(activeShow)! } })
+    },
+}
+
+// HELPER FUNCTIONS
+
+function historyDelete(id, data) {
+    data.forEach((a: any) => history({ id, newData: { id: a.id || a }, location: { page: get(activePage) as any } }))
+}
+
+async function duplicateShows(selected: any) {
+    await loadShows(selected.map(({ id }: any) => id))
+    selected.forEach(({ id }: any) => {
+        let show = JSON.parse(JSON.stringify(get(showsCache)[id]))
+        show.name += " 2"
+        show.timestamps.modified = new Date().getTime()
+        history({ id: "newShow", newData: { show }, location: { page: "show", project: id === "show" ? get(activeProject) : null } })
+    })
 }

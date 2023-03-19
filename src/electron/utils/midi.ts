@@ -51,7 +51,7 @@ export async function sendMidi(data: any) {
 let openedPorts: any = {}
 
 export function closeMidiInPorts(id: string = "") {
-    if (id) {
+    if (id && openedPorts[id]) {
         openedPorts[id].close()
         delete openedPorts[id]
         return

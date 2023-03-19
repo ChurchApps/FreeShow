@@ -1,78 +1,81 @@
 <script lang="ts">
-  import type { Resolution } from "../../../types/Settings"
-  import { outputs } from "../../stores"
-  import { getActiveOutputs, getResolution } from "../helpers/output"
+    import type { Resolution } from "../../../types/Settings"
+    import { outputs } from "../../stores"
+    import { getActiveOutputs, getResolution } from "../helpers/output"
 
-  export let background: string = $outputs[getActiveOutputs()[0]]?.show?.background || "#000000"
-  export let center: boolean = false
-  export let zoom: boolean = true
-  export let disableStyle: boolean = false
-  export let relative: boolean = false
-  export let aspectRatio: boolean = true
-  export let hideOverflow: boolean = true
-  export let resolution: Resolution = getResolution(null, $outputs)
-  $: resolution = getResolution(resolution, $outputs)
-  let slideWidth: number = 0
-  export let ratio: number = 1
-  $: ratio = Math.max(0.01, slideWidth / resolution.width)
+    export let background: string = $outputs[getActiveOutputs()[0]]?.show?.background || "#000000"
+    export let center: boolean = false
+    export let zoom: boolean = true
+    export let disableStyle: boolean = false
+    export let relative: boolean = false
+    export let aspectRatio: boolean = true
+    export let hideOverflow: boolean = true
+    export let customZoom: number = 1
+    export let resolution: Resolution = getResolution(null, $outputs)
+    $: resolution = getResolution(resolution, $outputs)
+    let slideWidth: number = 0
+    export let ratio: number = 1
+    $: ratio = Math.max(0.01, slideWidth / resolution.width) / customZoom
 </script>
 
 <!-- $$props.style ||  -->
 <div class:center class="zoomed" style="width: 100%;height: 100%;">
-  <div
-    bind:offsetWidth={slideWidth}
-    class="slide"
-    class:hideOverflow
-    class:disableStyle
-    class:relative
-    style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};` : ''};"
-  >
-    {#if zoom}
-      <span style="zoom: {ratio};">
-        <slot {ratio} />
-      </span>
-    {:else}
-      <slot ratio={1} />
-    {/if}
-  </div>
+    <div
+        bind:offsetWidth={slideWidth}
+        class="slide"
+        class:hideOverflow
+        class:disableStyle
+        class:relative
+        style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};` : ''};"
+    >
+        {#if zoom}
+            <span style="zoom: {ratio};">
+                <slot {ratio} />
+            </span>
+        {:else}
+            <slot ratio={1} />
+        {/if}
+    </div>
 </div>
 
 <style>
-  .slide {
-    position: relative;
-    /* TODO: not edit */
-    /* z-index: -1; */
-  }
+    .slide {
+        position: relative;
+        /* TODO: not edit */
+        /* z-index: -1; */
+    }
 
-  .slide:not(.relative) :global(.item) {
-    position: absolute;
-    /* display: inline-flex; */
-    overflow: hidden;
-  }
+    .slide:not(.relative) :global(.item) {
+        position: absolute;
+        /* display: inline-flex; */
+    }
+    .slide:not(.relative) :global(.item .align) {
+        overflow: hidden;
+    }
 
-  .slide:not(.disableStyle) :global(.item) {
-    color: white;
-    font-size: 100px;
-    font-family: "CMGSans";
-    line-height: 1;
-    -webkit-text-stroke-color: #000000;
-    text-shadow: 2px 2px 10px #000000;
+    .slide:not(.disableStyle) :global(.item) {
+        color: white;
+        font-size: 100px;
+        font-family: "CMGSans";
+        line-height: 1;
+        -webkit-text-stroke-color: #000000;
+        text-shadow: 2px 2px 10px #000000;
 
-    border-style: solid;
-    border-width: 0px;
-    border-color: #ffffff;
+        border-style: solid;
+        border-width: 0px;
+        border-color: #ffffff;
 
-    height: 150px;
-    width: 400px;
-  }
+        height: 150px;
+        width: 400px;
+    }
 
-  .hideOverflow {
-    overflow: hidden;
-  }
+    .hideOverflow {
+        overflow: hidden;
+    }
 
-  .center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+    .center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 </style>

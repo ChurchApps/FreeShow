@@ -38,6 +38,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
     newCategory: { label: "context.newCategory", icon: "all" },
     newScripture: { label: "new.scripture", icon: "scripture" },
+    createCollection: { label: "new.collection", icon: "collection" },
     changeIcon: { label: "context.changeIcon", icon: "noIcon" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
@@ -96,7 +97,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
 export const contextMenuLayouts: { [key: string]: string[] } = {
     // MENU
     file: ["save", "import", "export_more", "SEPERATOR", "quit"],
-    edit: ["undo", "redo", "history", "SEPERATOR", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
+    edit: ["undo", "redo", "history", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
     view: ["fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
     help: ["shortcuts", "docs", "about"],
     // MAIN
@@ -126,7 +127,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_templates_button: ["rename", "changeIcon", "delete"],
     category_media_button: ["rename", "delete"],
     category_audio_button: ["rename", "delete"],
-    category_scripture_button: ["delete"],
+    category_scripture_button: ["delete", "createCollection"],
     // CONTENT
     drawer_show: ["newShowPopup", "newShow"],
     // , "changeCategory" ? edit with rename & categories...
@@ -155,7 +156,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // PROJECT
     projects: ["newProject", "newFolder"],
     projectTab: ["export", "close"],
-    project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
+    project: ["newShowPopup", "newPrivateShow", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["rename", "delete", "export"],
     folder: ["rename", "delete"],
     project_media: ["play", "play_no_filters", "remove"],

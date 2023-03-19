@@ -6,7 +6,6 @@
     import CreateCalendarShow from "./components/calendar/CreateCalendarShow.svelte"
     import Day from "./components/calendar/Day.svelte"
     import ContextMenu from "./components/context/ContextMenu.svelte"
-    import { menuClick, removeSlide } from "./components/context/menuClick"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
     import DrawTools from "./components/draw/DrawTools.svelte"
     import Slide from "./components/draw/Slide.svelte"
@@ -16,8 +15,9 @@
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
     import Pdf from "./components/export/Pdf.svelte"
-    import { copy } from "./components/helpers/clipboard"
-    import { getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
+    import { copy, cut, deleteAction, paste, selectAll } from "./components/helpers/clipboard"
+    import { redo, undo } from "./components/helpers/history"
+    import { displayOutputs, getResolution, isOutCleared } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -52,7 +52,7 @@
         playingAudio,
         selected,
     } from "./stores"
-    import { send } from "./utils/request"
+    import { save } from "./utils/save"
     import { startup } from "./utils/startup"
 
     startup()
@@ -82,9 +82,9 @@
     const menus: TopViews[] = ["show", "edit", "calendar", "draw", "stage", "settings"]
     const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "player", "live", "templates"]
     const ctrlKeys: any = {
-        a: () => menuClick("selectAll"),
-        c: () => menuClick("copy"),
-        v: () => menuClick("paste"),
+        a: () => selectAll(),
+        c: () => copy(),
+        v: () => paste(),
         // a: () => {
         //   if ($activeShow?.id && ($activeShow.type === undefined || $activeShow.type === "show")) {
         //     if ($activePage === "show") {
@@ -110,23 +110,11 @@
         //   paste()
         //   return true
         // },
-        x: () => {
-            copy()
-            // TODO: delete
-            if ($selected.id === "slide") removeSlide({ sel: $selected })
-            return true
-        },
+        x: () => cut(),
         e: () => activePopup.set("export"),
         i: () => activePopup.set("import"),
         n: () => activePopup.set("show"),
-        o: () => {
-            let enabledOutputs: any[] = getActiveOutputs($outputs, false)
-            enabledOutputs.forEach((id) => {
-                let output: any = { id, ...$outputs[id] }
-                // , force: e.ctrlKey || e.metaKey
-                send(OUTPUT, ["DISPLAY"], { enabled: !$outputDisplay, output })
-            })
-        },
+        o: () => displayOutputs(),
         // ATTENTION: THESE ARE CALLED BY SYSTEM (menuTemplate -> menuClick)
         // s: () => save(),
         // y: (e: any) => {
@@ -138,10 +126,10 @@
         // Z: (e: any) => {
         //     if (!e.target.closest(".edit")) redo()
         // },
-        s: () => menuClick("save"),
-        y: () => menuClick("redo"),
-        z: () => menuClick("undo"),
-        Z: () => menuClick("redo"),
+        s: () => save(),
+        y: () => redo(),
+        z: () => undo(),
+        Z: () => redo(),
     }
     const keys: any = {
         Escape: () => {
@@ -156,10 +144,8 @@
             //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
             //   else drawer.set({ height: 40, stored: $drawer.height })
         },
-        Backspace: () => {
-            if ($selected.id === "slide") removeSlide({ sel: $selected })
-        },
-        Delete: () => keys.Backspace(),
+        Delete: () => deleteAction($selected),
+        Backspace: () => keys.Delete(),
         // Enter: (e: any) => {
         //   if (!e.target.closest(".edit")) {
         //     // hide / show drawer
@@ -179,8 +165,7 @@
                 return
             }
 
-            // e.key !== "s" &&
-            if (document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key)) return
+            if (e.key !== "s" && document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key)) return
 
             if (ctrlKeys[e.key]) {
                 if (ctrlKeys[e.key](e)) e.preventDefault()

@@ -9,6 +9,7 @@ import { getFileName } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { checkName } from "../components/helpers/show"
 import { convertBebliaBible } from "../converters/bebliaBible"
+import { importFSB } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertEasyWorship } from "../converters/easyworship"
 import { convertOpenLP } from "../converters/openlp"
@@ -255,13 +256,14 @@ const receiveIMPORT: any = {
     freeshow: (a: any) => importShow(a),
     freeshow_project: (a: any) => importProject(a),
     easyworship: (a: any) => convertEasyWorship(a),
-    beblia_bible: (a: any) => convertBebliaBible(a),
-    zefania_bible: (a: any) => convertZefaniaBible(a),
-    opensong_bible: (a: any) => convertOpenSongBible(a),
     videopsalm: (a: any) => convertVideopsalm(a),
     openlp: (a: any) => convertOpenLP(a),
     opensong: (a: any) => convertOpenSong(a),
     propresenter: (a: any) => convertProPresenter(a),
+    freeshow_bible: (a: any) => importFSB(a),
+    beblia_bible: (a: any) => convertBebliaBible(a),
+    zefania_bible: (a: any) => convertZefaniaBible(a),
+    opensong_bible: (a: any) => convertOpenSongBible(a),
 }
 
 function importShow(files: any[]) {

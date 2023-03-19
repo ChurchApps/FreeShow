@@ -320,6 +320,7 @@ export function _show(id: any = "active") {
                 else if (!layoutIds.length) layoutIds = Object.keys(shows[id]?.layouts || {})
                 layoutIds.forEach((layoutId: any) => {
                     let layout = shows[id]?.layouts[layoutId]
+                    if (!layout) return
                     if (key) layout = layout[key]
                     if (includeId) layout = { layoutId, ...layout }
                     a.push(layout)
@@ -351,7 +352,9 @@ export function _show(id: any = "active") {
                                         // remove empty slide
                                         showsCache.update((a) => {
                                             a[id].slides[layoutSlide.id].children?.splice(jndex, 1)
-                                            delete a[id].layouts[layoutId].slides[index].children[childId]
+                                            if (a[id].layouts[layoutId].slides[index].children[childId]) {
+                                                delete a[id].layouts[layoutId].slides[index].children[childId]
+                                            }
                                             return a
                                         })
                                         return

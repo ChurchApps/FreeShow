@@ -8,6 +8,10 @@ export interface Show {
     name: string
     private?: boolean
     category: null | ID
+    reference?: {
+        type: "calendar" | "scripture"
+        data: any
+    }
     settings: {
         activeLayout: ID
         resolution?: Resolution
@@ -106,6 +110,7 @@ export interface Chords {
 }
 
 export interface Layout {
+    id?: string
     name: string
     notes: string
     slides: SlideData[]

@@ -7,6 +7,14 @@ import { currentOutputSettings, outputDisplay, outputs, overlays, theme, themes 
 import { sendInitialOutputData } from "../../utils/messages"
 import { send } from "../../utils/request"
 
+export function displayOutputs(e: any = {}) {
+    let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
+    enabledOutputs.forEach((id) => {
+        let output: any = { id, ...get(outputs)[id] }
+        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey })
+    })
+}
+
 // background: null,
 // slide: null,
 // overlays: [],

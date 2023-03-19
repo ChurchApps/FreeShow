@@ -21,58 +21,30 @@
     $: if (actions.receiveMidi && !$midiIn[actions.receiveMidi]) {
         changeSlideAction("receiveMidi")
     }
+
+    const actionsList = [
+        { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play", white: true },
+        { id: "sendMidi", title: $dictionary.actions?.send_midi, icon: "music", white: true },
+        { id: "startTimer", title: $dictionary.actions?.start_timer, icon: "timer", white: true },
+        { id: "stopTimers", title: $dictionary.actions?.stop_timers, icon: "stop" },
+        { id: "clearBackground", title: $dictionary.clear?.background, icon: "background" },
+        { id: "clearOverlays", title: $dictionary.clear?.overlays, icon: "overlays" },
+        { id: "clearAudio", title: $dictionary.clear?.audio, icon: "audio" },
+    ]
 </script>
 
 <div class="icons" style="zoom: {4 / columns};">
-    {#if actions.receiveMidi}
-        <div>
-            <div class="button white">
-                <Button style="padding: 5px;" redHover title={$dictionary.actions?.play_on_midi} on:click={() => changeSlideAction("receiveMidi")}>
-                    <Icon id="play" white />
-                </Button>
+    {#each actionsList as action}
+        {#if actions[action.id]}
+            <div>
+                <div class="button {action.white ? 'white' : ''}">
+                    <Button style="padding: 5px;" redHover title={action.title} on:click={() => changeSlideAction(action.id)}>
+                        <Icon id={action.icon} white />
+                    </Button>
+                </div>
             </div>
-        </div>
-    {/if}
-    {#if actions.sendMidi}
-        <div>
-            <div class="button white">
-                <Button style="padding: 5px;" redHover title={$dictionary.actions?.send_midi} on:click={() => changeSlideAction("sendMidi")}>
-                    <!-- on:click={() => {
-                        popupData.set({ id: actions.sendMidi })
-                        activePopup.set("midi")
-                    }} -->
-                    <Icon id="music" white />
-                </Button>
-            </div>
-        </div>
-    {/if}
-    {#if actions.clearBackground}
-        <div>
-            <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.clear?.background} on:click={() => changeSlideAction("clearBackground")}>
-                    <Icon id="background" white />
-                </Button>
-            </div>
-        </div>
-    {/if}
-    {#if actions.clearOverlays}
-        <div>
-            <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.clear?.overlays} on:click={() => changeSlideAction("clearOverlays")}>
-                    <Icon id="overlays" white />
-                </Button>
-            </div>
-        </div>
-    {/if}
-    {#if actions.clearAudio}
-        <div>
-            <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.clear?.audio} on:click={() => changeSlideAction("clearAudio")}>
-                    <Icon id="audio" white />
-                </Button>
-            </div>
-        </div>
-    {/if}
+        {/if}
+    {/each}
 </div>
 
 <style>
