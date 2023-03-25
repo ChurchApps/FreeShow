@@ -15,7 +15,8 @@
         "sk": "Slovacco",
         "es": "Spagnolo",
         "pt_BR": "Brasiliano Portoghese",
-        "de": "Tedesco"
+        "de": "Tedesco",
+        "it": "Italiano"
     },
     "about": {
         "check_updates": "Cerca aggiornamenti",
@@ -44,28 +45,28 @@
         "filters": "Cambia l'aspetto dell'elemento selezionato.",
         "options": "Altre opzioni",
         "scripture": "Tieni premuto Ctrl/Cmd o Maiusc per selezionare più versi."
-   },
-     "setup": {
-         "good_luck": "Spero che troverai utile questo software. Buona fortuna! :)",
-         "tips": "Trova utili suggerimenti e tutorial sul sito web.",
-         "change_later": "Puoi modificare queste impostazioni in seguito",
-         "get_started": "Cominciamo!"
     },
-     "example": {
-         "welcome": "benvenuto",
-         "meetings": "Meeting",
-         "example": "Esempio",
-         "example_note": "Scrivi note qui",
-         "watermark": "Filigrana",
-         "recording": "Registrazione",
-         "rounded": "arrotondato",
-         "call": "Videochiamata",
-         "header": "Intestazione",
-         "text": "Testo",
-         "big": "grande",
-         "default": "Predefinito",
-         "small": "piccolo",
-         "bold": "grassetto"
+    "setup": {
+        "good_luck": "Spero che troverai utile questo software. Buona fortuna! :)",
+        "tips": "Trova utili suggerimenti e tutorial sul sito web.",
+        "change_later": "Puoi modificare queste impostazioni in seguito",
+        "get_started": "Cominciamo!"
+    },
+    "example": {
+        "welcome": "benvenuto",
+        "meetings": "Meeting",
+        "example": "Esempio",
+        "example_note": "Scrivi note qui",
+        "watermark": "Filigrana",
+        "recording": "Registrazione",
+        "rounded": "arrotondato",
+        "call": "Videochiamata",
+        "header": "Intestazione",
+        "text": "Testo",
+        "big": "grande",
+        "default": "Predefinito",
+        "small": "piccolo",
+        "bold": "grassetto"
     },
     "titlebar": {
         "file": "File",
