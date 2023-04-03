@@ -1,72 +1,76 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Layout } from "../../types/Show"
-import { history } from "../components/helpers/history"
 import { checkName, getGlobalGroup, initializeMetadata, newSlide } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
-import { activePopup, activeProject, dictionary, drawerTabsData, groups } from "./../stores"
+import { activePopup, alertMessage, dictionary, groups } from "./../stores"
+import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
 
 export function convertProPresenter(data: any) {
-    data?.forEach(({ content, name, extension }: any) => {
-        let song: any = {}
+    alertMessage.set("popup.importing")
+    activePopup.set("alert")
 
-        if (extension === "json") {
-            try {
-                song = JSON.parse(content)
-            } catch (err) {
-                console.error(err)
+    createCategory("ProPresenter")
+
+    let tempShows: any[] = []
+
+    setTimeout(() => {
+        data?.forEach(({ content, name, extension }: any) => {
+            let song: any = {}
+
+            if (extension === "json") {
+                try {
+                    song = JSON.parse(content)
+                } catch (err) {
+                    console.error(err)
+                }
+            } else {
+                song = xml2json(content)?.RVPresentationDocument
             }
-        } else {
-            song = xml2json(content)?.RVPresentationDocument
-        }
 
-        if (!song) return
+            if (!song) return
 
-        let category = get(drawerTabsData).shows?.activeSubTab
-        if (category === "all" || category === "unlabeled") category = null
+            let layoutID = uid()
+            let show = new ShowObj(false, "propresenter", layoutID)
+            show.name = checkName(name)
 
-        let layoutID = uid()
-        let show = new ShowObj(false, category || null, layoutID)
-        show.name = checkName(name)
+            let converted: any = {}
 
-        let converted: any = {}
+            if (extension === "json") {
+                converted = convertJSONToSlides(song)
+            } else {
+                converted = convertToSlides(song, extension)
+            }
 
-        if (extension === "json") {
-            converted = convertJSONToSlides(song)
-        } else {
-            converted = convertToSlides(song, extension)
-        }
+            let { slides, layouts, media }: any = converted
 
-        let { slides, layouts, media }: any = converted
+            show.slides = slides
+            show.layouts = {}
+            show.media = media
 
-        show.slides = slides
-        show.layouts = {}
-        show.media = media
+            show.meta = initializeMetadata({
+                title: song["@CCLISongTitle"],
+                artist: song["@CCLIArtistCredits"],
+                author: song["@CCLIAuthor"],
+                publisher: song["@CCLIPublisher"],
+                CCLI: song["@CCLISongNumber"],
+                year: song["@CCLICopyrightYear"],
+            })
 
-        show.meta = initializeMetadata({
-            title: song["@CCLISongTitle"],
-            artist: song["@CCLIArtistCredits"],
-            author: song["@CCLIAuthor"],
-            publisher: song["@CCLIPublisher"],
-            CCLI: song["@CCLISongNumber"],
-            year: song["@CCLICopyrightYear"],
+            layouts.forEach((layout: any, i: number) => {
+                show.layouts[i === 0 ? layoutID : layout.id] = {
+                    name: layout.name || get(dictionary).example?.default || "",
+                    notes: i === 0 ? song["@notes"] || "" : "",
+                    slides: layout.slides,
+                }
+            })
+
+            tempShows.push({ id: song["@uuid"] || uid(), show })
         })
 
-        layouts.forEach((layout: any, i: number) => {
-            show.layouts[i === 0 ? layoutID : layout.id] = {
-                name: layout.name || get(dictionary).example?.default || "",
-                notes: i === 0 ? song["@notes"] || "" : "",
-                slides: layout.slides,
-            }
-        })
-
-        let location: any = { page: "show" }
-        if (data.length === 1) location.project = get(activeProject)
-        history({ id: "newShow", newData: { id: song["@uuid"] || uid(), show, open: data.length < 2 }, location })
-    })
-
-    activePopup.set(null)
+        setTempShows(tempShows)
+    }, 10)
 }
 
 const JSONgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }

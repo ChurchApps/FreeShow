@@ -16,8 +16,8 @@
     })
 
     function createShow() {
-        let newData = createSlides(currentEvents)
-        history({ id: "newShow", newData, location: { page: "show", project: $activeProject || undefined } })
+        let { show } = createSlides(currentEvents)
+        history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
     }
 
     // function createCategory() {

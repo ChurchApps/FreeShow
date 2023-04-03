@@ -1,20 +1,6 @@
 <script lang="ts">
     import type { Category } from "../../../types/Tabs"
-    import {
-        activePopup,
-        audioFolders,
-        categories,
-        dictionary,
-        drawerTabsData,
-        mediaFolders,
-        overlayCategories,
-        overlays,
-        scriptures,
-        shows,
-        templateCategories,
-        templates,
-        webFavorites,
-    } from "../../stores"
+    import { activePopup, audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates, webFavorites } from "../../stores"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -199,7 +185,7 @@
     </div>
     {#if id === "shows"}
         <div class="tabs">
-            <Button on:click={() => history({ id: "newShowsCategory" })} center title={$dictionary.new?.category}>
+            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_shows" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
                 <span style="color: var(--secondary);">
                     <T id="new.category" />
@@ -215,7 +201,7 @@
         </FolderPicker>
     {:else if id === "overlays"}
         <div class="tabs">
-            <Button on:click={() => history({ id: "newOverlaysCategory" })} center title={$dictionary.new?.category}>
+            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_overlays" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
                 <span style="color: var(--secondary);">
                     <T id="new.category" />
@@ -224,7 +210,7 @@
         </div>
     {:else if id === "templates"}
         <div class="tabs">
-            <Button on:click={() => history({ id: "newTemplatesCategory" })} center title={$dictionary.new?.category}>
+            <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_templates" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
                 <span style="color: var(--secondary);">
                     <T id="new.category" />

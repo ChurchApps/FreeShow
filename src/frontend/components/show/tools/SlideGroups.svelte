@@ -43,7 +43,7 @@
     $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
         let name = group.name
         if (group.default) name = $dictionary.groups?.[group.name]
-        return { group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
+        return { id, group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
     })
 
     $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group?.localeCompare(b.group))
@@ -93,11 +93,8 @@
                         style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                         on:click={(e) => {
                             if (!e.ctrlKey && !e.metaKey && $activeShow) {
-                                history({
-                                    id: "newSlide",
-                                    newData: { slide, unique: true },
-                                    location: { page: "show", show: $activeShow, layout: $showsCache[$activeShow.id].settings.activeLayout },
-                                })
+                                // , unique: true
+                                history({ id: "SLIDES", newData: { data: [slide] } })
                             }
                         }}
                     >

@@ -104,7 +104,7 @@ const actions: any = {
         obj.sel = { id: "group", data: [{ id: slideId }] }
         actions.delete(obj)
     },
-    remove_slide: (obj: any) => removeSlide(obj.sel.data),
+    remove_slide: (obj: any) => removeSlide(obj.sel.data, "remove"),
     delete: (obj: any) => {
         if (deleteAction(obj.sel)) return
 
@@ -186,16 +186,16 @@ const actions: any = {
     // new
     newShowPopup: () => activePopup.set("show"),
 
-    newShow: () => history({ id: "newShow", location: { page: "show", project: get(activeProject) } }),
-    newPrivateShow: () => history({ id: "newShow", newData: { private: true }, location: { page: "show", project: get(activeProject) } }),
+    newShow: () => history({ id: "UPDATE", newData: { remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } }),
+    newPrivateShow: () => history({ id: "UPDATE", newData: { replace: { private: true }, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } }),
     newProject: (obj: any) => {
         let parent: string = obj.sel.data[0]?.id || obj.contextElem.id || "/" // obj.contextElem.getAttribute("data-parent")
-        history({ id: "newProject", oldData: { parentId: parent }, location: { page: "show", project: get(activeProject) } })
+        history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project" } })
     },
     newFolder: (obj: any) => {
         if (obj.contextElem.classList.contains("#folder__projects") || obj.contextElem.classList.contains("#projects")) {
-            let parent = obj.sel.data[0]?.id || obj.contextElem.id || "/" // obj.contextElem.getAttribute("data-parent")
-            history({ id: "newFolder", oldData: { id: parent }, location: { page: "show", project: get(activeProject) } })
+            let parent = obj.sel.data[0]?.id || obj.contextElem.id || "/"
+            history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project_folder" } })
             return
         }
 
@@ -209,21 +209,15 @@ const actions: any = {
             return
         }
     },
-    newSlide: () => history({ id: "newSlide", location: { page: "show", show: get(activeShow)!, layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout } }),
+    newSlide: () => {
+        history({ id: "SLIDES" })
+    },
     newCategory: (obj: any) => {
-        const ids: any = {
-            // shows: "newShowsCategory",
-            // overlays: "newOverlaysCategory",
-            // templates: "newTemplatesCategory",
-            shows_button__category_shows: "newShowsCategory",
-            overlays_button__category_overlays: "newOverlaysCategory",
-            templates_button__category_templates: "newTemplatesCategory",
-        }
-
         let classList = obj.contextElem.classList?.value || ""
-        let index = classList.indexOf("#category_")
-        let id = classList.slice(index + 10, classList.indexOf(" ", index))
-        history({ id: ids[id] })
+        let index = classList.indexOf("#category")
+        let id = classList.slice(index + 1, classList.indexOf(" ", index))
+        id = id.split("__")[1] || id
+        history({ id: "UPDATE", location: { page: "drawer", id } })
     },
     newScripture: () => activePopup.set("import_scripture"),
 
@@ -299,7 +293,7 @@ const actions: any = {
     },
     section: (obj) => {
         let index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
-        history({ id: "newSection", newData: { index }, location: { page: "show", project: get(activeProject) } })
+        history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
     },
 
     // slide views
@@ -338,10 +332,8 @@ const actions: any = {
                 ref.forEach((b: any) => {
                     obj.sel.data.forEach((c: any) => {
                         console.log(b)
-                        if (b.type === "child" && b.parent === c.id)
-                            a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex].children[b.id].disabled = !obj.enabled
-                        else if (b.id === c.id)
-                            a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex || b.index].disabled = !obj.enabled
+                        if (b.type === "child" && b.parent === c.id) a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex].children[b.id].disabled = !obj.enabled
+                        else if (b.id === c.id) a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex || b.index].disabled = !obj.enabled
                     })
                 })
                 return a
@@ -567,10 +559,8 @@ function changeSlideAction(obj: any, id: string) {
     })
 }
 
-export function removeSlide(data: any) {
-    let location: any = { page: get(activePage) as any, show: get(activeShow)!, layout: _show().get("settings.activeLayout") }
-    // console.log(location)
-    let ref = _show(location.show.id).layouts([location.layout]).ref()[0]
+export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
+    let ref = _show().layouts("active").ref()[0]
     let parents: any[] = []
     let childs: any[] = []
 
@@ -578,25 +568,17 @@ export function removeSlide(data: any) {
 
     // remove parents and delete childs
     data.forEach((a: any) => {
-        if (ref[a.index].type === "parent") parents.push(ref[a.index].index)
-        else childs.push(ref[a.index].id)
+        if (ref[a.index].type === "parent") parents.push({ index: ref[a.index].index, id: ref[a.index].id })
+        else childs.push({ id: ref[a.index].id })
     })
 
-    if (parents.length) {
-        console.log(parents)
-        history({
-            id: "removeSlides",
-            newData: { indexes: parents },
-            location,
-        })
-    }
-    if (childs.length) {
-        history({
-            id: "deleteSlides",
-            newData: { ids: childs },
-            location: { page: get(activePage) as any, show: get(activeShow)! },
-        })
-    }
+    let slides = parents
+    // don't do anything with the children if it's removing parents
+    if (type !== "remove") slides.push(...childs)
+
+    if (!slides.length) return
+
+    history({ id: "SLIDES", oldData: { type, data: slides } })
 }
 
 function format(id: string, obj: any) {

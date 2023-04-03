@@ -7,7 +7,8 @@
         "unnamed": "Bez názvu",
         "drop": "Pusti sem",
         "search": "Hľadať",
-        "none": "Nič"
+        "none": "Nič",
+        "finished": "Finished"
     },
     "languages": {
         "en": "Angličtina",
@@ -16,6 +17,7 @@
         "es": "Španielčina",
         "pt_BR": "Brazílska portugalčina",
         "de": "Nemčina"
+        "it": "Italian"
     },
     "about": {
         "check_updates": "Skontrolovať aktualizácie",

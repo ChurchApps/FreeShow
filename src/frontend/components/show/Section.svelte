@@ -34,7 +34,7 @@
 </script>
 
 {#key section}
-    <h4><TextInput value={section.name} on:change={updateName} /></h4>
+    <h4 id="sectionTitle"><TextInput value={section?.name || ""} on:change={updateName} /></h4>
 
     <Notes value={note} on:edit={edit} />
 {/key}

@@ -244,22 +244,12 @@ export function _show(id: any = "active") {
 
                                                 if (a[id].slides[slideId].items[index].lines[line][key] !== undefined) {
                                                     prev.values[prev.values.length - 1].push(JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])))
-                                                    a[id].slides[slideId].items[index].lines[line][key] = values[i]
-                                                        ? values[i][lineIndex] !== undefined
-                                                            ? values[i][lineIndex]
-                                                            : values[i][0]
-                                                        : values[0][0]
+                                                    a[id].slides[slideId].items[index].lines[line][key] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                                 } else prev.values[prev.values.length - 1].push(null)
                                             } else prev.values[prev.values.length - 1].push(null)
                                         } else {
-                                            prev.values[prev.values.length - 1].push(
-                                                a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line])) : null
-                                            )
-                                            a[id].slides[slideId].items[index].lines[line] = values[i]
-                                                ? values[i][lineIndex] !== undefined
-                                                    ? values[i][lineIndex]
-                                                    : values[i][0]
-                                                : values[0][0]
+                                            prev.values[prev.values.length - 1].push(a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line])) : null)
+                                            a[id].slides[slideId].items[index].lines[line] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                         }
                                     })
                                 })
@@ -352,7 +342,7 @@ export function _show(id: any = "active") {
                                         // remove empty slide
                                         showsCache.update((a) => {
                                             a[id].slides[layoutSlide.id].children?.splice(jndex, 1)
-                                            if (a[id].layouts[layoutId].slides[index].children[childId]) {
+                                            if (a[id].layouts[layoutId].slides[index].children?.[childId]) {
                                                 delete a[id].layouts[layoutId].slides[index].children[childId]
                                             }
                                             return a

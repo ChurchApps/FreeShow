@@ -1,9 +1,9 @@
-import { drawerTabsData, activePopup, groups, dictionary, activeProject } from "./../stores"
 import { get } from "svelte/store"
-import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
-import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
+import { ShowObj } from "./../classes/Show"
+import { activePopup, alertMessage, dictionary, groups } from "./../stores"
+import { createCategory, setTempShows } from "./importHelpers"
 
 interface Song {
     title: string
@@ -20,38 +20,43 @@ interface Song {
 }
 
 export function convertOpenLP(data: any) {
-    data?.forEach(({ content }: any) => {
-        let song = XMLtoObject(content)
+    activePopup.set("alert")
+    alertMessage.set("popup.importing")
 
-        let category = get(drawerTabsData).shows?.activeSubTab
-        if (category === "all" || category === "unlabeled") category = null
+    createCategory("OpenLP")
 
-        let layoutID = uid()
-        let show = new ShowObj(false, category || null, layoutID)
-        show.name = checkName(song.title)
-        if (song.authors) {
-            show.meta = {
-                title: show.name,
-                author: song.authors.find((a) => a.type === "words")?.name || "",
-                artist: song.authors.find((a) => a.type === "music")?.name || "",
+    let tempShows: any[] = []
+
+    setTimeout(() => {
+        data?.forEach(({ content }: any) => {
+            let song = XMLtoObject(content)
+
+            let layoutID = uid()
+            let show = new ShowObj(false, "openlp", layoutID)
+            show.name = checkName(song.title)
+            if (song.authors) {
+                show.meta = {
+                    title: show.name,
+                    author: song.authors.find((a) => a.type === "words")?.name || "",
+                    artist: song.authors.find((a) => a.type === "music")?.name || "",
+                }
             }
-        }
-        show.timestamps = {
-            created: new Date().getTime(),
-            modified: new Date(song.modified).getTime(),
-            used: null,
-        }
+            show.timestamps = {
+                created: new Date().getTime(),
+                modified: new Date(song.modified).getTime(),
+                used: null,
+            }
 
-        let { slides, layout }: any = createSlides(song)
+            let { slides, layout }: any = createSlides(song)
 
-        show.slides = slides
-        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+            show.slides = slides
+            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
 
-        let location: any = { page: "show" }
-        if (data.length === 1) location.project = get(activeProject)
-        history({ id: "newShow", newData: { show, open: data.length < 2 }, location })
-    })
-    activePopup.set(null)
+            tempShows.push({ id: uid(), show })
+        })
+
+        setTempShows(tempShows)
+    }, 10)
 }
 
 const OLPgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }

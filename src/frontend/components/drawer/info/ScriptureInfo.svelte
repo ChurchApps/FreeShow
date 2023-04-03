@@ -92,8 +92,7 @@
                 if ($scriptureSettings.verseNumbers) {
                     let size = 50
                     if (i === 0) size *= 2
-                    let verseNumberStyle =
-                        "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[bibleIndex]?.lines?.[0].text?.[0].style || ""
+                    let verseNumberStyle = "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[bibleIndex]?.lines?.[0].text?.[0].style || ""
 
                     slideArr.lines![0].text.push({
                         value: s + " ",
@@ -153,8 +152,8 @@
 
     function createShow() {
         if (verseRange) {
-            let newData = createSlides()
-            history({ id: "newShow", newData, location: { page: "show", project: $activeProject || undefined } })
+            let { show } = createSlides()
+            history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
         }
     }
 

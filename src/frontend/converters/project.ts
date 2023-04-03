@@ -1,21 +1,13 @@
-import { get } from "svelte/store"
-import { uid } from "uid"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { shows } from "../stores"
 
 export function importProject(files: any) {
-  // TODO: remove duplicates ??
-  files.forEach(({ content }: any) => {
-    let { project, shows } = JSON.parse(content)
-    Object.entries(shows).forEach(([id, show]: any) => createShow(id, show))
-    history({ id: "newProject", newData: project, oldData: { id: uid() } })
-  })
-}
+    files.forEach(({ content }: any) => {
+        let { project, shows } = JSON.parse(content)
 
-function createShow(id: string, show: any) {
-  if (get(shows)[id]) return
-  show.name = checkName(show.name)
+        let data = Object.entries(shows).map(([id, show]: any) => ({ id, show: { ...show, name: checkName(show.name) } }))
+        history({ id: "SHOWS", newData: { data } })
 
-  history({ id: "newShow", newData: { id, show } })
+        history({ id: "UPDATE", newData: { data: project }, location: { page: "show", id: "project" } })
+    })
 }

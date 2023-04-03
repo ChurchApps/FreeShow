@@ -7,7 +7,8 @@
         "unnamed": "Sem nome",
         "drop": "Soltar aqui",
         "search": "Buscar",
-        "none": "Nenhum"
+        "none": "Nenhum",
+        "finished": "Finished"
     },
     "languages": {
         "en": "Inglês",
@@ -15,7 +16,8 @@
         "sk": "Eslovaco",
         "es": "Espanhol",
         "pt_BR": "Português do Brasil",
-        "de": "German"
+        "de": "German",
+        "it": "Italian"
     },
     "about": {
         "check_updates": "Verificar por atualizações",

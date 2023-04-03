@@ -33,6 +33,8 @@
 
     $: newName = name === null && (type === "image" || type === "video") ? removeExtension(getFileName(id)) : name || ""
 
+    // TODO: set name when show does not exist
+
     // export let location;
     // export let access;
 
@@ -122,31 +124,13 @@
 <div {id} class="main">
     <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{newName}</span> -->
     <!-- WIP padding-left: 0.8em; -->
-    <Button
-        on:click={click}
-        on:dblclick={doubleClick}
-        {active}
-        outlineColor={activeOutput}
-        outline={activeOutput !== null || $playingAudio[id]}
-        class="context {$$props.class}"
-        {style}
-        bold={false}
-        border
-        red={$notFound.show?.includes(id)}
-    >
+    <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} outline={activeOutput !== null || $playingAudio[id]} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if iconID}
                 <Icon id={iconID} {custom} right />
             {/if}
             <!-- <p style="margin: 5px;">{newName}</p> -->
-            <HiddenInput
-                value={newName}
-                id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id}
-                on:edit={edit}
-                bind:edit={editActive}
-                allowEmpty={false}
-                allowEdit={!show.type || show.type === "show"}
-            />
+            <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
         </span>
 
         {#if match}

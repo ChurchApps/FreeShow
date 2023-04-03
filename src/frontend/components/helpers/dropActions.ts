@@ -52,17 +52,19 @@ export const dropActions: any = {
             }
             // if ((data.id !== drop.data.id && (parents[0] === "" || data.path === drop.data.path || !parents.includes(data.id))) || data.type !== drop.data.type) {
 
+            history.oldData = { id: data.id }
+
             if (data.type === "folder") {
-                history.id = "updateProjectFolder"
-                history.location.folder = data.id
+                history.id = "UPDATE"
+                history.location.id = "project_folder_key"
                 return
             }
 
-            history.id = "updateProject"
-            history.location.project = data.id
+            history.id = "UPDATE"
+            history.location.id = "project_key"
         }
 
-        history.newData = { key: "parent", value: drop.data.id || "/" }
+        history.newData = { key: "parent", data: drop.data.id || "/" }
 
         return history
     },
@@ -143,9 +145,10 @@ export const dropActions: any = {
         if (drop.data !== "all" && (drag.id === "overlay" || drag.id === "template")) {
             drag.data.forEach((id: any) => {
                 history({
-                    id: drag.id === "overlay" ? "updateOverlay" : "updateTemplate",
+                    id: "UPDATE",
+                    oldData: { id },
                     newData: { key: "category", data: drop.data === "unlabeled" ? null : drop.data },
-                    location: { page: "drawer", id },
+                    location: { page: "drawer", id: drag.id + "_category" },
                 })
             })
 
@@ -166,7 +169,7 @@ export const dropActions: any = {
                 category: activeTab === "all" || activeTab === "unlabeled" ? null : activeTab,
                 items: slide.items,
             }
-            history({ id: drop.id === "overlays" ? "newOverlay" : "newTemplate", newData: { data }, location: { page: "show" } })
+            history({ id: "UPDATE", newData: { data }, location: { page: "drawer", id: drop.id.slice(0, -1) } })
         })
     },
     overlays: ({ drag, drop }: any) => dropActions.templates({ drag, drop }),
@@ -219,11 +222,10 @@ const slideDrop: any = {
             return history
         }
 
-        history.id = "newSlide"
-        history.location.layoutSlide = drop.index
-        let slides: any[] = drag.data.map((a: any) => ({ group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: [] }))
+        history.id = "SLIDES"
+        let slides: any[] = drag.data.map((a: any) => ({ id: a.id || uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: [] }))
 
-        history.newData = { index: drop.index, slides, backgrounds: data }
+        history.newData = { index: drop.index, data: slides, layout: { backgrounds: data } }
 
         return history
     },

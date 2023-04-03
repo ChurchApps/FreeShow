@@ -8,7 +8,7 @@
     import StageSlide from "./StageSlide.svelte"
 
     function addSlide() {
-        history({ id: "newStageShow", location: { page: "stage" } })
+        history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
     }
 
     $: sortedStageSlides = Object.entries($stageShows)

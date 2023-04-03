@@ -7,7 +7,8 @@
         "unnamed": "Uten navn",
         "drop": "Slipp her",
         "search": "Søk",
-        "none": "Ingen"
+        "none": "Ingen",
+        "finished": "Fullført"
     },
     "languages": {
         "en": "Engelsk",
@@ -15,7 +16,8 @@
         "sk": "Slovakisk",
         "es": "Spansk",
         "pt_BR": "Brasiliansk portugisisk",
-        "de": "Tysk"
+        "de": "Tysk",
+        "it": "Italiensk"
     },
     "about": {
         "check_updates": "Se etter oppdateringer",

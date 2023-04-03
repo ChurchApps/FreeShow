@@ -7,12 +7,30 @@
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
 
+    const INITIAL: any = { id: "initial", time: 0 }
+
     $: rHistory = [...$redoHistory]
-    $: uHistory = [{ id: "initial", time: 0 }, ...$undoHistory].reverse()
+    $: uHistory = [INITIAL, ...$undoHistory].reverse()
 
     const historyIdToString = {
         SAVE: "Saved",
         initial: "Initial state",
+        // NEW
+        // STAGE
+        STAGE_SHOW: "Updated stage show",
+        SHOWS: "Updated shows",
+        SLIDES: "Updated slides",
+        // UPDATE
+        UPDATE_stage: "Updated stage show",
+        UPDATE_category_shows: "Updated shows category",
+        UPDATE_category_overlays: "Updated overlays category",
+        UPDATE_category_templates: "Updated templates category",
+        UPDATE_folder_media: "Updated media folder",
+        UPDATE_folder_audio: "Updated audio folder",
+        UPDATE_overlay: "Updated overlay",
+        UPDATE_template: "Updated template",
+        // UPDATE_ ... (historyHelpers)
+
         // edit
         textStyle: "Updated text style",
         textAlign: "Updated text align",
@@ -23,35 +41,16 @@
         // stage
         stageItemAlign: "Changed stage item align",
         stageItemStyle: "Changed stage item style",
-        // template
-        updateTemplate: "Updated template",
-        updateOverlay: "Updated overlay",
         // new
-        newMediaFolder: "Added media folder",
-        newAudioFolder: "Added audio folder",
         newProject: "Added project",
         newFolder: "Added folder in project",
         newSection: "Added section in project",
         newShow: "Created show",
-        newShowsCategory: "Added shows category",
-        newOverlaysCategory: "Added overlays category",
-        newTemplatesCategory: "Added templates category",
-        newOverlay: "Created overlay",
-        newTemplate: "Created template",
         newSlide: "Added slide",
         newItem: "Added item",
-        newStageShow: "Created stage show",
         // delete
         deleteFolder: "Deleted project folder",
         deleteProject: "Deleted project",
-        deleteStage: "Deleted stage view",
-        deleteOverlay: "Deleted overlay",
-        deleteTemplate: "Deleted template",
-        deleteShowsCategory: "Deleted shows category",
-        deleteMediaFolder: "Deleted media folder",
-        deleteAudioFolder: "Deleted audio folder",
-        deleteOverlaysCategory: "Deleted overlays category",
-        deleteTemplatesCategory: "Deleted templates category",
         removeSlides: "Removed slide(s)",
         deleteSlides: "Deleted slide(s)",
         deleteGroups: "Deleted slide group(s)",
@@ -113,7 +112,7 @@
             <p>
                 <span>
                     {#if item.id === "SAVE"}<Icon id="save" />{/if}
-                    {historyIdToString[item.id] || item.id}
+                    {historyIdToString[item.id === "UPDATE" ? item.id + "_" + item.location?.id : item.id] || item.id}
                 </span>
                 <!-- TODO: get clock as well: -->
                 <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
@@ -125,7 +124,7 @@
             <p>
                 <span>
                     {#if item.id === "SAVE"}<Icon id="save" />{/if}
-                    {historyIdToString[item.id] || item.id}
+                    {historyIdToString[item.id === "UPDATE" ? item.id + "_" + item.location?.id : item.id] || item.id}
                 </span>
                 <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
             </p>
