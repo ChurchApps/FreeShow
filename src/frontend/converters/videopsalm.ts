@@ -1,10 +1,9 @@
-import { drawerTabsData, activePopup, groups, dictionary, alertMessage, shows } from "./../stores"
 import { get } from "svelte/store"
-import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
-import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { save } from "../utils/save"
+import { ShowObj } from "./../classes/Show"
+import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
+import { createCategory, setTempShows } from "./importHelpers"
 
 interface VideoPsalm {
     Guid: string
@@ -75,77 +74,72 @@ const keys = [
     "Memo3",
 ]
 export function convertVideopsalm(data: any) {
-    alertMessage.set("popup.importing")
-    setTimeout(() => {
-        data.forEach(({ content }: any) => {
-            // add quotes to the invalid JSON formatting
-            if (content.length) {
-                content = content.replaceAll("{\n", "{").replaceAll("\n", "<br>").replaceAll("FontStyle", "Font")
-                content = content.split("Style:").map(removeStyle).join("Style:")
-                content = content.split(":").map(fixJSON).join(":")
-                content = content.replaceAll("\t", "").replaceAll("\v", "").replaceAll(',<br>"', ',"').replaceAll("﻿", "") // remove this invisible character
+    createCategory("VideoPsalm")
 
-                try {
-                    content = JSON.parse(content || {}) as VideoPsalm
-                } catch (e: any) {
-                    console.error(e)
-                    let pos = Number(e.toString().replace(/\D+/g, "") || 100)
-                    console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
-                }
+    let tempShows: any[] = []
+
+    data.forEach(({ content }: any) => {
+        // add quotes to the invalid JSON formatting
+        if (content.length) {
+            content = content.replaceAll("{\n", "{").replaceAll("\n", "<br>").replaceAll("FontStyle", "Font")
+            content = content.split("Style:").map(removeStyle).join("Style:")
+            content = content.split(":").map(fixJSON).join(":")
+            content = content.replaceAll("\t", "").replaceAll("\v", "").replaceAll(',<br>"', ',"').replaceAll("﻿", "") // remove this invisible character
+
+            try {
+                content = JSON.parse(content || {}) as VideoPsalm
+            } catch (e: any) {
+                console.error(e)
+                let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+                console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+            }
+        }
+
+        let i: number = 0
+        let importingText = get(dictionary)?.popup.importing || "Importing"
+
+        let album: string = content?.Text
+        if (content.Songs?.length) asyncLoop()
+
+        function asyncLoop() {
+            let song: Song = content.Songs[i]
+
+            let percentage: string = ((i / content.Songs.length) * 100).toFixed()
+            activePopup.set("alert")
+            alertMessage.set(importingText + " " + i + "/" + content.Songs.length + " (" + percentage + "%)" + "<br>" + (song.Text || ""))
+
+            if (get(shows)[song.Guid] && i < content.Songs.length - 1) {
+                i++
+                requestAnimationFrame(asyncLoop)
+                return
             }
 
-            let i: number = 0
-            let importingText = get(dictionary)?.popup.importing || "Importing"
-
-            let album: string = content?.Text
-            if (content.Songs?.length) asyncLoop()
-
-            function asyncLoop() {
-                let song: Song = content.Songs[i]
-
-                let percentage: string = ((i / content.Songs.length) * 100).toFixed()
-                activePopup.set("alert")
-                alertMessage.set(importingText + " " + i + "/" + content.Songs.length + " (" + percentage + "%)" + "<br>" + (song.Text || ""))
-
-                if (get(shows)[song.Guid] && i < content.Songs.length - 1) {
-                    i++
-                    requestAnimationFrame(asyncLoop)
-                    return
-                }
-
-                let category = get(drawerTabsData).shows?.activeSubTab
-                if (category === "all" || category === "unlabeled") category = null
-
-                let layoutID = uid()
-                let show = new ShowObj(false, category || null, layoutID)
-                show.name = checkName(song.Text) || ""
-                show.meta = {
-                    title: show.name,
-                    artist: album || "",
-                    author: song.Author || "",
-                    composer: song.Composer || "",
-                    copyright: song.Copyright || "",
-                    CCLI: song.CCLI || "",
-                }
-
-                let { slides, layout }: any = createSlides(song)
-                show.slides = slides
-                show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
-
-                history({ id: "newShow", newData: { id: song.Guid || uid(), show, open: content.Songs.length < 2 }, location: { page: "show" } })
-
-                if (i < content.Songs.length - 1) {
-                    i++
-                    requestAnimationFrame(asyncLoop)
-                } else {
-                    save()
-                    activePopup.set(null)
-                }
+            let layoutID = uid()
+            let show = new ShowObj(false, "videopsalm", layoutID)
+            show.name = checkName(song.Text) || ""
+            show.meta = {
+                title: show.name,
+                artist: album || "",
+                author: song.Author || "",
+                composer: song.Composer || "",
+                copyright: song.Copyright || "",
+                CCLI: song.CCLI || "",
             }
-        })
 
-        activePopup.set(null)
-    }, 10)
+            let { slides, layout }: any = createSlides(song)
+            show.slides = slides
+            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+
+            tempShows.push({ id: song.Guid || uid(), show })
+
+            if (i < content.Songs.length - 1) {
+                i++
+                requestAnimationFrame(asyncLoop)
+            } else {
+                setTempShows(tempShows)
+            }
+        }
+    })
 }
 
 function removeStyle(s) {

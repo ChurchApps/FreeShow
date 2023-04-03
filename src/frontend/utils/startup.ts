@@ -1,5 +1,4 @@
 import { get } from "svelte/store"
-import { uid } from "uid"
 import { MAIN, OPEN_FOLDER, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
@@ -12,6 +11,7 @@ import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertEasyWorship } from "../converters/easyworship"
+import { setTempShows } from "../converters/importHelpers"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
 import { convertPDF } from "../converters/pdf"
@@ -225,7 +225,7 @@ const receiveOUTPUT: any = {
 // }
 
 const receiveFOLDER: any = {
-    MEDIA: (a: any, id: string = "media") => {
+    MEDIA: (a: any, id: "media" | "audio" = "media") => {
         // TODO: clean
         // check if folder already exists
         let path: string = a.path
@@ -235,12 +235,10 @@ const receiveFOLDER: any = {
             activePopup.set("alert")
             return
         }
-        let folderId = uid()
         history({
-            id: id === "media" ? "newMediaFolder" : "newAudioFolder",
-            oldData: { id: folderId, data: null },
-            newData: { id: folderId, data: { name: getFileName(path), icon: "folder", path: path } },
-            location: { page: "drawer" },
+            id: "UPDATE",
+            newData: { data: { name: getFileName(path), icon: "folder", path: path } },
+            location: { page: "drawer", id: "category_" + id },
         })
     },
     AUDIO: (a: any) => receiveFOLDER.MEDIA(a, "audio"),
@@ -267,20 +265,12 @@ const receiveIMPORT: any = {
 }
 
 function importShow(files: any[]) {
-    let duplicates: string[] = []
+    let tempShows: any[] = []
+
     files.forEach(({ content }: any) => {
         let [id, show] = JSON.parse(content)
-
-        // if exits
-        if (get(shows)[id]) duplicates.push(show.name)
-        else show.name = checkName(show.name)
-
-        history({ id: "newShow", newData: { id, show } })
+        tempShows.push({ id, show: { ...show, name: checkName(show.name) } })
     })
 
-    // TODO: override or skip
-    if (duplicates.length) {
-        alertMessage.set("Overriten some shows:<br>- " + duplicates.join("<br>- "))
-        activePopup.set("alert")
-    }
+    setTempShows(tempShows)
 }

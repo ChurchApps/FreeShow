@@ -204,6 +204,21 @@
     let currentStyle: string = ""
 
     onMount(getStyle)
+
+    // update rearrange items
+    // TODO: (minor issue) text seemingly swapping places when rearranging items
+    // let updateItem: boolean = false
+    // $: if (item) checkItemUpdate()
+    // function checkItemUpdate() {
+    //     if (updateItem) {
+    //         updateItem = false
+    //         return
+    //     }
+
+    //     // update item
+    //     getStyle()
+    // }
+
     let currentSlide: number = -1
     $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide) {
         currentSlide = $activeEdit.slide
@@ -272,6 +287,7 @@
     }
 
     function updateLines(newLines: Line[]) {
+        // updateItem = true
         if (!newLines) newLines = getNewLines()
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
@@ -470,11 +486,7 @@ bind:offsetWidth={width} -->
                     <track kind="captions" />
                 </video>
             {:else}
-                <Image
-                    src={item.src}
-                    alt=""
-                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}"
-                />
+                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
                 <!-- <MediaLoader path={item.src} /> -->
             {/if}
         {/if}

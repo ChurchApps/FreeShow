@@ -1,10 +1,10 @@
-import { GetLayout } from "./../../helpers/get"
-import { activeEdit, activeShow, dictionary, overlays, showsCache, templates } from "../../../stores"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, ItemType } from "../../../../types/Show"
+import { activeEdit, activeShow, dictionary, showsCache, templates } from "../../../stores"
 import { history } from "../../helpers/history"
 import { getStyles, removeText } from "../../helpers/style"
+import { GetLayout } from "./../../helpers/get"
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
@@ -37,24 +37,15 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     }
     console.log(newData)
 
-    if (get(activeEdit).type === "overlay") {
-        // TODO: history
-        overlays.update((a) => {
-            a[get(activeEdit).id!].items.push(newData)
-            return a
-        })
-    } else if (get(activeEdit).type === "template") {
-        // TODO: history
-        templates.update((a) => {
-            a[get(activeEdit).id!].items.push(newData)
-            return a
-        })
-    } else if (!get(activeEdit).id) {
+    if (!get(activeEdit).id) {
         history({
             id: "newItem",
             oldData: null,
             newData,
             location: { page: "edit", show: get(activeShow)!, slide: GetLayout()[get(activeEdit).slide!].id },
         })
+    } else {
+        // overlay, template
+        history({ id: "UPDATE", newData: { data: newData, key: "items", index: -1 }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type } })
     }
 }

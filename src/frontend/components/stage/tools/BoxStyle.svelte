@@ -110,7 +110,7 @@
         // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
         history({
-            id: "STAGE",
+            id: "STAGE_ITEM_STYLE",
             newData: [{ key: input.id, value }],
             location: { page: "stage", id: $activeStage.id!, items },
         })
@@ -164,7 +164,7 @@
 
         history({
             // id: aligns ? "stageItemAlign" : "stageItemStyle",
-            id: "STAGE",
+            id: "STAGE_ITEM_STYLE",
             newData: [{ key: "style", value }],
             location: { page: "stage", id: $activeStage.id!, items },
         })

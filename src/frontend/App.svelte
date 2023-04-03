@@ -34,24 +34,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import {
-        activeDrawerTab,
-        activeEdit,
-        activePage,
-        activePopup,
-        activeShow,
-        activeStage,
-        activeTimers,
-        currentWindow,
-        drawer,
-        events,
-        loaded,
-        os,
-        outputDisplay,
-        outputs,
-        playingAudio,
-        selected,
-    } from "./stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, playingAudio, selected } from "./stores"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
 

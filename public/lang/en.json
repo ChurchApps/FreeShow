@@ -7,7 +7,8 @@
         "unnamed": "Unnamed",
         "drop": "Drop here",
         "search": "Search",
-        "none": "None"
+        "none": "None",
+        "finished": "Finished"
     },
     "languages": {
         "en": "English",

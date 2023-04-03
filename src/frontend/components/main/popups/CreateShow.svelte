@@ -29,7 +29,7 @@
         } else {
             let show = new ShowObj(false, category)
             show.name = checkName(values.name)
-            history({ id: "newShow", newData: { show }, location: { page: "show", project: $activeProject } })
+            history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
         }
         values = { name: "", text: "" }
         activePopup.set(null)
@@ -56,8 +56,7 @@
             "name"
         ),
     ]
-    let selectedCategory: any =
-        $drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab] ? cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab) : cats[0]
+    let selectedCategory: any = $drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab] ? cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab) : cats[0]
 
     const inputs: any = {
         formatNewShow: (e: any) => formatNewShow.set(e.target.checked),

@@ -154,7 +154,7 @@
                                 slidesData.splice(i, 0, [])
                             }
                             layout.splice(index, 0, { id })
-                        } else {
+                        } else if (slides[parent]) {
                             // get insert child index
                             let index = 0
                             if (!slides[parent].children) slides[parent].children = []

@@ -55,7 +55,7 @@ export function convertText({ name = "", category = null, text }: any) {
         }
     }
 
-    history({ id: "newShow", newData: { show }, location: { page: "show", project: get(activeProject) } })
+    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
 }
 
 function createSlides(labeled: any) {
@@ -117,7 +117,7 @@ function createSlides(labeled: any) {
                     // .filter((a: any) => !a.type || a.type === "text" || a.lines)
                     .map((item: any) => {
                         item.lines?.forEach((_: any, index: number) => {
-                            item.lines[index].text[0].style = activeItems[0]?.lines[index]?.text[0]?.style || ""
+                            item.lines[index].text[0].style = activeItems?.[0]?.lines?.[index]?.text?.[0]?.style || ""
                         })
                         return item
                     })

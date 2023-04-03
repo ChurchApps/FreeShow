@@ -1,10 +1,10 @@
-import { drawerTabsData, activePopup, groups, alertMessage, dictionary, drawer, shows } from "./../stores"
 import { get } from "svelte/store"
-import { ShowObj } from "./../classes/Show"
 import { uid } from "uid"
 import { history } from "../components/helpers/history"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
-import { save } from "../utils/save"
+import { ShowObj } from "./../classes/Show"
+import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
+import { createCategory, setTempShows } from "./importHelpers"
 
 interface Song {
     administrator: string
@@ -34,7 +34,9 @@ interface Words {
 
 export function convertEasyWorship(data: any) {
     // close drawer to prevent loading songs
-    drawer.set({ height: 40, stored: null })
+    // drawer.set({ height: 40, stored: null })
+
+    createCategory("EasyWorship")
 
     let songs = data.find((a: any) => a.content.song)?.content.song
     let songsWords = data.find((a: any) => a.content.word)?.content.word
@@ -46,6 +48,8 @@ export function convertEasyWorship(data: any) {
     // TODO: promise
     let i = 0
     let importingText = get(dictionary)?.popup.importing || "Importing"
+
+    let tempShows: any[] = []
 
     asyncLoop()
     // songsWords.forEach(asyncLoop);
@@ -71,11 +75,11 @@ export function convertEasyWorship(data: any) {
             return
         }
 
-        let category = get(drawerTabsData).shows?.activeSubTab
-        if (category === "all" || category === "unlabeled") category = null
+        // let category = get(drawerTabsData).shows?.activeSubTab || null
+        // if (category === "all" || category === "unlabeled") category = null
 
         let layoutID = uid()
-        let show = new ShowObj(false, category || null, layoutID)
+        let show = new ShowObj(false, "easyworship", layoutID)
         if (song) {
             show.meta = {
                 title: song?.title || "",
@@ -96,7 +100,7 @@ export function convertEasyWorship(data: any) {
         show.name = checkName(song?.title || (Object.values(slides) as any)[0].items[0].lines?.[0].text?.[0].value)
         show.settings.template = "default"
 
-        history({ id: "newShow", newData: { id: song?.song_uid || uid(), show, open: songs.length < 2 }, location: { page: "show" } })
+        tempShows.push({ id: song?.song_uid || uid(), show })
 
         if (i + 1 < songsWords.length) {
             // wait 5 seconds every 100 seconds to catch up ??
@@ -106,14 +110,8 @@ export function convertEasyWorship(data: any) {
             // setTimeout(asyncLoop, nextTimer)
             requestAnimationFrame(asyncLoop)
         } else {
-            console.log(songsWords)
-            save()
-            // setTimeout(() => {
-            //   showsCache.set({})
-            // }, 5000)
-            activePopup.set(null)
-            // activePopup.set("alert")
-            // alertMessage.set("Finished")
+            setTempShows(tempShows)
+            history({ id: "SHOWS", newData: { data: tempShows }, location: { page: "show" } })
         }
     }
 }
