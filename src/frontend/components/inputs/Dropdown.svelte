@@ -10,8 +10,8 @@
   export let disabled: boolean = false
   let active: boolean = false
   export let value: any
-  if (!value) value = options[0]?.name || "—"
-  $: updater = [value, $language]
+  let normalizedValue: any = value;
+  $: normalizedValue = value || options[0]?.name || "-", $language;
   // TODO: disable active on click anywhere
 
   let self: HTMLDivElement
@@ -36,7 +36,7 @@
 
 <div class:disabled bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
   <button on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
-    {translate(updater[0], { parts: true }) || value}
+    {translate(normalizedValue, { parts: true }) || value}
     <!-- <T id={value} /> -->
   </button>
   {#if active}

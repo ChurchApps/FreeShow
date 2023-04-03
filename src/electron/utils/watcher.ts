@@ -10,7 +10,7 @@ export default function watch(path: string) {
   })
 
   watcher
-    .on("add", (path) => console.log(`File ${path} has been added`))
-    .on("change", (path) => console.log(`File ${path} has been changed`))
-    .on("unlink", (path) => console.log(`File ${path} has been removed`))
+    .on("add", (path:string) => console.log(`File ${path} has been added`))
+    .on("change", (path:string) => console.log(`File ${path} has been changed`))
+    .on("unlink", (path:string) => console.log(`File ${path} has been removed`))
 }
