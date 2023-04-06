@@ -69,11 +69,11 @@ export const dropActions: any = {
         return history
     },
     project: ({ drag, drop }: any, history: any) => {
-        history.id = "addShowToProject"
-        history.location.page = "show"
-        history.location.project = get(activeProject)
+        history.id = "UPDATE"
+        history.location = { page: "show", id: "project_ref" }
+        history.oldData = { id: get(activeProject) }
 
-        let projectShows = get(projects)[history.location.project].shows
+        let projectShows = get(projects)[history.oldData.id]?.shows || []
 
         if (drop.index === undefined) drop.index = projectShows.length
         if (drag.id === "files" && drop.trigger?.includes("end")) drop.index++
@@ -97,9 +97,9 @@ export const dropActions: any = {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         }
 
-        history.oldData = JSON.stringify({ shows: projectShows })
-        if (drag.id === "show") history.newData = { shows: mover(projectShows, getIndexes(data), drop.index) }
-        else history.newData = { shows: addToPos(projectShows, data, drop.index) }
+        history.newData = { key: "shows", data: [] }
+        if (drag.id === "show") history.newData.data = mover(projectShows, getIndexes(data), drop.index)
+        else history.newData.data = addToPos(projectShows, data, drop.index)
 
         return history
     },

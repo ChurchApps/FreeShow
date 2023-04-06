@@ -1,3 +1,8 @@
+import type { Event } from "../../../types/Calendar"
+import type { Project, ProjectShowRef } from "../../../types/Projects"
+import type { Layout, Overlay, Slide, Template } from "../../../types/Show"
+import type { Category } from "../../../types/Tabs"
+
 // UPDATE
 
 export const EMPTY_STAGE = {
@@ -15,16 +20,20 @@ export const EMPTY_STAGE = {
     items: {},
 }
 
-export const EMPTY_CATEGORY = { name: "", icon: null }
+export const EMPTY_CATEGORY: Category = { name: "", icon: null }
 export const EMPTY_PLAYER_VIDEO = { name: "", type: "" } // "youtube" | "vimeo"
 
 // if (get(drawerTabsData)[s.store]?.activeSubTab !== "all" && get(drawerTabsData).templates?.activeSubTab !== "unlabeled") category = get(drawerTabsData)[s.store].activeSubTab
-export const EMPTY_SLIDE = { name: "", color: null, category: null, items: [] }
+export const EMPTY_SLIDE: Overlay | Template = { name: "", color: null, category: null, items: [] }
 
-export const EMPTY_PROJECT = { name: "", created: 0, parent: "/", shows: [] }
+export const EMPTY_PROJECT: Project = { name: "", created: 0, parent: "/", shows: [] }
 export const EMPTY_PROJECT_FOLDER = { name: "", parent: "/" }
 
-export const EMPTY_SECTION = { id: "", type: "section", name: "", notes: "" }
+export const EMPTY_SECTION: ProjectShowRef = { id: "", type: "section", name: "", notes: "" }
+
+export const EMPTY_EVENT: Event = { name: "", color: null, type: "event", from: "", to: "", time: false, repeat: false }
 
 // SLIDE
-export const EMPTY_SHOW_SLIDE = { group: "", color: null, settings: {}, notes: "", items: [] }
+export const EMPTY_SHOW_SLIDE: Slide = { group: "", color: null, settings: {}, notes: "", items: [] }
+
+export const EMPTY_LAYOUT: Layout = { name: "", notes: "", slides: [] }

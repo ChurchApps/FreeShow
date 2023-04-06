@@ -22,8 +22,7 @@
     function addLayout(e: any): any {
         if (e.ctrlKey || e.metaKey) return duplicate({ id: "layout" })
 
-        let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
-        history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: $activeShow! } })
+        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid() }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_layout" } })
     }
 
     const slidesViews: any = { grid: "list", list: "lyrics", lyrics: "text", text: "grid" }
@@ -39,12 +38,7 @@
         })
 
         // set active layout in project
-        if (
-            ($activeShow?.type === undefined || $activeShow?.type === "show") &&
-            $activeShow?.index !== undefined &&
-            $activeProject &&
-            $projects[$activeProject].shows[$activeShow.index]
-        ) {
+        if (($activeShow?.type === undefined || $activeShow?.type === "show") && $activeShow?.index !== undefined && $activeProject && $projects[$activeProject].shows[$activeShow.index]) {
             projects.update((a) => {
                 a[$activeProject!].shows[$activeShow!.index!].layout = id
                 return a
@@ -95,25 +89,13 @@
         <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition}>
             <Icon size={1.3} id="transition" white />
         </Button>
-        <Button
-            class="context #slideViews"
-            on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })}
-            title={$dictionary.show?.[$slidesOptions.mode]}
-        >
+        <Button class="context #slideViews" on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
             <Icon size={1.3} id={$slidesOptions.mode} white />
         </Button>
-        <Button
-            disabled={$slidesOptions.columns >= 10}
-            on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })}
-            title={$dictionary.actions?.zoomOut}
-        >
+        <Button disabled={$slidesOptions.columns >= 10} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })} title={$dictionary.actions?.zoomOut}>
             <Icon size={1.3} id="remove" white />
         </Button>
-        <Button
-            disabled={$slidesOptions.columns <= 2}
-            on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })}
-            title={$dictionary.actions?.zoomIn}
-        >
+        <Button disabled={$slidesOptions.columns <= 2} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })} title={$dictionary.actions?.zoomIn}>
             <Icon size={1.3} id="add" white />
         </Button>
         <p class="text" on:click={() => slidesOptions.set({ ...$slidesOptions, columns: 4 })}>{(100 / $slidesOptions.columns).toFixed()}%</p>

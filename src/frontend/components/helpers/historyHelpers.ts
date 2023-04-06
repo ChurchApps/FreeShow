@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { ShowObj } from "../../classes/Show"
-import { activeProject, activeShow, activeStage, defaultProjectName, dictionary, drawerTabsData, folders, notFound, openedFolders, overlays, playerVideos, projects, projectView, shows, showsCache, stageShows } from "../../stores"
+import { activeProject, activeShow, activeStage, defaultProjectName, dictionary, drawerTabsData, events, folders, notFound, openedFolders, overlays, playerVideos, projects, projectView, shows, showsCache, stageShows } from "../../stores"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
-import { EMPTY_CATEGORY, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "./empty"
+import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "./empty"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
@@ -19,6 +19,8 @@ const getDefaultCategoryUpdater = (tabId: string) => ({
         if (get(drawerTabsData)[tabId]?.activeSubTab === id) {
             setDrawerTabData(tabId, null)
         }
+
+        // TODO: set overlays/templates to unlabeled??
     },
 })
 
@@ -135,6 +137,7 @@ export const _updaters = {
     project_key: { store: projects },
     project_folder_key: { store: folders },
 
+    project_ref: { store: projects },
     section: {
         store: projects,
         empty: EMPTY_SECTION,
@@ -160,7 +163,7 @@ export const _updaters = {
     category_media: { store: mediaFolders, ...getDefaultCategoryUpdater("media") },
     category_audio: { store: audioFolders, ...getDefaultCategoryUpdater("audio") },
 
-    overlay: { store: overlays, empty: EMPTY_SLIDE, deselect: (id) => clearOverlayOutput(id) },
+    overlay: { store: overlays, empty: EMPTY_SLIDE, deselect: (id: string) => clearOverlayOutput(id) },
     overlay_items: { store: overlays, empty: [] },
     overlay_name: { store: overlays, empty: "" },
     overlay_color: { store: overlays, empty: null },
@@ -173,6 +176,22 @@ export const _updaters = {
     template_category: { store: templates, empty: "unlabeled" },
 
     player_video: { store: playerVideos, empty: EMPTY_PLAYER_VIDEO },
+
+    event: {
+        store: events,
+        empty: EMPTY_EVENT,
+        deselect: (id: string, data: any) => {
+            let event = get(events)[id]
+            if (!event) return
+            if (data.data?.repeat === true && data.previousData?.repeat === false) {
+                // TODO: delete repeated...
+            }
+        },
+    },
+
+    stage_item_style: { store: stageShows, empty: "" },
+    stage_item_position: { store: stageShows, empty: "" },
+    stage_item_content: { store: stageShows, empty: "" },
 
     show: {
         store: showsCache,
@@ -247,6 +266,28 @@ export const _updaters = {
             })
 
             // TODO: delete local file?
+        },
+    },
+
+    show_layout: {
+        store: showsCache,
+        empty: EMPTY_LAYOUT,
+        select: (id: string, { subkey }: any) => {
+            _show(id).set({ key: "settings.activeLayout", value: subkey })
+
+            // set active layout in project
+            if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!].shows[get(activeShow)!.index!]) {
+                projects.update((a) => {
+                    a[get(activeProject)!].shows[get(activeShow)!.index!].layout = subkey
+                    return a
+                })
+            }
+        },
+        deselect: (id: string, { subkey }: any) => {
+            if (_show(id).get("settings.activeLayout") !== subkey) return
+
+            let firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((id) => id !== subkey)[0]
+            _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
         },
     },
 }

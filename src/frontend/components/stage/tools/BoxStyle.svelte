@@ -8,94 +8,6 @@
     import Center from "../../system/Center.svelte"
     import { updateStageShow } from "../stage"
     import { textEdits } from "../values/text"
-    // import { addStyleString } from "../../edit/scripts/textStyle"
-    // import { history } from "../../helpers/history"
-    // import Color from "../../inputs/Color.svelte"
-    // import IconButton from "../../inputs/IconButton.svelte"
-    // import NumberInput from "../../inputs/NumberInput.svelte"
-    // import Panel from "../../system/Panel.svelte"
-
-    // let style: any = {}
-    // let align: any = {}
-
-    // $: {
-    //   if (items) setStyle()
-    // }
-
-    // setStyle()
-    // function setStyle() {
-    //   Object.entries($stageShows[$activeStage.id!].items).forEach(([id, item]: any) => {
-    //     let styles = getStyles(item.style, true)
-    //     let aligns = getStyles(item.align)
-    //     if (!style[id]) style[id] = {}
-    //     if (!align[id]) align[id] = {}
-    //     Object.entries(styles).forEach(([key, value]: any) => (style[id][key] = value))
-    //     Object.entries(aligns).forEach(([key, value]: any) => (align[id][key] = value))
-    //   })
-    //   console.log(style)
-    // }
-
-    // const defaults: { [key: string]: any } = {
-    //   color: "#FFFFFF",
-    //   "font-size": 100,
-    //   "text-align": "center",
-    //   "align-items": "center",
-    //   zeros: 0,
-    //   overrun: "#FF0000",
-    // }
-
-    // const getTitles = (id: string) => {
-    //   let category = id.split("#")[0]
-    //   let titles = ["color", "font-size"]
-    //   if (category === "timers" || category === "countdowns") titles.push("zeros")
-    //   if (category === "countdowns") titles.push("overrun")
-    //   return titles
-    // }
-
-    // const inputChange = (e: any, key: string) => update(key, e.target.value)
-    // function update(key: string, newStyle: any, aligns: boolean = false) {
-    //   console.log(key, newStyle)
-
-    //   let textStyle = newStyle
-    //   if (key === "font-size") textStyle += "px"
-
-    //   let newData: any = []
-    //   let oldData: any = []
-    //   // loop through all items
-    //   items.forEach((id) => {
-    //     if (aligns) {
-    //       if (!align[id]) align[id] = {}
-    //       if (newStyle === undefined || newStyle === null || !newStyle.toString().length) newStyle = defaults[key]
-    //       align[id][key] = newStyle
-    //     } else {
-    //       if (!style[id]) style[id] = {}
-    //       if (newStyle === undefined || newStyle === null || !newStyle.toString().length) newStyle = defaults[key]
-    //       style[id][key] = newStyle
-    //     }
-
-    //     oldData.push(allItems[id][align ? "align" : "style"])
-    //     newData.push(aligns ? addStyleString(allItems[id].align, [key, textStyle]) : addStyleString(allItems[id].style, [key, textStyle]))
-    //   })
-
-    //   history({
-    //     id: aligns ? "stageItemAlign" : "stageItemStyle",
-    //     oldData,
-    //     newData,
-    //     location: { page: "stage", slide: $activeStage.id!, items },
-    //   })
-
-    //   // if (!timeout) {
-    //   //   updateStageShow()
-    //   //   timeout = setTimeout(() => {
-    //   //     updateStageShow()
-    //   //     timeout = null
-    //   //   }, 500)
-    //   // }
-    // }
-
-    // let timeout: any = null
-
-    // ------------------------
 
     $: items = $activeStage.items
     $: stageItems = $stageShows[$activeStage.id!].items
@@ -109,11 +21,7 @@
         // if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
-        history({
-            id: "STAGE_ITEM_STYLE",
-            newData: [{ key: input.id, value }],
-            location: { page: "stage", id: $activeStage.id!, items },
-        })
+        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item", override: $activeStage.id + items.join("") } })
     }
 
     function updateStyle(e: any) {
@@ -125,27 +33,6 @@
             return
         }
 
-        // let textStyle = newStyle
-        // if (key === "font-size") textStyle += "px"
-
-        // let newData: any = []
-        // let oldData: any = []
-        // // loop through all items
-        // items.forEach((id) => {
-        //   if (aligns) {
-        //     if (!align[id]) align[id] = {}
-        //     if (newStyle === undefined || newStyle === null || !newStyle.toString().length) newStyle = defaults[key]
-        //     align[id][key] = newStyle
-        //   } else {
-        //     if (!style[id]) style[id] = {}
-        //     if (newStyle === undefined || newStyle === null || !newStyle.toString().length) newStyle = defaults[key]
-        //     style[id][key] = newStyle
-        //   }
-
-        //   oldData.push(allItems[id][align ? "align" : "style"])
-        //   newData.push(aligns ? addStyleString(allItems[id].align, [key, textStyle]) : addStyleString(allItems[id].style, [key, textStyle]))
-        // })
-
         let value: string = addStyleString(item!.style, [input.key, input.value]) || ""
 
         if (input.id === "CSS") value = input.value.replaceAll("\n", "")
@@ -154,20 +41,7 @@
 
         console.log(item?.style, value)
 
-        // history({
-        //   // id: aligns ? "stageItemAlign" : "stageItemStyle",
-        //   id: "stageItemStyle",
-        //   // oldData,
-        //   newData: [value],
-        //   location: { page: "stage", slide: $activeStage.id!, items },
-        // });
-
-        history({
-            // id: aligns ? "stageItemAlign" : "stageItemStyle",
-            id: "STAGE_ITEM_STYLE",
-            newData: [{ key: "style", value }],
-            location: { page: "stage", id: $activeStage.id!, items },
-        })
+        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: "style", keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
 
         if (!timeout) {
             updateStageShow()

@@ -2,26 +2,23 @@ import { get } from "svelte/store"
 import type { Slide } from "../../../types/Show"
 import { activePage, historyCacheCount, shows, undoHistory } from "../../stores"
 import type { ShowRef } from "./../../../types/Projects"
-import { activeProject, activeShow, events, groups, projects, redoHistory, showsCache, stageShows, templates, theme, themes } from "./../../stores"
+import { groups, redoHistory, showsCache, templates, theme, themes } from "./../../stores"
 import { clone } from "./array"
 import { historyActions } from "./historyActions"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 
-export type HistoryPages = "drawer" | "show" | "edit" | "stage" | "settings"
+export type HistoryPages = "drawer" | "show" | "edit" | "calendar" | "draw" | "stage" | "settings"
 export type HistoryIDs =
-    // TEMP
+    // WIP TEMP
     | "SAVE"
     // NEW
-    | "STAGE_ITEM_STYLE"
     | "UPDATE"
     | "SHOWS"
     | "SLIDES"
 
     // remove::::::::::::::::::::::::
     | "newItem"
-    | "addLayout"
-    | "deleteLayout"
 
     // edit
     | "textStyle"
@@ -30,12 +27,6 @@ export type HistoryIDs =
     | "setItems"
     | "setStyle"
     | "slideStyle"
-    // stage
-    | "stageItemAlign"
-    | "stageItemStyle"
-    // add
-    | "addShowToProject"
-    | "addLayout"
     // show
     | "updateShow"
     | "slide"
@@ -47,9 +38,6 @@ export type HistoryIDs =
     | "changeLayout"
     | "changeLayouts"
     // other
-    | "slideToOverlay"
-    | "newEvent"
-    | "deleteEvent"
     | "template"
     // settings
     | "theme"
@@ -65,7 +53,7 @@ export interface History {
     location?: {
         page: HistoryPages
         id?: string
-        override?: boolean
+        override?: boolean | string
         project?: null | string
         folder?: string
         show?: ShowRef
@@ -87,8 +75,6 @@ const override = [
     "deleteItem",
     "setItems",
     "setStyle",
-    "stageItemAlign",
-    "stageItemStyle",
     "slideStyle",
     // "changeSlide",
     "changeLayout",
@@ -186,16 +172,6 @@ export function history(obj: History, undo: null | boolean = null) {
                 console.log(old)
                 // _show(showID).set({ key: "timestamps.modified", value: new Date().getTime() })
                 break
-            case "stageItemStyle":
-            case "stageItemAlign":
-                stageShows.update((s) => {
-                    obj.location!.items!.forEach((item, index) => {
-                        s[obj.location!.slide!].items[item][obj.id === "stageItemStyle" ? "style" : "align"] = obj.newData[index]
-                    })
-                    return s
-                })
-                // _show(showID).set({ key: "timestamps.modified", value: new Date().getTime() })
-                break
             case "slideStyle":
                 old = { style: _show(showID).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData.style }) }
                 if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
@@ -280,78 +256,6 @@ export function history(obj: History, undo: null | boolean = null) {
                     }
                     return a
                 })
-                break
-
-            // delete
-            case "deleteLayout":
-                if (undo) {
-                    old = { id: _show(showID).get("settings.activeLayout") }
-                    // _show(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
-                    _show(showID).layouts().add(obj.newData.id, obj.newData.layout)
-                    _show(showID).set({ key: "settings.activeLayout", value: obj.newData.id })
-
-                    // set active layout in project
-                    if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!].shows[get(activeShow)!.index!]) {
-                        projects.update((a) => {
-                            a[get(activeProject)!].shows[get(activeShow)!.index!].layout = obj.newData.id
-                            return a
-                        })
-                    }
-                } else {
-                    obj.newData.active = _show(showID).get("settings.activeLayout")
-                    obj.oldData = { id: obj.newData.id, layout: _show(showID).layouts([obj.newData.id]).get()[0] }
-                    _show(showID).layouts().remove(obj.newData.id)
-
-                    // change layout if current is deleted
-                    if (obj.newData.active === obj.newData.id) {
-                        obj.newData.active = Object.keys(get(showsCache)[showID].layouts)[0]
-                        _show(showID).set({ key: "settings.activeLayout", value: obj.newData.active })
-                    }
-                }
-                break
-
-            // ADD
-            case "addShowToProject":
-                projects.update((p) => {
-                    if (undo) {
-                        p[obj.location!.project!].shows = JSON.parse(obj.newData.shows)
-                    } else {
-                        if (!obj.oldData?.shows) obj.oldData = { shows: JSON.stringify(p[obj.location!.project!].shows) }
-                        if (obj.newData.id) p[obj.location!.project!].shows.push(obj.newData)
-                        else p[obj.location!.project!].shows = obj.newData.shows
-                    }
-                    return p
-                })
-                break
-            case "addLayout":
-                if (undo) {
-                    _show(showID).set({ key: "settings.activeLayout", value: obj.newData.id })
-                    _show(showID).layouts().remove(obj.oldData.id)
-                } else {
-                    old = { id: _show(showID).get("settings.activeLayout") }
-                    // _show(showIDs).layouts().set({ key: obj.oldData.id, value: obj.newData.layout })
-                    _show(showID).layouts().add(obj.newData.id, obj.newData.layout)
-                    _show(showID).set({ key: "settings.activeLayout", value: obj.newData.id })
-
-                    // set active layout in project
-                    if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!].shows[get(activeShow)!.index!]) {
-                        projects.update((a) => {
-                            a[get(activeProject)!].shows[get(activeShow)!.index!].layout = obj.newData.id
-                            return a
-                        })
-                    }
-                }
-                // showsCache.update((a) => {
-                //   if (undo) {
-                //     delete a[showID].layouts[obj.oldData.id]
-                //     a[showID].settings.activeLayout = obj.newData.id
-                //   } else {
-                //     obj.oldData = { id: a[showID].settings.activeLayout }
-                //     a[showID].layouts[obj.newData.id] = obj.newData.layout
-                //     a[showID].settings.activeLayout = obj.newData.id
-                //   }
-                //   return a
-                // })
                 break
 
             case "showMedia":
@@ -500,48 +404,6 @@ export function history(obj: History, undo: null | boolean = null) {
                 })
                 break
             // other
-            // case "slideToOverlay":
-            //   overlays.update((a: any) => {
-            //     if (undo) {
-            //       let id: string = obj.oldData.id
-            //       // remove outputted
-            //       if (!isOutCleared("overlays")) {
-            //         outputs.update((a) => {
-            //           Object.entries(a).forEach(([outputId, output]: any) => {
-            //             if (output.out?.overlays?.includes(id)) {
-            //               a[outputId].out!.overlays = a[outputId].out!.overlays!.filter((a) => a !== id)
-            //             }
-            //           })
-            //           return a
-            //         })
-            //       }
-
-            //       delete a[id]
-            //     } else a[obj.newData.id] = obj.newData.slide
-            //     return a
-            //   })
-            //   break
-            case "newEvent":
-                events.update((a) => {
-                    if (undo) {
-                        if (!obj.newData) delete a[obj.oldData.id]
-                        else a[obj.oldData.id] = obj.newData
-                    } else a[obj.newData.id] = obj.newData.data
-                    return a
-                })
-                break
-            case "deleteEvent":
-                events.update((a) => {
-                    if (undo) {
-                        a[obj.newData.id] = obj.newData.data
-                    } else {
-                        obj.oldData = obj.newData
-                        if (!obj.oldData.data) obj.oldData.data = get(events)[obj.newData.id]
-                        delete a[obj.newData.id]
-                    }
-                    return a
-                })
-                break
             case "template":
                 showsCache.update((a) => {
                     if (undo) {
@@ -685,6 +547,10 @@ export function history(obj: History, undo: null | boolean = null) {
     if (undo) {
         redoHistory.update((rh: History[]) => {
             rh.push(obj)
+
+            // delete oldest if more than set value
+            // rh = rh.slice(-get(historyCacheCount))
+
             return rh
         })
     } else {
@@ -702,13 +568,13 @@ export function history(obj: History, undo: null | boolean = null) {
                 // else uh.push(obj)
                 uh.push(obj)
             }
+
+            // delete oldest if more than set value
+            uh = uh.slice(-get(historyCacheCount))
+
             return uh
         })
     }
-
-    // delete oldest if more than set value
-    undoHistory.set(get(undoHistory).slice(-get(historyCacheCount)))
-    // redoHistory.set(get(redoHistory).slice(-get(historyCacheCount)))
 
     console.log("UNDO: ", [...get(undoHistory)])
     console.log("REDO: ", [...get(redoHistory)])

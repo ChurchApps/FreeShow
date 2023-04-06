@@ -123,9 +123,13 @@ const actions: any = {
         if (obj.contextElem?.classList.value.includes("#event")) {
             let group: any = get(events)[obj.contextElem.id].group
             if (!group) return
+
+            let eventIds: string[] = []
             Object.entries(get(events)).forEach(([id, event]: any) => {
-                if (event.group === group) history({ id: "deleteEvent", newData: { id } })
+                if (event.group === group) eventIds.push(id)
             })
+
+            history({ id: "UPDATE", newData: { id: "keys" }, oldData: { keys: eventIds }, location: { page: "calendar", id: "event" } })
         }
     },
     duplicate: (obj: any) => {

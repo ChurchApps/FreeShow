@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { MAIN } from "../../../types/Channels"
 import type { Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePopup, activeShow, alertMessage, shows, showsCache, stageShows } from "../../stores"
+import { activeEdit, activePopup, activeShow, alertMessage, shows, showsCache } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
@@ -36,26 +36,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let id: string = data.id
             send(MAIN, ["READ_SAVED_CACHE"], { id })
         },
-        // STAGE
-        STAGE_ITEM_STYLE: () => {
-            // TODO: WIP...
-            // update the style of stage items
-            let stageId: string = obj.location.id
-            if (!stageId) return error("no stage id")
-
-            stageShows.update((a) => {
-                if (obj.location.items?.length) {
-                    obj.location.items.forEach((itemId, index) => {
-                        let itemData = data[index] || data[0]
-                        a[stageId].items[itemId] = setKeyOrData({ ...itemData, index: data[index] ? index : 0 }, a[stageId].items[itemId])
-                    })
-                    return a
-                }
-
-                a[stageId] = setKeyOrData(data, a[stageId])
-                return a
-            })
-        },
         UPDATE: () => {
             // create / delete / duplicate a full store (or a full key, or set indexes)
             if (!obj.location?.id) return error("no updater id")
@@ -63,18 +43,22 @@ export const historyActions = ({ obj, undo = null }: any) => {
             if (!updater) return error("missing updater: " + obj.location.id)
 
             let id = data.id
-            let key = data.key || obj.oldData?.key
-            let subkey = data.subkey || obj.oldData?.subkey
-            // insert in array
-            let index = data.index ?? obj.oldData?.index
-            // replace value[s] in array
-            let indexes = data.indexes || obj.oldData?.indexes
             let deleting: boolean = id !== undefined
 
-            if (!id) {
+            data = clone(deleting ? obj.oldData : data) || {}
+            let key = data.key
+            let subkey = data.subkey
+            // insert in array
+            let index = data.index
+            // replace value[s] in array
+            let indexes = data.indexes
+            let keys = data.keys
+
+            if (!deleting) {
                 let empty = !data?.data
                 data = { ...data, data: data?.data || clone(updater.empty) }
                 id = obj.oldData?.id || uid()
+                if (keys && !key) id = "keys"
 
                 if (initializing && empty && updater.initialize) data.data = updater.initialize(data.data)
 
@@ -85,7 +69,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             if (deleting && updater.deselect) {
-                let changed: any = updater.deselect(id, obj.oldData || {})
+                let changed: any = updater.deselect(id, data)
                 if (changed) data.changed = changed
             }
 
@@ -105,10 +89,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
             /////
 
             function revertOrDeleteElement(a) {
-                let previousData = clone(obj.oldData?.previousData)
+                let previousData = clone(data.previousData)
 
                 if (key) {
-                    data = { ...data, data: filterIndexes(clone(a[id][key]), indexes, subkey) }
+                    data = { ...data, data: filterIndexes(clone(a[id][key]), subkey, { indexes, keys }) }
 
                     // reverting value with array index will restore the whole array
                     if (previousData && index !== undefined) index = undefined
@@ -118,6 +102,25 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if (subkey) delete a[id][key][subkey]
                         else delete a[id][key]
                     }
+
+                    return a
+                }
+
+                if (keys) {
+                    // if just keys, but no "key"
+                    let currentData = {}
+                    keys.forEach((currentKey) => {
+                        currentData[currentKey] = clone(a[currentKey])
+
+                        if (previousData) {
+                            let replacerValue = previousData[currentKey] || previousData
+                            a[currentKey] = replacerValue
+                        } else {
+                            delete a[currentKey]
+                        }
+                    })
+
+                    data = { ...data, data: clone(currentData) }
 
                     return a
                 }
@@ -133,26 +136,36 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateElement(a) {
                 // TODO: check for duplicates!!???
                 if (key) {
-                    data.previousData = clone(filterIndexes(a[id][key], indexes, subkey))
+                    data.previousData = clone(filterIndexes(a[id][key], subkey, { indexes, keys }))
                     a = updateKeyData(a, data.data)
+                } else if (keys) {
+                    // if just keys, but no "key"
+                    data.previousData = {}
+                    keys.forEach((currentKey) => {
+                        data.previousData[currentKey] = a[currentKey]
+                        let replacerValue = data.data[currentKey] || data.data
+                        a[currentKey] = replacerValue
+                    })
                 } else {
                     data.previousData = clone(a[id])
                     a[id] = data.data
                 }
+
+                if (subkey && !Array.isArray(a[id][key][subkey])) delete data.previousData
 
                 if (data.previousData === data.data) error("Previous data is the same as current data. Try using clone()!")
                 return a
             }
 
             function updateKeyData(a, newValue) {
-                console.log(newValue, indexes, a[id][key], subkey)
+                console.log(newValue, indexes, keys, a[id][key], subkey)
 
                 if (indexes?.length && Array.isArray(a[id][key])) {
                     a[id][key] = a[id][key].map((value, i) => {
                         if (indexes?.length && !indexes.includes(i)) return value
                         let currentIndex = indexes.findIndex((a) => a === i)
                         let replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
-                        if (currentIndex < 0 || !replacerValue) error("missing data at index or no value")
+                        if (currentIndex < 0 || replacerValue === undefined) error("missing data at index or no value")
 
                         if (subkey) {
                             value[subkey] = replacerValue
@@ -163,6 +176,19 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     })
 
                     return a
+                }
+
+                if (keys?.length) {
+                    keys.forEach((currentKey) => {
+                        let replacerValue = newValue[currentKey] || newValue
+
+                        if (subkey) {
+                            a[id][key][currentKey][subkey] = replacerValue
+                            return
+                        }
+
+                        a[id][key][currentKey] = replacerValue
+                    })
                 }
 
                 if (subkey) {
@@ -455,32 +481,32 @@ export const historyActions = ({ obj, undo = null }: any) => {
         },
     }
 
-    function initialize(value: any, { key, index = null }: any) {
-        if (!initializing) return
-        if (index !== null) {
-            obj.oldData[index][key] = value
-        } else {
-            obj.oldData[key] = value
-        }
+    // function initialize(value: any, { key, index = null }: any) {
+    //     if (!initializing) return
+    //     if (index !== null) {
+    //         obj.oldData[index][key] = value
+    //     } else {
+    //         obj.oldData[key] = value
+    //     }
 
-        // obj.oldData = clone(obj.oldData)
-    }
+    //     // obj.oldData = clone(obj.oldData)
+    // }
 
-    function setKeyOrData({ data, key, value, index = null }, object: any) {
-        if (key) {
-            initialize(object[key], { key: "value", index })
-            object[key] = value
-            return object
-        }
+    // function setKeyOrData({ data, key, value, index = null }, object: any) {
+    //     if (key) {
+    //         initialize(object[key], { key: "value", index })
+    //         object[key] = value
+    //         return object
+    //     }
 
-        if (data) {
-            initialize(object, { key: "data" })
-            return data
-        }
+    //     if (data) {
+    //         initialize(object, { key: "data" })
+    //         return data
+    //     }
 
-        error("no data")
-        return object
-    }
+    //     error("no data")
+    //     return object
+    // }
 
     function error(msg: string = "") {
         console.error(obj.id, "HISTORY ERROR:", msg)
@@ -491,15 +517,32 @@ export const historyActions = ({ obj, undo = null }: any) => {
     return actions
 }
 
-function filterIndexes(data: any, indexes: number[], subkey: string = "") {
-    if (!indexes?.length) return data
-    if (!Array.isArray(data)) {
-        console.error("HISTORY ERROR: got indexes, but not an array")
-        return data
+function filterIndexes(data: any, subkey: string = "", { indexes, keys }) {
+    if (!indexes?.length && !keys?.length) return subkey ? data[subkey] : data
+
+    let filteredData: any = null
+
+    if (indexes?.length) {
+        if (!Array.isArray(data)) {
+            console.error("HISTORY ERROR: got indexes, but not an array")
+            return data
+        }
+
+        filteredData = data.filter((_, i) => indexes.includes(i))
+
+        if (subkey) filteredData = filteredData.map((a) => a[subkey])
     }
 
-    let filteredData = data.filter((_, i) => indexes.includes(i))
-    if (subkey) filteredData = filteredData.map((a) => a[subkey])
+    if (keys?.length) {
+        filteredData = {}
+
+        console.log(keys, data, subkey)
+
+        keys.forEach((key) => {
+            if (subkey) filteredData[key] = data[key]?.[subkey] || data[key]
+            else filteredData[key] = data[key]
+        })
+    }
 
     return filteredData
 }

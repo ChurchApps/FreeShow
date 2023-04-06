@@ -105,7 +105,7 @@
 
             console.log(firstMatch)
             searchElem.select()
-            if ($activePage === "show") history({ id: "addShowToProject", newData: { id: firstMatch.id }, location: { page: "show", project: $activeProject } })
+            if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: -1, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
             searchValue = ""
 
@@ -153,15 +153,7 @@
                 {/if}
             {/each}
         </span>
-        <input
-            bind:this={searchElem}
-            class="search edit"
-            type="text"
-            placeholder="{$dictionary.main?.search}..."
-            bind:value={searchValue}
-            on:input={search}
-            use:selectTextOnFocus
-        />
+        <input bind:this={searchElem} class="search edit" type="text" placeholder="{$dictionary.main?.search}..." bind:value={searchValue} on:input={search} use:selectTextOnFocus />
     </div>
     <div class="content">
         <Resizeable id={"drawerNavigation"}>

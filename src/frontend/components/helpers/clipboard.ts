@@ -416,7 +416,7 @@ const deleteActions = {
         })
     },
     event: (data: any) => {
-        history({ id: "deleteEvent", newData: { id: data.id } })
+        history({ id: "UPDATE", newData: { id: data.id }, location: { page: "calendar", id: "event" } })
     },
     midi: (data: any) => {
         data = data[0]
@@ -481,8 +481,7 @@ const deleteActions = {
     layout: (data: any) => {
         if (data.length < _show().layouts().get().length) {
             data.forEach((id: string) => {
-                history({ id: "deleteLayout", newData: { id }, location: { page: "show", show: get(activeShow)! } })
-                // history({id: "UPDATE", newData: {id}, oldData: {remember: {showId: get(activeShow)?.id}}, location: {page: "show", id: "layout"}})
+                history({ id: "UPDATE", newData: { id: get(activeShow)?.id }, oldData: { key: "layouts", subkey: id }, location: { page: "show", id: "show_layout" } })
             })
         } else {
             alertMessage.set("error.keep_one_layout")
@@ -493,12 +492,13 @@ const deleteActions = {
 
 const duplicateActions = {
     event: (data: any) => {
-        let event = JSON.parse(JSON.stringify(get(events)[data.id]))
+        let event = clone(get(events)[data.id])
         event.name += " 2"
         event.repeat = false
         delete event.group
         delete event.repeatData
-        history({ id: "newEvent", newData: { id: uid(), data: event } })
+
+        history({ id: "UPDATE", newData: { data: event }, location: { page: "calendar", id: "event" } })
     },
     show: (data: any) => {
         if (!get(activeProject)) return
@@ -515,9 +515,8 @@ const duplicateActions = {
         history({ id: "UPDATE", newData: { data: clone(stage) }, location: { page: "stage", id: "stage" } })
     },
     layout: () => {
-        let newData: any = { id: uid(), layout: { name: "", notes: "", slides: [] } }
-        newData.layout = clone(get(showsCache)[get(activeShow)!.id].layouts[get(showsCache)[get(activeShow)!.id].settings.activeLayout])
-        history({ id: "addLayout", oldData: null, newData, location: { page: "show", show: get(activeShow)! } })
+        let data = clone(get(showsCache)[get(activeShow)!.id].layouts[get(showsCache)[get(activeShow)!.id].settings.activeLayout])
+        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid(), data }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
     },
 }
 
