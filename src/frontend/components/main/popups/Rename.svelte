@@ -30,54 +30,56 @@
 
     const renameAction: any = {
         slide: () => {
+            // TODO: history (x3)
             $selected.data.forEach((a) => {
-                let newData: any = { key: "group", value: groupName }
                 let slide = a.id
                 let ref = _show("active").layouts("active").ref()[0][a.index]
                 if (!slide) slide = ref.id
-                let location: any = { page: "show", show: $activeShow, slide }
 
-                if ($activeShow && $showsCache[$activeShow.id].slides[slide].globalGroup) history({ id: "changeSlide", newData: { key: "globalGroup", value: null }, location })
-                history({ id: "changeSlide", newData, location })
+                // remove global group if active
+                if ($activeShow && $showsCache[$activeShow.id].slides[slide].globalGroup)
+                    history({ id: "UPDATE", newData: { data: null, key: "slides", keys: [ref.id], subkey: "globalGroup" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
 
-                if (!slide && ref?.parent) {
-                    let children = _show("active").slides([ref.parent.id]).get("children")[0]
-                    let offsetIndex: number = ref.parent.index - children.indexOf(ref.id)
-                    history({
-                        id: "changeSlide",
-                        newData: { key: "children", value: children.filter((a: string) => a !== ref.id) },
-                        location: { page: "show", show: $activeShow!, slide: ref.parent.id },
-                    })
-                    let currentLayouts = _show("active").layouts().get("slides")
-                    let newLayouts: any[][] = []
-                    currentLayouts.forEach((layout) => {
-                        let l: any[] = []
-                        let index = -1
-                        let storedData = {}
-                        layout.forEach((slide: any) => {
-                            l.push(slide)
-                            if (index > -1) index++
-                            if (slide.id === ref.parent.id) {
-                                index = 0
-                                if (slide.children?.[ref.id]) {
-                                    storedData = slide.children[ref.id]
-                                    delete slide.children[ref.id]
-                                }
-                            }
-                            if (index === offsetIndex) {
-                                index = -1
-                                l.push({ id: ref.id, ...storedData })
-                            }
-                        })
-                        newLayouts.push(l)
+                history({ id: "UPDATE", newData: { data: groupName, key: "slides", keys: [ref.id], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+
+                if (!ref?.parent) return
+                // make child a parent
+
+                let children = _show("active").slides([ref.parent.id]).get("children")[0]
+                let offsetIndex: number = ref.parent.index - children.indexOf(ref.id)
+
+                // remove renamed child
+                history({
+                    id: "UPDATE",
+                    newData: { data: children.filter((a: string) => a !== ref.id), key: "slides", keys: [ref.parent.id], subkey: "children" },
+                    oldData: { id: $activeShow?.id },
+                    location: { page: "show", id: "show_key" },
+                })
+
+                let currentLayouts = _show().layouts().get("slides")
+                let layoutIds: string[] = Object.keys($showsCache[$activeShow!.id].layouts)
+                let newLayouts: any = {}
+
+                currentLayouts.forEach((layout, i: number) => {
+                    let l: any[] = []
+
+                    // TODO: renaming multiple children with the same parent dont work properly
+
+                    let added = false
+                    layout.forEach((slide: any, index: number) => {
+                        l.push(slide)
+
+                        if (added || index + 1 < offsetIndex || slide.id !== ref.parent.id) return
+                        added = true
+
+                        l.push({ id: ref.id, ...(slide.children?.[ref.id] || {}) })
                     })
 
-                    history({
-                        id: "changeLayoutsSlides",
-                        newData: newLayouts,
-                        location: { page: "show", show: $activeShow!, layouts: Object.keys($showsCache[$activeShow!.id].layouts) },
-                    })
-                }
+                    newLayouts[layoutIds[i]] = l
+                })
+
+                // set updated layout slides
+                history({ id: "UPDATE", newData: { key: "layouts", keys: layoutIds, subkey: "slides", data: newLayouts }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
             })
         },
         group: () => renameAction.slide(),

@@ -78,19 +78,10 @@
     $: group = slide.group
     $: {
         if (slide.globalGroup && $groups[slide.globalGroup]) {
-            // TODO: history
-            // history({
-            //   id: "changeSlide",
-            //   newData: { key: "group", values: [$groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name] },
-            //   location: { page: "show", show: $activeShow!, layout: $showsCache[$activeShow!.id].settings.activeLayout, slide: layoutSlide.id },
-            // })
-            // history({
-            //   id: "changeSlide",
-            //   newData: { key: "color", values: [$groups[slide.globalGroup].color] },
-            //   location: { page: "show", show: $activeShow!, layout: $showsCache[$activeShow!.id].settings.activeLayout, slide: layoutSlide.id },
-            // })
             group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
             color = $groups[slide.globalGroup].color
+            // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+            // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
         }
     }
 
@@ -224,24 +215,12 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div
-    class="main"
-    class:active
-    class:focused
-    style="{outColor ? 'outline: 2px solid ' + outColor + ';' : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%;"
->
+<div class="main" class:active class:focused style="{outColor ? 'outline: 2px solid ' + outColor + ';' : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%;">
     {#if icons && !altKeyPressed}
         <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""} />
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
-    <div
-        class="slide context #{name === null ? 'slideChild' : 'slide'}"
-        class:disabled={layoutSlide.disabled}
-        class:afterEnd={endIndex !== null && index > endIndex}
-        {style}
-        tabindex={0}
-        on:click
-    >
+    <div class="slide context #{name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
@@ -256,9 +235,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     </div>
                 {/if}
                 <Zoomed
-                    background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit)
-                        ? slide.settings.color || currentOutput.show?.background || "black"
-                        : "transparent"}
+                    background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentOutput.show?.background || "black" : "transparent"}
                     let:ratio
                     {resolution}
                     zoom={$slidesOptions.mode !== "lyrics" || noQuickEdit}
@@ -315,11 +292,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     <!-- show note -->
                     <!-- TODO: BG: white, color: black -->
                     <!-- style="width: {resolution.width * zoom}px;" -->
-                    <div
-                        class="label"
-                        title={name || ""}
-                        style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}
-                    >
+                    <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
                         {#if slide.notes}<p class="notes">{slide.notes}</p>{/if}
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->

@@ -79,7 +79,6 @@
             currentOutputSettings.set(Object.keys(a)[0])
             return a
         })
-        // history({ id: "addTheme", oldData: { ...$themes[$theme] }, location: { page: "settings", theme: $theme } })
     }
 
     const isChecked = (e: any) => e.target.checked
@@ -305,21 +304,11 @@
 </div>
 <div>
     <p><T id="settings.override_with_template" /></p>
-    <Dropdown
-        options={templateList}
-        value={$templates[currentOutput.show?.template]?.name || "—"}
-        style="width: 200px;"
-        on:click={(e) => updateOutput("show.template", e.detail.id)}
-    />
+    <Dropdown options={templateList} value={$templates[currentOutput.show?.template]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("show.template", e.detail.id)} />
 </div>
 <div>
     <p><T id="settings.display_metadata" /></p>
-    <Dropdown
-        options={meta}
-        value={meta.find((a) => a.id === (currentOutput.show?.displayMetadata || "never"))?.name || "—"}
-        style="width: 200px;"
-        on:click={(e) => updateOutput("show.displayMetadata", e.detail.id)}
-    />
+    <Dropdown options={meta} value={meta.find((a) => a.id === (currentOutput.show?.displayMetadata || "never"))?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("show.displayMetadata", e.detail.id)} />
 </div>
 <div>
     <p><T id="settings.active_layers" /></p>

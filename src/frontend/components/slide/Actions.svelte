@@ -1,26 +1,22 @@
 <script lang="ts">
-    import { activeShow, dictionary, midiIn } from "../../stores"
+    import { dictionary } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
 
     export let columns: number
     export let index: number
     export let actions: any
 
-    function changeSlideAction(id: string) {
-        history({
-            id: "changeLayout",
-            newData: { key: "actions", value: { ...actions, [id]: actions[id] ? !actions[id] : true } },
-            location: { page: "show", show: $activeShow!, layoutSlide: index, layout: _show("active").get("settings.activeLayout") },
-        })
+    function changeSlideAction(id: string, save: boolean = true) {
+        let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
+        history({ id: "SHOW_LAYOUT", save, newData: { key: "actions", data, indexes: [index] } })
     }
 
     // delete receiveMidi if it don't exists
-    $: if (actions.receiveMidi && !$midiIn[actions.receiveMidi]) {
-        changeSlideAction("receiveMidi")
-    }
+    // $: if (actions.receiveMidi && !$midiIn[actions.receiveMidi]) {
+    //     changeSlideAction("receiveMidi", false)
+    // }
 
     const actionsList = [
         { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play", white: true },

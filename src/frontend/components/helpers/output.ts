@@ -161,9 +161,4 @@ export function addOutput(onlyFirst: boolean = false) {
         currentOutputSettings.set(id)
         return output
     })
-    // history({
-    //       id: "addTheme",
-    //       newData: { ...JSON.parse(JSON.stringify($themes[$theme])), default: false, name: themeValue + " 2" },
-    //       location: { page: "settings", theme: uid() },
-    //     })
 }

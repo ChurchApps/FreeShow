@@ -26,10 +26,12 @@
             $selected.data.forEach((a) => {
                 let ref = a.id ? { id: a.id } : _show("active").layouts("active").ref()[0][a.index]
                 if (ref.type === "child") ref = ref.parent
-                let location: any = { page: "show", show: $activeShow, slide: ref.id }
 
-                if ($activeShow && $showsCache[$activeShow.id].slides[ref.id].globalGroup) history({ id: "changeSlide", newData: { key: "globalGroup", value: null }, location })
-                history({ id: "changeSlide", newData: { key: "color", value }, location })
+                // remove global group if active
+                if ($activeShow && $showsCache[$activeShow.id].slides[ref.id].globalGroup)
+                    history({ id: "UPDATE", newData: { data: null, key: "slides", keys: [ref.id], subkey: "globalGroup" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+
+                history({ id: "UPDATE", newData: { data: value, key: "slides", keys: [ref.id], subkey: "color" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
             })
         },
         group: () => actions.slide(),

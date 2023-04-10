@@ -37,8 +37,9 @@ import { save } from "../../utils/save"
 import { playPause, playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
+import { clone } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
-import { GetLayout, GetLayoutRef } from "../helpers/get"
+import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { getMediaType } from "../helpers/media"
 import { getActiveOutputs, setOutput } from "../helpers/output"
@@ -411,26 +412,25 @@ const actions: any = {
         let type: "image" | "overlays" | "audio" = obj.menu.icon
         let slide: number = obj.sel.data[0].index
         let newData: any = null
-        let location: any = { page: "show", show: get(activeShow), layout: _show().get("settings.activeLayout"), layoutSlide: slide }
 
         let layoutSlide = _show().layouts("active").ref()[0][slide].data
         if (type === "image") {
-            newData = { key: "background", value: null }
+            newData = { key: "background", data: null, indexes: [slide] }
             // TODO: remove from show media if last one?
         } else if (type === "overlays") {
             let ol = layoutSlide.overlays
             // remove clicked
             ol.splice(ol.indexOf(obj.menu.id), 1)
-            newData = { key: "overlays", value: ol }
+            newData = { key: "overlays", data: ol, indexes: [slide] }
         } else if (type === "audio") {
             let audio = layoutSlide.audio
             // remove clicked
             audio.splice(audio.indexOf(obj.menu.id), 1)
-            newData = { key: "audio", value: audio }
+            newData = { key: "audio", data: audio, indexes: [slide] }
             // TODO: remove from show media if last one?
         }
 
-        if (newData) history({ id: "changeLayout", newData, location })
+        if (newData) history({ id: "SHOW_LAYOUT", newData })
     },
     keys: (obj: any) => {
         if (get(selected).id !== "chord") return
@@ -531,16 +531,12 @@ function changeSlideAction(obj: any, id: string) {
         let midiId: string = uid()
         let layoutSlide: number = obj.sel.data[0].index
         let ref = _show().layouts("active").ref()[0]
-        let actions = ref[layoutSlide].data.actions || {}
+        let actions = clone(ref[layoutSlide].data.actions) || {}
 
         if (actions[id]) midiId = actions[id]
         else actions[id] = midiId
 
-        history({
-            id: "changeLayout",
-            newData: { key: "actions", value: actions },
-            location: { page: "show", show: get(activeShow)!, layoutSlide, layout: _show().get("settings.activeLayout") },
-        })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
 
         let data: any = { id: midiId }
         // sendMidi | receiveMidi
@@ -551,16 +547,15 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
-    obj.sel.data.forEach((a: any) => {
-        let actions: any = GetLayout()[a.index].actions || {}
-        let value = actions[id] ? !actions[id] : true
-        actions = { ...actions, [id]: value }
-        history({
-            id: "changeLayout",
-            newData: { key: "actions", value: actions },
-            location: { page: "show", show: get(activeShow)!, layoutSlide: a.index, layout: _show().get("settings.activeLayout") },
-        })
+    let actionsList: any[] = []
+    let indexes: number[] = obj.sel.data.map(({ index }) => index)
+    indexes.forEach((index: number) => {
+        let actions: any = _show().layouts().ref()[0][index]?.data?.actions || {}
+        actions[id] = !actions[id]
+        actionsList.push(actions)
     })
+
+    history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actionsList, indexes } })
 }
 
 export function removeSlide(data: any, type: "delete" | "remove" = "delete") {

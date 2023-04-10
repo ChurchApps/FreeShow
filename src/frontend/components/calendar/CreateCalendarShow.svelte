@@ -17,28 +17,12 @@
 
     function createShow() {
         let { show } = createSlides(currentEvents)
+        // new calendar shows are private
         history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
     }
-
-    // function createCategory() {
-    //   // TODO: history
-    //   categories.update((a) => {
-    //     a.event = { name: "category.events", icon: "event", default: true }
-    //     return a
-    //   })
-    // }
 </script>
 
 <div class="main border">
-    <!-- <span style="opacity: 0.8;text-align: center;font-size: 1.2em;">
-    {from.getDate()}. {$dictionary.month?.[from.getMonth() + 1]}
-    {from.getFullYear()}
-    {#if sortedDays[0] - sortedDays[1] < 0}
-      - {to.getDate()}. {$dictionary.month?.[to.getMonth() + 1]}
-      {to.getFullYear()}
-    {/if}
-  </span>
-  <br /> -->
     {#if currentEvents.length}
         {#each currentEvents as day}
             {#if currentEvents.length > 1}

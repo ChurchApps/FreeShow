@@ -3,8 +3,8 @@ import { uid } from "uid"
 import type { Item, ItemType } from "../../../../types/Show"
 import { activeEdit, activeShow, dictionary, showsCache, templates } from "../../../stores"
 import { history } from "../../helpers/history"
+import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
-import { GetLayout } from "./../../helpers/get"
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
@@ -38,12 +38,9 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     console.log(newData)
 
     if (!get(activeEdit).id) {
-        history({
-            id: "newItem",
-            oldData: null,
-            newData,
-            location: { page: "edit", show: get(activeShow)!, slide: GetLayout()[get(activeEdit).slide!].id },
-        })
+        let ref = _show().layouts("active").ref()[0]
+        let slideId = ref[get(activeEdit).slide!]?.id
+        history({ id: "UPDATE", newData: { data: newData, key: "slides", keys: [slideId], subkey: "items", index: -1 }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key" } })
     } else {
         // overlay, template
         history({ id: "UPDATE", newData: { data: newData, key: "items", index: -1 }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type } })

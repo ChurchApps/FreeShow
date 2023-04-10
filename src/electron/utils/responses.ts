@@ -2,6 +2,7 @@
 // Respond to messages from the frontend
 
 import { app, Display, screen } from "electron"
+import lyricsFinder from "lyrics-finder"
 import os from "os"
 import path from "path"
 import { closeMain, getScreens, loadFonts, mainWindow, maximizeMain, openURL, setGlobalMenu, toApp } from ".."
@@ -9,10 +10,9 @@ import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, getDocumentsFolder, getPaths, loadFile, readFile, selectFilesDialog, selectFolderDialog } from "./files"
+import { checkShowsFolder, getDocumentsFolder, getPaths, loadFile, selectFilesDialog, selectFolderDialog } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
-import lyricsFinder from "lyrics-finder"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -73,7 +73,7 @@ const mainResponses: any = {
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     SHOWS_PATH: (): string => getDocumentsFolder(),
     EXPORT_PATH: (): string => getDocumentsFolder(null, "Exports"),
-    READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
+    // READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
     DISPLAY: (): boolean => false,
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
     GET_MIDI_INPUTS: (): string[] => getMidiInputs(),

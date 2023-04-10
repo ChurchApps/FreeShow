@@ -104,29 +104,32 @@ export const dropActions: any = {
         return history
     },
     all_slides: ({ drag, drop }: any, history: any) => {
-        history.location = { page: "show", show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout }
+        history.location = { page: "show" }
 
         if (drag.id === "template") {
-            history.id = "template"
+            history.id = "TEMPLATE"
 
             // TODO: add slide
             // if (trigger) location.layoutSlide = index
-            if (drop.center) history.location.layoutSlide = drop.index
-            history.newData = { template: drag.data[0], createItems: true }
+            let indexes: number[] = []
+            if (drop.center) indexes.push(drop.index)
+            history.newData = { id: drag.data[0], data: { createItems: true }, indexes }
         }
 
         return history
     },
     navigation: ({ drag, drop }: any, h: any) => {
         if (drop.data !== "all" && get(activeDrawerTab) && (drag.id === "show" || drag.id === "show_drawer")) {
-            h.id = "updateShow"
-            h.newData = { key: "category", values: [drop.data === "unlabeled" ? null : drop.data] }
-            h.location = { page: drag.id === "show" ? "show" : "drawer", shows: drag.data }
+            h.id = "SHOWS"
+            let data = drop.data === "unlabeled" ? null : drop.data
+            let showsList: any[] = drag.data.map(({ id }) => ({ show: { category: data }, id }))
+            h.newData = { replace: true, data: showsList }
+            h.location = { page: "drawer" }
             historyAwait(
-                drag.data.map((a: any) => a.id),
+                drag.data.map(({ id }) => id),
                 h
             )
-            return h
+            return
         }
 
         if (drop.data === "favourites" && drag.id === "media") {
@@ -301,12 +304,6 @@ const slideDrop: any = {
         if (drop.center) {
             if (drop.trigger?.includes("end")) drop.index--
             changeSlideGroups({ sel: { data: [{ index: drop.index }] }, menu: { id: drag.data[0].globalGroup } })
-
-            // history.id = "changeSlide"
-            // history.location.slide = ref[drop.index!].id
-            // delete history.location.layout
-            // history.newData = { key: "globalGroup", value: drag.data[0].globalGroup }
-
             return
         }
 
@@ -335,22 +332,23 @@ const slideDrop: any = {
         return history
     },
     overlay: ({ drag, drop }: any, history: any) => {
-        history.id = "changeLayout"
-        history.location.layoutSlide = drop.index
+        history.id = "SHOW_LAYOUT"
+
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let value: any[] = [...new Set([...(ref?.data?.overlays || []), ...drag.data])]
-        history.newData = { key: "overlays", value }
+        let data: any[] = [...new Set([...(ref?.data?.overlays || []), ...drag.data])]
+
+        history.newData = { key: "overlays", data, indexes: [drop.index] }
         return history
     },
     midi: ({ drag, drop }: any, history: any) => {
-        history.id = "changeLayout"
-        history.location.layoutSlide = drop.index
+        history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let value: any = ref.data.actions || {}
-        value.sendMidi = drag.data[0].id
+        let data: any = ref.data.actions || {}
+        let key = drag.data[0].type === "in" ? "receiveMidi" : "sendMidi"
+        data[key] = drag.data[0].id
 
-        history.newData = { key: "actions", value }
+        history.newData = { key: "actions", data, indexes: [drop.index] }
         return history
     },
 }

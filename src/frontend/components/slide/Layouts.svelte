@@ -17,7 +17,7 @@
 
     $: sortedLayouts = Object.entries(layouts || {})
         .map(([id, layout]: any) => ({ id, ...layout }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+        .sort((a, b) => a.name?.localeCompare(b.name))
 
     function addLayout(e: any): any {
         if (e.ctrlKey || e.metaKey) return duplicate({ id: "layout" })
@@ -28,7 +28,10 @@
     const slidesViews: any = { grid: "list", list: "lyrics", lyrics: "text", text: "grid" }
 
     function changeName(e: any) {
-        history({ id: "changeLayoutKey", newData: { key: "name", value: e.detail.value }, location: { page: "show", show: $activeShow!, layout: activeLayout } })
+        let currentLayout = e.detail?.id?.slice("layout_".length)
+        if (!currentLayout) return
+
+        history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: e.detail.value }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
     }
 
     function setLayout(id: string) {

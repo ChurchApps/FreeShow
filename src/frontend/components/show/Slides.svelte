@@ -78,7 +78,7 @@
 
     $: if (id && currentShow?.settings.template) {
         // update show by its template
-        history({ id: "template", save: false, newData: { template: currentShow.settings.template }, location: { page: "show", show: $activeShow! } })
+        history({ id: "TEMPLATE", save: false, newData: { id: currentShow.settings.template }, location: { page: "show" } })
     }
 
     let altKeyPressed: boolean = false

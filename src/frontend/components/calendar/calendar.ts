@@ -3,6 +3,7 @@ import { uid } from "uid"
 import type { Show } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { activeDays, categories, dictionary, events } from "../../stores"
+import { clone } from "../helpers/array"
 import { checkName } from "../helpers/show"
 import { _show } from "../helpers/shows"
 
@@ -115,7 +116,7 @@ export function createSlides(currentEvents: any[], id: string = "") {
 
     let layoutID = _show(id).get("settings.activeLayout") || "default"
 
-    let show: Show = _show(id).get() || new ShowObj(true, "events", layoutID, new Date().getTime(), false)
+    let show: Show = clone(_show(id).get() || new ShowObj(true, "events", layoutID, new Date().getTime(), false))
 
     // add events category
     if (!get(categories).events) {

@@ -109,11 +109,7 @@
     }
 
     function edit(e: any) {
-        historyAwait([id], {
-            id: "updateShow",
-            newData: { key: "name", values: [checkName(e.detail.value)] },
-            location: { page: index === null ? "drawer" : "show", shows: [{ id }] },
-        })
+        historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name: checkName(e.detail.value) } }], replace: true }, location: { page: "drawer" } })
     }
 
     let activeOutput: any = null

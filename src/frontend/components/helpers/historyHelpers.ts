@@ -1,7 +1,28 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { ShowObj } from "../../classes/Show"
-import { activeProject, activeShow, activeStage, defaultProjectName, dictionary, drawerTabsData, events, folders, notFound, openedFolders, overlays, playerVideos, projects, projectView, shows, showsCache, stageShows } from "../../stores"
+import {
+    activeProject,
+    activeShow,
+    activeStage,
+    defaultProjectName,
+    dictionary,
+    drawerTabsData,
+    events,
+    folders,
+    groups,
+    notFound,
+    openedFolders,
+    overlays,
+    playerVideos,
+    projects,
+    projectView,
+    shows,
+    showsCache,
+    stageShows,
+    theme,
+    themes,
+} from "../../stores"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
 import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "./empty"
 import { isOutCleared } from "./output"
@@ -290,6 +311,98 @@ export const _updaters = {
             _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
         },
     },
+
+    show_key: { store: showsCache },
+
+    global_group: { store: groups },
+
+    settings_theme: {
+        store: themes,
+        select: (id: string, data: any) => {
+            // TODO: remove default if name change; if (a[obj.location!.theme!].default) groupValue
+            if (data.key === "name" && get(themes)[id].default) {
+                themes.update((a) => {
+                    delete a[id].default
+                    return a
+                })
+            }
+
+            theme.set(id)
+
+            setTimeout(() => {
+                if (data.subkey) updateTransparentColors(id)
+                updateTheme(id)
+            }, 100)
+        },
+        deselect: (id: string, data: any) => {
+            if (!data.key && get(theme) === id) {
+                id = "default"
+                theme.set(id)
+            }
+
+            // if (data.key === "name" && get(themes)[id].default) {
+            //     data.default = true
+            // }
+
+            setTimeout(() => {
+                // setTheme({ ...data, data: data.previousValue })
+                if (data.subkey) updateTransparentColors(id)
+                updateTheme(id)
+            }, 100)
+        },
+    },
+}
+
+function updateTheme(id: string) {
+    Object.entries(get(themes)[id].colors).forEach(([subId, color]: any) => {
+        document.documentElement.style.setProperty("--" + subId, color)
+    })
+}
+// function setTheme(data: any) {
+//     let key = data.subkey || data.key
+//     if (!key || !data.data) return
+
+//     if (data.key === "font") key = data.key + "-" + key
+//     document.documentElement.style.setProperty("--" + key, data.data)
+// }
+function updateTransparentColors(id: string) {
+    themes.update((a) => {
+        Object.entries(a[id].colors).forEach(([subId, color]: any) => {
+            if (!converts[subId]) return
+            let transparentColors: any[] = converts[subId]
+
+            transparentColors.forEach(({ id: colorId, opacity }: any) => {
+                let rgba: string | null = makeTransparent(color, opacity)
+
+                a[id].colors[colorId] = rgba
+            })
+        })
+
+        return a
+    })
+}
+const converts: any = {
+    secondary: [{ id: "secondary-opacity", opacity: 0.5 }],
+    text: [
+        { id: "hover", opacity: 0.05 },
+        { id: "focus", opacity: 0.1 },
+    ],
+}
+function makeTransparent(value: string, amount: number = 0.5) {
+    let rgb = hexToRgb(value)
+    if (!rgb) return null
+    let newValue: string = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${amount})`
+    return newValue
+}
+function hexToRgb(hex: string) {
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result
+        ? {
+              r: parseInt(result[1], 16),
+              g: parseInt(result[2], 16),
+              b: parseInt(result[3], 16),
+          }
+        : null
 }
 
 function replaceEmptyValues(object: any, replacer: any) {

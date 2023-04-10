@@ -27,29 +27,13 @@ export function changeSlideGroups(obj: any) {
     let slides: any[] = sortObjectNumbers(obj.sel.data, "index")
     let groups: any[] = getConnectedGroups(obj.menu.id, slides, ref)
 
-    // let onlyParents = slides.map(slide => slide.type === "parent")
-    // // if only parent slides
-    // if (onlyParents.length === slides.length) {
-    //   slides.forEach(slide => {
-    //     let index = slide.layoutIndex
-    //     history({id: "changeSlide", newData: { key: "globalGroup", value: groups[0].globalGroup }, location: {page: "show", slide: ref[index].id}})
-    //   })
-    //   return
-    // }
-
     let newData: any = getCurrentLayout()
     groups = updateChildren(groups, ref, newData)
-
-    // console.log(newData)
-    // console.log(clone(groups))
 
     let updated = updateValues(groups, newData)
     groups = updated.groups
     newData = updated.newData
     let newParents: any[] = updated.newParents
-
-    // console.log(newData)
-    // console.log(clone(groups))
 
     // set new children
     groups.forEach(({ slides }) => {
@@ -60,28 +44,17 @@ export function changeSlideGroups(obj: any) {
         }
     })
 
-    // console.log(newParents, newData.layout)
-
     // add new parents
     newData = addParents(newData, newParents)
 
     // remove old parents
     newData.layout = newData.layout.filter((a: any) => !a.remove)
 
-    console.log(newData)
-
     // find matches and combine duplicates
     // TODO: combine duplicates
 
     let activeLayout: string = _show("active").get("settings.activeLayout")
     history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
-
-    // obj.sel.data.forEach((a: any) => {
-    //   let slide = GetLayoutRef()[a.index].id
-    //   // TODO: store group/color to redo
-    //   // TODO: change layout children & slide parent children
-    //   history({ id: "changeSlide", newData: { key: "globalGroup", value: obj.menu.id }, location: { page: "show", show: get(activeShow)!, slide } })
-    // })
 }
 
 //

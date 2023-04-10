@@ -59,7 +59,8 @@
                         color={template.color}
                         {resolution}
                         on:click={() => {
-                            if (($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show") history({ id: "template", newData: { template: template.id, createItems: true }, location: { page: "show", show: $activeShow } })
+                            if (($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show")
+                                history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "show", override: "show#" + $activeShow.id } })
                         }}
                     >
                         <SelectElem id="template" data={template.id} fill draggable>

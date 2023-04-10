@@ -96,11 +96,8 @@
         id = e.detail.id
         actions.receiveMidi = id
 
-        history({
-            id: "changeLayout",
-            newData: { key: "actions", value: actions },
-            location: { page: "show", show: $activeShow!, layoutSlide: $popupData.index, layout: _show().get("settings.activeLayout") },
-        })
+        let override = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout") + "index#" + $popupData.index
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [$popupData.index] }, location: { page: "show", override } })
 
         midiInListen()
     }

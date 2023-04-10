@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
-    import { activeDrawerTab, activeShow, drawer, drawerTabsData, scriptures, showsCache } from "../../stores"
+    import { activeDrawerTab, activeShow, drawer, drawerTabsData, scriptures } from "../../stores"
     import { createSlides, getDateString, getSelectedEvents, sortDays } from "../calendar/calendar"
+    import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -14,14 +15,9 @@
         let currentEvents: any[] = getSelectedEvents(show.reference?.data?.days)
 
         let showId: string = $activeShow?.id || ""
-        let newData = createSlides(currentEvents, showId)
-        console.log(newData)
-        // history({ id: "updateShow", newData: { key: "slides", values: [newData.show.slides] }, location: { page: "show", shows: [{ id: showId }] } })
-        // TODO: history
-        showsCache.update((a) => {
-            a[showId] = newData.show
-            return a
-        })
+        let data = createSlides(currentEvents, showId)
+
+        history({ id: "UPDATE", newData: { data: data.show }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
     }
 
     function getDaysString() {

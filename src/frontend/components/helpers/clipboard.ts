@@ -255,12 +255,12 @@ const pasteActions: any = {
             return
         }
 
-        let ref = _show(get(activeEdit).id || "active")
-            .layouts("active")
-            .ref()?.[0][get(activeEdit).slide!]
+        let ref = _show().layouts("active").ref()[0][get(activeEdit).slide!]
+        let items: any[] = []
         data.forEach((item: any) => {
-            history({ id: "newItem", newData: clone(item), location: { page: "edit", show: { id: get(activeEdit).id || get(activeShow)!.id }, slide: ref.id } })
+            items.push(clone(item))
         })
+        history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [ref.id], subkey: "items", index: -1 }, oldData: { id: get(activeShow)!.id }, location: { page: "edit", id: "show_key" } })
     },
     slide: (data: any, { index }: any) => {
         if (!data) return
@@ -338,29 +338,24 @@ const deleteActions = {
     item: (data) => {
         if (document.activeElement?.classList.contains("edit")) return
 
-        // TODO: history
-        if (get(activeEdit).id) {
-            if (get(activeEdit).type === "overlay") {
-                overlays.update((a: any) => {
-                    get(activeEdit).items.forEach((i: number) => {
-                        if (a[get(activeEdit).id!].items[i]) a[get(activeEdit).id!].items.splice(i, 1)
-                    })
-                    return a
-                })
+        let editId: string = get(activeEdit).id || ""
+        if (editId) {
+            // overlay / template
+            let currentItems: any[] = []
+            if (get(activeEdit).type === "overlay") currentItems = clone(get(overlays)[editId].items)
+            if (get(activeEdit).type === "template") currentItems = clone(get(templates)[editId].items)
 
-                return
-            }
+            get(activeEdit).items.forEach((i: number) => {
+                if (currentItems[i]) currentItems.splice(i, 1)
+            })
 
-            if (get(activeEdit).type === "template") {
-                templates.update((a: any) => {
-                    get(activeEdit).items.forEach((i: number) => {
-                        if (a[get(activeEdit).id!].items[i]) a[get(activeEdit).id!].items.splice(i, 1)
-                    })
-                    return a
-                })
-
-                return
-            }
+            let override = editId + "#" + get(activeEdit).items?.join(",")
+            history({
+                id: "UPDATE",
+                oldData: { id: editId },
+                newData: { key: "items", data: currentItems, indexes: get(activeEdit).items },
+                location: { page: "edit", id: get(activeEdit).type + "_items", override },
+            })
 
             return
         }
@@ -427,14 +422,11 @@ const deleteActions = {
         // remove from all layouts
         let ref = _show().layouts("active").ref()[0]
         ref.forEach((slideRef: any, i: number) => {
-            let actions = slideRef.data.actions || {}
+            let actions = clone(slideRef.data.actions) || {}
             if (actions[key] !== id) return
             delete actions[key]
-            history({
-                id: "changeLayout",
-                newData: { key: "actions", value: actions },
-                location: { page: "show", show: get(activeShow)!, layoutSlide: i, layout: _show().get("settings.activeLayout") },
-            })
+
+            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [i] } })
         })
 
         if (data.type === "in") {

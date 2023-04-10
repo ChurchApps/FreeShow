@@ -1,7 +1,5 @@
 import { get } from "svelte/store"
 import { STORE } from "../../types/Channels"
-import { clone } from "../components/helpers/array"
-import { history } from "../components/helpers/history"
 import {
     activeProject,
     alertUpdates,
@@ -22,7 +20,6 @@ import {
     imageExtensions,
     labelsDisabled,
     language,
-    lastSavedCache,
     maxConnections,
     media,
     mediaCache,
@@ -141,17 +138,15 @@ export function save() {
         scripturesCache: get(scripturesCache),
     }
 
-    // TODO: fix undefined when saving HISTORY... (maybe file is undefined?)
-
     // SAVE STATE
-    let savedAt: number = Date.now()
-    // only save if it's not the same as last save
-    if (JSON.stringify(allSavedData) !== get(lastSavedCache)) {
-        lastSavedCache.set(JSON.stringify(allSavedData))
-        history({ id: "SAVE", newData: { id: savedAt } })
-        // store saved data to it's own files
-        allSavedData.savedCache = { name: savedAt, data: clone(allSavedData) }
-    }
+    // let savedAt: number = Date.now()
+    // // only save if it's not the same as last save
+    // if (JSON.stringify(allSavedData) !== get(lastSavedCache)) {
+    //     lastSavedCache.set(JSON.stringify(allSavedData))
+    //     history({ id: "SAVE", newData: { id: savedAt } })
+    //     // store saved data to it's own files
+    //     allSavedData.savedCache = { name: savedAt, data: clone(allSavedData) }
+    // }
 
     // CACHES
     allSavedData = {

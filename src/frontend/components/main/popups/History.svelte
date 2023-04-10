@@ -20,15 +20,41 @@
         STAGE_SHOW: "Updated stage show",
         SHOWS: "Updated shows",
         SLIDES: "Updated slides",
+        TEMPLATE: "Changed template",
+        SHOW_LAYOUT: "Updated show layout",
         // UPDATE
         UPDATE_stage: "Updated stage show",
+        UPDATE_project: "Updated project",
+        UPDATE_project_folder: "Updated project folder",
+        UPDATE_project_key: "Changed project",
+        UPDATE_project_folder_key: "Changed project folder",
+        UPDATE_project_ref: "Updated items in project",
+        UPDATE_section: "Updated section in project",
         UPDATE_category_shows: "Updated shows category",
         UPDATE_category_overlays: "Updated overlays category",
         UPDATE_category_templates: "Updated templates category",
-        UPDATE_folder_media: "Updated media folder",
-        UPDATE_folder_audio: "Updated audio folder",
+        UPDATE_category_media: "Updated media folder",
+        UPDATE_category_audio: "Updated audio folder",
         UPDATE_overlay: "Updated overlay",
+        UPDATE_overlay_items: "Updated overlay items",
+        UPDATE_overlay_name: "Updated overlay name",
+        UPDATE_overlay_color: "Updated overlay color",
+        UPDATE_overlay_category: "Updated overlay category",
         UPDATE_template: "Updated template",
+        UPDATE_template_items: "Updated template items",
+        UPDATE_template_name: "Updated template name",
+        UPDATE_template_color: "Updated template color",
+        UPDATE_template_category: "Updated template category",
+        UPDATE_player_video: "Updated player video",
+        UPDATE_event: "Updated event",
+        UPDATE_stage_item_style: "Updated stage item style",
+        UPDATE_stage_item_position: "Updated stage item position",
+        UPDATE_stage_item_content: "Updated stage item content",
+        UPDATE_show: "Updated show",
+        UPDATE_show_layout: "Updated show layout",
+        UPDATE_show_key: "Changed show",
+        UPDATE_global_group: "Updated global group",
+        UPDATE_settings_theme: "Updated settings: theme",
         // UPDATE_ ... (historyHelpers)
 
         // edit
@@ -104,15 +130,22 @@
         undoHistory.set([])
         redoHistory.set([])
     }
+
+    function getItemId(item) {
+        if (item.id === "UPDATE") return item.id + "_" + item.location?.id
+
+        return item.id
+    }
 </script>
 
 {#if rHistory.length || uHistory.length}
     {#each rHistory as item, i}
+        {@const itemId = getItemId(item)}
         <Button on:click={() => callRedo(i)} style="opacity: 0.5;">
             <p>
                 <span>
                     {#if item.id === "SAVE"}<Icon id="save" />{/if}
-                    {historyIdToString[item.id === "UPDATE" ? item.id + "_" + item.location?.id : item.id] || item.id}
+                    {historyIdToString[itemId] || itemId}
                 </span>
                 <!-- TODO: get clock as well: -->
                 <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
@@ -120,11 +153,12 @@
         </Button>
     {/each}
     {#each uHistory as item, i}
+        {@const itemId = getItemId(item)}
         <Button on:click={() => callUndo(i - 1)} outline={i === 0}>
             <p>
                 <span>
                     {#if item.id === "SAVE"}<Icon id="save" />{/if}
-                    {historyIdToString[item.id === "UPDATE" ? item.id + "_" + item.location?.id : item.id] || item.id}
+                    {historyIdToString[itemId] || itemId}
                 </span>
                 <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
             </p>

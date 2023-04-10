@@ -1,7 +1,6 @@
 import { get } from "svelte/store"
 import { MAIN, OPEN_FOLDER, OUTPUT, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
-import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
@@ -58,7 +57,7 @@ import {
     version,
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
-import { redoHistory, scripturesCache, undoHistory } from "./../stores"
+import { redoHistory, undoHistory } from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
@@ -113,28 +112,28 @@ const receiveMAIN: any = {
     MENU: (a: any) => menuClick(a),
     SHOWS_PATH: (a: any) => showsPath.set(a),
     EXPORT_PATH: (a: any) => exportPath.set(a),
-    READ_SAVED_CACHE: (a: any) => {
-        if (!a) return
-        Object.entries(JSON.parse(a)).forEach(([key, data]: any) => {
-            // TODO: undoing save is not working properly (seems like all saved are the same??)
+    // READ_SAVED_CACHE: (a: any) => {
+    //     if (!a) return
+    //     Object.entries(JSON.parse(a)).forEach(([key, data]: any) => {
+    //         // TODO: undoing save is not working properly (seems like all saved are the same??)
 
-            if (key === "showsCache") console.log("SHOWS CACHE ---", clone(get(showsCache)), data)
+    //         if (key === "showsCache") console.log("SHOWS CACHE ---", clone(get(showsCache)), data)
 
-            // don't revert undo/redo history
-            if (key === "HISTORY") return
-            if (receiveSTORE[key]) receiveSTORE[key](data)
-            // if undo = { ...data, ...get(showsCache) } else { ...get(showsCache), ...data }
-            else if (key === "showsCache") showsCache.set({ ...data, ...get(showsCache) })
-            else if (key === "scripturesCache") scripturesCache.set(data)
-            else if (key === "path") showsPath.set(data)
-            else console.log("MISSING HISTORY RESTORE KEY:", key)
-        })
+    //         // don't revert undo/redo history
+    //         if (key === "HISTORY") return
+    //         if (receiveSTORE[key]) receiveSTORE[key](data)
+    //         // if undo = { ...data, ...get(showsCache) } else { ...get(showsCache), ...data }
+    //         else if (key === "showsCache") showsCache.set({ ...data, ...get(showsCache) })
+    //         else if (key === "scripturesCache") scripturesCache.set(data)
+    //         else if (key === "path") showsPath.set(data)
+    //         else console.log("MISSING HISTORY RESTORE KEY:", key)
+    //     })
 
-        // save to files?
-        // window.api.send(STORE, { channel: "SAVE", data: allSavedData })
+    //     // save to files?
+    //     // window.api.send(STORE, { channel: "SAVE", data: allSavedData })
 
-        saved.set(true)
-    },
+    //     saved.set(true)
+    // },
     ALERT: (a: any) => {
         alertMessage.set(a)
         activePopup.set("alert")

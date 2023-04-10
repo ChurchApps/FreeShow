@@ -1,10 +1,8 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN } from "../../../types/Channels"
 import type { Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePopup, activeShow, alertMessage, shows, showsCache } from "../../stores"
-import { send } from "../../utils/request"
+import { activeEdit, activePopup, activeShow, alertMessage, shows, showsCache, templates } from "../../stores"
 import { clone } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
 import { _updaters } from "./historyHelpers"
@@ -24,18 +22,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
     }
 
     const actions = {
-        SAVE: () => {
-            // don't do anything if creating
-            if (initializing) return
+        // SAVE: () => {
+        //     // don't do anything if creating
+        //     if (initializing) return
 
-            // TODO: confirm this!!
-            // if (!get(saved))
+        //     // if (!get(saved))
 
-            // restore
-            data = undo ? obj.oldData : obj.newData
-            let id: string = data.id
-            send(MAIN, ["READ_SAVED_CACHE"], { id })
-        },
+        //     // restore
+        //     data = undo ? obj.oldData : obj.newData
+        //     let id: string = data.id
+        //     send(MAIN, ["READ_SAVED_CACHE"], { id })
+        // },
         UPDATE: () => {
             // create / delete / duplicate a full store (or a full key, or set indexes)
             if (!obj.location?.id) return error("no updater id")
@@ -151,7 +148,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     a[id] = data.data
                 }
 
-                if (subkey && !Array.isArray(a[id][key][subkey])) delete data.previousData
+                if (subkey && index !== undefined && index > -1 && !Array.isArray(a[id][key][subkey])) delete data.previousData
 
                 if (data.previousData === data.data) error("Previous data is the same as current data. Try using clone()!")
                 return a
@@ -161,11 +158,15 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 console.log(newValue, indexes, keys, a[id][key], subkey)
 
                 if (indexes?.length && Array.isArray(a[id][key])) {
+                    if (!a[id][key].length && newValue.length) {
+                        a[id][key] = newValue
+                        return a
+                    }
+
                     a[id][key] = a[id][key].map((value, i) => {
                         if (indexes?.length && !indexes.includes(i)) return value
                         let currentIndex = indexes.findIndex((a) => a === i)
                         let replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
-                        if (currentIndex < 0 || replacerValue === undefined) error("missing data at index or no value")
 
                         if (subkey) {
                             value[subkey] = replacerValue
@@ -175,20 +176,26 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         return replacerValue
                     })
 
+                    a[id][key] = a[id][key].filter((a) => a !== undefined)
+
                     return a
                 }
 
                 if (keys?.length) {
                     keys.forEach((currentKey) => {
-                        let replacerValue = newValue[currentKey] || newValue
+                        let replacerValue = newValue?.[currentKey] === undefined ? newValue : newValue[currentKey]
+                        if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
                         if (subkey) {
-                            a[id][key][currentKey][subkey] = replacerValue
+                            if (index === -1) a[id][key][currentKey][subkey].push(...replacerValue)
+                            else a[id][key][currentKey][subkey] = replacerValue
                             return
                         }
 
-                        a[id][key][currentKey] = replacerValue
+                        if (index === -1) a[id][key][currentKey].push(...replacerValue)
+                        else a[id][key][currentKey] = replacerValue
                     })
+                    return a
                 }
 
                 if (subkey) {
@@ -219,11 +226,16 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let showsList = obj.newData?.data || obj.oldData?.data || []
             if (!showsList.length) return
 
+            let replace: boolean = obj.newData?.replace === true
             let deleting: boolean = !obj.newData?.data?.length
+            if (obj.oldData?.replace) replace = deleting = true
+
+            if (replace && initializing) obj.oldData = { data: clone(obj.newData.data) }
 
             // check for duplicate names inside itself
             showsList.forEach(({ show }, i) => {
                 let name = show.name
+                if (!name) return
                 let number = 1
                 while (showsList.find((a: any, index: number) => a.show.name === (number > 1 ? name + " " + number : name) && index !== i)) number++
                 name = number > 1 ? name + " " + number : name
@@ -234,9 +246,21 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let duplicates: string[] = []
 
             showsCache.update((a) => {
-                showsList.forEach(({ show, id }) => {
-                    if (deleting) delete a[id]
-                    else {
+                showsList.forEach(({ show, id }, i: number) => {
+                    if (deleting) {
+                        if (replace) {
+                            a[id] = show
+                            return
+                        }
+
+                        delete a[id]
+                    } else {
+                        if (replace) {
+                            if (initializing) obj.oldData.data[i].show = clone(a[id])
+                            a[id] = { ...a[id], ...show }
+                            return
+                        }
+
                         if (a[id]) duplicates.push(show.name)
                         a[id] = show
                         // skip text cache for faster import
@@ -248,15 +272,19 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             shows.update((a) => {
                 showsList.forEach(({ show, id }) => {
-                    if (deleting) delete a[id]
-                    else {
-                        a[id] = {
-                            name: show.name,
-                            category: show.category,
-                            timestamps: show.timestamps,
-                        }
-                        if (show.private) a[id].private = true
+                    if (deleting && !replace) {
+                        delete a[id]
+                        return
                     }
+
+                    a[id] = {
+                        name: show.name || a[id].name,
+                        category: show.category === undefined ? a[id].category : show.category,
+                        timestamps: show.timestamps || a[id].timestamps,
+                    }
+
+                    if (show.private) a[id].private = true
+                    else if (a[id].private) delete a[id].private
                 })
                 return a
             })
@@ -479,6 +507,160 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 // data.index = index
             }
         },
+        TEMPLATE: () => {
+            // set a template on a slide/show
+            let deleting: boolean = !!obj.oldData
+            data = (deleting ? obj.oldData : obj.newData) || {}
+
+            if (initializing) {
+                data.remember = { showId: get(activeShow)?.id, layout: _show().get("settings.activeLayout") }
+            }
+
+            let show = get(showsCache)[data.remember.showId]
+            let slides: any = show.slides || {}
+
+            let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0]
+            let slideId: string = data.indexes ? ref[data.indexes[0]]?.id : ""
+
+            let createItems: boolean = !!data.data?.createItems
+
+            if (deleting) {
+                let previousData = data.previousData
+                if (!previousData) return error("missing previousData")
+
+                _show(data.remember.showId).set({ key: "slides", value: previousData.slides || {} })
+                _show(data.remember.showId).set({ key: "settings.template", value: previousData.template })
+            } else {
+                data.previousData = { template: show.settings.template, slides: clone(slides) }
+                let templateId: string = data.id
+
+                _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
+
+                let template = clone(get(templates)[templateId])
+                updateSlidesWithTemplate(template)
+            }
+
+            if (!initializing) return
+
+            if (deleting) obj.oldData = clone(data)
+            else obj.newData = clone(data)
+
+            function updateSlidesWithTemplate(template: any) {
+                if (!template?.items?.length) return
+
+                showsCache.update((a) => {
+                    Object.entries(slides).forEach(([id, slide]: any) => {
+                        if (slideId && slideId !== id) return
+
+                        template.items.forEach((item: any, i: number) => {
+                            if (!slide.items[i] && !createItems) return
+
+                            if (!slide.items[i]) {
+                                // remove text from template & add to slide
+                                if (item.lines) item.lines = item.lines.map((line) => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: "" }] }))
+                                slide.items.push(item)
+
+                                return
+                            }
+
+                            slide.items[i].style = item.style || ""
+                            slide.items[i].align = item.align || ""
+                            slide.items[i].lines?.forEach((line: any, j: number) => {
+                                let templateLine = item.lines?.[j] || item.lines?.[0]
+                                line.align = templateLine?.align || ""
+                                line.text?.forEach((text: any, k: number) => {
+                                    let textStyle: string = templateLine?.text?.[k]?.style || templateLine?.text?.[0]?.style || ""
+                                    text.style = textStyle
+                                })
+                            })
+                        })
+
+                        slide.items.forEach((item: any, i: number) => {
+                            // remove item if template don't have it and it's empty
+                            if (i < template.items.length) return
+                            let text: number = item.lines?.reduce((value, line) => (value += line.text?.reduce((value, text) => (value += text.value.length), 0)), 0)
+                            if (text) return
+
+                            slide.items.splice(i, 1)
+                        })
+
+                        a[data.remember.showId].slides[id] = clone(slide)
+                    })
+
+                    return a
+                })
+            }
+        },
+        SHOW_LAYOUT: () => {
+            // change the layout of a show
+            let deleting: boolean = !!obj.oldData
+            data = (deleting ? obj.oldData : obj.newData) || {}
+            console.log(obj, deleting)
+
+            if (initializing) {
+                data.remember = { showId: get(activeShow)?.id, layout: _show().get("settings.activeLayout") }
+            }
+
+            if (deleting) {
+                let previousData = data.previousData
+                if (!previousData) return error("missing previousData")
+
+                _show(data.remember.showId).set({ key: "layouts", value: previousData.layouts || {} })
+            } else {
+                let show = get(showsCache)[data.remember.showId]
+                data.previousData = { layouts: clone(show.layouts) }
+
+                updateLayoutSlides()
+            }
+
+            if (!initializing) return
+
+            if (deleting) obj.oldData = clone(data)
+            else obj.newData = clone(data)
+
+            function updateLayoutSlides() {
+                showsCache.update((a: any) => {
+                    let layoutSlides = a[data.remember.showId].layouts[data.remember.layout].slides
+
+                    let currentIndex = -1
+                    layoutSlides.forEach((l: any) => {
+                        currentIndex++
+                        l = updateValues(l, currentIndex)
+
+                        let children: string[] = a[data.remember.showId].slides[l.id]?.children
+                        if (!children?.length) return
+                        if (!l.children) l.children = {}
+                        children.forEach((child) => {
+                            currentIndex++
+                            l.children[child] = updateValues(l.children[child] || {}, currentIndex)
+                        })
+                    })
+                    return a
+                })
+            }
+
+            function updateValues(l: any, currentIndex: number = -1) {
+                let indexes: number[] = data.indexes || []
+                let valueIndex: number = indexes.findIndex((a) => a === currentIndex)
+                if (currentIndex >= 0 && indexes.length && valueIndex < 0) return l
+
+                let keys: string[] = data.keys || [data.key]
+                let values = data.data
+                if (!Array.isArray(values)) values = [values]
+
+                keys.forEach((key, i) => {
+                    let value = valueIndex < 0 ? values[i] : values[i]?.[valueIndex] || values[valueIndex]
+
+                    if (value === undefined) delete l[key]
+                    else if (data.key && data.keys) {
+                        if (!l[data.key]) l[data.key] = {}
+                        l[data.key][key] = value
+                    } else l[key] = value
+                })
+
+                return l
+            }
+        },
     }
 
     // function initialize(value: any, { key, index = null }: any) {
@@ -536,10 +718,8 @@ function filterIndexes(data: any, subkey: string = "", { indexes, keys }) {
     if (keys?.length) {
         filteredData = {}
 
-        console.log(keys, data, subkey)
-
         keys.forEach((key) => {
-            if (subkey) filteredData[key] = data[key]?.[subkey] || data[key]
+            if (subkey) filteredData[key] = data[key]?.[subkey] === undefined ? data[key] : data[key][subkey]
             else filteredData[key] = data[key]
         })
     }
