@@ -93,8 +93,6 @@ export function history(obj: History, undo: null | boolean = null) {
             // set items
             case "textStyle":
             case "textAlign":
-                console.log("TEXT STYLE", obj.newData.style)
-                // TODO: get old data (not getting first value....)
                 old = {
                     style: _show(showID)
                         .slides([obj.location!.slide!])
@@ -102,7 +100,7 @@ export function history(obj: History, undo: null | boolean = null) {
                         .lines(obj.location!.lines! || [])
                         .set(obj.newData.style),
                 }
-                console.log(old.style)
+
                 if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
                 if (old.template) _show(showID).set(old.template)
                 break

@@ -19,6 +19,7 @@ export function displayOutputs(e: any = {}) {
 // slide: null,
 // overlays: [],
 // transition: null,
+// TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string | null = null, add: boolean = false) {
     outputs.update((a: any) => {
         let outs = getActiveOutputs()

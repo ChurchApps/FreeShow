@@ -61,3 +61,21 @@ export function loadBible(active: string, index: number = 0, bible: any) {
 
     return bible
 }
+
+export function joinRange(array: string[]) {
+    let prev: number = -1
+    let range: string = ""
+    array.forEach((a: string, i: number) => {
+        if (Number(a) - 1 === prev) {
+            if (i + 1 === array.length) range += "-" + a
+        } else {
+            if (range.length) {
+                if (prev !== Number(range[range.length - 1])) range += "-" + prev
+                range += "+"
+            }
+            range += a
+        }
+        prev = Number(a)
+    })
+    return range
+}

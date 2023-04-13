@@ -4,12 +4,13 @@
     import Loader from "../../main/Loader.svelte"
     // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
-    import type { OutSlide } from "../../../../types/Show"
-    import { activeShow, dictionary, notFound, outLocked, outputs, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
+    import { dictionary, notFound, outLocked, outputs, playScripture, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
-    import { fetchBible, loadBible } from "./scripture"
+    import { fetchBible, joinRange, loadBible } from "./scripture"
+    import Button from "../../inputs/Button.svelte"
+    import Icon from "../../helpers/Icon.svelte"
 
     export let active: any
     export let bibles: Bible[]
@@ -140,6 +141,8 @@
                 return a
             })
 
+            if (!bibles) return console.error("could not find bibles")
+
             let id = msg.content[0] || msg.id
 
             bibles[msg.data.index || 0].version = msg.content[1].name
@@ -215,8 +218,8 @@
                 verses[id] = content
             }
 
-            if (activeVerses.length && verses[id]) {
-                activeVerses = activeVerses.filter((a) => verses[id][a])
+            if (verses[id]) {
+                activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[id][a]) : ["1"]
                 bibles[i].activeVerses = activeVerses
             }
         })
@@ -237,7 +240,7 @@
     }
 
     function selectVerse(e: any, id: string) {
-        auto = false
+        autoComplete = false
         if (e.ctrlKey || e.metaKey) {
             console.log("A", activeVerses, id)
             if (activeVerses.includes(id)) activeVerses = activeVerses.filter((a) => a !== id)
@@ -271,8 +274,6 @@
     function showVerse(id: string) {
         if ($outLocked) return
 
-        // TODO: multiple versions
-
         let value = verses[firstBibleId]?.[id] || ""
         value = value.replace(/(<([^>]+)>)/gi, "")
         let text: any[] = []
@@ -301,171 +302,310 @@
                 style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
             })
 
-        // TODO: outline on outputted verses
         setOutput("slide", { id: "temp", tempItems })
     }
 
     // search
-    // TODO: what if it's spaces: 1 Peter, Songs of Solomon
-    let auto: boolean = false
-    $: if (searchValue) auto = true
-    let previousBook = ""
-    $: split = searchValue.split(" ")
-    // split chapter / verse range with ":" or "," or "." or " "
-    $: split2 = split[1]?.includes(":")
-        ? split[1].split(":")
-        : split[1]?.includes(",")
-        ? split[1]?.split(",")
-        : split[1]?.includes(".")
-        ? split[1]?.split(".")
-        : [split[1] || "", split[2] || ""]
-
-    // book
-    $: book = split[0]
-    $: if (book.length && books[firstBibleId]?.length && auto) {
-        let newBooks = JSON.parse(JSON.stringify(books[firstBibleId] || [])).map((b: any, i: number) => ({ ...b, id: b.id || i }))
-        let matches = newBooks.filter((a: any) => a.name.toLowerCase().includes(book.toLowerCase()))
-        let exactMatch = matches.find((a: any) => a.name.toLowerCase() === book.toLowerCase())
-        if ((matches.length === 1 || exactMatch) && !split[1]?.length && split[0].length >= previousBook.length) {
-            updateSearchValue(matches[0].name + " ")
-            previousBook = matches[0].name + " "
-
-            if (bookId !== matches[0].id) {
-                bookId = matches[0].id
-                getBook()
-            }
-        }
-    } else previousBook = ""
     const updateSearchValue = (v: string) => (searchValue = v)
 
-    // chapter
-    $: chapter = split2?.[0]?.length ? split2?.[0] : null
-    $: if (chapter) updateSearchValue(book + " " + chapter.replace(/[^0-9:.,]/g, ""))
-    $: if (chapter && chapter !== chapterId && auto) {
-        // GEN.1 || 0
-        chapters[firstBibleId]?.forEach((c, i) => {
-            if (c.id?.replace(/\D+/g, "") === chapter) chapterId = c.id
-            else if (c.number === chapter) chapterId = i
-        })
-        getChapter()
+    let autoComplete: boolean = false
+    // $: if (searchValue) autoComplete = true
+
+    let searchValues: { [key: string]: any } = {
+        bookName: "",
+        book: "",
+        chapter: "",
+        verses: [],
     }
 
-    // verses
-    $: verse = split2?.[1]?.length ? split2?.[1] : null
-    $: if (verse) updateSearchValue(book + " " + chapter + ":" + verse.replace(/[^0-9-+]/g, ""))
-    $: if (verse && auto) {
+    $: if (searchValue) updateSearch()
+
+    // TODO: what if it's spaces: 1 Peter, Songs of Solomon
+
+    function updateSearch() {
+        // if (!autoComplete) return
+        if (searchValue.length < 2) {
+            autoComplete = true
+            return
+        }
+
+        searchValues.book = findBook()
+        if (searchValues.book === "") {
+            searchValues.bookName = ""
+            return
+        }
+        if (bookId !== searchValues.book) {
+            bookId = searchValues.book
+            getBook()
+            getChapter()
+        }
+
+        let bookLength = (searchValues.bookName + " ").length
+        let searchEnd = searchValue.slice(bookLength)
+        let splitChar = searchEnd.includes(":") ? ":" : searchEnd.includes(",") ? "," : searchEnd.includes(".") ? "." : ""
+        let splittedEnd = splitChar ? searchEnd.split(splitChar) : [searchEnd]
+
+        searchValues.chapter = findChapter({ splittedEnd })
+        if (searchValues.chapter === "") return
+        if (chapterId !== searchValues.chapter) {
+            chapterId = searchValues.chapter
+            getChapter()
+        }
+
+        searchValues.verses = findVerse({ splittedEnd })
+        if (!searchValues.verses.length) return
+        if (bibles[0].activeVerses !== searchValues.verses) {
+            activeVerses = [...new Set(searchValues.verses)] as any
+            activeVerses = activeVerses.map((a) => a.toString())
+            bibles[0].activeVerses = activeVerses
+        }
+    }
+
+    function findBook() {
+        let booksList = books[firstBibleId]?.map((b: any, i: number) => ({ ...b, id: b.id || i })) || []
+
+        let lowerSearch = searchValue.toLowerCase()
+        let splittedSearch = lowerSearch.split(" ")
+
+        // make an array with different combinations of words, starting from first word and adding more words
+        splittedSearch.forEach((_, i) => {
+            if (i === 0) return
+
+            let index = 0
+            let joinedValue = splittedSearch[0]
+            while (index < i) {
+                index++
+                joinedValue += " " + splittedSearch[index]
+            }
+
+            splittedSearch.push(joinedValue)
+        })
+
+        // find the biggest string with a returned value
+        let findMatches: any[] = []
+        let matchingArray: any[] = []
+        splittedSearch.forEach((value) => {
+            matchingArray = []
+            booksList.forEach((book: any) => {
+                if (book.name.toLowerCase().includes(value)) matchingArray.push(book)
+            })
+            if (matchingArray.length) findMatches = matchingArray
+        })
+
+        let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName)
+        if (!exactMatch && findMatches.length !== 1) return ""
+
+        let matchingBook = exactMatch || findMatches[0]
+        searchValues.bookName = matchingBook.name
+        if (searchValues.book !== undefined && searchValues.book === matchingBook.id) return matchingBook.id
+
+        let fullMatch = searchValue.toLowerCase().includes(matchingBook.name.toLowerCase() + " ")
+        if (fullMatch || !autoComplete) return matchingBook.id
+
+        // auto complete
+        // let rest = searchValue.slice(match.length)
+        updateSearchValue(matchingBook.name + " ") // + rest.trim()
+        autoComplete = false
+
+        return matchingBook.id
+    }
+
+    function findChapter({ splittedEnd }) {
+        let chapter: string = splittedEnd[0] || ""
+
+        if (!chapter.length) return ""
+
+        // GEN.1 || 0
+        let formattedChapter: string | number | null = null
+        chapters[firstBibleId]?.forEach((c, i) => {
+            if (c.id?.replace(/\D+/g, "") === chapter) formattedChapter = c.id
+            else if (c.number === chapter) formattedChapter = i
+        })
+
+        if (formattedChapter === null) return ""
+
+        // if (!autoComplete)
+        // updateSearchValue(searchValues.bookName + " " + (splitChar ? [chapter, splittedEnd[1]].join(splitChar) : chapter))
+
+        return formattedChapter
+    }
+
+    function findVerse({ splittedEnd }) {
+        let verse: string = splittedEnd[1]
+
+        // || !splitChar
+        if (!verse?.length) return []
+
         // select range (GEN.1.1 || "1")
-        activeVerses = []
+        let verses: number[] = []
         verse.split("+").forEach((a) => {
             let split = a.split("-")
+
             if (split.length > 1 && split[1].length) {
                 let number: any = Number(split[0])
                 let end: any = Number(split[1])
+
                 while (number <= end) {
-                    activeVerses.push(number.toString())
+                    verses.push(number.toString())
                     number++
                 }
-            } else if (split[0].length) activeVerses.push(split[0])
+            } else if (split[0].length) verses.push(Number(split[0]))
         })
-        activeVerses = [...new Set(activeVerses)]
-        bibles[0].activeVerses = activeVerses
+
+        if (!verses.length) return []
+
+        // if (!autoComplete)
+        // updateSearchValue(searchValues.bookName + " " + [splittedEnd[0], verse].join(splitChar))
+
+        return verses
     }
 
     function keydown(e: any) {
+        if (!e.ctrlKey && !e.metaKey) return
         if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
-        let currentOutput: any = $outputs[getActiveOutputs()[0]]
-        let slide: null | OutSlide = currentOutput.out?.slide || null
-        if ($activeShow && slide?.id !== "temp" && !e.ctrlKey && !e.metaKey) return
 
         // go to next/previous verse
         let left = e.key.includes("Left")
+        moveSelection(left)
+    }
+
+    function moveSelection(moveLeft: boolean) {
         if (!activeVerses.length) {
-            activeVerses = [left ? Object.keys(verses[firstBibleId] || []).length.toString() : "1"]
+            activeVerses = [moveLeft ? Object.keys(verses[firstBibleId] || []).length.toString() : "1"]
             bibles[0].activeVerses = activeVerses
             return
         }
 
-        let currentIndex: number = Number(left ? activeVerses[0] : activeVerses.at(-1))
+        let currentIndex: number = Number(moveLeft ? activeVerses[0] : activeVerses.at(-1))
         console.log(verses, currentIndex)
         let newSelection: string[] = []
         ;[...Array(activeVerses.length)].map((_, i: number) => {
-            let newIndex: number = left ? currentIndex - i - 1 : currentIndex + i + 1
-            if (left ? newIndex > 0 : newIndex <= Object.keys(verses[firstBibleId] || []).length) newSelection.push(newIndex.toString())
+            let newIndex: number = moveLeft ? currentIndex - i - 1 : currentIndex + i + 1
+            if (moveLeft ? newIndex > 0 : newIndex <= Object.keys(verses[firstBibleId] || []).length) newSelection.push(newIndex.toString())
         })
         if (newSelection.length) {
             activeVerses = newSelection.sort((a: any, b: any) => a - b)
             bibles[0].activeVerses = activeVerses
         }
     }
+
+    $: outputIsScripture = $outputs[getActiveOutputs()[0]].out?.slide?.id === "temp"
+
+    function playOrClearScripture() {
+        if (outputIsScripture) {
+            setOutput("slide", null)
+            return
+        }
+
+        playScripture.set(true)
+    }
+
+    $: sortedVerses = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
+    let verseRange = ""
+    $: verseRange = sortedVerses.length ? joinRange(sortedVerses) : ""
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<div class="main">
-    {#if notLoaded}
-        <Center faded>
-            <T id="error.bible" />
-        </Center>
-    {:else if error}
-        <Center faded>
-            <T id="error.bible_api" />
-        </Center>
-    {:else}
-        <div class:center={!books[firstBibleId]?.length}>
-            {#if books[firstBibleId]?.length}
-                {#key books[firstBibleId]}
-                    {#each books[firstBibleId] as book, i}
+<div class="scroll" style="flex: 1;overflow-y: auto;">
+    <div class="main">
+        {#if notLoaded}
+            <Center faded>
+                <T id="error.bible" />
+            </Center>
+        {:else if error}
+            <Center faded>
+                <T id="error.bible_api" />
+            </Center>
+        {:else}
+            <div class:center={!books[firstBibleId]?.length}>
+                {#if books[firstBibleId]?.length}
+                    {#key books[firstBibleId]}
+                        {#each books[firstBibleId] as book, i}
+                            <span
+                                on:click={() => {
+                                    bibles[0].api ? (bookId = book.id) : (bookId = i)
+                                    autoComplete = false
+                                }}
+                                class:active={bibles[0].api ? bookId === book.id : bookId === i}
+                            >
+                                {book.name}
+                            </span>
+                        {/each}
+                    {/key}
+                {:else}
+                    <Loader />
+                {/if}
+            </div>
+            <div style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
+                {#if chapters[firstBibleId]?.length}
+                    {#each chapters[firstBibleId] as chapter, i}
                         <span
                             on:click={() => {
-                                bibles[0].api ? (bookId = book.id) : (bookId = i)
-                                auto = false
+                                bibles[0].api ? (chapterId = chapter.id) : (chapterId = i)
+                                autoComplete = false
                             }}
-                            class:active={bibles[0].api ? bookId === book.id : bookId === i}
+                            class:active={bibles[0].api ? chapterId === chapter.id : chapterId === i}
                         >
-                            {book.name}
+                            {chapter.number}
                         </span>
                     {/each}
-                {/key}
-            {:else}
-                <Loader />
-            {/if}
-        </div>
-        <div style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
-            {#if chapters[firstBibleId]?.length}
-                {#each chapters[firstBibleId] as chapter, i}
-                    <span
-                        on:click={() => {
-                            bibles[0].api ? (chapterId = chapter.id) : (chapterId = i)
-                            auto = false
-                        }}
-                        class:active={bibles[0].api ? chapterId === chapter.id : chapterId === i}
-                    >
-                        {chapter.number}
-                    </span>
-                {/each}
-            {:else}
-                <Loader />
-            {/if}
-        </div>
-        <div class="verses" class:center={!Object.keys(verses[firstBibleId] || {}).length}>
-            {#if Object.keys(verses[firstBibleId] || {}).length}
-                {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
-                    <p on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => showVerse(id)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
-                        <span class="v">{id}</span>{@html content}
-                    </p>
-                {/each}
-                {#if bibles[0].copyright}
-                    <copy>{bibles[0].copyright}</copy>
+                {:else}
+                    <Loader />
                 {/if}
-            {:else}
-                <Loader />
-            {/if}
-        </div>
-    {/if}
+            </div>
+            <div class="verses" class:center={!Object.keys(verses[firstBibleId] || {}).length}>
+                {#if Object.keys(verses[firstBibleId] || {}).length}
+                    {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
+                        <p on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => showVerse(id)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
+                            <span class="v">{id}</span>{@html content}
+                        </p>
+                    {/each}
+                    {#if bibles[0].copyright}
+                        <copy>{bibles[0].copyright}</copy>
+                    {/if}
+                {:else}
+                    <Loader />
+                {/if}
+            </div>
+        {/if}
+    </div>
 </div>
 
-<!-- TODO: select multiple verses -->
+<div class="tabs" style="display: flex;align-items: center;">
+    <!-- text-align: center; -->
+    <span style="flex: 1;padding: 0 10px;">
+        {#if bibles[0].version}
+            <span style="opacity: 0.8;">{bibles[0].version}</span>,
+            {bibles[0]?.book || ""}
+            {bibles[0]?.chapter || ""}{#if verseRange.length}:{verseRange}{/if}
+        {/if}
+    </span>
+    <!-- <div class="seperator" /> -->
+    <!-- TODO: change view (grid easy select) ? -->
+    <div class="seperator" />
+    <Button disabled={activeVerses.includes("1")} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
+        <Icon size={1.3} id="previous" />
+    </Button>
+    <Button disabled={$outLocked} title={$dictionary.menu?.[outputIsScripture ? "_title_display_stop" : "_title_display"]} on:click={playOrClearScripture}>
+        <Icon size={1.3} id={outputIsScripture ? "clear" : "play"} />
+    </Button>
+    <Button disabled={Object.keys(verses[firstBibleId] || {}).length && activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString())} title={$dictionary.preview?._next_slide} on:click={() => moveSelection(false)}>
+        <Icon size={1.3} id="next" />
+    </Button>
+</div>
+
 <style>
+    .tabs {
+        display: flex;
+        background-color: var(--primary-darkest);
+    }
+    .seperator {
+        width: 3px;
+        height: 100%;
+        background-color: var(--primary-lighter);
+    }
+
     .main {
         display: flex;
         height: 100%;

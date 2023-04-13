@@ -64,50 +64,10 @@
         setItems: "Changed item",
         setStyle: "Changed item style",
         slideStyle: "Changed slide style",
-        // stage
-        stageItemAlign: "Changed stage item align",
-        stageItemStyle: "Changed stage item style",
-        // new
-        newProject: "Added project",
-        newFolder: "Added folder in project",
-        newSection: "Added section in project",
-        newShow: "Created show",
-        newSlide: "Added slide",
-        newItem: "Added item",
-        // delete
-        deleteFolder: "Deleted project folder",
-        deleteProject: "Deleted project",
-        removeSlides: "Removed slide(s)",
-        deleteSlides: "Deleted slide(s)",
-        deleteGroups: "Deleted slide group(s)",
-        deletePlayerVideo: "Deleted player video",
-        deleteLayout: "Deleted layout",
-        // add
-        addShowToProject: "Added show to project",
-        addLayout: "Added new layout",
-        // show
-        deleteShow: "Deleted show",
-        updateShow: "Updated show",
+
         slide: "Added slide",
-        changeSlide: "Changed slide",
         showMedia: "Added media to show",
         showAudio: "Added audio to show",
-        changeLayoutsSlides: "Changed layout slides",
-        changeLayoutKey: "Changed layout key",
-        changeLayout: "Changed layout",
-        changeLayouts: "Changed layouts",
-        // project
-        updateProject: "Changed project",
-        updateProjectFolder: "Updated project folder",
-        // other
-        slideToOverlay: "Cloned slide to overlay",
-        newEvent: "Created event",
-        deleteEvent: "Deleted event",
-        template: "Changed show template",
-        // settings
-        theme: "Changed theme",
-        addTheme: "Added theme",
-        addGlobalGroup: "Added global group",
     }
 
     function callUndo(index) {

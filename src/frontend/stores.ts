@@ -68,6 +68,7 @@ export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)
 export const forceClock: Writable<boolean> = writable(false)
 export const lastSavedCache: Writable<any> = writable(null)
+export const playScripture: Writable<boolean> = writable(false)
 
 // ----- SAVED VARIABLES -----
 

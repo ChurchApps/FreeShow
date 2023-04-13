@@ -222,9 +222,7 @@
 
         history({
             // WIP
-            // TODO: editing muliple don't work
             id: input.key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
-            // oldData: { key: aligns ? "align" : "style", values: oldData },
             newData: { style: { key: input.key === "text-align" || aligns ? "align" : "text", values: newData } },
             location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: allItems },
         })

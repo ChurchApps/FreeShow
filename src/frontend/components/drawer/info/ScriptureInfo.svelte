@@ -3,11 +3,11 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, categories, drawerTabsData, outLocked, scriptureSettings, templates } from "../../../stores"
+    import { activeProject, categories, drawerTabsData, outLocked, outputs, playScripture, scriptureSettings, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
-    import { setOutput } from "../../helpers/output"
+    import { getActiveOutputs, setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -17,6 +17,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
+    import { joinRange } from "../bible/scripture"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
@@ -25,24 +26,6 @@
     $: {
         if (sorted.length) verseRange = joinRange(sorted)
         else verseRange = ""
-    }
-
-    function joinRange(array: string[]) {
-        let prev: number = -1
-        let range: string = ""
-        array.forEach((a: string, i: number) => {
-            if (Number(a) - 1 === prev) {
-                if (i + 1 === array.length) range += "-" + a
-            } else {
-                if (range.length) {
-                    if (prev !== Number(range[range.length - 1])) range += "-" + prev
-                    range += "+"
-                }
-                range += a
-            }
-            prev = Number(a)
-        })
-        return range
     }
 
     // settings
@@ -215,6 +198,13 @@
         setOutput("slide", { id: "temp", tempItems })
     }
 
+    $: if ($playScripture) {
+        showVerse()
+        playScripture.set(false)
+    }
+
+    $: if (verseRange && $outputs[getActiveOutputs()[0]].out?.slide?.id === "temp") showVerse()
+
     // show on enter
     function keydown(e: any) {
         if (e.key === "Enter") showVerse()
@@ -233,13 +223,6 @@
             <!-- {/each} -->
         {/if}
     </Zoomed>
-
-    <div style="text-align: center;opacity: 0.8;padding: 8px 0;">
-        <!-- {bibles[0].version}
-    <br /> -->
-        {bibles[0]?.book}
-        {bibles[0]?.chapter}{#if verseRange.length}:{verseRange}{/if}
-    </div>
 
     <!-- TODO: drag&drop slide(s) -->
 
@@ -305,7 +288,6 @@
         flex-direction: column;
         gap: 5px;
         padding: 10px;
-        padding-top: 0;
     }
     .settings span {
         display: flex;

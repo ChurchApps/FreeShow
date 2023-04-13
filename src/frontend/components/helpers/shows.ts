@@ -232,9 +232,9 @@ export function _show(id: any = "active") {
                         showsCache.update((a: any) => {
                             if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
                             slideIds.forEach((slideId) => {
-                                prev.values.push([])
                                 if (!indexes.length) indexes = a[id].slides[slideId].items.map((_: any, i: number) => i)
                                 indexes.forEach((index, i) => {
+                                    prev.values.push([])
                                     if (!lines?.length) lines = Object.keys(a[id].slides[slideId].items[index].lines)
                                     lines.forEach((line, lineIndex) => {
                                         if (key) {
