@@ -253,6 +253,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
 export const undo = () => {
     if (!get(undoHistory).length) return
+    if (document.activeElement?.classList?.contains("edit")) return
 
     let lastUndo: History
     undoHistory.update((uh: History[]) => {
@@ -271,6 +272,7 @@ export const undo = () => {
 
 export const redo = () => {
     if (!get(redoHistory).length) return
+    if (document.activeElement?.classList?.contains("edit")) return
 
     let lastRedo: History
     redoHistory.update((rh: History[]) => {

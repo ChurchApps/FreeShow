@@ -2,8 +2,7 @@
     // import {flip} from 'svelte/animate';
     // import type { Resolution } from "../../../types/Settings"
 
-    import { activeShow, outLocked, outputs, showsCache, slidesOptions } from "../../stores"
-    import { GetLayout } from "../helpers/get"
+    import { activeShow, cachedShowsData, outLocked, outputs, showsCache, slidesOptions } from "../../stores"
     import { history } from "../helpers/history"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { updateOut } from "../helpers/showActions"
@@ -27,8 +26,9 @@
     $: currentShow = $showsCache[$activeShow!.id]
     $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
     // $: layoutSlides = GetLayout($activeShow!.id, activeLayout)
-    $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts?.[activeLayout]?.slides, GetLayout($activeShow!.id)][1]
+    // $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts?.[activeLayout]?.slides, GetLayout($activeShow!.id)][1]
     // $: layoutSlides = _show($activeShow!.id).layouts(activeLayout).ref()[0]
+    $: layoutSlides = $cachedShowsData[id]?.layout || []
 
     let scrollElem: any
     let offset: number = -1
@@ -76,7 +76,7 @@
         } else endIndex = null
     }
 
-    $: if (id && currentShow?.settings.template) {
+    $: if (id && currentShow?.settings?.template && $cachedShowsData[id]?.template?.slidesUpdated === false) {
         // update show by its template
         history({ id: "TEMPLATE", save: false, newData: { id: currentShow.settings.template }, location: { page: "show" } })
     }
@@ -105,6 +105,24 @@
             }
         })
     }
+
+    let lazyLoader: number = 1
+    let timeout: any = null
+
+    $: if (layoutSlides?.length) {
+        lazyLoader = 1
+        startLazyLoader()
+    }
+
+    function startLazyLoader() {
+        if (lazyLoader >= layoutSlides.length) return
+        if (timeout) clearTimeout(timeout)
+
+        timeout = setTimeout(() => {
+            lazyLoader++
+            startLazyLoader()
+        }, 10)
+    }
 </script>
 
 <!-- TODO: tab enter not woring -->
@@ -129,7 +147,7 @@
                     <!-- {#each Object.values($showsCache[id].slides) as slide, i} -->
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if currentShow.slides[slide.id]}
+                            {#if i < lazyLoader && currentShow.slides[slide.id]}
                                 <Slide
                                     slide={currentShow.slides[slide.id]}
                                     show={currentShow}

@@ -107,11 +107,13 @@
         "svelte-check": "^2.2.12",
         "svelte-jester": "^2.3.2",
         "svelte-preprocess": "^4.10.1",
+        "svelte-virtual": "^0.6.2",
         "ts-jest": "^29.0.0-next.1",
         "tslib": "^2.0.0",
         "typescript": "^4.5.4"
     },
     "dependencies": {
+        "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@vimeo/player": "^2.16.4",
         "cross-env": "^7.0.3",
         "electron-store": "^8.0.1",

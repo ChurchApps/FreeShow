@@ -38,6 +38,11 @@ export interface Show {
     midi?: { [key: ID]: Midi }
 }
 
+export interface ShowList extends Show {
+    id: string
+    match?: number
+}
+
 export interface Slide {
     group: null | string
     color: null | string

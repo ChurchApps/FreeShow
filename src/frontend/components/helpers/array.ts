@@ -61,7 +61,7 @@ export function keysToID(object: { [key: string]: {} }): any {
 }
 
 // remove values in array object where key is value
-export function removeValues(object: {}[], key: string, value: any): {}[] {
+export function removeValues(object: any[], key: string, value: any): any[] {
     return object.filter((o: any) => o[key] !== value)
 }
 

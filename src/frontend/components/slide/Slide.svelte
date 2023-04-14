@@ -263,7 +263,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     {#if slide.items}
                         {#each slide.items as item}
                             <!-- TODO: lyrics zoom on text -->
-                            {#if $slidesOptions.mode !== "lyrics" || item.type === undefined || item.type === "text" || item.type === "timer"}
+                            {#if ($slidesOptions.mode !== "lyrics" || item.type === undefined || item.type === "text" || item.type === "timer")}
                                 <Textbox
                                     {item}
                                     {ratio}

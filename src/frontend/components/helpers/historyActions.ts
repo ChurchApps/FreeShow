@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePopup, activeShow, alertMessage, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, shows, showsCache, templates } from "../../stores"
 import { clone } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
 import { _updaters } from "./historyHelpers"
@@ -539,6 +539,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 let template = clone(get(templates)[templateId])
                 updateSlidesWithTemplate(template)
             }
+
+            // update cached show
+            cachedShowsData.update((a) => {
+                a[data.remember.showId].template.slidesUpdated = true
+                return a
+            })
 
             if (!initializing) return
 

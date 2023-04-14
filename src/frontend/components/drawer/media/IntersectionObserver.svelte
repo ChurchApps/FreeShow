@@ -1,41 +1,40 @@
 <script lang="ts">
-  import { onMount } from "svelte"
+    import { onMount } from "svelte"
 
-  export let once: boolean = false
-  export let top: number = 0
-  export let bottom: number = 0
-  export let left: number = 0
-  export let right: number = 0
+    export let once: boolean = false
+    export let top: number = 0
+    export let bottom: number = 0
+    export let left: number = 0
+    export let right: number = 0
 
-  let intersecting: boolean = false
-  let container: any
+    let intersecting: boolean = false
+    let container: any
 
-  onMount(() => {
-    if (typeof IntersectionObserver !== "undefined") {
-      const rootMargin = `${bottom}px ${left}px ${top}px ${right}px`
+    onMount(() => {
+        if (typeof IntersectionObserver === "undefined") return false
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          intersecting = entries[0].isIntersecting
-          if (intersecting && once) observer.unobserve(container)
-        },
-        { rootMargin }
-      )
+        const rootMargin = `${bottom}px ${left}px ${top}px ${right}px`
 
-      observer.observe(container)
-      return () => observer.unobserve(container)
-    }
-    return false
-  })
+        const observer = new IntersectionObserver(
+            (entries) => {
+                intersecting = entries[0].isIntersecting
+                if (intersecting && once) observer.unobserve(container)
+            },
+            { rootMargin }
+        )
+
+        observer.observe(container)
+        return () => observer.unobserve(container)
+    })
 </script>
 
 <div class={$$props.class} bind:this={container}>
-  <slot {intersecting} />
+    <slot {intersecting} />
 </div>
 
 <style>
-  div {
-    width: 100%;
-    height: 100%;
-  }
+    div {
+        width: 100%;
+        height: 100%;
+    }
 </style>

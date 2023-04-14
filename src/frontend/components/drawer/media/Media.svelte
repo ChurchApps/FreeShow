@@ -1,10 +1,12 @@
 <script lang="ts">
+    import VirtualList from "@sveltejs/svelte-virtual-list"
+    import { Grid } from "svelte-virtual"
     import { READ_FOLDER } from "../../../../types/Channels"
     import { activeShow, dictionary, media, mediaFolders, mediaOptions } from "../../../stores"
-    import { splitPath } from "../../helpers/get"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaType, isMediaExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
+    import { splitPath } from "../../helpers/get"
+    import { getMediaType, isMediaExtension } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Folder from "./Folder.svelte"
@@ -22,18 +24,7 @@
 
     // TODO: fix name...!!
     $: console.log(active, ":", rootPath, ":", path, ":", name)
-    $: name =
-        active === "all"
-            ? "category.all"
-            : active === "favourites"
-            ? "category.favourites"
-            : active === "pixabay"
-            ? "Pixabay"
-            : rootPath === path
-            ? active !== null
-                ? $mediaFolders[active]?.name || ""
-                : ""
-            : splitPath(path).name
+    $: name = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : active === "pixabay" ? "Pixabay" : rootPath === path ? (active !== null ? $mediaFolders[active]?.name || "" : "") : splitPath(path).name
 
     async function loadFilesAsync() {
         fullFilteredFiles = []
@@ -199,6 +190,9 @@
             }, 200)
         }
     }
+
+    let gridHeight
+    let gridWidth
 </script>
 
 <!-- TODO: download pixabay images!!! -->
@@ -210,18 +204,34 @@
 <!-- TODO: autoscroll -->
 <!-- TODO: ctrl+arrow keys change drawer item... -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
-    <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
+    <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;" bind:clientHeight={gridHeight} bind:clientWidth={gridWidth}>
         {#if fullFilteredFiles.length}
             {#key rootPath}
                 {#key path}
-                    {#each fullFilteredFiles as file}
-                        {#if file.folder}
-                            <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
-                        {:else}
-                            <!-- if slowLoader > i -->
-                            <Media name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
-                        {/if}
-                    {/each}
+                    {#if $mediaOptions.mode === "grid"}
+                        <Grid
+                            itemCount={fullFilteredFiles.length}
+                            itemHeight={gridWidth / $mediaOptions.columns / 1.777 + 25}
+                            itemWidth={gridWidth / $mediaOptions.columns - ($mediaOptions.columns > 8 || $mediaOptions.columns < 4 ? 12 - $mediaOptions.columns : 3)}
+                            height={gridHeight - 1}
+                        >
+                            <div slot="item" let:index let:style {style}>
+                                {#if fullFilteredFiles[index].folder}
+                                    <Folder bind:rootPath={path} name={fullFilteredFiles[index].name} path={fullFilteredFiles[index].path} mode={$mediaOptions.mode} />
+                                {:else}
+                                    <Media name={fullFilteredFiles[index].name} path={fullFilteredFiles[index].path} type={getMediaType(fullFilteredFiles[index].extension)} bind:activeFile {allFiles} {active} />
+                                {/if}
+                            </div>
+                        </Grid>
+                    {:else}
+                        <VirtualList items={fullFilteredFiles} let:item={file}>
+                            {#if file.folder}
+                                <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
+                            {:else}
+                                <Media name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
+                            {/if}
+                        </VirtualList>
+                    {/if}
                 {/key}
             {/key}
         {:else}
@@ -269,18 +279,10 @@
     >
         <Icon size={1.3} id={$mediaOptions.mode} white />
     </Button>
-    <Button
-        disabled={$mediaOptions.columns >= 10}
-        on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })}
-        title={$dictionary.actions?.zoomOut}
-    >
+    <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title={$dictionary.actions?.zoomOut}>
         <Icon size={1.3} id="remove" white />
     </Button>
-    <Button
-        disabled={$mediaOptions.columns <= 2}
-        on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })}
-        title={$dictionary.actions?.zoomIn}
-    >
+    <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn}>
         <Icon size={1.3} id="add" white />
     </Button>
     <p class="text">{(100 / $mediaOptions.columns).toFixed()}%</p>
@@ -298,9 +300,25 @@
         flex: 1;
         /* gap: 10px;
     padding: 10px; */
-        padding: 5px;
+        /* padding: 5px; */
         place-content: flex-start;
     }
+
+    .grid :global(svelte-virtual-list-viewport) {
+        width: 100%;
+    }
+
+    /* .grid :global(svelte-virtual-list-viewport) {
+        height: initial;
+        width: 100%;
+    }
+    .grid :global(svelte-virtual-list-contents) {
+        display: flex;
+        flex-wrap: wrap;
+        flex: 1;
+        padding: 5px;
+        place-content: flex-start;
+    } */
 
     .text {
         opacity: 0.8;

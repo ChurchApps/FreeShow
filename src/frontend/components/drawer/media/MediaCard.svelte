@@ -78,6 +78,7 @@
     class="context #media_card"
     style="width: {$mediaOptions.mode === 'grid' ? 100 : 100 / $mediaOptions.columns}%;"
     mode={$mediaOptions.mode}
+    width={100}
     changed={!!filter.length || flipped}
     preview={$activeShow?.id === path}
     outlineColor={findMatchingOut(path, $outputs)}
@@ -94,6 +95,7 @@
     on:mousemove={move}
 >
     <SelectElem id="media" data={{ name, path, type }} draggable fill>
+        <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
         <IntersectionObserver class="observer" once let:intersecting>
             {#if intersecting}
                 <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} />

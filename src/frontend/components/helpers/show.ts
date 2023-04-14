@@ -1,6 +1,8 @@
 import { get } from "svelte/store"
-import type { Slide } from "../../../types/Show"
-import { activeShow, dictionary, groups, shows } from "../../stores"
+import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
+import { activeShow, cachedShowsData, dictionary, groups, shows, sortedShowsList } from "../../stores"
+import { keysToID, removeValues, sortObject } from "./array"
+import { GetLayout } from "./get"
 
 // check if name exists and add number
 export function checkName(name: string = "") {
@@ -65,4 +67,42 @@ export function newSlide(data: any): Slide {
         items: [],
         ...data,
     }
+}
+
+// update list for drawer
+export function updateShowsList(shows: { [key: string]: Shows }) {
+    // sort shows in alphabeticly order & remove private shows
+    let sortedShows: ShowList[] = removeValues(sortObject(keysToID(shows), "name"), "private", true)
+    sortedShowsList.set(sortedShows)
+}
+
+// update cached shows
+export function updateCachedShows(shows: Shows) {
+    let cachedShows = {}
+    Object.entries(shows).forEach(([id, show]) => {
+        cachedShows[id] = updateCachedShow(id, show)
+    })
+    cachedShowsData.set(cachedShows)
+}
+
+// update cached show
+export function updateCachedShow(id: string, show: Show) {
+    console.log(id, show)
+
+    let layout = GetLayout(id)
+    // $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
+    // let layout = _show(id).layouts(activeLayout).ref()[0]
+
+    let endIndex = -1
+    if (layout.length) {
+        let lastEnabledSlide: number = layout.findIndex((a) => a.end === true && a.disabled !== true)
+        if (lastEnabledSlide >= 0) endIndex = lastEnabledSlide
+    }
+
+    let template = {
+        id: show?.settings?.template,
+        slidesUpdated: cachedShowsData[id]?.template?.slidesUpdated || false,
+    }
+
+    return { layout, endIndex, template }
 }

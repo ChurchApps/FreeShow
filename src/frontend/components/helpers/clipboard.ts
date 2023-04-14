@@ -34,9 +34,9 @@ export function paste(clip: any = null, extraData: any = {}) {
     let activeElem: any = document.activeElement
     console.log(activeElem?.classList)
     // activeElem.tagName !== "BODY"
-    // if (clip.id === null || activeElem?.classList?.contains(".edit")) {
+    // if (clip.id === null || activeElem?.classList?.contains("edit")) {
     if (clip.id === null) {
-        if (!activeElem?.classList?.contains(".edit")) return
+        if (!activeElem?.classList?.contains("edit")) return
         navigator.clipboard.readText().then((clipText: string) => {
             // TODO: insert at caret pos
             // TODO: paste properly in textbox
@@ -86,6 +86,11 @@ export function duplicate(data: any = {}) {
 
 export function selectAll(data: any = {}) {
     let newSelection: any[] = []
+
+    if (document.activeElement?.classList?.contains("edit")) {
+        // TODO: select all text
+        return
+    }
 
     if (!data.id && get(selected)) data = get(selected)
 

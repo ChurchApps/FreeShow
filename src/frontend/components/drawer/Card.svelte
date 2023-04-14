@@ -11,6 +11,7 @@
     export let outlineColor: string | null = null
     export let label: string
     export let title: string = ""
+    export let width: number = 0
     export let icon: null | string = null
     export let color: null | string = null
     export let white: boolean = true
@@ -18,18 +19,11 @@
     export let mode: "grid" | "list" | "lyrics" = "grid"
     export let resolution: Resolution = getResolution(null, $outputs)
     $: resolution = getResolution(resolution, $outputs)
+    $: mainWidth = width || (mode === "grid" ? 100 / $mediaOptions.columns : 100)
 </script>
 
 <!-- display: table; -->
-<div
-    class="main"
-    style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mode === 'grid'
-        ? 100 / $mediaOptions.columns
-        : 100}%;"
-    class:preview
-    class:active
-    class:changed
->
+<div class="main" style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mainWidth}%;" class:preview class:active class:changed>
     <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:click on:dblclick>
         {#if preview}
             <div class="overlay" />

@@ -65,6 +65,7 @@ import { listen } from "./messages"
 import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
+import { listenForUpdates } from "./listeners"
 
 export function startup() {
     loaded.set(false)
@@ -92,6 +93,7 @@ function startupMain() {
     })
 
     setTimeout(() => {
+        listenForUpdates()
         listen()
     }, 3000)
 }

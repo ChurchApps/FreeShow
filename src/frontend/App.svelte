@@ -148,10 +148,15 @@
                 return
             }
 
-            if (e.key !== "s" && document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key)) return
+            // if (e.key !== "s" && document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key))
+
+            // ! comment for testing on non mac computers
+            if ($os.platform !== "darwin" && document.activeElement?.classList?.contains("edit")) return
+            // e.preventDefault() // ???
 
             if (ctrlKeys[e.key]) {
-                if (ctrlKeys[e.key](e)) e.preventDefault()
+                // if (!["c", "v", "x"].includes(e.key) && document.activeElement?.classList?.contains("edit")) e.preventDefault()
+                ctrlKeys[e.key](e)
             }
             return
         }

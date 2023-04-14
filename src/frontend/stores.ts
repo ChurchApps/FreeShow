@@ -8,7 +8,7 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, DefaultProjectNames, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Themes } from "../types/Settings"
-import type { ID, MidiIn, Overlays, Shows, Templates, Timer, Transition } from "../types/Show"
+import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
 import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Outputs } from "./../types/Output"
@@ -58,6 +58,10 @@ export const slideTimers: Writable<{ [key: string]: any }> = writable({})
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
+
+// CACHE
+export const sortedShowsList: Writable<ShowList[]> = writable([])
+export const cachedShowsData: Writable<any> = writable({})
 
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })

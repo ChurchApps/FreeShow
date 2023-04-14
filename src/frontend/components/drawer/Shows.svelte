@@ -1,7 +1,8 @@
 <script lang="ts">
-    import type { Show } from "../../../types/Show"
-    import { activePopup, activeProject, activeShow, dictionary, shows, textCache } from "../../stores"
-    import { keysToID, removeValues, sortObject, sortObjectNumbers } from "../helpers/array"
+    import VirtualList from "@sveltejs/svelte-virtual-list"
+    import type { ShowList } from "../../../types/Show"
+    import { activePopup, activeProject, activeShow, dictionary, sortedShowsList, textCache } from "../../stores"
+    import { sortObjectNumbers } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -84,19 +85,11 @@
         return Math.min(sum, 100)
     }
 
-    // sort shows in alphabeticly order
-    let showsSorted: any
-    shows.subscribe((s) => {
-        showsSorted = removeValues(sortObject(keysToID(s), "name"), "private", true)
-        // TODO: remove category if it does not exist!
-    })
-    interface ShowId extends Show {
-        id: string
-        match?: number
-    }
-    let filteredShows: ShowId[]
+    $: showsSorted = $sortedShowsList
+
+    let filteredShows: ShowList[]
     let filteredStored: any
-    $: filteredStored = filteredShows = showsSorted.filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
+    $: filteredStored = filteredShows = active === "all" ? showsSorted : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && s.category === null))
 
     export let firstMatch: null | any = null
     $: {
@@ -106,7 +99,7 @@
                 let match = search(s)
                 if (match) filteredShows.push({ ...s, match })
             })
-            filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowId[]
+            filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowList[]
             firstMatch = filteredShows[0] || null
         } else {
             filteredShows = filteredStored
@@ -191,39 +184,15 @@
             <!-- {#each filteredShows as show}
         <button>{show.name}</button>
       {/each} -->
-            {#each filteredShows as show}
-                <!-- async loading -->
-                <!-- {#await import("../system/SelectElem.svelte") then c}
-          <svelte:component
-            this={c.default}
-            id="show_drawer"
-            data={{ id: show.id }}
-            draggable
-          >
-            {#if searchValue.length <= 1 || show.match}
-              {#await import("../inputs/ShowButton.svelte") then c}
-                <svelte:component
-                  this={c.default}
-                  id={show.id}
-                  {show}
-                  data={dateToString(
-                    show.timestamps.created,
-                    true,
-                    $dictionary
-                  )}
-                  class="#drawer_show_button__drawer_show"
-                  match={show.match || null}
-                />
-              {/await}
-            {/if}
-          </svelte:component>
-        {/await} -->
+
+            <VirtualList items={filteredShows} let:item={show}>
                 <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
                     {#if searchValue.length <= 1 || show.match}
                         <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true, $dictionary)} class="#drawer_show_button__drawer_show" match={show.match || null} />
                     {/if}
                 </SelectElem>
-            {/each}
+            </VirtualList>
+
             <!-- TODO: not updating values on activeSubTab change -->
             {#if searchValue.length > 1 && totalMatch === 0}
                 <Center size={1.2} faded><T id="empty.search" /></Center>
