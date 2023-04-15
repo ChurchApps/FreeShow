@@ -11,6 +11,7 @@ import {
     drawTool,
     events,
     folders,
+    groups,
     mediaFolders,
     midiIn,
     openedFolders,
@@ -136,5 +137,10 @@ export function listenForUpdates() {
             a[data.id] = updateCachedShow(data.id, show)
             return a
         })
+    })
+
+    groups.subscribe(() => {
+        // TODO: only update groups, not all the other values
+        updateCachedShows(get(showsCache))
     })
 }

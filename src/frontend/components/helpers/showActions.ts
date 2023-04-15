@@ -34,6 +34,7 @@ export function checkInput(e: any) {
         let shows = get(projects)[get(activeProject)!].shows
         let index: null | number = get(activeShow)?.index !== undefined ? get(activeShow)!.index! : null
         let newIndex: number = keys[e.key](index, shows)
+        if (!shows[newIndex]) return
 
         // show
         if (get(showsCache)[shows[newIndex].id]) swichProjectItem(newIndex, shows[newIndex].id)
@@ -108,10 +109,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // TODO: active show slide index on delete......
 
     // go to beginning if live mode & ctrl | no output | last slide active
-    if (
-        get(activeShow) &&
-        (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))
-    ) {
+    if (get(activeShow) && (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))) {
         let id = loop ? slide!.id : get(activeShow)!.id
         if (!id) return
 

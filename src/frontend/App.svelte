@@ -191,6 +191,17 @@
             setTimeout(() => (closeAd = false), 10)
         }
     })
+
+    // disable main content quickly after leaving "draw" page to adress svelte transition bug.
+    // let previousPage = ""
+    // let hideContent: boolean = false
+    // $: if (page) {
+    //     if (previousPage === "draw") {
+    //         hideContent = true
+    //         setTimeout(() => hideContent = false, 10)
+    //     }
+    //     previousPage = page
+    // }
 </script>
 
 <svelte:window on:keydown={keydown} />

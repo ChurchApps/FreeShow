@@ -31,10 +31,16 @@
             return a
         })
     }
+
+    function keydown(e: any) {
+        if (e.key !== "Enter") return
+
+        (document.activeElement as any)?.blur()
+    }
 </script>
 
 {#key section}
-    <h4 id="sectionTitle"><TextInput value={section?.name || ""} on:change={updateName} /></h4>
+    <h4 id="sectionTitle"><TextInput value={section?.name || ""} on:change={updateName} on:keydown={keydown} /></h4>
 
     <Notes value={note} on:edit={edit} />
 {/key}

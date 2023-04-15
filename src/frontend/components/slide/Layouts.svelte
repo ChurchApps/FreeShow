@@ -116,6 +116,12 @@
         /* box-shadow: 0px -2px 2px rgb(0 0 0 / 40%); */
     }
 
+    /* fixed height for consistent heights */
+    div :global(button) {
+        min-height: 35px;
+        padding: 0.2em 0.8em !important;
+    }
+
     .text {
         opacity: 0.8;
         text-align: right;

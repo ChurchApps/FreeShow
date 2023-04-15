@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeShow, showsCache } from "../../stores"
-    import { GetLayout } from "../helpers/get"
+    import { activeEdit, activeShow, cachedShowsData, showsCache } from "../../stores"
     import { findMatchingOut } from "../helpers/output"
     import T from "../helpers/T.svelte"
     import Slide from "../slide/Slide.svelte"
@@ -29,9 +28,10 @@
 
     // let layoutSlides: SlideData[] = []
     // $: layoutSlides = GetLayout($activeShow!.id)
-    $: activeLayout = $showsCache[$activeShow!.id]?.settings.activeLayout
+    // $: activeLayout = $showsCache[$activeShow!.id]?.settings.activeLayout
     // TODO: not getting parent color at first
-    $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
+    // $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
+    $: layoutSlides = $cachedShowsData[$activeShow!.id]?.layout || []
 
     function keydown(e: any) {
         if (e.altKey) {
@@ -89,6 +89,33 @@
     function keyup() {
         altKeyPressed = false
     }
+
+    // lazy loader
+
+    let lazyLoader: number = 1
+    let timeout: any = null
+    let loaded: boolean = false
+
+    // reset loading when changing view modes
+    $: if ($activeShow?.id) loaded = false
+
+    $: if (!loaded && layoutSlides?.length) {
+        lazyLoader = 1
+        startLazyLoader()
+    }
+
+    function startLazyLoader() {
+        if (lazyLoader >= layoutSlides.length || lazyLoader > 200) {
+            loaded = true
+            return
+        }
+        if (timeout) clearTimeout(timeout)
+
+        timeout = setTimeout(() => {
+            lazyLoader++
+            startLazyLoader()
+        }, 10)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
@@ -97,7 +124,7 @@
     {#if layoutSlides.length}
         <div class="grid" on:wheel={wheel}>
             {#each layoutSlides as slide, i}
-                {#if currentShow.slides[slide.id]}
+                {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id]}
                     <Slide
                         slide={currentShow.slides[slide.id]}
                         show={currentShow}

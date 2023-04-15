@@ -145,5 +145,6 @@
     .main :global(button) {
         width: 100%;
         justify-content: space-between;
+        padding: 0.15em 0.8em;
     }
 </style>

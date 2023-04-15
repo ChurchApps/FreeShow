@@ -135,56 +135,13 @@
             if (id) activeShow.set({ id, type: "show" })
         }
     }
-
-    // DEBUG
-
-    // let timeout: any = null
-    // let hidden: boolean = false
-    // drawer.subscribe((a) => {
-    //   hidden = true
-    //   if (timeout) clearTimeout(timeout)
-    //   timeout = setTimeout(() => {
-    //     if (a.height > 40) hidden = false
-    //   }, 100)
-    // })
-
-    //
-
-    // it's very laggy with "just" 3500 songs
-    // let duplicated = false
-    // $: if (filteredShows.length && !duplicated) {
-    //   duplicated = true
-    //   filteredShows = [...filteredShows, ...filteredShows, ...filteredShows, ...filteredShows, ...filteredShows]
-    // }
-
-    //
-
-    // let textHTML = ""
-
-    // $: if (filteredShows.length) loopThrough()
-
-    // function loopThrough(index: number = 0) {
-    //   if (index === 0) textHTML = ""
-    //   textHTML += "<button>" + filteredShows[index].name + "</button>"
-    //   index++
-    //   if (index < filteredShows.length) loopThrough(index)
-    // }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
-    <!-- class:hidden -->
     <div class="column context #drawer_show">
-        <!-- && $drawer.height > 40 -->
         {#if filteredShows.length}
-            <!-- {@html textHTML} -->
-            <!-- plain buttons work much better... -->
-            <!-- TODO: optimize components -->
-            <!-- {#each filteredShows as show}
-        <button>{show.name}</button>
-      {/each} -->
-
             <VirtualList items={filteredShows} let:item={show}>
                 <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
                     {#if searchValue.length <= 1 || show.match}

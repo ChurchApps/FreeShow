@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
-import { activeShow, cachedShowsData, dictionary, groups, shows, sortedShowsList } from "../../stores"
-import { keysToID, removeValues, sortObject } from "./array"
+import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sortedShowsList } from "../../stores"
+import { clone, keysToID, removeValues, sortObject } from "./array"
 import { GetLayout } from "./get"
 
 // check if name exists and add number
@@ -88,6 +88,7 @@ export function updateCachedShows(shows: Shows) {
 // update cached show
 export function updateCachedShow(id: string, show: Show) {
     console.log(id, show)
+    if (!show) return
 
     let layout = GetLayout(id)
     // $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
@@ -100,9 +101,46 @@ export function updateCachedShow(id: string, show: Show) {
     }
 
     let template = {
-        id: show?.settings?.template,
+        id: show.settings?.template,
         slidesUpdated: cachedShowsData[id]?.template?.slidesUpdated || false,
     }
 
-    return { layout, endIndex, template }
+    // create groups
+    let showSlides = clone(show.slides || {})
+    let addedGroups: any = {}
+    let showGroups: any[] = Object.entries(showSlides).map(createGroups)
+    function createGroups([slideId, slide]) {
+        // update if global group
+        if (slide.globalGroup && get(groups)[slide.globalGroup]) {
+            let oldGroup = clone({ group: slide.group, color: slide.color })
+
+            slide.group = get(groups)[slide.globalGroup].name
+            // get translated name
+            if (get(groups)[slide.globalGroup].default) slide.group = get(dictionary).groups?.[slide.group] || slide.group
+            slide.color = get(groups)[slide.globalGroup].color
+
+            // update local group
+            if (JSON.stringify(oldGroup) !== JSON.stringify({ group: slide.group, color: slide.color })) {
+                showsCache.update((a) => {
+                    a[id].slides[slideId].group = slide.group
+                    a[id].slides[slideId].color = slide.color
+                    return a
+                })
+            }
+        }
+
+        if (!slide.group || !get(groupNumbers)) return { id, ...slide }
+
+        // add numbers to different slides with same name
+        if (addedGroups[slide.group]) {
+            addedGroups[slide.group]++
+            slide.group += " " + addedGroups[slide.group]
+        } else addedGroups[slide.group] = 1
+
+        return { id, ...slide }
+    }
+    // sort groups by name
+    let sortedGroups = showGroups.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group?.localeCompare(b.group))
+
+    return { layout, endIndex, template, groups: sortedGroups }
 }

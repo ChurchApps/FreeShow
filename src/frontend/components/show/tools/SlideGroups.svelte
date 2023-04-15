@@ -1,44 +1,12 @@
 <script lang="ts">
-    import { activeShow, dictionary, fullColors, groupNumbers, groups, selected, showsCache } from "../../../stores"
+    import { activeShow, cachedShowsData, dictionary, fullColors, groups, selected } from "../../../stores"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
-    let slides: any[] = []
-    $: {
-        let added: any = {}
-        slides = Object.entries(JSON.parse(JSON.stringify($showsCache[$activeShow!.id]?.slides || {}))).map(([id, slide]: any) => {
-            // add global group
-            if (slide.globalGroup && $groups[slide.globalGroup]) {
-                let old = { group: slide.group, color: slide.color }
-                if ($groups[slide.globalGroup].default) slide.group = $dictionary.groups?.[$groups[slide.globalGroup].name] || $groups[slide.globalGroup].name
-                else slide.group = $groups[slide.globalGroup].name
-                slide.color = $groups[slide.globalGroup].color
-
-                // update local group
-                if (JSON.stringify(old) !== JSON.stringify({ group: slide.group, color: slide.color })) {
-                    showsCache.update((a) => {
-                        a[$activeShow!.id].slides[id].group = slide.group
-                        a[$activeShow!.id].slides[id].color = slide.color
-                        return a
-                    })
-                }
-            }
-            // add numbers to different slides with same name
-            if (slide.group && $groupNumbers) {
-                if (added[slide.group]) {
-                    added[slide.group]++
-                    slide.group += " " + added[slide.group]
-                } else added[slide.group] = 1
-            }
-            return { id, ...slide }
-        })
-    }
-
-    $: sortedSlides = slides.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group?.localeCompare(b.group))
-    // $: sortedSlides = slides.filter((a) => a.group !== null).sort((a: any, b: any) => (a.group > b.group ? 1 : b.group > a.group ? -1 : 0))
+    $: showGroups = $cachedShowsData[$activeShow!.id]?.groups || []
 
     $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
         let name = group.name
@@ -54,8 +22,8 @@
 <div style="display: flex;padding: 10px;height: 100%;">
     <div class="main">
         <h4><T id="groups.current" /></h4>
-        {#if sortedSlides.length}
-            {#each sortedSlides as slide}
+        {#if showGroups.length}
+            {#each showGroups as slide}
                 <SelectElem id="group" data={{ id: slide.id }} draggable>
                     <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                     <div
@@ -138,6 +106,7 @@
     h4 {
         overflow: visible;
         text-align: center;
+        color: var(--text);
     }
 
     .seperator {

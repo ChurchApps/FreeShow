@@ -106,16 +106,25 @@
         })
     }
 
+    // lazy loader
+
     let lazyLoader: number = 1
     let timeout: any = null
+    let loaded: boolean = false
 
-    $: if (layoutSlides?.length) {
+    // reset loading when changing view modes
+    $: if (id || activeLayout) loaded = false
+
+    $: if (!loaded && layoutSlides?.length) {
         lazyLoader = 1
         startLazyLoader()
     }
 
     function startLazyLoader() {
-        if (lazyLoader >= layoutSlides.length) return
+        if (lazyLoader >= layoutSlides.length || lazyLoader > 200) {
+            loaded = true
+            return
+        }
         if (timeout) clearTimeout(timeout)
 
         timeout = setTimeout(() => {
@@ -147,7 +156,7 @@
                     <!-- {#each Object.values($showsCache[id].slides) as slide, i} -->
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if i < lazyLoader && currentShow.slides[slide.id]}
+                            {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id]}
                                 <Slide
                                     slide={currentShow.slides[slide.id]}
                                     show={currentShow}
