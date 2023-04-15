@@ -13,7 +13,7 @@
     $: uHistory = [INITIAL, ...$undoHistory].reverse()
 
     const historyIdToString = {
-        SAVE: "Saved",
+        // SAVE: "Saved",
         initial: "Initial state",
         // NEW
         // STAGE
@@ -22,6 +22,7 @@
         SLIDES: "Updated slides",
         TEMPLATE: "Changed template",
         SHOW_LAYOUT: "Updated show layout",
+        SHOW_ITEMS: "Updated show items",
         // UPDATE
         UPDATE_stage: "Updated stage show",
         UPDATE_project: "Updated project",
@@ -103,8 +104,7 @@
         {@const itemId = getItemId(item)}
         <Button on:click={() => callRedo(i)} style="opacity: 0.5;">
             <p>
-                <span>
-                    {#if item.id === "SAVE"}<Icon id="save" />{/if}
+                <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
                     {historyIdToString[itemId] || itemId}
                 </span>
                 <!-- TODO: get clock as well: -->
@@ -116,8 +116,7 @@
         {@const itemId = getItemId(item)}
         <Button on:click={() => callUndo(i - 1)} outline={i === 0}>
             <p>
-                <span>
-                    {#if item.id === "SAVE"}<Icon id="save" />{/if}
+                <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
                     {historyIdToString[itemId] || itemId}
                 </span>
                 <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>

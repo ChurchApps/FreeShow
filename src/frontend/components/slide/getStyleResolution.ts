@@ -22,8 +22,6 @@ export function getStyleResolution(resolution: Resolution, width: any, height: a
         }
     }
 
-    console.log(style)
-
     // zoom
     if (zoom) {
         if (style.width) {

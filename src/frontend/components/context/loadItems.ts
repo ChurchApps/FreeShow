@@ -33,6 +33,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
             let actions = [
                 { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
                 { id: "sendMidi", label: "actions.send_midi", icon: "music" },
+                { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
                 { id: "startTimer", label: "actions.start_timer", icon: "timer", enabled: currentActions?.startTimer || false },
                 { id: "stopTimers", label: "actions.stop_timers", icon: "stop", enabled: currentActions?.stopTimers || false },
                 { id: "clearBackground", label: "clear.background", icon: "background", enabled: currentActions?.clearBackground || false },

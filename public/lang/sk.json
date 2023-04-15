@@ -397,6 +397,7 @@
         "send_midi": "Poslať MIDI",
         "start_timer": "Spustiť časovať",
         "stop_timers": "Zastaviť aktívne časovače",
+        "next_after_media": "Next after media",
         "remove_media": "Odstrániť médium"
     },
     "export": {

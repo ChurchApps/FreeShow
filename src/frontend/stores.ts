@@ -82,7 +82,7 @@ export const os: Writable<any> = writable({ platform: "", name: "Computer" }) //
 // HISTORY
 export const undoHistory: Writable<History[]> = writable([])
 export const redoHistory: Writable<History[]> = writable([])
-export const historyCacheCount: Writable<number> = writable(100)
+export const historyCacheCount: Writable<number> = writable(250)
 
 // SHOW
 export const shows: Writable<any> = writable({}) // {default}

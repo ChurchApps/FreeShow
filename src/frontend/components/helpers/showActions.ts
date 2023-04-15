@@ -80,78 +80,87 @@ function getOutputWithLines() {
     return Number(l) || 0
 }
 
-export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, outputId: string | null = null) {
+export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null) {
     if (get(outLocked) && !bypassLock) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-    if (outputId) currentOutput = get(outputs)[outputId]
-    console.log(currentOutput)
-    let slide: null | OutSlide = currentOutput.out?.slide || null
-    console.log(slide)
+    let outputIds = customOutputId ? [customOutputId] : getActiveOutputs()
+    outputIds.forEach(triggerInOutput)
 
-    // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
-    let layout: any[] = _show(slide ? slide.id : "active")
-        .layouts(slide ? [slide.layout] : "active")
-        .ref()[0]
-    let isLastSlide: boolean = slide && layout ? slide.index === layout.length - 1 && !layout[slide.index].end : false
-    let index: null | number = null
+    // let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    // if (customOutputId) currentOutput = get(outputs)[customOutputId]
 
-    // lines
-    let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
-    let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
-    let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout[slide.index].id]).get()[0] : null
-    let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-    let currentLineStart: number = slideLines ? slideLines - (amountOfLinesToShow! % slideLines) : 0
-    let hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : slideLines <= amountOfLinesToShow || amountOfLinesToShow! * linesIndex >= currentLineStart
-    if (isLastSlide && !hasLinesEnded) isLastSlide = false
+    function triggerInOutput(outputId: string) {
+        let currentOutput: any = get(outputs)[outputId]
+        let slide: null | OutSlide = currentOutput.out?.slide || null
+        console.log(slide)
 
-    // TODO: active show slide index on delete......
+        // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
+        let layout: any[] = _show(slide ? slide.id : "active")
+            .layouts(slide ? [slide.layout] : "active")
+            .ref()[0]
+        let isLastSlide: boolean = slide && layout ? slide.index === layout.length - 1 && !layout[slide.index].end : false
+        let index: null | number = null
 
-    // go to beginning if live mode & ctrl | no output | last slide active
-    if (get(activeShow) && (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))) {
-        let id = loop ? slide!.id : get(activeShow)!.id
-        if (!id) return
+        // lines
+        let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
+        let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
+        let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout[slide.index].id]).get()[0] : null
+        let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
+        let currentLineStart: number = slideLines ? slideLines - (amountOfLinesToShow! % slideLines) : 0
+        let hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : slideLines <= amountOfLinesToShow || amountOfLinesToShow! * linesIndex >= currentLineStart
+        if (isLastSlide && !hasLinesEnded) isLastSlide = false
 
-        // layout = GetLayout()
-        layout = _show(id).layouts("active").ref()[0]
-        if (!layout?.filter((a) => !a.data.disabled).length) return
+        // TODO: active show slide index on delete......
 
-        index = 0
-        while (layout[index].data.disabled) index++
+        // go to beginning if live mode & ctrl | no output | last slide active
+        if (get(activeShow) && (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))) {
+            let id = loop ? slide!.id : get(activeShow)!.id
+            if (!id) return
 
-        // console.log(id, layout, index)
-        setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, outputId)
-        updateOut(id, index, layout, true, outputId)
-        return
-    }
+            // layout = GetLayout()
+            layout = _show(id).layouts("active").ref()[0]
+            if (!layout?.filter((a) => !a.data.disabled).length) return
 
-    if (!slide || slide.id === "temp") return
+            index = 0
+            while (layout[index].data.disabled) index++
 
-    let newSlideOut: any = { ...slide, line: 0 }
-    if (!hasLinesEnded) {
-        index = slide.index!
-        newSlideOut.line = linesIndex! + 1
-    } else {
-        // TODO: Check for loop to beginning slide...
-        index = getNextEnabled(slide.index!, end)
-    }
-    newSlideOut.index = index
-
-    // go to next show if end
-    if (index === null && get(activeShow)!.id === slide.id && get(showsCache)[get(activeShow)!.id]?.settings.activeLayout === slide.layout) {
-        if (e?.key === " " && get(activeProject)) {
-            let index: number = typeof get(activeShow)?.index === "number" ? get(activeShow)!.index! : -1
-            if (index + 1 < get(projects)[get(activeProject)!].shows.length) index++
-            if (index > -1 && index !== get(activeShow)?.index) activeShow.set({ ...get(projects)[get(activeProject)!].shows[index], index })
+            setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, outputId)
+            updateOut(id, index, layout, !e?.altKey, outputId)
+            return
         }
-        return
-    }
 
-    if (index !== null) {
-        setOutput("slide", newSlideOut, false, outputId)
-        updateOut(slide ? slide.id : "active", index, layout, true, outputId)
+        if (!slide || slide.id === "temp") return
+
+        let newSlideOut: any = { ...slide, line: 0 }
+        if (!hasLinesEnded) {
+            index = slide.index!
+            newSlideOut.line = linesIndex! + 1
+        } else {
+            // TODO: Check for loop to beginning slide...
+            index = getNextEnabled(slide.index!, end)
+        }
+        newSlideOut.index = index
+
+        // go to next show if end
+        if (index === null && get(activeShow)!.id === slide.id && get(showsCache)[get(activeShow)!.id]?.settings.activeLayout === slide.layout) {
+            if (e?.key === " ") goToNextProjectItem()
+            return
+        }
+
+        if (index !== null) {
+            setOutput("slide", newSlideOut, false, outputId)
+            updateOut(slide ? slide.id : "active", index, layout, !e?.altKey, outputId)
+        }
     }
+}
+
+export function goToNextProjectItem() {
+    if (!get(activeProject)) return
+
+    let index: number = typeof get(activeShow)?.index === "number" ? get(activeShow)!.index! : -1
+    if (index + 1 < get(projects)[get(activeProject)!].shows.length) index++
+    if (index > -1 && index !== get(activeShow)?.index) activeShow.set({ ...get(projects)[get(activeProject)!].shows[index], index })
 }
 
 export function previousSlide() {
@@ -239,8 +248,8 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     if (!extra || !data) return
 
     // get output slide
-    let outs = getActiveOutputs()
-    let l = outs.find((id: string) => get(outputs)[id].show?.lines)
+    let outputIds = getActiveOutputs()
+    let l = outputIds.find((id: string) => get(outputs)[id].show?.lines)
     // don't trigger actions if same slide, but different outputted line
     if (l && get(outputs)[l]?.out?.slide?.line && get(outputs)[l].out!.slide!.line! > 0) return
 
@@ -292,8 +301,9 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
 
     // nextTimer
     // clear any active slide timers
+    if (outputId) outputIds = [outputId]
     Object.keys(get(slideTimers)).forEach((id) => {
-        if (outs.includes(id)) get(slideTimers)[id].timer?.clear()
+        if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
     })
 
     if ((data.nextTimer || 0) > 0) {
@@ -307,6 +317,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     // actions
     if (data.actions) {
         if (data.actions.sendMidi) sendMidi(_show(id).get("midi")[data.actions.sendMidi])
+        // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.startTimer) playSlideTimers({ showId: id, slideId: layout[index].id })
         if (data.actions.stopTimers) activeTimers.set([])
         if (data.actions.clearBackground) setOutput("background", null, false, outputId)

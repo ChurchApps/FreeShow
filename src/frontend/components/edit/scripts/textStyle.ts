@@ -170,7 +170,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
     let style: string = ""
     ;(pos || lines).forEach((_a: any, i: number) => {
         let currentPos: number = 0
-        lines[i]?.text.some((text): any => {
+        lines[i]?.text?.some((text): any => {
             // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
             if (pos && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
                 style = text.style

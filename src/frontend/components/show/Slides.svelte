@@ -115,6 +115,8 @@
     // reset loading when changing view modes
     $: if (id || activeLayout) loaded = false
 
+    // WIP this will refresh each time if slides are activated before loading is finished
+
     $: if (!loaded && layoutSlides?.length) {
         lazyLoader = 1
         startLazyLoader()

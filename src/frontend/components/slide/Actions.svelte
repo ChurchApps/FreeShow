@@ -21,6 +21,7 @@
     const actionsList = [
         { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play", white: true },
         { id: "sendMidi", title: $dictionary.actions?.send_midi, icon: "music", white: true },
+        { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward", white: true },
         { id: "startTimer", title: $dictionary.actions?.start_timer, icon: "timer", white: true },
         { id: "stopTimers", title: $dictionary.actions?.stop_timers, icon: "stop" },
         { id: "clearBackground", title: $dictionary.clear?.background, icon: "background" },

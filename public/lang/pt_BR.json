@@ -397,6 +397,7 @@
         "send_midi": "Send MIDI out",
         "start_timer": "Start timer",
         "stop_timers": "Stop active timers",
+        "next_after_media": "Next after media",
         "remove_media": "Remover mídia"
     },
     "export": {

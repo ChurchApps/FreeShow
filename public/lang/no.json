@@ -397,6 +397,7 @@
         "send_midi": "Send MIDI ut",
         "start_timer": "Start tidtaker",
         "stop_timers": "Stopp pågående tidtakere",
+        "next_after_media": "Neste etter medier",
         "remove_media": "Fjern media"
     },
     "export": {

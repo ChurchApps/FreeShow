@@ -2,16 +2,17 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, currentWindow, overlays, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, currentWindow, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
+    import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
     import { deleteAction } from "../helpers/clipboard"
-    import Icon from "../helpers/Icon.svelte"
+    import { history } from "../helpers/history"
     import { getExtension, getMediaType } from "../helpers/media"
     import { addToPos } from "../helpers/mover"
     import { loadShows } from "../helpers/setShow"
     import { _show } from "../helpers/shows"
-    import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import Textbox from "../slide/Textbox.svelte"
     import Timer from "../slide/views/Timer.svelte"
@@ -19,7 +20,7 @@
     import Movebox from "../system/Movebox.svelte"
     import { getAutoSize } from "./scripts/autoSize"
     import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
-    import { getSelectionRange, setCaret } from "./scripts/textStyle"
+    import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
 
     export let item: Item
     export let ref: {
@@ -289,13 +290,22 @@
     function updateLines(newLines: Line[]) {
         // updateItem = true
         if (!newLines) newLines = getNewLines()
+
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
         else if (ref.id) {
-            _show()
-                .slides([ref.id])
-                .items([index])
-                .set({ key: "lines", values: [newLines] })
+            // dont override history when undoing
+            let lastRedo = $redoHistory[$redoHistory.length - 1]
+            if (lastRedo?.id === "SHOW_ITEMS") {
+                let previousData = lastRedo.oldData.previousData
+
+                let historyText = previousData[index]?.lines.reduce((text, line) => (text += getLineText(line)), "")
+                let linesText = newLines.reduce((text, line) => (text += getLineText(line)), "")
+
+                if (historyText === linesText) return
+            }
+
+            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "edit", override: ref.showId + ref.id + index } })
         }
 
         function setNewLines(a: any) {
@@ -312,7 +322,12 @@
             let align: string = plain ? item.lines![i]?.align || "" : line.getAttribute("style") || ""
             pos++
             currentStyle += align
-            newLines.push({ align, text: [] })
+
+            let newLine: any = { align, text: [] }
+            let chords = item.lines![i].chords
+            if (chords) newLine.chords = chords
+            newLines.push(newLine)
+
             new Array(...line.children).forEach((child: any, j: number) => {
                 let style = plain ? item.lines![i]?.text[j]?.style || "" : child.getAttribute("style") || ""
                 newLines[pos].text.push({ style, value: child.innerText })
@@ -441,7 +456,7 @@ bind:offsetWidth={width} -->
 
         <!-- TODO: remove align..... -->
         <div class="align" class:plain style={plain ? null : item.align || null}>
-            {#if item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
+            {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
                 <span class="placeholder">
                     <T id="empty.text" />
                 </span>

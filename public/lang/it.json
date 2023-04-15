@@ -60,6 +60,7 @@
         "example_note": "Scrivi note qui",
         "watermark": "Filigrana",
         "recording": "Registrazione",
+        "clock": "Clock",
         "rounded": "arrotondato",
         "call": "Videochiamata",
         "header": "Intestazione",
@@ -331,6 +332,7 @@
         "overlay": "Nuova sovrapposizione",
         "template": "Nuovo modello",
         "scripture": "Nuova scrittura",
+        "collection": "New collection",
         "event": "Nuovo evento"
     },
     "show": {
@@ -341,7 +343,8 @@
         "grid": "Vista griglia",
         "list": "Vista elenco",
         "lyrics": "Vista testi",
-        "text": "Modifica testo"
+        "text": "Modifica testo",
+        "update": "Update show"
     },
     "actions": {
         "rename": "Rinomina",
@@ -392,6 +395,9 @@
         "custom_key": "Imposta valore personalizzato",
         "play_on_midi": "Riproduci su ingresso MIDI",
         "send_midi": "Invia MIDI in uscita",
+        "start_timer": "Start timer",
+        "stop_timers": "Stop active timers",
+        "next_after_media": "Next after media",
         "remove_media": "Rimuovi media"
     },
     "export": {

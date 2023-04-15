@@ -667,6 +667,33 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return l
             }
         },
+        SHOW_ITEMS: () => {
+            // change the values of show items
+            let deleting: boolean = !!obj.oldData
+            data = (deleting ? obj.oldData : obj.newData) || {}
+            console.log(obj, deleting)
+
+            let key: string | null = data.key || null
+
+            if (initializing) {
+                data.remember = { showId: get(activeShow)?.id }
+            }
+
+            if (!deleting) {
+                data.previousData = clone(_show(data.remember.showId).slides(data.slides).items(data.items).get()[0])
+
+                _show().slides(data.slides).items(data.items).set({ key, values: data.data })
+            } else {
+                if (!data.previousData) return
+
+                _show().slides(data.slides).items(data.items).set({ values: data.previousData })
+            }
+
+            if (!initializing) return
+
+            if (deleting) obj.oldData = clone(data)
+            else obj.newData = clone(data)
+        },
     }
 
     // function initialize(value: any, { key, index = null }: any) {

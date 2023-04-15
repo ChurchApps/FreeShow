@@ -15,6 +15,7 @@ export type HistoryIDs =
     | "SLIDES"
     | "TEMPLATE"
     | "SHOW_LAYOUT"
+    | "SHOW_ITEMS"
 
     // TODO: remove/update these:
     // edit

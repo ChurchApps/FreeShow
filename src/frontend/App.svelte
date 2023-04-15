@@ -159,12 +159,14 @@
 
             // return if not mac and using shortcuts in inputs (main difference is undo/redo)
             if ($os.platform !== "darwin" && document.activeElement?.classList?.contains("edit")) {
+                // && !["z", "y", "Z"].includes(e.key)
                 if (simulateMac) e.preventDefault()
                 else return
             }
 
             if (ctrlKeys[e.key]) {
-                // if (!["c", "v", "x"].includes(e.key) && document.activeElement?.classList?.contains("edit")) e.preventDefault()
+                // !["c", "v", "x"].includes(e.key) &&
+                // if (($os.platform !== "darwin" && !simulateMac) && !document.activeElement?.classList?.contains(".edit")) e.preventDefault()
                 ctrlKeys[e.key](e)
             }
             return

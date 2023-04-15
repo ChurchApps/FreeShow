@@ -6,6 +6,8 @@
     import Icon from "../../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { nextSlide } from "../../helpers/showActions"
+    import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
 
@@ -43,7 +45,23 @@
     }
 
     // auto clear video on finish
-    $: if (videoTime && videoData.duration && !videoData.paused && videoTime >= videoData.duration && !videoData.loop) {
+    $: if (videoTime && videoData.duration && !videoData.paused && videoTime + 0.1 >= videoData.duration) clearVideo()
+
+    function clearVideo() {
+        // check nextAfterMedia
+        let slideOut = currentOutput.out?.slide
+        if (slideOut) {
+            let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
+            let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
+            if (nextAfterMedia) {
+                videoTime = 0
+                nextSlide(null, false, false, true, true, outputId)
+                return
+            }
+        }
+
+        if (videoData.loop) return
+
         setOutput("background", null)
         videoTime = 0
         send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
