@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld("api", {
     },
     receive: (channel: ValidChannels, func: any) => {
         ipcRenderer.on(channel, (_e, ...args) => {
-            console.log("TO CLIENT [" + channel + "]: ", ...args)
+            if (args[0]?.channel !== "AUDIO_MAIN") console.log("TO CLIENT [" + channel + "]: ", ...args)
             func(...args)
         })
     },

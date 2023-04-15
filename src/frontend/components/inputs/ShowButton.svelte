@@ -101,8 +101,19 @@
             if (slide?.id === id && slide?.index === 0 && slide?.layout === $showsCache[id].settings.activeLayout) return
             setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: 0 })
         } else if (type === "image" || type === "video") {
-            let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, type: type }
-            if (index && $activeProject && $projects[$activeProject].shows[index].filter) out.filter = $projects[$activeProject].shows[index].filter
+            // WIP duplicate of Show.svelte - onVideoClick
+            let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, startAt: 0, type: type }
+            if (index && $activeProject) {
+                let styling = $projects[$activeProject].shows[index]
+                if (styling.filter) out.filter = styling.filter
+                // TODO: flipped, fit
+                // if (styling.flipped) out.flipped = styling.flipped
+                // if (styling.fit) out.fit = styling.fit
+            }
+
+            // remove active slide
+            if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === out.path)) setOutput("slide", null)
+
             setOutput("background", out)
         } else if (type === "audio") playAudio({ path: id, name: show.name })
         else if (type === "player") setOutput("background", { id, type: "player" })

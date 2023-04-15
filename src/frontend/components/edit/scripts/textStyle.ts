@@ -17,11 +17,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
                 if (pos < selection[i].start && pos + length > selection[i].start) from = selection[i].start - pos
                 if (pos < selection[i].end && pos + length > selection[i].end) to = selection[i].end - pos
 
-                if (
-                    (pos < selection[i].start && pos + length > selection[i].start) ||
-                    (pos < selection[i].end && pos + length > selection[i].end) ||
-                    (pos >= selection[i].start && pos + length <= selection[i].end)
-                ) {
+                if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
                     if (from > 0) newText.push({ value: text.value.slice(0, from), style: text.style })
                     if (to - from > 0 && to - from <= length) {
                         let newStyle: string = addStyleString(text.style, style)
@@ -259,11 +255,12 @@ export function getCaretCharacterOffsetWithin(element: any) {
     return caretOffset
 }
 
-export function setCaret(element: any, { line = 0, pos = 0 }) {
+export function setCaret(element: any, { line = 0, pos = 0 }, toEnd: boolean = false) {
     var range = document.createRange()
     var sel = window.getSelection()
 
     let lineElem = element.childNodes[line]
+
     // get child elem
     let childElem = -1
     let currentTextLength = 0
@@ -283,8 +280,21 @@ export function setCaret(element: any, { line = 0, pos = 0 }) {
         currentTextLength = 0
     }
 
+    // get end elem
+    let endElemIndex = element.childNodes.length - 1
+    let lastLineElem = element.childNodes[endElemIndex]
+    while (!lastLineElem.childNodes.length && endElemIndex > 0) {
+        endElemIndex--
+        lastLineElem = element.childNodes[endElemIndex]
+    }
+
+    // get end child elem
+    let lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
+    let currentEndTextLength = lastEndChild.innerText.length
+
     range.setStart(lineElem.childNodes[childElem].childNodes[0], pos - currentTextLength)
-    range.collapse(true)
+    if (toEnd) range.setEnd(lastEndChild.childNodes[0], currentEndTextLength)
+    else range.collapse(true)
 
     sel?.removeAllRanges()
     sel?.addRange(range)

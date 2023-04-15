@@ -230,7 +230,7 @@ export function history(obj: History, undo: null | boolean = null) {
             if (undo === null && (override.includes(obj.id) || obj.location?.override) && uh[uh.length - 1]?.id === obj.id && JSON.stringify(Object.values(uh[uh.length - 1]?.location || {})) === JSON.stringify(Object.values(obj.location || {}))) {
                 // override, but keep previousData!!!
                 let newestData = obj.newData
-                if (newestData.previousData) newestData.previousData = uh[uh.length - 1].newData.previousData
+                if (newestData?.previousData) newestData.previousData = uh[uh.length - 1].newData.previousData
                 uh[uh.length - 1].newData = newestData
                 uh[uh.length - 1].time = Date.now()
             } else {

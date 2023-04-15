@@ -8,12 +8,15 @@ import { clone } from "./array"
 import { history } from "./history"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
+import { pasteText } from "./caretHelper"
+import { setCaret } from "../edit/scripts/textStyle"
 
 export function copy({ id, data }: any = {}, getData: boolean = true) {
     let copy: any = { id, data }
-    if (get(selected).id) copy = get(selected)
+    // if (document.activeElement?.classList?.contains("edit")) copy = {id: null}
+    if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
+    else if (get(selected).id) copy = get(selected)
     else if (get(activeEdit).items.length) copy = { id: "item", data: get(activeEdit) }
-    else if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
 
     if (!copy || !copyActions[copy.id]) return
 
@@ -30,19 +33,15 @@ export function copy({ id, data }: any = {}, getData: boolean = true) {
 
 // pasting text in editbox is it's own function
 export function paste(clip: any = null, extraData: any = {}) {
+    console.log(clip, !clip)
+
     if (!clip) clip = get(clipboard)
     let activeElem: any = document.activeElement
     console.log(activeElem?.classList)
     // activeElem.tagName !== "BODY"
     // if (clip.id === null || activeElem?.classList?.contains("edit")) {
     if (clip.id === null) {
-        if (!activeElem?.classList?.contains("edit")) return
-        navigator.clipboard.readText().then((clipText: string) => {
-            // TODO: insert at caret pos
-            // TODO: paste properly in textbox
-            if (activeElem.nodeName === "INPUT" || activeElem.nodeName === "TEXTAREA") activeElem.value += clipText
-            else activeElem.innerHTML += clipText
-        })
+        pasteText(activeElem)
         return
     }
 
@@ -88,7 +87,7 @@ export function selectAll(data: any = {}) {
     let newSelection: any[] = []
 
     if (document.activeElement?.classList?.contains("edit")) {
-        // TODO: select all text
+        setCaret(document.activeElement, { line: 0, pos: 0 }, true)
         return
     }
 

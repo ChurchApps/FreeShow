@@ -1,11 +1,11 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, outLocked, playerVideos, videoExtensions } from "../../../stores"
+    import { activeShow, dictionary, outLocked, outputs, playerVideos, videoExtensions } from "../../../stores"
     import { send } from "../../../utils/request"
     import { splitPath } from "../../helpers/get"
     import Icon from "../../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../../helpers/media"
-    import { setOutput } from "../../helpers/output"
+    import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
 
@@ -28,7 +28,7 @@
 
     const sendToOutput = () => {
         // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_DATA", data: { ...videoData, time: videoTime } })
-        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
+        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData, updatePreview: true })
         // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_DATA", data: videoData })
         // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_TIME", data: videoTime })
     }
@@ -48,7 +48,26 @@
         videoTime = 0
         send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
     }
+
+    function keydown(e: any) {
+        if (e.key !== " ") return
+
+        // return if slide is outputted
+        let currentOutput = $outputs[getActiveOutputs()[0]]
+        if (currentOutput?.out?.slide) return
+
+        // play / pause video
+        e.preventDefault()
+        playPause()
+    }
+
+    function playPause() {
+        videoData.paused = !videoData.paused
+        sendToOutput()
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 {#if background}
     {#if background?.type === "player"}
@@ -62,16 +81,7 @@
     {/if}
     {#if (video && getMediaType(getExtension(outName)) === "video") || background?.type === "player"}
         <span class="group">
-            <Button
-                style="flex: 0"
-                center
-                title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause}
-                disabled={$outLocked}
-                on:click={() => {
-                    videoData.paused = !videoData.paused
-                    sendToOutput()
-                }}
-            >
+            <Button style="flex: 0" center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
             </Button>
             <VideoSlider disabled={$outLocked} {outputId} bind:videoData bind:videoTime toOutput />

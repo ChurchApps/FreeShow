@@ -114,7 +114,7 @@
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (!e.target.closest(".editArea")) return
-        zoom = Math.max(0.5, Math.min(2, zoom + (e.deltaY < 0 ? -0.1 : 0.1)))
+        zoom = Number(Math.max(0.5, Math.min(2, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
     }
 
     // CHORDS
@@ -183,10 +183,10 @@
             <Icon id="chords" white={!chordsMode} />
         </Button>
         <div class="seperator" />
-        <Button disabled={zoom >= 2} on:click={() => (zoom += 0.1)} title={$dictionary.actions?.zoomOut}>
+        <Button disabled={zoom >= 2} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
             <Icon size={1.3} id="remove" white />
         </Button>
-        <Button disabled={zoom <= 0.5} on:click={() => (zoom -= 0.1)} title={$dictionary.actions?.zoomIn}>
+        <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
             <Icon size={1.3} id="add" white />
         </Button>
         <p class="text" on:click={() => (zoom = 1)}>{(100 / zoom).toFixed()}%</p>
@@ -229,6 +229,12 @@
         width: 100%;
         background-color: var(--primary);
         border-top: 3px solid var(--primary-lighter);
+    }
+
+    /* fixed height for consistent heights */
+    .actions :global(button) {
+        min-height: 35px;
+        padding: 0.2em 0.8em !important;
     }
 
     .seperator {

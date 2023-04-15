@@ -2,7 +2,7 @@
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../types/Show"
     import { activePopup, activeProject, activeShow, dictionary, sortedShowsList, textCache } from "../../stores"
-    import { sortObjectNumbers } from "../helpers/array"
+    import { clone, sortObjectNumbers } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -41,8 +41,9 @@
         sva.forEach((sv, i) => {
             if (sv.length > 1) {
                 match[i] = 0
-                if (searchEquals(obj.name, sv)) match[i] = 100
-                else if (searchIncludes(obj.name, sv)) match[i] += 25
+                // if (searchEquals(obj.name, sv)) match[i] = 100
+                // else
+                if (searchIncludes(obj.name, sv)) match[i] += 25
                 // if (obj.category !== null && searchIncludes($categories[obj.category].name, sv)) match[i] += 10
 
                 let cache = $textCache[obj.id]
@@ -81,6 +82,10 @@
 
         if (hasZero) sum = 0
 
+        // find exact
+        if (sum >= 100) sum = 99
+        if (sva.join(" ") === obj.name.toLowerCase()) sum = 100
+
         totalMatch += sum
         return Math.min(sum, 100)
     }
@@ -92,19 +97,38 @@
     $: filteredStored = filteredShows = active === "all" ? showsSorted : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && s.category === null))
 
     export let firstMatch: null | any = null
+    let previousSearchValue: string[] = []
     $: {
         if (searchValue.length > 1) {
+            let currentShowsList = filteredStored
+            // reset if search value changed
+            if (sva.length === previousSearchValue.length && newSearchIncludesPrevious()) {
+                currentShowsList = filteredShows
+            }
             filteredShows = []
-            filteredStored.forEach((s: any) => {
+
+            console.log(currentShowsList)
+
+            currentShowsList.forEach((s: any) => {
                 let match = search(s)
                 if (match) filteredShows.push({ ...s, match })
             })
             filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowList[]
             firstMatch = filteredShows[0] || null
+
+            previousSearchValue = clone(sva)
         } else {
             filteredShows = filteredStored
             firstMatch = null
         }
+    }
+
+    function newSearchIncludesPrevious() {
+        let matching = true
+        previousSearchValue.forEach((value, i) => {
+            if (!sva[i].includes(value)) matching = false
+        })
+        return matching
     }
 
     let scrollElem: any

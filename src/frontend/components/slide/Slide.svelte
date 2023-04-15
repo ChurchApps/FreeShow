@@ -95,6 +95,7 @@
             if ($groupNumbers) {
                 // different slides with same name
                 Object.entries(show.slides).forEach(([id, a]: any) => {
+                    if (!a) return
                     if (added[a.group]) {
                         added[a.group]++
                         if (id === slideID) name += " " + added[a.group]
@@ -263,7 +264,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     {#if slide.items}
                         {#each slide.items as item}
                             <!-- TODO: lyrics zoom on text -->
-                            {#if ($slidesOptions.mode !== "lyrics" || item.type === undefined || item.type === "text" || item.type === "timer")}
+                            {#if $slidesOptions.mode !== "lyrics" || item.type === undefined || item.type === "text" || item.type === "timer"}
                                 <Textbox
                                     {item}
                                     {ratio}

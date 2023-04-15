@@ -556,7 +556,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 showsCache.update((a) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
-                        if (slideId && slideId !== id) return
+                        if ((slideId && slideId !== id) || !slide) return
 
                         template.items.forEach((item: any, i: number) => {
                             if (!slide.items[i] && !createItems) return
