@@ -58,8 +58,8 @@
                         label={template.name || "—"}
                         color={template.color}
                         {resolution}
-                        on:click={() => {
-                            if (($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show")
+                        on:click={(e) => {
+                            if ((($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show") && !e.ctrlKey && !e.metaKey)
                                 history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "show", override: "show#" + $activeShow.id } })
                         }}
                     >
@@ -107,6 +107,10 @@
         flex: 1;
         padding: 5px;
         place-content: flex-start;
+    }
+
+    .grid :global(.isSelected) {
+        outline: 5px solid var(--secondary-text);
     }
 
     .tabs {

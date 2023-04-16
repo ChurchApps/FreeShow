@@ -2,11 +2,11 @@
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import { Grid } from "svelte-virtual"
     import { READ_FOLDER } from "../../../../types/Channels"
-    import { activeShow, dictionary, media, mediaFolders, mediaOptions } from "../../../stores"
+    import { activeEdit, activePage, activeShow, dictionary, media, mediaFolders, mediaOptions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { splitPath } from "../../helpers/get"
-    import { getMediaType, isMediaExtension } from "../../helpers/media"
+    import { getExtension, getMediaType, isMediaExtension } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Folder from "./Folder.svelte"
@@ -19,7 +19,8 @@
     let files: any[] = []
 
     let notFolders = ["all", "favourites", "pixabay"]
-    $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active].path! : ""
+    $: console.log(active)
+    $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path! || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
     // TODO: fix name...!!
@@ -92,7 +93,7 @@
     let content = allFiles.length
 
     activeShow.subscribe((a) => {
-        if (a?.type !== "video" && $activeShow?.type !== "image") activeFile = null
+        if (a?.type !== "video" && a?.type !== "image") activeFile = null
     })
 
     // filter files
@@ -147,6 +148,21 @@
             if (rootPath === path) return
             goBack()
         },
+    }
+
+    $: if (activeFile !== null) selectMedia()
+    function selectMedia() {
+        if (activeFile === null) return
+
+        let path = allFiles[activeFile]
+        if (!path) return
+        if ($activePage === "edit" && $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")) {
+            activeEdit.set({ id: path, type: "media", items: [] })
+        } else {
+            activeEdit.set({ items: [] })
+            let type = getMediaType(getExtension(path))
+            activeShow.set({ id: path, name, type })
+        }
     }
 
     function keydown(e: any) {

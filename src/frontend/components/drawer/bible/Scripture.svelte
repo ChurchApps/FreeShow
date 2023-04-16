@@ -142,6 +142,7 @@
             })
 
             if (!bibles) return console.error("could not find bibles")
+            if (!bibles[msg.data.index || 0]) return console.error("could not find bible at index")
 
             let id = msg.content[0] || msg.id
 

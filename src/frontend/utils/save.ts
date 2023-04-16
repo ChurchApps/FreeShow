@@ -63,6 +63,7 @@ import {
     webFavorites,
 } from "../stores"
 import type { SaveListSettings } from "./../../types/Save"
+import { clone } from "../components/helpers/array"
 
 export function save() {
     console.log("SAVING...")
@@ -134,7 +135,7 @@ export function save() {
         MEDIA: get(media),
         THEMES: get(themes),
         // CACHES SAVED TO MULTIPLE FILES
-        showsCache: get(showsCache),
+        showsCache: clone(get(showsCache)),
         scripturesCache: get(scripturesCache),
     }
 

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activePage, activeShow, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers } from "../../stores"
+    import { activePage, activeShow, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers } from "../../stores"
     import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
     import { getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
-    import { getItemWithMostLines, nextSlide, previousSlide } from "../helpers/showActions"
+    import { getItemWithMostLines, nextSlide, previousSlide, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
@@ -113,6 +113,12 @@
         }
         if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow) return
 
+        // group shortcuts
+        if (/^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
+            e.preventDefault()
+            return
+        }
+
         // ($activeShow?.type === "show" || $activeShow?.type === undefined) &&
         if (shortcuts[e.key]) {
             e.preventDefault()
@@ -128,6 +134,56 @@
                 // send(OUTPUT, ["UPDATE_VIDEO_TIME"], videoTime)
             }
         }
+    }
+
+    function checkGroupShortcuts(e: any) {
+        if (!$activeShow) return
+
+        let currentShowId = outSlide?.id || ($activeShow.type === undefined || $activeShow.type === "show" ? $activeShow.id : null)
+        if (!currentShowId) return
+
+        let showRef = _show(currentShowId).layouts("active").ref()[0] || []
+        let groupIds = showRef.map((a) => a.id)
+        let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
+        if (!showGroups.length) return
+
+        let globalGroupIds: string[] = []
+        Object.entries($groups).forEach(([groupId, group]: any) => {
+            if (!group.shortcut || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
+            showGroups.forEach((slide) => {
+                if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
+            })
+        })
+
+        if (!globalGroupIds.length || $outLocked) return
+
+        // play first matching group
+        let nextAfterOutput = undefined
+        let index = undefined
+        showRef.forEach((ref) => {
+            // if (ref.id !== slideId) return
+            if (!globalGroupIds.includes(ref.id)) return
+
+            // get next slide if global group is outputted
+            if (index === undefined) index = ref.layoutIndex
+            if (outSlide?.index === undefined || nextAfterOutput || ref.layoutIndex <= outSlide.index) return
+
+            nextAfterOutput = ref.layoutIndex
+        })
+
+        if (nextAfterOutput) index = nextAfterOutput
+        if (index === undefined) return
+
+        // WIP duplicate of "slideClick" in Slides.svelte
+        updateOut(currentShowId, index, showRef, !e.altKey)
+        setOutput("slide", { id: currentShowId, layout: _show(currentShowId).get("settings.activeLayout"), index, line: 0 })
+
+        setTimeout(() => {
+            // defocus search input
+            ;(document.activeElement as any)?.blur()
+        }, 10)
+
+        return true
     }
 
     let fullscreen: boolean = false
@@ -186,13 +242,13 @@
     }
 
     // lines
-    $: slide = currentOutput.out?.slide
-    $: ref = slide ? (slide?.id === "temp" ? [{ temp: true, items: slide.tempItems }] : _show(slide.id).layouts([slide.layout]).ref()[0]) : []
+    $: outSlide = currentOutput.out?.slide
+    $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]) : []
     let linesIndex: null | number = null
     let maxLines: null | number = null
     $: amountOfLinesToShow = currentOutput.show?.lines !== undefined ? Number(currentOutput.show?.lines) : 0
-    $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
-    $: showSlide = slide?.index !== undefined ? _show(slide.id).slides([ref[slide.index].id]).get()[0] : null
+    $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
+    $: showSlide = outSlide?.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
     $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : slideLines - (amountOfLinesToShow % slideLines)) : null
 </script>

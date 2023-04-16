@@ -1,10 +1,12 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { dictionary, groups } from "../../../stores"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
     $: g = Object.entries($groups)
@@ -12,9 +14,16 @@
         .sort((a: any, b: any) => a.name.localeCompare(b.name))
 
     function changeGroup(e: any, id: string, key: string = "name") {
+        // TODO: history
         groups.update((a) => {
             if (key === "name" && a[id].default) delete a[id].default
-            a[id][key] = e.target.value
+
+            let value = e.target?.value
+            if (key === "shortcut") value = e.detail.name
+            if (value === "—") value = ""
+
+            a[id][key] = value
+
             return a
         })
     }
@@ -32,6 +41,17 @@
         tag: { name: "tag", default: true, color: "#7525f5" },
         verse: { name: "verse", default: true, color: "#5825f5" },
     }
+
+    const keys = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    let shortcuts: any[] = [{ name: "—" }]
+
+    onMount(() => {
+        keys.forEach((key) => {
+            shortcuts.push({ name: key })
+        })
+    })
+
+    $: console.log(shortcuts)
 </script>
 
 <!-- <h3><T id="settings.add_group" /></h3> -->
@@ -64,11 +84,14 @@
               {group.name}
             {/if} -->
         <Color value={group.color} on:input={(e) => changeGroup(e, group.id, "color")} style="width: 200px;" />
+        <!-- shortcut -->
+        <Dropdown title={$dictionary.settings?.group_shortcut} style="text-align: center;" value={group.shortcut || "—"} options={shortcuts} on:click={(e) => changeGroup(e, group.id, "shortcut")} />
         <Button
             on:click={() => {
                 history({ id: "UPDATE", newData: { id: group.id }, location: { page: "settings", id: "global_group" } })
             }}
         >
+            <Icon id="delete" right />
             <T id="settings.remove" />
         </Button>
     </div>
@@ -109,5 +132,14 @@
         justify-content: space-between;
         margin: 5px 0;
         gap: 5px;
+    }
+
+    div :global(.dropdownElem) {
+        min-width: 60px;
+        max-height: 30px;
+    }
+    div :global(.dropdownElem button) {
+        text-align: center;
+        padding: 2px 12px;
     }
 </style>

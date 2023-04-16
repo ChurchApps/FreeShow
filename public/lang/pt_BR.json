@@ -629,6 +629,7 @@
         "font_size": "Tamanho da fonte",
         "colors": "Cores",
         "add_group": "Adicionar grupo",
+        "group_shortcut": "Shortcut to activate group",
         "output_screen": "Tela de saída",
         "device_name": "Nome do dispositivo",
         "password": "senha",

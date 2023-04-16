@@ -138,6 +138,9 @@
             {/if}
             <!-- <p style="margin: 5px;">{newName}</p> -->
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
+            {#if show.layoutInfo?.name}
+                <span class="layout">{show.layoutInfo.name}</span>
+            {/if}
         </span>
 
         {#if match}
@@ -157,5 +160,12 @@
         width: 100%;
         justify-content: space-between;
         padding: 0.15em 0.8em;
+    }
+
+    .layout {
+        opacity: 0.6;
+        font-style: italic;
+        font-size: 0.9em;
+        padding-left: 5px;
     }
 </style>

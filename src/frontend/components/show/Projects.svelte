@@ -145,7 +145,7 @@
                         {#each $projects[$activeProject]?.shows as show, index}
                             <!-- + ($activeShow?.type === "show" && $activeShow?.id === show.id ? " active" : "")} on:click={() => activeShow.set(show)} -->
                             <!-- <ShowButton {...show} name={$shows[show.id]?.name} category={[$shows[show.id]?.category, true]} /> -->
-                            <SelectElem id="show" data={{ id: show.id, name: show.name || removeExtension(getFileName(show.id)), index, type: show.type }} {fileOver} borders="edges" trigger="column" draggable>
+                            <SelectElem id="show" data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <Button active={$activeShow?.id === show.id} class="section context #project_section__project" on:click={() => activeShow.set({ ...show, index })} dark center bold={false}>
                                         {#if show.name?.length}

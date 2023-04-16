@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activeProject, activeShow, audioExtensions, drawerTabsData, imageExtensions, media, projects, showsCache, videoExtensions } from "../../stores"
+import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, drawerTabsData, imageExtensions, media, projects, showsCache, videoExtensions } from "../../stores"
 import { addItem } from "../edit/scripts/addItem"
 import { clone } from "./array"
 import { history, historyAwait } from "./history"
@@ -24,7 +24,7 @@ function getId(drag: any): string {
 export const dropActions: any = {
     slides: ({ drag, drop }: any, history: any) => dropActions.slide({ drag, drop }, history),
     slide: ({ drag, drop }: any, history: any) => {
-        history.location = { page: "show", show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout }
+        history.location = { page: get(activePage), show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id].settings.activeLayout }
 
         let id: string = getId(drag)
         if (slideDrop[id]) {

@@ -17,7 +17,7 @@ export class ShowObj implements Show {
     media: any
     constructor(isPrivate: boolean = false, category: null | string = null, layoutID: string = uid(), created: number = new Date().getTime(), template: string | boolean = true) {
         if (template !== false) {
-            template = _show("active").get("settings.template") || null
+            template = template.toString() === template ? template : _show("active").get("settings.template") || null
             if (!template && get(templates).default) template = "default"
         }
 

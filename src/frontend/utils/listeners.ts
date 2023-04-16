@@ -54,8 +54,8 @@ export function listenForUpdates() {
         // TODO: this, timedout +++
         sendData(REMOTE, { channel: "OUT" }, true)
 
-        // cache shows data for faster show loading
-        updateCachedShows(data)
+        // cache shows data for faster show loading (if it's less than 100)
+        if (Object.keys(data).length < 100) updateCachedShows(data)
     })
 
     templates.subscribe((data) => {

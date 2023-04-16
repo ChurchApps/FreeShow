@@ -629,6 +629,7 @@
         "font_size": "Veľkosť písma",
         "colors": "Farby",
         "add_group": "Pridať skupinu",
+        "group_shortcut": "Shortcut to activate group",
         "output_screen": "Výstupná obrazovka",
         "device_name": "Názov zariadenia",
         "password": "heslo",

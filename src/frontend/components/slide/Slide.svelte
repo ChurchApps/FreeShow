@@ -345,6 +345,11 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         /* height: fit-content; */
         /* border: 2px solid var(--primary-lighter); */
     }
+
+    .slide :global(.isSelected) {
+        outline: 5px solid var(--secondary-text);
+    }
+
     .main.focused {
         outline: 2px solid var(--secondary-opacity);
         outline-offset: -1px;

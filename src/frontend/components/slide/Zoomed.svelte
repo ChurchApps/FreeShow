@@ -20,14 +20,7 @@
 
 <!-- $$props.style ||  -->
 <div class:center class="zoomed" style="width: 100%;height: 100%;">
-    <div
-        bind:offsetWidth={slideWidth}
-        class="slide"
-        class:hideOverflow
-        class:disableStyle
-        class:relative
-        style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};` : ''};"
-    >
+    <div bind:offsetWidth={slideWidth} class="slide" class:hideOverflow class:disableStyle class:relative style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};` : ''};">
         {#if zoom}
             <span style="zoom: {ratio};">
                 <slot {ratio} />

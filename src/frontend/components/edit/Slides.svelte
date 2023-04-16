@@ -5,6 +5,7 @@
     import Slide from "../slide/Slide.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
+    import DropArea from "../system/DropArea.svelte"
 
     // $: editIndex = $output.slide?.index || 0
     $: currentShow = $showsCache[$activeShow!.id]
@@ -121,35 +122,39 @@
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
 <Autoscroll {offset} bind:scrollElem style="display: flex;background-color: var(--primary-darker);">
-    {#if layoutSlides.length}
-        <div class="grid" on:wheel={wheel}>
-            {#each layoutSlides as slide, i}
-                {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id]}
-                    <Slide
-                        slide={currentShow.slides[slide.id]}
-                        show={currentShow}
-                        layoutSlide={slide}
-                        {layoutSlides}
-                        index={i}
-                        color={slide.color}
-                        outColor={findMatchingOut(slide.id)}
-                        active={findMatchingOut(slide.id) !== null}
-                        focused={$activeEdit.slide === i}
-                        noQuickEdit
-                        {altKeyPressed}
-                        {columns}
-                        on:click={(e) => {
-                            if (!e.ctrlKey && !e.metaKey) activeEdit.set({ slide: i, items: [] })
-                        }}
-                    />
-                {/if}
-            {/each}
-        </div>
-    {:else}
-        <Center faded>
-            <T id="empty.slides" />
-        </Center>
-    {/if}
+    <DropArea id="all_slides" selectChildren>
+        <DropArea id="slides" hoverTimeout={0} selectChildren>
+            {#if layoutSlides.length}
+                <div class="grid" on:wheel={wheel}>
+                    {#each layoutSlides as slide, i}
+                        {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id]}
+                            <Slide
+                                slide={currentShow.slides[slide.id]}
+                                show={currentShow}
+                                layoutSlide={slide}
+                                {layoutSlides}
+                                index={i}
+                                color={slide.color}
+                                outColor={findMatchingOut(slide.id)}
+                                active={findMatchingOut(slide.id) !== null}
+                                focused={$activeEdit.slide === i}
+                                noQuickEdit
+                                {altKeyPressed}
+                                {columns}
+                                on:click={(e) => {
+                                    if (!e.ctrlKey && !e.metaKey) activeEdit.set({ slide: i, items: [] })
+                                }}
+                            />
+                        {/if}
+                    {/each}
+                </div>
+            {:else}
+                <Center faded>
+                    <T id="empty.slides" />
+                </Center>
+            {/if}
+        </DropArea>
+    </DropArea>
 </Autoscroll>
 
 <style>

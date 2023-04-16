@@ -50,8 +50,8 @@
                         color={overlay.color}
                         icon={overlay.locked ? "locked" : null}
                         {resolution}
-                        on:click={() => {
-                            if (!$outLocked) setOutput("overlays", overlay.id, true)
+                        on:click={(e) => {
+                            if (!$outLocked && !e.ctrlKey && !e.metaKey) setOutput("overlays", overlay.id, true)
                         }}
                     >
                         <SelectElem id="overlay" data={overlay.id} fill draggable>
@@ -98,6 +98,10 @@
         flex: 1;
         padding: 5px;
         place-content: flex-start;
+    }
+
+    .grid :global(.isSelected) {
+        outline: 5px solid var(--secondary-text);
     }
 
     .tabs {

@@ -88,7 +88,7 @@ const actions: any = {
         else if (obj.sel.id === "layout") activeRename.set("layout_" + obj.sel.data[0])
         else if (obj.sel.id === "player") activeRename.set("player_" + obj.sel.data[0])
         else if (obj.sel.id === "stage") activeRename.set("stage_" + obj.sel.data[0].id)
-        else if (obj.sel.id.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + obj.sel.data[0])
+        else if (obj.sel.id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + obj.sel.data[0])
         else console.log("Missing rename", obj)
     },
     remove: (obj: any) => {

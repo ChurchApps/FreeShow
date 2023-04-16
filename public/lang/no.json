@@ -629,6 +629,7 @@
         "font_size": "Skriftstørrelse",
         "colors": "Farger",
         "add_group": "Legg til gruppe",
+        "group_shortcut": "Shortcut to activate group",
         "output_screen": "Skjermutgang",
         "device_name": "Enhetsnavn",
         "password": "passord",

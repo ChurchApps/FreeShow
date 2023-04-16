@@ -143,11 +143,19 @@
             if (e.key === "ArrowDown") {
                 // Ctrl + Arrow Down = change active drawer sub tab
                 let index = buttons.findIndex((a) => a.id === $drawerTabsData[id]?.activeSubTab)
-                if (index + 1 < buttons.length) setTab(buttons[index + 1].id)
+                let nextIndex = index + 1
+                while (nextIndex < buttons.length && buttons[nextIndex]?.id === "SEPERATOR") {
+                    nextIndex++
+                }
+                if (nextIndex < buttons.length) setTab(buttons[nextIndex].id)
             } else if (e.key === "ArrowUp") {
                 // Ctrl + Arrow Up = change active drawer sub tab
                 let index = buttons.findIndex((a) => a.id === $drawerTabsData[id]?.activeSubTab)
-                if (index - 1 >= 0) setTab(buttons[index - 1].id)
+                let nextIndex = index - 1
+                while (nextIndex >= 0 && buttons[nextIndex]?.id === "SEPERATOR") {
+                    nextIndex--
+                }
+                if (nextIndex >= 0) setTab(buttons[nextIndex].id)
             }
         }
     }

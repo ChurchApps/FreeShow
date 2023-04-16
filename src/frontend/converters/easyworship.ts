@@ -256,7 +256,7 @@ function createSlides({ words }: Words) {
                 .toLowerCase()
                 .trim()
             if (get(groups)[group]) {
-                console.log("REMOVE FIRST", lines)
+                // console.log("REMOVE FIRST", lines)
                 lines.shift()
             } else {
                 let found: boolean = false

@@ -34,16 +34,18 @@
         history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: e.detail.value }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
     }
 
-    function setLayout(id: string) {
+    function setLayout(id: string, layoutInfo) {
         showsCache.update((s) => {
             s[active].settings.activeLayout = id
             return s
         })
 
         // set active layout in project
+        if (sortedLayouts?.length < 2) return
         if (($activeShow?.type === undefined || $activeShow?.type === "show") && $activeShow?.index !== undefined && $activeProject && $projects[$activeProject].shows[$activeShow.index]) {
             projects.update((a) => {
                 a[$activeProject!].shows[$activeShow!.index!].layout = id
+                a[$activeProject!].shows[$activeShow!.index!].layoutInfo = layoutInfo
                 return a
             })
         }
@@ -65,7 +67,7 @@
                     <Button
                         class="context #layout"
                         on:click={() => {
-                            if (!edit) setLayout(layout.id)
+                            if (!edit) setLayout(layout.id, { name: layout.name })
                         }}
                         active={activeLayout === layout.id}
                         center

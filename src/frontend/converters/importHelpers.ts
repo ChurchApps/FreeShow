@@ -19,8 +19,4 @@ export function setTempShows(tempShows: any[]) {
 
     activePopup.set("alert")
     alertMessage.set(get(dictionary).main?.finished || "Finished")
-
-    setTimeout(() => {
-        activePopup.set(null)
-    }, 1500)
 }

@@ -8,6 +8,7 @@ import { EMPTY_SHOW_SLIDE } from "./empty"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { _show } from "./shows"
+import { save } from "../../utils/save"
 
 // TODO: move history switch to actions
 
@@ -298,6 +299,15 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     activePopup.set("alert")
                 }, 2000)
             }
+
+            if (!deleting && Object.keys(get(showsCache)).length >= 100) {
+                // store all to files
+                save()
+                // then delete showsCache
+                setTimeout(() => {
+                    showsCache.set({})
+                }, 2000)
+            }
         },
         SLIDES: () => {
             // add/remove/duplicate slide(s)
@@ -312,12 +322,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let slides = clone(data?.data) || []
 
             let { showId, layout } = data.remember
-            console.log(showId, layout)
             if (!showId || !layout) return
             let ref: any[] = _show(showId).layouts([layout]).ref()[0]
             data.index = data.index ?? ref.length
             let index = data.index
-            console.log(ref, data.index)
 
             let type: "remove" | "delete" = data.type || "delete"
 
@@ -345,7 +353,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             slides.forEach((slide, i) => {
                 let id = slide.id
                 delete slide.id
-                let index = slide.index
+                let slideIndex = slide.index || index
                 delete slide.index
 
                 // check if already exists!!
@@ -368,7 +376,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // update layout
                     showsCache.update((a) => {
                         let slides = a[showId].layouts[layout].slides
-                        a[showId].layouts[layout].slides = slides.filter((a, i) => (index !== undefined ? i !== index : a.id !== id))
+                        a[showId].layouts[layout].slides = slides.filter((a, i) => (slideIndex !== undefined ? i !== slideIndex : a.id !== id))
                         return a
                     })
 
@@ -381,8 +389,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             Object.keys(a[showId].slides).forEach((slideId) => {
                                 if (slideId === id) return
                                 let slide = a[showId].slides[slideId]
-                                let index = slide.children?.indexOf(id) ?? -1
-                                if (index >= 0) slide.children!.splice(index, 1)
+                                let childIndex = slide.children?.indexOf(id) ?? -1
+                                if (childIndex >= 0) slide.children!.splice(childIndex, 1)
                             })
                             return a
                         })
@@ -393,9 +401,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     _show(showId).slides([id]).add([slide], isParent)
 
                     // layout
-                    let layoutValue: any = { id }
+                    let layoutValue: any = data.layouts?.[i] || {}
+                    layoutValue.id = id
 
-                    // backgrounds
+                    // TODO: add media to show if it doesent have it
+                    // if (data.background && !_show(showId).media([data.background]).get()[0]) {
+                    // get bg path
+                    //     let bgId = _show(showId).media().add(path)
+                    //     layoutValue.background = bgId
+                    // }
+
+                    // backgrounds (not in use ?)
                     if (data.layout?.backgrounds?.length) {
                         let background = data.layout.backgrounds[i] || data.layout.backgrounds[0]
                         let bgId = _show(showId).media().add(background)
@@ -404,9 +420,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     if (isParent) {
                         // get layout slides index (without children)
-                        let slideLayoutIndex = index > 0 ? ref[index - 1]?.index + 1 : 0
+                        let slideLayoutIndex = slideIndex > 0 ? ref[slideIndex - 1]?.index + 1 : 0
+                        // TODO: sometimes incorrect index
                         // add to layout at index
-                        // _show(showId).layouts([layout]).slides().add([layoutValue], null, index)
+                        // _show(showId).layouts([layout]).slides().add([layoutValue], null, slideIndex)
                         _show(showId).layouts([layout]).slides([slideLayoutIndex]).add([layoutValue])
                     }
 
@@ -554,6 +571,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateSlidesWithTemplate(template: any) {
                 if (!template?.items?.length) return
 
+                console.log("TEMPLATE", template)
+
                 showsCache.update((a) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
                         if ((slideId && slideId !== id) || !slide) return
@@ -569,6 +588,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 return
                             }
 
+                            if (item.auto) slide.items[i].auto = true
                             slide.items[i].style = item.style || ""
                             slide.items[i].align = item.align || ""
                             slide.items[i].lines?.forEach((line: any, j: number) => {
@@ -614,7 +634,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 _show(data.remember.showId).set({ key: "layouts", value: previousData.layouts || {} })
             } else {
                 let show = get(showsCache)[data.remember.showId]
-                data.previousData = { layouts: clone(show.layouts) }
+                if (show) data.previousData = { layouts: clone(show.layouts) }
 
                 updateLayoutSlides()
             }

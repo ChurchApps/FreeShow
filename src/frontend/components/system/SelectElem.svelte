@@ -46,28 +46,23 @@
             newData = [data]
         } else if (!dragged && (e.ctrlKey || e.metaKey)) {
             if ($selected.id === id && arrayHasData($selected.data, data)) {
+                // dont deselect if not left click
+                if (e.button > 0) return
+
                 newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
-                if (!newData.length) newData = [data]
+                // if (!newData.length) newData = [data]
             } else if ($selected.id === id) newData = [...$selected.data, data]
             else newData = [data]
         }
         // TODO: holding ctrl + context menu will deselect element
         // } else newData = []
 
-        if (newData) selected.set({ id, data: newData })
+        if (!newData?.length) selected.set({ id: null, data: [] })
+        else if (newData) selected.set({ id, data: newData })
     }
 
     function deselect(e: any) {
-        if (
-            !e.ctrlKey &&
-            !e.metaKey &&
-            $selected.id === id &&
-            !e.target.closest(".menus") &&
-            !e.target.closest(".selectElem") &&
-            !e.target.closest(".popup") &&
-            !e.target.closest(".edit") &&
-            !e.target.closest(".contextMenu")
-        )
+        if (!e.ctrlKey && !e.metaKey && $selected.id === id && !e.target.closest(".menus") && !e.target.closest(".selectElem") && !e.target.closest(".popup") && !e.target.closest(".edit") && !e.target.closest(".contextMenu"))
             selected.set({ id: null, data: [] })
     }
 
@@ -131,8 +126,14 @@
     .isSelected {
         /* outline: 2px solid red;
     outline-offset: 2px; */
-        filter: contrast(0.7);
         background-color: var(--focus);
+        outline: 2px solid var(--secondary-text);
+        opacity: 0.9;
+
+        /* filter: invert(1); */
+        /* filter: sepia(1); */
+        /* filter: saturate(5); */
+        filter: invert(0.1) brightness(1.2) contrast(0.7);
     }
 
     .fill {

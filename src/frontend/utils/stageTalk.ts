@@ -79,10 +79,10 @@ export const receiveSTAGE: any = {
 
         if (!out || out.id === "temp") return msg
         let ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
-        let slides: any = _show(out.id).get().slides
+        let slides: any = _show(out.id).get()?.slides
         console.log(slides)
 
-        if (!ref[out.index!]) return
+        if (!ref?.[out.index!]) return
         msg.data = [slides[ref[out.index!].id]]
 
         let nextIndex = out.index! + 1

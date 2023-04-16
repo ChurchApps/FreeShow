@@ -1,7 +1,7 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaFit } from "../../../../types/Main"
-    import { activeEdit, activePage, activeShow, media, mediaOptions, outLocked, outputs } from "../../../stores"
+    import { activeShow, media, mediaOptions, outLocked, outputs } from "../../../stores"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import { getMediaFilter } from "../../helpers/showActions"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -38,14 +38,6 @@
 
     function click(e: any) {
         if (!e.ctrlKey && !e.metaKey) activeFile = index
-    }
-    $: if (activeFile !== null && allFiles[activeFile] === path) {
-        if ($activePage === "edit" && $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")) activeEdit.set({ id: path, type: "media", items: [] })
-        else {
-            activeEdit.set({ items: [] })
-            activeShow.set({ id: path, name, type })
-        }
-        activeFile = null
     }
 
     function dblclick(e: any) {

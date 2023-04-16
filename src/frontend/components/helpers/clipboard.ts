@@ -33,11 +33,8 @@ export function copy({ id, data }: any = {}, getData: boolean = true) {
 
 // pasting text in editbox is it's own function
 export function paste(clip: any = null, extraData: any = {}) {
-    console.log(clip, !clip)
-
     if (!clip) clip = get(clipboard)
     let activeElem: any = document.activeElement
-    console.log(activeElem?.classList)
     // activeElem.tagName !== "BODY"
     // if (clip.id === null || activeElem?.classList?.contains("edit")) {
     if (clip.id === null) {
@@ -201,7 +198,14 @@ const copyActions: any = {
     },
     slide: (data: any) => {
         let ref = _show().layouts("active").ref()?.[0]
-        let ids = data.map((a: any) => a.id || (a.index !== undefined ? ref[a.index].id : ""))
+        let layouts: any[] = []
+
+        let ids = data.map((a: any) => {
+            // get layout
+            if (a.index !== undefined) layouts.push(ref[a.index].data)
+
+            return a.id || (a.index !== undefined ? ref[a.index].id : "")
+        })
 
         let slides = clone(_show().slides(ids).get())
         slides = slides.map((slide) => {
@@ -220,9 +224,7 @@ const copyActions: any = {
             return slide
         })
 
-        // TODO: copy layout (media) too
-
-        return slides
+        return { slides, layouts }
     },
     group: (data: any) => copyActions.slide(data),
     overlay: (data: any) => {
@@ -273,7 +275,7 @@ const pasteActions: any = {
         data = clone(data)
 
         // get all slide ids & child ids
-        let copiedIds: string[] = data.map((a: any) => a.id)
+        let copiedIds: string[] = data.slides.map((a: any) => a.id)
         // let childs: any[] = []
         // data.forEach((slide: any) => {
         //   copiedIds.push(slide.id)
@@ -284,8 +286,10 @@ const pasteActions: any = {
         let ref: any[] = _show().layouts("active").ref()[0]
         let newSlides: any[] = []
 
+        let layouts: any[] = []
+
         // remove children
-        data.map((slide: any) => {
+        data.slides.map((slide: any, i: number) => {
             // has children
             if (slide.children) {
                 let children: string[] = []
@@ -315,10 +319,15 @@ const pasteActions: any = {
 
             slide.id = uid()
             newSlides.push(slide)
+
+            // add layout
+            let layout = data.layouts?.[i]
+            if (!layout) return
+            layouts[i] = layout
         })
         // TODO: children next to each other should be grouped
 
-        history({ id: "SLIDES", newData: { data: newSlides, index: index ? index + 1 : undefined } })
+        history({ id: "SLIDES", newData: { data: newSlides, layouts, index: index !== undefined ? index + 1 : undefined } })
         setTimeout(() => console.log(get(showsCache)), 1000)
     },
     group: (data: any) => pasteActions.slide(data),
@@ -498,7 +507,15 @@ const duplicateActions = {
     },
     show: (data: any) => {
         if (!get(activeProject)) return
-        data = data.map((a) => ({ id: a.id, type: a.type || "show" }))
+
+        data = data.map((a) => {
+            let newShowRef = clone(a)
+            delete newShowRef.index
+            if (!newShowRef.type) newShowRef.type = "show"
+            if (newShowRef.type === "show") delete newShowRef.name
+            return newShowRef
+        })
+
         projects.update((a) => {
             a[get(activeProject)!].shows.push(...data)
             return a

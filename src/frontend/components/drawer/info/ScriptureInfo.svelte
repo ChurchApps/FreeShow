@@ -18,6 +18,7 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { joinRange } from "../bible/scripture"
+    import { getAutoSize } from "../../edit/scripts/autoSize"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
@@ -64,6 +65,7 @@
             let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
             let alignStyle = currentTemplate?.lines?.[0].align || "text-align: justify;"
             let textStyle = currentTemplate?.lines?.[0].text?.[0].style || "font-size: 80px;"
+
             let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle }
 
             let slideIndex: number = 0
@@ -90,6 +92,7 @@
                 // } else
                 text = text.replace(/(<([^>]+)>)/gi, "")
                 if (text.charAt(text.length - 1) !== " ") text += " "
+
                 slideArr.lines![0].text.push({ value: text, style: textStyle })
 
                 // if (bibleIndex + 1 < bibles.length) return
@@ -105,6 +108,17 @@
                 slideIndex++
                 if (!slides[slideIndex]) slides.push([clone(emptyItem)])
                 else slides[slideIndex].push(clone(emptyItem))
+            })
+
+            // auto size
+            slides.forEach((slide, i) => {
+                slide.forEach((item, j) => {
+                    if (!template[j]?.auto) return
+                    let autoSize: number = getAutoSize(item)
+                    slides[i][j].lines![0].text.forEach((_, k) => {
+                        slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
+                    })
+                })
             })
 
             if (bibleIndex + 1 < bibles.length) return
@@ -153,7 +167,7 @@
 
         let layoutID = uid()
         // TODO: private!!!?
-        let show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), false)
+        let show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), $scriptureSettings.template || false)
         // add scripture category
         if (!$categories.scripture) {
             categories.update((a) => {
@@ -181,6 +195,7 @@
     }
 
     let templateList: any[] = []
+    // TODO: sort by name
     $: templateList = Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name }))
 
     const updateColor = (e: any) => update("numberColor", e.target.value)
