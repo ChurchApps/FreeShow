@@ -4,7 +4,7 @@
 import { app, BrowserWindow, desktopCapturer, ipcMain, Menu, Rectangle, screen, shell } from "electron"
 import { getFonts } from "font-list"
 import path from "path"
-import { EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { CLOUD, EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { closeServers } from "./servers"
 import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, selectFiles, selectFolder, writeFile } from "./utils/files"
@@ -14,6 +14,7 @@ import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./
 import { loadScripture, loadShow, receiveMain, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { cloudConnect } from "./cloud/cloud"
 // import checkForUpdates from "./utils/updater"
 
 // ----- STARTUP -----
@@ -224,8 +225,10 @@ app.on("web-contents-created", (_e, contents) => {
 // ----- STORE DATA -----
 
 ipcMain.on(STORE, (e, msg) => {
-    if (msg.channel === "SAVE") save(msg.data)
-    else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
+    if (msg.channel === "SAVE") {
+        save(msg.data)
+        e.reply(STORE, { channel: "SAVE" })
+    } else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
 })
 
 function save(data: any) {
@@ -279,6 +282,7 @@ ipcMain.on(READ_FOLDER, getFolderContent)
 ipcMain.on(OPEN_FOLDER, selectFolder)
 ipcMain.on(OPEN_FILE, selectFiles)
 ipcMain.on(FILE_INFO, getFileInfo)
+ipcMain.on(CLOUD, cloudConnect)
 
 // ----- HELPERS -----
 

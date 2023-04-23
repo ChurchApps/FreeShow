@@ -45,13 +45,13 @@ export function writeFile(path: string, content: string, id: string = "") {
 
     fs.writeFile(path, content, (err) => {
         if (err) {
-            toApp(SHOW, { error: "no_write", err, id })
+            if (id) toApp(SHOW, { error: "no_write", err, id })
             console.error("Error when writing to file: ", err)
         }
     })
 }
 
-function getFileStats(p: string) {
+export function getFileStats(p: string) {
     try {
         const stat: Stats = fs.statSync(p)
         return { path: p, stat, extension: path.extname(p).substring(1), folder: stat.isDirectory() }
@@ -63,8 +63,9 @@ function getFileStats(p: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(filters: any, multiple: boolean = true): string[] {
+export function selectFilesDialog(title: string = "", filters: any, multiple: boolean = true): string[] {
     let options: any = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
+    if (title) options.title = title
     if (multiple) options.properties.push("multiSelections")
     let files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
     return files
@@ -156,9 +157,18 @@ export function selectFolder(e: any, msg: { channel: string; title: string | und
 }
 
 // OPEN_FILE
-export function selectFiles(e: any, msg: { filter: any; multiple: boolean }) {
-    let files: any = selectFilesDialog(msg.filter, msg.multiple === undefined ? true : msg.multiple)
-    if (files) e.reply(OPEN_FILE, { files })
+export function selectFiles(e: any, msg: { channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }) {
+    let files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
+    if (files) {
+        let content: any = {}
+        if (msg.read) {
+            files.forEach((path: string) => {
+                content[path] = readFile(path)
+            })
+        }
+
+        e.reply(OPEN_FILE, { channel: msg.channel || "", data: { files, content } })
+    }
 }
 
 // FILE_INFO

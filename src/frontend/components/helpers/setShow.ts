@@ -26,6 +26,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
                 timestamps: value.timestamps,
             }
             if (value.private) a[id].private = true
+            if (value.driveId) a[id].driveId = value.driveId
         }
         return a
     })

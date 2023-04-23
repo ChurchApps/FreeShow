@@ -1,4 +1,4 @@
-export type SaveList = SaveListSettings | "themes" | "events" | "templates"
+export type SaveList = SaveListSettings | "themes" | "events" | "templates" | "driveKeys"
 
 export type SaveListSettings =
     | "initialized"
@@ -46,3 +46,4 @@ export type SaveListSettings =
     | "webFavorites"
     | "volume"
     | "midiIn"
+    | "driveData"

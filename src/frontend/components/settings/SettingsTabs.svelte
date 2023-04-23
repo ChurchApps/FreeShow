@@ -7,6 +7,7 @@
 
     // , "calendar"
     const tabs: SettingsTabs[] = ["general", "theme", "groups", "outputs", "actions", "connection"]
+    // , "cloud"
 </script>
 
 <div class="main">

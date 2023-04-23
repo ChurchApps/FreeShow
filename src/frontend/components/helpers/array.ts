@@ -23,6 +23,7 @@ export function removeData(array: any[], data: any): any[] {
 
 // check if array has any data
 export function arrayHasData(array: any[], data: any): boolean {
+    if (!Array.isArray(array)) return false
     return array.find((a) => JSON.stringify(a) === JSON.stringify(data)) !== undefined
 }
 

@@ -337,7 +337,7 @@ const slideDrop: any = {
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
         let data: any[] = [...new Set([...(ref?.data?.overlays || []), ...drag.data])]
 
-        history.newData = { key: "overlays", data, indexes: [drop.index] }
+        history.newData = { key: "overlays", data, dataIsArray: true, indexes: [drop.index] }
         return history
     },
     midi: ({ drag, drop }: any, history: any) => {

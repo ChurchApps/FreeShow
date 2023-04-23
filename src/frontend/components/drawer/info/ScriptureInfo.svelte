@@ -218,7 +218,7 @@
         playScripture.set(false)
     }
 
-    $: if (verseRange && $outputs[getActiveOutputs()[0]].out?.slide?.id === "temp") showVerse()
+    $: if (verseRange && $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp") showVerse()
 
     // show on enter
     function keydown(e: any) {

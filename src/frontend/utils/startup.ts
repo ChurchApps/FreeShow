@@ -31,6 +31,7 @@ import {
     draw,
     drawSettings,
     drawTool,
+    driveKeys,
     events,
     exportPath,
     folders,
@@ -66,6 +67,7 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { updateSettings } from "./updateSettings"
 import { listenForUpdates } from "./listeners"
+import { saveComplete } from "./save"
 
 export function startup() {
     loaded.set(false)
@@ -84,7 +86,7 @@ export function startup() {
 
 function startupMain() {
     // load files
-    send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "HISTORY", "CACHE"])
+    send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
     setLanguage()
 
     // load new show on show change
@@ -153,6 +155,7 @@ const receiveMAIN: any = {
 }
 
 export const receiveSTORE: any = {
+    SAVE: () => saveComplete(),
     SETTINGS: (a: any) => updateSettings(a),
     SHOWS: (a: any) => shows.set(a),
     STAGE_SHOWS: (a: any) => stageShows.set(a),
@@ -163,6 +166,7 @@ export const receiveSTORE: any = {
     OVERLAYS: (a: any) => overlays.set(a),
     TEMPLATES: (a: any) => templates.set(a),
     EVENTS: (a: any) => events.set(a),
+    DRIVE_API_KEY: (a: any) => driveKeys.set(a),
     MEDIA: (a: any) => media.set(a),
     THEMES: (a: any) => themes.set(a),
     CACHE: (a: any) => {

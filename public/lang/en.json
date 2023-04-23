@@ -594,6 +594,7 @@
         "actions": "Actions",
         "display": "Display",
         "connection": "Connection",
+        "cloud": "Cloud",
         "calendar": "Calendar",
         "other": "Other",
         "language": "Language",

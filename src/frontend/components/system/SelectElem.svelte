@@ -42,20 +42,26 @@
 
         let newData: any
 
-        if ((dragged || e.buttons === 2) && ($selected.id !== id || !arrayHasData($selected.data, data))) {
-            newData = [data]
-        } else if (!dragged && (e.ctrlKey || e.metaKey)) {
-            if ($selected.id === id && arrayHasData($selected.data, data)) {
-                // dont deselect if not left click
-                if (e.button > 0) return
+        let alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
+        let selectMultiple: boolean = e.ctrlKey || e.metaKey
+        let rightClick: boolean = e.buttons === 2
 
+        if (dragged) {
+            if (alreadySelected) return
+            // selectMultiple
+            newData = [data]
+        } else {
+            if (alreadySelected) {
+                // if (rightClick) return
+                if (!selectMultiple) return
+
+                // remove currently selected
                 newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
-                // if (!newData.length) newData = [data]
-            } else if ($selected.id === id) newData = [...$selected.data, data]
-            else newData = [data]
+            } else if (selectMultiple) {
+                // && $selected.id === id
+                newData = [...$selected.data, data]
+            } else if (rightClick) newData = [data]
         }
-        // TODO: holding ctrl + context menu will deselect element
-        // } else newData = []
 
         if (!newData?.length) selected.set({ id: null, data: [] })
         else if (newData) selected.set({ id, data: newData })

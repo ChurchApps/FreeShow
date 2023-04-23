@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { STORE } from "../../types/Channels"
+import { CLOUD, STORE } from "../../types/Channels"
 import {
     activeProject,
     alertUpdates,
@@ -10,6 +10,8 @@ import {
     drawer,
     drawerTabsData,
     drawSettings,
+    driveData,
+    driveKeys,
     events,
     exportPath,
     folders,
@@ -64,6 +66,7 @@ import {
 } from "../stores"
 import type { SaveListSettings } from "./../../types/Save"
 import { clone } from "../components/helpers/array"
+import { send } from "./request"
 
 export function save() {
     console.log("SAVING...")
@@ -117,6 +120,7 @@ export function save() {
         webFavorites: get(webFavorites),
         volume: get(volume),
         midiIn: get(midiIn),
+        driveData: get(driveData),
     }
     // save settings & shows
     // , shows: get(shows)
@@ -134,6 +138,7 @@ export function save() {
         EVENTS: get(events),
         MEDIA: get(media),
         THEMES: get(themes),
+        DRIVE_API_KEY: get(driveKeys),
         // CACHES SAVED TO MULTIPLE FILES
         showsCache: clone(get(showsCache)),
         scripturesCache: get(scripturesCache),
@@ -157,6 +162,12 @@ export function save() {
     }
 
     window.api.send(STORE, { channel: "SAVE", data: allSavedData })
+}
 
+export function saveComplete() {
     saved.set(true)
+
+    let mainFolderId = get(driveData).mainFolderId
+    if (!mainFolderId) return
+    send(CLOUD, ["SYNC_DATA"], { mainFolderId, path: get(showsPath) })
 }

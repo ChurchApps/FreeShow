@@ -13,9 +13,13 @@ import { setCaret } from "../edit/scripts/textStyle"
 
 export function copy({ id, data }: any = {}, getData: boolean = true) {
     let copy: any = { id, data }
-    // if (document.activeElement?.classList?.contains("edit")) copy = {id: null}
-    if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
-    else if (get(selected).id) copy = get(selected)
+
+    if (window.getSelection()?.toString()) {
+        navigator.clipboard.writeText(window.getSelection()!.toString())
+        return
+    }
+
+    if (get(selected).id) copy = get(selected)
     else if (get(activeEdit).items.length) copy = { id: "item", data: get(activeEdit) }
 
     if (!copy || !copyActions[copy.id]) return
@@ -35,8 +39,13 @@ export function copy({ id, data }: any = {}, getData: boolean = true) {
 export function paste(clip: any = null, extraData: any = {}) {
     if (!clip) clip = get(clipboard)
     let activeElem: any = document.activeElement
+
     // activeElem.tagName !== "BODY"
     // if (clip.id === null || activeElem?.classList?.contains("edit")) {
+
+    // edit item has its own paste function
+    if (activeElem?.closest(".editItem")) return
+
     if (clip.id === null) {
         pasteText(activeElem)
         return
@@ -268,7 +277,7 @@ const pasteActions: any = {
         })
         history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [ref.id], subkey: "items", index: -1 }, oldData: { id: get(activeShow)!.id }, location: { page: "edit", id: "show_key" } })
     },
-    slide: (data: any, { index }: any) => {
+    slide: (data: any, { index }: any = {}) => {
         if (!data) return
 
         // clone slides

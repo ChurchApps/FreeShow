@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "private": true,
     "main": "build/electron/index.js",
     "description": "An application for showing song lyrics and more for free!",
@@ -113,6 +113,7 @@
         "typescript": "^4.5.4"
     },
     "dependencies": {
+        "@googleapis/drive": "^5.0.2",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@vimeo/player": "^2.16.4",
         "cross-env": "^7.0.3",

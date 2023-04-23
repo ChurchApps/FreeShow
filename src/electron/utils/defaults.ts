@@ -102,6 +102,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     os: { platform: "", name: "Computer" },
     volume: 1,
     midiIn: {},
+    driveData: { mainFolderId: null },
 }
 
 export const defaultThemes: any = {

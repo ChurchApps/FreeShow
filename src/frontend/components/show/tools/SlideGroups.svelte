@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { uid } from "uid"
     import { activeShow, cachedShowsData, dictionary, fullColors, groups, selected } from "../../../stores"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
@@ -62,11 +63,14 @@
                         on:click={(e) => {
                             if (!e.ctrlKey && !e.metaKey && $activeShow) {
                                 // , unique: true
-                                history({ id: "SLIDES", newData: { data: [slide] } })
+                                history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
                             }
                         }}
                     >
-                        <p>{slide.group || "—"}</p>
+                        <p>
+                            {slide.group || "—"}
+                            {#if $groups[slide.id].shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
+                        </p>
                     </div>
                 </SelectElem>
             {/each}
@@ -101,6 +105,18 @@
     }
     .slide:hover {
         filter: brightness(1.1);
+    }
+
+    .shortcut {
+        position: absolute;
+        right: 5px;
+        background-color: var(--primary-darker);
+
+        color: rgb(255 255 255 / 0.5);
+        /* opacity: 0.6; */
+        font-style: italic;
+        font-size: 0.9em;
+        padding-left: 5px;
     }
 
     h4 {

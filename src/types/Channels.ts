@@ -12,6 +12,7 @@ export const FILE_INFO: FileInfo = "FILE_INFO"
 export const REMOTE: Remote = "REMOTE"
 export const STAGE: Stage = "STAGE"
 export const CONTROLLER: Controller = "CONTROLLER"
+export const CLOUD: Cloud = "CLOUD"
 
 export type Main = "MAIN"
 export type Store = "STORE"
@@ -27,8 +28,9 @@ export type FileInfo = "FILE_INFO"
 export type Remote = "REMOTE"
 export type Stage = "STAGE"
 export type Controller = "CONTROLLER"
+export type Cloud = "CLOUD"
 
-export type ValidChannels = Main | Store | Show | Bible | OutputData | Import | Export | OpenFile | OpenFolder | ReadFolder | Remote | Stage | Controller
+export type ValidChannels = Main | Store | Show | Bible | OutputData | Import | Export | OpenFile | OpenFolder | ReadFolder | Remote | Stage | Controller | Cloud
 
 export type Data = string | DataObject
 export interface DataObject {

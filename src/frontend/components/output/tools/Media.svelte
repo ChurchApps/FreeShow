@@ -68,7 +68,9 @@
     }
 
     function keydown(e: any) {
+        // WIP duplicate of Preview.svelte
         if (e.key !== " ") return
+        if (e.target.closest(".edit") || e.target.closest("input")) return
 
         // return if slide is outputted
         let currentOutput = $outputs[getActiveOutputs()[0]]

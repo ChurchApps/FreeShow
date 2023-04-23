@@ -140,7 +140,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
-<Autoscroll on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
+<Autoscroll class="context #shows__close" on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
     <!-- on:drop={(e) => {
       if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
     }}
@@ -154,7 +154,7 @@
             {:else if $slidesOptions.mode === "text"}
                 <TextEditor {currentShow} />
             {:else}
-                <div class="grid context #shows__close">
+                <div class="grid">
                     <!-- {#each Object.values($showsCache[id].slides) as slide, i} -->
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
