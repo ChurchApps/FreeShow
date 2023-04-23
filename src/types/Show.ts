@@ -6,6 +6,7 @@ export interface Shows {
 
 export interface Show {
     name: string
+    driveId?: string
     private?: boolean
     category: null | ID
     reference?: {

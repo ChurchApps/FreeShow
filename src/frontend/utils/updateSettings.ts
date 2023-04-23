@@ -12,6 +12,7 @@ import {
     drawer,
     drawerTabsData,
     drawSettings,
+    driveData,
     exportPath,
     formatNewShow,
     fullColors,
@@ -161,4 +162,5 @@ const updateList: { [key in SaveListSettings]: any } = {
     webFavorites: (v: any) => webFavorites.set(v),
     volume: (v: any) => volume.set(v),
     midiIn: (v: any) => midiIn.set(v),
+    driveData: (v: any) => driveData.set(v),
 }

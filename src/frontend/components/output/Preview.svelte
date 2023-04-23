@@ -107,14 +107,15 @@
     }
 
     function keydown(e: any) {
-        if ((e.ctrlKey || e.metaKey || e.altKey) && !e.metaKey && ctrlShortcuts[e.key]) {
+        if ((e.ctrlKey || e.metaKey || e.altKey) && ctrlShortcuts[e.key]) {
             e.preventDefault()
             ctrlShortcuts[e.key]()
         }
+
         if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow) return
 
         // group shortcuts
-        if (/^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
+        if (!e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
             e.preventDefault()
             return
         }

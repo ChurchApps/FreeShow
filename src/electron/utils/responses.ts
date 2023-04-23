@@ -16,7 +16,7 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
-    let files: string[] = selectFilesDialog(msg.data)
+    let files: string[] = selectFilesDialog("", msg.data)
 
     if ((os.platform() === "linux" && msg.channel === "pdf") || (msg.data.extensions && !files.length)) return
     importShow(msg.channel, files || null)

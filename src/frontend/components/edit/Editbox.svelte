@@ -324,7 +324,7 @@
             currentStyle += align
 
             let newLine: any = { align, text: [] }
-            let chords = item.lines![i].chords
+            let chords = item.lines?.[i]?.chords
             if (chords) newLine.chords = chords
             newLines.push(newLine)
 

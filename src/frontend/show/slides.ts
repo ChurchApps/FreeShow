@@ -252,7 +252,7 @@ function changeParent(slides: any, parentId: any, slideRef: any) {
     }
 
     // remove children array if nothing left
-    if (!slides[parentId].children?.length) delete slides[parentId].children
+    if (slides[parentId]?.children && !slides[parentId].children.length) delete slides[parentId].children
 
     // the label defines if a slide is a child or not
     if (slideRef.type === "child" && slideRef.newType === "parent") {

@@ -82,7 +82,7 @@
                 })
                 if (!hasId) chapterId = bookId + ".1"
 
-                if (data[0].number === "intro") chapters[bibleId] = data.slice(1, data.length - 1)
+                if (data[0].number === "intro") chapters[bibleId] = data.slice(1, data.length)
                 else chapters[bibleId] = data
                 break
             case "verses":
@@ -490,7 +490,7 @@
         }
     }
 
-    $: outputIsScripture = $outputs[getActiveOutputs()[0]].out?.slide?.id === "temp"
+    $: outputIsScripture = $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
 
     function playOrClearScripture() {
         if (outputIsScripture) {
@@ -501,7 +501,7 @@
         playScripture.set(true)
     }
 
-    $: sortedVerses = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
+    $: sortedVerses = bibles?.[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
     let verseRange = ""
     $: verseRange = sortedVerses.length ? joinRange(sortedVerses) : ""
 </script>

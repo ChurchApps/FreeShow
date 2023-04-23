@@ -129,7 +129,7 @@ export function updateCachedShow(id: string, show: Show) {
             }
         }
 
-        if (!slide.group || !get(groupNumbers)) return { id, ...slide }
+        if (!slide.group || !get(groupNumbers)) return { id: slideId, ...slide }
 
         // add numbers to different slides with same name
         if (addedGroups[slide.group]) {
@@ -137,7 +137,7 @@ export function updateCachedShow(id: string, show: Show) {
             slide.group += " " + addedGroups[slide.group]
         } else addedGroups[slide.group] = 1
 
-        return { id, ...slide }
+        return { id: slideId, ...slide }
     }
     // sort groups by name
     let sortedGroups = showGroups.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group?.localeCompare(b.group))

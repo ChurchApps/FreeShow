@@ -30,6 +30,7 @@ import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 import { dateToString } from "./time"
+import { clone } from "./array"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -224,7 +225,7 @@ export const _updaters = {
             let template = _show("active").get("settings.template") || null
             // TODO: set default template from settings!
             if (!template) template = get(templates).default ? "default" : null
-            if (template) replacer.template = template
+            if (template) replacer.template = clone(template)
 
             // category
             if (get(drawerTabsData).shows?.activeSubTab !== "all") replacer.category = get(drawerTabsData).shows?.activeSubTab
@@ -257,6 +258,7 @@ export const _updaters = {
             shows.update((a) => {
                 a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps }
                 if (data.data.private) a[id].private = true
+                if (data.data.driveId) a[id].driveId = data.data.driveId
 
                 return a
             })

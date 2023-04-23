@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { CONTROLLER, OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
@@ -7,6 +7,9 @@ import {
     categories,
     defaultProjectName,
     drawSettings,
+    driveConnected,
+    driveData,
+    driveKeys,
     events,
     exportPath,
     folders,
@@ -42,6 +45,7 @@ import {
     webFavorites,
 } from "../stores"
 import { alertUpdates, autoOutput, maxConnections, ports, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
+import { validateKeys } from "./drive"
 import { send } from "./request"
 import { client } from "./sendData"
 import { stageListen } from "./stageTalk"
@@ -51,6 +55,14 @@ export function listen() {
     window.api.receive(REMOTE, (msg: ClientMessage) => client(REMOTE, msg))
     window.api.receive(STAGE, (msg: ClientMessage) => client(STAGE, msg))
     window.api.receive(CONTROLLER, (msg: ClientMessage) => client(CONTROLLER, msg))
+
+    window.api.receive(OPEN_FILE, (msg: ClientMessage) => {
+        if (fileSelected[msg.channel]) fileSelected[msg.channel](msg.data)
+    })
+
+    window.api.receive(CLOUD, (msg: ClientMessage) => {
+        if (cloudHelpers[msg.channel]) cloudHelpers[msg.channel](msg.data)
+    })
 
     // TO STAGE
     stageListen()
@@ -74,6 +86,39 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["VOLUME"], get(volume))
     send(OUTPUT, ["TEMPLATES"], get(templates))
     send(OUTPUT, ["OVERLAYS"], get(overlays))
+}
+
+const fileSelected = {
+    GOOGLE_KEYS: ({ files, content }) => {
+        let path = files[0]
+        let file = content[path]
+        if (file) validateKeys(file)
+    },
+}
+
+const cloudHelpers = {
+    DRIVE_CONNECT: ({ status }: any) => {
+        if (status !== "connected") return
+
+        driveConnected.set(true)
+
+        if (get(driveData).mainFolderId) {
+            send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath) })
+            return
+        }
+
+        send(CLOUD, ["GET_MAIN_FOLDER"])
+    },
+    GET_MAIN_FOLDER: ({ id }: any) => {
+        if (!id) return
+
+        driveData.update((a) => {
+            a.mainFolderId = id
+            return a
+        })
+
+        send(CLOUD, ["SYNC_DATA"], { mainFolderId: id, path: get(showsPath) })
+    },
 }
 
 const saveList: { [key in SaveList]: any } = {
@@ -125,4 +170,6 @@ const saveList: { [key in SaveList]: any } = {
     webFavorites: webFavorites,
     volume: null,
     midiIn: midiIn,
+    driveKeys: driveKeys,
+    driveData: driveData,
 }

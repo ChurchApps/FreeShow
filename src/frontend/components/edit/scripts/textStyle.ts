@@ -260,6 +260,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd: boolean = f
     var sel = window.getSelection()
 
     let lineElem = element.childNodes[line]
+    if (!lineElem) return
 
     // get child elem
     let childElem = -1

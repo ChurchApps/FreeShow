@@ -63,6 +63,9 @@ export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 
 export const sortedShowsList: Writable<ShowList[]> = writable([])
 export const cachedShowsData: Writable<any> = writable({})
 
+// CLOUD
+export const driveConnected: Writable<boolean> = writable(false)
+
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })
 export const alertMessage: Writable<string> = writable("")
@@ -195,6 +198,10 @@ export const presenterControllerKeys: Writable<boolean> = writable(true) // true
 export const videoExtensions: Writable<string[]> = writable(["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"]) // [default]
 export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp"]) // [default]
 export const audioExtensions: Writable<string[]> = writable(["mp3", "wav", "m4a", "flac", "wma", "aac", "ogg", "weba", "aiff"])
+
+// CLOUD
+export const driveKeys: Writable<any> = writable(null)
+export const driveData: Writable<any> = writable({ mainFolderId: null })
 
 // ----- STORES LIST -----
 

@@ -286,6 +286,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     if (show.private) a[id].private = true
                     else if (a[id].private) delete a[id].private
+
+                    if (show.driveId) a[id].driveId = show.driveId
                 })
                 return a
             })
@@ -420,8 +422,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     if (isParent) {
                         // get layout slides index (without children)
-                        let slideLayoutIndex = slideIndex > 0 ? ref[slideIndex - 1]?.index + 1 : 0
-                        // TODO: sometimes incorrect index
+                        let refAtIndex = ref[slideIndex - 1]?.parent || ref[slideIndex - 1]
+                        let slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : 0
                         // add to layout at index
                         // _show(showId).layouts([layout]).slides().add([layoutValue], null, slideIndex)
                         _show(showId).layouts([layout]).slides([slideLayoutIndex]).add([layoutValue])
@@ -513,7 +515,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 count = -1
 
                 let parent = ref[index - 1]?.parent || ref[index - 1]
-                if (!parent) return
+                if (!parent || data.replace?.parent) return
                 ref.forEach((slide) => {
                     if (slide.id === parent.id && slide.layoutIndex < index) count++
                 })
@@ -675,7 +677,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (!Array.isArray(values)) values = [values]
 
                 keys.forEach((key, i) => {
-                    let value = valueIndex < 0 ? values[i] : values[i]?.[valueIndex] || values[valueIndex]
+                    // for overlays, add full array
+                    let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : values[i]?.[valueIndex] || values[valueIndex]
 
                     if (value === undefined) delete l[key]
                     else if (data.key && data.keys) {

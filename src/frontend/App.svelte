@@ -150,19 +150,22 @@
 
             // if (e.key !== "s" && document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key))
 
-            // ! testing on non mac computers
-            let simulateMac = false
+            // // ! testing on non mac computers
+            // let simulateMac = false
 
-            // edit item has its own paste function
-            // $os.platform === "darwin" || simulateMac
-            if (e.key === "v" && document.activeElement?.closest(".editItem")) return
+            // // edit item has its own paste function
+            // // $os.platform === "darwin" || simulateMac
+            // if (e.key === "v" && document.activeElement?.closest(".editItem")) return
 
-            // return if not mac and using shortcuts in inputs (main difference is undo/redo)
-            if ($os.platform !== "darwin" && document.activeElement?.classList?.contains("edit")) {
-                // && !["z", "y", "Z"].includes(e.key)
-                if (simulateMac) e.preventDefault()
-                else return
-            }
+            // // return if not mac and using shortcuts in inputs (main difference is undo/redo)
+            // if ($os.platform !== "darwin" && document.activeElement?.classList?.contains("edit")) {
+            //     // && !["z", "y", "Z"].includes(e.key)
+            //     if (simulateMac) e.preventDefault()
+            //     else return
+            // }
+
+            // return if using shortcuts in inputs
+            if (document.activeElement?.classList?.contains("edit")) return
 
             if (ctrlKeys[e.key]) {
                 // !["c", "v", "x"].includes(e.key) &&

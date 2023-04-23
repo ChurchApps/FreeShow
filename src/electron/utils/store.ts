@@ -23,12 +23,15 @@ const templates = new Store({ name: "templates", defaults: {} })
 // CALENDAR
 const events = new Store({ name: "events", defaults: {} })
 
+// CLOUD
+const driveKeys = new Store({ name: "DRIVE_API_KEY", defaults: {} })
+
 // CACHE
 const media = new Store({ name: "media", defaults: {}, accessPropertiesByDotNotation: false })
 const cache = new Store({ name: "cache", defaults: {} })
 const history = new Store({ name: "history", defaults: {} })
 
-export const stores: any = {
+export const stores: { [key: string]: Store<any> } = {
     SETTINGS: settings,
     THEMES: themes,
     PROJECTS: projects,
@@ -37,6 +40,7 @@ export const stores: any = {
     OVERLAYS: overlays,
     TEMPLATES: templates,
     EVENTS: events,
+    DRIVE_API_KEY: driveKeys,
     MEDIA: media,
     CACHE: cache,
     HISTORY: history,

@@ -9,6 +9,7 @@ import {
     draw,
     drawSettings,
     drawTool,
+    driveKeys,
     events,
     folders,
     groups,
@@ -29,6 +30,7 @@ import { midiInListen } from "./midi"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { eachConnection, sendData, timedout } from "./sendData"
+import { driveConnect } from "./drive"
 
 export function listenForUpdates() {
     shows.subscribe((data) => {
@@ -143,4 +145,6 @@ export function listenForUpdates() {
         // TODO: only update groups, not all the other values
         updateCachedShows(get(showsCache))
     })
+
+    driveKeys.subscribe(driveConnect)
 }
