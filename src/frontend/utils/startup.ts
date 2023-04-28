@@ -62,12 +62,12 @@ import { redoHistory, undoHistory } from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
+import { listenForUpdates } from "./listeners"
 import { listen } from "./messages"
 import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
-import { updateSettings } from "./updateSettings"
-import { listenForUpdates } from "./listeners"
 import { saveComplete } from "./save"
+import { updateSettings, updateSyncedSettings } from "./updateSettings"
 
 export function startup() {
     loaded.set(false)
@@ -86,7 +86,7 @@ export function startup() {
 
 function startupMain() {
     // load files
-    send(STORE, ["SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
+    send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
     setLanguage()
 
     // load new show on show change
@@ -152,11 +152,27 @@ const receiveMAIN: any = {
         else startupMain()
     },
     RECEIVE_MIDI: (msg) => playMidiIn(msg),
+    DELETE_SHOWS: (a) => {
+        if (!a.deleted.length) return
+
+        alertMessage.set("<h3>Deleted " + a.deleted.length + " files</h3><br>● " + a.deleted.join("<br>● "))
+        activePopup.set("alert")
+    },
+    REFRESH_SHOWS: (a) => {
+        let oldCount = Object.keys(get(shows)).length
+        let newCount = Object.keys(a).length
+
+        shows.set(a)
+
+        alertMessage.set("<h3>Updated shows</h3><br>● Old shows: " + oldCount + "<br>● New shows: " + newCount)
+        activePopup.set("alert")
+    },
 }
 
 export const receiveSTORE: any = {
     SAVE: () => saveComplete(),
     SETTINGS: (a: any) => updateSettings(a),
+    SYNCED_SETTINGS: (a: any) => updateSyncedSettings(a),
     SHOWS: (a: any) => shows.set(a),
     STAGE_SHOWS: (a: any) => stageShows.set(a),
     PROJECTS: (a: any) => {

@@ -232,14 +232,6 @@ ipcMain.on(STORE, (e, msg) => {
 })
 
 function save(data: any) {
-    // settings
-    // if (data.SETTINGS === null) stores.settings.clear()
-    // else {
-    //   Object.entries(data.SETTINGS).forEach(([key, value]: any) => {
-    //     if (JSON.stringify(stores.settings.get(key)) !== JSON.stringify(value)) stores.settings.set(key, value)
-    //   })
-    // }
-
     // save to files
     Object.entries(stores).forEach(storeData)
     function storeData([key, store]: any) {
@@ -290,7 +282,10 @@ ipcMain.on(CLOUD, cloudConnect)
 export const toApp = (channel: string, ...args: any[]): void => mainWindow?.webContents.send(channel, ...args)
 
 // open url in default web browser
-export const openURL = (url: string) => shell.openExternal(url)
+export const openURL = (url: string) => {
+    shell.openExternal(url)
+    return
+}
 
 // set/update global application menu
 export function setGlobalMenu(strings: any = {}) {

@@ -307,6 +307,7 @@
         "about": "Om",
         "history": "Historie",
         "midi": "MIDI",
+        "cloud_update": "Synkroniserer med sky",
         "shortcuts": "Hurtigtaster",
         "icon": "Ikoner",
         "initialize": "Velkommen",
@@ -395,10 +396,25 @@
         "custom_key": "Skriv inn verdi",
         "play_on_midi": "Spill av når MIDI inn",
         "send_midi": "Send MIDI ut",
+        "delete_shows_not_indexed": "Slett show i 'Shows'-mappen som ikke er indeksert",
+        "refresh_all_shows": "Finn alle show i 'Shows'-mappen",
         "start_timer": "Start tidtaker",
         "stop_timers": "Stopp pågående tidtakere",
         "next_after_media": "Neste etter medier",
         "remove_media": "Fjern media"
+    },
+    "cloud": {
+        "info": "Synkroniser filer med Google Disk for sikkerhetskopier, eller dersom du jobber på flere datamaskiner.",
+        "tip_api": "Du må bruke din egen gratis Google API nøkkel, slik at programmet kan laste opp filer automatisk til din Google Disk.",
+        "tip_how": "Vet du ikke hvordan du får en?",
+        "tip_guide": "Trykk her for en bruksanvisning.",
+        "enable": "Synkroniser automatisk ved oppstart og lagring",
+        "google_drive_api": "Google API tjenestekonto-nøkkel",
+        "select_key": "Importer nøkkelfil",
+        "update_key": "Oppdater nøkkelfil",
+        "main_folder": "Angi hovedmappe manuelt",
+        "reconnect": "Koble til på nytt",
+        "sync": "Synkroniser"
     },
     "export": {
         "export": "Eksporter",

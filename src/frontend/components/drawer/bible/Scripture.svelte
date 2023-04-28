@@ -2,15 +2,15 @@
     import { onMount } from "svelte"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
     import Loader from "../../main/Loader.svelte"
-    // import type { Bible } from "../../../../types/Bible"
+// import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
     import { dictionary, notFound, outLocked, outputs, playScripture, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import { fetchBible, joinRange, loadBible } from "./scripture"
-    import Button from "../../inputs/Button.svelte"
-    import Icon from "../../helpers/Icon.svelte"
 
     export let active: any
     export let bibles: Bible[]
@@ -510,7 +510,7 @@
 
 <div class="scroll" style="flex: 1;overflow-y: auto;">
     <div class="main">
-        {#if notLoaded}
+        {#if notLoaded || !bibles[0]}
             <Center faded>
                 <T id="error.bible" />
             </Center>
@@ -576,7 +576,7 @@
 <div class="tabs" style="display: flex;align-items: center;">
     <!-- text-align: center; -->
     <span style="flex: 1;padding: 0 10px;">
-        {#if bibles[0].version}
+        {#if bibles[0]?.version}
             <span style="opacity: 0.8;">{bibles[0].version}</span>,
             {bibles[0]?.book || ""}
             {bibles[0]?.chapter || ""}{#if verseRange.length}:{verseRange}{/if}

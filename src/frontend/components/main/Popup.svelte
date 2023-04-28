@@ -26,6 +26,7 @@
     import CreatePlayer from "./popups/CreatePlayer.svelte"
     import History from "./popups/History.svelte"
     import Midi from "./popups/Midi.svelte"
+    import CloudUpdate from "./popups/CloudUpdate.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -54,6 +55,7 @@
         alert: Alert,
         history: History,
         midi: Midi,
+        cloud_update: CloudUpdate,
     }
 </script>
 

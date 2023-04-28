@@ -1,5 +1,6 @@
+import { get } from "svelte/store"
 import { CLOUD } from "../../types/Channels"
-import { activePopup, alertMessage, driveKeys } from "../stores"
+import { activePopup, alertMessage, driveData, driveKeys, popupData, showsPath } from "../stores"
 import { send } from "./request"
 import { save } from "./save"
 
@@ -31,6 +32,14 @@ export function driveConnect(keys: any) {
         // authenticate("C:\\Users\\Kristoffer\\AppData\\Roaming\\freeshow\\DRIVE_API_KEY.json")
         send(CLOUD, ["DRIVE_CONNECT"])
     }, 100)
+}
+
+export function syncDrive(force: boolean = false) {
+    if (!force && get(driveData).disabled === true) return
+
+    send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath) })
+    popupData.set({})
+    activePopup.set("cloud_update")
 }
 
 // import { auth, drive } from "@googleapis/drive"

@@ -58,7 +58,7 @@
     {/if}
 
     <Button on:click={addMidi} style="width: 100%;" center>
-        <Icon id="add" />
+        <Icon id="add" right />
         <T id="settings.add" />
     </Button>
 </div>

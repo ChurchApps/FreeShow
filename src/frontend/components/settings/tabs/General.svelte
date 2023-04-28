@@ -1,64 +1,76 @@
 <script lang="ts">
-  import { activePopup, alertUpdates, autoOutput, fullColors, groupNumbers, labelsDisabled, showsPath, timeFormat } from "../../../stores"
-  import { setLanguage } from "../../../utils/language"
-  import Icon from "../../helpers/Icon.svelte"
-  import T from "../../helpers/T.svelte"
-  import Button from "../../inputs/Button.svelte"
-  import Checkbox from "../../inputs/Checkbox.svelte"
-  import FolderPicker from "../../inputs/FolderPicker.svelte"
-  import LocaleSwitcher from "../LocaleSwitcher.svelte"
+    import { MAIN } from "../../../../types/Channels"
+    import { activePopup, alertUpdates, autoOutput, fullColors, groupNumbers, labelsDisabled, shows, showsPath, timeFormat } from "../../../stores"
+    import { setLanguage } from "../../../utils/language"
+    import { send } from "../../../utils/request"
+    import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
+    import FolderPicker from "../../inputs/FolderPicker.svelte"
+    import LocaleSwitcher from "../LocaleSwitcher.svelte"
 
-  const inputs: any = {
-    timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
-    updates: (e: any) => alertUpdates.set(e.target.checked),
-    labels: (e: any) => labelsDisabled.set(e.target.checked),
-    colors: (e: any) => fullColors.set(e.target.checked),
-    groupNumber: (e: any) => groupNumbers.set(e.target.checked),
-    autoOutput: (e: any) => autoOutput.set(e.target.checked),
-  }
+    const inputs: any = {
+        timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
+        updates: (e: any) => alertUpdates.set(e.target.checked),
+        labels: (e: any) => labelsDisabled.set(e.target.checked),
+        colors: (e: any) => fullColors.set(e.target.checked),
+        groupNumber: (e: any) => groupNumbers.set(e.target.checked),
+        autoOutput: (e: any) => autoOutput.set(e.target.checked),
+    }
 
-  // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
+    // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
 
-  function reset() {
-    setLanguage(null)
-    alertUpdates.set(true)
-    labelsDisabled.set(false)
-    fullColors.set(false)
-    groupNumbers.set(true)
-    autoOutput.set(false)
-  }
+    function reset() {
+        setLanguage(null)
+        alertUpdates.set(true)
+        labelsDisabled.set(false)
+        fullColors.set(false)
+        groupNumbers.set(true)
+        autoOutput.set(false)
+    }
+
+    // delete shows from folder that are not indexed
+    function deleteShows() {
+        send(MAIN, ["DELETE_SHOWS"], { shows: $shows, path: $showsPath })
+    }
+
+    // get all shows inside current shows folder (and remove missing)
+    function refreshShows() {
+        send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
+    }
 </script>
 
 <div>
-  <p><T id="settings.language" /></p>
-  <LocaleSwitcher />
+    <p><T id="settings.language" /></p>
+    <LocaleSwitcher />
 </div>
 <div>
-  <p><T id="settings.use24hClock" /></p>
-  <Checkbox checked={$timeFormat === "24"} on:change={inputs.timeFormat} />
+    <p><T id="settings.use24hClock" /></p>
+    <Checkbox checked={$timeFormat === "24"} on:change={inputs.timeFormat} />
 </div>
 <div>
-  <p><T id="settings.alert_updates" /></p>
-  <!-- style="width: 200px;" -->
-  <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
+    <p><T id="settings.alert_updates" /></p>
+    <!-- style="width: 200px;" -->
+    <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
 </div>
 <div>
-  <p><T id="settings.auto_output" /></p>
-  <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
+    <p><T id="settings.auto_output" /></p>
+    <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
 </div>
 <div>
-  <p><T id="settings.disable_labels" /></p>
-  <!-- style="width: 200px;" -->
-  <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
+    <p><T id="settings.disable_labels" /></p>
+    <!-- style="width: 200px;" -->
+    <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
 </div>
 <hr />
 <div>
-  <p><T id="settings.group_numbers" /></p>
-  <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
+    <p><T id="settings.group_numbers" /></p>
+    <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
 </div>
 <div>
-  <p><T id="settings.full_colors" /></p>
-  <Checkbox checked={$fullColors} on:change={inputs.colors} />
+    <p><T id="settings.full_colors" /></p>
+    <Checkbox checked={$fullColors} on:change={inputs.colors} />
 </div>
 <!-- <div>
   <p><T id="settings.default_project_name" /></p>
@@ -117,38 +129,48 @@
   </span>
 </div> -->
 <div>
-  <p><T id="settings.show_location" /></p>
-  <span class="shows_path" title={$showsPath}>
-    <p>{$showsPath}</p>
-    <FolderPicker id="SHOWS">
-      <T id="inputs.change_folder" />
-    </FolderPicker>
-  </span>
+    <p><T id="settings.show_location" /></p>
+    <span class="shows_path" title={$showsPath}>
+        <p>{$showsPath}</p>
+        <FolderPicker id="SHOWS">
+            <T id="inputs.change_folder" />
+        </FolderPicker>
+    </span>
 </div>
+
+<hr />
+<Button style="width: 100%;" on:click={deleteShows} center>
+    <Icon id="delete" right />
+    <T id="actions.delete_shows_not_indexed" />
+</Button>
+<Button style="width: 100%;" on:click={refreshShows} center>
+    <Icon id="refresh" right />
+    <T id="actions.refresh_all_shows" />
+</Button>
 
 <hr />
 <!-- <Button style="width: 100%;" center><T id="settings.export_settings" /></Button> -->
 <!-- <Button style="width: 100%;" center><T id="settings.import_all" /></Button>
 <Button style="width: 100%;" center><T id="settings.export_all" /></Button> -->
 <Button style="width: 100%;" on:click={reset} center>
-  <Icon id="reset" right />
-  <T id="actions.reset" />
+    <Icon id="reset" right />
+    <T id="actions.reset" />
 </Button>
 <Button style="width: 100%;" on:click={() => activePopup.set("reset_all")} center>
-  <Icon id="reset" right /><T id="settings.reset_all" />
+    <Icon id="reset" right /><T id="settings.reset_all" />
 </Button>
 
 <!-- project store location... -->
 <style>
-  div:not(.scroll) {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 5px 0;
-    /* height: 35px; */
-    min-height: 38px;
-  }
-  /* .flex {
+    div:not(.scroll) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 5px 0;
+        /* height: 35px; */
+        min-height: 38px;
+    }
+    /* .flex {
     display: flex;
     align-items: center;
   }
@@ -161,23 +183,23 @@
     text-decoration: line-through;
   } */
 
-  .shows_path {
-    display: flex;
-    align-items: center;
-    max-width: 70%;
-  }
-  .shows_path :global(button) {
-    white-space: nowrap;
-  }
+    .shows_path {
+        display: flex;
+        align-items: center;
+        max-width: 70%;
+    }
+    .shows_path :global(button) {
+        white-space: nowrap;
+    }
 
-  hr {
-    margin: 20px 0;
-    border: none;
-    height: 2px;
-    background-color: var(--primary-lighter);
-  }
+    hr {
+        margin: 20px 0;
+        border: none;
+        height: 2px;
+        background-color: var(--primary-lighter);
+    }
 
-  div :global(.numberInput) {
-    width: 80px;
-  }
+    div :global(.numberInput) {
+        width: 80px;
+    }
 </style>

@@ -286,8 +286,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     if (show.private) a[id].private = true
                     else if (a[id].private) delete a[id].private
-
-                    if (show.driveId) a[id].driveId = show.driveId
                 })
                 return a
             })

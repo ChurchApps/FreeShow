@@ -46,12 +46,23 @@ import {
     webFavorites,
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
-import type { SaveListSettings } from "./../../types/Save"
+import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { currentWindow, maxConnections, outputs, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
 
+export function updateSyncedSettings(data: any) {
+    if (!data || !Object.keys(data).length) return
+
+    Object.entries(data).forEach(([key, value]: any) => {
+        if (updateList[key as SaveListSyncedSettings]) updateList[key as SaveListSyncedSettings](value)
+        else console.log("MISSING: ", key)
+    })
+}
+
 export function updateSettings(data: any) {
+    // pre v0.8.2 (data contains SaveListSyncedSettings, but it gets overwritten and removed on first save)
+
     Object.entries(data).forEach(([key, value]: any) => {
         if (updateList[key as SaveListSettings]) updateList[key as SaveListSettings](value)
         else console.log("MISSING: ", key)
@@ -87,7 +98,7 @@ export function updateSettings(data: any) {
     }, 100)
 }
 
-const updateList: { [key in SaveListSettings]: any } = {
+const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {
     initialized: (v: any) => {
         if (!v) {
             // FIRST TIME USER

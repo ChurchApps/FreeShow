@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
-import { CLOUD, STORE } from "../../types/Channels"
+import { STORE } from "../../types/Channels"
+import { clone } from "../components/helpers/array"
 import {
     activeProject,
     alertUpdates,
@@ -7,9 +8,9 @@ import {
     autoOutput,
     categories,
     defaultProjectName,
+    drawSettings,
     drawer,
     drawerTabsData,
-    drawSettings,
     driveData,
     driveKeys,
     events,
@@ -42,9 +43,9 @@ import {
     remotePassword,
     resized,
     saved,
+    scriptureSettings,
     scriptures,
     scripturesCache,
-    scriptureSettings,
     shows,
     showsCache,
     showsPath,
@@ -64,9 +65,8 @@ import {
     volume,
     webFavorites,
 } from "../stores"
-import type { SaveListSettings } from "./../../types/Save"
-import { clone } from "../components/helpers/array"
-import { send } from "./request"
+import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
+import { syncDrive } from "./drive"
 
 export function save() {
     console.log("SAVING...")
@@ -79,7 +79,6 @@ export function save() {
         autoOutput: get(autoOutput),
         maxConnections: get(maxConnections),
         ports: get(ports),
-        categories: get(categories),
         timeFormat: get(timeFormat),
         defaultProjectName: get(defaultProjectName),
         // events: get(events),
@@ -87,11 +86,9 @@ export function save() {
         exportPath: get(exportPath),
         drawer: get(drawer),
         drawerTabsData: get(drawerTabsData),
-        drawSettings: get(drawSettings),
         groupNumbers: get(groupNumbers),
         fullColors: get(fullColors),
         formatNewShow: get(formatNewShow),
-        groups: get(groups),
         imageExtensions: get(imageExtensions),
         labelsDisabled: get(labelsDisabled),
         language: get(language),
@@ -101,34 +98,40 @@ export function save() {
         os: get(os),
         outLocked: get(outLocked),
         outputs: get(outputs),
-        overlayCategories: get(overlayCategories),
         presenterControllerKeys: get(presenterControllerKeys),
         playerVideos: get(playerVideos),
         remotePassword: get(remotePassword),
         resized: get(resized),
-        scriptures: get(scriptures),
-        scriptureSettings: get(scriptureSettings),
         slidesOptions: get(slidesOptions),
         splitLines: get(splitLines),
-        templateCategories: get(templateCategories),
         // templates: get(templates),
-        timers: get(timers),
         theme: get(theme),
         transitionData: get(transitionData),
         // themes: get(themes),
         videoExtensions: get(videoExtensions),
         webFavorites: get(webFavorites),
         volume: get(volume),
-        midiIn: get(midiIn),
         driveData: get(driveData),
     }
-    // save settings & shows
-    // , shows: get(shows)
+
+    // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)
+    let syncedSettings: { [key in SaveListSyncedSettings]: any } = {
+        categories: get(categories),
+        drawSettings: get(drawSettings),
+        groups: get(groups),
+        overlayCategories: get(overlayCategories),
+        scriptures: get(scriptures),
+        scriptureSettings: get(scriptureSettings),
+        templateCategories: get(templateCategories),
+        timers: get(timers),
+        midiIn: get(midiIn),
+    }
 
     let allSavedData: any = {
         path: get(showsPath),
         // SETTINGS
         SETTINGS: settings,
+        SYNCED_SETTINGS: syncedSettings,
         // STORES
         SHOWS: get(shows),
         STAGE_SHOWS: get(stageShows),
@@ -167,7 +170,7 @@ export function save() {
 export function saveComplete() {
     saved.set(true)
 
-    let mainFolderId = get(driveData).mainFolderId
+    let mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId) return
-    send(CLOUD, ["SYNC_DATA"], { mainFolderId, path: get(showsPath) })
+    syncDrive()
 }

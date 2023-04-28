@@ -1,4 +1,4 @@
-import type { SaveListSettings } from "./../../types/Save"
+import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 
 export const defaultConfig: any = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 } }
 
@@ -26,21 +26,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     remotePassword: "",
     ports: { remote: 5510, stage: 5511 },
     maxConnections: 10,
-    categories: {
-        song: { name: "category.song", icon: "song", default: true },
-        presentation: { name: "category.presentation", icon: "presentation", default: true },
-    },
-    drawSettings: {},
-    overlayCategories: {
-        offers: { name: "category.offers", icon: "cash", default: true },
-        notice: { name: "category.notice", icon: "info", default: true },
-        visuals: { name: "category.visuals", icon: "star", default: true },
-    },
-    templateCategories: {
-        song: { name: "category.song", icon: "song", default: true },
-        presentation: { name: "category.presentation", icon: "presentation", default: true },
-        scripture: { name: "category.scripture", icon: "scripture", default: true },
-    },
     mediaFolders: {},
     audioFolders: {},
     webFavorites: {},
@@ -58,7 +43,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     mediaOptions: { columns: 5, mode: "grid" },
     drawerTabsData: {},
     drawer: { height: 300, stored: null },
-    timers: {},
     language: null,
     labelsDisabled: false,
     groupNumbers: true,
@@ -67,6 +51,36 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     showsPath: null,
     exportPath: null,
     splitLines: 0,
+    defaultProjectName: "date",
+    videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],
+    imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"],
+    theme: "default",
+    transitionData: {
+        text: { type: "fade", duration: 500, easing: "linear" },
+        media: { type: "fade", duration: 500, easing: "linear" },
+    },
+    os: { platform: "", name: "Computer" },
+    volume: 1,
+    driveData: { mainFolderId: null, disabled: false },
+}
+
+export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
+    categories: {
+        song: { name: "category.song", icon: "song", default: true },
+        presentation: { name: "category.presentation", icon: "presentation", default: true },
+    },
+    drawSettings: {},
+    overlayCategories: {
+        offers: { name: "category.offers", icon: "cash", default: true },
+        notice: { name: "category.notice", icon: "info", default: true },
+        visuals: { name: "category.visuals", icon: "star", default: true },
+    },
+    templateCategories: {
+        song: { name: "category.song", icon: "song", default: true },
+        presentation: { name: "category.presentation", icon: "presentation", default: true },
+        scripture: { name: "category.scripture", icon: "scripture", default: true },
+    },
+    timers: {},
     scriptures: {
         kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
         asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },
@@ -81,14 +95,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         showVersion: false,
         showVerse: true,
     },
-    defaultProjectName: "date",
-    videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],
-    imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"],
-    theme: "default",
-    transitionData: {
-        text: { type: "fade", duration: 500, easing: "linear" },
-        media: { type: "fade", duration: 500, easing: "linear" },
-    },
     groups: {
         break: { name: "break", default: true, color: "#f5255e" },
         bridge: { name: "bridge", default: true, color: "#f52598" },
@@ -99,10 +105,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         tag: { name: "tag", default: true, color: "#7525f5" },
         verse: { name: "verse", default: true, color: "#5825f5" },
     },
-    os: { platform: "", name: "Computer" },
-    volume: 1,
     midiIn: {},
-    driveData: { mainFolderId: null },
 }
 
 export const defaultThemes: any = {

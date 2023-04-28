@@ -2,13 +2,14 @@
 // Get all user configs
 
 import Store from "electron-store"
-import { defaultConfig, defaultSettings, defaultStage, defaultThemes } from "./defaults"
+import { defaultConfig, defaultSettings, defaultStage, defaultSyncedSettings, defaultThemes } from "./defaults"
 
 // MAIN WINDOW
 export const config = new Store<any>({ defaults: defaultConfig })
 
 // SETTINGS
 const settings = new Store({ name: "settings", defaults: defaultSettings })
+const synced_settings = new Store({ name: "settings_synced", defaults: defaultSyncedSettings })
 const themes = new Store({ name: "themes", defaults: defaultThemes })
 
 // PROJECTS
@@ -33,6 +34,7 @@ const history = new Store({ name: "history", defaults: {} })
 
 export const stores: { [key: string]: Store<any> } = {
     SETTINGS: settings,
+    SYNCED_SETTINGS: synced_settings,
     THEMES: themes,
     PROJECTS: projects,
     SHOWS: shows,

@@ -26,7 +26,6 @@ export function setShow(id: string, value: "delete" | Show): Show {
                 timestamps: value.timestamps,
             }
             if (value.private) a[id].private = true
-            if (value.driveId) a[id].driveId = value.driveId
         }
         return a
     })
@@ -78,7 +77,7 @@ export async function loadShows(s: string[]) {
                     })
                 }
 
-                setShow(msg.content[0], msg.content[1])
+                setShow(msg.id || msg.content[0], msg.content[1])
             }
             // console.log(count, s, msg, "LOAD")
 

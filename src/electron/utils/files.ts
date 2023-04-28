@@ -51,6 +51,14 @@ export function writeFile(path: string, content: string, id: string = "") {
     })
 }
 
+export function deleteFile(path: string) {
+    fs.unlink(path, (err) => {
+        if (err) {
+            console.error("Could not delete file:", err)
+        }
+    })
+}
+
 export function getFileStats(p: string) {
     try {
         const stat: Stats = fs.statSync(p)

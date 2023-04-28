@@ -201,7 +201,7 @@ export const audioExtensions: Writable<string[]> = writable(["mp3", "wav", "m4a"
 
 // CLOUD
 export const driveKeys: Writable<any> = writable(null)
-export const driveData: Writable<any> = writable({ mainFolderId: null })
+export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false })
 
 // ----- STORES LIST -----
 

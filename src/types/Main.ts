@@ -106,6 +106,7 @@ export type Popups =
     | "alert"
     | "history"
     | "midi"
+    | "cloud_update"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

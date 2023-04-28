@@ -3,6 +3,8 @@ import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT, REMOTE, STAGE } from "../../types
 import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
+    activePopup,
+    alertMessage,
     audioFolders,
     categories,
     defaultProjectName,
@@ -27,6 +29,7 @@ import {
     overlayCategories,
     overlays,
     playerVideos,
+    popupData,
     presenterControllerKeys,
     projects,
     remotePassword,
@@ -45,7 +48,7 @@ import {
     webFavorites,
 } from "../stores"
 import { alertUpdates, autoOutput, maxConnections, ports, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
-import { validateKeys } from "./drive"
+import { syncDrive, validateKeys } from "./drive"
 import { send } from "./request"
 import { client } from "./sendData"
 import { stageListen } from "./stageTalk"
@@ -102,14 +105,19 @@ const cloudHelpers = {
 
         driveConnected.set(true)
 
-        if (get(driveData).mainFolderId) {
-            send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath) })
+        if (get(driveData)?.mainFolderId) {
+            syncDrive()
             return
         }
 
         send(CLOUD, ["GET_MAIN_FOLDER"])
     },
-    GET_MAIN_FOLDER: ({ id }: any) => {
+    GET_MAIN_FOLDER: ({ id, error }: any) => {
+        if (error) {
+            alertMessage.set(error)
+            activePopup.set("alert")
+            return
+        }
         if (!id) return
 
         driveData.update((a) => {
@@ -117,7 +125,26 @@ const cloudHelpers = {
             return a
         })
 
-        send(CLOUD, ["SYNC_DATA"], { mainFolderId: id, path: get(showsPath) })
+        syncDrive()
+    },
+    SYNC_DATA: ({ changes }) => {
+        if (changes.error) {
+            alertMessage.set(changes.error)
+            activePopup.set("alert")
+            return
+        }
+
+        if (!changes.length) {
+            popupData.set({})
+            activePopup.set(null)
+            return
+        }
+
+        // reload shows cache (because there could be some changes)
+        showsCache.set({})
+
+        popupData.set(changes)
+        activePopup.set("cloud_update")
     },
 }
 
