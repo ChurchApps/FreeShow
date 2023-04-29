@@ -397,6 +397,7 @@
         "play_on_midi": "Spill av når MIDI inn",
         "send_midi": "Send MIDI ut",
         "delete_shows_not_indexed": "Slett show i 'Shows'-mappen som ikke er indeksert",
+        "delete_thumbnail_cache": "Slett hurtigbuffer med miniatyrbilder",
         "refresh_all_shows": "Finn alle show i 'Shows'-mappen",
         "start_timer": "Start tidtaker",
         "stop_timers": "Stopp pågående tidtakere",

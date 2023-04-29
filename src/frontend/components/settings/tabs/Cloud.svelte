@@ -2,6 +2,7 @@
     import { OPEN_FILE } from "../../../../types/Channels"
     import { driveData, driveKeys } from "../../../stores"
     import { driveConnect, syncDrive } from "../../../utils/drive"
+    import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -12,6 +13,8 @@
     function getKeysFile() {
         window.api.send(OPEN_FILE, { channel: "GOOGLE_KEYS", title: "Select keys file", filter: { name: "JSON", extensions: ["json"] }, multiple: false, read: true })
     }
+
+    $: validKeys = typeof $driveKeys === "object" && Object.keys($driveKeys).length
 
     function updateMainFolder(e: any) {
         let value = e.target.value
@@ -34,7 +37,7 @@
     }
 
     function reset() {
-        driveKeys.set(null)
+        driveKeys.set({})
         driveData.set({ mainFolderId: null, disabled: false })
     }
 </script>
@@ -55,7 +58,7 @@
     <span>
         <Button on:click={getKeysFile}>
             <Icon id="key" right />
-            {#if $driveKeys}
+            {#if validKeys}
                 <T id="cloud.update_key" />
             {:else}
                 <T id="cloud.select_key" />
@@ -64,7 +67,7 @@
     </span>
 </div>
 
-{#if $driveKeys}
+{#if validKeys}
     <div>
         <p><T id="cloud.main_folder" /></p>
         <span style="display: flex;align-items: center;overflow: auto;">
@@ -83,11 +86,21 @@
 <hr />
 
 <div style="display: flex;flex-direction: column;">
-    <Button on:click={() => syncDrive(true)} disabled={!$driveKeys} style="width: 100%;" center>
+    <Button
+        on:click={() => {
+            save()
+            setTimeout(() => {
+                syncDrive(true)
+            }, 1000)
+        }}
+        disabled={!validKeys}
+        style="width: 100%;"
+        center
+    >
         <Icon id="cloud_sync" right />
         <T id="cloud.sync" />
     </Button>
-    <Button on:click={() => driveConnect($driveKeys)} disabled={!$driveKeys} style="width: 100%;" center>
+    <Button on:click={() => driveConnect($driveKeys)} disabled={!validKeys} style="width: 100%;" center>
         <Icon id="refresh" right />
         <T id="cloud.reconnect" />
     </Button>

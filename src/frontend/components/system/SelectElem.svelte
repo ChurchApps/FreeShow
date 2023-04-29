@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SelectIds } from "../../../types/Main"
-    import { selected } from "../../stores"
+    import { os, selected } from "../../stores"
     import { arrayHasData } from "../helpers/array"
 
     export let id: SelectIds
@@ -44,7 +44,7 @@
 
         let alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
         let selectMultiple: boolean = e.ctrlKey || e.metaKey
-        let rightClick: boolean = e.buttons === 2
+        let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         if (dragged) {
             if (alreadySelected) return
@@ -53,7 +53,7 @@
         } else {
             if (alreadySelected) {
                 // if (rightClick) return
-                if (!selectMultiple) return
+                if (!selectMultiple || rightClick) return
 
                 // remove currently selected
                 newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))

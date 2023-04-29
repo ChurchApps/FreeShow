@@ -96,24 +96,19 @@ export function _show(id: any = "active") {
                 return prev
             },
             /** Add new slide */
-            add: (slide: null | any[] = null, parent: boolean = false) => {
-                // TODO: template....
+            add: (slides: null | any[] = null, parent: boolean = false) => {
                 let group: null | string = null
                 if (parent) group = ""
-                if (!slide) slide = [{ group, color: null, settings: {}, notes: "", items: [] }]
+                if (!slides) slides = [{ group, color: null, settings: {}, notes: "", items: [] }]
                 if (!slideIds.length) slideIds = [uid()]
                 showsCache.update((a: any) => {
                     slideIds.forEach((slideId: string, i: number) => {
-                        console.log(slide)
-                        console.log(slide![i] || slide![0])
-
-                        a[id].slides[slideId] = slide![i] || slide![0]
+                        a[id].slides[slideId] = slides![i] || slides![0]
                     })
 
                     a[id].timestamps.modified = new Date().getTime()
                     return a
                 })
-                // ADD TO LAYOUT......????
                 return slideIds[0]
             },
             /** Remove slide */

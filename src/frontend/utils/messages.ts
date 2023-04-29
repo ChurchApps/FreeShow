@@ -9,7 +9,6 @@ import {
     categories,
     defaultProjectName,
     drawSettings,
-    driveConnected,
     driveData,
     driveKeys,
     events,
@@ -100,10 +99,13 @@ const fileSelected = {
 }
 
 const cloudHelpers = {
-    DRIVE_CONNECT: ({ status }: any) => {
+    DRIVE_CONNECT: ({ status, error }: any) => {
+        if (error) {
+            alertMessage.set(error)
+            activePopup.set("alert")
+            return
+        }
         if (status !== "connected") return
-
-        driveConnected.set(true)
 
         if (get(driveData)?.mainFolderId) {
             syncDrive()

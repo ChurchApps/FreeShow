@@ -7,7 +7,7 @@ import { historyActions } from "./historyActions"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 
-export type HistoryPages = "drawer" | "show" | "edit" | "calendar" | "draw" | "stage" | "settings"
+export type HistoryPages = "none" | "drawer" | "show" | "edit" | "calendar" | "draw" | "stage" | "settings"
 export type HistoryIDs =
     // NEW
     | "UPDATE"
@@ -210,7 +210,7 @@ export function history(obj: History, undo: null | boolean = null) {
     // TODO: go to location
     if (obj.location!.page === "drawer") {
         // TODO: open drawer
-    } else activePage.set(obj.location!.page)
+    } else if (obj.location!.page !== "none") activePage.set(obj.location!.page)
 
     // TODO: slide text edit, dont override different style keys!
     // }

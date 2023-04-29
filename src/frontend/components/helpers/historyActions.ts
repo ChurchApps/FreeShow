@@ -312,7 +312,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
         SLIDES: () => {
             // add/remove/duplicate slide(s)
             let deleting: boolean = !!obj.oldData
-            console.log(obj, deleting)
             data = (deleting ? obj.oldData : obj.newData) || {}
 
             if (initializing) {
@@ -347,7 +346,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 }
             }
 
-            console.log(slides)
             if (!slides[0]) return
 
             slides.forEach((slide, i) => {
@@ -381,8 +379,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     })
 
                     if (type === "delete" && !isParent) {
-                        let parent = ref.filter((a: any) => a.children?.includes(id))[0]
-                        console.log(parent)
+                        // let parent = ref.filter((a: any) => a.children?.includes(id))[0]
+                        // console.log(parent)
 
                         // remove from other slides
                         showsCache.update((a) => {
@@ -422,9 +420,24 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         // get layout slides index (without children)
                         let refAtIndex = ref[slideIndex - 1]?.parent || ref[slideIndex - 1]
                         let slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : 0
+                        console.log(refAtIndex, slideLayoutIndex)
+
                         // add to layout at index
                         // _show(showId).layouts([layout]).slides().add([layoutValue], null, slideIndex)
                         _show(showId).layouts([layout]).slides([slideLayoutIndex]).add([layoutValue])
+                        // } else {
+                        //     // add as child
+                        //     console.log(slideIndex)
+                        //     let parentSlideId = ref[slideIndex - 1]?.id
+                        //     if (!parentSlideId) return
+                        //     showsCache.update((a) => {
+                        //         let children = a[showId].slides[parentSlideId].children
+                        //         if (!children) a[showId].slides[parentSlideId].children = []
+                        //         else if (children?.includes(id)) return a
+
+                        //         a[showId].slides[parentSlideId].children!.push(id)
+                        //         return a
+                        //     })
                     }
 
                     increaseEditIndex()
@@ -456,10 +469,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 }
             } else {
                 // move edit index
-                activeEdit.update((a) => {
-                    a.slide = index
-                    return a
-                })
+                setTimeout(() => {
+                    activeEdit.update((a) => {
+                        a.slide = index
+                        return a
+                    })
+                }, 10)
 
                 // TODO: go to remember (show & layout)
             }
@@ -477,6 +492,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (!isParent) {
                     let parent = ref[index - 1]?.parent || ref[index - 1]
+
                     if (!parent) return
                     let parentSlide = _show(showId).slides([parent.id]).get()[0]
 
@@ -484,7 +500,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     let childIndex = parent.layoutIndex < index ? index - parent.layoutIndex - 1 : index
                     if (parentSlide.children) value = addToPos(parentSlide.children, value, childIndex)
 
-                    _show(showId).slides([parent.id]).set({ key: "children", value })
+                    // timeout is to allow slide to be updated when active in output
+                    setTimeout(() => {
+                        _show(showId).slides([parent.id]).set({ key: "children", value })
+                    }, 10)
                 }
 
                 let items: any[] = data.replace?.items || []
@@ -498,7 +517,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     )
                     items = removeItemValues(items)
                 }
-                console.log(items)
 
                 let slide: Slide = { ...EMPTY_SHOW_SLIDE, items }
                 if (isParent) slide.globalGroup = "verse"

@@ -6,13 +6,12 @@ import { save } from "./save"
 
 export function validateKeys(file: string) {
     let keys = JSON.parse(file)
-    console.log(keys)
 
     // check keys
     let error = ""
-    if (!keys.client_id) error = "Could not find client_id"
-    else if (!keys.private_key) error = "Could not find private_key"
-    else if (!keys.project_id) error = "Could not find project_id"
+    if (!keys.client_id) error = "Invalid key file: Missing 'client_id'"
+    else if (!keys.private_key) error = "Invalid key file: Missing 'private_key'"
+    else if (!keys.project_id) error = "Invalid key file: Missing 'project_id'"
 
     if (error) {
         alertMessage.set(error)
@@ -25,7 +24,7 @@ export function validateKeys(file: string) {
 }
 
 export function driveConnect(keys: any) {
-    if (!keys) return
+    if (typeof keys !== "object" || !Object.keys(keys).length) return
 
     // give time for the keys file to save
     setTimeout(() => {

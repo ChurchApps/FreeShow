@@ -40,22 +40,6 @@
 
     startup()
     $: page = $activePage
-    // let reloadPage: boolean = false
-    // let previousPage: string = ""
-    // $: if (page === "draw") {
-    //   previousPage = "draw"
-    //   reload()
-    // }
-    // $: if (page !== "draw" && previousPage === "draw") {
-    //   previousPage = ""
-    //   reload()
-    // }
-    // function reload() {
-    //   reloadPage = true
-    //   setTimeout(() => {
-    //     reloadPage = false
-    //   }, 2000)
-    // }
 
     let width: number = 0
     let height: number = 0
@@ -68,47 +52,11 @@
         a: () => selectAll(),
         c: () => copy(),
         v: () => paste(),
-        // a: () => {
-        //   if ($activeShow?.id && ($activeShow.type === undefined || $activeShow.type === "show")) {
-        //     if ($activePage === "show") {
-        //       // select all slides
-        //       let ref = _show("active").layouts("active").ref()[0]
-        //       let selection = ref.map((_: any, index: number) => ({ index }))
-        //       selected.set({ id: "slide", data: selection })
-        //       return true
-        //     } else if ($activePage === "edit") {
-        //       // select all elements...
-        //     }
-        //   }
-        //   return false
-        // },
-        // c: () => {
-        //   // TODO: slides don't get copied!!!!
-        //   if ($selected.id) copy($selected)
-        //   else if ($activeEdit.items) copy({ id: "item", data: $activeEdit })
-        //   else if (window.getSelection()) navigator.clipboard.writeText(window.getSelection()!.toString())
-        //   return true
-        // },
-        // v: () => {
-        //   paste()
-        //   return true
-        // },
         x: () => cut(),
         e: () => activePopup.set("export"),
         i: () => activePopup.set("import"),
         n: () => activePopup.set("show"),
         o: () => displayOutputs(),
-        // ATTENTION: THESE ARE CALLED BY SYSTEM (menuTemplate -> menuClick)
-        // s: () => save(),
-        // y: (e: any) => {
-        //   if (!e.target.closest(".edit")) redo()
-        // },
-        // z: (e: any) => {
-        //   if (!e.target.closest(".edit")) undo()
-        // },
-        // Z: (e: any) => {
-        //     if (!e.target.closest(".edit")) redo()
-        // },
         s: () => save(),
         y: () => redo(),
         z: () => undo(),
@@ -148,28 +96,10 @@
                 return
             }
 
-            // if (e.key !== "s" && document.activeElement?.classList?.contains("edit") && Object.keys(ctrlKeys).includes(e.key))
-
-            // // ! testing on non mac computers
-            // let simulateMac = false
-
-            // // edit item has its own paste function
-            // // $os.platform === "darwin" || simulateMac
-            // if (e.key === "v" && document.activeElement?.closest(".editItem")) return
-
-            // // return if not mac and using shortcuts in inputs (main difference is undo/redo)
-            // if ($os.platform !== "darwin" && document.activeElement?.classList?.contains("edit")) {
-            //     // && !["z", "y", "Z"].includes(e.key)
-            //     if (simulateMac) e.preventDefault()
-            //     else return
-            // }
-
             // return if using shortcuts in inputs
             if (document.activeElement?.classList?.contains("edit")) return
 
             if (ctrlKeys[e.key]) {
-                // !["c", "v", "x"].includes(e.key) &&
-                // if (($os.platform !== "darwin" && !simulateMac) && !document.activeElement?.classList?.contains(".edit")) e.preventDefault()
                 ctrlKeys[e.key](e)
             }
             return
@@ -206,16 +136,7 @@
         }
     })
 
-    // disable main content quickly after leaving "draw" page to adress svelte transition bug.
-    // let previousPage = ""
-    // let hideContent: boolean = false
-    // $: if (page) {
-    //     if (previousPage === "draw") {
-    //         hideContent = true
-    //         setTimeout(() => hideContent = false, 10)
-    //     }
-    //     previousPage = page
-    // }
+    $: isWindows = !$currentWindow && $os.platform === "win32"
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -223,10 +144,10 @@
 {#if $currentWindow === "pdf"}
     <Pdf />
 {:else}
-    {#if !$currentWindow && $os.platform === "win32"}
+    {#if isWindows}
         <MenuBar />
     {/if}
-    <main style={!$currentWindow && $os.platform === "win32" ? "height: calc(100% - 30px);" : ""} class:closeAd>
+    <main style={isWindows ? "height: calc(100% - 30px);" : ""} class:closeAd>
         {#if $currentWindow === "output"}
             <!-- TODO: mac center  -->
             <div
@@ -245,7 +166,7 @@
             <Popup />
 
             <div class="column">
-                <Top />
+                <Top {isWindows} />
                 <div class="row">
                     <Resizeable id="mainLeft">
                         <div class="left">
@@ -265,7 +186,6 @@
                         </div>
                     </Resizeable>
 
-                    <!-- {#if !reloadPage} -->
                     <div class="center">
                         {#if page === "show"}
                             <Show />
@@ -281,7 +201,6 @@
                             <Calendar />
                         {/if}
                     </div>
-                    <!-- {/if} -->
 
                     <Resizeable id="mainRight" let:width side="right">
                         <div class="right" class:row={width > 600}>

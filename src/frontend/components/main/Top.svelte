@@ -4,10 +4,15 @@
     import { displayOutputs } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
+
+    export let isWindows: boolean = false
 </script>
 
-<div class="top">
-    <span style="width: 300px;-webkit-app-region: no-drag;">
+<div class="top" class:drag={!isWindows}>
+    <!-- {#if !isWindows}
+    <div class="dragZone" />
+    {/if} -->
+    <span style="width: 300px;">
         {#if !$saved && $os.platform !== "win32"}
             <div class="unsaved" />
         {/if}
@@ -23,12 +28,7 @@
     </span>
     <span style="width: 300px;justify-content: flex-end;">
         <TopButton id="settings" hideLabel />
-        <Button
-            title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display}
-            on:click={displayOutputs}
-            class="context #output display {$outputDisplay ? 'on' : 'off'}"
-            red={$outputDisplay}
-        >
+        <Button title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display} on:click={displayOutputs} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay}>
             {#if $outputDisplay}
                 <Icon id="cancelDisplay" size={1.8} white />
             {:else}
@@ -54,9 +54,26 @@
         display: flex;
     }
 
-    .top :global(button) {
+    .top.drag {
+        -webkit-app-region: drag;
+    }
+
+    .top.drag :global(button) {
         -webkit-app-region: no-drag;
     }
+
+    /* .dragZone {
+        position: absolute;
+
+        display: flex;
+        justify-content: space-between;
+        background-color: var(--primary-darker);
+        width: 100%;
+        height: 3px;
+
+        z-index: 2;
+        -webkit-app-region: drag;
+    } */
 
     div :global(button.display) {
         display: flex;

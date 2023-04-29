@@ -261,7 +261,6 @@
         html = ""
         currentStyle = ""
         item?.lines?.forEach((line) => {
-            // TODO: break ...:
             currentStyle += line.align
             let style = line.align ? 'style="' + line.align + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
@@ -305,7 +304,7 @@
                 if (historyText === linesText) return
             }
 
-            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "edit", override: ref.showId + ref.id + index } })
+            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: ref.showId + ref.id + index } })
         }
 
         function setNewLines(a: any) {
@@ -314,10 +313,13 @@
         }
     }
 
+    let previousLinesCount = 100
     function getNewLines() {
         let newLines: Line[] = []
         let pos: number = -1
         currentStyle = ""
+        let updateHTML: boolean = false
+
         new Array(...textElem.children).forEach((line: any, i: number) => {
             let align: string = plain ? item.lines![i]?.align || "" : line.getAttribute("style") || ""
             pos++
@@ -328,12 +330,43 @@
             if (chords) newLine.chords = chords
             newLines.push(newLine)
 
-            new Array(...line.children).forEach((child: any, j: number) => {
+            new Array(...line.childNodes).forEach((child: any, j: number) => {
+                if (child.nodeName === "#text") {
+                    // add "floating" text to previous node (e.g. pressing backspace at the start of a line)
+                    let lastNode = newLines[pos].text.length - 1
+                    if (lastNode < 0 || !newLines[pos].text[lastNode]) return
+                    newLines[pos].text[lastNode].value += child.textContent
+
+                    updateHTML = true
+                    return
+                }
+                if (child.nodeName !== "SPAN") return
+
                 let style = plain ? item.lines![i]?.text[j]?.style || "" : child.getAttribute("style") || ""
                 newLines[pos].text.push({ style, value: child.innerText })
                 currentStyle += style
             })
         })
+
+        let linesLength = new Array(...textElem.children).filter((a) => a.innerText).length
+        if (updateHTML || (plain && linesLength < previousLinesCount)) {
+            // get caret pos
+            let sel = getSelectionRange()
+            let lineIndex = sel.findIndex((a) => a?.start !== undefined)
+            if (lineIndex >= 0) {
+                let caret = { line: lineIndex || 0, pos: sel[lineIndex].start || 0 }
+
+                setTimeout(() => {
+                    getStyle()
+                    // set caret position back
+                    setTimeout(() => {
+                        setCaret(textElem, caret)
+                    }, 10)
+                }, 10)
+            }
+        }
+        previousLinesCount = linesLength
+
         return newLines
     }
 
@@ -341,10 +374,19 @@
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
 
+    function textElemKeydown(e: any) {
+        if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault()
+            navigator.clipboard.readText().then((clipText: string) => {
+                paste(e, clipText)
+            })
+        }
+    }
+
     // paste
-    function paste(e: any) {
-        e.preventDefault()
-        let clipboard = e.clipboardData.getData("text/plain")
+    function paste(e: any, clipboardText: string = "") {
+        let clipboard: string = clipboardText || e.clipboardData.getData("text/plain") || ""
+        if (!clipboard) return
 
         let sel = getSelectionRange()
         let lines: Line[] = getNewLines()
@@ -358,7 +400,6 @@
                 let pos = 0
                 let pasted = false
                 lines[i].text.forEach(({ value }, j) => {
-                    console.log(pos, lineSel.start, value)
                     if (!pasted && (pos + value.length >= lineSel.start || (emptySelection && j >= lines[i].text.length - 1))) {
                         let caretPos = lineSel.start - pos
                         caret = { line: i, pos: lineSel.start + clipboard.length }
@@ -372,7 +413,6 @@
                 })
             }
         })
-        console.log(caret)
 
         updateLines(lines)
         getStyle()
@@ -400,6 +440,8 @@
         newItem.style = "width: 100%;height: 100%;pointer-events: none;"
         return newItem
     }
+
+    $: console.trace($showsCache[ref.showId || ""]?.slides, clone($showsCache[ref.showId || ""]?.slides["1"]))
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
@@ -486,12 +528,14 @@ bind:offsetWidth={width} -->
                 }}
                 class="edit"
                 contenteditable
-                on:paste={paste}
+                on:keydown={textElemKeydown}
                 bind:innerHTML={html}
                 style={plain ? null : item.align ? item.align.replace("align-items", "justify-content") : null}
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />
+            <!-- on:paste did not work on mac -->
+            <!-- on:paste|preventDefault={paste} -->
         </div>
     {:else if item?.type === "media"}
         {#if item.src}

@@ -40,7 +40,7 @@
     }
 </script>
 
-<div style="display: flex;width: 100%;height: 100%;" bind:clientWidth={width} bind:clientHeight={height}>
+<div style="display: flex;width: 100%;height: 100%;place-content: center;" bind:clientWidth={width} bind:clientHeight={height}>
     <video
         class="media"
         style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, fit)};filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}"

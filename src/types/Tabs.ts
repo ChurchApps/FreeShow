@@ -17,6 +17,7 @@ export interface TabsObj {
         name: string
         icon: string
         disabled?: boolean
+        remove?: boolean
     }
 }
 

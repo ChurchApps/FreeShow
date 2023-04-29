@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { MediaFit } from "../../../../types/Main"
+    import type { Resolution } from "../../../../types/Settings"
 
     import { mediaCache, outputs, videoExtensions } from "../../../stores"
     import { getResolution } from "../../helpers/output"
@@ -16,6 +17,7 @@
     export let type: null | "media" | "image" | "video" | "camera" | "screen" | "audio" = null
     export let hover: boolean = false
     export let loaded: boolean = false
+    export let resolution: Resolution | null = null
     export let duration: number = 0
     export let videoElem: any = null
 
@@ -59,7 +61,7 @@
         let x = 0
         let y = 0
 
-        if (width / height > resolution.width / resolution.height) {
+        if (width / height > customResolution.width / customResolution.height) {
             height = height / (width / thumbnailSize.width)
             width = thumbnailSize.width
             y = (thumbnailSize.height - height) / 2
@@ -161,10 +163,10 @@
     let width: number = 0
     let height: number = 0
 
-    $: resolution = getResolution(null, $outputs)
+    $: customResolution = resolution || getResolution(null, $outputs)
 </script>
 
-<div class="main" style="aspect-ratio: {resolution.width}/{resolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
+<div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
     {#key path}
         {#if type === "camera"}
             <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">

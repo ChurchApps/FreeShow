@@ -13,13 +13,13 @@ const cloudHelpers: any = {
     DRIVE_CONNECT: async () => {
         let keysFilePath = stores.DRIVE_API_KEY.path
 
-        await authenticate(keysFilePath)
+        let status = await authenticate(keysFilePath)
 
-        // TODO: return actual status
-        return { status: "connected" }
+        return status
     },
     GET_MAIN_FOLDER: async () => {
         let folders = await listFolders()
+        if (folders === null) return { error: "Error: No access to the service account!" }
         if (!folders?.[0]) return { error: "Error: Could not find any folders! Have you shared it with the service account?" }
 
         return { id: folders[0].id }

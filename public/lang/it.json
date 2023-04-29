@@ -397,6 +397,7 @@
         "play_on_midi": "Riproduci su ingresso MIDI",
         "send_midi": "Invia MIDI in uscita",
         "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
+        "delete_thumbnail_cache": "Delete thumbnail cache",
         "refresh_all_shows": "Get all shows in 'Shows' folder",
         "start_timer": "Start timer",
         "stop_timers": "Stop active timers",

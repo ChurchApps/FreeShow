@@ -2,29 +2,42 @@ import { auth, drive } from "@googleapis/drive"
 import path from "path"
 import { toApp } from ".."
 import { STORE } from "../../types/Channels"
-import { checkShowsFolder, getDocumentsFolder, getFileStats, loadFile, readFile, writeFile } from "../utils/files"
+import { checkShowsFolder, getDocumentsFolder, getFileStats, readFile, writeFile } from "../utils/files"
 import { stores } from "../utils/store"
 
 let driveClient: any = null
 
 export async function authenticate(keysFilePath: string) {
-    // TODO: try catch, test wrong file data...
-    const authData = new auth.GoogleAuth({ keyFile: keysFilePath, scopes: ["https://www.googleapis.com/auth/drive"] })
-    const authClient = await authData.getClient()
-    const client = drive({ version: "v3", auth: authClient })
+    let status: any = {}
 
-    driveClient = client
-    return client
+    try {
+        const authData = new auth.GoogleAuth({ keyFile: keysFilePath, scopes: ["https://www.googleapis.com/auth/drive"] })
+        const authClient = await authData.getClient()
+        driveClient = drive({ version: "v3", auth: authClient })
+
+        status = { status: "connected" }
+    } catch (err) {
+        console.error(err)
+        status = { error: "Could not connect to the account!" }
+    }
+
+    return status
 }
 
 export async function listFolders(pageSize = 20, sort = "modified") {
     if (!driveClient) return
 
-    const res = await driveClient.files.list({
-        pageSize,
-        q: "mimeType='application/vnd.google-apps.folder'",
-        fields: "nextPageToken, files(id, name, modifiedTime)",
-    })
+    let res: any = {}
+    try {
+        res = await driveClient.files.list({
+            pageSize,
+            q: "mimeType='application/vnd.google-apps.folder'",
+            fields: "nextPageToken, files(id, name, modifiedTime)",
+        })
+    } catch (err) {
+        console.error(err)
+        return null
+    }
 
     let files = res.data.files || []
 
@@ -164,7 +177,6 @@ export async function syncDataDrive(data: any) {
     if (!mainFolder) return { error: "Error: Could not find main folder! Have you shared it with the service account?" }
 
     let shows: any = null
-    let newestShows: string = ""
     let bibles: any = null
 
     // CONFIGS
@@ -195,8 +207,7 @@ export async function syncDataDrive(data: any) {
         let storeContent: string = JSON.stringify(store.store)
         let matchingContent: boolean = driveContent && JSON.stringify(driveContent) === storeContent
 
-        if (id === "SHOWS") newestShows = newest
-        else if (matchingContent) return
+        if (matchingContent) return
 
         // download
         if (driveFile && newest === "cloud") {
@@ -205,10 +216,7 @@ export async function syncDataDrive(data: any) {
                 return
             }
 
-            if (id === "SHOWS") {
-                shows = driveContent
-                if (matchingContent) return
-            } else if (id === "SYNCED_SETTINGS") {
+            if (id === "SYNCED_SETTINGS") {
                 bibles = driveContent?.scriptures
             }
 
@@ -220,10 +228,7 @@ export async function syncDataDrive(data: any) {
         }
 
         // upload (newest === "local")
-        if (id === "SHOWS") {
-            shows = store.store
-            if (matchingContent) return
-        } else if (id === "SYNCED_SETTINGS") {
+        if (id === "SYNCED_SETTINGS") {
             bibles = store.store?.scriptures
         }
 
@@ -313,41 +318,48 @@ export async function syncDataDrive(data: any) {
 
         let name: string = SHOWS_CONTENT + ".json"
         let driveFileId = files.find((a: any) => a.name === name)?.id
-        let showsPath: string = checkShowsFolder(data.path)
-        let count: number = 0
-
-        // return if no changes to "SHOWS" & "SHOWS_CONTENT" exists
-        if (driveFileId && !newestShows) return
-
+        let driveFile = await getFile(driveFileId)
         // download shows
-        if (driveFileId && newestShows === "cloud") {
-            let driveContent: any = await downloadFile(driveFileId)
-            if (!driveContent) {
-                changes.push({ type: "show", action: "download_failed", name })
+        let driveContent: any = driveFile ? await downloadFile(driveFileId) : null
+
+        let showsPath: string = checkShowsFolder(data.path)
+        if (!showsPath) return
+
+        let downloadCount: number = 0
+        let uploadCount: number = 0
+        let allShows: any = {}
+
+        await Promise.all(Object.entries(shows).map(checkShow))
+        async function checkShow([id, show]: any) {
+            let name = show.name + ".show"
+            let localShowPath = path.join(showsPath, name)
+
+            // check existing content
+            let cloudContent = driveContent ? JSON.stringify([id, driveContent[id]]) : null
+            let localContent = readFile(localShowPath)
+            if (localContent) allShows[id] = JSON.parse(localContent)[1]
+            if (cloudContent && localContent === cloudContent) return
+
+            let newest = await getNewest({ driveFile, localPath: localShowPath })
+
+            if (newest === "same") return
+
+            // "download" show
+            if (cloudContent && newest === "cloud") {
+                writeFile(localShowPath, cloudContent, id)
+                downloadCount++
+
                 return
             }
 
-            count = writeShows(driveContent, showsPath).length
-
-            if (count) changes.push({ type: "show", action: "download", name, count })
-            return
+            // upload shows
+            uploadCount++
         }
+
+        if (downloadCount) changes.push({ type: "show", action: "download", name, count: downloadCount })
+        if (!uploadCount) return
 
         // upload shows
-        let allShows: any = {}
-        Object.entries(shows).forEach(loadShow)
-
-        function loadShow([id, show]: any) {
-            let name = show.name + ".show"
-            let localShow = loadFile(path.join(showsPath, name))?.content
-            if (!localShow) return
-
-            allShows[id] = localShow[1]
-            count++
-        }
-
-        if (!count) return
-
         let file = createFile(data.mainFolderId, { type: "json", name }, JSON.stringify(allShows))
         let response = await uploadFile(file, driveFileId)
 
@@ -356,29 +368,8 @@ export async function syncDataDrive(data: any) {
             return
         }
 
-        changes.push({ type: "show", action: "upload", name, count })
+        changes.push({ type: "show", action: "upload", name, count: uploadCount })
     }
-}
-
-function writeShows(shows: any, showsPath: string) {
-    if (!showsPath) return []
-
-    let changed: string[] = []
-
-    Object.entries(shows).forEach(([id, show]: any) => {
-        let name: string = show.name + ".show"
-        let p: string = path.resolve(showsPath, name)
-        let newContent = JSON.stringify([id, show])
-
-        // check existing content
-        let localContent = readFile(p)
-        if (localContent === newContent) return
-
-        writeFile(p, newContent, id)
-        changed.push(show.name)
-    })
-
-    return changed
 }
 
 async function getNewest({ driveFile, localPath }: any) {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, alertUpdates, autoOutput, fullColors, groupNumbers, labelsDisabled, shows, showsPath, timeFormat } from "../../../stores"
+    import { activePopup, alertUpdates, autoOutput, fullColors, groupNumbers, labelsDisabled, mediaCache, shows, showsPath, timeFormat } from "../../../stores"
     import { setLanguage } from "../../../utils/language"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -30,14 +30,19 @@
         autoOutput.set(false)
     }
 
+    // get all shows inside current shows folder (and remove missing)
+    function refreshShows() {
+        send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
+    }
+
     // delete shows from folder that are not indexed
     function deleteShows() {
         send(MAIN, ["DELETE_SHOWS"], { shows: $shows, path: $showsPath })
     }
 
-    // get all shows inside current shows folder (and remove missing)
-    function refreshShows() {
-        send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
+    // delete media thumbnail cache
+    function deleteCache() {
+        mediaCache.set({})
     }
 </script>
 
@@ -139,13 +144,17 @@
 </div>
 
 <hr />
+<Button style="width: 100%;" on:click={refreshShows} center>
+    <Icon id="refresh" right />
+    <T id="actions.refresh_all_shows" />
+</Button>
 <Button style="width: 100%;" on:click={deleteShows} center>
     <Icon id="delete" right />
     <T id="actions.delete_shows_not_indexed" />
 </Button>
-<Button style="width: 100%;" on:click={refreshShows} center>
-    <Icon id="refresh" right />
-    <T id="actions.refresh_all_shows" />
+<Button style="width: 100%;" on:click={deleteCache} center>
+    <Icon id="delete" right />
+    <T id="actions.delete_thumbnail_cache" />
 </Button>
 
 <hr />

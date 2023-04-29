@@ -25,6 +25,11 @@
     let active: string = Object.keys(tabs)[0]
     $: tabs.text.icon = item?.type && boxes[item.type] ? boxes[item.type]!.icon : "text"
 
+    // is not template or overlay
+    $: isShow = !$activeEdit.id
+    $: tabs.slide.remove = !isShow
+    $: if (tabs.slide.remove && active === "slide") active = item ? "text" : "items"
+
     let slides: any[] = []
     $: if (allSlideItems && (($activeEdit?.id && $activeEdit.slide !== null && $activeEdit.slide !== undefined) || ($activeShow && ($activeShow.type === undefined || $activeShow.type === "show"))))
         slides = _show($activeEdit?.id || $activeShow?.id)
@@ -70,6 +75,8 @@
     $: item = items?.length ? items[items.length - 1] : null
 
     function applyStyleToAllSlides() {
+        if (!isShow) return
+
         if (active === "text") {
             // get current text style
             let style = item?.lines?.[0].text?.[0].style
@@ -147,6 +154,10 @@
     }
 
     function reset() {
+        if (!isShow) {
+            return
+        }
+
         let ref = _show("active").layouts("active").ref()[0]
         let slide = _show("active").slides([ref[$activeEdit.slide!].id]).get("id")[0]
         // let slide = GetLayout()[$activeEdit.slide!].id
@@ -239,11 +250,14 @@
 
         <span style="display: flex;">
             {#if active !== "items"}
-                <Button style="flex: 1;" on:click={applyStyleToAllSlides} dark center>
-                    <Icon id="copy" right />
-                    <T id={"actions.to_all"} />
-                </Button>
-                <Button style="flex: 1;" on:click={reset} dark center>
+                {#if isShow}
+                    <Button style="flex: 1;" on:click={applyStyleToAllSlides} dark center>
+                        <Icon id="copy" right />
+                        <T id={"actions.to_all"} />
+                    </Button>
+                {/if}
+                <!-- TODO: reset template/overlay -->
+                <Button style="flex: 1;" on:click={reset} disabled={!isShow} dark center>
                     <Icon id="reset" right />
                     <T id={"actions.reset"} />
                 </Button>

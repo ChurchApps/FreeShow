@@ -3,9 +3,11 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution } from "../../../types/Settings"
-import { currentOutputSettings, outputDisplay, outputs, overlays, theme, themes } from "../../stores"
+import { currentOutputSettings, outputDisplay, outputs, overlays, playingVideos, showsCache, theme, themes, transitionData } from "../../stores"
 import { sendInitialOutputData } from "../../utils/messages"
 import { send } from "../../utils/request"
+import type { Transition } from "../../../types/Show"
+import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
@@ -162,4 +164,58 @@ export function addOutput(onlyFirst: boolean = false) {
         currentOutputSettings.set(id)
         return output
     })
+}
+
+export async function clearPlayingVideo(clearOutput: boolean = true) {
+    // videoData.paused = true
+    if (clearOutput) setOutput("background", null)
+
+    let mediaTransition: Transition = getCurrentMediaTransition()
+    console.log(mediaTransition)
+
+    // TODO: fade out audio
+
+    let duration = mediaTransition?.duration || 0
+    if (!clearOutput) duration /= 2.4 // a little less than half the time
+
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            // if (!videoData.paused) return
+
+            // remove from playing
+            playingVideos.update((a) => {
+                let existing = a.findIndex((a) => a.location === "output")
+                if (existing > -1) a.splice(existing, 1)
+                return a
+            })
+
+            //   let video = null
+            let videoTime = 0
+            let videoData = {
+                time: 0,
+                duration: 0,
+                paused: clearOutput,
+                muted: false,
+                loop: false,
+            }
+
+            window.api.send(OUTPUT, { channel: "UPDATE_VIDEO", data: videoData })
+            window.api.send(OUTPUT, { channel: "UPDATE_VIDEO_TIME", data: videoTime })
+
+            resolve(videoData)
+        }, duration)
+    })
+}
+
+export function getCurrentMediaTransition() {
+    let transition: Transition = get(transitionData).media
+
+    let outputId = getActiveOutputs(get(outputs))[0]
+    let currentOutput = get(outputs)[outputId] || {}
+    let out: any = currentOutput?.out || {}
+    let slide: any = out.slide || null
+    let slideData = get(showsCache) && slide && slide.id !== "temp" ? _show(slide.id).layouts("active").ref()[0]?.[slide.index!]?.data : null
+    let slideMediaTransition = slideData ? slideData.mediaTransition : null
+
+    return slideMediaTransition || transition
 }

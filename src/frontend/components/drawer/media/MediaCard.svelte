@@ -63,6 +63,9 @@
         flipped = $media[path]?.flipped || false
         fit = $media[path]?.fit || "contain"
     }
+
+    // fixed resolution
+    let resolution = { width: 1920, height: 1080 }
 </script>
 
 <Card
@@ -90,7 +93,7 @@
         <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
         <IntersectionObserver class="observer" once let:intersecting>
             {#if intersecting}
-                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} />
+                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {filter} {flipped} {fit} />
                 <!-- <SyncMedia bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} /> -->
             {/if}
         </IntersectionObserver>
