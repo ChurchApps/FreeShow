@@ -13,10 +13,12 @@ export function createCategory(name: string, icon: string = "song", { isDefault 
 export function setTempShows(tempShows: any[]) {
     if (tempShows.length === 1) {
         history({ id: "UPDATE", newData: { data: tempShows[0].show, remember: { project: get(activeProject) } }, oldData: { id: tempShows[0].id }, location: { page: "show", id: "show" } })
+
+        activePopup.set(null)
     } else {
         history({ id: "SHOWS", newData: { data: tempShows }, location: { page: "show" } })
-    }
 
-    activePopup.set("alert")
-    alertMessage.set(get(dictionary).main?.finished || "Finished")
+        alertMessage.set(get(dictionary).main?.finished || "Finished")
+        activePopup.set("alert")
+    }
 }

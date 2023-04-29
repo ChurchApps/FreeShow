@@ -103,6 +103,7 @@ const actions: any = {
         let ref: any[] = _show().layouts("active").ref()[0]
         let slideId: string = ref[obj.sel.data[0].index].id
         obj.sel = { id: "group", data: [{ id: slideId }] }
+
         actions.delete(obj)
     },
     remove_slide: (obj: any) => removeSlide(obj.sel.data, "remove"),
@@ -563,10 +564,9 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
     let parents: any[] = []
     let childs: any[] = []
 
-    console.log(ref, data)
-
     // remove parents and delete childs
     data.forEach((a: any) => {
+        if (!ref[a.index]) return
         if (ref[a.index].type === "parent") parents.push({ index: ref[a.index].index, id: ref[a.index].id })
         else childs.push({ id: ref[a.index].id })
     })

@@ -1,14 +1,16 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Event } from "../../../types/Calendar"
-import { shows } from "../../stores"
+import { events, shows } from "../../stores"
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
 
-export function createRepeatedEvents(event: Event) {
+export function createRepeatedEvents(event: Event, onlyMissing: boolean = false) {
     // <!-- REPEAT EVERY: {1-10000}, {day, week, month, year} -->
     // <!-- REPEAT ON: {MO,TH,WE,TH,FR,SA,SU} (if "week") -->
     // <!-- ENDING: {date, after {10} times, never} -->
+
+    console.log(event)
 
     let data = event.repeatData!
     let dates: string[][] = []
@@ -76,9 +78,8 @@ export function createRepeatedEvents(event: Event) {
     }
 
     // create events
-    let newEvents: any = {
-        [event.id || event.group || ""]: event,
-    }
+    let newEvents: any = {}
+    if (!onlyMissing) newEvents = { [event.id || event.group || ""]: event }
 
     dates.forEach((date: string[]) => {
         let newEvent = clone(event)
@@ -86,9 +87,24 @@ export function createRepeatedEvents(event: Event) {
         newEvent.from = date[0]
         newEvent.to = date[1]
 
+        // find existing event at this date!
+        let exists = false
+        if (onlyMissing) {
+            Object.values(get(events)).forEach((currentEvent) => {
+                if (currentEvent.group !== event.group) return
+                if (currentEvent.from !== newEvent.from || currentEvent.to !== newEvent.to) return
+
+                exists = true
+            })
+        }
+
+        if (exists) return
         newEvents[uid()] = newEvent
     })
 
+    // TODO: remove existing events after last newEvent.from
+
+    if (!Object.keys(newEvents).length) return
     history({ id: "UPDATE", newData: { data: newEvents, keys: Object.keys(newEvents) }, location: { page: "calendar", id: "event" } })
 }
 

@@ -154,6 +154,7 @@ export function _show(id: any = "active") {
                     showsCache.update((a: any) => {
                         if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
                         slideIds.forEach((slideId) => {
+                            if (!a[id].slides[slideId]) return
                             if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
                             indexes.forEach((index, i) => {
                                 if (key) {

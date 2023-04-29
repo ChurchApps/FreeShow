@@ -1,56 +1,20 @@
 <script lang="ts">
-    import { dictionary, outLocked, outputs, playingAudio, slideTimers } from "../../stores"
+    import { dictionary, outLocked, outputs, playingAudio } from "../../stores"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
-    import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
-    import { clearOverlays } from "../helpers/showActions"
+    import { isOutCleared, setOutput } from "../helpers/output"
+    import { clearAll, clearOverlays } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
-
-    // $: allCleared = !$outBackground && !$outSlide && !$outOverlays.length && !Object.keys($playingAudio).length && !$outTransition
-    $: allCleared = isOutCleared(null, $outputs) && !Object.keys($playingAudio).length
+    import { clearTimers } from "./clear"
 
     export let autoChange: any
     export let activeClear: any
-    export let video: any
-    export let videoTime: number
-    export let videoData: any
+    export let callVideoClear: any
 
-    async function clearVideo() {
-        // videoData.paused = true // ?
-        videoData = await clearPlayingVideo()
-
-        // RESET
-        video = null
-        videoTime = 0
-    }
-
-    function clearTimers() {
-        setOutput("transition", null)
-        let outs = getActiveOutputs()
-        Object.keys($slideTimers).forEach((id) => {
-            if (outs.includes(id)) $slideTimers[id].timer?.clear()
-        })
-    }
-
-    export let callClear: boolean = false
-    $: if (callClear) {
-        clearAll()
-        callClear = false
-    }
-
-    const clearAll = () => {
-        if ($outLocked) return
-
-        clearVideo()
-        setOutput("background", null)
-        setOutput("slide", null)
-        clearOverlays()
-        clearAudio()
-        clearTimers()
-        allCleared = true
-        autoChange = true
-    }
+    // $: allCleared = !$outBackground && !$outSlide && !$outOverlays.length && !Object.keys($playingAudio).length && !$outTransition
+    $: allCleared = isOutCleared(null, $outputs) && !Object.keys($playingAudio).length
+    $: if (allCleared) autoChange = true
 </script>
 
 <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
@@ -70,7 +34,7 @@
                     activeClear = "background"
                 } else if (!$outLocked) {
                     autoChange = true
-                    clearVideo()
+                    callVideoClear = true
                     setOutput("background", null)
                 }
             }}

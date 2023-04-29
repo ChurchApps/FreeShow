@@ -82,6 +82,7 @@
         "pixels": "piksler"
     },
     "create_show": {
+        "search_web": "Søk etter sang på nettet",
         "more_options": "Flere alternativer",
         "format_new_show": "Formater tekst",
         "split_lines": "Antall linjer",

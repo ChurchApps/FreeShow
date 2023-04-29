@@ -6,7 +6,7 @@
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import { playAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaType } from "../../helpers/media"
+    import { getExtension, getMediaType } from "../../helpers/media"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import { getMediaFilter, sendMidi } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
@@ -47,11 +47,11 @@
         layoutBackgrounds.forEach((a: any) => {
             let id = show.media[a].path || show.media[a].id!
 
-            const extension = id.slice(id.lastIndexOf(".") + 1, id.length) || ""
+            const extension = getExtension(id)
             let type = getMediaType(extension)
 
             if (backgrounds[id]) backgrounds[id].count++
-            else backgrounds[id] = { id: a, ...show.media[a], type, count: 1 }
+            else backgrounds[id] = { id: a, ...show.media[a], path: id, type, count: 1 }
         })
         Object.values(backgrounds).forEach((a) => bgs.push(a))
     } else bgs = []
@@ -118,8 +118,7 @@
                             on:click={() => {
                                 if (!$outLocked) {
                                     setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped, fit })
-                                    if (background.type === "video")
-                                        send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
+                                    if (background.type === "video") send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
                                 }
                             }}
                             title={$dictionary.media?.play}
@@ -135,12 +134,7 @@
                             <span style="color: var(--secondary);">{background.count}</span>
                         {/if}
                         {#if background.type === "video"}
-                            <Button
-                                style="flex: 0"
-                                center
-                                title={background.muted !== false ? "Unmute" : "Mute"}
-                                on:click={() => setBG(background.id, "muted", background.muted === false)}
-                            >
+                            <Button style="flex: 0" center title={background.muted !== false ? "Unmute" : "Mute"} on:click={() => setBG(background.id, "muted", background.muted === false)}>
                                 <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
                             </Button>
                             <Button style="flex: 0" center title={$dictionary.media?._loop} on:click={() => setBG(background.id, "loop", background.loop === false)}>
@@ -172,13 +166,7 @@
             <h5><T id="popup.midi" /></h5>
             {#each midi as midi}
                 <SelectElem id="midi" data={midi} draggable>
-                    <Button
-                        class="context #midi"
-                        on:click={() => (midi.type === "in" ? playMidiIn(midi) : sendMidi(midi))}
-                        style="padding: 8px;width: 100%;"
-                        title={midi.name}
-                        bold={false}
-                    >
+                    <Button class="context #midi" on:click={() => (midi.type === "in" ? playMidiIn(midi) : sendMidi(midi))} style="padding: 8px;width: 100%;" title={midi.name} bold={false}>
                         <Icon id={midi.type === "in" ? "play" : "music"} size={1.2} right />
                         <p>{midi.name}</p>
                     </Button>

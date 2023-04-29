@@ -3,8 +3,8 @@
     import { activePage, activeShow, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers } from "../../stores"
     import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
-    import { getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
-    import { getItemWithMostLines, nextSlide, previousSlide, updateOut } from "../helpers/showActions"
+    import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
+    import { clearAll, getItemWithMostLines, nextSlide, previousSlide, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
@@ -25,7 +25,6 @@
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
     // TODO: outputIds for multiple outputs (update multiple videos at the same time)
 
-    let callClear: boolean = false
     const ctrlShortcuts: any = {
         // c: () => (callClear = true),
         f: () => (fullscreen = !fullscreen),
@@ -42,10 +41,11 @@
     const shortcuts: any = {
         // presenter controller keys
         Escape: () => {
-            // TODO: dont toggle drawer
-            if ($activePage !== "show") return
-            if ($presenterControllerKeys) callClear = true
-            else if (fullscreen) fullscreen = false
+            // if ($activePage !== "show") return
+            if ($presenterControllerKeys) {
+                clearVideo()
+                clearAll()
+            } else if (fullscreen) fullscreen = false
         },
         F1: () => {
             if (!$outLocked) setOutput("background", null)
@@ -62,7 +62,8 @@
         ".": () => {
             if ($activePage !== "show") return
             // if ($presenterControllerKeys)
-            callClear = true
+            clearVideo()
+            clearAll()
         },
         F5: () => {
             if ($presenterControllerKeys) nextSlide(null, true)
@@ -252,13 +253,33 @@
     $: showSlide = outSlide?.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
     $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : slideLines - (amountOfLinesToShow % slideLines)) : null
+
+    // TODO: only show preview in "show" ? (toggle in settings)
+    // $: enablePreview = ["show", "edit", "settings"].includes($activePage)
+    $: enablePreview = true
+
+    // clear video
+    let callVideoClear: boolean = false
+    $: if (callVideoClear) clearVideo()
+    async function clearVideo() {
+        // videoData.paused = true // ?
+        videoData = await clearPlayingVideo()
+
+        // RESET
+        video = null
+        videoTime = 0
+
+        callVideoClear = false
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <div class="main">
-    <PreviewOutputs bind:currentOutputId={outputId} />
-    <div class="top">
+    {#if enablePreview}
+        <PreviewOutputs bind:currentOutputId={outputId} />
+    {/if}
+    <div class="top" class:hide={!enablePreview}>
         <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: 100%"}>
             {#if fullscreen}
                 <span class="resolution">
@@ -279,10 +300,12 @@
 
     <!-- TODO: title keyboard shortcuts -->
 
-    <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />
+    {#if enablePreview}
+        <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />
+    {/if}
 
     {#if $activePage === "show"}
-        <ClearButtons bind:autoChange bind:activeClear bind:video bind:videoData bind:videoTime bind:callClear />
+        <ClearButtons bind:autoChange bind:activeClear bind:callVideoClear />
 
         {#if activeClear === "background"}
             <Media {currentOutput} {outputId} {video} bind:videoData bind:videoTime bind:title />
@@ -307,6 +330,9 @@
 
     .top {
         display: flex;
+    }
+    .top.hide {
+        display: none;
     }
     /* button {
     background-color: inherit;

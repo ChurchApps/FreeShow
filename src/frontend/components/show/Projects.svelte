@@ -1,10 +1,9 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
-    import { activeProject, activeShow, dictionary, folders, loaded, projects, projectView } from "../../stores"
+    import { activeProject, activeShow, dictionary, folders, projects, projectView } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
-    import { loadShows } from "../helpers/setShow"
     import { checkInput } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -70,9 +69,10 @@
             return
         }
 
-        if ($loaded) {
-            loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
-        }
+        // load all shows in a project (this was not good when changing many projects)
+        // if ($loaded) {
+        //     loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
+        // }
         // TODO: CHECK VIDEOS
     }
 

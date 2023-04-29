@@ -177,7 +177,7 @@
         {#key slide}
             <!-- TODO: svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
             <span transition:custom={transition} style="pointer-events: none;display: block;">
-                {#if currentSlide}
+                {#if currentSlide?.items}
                     {#each currentSlide?.items as item}
                         <Textbox {item} {ratio} ref={{ showId: slide.id, slideId: currentSlide.id, id: currentSlide.id }} {linesStart} {linesEnd} />
                     {/each}

@@ -131,13 +131,15 @@
         return matching
     }
 
+    // this is useless with the virtual list
     let scrollElem: any
     let offset: number = -1
-    $: {
-        if (id && $activeShow !== null) {
-            if (id === "shows" && $activeShow.type === null && scrollElem) offset = scrollElem.querySelector("#" + $activeShow.id)?.offsetTop - scrollElem.offsetTop
-        }
-    }
+    console.log(id)
+    // $: {
+    //     if (id && $activeShow !== null) {
+    //         if (id === "shows" && $activeShow.type === null && scrollElem) offset = scrollElem.querySelector("#" + $activeShow.id)?.offsetTop - scrollElem.offsetTop
+    //     }
+    // }
 
     function keydown(e: any) {
         if (!e.target.closest("input") && !e.target.closest(".edit") && (e.ctrlKey || e.metaKey) && filteredShows.length) {
@@ -166,13 +168,16 @@
 <Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
     <div class="column context #drawer_show">
         {#if filteredShows.length}
-            <VirtualList items={filteredShows} let:item={show}>
-                <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
-                    {#if searchValue.length <= 1 || show.match}
-                        <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true, $dictionary)} class="#drawer_show_button__drawer_show" match={show.match || null} />
-                    {/if}
-                </SelectElem>
-            </VirtualList>
+            <!-- reload list when changing category -->
+            {#key active}
+                <VirtualList items={filteredShows} let:item={show}>
+                    <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
+                        {#if searchValue.length <= 1 || show.match}
+                            <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true, $dictionary)} class="#drawer_show_button__drawer_show" match={show.match || null} />
+                        {/if}
+                    </SelectElem>
+                </VirtualList>
+            {/key}
 
             <!-- TODO: not updating values on activeSubTab change -->
             {#if searchValue.length > 1 && totalMatch === 0}

@@ -1,15 +1,16 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
-import { activeDays, activeEdit, activePage, activePopup, activeProject, activeShow, activeStage, alertMessage, clipboard, events, midiIn, overlays, projects, scriptures, selected, showsCache, stageShows, templates } from "../../stores"
+import { activeDays, activeEdit, activePage, activePopup, activeProject, activeShow, activeStage, alertMessage, clipboard, events, folders, midiIn, overlays, projects, scriptures, selected, showsCache, stageShows, templates } from "../../stores"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
+import { setCaret } from "../edit/scripts/textStyle"
 import { clone } from "./array"
+import { pasteText } from "./caretHelper"
 import { history } from "./history"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
-import { pasteText } from "./caretHelper"
-import { setCaret } from "../edit/scripts/textStyle"
 
 export function copy({ id, data }: any = {}, getData: boolean = true) {
     let copy: any = { id, data }
@@ -70,6 +71,7 @@ export function deleteAction({ id, data }) {
     deleteActions[id](data)
 
     console.log("DELETED:", { id, data })
+    selected.set({ id: null, data: [] })
     return true
 }
 
@@ -92,7 +94,13 @@ export function duplicate(data: any = {}) {
 export function selectAll(data: any = {}) {
     let newSelection: any[] = []
 
-    if (document.activeElement?.classList?.contains("edit")) {
+    let activeElem: any = document.activeElement
+    if (activeElem?.nodeName === "INPUT" || activeElem?.nodeName === "TEXTAREA") {
+        activeElem.select()
+        return
+    }
+
+    if (activeElem?.classList?.contains("edit")) {
         setCaret(document.activeElement, { line: 0, pos: 0 }, true)
         return
     }
@@ -282,6 +290,8 @@ const pasteActions: any = {
 
         // clone slides
         data = clone(data)
+        data.slides.reverse()
+        if (data.layouts) data.layouts.reverse()
 
         // get all slide ids & child ids
         let copiedIds: string[] = data.slides.map((a: any) => a.id)
@@ -539,6 +549,60 @@ const duplicateActions = {
     layout: () => {
         let data = clone(get(showsCache)[get(activeShow)!.id].layouts[get(showsCache)[get(activeShow)!.id].settings.activeLayout])
         history({ id: "UPDATE", newData: { key: "layouts", subkey: uid(), data }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
+    },
+    folder: (data: any) => {
+        // duplicate projects folder and all of the projects inside
+        // TODO: history
+        let newProjects: Project[] = []
+
+        folders.update((a) => {
+            data.forEach((folder) => {
+                let id = folder.id
+                folder = a[id]
+                let parent = Object.values(a).find((a) => a.parent === folder.id) || folder.parent
+                let newId = uid()
+                a[newId] = { ...clone(folder), name: folder.name + " 2", parent }
+                duplicateFolder(id, newId)
+            })
+
+            function duplicateFolder(oldParent: string, newParent: string) {
+                let folderList: Folder[] = Object.entries(a).map(([id, folder]) => ({ id, ...folder }))
+                folderList = folderList.filter((a) => a.parent === oldParent)
+
+                folderList.forEach((folder) => {
+                    let newId = uid()
+                    a[newId] = { ...clone(folder), parent: newParent }
+                    delete a[newId].id
+                    duplicateFolder(folder.id!, newId)
+                })
+
+                let projectList = Object.values(get(projects)).filter((a) => a.parent === oldParent)
+                projectList.forEach((project) => {
+                    newProjects.push({ ...clone(project), parent: newParent })
+                })
+            }
+
+            return a
+        })
+
+        projects.update((a) => {
+            newProjects.forEach((project) => {
+                a[uid()] = project
+            })
+
+            return a
+        })
+    },
+    project: (data: any) => {
+        // TODO: history
+        projects.update((a) => {
+            data.forEach((project) => {
+                project = a[project.id]
+                a[uid()] = { ...clone(project), name: project.name + " 2" }
+                return a
+            })
+            return a
+        })
     },
 }
 

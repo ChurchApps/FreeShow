@@ -82,6 +82,7 @@
         "pixels": "pixel"
     },
     "create_show": {
+        "search_web": "Search for song on the web",
         "more_options": "Altre opzioni",
         "format_new_show": "Formato del testo",
         "split_lines": "Nummero di linee",

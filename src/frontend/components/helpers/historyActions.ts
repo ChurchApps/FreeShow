@@ -374,7 +374,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // update layout
                     showsCache.update((a) => {
                         let slides = a[showId].layouts[layout].slides
-                        a[showId].layouts[layout].slides = slides.filter((a, i) => (slideIndex !== undefined ? i !== slideIndex : a.id !== id))
+                        console.log(slides)
+                        console.log(slideIndex, id)
+
+                        let newSlides = slides.filter((a, i) => (a.id ? a.id !== id : i !== slideIndex))
+                        console.log(newSlides)
+                        a[showId].layouts[layout].slides = newSlides
                         return a
                     })
 

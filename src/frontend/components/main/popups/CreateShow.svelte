@@ -2,7 +2,7 @@
     import { MAIN } from "../../../../types/Channels"
     import { ShowObj } from "../../../classes/Show"
     import { convertText } from "../../../converters/txt"
-    import { activePopup, activeProject, categories, dictionary, drawerTabsData, formatNewShow, splitLines } from "../../../stores"
+    import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, shows, splitLines } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import { sortObject } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -56,7 +56,12 @@
             "name"
         ),
     ]
-    let selectedCategory: any = $drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab] ? cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab) : cats[0]
+
+    let selectedCategory: any = cats[0]
+    // get the selected category
+    if ($drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab]) selectedCategory = cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab)
+    // get the category from the active show
+    else if ($shows[$activeShow?.id || ""]?.category) selectedCategory = cats.find((a: any) => a.id === $shows[$activeShow?.id || ""]?.category)
 
     const inputs: any = {
         formatNewShow: (e: any) => formatNewShow.set(e.target.checked),
@@ -94,7 +99,7 @@
             {#if loading}
                 <Loader />
             {:else}
-                <Button on:click={searchLyrics}>
+                <Button on:click={searchLyrics} title={$dictionary.create_show?.search_web}>
                     <Icon id="search" size={1.2} white />
                 </Button>
             {/if}

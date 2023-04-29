@@ -185,13 +185,34 @@ export const _updaters = {
     category_media: { store: mediaFolders, ...getDefaultCategoryUpdater("media") },
     category_audio: { store: audioFolders, ...getDefaultCategoryUpdater("audio") },
 
-    overlay: { store: overlays, empty: EMPTY_SLIDE, deselect: (id: string) => clearOverlayOutput(id) },
+    overlay: {
+        store: overlays,
+        empty: EMPTY_SLIDE,
+        initialize: (data) => {
+            // get selected category
+            if (get(drawerTabsData).overlays?.activeSubTab && get(overlayCategories)[get(drawerTabsData).overlays.activeSubTab!]) {
+                data.category = get(drawerTabsData).overlays.activeSubTab
+            }
+            return data
+        },
+        deselect: (id: string) => clearOverlayOutput(id),
+    },
     overlay_items: { store: overlays, empty: [] },
     overlay_name: { store: overlays, empty: "" },
     overlay_color: { store: overlays, empty: null },
     overlay_category: { store: overlays, empty: "unlabeled" },
 
-    template: { store: templates, empty: EMPTY_SLIDE },
+    template: {
+        store: templates,
+        empty: EMPTY_SLIDE,
+        initialize: (data) => {
+            // get selected category
+            if (get(drawerTabsData).templates?.activeSubTab && get(categories)[get(drawerTabsData).templates.activeSubTab!]) {
+                data.category = get(drawerTabsData).templates.activeSubTab
+            }
+            return data
+        },
+    },
     template_items: { store: templates, empty: [] },
     template_name: { store: templates, empty: "" },
     template_color: { store: templates, empty: null },

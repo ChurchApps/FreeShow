@@ -22,7 +22,7 @@
     export let videoElem: any = null
 
     // TODO: fit
-    $: console.log(fit)
+    console.log(fit)
 
     // TODO: update
     $: if ((!type || type === "image") && canvas) {

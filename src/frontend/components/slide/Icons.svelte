@@ -17,8 +17,6 @@
     export let index: number
     export let style: string
 
-    $: console.log(layoutSlide.audio)
-
     $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
     $: notMuted = background?.muted === false
 

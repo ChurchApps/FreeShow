@@ -129,6 +129,10 @@
 
         history({ id: "UPDATE", newData: { data: updatedData, keys: Object.keys(updatedData) }, location: { page: "calendar", id: "event" } })
 
+        if (data.repeat) {
+            createRepeatedEvents(data, true)
+        }
+
         activePopup.set(null)
         eventEdit.set(null)
     }
