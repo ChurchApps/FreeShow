@@ -8,7 +8,7 @@
         "drop": "Rilascia qui",
         "search": "Cerca",
         "none": "Nessuno",
-        "finished": "Finished"
+        "finished": "Finito"
     },
     "languages": {
         "en": "Inglese",
@@ -82,7 +82,7 @@
         "pixels": "pixel"
     },
     "create_show": {
-        "search_web": "Search for song on the web",
+        "search_web": "Cerca canzone sul web",
         "more_options": "Altre opzioni",
         "format_new_show": "Formato del testo",
         "split_lines": "Nummero di linee",
@@ -242,7 +242,7 @@
         "textInvert": "Testo invertito",
         "secondary-text": "Testo secondario",
         "secondary": "Secondario",
-        "secondary-opacity": "OPacità secondaria",
+        "secondary-opacity": "Opacità secondaria",
         "hover": "Hover",
         "focus": "Focus"
     },
@@ -353,7 +353,7 @@
         "list": "Vista elenco",
         "lyrics": "Vista testi",
         "text": "Modifica testo",
-        "update": "Update show"
+        "update": "Aggiorna spettacolo"
     },
     "actions": {
         "rename": "Rinomina",
@@ -404,28 +404,28 @@
         "custom_key": "Imposta valore personalizzato",
         "play_on_midi": "Riproduci su ingresso MIDI",
         "send_midi": "Invia MIDI in uscita",
-        "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
-        "delete_thumbnail_cache": "Delete thumbnail cache",
-        "refresh_all_shows": "Get all shows in 'Shows' folder",
-        "start_timer": "Start timer",
-        "stop_timers": "Stop active timers",
-        "next_after_media": "Next after media",
+        "delete_shows_not_indexed": "Elimina gli spettacoli nella cartella 'Shows' che non sono indicizzati",
+        "delete_thumbnail_cache": "Elimina la cache delle miniature",
+        "refresh_all_shows": "Ottieni tutti gli spettacoli nella cartella 'Shows'.",
+        "start_timer": "Avviare il timer",
+        "stop_timers": "Arresta i timer attivi",
+        "next_after_media": "Avanti dopo i media",
         "remove_media": "Rimuovi media"
     },
     "cloud": {
-        "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
-        "tip_api": "You have to provide your own free Google API key so the program can automatically upload files to your Google Drive.",
-        "tip_how": "Don't know how to get one?",
-        "tip_guide": "Click here for a guide.",
-        "enable": "Automatic sync on startup and save",
+        "info": "Sincronizza i file con Google Drive per i backup o se lavori su più computer.",
+        "tip_api": "Devi fornire la tua chiave API Google gratuita in modo che il programma possa caricare automaticamente i file sul tuo Google Drive.",
+        "tip_how": "Non sai come ottenerne una?",
+        "tip_guide": "Clicca qui per una guida.",
+        "enable": "Sincronizzazione automatica all'avvio e salvataggio",
         "disable_upload": "Disable uploading data",
-        "google_drive_api": "Google API service account key",
-        "select_key": "Import keys file",
-        "update_key": "Update keys file",
-        "main_folder": "Set main folder manually",
+        "google_drive_api": "Chiave dell'account di servizio dell'API di Google",
+        "select_key": "Importa il file delle chiavi",
+        "update_key": "Aggiorna il file delle chiavi",
+        "main_folder": "Imposta la cartella principale manualmente",
         "media_folder": "Cloud media folder",
-        "reconnect": "Reconnect",
-        "sync": "Sync",
+        "reconnect": "Riconnetti",
+        "sync": "Sincronizza",
         "choose_method_tip": "There is existing data in the cloud. Please choose from where you want to keep the data. And override the other location.",
         "local": "Local"
     },
