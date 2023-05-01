@@ -5,7 +5,7 @@
     import { activeShow, cachedShowsData, outLocked, outputs, showsCache, slidesOptions } from "../../stores"
     import { history } from "../helpers/history"
     import { getActiveOutputs, setOutput } from "../helpers/output"
-    import { updateOut } from "../helpers/showActions"
+    import { getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import Slide from "../slide/Slide.svelte"
@@ -98,10 +98,28 @@
     $: {
         activeSlides = []
         activeOutputs.forEach((a) => {
-            let s: any = $outputs[a]?.out?.slide || {}
+            let currentOutput: any = $outputs[a]
+            if (!currentOutput) return
+            let outSlide: any = currentOutput.out?.slide || {}
+
             // console.log(s, slideIndex, id, activeLayout)
-            if (!activeSlides[s.index] && s.id === id && s.layout === activeLayout) {
-                activeSlides[s.index] = $outputs[a].color
+            if (!activeSlides[outSlide.index] && outSlide.id === id && outSlide.layout === activeLayout) {
+                // get progress of current line division
+                let amountOfLinesToShow: number = currentOutput.show?.lines !== undefined ? Number(currentOutput.show?.lines) : 0
+                let lineIndex: any = outSlide.line || 0
+                let maxLines: number = 0
+                if (amountOfLinesToShow > 0) {
+                    let ref = a?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+                    let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
+                    let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
+                    maxLines = slideLines && lineIndex !== null ? (amountOfLinesToShow >= slideLines ? 0 : Math.round(slideLines / amountOfLinesToShow)) : 0
+                }
+
+                activeSlides[outSlide.index] = {
+                    color: $outputs[a].color,
+                    line: lineIndex,
+                    maxLines,
+                }
             }
         })
     }
@@ -166,7 +184,7 @@
                                     layoutSlide={slide}
                                     index={i}
                                     color={slide.color}
-                                    outColor={activeSlides[i]}
+                                    output={activeSlides[i]}
                                     active={activeSlides[i] !== undefined}
                                     {endIndex}
                                     list={$slidesOptions.mode !== "grid"}

@@ -115,10 +115,10 @@
     on:click={() => {
         changeTransition("text", "duration", 500)
         changeTransition("text", "type", "fade")
-        changeTransition("text", "easing", "linear")
-        changeTransition("media", "duration", 500)
+        changeTransition("text", "easing", "sine")
+        changeTransition("media", "duration", 800)
         changeTransition("media", "type", "fade")
-        changeTransition("media", "easing", "linear")
+        changeTransition("media", "easing", "sine")
     }}
     center
 >

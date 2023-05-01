@@ -22,6 +22,15 @@ export interface Show {
         modified: null | number
         used: null | number
     }
+    message?: {
+        text: string
+        template: string
+    }
+    metadata?: {
+        override: boolean
+        display: string
+        template: string
+    }
     meta: {
         title?: string
         artist?: string

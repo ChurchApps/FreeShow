@@ -211,7 +211,13 @@
         "publisher": "Publisher",
         "copyright": "Copyright",
         "CCLI": "License (CCLI)",
-        "year": "Year"
+        "year": "Year",
+        "message": "Message",
+        "message_tip": "Display something on all slides",
+        "override_output": "Override styling in output",
+        "display_metadata": "Display metadata",
+        "meta_template": "Metadata template",
+        "message_template": "Message template"
     },
     "show_at": {
         "never": "No slides",
@@ -309,6 +315,7 @@
         "history": "History",
         "midi": "MIDI",
         "cloud_update": "Syncing with cloud",
+        "cloud_method": "Data location",
         "shortcuts": "Shortcuts",
         "icon": "Icons",
         "initialize": "Welcome",
@@ -411,12 +418,16 @@
         "tip_how": "Don't know how to get one?",
         "tip_guide": "Click here for a guide.",
         "enable": "Automatic sync on startup and save",
+        "disable_upload": "Disable uploading data",
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",
         "update_key": "Update keys file",
         "main_folder": "Set main folder manually",
+        "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
-        "sync": "Sync"
+        "sync": "Sync",
+        "choose_method_tip": "There is existing data in the cloud. Please choose from where you want to keep the data. And override the other location.",
+        "local": "Local"
     },
     "export": {
         "export": "Export",
@@ -617,7 +628,7 @@
         "other": "Other",
         "language": "Language",
         "use24hClock": "Use 24-hour clock",
-        "hide_output_hint": "Double click on the output window to hide it.",
+        "hide_output_hint": "Double click on the output window to hide it. Hold CTRL to enable dragging.",
         "show_output_hint": "Hold ctrl/cmd while clicking the display button to force it to show over this monitor.",
         "move_output_hint": "Don't find your display? Change the position until the window shows up on the second screen.",
         "new_output": "New output",
@@ -634,7 +645,6 @@
         "group_numbers": "Group numbers",
         "full_colors": "Full slide group colors",
         "auto_output": "Activate output screen on startup",
-        "display_metadata": "Display metadata while showing",
         "default_project_name": "Default project name",
         "resolution": "Resolution",
         "video_extensions": "Video extensions",

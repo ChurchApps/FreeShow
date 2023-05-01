@@ -66,7 +66,7 @@
             clearAll()
         },
         F5: () => {
-            if ($presenterControllerKeys) nextSlide(null, true)
+            if ($presenterControllerKeys) nextSlide(null)
             else setOutput("transition", null)
         },
         PageDown: (e: any) => {
@@ -252,7 +252,7 @@
     $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
     $: showSlide = outSlide?.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-    $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : slideLines - (amountOfLinesToShow % slideLines)) : null
+    $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : Math.round(slideLines / amountOfLinesToShow)) : null
 
     // TODO: only show preview in "show" ? (toggle in settings)
     // $: enablePreview = ["show", "edit", "settings"].includes($activePage)

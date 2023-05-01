@@ -27,6 +27,7 @@
     import History from "./popups/History.svelte"
     import Midi from "./popups/Midi.svelte"
     import CloudUpdate from "./popups/CloudUpdate.svelte"
+    import CloudMethod from "./popups/CloudMethod.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -56,6 +57,7 @@
         history: History,
         midi: Midi,
         cloud_update: CloudUpdate,
+        cloud_method: CloudMethod,
     }
 </script>
 

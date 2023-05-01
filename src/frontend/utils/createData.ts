@@ -134,6 +134,32 @@ export function setExampleTemplates() {
         return a
     })
     templates.update((a) => {
+        // metadata
+        a.metadata = {
+            name: get(dictionary).tools?.metadata || "Metadata",
+            color: null,
+            category: null,
+            items: [
+                {
+                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: get(dictionary).tools?.metadata || "Metadata", style: "font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }],
+                },
+            ],
+        }
+        // message
+        a.message = {
+            name: get(dictionary).meta?.message || "Message",
+            color: null,
+            category: null,
+            items: [
+                {
+                    style: "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: get(dictionary).meta?.message || "Message", style: "font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }],
+                },
+            ],
+        }
         // presentation
         a.header = {
             name: get(dictionary).example?.header || "Header",

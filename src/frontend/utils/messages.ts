@@ -4,7 +4,6 @@ import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
     activePopup,
-    alertMessage,
     audioFolders,
     categories,
     defaultProjectName,
@@ -43,6 +42,7 @@ import {
     themes,
     timeFormat,
     timers,
+    toastMessages,
     videoExtensions,
     webFavorites,
 } from "../stores"
@@ -90,6 +90,11 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["OVERLAYS"], get(overlays))
 }
 
+export function newToast(msg: string) {
+    if (!msg) return
+    toastMessages.set([...new Set([...get(toastMessages), msg])])
+}
+
 const fileSelected = {
     GOOGLE_KEYS: ({ files, content }) => {
         let path = files[0]
@@ -101,23 +106,26 @@ const fileSelected = {
 const cloudHelpers = {
     DRIVE_CONNECT: ({ status, error }: any) => {
         if (error) {
-            alertMessage.set(error)
-            activePopup.set("alert")
+            newToast(error)
             return
         }
         if (status !== "connected") return
 
         if (get(driveData)?.mainFolderId) {
+            driveData.update((a) => {
+                a.initializeMethod = "done"
+                return a
+            })
+
             syncDrive()
             return
         }
 
-        send(CLOUD, ["GET_MAIN_FOLDER"])
+        send(CLOUD, ["GET_MAIN_FOLDER"], { method: get(driveData).initializeMethod })
     },
-    GET_MAIN_FOLDER: ({ id, error }: any) => {
+    GET_MAIN_FOLDER: ({ id, error, existingData }: any) => {
         if (error) {
-            alertMessage.set(error)
-            activePopup.set("alert")
+            newToast(error)
             return
         }
         if (!id) return
@@ -127,12 +135,25 @@ const cloudHelpers = {
             return a
         })
 
+        if (!get(driveData).initializeMethod) {
+            if (existingData) {
+                activePopup.set("cloud_method")
+                return
+            }
+
+            driveData.update((a) => {
+                a.initializeMethod = "upload"
+                return a
+            })
+
+            return
+        }
+
         syncDrive()
     },
     SYNC_DATA: ({ changes }) => {
         if (changes.error) {
-            alertMessage.set(changes.error)
-            activePopup.set("alert")
+            newToast(changes.error)
             return
         }
 
@@ -147,6 +168,12 @@ const cloudHelpers = {
 
         popupData.set(changes)
         activePopup.set("cloud_update")
+
+        if (get(driveData).initializeMethod === "done") return
+        driveData.update((a) => {
+            a.initializeMethod = "done"
+            return a
+        })
     },
 }
 

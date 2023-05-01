@@ -211,7 +211,13 @@
         "publisher": "Publisher",
         "copyright": "Copyright",
         "CCLI": "Licenza (CCLI)",
-        "year": "Anno"
+        "year": "Anno",
+        "message": "Messaggio",
+        "message_tip": "Display something on all slides",
+        "override_output": "Override styling in output",
+        "display_metadata": "Mostra i metadati",
+        "meta_template": "Metadata template",
+        "message_template": "Message template"
     },
     "show_at": {
         "never": "Nessuna diapositiva",
@@ -309,6 +315,7 @@
         "history": "Cronologia",
         "midi": "MIDI",
         "cloud_update": "Syncing with cloud",
+        "cloud_method": "Data location",
         "shortcuts": "Scorciatoie",
         "icon": "Icone",
         "initialize": "Benvenuti",
@@ -411,12 +418,16 @@
         "tip_how": "Don't know how to get one?",
         "tip_guide": "Click here for a guide.",
         "enable": "Automatic sync on startup and save",
+        "disable_upload": "Disable uploading data",
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",
         "update_key": "Update keys file",
         "main_folder": "Set main folder manually",
+        "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
-        "sync": "Sync"
+        "sync": "Sync",
+        "choose_method_tip": "There is existing data in the cloud. Please choose from where you want to keep the data. And override the other location.",
+        "local": "Local"
     },
     "export": {
         "export": "Esporta",
@@ -617,7 +628,7 @@
         "other": "Altro",
         "language": "Lingua",
         "use24hClock": "Usa il formato 24 ore",
-        "hide_output_hint": "Fare doppio clic sulla finestra di output per nasconderla.",
+        "hide_output_hint": "Fare doppio clic sulla finestra di output per nasconderla. Hold CTRL to enable dragging.",
         "show_output_hint": "Tieni premuto ctrl/cmd mentre fai clic sul pulsante di visualizzazione per forzarne la visualizzazione su questo monitor.",
         "move_output_hint": "Non trovi il tuo display? Cambia la posizione finché la finestra non appare sul secondo schermo.",
         "new_output": "Nuovo output",
@@ -634,7 +645,6 @@
         "group_numbers": "Numeri di gruppo",
         "full_colors": "Colori completi del gruppo di diapositive",
         "auto_output": "Attiva la schermata di output all'avvio",
-        "display_metadata": "Mostra i metadati durante la visualizzazione",
         "default_project_name": "Nome progetto predefinito",
         "resolution": "Risoluzione",
         "video_extensions": "Estensioni video",

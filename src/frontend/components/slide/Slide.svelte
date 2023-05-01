@@ -23,7 +23,7 @@
     export let color: string | null = slide.color
     export let index: number
     export let columns: number = 1
-    export let outColor: string | null = null
+    export let output: any = null
     export let active: boolean = false
     export let focused: boolean = false
     export let list: boolean = false
@@ -216,7 +216,7 @@
 <!-- animate:flip -->
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
-<div class="main" class:active class:focused style="{outColor ? 'outline: 2px solid ' + outColor + ';' : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%;">
+<div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%;">
     {#if icons && !altKeyPressed}
         <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""} />
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
@@ -290,10 +290,13 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     {/if}
                 </Zoomed>
                 {#if $slidesOptions.mode !== "lyrics" || noQuickEdit}
-                    <!-- show note -->
-                    <!-- TODO: BG: white, color: black -->
                     <!-- style="width: {resolution.width * zoom}px;" -->
                     <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
+                        {#if output?.maxLines}
+                            <div class="lineProgress">
+                                <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {output.color};" />
+                            </div>
+                        {/if}
                         {#if slide.notes}<p class="notes">{slide.notes}</p>{/if}
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
@@ -411,6 +414,22 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         font-weight: bold;
         align-items: center;
         /* opacity: 0.8; */
+    }
+
+    .lineProgress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform: translateY(-100%);
+        width: 100%;
+        height: 2px;
+        z-index: 2;
+        background-color: var(--primary-darkest);
+    }
+    .lineProgress .fill {
+        width: 0;
+        height: 100%;
+        background-color: var(--secondary);
     }
 
     .notes {

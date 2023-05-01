@@ -211,7 +211,13 @@
         "publisher": "Herausgeber",
         "copyright": "Copyright",
         "CCLI": "Lizenz (CCLI)",
-        "year": "Jahr"
+        "year": "Jahr",
+        "message": "Mitteilung",
+        "message_tip": "Display something on all slides",
+        "override_output": "Override styling in output",
+        "display_metadata": "Zeige Metadaten",
+        "meta_template": "Metadata template",
+        "message_template": "Message template"
     },
     "show_at": {
         "never": "Kein Folien",
@@ -309,6 +315,7 @@
         "history": "History",
         "midi": "MIDI",
         "cloud_update": "Syncing with cloud",
+        "cloud_method": "Data location",
         "shortcuts": "Tastaturkürzel",
         "icon": "Symbole",
         "initialize": "Willkommen",
@@ -411,12 +418,16 @@
         "tip_how": "Don't know how to get one?",
         "tip_guide": "Click here for a guide.",
         "enable": "Automatic sync on startup and save",
+        "disable_upload": "Disable uploading data",
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",
         "update_key": "Update keys file",
         "main_folder": "Set main folder manually",
+        "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
-        "sync": "Sync"
+        "sync": "Sync",
+        "choose_method_tip": "There is existing data in the cloud. Please choose from where you want to keep the data. And override the other location.",
+        "local": "Local"
     },
     "export": {
         "export": "Exportieren",
@@ -617,7 +628,7 @@
         "other": "Andere",
         "language": "Sprache",
         "use24hClock": "24h-Format verwenden",
-        "hide_output_hint": "Doppelklick auf das Ausgabefenster, um es zu verstecken.",
+        "hide_output_hint": "Doppelklick auf das Ausgabefenster, um es zu verstecken. Hold CTRL to enable dragging.",
         "show_output_hint": "Halte Strg/Cmd gedrückt, während du auf die Anzeige-Schaltfläche klickst, um die Anzeige über diesen Monitor zu erzwingen.",
         "move_output_hint": "Findest du deine Anzeige nicht? Ändere die Position, bis das Fenster auf dem zweiten Bildschirm angezeigt wird.",
         "new_output": "Neue Ausgabe",
@@ -634,7 +645,6 @@
         "group_numbers": "Gruppennummerierung",
         "full_colors": "Folien Gruppenfarbe",
         "auto_output": "Zeige Ausgabebildschirm beim Start",
-        "display_metadata": "Zeige Metadaten während Anzeige",
         "default_project_name": "Standard Projektname",
         "resolution": "Auflösung",
         "video_extensions": "Video-Erweiterungen",

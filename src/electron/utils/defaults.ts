@@ -56,12 +56,12 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"],
     theme: "default",
     transitionData: {
-        text: { type: "fade", duration: 500, easing: "linear" },
-        media: { type: "fade", duration: 500, easing: "linear" },
+        text: { type: "fade", duration: 500, easing: "sine" },
+        media: { type: "fade", duration: 800, easing: "sine" },
     },
     os: { platform: "", name: "Computer" },
     volume: 1,
-    driveData: { mainFolderId: null, disabled: false },
+    driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {

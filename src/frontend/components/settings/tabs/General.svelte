@@ -2,6 +2,7 @@
     import { MAIN } from "../../../../types/Channels"
     import { activePopup, alertUpdates, autoOutput, fullColors, groupNumbers, labelsDisabled, mediaCache, shows, showsPath, timeFormat } from "../../../stores"
     import { setLanguage } from "../../../utils/language"
+    import { newToast } from "../../../utils/messages"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -42,6 +43,12 @@
 
     // delete media thumbnail cache
     function deleteCache() {
+        if (!Object.keys($mediaCache).length) {
+            newToast("Empty cache")
+            return
+        }
+
+        newToast("Deleted media thumbnail cache")
         mediaCache.set({})
     }
 </script>

@@ -37,7 +37,12 @@
     }
 
     let templateList: any[] = []
-    $: templateList = [{ id: null, name: "—" }, ...Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name }))]
+    $: templateList = [
+        { id: null, name: "—" },
+        ...Object.entries($templates)
+            .map(([id, template]: any) => ({ id, name: template.name }))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+    ]
 
     let options: any[] = []
     $: options = Object.entries($outputs)
@@ -303,14 +308,6 @@
     />
 </div>
 <div>
-    <p><T id="settings.override_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentOutput.show?.template]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("show.template", e.detail.id)} />
-</div>
-<div>
-    <p><T id="settings.display_metadata" /></p>
-    <Dropdown options={meta} value={meta.find((a) => a.id === (currentOutput.show?.displayMetadata || "never"))?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("show.displayMetadata", e.detail.id)} />
-</div>
-<div>
     <p><T id="settings.active_layers" /></p>
     <span style="display: flex;">
         <!-- active={activeLayers.includes("background")} -->
@@ -360,6 +357,33 @@
             <T id="preview.overlays" />
         </Button>
     </span>
+</div>
+<div>
+    <p><T id="settings.override_with_template" /></p>
+    <Dropdown options={templateList} value={$templates[currentOutput.show?.template]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("show.template", e.detail.id)} />
+</div>
+<!-- meta -->
+<div>
+    <p><T id="meta.display_metadata" /></p>
+    <Dropdown options={meta} value={meta.find((a) => a.id === (currentOutput.show?.displayMetadata || "never"))?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("show.displayMetadata", e.detail.id)} />
+</div>
+<div>
+    <p><T id="meta.meta_template" /></p>
+    <Dropdown
+        options={templateList}
+        value={$templates[currentOutput.show?.metadataTemplate === undefined ? "metadata" : currentOutput.show?.metadataTemplate]?.name || "—"}
+        style="width: 200px;"
+        on:click={(e) => updateOutput("show.metadataTemplate", e.detail.id)}
+    />
+</div>
+<div>
+    <p><T id="meta.message_template" /></p>
+    <Dropdown
+        options={templateList}
+        value={$templates[currentOutput.show?.messageTemplate === undefined ? "message" : currentOutput.show?.messageTemplate]?.name || "—"}
+        style="width: 200px;"
+        on:click={(e) => updateOutput("show.messageTemplate", e.detail.id)}
+    />
 </div>
 <!-- TODO: override transition ? -->
 

@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { history } from "../components/helpers/history"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
+import { newToast } from "../utils/messages"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
@@ -41,7 +42,7 @@ export function convertEasyWorship(data: any) {
     let songs = data.find((a: any) => a.content.song)?.content.song
     let songsWords = data.find((a: any) => a.content.word)?.content.word
     if (!songsWords) {
-        alertMessage.set("Missing SongsWords.db file.")
+        newToast("Missing SongsWords.db file.")
         return
     }
     // console.log(songsWords)

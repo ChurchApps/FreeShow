@@ -133,7 +133,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete"],
+    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete", "selectAll"],
     drawer_new_show: ["newShowPopup", "newShow"],
     // media / audio
     // "play", "play_no_filters", "SEPERATOR", "edit",

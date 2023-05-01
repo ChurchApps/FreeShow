@@ -1,7 +1,7 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../types/Show"
-    import { activePopup, activeProject, activeShow, dictionary, sortedShowsList, textCache } from "../../stores"
+    import { activePopup, activeProject, activeShow, categories, dictionary, sortedShowsList, textCache } from "../../stores"
     import { clone, sortObjectNumbers } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -94,7 +94,7 @@
 
     let filteredShows: ShowList[]
     let filteredStored: any
-    $: filteredStored = filteredShows = active === "all" ? showsSorted : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && s.category === null))
+    $: filteredStored = filteredShows = active === "all" ? showsSorted : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
     export let firstMatch: null | any = null
     let previousSearchValue: string[] = []

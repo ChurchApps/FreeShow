@@ -65,6 +65,7 @@ export const cachedShowsData: Writable<any> = writable({})
 
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })
+export const toastMessages: Writable<string[]> = writable([])
 export const alertMessage: Writable<string> = writable("")
 export const popupData: Writable<any> = writable({})
 export const systemFonts: Writable<string[]> = writable([])
@@ -91,8 +92,8 @@ export const textCache: Writable<any> = writable({}) // {}
 export const groups: Writable<any> = writable({}) // {default}
 export const categories: Writable<Categories> = writable({}) // {default}
 export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
-    text: { type: "fade", duration: 500, easing: "linear" },
-    media: { type: "fade", duration: 500, easing: "linear" },
+    text: { type: "fade", duration: 500, easing: "sine" },
+    media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
 
@@ -198,7 +199,7 @@ export const audioExtensions: Writable<string[]> = writable(["mp3", "wav", "m4a"
 
 // CLOUD
 export const driveKeys: Writable<any> = writable({})
-export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false })
+export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
 
 // ----- STORES LIST -----
 

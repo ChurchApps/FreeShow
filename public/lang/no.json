@@ -211,7 +211,13 @@
         "publisher": "Utgiver",
         "copyright": "Opphavsrett",
         "CCLI": "Lisens (CCLI)",
-        "year": "År"
+        "year": "År",
+        "message": "Melding",
+        "message_tip": "Vis noe på alle lysbildene",
+        "override_output": "Overskriv stil i utgangsskjermen",
+        "display_metadata": "Vis metadata",
+        "meta_template": "Mal for metadata",
+        "message_template": "Mal for melding"
     },
     "show_at": {
         "never": "Ingen lysbilder",
@@ -309,6 +315,7 @@
         "history": "Historie",
         "midi": "MIDI",
         "cloud_update": "Synkroniserer med sky",
+        "cloud_method": "Dataplassering",
         "shortcuts": "Hurtigtaster",
         "icon": "Ikoner",
         "initialize": "Velkommen",
@@ -411,12 +418,16 @@
         "tip_how": "Vet du ikke hvordan du får en?",
         "tip_guide": "Trykk her for en bruksanvisning.",
         "enable": "Synkroniser automatisk ved oppstart og lagring",
+        "disable_upload": "Deaktiver opplasting av data",
         "google_drive_api": "Google API tjenestekonto-nøkkel",
         "select_key": "Importer nøkkelfil",
         "update_key": "Oppdater nøkkelfil",
         "main_folder": "Angi hovedmappe manuelt",
+        "media_folder": "Mediemappe i skyen",
         "reconnect": "Koble til på nytt",
-        "sync": "Synkroniser"
+        "sync": "Synkroniser",
+        "choose_method_tip": "Det er eksisterende data i skyen. Velg hvor du vil beholde dataene, og overskrive den andre plasseringen.",
+        "local": "Lokal"
     },
     "export": {
         "export": "Eksporter",
@@ -617,7 +628,7 @@
         "other": "Annet",
         "language": "Språk",
         "use24hClock": "Bruk 24-timersklokke",
-        "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den.",
+        "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den. Hold CTRL for å kunne dra den rundt.",
         "show_output_hint": "Hold ctrl/cmd mens du trykker på \"vis utgangsskjerm\"-knappen for å tvinge visning over denne skjermen.",
         "move_output_hint": "Finner ikke skjermen din? Endre posisjonen til vinduet viser på den andre skjermen.",
         "new_output": "Ny utgang",
@@ -634,7 +645,6 @@
         "group_numbers": "Gruppenummer",
         "full_colors": "Full farge på lysbildegruppe",
         "auto_output": "Aktiver utgangsskjerm ved oppstart",
-        "display_metadata": "Vis metadata under presentering",
         "default_project_name": "Standard prosjektnavn",
         "resolution": "Oppløsning",
         "video_extensions": "Videoutvidelse",

@@ -2,7 +2,30 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
-import { activeDays, activeEdit, activePage, activePopup, activeProject, activeShow, activeStage, alertMessage, clipboard, events, folders, midiIn, overlays, projects, scriptures, selected, showsCache, stageShows, templates } from "../../stores"
+import {
+    activeDays,
+    activeEdit,
+    activePage,
+    activePopup,
+    activeProject,
+    activeShow,
+    activeStage,
+    categories,
+    clipboard,
+    drawerTabsData,
+    events,
+    folders,
+    midiIn,
+    overlays,
+    projects,
+    scriptures,
+    selected,
+    shows,
+    showsCache,
+    stageShows,
+    templates,
+} from "../../stores"
+import { newToast } from "../../utils/messages"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { setCaret } from "../edit/scripts/textStyle"
@@ -68,10 +91,10 @@ export function cut(data: any = {}) {
 
 export function deleteAction({ id, data }) {
     if (!deleteActions[id]) return false
-    deleteActions[id](data)
+    let deleted: any = deleteActions[id](data)
 
     console.log("DELETED:", { id, data })
-    selected.set({ id: null, data: [] })
+    if (deleted !== false) selected.set({ id: null, data: [] })
     return true
 }
 
@@ -106,6 +129,32 @@ export function selectAll(data: any = {}) {
     }
 
     if (!data.id && get(selected)) data = get(selected)
+
+    if (data.id === "show_drawer") {
+        // select all shows in selected category in drawer!
+        let data: any = []
+
+        let activeTab = get(drawerTabsData).shows?.activeSubTab
+        if (!activeTab) return
+
+        let showsList: string[] = Object.keys(get(shows)).filter((id: any) => !get(shows)[id].private)
+        if (!showsList.length) return
+
+        if (activeTab === "all") {
+            data = showsList
+        } else {
+            data = showsList.filter((id) => {
+                let show = get(shows)[id]
+                if (activeTab === show.category) return true
+                if (activeTab !== "unlabeled") return false
+                if (show.category === null || !get(categories)[show.category]) return true
+                return false
+            })
+        }
+
+        selected.set({ id: "show_drawer", data: data.map((id) => ({ id })) })
+        return
+    }
 
     // select all slides with current group
     if (data.id === "group") {
@@ -476,6 +525,7 @@ const deleteActions = {
     },
     show_drawer: () => {
         activePopup.set("delete_show")
+        return false
     },
     // "remove"
     show: (data: any) => {
@@ -508,8 +558,7 @@ const deleteActions = {
                 history({ id: "UPDATE", newData: { id: get(activeShow)?.id }, oldData: { key: "layouts", subkey: id }, location: { page: "show", id: "show_layout" } })
             })
         } else {
-            alertMessage.set("error.keep_one_layout")
-            activePopup.set("alert")
+            newToast("$error.keep_one_layout")
         }
     },
 }
