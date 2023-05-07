@@ -58,9 +58,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // SHOWS
     addToProject: { label: "context.addToProject", icon: "project" },
     remove: { label: "actions.remove", icon: "remove" },
+    remove_group: { label: "actions.remove", icon: "remove" },
     remove_slide: { label: "actions.remove", icon: "remove" },
     delete_slide: { label: "actions.delete", icon: "delete" },
-    slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove", "SEPERATOR", "LOAD_slide_groups"] },
+    slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove_group", "SEPERATOR", "LOAD_slide_groups"] },
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add" },
     // newGroup: { label: "context.createNew", icon: "add" },

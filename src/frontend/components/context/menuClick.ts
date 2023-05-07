@@ -48,9 +48,12 @@ import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
+import type { Slide } from "../../../types/Show"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
-    if (actions[id]) return actions[id]({ sel, actionItem, enabled, contextElem, menu })
+    let obj = { sel, actionItem, enabled, contextElem, menu }
+    console.log("MENU CLICK: " + id, obj)
+    if (actions[id]) return actions[id](obj)
     console.log("MISSING CONTEXT: ", id)
 }
 
@@ -99,6 +102,8 @@ const actions: any = {
     recolor: (obj: any) => {
         if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
     },
+    remove_group: (obj: any) => removeGroup(obj.sel.data),
+    remove_slide: (obj: any) => removeSlide(obj.sel.data, "remove"),
     delete_slide: (obj: any) => {
         let ref: any[] = _show().layouts("active").ref()[0]
         let slideId: string = ref[obj.sel.data[0].index].id
@@ -106,7 +111,6 @@ const actions: any = {
 
         actions.delete(obj)
     },
-    remove_slide: (obj: any) => removeSlide(obj.sel.data, "remove"),
     delete: (obj: any) => {
         if (deleteAction(obj.sel)) return
 
@@ -271,15 +275,16 @@ const actions: any = {
             return
         }
 
-        // shows
-        if (obj.contextElem.classList.contains("grid")) {
-            activeShow.set(null)
+        // project
+        if (obj.contextElem.classList.contains("#projectTab")) {
+            activeProject.set(null)
+            projectView.set(true)
             return
         }
 
-        if (!obj.contextElem.classList.contains("#projectTab") || !get(activeProject)) return
-        activeProject.set(null)
-        projectView.set(true)
+        // shows
+        if (!obj.contextElem.closest(".center")) return
+        activeShow.set(null)
     },
     private: (obj: any) => {
         showsCache.update((a: any) => {
@@ -410,25 +415,23 @@ const actions: any = {
 
     actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
     remove_media: (obj: any) => {
-        let type: "image" | "overlays" | "audio" = obj.menu.icon
+        let type: "image" | "overlays" | "music" = obj.menu.icon
         let slide: number = obj.sel.data[0].index
         let newData: any = null
 
         let layoutSlide = _show().layouts("active").ref()[0][slide].data
         if (type === "image") {
             newData = { key: "background", data: null, indexes: [slide] }
-            // TODO: remove from show media if last one?
         } else if (type === "overlays") {
             let ol = layoutSlide.overlays
             // remove clicked
             ol.splice(ol.indexOf(obj.menu.id), 1)
-            newData = { key: "overlays", data: ol, indexes: [slide] }
-        } else if (type === "audio") {
+            newData = { key: "overlays", data: ol, dataIsArray: true, indexes: [slide] }
+        } else if (type === "music") {
             let audio = layoutSlide.audio
             // remove clicked
             audio.splice(audio.indexOf(obj.menu.id), 1)
-            newData = { key: "audio", data: audio, indexes: [slide] }
-            // TODO: remove from show media if last one?
+            newData = { key: "audio", data: audio, dataIsArray: true, indexes: [slide] }
         }
 
         if (newData) history({ id: "SHOW_LAYOUT", newData })
@@ -557,6 +560,70 @@ function changeSlideAction(obj: any, id: string) {
     })
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actionsList, indexes } })
+}
+
+export function removeGroup(data: any) {
+    // TODO: add new slide, and only remove the selected one
+
+    let ref = _show().layouts("active").ref()[0]
+    let firstSlideId = ref[0].id
+
+    let removeSlideIds: any[] = []
+    data.forEach((slideRef) => {
+        if (!slideRef.index) return
+        let refSlide = ref.find((a) => a.layoutIndex === slideRef.index)
+        if (refSlide?.type === "child" || refSlide?.id === firstSlideId) return
+
+        removeSlideIds.push(refSlide.id)
+    })
+    removeSlideIds = [...new Set(removeSlideIds)]
+    if (!removeSlideIds.length) return
+
+    let newParentIds: any = {}
+
+    // remove from layout
+    let activeLayout = _show().get("settings.activeLayout")
+    let layout = clone(_show().layouts([activeLayout]).get("slides")[0])
+    let newLayoutSlides: any[] = []
+    layout.forEach((layoutRef, i: number) => {
+        if (!removeSlideIds.includes(layoutRef.id)) {
+            newLayoutSlides.push(layoutRef)
+            return
+        }
+
+        let currentIndex = newLayoutSlides.length - 1
+        let isSelected = data.find((a) => a.index === ref.find((a) => a.index === i)?.layoutIndex)
+        if (isSelected) newParentIds[layoutRef.id] = newLayoutSlides[currentIndex].id
+
+        if (!Object.keys(layoutRef).length) return
+
+        if (!newLayoutSlides[currentIndex].children) newLayoutSlides[currentIndex].children = {}
+        let id = layoutRef.id
+        delete layoutRef.id
+        newLayoutSlides[currentIndex].children[id] = layoutRef
+    })
+
+    let slides = clone(_show().get("slides"))
+    Object.keys(slides).forEach((slideId) => {
+        let slide: Slide = slides[slideId]
+        let willChange = removeSlideIds.includes(slideId)
+        if (!willChange) return
+
+        let newParent: string = newParentIds[slideId]
+
+        let children = slide.children || []
+        if (!slides[newParent].children) slides[newParent].children = []
+
+        slides[newParent].children = [...slides[newParent].children, slideId, children]
+        delete slides[slideId].children
+
+        delete slides[slideId].globalGroup
+        slides[slideId].group = null
+        slides[slideId].color = null
+    })
+
+    let newData = { slides, layout: newLayoutSlides }
+    history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
 }
 
 export function removeSlide(data: any, type: "delete" | "remove" = "delete") {

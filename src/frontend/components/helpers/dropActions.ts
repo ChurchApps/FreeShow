@@ -301,6 +301,7 @@ const slideDrop: any = {
     global_group: ({ drag, drop }: any, history: any) => {
         let ref: any[] = _show().layouts("active").ref()[0]
 
+        // TODO: just remove this function... ?
         if (drop.center) {
             if (drop.trigger?.includes("end")) drop.index--
             changeSlideGroups({ sel: { data: [{ index: drop.index }] }, menu: { id: drag.data[0].globalGroup } })
@@ -319,6 +320,7 @@ const slideDrop: any = {
 
         drag.data.forEach((slide: any) => {
             let id = uid()
+            delete slide.id
             slides[id] = slide
 
             let parent = ref[newIndex - 1]

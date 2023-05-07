@@ -152,6 +152,8 @@ export function history(obj: History, undo: null | boolean = null) {
             case "showAudio":
                 // get existing show media id
                 let audioId: null | string = null
+                if (!obj.newData) return
+
                 if (obj.newData.path) {
                     _show(showID)
                         .media()

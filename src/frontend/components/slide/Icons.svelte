@@ -135,7 +135,7 @@
             </div>
             <span>
                 {#if layoutSlide.audio.length === 1}
-                    {#await getAudioDuration(_show("active").get().media[layoutSlide.audio[0]].path)}
+                    {#await getAudioDuration(_show("active").get().media[layoutSlide.audio[0]]?.path)}
                         <p>00:00</p>
                     {:then duration}
                         <p>{joinTime(secondsToTime(duration))}</p>
