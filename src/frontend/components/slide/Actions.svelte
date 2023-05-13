@@ -52,6 +52,9 @@
         position: absolute;
         right: 5px;
         z-index: 1;
+
+        height: 80%;
+        flex-wrap: wrap-reverse;
     }
     .icons div {
         opacity: 0.9;

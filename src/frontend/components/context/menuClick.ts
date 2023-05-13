@@ -548,11 +548,23 @@ function changeSlideAction(obj: any, id: string) {
 
         popupData.set(data)
         activePopup.set("midi")
+
+        return
+    }
+
+    let indexes: number[] = obj.sel.data.map(({ index }) => index)
+
+    // this is old and has to be stored as this
+    if (id === "loop") {
+        let ref = _show().layouts("active").ref()[0][obj.sel.data[0]?.index]
+        let loop = ref?.data?.end || false
+        // WIP this does not work with multiple for some reason
+        history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !loop, indexes } })
+
         return
     }
 
     let actionsList: any[] = []
-    let indexes: number[] = obj.sel.data.map(({ index }) => index)
     indexes.forEach((index: number) => {
         let actions: any = _show().layouts().ref()[0][index]?.data?.actions || {}
         actions[id] = !actions[id]

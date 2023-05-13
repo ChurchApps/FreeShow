@@ -217,10 +217,16 @@
 <!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {$slidesOptions.mode === 'grid' || noQuickEdit ? 100 / columns : 100}%;">
+    <!-- group box -->
+    {#if $fullColors}
+        <div class="group_box" style="background-color: {color};" />
+    {/if}
+    <!-- icons -->
     {#if icons && !altKeyPressed}
         <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={$slidesOptions.mode === "lyrics" ? "padding-top: 23px;" : ""} />
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
+    <!-- content -->
     <div class="slide context #{name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
@@ -363,6 +369,16 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         outline: 2px solid var(--secondary);
         outline-offset: -1px;
         z-index: 2;
+    }
+
+    .group_box {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+
+        opacity: 0.25;
     }
 
     .slide.afterEnd {

@@ -18,7 +18,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
             let selectedIndex = get(selected).data[0]?.index
             let currentSlide = _show().layouts("active").ref()[0][selectedIndex]
             let currentGroup = currentSlide.data.globalGroup
-            
+
             Object.entries(get(groups)).forEach(([aID, a]: any) => {
                 items.push([id, { id: aID, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: a.default, enabled: aID === currentGroup }])
             })
@@ -30,18 +30,22 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
             })
             break
         case "actions":
-            let currentActions: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]?.data?.actions
-            let actions = [
-                { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
-                { id: "sendMidi", label: "actions.send_midi", icon: "music" },
+            let slideRef: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]
+            let currentActions: any = slideRef?.data?.actions
+            let actions: any = [
+                { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
                 { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
                 { id: "startTimer", label: "actions.start_timer", icon: "timer", enabled: currentActions?.startTimer || false },
+                { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
+                { id: "sendMidi", label: "actions.send_midi", icon: "music" },
+            ]
+            let clearActions: any = [
                 { id: "stopTimers", label: "actions.stop_timers", icon: "stop", enabled: currentActions?.stopTimers || false },
                 { id: "clearBackground", label: "clear.background", icon: "background", enabled: currentActions?.clearBackground || false },
                 { id: "clearOverlays", label: "clear.overlays", icon: "overlays", enabled: currentActions?.clearOverlays || false },
                 { id: "clearAudio", label: "clear.audio", icon: "audio", enabled: currentActions?.clearAudio || false },
             ]
-            actions.forEach((action: any) => items.push([id, action]))
+            items = [...items, ...actions.map((a) => [id, a]), ["SEPERATOR"], ...clearActions.map((a) => [id, a])]
             break
         case "remove_media":
             let data: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]?.data

@@ -189,12 +189,20 @@
 
         return style + textStyle
     }
+
+    // give time for video to clear
+    let tempVideoBG: any = null
+    $: if (background) tempVideoBG = background
+    else setTimeout(resetTempBG, 100)
+    function resetTempBG() {
+        tempVideoBG = null
+    }
 </script>
 
 <Zoomed background={currentSlide?.settings?.color || currentOutput.show?.background || "black"} {center} {style} {resolution} bind:ratio>
-    {#if background && layers.includes("background")}
+    {#if tempVideoBG && layers.includes("background")}
         <div style="height: 100%;zoom: {1 / ratio}">
-            <MediaOutput {...background} {background} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
+            <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
         </div>
     {/if}
 

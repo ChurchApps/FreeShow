@@ -39,10 +39,14 @@
     let video2: any = {}
     let videoTime1: number = 0
     let videoTime2: number = 0
+    // initialize
     resetVideos()
 
     $: if (type === "video" && path) startVideoTransition()
     else resetVideos()
+
+    // quick fix remove video on end (in output)
+    $: if (video1.video?.ended || video2.video?.ended) resetVideos()
 
     function resetVideos() {
         video = null
@@ -50,7 +54,7 @@
             active: false,
             video: null,
             path: "",
-            data: {},
+            data: { loop: false },
         }
         video2 = clone(video1)
         video1.active = true

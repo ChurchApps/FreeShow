@@ -323,10 +323,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let { showId, layout } = data.remember
             if (!showId || !layout) return
             let ref: any[] = _show(showId).layouts([layout]).ref()[0]
-            data.index = data.index ?? ref.length
+            if (!deleting) data.index = data.index ?? ref.length
             let index = data.index
 
-            let type: "remove" | "delete" = data.type || "delete"
+            let type: "delete" | "delete_group" | "remove" = data.type || "delete"
 
             if (!deleting) {
                 if (data.previousData) {
@@ -374,30 +374,54 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // update layout
                     showsCache.update((a) => {
                         let slides = a[showId].layouts[layout].slides
-                        console.log(slides)
-                        console.log(slideIndex, id)
+                        let newSlides = clone(slides).filter((a, i) => (slideIndex !== undefined ? i !== slideIndex : a.id !== id))
 
-                        let newSlides = slides.filter((a, i) => (a.id ? a.id !== id : i !== slideIndex))
-                        console.log(newSlides)
+                        if (type === "delete") {
+                            Object.keys(a[showId].slides).forEach((slideId) => {
+                                let slide = a[showId].slides[slideId]
+
+                                if (slideId !== id) {
+                                    // remove from other slides
+                                    let childIndex = slide.children?.indexOf(id) ?? -1
+                                    if (childIndex >= 0) slide.children!.splice(childIndex, 1)
+                                    return
+                                }
+
+                                if (isParent) {
+                                    // make first child a parent
+                                    if (!slide.children?.length) return
+                                    let firstChildId = slide.children[0]
+                                    let newChildren = clone(slide.children.slice(1))
+
+                                    // make parent
+                                    a[showId].slides[firstChildId].globalGroup = slide.globalGroup
+                                    a[showId].slides[firstChildId].group = slide.group
+                                    a[showId].slides[firstChildId].color = slide.color
+                                    a[showId].slides[firstChildId].children = newChildren
+
+                                    // add to layout
+                                    newSlides = clone(slides).map((layoutSlideRef) => {
+                                        if (layoutSlideRef.id !== id) return layoutSlideRef
+
+                                        // clone layout data
+                                        let newChildren: any = clone(layoutSlideRef.children || {})
+                                        let newLayoutRef = { id: firstChildId, ...newChildren[firstChildId], children: {} }
+                                        delete newChildren[firstChildId]
+                                        newLayoutRef.children = newChildren
+
+                                        return newLayoutRef
+                                    })
+
+                                    return
+                                }
+                            })
+                        }
+
+                        // layout
                         a[showId].layouts[layout].slides = newSlides
+
                         return a
                     })
-
-                    if (type === "delete" && !isParent) {
-                        // let parent = ref.filter((a: any) => a.children?.includes(id))[0]
-                        // console.log(parent)
-
-                        // remove from other slides
-                        showsCache.update((a) => {
-                            Object.keys(a[showId].slides).forEach((slideId) => {
-                                if (slideId === id) return
-                                let slide = a[showId].slides[slideId]
-                                let childIndex = slide.children?.indexOf(id) ?? -1
-                                if (childIndex >= 0) slide.children!.splice(childIndex, 1)
-                            })
-                            return a
-                        })
-                    }
 
                     // TODO: check if slide is active in edit and decrease index...
                 } else {
@@ -467,7 +491,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             })
 
             if (deleting) {
-                if (type === "delete") {
+                if (type === "delete" || type === "delete_group") {
                     _show(showId)
                         .slides(data.data.map((a) => a.id))
                         .remove()

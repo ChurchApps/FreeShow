@@ -458,7 +458,7 @@ const deleteActions = {
         removeSlide(data)
     },
     group: (data: any) => {
-        history({ id: "SLIDES", oldData: { data: data.map(({ id }: any) => ({ id })) } })
+        history({ id: "SLIDES", oldData: { type: "delete_group", data: data.map(({ id }: any) => ({ id })) } })
     },
     timer: (data: any) => {
         data.forEach((a) => {

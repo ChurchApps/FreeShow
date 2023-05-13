@@ -134,7 +134,7 @@
                             <span style="color: var(--secondary);">{background.count}</span>
                         {/if}
                         {#if background.type === "video"}
-                            <Button style="flex: 0" center title={background.muted !== false ? "Unmute" : "Mute"} on:click={() => setBG(background.id, "muted", background.muted === false)}>
+                            <Button style="flex: 0" center title={background.muted !== false ? $dictionary.actions?.unmute : $dictionary.actions?.mute} on:click={() => setBG(background.id, "muted", background.muted === false)}>
                                 <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
                             </Button>
                             <Button style="flex: 0" center title={$dictionary.media?._loop} on:click={() => setBG(background.id, "loop", background.loop === false)}>

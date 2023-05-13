@@ -66,6 +66,7 @@
         </div>
     {/if}
     {#if layoutSlide.end}
+        <!-- WIP move this to Actions.svelte (right side) -->
         <div>
             <div class="button">
                 <Button style="padding: 5px;" redHover title={$dictionary.remove?.to_start} on:click={() => removeLayout("end")}>
@@ -155,6 +156,9 @@
         flex-direction: column;
         position: absolute;
         z-index: 1;
+
+        height: 80%;
+        flex-wrap: wrap;
     }
     .icons div {
         opacity: 0.9;
