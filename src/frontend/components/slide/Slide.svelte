@@ -258,6 +258,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                                     path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
                                     cameraGroup={background?.cameraGroup || ghostBackground?.cameraGroup || ""}
                                     type={background?.type !== "player" ? background?.type : ghostBackground?.type !== "player" ? ghostBackground?.type : null}
+                                    loadFullImage={!!(background?.path || background?.id)}
                                     {filter}
                                     {flipped}
                                     {fit}

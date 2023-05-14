@@ -10,6 +10,7 @@
 
     export let name: any = ""
     export let path: string
+    export let loadFullImage: boolean = false
     export let cameraGroup: string = ""
     export let filter: any = ""
     export let flipped: boolean = false
@@ -150,11 +151,12 @@
 
             // set cache
             setTimeout(() => {
+                if (!canvas) return
                 mediaCache.update((a: any) => {
                     a[path] = { data: canvas.toDataURL(), width, height }
                     return a
                 })
-            }, 100)
+            }, 1000)
 
             loaded = true
         }
@@ -178,17 +180,16 @@
         {#if type === "video"}
             <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">
                 <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
-                {#if !loaded || hover}
-                    <video style="position: absolute;" bind:this={videoElem} src={path} on:canplaythrough={ready}>
+                {#if !loaded || hover || loadFullImage}
+                    <video style="position: absolute;{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, 'cover')}" bind:this={videoElem} src={path} on:canplaythrough={ready}>
                         <track kind="captions" />
                     </video>
                 {/if}
             </div>
+        {:else if loadFullImage}
+            <img src={path} alt={name} loading="lazy" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;object-fit: contain;" />
         {:else}
-            <!-- <img loading="lazy" src={path} alt={name} /> -->
-            <!-- {getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, 'cover')}; -->
             <canvas style="width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" bind:this={canvas} />
-            <!-- <Image src={path} alt={name} style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" /> -->
         {/if}
     {/key}
 </div>

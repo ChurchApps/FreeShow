@@ -140,7 +140,7 @@
             currentAnalyser = await getAnalyser(video)
             currentAnalysedElem = video
         }
-        playingVideos.set([{ analyser: currentAnalyser }])
+        playingVideos.set([{ video, analyser: currentAnalyser }])
         analyseAudio()
     }
 

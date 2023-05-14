@@ -467,6 +467,26 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         //         a[showId].slides[parentSlideId].children!.push(id)
                         //         return a
                         //     })
+                    } else if (slide.oldChild) {
+                        let parent = ref.find((a) => a.children?.includes(slide.oldChild))
+                        if (parent) {
+                            let newChildren = clone(_show(showId).slides([parent.id]).get()[0]?.children || [])
+                            let oldIndex = newChildren.indexOf(slide.oldChild)
+                            if (oldIndex < 0) oldIndex = newChildren.length
+
+                            newChildren = addToPos(newChildren, [id], oldIndex)
+
+                            _show(showId).slides([parent.id]).set({ key: "children", value: newChildren })
+
+                            // WIP get children layout style when copying
+                            // get layout style
+                            // let newLayoutChildren = _show(showId).layouts([layout]).slides([parent.index]).get()[0].children || {}
+                            // newLayoutChildren[id] = parent.data.children?.[slide.oldChild] || {}
+                            // _show(showId).layouts([layout]).slides([parent.index]).set({ key: "children", value: newLayoutChildren })
+                        } else {
+                            _show(showId).slides([id]).set({ key: "group", value: "" })
+                            _show(showId).layouts([layout]).slides().add([{ id }])
+                        }
                     }
 
                     increaseEditIndex()

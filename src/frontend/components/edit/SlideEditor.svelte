@@ -37,6 +37,8 @@
 
     // get backgruond
     $: bgId = ref?.[$activeEdit.slide!]?.data.background
+    // $: loadFullImage = !!ref?.[$activeEdit.slide!]?.data.background
+    let loadFullImage = true
 
     // get ghost background
     $: if (!bgId) {
@@ -149,7 +151,7 @@
                     {#if !altKeyPressed && background}
                         {#key background.path}
                             <div class="background" style="zoom: {1 / ratio};opacity: 0.5;">
-                                <MediaLoader path={background.path || background.id || ""} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
+                                <MediaLoader path={background.path || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
                             </div>
                         {/key}
                     {/if}

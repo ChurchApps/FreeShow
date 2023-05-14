@@ -177,7 +177,7 @@
 
         if (e.target.closest("input") || e.target.closest(".edit") || !allFiles.length) return
 
-        if (e.ctrlKey && shortcuts[e.key]) {
+        if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
             // e.preventDefault()
             shortcuts[e.key]()
         }

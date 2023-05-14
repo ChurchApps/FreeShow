@@ -12,7 +12,7 @@
         { name: "Clipboard", id: "clipboard" },
         { name: "Text file", extensions: ["txt"], id: "txt" },
         { name: "PDF", extensions: ["pdf"], id: "pdf" },
-        { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint" },
+        { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint", tutorial: "This will convert all the text to a show. If you want to import all images and styling, please export/convert to PDF and import as PDF." },
         { name: "FreeShow", extensions: ["show"], id: "freeshow" },
         { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "json"], id: "propresenter" }, // "pro"
         {

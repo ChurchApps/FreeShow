@@ -286,6 +286,7 @@
     "groups": {
         "current": "Gjeldende",
         "global": "Globale",
+        "toggle_global_group": "Veksle globale grupper",
         "intro": "Intro",
         "verse": "Vers",
         "pre_chorus": "Pre-chorus",

@@ -48,9 +48,7 @@
 
   {#if showId && $showsCache[showId]}
     {#if active === "groups"}
-      <div class="content">
-        <SlideGroups />
-      </div>
+      <SlideGroups />
     {:else if active === "layout"}
       <Layout />
     {:else if active === "media"}

@@ -330,9 +330,19 @@ export function _show(id: any = "active") {
 
                             layoutIndex++
                             let slide = shows[id].slides[layoutSlide.id]
-                            a[i].push({ type: "parent", layoutId, index, layoutIndex, id: layoutSlide.id, children: slide?.children || [], data: layoutSlide })
-                            if (slide?.children) {
-                                slide.children.forEach((childId: string, jndex: number) => {
+                            let children = slide?.children || []
+                            // fix bug where some childs are stored as an array
+                            let newChildren: any[] = []
+                            children.forEach((a) => {
+                                if (Array.isArray(a)) newChildren.push(...a)
+                                else newChildren.push(a)
+                            })
+                            if (newChildren.length && JSON.stringify(children) !== JSON.stringify(newChildren)) _show().slides([layoutSlide.id]).set({ key: "children", value: newChildren })
+                            children = newChildren
+
+                            a[i].push({ type: "parent", layoutId, index, layoutIndex, id: layoutSlide.id, children, data: layoutSlide })
+                            if (children) {
+                                children.forEach((childId: string, jndex: number) => {
                                     layoutIndex++
 
                                     // array bug

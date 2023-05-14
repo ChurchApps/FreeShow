@@ -286,6 +286,7 @@
     "groups": {
         "current": "Atual",
         "global": "Global",
+        "toggle_global_group": "Toggle global groups",
         "intro": "Introdução",
         "verse": "Verso",
         "pre_chorus": "Pré Refrão",

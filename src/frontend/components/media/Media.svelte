@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { MediaFit } from "../../../types/Main"
     import type { Transition } from "../../../types/Show"
-    import { activeEdit, activeShow, media } from "../../stores"
+    import { activeEdit, activeShow, media, playingVideos } from "../../stores"
     import { custom } from "../../utils/transitions"
     import { clone } from "../helpers/array"
     import { getExtension, getMediaType } from "../helpers/media"
@@ -58,6 +58,8 @@
         }
         video2 = clone(video1)
         video1.active = true
+
+        playingVideos.set([])
     }
 
     $: if (videoData) updateVideo("data")

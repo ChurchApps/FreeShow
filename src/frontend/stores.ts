@@ -40,6 +40,7 @@ export const activeDrawerTab: Writable<DrawerTabIds> = writable("shows")
 export const settingsTab: Writable<SettingsTabs> = writable("general")
 export const projectView: Writable<boolean> = writable(false)
 export const eventEdit: Writable<null | string> = writable(null)
+export const globalGroupViewEnabled: Writable<boolean> = writable(false)
 
 // AUDIO
 export const audioChannels: Writable<{ left: number; right: number }> = writable({ left: 0, right: 0 })

@@ -262,11 +262,25 @@ const slideDrop: any = {
         if (drag.id === "slide") {
             let selected: number[] = getIndexes(drag.data)
 
+            // let moveIntoChild: string = ""
+
+            // move all children when parent is moved
             selected.forEach(selectChildren)
             function selectChildren(index: number) {
                 if (ref[index].type !== "parent") return
-                let children: string[] = ref[index].children
-                children?.map((_id: string, childIndex: number) => selected.push(index + childIndex + 1))
+                console.log(newIndex, index, ref[index].children)
+                let children: string[] = ref[index].children || []
+                if (!children) return
+
+                // let parentMovedToOwnChildren = newIndex > index && newIndex - 1 <= index + children.length
+
+                // // select children
+                // if (parentMovedToOwnChildren) {
+                //     // moveIntoChild = ref[index].id
+                //     return
+                // }
+
+                children.map((_id: string, childIndex: number) => selected.push(index + childIndex + 1))
                 selected = [...new Set(selected)]
             }
 
@@ -291,6 +305,9 @@ const slideDrop: any = {
         // sort layout ref
         let newLayoutRef: any[] = addToPos(ref, moved, newIndex)
 
+        // TODO: dragging a current group on child will not remove old children
+        // TODO: dragging a parent slide over its own childs will not change children
+
         // check if first slide child
         if (newLayoutRef[0].type === "child") newLayoutRef[0].newType = "parent"
 
@@ -301,7 +318,6 @@ const slideDrop: any = {
     global_group: ({ drag, drop }: any, history: any) => {
         let ref: any[] = _show().layouts("active").ref()[0]
 
-        // TODO: just remove this function... ?
         if (drop.center) {
             if (drop.trigger?.includes("end")) drop.index--
             changeSlideGroups({ sel: { data: [{ index: drop.index }] }, menu: { id: drag.data[0].globalGroup } })

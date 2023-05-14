@@ -266,7 +266,12 @@ const copyActions: any = {
         let ref = _show().layouts("active").ref()?.[0]
         let layouts: any[] = []
 
-        let ids = data.map((a: any) => {
+        // dont know why this is like this when ctrl + c
+        if (data.slides) data = data.slides
+
+        let sortedData = data.sort((a, b) => (a.index < b.index ? -1 : 1))
+
+        let ids = sortedData.map((a: any) => {
             // get layout
             if (a.index !== undefined) layouts.push(ref[a.index].data)
 
@@ -275,17 +280,18 @@ const copyActions: any = {
 
         let slides = clone(_show().slides(ids).get())
         slides = slides.map((slide) => {
+            if (slide.group !== null) return slide
+
             // make children parent
-            if (slide.group === null) {
-                // this should never be here
-                delete slide.children
+            // this should never be here
+            delete slide.children
 
-                let parent = ref.find((a) => a.id === slide.id)?.parent || ""
-                // check that parent is not copied
-                if (ids.includes(parent)) return slide
+            let parent = ref.find((a) => a.id === slide.id)?.parent || ""
+            // check that parent is not copied
+            if (ids.includes(parent)) return slide
 
-                slide.group = ""
-            }
+            // slide.group = ""
+            slide.oldChild = slide.id
 
             return slide
         })
@@ -339,8 +345,9 @@ const pasteActions: any = {
 
         // clone slides
         data = clone(data)
-        data.slides.reverse()
-        if (data.layouts) data.layouts.reverse()
+
+        // data.slides.reverse()
+        // if (data.layouts) data.layouts.reverse()
 
         // get all slide ids & child ids
         let copiedIds: string[] = data.slides.map((a: any) => a.id)
@@ -350,50 +357,66 @@ const pasteActions: any = {
         //   if (slide.children?.length) childs.push(...slide.children)
         // })
 
-        let slides: any = _show().get().slides
-        let ref: any[] = _show().layouts("active").ref()[0]
+        // TODO: duplicate each individual slide as their own
+
+        let slides: any = clone(_show().get().slides)
+        // let ref: any[] = _show().layouts("active").ref()[0]
         let newSlides: any[] = []
 
         let layouts: any[] = []
 
+        let addedChildren: string[] = []
+
         // remove children
-        data.slides.map((slide: any, i: number) => {
+        data.slides.forEach((slide: any, i: number) => {
+            // dont add child if it is already copied
+            if (slide.group === null && addedChildren.includes(slide.id)) return
+
+            slide.id = uid()
+            newSlides.push(slide)
+
             // has children
             if (slide.children) {
-                let children: string[] = []
-                children = slide.children.filter((child: string) => copiedIds.includes(child))
-                // if (JSON.stringify(children) !== JSON.stringify(slide.children)) slide.id = uid()
-                if (children.length && slide.children.length > children.length) slide.children = children
+                // let children: string[] = []
+                // children = slide.children.filter((child: string) => copiedIds.includes(child))
+                // if (children.length && slide.children.length > children.length) slide.children = children
 
-                // clone children
+                // clone selected children
                 let clonedChildren: string[] = []
                 slide.children.forEach((childId: string) => {
-                    if (!slides[childId]) return
-                    let childSlide: any = clone(slides[childId])
+                    // !slides[childId]
+                    if (!copiedIds.includes(childId)) return
+                    let childSlide: any = clone(data.slides.find((a) => a.id === childId))
+                    addedChildren.push(childId)
+
+                    // let childSlide: any = clone(slides[childId])
+                    console.log(childSlide, clone(slides[childId]))
                     childSlide.id = uid()
+                    delete childSlide.oldChild
                     clonedChildren.push(childSlide.id)
                     newSlides.push(childSlide)
                 })
 
                 slide.children = clonedChildren
-            } else if (slide.group === null && !copiedIds.includes(slide.id)) {
-                // is child
-                let slideRef = ref.find((a) => a.id === slide.id)
-                let parent: any = slides[slideRef.parent.id]
-                slide.group = parent.group || ""
-                slide.color = parent.color || ""
-                slide.globalGroup = parent.globalGroup || ""
+                // } else if (slide.group === null && !copiedIds.includes(slide.id)) {
+                //     // is child
+                //     let slideRef = ref.find((a) => a.id === slide.id)
+                //     let parent: any = slides[slideRef.parent.id]
+                //     slide.group = parent.group || ""
+                //     slide.color = parent.color || ""
+                //     slide.globalGroup = parent.globalGroup || ""
             }
-
-            slide.id = uid()
-            newSlides.push(slide)
 
             // add layout
             let layout = data.layouts?.[i]
             if (!layout) return
-            layouts[i] = layout
+            layouts[i] = layout || {}
         })
         // TODO: children next to each other should be grouped
+
+        console.log(newSlides)
+
+        // TODO: undo/redo this is buggy
 
         history({ id: "SLIDES", newData: { data: newSlides, layouts, index: index !== undefined ? index + 1 : undefined } })
         setTimeout(() => console.log(get(showsCache)), 1000)

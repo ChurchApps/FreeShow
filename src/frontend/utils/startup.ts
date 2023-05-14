@@ -25,6 +25,7 @@ import {
     activeShow,
     activeTimers,
     alertMessage,
+    audioChannels,
     audioFolders,
     autoOutput,
     currentWindow,
@@ -223,6 +224,9 @@ const receiveOUTPUT: any = {
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
     AUDIO_MAIN: async (data: any) => {
+        audioChannels.set(data.channels)
+        if (!data.id) return
+
         // let analyser: any = await getAnalyser(video)
         // TODO: remove when finished
         playingVideos.update((a) => {

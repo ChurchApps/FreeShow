@@ -1,6 +1,8 @@
 import { get } from "svelte/store"
 import { audioChannels, playingAudio, playingVideos, volume } from "../../stores"
 import { audioAnalyser } from "../output/audioAnalyser"
+import { OUTPUT } from "../../../types/Channels"
+import { send } from "../../utils/request"
 
 export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolean = true, startAt: number = 0) {
     let existing: any = get(playingAudio)[path]
@@ -46,9 +48,12 @@ let interval: any = null
 export function analyseAudio() {
     if (interval) return
 
-    let allAudio: any[] = Object.values(get(playingAudio)).filter((a) => a.paused === false && a.audio.volume)
-    if (get(volume) && get(playingVideos).length) get(playingVideos).map((a) => allAudio.push({ ...a }))
-    let updateAudio: number = 0
+    let allAudio: any[] = []
+
+    // let allAudio: any[] = Object.values(get(playingAudio)).filter((a) => a.paused === false && a.audio.volume)
+    // if (get(volume) && get(playingVideos).length) get(playingVideos).map((a) => allAudio.push({ ...a }))
+
+    let updateAudio: number = 10
     interval = setInterval(() => {
         // get new audio
         updateAudio++
@@ -70,16 +75,23 @@ export function analyseAudio() {
 
                     return audio.paused === false && audio.audio.volume
                 })
-            if (get(volume) && get(playingVideos).length)
-                get(playingVideos).map((a) => {
+
+            // remove cleared videos
+            let videos: any[] = get(playingVideos).filter((a) => document.contains(a.video))
+
+            if (get(volume) && videos.length) {
+                videos.map((a) => {
                     if (!a.paused) allAudio.push({ ...a })
                 })
+            }
         }
 
         if (!allAudio.length) {
             audioChannels.set({ left: 0, right: 0 })
             clearInterval(interval)
             interval = null
+
+            send(OUTPUT, ["AUDIO_MAIN"], { channels: { left: 0, right: 0 } })
             return
         }
 

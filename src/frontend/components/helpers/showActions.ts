@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../../types/Channels"
+import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { activeEdit, activePage, activeProject, activeShow, activeTimers, media, outLocked, outputs, overlays, projects, showsCache, slideTimers } from "./../../stores"
@@ -290,6 +290,8 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     // overlays
     if (data.overlays?.length) {
         setOutput("overlays", data.overlays, false, outputId, true)
+        // send overlays again, because it sometimes don't have it for some reason
+        send(OUTPUT, ["OVERLAYS"], get(overlays))
     }
 
     // audio

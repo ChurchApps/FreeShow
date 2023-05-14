@@ -280,7 +280,7 @@
         <PreviewOutputs bind:currentOutputId={outputId} />
     {/if}
     <div class="top" class:hide={!enablePreview}>
-        <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: 100%"}>
+        <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 15px);"}>
             {#if fullscreen}
                 <span class="resolution">
                     <!-- TODO: get actual resultion ... -->

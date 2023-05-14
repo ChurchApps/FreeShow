@@ -72,14 +72,28 @@ ipcMain.once("LOADED", () => {
 //   }
 
 // "fileAssociations": [
-//   {
-//     "ext": "show",
-//     "name": "Show File",
-//     "description": "A FreeShow lyric/presentation file",
-//     "role": "Editor",
-//     "perMachine": true
-//   }
+//     {
+//         "ext": "show",
+//         "name": "FreeShow Show",
+//         "description": "A FreeShow Show File",
+//         "role": "Editor"
+//     },
+//     {
+//         "ext": "fsb",
+//         "name": "FreeShow Bible",
+//         "description": "A FreeShow Bible File",
+//         "role": "Editor"
+//     },
+//     {
+//         "ext": "project",
+//         "name": "FreeShow Project",
+//         "description": "A FreeShow Project File",
+//         "role": "Editor"
+//     }
 // ],
+// "nsis": {
+//     "perMachine": true
+// },
 
 // ----- LOADING WINDOW -----
 
