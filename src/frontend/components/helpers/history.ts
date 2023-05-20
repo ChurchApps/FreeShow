@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activePage, historyCacheCount, undoHistory } from "../../stores"
+import { activePage, historyCacheCount, selected, undoHistory } from "../../stores"
 import type { ShowRef } from "./../../../types/Projects"
 import { redoHistory } from "./../../stores"
 import { clone } from "./array"
@@ -249,6 +249,9 @@ export function history(obj: History, undo: null | boolean = null) {
             return uh
         })
     }
+
+    // deselect selected
+    selected.set({ id: null, data: [] })
 
     console.log("UNDO: ", [...get(undoHistory)])
     console.log("REDO: ", [...get(redoHistory)])

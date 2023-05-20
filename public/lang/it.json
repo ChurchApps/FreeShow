@@ -360,6 +360,7 @@
         "rename": "Rinomina",
         "recolor": "Cambia colore",
         "remove": "Rimuovi",
+        "remove_group": "Remove group",
         "private": "Privato",
         "import": "Importa",
         "export": "Esporta",

@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { activeShow, shows as allShows, showsCache } from "../../stores"
 import { addToPos } from "./mover"
+import { clone } from "./array"
 // import { loadShows } from "./setShow"
 
 /** Shows function */
@@ -34,7 +35,7 @@ export function _show(id: any = "active") {
                     prev = a[id][double[0]][double[1]]
                     a[id][double[0]][double[1]] = value
                 } else {
-                    prev = a[id][key]
+                    prev = clone(a[id][key])
                     a[id][key] = value
                 }
 
@@ -530,7 +531,8 @@ export function _show(id: any = "active") {
                     set: ({ key, value }: any) => {
                         let prev: any[] = []
                         showsCache.update((a: any) => {
-                            if (!layoutIds.length) layoutIds = Object.keys(a[id].layouts)
+                            if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
+                            else if (!layoutIds.length) layoutIds = Object.keys(a[id].layouts)
                             layoutIds.forEach((layoutId: any, i: number) => {
                                 if (i === 0) prev[i] = []
                                 if (!indexes.length) indexes = Object.keys(shows[id].layouts[layoutId].slides)

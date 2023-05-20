@@ -348,10 +348,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (!slides[0]) return
 
+            // sort in descending order so indexes are correct while adding/removing
+            slides = slides.sort((a, b) => (a.index < b.index ? 1 : -1))
+
             slides.forEach((slide, i) => {
                 let id = slide.id
                 delete slide.id
-                let slideIndex = slide.index || index
+                let slideIndex = slide.index ?? index
                 delete slide.index
 
                 // check if already exists!!

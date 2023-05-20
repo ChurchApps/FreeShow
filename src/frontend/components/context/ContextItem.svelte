@@ -21,11 +21,13 @@
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
                 enabled = GetLayout()[$selected.data[0].index].disabled! || false
-                menu.label = enabled ? "actions.enable" : "actions.disable"
-                return
+            } else if ($selected.id === "group") {
+                enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
+            } else if ($selected.id === "stage") {
+                enabled = $stageShows[$selected.data[0].id]?.disabled
             }
-            if ($selected.id === "group") enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
-            else if ($selected.id === "stage") enabled = $stageShows[$selected.data[0].id]?.disabled
+
+            menu.label = enabled ? "actions.enable" : "actions.disable"
         },
         remove_group: () => {
             if ($selected.id !== "slide") return

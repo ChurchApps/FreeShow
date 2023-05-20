@@ -262,7 +262,7 @@ const copyActions: any = {
         items = items.filter((_a: any, i: number) => data.items.includes(i))
         return [...items]
     },
-    slide: (data: any) => {
+    slide: (data: any, fullGroup: boolean = false) => {
         let ref = _show().layouts("active").ref()?.[0]
         let layouts: any[] = []
 
@@ -277,6 +277,12 @@ const copyActions: any = {
 
             return a.id || (a.index !== undefined ? ref[a.index].id : "")
         })
+
+        if (fullGroup) {
+            // select all children of group
+            ids = ref.filter((a) => ids.includes(a.parent?.id || a.id)).map((a) => a.id)
+            ids = [...new Set(ids)]
+        }
 
         let slides = clone(_show().slides(ids).get())
         slides = slides.map((slide) => {
@@ -298,7 +304,7 @@ const copyActions: any = {
 
         return { slides, layouts }
     },
-    group: (data: any) => copyActions.slide(data),
+    group: (data: any) => copyActions.slide(data, true),
     overlay: (data: any) => {
         return data.map((id: string) => get(overlays)[id])
     },

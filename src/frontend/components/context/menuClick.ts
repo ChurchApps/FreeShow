@@ -338,16 +338,18 @@ const actions: any = {
             return
         }
         if (obj.sel.id === "group") {
-            showsCache.update((a) => {
-                let ref = GetLayoutRef()
-                ref.forEach((b: any) => {
-                    obj.sel.data.forEach((c: any) => {
-                        console.log(b)
-                        if (b.type === "child" && b.parent === c.id) a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex].children[b.id].disabled = !obj.enabled
-                        else if (b.id === c.id) a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides[b.layoutIndex || b.index].disabled = !obj.enabled
-                    })
-                })
-                return a
+            let ref = _show().layouts("active").ref()[0]
+            let groupIds: string[] = obj.sel.data.map(({ id }) => id)
+            let disabled = !ref.find((a) => a.id === groupIds[0]).data.disabled
+            let allGroupSlidesInLayout = ref.filter((a) => groupIds.includes(a.parent?.id || a.id))
+
+            allGroupSlidesInLayout.forEach((slideRef) => {
+                if (slideRef.type === "child") {
+                    _show().layouts("active").slides([slideRef.parent.index]).children([slideRef.id]).set({ key: "disabled", value: disabled })
+                    return
+                }
+
+                _show().layouts("active").slides([slideRef.index]).set({ key: "disabled", value: disabled })
             })
         }
         if (obj.sel.id === "stage") {
@@ -604,7 +606,8 @@ export function removeGroup(data: any) {
         }
 
         let currentIndex = newLayoutSlides.length - 1
-        let isSelected = data.find((a) => a.index === ref.find((a) => a.index === i)?.layoutIndex)
+        let layoutIndex = ref.find((a) => a.id === layoutRef.id && a.index === i)?.layoutIndex
+        let isSelected = data.find((a) => a.index === layoutIndex)
         if (isSelected) newParentIds[layoutRef.id] = newLayoutSlides[currentIndex].id
 
         if (!Object.keys(layoutRef).length) return
@@ -622,11 +625,12 @@ export function removeGroup(data: any) {
         if (!willChange) return
 
         let newParent: string = newParentIds[slideId]
+        if (!newParent) return
 
         let children = slide.children || []
         if (!slides[newParent].children) slides[newParent].children = []
 
-        slides[newParent].children = [...slides[newParent].children, slideId, children]
+        slides[newParent].children = [...slides[newParent].children, slideId, ...children]
         delete slides[slideId].children
 
         delete slides[slideId].globalGroup
@@ -644,15 +648,23 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
     let childs: any[] = []
 
     // remove parents and delete childs
-    data.forEach((a: any) => {
-        if (!ref[a.index]) return
-        if (ref[a.index].type === "parent") parents.push({ index: ref[a.index].index, id: ref[a.index].id })
-        else childs.push({ id: ref[a.index].id })
+    data.forEach(({index}: any) => {
+        if (!ref[index]) return
+
+        if (type === "remove") {
+            index = ref[index].parent?.layoutIndex ?? index
+            parents.push({ index: ref[index].index, id: ref[index].id })
+            return
+        }
+
+        if (ref[index].type === "parent") parents.push({ index: ref[index].index, id: ref[index].id })
+        else childs.push({ id: ref[index].id })
     })
 
     let slides = parents
     // don't do anything with the children if it's removing parents
-    if (type !== "remove") slides.push(...childs)
+    if (type === "remove") slides = [...new Set(slides)]
+    else slides.push(...childs)
 
     if (!slides.length) return
 
