@@ -210,15 +210,14 @@ export async function syncDataDrive(data: any) {
         if (matchingContent) return
 
         // download
-        if (driveFile && newest === "cloud") {
+        if (driveFile && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
             if (!driveContent) {
                 changes.push({ type: "config", action: "download_failed", name })
                 return
             }
 
-            if (id === "SYNCED_SETTINGS") {
-                bibles = driveContent?.scriptures
-            }
+            if (id === "SHOWS") shows = driveContent
+            else if (id === "SYNCED_SETTINGS") bibles = driveContent?.scriptures
 
             toApp(STORE, { channel: id, data: driveContent })
 
@@ -228,9 +227,9 @@ export async function syncDataDrive(data: any) {
         }
 
         // upload (newest === "local")
-        if (id === "SYNCED_SETTINGS") {
-            bibles = store.store?.scriptures
-        }
+        if (data.method === "download") return
+        if (id === "SHOWS") shows = store.store
+        else if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
 
         let file = createFile(data.mainFolderId, { type: "json", name }, storeContent)
         let response = await uploadFile(file, driveFileId)
@@ -286,7 +285,7 @@ export async function syncDataDrive(data: any) {
             if (matchingContent) return
 
             // download
-            if (driveFile && newest === "cloud") {
+            if (driveFile && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
                 if (!driveContent) {
                     changes.push({ type: "bible", action: "download_failed", name })
                     return
@@ -299,6 +298,7 @@ export async function syncDataDrive(data: any) {
             }
 
             // upload (newest === "local")
+            if (data.method === "download") return
             if (!localFile) return
             let file = createFile(driveBiblesFolderId, { type: "json", name }, localFile)
             let response = await uploadFile(file, driveFileId)
@@ -345,7 +345,7 @@ export async function syncDataDrive(data: any) {
             if (newest === "same") return
 
             // "download" show
-            if (cloudContent && newest === "cloud") {
+            if (cloudContent && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
                 writeFile(localShowPath, cloudContent, id)
                 downloadCount++
 
@@ -360,6 +360,7 @@ export async function syncDataDrive(data: any) {
         if (!uploadCount) return
 
         // upload shows
+        if (data.method === "download") return
         let file = createFile(data.mainFolderId, { type: "json", name }, JSON.stringify(allShows))
         let response = await uploadFile(file, driveFileId)
 

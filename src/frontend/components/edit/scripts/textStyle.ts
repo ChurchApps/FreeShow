@@ -1,7 +1,7 @@
 import type { Item, Line } from "../../../../types/Show"
 
 // add new style to text by selection
-export function addStyle(selection: { start: number; end: number }[], item: Item, style: any[]): Item {
+export function addStyle(selection: { start: number; end: number }[], item: Item, style: string | any[]): Item {
     // let selections: null | Selection = window.getSelection()
     // let global: null | number[] = null
     item.lines?.forEach((line, i) => {
@@ -20,7 +20,9 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
                 if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
                     if (from > 0) newText.push({ value: text.value.slice(0, from), style: text.style })
                     if (to - from > 0 && to - from <= length) {
-                        let newStyle: string = addStyleString(text.style, style)
+                        let newStyle: string = ""
+                        if (Array.isArray(style)) newStyle = addStyleString(text.style, style)
+                        else newStyle = style
                         newText.push({ value: text.value.slice(from, to), style: newStyle })
                     }
                     if (to < length) newText.push({ value: text.value.slice(to, length), style: text.style })
@@ -183,7 +185,9 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
     // filter out empty lines
     lines = lines.filter((a) => a.text.length)
 
+    console.log(style)
     if (!style.length && lines.length) style = lines[lines.length - 1].text[lines[lines.length - 1].text.length - 1]?.style || ""
+    console.log(style)
 
     return style
 }

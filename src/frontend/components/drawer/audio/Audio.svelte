@@ -87,7 +87,7 @@
 
         if (e.target.closest("input") || e.target.closest(".edit")) return
 
-        if (e.ctrlKey && e.key === "Backspace") {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Backspace") {
             if (rootPath === path) return
             goBack()
         }

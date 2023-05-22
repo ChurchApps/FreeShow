@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activePage, historyCacheCount, undoHistory } from "../../stores"
+import { activePage, historyCacheCount, selected, undoHistory } from "../../stores"
 import type { ShowRef } from "./../../../types/Projects"
 import { redoHistory } from "./../../stores"
 import { clone } from "./array"
@@ -101,6 +101,8 @@ export function history(obj: History, undo: null | boolean = null) {
                         .lines(obj.location!.lines! || [])
                         .set(obj.newData.style),
                 }
+                // CSS text style
+                // if (obj.newData?.style?.key === "text-style" && old.style.values?.[0]?.[0]) old.style.values = old.style.values[0]
 
                 if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
                 if (old.template) _show(showID).set(old.template)
@@ -152,6 +154,8 @@ export function history(obj: History, undo: null | boolean = null) {
             case "showAudio":
                 // get existing show media id
                 let audioId: null | string = null
+                if (!obj.newData) return
+
                 if (obj.newData.path) {
                     _show(showID)
                         .media()
@@ -247,6 +251,9 @@ export function history(obj: History, undo: null | boolean = null) {
             return uh
         })
     }
+
+    // deselect selected
+    selected.set({ id: null, data: [] })
 
     console.log("UNDO: ", [...get(undoHistory)])
     console.log("REDO: ", [...get(redoHistory)])

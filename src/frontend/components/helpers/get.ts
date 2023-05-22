@@ -34,7 +34,8 @@ export const getOutOverlays = () => []
 
 export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null): SlideData[] => {
   // console.trace(showID)
-  if (!showID) showID = get(activeShow)!.id
+  if (!showID) showID = get(activeShow)?.id || null
+  if (!showID) return []
   let currentShow: Show = get(showsCache)[showID]
   if (!layoutID) layoutID = currentShow?.settings?.activeLayout
   let layoutSlides: SlideData[] = []

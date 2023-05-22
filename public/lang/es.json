@@ -211,7 +211,13 @@
         "publisher": "Editor",
         "copyright": "Derecho de autor",
         "CCLI": "Licencia (CCLI)",
-        "year": "Año"
+        "year": "Año",
+        "message": "Mensaje",
+        "message_tip": "Display something on all slides",
+        "override_output": "Override styling in output",
+        "display_metadata": "Visualizar metadatos",
+        "meta_template": "Metadata template",
+        "message_template": "Message template"
     },
     "show_at": {
         "never": "Ninguna diapositiva",
@@ -280,6 +286,7 @@
     "groups": {
         "current": "Actual",
         "global": "Global",
+        "toggle_global_group": "Toggle global groups",
         "intro": "Introducción",
         "verse": "Verso",
         "pre_chorus": "Pre Coro",
@@ -309,6 +316,7 @@
         "history": "History",
         "midi": "MIDI",
         "cloud_update": "Syncing with cloud",
+        "cloud_method": "Data location",
         "shortcuts": "Atajos",
         "icon": "Íconos",
         "initialize": "Bienvenido",
@@ -352,6 +360,7 @@
         "rename": "Renombrar",
         "recolor": "Cambiar color",
         "remove": "Suprimir",
+        "remove_group": "Remove group",
         "private": "Privado",
         "import": "Importar",
         "export": "Exportar",
@@ -411,12 +420,16 @@
         "tip_how": "Don't know how to get one?",
         "tip_guide": "Click here for a guide.",
         "enable": "Automatic sync on startup and save",
+        "disable_upload": "Disable uploading data",
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",
         "update_key": "Update keys file",
         "main_folder": "Set main folder manually",
+        "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
-        "sync": "Sync"
+        "sync": "Sync",
+        "choose_method_tip": "There is existing data in the cloud. Please choose from where you want to keep the data. And override the other location.",
+        "local": "Local"
     },
     "export": {
         "export": "Exportar",
@@ -617,7 +630,7 @@
         "other": "Otro",
         "language": "Idioma",
         "use24hClock": "Usar reloj de 24 horas",
-        "hide_output_hint": "Doble click en la ventana de salida para ocultarlo.",
+        "hide_output_hint": "Doble click en la ventana de salida para ocultarlo. Hold CTRL to enable dragging.",
         "show_output_hint": "Presionar ctrl/cmd mientras hace click al botón de visualización para forzarlo a mostrarse delante de pantalla.",
         "move_output_hint": "No se visualiza? Cambiar la posición hasta que la ventana se muestre en una segunda pantalla.",
         "new_output": "Nueva salida",
@@ -634,7 +647,6 @@
         "group_numbers": "Números de grupo",
         "full_colors": "Despliega todos los grupos de colores",
         "auto_output": "Muestra la ventana de salida en la pantalla de inicio",
-        "display_metadata": "Visualizar metadatos mientras se están mostrando",
         "default_project_name": "Nombre predeterminado del proyecto",
         "resolution": "Solución",
         "video_extensions": "Extensiones de video",

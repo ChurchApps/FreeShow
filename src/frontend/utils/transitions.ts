@@ -4,37 +4,37 @@ import type { TransitionType } from "./../../types/Show"
 import { backInOut, bounceInOut, circInOut, cubicInOut, elasticInOut, linear, sineInOut } from "svelte/easing"
 
 export const transitions: { [key in TransitionType]: any } = {
-  none: () => {},
-  blur,
-  fade,
-  fly,
-  scale,
-  slide,
-  spin: (node: any) => {
-    const o = +getComputedStyle(node).opacity
-    return {
-      // easing: elasticInOut,
-      // css: (t: any) => `transform: translateX(${t}%);`,
-      // scale(${t})
-      css: (t: any) => `opacity: ${t * o}; transform: rotate(${t * 360}deg);`,
-    }
-  },
+    none: () => {},
+    blur,
+    fade,
+    fly,
+    scale,
+    slide,
+    spin: (node: any) => {
+        const o = +getComputedStyle(node).opacity
+        return {
+            // easing: elasticInOut,
+            // css: (t: any) => `transform: translateX(${t}%);`,
+            // scale(${t})
+            css: (t: any) => `opacity: ${t * o}; transform: rotate(${t * 360}deg);`,
+        }
+    },
 }
 
 export const easings: any[] = [
-  { id: "linear", name: "$:easings.linear:$", data: linear },
-  { id: "back", name: "$:easings.back:$", data: backInOut },
-  { id: "sine", name: "$:easings.sine:$", data: sineInOut },
-  { id: "circ", name: "$:easings.circ:$", data: circInOut },
-  { id: "cubic", name: "$:easings.cubic:$", data: cubicInOut },
-  { id: "elastic", name: "$:easings.elastic:$", data: elasticInOut },
-  { id: "bounce", name: "$:easings.bounce:$", data: bounceInOut },
-  // { id: "expo", name: "$:easings.expo:$", data: expoInOut },
-  // { id: "quad", name: "$:easings.quad:$", data: quadInOut },
-  // { id: "quart", name: "$:easings.quart:$", data: quartInOut },
-  // { id: "quint", name: "$:easings.quint:$", data: quintInOut },
+    { id: "linear", name: "$:easings.linear:$", data: linear },
+    { id: "back", name: "$:easings.back:$", data: backInOut },
+    { id: "sine", name: "$:easings.sine:$", data: sineInOut },
+    { id: "circ", name: "$:easings.circ:$", data: circInOut },
+    { id: "cubic", name: "$:easings.cubic:$", data: cubicInOut },
+    { id: "elastic", name: "$:easings.elastic:$", data: elasticInOut },
+    { id: "bounce", name: "$:easings.bounce:$", data: bounceInOut },
+    // { id: "expo", name: "$:easings.expo:$", data: expoInOut },
+    // { id: "quad", name: "$:easings.quad:$", data: quadInOut },
+    // { id: "quart", name: "$:easings.quart:$", data: quartInOut },
+    // { id: "quint", name: "$:easings.quint:$", data: quintInOut },
 ]
 
-export function custom(node: any, { type = "fade", duration = 500, easing = "linear" }: any) {
-  return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing).data || linear }
+export function custom(node: any, { type = "fade", duration = 500, easing = "sine" }: any) {
+    return { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing).data || linear }
 }

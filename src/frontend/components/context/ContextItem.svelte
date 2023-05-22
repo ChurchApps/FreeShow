@@ -21,16 +21,29 @@
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
                 enabled = GetLayout()[$selected.data[0].index].disabled! || false
-                menu.label = enabled ? "actions.enable" : "actions.disable"
-                return
+            } else if ($selected.id === "group") {
+                enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
+            } else if ($selected.id === "stage") {
+                enabled = $stageShows[$selected.data[0].id]?.disabled
             }
-            if ($selected.id === "group") enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
-            else if ($selected.id === "stage") enabled = $stageShows[$selected.data[0].id]?.disabled
+
+            menu.label = enabled ? "actions.enable" : "actions.disable"
+        },
+        remove_group: () => {
+            if ($selected.id !== "slide") return
+
+            let ref = _show().layouts("active").ref()[0]
+            let parentSlide = $selected.data.find((a) => a.index && getCurrentSlide(a.index)?.type === "parent")
+            function getCurrentSlide(index) {
+                return ref.find((a) => a.layoutIndex === index)
+            }
+
+            if (parentSlide) return
+
+            // disable when no parents are selected or just first slide
+            disabled = true
         },
         remove: () => {
-            // WIP
-            // if ($selected.id === "slide" && ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child")) disabled = true
-            if ($selected.id === "slide") disabled = true
             if ($selected.id === "show" && _show($selected.data[0].id).get("private") === true) disabled = true
         },
         undo: () => {

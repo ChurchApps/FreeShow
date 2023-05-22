@@ -222,7 +222,10 @@
 
     // show on enter
     function keydown(e: any) {
-        if (e.key === "Enter") showVerse()
+        if (e.key !== "Enter" || (!e.ctrlKey && !e.metaKey)) return
+        if (e.target.closest("input") || e.target.closest(".edit")) return
+
+        showVerse()
     }
 </script>
 

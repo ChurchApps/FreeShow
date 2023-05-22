@@ -58,9 +58,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // SHOWS
     addToProject: { label: "context.addToProject", icon: "project" },
     remove: { label: "actions.remove", icon: "remove" },
-    remove_slide: { label: "actions.remove", icon: "remove" },
+    remove_group: { label: "actions.remove", icon: "remove" },
+    remove_slide: { label: "actions.remove_group", icon: "remove" },
     delete_slide: { label: "actions.delete", icon: "delete" },
-    slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove", "SEPERATOR", "LOAD_slide_groups"] },
+    slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove_group", "SEPERATOR", "LOAD_slide_groups"] },
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add" },
     // newGroup: { label: "context.createNew", icon: "add" },
@@ -133,7 +134,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete"],
+    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete", "selectAll"],
     drawer_new_show: ["newShowPopup", "newShow"],
     // media / audio
     // "play", "play_no_filters", "SEPERATOR", "edit",
@@ -171,8 +172,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
-    slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete"],
+    slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
+    slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
     group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
     global_group: ["edit"],
     // global_group: ["rename"],

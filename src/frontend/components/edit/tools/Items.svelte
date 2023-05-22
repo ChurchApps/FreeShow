@@ -100,7 +100,7 @@
                 on:click={(e) => {
                     if (!e.target?.closest(".up")) {
                         activeEdit.update((ae) => {
-                            if (e.ctrlKey) {
+                            if (e.ctrlKey || e.metaKey) {
                                 if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)
                                 else ae.items.push(index)
                             } else if (!ae.items.includes(index)) ae.items = [index]

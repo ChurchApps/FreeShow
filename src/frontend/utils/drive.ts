@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { CLOUD } from "../../types/Channels"
-import { activePopup, alertMessage, driveData, driveKeys, popupData, showsPath } from "../stores"
+import { activePopup, driveData, driveKeys, popupData, showsPath } from "../stores"
+import { newToast } from "./messages"
 import { send } from "./request"
 import { save } from "./save"
 
@@ -14,8 +15,8 @@ export function validateKeys(file: string) {
     else if (!keys.project_id) error = "Invalid key file: Missing 'project_id'"
 
     if (error) {
-        alertMessage.set(error)
-        activePopup.set("alert")
+        activePopup.set(null)
+        newToast(error)
         return
     }
 
@@ -36,7 +37,9 @@ export function driveConnect(keys: any) {
 export function syncDrive(force: boolean = false) {
     if (!force && get(driveData).disabled === true) return
 
-    send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath) })
+    let method = get(driveData).initializeMethod
+    if (get(driveData).disableUpload) method = "download"
+    send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath), method })
     popupData.set({})
     activePopup.set("cloud_update")
 }

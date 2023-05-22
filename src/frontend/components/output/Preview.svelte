@@ -66,7 +66,7 @@
             clearAll()
         },
         F5: () => {
-            if ($presenterControllerKeys) nextSlide(null, true)
+            if ($presenterControllerKeys) nextSlide(null)
             else setOutput("transition", null)
         },
         PageDown: (e: any) => {
@@ -252,7 +252,7 @@
     $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
     $: showSlide = outSlide?.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-    $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : slideLines - (amountOfLinesToShow % slideLines)) : null
+    $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : Math.round(slideLines / amountOfLinesToShow)) : null
 
     // TODO: only show preview in "show" ? (toggle in settings)
     // $: enablePreview = ["show", "edit", "settings"].includes($activePage)
@@ -280,7 +280,7 @@
         <PreviewOutputs bind:currentOutputId={outputId} />
     {/if}
     <div class="top" class:hide={!enablePreview}>
-        <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: 100%"}>
+        <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 15px);"}>
             {#if fullscreen}
                 <span class="resolution">
                     <!-- TODO: get actual resultion ... -->

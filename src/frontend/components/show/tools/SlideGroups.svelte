@@ -1,11 +1,13 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeShow, cachedShowsData, dictionary, fullColors, groups, selected } from "../../../stores"
+    import { activeShow, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, selected } from "../../../stores"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import Button from "../../inputs/Button.svelte"
+    import Icon from "../../helpers/Icon.svelte"
 
     $: showGroups = $cachedShowsData[$activeShow!.id]?.groups || []
 
@@ -20,9 +22,11 @@
 
 <!-- TODO: tooltips... (Click or drag to add groups) -->
 
-<div style="display: flex;padding: 10px;height: 100%;">
+<div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;">
     <div class="main">
-        <h4><T id="groups.current" /></h4>
+        {#if $globalGroupViewEnabled}
+            <h4><T id="groups.current" /></h4>
+        {/if}
         {#if showGroups.length}
             {#each showGroups as slide}
                 <SelectElem id="group" data={{ id: slide.id }} draggable>
@@ -49,47 +53,67 @@
         {/if}
     </div>
 
-    <div class="seperator" />
+    {#if $globalGroupViewEnabled}
+        <div class="seperator" />
 
-    <div class="main">
-        <h4><T id="groups.global" /></h4>
-        {#if sortedGroups.length}
-            {#each sortedGroups as slide}
-                <SelectElem id="global_group" data={slide} draggable>
-                    <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
-                    <div
-                        class="slide context #global_group"
-                        style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
-                        on:click={(e) => {
-                            if (!e.ctrlKey && !e.metaKey && $activeShow) {
-                                // , unique: true
-                                history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
-                            }
-                        }}
-                    >
-                        <p>
-                            {slide.group || "—"}
-                            {#if $groups[slide.id].shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
-                        </p>
-                    </div>
-                </SelectElem>
-            {/each}
-        {:else}
-            <Center faded>
-                <T id="empty.slides" />
-            </Center>
-        {/if}
-    </div>
+        <div class="main">
+            <h4><T id="groups.global" /></h4>
+            {#if sortedGroups.length}
+                {#each sortedGroups as slide}
+                    <SelectElem id="global_group" data={slide} draggable>
+                        <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
+                        <div
+                            class="slide context #global_group"
+                            style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
+                            on:click={(e) => {
+                                if (!e.ctrlKey && !e.metaKey && $activeShow) {
+                                    // , unique: true
+                                    history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
+                                }
+                            }}
+                        >
+                            <p>
+                                {slide.group || "—"}
+                                {#if $groups[slide.id].shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
+                            </p>
+                        </div>
+                    </SelectElem>
+                {/each}
+            {:else}
+                <Center faded>
+                    <T id="empty.slides" />
+                </Center>
+            {/if}
+        </div>
+    {/if}
+</div>
+
+<div class="bottom">
+    <Button style="width: 100%;" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)} dark center>
+        <Icon id="groups" right />
+        <T id="groups.toggle_global_group" />
+    </Button>
 </div>
 
 <style>
     .main {
         display: flex;
         flex-direction: column;
+
+        /* two columns */
+        /* justify-content: space-between;
+        flex-wrap: wrap;
+        align-content: flex-start; */
+
         gap: 5px;
         flex: 1;
         overflow-x: clip;
     }
+
+    /* two columns */
+    /* .main :global(.selectElem) {
+        width: 47%;
+    } */
 
     .slide {
         /* padding: 5px; */

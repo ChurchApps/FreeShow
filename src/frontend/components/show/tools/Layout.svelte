@@ -60,33 +60,6 @@
         }
     }
 
-    function toggleEnd(i: number, value: null | boolean = null) {
-        // TODO: more global way of doing this!
-        showsCache.update((a: any) => {
-            // let ref: any[] = GetLayoutRef()
-            let slides = a[$activeShow!.id].layouts[activeLayout].slides
-            // remove old
-            let currentIndex: number = -1
-            slides.forEach((l: any) => {
-                currentIndex++
-                if (currentIndex === i && l.end !== true) l.end = value === null ? true : value
-                else if ((!value || currentIndex !== i) && l.end) delete l.end
-                let children: string[] = a[$activeShow!.id].slides[l.id]?.children
-                if (children?.length) {
-                    if (!l.children) l.children = {}
-                    children.forEach((child) => {
-                        currentIndex++
-                        if (currentIndex === i && l.children[child]?.end !== true) {
-                            if (!l.children[child]) l.children[child] = {}
-                            l.children[child].end = value === null ? true : value
-                        } else if ((!value || currentIndex !== i) && l.children[child]?.end) delete l.children[child]?.end
-                    })
-                }
-            })
-            return a
-        })
-    }
-
     // total time
     let total: number = 0
     $: {
@@ -112,12 +85,8 @@
         let override: string = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout")
         history({ id: "SHOW_LAYOUT", newData: { keys, data }, location: { page: "show", override } })
 
-        let index = 0
-        slides.forEach((slide: any, i: number) => {
-            if (reset && slide.end) index = i
-            else if (!reset && !slide.disabled) index = i
-        })
-        toggleEnd(index, !reset)
+        // loop last slide
+        history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !reset, indexes: [slides.length - 1] } })
     }
 </script>
 
@@ -135,7 +104,7 @@
                         </SelectElem>
                         <!-- transition -->
                         <Button
-                            style="height: 100%;"
+                            style="height: 100%;margin: 0 5px;"
                             title={$dictionary.popup?.transition}
                             on:click={() => {
                                 selected.set({ id: "slide", data: [{ ...slide, index: i }] })
@@ -146,19 +115,18 @@
                         </Button>
                         <!-- next timer -->
                         <!-- empty or 0 === disabled -->
-                        <NumberInput title={$dictionary.preview.nextTimer} value={slide.nextTimer || 0} on:change={(e) => change(e, i)} buttons={false} />
+                        <NumberInput title={$dictionary.preview.nextTimer} value={slide.nextTimer || 0} max={3600} on:change={(e) => change(e, i)} buttons={false} />
                         <!-- <TextInput type="number" style="min-width: 50px;flex: 1;" value={0} on:change={(e) => change(e, i)} center /> -->
-                        <!-- to beginning -->
-                        <Button title={$dictionary.preview.to_start} style="height: 100%;" on:click={() => toggleEnd(i)}>
-                            <Icon id="restart" white={slide.end !== true} />
-                        </Button>
                     </div>
                 {/each}
             </DropArea>
         </div>
     </div>
-    <!-- padding: 5px;gap: 5px; -->
-    <div class="bottom" style="display: flex;flex-direction: column;">
+    <div class="bottom">
+        <div>
+            <!-- total time -->
+            <span style="display: flex;align-items: center;justify-content: center;">{totalTime}</span>
+        </div>
         <div style="display: flex;gap: 5px;">
             <!-- <Button style="height: 100%;">
       <Icon id="transition" />
@@ -170,8 +138,7 @@
                 <T id="actions.to_all" />
             </Button>
         </div>
-        <div style="display: flex;gap: 5px;">
-            <span style="flex: 1;display: flex;align-items: center;justify-content: center;">{totalTime}</span>
+        <div style="display: flex;">
             <Button style="flex: 1;" on:click={() => changeAll(true)} center dark>
                 <Icon id="reset" right />
                 <T id="actions.reset" />
@@ -194,6 +161,7 @@
         height: 28px;
         display: flex;
         align-items: center;
+        justify-content: space-between;
         margin: 5px 0;
     }
 
@@ -201,9 +169,21 @@
         opacity: 0.2;
     }
 
-    .slide :global(.numberInput),
+    .slide :global(.numberInput) {
+        margin-right: 5px;
+        max-width: 50px;
+    }
+
     .bottom :global(.numberInput) {
-        flex: 1;
+        align-self: center;
+        max-width: 50%;
+    }
+
+    .bottom {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        background-color: var(--primary-darkest);
     }
 
     .group {

@@ -25,6 +25,7 @@ import {
     activeShow,
     activeTimers,
     alertMessage,
+    audioChannels,
     audioFolders,
     autoOutput,
     currentWindow,
@@ -63,7 +64,7 @@ import { checkForUpdates } from "./checkForUpdates"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
 import { listenForUpdates } from "./listeners"
-import { listen } from "./messages"
+import { listen, newToast } from "./messages"
 import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
@@ -97,7 +98,7 @@ function startupMain() {
     setTimeout(() => {
         listenForUpdates()
         listen()
-    }, 3000)
+    }, 5000)
 }
 
 // receivers
@@ -153,7 +154,10 @@ const receiveMAIN: any = {
     },
     RECEIVE_MIDI: (msg) => playMidiIn(msg),
     DELETE_SHOWS: (a) => {
-        if (!a.deleted.length) return
+        if (!a.deleted.length) {
+            newToast("No shows to delete")
+            return
+        }
 
         alertMessage.set("<h3>Deleted " + a.deleted.length + " files</h3><br>● " + a.deleted.join("<br>● "))
         activePopup.set("alert")
@@ -220,6 +224,9 @@ const receiveOUTPUT: any = {
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
     AUDIO_MAIN: async (data: any) => {
+        audioChannels.set(data.channels)
+        if (!data.id) return
+
         // let analyser: any = await getAnalyser(video)
         // TODO: remove when finished
         playingVideos.update((a) => {
@@ -239,6 +246,14 @@ const receiveOUTPUT: any = {
             // outputScreen.set(a)
         }
     },
+    MOVE: (data) => {
+        outputs.update((a) => {
+            if (!a[data.id]) return a
+
+            a[data.id].bounds = data.bounds
+            return a
+        })
+    },
 }
 
 // const receiveOUTPUTasOutput: any = {
@@ -252,8 +267,7 @@ const receiveFOLDER: any = {
         let path: string = a.path
         let exists = Object.values(id === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
         if (exists) {
-            alertMessage.set("error.folder_exists")
-            activePopup.set("alert")
+            newToast("$error.folder_exists")
             return
         }
         history({

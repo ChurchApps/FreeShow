@@ -21,6 +21,7 @@
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
+    import Toast from "./components/main/Toast.svelte"
     import Top from "./components/main/Top.svelte"
     import Output from "./components/output/Output.svelte"
     import Preview from "./components/output/Preview.svelte"
@@ -88,6 +89,7 @@
 
     function keydown(e: any) {
         if ($currentWindow === "output") return
+
         if (e.ctrlKey || e.metaKey) {
             if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
                 activeDrawerTab.set(drawerMenus[e.key - 1])
@@ -142,6 +144,12 @@
     })
 
     $: isWindows = !$currentWindow && $os.platform === "win32"
+
+    let enableOutputMove: boolean = false
+    function mousemoveOutput(e: any) {
+        if (e.ctrlKey || e.metaKey || e.target.closest(".dragger")) enableOutputMove = true
+        else enableOutputMove = false
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -158,17 +166,23 @@
             <div
                 class="fill"
                 style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') ? 'row' : 'column'}"
+                on:mousemove={mousemoveOutput}
                 bind:offsetWidth={width}
                 bind:offsetHeight={height}
                 on:dblclick={() => hideDisplay()}
-                on:click={(e) => hideDisplay(e.ctrlKey || e.metaKey)}
             >
+                {#if enableOutputMove}
+                    <div class="dragger">
+                        <p>Drag window</p>
+                    </div>
+                {/if}
                 <!-- Mac: width: 100%; -->
                 <Output style={getStyleResolution(resolution, width, height, "fit")} center />
             </div>
         {:else}
             <ContextMenu />
             <Popup />
+            <Toast />
 
             <div class="column">
                 <Top {isWindows} />
@@ -243,6 +257,22 @@
     main {
         height: 100%;
         background-color: var(--primary);
+    }
+
+    .dragger {
+        -webkit-app-region: drag;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 5vh;
+        width: 100%;
+        z-index: 10;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        background-color: rgb(255 255 255 / 0.2);
     }
 
     .closeAd {

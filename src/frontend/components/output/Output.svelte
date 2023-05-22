@@ -165,14 +165,47 @@
     $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
     $: linesStart = linesIndex !== null ? amountOfLinesToShow! * linesIndex : null
     $: linesEnd = linesStart !== null ? linesStart + amountOfLinesToShow! : null
+
+    // metadata
+    $: overrideOutput = $showsCache[slide?.id]?.metadata?.override
+    $: metadataTemplate = overrideOutput ? $showsCache[slide?.id]?.metadata?.template : currentOutput.show?.metadataTemplate || "metadata"
+    $: metadataDisplay = overrideOutput ? $showsCache[slide?.id]?.metadata?.display : currentOutput.show?.displayMetadata
+    const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
+    let metadataStyle = defaultMetadataStyle
+    $: metadataStyle = getTemplateStyle(metadataTemplate, $templates) || defaultMetadataStyle
+
+    $: messageTemplate = overrideOutput ? $showsCache[slide?.id]?.message?.template : currentOutput.show?.messageTemplate || "message"
+    const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
+    let messageStyle = defaultMessageStyle
+    $: messageStyle = getTemplateStyle(messageTemplate, $templates) || defaultMessageStyle
+
+    function getTemplateStyle(templateId: string, updater: any) {
+        if (!templateId) return
+        let template = updater[templateId]
+        if (!template) return
+
+        let style = template.items[0]?.style || ""
+        let textStyle = template.items[0]?.lines?.[0]?.text?.[0]?.style || ""
+
+        return style + textStyle
+    }
+
+    // give time for video to clear
+    let tempVideoBG: any = null
+    $: if (background) tempVideoBG = background
+    else setTimeout(resetTempBG, 100)
+    function resetTempBG() {
+        tempVideoBG = null
+    }
 </script>
 
 <Zoomed background={currentSlide?.settings?.color || currentOutput.show?.background || "black"} {center} {style} {resolution} bind:ratio>
-    {#if background && layers.includes("background")}
+    {#if tempVideoBG && layers.includes("background")}
         <div style="height: 100%;zoom: {1 / ratio}">
-            <MediaOutput {...background} {background} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
+            <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
         </div>
     {/if}
+
     {#if slide && layers.includes("slide")}
         {#key slide}
             <!-- TODO: svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
@@ -184,28 +217,48 @@
                 {/if}
             </span>
         {/key}
-        {#if currentOutput.show?.displayMetadata === "always" || (currentOutput.show?.displayMetadata?.includes("first") && slide.index === 0) || (currentOutput.show?.displayMetadata?.includes("last") && slide.index === currentLayout.length - 1)}
-            <span transition:custom={transition} style="font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);position: absolute;left: {resolution.width / 2}px;bottom: 20px;transform: translateX(-50%);opacity: 0.8;">
-                {Object.values($showsCache[slide.id].meta || {})
+    {/if}
+
+    {#if layers.includes("overlays")}
+        <!-- message -->
+        {#if $showsCache[slide?.id]?.message?.text}
+            <div class="meta" transition:custom={transition} style={messageStyle}>
+                {$showsCache[slide?.id]?.message?.text}
+            </div>
+        {/if}
+        <!-- metadata -->
+        {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
+            <div class="meta" transition:custom={transition} style={metadataStyle}>
+                {Object.values($showsCache[slide?.id].meta)
                     .filter((a) => a.length)
                     .join("; ")}
-            </span>
+            </div>
         {/if}
-    {/if}
-    {#if out.overlays?.length && layers.includes("overlays")}
-        {#each out.overlays as id}
-            {#if $overlays[id]}
-                <div transition:custom={overlayTransition}>
-                    <div>
-                        {#each $overlays[id].items as item}
-                            <Textbox {item} ref={{ type: "overlay", id }} />
-                        {/each}
+        <!-- overlays -->
+        {#if out.overlays?.length}
+            {#each out.overlays as id}
+                {#if $overlays[id]}
+                    <div transition:custom={overlayTransition}>
+                        <div>
+                            {#each $overlays[id].items as item}
+                                <Textbox {item} ref={{ type: "overlay", id }} />
+                            {/each}
+                        </div>
                     </div>
-                </div>
-            {/if}
-        {/each}
+                {/if}
+            {/each}
+        {/if}
     {/if}
     {#if mirror || currentOutput.active}
         <Draw />
     {/if}
 </Zoomed>
+
+<style>
+    .meta {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>

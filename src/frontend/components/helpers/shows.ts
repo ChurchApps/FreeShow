@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { activeShow, shows as allShows, showsCache } from "../../stores"
 import { addToPos } from "./mover"
+import { clone } from "./array"
 // import { loadShows } from "./setShow"
 
 /** Shows function */
@@ -34,7 +35,7 @@ export function _show(id: any = "active") {
                     prev = a[id][double[0]][double[1]]
                     a[id][double[0]][double[1]] = value
                 } else {
-                    prev = a[id][key]
+                    prev = clone(a[id][key])
                     a[id][key] = value
                 }
 
@@ -152,16 +153,17 @@ export function _show(id: any = "active") {
                     let prev: any = { values: [] }
                     if (key) prev.key = key
                     showsCache.update((a: any) => {
+                        if (!a[id]) return a
                         if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
                         slideIds.forEach((slideId) => {
                             if (!a[id].slides[slideId]) return
                             if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
                             indexes.forEach((index, i) => {
                                 if (key) {
-                                    prev.values.push(a[id].slides[slideId].items[index][key] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index][key])) : null)
+                                    prev.values.push(a[id].slides[slideId].items[index][key] ? clone(a[id].slides[slideId].items[index][key]) : null)
                                     a[id].slides[slideId].items[index][key] = values[i] || values[0]
                                 } else {
-                                    prev.values.push(a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index])) : null)
+                                    prev.values.push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index]) : null)
                                     a[id].slides[slideId].items[index] = values[i] || values[0]
                                 }
                             })
@@ -235,16 +237,17 @@ export function _show(id: any = "active") {
                                     lines.forEach((line, lineIndex) => {
                                         if (key) {
                                             if (a[id].slides[slideId].items[index].lines[line]) {
-                                                console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
-                                                console.log(a[id].slides[slideId].items[index].lines[line][key][0]?.style)
+                                                // console.log(a[id].slides[slideId].items[index].lines[line], key, values, i)
+                                                // console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
+                                                // console.log(a[id].slides[slideId].items[index].lines[line].text?.[0]?.style)
 
                                                 if (a[id].slides[slideId].items[index].lines[line][key] !== undefined) {
-                                                    prev.values[prev.values.length - 1].push(JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])))
+                                                    prev.values[prev.values.length - 1].push(clone(a[id].slides[slideId].items[index].lines[line][key]))
                                                     a[id].slides[slideId].items[index].lines[line][key] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                                 } else prev.values[prev.values.length - 1].push(null)
                                             } else prev.values[prev.values.length - 1].push(null)
                                         } else {
-                                            prev.values[prev.values.length - 1].push(a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line])) : null)
+                                            prev.values[prev.values.length - 1].push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index].lines[line]) : null)
                                             a[id].slides[slideId].items[index].lines[line] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                         }
                                     })
@@ -323,11 +326,26 @@ export function _show(id: any = "active") {
                         a.push([])
                         let layoutIndex: number = -1
                         shows[id].layouts[layoutId].slides.forEach((layoutSlide: any, index: number) => {
+                            if (!shows[id].slides[layoutSlide.id]) {
+                                console.log("MISSING SLIDE")
+                                return
+                            }
+
                             layoutIndex++
                             let slide = shows[id].slides[layoutSlide.id]
-                            a[i].push({ type: "parent", layoutId, index, layoutIndex, id: layoutSlide.id, children: slide?.children || [], data: layoutSlide })
-                            if (slide?.children) {
-                                slide.children.forEach((childId: string, jndex: number) => {
+                            let children = slide?.children || []
+                            // fix bug where some childs are stored as an array
+                            let newChildren: any[] = []
+                            children.forEach((a) => {
+                                if (Array.isArray(a)) newChildren.push(...a)
+                                else newChildren.push(a)
+                            })
+                            if (newChildren.length && JSON.stringify(children) !== JSON.stringify(newChildren)) _show().slides([layoutSlide.id]).set({ key: "children", value: newChildren })
+                            children = newChildren
+
+                            a[i].push({ type: "parent", layoutId, index, layoutIndex, id: layoutSlide.id, children, data: layoutSlide })
+                            if (children) {
+                                children.forEach((childId: string, jndex: number) => {
                                     layoutIndex++
 
                                     // array bug
@@ -515,7 +533,8 @@ export function _show(id: any = "active") {
                     set: ({ key, value }: any) => {
                         let prev: any[] = []
                         showsCache.update((a: any) => {
-                            if (!layoutIds.length) layoutIds = Object.keys(a[id].layouts)
+                            if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
+                            else if (!layoutIds.length) layoutIds = Object.keys(a[id].layouts)
                             layoutIds.forEach((layoutId: any, i: number) => {
                                 if (i === 0) prev[i] = []
                                 if (!indexes.length) indexes = Object.keys(shows[id].layouts[layoutId].slides)

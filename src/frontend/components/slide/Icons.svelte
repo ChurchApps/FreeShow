@@ -66,6 +66,7 @@
         </div>
     {/if}
     {#if layoutSlide.end}
+        <!-- WIP move this to Actions.svelte (right side) -->
         <div>
             <div class="button">
                 <Button style="padding: 5px;" redHover title={$dictionary.remove?.to_start} on:click={() => removeLayout("end")}>
@@ -135,7 +136,7 @@
             </div>
             <span>
                 {#if layoutSlide.audio.length === 1}
-                    {#await getAudioDuration(_show("active").get().media[layoutSlide.audio[0]].path)}
+                    {#await getAudioDuration(_show("active").get().media[layoutSlide.audio[0]]?.path)}
                         <p>00:00</p>
                     {:then duration}
                         <p>{joinTime(secondsToTime(duration))}</p>
@@ -155,6 +156,9 @@
         flex-direction: column;
         position: absolute;
         z-index: 1;
+
+        height: 80%;
+        flex-wrap: wrap;
     }
     .icons div {
         opacity: 0.9;

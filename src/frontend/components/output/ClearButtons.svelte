@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, outLocked, outputs, playingAudio } from "../../stores"
+    import { dictionary, outLocked, outputs, playingAudio, presenterControllerKeys } from "../../stores"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { isOutCleared, setOutput } from "../helpers/output"
@@ -19,7 +19,7 @@
 
 <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
     <span>
-        <Button class="clearAll" disabled={$outLocked || allCleared} on:click={clearAll} title={$dictionary.clear?.all} red dark center>
+        <Button class="clearAll" disabled={$outLocked || allCleared} on:click={clearAll} title="{$dictionary.clear?.all} [esc]" red dark center>
             <Icon id="clear" size={1.2} />
             <span style="padding-left: 10px;"><T id={"clear.all"} /></span>
         </Button>
@@ -38,7 +38,7 @@
                     setOutput("background", null)
                 }
             }}
-            title={activeClear === "background" ? $dictionary.clear?.background : $dictionary.preview?.background}
+            title={activeClear === "background" ? $dictionary.clear?.background + " [F1]" : $dictionary.preview?.background}
             red={activeClear === "background"}
             dark
             center
@@ -57,7 +57,7 @@
                     setOutput("slide", null)
                 }
             }}
-            title={activeClear === "slide" ? $dictionary.clear?.slide : $dictionary.preview?.slide}
+            title={activeClear === "slide" ? $dictionary.clear?.slide + " [F2]" : $dictionary.preview?.slide}
             red={activeClear === "slide"}
             dark
             center
@@ -76,7 +76,7 @@
                     clearOverlays()
                 }
             }}
-            title={activeClear === "overlays" ? $dictionary.clear?.overlays : $dictionary.preview?.overlays}
+            title={activeClear === "overlays" ? $dictionary.clear?.overlays + " [F3]" : $dictionary.preview?.overlays}
             red={activeClear === "overlays"}
             dark
             center
@@ -95,7 +95,7 @@
                     clearAudio()
                 }
             }}
-            title={activeClear === "audio" ? $dictionary.clear?.audio : $dictionary.preview?.audio}
+            title={activeClear === "audio" ? $dictionary.clear?.audio + " [F4]" : $dictionary.preview?.audio}
             red={activeClear === "audio"}
             dark
             center
@@ -114,7 +114,7 @@
                     clearTimers()
                 }
             }}
-            title={activeClear === "nextTimer" ? $dictionary.clear?.nextTimer : $dictionary.preview?.nextTimer}
+            title={activeClear === "nextTimer" ? $dictionary.clear?.nextTimer + ($presenterControllerKeys ? "" : " [F5]") : $dictionary.preview?.nextTimer}
             red={activeClear === "nextTimer"}
             dark
             center

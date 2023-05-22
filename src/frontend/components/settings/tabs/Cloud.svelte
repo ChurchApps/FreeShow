@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OPEN_FILE } from "../../../../types/Channels"
-    import { driveData, driveKeys } from "../../../stores"
+    import { activePopup, driveData, driveKeys } from "../../../stores"
     import { driveConnect, syncDrive } from "../../../utils/drive"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
@@ -11,6 +11,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
 
     function getKeysFile() {
+        activePopup.set("cloud_update")
         window.api.send(OPEN_FILE, { channel: "GOOGLE_KEYS", title: "Select keys file", filter: { name: "JSON", extensions: ["json"] }, multiple: false, read: true })
     }
 
@@ -27,18 +28,18 @@
         })
     }
 
-    function toggleSync(e: any) {
+    function toggleData(e: any, key, invert: boolean = false) {
         let checked: boolean = e.target.checked || false
 
         driveData.update((a) => {
-            a.disabled = !checked
+            a[key] = invert ? !checked : checked
             return a
         })
     }
 
     function reset() {
         driveKeys.set({})
-        driveData.set({ mainFolderId: null, disabled: false })
+        driveData.set({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
     }
 </script>
 
@@ -49,7 +50,14 @@
 <div>
     <p><T id="cloud.enable" /></p>
     <span>
-        <Checkbox checked={!$driveData.disabled} on:change={toggleSync} />
+        <Checkbox checked={!$driveData.disabled} on:change={(e) => toggleData(e, "disabled", true)} />
+    </span>
+</div>
+
+<div>
+    <p><T id="cloud.disable_upload" /></p>
+    <span>
+        <Checkbox checked={$driveData.disableUpload} on:change={(e) => toggleData(e, "disableUpload")} />
     </span>
 </div>
 
@@ -75,6 +83,14 @@
             <TextInput style="width: 300px;padding: 3px;border-bottom: 2px solid var(--secondary);background-color: var(--primary-darkest);" value={$driveData?.mainFolderId || ""} on:change={updateMainFolder} />
         </span>
     </div>
+    <!-- TODO: media folder -->
+    <!-- <div>
+        <p><T id="cloud.media_folder" /></p>
+        <span style="display: flex;align-items: center;overflow: auto;">
+            <p style="font-size: 0.9em;opacity: 0.7;">drive.google.com/drive/folders/</p>
+            <TextInput style="width: 300px;padding: 3px;border-bottom: 2px solid var(--secondary);background-color: var(--primary-darkest);" value={$driveData?.mediaFolderId || ""} on:change={updateMediaFolder} />
+        </span>
+    </div> -->
 {:else}
     <span class="guide">
         <!-- Keep in mind you have a 750 GB limit per day, and 20,000 queries per second which should be plenty. -->

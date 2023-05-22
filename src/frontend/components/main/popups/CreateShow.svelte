@@ -3,6 +3,7 @@
     import { ShowObj } from "../../../classes/Show"
     import { convertText } from "../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, shows, splitLines } from "../../../stores"
+    import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
     import { sortObject } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -81,10 +82,13 @@
     receive(MAIN, {
         SEARCH_LYRICS: (data) => {
             loading = false
-            console.log(data.lyrics)
-            if (!data.lyrics) return
+            if (!data.lyrics) {
+                newToast("Could not find lyrics!")
+                return
+            }
 
             values.text = data.lyrics
+            newToast("Lyrics copied from Google!")
         },
     })
 </script>

@@ -262,11 +262,20 @@ const slideDrop: any = {
         if (drag.id === "slide") {
             let selected: number[] = getIndexes(drag.data)
 
+            // move all children when parent is moved
             selected.forEach(selectChildren)
             function selectChildren(index: number) {
                 if (ref[index].type !== "parent") return
-                let children: string[] = ref[index].children
-                children?.map((_id: string, childIndex: number) => selected.push(index + childIndex + 1))
+                console.log(newIndex, index, ref[index].children)
+                let children: string[] = ref[index].children || []
+                if (!children) return
+
+                let parentMovedToOwnChildren = newIndex > index && newIndex - 1 <= index + children.length
+
+                // select children
+                if (parentMovedToOwnChildren) return
+
+                children.map((_id: string, childIndex: number) => selected.push(index + childIndex + 1))
                 selected = [...new Set(selected)]
             }
 
@@ -281,7 +290,8 @@ const slideDrop: any = {
         } else if (drag.id === "group") {
             if (drop.center) {
                 if (drop.trigger?.includes("end")) newIndex--
-                ref.splice(drop.index, 1)
+                // ref.splice(drop.index, 1)
+                // WIP adding to children will not remove old children
             }
 
             moved = drag.data.map(({ index, id }: any) => ref[index] || { type: "parent", id })
@@ -290,6 +300,9 @@ const slideDrop: any = {
 
         // sort layout ref
         let newLayoutRef: any[] = addToPos(ref, moved, newIndex)
+
+        // TODO: dragging a current group on child will not remove old children
+        // TODO: dragging a parent slide over its own childs will not change children
 
         // check if first slide child
         if (newLayoutRef[0].type === "child") newLayoutRef[0].newType = "parent"
@@ -311,7 +324,7 @@ const slideDrop: any = {
 
         let layoutId: string = _show().get("settings.activeLayout")
 
-        let slides: any = get(showsCache)[get(activeShow)!.id].slides
+        let slides: any = clone(get(showsCache)[get(activeShow)!.id].slides)
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
         if (drop.index === undefined) drop.index = layout.length
@@ -319,6 +332,7 @@ const slideDrop: any = {
 
         drag.data.forEach((slide: any) => {
             let id = uid()
+            delete slide.id
             slides[id] = slide
 
             let parent = ref[newIndex - 1]

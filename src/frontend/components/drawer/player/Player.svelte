@@ -72,7 +72,7 @@
     <div style="display: flex;background-color: var(--primary-darkest);">
         <Button style="width: 100%;" on:click={() => activePopup.set("player")} center>
             <Icon id="add" right />
-            <span style="color: var(--secondary);"><T id="settings.add" /></span>
+            <span><T id="settings.add" /></span>
         </Button>
     </div>
 </div>

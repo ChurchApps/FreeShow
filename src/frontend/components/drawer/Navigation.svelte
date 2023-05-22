@@ -20,7 +20,7 @@
     }
     let buttons: Button[] = []
     $: {
-        if (id === "shows") {
+        if (id === "shows" && $dictionary) {
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
@@ -111,31 +111,37 @@
     const getBibleVersions = () =>
         keysToID($scriptures)
             .map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
-            .sort((a: any, b: any) => a.name.localeCompare(b.name))
+            .sort((a: any, b: any) => b.name.localeCompare(a.name))
             .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
             .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
 
     let length: any = {}
     if (id) length = {}
     $: {
-        buttons.forEach((a) => {
-            length[a.id] = 0
-            if (id === "shows") {
-                Object.values($shows).forEach((b: any) => {
-                    if (!b.private) {
-                        if (a.id === "all" || b.category === a.id || (b.category === null && a.id === "unlabeled")) length[a.id]++
-                    }
-                })
-            } else if (id === "overlays") {
-                Object.values($overlays).forEach((b: any) => {
-                    if (a.id === "all" || b.category === a.id || (b.category === null && a.id === "unlabeled")) length[a.id]++
-                })
-            } else if (id === "templates") {
-                Object.values($templates).forEach((b: any) => {
-                    if (a.id === "all" || b.category === a.id || (b.category === null && a.id === "unlabeled")) length[a.id]++
-                })
+        let list: any[] = []
+        if (id === "shows") list = Object.values($shows).filter((a: any) => !a.private)
+        else if (id === "overlays") list = Object.values($overlays)
+        else if (id === "templates") list = Object.values($templates)
+
+        let totalLength: number = 0
+        buttons.forEach((button) => {
+            length[button.id] = 0
+
+            if (button.id === "all") {
+                length[button.id] = list.length
+                return
+            }
+
+            length[button.id] = list.filter(checkMatch).length
+            totalLength += length[button.id]
+
+            function checkMatch(a) {
+                if (button.id === "unlabeled") return a.category === null
+                return a.category === button.id
             }
         })
+
+        length.unlabeled += list.length - totalLength
     }
 
     function keydown(e: KeyboardEvent) {
@@ -195,7 +201,7 @@
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_shows" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
-                <span style="color: var(--secondary);">
+                <span>
                     <T id="new.category" />
                 </span>
             </Button>
@@ -203,7 +209,7 @@
     {:else if id === "media" || id === "audio"}
         <FolderPicker id={id.toUpperCase()} title={$dictionary.new?.folder}>
             <Icon id="folder" right />
-            <span style="color: var(--secondary);">
+            <span>
                 <T id="new.folder" />
             </span>
         </FolderPicker>
@@ -211,7 +217,7 @@
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_overlays" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
-                <span style="color: var(--secondary);">
+                <span>
                     <T id="new.category" />
                 </span>
             </Button>
@@ -220,7 +226,7 @@
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_templates" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
-                <span style="color: var(--secondary);">
+                <span>
                     <T id="new.category" />
                 </span>
             </Button>
@@ -229,7 +235,7 @@
         <div class="tabs">
             <Button on:click={() => activePopup.set("import_scripture")} center title={$dictionary.new?.scripture}>
                 <Icon id="scripture" right />
-                <span style="color: var(--secondary);">
+                <span>
                     <T id="new.scripture" />
                 </span>
             </Button>

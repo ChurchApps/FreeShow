@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { history } from "../components/helpers/history"
-import { activePopup, activeProject, alertMessage, categories, dictionary } from "../stores"
+import { activePopup, activeProject, categories } from "../stores"
+import { newToast } from "../utils/messages"
 
 export function createCategory(name: string, icon: string = "song", { isDefault } = { isDefault: false }) {
     let id = name.toLowerCase()
@@ -13,12 +14,10 @@ export function createCategory(name: string, icon: string = "song", { isDefault 
 export function setTempShows(tempShows: any[]) {
     if (tempShows.length === 1) {
         history({ id: "UPDATE", newData: { data: tempShows[0].show, remember: { project: get(activeProject) } }, oldData: { id: tempShows[0].id }, location: { page: "show", id: "show" } })
-
-        activePopup.set(null)
     } else {
         history({ id: "SHOWS", newData: { data: tempShows }, location: { page: "show" } })
-
-        alertMessage.set(get(dictionary).main?.finished || "Finished")
-        activePopup.set("alert")
     }
+
+    activePopup.set(null)
+    newToast("$main.finished")
 }

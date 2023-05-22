@@ -211,7 +211,13 @@
         "publisher": "Vydavateľ",
         "copyright": "Copyright",
         "CCLI": "Licencia (CCLI)",
-        "year": "Rok"
+        "year": "Rok",
+        "message": "Správa",
+        "message_tip": "Display something on all slides",
+        "override_output": "Override styling in output",
+        "display_metadata": "Zobrazovať metadata",
+        "meta_template": "Metadata template",
+        "message_template": "Message template"
     },
     "show_at": {
         "never": "Žiadne snímky",
@@ -280,6 +286,7 @@
     "groups": {
         "current": "Aktuálne",
         "global": "Globálne",
+        "toggle_global_group": "Toggle global groups",
         "intro": "Úvod",
         "verse": "Verš",
         "pre_chorus": "Pre Chorus",
@@ -309,6 +316,7 @@
         "history": "História",
         "midi": "MIDI",
         "cloud_update": "Syncing with cloud",
+        "cloud_method": "Data location",
         "shortcuts": "Skratky",
         "icon": "Ikony",
         "initialize": "Vitajte",
@@ -352,6 +360,7 @@
         "rename": "Premenovať",
         "recolor": "Zmeniť farbu",
         "remove": "Odstrániť",
+        "remove_group": "Remove group",
         "private": "Súkromné",
         "import": "Import",
         "export": "Export",
@@ -411,12 +420,16 @@
         "tip_how": "Don't know how to get one?",
         "tip_guide": "Click here for a guide.",
         "enable": "Automatic sync on startup and save",
+        "disable_upload": "Disable uploading data",
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",
         "update_key": "Update keys file",
         "main_folder": "Set main folder manually",
+        "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
-        "sync": "Sync"
+        "sync": "Sync",
+        "choose_method_tip": "There is existing data in the cloud. Please choose from where you want to keep the data. And override the other location.",
+        "local": "Local"
     },
     "export": {
         "export": "Export",
@@ -617,7 +630,7 @@
         "other": "Iné",
         "language": "Jazyk",
         "use24hClock": "Použiť 24 hodín",
-        "hide_output_hint": "Dvojklikom skryjete výstupné okno.",
+        "hide_output_hint": "Dvojklikom skryjete výstupné okno. Hold CTRL to enable dragging.",
         "show_output_hint": "Podržním ctrl/cmd pri kliknutí na tlačidlo Zobraziť sa zobrazí na túto obrazovku.",
         "move_output_hint": "Nenašli ste svoju obrazovku? Zmeňte pozíciu dokým sa okno neukáže na druhej obrazovke.",
         "new_output": "Nový výstup",
@@ -634,7 +647,6 @@
         "group_numbers": "Čísla skupín",
         "full_colors": "Plné farby skupín snímok",
         "auto_output": "Zobraziť výstupné okno pri spustení",
-        "display_metadata": "Zobrazovať metadata pri prezentácii",
         "default_project_name": "Predvolený názov projektu",
         "resolution": "Rozlíšenie",
         "video_extensions": "Prípony videí",

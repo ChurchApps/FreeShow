@@ -2,7 +2,30 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
-import { activeDays, activeEdit, activePage, activePopup, activeProject, activeShow, activeStage, alertMessage, clipboard, events, folders, midiIn, overlays, projects, scriptures, selected, showsCache, stageShows, templates } from "../../stores"
+import {
+    activeDays,
+    activeEdit,
+    activePage,
+    activePopup,
+    activeProject,
+    activeShow,
+    activeStage,
+    categories,
+    clipboard,
+    drawerTabsData,
+    events,
+    folders,
+    midiIn,
+    overlays,
+    projects,
+    scriptures,
+    selected,
+    shows,
+    showsCache,
+    stageShows,
+    templates,
+} from "../../stores"
+import { newToast } from "../../utils/messages"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { setCaret } from "../edit/scripts/textStyle"
@@ -68,10 +91,10 @@ export function cut(data: any = {}) {
 
 export function deleteAction({ id, data }) {
     if (!deleteActions[id]) return false
-    deleteActions[id](data)
+    let deleted: any = deleteActions[id](data)
 
     console.log("DELETED:", { id, data })
-    selected.set({ id: null, data: [] })
+    if (deleted !== false) selected.set({ id: null, data: [] })
     return true
 }
 
@@ -106,6 +129,32 @@ export function selectAll(data: any = {}) {
     }
 
     if (!data.id && get(selected)) data = get(selected)
+
+    if (data.id === "show_drawer") {
+        // select all shows in selected category in drawer!
+        let data: any = []
+
+        let activeTab = get(drawerTabsData).shows?.activeSubTab
+        if (!activeTab) return
+
+        let showsList: string[] = Object.keys(get(shows)).filter((id: any) => !get(shows)[id].private)
+        if (!showsList.length) return
+
+        if (activeTab === "all") {
+            data = showsList
+        } else {
+            data = showsList.filter((id) => {
+                let show = get(shows)[id]
+                if (activeTab === show.category) return true
+                if (activeTab !== "unlabeled") return false
+                if (show.category === null || !get(categories)[show.category]) return true
+                return false
+            })
+        }
+
+        selected.set({ id: "show_drawer", data: data.map((id) => ({ id })) })
+        return
+    }
 
     // select all slides with current group
     if (data.id === "group") {
@@ -213,37 +262,49 @@ const copyActions: any = {
         items = items.filter((_a: any, i: number) => data.items.includes(i))
         return [...items]
     },
-    slide: (data: any) => {
+    slide: (data: any, fullGroup: boolean = false) => {
         let ref = _show().layouts("active").ref()?.[0]
         let layouts: any[] = []
 
-        let ids = data.map((a: any) => {
+        // dont know why this is like this when ctrl + c
+        if (data.slides) data = data.slides
+
+        let sortedData = data.sort((a, b) => (a.index < b.index ? -1 : 1))
+
+        let ids = sortedData.map((a: any) => {
             // get layout
             if (a.index !== undefined) layouts.push(ref[a.index].data)
 
             return a.id || (a.index !== undefined ? ref[a.index].id : "")
         })
 
+        if (fullGroup) {
+            // select all children of group
+            ids = ref.filter((a) => ids.includes(a.parent?.id || a.id)).map((a) => a.id)
+            ids = [...new Set(ids)]
+        }
+
         let slides = clone(_show().slides(ids).get())
         slides = slides.map((slide) => {
+            if (slide.group !== null) return slide
+
             // make children parent
-            if (slide.group === null) {
-                // this should never be here
-                delete slide.children
+            // this should never be here
+            delete slide.children
 
-                let parent = ref.find((a) => a.id === slide.id)?.parent || ""
-                // check that parent is not copied
-                if (ids.includes(parent)) return slide
+            let parent = ref.find((a) => a.id === slide.id)?.parent || ""
+            // check that parent is not copied
+            if (ids.includes(parent)) return slide
 
-                slide.group = ""
-            }
+            // slide.group = ""
+            slide.oldChild = slide.id
 
             return slide
         })
 
         return { slides, layouts }
     },
-    group: (data: any) => copyActions.slide(data),
+    group: (data: any) => copyActions.slide(data, true),
     overlay: (data: any) => {
         return data.map((id: string) => get(overlays)[id])
     },
@@ -290,8 +351,9 @@ const pasteActions: any = {
 
         // clone slides
         data = clone(data)
-        data.slides.reverse()
-        if (data.layouts) data.layouts.reverse()
+
+        // data.slides.reverse()
+        // if (data.layouts) data.layouts.reverse()
 
         // get all slide ids & child ids
         let copiedIds: string[] = data.slides.map((a: any) => a.id)
@@ -301,50 +363,66 @@ const pasteActions: any = {
         //   if (slide.children?.length) childs.push(...slide.children)
         // })
 
-        let slides: any = _show().get().slides
-        let ref: any[] = _show().layouts("active").ref()[0]
+        // TODO: duplicate each individual slide as their own
+
+        let slides: any = clone(_show().get().slides)
+        // let ref: any[] = _show().layouts("active").ref()[0]
         let newSlides: any[] = []
 
         let layouts: any[] = []
 
+        let addedChildren: string[] = []
+
         // remove children
-        data.slides.map((slide: any, i: number) => {
+        data.slides.forEach((slide: any, i: number) => {
+            // dont add child if it is already copied
+            if (slide.group === null && addedChildren.includes(slide.id)) return
+
+            slide.id = uid()
+            newSlides.push(slide)
+
             // has children
             if (slide.children) {
-                let children: string[] = []
-                children = slide.children.filter((child: string) => copiedIds.includes(child))
-                // if (JSON.stringify(children) !== JSON.stringify(slide.children)) slide.id = uid()
-                if (children.length && slide.children.length > children.length) slide.children = children
+                // let children: string[] = []
+                // children = slide.children.filter((child: string) => copiedIds.includes(child))
+                // if (children.length && slide.children.length > children.length) slide.children = children
 
-                // clone children
+                // clone selected children
                 let clonedChildren: string[] = []
                 slide.children.forEach((childId: string) => {
-                    if (!slides[childId]) return
-                    let childSlide: any = clone(slides[childId])
+                    // !slides[childId]
+                    if (!copiedIds.includes(childId)) return
+                    let childSlide: any = clone(data.slides.find((a) => a.id === childId))
+                    addedChildren.push(childId)
+
+                    // let childSlide: any = clone(slides[childId])
+                    console.log(childSlide, clone(slides[childId]))
                     childSlide.id = uid()
+                    delete childSlide.oldChild
                     clonedChildren.push(childSlide.id)
                     newSlides.push(childSlide)
                 })
 
                 slide.children = clonedChildren
-            } else if (slide.group === null && !copiedIds.includes(slide.id)) {
-                // is child
-                let slideRef = ref.find((a) => a.id === slide.id)
-                let parent: any = slides[slideRef.parent.id]
-                slide.group = parent.group || ""
-                slide.color = parent.color || ""
-                slide.globalGroup = parent.globalGroup || ""
+                // } else if (slide.group === null && !copiedIds.includes(slide.id)) {
+                //     // is child
+                //     let slideRef = ref.find((a) => a.id === slide.id)
+                //     let parent: any = slides[slideRef.parent.id]
+                //     slide.group = parent.group || ""
+                //     slide.color = parent.color || ""
+                //     slide.globalGroup = parent.globalGroup || ""
             }
-
-            slide.id = uid()
-            newSlides.push(slide)
 
             // add layout
             let layout = data.layouts?.[i]
             if (!layout) return
-            layouts[i] = layout
+            layouts[i] = layout || {}
         })
         // TODO: children next to each other should be grouped
+
+        console.log(newSlides)
+
+        // TODO: undo/redo this is buggy
 
         history({ id: "SLIDES", newData: { data: newSlides, layouts, index: index !== undefined ? index + 1 : undefined } })
         setTimeout(() => console.log(get(showsCache)), 1000)
@@ -409,7 +487,7 @@ const deleteActions = {
         removeSlide(data)
     },
     group: (data: any) => {
-        history({ id: "SLIDES", oldData: { data: data.map(({ id }: any) => ({ id })) } })
+        history({ id: "SLIDES", oldData: { type: "delete_group", data: data.map(({ id }: any) => ({ id })) } })
     },
     timer: (data: any) => {
         data.forEach((a) => {
@@ -476,6 +554,7 @@ const deleteActions = {
     },
     show_drawer: () => {
         activePopup.set("delete_show")
+        return false
     },
     // "remove"
     show: (data: any) => {
@@ -508,8 +587,7 @@ const deleteActions = {
                 history({ id: "UPDATE", newData: { id: get(activeShow)?.id }, oldData: { key: "layouts", subkey: id }, location: { page: "show", id: "show_layout" } })
             })
         } else {
-            alertMessage.set("error.keep_one_layout")
-            activePopup.set("alert")
+            newToast("$error.keep_one_layout")
         }
     },
 }

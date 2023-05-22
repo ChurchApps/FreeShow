@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../../types/Channels"
+import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { activeEdit, activePage, activeProject, activeShow, activeTimers, media, outLocked, outputs, overlays, projects, showsCache, slideTimers } from "./../../stores"
@@ -115,7 +115,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
         // go to beginning if live mode & ctrl | no output | last slide active
         if (get(activeShow) && (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))) {
-            let id = loop ? slide!.id : get(activeShow)!.id
+            let id = loop ? slide?.id : get(activeShow)?.id
             if (!id) return
 
             // layout = GetLayout()
@@ -178,7 +178,8 @@ export function previousSlide() {
     if (index === null) return
 
     // lines
-    let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
+    let outputWithLines = getOutputWithLines()
+    let amountOfLinesToShow: number = outputWithLines ? outputWithLines : 0
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
     let hasLinesEnded: boolean = !slide || linesIndex === null || linesIndex < 1
 
@@ -192,7 +193,8 @@ export function previousSlide() {
             .slides([layout[index].id])
             .get()[0]
         let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-        line = slideLines ? (amountOfLinesToShow >= slideLines ? 0 : slideLines - (amountOfLinesToShow % slideLines) - 1) : 0
+        // line = slideLines ? (amountOfLinesToShow >= slideLines ? 0 : slideLines - (amountOfLinesToShow % slideLines) - 1) : 0
+        line = slideLines ? slideLines - 1 : 0
     } else {
         index = slide!.index!
         line--
@@ -288,6 +290,8 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     // overlays
     if (data.overlays?.length) {
         setOutput("overlays", data.overlays, false, outputId, true)
+        // send overlays again, because it sometimes don't have it for some reason
+        send(OUTPUT, ["OVERLAYS"], get(overlays))
     }
 
     // audio

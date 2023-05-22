@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, mediaOptions, outLocked, outputs, overlays } from "../../stores"
+    import { dictionary, mediaOptions, outLocked, outputs, overlayCategories, overlays } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { findMatchingOut, getResolution, setOutput } from "../helpers/output"
@@ -20,7 +20,7 @@
     let filteredOverlays: any[] = []
     $: filteredOverlays = Object.keys($overlays)
         .map((id) => ({ id, ...$overlays[id] }))
-        .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && s.category === null))
+        .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category])))
         .sort((a, b) => a.name.localeCompare(b.name))
 
     // search
@@ -85,7 +85,7 @@
         title={$dictionary.new?.overlay}
     >
         <Icon id="overlays" right />
-        <span style="color: var(--secondary);">
+        <span>
             <T id="new.overlay" />
         </span>
     </Button>

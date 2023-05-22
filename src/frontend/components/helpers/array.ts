@@ -1,3 +1,5 @@
+import { translate } from "../../utils/language"
+
 // move data in array at given indexes to new pos
 export function groupToPos(array: any[], group: number[], pos: number): any[] {
     let temp: any[] = []
@@ -35,15 +37,14 @@ export function removeEmpty(array: any[]): any[] {
 // OBJETS
 
 // sort objects in array alphabeticly
-export function sortObject(object: {}[], key: string, casesensitive: boolean = false): {}[] {
+export function sortObject(object: {}[], key: string): {}[] {
     return object.sort((a: any, b: any) => {
         let textA: string = a[key]
         let textB: string = b[key]
-        if (!casesensitive) {
-            textA = textA.toUpperCase()
-            textB = textB.toUpperCase()
-        }
-        return textA < textB ? -1 : textA > textB ? 1 : 0
+        if (a.default === true) textA = translate(textA) || textA.slice(textA.indexOf("."))
+        if (b.default === true) textB = translate(textB) || textB.slice(textB.indexOf("."))
+
+        return textA.localeCompare(textB)
     })
 }
 

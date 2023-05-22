@@ -440,8 +440,6 @@
         newItem.style = "width: 100%;height: 100%;pointer-events: none;"
         return newItem
     }
-
-    $: console.trace($showsCache[ref.showId || ""]?.slides, clone($showsCache[ref.showId || ""]?.slides["1"]))
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
