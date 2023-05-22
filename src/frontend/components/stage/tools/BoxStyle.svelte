@@ -21,7 +21,7 @@
         // if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
-        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item", override: $activeStage.id + items.join("") } })
+        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
     }
 
     function updateStyle(e: any) {

@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
     import Loader from "../../main/Loader.svelte"
-// import type { Bible } from "../../../../types/Bible"
+    // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
     import { dictionary, notFound, outLocked, outputs, playScripture, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
@@ -577,7 +577,7 @@
     <!-- text-align: center; -->
     <span style="flex: 1;padding: 0 10px;">
         {#if bibles[0]?.version}
-            <span style="opacity: 0.8;">{bibles[0].version}</span>,
+            <span style="opacity: 0.8;">{bibles[0].version}:</span>
             {bibles[0]?.book || ""}
             {bibles[0]?.chapter || ""}{#if verseRange.length}:{verseRange}{/if}
         {/if}

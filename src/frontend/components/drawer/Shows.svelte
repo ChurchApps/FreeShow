@@ -201,7 +201,8 @@
         title={$dictionary.tooltip?.show}
     >
         <Icon id="showIcon" right />
-        <span style="color: var(--secondary);">
+        <span>
+            <!-- style="color: var(--secondary);" -->
             <T id="new.show" />
         </span>
     </Button>

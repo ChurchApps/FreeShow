@@ -101,6 +101,8 @@ export function history(obj: History, undo: null | boolean = null) {
                         .lines(obj.location!.lines! || [])
                         .set(obj.newData.style),
                 }
+                // CSS text style
+                // if (obj.newData?.style?.key === "text-style" && old.style.values?.[0]?.[0]) old.style.values = old.style.values[0]
 
                 if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
                 if (old.template) _show(showID).set(old.template)

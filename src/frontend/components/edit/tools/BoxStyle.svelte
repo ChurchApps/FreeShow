@@ -13,8 +13,6 @@
     export let id: ItemType
     export let allSlideItems: Item[] = []
     export let item: Item | null = null
-    console.log(item)
-    console.log(allSlideItems)
 
     // -----
 
@@ -28,12 +26,12 @@
         let sel: any = window.getSelection()
         // if (sel.focusNode?.parentElement?.closest(".edit") !== null && !e.target.closest(".editTools")) {
         // if (e.target.closest(".edit") && !e.target.closest(".editTools")) {
-        if (e.target.closest(".edit")) {
+        if (e.target.closest(".edit") && !e.target.closest(".CSS")) {
             if (sel.type === "None") selection = null
             // else if (sel.type === "caret") selection = [sel.anchorOffset, sel.focusOffset]
             else selection = getSelectionRange() // range
         }
-        console.log("SEL: ", selection)
+        // console.log("SEL: ", selection)
     }
 
     function keyup(e: any) {
@@ -50,7 +48,8 @@
     $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : item?.style || ""
     let styles: any = {}
     $: if (style) styles = getStyles(style, true)
-    $: console.log(style, styles)
+
+    $: if (box?.edit?.CSS && style) box.edit.CSS[0].value = style
 
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : {}
     $: alignStyle = item?.align ? getStyles(item.align) : {}
@@ -123,29 +122,30 @@
         history({
             id: "setItems",
             newData: { style: { key: input.id, values: [value] } },
-            location: { page: "edit", show: $activeShow!, slide: _show("active").layouts("active").ref()[0][$activeEdit.slide!].id, items: allItems },
+            location: { page: "edit", show: $activeShow!, slide: _show().layouts("active").ref()[0][$activeEdit.slide!].id, items: allItems },
         })
     }
 
     function updateValue(e: any) {
         let input = e.detail
-        // console.log(input)
 
-        if (input.id !== "style") {
+        if (input.id !== "style" && input.id !== "CSS") {
             setValue(input)
             return
         }
 
         // console.log("original", getOriginalValue(box!.edit, input.key))
-        console.log(input.value)
+        // console.log(input)
 
         let allItems: number[] = $activeEdit.items
         // update all items if nothing is selected
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
         allSlideItems = clone(allSlideItems)
 
-        let newData: any = []
+        let values: any = []
         let aligns: boolean = input.key === "align-items" || input.key === "text-align"
+
+        if (input.id === "CSS") allItems = [allItems[0]]
 
         allItems.forEach((itemIndex) => {
             let selected = selection
@@ -162,11 +162,19 @@
                     if (!selection || selection[line].start !== undefined) newAligns.push(input.key + ": " + input.value)
                     else newAligns.push(allSlideItems[itemIndex].lines![line].align)
                 })
-                newData.push(newAligns)
+                values.push(newAligns)
             } else if (allSlideItems[itemIndex].lines) {
-                newData.push(aligns ? addStyleString(allSlideItems[itemIndex].align || "", [input.key, input.value]) : addStyle(selected, allSlideItems[itemIndex], [input.key, input.value]).lines!.map((a) => a.text))
+                if (input.id === "CSS") {
+                    values.push(addStyle(selected, allSlideItems[itemIndex], input.value.replaceAll("\n", "")).lines!.map((a) => a.text))
+                } else {
+                    values.push(aligns ? addStyleString(allSlideItems[itemIndex].align || "", [input.key, input.value]) : addStyle(selected, allSlideItems[itemIndex], [input.key, input.value]).lines!.map((a) => a.text))
+                }
             } else {
-                newData = [addStyleString(item?.style || "", [input.key, input.value])]
+                if (input.id === "CSS") {
+                    values = [input.value.replaceAll("\n", "")]
+                } else {
+                    values = [addStyleString(item?.style || "", [input.key, input.value])]
+                }
             }
             // newData.push(addStyle(selected, allSlideItems[itemIndex], [input.key, input.value]).lines!.map((a) => a.text))
         })
@@ -174,9 +182,9 @@
         // TODO: remove unused (if default)
 
         // TODO: template v-align
-        console.log(newData, input)
+        // console.log(values, input)
 
-        if (!newData.length) return
+        if (!values.length) return
 
         // update layout
         if ($activeEdit.id) {
@@ -186,7 +194,7 @@
             if ($activeEdit.type === "template") currentItems = clone($templates[$activeEdit.id!].items)
 
             allItems.forEach((itemIndex, i) => {
-                let currentValue = newData[i] ?? newData[0]
+                let currentValue = values[i] ?? values[0]
 
                 if (input.key === "align-items") currentItems[itemIndex].align = currentValue
                 else {
@@ -208,22 +216,23 @@
             return
         }
 
-        let ref: any[] = _show("active").layouts("active").ref()[0]
+        let ref: any[] = _show().layouts("active").ref()[0]
 
         if (id === "timer" || id === "clock" || id === "icon") {
             history({
                 id: "setItems",
                 // oldData: { style: { key: "style", values: [oldData] } },
-                newData: { style: { key: "style", values: newData } },
+                newData: { style: { key: "style", values: values } },
                 location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: allItems },
             })
             return
         }
 
+        let key: string = input.key === "text-align" || aligns ? "align" : "text"
         history({
             // WIP
             id: input.key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
-            newData: { style: { key: input.key === "text-align" || aligns ? "align" : "text", values: newData } },
+            newData: { style: { key, values: values } },
             location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: allItems },
         })
     }

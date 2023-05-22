@@ -3,12 +3,12 @@ import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
 import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, shows, showsCache, templates } from "../../stores"
+import { save } from "../../utils/save"
 import { clone } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { _show } from "./shows"
-import { save } from "../../utils/save"
 
 // TODO: move history switch to actions
 
@@ -90,6 +90,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 let previousData = clone(data.previousData)
 
                 if (key) {
+                    if (!a[id]) return a
+
                     data = { ...data, data: filterIndexes(clone(a[id][key]), subkey, { indexes, keys }) }
 
                     // reverting value with array index will restore the whole array
@@ -279,7 +281,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     }
 
                     a[id] = {
-                        name: show.name || a[id].name,
+                        name: show.name || a[id]?.name || "",
                         category: show.category === undefined ? a[id].category : show.category,
                         timestamps: show.timestamps || a[id].timestamps,
                     }

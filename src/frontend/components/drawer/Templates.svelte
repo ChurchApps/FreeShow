@@ -94,7 +94,7 @@
         title={$dictionary.new?.template}
     >
         <Icon id="templates" right />
-        <span style="color: var(--secondary);">
+        <span>
             <T id="new.template" />
         </span>
     </Button>

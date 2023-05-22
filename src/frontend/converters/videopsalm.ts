@@ -75,6 +75,11 @@ const keys = [
     "Memo1",
     "Memo2",
     "Memo3",
+    "Capo",
+    "PrintCapo",
+    "IsDisplayed",
+    "KeyLine",
+    "Note",
 ]
 export function convertVideopsalm(data: any) {
     createCategory("VideoPsalm")
@@ -84,10 +89,10 @@ export function convertVideopsalm(data: any) {
     data.forEach(({ content }: any) => {
         // add quotes to the invalid JSON formatting
         if (content.length) {
-            content = content.replaceAll("{\n", "{").replaceAll("\n", "<br>").replaceAll("FontStyle", "Font")
+            content = content.replaceAll("{\n", "{").replaceAll("}\n", "}").replaceAll("\n", "<br>").replaceAll("FontStyle", "Font")
             content = content.split("Style:").map(removeStyle).join("Style:")
             content = content.split(":").map(fixJSON).join(":")
-            content = content.replaceAll("\t", "").replaceAll("\v", "").replaceAll(',<br>"', ',"').replaceAll("﻿", "") // remove this invisible character
+            content = content.replaceAll("\t", "").replaceAll("\v", "").replaceAll("\r", "").replaceAll(',<br>"', ',"').replaceAll("﻿", "") // remove this invisible character
 
             try {
                 content = JSON.parse(content || {}) as VideoPsalm
@@ -119,7 +124,7 @@ export function convertVideopsalm(data: any) {
 
             let layoutID = uid()
             let show = new ShowObj(false, "videopsalm", layoutID)
-            show.name = checkName(song.Text) || ""
+            show.name = checkName(song.Text || get(dictionary).main?.unnamed || "Unnamed") || ""
             show.meta = {
                 title: show.name,
                 artist: album || "",
@@ -176,9 +181,8 @@ function fixJSON(s: string) {
 }
 
 const VPgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
-function createSlides({ Verses, Sequence, VerseOrderIndex }: Song) {
-    console.log(VerseOrderIndex)
-
+function createSlides({ Verses, Sequence }: Song) {
+    // VerseOrderIndex
     let slides: any = {}
     let layout: any[] = []
     let sequence: string[] = Sequence?.split(" ") || []

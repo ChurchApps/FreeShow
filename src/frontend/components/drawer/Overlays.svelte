@@ -85,7 +85,7 @@
         title={$dictionary.new?.overlay}
     >
         <Icon id="overlays" right />
-        <span style="color: var(--secondary);">
+        <span>
             <T id="new.overlay" />
         </span>
     </Button>

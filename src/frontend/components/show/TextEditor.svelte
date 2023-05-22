@@ -31,7 +31,7 @@
             let slideData: any = { id, items: slide.items, text: "", ref: refSlide }
 
             if (slide.group !== null) {
-                let groupId = "[" + slide.group + "]"
+                let groupId = "[" + (replaceValues(slide.group, true) || "—") + "]"
                 text += groupId + "\n"
                 slideData.text += groupId + (slide.items.length ? "\n" : "")
                 // text += "[" + slide.group + "#" + id + "]\n"
@@ -81,7 +81,18 @@
         return { text, plainText }
     }
 
-    const br = "[[__$BREAK$__]]"
+    const br = "||__$BREAK$__||"
+    // const startBracket = "||__$[$__||"
+    // const endBracket = "||__$]$__||"
+
+    function replaceValues(text: string, revert: boolean = false) {
+        if (!text) return ""
+
+        if (revert) return text.replaceAll(br, "\n")
+        return text.replaceAll("\n", br)
+        // if (revert) return text.replaceAll(br, "\n").replaceAll(startBracket, "[").replaceAll(endBracket, "]")
+        // return text.replaceAll("[", startBracket).replaceAll("]", endBracket).replaceAll("\n", br)
+    }
 
     function editText(e: any) {
         let newText = e.detail.split("\n\n")
@@ -94,16 +105,16 @@
         console.log(slidesData)
 
         for (let i = 0; i < newText.length; i++) {
-            let text = newText[i].replaceAll("\n", br)
-            let originalText = slidesData[i]?.text?.replaceAll("\n", br) || ""
+            let text = replaceValues(newText[i])
+            let originalText = replaceValues(slidesData[i]?.text)
 
             if (text !== originalText) {
                 let state = "changed"
 
-                let nextText = newText[i + 1]?.replaceAll("\n", br) || ""
+                let nextText = replaceValues(newText[i + 1])
                 if (originalText === nextText) state = "added"
                 else {
-                    let nextOriginalText = slidesData[i + 1]?.text?.replaceAll("\n", br) || ""
+                    let nextOriginalText = replaceValues(slidesData[i + 1]?.text)
                     if (text === nextOriginalText) state = "removed"
                 }
 
@@ -160,7 +171,7 @@
                             if (!slides[parent].children) slides[parent].children = []
                             else {
                                 index = slides[parent].children.findIndex((childId: string) => {
-                                    let childText = getItems(slides[childId].items).plainText?.replaceAll("\n", br) || ""
+                                    let childText = replaceValues(getItems(slides[childId].items).plainText)
                                     if (childText === nextText) return true
                                     return false
                                 })

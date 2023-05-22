@@ -201,7 +201,7 @@
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_shows" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
-                <span style="color: var(--secondary);">
+                <span>
                     <T id="new.category" />
                 </span>
             </Button>
@@ -209,7 +209,7 @@
     {:else if id === "media" || id === "audio"}
         <FolderPicker id={id.toUpperCase()} title={$dictionary.new?.folder}>
             <Icon id="folder" right />
-            <span style="color: var(--secondary);">
+            <span>
                 <T id="new.folder" />
             </span>
         </FolderPicker>
@@ -217,7 +217,7 @@
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_overlays" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
-                <span style="color: var(--secondary);">
+                <span>
                     <T id="new.category" />
                 </span>
             </Button>
@@ -226,7 +226,7 @@
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_templates" } })} center title={$dictionary.new?.category}>
                 <Icon id="all" right />
-                <span style="color: var(--secondary);">
+                <span>
                     <T id="new.category" />
                 </span>
             </Button>
@@ -235,7 +235,7 @@
         <div class="tabs">
             <Button on:click={() => activePopup.set("import_scripture")} center title={$dictionary.new?.scripture}>
                 <Icon id="scripture" right />
-                <span style="color: var(--secondary);">
+                <span>
                     <T id="new.scripture" />
                 </span>
             </Button>

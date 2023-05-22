@@ -205,7 +205,7 @@
         // $fullColors &&
         if ($slidesOptions.mode !== "lyrics" || noQuickEdit) style += `background-color: ${color};`
         if (!$fullColors && ($slidesOptions.mode !== "lyrics" || noQuickEdit)) style += `color: ${color};`
-        if ($slidesOptions.mode === "lyrics" && !noQuickEdit) style += "font-weight: bold;background-color: transparent;"
+        if ($slidesOptions.mode === "lyrics" && !noQuickEdit) style += "background-color: transparent;"
         if ($slidesOptions.mode !== "grid" && !noQuickEdit && $slidesOptions.mode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
     }
 </script>

@@ -153,16 +153,17 @@ export function _show(id: any = "active") {
                     let prev: any = { values: [] }
                     if (key) prev.key = key
                     showsCache.update((a: any) => {
+                        if (!a[id]) return a
                         if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
                         slideIds.forEach((slideId) => {
                             if (!a[id].slides[slideId]) return
                             if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
                             indexes.forEach((index, i) => {
                                 if (key) {
-                                    prev.values.push(a[id].slides[slideId].items[index][key] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index][key])) : null)
+                                    prev.values.push(a[id].slides[slideId].items[index][key] ? clone(a[id].slides[slideId].items[index][key]) : null)
                                     a[id].slides[slideId].items[index][key] = values[i] || values[0]
                                 } else {
-                                    prev.values.push(a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index])) : null)
+                                    prev.values.push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index]) : null)
                                     a[id].slides[slideId].items[index] = values[i] || values[0]
                                 }
                             })
@@ -236,16 +237,17 @@ export function _show(id: any = "active") {
                                     lines.forEach((line, lineIndex) => {
                                         if (key) {
                                             if (a[id].slides[slideId].items[index].lines[line]) {
-                                                console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
-                                                console.log(a[id].slides[slideId].items[index].lines[line][key][0]?.style)
+                                                // console.log(a[id].slides[slideId].items[index].lines[line], key, values, i)
+                                                // console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
+                                                // console.log(a[id].slides[slideId].items[index].lines[line].text?.[0]?.style)
 
                                                 if (a[id].slides[slideId].items[index].lines[line][key] !== undefined) {
-                                                    prev.values[prev.values.length - 1].push(JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line][key])))
+                                                    prev.values[prev.values.length - 1].push(clone(a[id].slides[slideId].items[index].lines[line][key]))
                                                     a[id].slides[slideId].items[index].lines[line][key] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                                 } else prev.values[prev.values.length - 1].push(null)
                                             } else prev.values[prev.values.length - 1].push(null)
                                         } else {
-                                            prev.values[prev.values.length - 1].push(a[id].slides[slideId].items[index] ? JSON.parse(JSON.stringify(a[id].slides[slideId].items[index].lines[line])) : null)
+                                            prev.values[prev.values.length - 1].push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index].lines[line]) : null)
                                             a[id].slides[slideId].items[index].lines[line] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                         }
                                     })
