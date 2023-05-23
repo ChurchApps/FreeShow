@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary, mediaOptions, outputs, showsCache, templateCategories, templates } from "../../stores"
+    import { activeShow, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, templateCategories, templates } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getResolution } from "../helpers/output"
@@ -93,10 +93,8 @@
         center
         title={$dictionary.new?.template}
     >
-        <Icon id="templates" right />
-        <span>
-            <T id="new.template" />
-        </span>
+        <Icon id="add" right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<T id="new.template" />{/if}
     </Button>
 </div>
 
@@ -110,7 +108,7 @@
     }
 
     .grid :global(.isSelected) {
-        outline: 5px solid var(--secondary-text);
+        outline: 5px solid var(--secondary-text) !important;
     }
 
     .tabs {

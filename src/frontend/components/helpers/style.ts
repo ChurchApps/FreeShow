@@ -2,8 +2,6 @@ import type { StringObject } from "../../../types/Main"
 
 export const getStyles = (str: string | null | undefined, removeTxt: boolean = false) => {
     let styles: StringObject = {}
-    console.trace(str)
-
     if (!str?.length) return styles
 
     str.split(";").forEach((s) => {

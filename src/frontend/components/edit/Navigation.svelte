@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeShow } from "../../stores"
+    import { activeEdit, activeShow, labelsDisabled } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
@@ -25,10 +25,9 @@
 
 {#if $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")}
     <Slides />
-    <!-- style="background-color: var(--primary-darkest);" -->
-    <Button center on:click={addSlide}>
-        <Icon id="add" right />
-        <T id="new.slide" />
+    <Button on:click={addSlide} center dark>
+        <Icon id="add" right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<T id="new.slide" />{/if}
     </Button>
 {:else}
     <Center faded>

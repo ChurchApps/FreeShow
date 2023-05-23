@@ -4,6 +4,7 @@
     import { analyseAudio, getAnalyser } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, setOutput } from "../helpers/output"
+    import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import HoverButton from "../inputs/HoverButton.svelte"
     import Splash from "../main/Splash.svelte"
@@ -122,6 +123,8 @@
         flipped = $media[show.id]?.flipped || false
         fit = $media[show.id]?.fit || "contain"
     }
+
+    let previewControls: boolean = false
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -156,23 +159,30 @@
                                 {/if}
                             </HoverButton>
                         </div>
-                        <div class="buttons" style="display: flex;">
-                            <Button
-                                style="flex: 0"
-                                center
-                                title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause}
-                                on:click={() => {
-                                    autoPause = false
-                                    videoData.paused = !videoData.paused
-                                }}
-                            >
-                                <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
+                        {#if previewControls}
+                            <div class="buttons" style="display: flex;">
+                                <Button
+                                    style="flex: 0"
+                                    center
+                                    title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause}
+                                    on:click={() => {
+                                        autoPause = false
+                                        videoData.paused = !videoData.paused
+                                    }}
+                                >
+                                    <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
+                                </Button>
+                                <VideoSlider bind:videoData bind:videoTime />
+                                <Button style="flex: 0" center title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute} on:click={() => (videoData.muted = !videoData.muted)}>
+                                    <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
+                                </Button>
+                            </div>
+                        {:else}
+                            <Button on:click={() => (previewControls = true)} style="background-color: var(--primary-darkest);" center dark>
+                                <Icon id="eye" right />
+                                <T id="preview.enable_controls" />
                             </Button>
-                            <VideoSlider bind:videoData bind:videoTime />
-                            <Button style="flex: 0" center title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute} on:click={() => (videoData.muted = !videoData.muted)}>
-                                <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
-                            </Button>
-                        </div>
+                        {/if}
                     {/key}
                 {:else}
                     <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
@@ -209,6 +219,10 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+    }
+
+    .buttons {
+        background-color: var(--primary-darkest);
     }
 
     .buttons :global(.slider input) {

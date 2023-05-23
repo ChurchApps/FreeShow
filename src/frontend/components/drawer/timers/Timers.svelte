@@ -54,40 +54,41 @@
     <div style="flex: 1;overflow: auto;padding: 10px 0;">
         <!-- {#if Object.keys(globalList).length} -->
         {#if active === "timer"}
-            {#each Object.entries(globalList) as [id, timer]}
-                <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
-                <SelectElem id="global_timer" data={{ id, timer }}>
-                    <div class:outline={$activeTimers.find((a) => a.id === id)} class="context #global_timer" style="display: flex;justify-content: space-between;">
-                        <div style="display: flex;width: 50%;">
-                            <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(id, timer)} title={$activeTimers.find((a) => a.id === id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
-                                <Icon id={timer.type !== "counter" || $activeTimers.find((a) => a.id === id && a.paused !== true) ? "pause" : "play"} />
-                            </Button>
-                            <p style="align-self: center;padding: 0 5px;" title={timer.name}>
-                                {#if timer.name}
-                                    {timer.name}
-                                {:else}
-                                    <span style="opacity: 0.5;">
-                                        <T id="main.unnamed" />
-                                    </span>
-                                {/if}
-                            </p>
-                        </div>
+            {#if Object.keys(globalList).length}
+                {#each Object.entries(globalList) as [id, timer]}
+                    <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
+                    <SelectElem id="global_timer" data={{ id, timer }}>
+                        <div class:outline={$activeTimers.find((a) => a.id === id)} class="context #global_timer" style="display: flex;justify-content: space-between;">
+                            <div style="display: flex;width: 50%;">
+                                <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(id, timer)} title={$activeTimers.find((a) => a.id === id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
+                                    <Icon id={timer.type !== "counter" || $activeTimers.find((a) => a.id === id && a.paused !== true) ? "pause" : "play"} />
+                                </Button>
+                                <p style="align-self: center;padding: 0 5px;" title={timer.name}>
+                                    {#if timer.name}
+                                        {timer.name}
+                                    {:else}
+                                        <span style="opacity: 0.5;">
+                                            <T id="main.unnamed" />
+                                        </span>
+                                    {/if}
+                                </p>
+                            </div>
 
-                        <Slider
-                            style="background: var(--primary);align-self: center;margin: 0 10px;"
-                            on:input={(e) => updateActiveTimer(e, { id }, timer)}
-                            value={getCurrentValue(timer, { id }, $activeTimers)}
-                            min={Math.min(timer.start || 0, timer.end || 0)}
-                            max={Math.max(timer.start || 0, timer.end || 0)}
-                            invert={(timer.end || 0) < (timer.start || 0)}
-                        />
+                            <Slider
+                                style="background: var(--primary);align-self: center;margin: 0 10px;"
+                                on:input={(e) => updateActiveTimer(e, { id }, timer)}
+                                value={getCurrentValue(timer, { id }, $activeTimers)}
+                                min={Math.min(timer.start || 0, timer.end || 0)}
+                                max={Math.max(timer.start || 0, timer.end || 0)}
+                                invert={(timer.end || 0) < (timer.start || 0)}
+                            />
 
-                        <div style="display: flex;">
-                            <span style="display: flex;align-self: center;padding: 0 5px;">
-                                <Timer {timer} ref={{ id }} {today} />
-                                <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->
-                            </span>
-                            <!-- <Button
+                            <div style="display: flex;">
+                                <span style="display: flex;align-self: center;padding: 0 5px;">
+                                    <Timer {timer} ref={{ id }} {today} />
+                                    <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->
+                                </span>
+                                <!-- <Button
                 on:click={() => {
                   select("timer", { id })
                   activePopup.set("timer")
@@ -96,63 +97,69 @@
               >
                 <Icon id="edit" />
               </Button> -->
-                            {#if timer.type === "counter"}
-                                <Button on:click={() => resetTimer(id)} title={$dictionary.actions?.reset}>
-                                    <Icon id="reset" />
-                                </Button>
-                            {/if}
-                            <!-- <Button on:click={() => deleteTimer(id)}>
+                                {#if timer.type === "counter"}
+                                    <Button on:click={() => resetTimer(id)} title={$dictionary.actions?.reset}>
+                                        <Icon id="reset" />
+                                    </Button>
+                                {/if}
+                                <!-- <Button on:click={() => deleteTimer(id)}>
                 <Icon id="delete" title={$dictionary.actions?.delete} />
               </Button> -->
+                            </div>
                         </div>
-                    </div>
-                </SelectElem>
-            {/each}
+                    </SelectElem>
+                {/each}
+            {:else}
+                <Center faded>
+                    <T id="empty.general" />
+                </Center>
+            {/if}
         {/if}
         <!-- {#if list.length} -->
         {#if active === "project"}
-            {#each list as item}
-                {@const timer = item.timer}
-                <!-- {@const playing = $activeTimers.find((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === item.timer.id && a.paused !== true)} -->
-                <SelectElem id="timer" data={item}>
-                    <div class:outline={$activeTimers.find((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === timer.id)} class="context #timer" style="display: flex;justify-content: space-between;">
-                        <div style="display: flex;width: 50%;">
-                            <Button
-                                disabled={timer.type !== "counter"}
-                                on:click={() => playPause(item)}
-                                title={$activeTimers.find((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}
-                            >
-                                <Icon id={timer.type !== "counter" || $activeTimers.find((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === timer.id && a.paused !== true) ? "pause" : "play"} />
-                            </Button>
-                            <p style="align-self: center;padding: 0 5px;" title={$shows[list[activeTimer].showId].name}>
-                                {#if timer.name}
-                                    {timer.name}
-                                {:else if $showsCache[item.showId]}
-                                    <span style="opacity: 0.5;">
-                                        {$showsCache[item.showId].name}
-                                    </span>
-                                {:else}
-                                    <span style="opacity: 0.5;">
-                                        <T id="main.unnamed" />
-                                    </span>
-                                {/if}
-                            </p>
-                        </div>
+            {#if list.length}
+                {#each list as item}
+                    {@const timer = item.timer}
+                    <!-- {@const playing = $activeTimers.find((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === item.timer.id && a.paused !== true)} -->
+                    <SelectElem id="timer" data={item}>
+                        <div class:outline={$activeTimers.find((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === timer.id)} class="context #timer" style="display: flex;justify-content: space-between;">
+                            <div style="display: flex;width: 50%;">
+                                <Button
+                                    disabled={timer.type !== "counter"}
+                                    on:click={() => playPause(item)}
+                                    title={$activeTimers.find((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}
+                                >
+                                    <Icon id={timer.type !== "counter" || $activeTimers.find((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === timer.id && a.paused !== true) ? "pause" : "play"} />
+                                </Button>
+                                <p style="align-self: center;padding: 0 5px;" title={$shows[list[activeTimer].showId].name}>
+                                    {#if timer.name}
+                                        {timer.name}
+                                    {:else if $showsCache[item.showId]}
+                                        <span style="opacity: 0.5;">
+                                            {$showsCache[item.showId].name}
+                                        </span>
+                                    {:else}
+                                        <span style="opacity: 0.5;">
+                                            <T id="main.unnamed" />
+                                        </span>
+                                    {/if}
+                                </p>
+                            </div>
 
-                        <Slider
-                            style="background: var(--primary);align-self: center;margin: 0 10px;"
-                            on:input={(e) => updateActiveTimer(e, { showId: item.showId, slideId: item.slideId, id: item.id }, timer)}
-                            value={getCurrentValue(timer, { showId: item.showId, slideId: item.slideId, id: item.id }, $activeTimers)}
-                            min={Math.min(timer.start || 0, timer.end || 0)}
-                            max={Math.max(timer.start || 0, timer.end || 0)}
-                            invert={(timer.end || 0) < (timer.start || 0)}
-                        />
+                            <Slider
+                                style="background: var(--primary);align-self: center;margin: 0 10px;"
+                                on:input={(e) => updateActiveTimer(e, { showId: item.showId, slideId: item.slideId, id: item.id }, timer)}
+                                value={getCurrentValue(timer, { showId: item.showId, slideId: item.slideId, id: item.id }, $activeTimers)}
+                                min={Math.min(timer.start || 0, timer.end || 0)}
+                                max={Math.max(timer.start || 0, timer.end || 0)}
+                                invert={(timer.end || 0) < (timer.start || 0)}
+                            />
 
-                        <div style="display: flex;">
-                            <span style="display: flex;align-self: center;padding: 0 5px;">
-                                <Timer {item} ref={{ showId: item.showId, slideId: item.slideId, id: item.id }} {today} />
-                            </span>
-                            <!-- <Button
+                            <div style="display: flex;">
+                                <span style="display: flex;align-self: center;padding: 0 5px;">
+                                    <Timer {item} ref={{ showId: item.showId, slideId: item.slideId, id: item.id }} {today} />
+                                </span>
+                                <!-- <Button
               on:click={() => {
                 select("timer", { id: item.id, showId: item.showId, slideId: item.slideId })
                 activePopup.set("timer")
@@ -161,15 +168,20 @@
             >
               <Icon id="edit" />
             </Button> -->
-                            {#if timer.type === "counter"}
-                                <Button on:click={() => resetTimer(timer.id)} title={$dictionary.actions?.reset}>
-                                    <Icon id="reset" />
-                                </Button>
-                            {/if}
+                                {#if timer.type === "counter"}
+                                    <Button on:click={() => resetTimer(timer.id)} title={$dictionary.actions?.reset}>
+                                        <Icon id="reset" />
+                                    </Button>
+                                {/if}
+                            </div>
                         </div>
-                    </div>
-                </SelectElem>
-            {/each}
+                    </SelectElem>
+                {/each}
+            {:else}
+                <Center faded>
+                    <T id="empty.general" />
+                </Center>
+            {/if}
         {/if}
     </div>
 {:else}

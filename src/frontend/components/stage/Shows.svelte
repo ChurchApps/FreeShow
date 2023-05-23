@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeStage, stageShows } from "../../stores"
+    import { activeStage, labelsDisabled, stageShows } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -41,9 +41,9 @@
         </Center>
     {/if}
     <!-- Add -->
-    <Button on:click={addSlide} style="width: 100%;background-color: var(--primary);" center>
-        <Icon id="add" right />
-        <T id="new.slide" />
+    <Button on:click={addSlide} center dark>
+        <Icon id="add" right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<T id="new.slide" />{/if}
     </Button>
 </div>
 

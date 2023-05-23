@@ -97,6 +97,9 @@
         "_update": "Oppdater utgang",
         "_next_slide": "Neste lysbilde",
         "_next_show": "Neste show",
+        "_hide_preview": "Skjul forhåndsvisning",
+        "show_preview": "Vis forhåndsvisning",
+        "enable_controls": "Vis kontroller for forhåndsvisning av medier",
         "background": "Bakgrunn",
         "slide": "Lysbilde",
         "overlays": "Overlegg",
@@ -386,6 +389,7 @@
         "zoomIn": "Zoom inn",
         "zoomOut": "Zoom ut",
         "reset": "Tilbakestill",
+        "reset_defaults": "Tilbakestill standarder",
         "to_all": "Legg til alle",
         "back": "Gå tilbake",
         "home": "Hjem",
@@ -477,7 +481,10 @@
         "metadata": "Metadata",
         "media": "Medier",
         "audio": "Lyd",
-        "layout": "Oppsett"
+        "layout": "Oppsett",
+        "item": "Element",
+        "items": "Elementer",
+        "slide": "Lysbilde"
     },
     "edit": {
         "font": "Skrift",

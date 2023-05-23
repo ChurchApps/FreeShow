@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Category } from "../../../types/Tabs"
-    import { activePopup, audioFolders, categories, dictionary, drawerTabsData, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates, webFavorites } from "../../stores"
+    import { activePopup, audioFolders, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates, webFavorites } from "../../stores"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -200,44 +200,34 @@
     {#if id === "shows"}
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_shows" } })} center title={$dictionary.new?.category}>
-                <Icon id="all" right />
-                <span>
-                    <T id="new.category" />
-                </span>
+                <Icon id="add" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.category" />{/if}
             </Button>
         </div>
     {:else if id === "media" || id === "audio"}
         <FolderPicker id={id.toUpperCase()} title={$dictionary.new?.folder}>
-            <Icon id="folder" right />
-            <span>
-                <T id="new.folder" />
-            </span>
+            <Icon id="add" right={!$labelsDisabled} />
+            {#if !$labelsDisabled}<T id="new.folder" />{/if}
         </FolderPicker>
     {:else if id === "overlays"}
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_overlays" } })} center title={$dictionary.new?.category}>
-                <Icon id="all" right />
-                <span>
-                    <T id="new.category" />
-                </span>
+                <Icon id="add" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.category" />{/if}
             </Button>
         </div>
     {:else if id === "templates"}
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", location: { page: "drawer", id: "category_templates" } })} center title={$dictionary.new?.category}>
-                <Icon id="all" right />
-                <span>
-                    <T id="new.category" />
-                </span>
+                <Icon id="add" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.category" />{/if}
             </Button>
         </div>
     {:else if id === "scripture"}
         <div class="tabs">
             <Button on:click={() => activePopup.set("import_scripture")} center title={$dictionary.new?.scripture}>
-                <Icon id="scripture" right />
-                <span>
-                    <T id="new.scripture" />
-                </span>
+                <Icon id="add" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.scripture" />{/if}
             </Button>
         </div>
     {/if}

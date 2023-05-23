@@ -1,14 +1,23 @@
 <script>
-  import { setExampleTemplates } from "../../../utils/createData"
-  import Button from "../../inputs/Button.svelte"
+    import { setExampleTemplates } from "../../../utils/createData"
+    import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
 </script>
 
-<main>
-  <Button style="width: 100%;" on:click={setExampleTemplates} center dark>Refresh example templates</Button>
-</main>
+<div class="scroll" />
+
+<Button style="width: 100%;" on:click={setExampleTemplates} center dark>
+    <Icon id="reset" right />
+    <T id="actions.reset_defaults" />
+</Button>
 
 <style>
-  main {
-    padding: 10px;
-  }
+    .scroll {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
 </style>

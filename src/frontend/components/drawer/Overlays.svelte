@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, mediaOptions, outLocked, outputs, overlayCategories, overlays } from "../../stores"
+    import { dictionary, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { findMatchingOut, getResolution, setOutput } from "../helpers/output"
@@ -84,10 +84,8 @@
         center
         title={$dictionary.new?.overlay}
     >
-        <Icon id="overlays" right />
-        <span>
-            <T id="new.overlay" />
-        </span>
+        <Icon id="add" right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<T id="new.overlay" />{/if}
     </Button>
 </div>
 
@@ -101,7 +99,7 @@
     }
 
     .grid :global(.isSelected) {
-        outline: 5px solid var(--secondary-text);
+        outline: 5px solid var(--secondary-text) !important;
     }
 
     .tabs {

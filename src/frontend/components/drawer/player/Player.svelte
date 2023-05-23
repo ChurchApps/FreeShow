@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeShow, playerVideos } from "../../../stores"
+    import { activePopup, activeShow, labelsDisabled, playerVideos } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -71,8 +71,8 @@
     </div>
     <div style="display: flex;background-color: var(--primary-darkest);">
         <Button style="width: 100%;" on:click={() => activePopup.set("player")} center>
-            <Icon id="add" right />
-            <span><T id="settings.add" /></span>
+            <Icon id="add" right={!$labelsDisabled} />
+            {#if !$labelsDisabled}<T id="settings.add" />{/if}
         </Button>
     </div>
 </div>

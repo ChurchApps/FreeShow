@@ -686,7 +686,9 @@ const duplicateActions = {
 
 // HELPER FUNCTIONS
 
+const exludedCategories = ["all", "unlabeled", "favourites", "pixabay"]
 function historyDelete(id, data, { updater } = { updater: "" }) {
+    data = data.filter((a) => !exludedCategories.includes(a.id || a))
     data.forEach((a: any) => history({ id, newData: { id: a.id || a }, location: { page: get(activePage) as any, id: updater || undefined } }))
 }
 

@@ -97,6 +97,9 @@
         "_update": "Aktualizovať výstup",
         "_next_slide": "Ďalší snímok",
         "_next_show": "Ďalšia prezentácia",
+        "_hide_preview": "Hide preview",
+        "show_preview": "Show preview",
+        "enable_controls": "Show media preview controls",
         "background": "Pozadie",
         "slide": "Snímok",
         "overlays": "Prvky",
@@ -386,6 +389,7 @@
         "zoomIn": "Priblížiť",
         "zoomOut": "Oddialiť",
         "reset": "Resetovať",
+        "reset_defaults": "Reset defaults",
         "to_all": "Použiť na všetky",
         "back": "Prejsť späť",
         "home": "Domov",
@@ -477,7 +481,10 @@
         "metadata": "Metadata",
         "media": "Media",
         "audio": "Audio",
-        "layout": "Rozloženie"
+        "layout": "Rozloženie",
+        "item": "Položka",
+        "items": "Položky",
+        "slide": "Snímok"
     },
     "edit": {
         "font": "Písmo",

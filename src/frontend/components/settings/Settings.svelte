@@ -7,6 +7,7 @@
     import Connection from "./tabs/Connection.svelte"
     import General from "./tabs/General.svelte"
     import Groups from "./tabs/Groups.svelte"
+    import Other from "./tabs/Other.svelte"
     import Outputs from "./tabs/Outputs.svelte"
     import Theme from "./tabs/Theme.svelte"
 </script>
@@ -34,6 +35,8 @@
             <Cloud />
         {:else if $settingsTab === "calendar"}
             <Calendar />
+        {:else if $settingsTab === "other"}
+            <Other />
         {/if}
     </div>
 </main>
@@ -55,7 +58,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         height: 100%;
-        padding: 0 80px;
+        padding: 0 50px;
     }
 
     div:not(.scroll) {

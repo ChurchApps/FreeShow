@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
-    import { activeProject, activeShow, dictionary, folders, projects, projectView } from "../../stores"
+    import { activeProject, activeShow, dictionary, folders, labelsDisabled, projects, projectView } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
@@ -102,7 +102,11 @@
         <!-- TODO: set different project system folders.... -->
         <!-- TODO: right click change... -->
         <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
-            <Icon id="folder" />
+            <Icon id="folder" right />
+            <!-- ={!$labelsDisabled} -->
+            <!-- {#if !$labelsDisabled}
+                <T id="remote.projects" />
+            {/if} -->
         </Button>
         <!-- TODO: right click go to recent -->
         <Button
@@ -130,10 +134,12 @@
         </div>
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project_folder" } })} center title={$dictionary.new?.folder}>
-                <Icon id="folder" />
+                <Icon id="folder" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.folder" />{/if}
             </Button>
             <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project" } })} center title={$dictionary.new?.project}>
-                <Icon id="project" />
+                <Icon id="project" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.project" />{/if}
             </Button>
         </div>
     {:else if $activeProject !== null}
@@ -187,10 +193,8 @@
     <!-- TODO: add section button -->
     <div class="tabs">
         <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
-            <Icon id="section" />
-            <!-- <span style="color: var(--secondary);">
-                <T id="new.section" />
-            </span> -->
+            <Icon id="section" right={!$labelsDisabled} />
+            {#if !$labelsDisabled}<T id="new.section" />{/if}
         </Button>
     </div>
 {/if}

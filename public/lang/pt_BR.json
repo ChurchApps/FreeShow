@@ -97,6 +97,9 @@
         "_update": "Atualizar saída",
         "_next_slide": "Próximo slide",
         "_next_show": "Próxima apresentação",
+        "_hide_preview": "Hide preview",
+        "show_preview": "Show preview",
+        "enable_controls": "Show media preview controls",
         "background": "Plano de fundo",
         "slide": "Slide",
         "overlays": "Sobreposições",
@@ -386,6 +389,7 @@
         "zoomIn": "Mais Zoom",
         "zoomOut": "Menos Zoom",
         "reset": "Redefinir",
+        "reset_defaults": "Reset defaults",
         "to_all": "Aplicar a todos",
         "back": "Voltar",
         "home": "Início",
@@ -477,7 +481,10 @@
         "metadata": "Metadados",
         "media": "Mídia",
         "audio": "Áudio",
-        "layout": "Layout"
+        "layout": "Layout",
+        "item": "Item",
+        "items": "Itens",
+        "slide": "Slide"
     },
     "edit": {
         "font": "Fonte",

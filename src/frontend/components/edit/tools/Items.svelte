@@ -62,13 +62,13 @@
 <Panel>
     <h6><T id="edit.add_items" /></h6>
     <div class="grid">
-        <IconButton title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
-        <IconButton title={$dictionary.items?.image} icon="image" on:click={() => addItem("media")} />
+        <IconButton name title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
+        <IconButton name title={$dictionary.items?.image} icon="image" on:click={() => addItem("media")} />
         <!-- TODO: camera box -->
-        <!-- <IconButton title={$dictionary.items?.live} disabled icon="camera" /> -->
-        <IconButton title={$dictionary.items?.timer} icon="timer" on:click={() => addItem("timer")} />
-        <IconButton title={$dictionary.items?.clock} icon="clock" on:click={() => addItem("clock")} />
-        <IconButton title={$dictionary.items?.mirror} icon="mirror" on:click={() => addItem("mirror")} />
+        <!-- <IconButton name title={$dictionary.items?.live} disabled icon="camera" /> -->
+        <IconButton name title={$dictionary.items?.timer} icon="timer" on:click={() => addItem("timer")} />
+        <IconButton name title={$dictionary.items?.clock} icon="clock" on:click={() => addItem("clock")} />
+        <IconButton name title={$dictionary.items?.mirror} icon="mirror" on:click={() => addItem("mirror")} />
     </div>
     <div>
         <!-- square, circle, triangle, star, heart, ... -->
@@ -142,11 +142,10 @@
     }
 
     .grid :global(#icon) {
-        /* min-width: 33%; */
-        min-width: 49%;
+        /* min-width: 32%; */
         flex: 1;
         background-color: var(--primary-darker);
-        padding: 20px;
+        padding: 10px;
     }
     .grid :global(#icon:hover) {
         background-color: var(--primary-lighter);

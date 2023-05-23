@@ -6,7 +6,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { splitPath } from "../../helpers/get"
-    import { getExtension, getMediaType, isMediaExtension } from "../../helpers/media"
+    import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Folder from "./Folder.svelte"
@@ -23,9 +23,7 @@
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path! || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
-    // TODO: fix name...!!
-    $: console.log(active, ":", rootPath, ":", path, ":", name)
-    $: name = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : active === "pixabay" ? "Pixabay" : rootPath === path ? (active !== null ? $mediaFolders[active]?.name || "" : "") : splitPath(path).name
+    $: folderName = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : active === "pixabay" ? "Pixabay" : rootPath === path ? (active !== null ? $mediaFolders[active]?.name || "" : "") : splitPath(path).name
 
     async function loadFilesAsync() {
         fullFilteredFiles = []
@@ -160,6 +158,7 @@
             activeEdit.set({ id: path, type: "media", items: [] })
         } else {
             activeEdit.set({ items: [] })
+            let name = removeExtension(getFileName(path))
             let type = getMediaType(getExtension(path))
             activeShow.set({ id: path, name, type })
         }
@@ -266,11 +265,11 @@
         <Icon size={1.3} id="home" />
     </Button>
     <span style="flex: 1;text-align: center;">
-        {#key name}
-            {#if name.includes(".")}
-                <T id={name} />
+        {#key folderName}
+            {#if folderName.includes(".")}
+                <T id={folderName} />
             {:else}
-                {name}
+                {folderName}
             {/if}
         {/key}
     </span>

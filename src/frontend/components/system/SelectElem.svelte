@@ -129,7 +129,7 @@
         position: relative;
     }
 
-    .isSelected {
+    div.isSelected {
         /* outline: 2px solid red;
     outline-offset: 2px; */
         background-color: var(--focus);
@@ -140,6 +140,9 @@
         /* filter: sepia(1); */
         /* filter: saturate(5); */
         filter: invert(0.1) brightness(1.2) contrast(0.7);
+    }
+    div.isSelected :global(button) {
+        background-color: inherit !important;
     }
 
     .fill {

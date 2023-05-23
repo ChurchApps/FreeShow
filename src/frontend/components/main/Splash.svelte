@@ -4,12 +4,19 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import Link from "../inputs/Link.svelte"
     import Center from "../system/Center.svelte"
 </script>
 
 <Center>
     <h1>FreeShow</h1>
-    <p style="padding: 30px">v{$version}</p>
+    <p>v{$version}</p>
+    <p style="padding: 30px">
+        <Link url="https://freeshow.app/docs">
+            <T id="main.docs" />
+            <Icon id="launch" white />
+        </Link>
+    </p>
 
     <span class="buttons">
         <Button on:click={() => history({ id: "UPDATE", location: { page: "show", id: "project" } })} title={$dictionary.tooltip?.project} dark>
@@ -25,7 +32,7 @@
             title={$dictionary.tooltip?.show}
             dark
         >
-            <Icon id="showIcon" right />
+            <Icon id="add" right />
             <T id="new.show" />
         </Button>
     </span>

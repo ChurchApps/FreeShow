@@ -17,13 +17,14 @@
     import SlideStyle from "./tools/SlideStyle.svelte"
 
     let tabs: TabsObj = {
-        text: { name: "tools.text", icon: "text" },
+        text: { name: "items.text", icon: "text" },
         item: { name: "tools.item", icon: "item" },
         items: { name: "tools.items", icon: "items" },
         slide: { name: "tools.slide", icon: "options" }, // slide
     }
     let active: string = Object.keys(tabs)[0]
     $: tabs.text.icon = item?.type && boxes[item.type] ? boxes[item.type]!.icon : "text"
+    $: tabs.text.name = "items." + (item?.type || "text")
 
     // is not template or overlay
     $: isShow = !$activeEdit.id
@@ -222,7 +223,8 @@
 <!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
 <div class="main border editTools">
     {#if (slides?.length && $activeShow && ($activeShow.type === undefined || $activeShow.type === "show") && $activeEdit.slide !== null) || $activeEdit.id}
-        <Tabs {tabs} bind:active labels={false} />
+        <Tabs {tabs} bind:active />
+        <!-- labels={false} -->
         {#if active === "text"}
             <div class="content">
                 {#if item}

@@ -26,56 +26,56 @@
   <h6><T id="about.thanks" /></h6> -->
     <div>
         <h6><T id="about.assets" /></h6>
-        <div style="display: flex;justify-content: space-between;">
-            <span>CMG Sans (Custom font)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● CMG Sans (Custom font)</span>
             <span>
                 <Link url={"https://www.churchmotiongraphics.com/cmg-sans/"}>https://www.churchmotiongraphics.com/cmg-sans/</Link>
             </span>
         </div>
-        <div style="display: flex;justify-content: space-between;">
-            <span>Google Fonts (Icons)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● Google Fonts (Icons)</span>
             <span>
                 <Link url={"https://fonts.google.com/icons"}>https://fonts.google.com/icons</Link>
             </span>
         </div>
-        <div style="display: flex;justify-content: space-between;">
-            <span>Icons8 (Icons)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● Icons8 (Icons)</span>
             <span>
                 <Link url={"https://icons8.com"}>https://icons8.com</Link>
             </span>
         </div>
-        <div style="display: flex;justify-content: space-between;">
-            <span>Pixabay (Web Images)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● Pixabay (Web Images)</span>
             <span>
                 <Link url={"https://pixabay.com/"}>https://pixabay.com/</Link>
             </span>
         </div>
-        <div style="display: flex;justify-content: space-between;">
-            <span>Electron (Cross-platform desktop apps)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● Electron (Cross-platform desktop apps)</span>
             <span>
                 <Link url={"https://www.electronjs.org/"}>https://www.electronjs.org/</Link>
             </span>
         </div>
-        <div style="display: flex;justify-content: space-between;">
-            <span>Svelte (DOM framework)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● Svelte (DOM framework)</span>
             <span>
                 <Link url={"https://svelte.dev/"}>https://svelte.dev/</Link>
             </span>
         </div>
-        <div style="display: flex;justify-content: space-between;">
-            <span>Rollup (Module bundler)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● Rollup (Module bundler)</span>
             <span>
                 <Link url={"https://rollupjs.org/"}>https://rollupjs.org/</Link>
             </span>
         </div>
-        <div style="display: flex;justify-content: space-between;">
-            <span>Socket.io (LAN connections)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● Socket.io (LAN connections)</span>
             <span>
                 <Link url={"https://socket.io/"}>https://socket.io/</Link>
             </span>
         </div>
-        <div style="display: flex;justify-content: space-between;">
-            <span>Express (Web framework)</span>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● Express (Web framework)</span>
             <span>
                 <Link url={"https://expressjs.com/"}>https://expressjs.com/</Link>
             </span>

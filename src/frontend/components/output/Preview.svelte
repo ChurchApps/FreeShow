@@ -1,13 +1,15 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activePage, activeShow, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers } from "../../stores"
+    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers } from "../../stores"
     import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
+    import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
     import { clearAll, getItemWithMostLines, nextSlide, previousSlide, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
+    import Button from "../inputs/Button.svelte"
     import { getStyleResolution } from "../slide/getStyleResolution"
     import AudioMeter from "./AudioMeter.svelte"
     import ClearButtons from "./ClearButtons.svelte"
@@ -278,8 +280,16 @@
 <div class="main">
     {#if enablePreview}
         <PreviewOutputs bind:currentOutputId={outputId} />
+    {:else}
+        <Button on:click={() => (enablePreview = true)} style="width: 100%;" center dark>
+            <Icon id="eye" right />
+            <T id="preview.show_preview" />
+        </Button>
     {/if}
     <div class="top" class:hide={!enablePreview}>
+        <Button class="hide" on:click={() => (enablePreview = false)} title={$dictionary.preview?._hide_preview} center>
+            <Icon id="hide" white />
+        </Button>
         <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 15px);"}>
             {#if fullscreen}
                 <span class="resolution">
@@ -339,6 +349,21 @@
     color: inherit;
     border: none;
   } */
+
+    .top :global(.hide) {
+        position: absolute;
+        top: 10px;
+        left: 27px;
+        z-index: 1;
+        background-color: rgb(0 0 0 / 0.6) !important;
+        width: 40px;
+        height: 40px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .top:hover > :global(.hide) {
+        opacity: 1;
+    }
 
     .fullscreen {
         position: fixed;

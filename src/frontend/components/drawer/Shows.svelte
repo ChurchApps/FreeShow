@@ -1,7 +1,7 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../types/Show"
-    import { activePopup, activeProject, activeShow, categories, dictionary, sortedShowsList, textCache } from "../../stores"
+    import { activePopup, activeProject, activeShow, categories, dictionary, labelsDisabled, sortedShowsList, textCache } from "../../stores"
     import { clone, sortObjectNumbers } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -200,11 +200,8 @@
         center
         title={$dictionary.tooltip?.show}
     >
-        <Icon id="showIcon" right />
-        <span>
-            <!-- style="color: var(--secondary);" -->
-            <T id="new.show" />
-        </span>
+        <Icon id="add" right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<T id="new.show" />{/if}
     </Button>
 </div>
 
