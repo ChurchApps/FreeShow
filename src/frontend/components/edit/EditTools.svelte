@@ -15,11 +15,13 @@
     import Items from "./tools/Items.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
+    import SlideFilters from "./tools/SlideFilters.svelte"
 
     let tabs: TabsObj = {
         text: { name: "items.text", icon: "text" },
         item: { name: "tools.item", icon: "item" },
         items: { name: "tools.items", icon: "items" },
+        filters: { name: "edit.filters", icon: "filter" },
         slide: { name: "tools.slide", icon: "options" }, // slide
     }
     let active: string = Object.keys(tabs)[0]
@@ -133,6 +135,16 @@
             return
         }
 
+        if (active === "filters") {
+            let ref = _show("active").layouts("active").ref()[0]
+            let slideData = ref[$activeEdit.slide!].data
+            let indexes = ref.map((_, i) => i)
+
+            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: slideData.filterEnabled || ["background"], dataIsArray: true, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: slideData.filter, indexes } })
+            return
+        }
+
         if (active === "slide") {
             let ref = _show("active").layouts("active").ref()[0]
             let slideStyle = _show("active").slides([ref[$activeEdit.slide!].id]).get("settings")[0]
@@ -154,6 +166,17 @@
         }
     }
 
+    function addToFollowing() {
+        if (active !== "filters") return
+
+        let ref = _show("active").layouts("active").ref()[0]
+        let slideData = ref[$activeEdit.slide!].data
+        let indexes = ref.map((_, i) => i).filter((a) => a >= $activeEdit.slide!)
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: slideData.filterEnabled || ["background"], dataIsArray: true, indexes } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: slideData.filter, indexes } })
+    }
+
     function reset() {
         if (!isShow) {
             return
@@ -169,6 +192,15 @@
                 newData: { style: { key: "style", values: ["top:120px;left:50px;height:840px;width:1820px;"] } },
                 location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items },
             })
+            return
+        }
+
+        if (active === "filters") {
+            let indexes = [$activeEdit.slide]
+            if (typeof indexes[0] !== "number") return
+
+            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, dataIsArray: true, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: undefined, indexes } })
             return
         }
 
@@ -243,6 +275,10 @@
             <div class="content">
                 <Items bind:allSlideItems />
             </div>
+        {:else if active === "filters"}
+            <div class="content">
+                <SlideFilters />
+            </div>
         {:else if active === "slide"}
             <div class="content">
                 <SlideStyle />
@@ -250,12 +286,18 @@
         {/if}
         <!-- add shapes, text edit, arrange layers, transitions... -->
 
-        <span style="display: flex;">
+        <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
             {#if active !== "items"}
                 {#if isShow}
                     <Button style="flex: 1;" on:click={applyStyleToAllSlides} dark center>
                         <Icon id="copy" right />
                         <T id={"actions.to_all"} />
+                    </Button>
+                {/if}
+                {#if active === "filters"}
+                    <Button style="flex: 1;" on:click={addToFollowing} dark center>
+                        <Icon id="down" right />
+                        <T id={"actions.to_following"} />
                     </Button>
                 {/if}
                 <!-- TODO: reset template/overlay -->

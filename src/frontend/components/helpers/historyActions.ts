@@ -692,8 +692,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
         SHOW_LAYOUT: () => {
             // change the layout of a show
             let deleting: boolean = !!obj.oldData
-            data = (deleting ? obj.oldData : obj.newData) || {}
-            console.log(obj, deleting)
+            data = clone((deleting ? obj.oldData : obj.newData) || {})
+            // console.log(obj, deleting)
 
             if (initializing) {
                 data.remember = { showId: get(activeShow)?.id, layout: _show().get("settings.activeLayout") }
@@ -721,7 +721,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     let layoutSlides = a[data.remember.showId].layouts[data.remember.layout].slides
 
                     let currentIndex = -1
-                    layoutSlides.forEach((l: any) => {
+                    layoutSlides.forEach((l: any, i: number) => {
                         currentIndex++
                         l = updateValues(l, currentIndex)
 
@@ -732,6 +732,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             currentIndex++
                             l.children[child] = updateValues(l.children[child] || {}, currentIndex)
                         })
+
+                        a[data.remember.showId].layouts[data.remember.layout].slides[i] = l
                     })
                     return a
                 })
@@ -746,15 +748,18 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 let values = data.data
                 if (!Array.isArray(values)) values = [values]
 
+
                 keys.forEach((key, i) => {
                     // for overlays, add full array
                     let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : values[i]?.[valueIndex] || values[valueIndex]
+                    if (!data.dataIsArray && typeof values[i] === "string") value = values[i]
 
                     if (value === undefined) delete l[key]
                     else if (data.key && data.keys) {
                         if (!l[data.key]) l[data.key] = {}
                         l[data.key][key] = value
                     } else l[key] = value
+
                 })
 
                 return l

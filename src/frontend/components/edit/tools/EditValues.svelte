@@ -14,6 +14,7 @@
     import Notes from "../../show/tools/Notes.svelte"
     import { getOriginalValue, removeExtension } from "../scripts/edit"
     import EditTimer from "./EditTimer.svelte"
+    import Button from "../../inputs/Button.svelte"
 
     export let edits: any
     export let item: any = null
@@ -36,6 +37,10 @@
         if (input.input === "checkbox") value = e.target.checked
         else if (input.input === "dropdown") value = value.id
         else if (input.input === "number") value = Number(value)
+        else if (input.input === "multiselect") {
+            if (input.value.includes(value)) value = input.value.filter((a) => a !== value)
+            else value = [...input.value, value]
+        }
 
         if (input.extension) value += input.extension
 
@@ -146,6 +151,23 @@
                     <Icon id="image" right />
                     <T id="edit.choose_media" />
                 </MediaPicker>
+            {:else if input.input === "multiselect"}
+                <div class="line">
+                    {#each input.values as option}
+                        <Button
+                            on:click={() => valueChange({ detail: option.id }, input)}
+                            style={input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                            bold={false}
+                            center
+                            dark
+                        >
+                            {#if option.icon}
+                                <Icon id={option.icon} right />
+                            {/if}
+                            <T id={option.name} />
+                        </Button>
+                    {/each}
+                </div>
             {:else if lineInputs[input.input]}
                 <div class="line" style="margin-bottom: 5px;">
                     {#each lineInputs[input.input] as lineInput}

@@ -15,7 +15,7 @@ export type EditInput = {
     id?: string
     key?: string
     input: string
-    value?: string | number | boolean
+    value?: string | number | boolean | string[]
     extension?: string
     disabled?: string
     valueIndex?: number

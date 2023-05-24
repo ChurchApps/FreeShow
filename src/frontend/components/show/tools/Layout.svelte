@@ -127,7 +127,7 @@
             <!-- total time -->
             <span style="display: flex;align-items: center;justify-content: center;">{totalTime}</span>
         </div>
-        <div style="display: flex;gap: 5px;">
+        <div style="display: flex;">
             <!-- <Button style="height: 100%;">
       <Icon id="transition" />
     </Button> -->
@@ -182,7 +182,6 @@
     .bottom {
         display: flex;
         flex-direction: column;
-        gap: 5px;
         background-color: var(--primary-darkest);
     }
 

@@ -35,9 +35,10 @@
 
     let ratio: number = 1
 
+    $: layoutSlide = ref?.[$activeEdit.slide!]?.data
     // get backgruond
-    $: bgId = ref?.[$activeEdit.slide!]?.data.background
-    // $: loadFullImage = !!ref?.[$activeEdit.slide!]?.data.background
+    $: bgId = layoutSlide.background
+    // $: loadFullImage = !!layoutSlide.background
     let loadFullImage = true
 
     // get ghost background
@@ -51,7 +52,7 @@
     }
 
     $: background = bgId && currentShow ? $showsCache[currentShow].media[bgId] : null
-    // $: slideOverlays = ref?.[$activeEdit.slide!]?.data.overlays || []
+    // $: slideOverlays = layoutSlide.overlays || []
 
     let filter: string = ""
     let flipped: boolean = false
@@ -150,7 +151,7 @@
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         {#key background.path}
-                            <div class="background" style="zoom: {1 / ratio};opacity: 0.5;">
+                            <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{(!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes('background')) && layoutSlide.filter ? 'filter: ' + layoutSlide.filter + ';' : ''}">
                                 <MediaLoader path={background.path || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
                             </div>
                         {/key}
@@ -158,7 +159,7 @@
                     <!-- edit -->
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                     {#each Slide.items as item, index}
-                        <Editbox {item} {chordsMode} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />
+                        <Editbox filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} {item} {chordsMode} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />
                     {/each}
                     <!-- overlays -->
                     <!-- {#if !altKeyPressed && slideOverlays?.length}

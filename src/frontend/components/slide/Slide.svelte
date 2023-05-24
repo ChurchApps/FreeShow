@@ -252,7 +252,11 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                 >
                     {#if !altKeyPressed && (background || ghostBackground) && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
                         {#key background?.path || ghostBackground?.path}
-                            <div class="background" style="zoom: {1 / ratio}" class:ghost={!background}>
+                            <div
+                                class="background"
+                                style="zoom: {1 / ratio};{(!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes('background')) && layoutSlide.filter ? 'filter: ' + layoutSlide.filter + ';' : ''}"
+                                class:ghost={!background}
+                            >
                                 <MediaLoader
                                     name={$dictionary.error?.load}
                                     path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
@@ -273,6 +277,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                             <!-- TODO: lyrics zoom on text -->
                             {#if $slidesOptions.mode !== "lyrics" || item.type === undefined || item.type === "text" || item.type === "timer"}
                                 <Textbox
+                                    filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
                                     {item}
                                     {ratio}
                                     ref={{

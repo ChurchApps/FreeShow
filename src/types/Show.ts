@@ -139,6 +139,8 @@ export interface SlideData {
     // TODO: this is next slide timer
     nextTimer?: number
     transition?: Transition
+    filterEnabled?: ["background", "foreground"]
+    filter?: string
     end?: boolean
     timer?: number
     background?: string // set backgorund action?

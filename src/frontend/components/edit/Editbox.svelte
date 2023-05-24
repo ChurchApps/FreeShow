@@ -23,6 +23,7 @@
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
 
     export let item: Item
+    export let filter: string = ""
     export let ref: {
         type?: "show" | "overlay" | "template"
         showId?: string
@@ -450,7 +451,7 @@ bind:offsetWidth={width} -->
     bind:this={itemElem}
     class={plain ? "editItem" : "editItem item context #edit_box"}
     class:selected={$activeEdit.items.includes(index)}
-    style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1}`}
+    style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1};${filter ? "filter: " + filter + ";" : ""}`}
     data-index={index}
     on:mousedown={mousedown}
 >

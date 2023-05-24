@@ -117,12 +117,12 @@
 <hr />
 <Button
     on:click={() => {
-        changeTransition("text", "duration", $transitionData.text.duration || 500)
-        changeTransition("text", "type", $transitionData.text.type || "fade")
-        changeTransition("text", "easing", $transitionData.text.easing || "sine")
-        changeTransition("media", "duration", $transitionData.media.duration || 800)
-        changeTransition("media", "type", $transitionData.media.type || "fade")
-        changeTransition("media", "easing", $transitionData.media.easing || "sine")
+        changeTransition("text", "duration", isSlide ? $transitionData.text.duration || 500 : 500)
+        changeTransition("text", "type", isSlide ? $transitionData.text.type || "fade" : "fade")
+        changeTransition("text", "easing", isSlide ? $transitionData.text.easing || "sine" : "sine")
+        changeTransition("media", "duration", isSlide ? $transitionData.media.duration || 800 : 800)
+        changeTransition("media", "type", isSlide ? $transitionData.media.type || "fade" : "fade")
+        changeTransition("media", "easing", isSlide ? $transitionData.media.easing || "sine" : "sine")
     }}
     center
 >
