@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
-import { uid } from "uid"
 import type { Item, ItemType } from "../../../../types/Show"
-import { activeEdit, activeShow, dictionary, showsCache, templates } from "../../../stores"
+import { activeEdit, activeShow, showsCache, templates, timers } from "../../../stores"
+import { createNewTimer } from "../../drawer/timers/timers"
 import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
@@ -17,8 +17,8 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     if (id) newData.id = id
 
     if (type === "text") newData.lines = [{ align: template?.[0].lines?.[0].align || "", text: [{ value: "", style: template?.[0].lines?.[0].text?.[0].style || "" }] }]
-    // else if (type === "timer") newData.timer = { id: uid(), name: "", type: "countdown", start: 300, end: 0, format: "MM:SS" }
-    else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
+    // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
+    else if (type === "timer") newData.timerId = Object.keys(get(timers))[0] || createNewTimer()
     else if (type === "clock") newData.clock = { type: "digital", seconds: false }
     else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""

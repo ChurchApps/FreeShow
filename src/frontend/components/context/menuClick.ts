@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OUTPUT, STAGE } from "../../../types/Channels"
+import type { Slide } from "../../../types/Show"
 import { changeSlideGroups } from "../../show/slides"
 import {
     activeDrawerTab,
@@ -21,8 +22,8 @@ import {
     overlays,
     popupData,
     previousShow,
-    projects,
     projectView,
+    projects,
     saved,
     scriptures,
     selected,
@@ -34,7 +35,7 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
-import { playPause, playPauseGlobal } from "../drawer/timers/timers"
+import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
 import { clone } from "../helpers/array"
@@ -48,7 +49,6 @@ import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
-import type { Slide } from "../../../types/Show"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
@@ -468,8 +468,7 @@ const actions: any = {
 
         if (obj.sel.id.includes("timer")) {
             obj.sel.data.forEach((data) => {
-                if (obj.sel.id === "timer") playPause(data.item)
-                else playPauseGlobal(data.id, data.timer)
+                playPauseGlobal(data.id, data)
             })
             return
         }
@@ -648,7 +647,7 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
     let childs: any[] = []
 
     // remove parents and delete childs
-    data.forEach(({index}: any) => {
+    data.forEach(({ index }: any) => {
         if (!ref[index]) return
 
         if (type === "remove") {

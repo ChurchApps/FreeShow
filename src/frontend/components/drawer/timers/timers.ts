@@ -4,25 +4,18 @@ import { activeProject, activeTimers, events, projects, timers } from "../../../
 import { loadShows } from "../../helpers/setShow"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
+import { uid } from "uid"
+import { clone } from "../../helpers/array"
 
-export async function getTimers(showRef: any) {
-    let list: any[] = []
+export async function getShowTimers(showRef: any) {
+    let list: string[] = []
 
     if (showRef.type !== undefined && showRef.type !== "show") return []
     if (!get(showsCache)[showRef.id]) await loadShows([showRef.id])
 
     let timers = (_show(showRef.id).slides().items().get() || [[]]).flat().filter((a: any) => a.type === "timer")
 
-    if (timers.length) {
-        timers.forEach((a: any) => {
-            let timer = a.timer
-
-            // pre 0.5.3
-            if (timer.type === "countdown") timer.type = "counter"
-
-            list.push({ showId: showRef.id, slideId: a.id, id: a.timer.id, timer })
-        })
-    }
+    if (timers.length) list = timers.map((a) => a.timerId)
 
     return list
 }
@@ -62,6 +55,41 @@ export function updateShowTimer(ref: any, timer: any) {
     })
 }
 
+export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
+    if (!showId) return
+
+    showsCache.update((a) => {
+        if (!a[showId]) return a
+
+        Object.keys(a[showId].slides).forEach(checkSlide)
+        function checkSlide(slideId) {
+            let items: any[] = a[showId!].slides[slideId].items
+
+            let timerIndex = items.findIndex((a) => !a.timerId && a.timer)
+            while (timerIndex >= 0) {
+                let globalTimerId = uid()
+                a[showId!].slides[slideId].items[timerIndex].timerId = globalTimerId
+
+                timers.update((t) => {
+                    let globalTimer = clone(a[showId!].slides[slideId].items[timerIndex].timer)
+                    globalTimer.name = a[showId!].name
+                    delete globalTimer.id
+
+                    // pre 0.5.3
+                    if (globalTimer.type === "countdown") globalTimer.type = "counter"
+
+                    t[globalTimerId] = globalTimer
+                    return t
+                })
+
+                timerIndex = items.findIndex((a) => !a.timerId && a.timer)
+            }
+        }
+
+        return a
+    })
+}
+
 // function getSlideWithTimer(ref: any) {
 //   let slide: any = _show(ref.showId).get().slide[ref.slideId]
 //   let itemIndex: number | null = null
@@ -86,21 +114,20 @@ export async function loadProjectTimers(projectShows = get(projects)[get(activeP
 
     await Promise.all(
         projectShows.map(async (a) => {
-            let timers: any[] = await getTimers(a)
+            let timers: any[] = await getShowTimers(a)
             if (timers) list.push(...timers)
         })
     )
 
     // remove duplicates
-    list = list.filter((value, index, self) => index === self.findIndex((a) => a.id === value.id))
+    list = [...new Set(list)]
     return list
 }
 
-export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, item: any = null) {
+export function getCurrentTimerValue(timer: Timer, ref: any, today: Date) {
     let currentTime: number = 0
     if (timer.type === "counter") {
-        if (item) currentTime = get(activeTimers).filter((a) => a.showId === ref.showId && a.slideId === ref.slideId && a.id === ref.id)[0]?.currentTime
-        else currentTime = get(activeTimers).filter((a) => a.id === ref.id)[0]?.currentTime
+        currentTime = get(activeTimers).filter((a) => a.id === ref.id)[0]?.currentTime
         if (typeof currentTime !== "number") currentTime = timer.start!
     } else if (timer.type === "clock") {
         let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
@@ -110,32 +137,33 @@ export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, item: 
         currentTime = eventTime > today.getTime() ? (eventTime - today.getTime()) / 1000 : 0
     }
 
-    console.log(currentTime)
+    // console.log(currentTime)
     return currentTime
 }
 
 // ACTIONS
 
-export function playPause(item: any) {
-    let index = get(activeTimers).findIndex((a) => a.showId === item.showId && a.slideId === item.slideId && a.id === item.id)
-
-    activeTimers.update((a) => {
-        if (index < 0) a.push({ showId: item.showId, slideId: item.slideId, ...item.timer, currentTime: item.timer.start, paused: false })
-        else a[index].paused = !a[index].paused
-        return a
-    })
-}
-
-export function playPauseGlobal(id: any, timer: any) {
+export function playPauseGlobal(id: any, timer: any, forcePlay: boolean = false) {
     let index = get(activeTimers).findIndex((a) => a.id === id)
 
     activeTimers.update((a) => {
-        if (index < 0) a.push({ ...timer, id, currentTime: timer.start, paused: false })
-        else a[index].paused = !a[index].paused
+        if (index < 0) a.push({ ...timer, id, currentTime: timer?.start || 0, paused: false })
+        else a[index].paused = forcePlay ? false : !a[index].paused
         return a
     })
 
     // send(OUTPUT, ["ACTIVE_TIMERS"], get(activeTimers))
+}
+
+export function createNewTimer(name: string = "") {
+    let timerId = uid()
+
+    timers.update((a) => {
+        a[timerId] = { name, type: "counter" }
+        return a
+    })
+
+    return timerId
 }
 
 export function resetTimer(id: string) {
@@ -157,22 +185,3 @@ export function deleteTimer(id: string) {
         return a
     })
 }
-
-// export function getTimerNumber(time: string) {
-//   // let start = timer.start
-//   // let end = timer.end
-//   // let duration = timer.start - timer.end
-
-//   console.log(time)
-//   let split = time.split(":")
-//   split.reverse()
-//   let currentTime = 0
-//   split.forEach((timeString: string, i) => {
-//     let seconds = 60 * (i + 1) - 60
-//     console.log(seconds)
-//     currentTime += Number(timeString) / seconds
-//   })
-//   console.log(currentTime)
-
-//   return currentTime
-// }

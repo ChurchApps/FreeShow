@@ -4,7 +4,6 @@ import { updateCachedShow, updateCachedShows, updateShowsList } from "../compone
 import {
     activeProject,
     activeShow,
-    activeTimers,
     cachedShowsData,
     draw,
     drawSettings,
@@ -23,14 +22,15 @@ import {
     shows,
     showsCache,
     templates,
+    timers,
     transitionData,
     volume,
 } from "../stores"
+import { driveConnect } from "./drive"
 import { midiInListen } from "./midi"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { eachConnection, sendData, timedout } from "./sendData"
-import { driveConnect } from "./drive"
 
 export function listenForUpdates() {
     shows.subscribe((data) => {
@@ -104,11 +104,16 @@ export function listenForUpdates() {
     transitionData.subscribe((data) => {
         send(OUTPUT, ["TRANSITION"], data)
     })
-    activeTimers.subscribe((data) => {
-        send(OUTPUT, ["ACTIVE_TIMERS"], data)
-    })
+    // timerTick.ts
+    // activeTimers.subscribe((data) => {
+    //     send(OUTPUT, ["ACTIVE_TIMERS"], data)
+    // })
     mediaFolders.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
+    })
+
+    timers.subscribe((data) => {
+        send(OUTPUT, ["TIMERS"], data)
     })
 
     volume.subscribe((data) => {

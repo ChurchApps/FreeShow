@@ -178,7 +178,7 @@
         "groups": "Não há grupos",
         "events": "Não há eventos",
         "text": "Digite algo",
-        "timers": "Sem temporizadores globais e sem temporizadores nas visualizações deste projeto"
+        "timers": "No timers"
     },
     "remote": {
         "projects": "Projetos",
@@ -618,7 +618,6 @@
         "system_clock": "Relógio do sistema",
         "video_time": "Tempo do vídeo",
         "video_countdown": "Contagem regressiva de vídeo",
-        "global_timers": "Temporizadores globais",
         "other": "Outro",
         "message": "Mensagem",
         "color": "Cor",

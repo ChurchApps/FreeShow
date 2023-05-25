@@ -178,7 +178,7 @@
         "groups": "Žiadne skupiny",
         "events": "Žiadne udalosti",
         "text": "Niečo napíšte",
-        "timers": "Žiadne globálne časovače ani žiadne časovače v prezentácii tohoto projektu"
+        "timers": "No timers"
     },
     "remote": {
         "projects": "Projekty",
@@ -618,7 +618,6 @@
         "system_clock": "Systémové hodiny",
         "video_time": "Video čas",
         "video_countdown": "Video odpočet",
-        "global_timers": "Globálne časovače",
         "other": "Iné",
         "message": "Správa",
         "color": "Farba",

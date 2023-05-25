@@ -178,7 +178,7 @@
         "groups": "Keine Gruppen",
         "events": "Keine Veranstaltungen",
         "text": "Etwas eingeben",
-        "timers": "Keine globalen Timer und keine Timer in der Show in diesem Projekt"
+        "timers": "No timers"
     },
     "remote": {
         "projects": "Projekte",
@@ -618,7 +618,6 @@
         "system_clock": "Systemuhr",
         "video_time": "Videozeit",
         "video_countdown": "Video Countdown",
-        "global_timers": "Globale Timer",
         "other": "Andere",
         "message": "Mitteilung",
         "color": "Farbe",

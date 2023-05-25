@@ -67,10 +67,10 @@
             buttons = [
                 // { id: "all", name: "all", default: true, icon: "all" }, ???????
                 // TODO: split event timers to it's own space & create popup ???????
-                { id: "timer", name: "stage.global_timers", default: true, icon: "timer" },
+                { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
                 // { id: "events", name: "event timers...", default: true, icon: "event" },
                 // TODO: all active in output, not project!!
-                { id: "project", name: "remote.project", default: true, icon: "project" },
+                // { id: "project", name: "remote.project", default: true, icon: "project" },
             ]
         } else if (id === "web") {
             buttons = [...(sortObject(keysToID($webFavorites), "name") as Button[])]

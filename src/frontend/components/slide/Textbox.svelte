@@ -46,7 +46,7 @@
         setInterval(() => (today = new Date()), 500)
     })
 
-    $: if (item.type === "timer") ref.id = item.timer!.id!
+    // $: if (item.type === "timer") ref.id = item.timer!.id!
 
     $: slideId = ref.slideId || ""
     function getMirroredItem() {
@@ -110,9 +110,9 @@
             {/if}
         {/if}
     {:else if item?.type === "timer"}
-        {#key item.timer}
-            <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />
-        {/key}
+        <!-- {#key item.timer} -->
+        <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
+        <!-- {/key} -->
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "mirror"}

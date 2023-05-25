@@ -90,7 +90,7 @@ export const boxes: Box = {
     timer: {
         icon: "timer",
         edit: {
-            default: [{ input: "editTimer" }],
+            default: [{ id: "timerId", input: "editTimer" }],
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
                 { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },

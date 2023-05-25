@@ -145,7 +145,7 @@
         {/if}
         {#each edits[section] as input}
             {#if input.input === "editTimer"}
-                <EditTimer {item} />
+                <EditTimer {item} on:change={(e) => valueChange(e, input)} />
             {:else if input.input === "media"}
                 <MediaPicker style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
                     <Icon id="image" right />

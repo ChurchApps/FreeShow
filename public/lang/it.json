@@ -178,7 +178,7 @@
         "groups": "Nessun grouppo",
         "events": "Nessun evento",
         "text": "Scrivi qualcosa",
-        "timers": "Nessun timer globale e nessun timer negli spettacoli in questo progetto"
+        "timers": "No timers"
     },
     "remote": {
         "projects": "Progetti",
@@ -618,7 +618,6 @@
         "system_clock": "Orologio di sistema",
         "video_time": "Tempo del video",
         "video_countdown": "Conto alla rovescia del video",
-        "global_timers": "Timer globali",
         "other": "Altro",
         "message": "Messaggio",
         "color": "Colore",

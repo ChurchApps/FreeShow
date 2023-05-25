@@ -55,6 +55,7 @@ import {
     templates,
     textCache,
     themes,
+    timers,
     transitionData,
     version,
 } from "../stores"
@@ -219,6 +220,7 @@ const receiveOUTPUT: any = {
     DRAW_TOOL: (a: any) => drawTool.set(a),
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     MEDIA: (a: any) => mediaFolders.set(a),
+    TIMERS: (a: any) => timers.set(a),
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     // POSITION: (a: any) => outputPosition.set(a),

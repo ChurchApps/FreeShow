@@ -25,6 +25,8 @@
         else index = Math.max(0, index - 1)
         dispatch("click", options[index])
     }
+
+    // TODO: scroll don't work with multiple of the same name (e.g. EditTimer.svelte)
 </script>
 
 <svelte:window

@@ -2,11 +2,11 @@ import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
-import { activeEdit, activePage, activeProject, activeShow, activeTimers, media, outLocked, outputs, overlays, projects, showsCache, slideTimers } from "./../../stores"
+import { playPauseGlobal } from "../drawer/timers/timers"
+import { activeEdit, activePage, activeProject, activeShow, activeTimers, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, timers } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getMediaType } from "./media"
 import { getActiveOutputs, setOutput } from "./output"
-import { playPause } from "../drawer/timers/timers"
 import { _show } from "./shows"
 
 const keys: any = {
@@ -339,11 +339,7 @@ function playSlideTimers({ showId, slideId }) {
         if (slide.id !== slideId) return
         let items = slide.items
         items.forEach((item) => {
-            if (item.type === "timer") {
-                let itemRef = { showId, slideId, id: item.timer.id, ...item }
-                console.log(itemRef)
-                playPause(itemRef)
-            }
+            if (item.type === "timer" && item.timerId) playPauseGlobal(item.timerId, get(timers)[item.timerId], true)
         })
     })
 }

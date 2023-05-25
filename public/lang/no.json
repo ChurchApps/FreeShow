@@ -178,7 +178,7 @@
         "groups": "Ingen grupper",
         "events": "Ingen hendelser",
         "text": "Skriv noe",
-        "timers": "Ingen globale nedtellinger, og ingen i noen show i dette prosjektet"
+        "timers": "Ingen nedtellinger"
     },
     "remote": {
         "projects": "Prosjekter",
@@ -618,7 +618,6 @@
         "system_clock": "Systemklokke",
         "video_time": "Videotid",
         "video_countdown": "Video nedtelling",
-        "global_timers": "Globale nedtellinger",
         "other": "Andre",
         "message": "Melding",
         "color": "Farge",

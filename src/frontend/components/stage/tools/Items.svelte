@@ -56,9 +56,9 @@
     <Panel>
         {#each Object.entries(titles) as [title, items], i}
             {#if i > 0}<hr />{/if}
-            <h6><T id="stage.{title}" /></h6>
 
             {#if title === "global_timers"}
+                <h6><T id="tabs.timers" /></h6>
                 {#each timersList as timer}
                     <Button on:click={() => click(title + "#" + timer.id)} active={enabledItems[title + "#" + timer.id]?.enabled} style="width: 100%;" bold={false}>
                         <Icon id="timer" right />
@@ -66,6 +66,7 @@
                     </Button>
                 {/each}
             {:else}
+                <h6><T id="stage.{title}" /></h6>
                 {#each items as item}
                     <Button on:click={() => click(title + "#" + item)} active={enabledItems[title + "#" + item]?.enabled} style="width: 100%;" bold={false}>
                         <Icon id={item.split("_")[item.split("_").length - 1]} right />

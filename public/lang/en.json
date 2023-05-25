@@ -178,7 +178,7 @@
         "groups": "No groups",
         "events": "No events",
         "text": "Type something",
-        "timers": "No global timers and no timers in the shows in this project"
+        "timers": "No timers"
     },
     "remote": {
         "projects": "Projects",
@@ -618,7 +618,6 @@
         "system_clock": "System clock",
         "video_time": "Video time",
         "video_countdown": "Video countdown",
-        "global_timers": "Global timers",
         "other": "Other",
         "message": "Message",
         "color": "Color",

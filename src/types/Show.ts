@@ -74,7 +74,8 @@ export interface Item {
     style: string
     align?: string
     media?: any
-    timer?: Timer
+    timer?: Timer // pre 0.8.3 // also local backup?
+    timerId?: string
     clock?: Clock
     type?: ItemType
     mirror?: Mirror

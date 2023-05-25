@@ -549,7 +549,7 @@ bind:offsetWidth={width} -->
             {/if}
         {/if}
     {:else if item?.type === "timer"}
-        <Timer {item} {ref} {today} style="font-size: {autoSize}px;" />
+        <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "mirror"}

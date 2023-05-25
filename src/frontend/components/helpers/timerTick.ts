@@ -1,12 +1,13 @@
 import { get } from "svelte/store"
 import type { Event } from "../../../types/Calendar"
 import { OUTPUT, STAGE } from "../../../types/Channels"
-import { activeTimers, events, shows } from "../../stores"
+import { activeTimers, currentWindow, events, shows } from "../../stores"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
+import { clone } from "./array"
 
 const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
@@ -14,15 +15,16 @@ const ONE_MINUTE = 1000 * 60
 
 let timeout: any = null
 export function startTimer() {
+    if (get(currentWindow)) return
     if (!get(activeTimers).filter((a) => a.paused !== true).length || timeout) return
 
     timeout = setTimeout(() => {
-        activeTimers.update((a) => {
-            a = a.map(increment)
-            return a
-        })
-        send(OUTPUT, ["ACTIVE_TIMERS"], get(activeTimers))
-        send(STAGE, ["ACTIVE_TIMERS"], get(activeTimers))
+        let newActiveTimers = clone(get(activeTimers)).map(increment)
+
+        send(OUTPUT, ["ACTIVE_TIMERS"], newActiveTimers)
+        send(STAGE, ["ACTIVE_TIMERS"], newActiveTimers)
+        activeTimers.set(newActiveTimers)
+
         timeout = null
         startTimer()
     }, INTERVAL)

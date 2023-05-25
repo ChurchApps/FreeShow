@@ -1,10 +1,11 @@
 <script lang="ts">
     import { activeProject, activeShow, dictionary, media, outLocked, outputs, playingVideos, projects, volume } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
-    import { analyseAudio, getAnalyser } from "../helpers/audio"
+    import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
     import Icon from "../helpers/Icon.svelte"
-    import { getActiveOutputs, setOutput } from "../helpers/output"
     import T from "../helpers/T.svelte"
+    import { analyseAudio, getAnalyser } from "../helpers/audio"
+    import { getActiveOutputs, setOutput } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
     import HoverButton from "../inputs/HoverButton.svelte"
     import Splash from "../main/Splash.svelte"
@@ -125,6 +126,9 @@
     }
 
     let previewControls: boolean = false
+
+    // check for timer & create global
+    $: if (show?.id) createGlobalTimerFromLocalTimer(show?.id)
 </script>
 
 <svelte:window on:keydown={keydown} />
