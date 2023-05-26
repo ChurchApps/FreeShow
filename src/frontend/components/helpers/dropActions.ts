@@ -15,6 +15,7 @@ function getId(drag: any): string {
     if (drag.id === "slide" || drag.id === "group") return "slide"
     const extension: string = getExtension(drag.data[0].name)
     if (drag.id === "files" && getMediaType(extension) === "audio") return "audio"
+    if (drag.id === "show" && drag.data[0].type === "audio") return "audio"
     if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera") return "media"
     // if (drag.id === "audio") return "audio"
     // if (drag.id === "global_group") return "global_group"
@@ -212,7 +213,10 @@ const slideDrop: any = {
         } else if (drag.id === "camera") data[0].type = "camera"
         else if (!data[0].name) data[0].name = data[0].path
 
-        if (drop.center) {
+        let center = drop.center
+        if (drag.id === "files" && _show().layouts("active").ref()[0][drop.index - 1]) center = true
+
+        if (center) {
             history.id = "showMedia"
 
             if (drop.trigger?.includes("end")) drop.index!--
@@ -235,12 +239,28 @@ const slideDrop: any = {
     audio: ({ drag, drop }: any, h: any) => {
         h.id = "showAudio"
 
+        let data = drag.data
+
+        if (drag.id === "files") {
+            data = []
+            drag.data.forEach((a: any) => {
+                const extension: string = getExtension(a.name)
+                if (files[drop.id].includes(extension)) {
+                    data.push({
+                        path: a.path,
+                        name: removeExtension(a.name),
+                        type: getMediaType(extension),
+                    })
+                }
+            })
+        }
+
         if (drop.trigger?.includes("end")) drop.index!--
         h.location.layoutSlide = drop.index
 
-        drag.data.forEach((audio: any) => {
+        data.forEach((audio: any) => {
             // TODO: drop both audio & video files...
-            h.newData = { name: audio.name || audio.path, path: audio.path, type: "audio" }
+            h.newData = { name: audio.name || audio.path || audio.id, path: audio.path || audio.id, type: "audio" }
             history(h)
         })
     },

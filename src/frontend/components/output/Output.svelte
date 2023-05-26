@@ -5,6 +5,7 @@
     import { receive, send } from "../../utils/request"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
+    import { clone } from "../helpers/array"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Textbox from "../slide/Textbox.svelte"
@@ -197,6 +198,22 @@
     function resetTempBG() {
         tempVideoBG = null
     }
+
+    // fix videoTime resetting to 0 in Preview.svelte
+    $: if (tempVideoBG?.type === "player") video = "player"
+
+    // prevent too fast slide text updates (svelte transition bug)
+    let slideClone: any = {}
+    let slideTimeout: any = null
+    $: startSlideTimer(currentSlide)
+    function startSlideTimer(_updater) {
+        if (slideTimeout !== null) return
+
+        slideTimeout = setTimeout(() => {
+            slideClone = clone(currentSlide)
+            slideTimeout = null
+        }, 50)
+    }
 </script>
 
 <Zoomed background={currentSlide?.settings?.color || currentOutput.show?.background || "black"} {center} {style} {resolution} bind:ratio>
@@ -212,12 +229,12 @@
     {/if}
 
     {#if slide && layers.includes("slide")}
-        {#key slide}
+        {#key slideClone}
             <!-- TODO: svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
             <span transition:custom={transition} style="pointer-events: none;display: block;">
-                {#if currentSlide?.items}
-                    {#each currentSlide?.items as item}
-                        <Textbox filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""} {item} {ratio} ref={{ showId: slide.id, slideId: currentSlide.id, id: currentSlide.id }} {linesStart} {linesEnd} />
+                {#if slideClone?.items}
+                    {#each slideClone?.items as item}
+                        <Textbox filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""} {item} {ratio} ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }} {linesStart} {linesEnd} />
                     {/each}
                 {/if}
             </span>

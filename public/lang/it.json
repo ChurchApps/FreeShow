@@ -565,6 +565,8 @@
         "seconds": "Secondi",
         "from": "Da",
         "to": "A",
+        "overflow": "Overflow when reached end",
+        "overflow_color": "Overflow color",
         "preview": "Anteprima",
         "clock": "Orologio",
         "event": "Evento",

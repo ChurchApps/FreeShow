@@ -166,11 +166,8 @@ export function history(obj: History, undo: null | boolean = null) {
                 }
 
                 // layout audio
-                let audio =
-                    _show(showID)
-                        .layouts([obj.location!.layout!])
-                        .slides([[obj.location!.layoutSlide!]])
-                        .get()[0]?.[0]?.audio || []
+                let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
+                let audio = ref.data?.audio || []
 
                 if (undo) {
                     _show(showID).media([obj.newData.path]).remove()
@@ -187,7 +184,6 @@ export function history(obj: History, undo: null | boolean = null) {
                     if (!audio.includes(audioId)) {
                         audio.push(audioId)
 
-                        let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
                         if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "audio", value: audio })
                         else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "audio", value: audio })
                     }
@@ -214,7 +210,12 @@ export function history(obj: History, undo: null | boolean = null) {
     // TODO: go to location
     if (obj.location!.page === "drawer") {
         // TODO: open drawer
-    } else if (obj.location!.page !== "none") activePage.set(obj.location!.page)
+    } else if (obj.location!.page !== "none") {
+        // this makes more sense
+        if ((get(activePage) === "show" || get(activePage) === "edit") && (obj.location!.page === "show" || obj.location!.page === "edit")) {
+            // dont do anything
+        } else activePage.set(obj.location!.page)
+    }
 
     // TODO: slide text edit, dont override different style keys!
     // }

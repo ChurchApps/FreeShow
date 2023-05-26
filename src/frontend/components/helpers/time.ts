@@ -1,6 +1,9 @@
 import type { Time } from "../../../types/Main"
 
 export function secondsToTime(seconds: number): Time {
+    // turn to positive (timers have custom negative placed before)
+    seconds = Math.abs(seconds)
+
     let d: any = Math.floor(seconds / (3600 * 24))
     let h: any = Math.floor(seconds / 3600 - d * 24)
     let m: any = Math.floor((seconds - d * 3600 * 24 - h * 3600) / 60)
@@ -33,9 +36,7 @@ export function dateToString(date: any, full: boolean = false, d: any = {}): str
     let string: string = ""
     if (full) {
         let weekday = d.weekday ? d.weekday[date.getDay() === 0 ? 7 : date.getDay()] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()]
-        month = d.month
-            ? d.month[date.getMonth() + 1]
-            : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][date.getMonth()]
+        month = d.month ? d.month[date.getMonth() + 1] : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][date.getMonth()]
         weekday = weekday[0].toUpperCase() + weekday.slice(1, weekday.length)
 
         // Monday 6. February, 2021

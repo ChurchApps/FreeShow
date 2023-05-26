@@ -432,14 +432,14 @@ const pasteActions: any = {
         data?.forEach((slide: any) => {
             slide = JSON.parse(JSON.stringify(slide))
             slide.name += " 2"
-            history({ id: "UPDATE", newData: { data: slide }, location: { page: "drawer", id: "category_overlays" } })
+            history({ id: "UPDATE", newData: { data: slide }, location: { page: "drawer", id: "overlay" } })
         })
     },
     template: (data: any) => {
         data?.forEach((slide: any) => {
             slide = JSON.parse(JSON.stringify(slide))
             slide.name += " 2"
-            history({ id: "UPDATE", newData: { data: slide }, location: { page: "drawer", id: "category_templates" } })
+            history({ id: "UPDATE", newData: { data: slide }, location: { page: "drawer", id: "template" } })
         })
     },
 }

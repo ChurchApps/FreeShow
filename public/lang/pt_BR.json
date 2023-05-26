@@ -565,6 +565,8 @@
         "seconds": "Segundos",
         "from": "A partir de",
         "to": "Até",
+        "overflow": "Overflow when reached end",
+        "overflow_color": "Overflow color",
         "preview": "Pré-visualizar",
         "clock": "Relógio",
         "event": "Evento",

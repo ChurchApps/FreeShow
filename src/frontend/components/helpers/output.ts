@@ -26,6 +26,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
     outputs.update((a: any) => {
         let outs = getActiveOutputs()
         if (outputId) outs = [outputId]
+
         outs.forEach((id: string) => {
             let output: any = a[id]
             if (!output.out) a[id].out = {}
@@ -41,6 +42,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             // , time: data.startAt || 0
             if (key === "background" && data) send(OUTPUT, ["UPDATE_VIDEO"], { id, data: { muted: data.muted || false, loop: data.loop || false } })
         })
+
         return a
     })
 }

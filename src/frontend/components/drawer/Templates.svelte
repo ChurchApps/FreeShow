@@ -60,7 +60,7 @@
                         {resolution}
                         on:click={(e) => {
                             if ((($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show") && !e.ctrlKey && !e.metaKey)
-                                history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "show", override: "show#" + $activeShow.id } })
+                                history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })
                         }}
                     >
                         <SelectElem id="template" data={template.id} fill draggable>

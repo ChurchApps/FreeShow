@@ -211,7 +211,12 @@
         /* justify-content: center;
         align-items: center; */
         /* padding: 10px; */
-        overflow: auto;
+
+        /* WIP try to fix scrollbar content flickering */
+        /* setting .slide elem to overflow: hidden; works... */
+        /* overflow: overlay;
+        z-index: 1; */
+        /* scrollbar-gutter: stable both-edges; */
     }
 
     /* .chordsButton {

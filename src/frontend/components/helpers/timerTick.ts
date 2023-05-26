@@ -31,7 +31,7 @@ export function startTimer() {
 }
 
 function increment(timer: any) {
-    if (timer.currentTime === timer.end || timer.paused) return timer
+    if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
     if (timer.start < timer.end) timer.currentTime++
     else timer.currentTime--
 

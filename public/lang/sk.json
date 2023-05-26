@@ -565,6 +565,8 @@
         "seconds": "Sekundy",
         "from": "Od",
         "to": "Do",
+        "overflow": "Overflow when reached end",
+        "overflow_color": "Overflow color",
         "preview": "Náhľad",
         "clock": "Hodiny",
         "event": "Nová udalosť",

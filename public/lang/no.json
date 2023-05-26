@@ -565,6 +565,8 @@
         "seconds": "Sekunder",
         "from": "Fra",
         "to": "Til",
+        "overflow": "Fortsett ved slutt er nådd",
+        "overflow_color": "Overløpsfarge",
         "preview": "Forhåndsvisning",
         "clock": "Klokke",
         "event": "Hendelse",

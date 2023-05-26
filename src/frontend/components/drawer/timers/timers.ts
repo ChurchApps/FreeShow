@@ -43,18 +43,6 @@ export function getTimer(ref: any) {
     return JSON.parse(JSON.stringify(timer || {}))
 }
 
-export function updateShowTimer(ref: any, timer: any) {
-    if (!ref.id || !ref.showId || !ref.slideId) return
-
-    showsCache.update((a) => {
-        let items: any[] = a[ref.showId].slides[ref.slideId].items
-        let index: number = items.findIndex((a) => a.timer?.id === ref.id)
-        console.log(items, index)
-        if (index > -1) items[index].timer = timer
-        return a
-    })
-}
-
 export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
     if (!showId) return
 
@@ -64,6 +52,8 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
         Object.keys(a[showId].slides).forEach(checkSlide)
         function checkSlide(slideId) {
             let items: any[] = a[showId!].slides[slideId].items
+
+            // TODO: "backup" global timer to show item.timer
 
             let timerIndex = items.findIndex((a) => !a.timerId && a.timer)
             while (timerIndex >= 0) {

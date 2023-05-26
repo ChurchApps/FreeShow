@@ -204,7 +204,7 @@
     let videoTime: number = 0
 
     // duration is for some reason NaN sometimes
-    $: if (video && !videoData.duration) videoData.duration = video.duration
+    $: if (video && videoData && !videoData?.duration) videoData.duration = video.duration
     $: if (!video && videoTime) videoTime = 0
 
     let title: string = ""
@@ -287,7 +287,7 @@
         </Button>
     {/if}
     <div class="top" class:hide={!enablePreview}>
-        <Button class="hide" on:click={() => (enablePreview = false)} title={$dictionary.preview?._hide_preview} center>
+        <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>
             <Icon id="hide" white />
         </Button>
         <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 15px);"}>

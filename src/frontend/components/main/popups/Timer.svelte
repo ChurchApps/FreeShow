@@ -3,12 +3,14 @@
     import { uid } from "uid"
     import type { Timer } from "../../../../types/Show"
     import { activePopup, dictionary, events, timers } from "../../../stores"
-    import { getTimer, updateShowTimer } from "../../drawer/timers/timers"
+    import { getTimer } from "../../drawer/timers/timers"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { deselect, getSelected } from "../../helpers/select"
     import { secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
+    import Color from "../../inputs/Color.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
@@ -91,6 +93,13 @@
         timer.name = e.target.value
     }
 
+    function toggleOverflow(e: any) {
+        timer.overflow = e.target.checked
+    }
+    function changeOverflowColor(e: any) {
+        timer.overflowColor = e.target.value
+    }
+
     // timer
     function createTimer() {
         timers.update((a) => {
@@ -104,30 +113,33 @@
     // TODO: history
 
     function editTimer() {
-        console.log("edit", currentTimer)
         let id: string = currentTimer.id
         let newTimer: any = getNewTimer()
 
-        if (currentTimer.showId) {
-            updateShowTimer(currentTimer, newTimer)
-        } else {
-            timers.update((a) => {
-                a[id] = newTimer
-                return a
-            })
-        }
+        timers.update((a) => {
+            a[id] = newTimer
+            return a
+        })
+
         activePopup.set(null)
     }
 
     function getNewTimer() {
         let newTimer: Timer = { name: timer.name, type: timer.type }
+
         if (timer.id) newTimer.id = timer.id
         if (timer.type === "event") newTimer.event = timer.event
         else if (timer.type === "clock") newTimer.time = timer.time || "12:00"
         else {
             newTimer.start = timer.start === undefined ? 300 : Number(timer.start)
             newTimer.end = timer.end === undefined ? 0 : Number(timer.end)
+
+            if (timer.overflow) {
+                newTimer.overflow = timer.overflow
+                newTimer.overflowColor = timer.overflowColor
+            }
         }
+
         return newTimer
     }
 </script>
@@ -152,6 +164,20 @@
     </div>
 
     <br />
+
+    <div style="display: flex;align-items: center;justify-content: space-between;">
+        <p><T id="timer.overflow" /></p>
+        <Checkbox checked={timer.overflow} on:change={toggleOverflow} />
+    </div>
+    {#if timer.overflow}
+        <div style="display: flex;align-items: center;justify-content: space-between">
+            <p><T id="timer.overflow_color" /></p>
+            <Color style="width: 30%;" value={timer.overflowColor || "red"} on:input={changeOverflowColor} />
+        </div>
+    {/if}
+
+    <br />
+
     <h4><T id="timer.preview" /></h4>
     <div style="display: flex;align-items: center;">
         {#if Number(fromTime.d)}{fromTime.d}, {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s}

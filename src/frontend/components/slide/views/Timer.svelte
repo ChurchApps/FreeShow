@@ -27,24 +27,37 @@
     $: if (timer) currentTime = getCurrentTimerValue(timer, ref, today)
 
     function numberToText(time: number) {
-        // let allTimes: any = secondsToTimes(time)
-        // console.log(allTimes)
-
-        // let t: string[] = []
-        // if (timer?.format) timer?.format.split(":").forEach((a: string) => t.push(format(a, allTimes)))
-        // else {
         let allTimes: any = secondsToTime(time)
+
         timeValue = (allTimes.d === 0 ? "" : allTimes.d + ", ") + [allTimes.h === "00" ? "" : allTimes.h, allTimes.m, allTimes.s].join(":")
         while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
+
         timeValue = timeValue.replace(" :", " ")
-        // console.log(time, allTimes, timeValue)
-        // }
-        // times = t
+    }
+
+    $: overflow = getTimerOverflow(currentTime)
+    $: negative = timer?.start! > timer?.end!
+    function getTimerOverflow(time) {
+        if (!timer.overflow || timer.type !== "counter") return false
+        if (!timer.overflow) return false
+        let start: number = timer.start!
+        let end: number = timer.end!
+
+        if (start < end) {
+            if (time > end) return true
+            return false
+        }
+
+        if (time < end) return true
+        return false
     }
 </script>
 
 <div class="align" style="{style}{item?.align || ''}">
-    <div style="display: flex;white-space: nowrap;">
+    <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
+        {#if overflow && negative}
+            <span>-</span>
+        {/if}
         {#if times.length}
             {#each times as ti, i}
                 <div style="position: relative;display: flex;">

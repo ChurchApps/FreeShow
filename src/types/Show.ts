@@ -96,6 +96,8 @@ export interface Timer {
     end?: number
     event?: string
     time?: string
+    overflow?: boolean
+    overflowColor?: string
     // format?: string
     // paused?: boolean
 }
