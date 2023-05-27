@@ -109,6 +109,7 @@
                 {@const filter = getMediaFilter(background.path)}
                 {@const flipped = $media[background.path]?.flipped || false}
                 {@const fit = $media[background.path]?.fit || "contain"}
+                {@const speed = $media[background.path]?.speed || "1"}
                 <SelectElem id="media" data={{ ...background }} draggable>
                     <div class="item context #show_media" class:active={findMatchingOut(background.path)}>
                         <HoverButton
@@ -117,7 +118,7 @@
                             size={3}
                             on:click={() => {
                                 if (!$outLocked) {
-                                    setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped, fit })
+                                    setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped, fit, speed })
                                     if (background.type === "video") send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
                                 }
                             }}
@@ -125,7 +126,7 @@
                         >
                             <!-- <div style="flex: 2;height: 50px;"> -->
                             {#key background.path}
-                                <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} {fit} />
+                                <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} {fit} {speed} />
                             {/key}
                             <!-- </div> -->
                         </HoverButton>

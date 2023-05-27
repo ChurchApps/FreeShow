@@ -135,6 +135,7 @@
         "pause": "Sett på pause",
         "stop": "Stopp",
         "volume": "Volum",
+        "speed": "Hastighet",
         "show": "Vis",
         "flip": "Vend",
         "all": "Mapper, bilder og videoer",
@@ -532,6 +533,8 @@
         "add_icons": "Legg til ikoner",
         "arrange_items": "Ordne elementer",
         "filters": "Filtre",
+        "backdrop_filters": "Filtre bak",
+        "video": "Video",
         "choose_media": "Velg media"
     },
     "items": {

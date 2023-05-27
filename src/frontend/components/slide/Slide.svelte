@@ -208,6 +208,14 @@
         if ($slidesOptions.mode === "lyrics" && !noQuickEdit) style += "background-color: transparent;"
         if ($slidesOptions.mode !== "grid" && !noQuickEdit && $slidesOptions.mode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
     }
+
+    $: slideFilter = ""
+    $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes('background')) getSlideFilter()
+    function getSlideFilter() {
+        slideFilter = ""
+        if (layoutSlide.filter) slideFilter += 'filter: ' + layoutSlide.filter + ';'
+        if (layoutSlide["backdrop-filter"]) slideFilter += 'backdrop-filter: ' + layoutSlide["backdrop-filter"] + ';'
+    }
 </script>
 
 <!-- TODO: faster loading ? lazy load images? -->
@@ -254,7 +262,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                         {#key background?.path || ghostBackground?.path}
                             <div
                                 class="background"
-                                style="zoom: {1 / ratio};{(!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes('background')) && layoutSlide.filter ? 'filter: ' + layoutSlide.filter + ';' : ''}"
+                                style="zoom: {1 / ratio};{slideFilter}"
                                 class:ghost={!background}
                             >
                                 <MediaLoader
@@ -278,6 +286,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                             {#if $slidesOptions.mode !== "lyrics" || item.type === undefined || item.type === "text" || item.type === "timer"}
                                 <Textbox
                                     filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
+                                    backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
                                     {item}
                                     {ratio}
                                     ref={{

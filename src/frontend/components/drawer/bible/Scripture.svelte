@@ -11,6 +11,7 @@
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import { fetchBible, joinRange, loadBible } from "./scripture"
+    import { newToast } from "../../../utils/messages"
 
     export let active: any
     export let bibles: Bible[]
@@ -57,6 +58,9 @@
 
     async function loadAPIBible(bibleId: string, load: string, index: number = 0) {
         let data: any = null
+
+        // fix chapterId beeing 0 instead of "GEN.1" for Bible.API
+        if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
         try {
             data = await fetchBible(load, bibleId, { versesList: versesList[bibleId] || [], bookId, chapterId })
@@ -423,7 +427,10 @@
             else if (c.number === chapter) formattedChapter = i
         })
 
-        if (formattedChapter === null) return ""
+        if (formattedChapter === null) {
+            newToast("Chapter " + chapter + " does not exist in this book.")
+            return ""
+        }
 
         // if (!autoComplete)
         // updateSearchValue(searchValues.bookName + " " + (splitChar ? [chapter, splittedEnd[1]].join(splitChar) : chapter))
@@ -438,7 +445,7 @@
         if (!verse?.length) return []
 
         // select range (GEN.1.1 || "1")
-        let verses: number[] = []
+        let currentVerses: number[] = []
         verse.split("+").forEach((a) => {
             let split = a.split("-")
 
@@ -447,18 +454,24 @@
                 let end: any = Number(split[1])
 
                 while (number <= end) {
-                    verses.push(number.toString())
+                    currentVerses.push(number.toString())
                     number++
                 }
-            } else if (split[0].length) verses.push(Number(split[0]))
+            } else if (split[0].length) currentVerses.push(Number(split[0]))
         })
 
-        if (!verses.length) return []
+        if (!currentVerses.length) {
+            return []
+        } else if (currentVerses.length === 1 && verses[firstBibleId]) {
+            if (currentVerses[0] > Object.keys(verses[firstBibleId]).length) {
+                newToast("Verse " + verse + " does not exist in this chapter.")
+            }
+        }
 
         // if (!autoComplete)
         // updateSearchValue(searchValues.bookName + " " + [splittedEnd[0], verse].join(splitChar))
 
-        return verses
+        return currentVerses
     }
 
     function keydown(e: any) {

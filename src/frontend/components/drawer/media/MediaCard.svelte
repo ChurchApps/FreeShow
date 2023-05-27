@@ -42,7 +42,7 @@
 
     function dblclick(e: any) {
         if (!e.ctrlKey && !e.metaKey && !$outLocked) {
-            setOutput("background", { path, type, loop: true, muted: false, filter, flipped })
+            setOutput("background", { path, type, loop: true, muted: false, filter, flipped, speed })
             // TODO: get actual data
             // TODO: output/preview control does not always match
             window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
@@ -57,11 +57,13 @@
     let filter = ""
     let flipped = false
     let fit: MediaFit = "contain"
+    let speed: string = "1"
 
     $: if (path) {
         filter = getMediaFilter(path)
         flipped = $media[path]?.flipped || false
         fit = $media[path]?.fit || "contain"
+        speed = $media[path]?.speed || "1"
     }
 
     // fixed resolution
@@ -93,7 +95,7 @@
         <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
         <IntersectionObserver class="observer" once let:intersecting>
             {#if intersecting}
-                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {filter} {flipped} {fit} />
+                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {filter} {flipped} {fit} {speed} />
                 <!-- <SyncMedia bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} /> -->
             {/if}
         </IntersectionObserver>

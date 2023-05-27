@@ -15,6 +15,7 @@
     export let filter: string = ""
     export let flipped: boolean = false
     export let fit: MediaFit = "contain"
+    export let speed: string = "1"
 
     let dispatch: any = createEventDispatcher()
     let width: number = 0
@@ -38,6 +39,8 @@
             startAt = 0
         }, 50)
     }
+
+    $: if (speed && video) video.playbackRate = Number(speed)
 </script>
 
 <div style="display: flex;width: 100%;height: 100%;place-content: center;" bind:clientWidth={width} bind:clientHeight={height}>

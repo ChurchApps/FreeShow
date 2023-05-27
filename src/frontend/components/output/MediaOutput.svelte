@@ -121,6 +121,7 @@
     let filter: string = ""
     let flipped: boolean = false
     let fit: MediaFit = "contain"
+    let speed: string = "1"
 
     $: if (background !== null) updateFilter()
     function updateFilter() {
@@ -128,6 +129,7 @@
         filter = temp.filter || ""
         flipped = temp.flipped || false
         fit = temp.fit || "contain"
+        speed = temp.speed || "1"
     }
 
     // only output window
@@ -152,7 +154,7 @@
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
     {#if getMediaType(getExtension(path)) === "video"}
-        <Media {path} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing={playing} on:loaded={loaded} />
+        <Media {path} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
     {:else}
         {#key path}
             <!-- don't know why this don't work in the Media component -->

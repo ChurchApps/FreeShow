@@ -57,12 +57,14 @@
     let filter: string = ""
     let flipped: boolean = false
     let fit: MediaFit = "contain"
+    let speed: string = "1"
 
     $: if (background?.path) {
         // TODO: use show filter if existing
         filter = getMediaFilter(background.path)
         flipped = $media[background.path]?.flipped || false
         fit = $media[background.path]?.fit || "contain"
+        speed = $media[background.path]?.speed || "1"
     }
 
     $: {
@@ -125,6 +127,14 @@
     function toggleChords() {
         chordsMode = !chordsMode
     }
+
+    $: slideFilter = ""
+    $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
+    function getSlideFilter() {
+        slideFilter = ""
+        if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
+        if (layoutSlide["backdrop-filter"]) slideFilter += "backdrop-filter: " + layoutSlide["backdrop-filter"] + ";"
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:wheel={wheel} />
@@ -151,15 +161,24 @@
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         {#key background.path}
-                            <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{(!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes('background')) && layoutSlide.filter ? 'filter: ' + layoutSlide.filter + ';' : ''}">
-                                <MediaLoader path={background.path || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} />
+                            <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter}">
+                                <MediaLoader path={background.path || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} {speed} />
                             </div>
                         {/key}
                     {/if}
                     <!-- edit -->
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                     {#each Slide.items as item, index}
-                        <Editbox filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} {item} {chordsMode} ref={{ showId: currentShow, id: Slide.id }} {index} {ratio} bind:mouse />
+                        <Editbox
+                            filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
+                            backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
+                            {item}
+                            {chordsMode}
+                            ref={{ showId: currentShow, id: Slide.id }}
+                            {index}
+                            {ratio}
+                            bind:mouse
+                        />
                     {/each}
                     <!-- overlays -->
                     <!-- {#if !altKeyPressed && slideOverlays?.length}

@@ -135,6 +135,7 @@
         "pause": "Pauza",
         "stop": "Stop",
         "volume": "Hlasitosť",
+        "speed": "Speed",
         "show": "Zobraziť",
         "flip": "Preklopiť",
         "all": "Priečinky, obrázky a videá",
@@ -532,6 +533,8 @@
         "add_icons": "Pridať ikony",
         "arrange_items": "Usporiadať položky",
         "filters": "Filtre",
+        "backdrop_filters": "Backdrop filters",
+        "video": "Video",
         "choose_media": "Vyberte médiá"
     },
     "items": {

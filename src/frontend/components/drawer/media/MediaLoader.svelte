@@ -15,6 +15,7 @@
     export let filter: any = ""
     export let flipped: boolean = false
     export let fit: MediaFit = "contain"
+    export let speed: string = "1"
     export let type: null | "media" | "image" | "video" | "camera" | "screen" | "audio" = null
     export let hover: boolean = false
     export let loaded: boolean = false
@@ -166,6 +167,8 @@
     let height: number = 0
 
     $: customResolution = resolution || getResolution(null, $outputs)
+
+    $: if (speed && videoElem) videoElem.playbackRate = speed
 </script>
 
 <div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>

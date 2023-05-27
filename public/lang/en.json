@@ -135,6 +135,7 @@
         "pause": "Pause",
         "stop": "Stop",
         "volume": "Volume",
+        "speed": "Speed",
         "show": "Show",
         "flip": "Flip",
         "all": "Folders, images & videos",
@@ -532,6 +533,8 @@
         "add_icons": "Add icons",
         "arrange_items": "Arrange items",
         "filters": "Filters",
+        "backdrop_filters": "Backdrop filters",
+        "video": "Video",
         "choose_media": "Choose media"
     },
     "items": {

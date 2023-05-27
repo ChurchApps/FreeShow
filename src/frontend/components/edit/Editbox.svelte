@@ -24,6 +24,7 @@
 
     export let item: Item
     export let filter: string = ""
+    export let backdropFilter: string = ""
     export let ref: {
         type?: "show" | "overlay" | "template"
         showId?: string
@@ -451,7 +452,7 @@ bind:offsetWidth={width} -->
     bind:this={itemElem}
     class={plain ? "editItem" : "editItem item context #edit_box"}
     class:selected={$activeEdit.items.includes(index)}
-    style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1};${filter ? "filter: " + filter + ";" : ""}`}
+    style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1};${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`}
     data-index={index}
     on:mousedown={mousedown}
 >
@@ -540,7 +541,7 @@ bind:offsetWidth={width} -->
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}
                 <!-- video -->
-                <video src={item.src} muted={true}>
+                <video src={item.src} muted={true} loop>
                     <track kind="captions" />
                 </video>
             {:else}

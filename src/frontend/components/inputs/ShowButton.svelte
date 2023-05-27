@@ -106,7 +106,7 @@
             if (index && $activeProject) {
                 let styling = $projects[$activeProject].shows[index]
                 if (styling.filter) out.filter = styling.filter
-                // TODO: flipped, fit
+                // TODO: flipped, fit, speed
                 // if (styling.flipped) out.flipped = styling.flipped
                 // if (styling.fit) out.fit = styling.fit
             }

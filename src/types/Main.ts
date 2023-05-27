@@ -78,6 +78,7 @@ export interface Media {
         filter: any
         flipped?: boolean
         fit?: MediaFit
+        speed?: string
         favourite?: boolean
         audio?: boolean
     }

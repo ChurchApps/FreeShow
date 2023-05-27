@@ -16,6 +16,7 @@
     export let item: Item
     export let ratio: number = 1
     export let filter: string = ""
+    export let backdropFilter: string = ""
     export let smallFontSize: boolean = false
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
@@ -78,7 +79,7 @@
 </script>
 
 <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
-<div class="item" style="{style ? item?.style : null};transition: filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}">
+<div class="item" style="{style ? item?.style : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}">
     {#if lines}
         <div class="align" style={style ? item.align : null}>
             {#if chords}

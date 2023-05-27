@@ -13,8 +13,9 @@
     // get slide filters
     $: currentShow = $activeShow?.id || ""
     $: currentSlide = $activeEdit.slide || 0
-    $: ref = _show(currentShow).layouts("active").ref()[0]
-    $: currentSlideData = $showsCache[currentShow] ? ref[currentSlide]?.data || null : null
+    $: ref = $showsCache[currentShow] ? _show(currentShow).layouts("active").ref()[0] : {}
+
+    $: currentSlideData = ref?.[currentSlide]?.data || null
 
     // update
     $: if (currentSlideData !== null) {
@@ -28,24 +29,33 @@
             let index = edits.filters.findIndex((a: any) => a.key === filter.key)
             edits.filters[index].value = value
         })
+
+        // update backdrop filters
+        let backdropFilters = getFilters(currentSlideData["backdrop-filter"] || "")
+        let defaultBackdropFilters = slideFilters.media?.edit?.backdrop_filters || []
+        edits.backdrop_filters.forEach((filter: any) => {
+            let value = backdropFilters[filter.key] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
+            let index = edits.backdrop_filters.findIndex((a: any) => a.key === filter.key)
+            edits.backdrop_filters[index].value = value
+        })
     }
 
     export function valueChanged(input: any) {
         let data: any = input.value
         let indexes = [currentSlide]
 
-        let override = currentShow + "_" + currentSlide + "_" + input.key
+        let override = [currentShow, currentSlide, input.id, input.key].join("_")
 
-        if (input.id !== "filter") {
+        if (input.id !== "filter" && input.id !== "backdrop-filter") {
             // change filter enabled
             history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data, dataIsArray: true, indexes }, location: { page: "edit", override } })
 
             return
         }
 
-        data = addFilterString(currentSlideData.filter || "", [input.key, data])
+        data = addFilterString(currentSlideData[input.id] || "", [input.key, data])
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "filter", data, indexes }, location: { page: "edit", override } })
+        history({ id: "SHOW_LAYOUT", newData: { key: input.id, data, indexes }, location: { page: "edit", override } })
     }
 </script>
 

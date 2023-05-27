@@ -16,6 +16,7 @@
     export let filter: string = ""
     export let flipped: boolean = false
     export let fit: MediaFit = "contain"
+    export let speed: string = "1"
 
     export let video: any = null
     export let videoData: any = { paused: false, muted: true, duration: 0, loop: false }
@@ -30,6 +31,7 @@
         filter = $media[mediaId]?.filter || ""
         flipped = $media[mediaId]?.flipped || false
         fit = $media[mediaId]?.fit || "contain"
+        speed = $media[mediaId]?.speed || "1"
     }
 
     $: extension = getExtension(path)
@@ -133,17 +135,17 @@
     <!-- svelte transition bug, this is to remove media when changing from "draw" view -->
     {#if transition.type === "none" && mirror}
         <div class="video">
-            <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} on:playing on:loaded />
+            <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded />
         </div>
     {:else}
         {#if video1.active}
             <div class="video" class:change transition:custom={transition}>
-                <Video path={video1.path} bind:video={video1.video} bind:videoData={video1.data} bind:videoTime={videoTime1} {startAt} {mirror} {filter} {flipped} {fit} on:playing on:loaded />
+                <Video path={video1.path} bind:video={video1.video} bind:videoData={video1.data} bind:videoTime={videoTime1} {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded />
             </div>
         {/if}
         {#if video2.active}
             <div class="video" class:change transition:custom={transition}>
-                <Video path={video2.path} bind:video={video2.video} bind:videoData={video2.data} bind:videoTime={videoTime2} {startAt} {mirror} {filter} {flipped} {fit} on:playing on:loaded />
+                <Video path={video2.path} bind:video={video2.video} bind:videoData={video2.data} bind:videoTime={videoTime2} {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded />
             </div>
         {/if}
     {/if}

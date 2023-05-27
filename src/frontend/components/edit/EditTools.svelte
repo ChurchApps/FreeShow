@@ -30,8 +30,9 @@
 
     // is not template or overlay
     $: isShow = !$activeEdit.id
+    $: tabs.filters.remove = !isShow // TODO: set filters in template / overlay ?
     $: tabs.slide.remove = !isShow
-    $: if (tabs.slide.remove && active === "slide") active = item ? "text" : "items"
+    $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
 
     let slides: any[] = []
     $: if (allSlideItems && (($activeEdit?.id && $activeEdit.slide !== null && $activeEdit.slide !== undefined) || ($activeShow && ($activeShow.type === undefined || $activeShow.type === "show"))))

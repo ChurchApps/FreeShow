@@ -96,7 +96,7 @@
     function onVideoClick(e: any) {
         if ($outLocked) return
 
-        let bg: any = { type: show!.type, startAt: e.ctrlKey || e.metaKey ? videoTime : 0, loop: false, filter, flipped, fit }
+        let bg: any = { type: show!.type, startAt: e.ctrlKey || e.metaKey ? videoTime : 0, loop: false, filter, flipped, fit, speed }
 
         if (show!.type === "player") bg.id = show!.id
         else {
@@ -118,17 +118,21 @@
     let filter = ""
     let flipped = false
     let fit = "contain"
+    let speed = "1"
 
     $: if (show) {
         filter = $media[show.id]?.filter || ""
         flipped = $media[show.id]?.flipped || false
         fit = $media[show.id]?.fit || "contain"
+        speed = $media[show.id]?.speed || "1"
     }
 
     let previewControls: boolean = false
 
     // check for timer & create global
     $: if (show?.id) createGlobalTimerFromLocalTimer(show?.id)
+
+    $: if (video && speed) video.playbackRate = speed
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -194,7 +198,7 @@
                             icon="play"
                             size={10}
                             on:click={() => {
-                                if (!$outLocked) setOutput("background", { path: show?.id, filter, flipped, fit })
+                                if (!$outLocked) setOutput("background", { path: show?.id, filter, flipped, fit, speed })
                             }}
                             title={$dictionary.media?.show}
                         >

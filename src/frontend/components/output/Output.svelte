@@ -214,16 +214,20 @@
             slideTimeout = null
         }, 50)
     }
+
+    $: slideFilter = ""
+    $: if (!slideData?.filterEnabled || slideData?.filterEnabled?.includes("background")) getSlideFilter()
+    function getSlideFilter() {
+        if (!slideData) return
+        slideFilter = ""
+        if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
+        if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
+    }
 </script>
 
 <Zoomed background={currentSlide?.settings?.color || currentOutput.show?.background || "black"} {center} {style} {resolution} bind:ratio>
     {#if tempVideoBG && layers.includes("background")}
-        <div
-            class="media"
-            style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms;{(!slideData?.filterEnabled || slideData?.filterEnabled?.includes('background')) && slideData?.filter
-                ? 'filter: ' + slideData?.filter + ';'
-                : ''}"
-        >
+        <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}">
             <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
         </div>
     {/if}
@@ -234,7 +238,15 @@
             <span transition:custom={transition} style="pointer-events: none;display: block;">
                 {#if slideClone?.items}
                     {#each slideClone?.items as item}
-                        <Textbox filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""} {item} {ratio} ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }} {linesStart} {linesEnd} />
+                        <Textbox
+                            filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                            backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                            {item}
+                            {ratio}
+                            ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                            {linesStart}
+                            {linesEnd}
+                        />
                     {/each}
                 {/if}
             </span>

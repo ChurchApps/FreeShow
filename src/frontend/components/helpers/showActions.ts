@@ -281,6 +281,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
                 filter: getMediaFilter(bg.path),
                 flipped: get(media)[bg.path]?.flipped || false,
                 fit: get(media)[bg.path]?.fit || "contain",
+                speed: get(media)[bg.path]?.speed || "1",
             }
             // outBackground.set(bgData)
             setOutput("background", bgData, false, outputId)
