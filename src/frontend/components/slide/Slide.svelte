@@ -210,11 +210,11 @@
     }
 
     $: slideFilter = ""
-    $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes('background')) getSlideFilter()
+    $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
     function getSlideFilter() {
         slideFilter = ""
-        if (layoutSlide.filter) slideFilter += 'filter: ' + layoutSlide.filter + ';'
-        if (layoutSlide["backdrop-filter"]) slideFilter += 'backdrop-filter: ' + layoutSlide["backdrop-filter"] + ';'
+        if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
+        if (layoutSlide["backdrop-filter"]) slideFilter += "backdrop-filter: " + layoutSlide["backdrop-filter"] + ";"
     }
 </script>
 
@@ -260,11 +260,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                 >
                     {#if !altKeyPressed && (background || ghostBackground) && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
                         {#key background?.path || ghostBackground?.path}
-                            <div
-                                class="background"
-                                style="zoom: {1 / ratio};{slideFilter}"
-                                class:ghost={!background}
-                            >
+                            <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
                                 <MediaLoader
                                     name={$dictionary.error?.load}
                                     path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
@@ -313,6 +309,10 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                 {#if $slidesOptions.mode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
                     <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
+                        {#if name === null && $fullColors}
+                            <!-- WIP this works fine without full colors, but is it neccesary? (UI vs UX) -->
+                            <div class="childLink" style="background-color: {color};" class:full={$fullColors} />
+                        {/if}
                         {#if output?.maxLines}
                             <div class="lineProgress">
                                 <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {output.color};" />
@@ -445,6 +445,19 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         font-weight: bold;
         align-items: center;
         /* opacity: 0.8; */
+    }
+
+    .childLink {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        transform: translate(-100%, 100%);
+        width: 10px;
+        height: 2px;
+    }
+    .childLink.full {
+        transform: translate(-100%, 0);
+        height: 25px;
     }
 
     .lineProgress {

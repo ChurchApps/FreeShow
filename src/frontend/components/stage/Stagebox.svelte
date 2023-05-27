@@ -60,7 +60,7 @@
 
     function keydown(e: any) {
         if (edit) {
-            if (e.key === "Backspace" && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
+            if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
                 // TODO: history??
                 $stageShows[$activeStage.id!].items[id].enabled = false
                 activeStage.set({ id: $activeStage.id, items: [] })

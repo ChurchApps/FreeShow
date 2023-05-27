@@ -92,7 +92,7 @@ export function createSlides(currentEvents: any[], id: string = "") {
                 values.push(v)
                 if (event.notes) values.push([{ value: "&nbsp;&nbsp;&nbsp;&nbsp;" + event.notes, style: "font-size:60px;" }])
                 values.push([{ value: "", style: "font-size:80px;" }])
-                totalLength += event.name.length + event.notes.length / 3 // + event.location.length
+                totalLength += event.name.length / 2 + event.notes.length / 5 // + event.location.length
             })
         let items: any[] = [
             {
@@ -108,7 +108,7 @@ export function createSlides(currentEvents: any[], id: string = "") {
         let l: any = { id }
         if (currentEvents.length > 1) {
             let duration = totalLength < 25 ? Math.max(5, totalLength * 0.5) : totalLength < 80 ? Math.max(10, totalLength * 0.3) : Math.max(25, totalLength * 0.2)
-            l.nextTimer = Math.min(60, Math.floor(duration))
+            l.nextTimer = Math.min(20, Math.floor(duration))
         }
         layouts.push(l)
     })

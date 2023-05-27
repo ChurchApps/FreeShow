@@ -36,6 +36,8 @@
             return a
         })
         activeDrawerTab.set("scripture")
+        // WIP set book, chapter and verses too
+
         // open drawer if closed
         if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
     }
@@ -44,13 +46,13 @@
 <div>
     {#if show.reference?.type === "calendar"}
         <p><T id="menu.calendar" />: {getDaysString()}</p>
-        <Button on:click={updateCalendar} style="color: var(--secondary);" dark>
+        <Button on:click={updateCalendar} style="white-space: nowrap;" dark>
             <Icon id="calendar" right />
             <T id="show.update" />
         </Button>
     {:else if show.reference?.type === "scripture"}
         <p title={show.reference?.data?.version || ""}><T id="tabs.scripture" />: {show.reference?.data?.version || ""}</p>
-        <Button on:click={openTab} style="color: var(--secondary);white-space: nowrap;" dark>
+        <Button on:click={openTab} style="white-space: nowrap;" dark>
             <Icon id="scripture" right />
             <T id="tabs.scripture" />
         </Button>

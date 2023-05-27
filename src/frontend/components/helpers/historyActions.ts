@@ -235,29 +235,38 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (replace && initializing) obj.oldData = { data: clone(obj.newData.data) }
 
-            // check for duplicate names inside itself
-            showsList.forEach(({ show }, i) => {
-                let name = show.name
-                if (!name) return
-                let number = 1
-                while (showsList.find((a: any, index: number) => a.show.name === (number > 1 ? name + " " + number : name) && index !== i)) number++
-                name = number > 1 ? name + " " + number : name
+            console.log("DELETE SHOWS", deleting, showsList)
 
-                showsList[i].show.name = name
-            })
+            // check for duplicate names inside itself
+            if (!deleting) {
+                showsList.forEach(({ show }, i) => {
+                    if (!show) return
+
+                    let name = show.name
+                    if (!name) return
+
+                    let number = 1
+                    while (showsList.find((a: any, index: number) => a.show.name === (number > 1 ? name + " " + number : name) && index !== i)) number++
+                    name = number > 1 ? name + " " + number : name
+
+                    showsList[i].show.name = name
+                })
+            }
 
             let duplicates: string[] = []
 
             showsCache.update((a) => {
                 showsList.forEach(({ show, id }, i: number) => {
                     if (deleting) {
-                        if (replace) {
+                        if (replace && show) {
                             a[id] = show
                             return
                         }
 
                         delete a[id]
                     } else {
+                        if (!show.slides) return
+
                         if (replace) {
                             if (initializing) obj.oldData.data[i].show = clone(a[id])
                             a[id] = { ...a[id], ...show }
@@ -274,11 +283,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
             })
 
             shows.update((a) => {
-                showsList.forEach(({ show, id }) => {
+                showsList.forEach(({ show, id }, i) => {
                     if (deleting && !replace) {
+                        // store show
+                        if (!obj.oldData?.data[i]?.show) obj.oldData.data[i] = { id, show: a[id] }
+
                         delete a[id]
+
                         return
                     }
+
+                    if (!show) return
 
                     a[id] = {
                         name: show.name || a[id]?.name || "",
@@ -748,7 +763,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 let values = data.data
                 if (!Array.isArray(values)) values = [values]
 
-
                 keys.forEach((key, i) => {
                     // for overlays, add full array
                     let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : values[i]?.[valueIndex] || values[valueIndex]
@@ -759,7 +773,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if (!l[data.key]) l[data.key] = {}
                         l[data.key][key] = value
                     } else l[key] = value
-
                 })
 
                 return l

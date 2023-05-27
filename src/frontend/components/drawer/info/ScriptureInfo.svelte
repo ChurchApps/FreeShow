@@ -63,7 +63,7 @@
         bibles.forEach((bible, bibleIndex) => {
             let currentTemplate = template[bibleIndex] || template[0]
             let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-            let alignStyle = currentTemplate?.lines?.[0].align || "text-align: justify;"
+            let alignStyle = currentTemplate?.lines?.[0].align || "text-align: left;"
             let textStyle = currentTemplate?.lines?.[0].text?.[0].style || "font-size: 80px;"
 
             let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle }

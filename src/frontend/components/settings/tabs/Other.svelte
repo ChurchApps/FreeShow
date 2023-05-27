@@ -1,5 +1,8 @@
-<script>
+<script lang="ts">
+    import { MAIN } from "../../../../types/Channels"
     import { activePopup, mediaCache, shows, showsPath } from "../../../stores"
+    import { newToast } from "../../../utils/messages"
+    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"

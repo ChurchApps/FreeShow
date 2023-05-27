@@ -90,7 +90,7 @@
 
 <div class="bottom">
     <Button style="width: 100%;" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)} dark center>
-        <Icon id="groups" right />
+        <Icon id="groups" right white={$globalGroupViewEnabled} />
         <T id="groups.toggle_global_group" />
     </Button>
 </div>

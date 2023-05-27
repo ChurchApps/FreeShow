@@ -17,8 +17,8 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
         case "slide_groups":
             let selectedIndex = get(selected).data[0]?.index
             let currentSlide = _show().layouts("active").ref()[0][selectedIndex]
-            let currentGroup = currentSlide?.data?.globalGroup
-            if (!currentGroup) return []
+            if (!currentSlide) return []
+            let currentGroup = currentSlide.data?.globalGroup || ""
 
             Object.entries(get(groups)).forEach(([aID, a]: any) => {
                 items.push([id, { id: aID, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: a.default, enabled: aID === currentGroup }])
