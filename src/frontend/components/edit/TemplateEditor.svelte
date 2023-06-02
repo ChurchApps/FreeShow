@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, outputs, templates } from "../../stores"
+    import { activeEdit, outputs, styles, templates } from "../../stores"
     import { history } from "../helpers/history"
     import { getResolution } from "../helpers/output"
     import { getStyles } from "../helpers/style"
@@ -24,7 +24,7 @@
 
     let width: number = 0
     let height: number = 0
-    $: resolution = getResolution(null, $outputs)
+    $: resolution = getResolution(null, { $outputs, $styles })
 
     let ratio: number = 1
 

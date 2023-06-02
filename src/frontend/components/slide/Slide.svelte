@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { MediaFit } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-    import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, media, outputs, overlays, showsCache, slidesOptions } from "../../stores"
+    import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, media, outputs, overlays, showsCache, slidesOptions, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
@@ -195,7 +195,7 @@
         console.log(timer)
     }
 
-    $: resolution = getResolution(slide?.settings?.resolution, $outputs)
+    $: resolution = getResolution(slide?.settings?.resolution, { $outputs, $styles })
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
 

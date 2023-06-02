@@ -56,6 +56,7 @@
         UPDATE_show_key: "Changed show",
         UPDATE_global_group: "Updated global group",
         UPDATE_settings_theme: "Updated settings: theme",
+        UPDATE_settings_style: "Updated settings: style",
         // UPDATE_ ... (historyHelpers)
 
         // edit

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, draw, drawSettings, drawTool, outputs } from "../../stores"
+    import { activeShow, draw, drawSettings, drawTool, outputs, styles } from "../../stores"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Output from "../output/Output.svelte"
@@ -11,7 +11,7 @@
 
     let width: number = 0
     let height: number = 0
-    $: resolution = getResolution(Slide?.settings?.resolution, $outputs)
+    $: resolution = getResolution(Slide?.settings?.resolution, { $outputs, $styles })
     let ratio: number = 0
 
     let parent: any

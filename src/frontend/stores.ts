@@ -7,7 +7,7 @@ import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, DefaultProjectNames, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
-import type { Dictionary, Themes } from "../types/Settings"
+import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
 import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
@@ -178,6 +178,9 @@ export const showsPath: Writable<null | string> = writable(null) // null
 // THEME
 export const theme: Writable<string> = writable("default") // "default"
 export const themes: Writable<{ [key: string]: Themes }> = writable({}) // {default}
+
+// STYLES
+export const styles: Writable<{ [key: string]: Styles }> = writable({})
 
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}

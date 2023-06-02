@@ -181,6 +181,7 @@ export interface Midi {
     input?: string
     output?: string
     action?: string
+    actionData?: any
     type: "noteon" | "noteoff" | "cc"
     values: {
         note: number

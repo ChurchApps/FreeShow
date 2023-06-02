@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays } from "../../stores"
+    import { dictionary, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { findMatchingOut, getResolution, setOutput } from "../helpers/output"
@@ -15,7 +15,7 @@
     export let active: string | null
     export let searchValue: string = ""
 
-    $: resolution = getResolution(null, $outputs)
+    $: resolution = getResolution(null, { $outputs, $styles })
 
     let filteredOverlays: any[] = []
     $: filteredOverlays = Object.keys($overlays)

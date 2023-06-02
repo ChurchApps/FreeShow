@@ -164,7 +164,7 @@ export function displayOutput(data: any) {
     } else {
         hideWindow(window)
         data.enabled = false
-        toApp(MAIN, { channel: "ALERT", data: "error.display" })
+        if (!data.auto) toApp(MAIN, { channel: "ALERT", data: "error.display" })
     }
 
     toApp(OUTPUT, { channel: "DISPLAY", data })

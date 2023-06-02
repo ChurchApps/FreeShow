@@ -17,6 +17,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
             show: {},
         },
     },
+    styles: {},
     openedFolders: [],
     activeProject: null,
     alertUpdates: true,

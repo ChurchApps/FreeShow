@@ -2,7 +2,7 @@
     import type { MediaFit } from "../../../../types/Main"
     import type { Resolution } from "../../../../types/Settings"
 
-    import { mediaCache, outputs, videoExtensions } from "../../../stores"
+    import { mediaCache, outputs, styles, videoExtensions } from "../../../stores"
     import { getResolution } from "../../helpers/output"
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -166,7 +166,7 @@
     let width: number = 0
     let height: number = 0
 
-    $: customResolution = resolution || getResolution(null, $outputs)
+    $: customResolution = resolution || getResolution(null, { $outputs, $styles })
 
     $: if (speed && videoElem) videoElem.playbackRate = speed
 </script>

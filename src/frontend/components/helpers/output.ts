@@ -3,17 +3,17 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution } from "../../../types/Settings"
-import { currentOutputSettings, outputDisplay, outputs, overlays, playingVideos, showsCache, theme, themes, transitionData } from "../../stores"
+import { currentOutputSettings, outputDisplay, outputs, overlays, playingVideos, showsCache, styles, theme, themes, transitionData } from "../../stores"
 import { sendInitialOutputData } from "../../utils/messages"
 import { send } from "../../utils/request"
 import type { Transition } from "../../../types/Show"
 import { _show } from "./shows"
 
-export function displayOutputs(e: any = {}) {
+export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
     enabledOutputs.forEach((id) => {
         let output: any = { id, ...get(outputs)[id] }
-        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey })
+        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey, auto })
     })
 }
 
@@ -126,7 +126,8 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
 
 export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null): Resolution {
     let currentOutput = get(outputs)[getActiveOutputs()[0]]
-    return initial || currentOutput?.show?.resolution || { width: 1920, height: 1080 }
+    let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+    return initial || style || { width: 1920, height: 1080 }
 }
 
 // settings

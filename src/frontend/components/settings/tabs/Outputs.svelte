@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activePopup, currentOutputSettings, labelsDisabled, outputDisplay, outputs, templates } from "../../../stores"
+    import { activePopup, currentOutputSettings, labelsDisabled, outputDisplay, outputs, styles } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { addOutput, defaultOutput, getActiveOutputs } from "../../helpers/output"
@@ -9,16 +9,7 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-
-    const meta: any[] = [
-        { id: "never", name: "$:show_at.never:$" },
-        { id: "always", name: "$:show_at.always:$" },
-        { id: "first", name: "$:show_at.first:$" },
-        { id: "last", name: "$:show_at.last:$" },
-        { id: "first_last", name: "$:show_at.first_last:$" },
-    ]
 
     function reset() {
         let n = currentOutput.name
@@ -36,14 +27,6 @@
         })
     }
 
-    let templateList: any[] = []
-    $: templateList = [
-        { id: null, name: "—" },
-        ...Object.entries($templates)
-            .map(([id, template]: any) => ({ id, name: template.name }))
-            .sort((a, b) => a.name.localeCompare(b.name)),
-    ]
-
     let options: any[] = []
     $: options = Object.entries($outputs)
         .map(([id, a]) => ({ id, ...a }))
@@ -55,12 +38,6 @@
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
 
     $: name = currentOutput?.name || ""
-
-    let activeLayers: any[] = []
-    $: {
-        if (currentOutput.show?.layers) activeLayers = currentOutput.show?.layers
-        else activeLayers = ["background", "slide", "overlays"]
-    }
 
     function updateOutput(key: string, value: any) {
         outputs.update((a: any) => {
@@ -88,6 +65,18 @@
 
     const isChecked = (e: any) => e.target.checked
     const getValue = (e: any) => e.target.value
+
+    // styles
+    $: stylesList = getList($styles)
+    function getList(styles) {
+        let list = Object.entries(styles).map(([id, obj]: any) => {
+            return { ...obj, id }
+        })
+
+        let sortedList = list.sort((a, b) => a.name.localeCompare(b.name))
+
+        return [{ id: null, name: "—" }, ...sortedList]
+    }
 </script>
 
 <div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;">
@@ -148,6 +137,11 @@
     </span>
 </div>
 
+<div>
+    <p><T id="settings.active_style" /></p>
+    <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("style", e.detail.id)} />
+</div>
+
 <hr />
 
 <!-- window -->
@@ -156,82 +150,19 @@
   <p><T id="settings.move_output_hint" /></p>
 </div> -->
 <div>
-    <p><T id="settings.position" /></p>
-    <span class="inputs">
-        <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.x" /></p>
-        <NumberInput
-            value={currentOutput.bounds?.x || 0}
-            min={-10000}
-            max={100000}
-            on:change={(e) => {
-                updateOutput("bounds", { ...currentOutput.bounds, x: Number(e.detail) })
-                updateOutput("screen", null)
-                setTimeout(() => {
-                    send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-                }, 10)
-            }}
-            buttons={false}
-            outline
-        />
-        <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.y" /></p>
-        <NumberInput
-            value={currentOutput.bounds?.y || 0}
-            min={-10000}
-            max={100000}
-            on:change={(e) => {
-                updateOutput("bounds", { ...currentOutput.bounds, y: Number(e.detail) })
-                updateOutput("screen", null)
-                setTimeout(() => {
-                    send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-                }, 10)
-            }}
-            buttons={false}
-            outline
-        />
-    </span>
-</div>
-<div>
-    <p><T id="edit.size" /></p>
-    <span class="inputs">
-        <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.width" /></p>
-        <NumberInput
-            value={currentOutput.bounds?.width || 0}
-            min={40}
-            max={100000}
-            on:change={(e) => {
-                updateOutput("bounds", { ...currentOutput.bounds, width: Number(e.detail) })
-                updateOutput("screen", null)
-                setTimeout(() => {
-                    send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-                }, 10)
-            }}
-            buttons={false}
-            outline
-        />
-        <p style="width: 80px;text-align: right;font-weight: bold;"><T id="edit.height" /></p>
-        <NumberInput
-            value={currentOutput.bounds?.height || 0}
-            min={40}
-            max={100000}
-            on:change={(e) => {
-                updateOutput("bounds", { ...currentOutput.bounds, height: Number(e.detail) })
-                updateOutput("screen", null)
-                setTimeout(() => {
-                    send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-                }, 10)
-            }}
-            buttons={false}
-            outline
-        />
-    </span>
-</div>
-<div>
     <p><T id="settings.output_screen" /></p>
     <Button on:click={() => activePopup.set("choose_screen")}>
         <Icon id="screen" right />
         <p><T id="popup.choose_screen" /></p>
     </Button>
     <!-- <Screens /> -->
+</div>
+<div>
+    <p><T id="settings.position" /></p>
+    <Button on:click={() => activePopup.set("change_output_values")}>
+        <Icon id="screen" right />
+        <p><T id="popup.change_output_values" /></p>
+    </Button>
 </div>
 <!-- disable on linux -->
 <!-- {#if $os.platform !== "linux"}
@@ -258,137 +189,6 @@
 
 <hr />
 
-<!-- show -->
-<h3><T id="preview.slide" /></h3>
-<!-- TODO: use stage (dropdown) -->
-<div>
-    <p><T id="edit.background_color" /></p>
-    <span style="width: 200px;">
-        <Color value={currentOutput.show?.background || "#000000"} on:input={(e) => updateOutput("show.background", getValue(e))} />
-    </span>
-</div>
-<!-- TODO: transparency? -->
-<div>
-    <p><T id="settings.resolution" /></p>
-    <span class="inputs">
-        <!-- defaults dropdown -->
-        <!-- custom... -->
-        <p style="width: 80px; text-align: right; font-weight: bold;"><T id="screen.width" /></p>
-        <NumberInput
-            value={currentOutput.show?.resolution?.width || 1920}
-            min={100}
-            max={10000}
-            buttons={false}
-            outline
-            on:change={(e) => updateOutput("show.resolution", { width: Number(e.detail), height: currentOutput.show?.resolution?.height || 1080 })}
-        />
-        <p style="width: 80px; text-align: right; font-weight: bold;"><T id="screen.height" /></p>
-        <NumberInput
-            value={currentOutput.show?.resolution?.height || 1080}
-            min={100}
-            max={10000}
-            buttons={false}
-            outline
-            on:change={(e) => updateOutput("show.resolution", { height: Number(e.detail), width: currentOutput.show?.resolution?.width || 1920 })}
-        />
-    </span>
-</div>
-
-<div>
-    <p><T id="settings.lines" /></p>
-    <NumberInput
-        value={currentOutput.show?.lines || 0}
-        min={0}
-        max={99}
-        buttons={false}
-        outline
-        on:change={(e) => {
-            updateOutput("show.lines", e.detail)
-        }}
-    />
-</div>
-<div>
-    <p><T id="settings.active_layers" /></p>
-    <span style="display: flex;">
-        <!-- active={activeLayers.includes("background")} -->
-        <Button
-            on:click={() => {
-                if (activeLayers.includes("background")) activeLayers.splice(activeLayers.indexOf("background"), 1)
-                else activeLayers = [...new Set([...activeLayers, "background"])]
-                console.log(activeLayers)
-                updateOutput("show.layers", activeLayers)
-            }}
-            style={activeLayers.includes("background") ? "border-bottom: 2px solid var(--secondary) !important;" : "border-bottom: 2px solid var(--primary-lighter);"}
-            bold={false}
-            center
-            dark
-        >
-            <Icon id="background" right />
-            <T id="preview.background" />
-        </Button>
-        <!-- active={activeLayers.includes("slide")} -->
-        <Button
-            on:click={() => {
-                if (activeLayers.includes("slide")) activeLayers.splice(activeLayers.indexOf("slide"), 1)
-                else activeLayers = [...new Set([...activeLayers, "slide"])]
-                updateOutput("show.layers", activeLayers)
-            }}
-            style={activeLayers.includes("slide") ? "border-bottom: 2px solid var(--secondary) !important;" : "border-bottom: 2px solid var(--primary-lighter);"}
-            bold={false}
-            center
-            dark
-        >
-            <Icon id="slide" right />
-            <T id="preview.slide" />
-        </Button>
-        <!-- active={activeLayers.includes("overlays")} -->
-        <Button
-            on:click={() => {
-                if (activeLayers.includes("overlays")) activeLayers.splice(activeLayers.indexOf("overlays"), 1)
-                else activeLayers = [...new Set([...activeLayers, "overlays"])]
-                updateOutput("show.layers", activeLayers)
-            }}
-            style={activeLayers.includes("overlays") ? "border-bottom: 2px solid var(--secondary) !important;" : "border-bottom: 2px solid var(--primary-lighter);"}
-            bold={false}
-            center
-            dark
-        >
-            <Icon id="overlays" right />
-            <T id="preview.overlays" />
-        </Button>
-    </span>
-</div>
-<div>
-    <p><T id="settings.override_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentOutput.show?.template]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("show.template", e.detail.id)} />
-</div>
-<!-- meta -->
-<div>
-    <p><T id="meta.display_metadata" /></p>
-    <Dropdown options={meta} value={meta.find((a) => a.id === (currentOutput.show?.displayMetadata || "never"))?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("show.displayMetadata", e.detail.id)} />
-</div>
-<div>
-    <p><T id="meta.meta_template" /></p>
-    <Dropdown
-        options={templateList}
-        value={$templates[currentOutput.show?.metadataTemplate === undefined ? "metadata" : currentOutput.show?.metadataTemplate]?.name || "—"}
-        style="width: 200px;"
-        on:click={(e) => updateOutput("show.metadataTemplate", e.detail.id)}
-    />
-</div>
-<div>
-    <p><T id="meta.message_template" /></p>
-    <Dropdown
-        options={templateList}
-        value={$templates[currentOutput.show?.messageTemplate === undefined ? "message" : currentOutput.show?.messageTemplate]?.name || "—"}
-        style="width: 200px;"
-        on:click={(e) => updateOutput("show.messageTemplate", e.detail.id)}
-    />
-</div>
-<!-- TODO: override transition ? -->
-
-<hr />
-
 <Button style="width: 100%;" on:click={reset} center>
     <Icon id="reset" right />
     <T id="actions.reset" />
@@ -411,12 +211,6 @@
     }
     h3 {
         font-size: initial;
-    }
-
-    .inputs {
-        display: flex;
-        gap: 10px;
-        align-items: center;
     }
 
     hr {

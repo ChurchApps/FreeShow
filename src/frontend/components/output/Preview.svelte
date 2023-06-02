@@ -5,7 +5,7 @@
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
-    import { clearAll, getItemWithMostLines, nextSlide, previousSlide, updateOut } from "../helpers/showActions"
+    import { clearAll, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
@@ -141,9 +141,7 @@
     }
 
     function checkGroupShortcuts(e: any) {
-        if (!$activeShow) return
-
-        let currentShowId = outSlide?.id || ($activeShow.type === undefined || $activeShow.type === "show" ? $activeShow.id : null)
+        let currentShowId = outSlide?.id || ($activeShow !== null ? ($activeShow.type === undefined || $activeShow.type === "show" ? $activeShow.id : null) : null)
         if (!currentShowId) return
 
         let showRef = _show(currentShowId).layouts("active").ref()[0] || []
@@ -159,35 +157,7 @@
             })
         })
 
-        if (!globalGroupIds.length || $outLocked) return
-
-        // play first matching group
-        let nextAfterOutput = undefined
-        let index = undefined
-        showRef.forEach((ref) => {
-            // if (ref.id !== slideId) return
-            if (!globalGroupIds.includes(ref.id)) return
-
-            // get next slide if global group is outputted
-            if (index === undefined) index = ref.layoutIndex
-            if (outSlide?.index === undefined || nextAfterOutput || ref.layoutIndex <= outSlide.index) return
-
-            nextAfterOutput = ref.layoutIndex
-        })
-
-        if (nextAfterOutput) index = nextAfterOutput
-        if (index === undefined) return
-
-        // WIP duplicate of "slideClick" in Slides.svelte
-        updateOut(currentShowId, index, showRef, !e.altKey)
-        setOutput("slide", { id: currentShowId, layout: _show(currentShowId).get("settings.activeLayout"), index, line: 0 })
-
-        setTimeout(() => {
-            // defocus search input
-            ;(document.activeElement as any)?.blur()
-        }, 10)
-
-        return true
+        return playNextGroup(globalGroupIds, !e.altKey)
     }
 
     let fullscreen: boolean = false

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { MediaFit } from "../../../types/Main"
 
-    import { activeEdit, activeShow, dictionary, media, outputs, showsCache } from "../../stores"
+    import { activeEdit, activeShow, dictionary, media, outputs, showsCache, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -30,7 +30,7 @@
 
     let width: number = 0
     let height: number = 0
-    $: resolution = getResolution(Slide?.settings?.resolution, $outputs)
+    $: resolution = getResolution(Slide?.settings?.resolution, {$outputs, $styles})
     // TODO: zoom more in...
 
     let ratio: number = 1

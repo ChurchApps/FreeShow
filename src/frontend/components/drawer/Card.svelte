@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Resolution } from "../../../types/Settings"
-    import { mediaOptions, outputs } from "../../stores"
+    import { mediaOptions, outputs, styles } from "../../stores"
     import { getResolution } from "../helpers/output"
     import Loader from "../main/Loader.svelte"
     import Label from "./Label.svelte"
@@ -17,8 +17,8 @@
     export let white: boolean = true
     export let changed: boolean = false
     export let mode: "grid" | "list" | "lyrics" = "grid"
-    export let resolution: Resolution = getResolution(null, $outputs)
-    $: resolution = getResolution(resolution, $outputs)
+    export let resolution: Resolution = getResolution(null, { $outputs, $styles })
+    $: resolution = getResolution(resolution, { $outputs, $styles })
     $: mainWidth = width || (mode === "grid" ? 100 / $mediaOptions.columns : 100)
 </script>
 

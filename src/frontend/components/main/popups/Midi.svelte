@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activeShow, midiIn, popupData } from "../../../stores"
+    import { activeShow, dictionary, groups, midiIn, popupData } from "../../../stores"
     import { midiActions, midiInListen } from "../../../utils/midi"
     import { receive, send } from "../../../utils/request"
     import { history } from "../../helpers/history"
@@ -103,6 +103,10 @@
     }
 
     const actionOptions = Object.keys(midiActions).map((id) => ({ id, name: id }))
+
+    // TODO: translate name & sort
+    const groupsList = Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))
+    $: console.log(groupsList)
 </script>
 
 <div>
@@ -153,12 +157,19 @@
         <NumberInput value={midi.values.channel} max={255} on:change={(e) => (midi.values.channel = e.detail)} />
     </span>
 
-    <span>
-        {#if $popupData.action || midi.action}
+    {#if $popupData.action || midi.action}
+        <span>
             <p><T id="midi.start_action" /></p>
             <Dropdown value={midi.action || "—"} options={actionOptions} on:click={(e) => (midi.action = e.detail.name)} />
-        {/if}
-    </span>
+        </span>
+    {/if}
+
+    {#if midi.action === "goto_group"}
+        <span>
+            <p><T id="actions.choose_group" /></p>
+            <Dropdown value={groupsList.find((a) => a.id === midi.actionData?.group)?.name || "—"} options={groupsList} on:click={(e) => (midi.actionData = { group: e.detail.id })} />
+        </span>
+    {/if}
 </div>
 
 <style>

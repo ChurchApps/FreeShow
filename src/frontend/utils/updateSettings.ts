@@ -37,6 +37,7 @@ import {
     resized,
     showsPath,
     slidesOptions,
+    styles,
     templateCategories,
     theme,
     themes,
@@ -50,6 +51,7 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { currentWindow, maxConnections, outputs, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
+import { displayOutputs } from "../components/helpers/output"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -128,7 +130,15 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     // events: (v: any) => events.set(v),
     alertUpdates: (v: any) => alertUpdates.set(v === false ? false : true),
-    autoOutput: (v: any) => autoOutput.set(v),
+    autoOutput: (v: any) => {
+        autoOutput.set(v)
+
+        if (v) {
+            setTimeout(() => {
+                displayOutputs({}, true)
+            }, 500)
+        }
+    },
     maxConnections: (v: any) => maxConnections.set(v),
     ports: (v: any) => ports.set(v),
     timeFormat: (v: any) => timeFormat.set(v),
@@ -138,6 +148,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         })
         outputs.set(v)
     },
+    styles: (v: any) => styles.set(v),
     remotePassword: (v: any) => remotePassword.set(v),
     audioFolders: (v: any) => audioFolders.set(v),
     defaultProjectName: (v: any) => defaultProjectName.set(v),

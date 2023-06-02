@@ -99,6 +99,7 @@ export type Popups =
     | "import_scripture"
     | "edit_event"
     | "choose_screen"
+    | "change_output_values"
     | "advanced_settings"
     | "about"
     | "shortcuts"

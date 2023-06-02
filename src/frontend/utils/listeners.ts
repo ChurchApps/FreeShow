@@ -21,6 +21,7 @@ import {
     projects,
     shows,
     showsCache,
+    styles,
     templates,
     timers,
     transitionData,
@@ -86,6 +87,9 @@ export function listenForUpdates() {
     outputs.subscribe((data) => {
         send(OUTPUT, ["OUTPUTS"], data)
         sendData(REMOTE, { channel: "OUT" })
+    })
+    styles.subscribe((data) => {
+        send(OUTPUT, ["STYLES"], data)
     })
     playerVideos.subscribe((data) => {
         send(OUTPUT, ["PLAYER_VIDEOS"], data)

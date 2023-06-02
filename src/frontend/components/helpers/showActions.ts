@@ -331,6 +331,48 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     }
 }
 
+export function playNextGroup(globalGroupIds: string[], extra: boolean = true) {
+    console.log(globalGroupIds)
+    // TODO: get groups from midi!!!
+    if (!globalGroupIds.length || get(outLocked)) return
+
+    let outputId = getActiveOutputs(get(outputs))[0]
+    let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
+    let outSlide = currentOutput.out?.slide
+    let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
+    if (!currentShowId) return
+
+    let showRef = _show(currentShowId).layouts("active").ref()[0] || []
+
+    // play first matching group
+    let nextAfterOutput = undefined
+    let index = undefined
+    showRef.forEach((ref) => {
+        // if (ref.id !== slideId) return
+        if (!globalGroupIds.includes(ref.id)) return
+
+        // get next slide if global group is outputted
+        if (index === undefined) index = ref.layoutIndex
+        if (outSlide?.index === undefined || nextAfterOutput || ref.layoutIndex <= outSlide.index) return
+
+        nextAfterOutput = ref.layoutIndex
+    })
+
+    if (nextAfterOutput) index = nextAfterOutput
+    if (index === undefined) return
+
+    // WIP duplicate of "slideClick" in Slides.svelte
+    updateOut(currentShowId, index, showRef, extra)
+    setOutput("slide", { id: currentShowId, layout: _show(currentShowId).get("settings.activeLayout"), index, line: 0 })
+
+    setTimeout(() => {
+        // defocus search input
+        ;(document.activeElement as any)?.blur()
+    }, 10)
+
+    return true
+}
+
 function playSlideTimers({ showId, slideId }) {
     if (showId === "active") showId = get(activeShow)?.id
     let showSlides: any[] = _show(showId).slides().get()

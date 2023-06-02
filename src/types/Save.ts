@@ -26,6 +26,7 @@ export type SaveListSettings =
     | "openedFolders"
     | "os"
     | "outputs"
+    | "styles"
     | "outLocked"
     | "presenterControllerKeys"
     | "playerVideos"

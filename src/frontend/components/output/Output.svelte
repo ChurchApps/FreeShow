@@ -1,7 +1,8 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
+    import type { Styles } from "../../../types/Settings"
     import type { Transition } from "../../../types/Show"
-    import { outputs, overlays, showsCache, templates, transitionData, volume } from "../../stores"
+    import { outputs, overlays, showsCache, styles, templates, transitionData, volume } from "../../stores"
     import { receive, send } from "../../utils/request"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
@@ -32,12 +33,15 @@
     $: outputId = getActiveOutputs($outputs)[0]
     $: currentOutput = $outputs[outputId] || {}
 
-    let layers: any = currentOutput?.show?.layers || defaultLayers
+    let currentStyle: Styles = { name: "" }
+    $: currentStyle = currentOutput?.style ? $styles[currentOutput?.style] : { name: "" }
+
+    let layers: any = currentStyle.layers || defaultLayers
     let out: any = currentOutput?.out || {}
     let slide: any = out.slide || null
     let background: any = out.background || null
 
-    $: if (JSON.stringify(layers) !== JSON.stringify(currentOutput?.show?.layers || defaultLayers)) layers = JSON.parse(JSON.stringify(currentOutput?.show?.layers || defaultLayers))
+    $: if (JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) layers = JSON.parse(JSON.stringify(currentStyle.layers || defaultLayers))
     $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = JSON.parse(JSON.stringify(currentOutput?.out || {}))
     $: if (out.refresh || outputId || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) slide = JSON.parse(JSON.stringify(out.slide || null))
     $: if (out.refresh || outputId || JSON.stringify(background) !== JSON.stringify(out.background || null)) background = JSON.parse(JSON.stringify(out.background || null))
@@ -136,11 +140,11 @@
     $: currentLayout = slide ? _show(slide.id).layouts([slide.layout]).ref()[0] : []
     $: currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? JSON.parse(JSON.stringify(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {})) : null) : null
 
-    $: if (currentSlide && currentOutput.show.template) setTemplateStyle()
+    $: if (currentSlide && currentOutput?.style && currentStyle) setTemplateStyle()
     function setTemplateStyle() {
         // TODO: duplicate of history "template":1107
-        let template = $templates[currentOutput.show.template]
-        if (template?.items.length) {
+        let template = $templates[currentStyle.template || ""]
+        if (template?.items?.length) {
             template.items.forEach((item: any, i: number) => {
                 if (currentSlide.items[i]) {
                     currentSlide.items[i].style = item.style || ""
@@ -154,31 +158,34 @@
                     })
                 }
             })
+        } else {
+            // reset style
+            currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? JSON.parse(JSON.stringify(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {})) : null) : null
         }
     }
 
-    $: resolution = getResolution(currentSlide?.settings?.resolution, currentOutput)
+    $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
 
     // lines
     let linesStart: null | number = null
     let linesEnd: null | number = null
-    $: amountOfLinesToShow = currentOutput.show?.lines !== undefined ? Number(currentOutput.show?.lines) : 0
+    $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
     $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
     $: linesStart = linesIndex !== null ? amountOfLinesToShow! * linesIndex : null
     $: linesEnd = linesStart !== null ? linesStart + amountOfLinesToShow! : null
 
     // metadata
     $: overrideOutput = $showsCache[slide?.id]?.metadata?.override
-    $: metadataTemplate = overrideOutput ? $showsCache[slide?.id]?.metadata?.template : currentOutput.show?.metadataTemplate || "metadata"
-    $: metadataDisplay = overrideOutput ? $showsCache[slide?.id]?.metadata?.display : currentOutput.show?.displayMetadata
+    $: metadataTemplate = overrideOutput ? $showsCache[slide?.id]?.metadata?.template : currentStyle.metadataTemplate || "metadata"
+    $: metadataDisplay = overrideOutput ? $showsCache[slide?.id]?.metadata?.display : currentStyle.displayMetadata
     const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
     let metadataStyle = defaultMetadataStyle
-    $: metadataStyle = getTemplateStyle(metadataTemplate, $templates) || defaultMetadataStyle
+    $: metadataStyle = getTemplateStyle(metadataTemplate!, $templates) || defaultMetadataStyle
 
-    $: messageTemplate = overrideOutput ? $showsCache[slide?.id]?.message?.template : currentOutput.show?.messageTemplate || "message"
+    $: messageTemplate = overrideOutput ? $showsCache[slide?.id]?.message?.template : currentStyle.messageTemplate || "message"
     const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
     let messageStyle = defaultMessageStyle
-    $: messageStyle = getTemplateStyle(messageTemplate, $templates) || defaultMessageStyle
+    $: messageStyle = getTemplateStyle(messageTemplate!, $templates) || defaultMessageStyle
 
     function getTemplateStyle(templateId: string, updater: any) {
         if (!templateId) return
@@ -225,7 +232,7 @@
     }
 </script>
 
-<Zoomed background={currentSlide?.settings?.color || currentOutput.show?.background || "black"} {center} {style} {resolution} bind:ratio>
+<Zoomed background={currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} bind:ratio>
     {#if tempVideoBG && layers.includes("background")}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}">
             <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />

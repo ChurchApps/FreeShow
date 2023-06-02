@@ -9,6 +9,7 @@
     import Groups from "./tabs/Groups.svelte"
     import Other from "./tabs/Other.svelte"
     import Outputs from "./tabs/Outputs.svelte"
+    import Styles from "./tabs/Styles.svelte"
     import Theme from "./tabs/Theme.svelte"
 </script>
 
@@ -25,6 +26,8 @@
             <Theme />
         {:else if $settingsTab === "groups"}
             <Groups />
+        {:else if $settingsTab === "styles"}
+            <Styles />
         {:else if $settingsTab === "outputs"}
             <Outputs />
         {:else if $settingsTab === "actions"}

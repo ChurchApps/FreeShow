@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, templateCategories, templates } from "../../stores"
+    import { activeShow, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, styles, templateCategories, templates } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getResolution } from "../helpers/output"
@@ -15,7 +15,7 @@
     export let active: string | null
     export let searchValue: string = ""
 
-    $: resolution = getResolution(null, $outputs)
+    $: resolution = getResolution(null, { $outputs, $styles })
     let filteredTemplates: any
 
     $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings.template : null

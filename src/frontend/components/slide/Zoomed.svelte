@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Resolution } from "../../../types/Settings"
-    import { outputs } from "../../stores"
+    import { outputs, styles } from "../../stores"
     import { getActiveOutputs, getResolution } from "../helpers/output"
 
     export let background: string = $outputs[getActiveOutputs()[0]]?.show?.background || "#000000"
@@ -11,8 +11,8 @@
     export let aspectRatio: boolean = true
     export let hideOverflow: boolean = true
     export let customZoom: number = 1
-    export let resolution: Resolution = getResolution(null, $outputs)
-    $: resolution = getResolution(resolution, $outputs)
+    export let resolution: Resolution = getResolution(null, { $outputs, $styles })
+    $: resolution = getResolution(resolution, { $outputs, $styles })
     let slideWidth: number = 0
     export let ratio: number = 1
     $: ratio = Math.max(0.01, slideWidth / resolution.width) / customZoom

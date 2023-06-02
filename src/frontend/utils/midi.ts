@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
 import { setOutput } from "../components/helpers/output"
-import { clearAll, nextSlide, previousSlide, updateOut } from "../components/helpers/showActions"
+import { clearAll, nextSlide, playNextGroup, previousSlide, updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { midiIn, shows } from "../stores"
 import { send } from "./request"
@@ -52,6 +52,10 @@ export const midiActions = {
     clear_all: () => {
         clearAll()
     },
+    goto_group: (data: any) => {
+        let globalGroupIds = [data.group]
+        playNextGroup(globalGroupIds)
+    },
 }
 
 export function playMidiIn(msg) {
@@ -62,7 +66,7 @@ export function playMidiIn(msg) {
     if (JSON.stringify(midi.values) !== JSON.stringify(msg.values)) return
 
     if (midi.action) {
-        midiActions[midi.action]()
+        midiActions[midi.action](midi.actionData)
         return
     }
 

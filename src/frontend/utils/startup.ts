@@ -52,6 +52,7 @@ import {
     showsCache,
     showsPath,
     stageShows,
+    styles,
     templates,
     textCache,
     themes,
@@ -142,6 +143,12 @@ const receiveMAIN: any = {
     // },
     ALERT: (a: any) => {
         alertMessage.set(a)
+
+        if (a === "error.display") {
+            activePopup.set("choose_screen")
+            return
+        }
+
         activePopup.set("alert")
     },
     CLOSE: () => {
@@ -202,6 +209,7 @@ export const receiveSTORE: any = {
 
 const receiveOUTPUT: any = {
     OUTPUTS: (a: any) => outputs.set(a),
+    STYLES: (a: any) => styles.set(a),
     // BACKGROUND: (a: any) => outBackground.set(a),
     TRANSITION: (a: any) => transitionData.set(a),
     // SLIDE: (a: any) => outSlide.set(a),

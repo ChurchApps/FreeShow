@@ -20,6 +20,7 @@ import {
     shows,
     showsCache,
     stageShows,
+    styles,
     theme,
     themes,
 } from "../../stores"
@@ -373,6 +374,7 @@ export const _updaters = {
             }, 100)
         },
     },
+    settings_style: { store: styles },
 }
 
 function updateTheme(id: string) {
