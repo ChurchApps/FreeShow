@@ -11,8 +11,6 @@
         timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
         updates: (e: any) => alertUpdates.set(e.target.checked),
         labels: (e: any) => labelsDisabled.set(e.target.checked),
-        colors: (e: any) => fullColors.set(e.target.checked),
-        groupNumber: (e: any) => groupNumbers.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
     }
 
@@ -50,15 +48,8 @@
     <!-- style="width: 200px;" -->
     <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
 </div>
-<hr />
-<div>
-    <p><T id="settings.group_numbers" /></p>
-    <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
-</div>
-<div>
-    <p><T id="settings.full_colors" /></p>
-    <Checkbox checked={$fullColors} on:change={inputs.colors} />
-</div>
+
+<!-- <hr /> -->
 <!-- <div>
   <p><T id="settings.default_project_name" /></p>
   <Dropdown

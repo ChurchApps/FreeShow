@@ -13,7 +13,7 @@
 
     $: outs = Object.entries($outputs)
         .map(([id, o]: any) => ({ id, ...o }))
-        .filter((a) => a.enabled)
+        .filter((a) => a.enabled && !a.isKeyOutput)
         .sort((a, b) => a.name.localeCompare(b.name))
 
     function toggleOutput(id: string) {

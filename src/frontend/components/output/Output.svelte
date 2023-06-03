@@ -234,7 +234,7 @@
 
 <Zoomed background={currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} bind:ratio>
     {#if tempVideoBG && layers.includes("background")}
-        <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}">
+        <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
             <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
         </div>
     {/if}
@@ -248,6 +248,7 @@
                         <Textbox
                             filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
                             backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                            key={currentOutput.isKeyOutput}
                             {item}
                             {ratio}
                             ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
@@ -263,13 +264,13 @@
     {#if layers.includes("overlays")}
         <!-- message -->
         {#if $showsCache[slide?.id]?.message?.text}
-            <div class="meta" transition:custom={transition} style={messageStyle}>
+            <div class="meta" transition:custom={transition} style={messageStyle} class:key={currentOutput.isKeyOutput}>
                 {$showsCache[slide?.id]?.message?.text}
             </div>
         {/if}
         <!-- metadata -->
         {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
-            <div class="meta" transition:custom={transition} style={metadataStyle}>
+            <div class="meta" transition:custom={transition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
                 {Object.values($showsCache[slide?.id].meta)
                     .filter((a) => a.length)
                     .join("; ")}
@@ -279,7 +280,7 @@
         {#if out.overlays?.length}
             {#each out.overlays as id}
                 {#if $overlays[id]}
-                    <div transition:custom={overlayTransition}>
+                    <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
                         <div>
                             {#each $overlays[id].items as item}
                                 <Textbox {item} ref={{ type: "overlay", id }} />
@@ -301,5 +302,9 @@
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+
+    .key {
+        filter: brightness(30);
     }
 </style>

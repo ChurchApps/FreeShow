@@ -3,7 +3,7 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { activeEdit, activePage, activeProject, activeShow, activeTimers, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, timers } from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, activeTimers, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getMediaType } from "./media"
 import { getActiveOutputs, setOutput } from "./output"
@@ -73,11 +73,23 @@ export function getItemWithMostLines(slide: Slide) {
     return amount
 }
 
+// TODO: multiple outputs with different lines!
 function getOutputWithLines() {
     let outs = getActiveOutputs()
-    let l = outs.find((id: string) => get(outputs)[id].show?.lines)
-    l = get(outputs)[l]?.show?.lines
-    return Number(l) || 0
+
+    let currentLines = 0
+    outs.forEach((id: string) => {
+        let output = get(outputs)[id]
+        if (!output.style) return
+
+        let style = get(styles)[output.style]
+        let lines = style.lines
+        if (!lines) return
+
+        if (lines > currentLines) currentLines = lines
+    })
+
+    return currentLines
 }
 
 export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null) {
@@ -323,6 +335,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     if (data.actions) {
         if (data.actions.sendMidi) sendMidi(_show(id).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
+        if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle)
         if (data.actions.startTimer) playSlideTimers({ showId: id, slideId: layout[index].id })
         if (data.actions.stopTimers) activeTimers.set([])
         if (data.actions.clearBackground) setOutput("background", null, false, outputId)
@@ -331,18 +344,23 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     }
 }
 
-export function playNextGroup(globalGroupIds: string[], extra: boolean = true) {
+export function changeOutputStyle(styleId: string) {
+    let activeOutputs = getActiveOutputs(get(outputs))
+    activeOutputs.forEach(changeStyle)
+
+    function changeStyle(outputId: string) {
+        outputs.update((a) => {
+            a[outputId].style = styleId
+
+            return a
+        })
+    }
+}
+
+export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra: boolean = true) {
     console.log(globalGroupIds)
     // TODO: get groups from midi!!!
     if (!globalGroupIds.length || get(outLocked)) return
-
-    let outputId = getActiveOutputs(get(outputs))[0]
-    let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
-    let outSlide = currentOutput.out?.slide
-    let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
-    if (!currentShowId) return
-
-    let showRef = _show(currentShowId).layouts("active").ref()[0] || []
 
     // play first matching group
     let nextAfterOutput = undefined

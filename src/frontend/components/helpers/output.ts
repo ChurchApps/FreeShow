@@ -8,6 +8,7 @@ import { sendInitialOutputData } from "../../utils/messages"
 import { send } from "../../utils/request"
 import type { Transition } from "../../../types/Show"
 import { _show } from "./shows"
+import { clone } from "./array"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
@@ -140,7 +141,33 @@ export const defaultOutput: Output = {
     bounds: { x: 0, y: 0, width: 1920, height: 1080 }, // x: 1920 ?
     screen: null,
     kiosk: true,
-    show: {},
+}
+
+export function keyOutput(keyId: string, delOutput: boolean = false) {
+    if (!keyId) return
+
+    if (delOutput) {
+        deleteOutput(keyId)
+        return
+    }
+
+    // create new "key" output
+    outputs.update((a) => {
+        let currentOutput = clone(defaultOutput)
+        currentOutput.name = "Key"
+        currentOutput.isKeyOutput = true
+        a[keyId] = currentOutput
+
+        // show
+        send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput })
+        if (get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id: keyId, ...currentOutput } })
+
+        setTimeout(() => {
+            sendInitialOutputData()
+        }, 3000)
+
+        return a
+    })
 }
 
 export function addOutput(onlyFirst: boolean = false) {
@@ -149,7 +176,7 @@ export function addOutput(onlyFirst: boolean = false) {
     outputs.update((output) => {
         let id = uid()
         if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)]?.colors?.secondary
-        output[id] = JSON.parse(JSON.stringify(defaultOutput))
+        output[id] = clone(defaultOutput)
 
         // set name
         let n = 0
@@ -166,6 +193,16 @@ export function addOutput(onlyFirst: boolean = false) {
 
         currentOutputSettings.set(id)
         return output
+    })
+}
+
+export function deleteOutput(outputId: string) {
+    if (Object.keys(get(outputs)).length <= 1) return
+
+    outputs.update((a) => {
+        delete a[outputId]
+        currentOutputSettings.set(Object.keys(a)[0])
+        return a
     })
 }
 

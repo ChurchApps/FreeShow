@@ -37,6 +37,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
                 { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
                 { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
                 { id: "startTimer", label: "actions.start_timer", icon: "timer", enabled: currentActions?.startTimer || false },
+                { id: "outputStyle", label: "actions.change_output_style", icon: "styles", enabled: currentActions?.outputStyle || false },
                 { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
                 { id: "sendMidi", label: "actions.send_midi", icon: "music" },
             ]

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activeShow, dictionary, groups, midiIn, popupData } from "../../../stores"
+    import { activeShow, dictionary, groups, midiIn, popupData, styles } from "../../../stores"
     import { midiActions, midiInListen } from "../../../utils/midi"
     import { receive, send } from "../../../utils/request"
     import { history } from "../../helpers/history"
@@ -106,7 +106,15 @@
 
     // TODO: translate name & sort
     const groupsList = Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))
-    $: console.log(groupsList)
+
+    $: stylesList = getList($styles)
+    function getList(styles) {
+        let list = Object.entries(styles).map(([id, obj]: any) => {
+            return { ...obj, id }
+        })
+
+        return list.sort((a, b) => a.name.localeCompare(b.name))
+    }
 </script>
 
 <div>
@@ -168,6 +176,11 @@
         <span>
             <p><T id="actions.choose_group" /></p>
             <Dropdown value={groupsList.find((a) => a.id === midi.actionData?.group)?.name || "—"} options={groupsList} on:click={(e) => (midi.actionData = { group: e.detail.id })} />
+        </span>
+    {:else if midi.action === "change_output_style"}
+        <span>
+            <p><T id="actions.change_output_style" /></p>
+            <Dropdown value={$styles[midi.actionData?.style]?.name || "—"} options={stylesList} on:click={(e) => (midi.actionData = { style: e.detail.id })} />
         </span>
     {/if}
 </div>

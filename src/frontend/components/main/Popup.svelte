@@ -29,6 +29,7 @@
     import CloudUpdate from "./popups/CloudUpdate.svelte"
     import CloudMethod from "./popups/CloudMethod.svelte"
     import ChangeOutputValues from "./popups/ChangeOutputValues.svelte"
+    import ChooseStyle from "./popups/ChooseStyle.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -50,6 +51,7 @@
         edit_event: EditEvent,
         choose_screen: ChooseScreen,
         change_output_values: ChangeOutputValues,
+        choose_style: ChooseStyle,
         advanced_settings: AdvancedScreen,
         about: About,
         shortcuts: Shortcuts,

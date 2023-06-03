@@ -6,6 +6,7 @@ export interface Outputs {
 
 export interface Output {
     id?: string
+    isKeyOutput?: boolean
     enabled: boolean
     active: boolean
     name: string

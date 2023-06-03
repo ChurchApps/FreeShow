@@ -2,7 +2,7 @@
     // import {flip} from 'svelte/animate';
     // import type { Resolution } from "../../../types/Settings"
 
-    import { activeShow, cachedShowsData, outLocked, outputs, showsCache, slidesOptions } from "../../stores"
+    import { activeShow, cachedShowsData, outLocked, outputs, showsCache, slidesOptions, styles } from "../../stores"
     import { history } from "../helpers/history"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
@@ -99,13 +99,15 @@
         activeSlides = []
         activeOutputs.forEach((a) => {
             let currentOutput: any = $outputs[a]
+            let currentStyle = $styles[currentOutput?.style || ""] || {}
             if (!currentOutput) return
+
             let outSlide: any = currentOutput.out?.slide || {}
 
             // console.log(s, slideIndex, id, activeLayout)
             if (!activeSlides[outSlide.index] && outSlide.id === id && outSlide.layout === activeLayout) {
                 // get progress of current line division
-                let amountOfLinesToShow: number = currentOutput.show?.lines !== undefined ? Number(currentOutput.show?.lines) : 0
+                let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
                 let lineIndex: any = outSlide.line || 0
                 let maxLines: number = 0
                 if (amountOfLinesToShow > 0) {

@@ -29,17 +29,24 @@
     function updateTheme(e: any, id: null | string, key: string = "colors") {
         if ($theme === "default") {
             // duplicate
-            let thisTheme: any = $themes[$theme]
+            let thisTheme: any = clone($themes[$theme])
             let data: any = {
                 ...thisTheme,
                 default: false,
                 name: themeValue + " 2",
                 [key]: { ...thisTheme[key], [id!]: e.target?.value || e },
             }
+
             history({ id: "UPDATE", newData: { data }, location: { page: "settings", id: "settings_theme" } })
+            updateStyle(data)
         } else {
             let value: string = e.target?.value || e
+
             history({ id: "UPDATE", newData: { key, subkey: id, data: value }, oldData: { id: $theme }, location: { page: "settings", id: "settings_theme", override: "theme#" + $theme + "." + id } })
+
+            setTimeout(() => {
+                updateStyle($themes[$theme])
+            }, 20)
         }
     }
 

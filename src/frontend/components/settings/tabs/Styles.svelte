@@ -93,6 +93,10 @@
     ]
 </script>
 
+<div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;">
+    <p><T id="settings.styles_hint" /></p>
+</div>
+
 <Dropdown value={currentStyle.name} options={stylesList} on:click={(e) => (styleId = e.detail?.id)} />
 
 <div class="flex">
@@ -133,6 +137,8 @@
     </span>
 </div>
 <!-- TODO: transparency? -->
+<!-- WIP background image (clear to image...) -->
+<!-- WIP foreground: mask/overlay -->
 <div>
     <p><T id="settings.resolution" /></p>
     <span class="inputs">
@@ -208,6 +214,7 @@
         </Button>
     </span>
 </div>
+<!-- WIP toggle meta -->
 
 <div>
     <p><T id="settings.override_with_template" /></p>
@@ -236,7 +243,7 @@
 <hr />
 <Button style="width: 100%;" on:click={resetStyle} center>
     <Icon id="reset" right />
-    <T id="settings.reset_style" />
+    <T id="actions.reset" />
 </Button>
 
 <style>

@@ -12,11 +12,13 @@
     import Clock from "../system/Clock.svelte"
     import Chords from "./Chords.svelte"
     import Timer from "./views/Timer.svelte"
+    import { getStyles } from "../helpers/style"
 
     export let item: Item
     export let ratio: number = 1
     export let filter: string = ""
     export let backdropFilter: string = ""
+    export let key: boolean = false
     export let smallFontSize: boolean = false
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
@@ -76,10 +78,46 @@
     }
 
     let textElem: any = null
+
+    // TODO: aplha key: output preview not filtered
+
+    function getAlphaStyle(style: string) {
+        if (!key) return style
+        let styles = getStyles(style)
+
+        let alphaStyles = ";"
+        let bgAlpha = getAlphaValues(styles["background-color"])
+        let textAlpha = getAlphaValues(styles["color"])
+        if (bgAlpha) alphaStyles += "background-color: rgb(255 255 255 / " + bgAlpha + ");"
+        if (textAlpha) alphaStyles += "color: rgb(255 255 255 / " + textAlpha + ");"
+
+        return style + alphaStyles
+    }
+
+    function getAlphaValues(colorValue: string) {
+        if (!colorValue) return 0
+        let alpha = 0
+
+        if (colorValue.includes("#")) alpha = alphaFromHex(colorValue)
+        else if (colorValue.includes("rgb")) alpha = alphaFromRgb(colorValue)
+
+        return alpha || 0
+    }
+    function alphaFromHex(colorValue: string) {
+        let rx = /^#([0-9a-f]{2})[0-9a-f]{6}$/i
+        let m = colorValue.match(rx)
+        if (!m) return 0
+        return parseInt(m[1], 16) / 255
+    }
+    function alphaFromRgb(colorValue: string) {
+        if (colorValue.includes(",")) return parseFloat(colorValue.split(",")[3])
+        if (colorValue.includes("/")) return parseFloat(colorValue.substring(colorValue.indexOf("/") + 1))
+        return 0
+    }
 </script>
 
 <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
-<div class="item" style="{style ? item?.style : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}">
+<div class="item" style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}" class:key>
     {#if lines}
         <div class="align" style={style ? item.align : null}>
             {#if chords}
@@ -90,7 +128,7 @@
                     {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
                         <div class="break" class:smallFontSize style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
                             {#each line.text as text}
-                                <span style="{style ? text.style : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value}</span>
+                                <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value}</span>
                             {/each}
                         </div>
                     {/if}
@@ -161,6 +199,11 @@
 
     .item :global(.wj) {
         color: #ff5050;
+    }
+
+    .key {
+        /* filter: brightness(30); */
+        filter: grayscale(1) brightness(20);
     }
 
     /* span {

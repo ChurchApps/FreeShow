@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers } from "../../stores"
+    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
     import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
@@ -157,11 +157,11 @@
             })
         })
 
-        return playNextGroup(globalGroupIds, !e.altKey)
+        return playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
     }
 
     let fullscreen: boolean = false
-    $: resolution = getResolution(currentOutput.show?.resolution)
+    $: resolution = getResolution(currentStyle.resolution)
 
     // TODO: video gets ((removed)) if video is starting while another is fading out
     let video: any = null
@@ -215,12 +215,14 @@
         })
     }
 
+    $: currentStyle = $styles[currentOutput?.style] || {}
+
     // lines
     $: outSlide = currentOutput.out?.slide
     $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]) : []
     let linesIndex: null | number = null
     let maxLines: null | number = null
-    $: amountOfLinesToShow = currentOutput.show?.lines !== undefined ? Number(currentOutput.show?.lines) : 0
+    $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
     $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
     $: showSlide = outSlide?.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null

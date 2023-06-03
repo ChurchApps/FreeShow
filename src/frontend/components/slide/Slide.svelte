@@ -198,6 +198,7 @@
     $: resolution = getResolution(slide?.settings?.resolution, { $outputs, $styles })
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     let style: string = ""
     $: {
@@ -250,7 +251,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     </div>
                 {/if}
                 <Zoomed
-                    background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentOutput.show?.background || "black" : "transparent"}
+                    background={slide.items?.length && ($slidesOptions.mode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentStyle.background || "black" : "transparent"}
                     let:ratio
                     {resolution}
                     zoom={$slidesOptions.mode !== "lyrics" || noQuickEdit}

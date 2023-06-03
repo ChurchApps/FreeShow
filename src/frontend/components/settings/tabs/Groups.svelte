@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { dictionary, groups } from "../../../stores"
+    import { dictionary, fullColors, groupNumbers, groups } from "../../../stores"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -8,6 +8,7 @@
     import Color from "../../inputs/Color.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
 
     $: g = Object.entries($groups)
         .map(([id, a]: any) => ({ id, ...a, name: a.default ? $dictionary.groups?.[a.name] : a.name }))
@@ -26,6 +27,11 @@
 
             return a
         })
+    }
+
+    const inputs: any = {
+        colors: (e: any) => fullColors.set(e.target.checked),
+        groupNumber: (e: any) => groupNumbers.set(e.target.checked),
     }
 
     const changeValue = (e: any, key: string) => (value[key] = e.target.value)
@@ -54,6 +60,17 @@
     $: console.log(shortcuts)
 </script>
 
+<div>
+    <p><T id="settings.group_numbers" /></p>
+    <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
+</div>
+<div>
+    <p><T id="settings.full_colors" /></p>
+    <Checkbox checked={$fullColors} on:change={inputs.colors} />
+</div>
+
+<hr />
+
 <!-- <h3><T id="settings.add_group" /></h3> -->
 <div>
     <TextInput value={value.group} on:input={(e) => changeValue(e, "group")} light />
@@ -73,7 +90,7 @@
     </Button>
 </div>
 
-<hr />
+<br />
 
 {#each g as group}
     <div>
@@ -132,6 +149,7 @@
         justify-content: space-between;
         margin: 5px 0;
         gap: 5px;
+        min-height: 38px;
     }
 
     div :global(.dropdownElem) {

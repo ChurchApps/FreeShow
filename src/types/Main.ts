@@ -100,6 +100,7 @@ export type Popups =
     | "edit_event"
     | "choose_screen"
     | "change_output_values"
+    | "choose_style"
     | "advanced_settings"
     | "about"
     | "shortcuts"

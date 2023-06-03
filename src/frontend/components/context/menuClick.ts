@@ -32,6 +32,7 @@ import {
     showsCache,
     slidesOptions,
     stageShows,
+    styles,
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
@@ -49,6 +50,7 @@ import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
+import { newToast } from "../../utils/messages"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
@@ -532,10 +534,11 @@ const actions: any = {
 }
 
 function changeSlideAction(obj: any, id: string) {
+    let layoutSlide: number = obj.sel.data[0]?.index || 0
+    let ref = _show().layouts("active").ref()[0]
+
     if (id.includes("Midi")) {
         let midiId: string = uid()
-        let layoutSlide: number = obj.sel.data[0].index
-        let ref = _show().layouts("active").ref()[0]
         let actions = clone(ref[layoutSlide].data.actions) || {}
 
         if (actions[id]) midiId = actions[id]
@@ -545,10 +548,31 @@ function changeSlideAction(obj: any, id: string) {
 
         let data: any = { id: midiId }
         // sendMidi | receiveMidi
-        if (id === "receiveMidi") data = { id: midiId, type: "in", index: obj.sel.data[0].index }
+        if (id === "receiveMidi") data = { id: midiId, type: "in", index: layoutSlide }
 
         popupData.set(data)
         activePopup.set("midi")
+
+        return
+    }
+
+    if (id === "outputStyle") {
+        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
+        let styleId: string = actions[id] || Object.keys(get(styles))[0]
+
+        if (!styleId) {
+            newToast("No styles")
+            return
+        }
+
+        if (!actions[id]) actions[id] = styleId
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] }, location: { page: "show", override: "change_style_slide" } })
+
+        let data: any = { id: styleId, index: layoutSlide }
+
+        popupData.set(data)
+        activePopup.set("choose_style")
 
         return
     }
@@ -557,8 +581,7 @@ function changeSlideAction(obj: any, id: string) {
 
     // this is old and has to be stored as this
     if (id === "loop") {
-        let ref = _show().layouts("active").ref()[0][obj.sel.data[0]?.index]
-        let loop = ref?.data?.end || false
+        let loop = ref[layoutSlide]?.data?.end || false
         // WIP this does not work with multiple for some reason
         history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !loop, indexes } })
 
@@ -567,7 +590,7 @@ function changeSlideAction(obj: any, id: string) {
 
     let actionsList: any[] = []
     indexes.forEach((index: number) => {
-        let actions: any = _show().layouts().ref()[0][index]?.data?.actions || {}
+        let actions: any = ref[index]?.data?.actions || {}
         actions[id] = !actions[id]
         actionsList.push(actions)
     })

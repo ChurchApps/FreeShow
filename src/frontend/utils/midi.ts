@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
-import { setOutput } from "../components/helpers/output"
-import { clearAll, nextSlide, playNextGroup, previousSlide, updateOut } from "../components/helpers/showActions"
+import { getActiveOutputs, setOutput } from "../components/helpers/output"
+import { changeOutputStyle, clearAll, nextSlide, playNextGroup, previousSlide, updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
-import { midiIn, shows } from "../stores"
+import { activeShow, groups, midiIn, outputs, shows } from "../stores"
 import { send } from "./request"
 
 export function midiInListen() {
@@ -53,9 +53,30 @@ export const midiActions = {
         clearAll()
     },
     goto_group: (data: any) => {
-        let globalGroupIds = [data.group]
-        playNextGroup(globalGroupIds)
+        // WIP duplicate of Preview.svelte checkGroupShortcuts()
+
+        let outputId = getActiveOutputs(get(outputs))[0]
+        let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
+        let outSlide = currentOutput.out?.slide
+        let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
+        if (!currentShowId) return
+
+        let showRef = _show(currentShowId).layouts("active").ref()[0] || []
+        let groupIds = showRef.map((a) => a.id)
+        let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
+        if (!showGroups.length) return
+
+        let globalGroupIds: string[] = []
+        Object.keys(get(groups)).forEach((groupId: string) => {
+            if (groupId !== data.group) return
+            showGroups.forEach((slide) => {
+                if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
+            })
+        })
+
+        playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId })
     },
+    change_output_style: (data: any) => changeOutputStyle(data.style),
 }
 
 export function playMidiIn(msg) {

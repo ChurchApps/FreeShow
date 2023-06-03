@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
     import { activePopup, currentOutputSettings, labelsDisabled, outputDisplay, outputs, styles } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
-    import { addOutput, defaultOutput, getActiveOutputs } from "../../helpers/output"
+    import { addOutput, defaultOutput, deleteOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -30,6 +31,7 @@
     let options: any[] = []
     $: options = Object.entries($outputs)
         .map(([id, a]) => ({ id, ...a }))
+        .filter((a) => !a.isKeyOutput)
         .sort((a, b) => a.name.localeCompare(b.name))
 
     $: if (options.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(options[0].id)
@@ -49,16 +51,6 @@
                 a[currentOutput.id][key] = value
             }
             currentOutputSettings.set(currentOutput.id)
-            return a
-        })
-    }
-
-    function deleteOutput() {
-        if (Object.keys($outputs).length <= 1) return
-
-        outputs.update((a) => {
-            delete a[currentOutput.id]
-            currentOutputSettings.set(Object.keys(a)[0])
             return a
         })
     }
@@ -95,7 +87,7 @@
         }}
         light
     />
-    <Button on:click={deleteOutput} disabled={Object.keys($outputs).length <= 1}>
+    <Button on:click={() => deleteOutput(currentOutput.id)} disabled={options.length <= 1}>
         <Icon id="delete" right />
         {#if !$labelsDisabled}
             <T id="actions.delete" />
@@ -113,7 +105,7 @@
 <!-- main -->
 
 <br />
-{#if Object.keys($outputs).length > 1}
+{#if options.length > 1}
     <div>
         <p><T id="settings.enabled" /></p>
         <Checkbox
@@ -140,6 +132,19 @@
 <div>
     <p><T id="settings.active_style" /></p>
     <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("style", e.detail.id)} />
+</div>
+
+<div>
+    <p><T id="settings.enable_key_output" /></p>
+    <Checkbox
+        checked={!!currentOutput.keyOutput}
+        on:change={(e) => {
+            let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput.keyOutput
+            let keyValue = isChecked(e) ? outputId : null
+            updateOutput("keyOutput", keyValue)
+            keyOutput(outputId, !isChecked(e))
+        }}
+    />
 </div>
 
 <hr />
