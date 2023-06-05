@@ -90,6 +90,7 @@ export type Popups =
     | "export"
     | "show"
     | "delete_show"
+    | "select_show"
     | "icon"
     | "player"
     | "rename"

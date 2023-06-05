@@ -63,6 +63,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     os: { platform: "", name: "Computer" },
     volume: 1,
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
+    calendarAddShow: "",
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {

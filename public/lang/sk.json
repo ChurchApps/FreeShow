@@ -303,6 +303,7 @@
     },
     "popup": {
         "show": "Nová prezentácia",
+        "select_show": "Select show",
         "rename": "Premenovať",
         "color": "Farba",
         "timer": "Časovač",
@@ -505,6 +506,7 @@
         "_title_strikethrough": "Prečiarknuté",
         "color": "Farba",
         "background_color": "Farba pozadia",
+        "background_image": "Background image",
         "size": "Veľkosť",
         "chords": "Akordy",
         "auto_size": "Automatická veľkosť",
@@ -730,7 +732,8 @@
         "ending_the": "",
         "ending_repeated": "opakovať",
         "ending_times": "krát",
-        "save_all": "Uložiť a aktualizovať všetko"
+        "save_all": "Uložiť a aktualizovať všetko",
+        "add_slides_from_show": "Include slides from show"
     },
     "scripture": {
         "bibles": "Biblie z API.Bible",

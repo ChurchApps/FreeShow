@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { dictionary, labelsDisabled, outputs, styles, templates } from "../../../stores"
+    import { dictionary, imageExtensions, labelsDisabled, outputs, styles, templates } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -10,9 +10,11 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import MediaPicker from "../../inputs/MediaPicker.svelte"
+    import { getFileName } from "../../helpers/media"
 
     function updateStyle(e: any, key: string) {
-        let value = e?.detail || e?.target?.value || e
+        let value = e?.detail ?? e?.target?.value ?? e
 
         currentStyle[key] = value
         if (!styleId) styleId = uid()
@@ -135,6 +137,17 @@
     <span style="width: 200px;">
         <Color value={currentStyle.background || "#000000"} on:input={(e) => updateStyle(e, "background")} />
     </span>
+</div>
+<div>
+    <p><T id="edit.background_image" /></p>
+    <MediaPicker title={currentStyle.backgroundImage} filter={{ name: "Image files", extensions: $imageExtensions }} on:picked={(e) => updateStyle(e, "backgroundImage")} clearOnClick={!!currentStyle.backgroundImage}>
+        <Icon id="image" right />
+        {#if currentStyle.backgroundImage}
+            {getFileName(currentStyle.backgroundImage)}
+        {:else}
+            <T id="edit.choose_media" />
+        {/if}
+    </MediaPicker>
 </div>
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->

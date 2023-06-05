@@ -4,9 +4,16 @@
     import Button from "./Button.svelte"
 
     export let filter: any
+    export let title: string = ""
     export let multiple: boolean = false
+    export let clearOnClick: boolean = false
 
     function pick() {
+        if (clearOnClick) {
+            dispatch("picked", "")
+            return
+        }
+
         // filter: { name: "Text file", extensions: ["txt"], id: "txt" }
         window.api.send(OPEN_FILE, { channel: "MEDIA", filter, multiple })
     }
@@ -17,6 +24,6 @@
     })
 </script>
 
-<Button style={$$props.style || null} on:click={pick} center dark>
+<Button {title} style={$$props.style || null} on:click={pick} center dark>
     <slot />
 </Button>

@@ -148,6 +148,7 @@ export const boxes: Box = {
     mirror: {
         icon: "mirror",
         edit: {
+            // TODO: select show popup
             default: [{ name: "remote.show", id: "mirror", key: "show", input: "dropdown", value: "", values: { options: [] } }],
             // template, item index
         },

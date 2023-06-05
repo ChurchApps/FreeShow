@@ -130,12 +130,10 @@
 
         // TODO: youtube seekTo
         setTimeout(() => {
-            console.log(videoTime, time)
             videoTime = time
 
             setTimeout(() => {
                 if (autoPaused) videoData.paused = false
-                console.log(videoTime, time)
             }, 80)
         }, 10)
     }
@@ -203,8 +201,21 @@
 
     // give time for video to clear
     let tempVideoBG: any = null
-    $: if (background) tempVideoBG = background
+    $: if (background || currentStyle?.backgroundImage) getTempBG()
     else setTimeout(resetTempBG, 100)
+    function getTempBG() {
+        if (!background || !layers.includes("background")) {
+            if (!currentStyle?.backgroundImage) {
+                tempVideoBG = null
+                return
+            }
+
+            tempVideoBG = { path: currentStyle?.backgroundImage }
+            return
+        }
+
+        tempVideoBG = background
+    }
     function resetTempBG() {
         tempVideoBG = null
     }
@@ -236,7 +247,7 @@
 </script>
 
 <Zoomed background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} bind:ratio>
-    {#if tempVideoBG && layers.includes("background")}
+    {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
             <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
         </div>

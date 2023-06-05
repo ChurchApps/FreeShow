@@ -303,6 +303,7 @@
     },
     "popup": {
         "show": "Nova apresentação",
+        "select_show": "Select show",
         "rename": "Renomear",
         "color": "Cor",
         "timer": "Temporizador",
@@ -505,6 +506,7 @@
         "_title_strikethrough": "Tachado",
         "color": "Cor",
         "background_color": "Cor de plano de fundo",
+        "background_image": "Background image",
         "size": "Tamanho",
         "chords": "Acordes",
         "auto_size": "Tamanho automático",
@@ -730,7 +732,8 @@
         "ending_the": "o",
         "ending_repeated": "repetida",
         "ending_times": "tempos",
-        "save_all": "Salve e atualize todos"
+        "save_all": "Salve e atualize todos",
+        "add_slides_from_show": "Include slides from show"
     },
     "scripture": {
         "bibles": "Bíblias da API.Bible",

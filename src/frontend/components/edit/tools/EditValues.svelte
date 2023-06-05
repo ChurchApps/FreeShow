@@ -15,6 +15,7 @@
     import { getOriginalValue, removeExtension } from "../scripts/edit"
     import EditTimer from "./EditTimer.svelte"
     import Button from "../../inputs/Button.svelte"
+    import { getFileName } from "../../helpers/media"
 
     export let edits: any
     export let item: any = null
@@ -147,9 +148,13 @@
             {#if input.input === "editTimer"}
                 <EditTimer {item} on:change={(e) => valueChange(e, input)} />
             {:else if input.input === "media"}
-                <MediaPicker style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
+                <MediaPicker title={input.value} style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
                     <Icon id="image" right />
-                    <T id="edit.choose_media" />
+                    {#if input.value}
+                        {getFileName(input.value)}
+                    {:else}
+                        <T id="edit.choose_media" />
+                    {/if}
                 </MediaPicker>
             {:else if input.input === "multiselect"}
                 <div class="line">

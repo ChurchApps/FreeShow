@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Event } from "../../../../types/Calendar"
-    import { activeDays, activePopup, dictionary, eventEdit, events, shows } from "../../../stores"
+    import { activeDays, activePopup, dictionary, eventEdit, events, popupData, shows } from "../../../stores"
     import { createRepeatedEvents, updateEventData } from "../../calendar/event"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -57,6 +57,13 @@
         editEvent = { ...event, id: $eventEdit, isoFrom: getISO(from), isoTo: getISO(to), fromTime: getTime(from), toTime: getTime(to) }
         if (!editEvent.repeatData) editEvent.repeatData = defaultRepeatData
 
+        // update show
+        if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.id) {
+            editEvent.show = $popupData.id
+            selectedShow = showsList.find((a) => a.id === editEvent.show)
+            selectedType = types.find((a) => a.id === "show")!
+            popupData.set({})
+        }
         if (editEvent.show) selectedShow = showsList.find((a) => a.id === editEvent.show)
 
         selectedType = types.find((a) => a.id === (editEvent.type || "event")) || types[0]
@@ -84,6 +91,16 @@
             repeat: false,
             repeatData: defaultRepeatData,
             notes: "",
+        }
+
+        // update show
+        if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.id) {
+            console.log($popupData)
+            editEvent.type = "show"
+            editEvent.show = $popupData.id
+            selectedShow = showsList.find((a) => a.id === editEvent.show)
+            selectedType = types.find((a) => a.id === "show")!
+            popupData.set({})
         }
 
         let obj: any = { month: selectedDate.getMonth() + 1 }
@@ -318,7 +335,19 @@
                 <TextInput value={editEvent.notes} style="width: 50%;" on:input={(e) => inputChange(e, "notes")} />
             </section>
         {:else if selectedType.id === "show"}
-            <Dropdown options={showsList} value={selectedShow.name || "—"} on:click={(e) => (selectedShow = e.detail)} />
+            <!-- <Dropdown options={showsList} value={selectedShow.name || "—"} on:click={(e) => (selectedShow = e.detail)} /> -->
+            <Button
+                on:click={() => {
+                    popupData.set({ action: "select_show", location: "event" })
+                    activePopup.set("select_show")
+                }}
+                style="flex: 1;overflow: hidden;"
+                dark
+                center
+            >
+                <Icon id="showIcon" right />
+                <p style="white-space: normal;"><T id="popup.select_show" />: {selectedShow.name || "—"}</p>
+            </Button>
         {/if}
         <!-- TODO: timers -->
     </div>

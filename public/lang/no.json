@@ -303,6 +303,7 @@
     },
     "popup": {
         "show": "Nytt show",
+        "select_show": "Velg show",
         "rename": "Gi nytt navn",
         "color": "Farge",
         "timer": "Nedtelling",
@@ -505,6 +506,7 @@
         "_title_strikethrough": "Gjennomstreking",
         "color": "Farge",
         "background_color": "Bakgrunnsfarge",
+        "background_image": "Bakgrunnsbilde",
         "size": "Størrelse",
         "chords": "Akkorder",
         "auto_size": "Auto-størrelse",
@@ -730,7 +732,8 @@
         "ending_the": "den",
         "ending_repeated": "gjentatt",
         "ending_times": "ganger",
-        "save_all": "Lagre og oppdater alle"
+        "save_all": "Lagre og oppdater alle",
+        "add_slides_from_show": "Inkluder lysbilder fra show"
     },
     "scripture": {
         "bibles": "Bibler fra API.Bible",

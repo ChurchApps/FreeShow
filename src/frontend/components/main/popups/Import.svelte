@@ -11,7 +11,7 @@
     const show_formats = [
         { name: "Clipboard", id: "clipboard" },
         { name: "Text file", extensions: ["txt"], id: "txt" },
-        { name: "PDF", extensions: ["pdf"], id: "pdf" },
+        { name: "PDF", extensions: ["pdf"], id: "pdf", tutorial: "This might take a while.<br>Currently not supported on linux!<br>Use an online PDF to Image converter if you are having issues." },
         { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint", tutorial: "This will convert all the text to a show. If you want to import all images and styling, please export/convert to PDF and import as PDF." },
         { name: "FreeShow", extensions: ["show"], id: "freeshow" },
         { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "pro", "json"], id: "propresenter" },
@@ -52,9 +52,6 @@
                     if (format.tutorial) {
                         alertMessage.set(format.tutorial)
                         activePopup.set("alert")
-                    } else if (["pdf"].includes(format.id)) {
-                        activePopup.set("alert")
-                        alertMessage.set("popup.importing")
                     } else {
                         activePopup.set(null)
                     }

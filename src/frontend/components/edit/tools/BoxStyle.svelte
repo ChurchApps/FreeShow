@@ -55,6 +55,7 @@
     $: alignStyle = item?.align ? getStyles(item.align) : {}
 
     $: if (id === "mirror" && box) box.edit.default[0].values.options = getListOfShows(!$activeEdit.id)
+    $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
 
     function setValue(input: any) {
         let allItems: number[] = $activeEdit.items

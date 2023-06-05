@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, dictionary, events } from "../../stores"
+    import { activeDays, activePopup, dictionary, eventEdit, events, popupData } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import Button from "../inputs/Button.svelte"
     import { isSameDay } from "./calendar"
@@ -168,6 +168,17 @@
     function move(e: any, day: Date) {
         if (e.buttons) activeDays.set([...new Set([...$activeDays, copy(day).getTime()])])
     }
+
+    // listen for update
+    $: if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.id) selectedShow()
+    function selectedShow() {
+        console.log($popupData, $eventEdit)
+
+        // let animation finish
+        setTimeout(() => {
+            activePopup.set("edit_event")
+        }, 300)
+    }
 </script>
 
 <div class="calendar" on:wheel={wheel} bind:this={calendarElem}>
@@ -178,10 +189,7 @@
                     current = today
                     activeDays.set([copy(today).getTime()])
                 }}
-                active={!!$activeDays.length &&
-                    isSameDay(new Date($activeDays[0]), today) &&
-                    current.getMonth() === new Date($activeDays[0]).getMonth() &&
-                    current.getFullYear() === new Date($activeDays[0]).getFullYear()}
+                active={!!$activeDays.length && isSameDay(new Date($activeDays[0]), today) && current.getMonth() === new Date($activeDays[0]).getMonth() && current.getFullYear() === new Date($activeDays[0]).getFullYear()}
                 title={$dictionary.calendar?.today}
                 style="width: 100%;height: 100%;"
                 center

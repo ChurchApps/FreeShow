@@ -6,6 +6,7 @@ import {
     alertUpdates,
     audioFolders,
     autoOutput,
+    calendarAddShow,
     categories,
     defaultProjectName,
     drawSettings,
@@ -114,6 +115,7 @@ export function save() {
         webFavorites: get(webFavorites),
         volume: get(volume),
         driveData: get(driveData),
+        calendarAddShow: get(calendarAddShow),
     }
 
     // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)

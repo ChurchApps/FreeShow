@@ -136,6 +136,7 @@ export const templates: Writable<Templates> = writable({}) // {default}
 
 // CALENDAR
 export const events: Writable<{ [key: string]: Event }> = writable({}) // {}
+export const calendarAddShow: Writable<string> = writable() // ""
 
 // DRAW
 export const drawSettings: Writable<DrawSettings> = writable({}) // {}

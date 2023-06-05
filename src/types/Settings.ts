@@ -9,6 +9,7 @@ export interface Styles {
     name: string
     layers?: ["background", "slide", "overlays"][]
     background?: string
+    backgroundImage?: string
     resolution?: Resolution
     lines?: number
     template?: string

@@ -5,6 +5,7 @@ import type { ClientMessage } from "../../types/Socket"
 import {
     activePopup,
     audioFolders,
+    calendarAddShow,
     categories,
     defaultProjectName,
     drawSettings,
@@ -230,4 +231,5 @@ const saveList: { [key in SaveList]: any } = {
     midiIn: midiIn,
     driveKeys: driveKeys,
     driveData: driveData,
+    calendarAddShow: calendarAddShow,
 }

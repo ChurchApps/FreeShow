@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
-    import { activeDrawerTab, activeShow, drawer, drawerTabsData, scriptures } from "../../stores"
+    import { activeDrawerTab, activeShow, drawer, drawerTabsData, scriptures, shows } from "../../stores"
     import { createSlides, getDateString, getSelectedEvents, sortDays } from "../calendar/calendar"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -11,11 +11,11 @@
 
     $: console.log(show)
 
-    function updateCalendar() {
+    async function updateCalendar() {
         let currentEvents: any[] = getSelectedEvents(show.reference?.data?.days)
 
         let showId: string = $activeShow?.id || ""
-        let data = createSlides(currentEvents, showId)
+        let data = await createSlides(currentEvents, showId)
 
         history({ id: "UPDATE", newData: { data: data.show }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
     }
@@ -45,7 +45,12 @@
 
 <div>
     {#if show.reference?.type === "calendar"}
-        <p><T id="menu.calendar" />: {getDaysString()}</p>
+        <p>
+            <T id="menu.calendar" />: {getDaysString()}
+            {#if show.reference?.data?.show && $shows[show.reference?.data?.show]}
+                {" + "}{$shows[show.reference.data.show].name}
+            {/if}
+        </p>
         <Button on:click={updateCalendar} style="white-space: nowrap;" dark>
             <Icon id="calendar" right />
             <T id="show.update" />

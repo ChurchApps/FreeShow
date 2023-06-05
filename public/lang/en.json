@@ -303,6 +303,7 @@
     },
     "popup": {
         "show": "New show",
+        "select_show": "Select show",
         "rename": "Rename",
         "color": "Color",
         "timer": "Timer",
@@ -505,6 +506,7 @@
         "_title_strikethrough": "Strikethrough",
         "color": "Color",
         "background_color": "Background color",
+        "background_image": "Background image",
         "size": "Size",
         "chords": "Chords",
         "auto_size": "Auto Size",
@@ -730,7 +732,8 @@
         "ending_the": "the",
         "ending_repeated": "repeated",
         "ending_times": "times",
-        "save_all": "Save and update all"
+        "save_all": "Save and update all",
+        "add_slides_from_show": "Include slides from show"
     },
     "scripture": {
         "bibles": "Bibles from API.Bible",

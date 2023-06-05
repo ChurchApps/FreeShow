@@ -41,3 +41,4 @@ export type SaveListSettings =
     | "webFavorites"
     | "volume"
     | "driveData"
+    | "calendarAddShow"

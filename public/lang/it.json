@@ -303,6 +303,7 @@
     },
     "popup": {
         "show": "Nuovo spettacolo",
+        "select_show": "Select show",
         "rename": "Rinomina",
         "color": "Colore",
         "timer": "Timer",
@@ -505,6 +506,7 @@
         "_title_strikethrough": "Barrato",
         "color": "Colore",
         "background_color": "Colore di sfondo",
+        "background_image": "Background image",
         "size": "Dimensione",
         "chords": "Accordi",
         "auto_size": "Dimensione automatica",
@@ -730,7 +732,8 @@
         "ending_the": "il",
         "ending_repeated": "ripetuto",
         "ending_times": "Tempi",
-        "save_all": "Salva e aggiorna tutto"
+        "save_all": "Salva e aggiorna tutto",
+        "add_slides_from_show": "Include slides from show"
     },
     "scripture": {
         "bibles": "Bibbie da API.Bible",

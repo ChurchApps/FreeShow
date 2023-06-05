@@ -2,10 +2,12 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
-import { activeDays, categories, dictionary, events } from "../../stores"
+import { activeDays, calendarAddShow, categories, dictionary, events, showsCache } from "../../stores"
 import { clone } from "../helpers/array"
 import { checkName } from "../helpers/show"
 import { _show } from "../helpers/shows"
+import { loadShows } from "../helpers/setShow"
+import { getItemText } from "../edit/scripts/textStyle"
 
 export const copyDate = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
 export const isSameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -31,7 +33,7 @@ export function sortDays(selectedDays: number[]) {
     return { sortedDays, from, to }
 }
 
-export function createSlides(currentEvents: any[], id: string = "") {
+export async function createSlides(currentEvents: any[], showId: string = "") {
     let slides: any = {}
     let layouts: any[] = []
 
@@ -79,6 +81,8 @@ export function createSlides(currentEvents: any[], id: string = "") {
         day.events
             .sort((a: any, b: any) => a.from - b.from)
             .forEach((event: any) => {
+                if (!event.name) return
+
                 let v: any[] = []
                 if (event.time) {
                     let time = getTime(new Date(event.from))
@@ -92,7 +96,7 @@ export function createSlides(currentEvents: any[], id: string = "") {
                 values.push(v)
                 if (event.notes) values.push([{ value: "&nbsp;&nbsp;&nbsp;&nbsp;" + event.notes, style: "font-size:60px;" }])
                 values.push([{ value: "", style: "font-size:80px;" }])
-                totalLength += event.name.length / 2 + event.notes.length / 5 // + event.location.length
+                totalLength += event.name.length / 1.5 + (event.notes?.length || 0) / 5 // + event.location.length
             })
         let items: any[] = [
             {
@@ -107,16 +111,68 @@ export function createSlides(currentEvents: any[], id: string = "") {
         slides[id] = { group, color, settings: {}, notes: "", items }
         let l: any = { id }
         if (currentEvents.length > 1) {
-            let duration = totalLength < 25 ? Math.max(5, totalLength * 0.5) : totalLength < 80 ? Math.max(10, totalLength * 0.3) : Math.max(25, totalLength * 0.2)
-            l.nextTimer = Math.min(20, Math.floor(duration))
+            l.nextTimer = getToNextDuration(totalLength)
         }
         layouts.push(l)
     })
-    if (currentEvents.length > 1) layouts[layouts.length - 1].end = true
 
-    let layoutID = _show(id).get("settings.activeLayout") || "default"
+    // add custom show slides
+    let showMedia: any = {}
+    let currentCalendarShow: string = _show(showId).get("reference")?.data?.show || get(calendarAddShow) || ""
+    if (currentCalendarShow) {
+        await loadShows([currentCalendarShow])
+        let show = get(showsCache)[currentCalendarShow]
+        if (show) {
+            let _calendarShow = clone(_show(currentCalendarShow).get())
+            let showLayoutRef = clone(_show(currentCalendarShow).layouts("active").ref()[0])
+            let showSlides = _calendarShow.slides
+            showMedia = _calendarShow.media || {}
 
-    let show: Show = clone(_show(id).get() || new ShowObj(true, "events", layoutID, new Date().getTime(), false))
+            // add slides & set times
+            showLayoutRef.forEach((layoutRef) => {
+                let id = layoutRef.id
+                if (!showSlides[id]) return
+                if (!slides[id]) slides[id] = showSlides[id]
+                console.log(layoutRef)
+
+                let layout = layoutRef.data || {}
+                delete layout.end
+
+                if (!layout.nextTimer) {
+                    let totalTextLength = slides[id].items.reduce((value, item) => (value += getItemText(item).length), 0) / 2
+                    if (layout.background && !totalTextLength) layout.nextTimer = 10
+                    else layout.nextTimer = getToNextDuration(totalTextLength)
+                }
+
+                let isParent = layoutRef.type === "parent"
+                if (isParent) {
+                    layouts.push(layout)
+                    return
+                }
+
+                if (!layouts[layouts.length - 1].children) layouts[layouts.length - 1].children = {}
+                if (!layouts[layouts.length - 1].children[id]) layouts[layouts.length - 1].children[id] = {}
+                layouts[layouts.length - 1].children[id] = layout
+            })
+        }
+    }
+
+    if (currentEvents.length > 1) {
+        let lastParent = layouts[layouts.length - 1]
+        let parentChildren = slides[lastParent.id].children
+        if (parentChildren?.length) {
+            let lastChild = parentChildren[parentChildren.length - 1]
+            if (!lastParent.children) lastParent.children = {}
+            if (!lastParent.children[lastChild]) lastParent.children[lastChild] = {}
+            lastParent.children[lastChild].end = true
+        } else {
+            layouts[layouts.length - 1].end = true
+        }
+    }
+
+    let layoutID = _show(showId).get("settings.activeLayout") || "default"
+
+    let show: Show = clone(_show(showId).get() || new ShowObj(true, "events", layoutID, new Date().getTime(), false))
 
     // add events category
     if (!get(categories).events) {
@@ -128,8 +184,9 @@ export function createSlides(currentEvents: any[], id: string = "") {
 
     show.slides = slides
     show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
+    show.media = showMedia
 
-    if (!id) {
+    if (!showId) {
         // TODO: week?
         let { sortedDays, from, to } = sortDays(get(activeDays))
         show.name = getDateString(from)
@@ -137,9 +194,15 @@ export function createSlides(currentEvents: any[], id: string = "") {
         show.name = checkName(show.name)
 
         show.reference = { type: "calendar", data: { days: get(activeDays) } }
+        if (get(calendarAddShow)) show.reference.data.show = get(calendarAddShow)
     }
 
     return { show }
+}
+
+function getToNextDuration(textLength: number) {
+    let duration: number = textLength < 25 ? Math.max(5, textLength * 0.5) : textLength < 80 ? Math.max(10, textLength * 0.3) : Math.max(25, textLength * 0.2)
+    return Math.min(20, Math.floor(duration))
 }
 
 export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {

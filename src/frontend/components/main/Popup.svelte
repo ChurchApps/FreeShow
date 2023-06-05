@@ -30,6 +30,7 @@
     import CloudMethod from "./popups/CloudMethod.svelte"
     import ChangeOutputValues from "./popups/ChangeOutputValues.svelte"
     import ChooseStyle from "./popups/ChooseStyle.svelte"
+    import SelectShow from "./popups/SelectShow.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -41,6 +42,7 @@
         export: Export,
         show: CreateShow,
         delete_show: DeleteShow,
+        select_show: SelectShow,
         icon: ChangeIcon,
         player: CreatePlayer,
         rename: Rename,
