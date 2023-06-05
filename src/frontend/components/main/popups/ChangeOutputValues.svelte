@@ -9,7 +9,10 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
 
     let currentOutput: any = {}
-    $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
+    $: if ($currentOutputSettings) getCurrentOutput($currentOutputSettings)
+    function getCurrentOutput(id: string) {
+        currentOutput = { id, ...$outputs[id] }
+    }
 
     function updateOutput(key: string, value: any) {
         outputs.update((a: any) => {
@@ -20,9 +23,11 @@
             } else {
                 a[currentOutput.id][key] = value
             }
-            currentOutputSettings.set(currentOutput.id)
+
             return a
         })
+
+        getCurrentOutput(currentOutput.id)
     }
 </script>
 
@@ -32,6 +37,13 @@
         <Icon id="outputs" right />
         <p><T id="context.force_outputs" /></p>
     </Button>
+
+    {#if currentOutput.keyOutput}
+        <Button on:click={() => getCurrentOutput(currentOutput.keyOutput)} style="width: 100%;" dark center>
+            <Icon id="display" right />
+            <p><T id="settings.change_key_output_position" /></p>
+        </Button>
+    {/if}
 
     <br />
 

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "slide.proto";
+import "basicTypes.proto";
+import "alignmentGuide.proto";
+import "effects.proto";
+import "graphicsData.proto";
+
+message PresentationSlide {
+  rv.data.Slide base_slide = 1;
+  rv.data.PresentationSlide.Notes notes = 2;
+  repeated rv.data.AlignmentGuide template_guidelines = 3;
+  rv.data.URL chord_chart = 4;
+  rv.data.Transition transition = 5;
+
+  message Notes {
+    bytes rtf_data = 1;
+    rv.data.Graphics.Text.Attributes attributes = 2;
+
+  }
+}

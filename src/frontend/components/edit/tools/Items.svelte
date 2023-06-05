@@ -16,6 +16,7 @@
     $: invertedItemList = clone(allSlideItems)?.reverse() || []
 
     $: console.log(allSlideItems, invertedItemList)
+    // TODO: this don't work properly
 
     function move(index: number) {
         let items = []
@@ -32,7 +33,7 @@
 
         // move in array (to, from)
         // items.splice(index, 0, items.splice(index + 1, 1)[0])
-        items = moveItem(items, index, index + 1)
+        items = clone(moveItem(items, index, index + 1))
 
         // update
         if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {

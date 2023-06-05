@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+
+message TemplateIdentification {
+  rv.data.UUID uuid = 1;
+  string name = 2;
+  rv.data.UUID slide_uuid = 3;
+  string slide_name = 4;
+  uint32 slide_index = 5;
+
+}

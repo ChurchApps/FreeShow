@@ -38,10 +38,13 @@
         {#each Object.entries($midiIn) as [id, input]}
             <div class="midi">
                 <Button on:click={() => playMidiIn({ id, ...input })} dark>
-                    <strong>{input.name} ({input.input || "—"})</strong>
-                    <p style="opacity: 0.8;">
-                        <T id="midi.note" />: {input.values.note}, <T id="midi.velocity" />: {input.values.velocity}, <T id="midi.channel" />: {input.values.channel} — {input.type}
-                    </p>
+                    <span style="display: flex;align-items: center;width: 100%;">
+                        <Icon id={input.action ? "actions" : "slide"} right />
+                        <p style="width: 350px;">{input.name} ({input.input || "—"})</p>
+                        <p style="opacity: 0.8;display: inline;">
+                            <T id="midi.note" />: {input.values.note}, <T id="midi.velocity" />: {input.values.velocity}, <T id="midi.channel" />: {input.values.channel} — {input.type}
+                        </p>
+                    </span>
                     <p style="opacity: 0.5;font-style: italic;">{input.action ? "" : input.shows.length}</p>
                 </Button>
 
@@ -82,5 +85,6 @@
     .midi :global(button:nth-child(1)) {
         width: 100%;
         justify-content: space-between;
+        text-align: left;
     }
 </style>

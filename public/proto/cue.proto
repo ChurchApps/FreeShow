@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "hotKey.proto";
+import "action.proto";
+
+message Cue {
+  rv.data.UUID uuid = 1;
+  string name = 2;
+  enum CompletionTargetType {
+    COMPLETION_TARGET_TYPE_NONE = 0;
+    COMPLETION_TARGET_TYPE_NEXT = 1;
+    COMPLETION_TARGET_TYPE_RANDOM = 2;
+    COMPLETION_TARGET_TYPE_CUE = 3;
+    COMPLETION_TARGET_TYPE_FIRST = 4;
+  }
+  CompletionTargetType completion_target_type = 3;
+  rv.data.UUID completion_target_uuid = 4;
+  enum CompletionActionType {
+    COMPLETION_ACTION_TYPE_FIRST = 0;
+    COMPLETION_ACTION_TYPE_LAST = 1;
+    COMPLETION_ACTION_TYPE_AFTER_ACTION = 2;
+    COMPLETION_ACTION_TYPE_AFTER_TIME = 3;
+  }
+  CompletionActionType completion_action_type = 5;
+  rv.data.UUID completion_action_uuid = 6;
+  rv.data.Cue.TimecodeTime trigger_time = 7;
+  rv.data.HotKey hot_key = 8;
+  repeated rv.data.Action actions = 10;
+  repeated rv.data.Cue.PendingImportsEntry pending_imports = 11;
+  bool isEnabled = 12;
+  double completion_time = 13;
+
+  message TimecodeTime {
+    double time = 1;
+
+  }
+  message PendingImportsEntry {
+    string key = 1;
+    rv.data.URLs value = 2;
+
+  }
+}

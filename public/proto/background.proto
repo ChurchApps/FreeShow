@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "graphicsData.proto";
+import "basicTypes.proto";
+
+message Background {
+  bool is_enabled = 3;
+  oneof Fill {
+    rv.data.Color color = 1;
+    rv.data.Graphics.Gradient gradient = 2;
+  }
+
+
+}

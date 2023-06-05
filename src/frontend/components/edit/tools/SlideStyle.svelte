@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeShow, outputs, showsCache } from "../../../stores"
+    import { activeEdit, activeShow, outputs, showsCache, styles } from "../../../stores"
     import { history } from "../../helpers/history"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
@@ -13,7 +13,7 @@
 
     $: slideId = _show("active").layouts("active").ref()[0]?.[$activeEdit.slide || 0]?.id
     $: editSlide = $activeEdit.slide !== null && slideId ? _show("active").slides([slideId]).get()[0] : null
-    $: backgroundColor = $outputs[getActiveOutputs()[0]]?.show?.background
+    $: backgroundColor = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background
 
     let settings: any = {}
     showsCache.subscribe(setValues)

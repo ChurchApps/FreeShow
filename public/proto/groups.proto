@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "hotKey.proto";
+
+message Group {
+  rv.data.UUID uuid = 1;
+  string name = 2;
+  rv.data.Color color = 3;
+  rv.data.HotKey hotKey = 4;
+  rv.data.UUID application_group_identifier = 5;
+  string application_group_name = 6;
+
+}
+message ProGroupsDocument {
+  repeated rv.data.Group groups = 1;
+
+}

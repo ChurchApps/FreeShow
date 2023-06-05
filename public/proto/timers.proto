@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+
+message Clock {
+  string format = 1;
+
+  message Format {
+    enum DateFormatterStyle {
+      DATE_FORMATTER_STYLE_NONE = 0;
+      DATE_FORMATTER_STYLE_SHORT = 1;
+      DATE_FORMATTER_STYLE_MEDIUM = 2;
+      DATE_FORMATTER_STYLE_LONG = 3;
+      DATE_FORMATTER_STYLE_FULL = 4;
+    }
+    DateFormatterStyle date_type = 2;
+    DateFormatterStyle time_format = 3;
+    bool military_time_enabled = 4;
+
+  }
+}
+message Timer {
+  rv.data.UUID uuid = 1;
+  string name = 2;
+  rv.data.Timer.Configuration configuration = 10;
+
+  message Format {
+    enum Style {
+      STYE_NONE = 0;
+      STYLE_SHORT = 1;
+      STYLE_LONG = 2;
+      STYLE_REMOVE_SHORT = 3;
+      STYLE_REMOVE_LONG = 4;
+    }
+    Style hour = 1;
+    Style minute = 2;
+    Style second = 3;
+    Style millisecond = 4;
+    bool is_wall_clock_time = 5;
+    bool is_24_hour_time = 6;
+    bool show_milliseconds_under_minute_only = 7;
+
+  }
+  message Configuration {
+    bool allows_overrun = 4;
+    oneof TimerType {
+      rv.data.Timer.Configuration.TimerTypeCountdown countdown = 1;
+      rv.data.Timer.Configuration.TimerTypeCountdownToTime countdown_to_time = 2;
+      rv.data.Timer.Configuration.TimerTypeElapsedTime elapsed_time = 3;
+    }
+
+
+    message TimerTypeCountdown {
+      double duration = 1;
+
+    }
+    message TimerTypeCountdownToTime {
+      double time_of_day = 1;
+      enum TimePeriod {
+        TIME_PERIOD_AM = 0;
+        TIME_PERIOD_PM = 1;
+        TIME_PERIOD_24 = 2;
+      }
+      TimePeriod period = 2;
+
+    }
+    message TimerTypeElapsedTime {
+      double start_time = 1;
+      double end_time = 2;
+      bool has_end_time = 3;
+
+    }
+  }
+}
+message TimersDocument {
+  rv.data.ApplicationInfo application_info = 1;
+  rv.data.Clock clock = 2;
+  repeated rv.data.Timer timers = 3;
+
+}

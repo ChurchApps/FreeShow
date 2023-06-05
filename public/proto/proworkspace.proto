@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "proscreen.proto";
+import "proAudienceLook.proto";
+import "proMask.proto";
+import "input.proto";
+import "audio.proto";
+import "digitalAudio.proto";
+import "stage.proto";
+import "recording.proto";
+
+message ProPresenterWorkspace {
+  repeated rv.data.ProPresenterScreen pro_screens = 1;
+  repeated rv.data.ProAudienceLook audience_looks = 2;
+  rv.data.ProAudienceLook live_audience_look = 3;
+  repeated rv.data.ProMask masks = 4;
+  repeated rv.data.VideoInput videoInputs = 5;
+  repeated rv.data.Stage.ScreenAssignment stage_layout_mappings = 6;
+  rv.data.Audio.SettingsDocument audio_settings = 7;
+  string selected_library_name = 8;
+  rv.data.Recording.SettingsDocument record_settings = 9;
+  rv.data.DigitalAudio.Setup digital_audio_setup = 10;
+  repeated rv.data.AudioInput audio_inputs = 11;
+  double audio_input_transition_time = 12;
+
+}

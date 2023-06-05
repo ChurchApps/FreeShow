@@ -184,7 +184,7 @@
             <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">
                 <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
                 {#if !loaded || hover || loadFullImage}
-                    <video style="position: absolute;{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, 'cover')}" bind:this={videoElem} src={path} on:canplaythrough={ready}>
+                    <video style="pointer-events: none;position: absolute;{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, 'cover')}" bind:this={videoElem} src={path} on:canplaythrough={ready}>
                         <track kind="captions" />
                     </video>
                 {/if}

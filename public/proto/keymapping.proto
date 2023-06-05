@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+
+message KeyMapping {
+  rv.data.KeyMapping.ComputerKeyboard keyboard = 1;
+  rv.data.KeyMapping.MIDIKeyboard midi = 2;
+  oneof TargetIdentifier {
+    string menu_item = 100;
+    rv.data.CollectionElementType clear_group_identifier = 101;
+    rv.data.CollectionElementType cue_identifier = 102;
+    rv.data.CollectionElementType group_identifier = 103;
+    rv.data.CollectionElementType macro_identifier = 104;
+    rv.data.CollectionElementType prop_identifier = 105;
+    rv.data.CollectionElementType timer_identifier = 106;
+  }
+
+
+  message ComputerKeyboard {
+    string key_equivalent = 1;
+    enum ModifierFlags {
+      MODIFIERFLAGS_COMMAND_KEY = 0;
+      MODIFIERFLAGS_SHIFT_KEY = 1;
+      MODIFIERFLAGS_OPTION_KEY = 2;
+      MODIFIERFLAGS_CONTROL_KEY = 3;
+      MODIFIERFLAGS_FUNCTION_KEY = 4;
+    }
+    repeated ModifierFlags key_equivalent_modifier_flags = 2;
+
+  }
+  message MIDIKeyboard {
+    int32 channel = 1;
+    int32 pitch = 2;
+    int32 velocity = 3;
+
+  }
+}
+message KeyMappingDocument {
+  rv.data.ApplicationInfo application_info = 1;
+  repeated rv.data.KeyMapping keymappings = 2;
+  repeated rv.data.KeyMapping macos_keymappings = 3;
+  repeated rv.data.KeyMapping windows_keymappings = 4;
+
+}

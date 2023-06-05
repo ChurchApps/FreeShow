@@ -6,6 +6,7 @@ export interface Outputs {
 
 export interface Output {
     id?: string
+    keyOutput?: string
     isKeyOutput?: boolean
     enabled: boolean
     active: boolean
@@ -14,6 +15,7 @@ export interface Output {
     bounds: { x: number; y: number; width: number; height: number }
     screen: string | null
     kiosk: boolean
+    alwaysOnTop?: boolean
     style?: string
     show?: any
     out?: {

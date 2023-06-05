@@ -30,7 +30,7 @@
 
     let width: number = 0
     let height: number = 0
-    $: resolution = getResolution(Slide?.settings?.resolution, {$outputs, $styles})
+    $: resolution = getResolution(Slide?.settings?.resolution, { $outputs, $styles })
     // TODO: zoom more in...
 
     let ratio: number = 1
@@ -146,7 +146,7 @@
         {#if Slide}
             <DropArea id="edit">
                 <Zoomed
-                    background={Slide?.settings?.color || $outputs[getActiveOutputs()[0]]?.show?.background || "black"}
+                    background={Slide?.settings?.color || $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background || "black"}
                     {resolution}
                     style={getStyleResolution(resolution, width, height, "fit", { zoom })}
                     bind:ratio

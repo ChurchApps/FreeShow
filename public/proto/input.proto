@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "graphicsData.proto";
+import "digitalAudio.proto";
+
+message VideoInput {
+  rv.data.UUID uuid = 1;
+  string user_description = 2;
+  rv.data.Media.VideoDevice video_input_device = 3;
+  rv.data.Color display_color = 4;
+  rv.data.URL thumbnail_path = 5;
+  enum AudioDeviceType {
+    AUDIO_DEVICE_TYPE_DEFAULT = 0;
+    AUDIO_DEVICE_TYPE_NONE = 1;
+    AUDIO_DEVICE_TYPE_ALTERNATE = 2;
+  }
+  AudioDeviceType audio_type = 8;
+  oneof AltAudioSource {
+    rv.data.DigitalAudio.Device audio_device = 6;
+    rv.data.Media.VideoDevice video_device = 7;
+  }
+
+
+  message SettingsDocument {
+    repeated rv.data.VideoInput inputs = 1;
+
+  }
+}
+message AudioInput {
+  rv.data.UUID uuid = 1;
+  string user_description = 2;
+  rv.data.AudioInput.BehaviorMode behavior_mode = 5;
+  oneof Source {
+    rv.data.DigitalAudio.Device audio_device = 3;
+    rv.data.Media.VideoDevice video_device = 4;
+  }
+
+
+  message BehaviorMode {
+    oneof Mode {
+      rv.data.AudioInput.BehaviorMode.On on = 1;
+      rv.data.AudioInput.BehaviorMode.Off off = 2;
+      rv.data.AudioInput.BehaviorMode.AutoOn auto_on = 3;
+      rv.data.AudioInput.BehaviorMode.AutoOff auto_off = 4;
+    }
+
+
+    message On {
+
+    }
+    message Off {
+
+    }
+    message AutoOff {
+
+    }
+    message AutoOn {
+      repeated uint32 linked_video_inputs = 1;
+
+    }
+  }
+}

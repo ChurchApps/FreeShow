@@ -1,0 +1,2286 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "proApiV1BasicTypes.proto";
+import "google/protobuf/wrappers.proto";
+
+message NetworkAPI_v1 {
+  oneof Command {
+    rv.data.NetworkAPI_v1.Action action = 1;
+  }
+
+
+  message Action {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request audio_request = 1;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Request capture_request = 2;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request clearing_request = 3;
+      rv.data.NetworkAPI_v1.API_v1_Groups_Request groups_request = 4;
+      rv.data.NetworkAPI_v1.API_v1_Link_Request link_request = 5;
+      rv.data.NetworkAPI_v1.API_v1_Library_Request library_request = 6;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request looks_request = 7;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Request macro_request = 8;
+      rv.data.NetworkAPI_v1.API_v1_Masks_Request masks_request = 9;
+      rv.data.NetworkAPI_v1.API_v1_Media_Request media_request = 10;
+      rv.data.NetworkAPI_v1.API_v1_Message_Request message_request = 11;
+      rv.data.NetworkAPI_v1.API_v1_Miscellaneous_Request miscellaneous_request = 12;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request playlist_request = 13;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request preroll_request = 14;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request presentation_request = 15;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Request prop_request = 16;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request stage_request = 17;
+      rv.data.NetworkAPI_v1.API_v1_Status_Request status_request = 18;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request theme_request = 19;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request timer_request = 20;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request transport_request = 21;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request trigger_request = 22;
+      rv.data.NetworkAPI_v1.API_v1_Video_Inputs_Request video_inputs_request = 23;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request announcement_request = 24;
+    }
+
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response audio_response = 101;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Response capture_response = 102;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response clearing_response = 103;
+      rv.data.NetworkAPI_v1.API_v1_Groups_Response groups_response = 104;
+      rv.data.NetworkAPI_v1.API_v1_Link_Response link_response = 105;
+      rv.data.NetworkAPI_v1.API_v1_Library_Response library_response = 106;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response looks_response = 107;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Response macro_response = 108;
+      rv.data.NetworkAPI_v1.API_v1_Masks_Response masks_response = 109;
+      rv.data.NetworkAPI_v1.API_v1_Media_Response media_response = 110;
+      rv.data.NetworkAPI_v1.API_v1_Message_Response message_response = 111;
+      rv.data.NetworkAPI_v1.API_v1_Miscellaneous_Response miscellaneous_response = 112;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response playlist_response = 113;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Response preroll_response = 114;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response presentation_response = 115;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Response prop_response = 116;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response stage_response = 117;
+      rv.data.NetworkAPI_v1.API_v1_Status_Response status_response = 118;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response theme_response = 119;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response timer_response = 120;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response transport_response = 121;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response trigger_response = 122;
+      rv.data.NetworkAPI_v1.API_v1_Video_Inputs_Response video_inputs_response = 123;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response announcement_response = 124;
+      rv.data.API_v1_Error_Response error_response = 200;
+    }
+
+    oneof StreamingUpdateIdentifier {
+      string update_identifier = 201;
+    }
+
+
+  }
+  message API_v1_Announcement_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.ActiveTimelineOperation active_timeline_operation = 1;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.ActiveTimelineStatus active_timeline_status = 2;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.Active active = 3;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.AnnouncementIndex slide_index = 4;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.ActiveFocus active_focus = 5;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.ActiveTrigger active_trigger = 6;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.ActiveNextTrigger active_next_trigger = 7;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.ActivePreviousTrigger active_previous_trigger = 8;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Request.ActiveIndexTrigger active_index_trigger = 9;
+    }
+
+
+    message ActiveTimelineOperation {
+      enum API_v1_TimelineOperation {
+        play = 0;
+        pause = 1;
+        rewind = 2;
+      }
+      API_v1_TimelineOperation operation = 1;
+
+    }
+    message ActiveTimelineStatus {
+
+    }
+    message Active {
+
+    }
+    message AnnouncementIndex {
+
+    }
+    message ActiveFocus {
+
+    }
+    message ActiveTrigger {
+
+    }
+    message ActiveNextTrigger {
+
+    }
+    message ActivePreviousTrigger {
+
+    }
+    message ActiveIndexTrigger {
+      uint32 index = 1;
+
+    }
+  }
+  message API_v1_Audio_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.Playlists playlists = 1;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.Playlist playlist = 2;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.PlaylistUpdates playlist_updates = 3;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_focused = 4;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_active = 5;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_next_focus = 6;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_previous_focus = 7;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_active_focus = 8;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.IdentifierMessage playlist_id_focus = 9;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_focused_trigger = 10;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_active_trigger = 11;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.IdentifierMessage playlist_id_trigger = 12;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_focused_next_trigger = 13;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_focused_previous_trigger = 14;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.IdentifierMessage playlist_focused_id_trigger = 15;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_active_next_trigger = 16;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.EmptyMessage playlist_active_previous_trigger = 17;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.IdentifierMessage playlist_active_id_trigger = 18;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.IdentifierMessage playlist_id_next_trigger = 19;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Request.IdentifierMessage playlist_id_previous_trigger = 20;
+    }
+
+
+    message Playlists {
+
+    }
+    message Playlist {
+      string id = 1;
+      uint32 start = 2;
+
+    }
+    message PlaylistUpdates {
+      string id = 1;
+
+    }
+    message EmptyMessage {
+
+    }
+    message IdentifierMessage {
+      string id = 1;
+
+    }
+  }
+  message API_v1_Capture_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Capture_Request.Status get_status = 1;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Request.Operation operation = 2;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Request.GetSettings get_settings = 3;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Request.SetSettings set_settings = 4;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Request.Encodings get_encodings = 5;
+    }
+
+
+    message Status {
+
+    }
+    message Operation {
+      enum CaptureOperation {
+        start = 0;
+        stop = 1;
+      }
+      CaptureOperation operation = 1;
+
+    }
+    message GetSettings {
+
+    }
+    message SetSettings {
+      rv.data.API_v1_CaptureSettings settings = 1;
+
+    }
+    message Encodings {
+      enum API_v1_CaptureDestination {
+        disk = 0;
+        rtmp = 1;
+        resi = 2;
+      }
+      API_v1_CaptureDestination type = 1;
+
+    }
+  }
+  message API_v1_Clear_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.ClearLayer clear_layer = 1;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.CreateGroup create_group = 2;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.GetGroup get_group = 3;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.PutGroup put_group = 4;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.GetGroupIcon get_group_icon = 5;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.PutGroupIcon put_group_icon = 6;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.DeleteGroup delete_group = 7;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.TriggerGroup trigger_group = 8;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Request.GetGroups get_groups = 9;
+    }
+
+
+    message ClearLayer {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+
+    }
+    message CreateGroup {
+      rv.data.API_v1_ClearGroup group = 1;
+
+    }
+    message GetGroup {
+      string id = 1;
+
+    }
+    message PutGroup {
+      string id = 1;
+      rv.data.API_v1_ClearGroup group = 2;
+
+    }
+    message GetGroupIcon {
+      string id = 1;
+
+    }
+    message PutGroupIcon {
+      string id = 1;
+      string content_type = 2;
+      bytes icon = 3;
+
+    }
+    message DeleteGroup {
+      string id = 1;
+
+    }
+    message TriggerGroup {
+      string id = 1;
+
+    }
+    message GetGroups {
+
+    }
+  }
+  message API_v1_Groups_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Groups_Request.GroupsRequest groups_request = 1;
+      rv.data.NetworkAPI_v1.API_v1_Groups_Request.TriggerGroup trigger_group = 2;
+    }
+
+
+    message GroupsRequest {
+
+    }
+    message TriggerGroup {
+      string id = 1;
+
+    }
+  }
+  message API_v1_Link_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Link_Request.Heartbeat heartbeat = 1;
+      rv.data.NetworkAPI_v1.API_v1_Link_Request.Status status = 2;
+      rv.data.NetworkAPI_v1.API_v1_Link_Request.AddMember add_member = 3;
+      rv.data.NetworkAPI_v1.API_v1_Link_Request.RemoveMember remove_member = 4;
+    }
+
+
+    message Heartbeat {
+      uint32 port = 1;
+      string if_modified_since = 2;
+
+    }
+    message Status {
+
+    }
+    message AddMember {
+      oneof AddType {
+        rv.data.API_v1_GroupDefinition group_definition = 1;
+        rv.data.API_v1_GroupMember member_details = 2;
+      }
+
+
+    }
+    message RemoveMember {
+      rv.data.API_v1_GroupMember member_details = 1;
+
+    }
+  }
+  message API_v1_Library_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Library_Request.Libraries libraries = 1;
+      rv.data.NetworkAPI_v1.API_v1_Library_Request.Library library = 2;
+      rv.data.NetworkAPI_v1.API_v1_Library_Request.Trigger trigger = 3;
+    }
+
+
+    message Libraries {
+
+    }
+    message Library {
+      string id = 1;
+
+    }
+    message Trigger {
+      string library_id = 1;
+      string presentation_id = 2;
+      uint32 index = 3;
+
+    }
+  }
+  message API_v1_Looks_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request.Looks looks = 1;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request.CreateLook create_look = 2;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request.GetCurrentLook get_current_look = 3;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request.PutCurrentLook put_current_look = 4;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request.GetLook get_look = 5;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request.PutLook put_look = 6;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request.DeleteLook delete_look = 7;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Request.TriggerLook trigger_look = 8;
+    }
+
+
+    message Looks {
+
+    }
+    message CreateLook {
+      rv.data.API_v1_Look look = 1;
+
+    }
+    message GetCurrentLook {
+
+    }
+    message PutCurrentLook {
+      rv.data.API_v1_Look look = 1;
+
+    }
+    message GetLook {
+      string id = 1;
+
+    }
+    message PutLook {
+      string id = 1;
+      rv.data.API_v1_Look look = 2;
+
+    }
+    message DeleteLook {
+      string id = 1;
+
+    }
+    message TriggerLook {
+      string id = 1;
+
+    }
+  }
+  message API_v1_Macro_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Macro_Request.Macros macros = 1;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Request.GetMacro get_macro = 2;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Request.PutMacro put_macro = 3;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Request.DeleteMacro delete_macro = 4;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Request.TriggerMacro trigger_macro = 5;
+    }
+
+
+    message Macros {
+
+    }
+    message GetMacro {
+      string id = 1;
+
+    }
+    message PutMacro {
+      string id = 1;
+      string name_change = 2;
+      rv.data.API_v1_Color color_change = 3;
+
+    }
+    message DeleteMacro {
+      string id = 1;
+
+    }
+    message TriggerMacro {
+      string id = 1;
+
+    }
+  }
+  message API_v1_Masks_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Masks_Request.Masks masks = 1;
+      rv.data.NetworkAPI_v1.API_v1_Masks_Request.GetMask get_mask = 2;
+      rv.data.NetworkAPI_v1.API_v1_Masks_Request.GetThumbnail get_thumbnail = 3;
+    }
+
+
+    message Masks {
+
+    }
+    message GetMask {
+      string id = 1;
+
+    }
+    message GetThumbnail {
+      string id = 1;
+      int32 quality = 2;
+
+    }
+  }
+  message API_v1_Media_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Media_Request.Playlists playlists = 1;
+      rv.data.NetworkAPI_v1.API_v1_Media_Request.GetPlaylist get_playlist = 2;
+      rv.data.NetworkAPI_v1.API_v1_Media_Request.GetPlaylistUpdates get_playlist_updates = 3;
+      rv.data.NetworkAPI_v1.API_v1_Media_Request.GetThumbnail get_thumbnail = 4;
+      rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage playlist_focused = 5;
+      rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage playlist_active = 6;
+      rv.data.NetworkAPI_v1.API_v1_Media_Request.FocusMessage focus = 7;
+      rv.data.NetworkAPI_v1.API_v1_Media_Request.TriggerMessage trigger = 8;
+    }
+
+
+    message Playlists {
+
+    }
+    message GetPlaylist {
+      string id = 1;
+      uint32 start = 4;
+
+    }
+    message GetPlaylistUpdates {
+      string id = 1;
+
+    }
+    message GetThumbnail {
+      rv.data.UUID uuid = 1;
+      int32 quality = 2;
+
+    }
+    message EmptyMessage {
+
+    }
+    message FocusMessage {
+      oneof Playlist {
+        rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage next = 1;
+        rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage previous = 2;
+        rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage active = 3;
+        google.protobuf.StringValue id = 4;
+      }
+
+
+    }
+    message TriggerMessage {
+      oneof Playlist {
+        rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage focused = 1;
+        rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage active = 2;
+        google.protobuf.StringValue playlist_id = 3;
+      }
+
+      oneof Item {
+        rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage start = 4;
+        rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage next = 5;
+        rv.data.NetworkAPI_v1.API_v1_Media_Request.EmptyMessage previous = 6;
+        google.protobuf.StringValue media_id = 7;
+      }
+
+
+    }
+  }
+  message API_v1_Message_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Message_Request.Messages messages = 1;
+      rv.data.NetworkAPI_v1.API_v1_Message_Request.CreateMessage create_message = 2;
+      rv.data.NetworkAPI_v1.API_v1_Message_Request.GetMessage get_message = 3;
+      rv.data.NetworkAPI_v1.API_v1_Message_Request.PutMessage put_message = 4;
+      rv.data.NetworkAPI_v1.API_v1_Message_Request.DeleteMessage delete_message = 5;
+      rv.data.NetworkAPI_v1.API_v1_Message_Request.TriggerMessage trigger_message = 6;
+      rv.data.NetworkAPI_v1.API_v1_Message_Request.ClearMessage clear_message = 7;
+    }
+
+
+    message Messages {
+
+    }
+    message CreateMessage {
+      rv.data.API_v1_Message message = 1;
+
+    }
+    message GetMessage {
+      string id = 1;
+
+    }
+    message PutMessage {
+      string id = 1;
+      rv.data.API_v1_Message message = 2;
+
+    }
+    message DeleteMessage {
+      string id = 1;
+
+    }
+    message TriggerMessage {
+      string id = 1;
+      repeated rv.data.API_v1_Message.API_v1_MessageToken tokens = 2;
+
+    }
+    message ClearMessage {
+      string id = 1;
+
+    }
+  }
+  message API_v1_Miscellaneous_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Miscellaneous_Request.FindMyMouse find_my_mouse = 1;
+    }
+
+
+    message FindMyMouse {
+
+    }
+  }
+  message API_v1_Playlist_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.Playlists playlists = 1;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.CreatePlaylist create_playlist = 2;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.GetPlaylist get_playlist = 3;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.PutPlaylist put_playlist = 4;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.PostPlaylist post_playlist = 5;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.GetActivePlaylist get_active_playlist = 6;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.GetActivePlaylist focused = 7;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage next_focus = 8;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage previous_focus = 9;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage active_presentation_focus = 10;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage active_announcement_focus = 11;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage focused_trigger = 12;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage active_presentation_trigger = 13;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage active_announcement_trigger = 14;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage focused_next_trigger = 15;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage focused_previous_trigger = 16;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage active_presentation_next_trigger = 17;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage active_announcement_next_trigger = 18;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage active_presentation_previous_trigger = 19;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.EmptyMessage active_announcement_previous_trigger = 20;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.IdMessage id_focus = 21;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.IdMessage id_trigger = 22;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.IdMessage id_next_trigger = 23;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.IdMessage id_previous_trigger = 24;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.IndexMessage focused_index_trigger = 25;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.IndexMessage active_presentation_index_trigger = 26;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.IndexMessage active_announcement_index_trigger = 27;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Request.IdMessage id_updates = 28;
+    }
+
+
+    message Playlists {
+
+    }
+    message CreatePlaylist {
+      string name = 1;
+      enum API_v1_PlaylistType {
+        group = 0;
+        playlist = 1;
+      }
+      API_v1_PlaylistType type = 2;
+
+    }
+    message GetActivePlaylist {
+
+    }
+    message GetPlaylist {
+      string id = 1;
+
+    }
+    message PutPlaylist {
+      string id = 1;
+      repeated rv.data.API_v1_PlaylistItem items = 2;
+
+    }
+    message PostPlaylist {
+      string id = 1;
+      string name = 2;
+      enum API_v1_PlaylistType {
+        group = 0;
+        playlist = 1;
+      }
+      API_v1_PlaylistType type = 3;
+
+    }
+    message EmptyMessage {
+
+    }
+    message IdMessage {
+      string id = 1;
+
+    }
+    message IndexMessage {
+      uint32 index = 1;
+
+    }
+  }
+  message API_v1_Preroll_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.PrerollCue preroll_cue = 1;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.PrerollPlaylistItem preroll_playlist_item = 2;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.PrerollMediaItem preroll_media_item = 3;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.PrerollAudioItem preroll_audio_item = 4;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.PrerollVideoInput preroll_video_input = 5;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.PrerollLibraryItem preroll_library_item = 6;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.PrerollNext preroll_next = 7;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.PrerollPrevious preroll_previous = 8;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.ActivatePrerollItem activate_preroll_item = 9;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Request.CancelPrerollItem cancel_preroll_item = 10;
+    }
+
+
+    message PrerollCue {
+      int32 index = 1;
+      uint64 preroll_id = 2;
+
+    }
+    message PrerollPlaylistItem {
+      repeated rv.data.API_v1_Identifier path = 1;
+      uint64 preroll_id = 2;
+
+    }
+    message PrerollMediaItem {
+      repeated rv.data.API_v1_Identifier path = 1;
+      uint64 preroll_id = 2;
+
+    }
+    message PrerollAudioItem {
+      repeated rv.data.API_v1_Identifier path = 1;
+      uint64 preroll_id = 2;
+
+    }
+    message PrerollVideoInput {
+      string id = 1;
+      uint64 preroll_id = 2;
+
+    }
+    message PrerollLibraryItem {
+      repeated rv.data.API_v1_Identifier path = 1;
+      uint64 preroll_id = 2;
+
+    }
+    message PrerollNext {
+      uint64 preroll_id = 1;
+
+    }
+    message PrerollPrevious {
+      uint64 preroll_id = 1;
+
+    }
+    message ActivatePrerollItem {
+      uint64 id = 1;
+      uint64 time = 2;
+
+    }
+    message CancelPrerollItem {
+      uint64 id = 1;
+
+    }
+  }
+  message API_v1_Presentation_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.Active active = 1;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage focused = 2;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.SlideIndex slide_index = 3;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.ChordChart chord_chart = 4;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.ChordChartUpdates chord_chart_updates = 5;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.Presentation presentation = 6;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.DeletePresentation delete_presentation = 7;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.TimelineOperation timeline_operation = 8;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.ActivePresentationTimelineOperation active_presentation_timeline_operation = 9;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.FocusedPresentationTimelineOperation focused_presentation_timeline_operation = 10;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.ActivePresentationTimelineStatus active_presentation_timeline_status = 11;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.FocusedPresentationTimelineStatus focused_presentation_timeline_status = 12;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.Thumbnail thumbnail = 13;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.FocusMessage focus = 14;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Request.TriggerMessage trigger = 15;
+    }
+
+
+    message Active {
+
+    }
+    message SlideIndex {
+
+    }
+    message ChordChart {
+      int32 quality = 1;
+
+    }
+    message ChordChartUpdates {
+
+    }
+    message Presentation {
+      rv.data.UUID uuid = 1;
+
+    }
+    message DeletePresentation {
+      rv.data.UUID uuid = 1;
+
+    }
+    message TimelineOperation {
+      rv.data.UUID uuid = 1;
+      enum API_v1_TimelineOperation {
+        play = 0;
+        pause = 1;
+        rewind = 2;
+      }
+      API_v1_TimelineOperation operation = 2;
+
+    }
+    message ActivePresentationTimelineOperation {
+      enum API_v1_TimelineOperation {
+        play = 0;
+        pause = 1;
+        rewind = 2;
+      }
+      API_v1_TimelineOperation operation = 1;
+
+    }
+    message FocusedPresentationTimelineOperation {
+      enum API_v1_TimelineOperation {
+        play = 0;
+        pause = 1;
+        rewind = 2;
+      }
+      API_v1_TimelineOperation operation = 1;
+
+    }
+    message ActivePresentationTimelineStatus {
+
+    }
+    message FocusedPresentationTimelineStatus {
+
+    }
+    message Thumbnail {
+      rv.data.UUID uuid = 1;
+      uint32 cue_index = 2;
+      int32 quality = 3;
+      enum API_v1_ContentType {
+        PNG = 0;
+        JPEG = 1;
+      }
+      API_v1_ContentType content_type = 4;
+
+    }
+    message EmptyMessage {
+
+    }
+    message FocusMessage {
+      oneof Presentation {
+        rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage next = 1;
+        rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage previous = 2;
+        rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage active = 3;
+        string uuid = 4;
+      }
+
+
+    }
+    message TriggerMessage {
+      oneof Presentation {
+        rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage focused = 1;
+        rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage active = 2;
+        google.protobuf.StringValue uuid = 3;
+      }
+
+      oneof Cue {
+        rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage first = 4;
+        rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage next = 5;
+        rv.data.NetworkAPI_v1.API_v1_Presentation_Request.EmptyMessage previous = 6;
+        google.protobuf.UInt32Value index = 7;
+        google.protobuf.StringValue group = 8;
+      }
+
+
+    }
+  }
+  message API_v1_Prop_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Prop_Request.Props props = 1;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Request.GetProp get_prop = 2;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Request.DeleteProp delete_prop = 3;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Request.TriggerProp trigger_prop = 4;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Request.ClearProp clear_prop = 5;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Request.GetThumbnail get_thumbnail = 6;
+    }
+
+
+    message Props {
+
+    }
+    message GetProp {
+      string id = 1;
+
+    }
+    message DeleteProp {
+      string id = 1;
+
+    }
+    message TriggerProp {
+      string id = 1;
+
+    }
+    message ClearProp {
+      string id = 1;
+
+    }
+    message GetThumbnail {
+      string id = 1;
+      int32 quality = 2;
+
+    }
+  }
+  message API_v1_Stage_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.GetLayoutMap get_layout_map = 1;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.SetLayoutMap set_layout_map = 2;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.GetMessage get_message = 3;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.PutMessage put_message = 4;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.DeleteMessage delete_message = 5;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.GetScreens get_screens = 6;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.GetScreenLayout get_screen_layout = 7;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.SetScreenLayout set_screen_layout = 8;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.GetLayouts get_layouts = 9;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.DeleteLayout delete_layout = 10;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Request.GetLayoutThumbnail get_layout_thumbnail = 11;
+    }
+
+
+    message GetLayoutMap {
+
+    }
+    message SetLayoutMap {
+      rv.data.API_v1_StageLayoutMap map = 1;
+
+    }
+    message GetMessage {
+
+    }
+    message PutMessage {
+      string message = 1;
+
+    }
+    message DeleteMessage {
+
+    }
+    message GetScreens {
+
+    }
+    message GetScreenLayout {
+      string id = 1;
+
+    }
+    message SetScreenLayout {
+      string id = 1;
+      string layout = 2;
+
+    }
+    message GetLayouts {
+
+    }
+    message DeleteLayout {
+      string id = 1;
+
+    }
+    message GetLayoutThumbnail {
+      string id = 1;
+      int32 quality = 2;
+
+    }
+  }
+  message API_v1_Status_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Status_Request.GetLayers get_layers = 1;
+      rv.data.NetworkAPI_v1.API_v1_Status_Request.GetStageScreens get_stage_screens = 2;
+      rv.data.NetworkAPI_v1.API_v1_Status_Request.PutStageScreens put_stage_screens = 3;
+      rv.data.NetworkAPI_v1.API_v1_Status_Request.GetAudienceScreens get_audience_screens = 4;
+      rv.data.NetworkAPI_v1.API_v1_Status_Request.PutAudienceScreens put_audience_screens = 5;
+      rv.data.NetworkAPI_v1.API_v1_Status_Request.GetScreens get_screens = 6;
+      rv.data.NetworkAPI_v1.API_v1_Status_Request.GetSlide get_slide = 7;
+    }
+
+
+    message GetLayers {
+
+    }
+    message GetStageScreens {
+
+    }
+    message PutStageScreens {
+      bool enabled = 1;
+
+    }
+    message GetAudienceScreens {
+
+    }
+    message PutAudienceScreens {
+      bool enabled = 1;
+
+    }
+    message GetScreens {
+
+    }
+    message GetSlide {
+
+    }
+  }
+  message API_v1_Theme_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.GetAll get_all = 1;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.GetTheme get_theme = 2;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.DeleteTheme delete_theme = 3;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.GetThemeName get_theme_name = 4;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.PutThemeName put_theme_name = 5;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.GetThemeSlide get_theme_slide = 6;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.PutThemeSlide put_theme_slide = 7;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.DeleteThemeSlide delete_theme_slide = 8;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Request.GetThemeSlideThumbnail get_theme_slide_thumbnail = 9;
+    }
+
+
+    message GetAll {
+
+    }
+    message GetTheme {
+      string id = 1;
+
+    }
+    message DeleteTheme {
+      string id = 1;
+
+    }
+    message GetThemeName {
+      string id = 1;
+
+    }
+    message PutThemeName {
+      string id = 1;
+      string name = 2;
+
+    }
+    message GetThemeSlide {
+      string id = 1;
+      string theme_slide = 2;
+
+    }
+    message PutThemeSlide {
+      string id = 1;
+      string theme_slide = 2;
+      rv.data.API_v1_ThemeSlide slide = 3;
+
+    }
+    message DeleteThemeSlide {
+      string id = 1;
+      string theme_slide = 2;
+
+    }
+    message GetThemeSlideThumbnail {
+      string id = 1;
+      string theme_slide = 2;
+      int32 quality = 3;
+
+    }
+  }
+  message API_v1_Timer_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.Timers timers = 1;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.CreateTimer create_timer = 2;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.CurrentTimes current_times = 3;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.AllTimersOperation all_timers_operation = 4;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.GetTimer get_timer = 5;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.PutTimer put_timer = 6;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.DeleteTimer delete_timer = 7;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.TimerOperation timer_operation = 8;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.SystemTime system_time = 9;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Request.VideoCountdown video_countdown = 10;
+    }
+
+
+    message Timers {
+
+    }
+    message CreateTimer {
+      string name = 1;
+      bool allows_overrun = 2;
+      rv.data.API_v1_Timer.API_v1_Timer_Countdown countdown = 3;
+      rv.data.API_v1_Timer.API_v1_Timer_CountdownToTime count_down_to_time = 4;
+      rv.data.API_v1_Timer.API_v1_Timer_Elapsed elapsed = 5;
+
+    }
+    message CurrentTimes {
+
+    }
+    message AllTimersOperation {
+      enum API_v1_TimerOperation {
+        start = 0;
+        stop = 1;
+        reset = 2;
+      }
+      API_v1_TimerOperation operation = 1;
+
+    }
+    message GetTimer {
+      string id = 1;
+
+    }
+    message PutTimer {
+      string id = 1;
+      rv.data.API_v1_Timer timer = 2;
+
+    }
+    message DeleteTimer {
+      string id = 1;
+
+    }
+    message TimerOperation {
+      string id = 1;
+      enum API_v1_TimerOperation {
+        start = 0;
+        stop = 1;
+        reset = 2;
+      }
+      API_v1_TimerOperation operation = 2;
+
+    }
+    message SystemTime {
+
+    }
+    message VideoCountdown {
+
+    }
+  }
+  message API_v1_Transport_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.Play play = 1;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.Pause pause = 2;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.SkipBackward skip_backward = 3;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.SkipForward skip_forward = 4;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.GoToEnd go_to_end = 5;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.GetTime get_time = 6;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.PutTime put_time = 7;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.GetAutoAdvance get_auto_advance = 8;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.DeleteAutoAdvance delete_auto_advance = 9;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Request.GetCurrentMedia get_current_media = 10;
+    }
+
+
+    message Play {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+
+    }
+    message Pause {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+
+    }
+    message SkipBackward {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+      double seconds = 2;
+
+    }
+    message SkipForward {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+      double seconds = 2;
+
+    }
+    message GoToEnd {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+      double seconds = 2;
+
+    }
+    message GetTime {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+
+    }
+    message PutTime {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+      double seconds = 2;
+
+    }
+    message GetAutoAdvance {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+
+    }
+    message DeleteAutoAdvance {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+
+    }
+    message GetCurrentMedia {
+      enum API_v1_LayerType {
+        audio = 0;
+        props = 1;
+        messages = 2;
+        announcements = 3;
+        slide = 4;
+        media = 5;
+        video_input = 6;
+      }
+      API_v1_LayerType layer = 1;
+
+    }
+  }
+  message API_v1_Trigger_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.Cue cue = 1;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.Playlist playlist = 2;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.Media media = 3;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.Audio audio = 4;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.VideoInput video_input = 5;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.Library library = 6;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.Next next = 7;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.Previous previous = 8;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.MediaNext media_next = 9;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.MediaPrevious media_previous = 10;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.AudioNext audio_next = 11;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Request.AudioPrevious audio_previous = 12;
+    }
+
+
+    message Cue {
+      uint32 index = 1;
+
+    }
+    message Playlist {
+      string id = 1;
+
+    }
+    message Media {
+      string id = 1;
+
+    }
+    message MediaNext {
+
+    }
+    message MediaPrevious {
+
+    }
+    message Audio {
+      string id = 1;
+
+    }
+    message AudioNext {
+
+    }
+    message AudioPrevious {
+
+    }
+    message VideoInput {
+      string id = 1;
+
+    }
+    message Library {
+      string id = 1;
+
+    }
+    message Next {
+
+    }
+    message Previous {
+
+    }
+  }
+  message API_v1_Video_Inputs_Request {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Video_Inputs_Request.GetAll get_all = 1;
+      rv.data.NetworkAPI_v1.API_v1_Video_Inputs_Request.Trigger trigger = 2;
+    }
+
+
+    message GetAll {
+
+    }
+    message Trigger {
+      string id = 1;
+
+    }
+  }
+  message API_v1_Announcement_Response {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.ActiveTimelineOperation active_timeline_operation = 1;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.ActiveTimelineStatus active_timeline_status = 2;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.Active active = 3;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.SlideIndex slide_index = 4;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.ActiveFocus active_focus = 5;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.ActiveTrigger active_trigger = 6;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.ActiveNextTrigger active_next_trigger = 7;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.ActivePreviousTrigger active_previous_trigger = 8;
+      rv.data.NetworkAPI_v1.API_v1_Announcement_Response.ActiveIndexTrigger active_index_trigger = 9;
+    }
+
+
+    message ActiveTimelineOperation {
+
+    }
+    message ActiveTimelineStatus {
+      bool is_running = 1;
+      double current_time = 2;
+
+    }
+    message Active {
+      rv.data.API_v1_Presentation announcement = 1;
+
+    }
+    message SlideIndex {
+      rv.data.API_v1_SlideIndex announcement_index = 1;
+
+    }
+    message ActiveFocus {
+
+    }
+    message ActiveTrigger {
+
+    }
+    message ActiveNextTrigger {
+
+    }
+    message ActivePreviousTrigger {
+
+    }
+    message ActiveIndexTrigger {
+
+    }
+  }
+  message API_v1_Audio_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.Playlists playlists = 1;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.Playlist playlist = 2;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.PlaylistUpdate update = 3;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.FocusedPlaylist playlist_focused = 4;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.ActivePlaylist playlist_active = 5;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_next_focus = 6;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_previous_focus = 7;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_active_focus = 8;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_id_focus = 9;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_focused_trigger = 10;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_active_trigger = 11;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_id_trigger = 12;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_focused_next_trigger = 13;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_focused_previous_trigger = 14;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_focused_id_trigger = 15;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_active_next_trigger = 16;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_active_previous_trigger = 17;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_active_id_trigger = 18;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_id_next_trigger = 19;
+      rv.data.NetworkAPI_v1.API_v1_Audio_Response.EmptyMessage playlist_id_previous_trigger = 20;
+    }
+
+
+    message Playlists {
+      repeated rv.data.API_v1_Playlist playlists = 1;
+
+    }
+    message Playlist {
+      rv.data.API_v1_Identifier id = 1;
+      repeated rv.data.API_v1_MediaPlaylistItem items = 2;
+
+    }
+    message PlaylistUpdate {
+      rv.data.API_v1_Identifier id = 1;
+
+    }
+    message EmptyMessage {
+
+    }
+    message FocusedPlaylist {
+      rv.data.API_v1_Identifier id = 1;
+
+    }
+    message ActivePlaylist {
+      rv.data.API_v1_Identifier playlist = 1;
+      rv.data.API_v1_Identifier item = 2;
+
+    }
+  }
+  message API_v1_Capture_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Capture_Response.GetStatus get_status = 1;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Response.Operation operation = 2;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Response.GetSettings get_settings = 3;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Response.SetSettings set_settings = 4;
+      rv.data.NetworkAPI_v1.API_v1_Capture_Response.Encodings get_encodings = 5;
+    }
+
+
+    message GetStatus {
+      enum API_v1_CaptureStatus {
+        active = 0;
+        inactive = 1;
+        caution = 2;
+        error = 3;
+      }
+      API_v1_CaptureStatus status = 1;
+      string capture_time = 2;
+      string status_text = 3;
+
+    }
+    message Operation {
+
+    }
+    message GetSettings {
+      rv.data.API_v1_CaptureSettings settings = 1;
+
+    }
+    message SetSettings {
+
+    }
+    message Encodings {
+      repeated string encodings = 1;
+
+    }
+  }
+  message API_v1_Clear_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.ClearLayer clear_layer = 1;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.CreateGroup create_group = 2;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.GetGroup get_group = 3;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.PutGroup put_group = 4;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.DeleteGroup delete_group = 5;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.TriggerGroup trigger_group = 6;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.GetGroups get_groups = 7;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.GetGroupIcon get_group_icon = 8;
+      rv.data.NetworkAPI_v1.API_v1_Clear_Response.PutGroupIcon put_group_icon = 9;
+    }
+
+
+    message ClearLayer {
+
+    }
+    message PutGroup {
+      rv.data.API_v1_ClearGroup group = 1;
+
+    }
+    message DeleteGroup {
+
+    }
+    message TriggerGroup {
+
+    }
+    message CreateGroup {
+      rv.data.API_v1_ClearGroup group = 1;
+
+    }
+    message GetGroup {
+      rv.data.API_v1_ClearGroup group = 1;
+
+    }
+    message GetGroups {
+      repeated rv.data.API_v1_ClearGroup groups = 1;
+
+    }
+    message GetGroupIcon {
+      string content_type = 1;
+      bytes icon = 2;
+
+    }
+    message PutGroupIcon {
+
+    }
+  }
+  message API_v1_Groups_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Groups_Response.GroupsRequest groups = 1;
+      rv.data.NetworkAPI_v1.API_v1_Groups_Response.TriggerGroup trigger_group = 2;
+    }
+
+
+    message GroupsRequest {
+      repeated rv.data.NetworkAPI_v1.API_v1_Groups_Response.GroupsRequest.Group groups = 1;
+
+      message Group {
+        rv.data.API_v1_Identifier id = 1;
+        rv.data.API_v1_Color color = 2;
+
+      }
+    }
+    message TriggerGroup {
+
+    }
+  }
+  message API_v1_Link_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Link_Response.Heartbeat heartbeat = 1;
+      rv.data.NetworkAPI_v1.API_v1_Link_Response.Status status = 2;
+      rv.data.NetworkAPI_v1.API_v1_Link_Response.AddMember add_member = 3;
+      rv.data.NetworkAPI_v1.API_v1_Link_Response.RemoveMember remove_member = 4;
+    }
+
+
+    message Heartbeat {
+      rv.data.API_v1_GroupDefinition group_definition = 1;
+      rv.data.API_v1_GroupMemberStatus status = 2;
+
+    }
+    message Status {
+      rv.data.API_v1_GroupDefinition group_definition = 1;
+      string member_name = 2;
+
+    }
+    message AddMember {
+      oneof Result {
+        rv.data.API_v1_GroupDefinition group_definition = 1;
+        rv.data.NetworkAPI_v1.API_v1_Link_Response.AddMember.RemoteMachineAccepts accept = 2;
+        rv.data.NetworkAPI_v1.API_v1_Link_Response.AddMember.RemoteMachineDecline decline = 3;
+      }
+
+
+      message RemoteMachineAccepts {
+
+      }
+      message RemoteMachineDecline {
+        enum DeclineReason {
+          ALREADY_IN_GROUP = 0;
+          USER_DECLINED = 1;
+        }
+        DeclineReason reason = 1;
+
+      }
+    }
+    message RemoveMember {
+
+    }
+  }
+  message API_v1_Library_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Library_Response.Libraries libraries = 1;
+      rv.data.NetworkAPI_v1.API_v1_Library_Response.Library library = 2;
+      rv.data.NetworkAPI_v1.API_v1_Library_Response.Trigger triggger = 3;
+    }
+
+
+    message Libraries {
+      repeated rv.data.API_v1_Identifier libraries = 1;
+
+    }
+    message Library {
+      enum UpdateType {
+        all = 0;
+        add = 1;
+        remove = 2;
+      }
+      UpdateType update_type = 1;
+      repeated rv.data.API_v1_Identifier items = 2;
+
+    }
+    message Trigger {
+
+    }
+  }
+  message API_v1_Looks_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response.Looks looks = 1;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response.CreateLook create_look = 2;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response.GetCurrentLook get_current_look = 3;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response.PutCurrentLook put_current_look = 4;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response.GetLook get_look = 5;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response.PutLook put_look = 6;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response.DeleteLook delete_look = 7;
+      rv.data.NetworkAPI_v1.API_v1_Looks_Response.TriggerLook trigger_look = 8;
+    }
+
+
+    message Looks {
+      repeated rv.data.API_v1_Look looks = 1;
+
+    }
+    message CreateLook {
+      rv.data.API_v1_Look look = 1;
+
+    }
+    message GetCurrentLook {
+      rv.data.API_v1_Look look = 1;
+
+    }
+    message PutCurrentLook {
+      rv.data.API_v1_Look look = 1;
+
+    }
+    message GetLook {
+      rv.data.API_v1_Look look = 1;
+
+    }
+    message PutLook {
+      rv.data.API_v1_Look look = 1;
+
+    }
+    message DeleteLook {
+
+    }
+    message TriggerLook {
+
+    }
+  }
+  message API_v1_Macro_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Macro_Response.Macros macros = 1;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Response.GetMacro get_macro = 2;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Response.PutMacro put_macro = 3;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Response.DeleteMacro delete_macro = 4;
+      rv.data.NetworkAPI_v1.API_v1_Macro_Response.TriggerMacro trigger_macro = 5;
+    }
+
+
+    message Macros {
+      repeated rv.data.API_v1_Macro macros = 1;
+
+    }
+    message GetMacro {
+      rv.data.API_v1_Macro macro = 1;
+
+    }
+    message PutMacro {
+      rv.data.API_v1_Macro macro = 1;
+
+    }
+    message DeleteMacro {
+
+    }
+    message TriggerMacro {
+
+    }
+  }
+  message API_v1_Masks_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Masks_Response.Masks masks = 1;
+      rv.data.NetworkAPI_v1.API_v1_Masks_Response.GetMask get_mask = 2;
+      rv.data.NetworkAPI_v1.API_v1_Masks_Response.GetThumbnail get_thumbnail = 3;
+    }
+
+
+    message Masks {
+      repeated rv.data.API_v1_Identifier masks = 1;
+
+    }
+    message GetMask {
+      rv.data.API_v1_Identifier id = 1;
+
+    }
+    message GetThumbnail {
+      bytes data = 1;
+
+    }
+  }
+  message API_v1_Media_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Media_Response.Playlists playlists = 1;
+      rv.data.NetworkAPI_v1.API_v1_Media_Response.GetPlaylist get_playlist = 2;
+      rv.data.NetworkAPI_v1.API_v1_Media_Response.GetPlaylistUpdates get_playlist_updates = 3;
+      rv.data.NetworkAPI_v1.API_v1_Media_Response.GetThumbnail get_thumbnail = 4;
+      rv.data.NetworkAPI_v1.API_v1_Media_Response.GetFocusedPlaylist playlist_focused = 5;
+      rv.data.NetworkAPI_v1.API_v1_Media_Response.GetActivePlaylist playlist_active = 6;
+      rv.data.NetworkAPI_v1.API_v1_Media_Response.EmptyMessage focus = 7;
+      rv.data.NetworkAPI_v1.API_v1_Media_Response.EmptyMessage trigger = 8;
+    }
+
+
+    message Playlists {
+      repeated rv.data.API_v1_Playlist playlists = 1;
+
+    }
+    message GetPlaylist {
+      rv.data.API_v1_Identifier id = 1;
+      repeated rv.data.API_v1_MediaPlaylistItem items = 2;
+
+    }
+    message GetPlaylistUpdates {
+      rv.data.API_v1_Identifier id = 1;
+
+    }
+    message GetThumbnail {
+      rv.data.UUID uuid = 1;
+      bytes thumbnail_data = 2;
+
+    }
+    message GetFocusedPlaylist {
+      rv.data.API_v1_Identifier id = 1;
+
+    }
+    message GetActivePlaylist {
+      rv.data.API_v1_Identifier playlist = 1;
+      rv.data.API_v1_Identifier item = 2;
+
+    }
+    message EmptyMessage {
+
+    }
+  }
+  message API_v1_Message_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Message_Response.Messages messages = 1;
+      rv.data.NetworkAPI_v1.API_v1_Message_Response.CreateMessage create_message = 2;
+      rv.data.NetworkAPI_v1.API_v1_Message_Response.GetMessage get_message = 3;
+      rv.data.NetworkAPI_v1.API_v1_Message_Response.PutMessage put_message = 4;
+      rv.data.NetworkAPI_v1.API_v1_Message_Response.DeleteMessage delete_message = 5;
+      rv.data.NetworkAPI_v1.API_v1_Message_Response.TriggerMessage trigger_message = 6;
+      rv.data.NetworkAPI_v1.API_v1_Message_Response.ClearMessage clear_message = 7;
+    }
+
+
+    message Messages {
+      repeated rv.data.API_v1_Message messages = 1;
+
+    }
+    message CreateMessage {
+      rv.data.API_v1_Message message = 1;
+
+    }
+    message GetMessage {
+      rv.data.API_v1_Message message = 1;
+
+    }
+    message PutMessage {
+      rv.data.API_v1_Message message = 1;
+
+    }
+    message DeleteMessage {
+
+    }
+    message TriggerMessage {
+
+    }
+    message ClearMessage {
+
+    }
+  }
+  message API_v1_Miscellaneous_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Miscellaneous_Response.FindMyMouse find_my_mouse = 1;
+    }
+
+
+    message FindMyMouse {
+
+    }
+  }
+  message API_v1_Playlist_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.Playlists playlists = 1;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.CreatePlaylist create_playlist = 2;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.GetPlaylist get_playlist = 3;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.PutPlaylist put_playlist = 4;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.PostPlaylist post_playlist = 5;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.GetActivePlaylist get_active_playlist = 6;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.GetFocusedPlaylist focused = 7;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage next_focus = 8;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage previous_focus = 9;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_presentation_focus = 10;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_announcement_focus = 11;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage focused_trigger = 12;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_presentation_trigger = 13;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_announcement_trigger = 14;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage focused_next_trigger = 15;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage focused_previous_trigger = 16;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_presentation_next_trigger = 17;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_announcement_next_trigger = 18;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_presentation_previous_trigger = 19;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_announcement_previous_trigger = 20;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage id_focus = 21;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage id_trigger = 22;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage id_next_trigger = 23;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage id_previous_trigger = 24;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage focused_index_trigger = 25;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_presentation_index_trigger = 26;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage active_announcement_index_trigger = 27;
+      rv.data.NetworkAPI_v1.API_v1_Playlist_Response.EmptyMessage id_updates = 28;
+    }
+
+
+    message Playlists {
+      repeated rv.data.API_v1_Playlist playlists = 1;
+
+    }
+    message CreatePlaylist {
+      rv.data.API_v1_Playlist playlist = 1;
+
+    }
+    message GetActivePlaylist {
+      rv.data.API_v1_PlaylistAndItem presentation = 1;
+      rv.data.API_v1_PlaylistAndItem announcements = 2;
+
+    }
+    message GetPlaylist {
+      rv.data.API_v1_Identifier id = 1;
+      repeated rv.data.API_v1_PlaylistItem items = 2;
+
+    }
+    message PutPlaylist {
+
+    }
+    message PostPlaylist {
+      rv.data.API_v1_Playlist playlist = 1;
+
+    }
+    message GetFocusedPlaylist {
+      rv.data.API_v1_PlaylistAndItem playlist = 1;
+
+    }
+    message EmptyMessage {
+
+    }
+  }
+  message API_v1_Preroll_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Response.PrerollReady preroll_ready = 1;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Response.ActivatePrerollItem activate_preroll_item = 3;
+      rv.data.NetworkAPI_v1.API_v1_Preroll_Response.CancelPrerollItem cancel_preroll_item = 4;
+    }
+
+
+    message PrerollReady {
+      uint64 id = 1;
+      uint64 latency = 2;
+      uint64 time = 3;
+
+    }
+    message ActivatePrerollItem {
+      bool success = 1;
+
+    }
+    message CancelPrerollItem {
+      bool success = 1;
+
+    }
+  }
+  message API_v1_Presentation_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.Active active = 1;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.SlideIndex slide_index = 2;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.ChordChart chord_chart = 3;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.ChordChartUpdates chord_chart_update = 4;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.Presentation presentation = 5;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.DeletePresentation delete_presentation = 6;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.TriggerPresentation trigger_presentation = 7;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.TriggerCue trigger_cue = 8;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.TimelineOperation timeline_operation = 9;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.ActivePresentationTimelineOperation active_presentation_timeline_operation = 10;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.FocusedPresentationTimelineOperation focused_presentation_timeline_operation = 11;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.ActivePresentationTimelineStatus active_presentation_timeline_status = 12;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.FocusedPresentationTimelineStatus focused_presentation_timeline_status = 13;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.Thumbnail thumbnail = 14;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.Focused focused = 15;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.EmptyMessage focus = 16;
+      rv.data.NetworkAPI_v1.API_v1_Presentation_Response.EmptyMessage trigger = 17;
+    }
+
+
+    message Active {
+      rv.data.API_v1_Presentation presentation = 1;
+
+    }
+    message SlideIndex {
+      rv.data.API_v1_SlideIndex presentation_index = 1;
+
+    }
+    message ChordChart {
+      bytes chord_chart = 1;
+
+    }
+    message ChordChartUpdates {
+
+    }
+    message Presentation {
+      rv.data.API_v1_Presentation presentation = 1;
+
+    }
+    message DeletePresentation {
+
+    }
+    message TriggerPresentation {
+
+    }
+    message TriggerCue {
+
+    }
+    message TimelineOperation {
+
+    }
+    message ActivePresentationTimelineOperation {
+
+    }
+    message FocusedPresentationTimelineOperation {
+
+    }
+    message ActivePresentationTimelineStatus {
+      bool is_running = 1;
+      double current_time = 2;
+
+    }
+    message FocusedPresentationTimelineStatus {
+      bool is_running = 1;
+      double current_time = 2;
+
+    }
+    message Thumbnail {
+      bytes data = 1;
+      enum API_v1_ContentType {
+        PNG = 0;
+        JPEG = 1;
+      }
+      API_v1_ContentType content_type = 2;
+
+    }
+    message Focused {
+      rv.data.API_v1_Identifier id = 1;
+
+    }
+    message EmptyMessage {
+
+    }
+  }
+  message API_v1_Prop_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Prop_Response.Props props = 1;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Response.GetProp get_prop = 2;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Response.DeleteProp delete_prop = 3;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Response.TriggerProp trigger_prop = 4;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Response.ClearProp clear_prop = 5;
+      rv.data.NetworkAPI_v1.API_v1_Prop_Response.GetThumbnail get_thumbnail = 6;
+    }
+
+
+    message Props {
+      repeated rv.data.API_v1_PropData props = 1;
+
+    }
+    message GetProp {
+      rv.data.API_v1_PropData prop = 1;
+
+    }
+    message DeleteProp {
+
+    }
+    message TriggerProp {
+
+    }
+    message ClearProp {
+
+    }
+    message GetThumbnail {
+      bytes data = 1;
+
+    }
+  }
+  message API_v1_Stage_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.GetLayoutMap get_layout_map = 1;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.SetLayoutMap set_layout_map = 2;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.GetMessage get_message = 3;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.PutMessage put_message = 4;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.DeleteMessage delete_message = 5;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.GetScreens get_screens = 6;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.GetScreenLayout get_screen_layout = 7;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.SetScreenLayout set_screen_layout = 8;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.GetLayouts get_layouts = 9;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.DeleteLayout delete_layout = 10;
+      rv.data.NetworkAPI_v1.API_v1_Stage_Response.GetLayoutThumbnail get_layout_thumbnail = 11;
+    }
+
+
+    message GetLayoutMap {
+      rv.data.API_v1_StageLayoutMap map = 1;
+
+    }
+    message SetLayoutMap {
+
+    }
+    message GetMessage {
+      string message = 1;
+
+    }
+    message PutMessage {
+
+    }
+    message DeleteMessage {
+
+    }
+    message GetScreens {
+      repeated rv.data.API_v1_Identifier screens = 1;
+
+    }
+    message GetScreenLayout {
+      rv.data.API_v1_Identifier id = 1;
+
+    }
+    message SetScreenLayout {
+
+    }
+    message GetLayouts {
+      repeated rv.data.NetworkAPI_v1.API_v1_Stage_Response.GetLayouts.Layout layouts = 1;
+
+      message Layout {
+        rv.data.API_v1_Identifier id = 1;
+
+      }
+    }
+    message DeleteLayout {
+
+    }
+    message GetLayoutThumbnail {
+      bytes data = 1;
+
+    }
+  }
+  message API_v1_Status_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Status_Response.GetLayers get_layers = 1;
+      rv.data.NetworkAPI_v1.API_v1_Status_Response.GetStageScreens get_stage_screens = 2;
+      rv.data.NetworkAPI_v1.API_v1_Status_Response.PutStageScreens put_stage_screens = 3;
+      rv.data.NetworkAPI_v1.API_v1_Status_Response.GetAudienceScreens get_audience_screens = 4;
+      rv.data.NetworkAPI_v1.API_v1_Status_Response.PutAudienceScreens put_audience_screens = 5;
+      rv.data.NetworkAPI_v1.API_v1_Status_Response.GetScreens get_screens = 6;
+      rv.data.NetworkAPI_v1.API_v1_Status_Response.GetSlide get_slide = 7;
+    }
+
+
+    message GetLayers {
+      bool video_input = 1;
+      bool media = 2;
+      bool slide = 3;
+      bool announcements = 4;
+      bool props = 5;
+      bool messages = 6;
+      bool audio = 7;
+
+    }
+    message GetStageScreens {
+      bool enabled = 1;
+
+    }
+    message PutStageScreens {
+
+    }
+    message GetAudienceScreens {
+      bool enabled = 1;
+
+    }
+    message PutAudienceScreens {
+
+    }
+    message GetScreens {
+      repeated rv.data.API_v1_ScreenConfig screens = 1;
+
+    }
+    message GetSlide {
+      rv.data.API_v1_SlideDisplayDetails current = 1;
+      rv.data.API_v1_SlideDisplayDetails next = 2;
+
+    }
+  }
+  message API_v1_Theme_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.GetAll get_all = 1;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.GetTheme get_theme = 2;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.DeleteTheme delete_theme = 3;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.GetThemeName get_theme_name = 4;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.PutThemeName put_theme_name = 5;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.GetThemeSlide get_theme_slide = 6;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.PutThemeSlide put_theme_slide = 7;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.DeleteThemeSlide delete_theme_slide = 8;
+      rv.data.NetworkAPI_v1.API_v1_Theme_Response.GetThemeSlideThumbnail get_theme_slide_thumbnail = 9;
+    }
+
+
+    message GetAll {
+      repeated rv.data.API_v1_ThemeGroup groups = 1;
+      repeated rv.data.API_v1_Theme themes = 2;
+
+    }
+    message GetTheme {
+      oneof Value {
+        rv.data.API_v1_Theme theme = 1;
+        rv.data.API_v1_ThemeGroup group = 2;
+      }
+
+
+    }
+    message DeleteTheme {
+
+    }
+    message GetThemeName {
+      string name = 1;
+
+    }
+    message PutThemeName {
+
+    }
+    message GetThemeSlide {
+      rv.data.API_v1_ThemeSlide theme_slide = 1;
+
+    }
+    message PutThemeSlide {
+
+    }
+    message DeleteThemeSlide {
+
+    }
+    message GetThemeSlideThumbnail {
+      bytes data = 1;
+
+    }
+  }
+  message API_v1_Timer_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.Timers timers = 1;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.CreateTimer create_timer = 2;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.CurrentTimes current_times = 3;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.AllTimersOperation all_timers_operation = 4;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.GetTimer get_timer = 5;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.PutTimer put_timer = 6;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.DeleteTimer delete_timer = 7;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.TimerOperation timer_operation = 8;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.SystemTime system_time = 9;
+      rv.data.NetworkAPI_v1.API_v1_Timer_Response.VideoCountdown video_countdown = 10;
+    }
+
+
+    message Timers {
+      repeated rv.data.API_v1_Timer timers = 1;
+
+    }
+    message CreateTimer {
+      rv.data.API_v1_Timer timer = 1;
+
+    }
+    message CurrentTimes {
+      repeated rv.data.API_v1_TimerValue timers = 1;
+
+    }
+    message AllTimersOperation {
+
+    }
+    message GetTimer {
+      rv.data.API_v1_Timer timer = 1;
+
+    }
+    message PutTimer {
+      rv.data.API_v1_Timer timer = 1;
+
+    }
+    message DeleteTimer {
+
+    }
+    message TimerOperation {
+
+    }
+    message SystemTime {
+      uint64 time = 1;
+
+    }
+    message VideoCountdown {
+      string time = 1;
+
+    }
+  }
+  message API_v1_Transport_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.Play play = 1;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.Pause pause = 2;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.SkipBackward skip_backward = 3;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.SkipForward skip_forward = 4;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.GoToEnd go_to_end = 5;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.GetTime get_time = 6;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.PutTime put_time = 7;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.GetAutoAdvance get_auto_advance = 8;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.DeleteAutoAdvance delete_auto_advance = 9;
+      rv.data.NetworkAPI_v1.API_v1_Transport_Response.GetCurrentMedia get_current_media = 10;
+    }
+
+
+    message Play {
+
+    }
+    message Pause {
+
+    }
+    message SkipBackward {
+
+    }
+    message SkipForward {
+
+    }
+    message GoToEnd {
+
+    }
+    message GetTime {
+      double seconds = 1;
+
+    }
+    message PutTime {
+
+    }
+    message GetAutoAdvance {
+      bool auto_advance = 1;
+
+    }
+    message DeleteAutoAdvance {
+
+    }
+    message GetCurrentMedia {
+      bool is_playing = 1;
+      rv.data.UUID uuid = 2;
+      string name = 3;
+      string artist = 4;
+      bool audio_only = 5;
+      double duration = 6;
+
+    }
+  }
+  message API_v1_Trigger_Response {
+    oneof Response {
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.Cue cue = 1;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.Playlist playlist = 2;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.Media media = 3;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.Audio audio = 4;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.VideoInput video_input = 5;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.Library library = 6;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.Next next = 7;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.Previous previous = 8;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.MediaNext media_next = 9;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.MediaPrevious media_previous = 10;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.AudioNext audio_next = 11;
+      rv.data.NetworkAPI_v1.API_v1_Trigger_Response.AudioPrevious audio_previous = 12;
+    }
+
+
+    message Cue {
+
+    }
+    message Playlist {
+
+    }
+    message Media {
+
+    }
+    message MediaNext {
+
+    }
+    message MediaPrevious {
+
+    }
+    message Audio {
+
+    }
+    message AudioNext {
+
+    }
+    message AudioPrevious {
+
+    }
+    message VideoInput {
+
+    }
+    message Library {
+
+    }
+    message Next {
+
+    }
+    message Previous {
+
+    }
+  }
+  message API_v1_Video_Inputs_Response {
+    oneof Request {
+      rv.data.NetworkAPI_v1.API_v1_Video_Inputs_Response.GetAll get_all = 1;
+      rv.data.NetworkAPI_v1.API_v1_Video_Inputs_Response.Trigger trigger = 2;
+    }
+
+
+    message GetAll {
+      repeated rv.data.API_v1_Identifier inputs = 1;
+
+    }
+    message Trigger {
+
+    }
+  }
+}

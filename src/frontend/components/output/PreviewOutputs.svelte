@@ -8,7 +8,7 @@
     export let currentOutputId: string | null
 
     onMount(() => {
-        currentOutputId = getActiveOutputs()[0]
+        currentOutputId = getActiveOutputs({}, true, true)[0]
     })
 
     $: outs = Object.entries($outputs)

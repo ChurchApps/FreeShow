@@ -102,21 +102,31 @@
         if (!currentScreen) return
 
         let bounds = e.detail.bounds
+        let keyOutput = currentScreen.keyOutput
         outputs.update((a) => {
             a[screenId!].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
             a[screenId!].screen = e.detail.id.toString()
             // a[screenId!].kiosk = true
+
+            if (keyOutput) {
+                a[keyOutput].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
+                a[keyOutput].screen = e.detail.id.toString()
+            }
             return a
         })
 
-        console.log("ENABLED", activateOutput || $outputDisplay)
-
         setTimeout(() => {
-            send(OUTPUT, ["DISPLAY"], { enabled: activateOutput || $outputDisplay, output: { id: screenId, ...currentScreen }, reset: true })
+            let enabled = activateOutput || $outputDisplay
+            send(OUTPUT, ["DISPLAY"], { enabled, output: { id: screenId, ...currentScreen }, reset: true })
             // send(OUTPUT, ["TOGGLE_KIOSK"], { id: screenId, enabled: true })
             // setTimeout(() => {
             send(OUTPUT, ["UPDATE_BOUNDS"], { id: screenId, ...currentScreen })
             // }, 100)
+
+            if (keyOutput) {
+                send(OUTPUT, ["DISPLAY"], { enabled, output: { id: keyOutput, ...currentScreen }, reset: true })
+                send(OUTPUT, ["UPDATE_BOUNDS"], { id: keyOutput, ...currentScreen })
+            }
         }, 100)
 
         if (activateOutput) {

@@ -78,6 +78,18 @@ export const midiActions = {
     },
     change_output_style: (data: any) => changeOutputStyle(data.style),
 }
+export const midiNames = {
+    next_slide: "preview._next_slide",
+    previous_slide: "preview._previous_slide",
+    clear_all: "clear.all",
+}
+export const defaultMidiActionChannels = {
+    next_slide: { type: "noteon", values: { note: 1, velocity: -1, channel: 1 } },
+    previous_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 1 } },
+    clear_all: { type: "noteon", values: { note: 3, velocity: -1, channel: 1 } },
+    goto_group: { type: "noteon", values: { note: 10, velocity: -1, channel: 1 } },
+    change_output_style: { type: "noteoff", values: { note: 1, velocity: -1, channel: 1 } },
+}
 
 export function playMidiIn(msg) {
     let midi = get(midiIn)[msg.id]

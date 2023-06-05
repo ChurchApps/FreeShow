@@ -1,0 +1,502 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "graphicsData.proto";
+import "basicTypes.proto";
+import "alignmentGuide.proto";
+import "effects.proto";
+import "timers.proto";
+
+message Slide {
+  repeated rv.data.Slide.Element elements = 1;
+  repeated rv.data.UUID element_build_order = 2;
+  repeated rv.data.AlignmentGuide guidelines = 3;
+  bool draws_background_color = 4;
+  rv.data.Color background_color = 5;
+  rv.data.Graphics.Size size = 6;
+  rv.data.UUID uuid = 7;
+
+  message Element {
+    rv.data.Graphics.Element element = 1;
+    rv.data.Slide.Element.Build build_in = 2;
+    rv.data.Slide.Element.Build build_out = 3;
+    uint32 info = 4;
+    enum TextRevealType {
+      TEXT_REVEAL_TYPE_NONE = 0;
+      TEXT_REVEAL_TYPE_BULLET = 1;
+      TEXT_REVEAL_TYPE_UNDERLINE = 2;
+    }
+    TextRevealType reveal_type = 5;
+    repeated rv.data.Slide.Element.DataLink data_links = 6;
+    repeated rv.data.Slide.Element.ChildBuild childBuilds = 7;
+    uint32 reveal_from_index = 8;
+    rv.data.Slide.Element.TextScroller text_scroller = 9;
+
+    message Build {
+      rv.data.UUID uuid = 1;
+      rv.data.UUID elementUUID = 2;
+      enum Start {
+        START_ON_CLICK = 0;
+        START_WITH_PREVIOUS = 1;
+        START_AFTER_PREVIOUS = 2;
+        START_WITH_SLIDE = 3;
+      }
+      Start start = 3;
+      double delayTime = 4;
+      rv.data.Transition transition = 5;
+
+    }
+    message ChildBuild {
+      rv.data.UUID uuid = 1;
+      enum Start {
+        START_ON_CLICK = 0;
+        START_WITH_PREVIOUS = 1;
+        START_AFTER_PREVIOUS = 2;
+        START_WITH_SLIDE = 3;
+      }
+      Start start = 2;
+      double delayTime = 3;
+      uint32 index = 4;
+
+    }
+    message DataLink {
+      oneof PropertyType {
+        rv.data.Slide.Element.DataLink.Ticker ticker = 1;
+        rv.data.Slide.Element.DataLink.AlternateElementText alternate_text = 2;
+        rv.data.Slide.Element.DataLink.TimerText timer_text = 3;
+        rv.data.Slide.Element.DataLink.ClockText clock_text = 4;
+        rv.data.Slide.Element.DataLink.ChordChart chord_chart = 5;
+        rv.data.Slide.Element.DataLink.OutputScreen output_screen = 6;
+        rv.data.Slide.Element.DataLink.PCOLive pco_live = 7;
+        rv.data.Slide.Element.DataLink.AlternateElementFill alternate_fill = 8;
+        rv.data.Slide.Element.DataLink.VisibilityLink visibility_link = 9;
+        rv.data.Slide.Element.DataLink.SlideText slide_text = 10;
+        rv.data.Slide.Element.DataLink.StageMessage stage_message = 11;
+        rv.data.Slide.Element.DataLink.VideoCountdown video_countdown = 12;
+        rv.data.Slide.Element.DataLink.SlideImage slide_image = 13;
+        rv.data.Slide.Element.DataLink.CCLIText ccli_text = 14;
+        rv.data.Slide.Element.DataLink.GroupName group_name = 15;
+        rv.data.Slide.Element.DataLink.GroupColor group_color = 16;
+        rv.data.Slide.Element.DataLink.PresentationNotes presentation_notes = 17;
+        rv.data.Slide.Element.DataLink.PlaylistItem playlist_item = 18;
+        rv.data.Slide.Element.DataLink.AutoAdvanceTimeRemaining auto_advance_time_remaining = 19;
+        rv.data.Slide.Element.DataLink.CaptureStatusText capture_status_text = 20;
+        rv.data.Slide.Element.DataLink.CaptureStatusColor capture_status_color = 21;
+        rv.data.Slide.Element.DataLink.SlideCount slide_count = 22;
+        rv.data.Slide.Element.DataLink.AudioCountdown audio_countdown = 23;
+        rv.data.Slide.Element.DataLink.Presentation presentation = 24;
+        rv.data.Slide.Element.DataLink.SlideLabelText slide_Label_Text = 25;
+        rv.data.Slide.Element.DataLink.SlideLabelColor slide_Label_Color = 26;
+        rv.data.Slide.Element.DataLink.RSSFeed rss_feed = 27;
+        rv.data.Slide.Element.DataLink.FileFeed file_feed = 28;
+        rv.data.Slide.Element.DataLink.ChordProChart chord_pro_chart = 29;
+        rv.data.Slide.Element.DataLink.PlaybackMarkerText playback_marker_text = 30;
+        rv.data.Slide.Element.DataLink.PlaybackMarkerIdentifier playback_marker_color = 32;
+        rv.data.Slide.Element.DataLink.TimecodeText timecode_text = 33;
+        rv.data.Slide.Element.DataLink.TimecodeStatus timecode_status = 34;
+      }
+
+
+      message RSSFeed {
+        rv.data.URL url = 1;
+        enum ContentType {
+          CONTENT_TYPE_TITLE_ONLY = 0;
+          CONTENT_TYPE_TITLE_AND_DESCRIPTION = 1;
+        }
+        ContentType content = 2;
+        string text_delimiter = 3;
+
+      }
+      message FileFeed {
+        rv.data.URL url = 1;
+
+      }
+      message Ticker {
+        double play_rate = 4;
+        bool should_loop = 5;
+        double loop_delay = 6;
+        string text_delimiter = 7;
+        oneof SourceType {
+          rv.data.Slide.Element.DataLink.Ticker.TextType text_type = 1;
+          rv.data.Slide.Element.DataLink.Ticker.RSSType rss_type = 2;
+          rv.data.Slide.Element.DataLink.Ticker.FileType file_type = 3;
+        }
+
+
+        message TextType {
+          string text = 1;
+
+        }
+        message RSSType {
+          rv.data.URL url = 1;
+          enum ContentType {
+            CONTENT_TYPE_TITLE_ONLY = 0;
+            CONTENT_TYPE_TITLE_AND_DESCRIPTION = 1;
+          }
+          ContentType content = 2;
+
+        }
+        message FileType {
+          rv.data.URL url = 1;
+
+        }
+      }
+      message AlternateElementText {
+        rv.data.UUID other_element_uuid = 1;
+        string other_element_name = 2;
+        uint32 text_transform_options = 3;
+        enum TextTransformOption {
+          TEXT_TRANSFORM_OPTION_NONE = 0;
+          TEXT_TRANSFORM_OPTION_REMOVE_LINE_RETURNS = 1;
+          TEXT_TRANSFORM_OPTION_ONE_WORD_PER_LINE = 2;
+          TEXT_TRANSFORM_OPTION_ONE_CHARACTER_PER_LINE = 3;
+        }
+        TextTransformOption text_transform = 4;
+
+      }
+      message CCLIText {
+
+      }
+      message ColorTrigger {
+        double time = 1;
+        rv.data.Color color = 2;
+
+      }
+      message TimerText {
+        rv.data.UUID timer_uuid = 1;
+        string timer_name = 2;
+        rv.data.Timer.Format timer_format = 3;
+        string timer_format_string = 4;
+        repeated rv.data.Slide.Element.DataLink.ColorTrigger color_triggers = 5;
+
+      }
+      message ClockText {
+        string clock_format_string = 1;
+        rv.data.Clock.Format format = 5;
+
+      }
+      message ChordChart {
+
+      }
+      message OutputScreen {
+        rv.data.UUID screen_id = 1;
+        string screen_name = 2;
+
+      }
+      message PCOLive {
+        enum Theme {
+          PCOLIVE_THEME_LIGHT = 0;
+          PCOLIVE_THEME_DARK = 1;
+        }
+        Theme theme = 2;
+        enum CountdownType {
+          COUNTDOWN_TYPE_FULL_ITEM_LENGTH = 0;
+          COUNTDOWN_TYPE_END_ITEM_ON_TIME = 1;
+          COUNTDOWN_TYPE_END_SERVICE_ON_TIME = 2;
+        }
+        CountdownType countdown_type = 3;
+
+      }
+      message AlternateElementFill {
+        rv.data.UUID other_element_uuid = 1;
+        string other_element_name = 2;
+
+      }
+      message VisibilityLink {
+        enum VisibilityCriterion {
+          VISIBILITY_CRITERION_ALL = 0;
+          VISIBILITY_CRITERION_ANY = 1;
+          VISIBILITY_CRITERION_NONE = 2;
+        }
+        VisibilityCriterion visibility_criterion = 1;
+        repeated rv.data.Slide.Element.DataLink.VisibilityLink.Condition conditions = 2;
+
+        message Condition {
+          oneof ConditionType {
+            rv.data.Slide.Element.DataLink.VisibilityLink.Condition.ElementVisibility element_visibility = 1;
+            rv.data.Slide.Element.DataLink.VisibilityLink.Condition.TimerVisibility timer_visibility = 2;
+            rv.data.Slide.Element.DataLink.VisibilityLink.Condition.VideoCountdownVisibility video_countdown_visibility = 3;
+            rv.data.Slide.Element.DataLink.VisibilityLink.Condition.CaptureSessionVisibility capture_session_visibility = 4;
+            rv.data.Slide.Element.DataLink.VisibilityLink.Condition.VideoInputVisibility video_input_visibility = 5;
+            rv.data.Slide.Element.DataLink.VisibilityLink.Condition.AudioCountdownVisibility audio_countdown_visibility = 6;
+          }
+
+
+          message ElementVisibility {
+            rv.data.UUID other_element_uuid = 1;
+            string other_element_name = 2;
+            enum ElementVisibilityCriterion {
+              ELEMENT_VISIBILITY_CRITERION_HAS_TEXT = 0;
+              ELEMENT_VISIBILITY_CRITERION_HAS_NO_TEXT = 1;
+            }
+            ElementVisibilityCriterion visibility_criterion = 3;
+
+          }
+          message TimerVisibility {
+            rv.data.UUID timer_uuid = 1;
+            string timer_name = 2;
+            enum TimerVisibilityCriterion {
+              TIMER_VISIBILITY_CRITERION_HAS_TIME_REMAINING = 0;
+              TIMER_VISIBILITY_CRITERION_HAS_EXPIRED = 1;
+              TIMER_VISIBILITY_CRITERION_IS_RUNNING = 2;
+              TIMER_VISIBILITY_CRITERION_NOT_RUNNING = 3;
+            }
+            TimerVisibilityCriterion visibility_criterion = 3;
+
+          }
+          message VideoCountdownVisibility {
+            enum VideoCountdownVisibilityCriterion {
+              VIDEO_COUNTDOWN_VISIBILITY_CRITERION_HAS_TIME_REMAINING = 0;
+              VIDEO_COUNTDOWN_VISIBILITY_CRITERION_HAS_EXPIRED = 1;
+              VIDEO_COUNTDOWN_VISIBILITY_CRITERION_IS_RUNNING = 2;
+              VIDEO_COUNTDOWN_VISIBILITY_CRITERION_NOT_RUNNING = 3;
+              VIDEO_COUNTDOWN_VISIBILITY_CRITERION_LOOPING = 4;
+              VIDEO_COUNTDOWN_VISIBILITY_CRITERION_NOT_LOOPING = 5;
+            }
+            VideoCountdownVisibilityCriterion visibility_criterion = 1;
+
+          }
+          message AudioCountdownVisibility {
+            enum AudioCountdownVisibilityCriterion {
+              AUDIO_COUNTDOWN_VISIBILITY_CRITERION_HAS_TIME_REMAINING = 0;
+              AUDIO_COUNTDOWN_VISIBILITY_CRITERION_HAS_EXPIRED = 1;
+              AUDIO_COUNTDOWN_VISIBILITY_CRITERION_IS_RUNNING = 2;
+              AUDIO_COUNTDOWN_VISIBILITY_CRITERION_NOT_RUNNING = 3;
+              AUDIO_COUNTDOWN_VISIBILITY_CRITERION_LOOPING = 4;
+              AUDIO_COUNTDOWN_VISIBILITY_CRITERION_NOT_LOOPING = 5;
+            }
+            AudioCountdownVisibilityCriterion visibility_criterion = 1;
+
+          }
+          message CaptureSessionVisibility {
+            enum CaptureSessionVisibilityCriterion {
+              CAPTURE_SESSION_VISIBILITY_CRITERION_ACTIVE = 0;
+              CAPTURE_SESSION_VISIBILITY_CRITERION_INACTIVE = 1;
+            }
+            CaptureSessionVisibilityCriterion visibility_criterion = 1;
+
+          }
+          message VideoInputVisibility {
+            int32 video_input_index = 1;
+            enum VideoInputVisibilityCriterion {
+              VIDEO_INPUT_VISIBILITY_CRITERION_ACTIVE = 0;
+              VIDEO_INPUT_VISIBILITY_CRITERION_INACTIVE = 1;
+            }
+            VideoInputVisibilityCriterion visibility_criterion = 2;
+
+          }
+        }
+      }
+      message SlideText {
+        enum SlideSourceType {
+          SLIDE_SOURCE_TYPE_CURRENT_SLIDE = 0;
+          SLIDE_SOURCE_TYPE_NEXT_SLIDE = 1;
+        }
+        SlideSourceType source_slide = 1;
+        enum TextSourceOption {
+          TEXT_SOURCE_OPTION_TEXT = 0;
+          TEXT_SOURCE_OPTION_NOTES = 1;
+          TEXT_SOURCE_OPTION_ELEMENT_MATCHING_NAME = 2;
+        }
+        TextSourceOption source_option = 2;
+        bool preserve_notes_format = 3;
+        string name_to_match = 4;
+        enum TextTransformOption {
+          TEXT_TRANSFORM_OPTION_NONE = 0;
+          TEXT_TRANSFORM_OPTION_REMOVE_LINE_RETURNS = 1;
+          TEXT_TRANSFORM_OPTION_ONE_WORD_PER_LINE = 2;
+          TEXT_TRANSFORM_OPTION_ONE_CHARACTER_PER_LINE = 3;
+        }
+        TextTransformOption element_text_transform = 5;
+
+      }
+      message SlideImage {
+        enum SlideSourceType {
+          SLIDE_SOURCE_TYPE_CURRENT_SLIDE = 0;
+          SLIDE_SOURCE_TYPE_NEXT_SLIDE = 1;
+        }
+        SlideSourceType source_slide = 1;
+
+      }
+      message StageMessage {
+        bool should_flash = 1;
+        rv.data.Color flash_color = 2;
+
+      }
+      message VideoCountdown {
+        rv.data.Timer.Format timer_format = 1;
+        string timer_format_string = 2;
+        repeated rv.data.Slide.Element.DataLink.ColorTrigger color_triggers = 3;
+        bool ignore_looping_videos = 4;
+        enum VideoCountdownSource {
+          VIDEO_COUNTDOWN_SOURCE_PRESENTATION = 0;
+          VIDEO_COUNTDOWN_SOURCE_ANNOUNCEMENT = 1;
+        }
+        VideoCountdownSource video_countdown_source = 5;
+
+      }
+      message AudioCountdown {
+        rv.data.Timer.Format timer_format = 1;
+        string timer_format_string = 2;
+        repeated rv.data.Slide.Element.DataLink.ColorTrigger color_triggers = 3;
+        bool ignore_looping_audio = 4;
+
+      }
+      message GroupName {
+        enum GroupSourceType {
+          GROUP_SOURCE_TYPE_CURRENT_SLIDE = 0;
+          GROUP_SOURCE_TYPE_NEXT_SLIDE = 1;
+          GROUP_SOURCE_TYPE_NEXT_GROUP = 2;
+        }
+        GroupSourceType groupSource = 1;
+
+      }
+      message GroupColor {
+        enum GroupSourceType {
+          GROUP_SOURCE_TYPE_CURRENT_SLIDE = 0;
+          GROUP_SOURCE_TYPE_NEXT_SLIDE = 1;
+          GROUP_SOURCE_TYPE_NEXT_GROUP = 2;
+        }
+        GroupSourceType groupSource = 1;
+
+      }
+      message SlideLabelText {
+        enum SlideLabelSource {
+          SLIDE_LABEL_SOURCE_CURRENT_SLIDE = 0;
+          SLIDE_LABEL_SOURCE_NEXT_SLIDE = 1;
+        }
+        SlideLabelSource slide_label_source = 1;
+
+      }
+      message SlideLabelColor {
+        enum SlideLabelSource {
+          SLIDE_LABEL_SOURCE_CURRENT_SLIDE = 0;
+          SLIDE_LABEL_SOURCE_NEXT_SLIDE = 1;
+        }
+        SlideLabelSource slide_label_source = 1;
+
+      }
+      message PresentationNotes {
+
+      }
+      message Presentation {
+        enum PresentationSource {
+          PRESENTATION_SOURCE_PRESENTATION = 0;
+          PRESENTATION_SOURCE_ANNOUNCEMENT = 1;
+        }
+        PresentationSource presentation_source = 1;
+
+      }
+      message PlaylistItem {
+        enum PlaylistItemSourceType {
+          PLAYLIST_ITEM_SOURCE_TYPE_CURRENT = 0;
+          PLAYLIST_ITEM_SOURCE_TYPE_NEXT = 1;
+          PLAYLIST_ITEM_SOURCE_TYPE_CURRENT_HEADER = 2;
+          PLAYLIST_ITEM_SOURCE_TYPE_NEXT_HEADER = 3;
+          PLAYLIST_ITEM_SOURCE_TYPE_PARENT_PLAYLIST = 4;
+        }
+        PlaylistItemSourceType playlistItemSource = 1;
+        bool showArrangement = 2;
+
+      }
+      message AutoAdvanceTimeRemaining {
+        enum AutoAdvanceSource {
+          AUTO_ADVANCE_SOURCE_PRESENTATION = 0;
+          AUTO_ADVANCE_SOURCE_ANNOUNCEMENT = 1;
+        }
+        AutoAdvanceSource auto_advance_source = 1;
+        rv.data.Timer.Format timer_format = 2;
+
+      }
+      message CaptureStatusText {
+        oneof TextType {
+          rv.data.Slide.Element.DataLink.CaptureStatusText.StatusText status_text = 1;
+          rv.data.Slide.Element.DataLink.CaptureStatusText.ElapsedTime elapsed_time = 2;
+        }
+
+
+        message StatusText {
+
+        }
+        message ElapsedTime {
+          rv.data.Timer.Format timer_format = 1;
+
+        }
+      }
+      message CaptureStatusColor {
+
+      }
+      message SlideCount {
+        enum SlideCountSourceType {
+          SLIDE_COUNT_SOURCE_TYPE_CURRENT = 0;
+          SLIDE_COUNT_SOURCE_TYPE_REMAINING = 1;
+          SLIDE_COUNT_SOURCE_TYPE_TOTAL = 2;
+        }
+        SlideCountSourceType slideCountSourceType = 1;
+
+      }
+      message PlaybackMarkerIdentifier {
+        enum Destination {
+          PLAYBACK_MARKER_DESTINATION_PRESENTATION = 0;
+          PLAYBACK_MARKER_DESTINATION_ANNOUNCEMENT = 1;
+          PLAYBACK_MARKER_DESTINATION_AUDIO = 2;
+        }
+        Destination destination = 1;
+        enum Type {
+          PLAYBACK_MARKER_IDENTIFIER_FIRST = 0;
+          PLAYBACK_MARKER_IDENTIFIER_PREVIOUS = 1;
+          PLAYBACK_MARKER_IDENTIFIER_NEXT = 2;
+          PLAYBACK_MARKER_IDENTIFIER_LAST = 3;
+          PLAYBACK_MARKER_IDENTIFIER_NAME = 4;
+        }
+        Type type = 2;
+        string name = 3;
+
+      }
+      message PlaybackMarkerText {
+        rv.data.Slide.Element.DataLink.PlaybackMarkerIdentifier identifier = 1;
+        bool should_use_marker_color = 4;
+        oneof TextType {
+          rv.data.Slide.Element.DataLink.PlaybackMarkerText.Name name = 2;
+          rv.data.Slide.Element.DataLink.PlaybackMarkerText.Time time = 3;
+        }
+
+
+        message Name {
+
+        }
+        message Time {
+          rv.data.Timer.Format format = 1;
+
+        }
+      }
+      message ChordProChart {
+
+      }
+      message TimecodeText {
+
+      }
+      message TimecodeStatus {
+
+      }
+    }
+    message TextScroller {
+      bool should_scroll = 1;
+      double scroll_rate = 2;
+      bool should_repeat = 3;
+      double repeat_distance = 4;
+      enum Direction {
+        DIRECTION_LEFT = 0;
+        DIRECTION_RIGHT = 1;
+        DIRECTION_UP = 2;
+        DIRECTION_DOWN = 3;
+      }
+      Direction scrolling_direction = 5;
+      bool starts_off_screen = 6;
+      double fade_left = 7;
+      double fade_right = 8;
+
+    }
+  }
+}

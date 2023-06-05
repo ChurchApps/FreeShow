@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "slide.proto";
+
+message Stage {
+
+  message Layout {
+    rv.data.UUID uuid = 1;
+    string name = 2;
+    rv.data.Slide slide = 3;
+
+  }
+  message Document {
+    rv.data.ApplicationInfo application_info = 1;
+    repeated rv.data.Stage.Layout layouts = 2;
+
+  }
+  message ScreenAssignment {
+    rv.data.CollectionElementType screen = 1;
+    rv.data.CollectionElementType layout = 2;
+
+  }
+}

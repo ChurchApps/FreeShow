@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "templateIdentification.proto";
+import "timers.proto";
+
+message Message {
+  rv.data.UUID uuid = 1;
+  string title = 2;
+  double time_to_remove = 3;
+  bool visible_on_network = 4;
+  rv.data.TemplateIdentification template = 6;
+  enum ClearType {
+    CLEAR_TYPE_MANUAL = 0;
+    CLEAR_TYPE_AFTER_TIME = 1;
+    CLEAR_TYPE_AFTER_TIMERS = 2;
+  }
+  ClearType clear_type = 9;
+  string message_text = 10;
+  repeated rv.data.Message.Token tokens = 11;
+  repeated rv.data.Message.TokenValue token_values = 12;
+
+  message Token {
+    rv.data.UUID uuid = 1;
+    oneof TokenType {
+      rv.data.Message.Token.TokenTypeText text = 2;
+      rv.data.Message.Token.TokenTypeTimer timer = 3;
+      rv.data.Message.Token.TokenTypeClock clock = 4;
+    }
+
+
+    message TokenTypeText {
+      string name = 1;
+
+    }
+    message TokenTypeTimer {
+      string name = 1;
+      rv.data.UUID timer_uuid = 2;
+
+    }
+    message TokenTypeClock {
+
+    }
+  }
+  message TokenValue {
+    rv.data.UUID token_id = 1;
+    string token_name = 5;
+    oneof TokenValueType {
+      rv.data.Message.TokenValue.TokenValueText text = 2;
+      rv.data.Message.TokenValue.TokenValueTimer timer = 3;
+      rv.data.Message.TokenValue.TokenValueClock clock = 4;
+    }
+
+
+    message TokenValueText {
+      string value = 1;
+
+    }
+    message TokenValueTimer {
+      rv.data.Timer.Configuration configuration = 1;
+      rv.data.Timer.Format format = 2;
+
+    }
+    message TokenValueClock {
+      rv.data.Clock.Format format = 1;
+
+    }
+  }
+}
+message MessageDocument {
+  rv.data.ApplicationInfo application_info = 1;
+  repeated rv.data.Message messages = 2;
+
+}

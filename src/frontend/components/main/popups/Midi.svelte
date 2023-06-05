@@ -1,11 +1,12 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
     import { activeShow, dictionary, groups, midiIn, popupData, styles } from "../../../stores"
-    import { midiActions, midiInListen } from "../../../utils/midi"
+    import { defaultMidiActionChannels, midiActions, midiInListen, midiNames } from "../../../utils/midi"
     import { receive, send } from "../../../utils/request"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
@@ -13,7 +14,7 @@
     let id: string = ""
     $: if ($popupData.id) id = $popupData.id
 
-    let midi: any = { name: "MIDI", type: "noteon", values: { note: 1, velocity: 1, channel: 1 } }
+    let midi: any = { name: "MIDI", type: "noteon", values: { note: 1, velocity: -1, channel: 1 }, defaultValues: true }
     $: if (id) setMidi()
     function setMidi() {
         if ($popupData.type === "in") midi = $midiIn[id] || midi
@@ -43,17 +44,31 @@
             if (!midi.input) midi.input = msg[0]
         },
         RECEIVE_MIDI: (msg) => {
+            if (!autoValues) return
             if (msg.id === id && msg.type === midi.type) {
                 midi.values = msg.values
             }
         },
     })
 
+    let autoValues: boolean = false
+    function toggleAutoValues(e: any) {
+        autoValues = e.target.checked
+    }
+
     // update show
     $: if (midi) saveMidi()
 
     function changeName(e: any) {
         midi.name = e.target.value
+    }
+
+    function toggleDefaultValues(e: any) {
+        midi.defaultValues = e.target.checked
+
+        if (midi.defaultValues && defaultMidiActionChannels[midi.action]) {
+            midi = { ...midi, ...defaultMidiActionChannels[midi.action] }
+        }
     }
 
     // TODO: history!
@@ -102,7 +117,7 @@
         midiInListen()
     }
 
-    const actionOptions = Object.keys(midiActions).map((id) => ({ id, name: id }))
+    const actionOptions = Object.keys(midiActions).map((id) => ({ id, name: "$:" + (midiNames[id] || "actions." + id) + ":$", translate: true }))
 
     // TODO: translate name & sort
     const groupsList = Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))
@@ -113,8 +128,21 @@
             return { ...obj, id }
         })
 
-        return list.sort((a, b) => a.name.localeCompare(b.name))
+        let sortedList = list.sort((a, b) => a.name.localeCompare(b.name))
+
+        return [{ id: null, name: "—" }, ...sortedList]
     }
+
+    function changeAction(e: any) {
+        midi.action = e.detail.id
+
+        if (midi.defaultValues && defaultMidiActionChannels[midi.action]) {
+            midi = { ...midi, ...defaultMidiActionChannels[midi.action] }
+        }
+    }
+
+    $: canHaveAction = $popupData.action || midi.action
+    $: notActionOrDefaultValues = canHaveAction ? midi.defaultValues : false
 </script>
 
 <div>
@@ -139,49 +167,75 @@
         {/if}
     </span>
 
-    <span>
-        <p><T id="midi.type" /></p>
-        <Dropdown value={midi.type} options={types} on:click={(e) => (midi.type = e.detail.name)} />
-    </span>
+    <br />
+
+    {#if canHaveAction}
+        <span>
+            <p><T id="midi.use_default_values" /></p>
+            <Checkbox checked={midi.defaultValues} on:change={toggleDefaultValues} />
+        </span>
+    {/if}
+
+    {#if !notActionOrDefaultValues}
+        <span>
+            <p><T id="midi.auto_values" /></p>
+            <Checkbox checked={autoValues} on:change={toggleAutoValues} />
+        </span>
+
+        <span>
+            {#if $popupData.type === "in"}
+                <p style="font-size: 0.7em;opacity: 0.8;">
+                    <T id="midi.tip_velocity" />
+                </p>
+            {/if}
+        </span>
+    {/if}
 
     <span>
-        {#if $popupData.type === "in"}
-            <p style="font-size: 0.7em;opacity: 0.8;">
-                <T id="midi.tip" />
-            </p>
-        {/if}
+        <p><T id="midi.type" /></p>
+        <Dropdown value={midi.type} options={types} on:click={(e) => (midi.type = e.detail.name)} disabled={notActionOrDefaultValues} />
     </span>
 
     <span>
         <p><T id="midi.note" /></p>
-        <NumberInput value={midi.values.note} max={127} on:change={(e) => (midi.values.note = e.detail)} />
+        <NumberInput value={midi.values.note} max={127} on:change={(e) => (midi.values.note = e.detail)} disabled={notActionOrDefaultValues} />
     </span>
-    <span>
-        <p><T id="midi.velocity" /></p>
-        <NumberInput value={midi.values.velocity} min={$popupData.type === "in" ? -1 : 0} max={127} on:change={(e) => (midi.values.velocity = e.detail)} />
-    </span>
-    <span>
-        <p><T id="midi.channel" /></p>
-        <NumberInput value={midi.values.channel} max={255} on:change={(e) => (midi.values.channel = e.detail)} />
-    </span>
-
-    {#if $popupData.action || midi.action}
+    {#if !notActionOrDefaultValues}
         <span>
-            <p><T id="midi.start_action" /></p>
-            <Dropdown value={midi.action || "—"} options={actionOptions} on:click={(e) => (midi.action = e.detail.name)} />
+            <p><T id="midi.velocity" /></p>
+            <NumberInput value={midi.values.velocity} min={$popupData.type === "in" ? -1 : 0} max={127} on:change={(e) => (midi.values.velocity = e.detail)} />
         </span>
     {/if}
+    <span>
+        <p><T id="midi.channel" /></p>
+        <NumberInput value={midi.values.channel} max={255} on:change={(e) => (midi.values.channel = e.detail)} disabled={notActionOrDefaultValues} />
+    </span>
 
-    {#if midi.action === "goto_group"}
+    {#if canHaveAction}
+        <br />
+
         <span>
-            <p><T id="actions.choose_group" /></p>
-            <Dropdown value={groupsList.find((a) => a.id === midi.actionData?.group)?.name || "—"} options={groupsList} on:click={(e) => (midi.actionData = { group: e.detail.id })} />
+            <p style="font-size: 0.7em;opacity: 0.8;">
+                <T id="midi.tip_action" />
+            </p>
         </span>
-    {:else if midi.action === "change_output_style"}
+
         <span>
-            <p><T id="actions.change_output_style" /></p>
-            <Dropdown value={$styles[midi.actionData?.style]?.name || "—"} options={stylesList} on:click={(e) => (midi.actionData = { style: e.detail.id })} />
+            <p><T id="midi.start_action" /></p>
+            <Dropdown value={midi.action ? "$:" + (midiNames[midi.action] || "actions." + midi.action) + ":$" : "—"} options={actionOptions} on:click={changeAction} />
         </span>
+
+        {#if midi.action === "goto_group"}
+            <span>
+                <p><T id="actions.choose_group" /></p>
+                <Dropdown value={groupsList.find((a) => a.id === midi.actionData?.group)?.name || "—"} options={groupsList} on:click={(e) => (midi.actionData = { group: e.detail.id })} />
+            </span>
+        {:else if midi.action === "change_output_style"}
+            <span>
+                <p><T id="actions.change_output_style" /></p>
+                <Dropdown value={$styles[midi.actionData?.style]?.name || "—"} options={stylesList} on:click={(e) => (midi.actionData = { style: e.detail.id })} />
+            </span>
+        {/if}
     {/if}
 </div>
 
@@ -196,6 +250,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 10px;
     }
 
     div :global(.numberInput),

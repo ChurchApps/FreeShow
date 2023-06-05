@@ -22,7 +22,7 @@
     import Overlay from "./tools/Overlay.svelte"
     import Show from "./tools/Show.svelte"
 
-    $: outputId = getActiveOutputs($outputs)[0]
+    $: outputId = getActiveOutputs($outputs, true, true)[0]
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
     // TODO: outputIds for multiple outputs (update multiple videos at the same time)

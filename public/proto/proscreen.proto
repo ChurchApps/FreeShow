@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "screens.proto";
+import "basicTypes.proto";
+
+message ProPresenterScreen {
+  string name = 1;
+  enum ScreenType {
+    SCREEN_TYPE_UNKNOWN = 0;
+    SCREEN_TYPE_AUDIENCE = 1;
+    SCREEN_TYPE_STAGE = 2;
+  }
+  ScreenType screen_type = 2;
+  rv.data.Color background_color = 6;
+  rv.data.UUID uuid = 7;
+  bool background_color_enabled = 8;
+  oneof Arrangement {
+    rv.data.ProPresenterScreen.SingleArrangement arrangement_single = 3;
+    rv.data.ProPresenterScreen.CombinedArrangement arrangement_combined = 4;
+    rv.data.ProPresenterScreen.EdgeBlendArrangement arrangement_edge_blend = 5;
+  }
+
+
+  message SingleArrangement {
+    repeated rv.data.Screen screens = 1;
+
+  }
+  message CombinedArrangement {
+    repeated rv.data.Screen screens = 1;
+    uint32 rows = 2;
+    uint32 columns = 3;
+
+  }
+  message EdgeBlendArrangement {
+    uint32 screen_count = 1;
+    repeated rv.data.Screen screens = 2;
+    repeated rv.data.EdgeBlend edge_blends = 3;
+
+  }
+}

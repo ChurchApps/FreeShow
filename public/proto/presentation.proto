@@ -1,0 +1,123 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "action.proto";
+import "basicTypes.proto";
+import "cue.proto";
+import "rvtimestamp.proto";
+import "background.proto";
+import "effects.proto";
+import "groups.proto";
+
+message Presentation {
+  rv.data.ApplicationInfo application_info = 1;
+  rv.data.UUID uuid = 2;
+  string name = 3;
+  rv.data.Timestamp last_date_used = 4;
+  rv.data.Timestamp last_modified_date = 5;
+  string category = 6;
+  string notes = 7;
+  rv.data.Background background = 8;
+  rv.data.URL chord_chart = 9;
+  rv.data.UUID selected_arrangement = 10;
+  repeated rv.data.Presentation.Arrangement arrangements = 11;
+  repeated rv.data.Presentation.CueGroup cue_groups = 12;
+  repeated rv.data.Cue cues = 13;
+  rv.data.Presentation.CCLI ccli = 14;
+  rv.data.Presentation.BibleReference bible_reference = 15;
+  rv.data.Presentation.SocialMedia social_media = 16;
+  rv.data.Presentation.Timeline timeline = 17;
+  rv.data.Transition transition = 18;
+  enum ContentDestination {
+    CONTENT_DESTINATION_GLOBAL = 0;
+    CONTENT_DESTINATION_ANNOUNCEMENTS = 1;
+  }
+  ContentDestination content_destination = 19;
+  rv.data.Presentation.MultiTracksLicensing multi_tracks_licensing = 21;
+  string music_key = 22;
+  rv.data.Presentation.Music music = 23;
+  oneof SlideShow {
+    double slide_show_duration = 20;
+  }
+
+
+  message CCLI {
+    string author = 1;
+    string artist_credits = 2;
+    string song_title = 3;
+    string publisher = 4;
+    uint32 copyright_year = 5;
+    uint32 song_number = 6;
+    bool display = 7;
+    string album = 8;
+    bytes artwork = 9;
+
+  }
+  message BibleReference {
+    uint32 book_index = 1;
+    string book_name = 2;
+    rv.data.IntRange chapter_range = 3;
+    rv.data.IntRange verse_range = 4;
+    string translation_name = 5;
+    string translation_display_abbreviation = 6;
+    string translation_internal_abbreviation = 7;
+    string book_key = 8;
+
+  }
+  message SocialMedia {
+    string term = 1;
+    rv.data.Timestamp time = 2;
+
+  }
+  message Timeline {
+    repeated rv.data.Presentation.Timeline.Cue cues = 1;
+    double duration = 5;
+    bool loop = 6;
+    rv.data.Action audio_action = 8;
+    bool timecode_enable = 9;
+    double timecode_offset = 10;
+    repeated rv.data.Presentation.Timeline.Cue cues_v2 = 11;
+
+    message Cue {
+      double trigger_time = 1;
+      string name = 3;
+      oneof trigger_info {
+        rv.data.UUID cue_id = 2;
+        rv.data.Action action = 4;
+      }
+
+
+    }
+  }
+  message Arrangement {
+    rv.data.UUID uuid = 1;
+    string name = 2;
+    repeated rv.data.UUID group_identifiers = 3;
+
+  }
+  message CueGroup {
+    rv.data.Group group = 1;
+    repeated rv.data.UUID cue_identifiers = 2;
+
+  }
+  message MultiTracksLicensing {
+    int64 song_identifier = 1;
+    string customer_identifier = 2;
+    rv.data.Timestamp expiration_date = 3;
+    rv.data.Timestamp license_expiration = 4;
+    enum Subscription {
+      SUBSCRIPTION_CHART_PRO = 0;
+      SUBSCRIPTION_SLIDE_PRO = 1;
+    }
+    Subscription subscription = 5;
+
+  }
+  message Music {
+    string original_music_key = 1;
+    string user_music_key = 2;
+    rv.data.MusicKeyScale original = 3;
+    rv.data.MusicKeyScale user = 4;
+
+  }
+}

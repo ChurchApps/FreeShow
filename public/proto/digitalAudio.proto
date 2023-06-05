@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package rv.data;
+
+
+message DigitalAudio {
+
+  message Setup {
+    repeated rv.data.DigitalAudio.Bus buses = 1;
+    rv.data.DigitalAudio.Device monitor_device = 2;
+    rv.data.DigitalAudio.Device main_output_device = 3;
+    bool enable_sdi_ndi_device = 4;
+    rv.data.DigitalAudio.Device sdi_ndi_device = 5;
+    bool monitor_on_mains = 6;
+    bool disable_main_output_device = 7;
+
+  }
+  message Bus {
+    string name = 1;
+    bool muted = 2;
+    bool solo = 3;
+    bool test_tone = 4;
+    double master_level = 5;
+
+  }
+  message Device {
+    string name = 1;
+    string renderID = 2;
+    repeated rv.data.DigitalAudio.Device.Format formats = 3;
+    rv.data.DigitalAudio.Device.Routing routing = 4;
+
+    message Format {
+      uint32 sample_rate = 1;
+      uint32 bit_depth = 2;
+      enum Type {
+        TYPE_INT = 0;
+        TYPE_FLOAT = 1;
+      }
+      Type type = 3;
+
+    }
+    message Map {
+      uint32 channel_index = 1;
+      repeated uint32 mapped_indices = 2;
+
+    }
+    message Channel {
+      bool mute_enable = 1;
+      bool solo_enable = 2;
+      bool tone_enable = 3;
+      double audio_delay = 4;
+      double level = 5;
+
+    }
+    message Routing {
+      repeated rv.data.DigitalAudio.Device.Channel channels = 1;
+      repeated rv.data.DigitalAudio.Device.Map map = 2;
+      bool is_custom_map = 3;
+      rv.data.DigitalAudio.Device.Channel master_channel = 4;
+
+    }
+  }
+}

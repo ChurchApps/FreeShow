@@ -31,6 +31,7 @@
     const sendToOutput = () => {
         // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_DATA", data: { ...videoData, time: videoTime } })
         send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData, updatePreview: true })
+        if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, data: videoData, updatePreview: true })
         // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_DATA", data: videoData })
         // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_TIME", data: videoTime })
     }
@@ -65,6 +66,7 @@
         setOutput("background", null)
         videoTime = 0
         send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
+        if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })
     }
 
     function keydown(e: any) {

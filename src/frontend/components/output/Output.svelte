@@ -19,6 +19,9 @@
     export let title: string = ""
     export let mirror: boolean = false
 
+    // $: if (currentOutput.isKeyOutput) mirror = true
+    // $: console.log("MIRROR", mirror, currentOutput.isKeyOutput)
+
     // TODO: showing slide upon clear fade out will show black output (Transition bug!)
     // TODO: dont show transition upon no change!s
     export let transition: Transition = $transitionData.text
@@ -30,7 +33,7 @@
 
     // out data
     const defaultLayers: string[] = ["background", "slide", "overlays"]
-    $: outputId = getActiveOutputs($outputs)[0]
+    $: outputId = getActiveOutputs($outputs, true, mirror)[0]
     $: currentOutput = $outputs[outputId] || {}
 
     let currentStyle: Styles = { name: "" }
@@ -232,10 +235,10 @@
     }
 </script>
 
-<Zoomed background={currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} bind:ratio>
+<Zoomed background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} bind:ratio>
     {#if tempVideoBG && layers.includes("background")}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title {mirror} />
+            <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
         </div>
     {/if}
 
@@ -305,6 +308,8 @@
     }
 
     .key {
-        filter: brightness(30);
+        /* filter: brightness(50); */
+        filter: grayscale(1) brightness(1000) contrast(100);
+        /* filter: invert(1) grayscale(1) brightness(1000); */
     }
 </style>

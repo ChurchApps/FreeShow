@@ -79,17 +79,15 @@
 
     let textElem: any = null
 
-    // TODO: aplha key: output preview not filtered
-
     function getAlphaStyle(style: string) {
         if (!key) return style
         let styles = getStyles(style)
 
         let alphaStyles = ";"
         let bgAlpha = getAlphaValues(styles["background-color"])
-        let textAlpha = getAlphaValues(styles["color"])
+        let textAlpha = getAlphaValues(styles["color"]) || 1
         if (bgAlpha) alphaStyles += "background-color: rgb(255 255 255 / " + bgAlpha + ");"
-        if (textAlpha) alphaStyles += "color: rgb(255 255 255 / " + textAlpha + ");"
+        alphaStyles += "color: rgb(255 255 255 / " + textAlpha + ");"
 
         return style + alphaStyles
     }
@@ -106,18 +104,23 @@
     function alphaFromHex(colorValue: string) {
         let rx = /^#([0-9a-f]{2})[0-9a-f]{6}$/i
         let m = colorValue.match(rx)
-        if (!m) return 0
+        if (!m) return 1
         return parseInt(m[1], 16) / 255
     }
     function alphaFromRgb(colorValue: string) {
         if (colorValue.includes(",")) return parseFloat(colorValue.split(",")[3])
         if (colorValue.includes("/")) return parseFloat(colorValue.substring(colorValue.indexOf("/") + 1))
-        return 0
+        return 1
     }
 </script>
 
 <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
-<div class="item" style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}" class:key>
+<div
+    class="item"
+    style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}"
+    class:white={key && !lines?.length}
+    class:key
+>
     {#if lines}
         <div class="align" style={style ? item.align : null}>
             {#if chords}
@@ -201,9 +204,12 @@
         color: #ff5050;
     }
 
-    .key {
+    .white {
         /* filter: brightness(30); */
         filter: grayscale(1) brightness(20);
+    }
+    .key {
+        filter: grayscale(1);
     }
 
     /* span {

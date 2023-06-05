@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "template.proto";
+
+message CCLIDocument {
+  rv.data.ApplicationInfo application_info = 1;
+  bool enable_ccli_display = 2;
+  string ccli_license = 3;
+  enum DisplayType {
+    DISPLAY_TYPE_FIRST_SLIDE = 0;
+    DISPLAY_TYPE_LAST_SLIDE = 1;
+    DISPLAY_TYPE_FIRST_AND_LAST_SLIDE = 2;
+    DISPLAY_TYPE_ALL_SLIDES = 3;
+  }
+  DisplayType display_type = 4;
+  rv.data.Template.Slide template = 5;
+
+}

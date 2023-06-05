@@ -49,7 +49,22 @@
                 if (split[1] === "lines" && !Number(value)) delete a[currentOutput.id][split[0]][split[1]]
             } else {
                 a[currentOutput.id][key] = value
+
+                // update key output style
+                if (["style", "enabled", "alwaysOnTop"].includes(key) && a[currentOutput.id].keyOutput) {
+                    a[a[currentOutput.id].keyOutput][key] = value
+                }
             }
+
+            if (key === "alwaysOnTop") {
+                send(OUTPUT, ["SET_VALUE"], { id: $currentOutputSettings, key, value })
+
+                // update key output
+                if (a[currentOutput.id].keyOutput) {
+                    send(OUTPUT, ["SET_VALUE"], { id: a[currentOutput.id].keyOutput, key, value })
+                }
+            }
+
             currentOutputSettings.set(currentOutput.id)
             return a
         })
@@ -132,6 +147,11 @@
 <div>
     <p><T id="settings.active_style" /></p>
     <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("style", e.detail.id)} />
+</div>
+
+<div>
+    <p><T id="settings.always_on_top" /></p>
+    <Checkbox checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
 </div>
 
 <div>

@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+
+message Effect {
+  rv.data.UUID uuid = 1;
+  bool enabled = 2;
+  string name = 3;
+  string render_id = 4;
+  string behavior_description = 5;
+  string category = 6;
+  repeated rv.data.Effect.EffectVariable variables = 7;
+
+  message EffectVariable {
+    string name = 1;
+    string description = 2;
+    oneof Type {
+      rv.data.Effect.EffectVariable.EffectInt int = 3;
+      rv.data.Effect.EffectVariable.EffectFloat float = 4;
+      rv.data.Effect.EffectVariable.EffectColor color = 5;
+      rv.data.Effect.EffectVariable.EffectDirection direction = 6;
+      rv.data.Effect.EffectVariable.EffectDouble double = 7;
+    }
+
+
+    message EffectInt {
+      int32 value = 1;
+      int32 default_value = 2;
+      int32 min = 3;
+      int32 max = 4;
+
+    }
+    message EffectFloat {
+      float value = 1;
+      float default_value = 2;
+      float min = 3;
+      float max = 4;
+
+    }
+    message EffectDouble {
+      double value = 1;
+      double default_value = 2;
+      double min = 3;
+      double max = 4;
+
+    }
+    message EffectColor {
+      rv.data.Color color = 1;
+      rv.data.Color default_color = 2;
+
+    }
+    message EffectDirection {
+      enum EffectDirection {
+        EFFECT_DIRECTION_NONE = 0;
+        EFFECT_DIRECTION_TOP_LEFT = 1;
+        EFFECT_DIRECTION_TOP = 2;
+        EFFECT_DIRECTION_TOP_RIGHT = 4;
+        EFFECT_DIRECTION_LEFT = 8;
+        EFFECT_DIRECTION_CENTER = 16;
+        EFFECT_DIRECTION_RIGHT = 32;
+        EFFECT_DIRECTION_BOTTOM_LEFT = 64;
+        EFFECT_DIRECTION_BOTTOM = 128;
+        EFFECT_DIRECTION_BOTTOM_RIGHT = 256;
+      }
+      EffectDirection direction = 1;
+      EffectDirection default_direction = 2;
+      uint32 available_directions = 3;
+
+    }
+  }
+  message Preset {
+    rv.data.UUID uuid = 1;
+    string name = 2;
+    repeated rv.data.Effect effects = 3;
+
+  }
+}
+message Transition {
+  double duration = 1;
+  rv.data.UUID favorite_uuid = 2;
+  rv.data.Effect effect = 3;
+
+  message Preset {
+    rv.data.UUID uuid = 1;
+    string name = 2;
+    rv.data.Transition transition = 3;
+
+  }
+}

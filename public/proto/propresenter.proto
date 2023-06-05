@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "playlist.proto";
+import "action.proto";
+
+message PlaylistDocument {
+  rv.data.ApplicationInfo application_info = 1;
+  enum Type {
+    TYPE_UNKNOWN = 0;
+    TYPE_PRESENTATION = 1;
+    TYPE_MEDIA = 2;
+    TYPE_AUDIO = 3;
+  }
+  Type type = 2;
+  rv.data.Playlist root_node = 3;
+  repeated rv.data.Playlist.Tag tags = 4;
+  rv.data.Playlist live_video_playlist = 5;
+  rv.data.Playlist downloads_playlist = 6;
+
+}
+message SettingsDocument {
+  repeated rv.data.Action.Label labels = 2;
+
+}

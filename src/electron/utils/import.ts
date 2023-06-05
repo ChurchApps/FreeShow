@@ -7,6 +7,7 @@ import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
 import { app } from "electron"
 import { getDocumentsFolder } from "./files"
+import protobufjs from "protobufjs"
 
 export async function importShow(id: any, files: string[] | null) {
     if (!files?.length) return
@@ -72,25 +73,51 @@ export async function importShow(id: any, files: string[] | null) {
         )
     } else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
-        files.forEach((filePath: string) => {
-            data.push(readFile(filePath))
-        })
+        await Promise.all(
+            files.map(async (filePath: string) => {
+                let file = await readFile(filePath)
+                data.push(file)
+            })
+        )
     }
 
     if (data.length) toApp(IMPORT, { channel: id, data })
 }
 
-function readFile(filePath: string) {
+async function readFile(filePath: string) {
     let content: string = ""
+
+    let name: string = getFileName(filePath) || ""
+    let extension: string = path.extname(filePath).substring(1).toLowerCase()
+
     try {
-        content = readFileSync(filePath, "utf8").toString()
+        if (extension === "pro") {
+            content = await decodeProto(filePath)
+        } else {
+            content = readFileSync(filePath, "utf8").toString()
+        }
     } catch (err) {
         console.error("Error reading file:", err.stack)
     }
 
-    let name: string = getFileName(filePath) || ""
-    let extension: string = path.extname(filePath).substring(1).toLowerCase()
     return { content, name, extension }
 }
 
 const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.basename(filePath).lastIndexOf("."))
+
+// PROTO
+// https://greyshirtguy.com/blog/propresenter-7-file-format-part-2/
+// https://github.com/greyshirtguy/ProPresenter7-Proto
+// https://www.npmjs.com/package/protobufjs
+
+async function decodeProto(filePath: string) {
+    const root = await protobufjs.load("public/proto/presentation.proto")
+
+    const Presentation = root.lookupType("Presentation")
+
+    const fileContent = readFileSync(filePath)
+    const buffer = Buffer.from(fileContent)
+    const message = Presentation.decode(buffer)
+
+    return JSON.stringify(message)
+}

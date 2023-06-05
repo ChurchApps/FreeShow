@@ -1,11 +1,14 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Item, Layout } from "../../types/Show"
+import type { Item, Layout, Slide, SlideData } from "../../types/Show"
 import { checkName, getGlobalGroup, initializeMetadata, newSlide } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
+import { getExtension, getFileName, getMediaType } from "../components/helpers/media"
+
+const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 
 export function convertProPresenter(data: any) {
     alertMessage.set("popup.importing")
@@ -19,7 +22,7 @@ export function convertProPresenter(data: any) {
         data?.forEach(({ content, name, extension }: any) => {
             let song: any = {}
 
-            if (extension === "json") {
+            if (extension === "json" || extension === "pro") {
                 try {
                     song = JSON.parse(content)
                 } catch (err) {
@@ -33,12 +36,14 @@ export function convertProPresenter(data: any) {
 
             let layoutID = uid()
             let show = new ShowObj(false, "propresenter", layoutID)
-            show.name = checkName(name)
+            show.name = checkName(song.name || name)
 
             let converted: any = {}
 
             if (extension === "json") {
                 converted = convertJSONToSlides(song)
+            } else if (extension === "pro") {
+                converted = convertProToSlides(song)
             } else {
                 converted = convertToSlides(song, extension)
             }
@@ -50,12 +55,12 @@ export function convertProPresenter(data: any) {
             show.media = media
 
             show.meta = initializeMetadata({
-                title: song["@CCLISongTitle"],
+                title: song["@CCLISongTitle"] || song.ccli?.songTitle,
                 artist: song["@CCLIArtistCredits"],
-                author: song["@CCLIAuthor"],
-                publisher: song["@CCLIPublisher"],
-                CCLI: song["@CCLISongNumber"],
-                year: song["@CCLICopyrightYear"],
+                author: song["@CCLIAuthor"] || song.ccli?.author,
+                publisher: song["@CCLIPublisher"] || song.ccli?.publisher,
+                CCLI: song["@CCLISongNumber"] || song.ccli?.songNumber,
+                year: song["@CCLICopyrightYear"] || song.ccli?.copyrightYear,
             })
 
             layouts.forEach((layout: any, i: number) => {
@@ -66,7 +71,7 @@ export function convertProPresenter(data: any) {
                 }
             })
 
-            tempShows.push({ id: song["@uuid"] || uid(), show })
+            tempShows.push({ id: song["@uuid"] || song.uuid?.string || uid(), show })
         })
 
         setTempShows(tempShows)
@@ -93,7 +98,7 @@ function convertJSONToSlides(song: any) {
 
         let items = [
             {
-                style: "left:50px;top:120px;width:1820px;height:840px;",
+                style: itemStyle,
                 lines: text.split("\n").map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
             },
         ]
@@ -213,9 +218,6 @@ function getSlideItems(slide: any): any[] {
 
     let items: any[] = []
 
-    // TODO: get active show template style
-    let itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
-
     let itemStrings = elements.RVTextElement.NSString
     if (!itemStrings) itemStrings = [elements.RVTextElement["@RTFData"]]
     else if (itemStrings["#text"]) itemStrings = [itemStrings]
@@ -284,6 +286,19 @@ function decodeBase64(text: string) {
     return r
 }
 
+function RTFToText(input: string) {
+    input = input.slice(0, input.lastIndexOf("}"))
+    input = input.replaceAll("\\pard", "\\remove")
+    input = input.replaceAll("\\par", "__BREAK__")
+
+    // https://stackoverflow.com/a/188877
+    const regex = /\{\*?\\[^{}]+}|[{}]|\\\n?[A-Za-z]+\n?(?:-?\d+)?[ ]?/gm
+    input = input.replace(regex, "").replaceAll("\\*", "")
+
+    let splitted = input.split("__BREAK__").filter((a) => a)
+    return splitted.join("\n").trim()
+}
+
 function decodeHex(input: string) {
     let textStart = input.indexOf("\\cf2\\ltrch")
     // remove RTF before text
@@ -340,3 +355,178 @@ function rgbStringToHex(rgbaString: string) {
     return `#${toHex(r * 255)}${toHex(g * 255)}${toHex(b * 255)}`
 }
 const toHex = (c: number) => ("0" + Number(c.toFixed()).toString(16)).slice(-2)
+
+///// PRO 7 /////
+
+function convertProToSlides(song: any) {
+    let slides: any = {}
+    let media: any = {}
+    let layouts: any = []
+
+    let tempLayouts: any = {}
+    const tempArrangements: any[] = getArrangements(song.arrangements)
+    const tempGroups: any[] = getGroups(song.cueGroups)
+    const tempSlides: any[] = getSlides(song.cues)
+
+    if (!tempArrangements?.length) {
+        tempArrangements.push({ groups: Object.keys(tempGroups), name: "" })
+    }
+
+    let slidesWithoutGroup = Object.keys(tempSlides).filter((id) => !Object.values(tempGroups).find((a) => a.slides.includes(id)))
+    if (slidesWithoutGroup.length) slidesWithoutGroup.forEach((id) => createSlide(id))
+
+    tempArrangements.forEach(createLayout)
+    function createLayout({ name = "", groups }: any) {
+        layouts.push({ id: uid(), name, notes: "", slides: createSlides(groups) })
+    }
+
+    function createSlides(groups: string[]) {
+        let layoutSlides: any[] = []
+
+        groups.forEach((groupId) => {
+            let group = tempGroups[groupId]
+
+            let allSlides = group.slides.map((id, i) => createSlide(id, i === 0, { color: group.color, name: group.name }))
+            if (allSlides.length > 1) {
+                let children = allSlides.slice(1).map(({ id }) => id)
+                slides[allSlides[0].id].children = children
+            }
+
+            layoutSlides.push(allSlides[0])
+        })
+
+        return layoutSlides
+    }
+
+    function createSlide(id: string, isParent: boolean = true, { color, name }: any = {}) {
+        if (tempLayouts[id]) return tempLayouts[id]
+
+        let slideId = uid()
+        let layoutSlide: SlideData = { id: slideId }
+
+        let tempSlide = tempSlides[id]
+
+        if (tempSlide.disabled) layoutSlide.disabled = true
+
+        if (tempSlide.media) {
+            let mediaId = uid()
+            let path = tempSlide.media
+            media[mediaId] = { name: getFileName(path), path, type: getMediaType(getExtension(path)) }
+            layoutSlide.background = mediaId
+        }
+
+        let slide: Slide = {
+            group: null,
+            color: null,
+            settings: {
+                background: tempSlide.backgroundColor,
+                resolution: tempSlide.size,
+            },
+            notes: "",
+            items: tempSlide.items.map(convertItem),
+        }
+
+        if (isParent) {
+            let group = name || tempSlide.name || ""
+            let globalGroup = getGlobalGroup(group)
+            slide.color = color || ""
+            slide.group = group || ""
+            if (globalGroup) slide.globalGroup = globalGroup
+        }
+
+        slides[slideId] = slide
+        tempLayouts[id] = layoutSlide
+        return layoutSlide
+    }
+
+    return { slides, layouts, media }
+}
+
+function convertItem({ text }: any) {
+    let item: Item = {
+        style: itemStyle,
+        lines: text.split("\n").map(getLine),
+    }
+
+    return item
+
+    function getLine(text: string) {
+        return { align: "", text: [{ value: text, style: "" }] }
+    }
+}
+
+function getArrangements(arrangements: any) {
+    if (!arrangements) return []
+
+    let newArrangements: any = []
+    arrangements.forEach((a) => {
+        newArrangements.push({
+            name: a.name,
+            groups: a.groupIdentifiers.map((a) => a.string),
+        })
+    })
+
+    return newArrangements
+}
+
+function getGroups(groups) {
+    if (!groups) return {}
+
+    let newGroups: any = {}
+    groups.forEach(({ group, cueIdentifiers }) => {
+        newGroups[group.uuid.string] = {
+            name: group.name,
+            color: getColorValue(group.color),
+            slides: cueIdentifiers.map((a) => a.string),
+        }
+    })
+
+    return newGroups
+}
+
+function getSlides(cues: any) {
+    let slides: any = {}
+
+    cues.forEach((slide) => {
+        let baseSlide = slide.actions.find((a) => a.slide?.presentation)?.slide?.presentation?.baseSlide || {}
+        if (!baseSlide) return
+
+        slides[slide.uuid.string] = {
+            name: slide.name,
+            disabled: !slide.isEnabled,
+            media: slide.actions.find((a) => a.media?.element)?.media?.element?.url?.absoluteString,
+            backgroundColor: getColorValue(baseSlide.backgroundColor),
+            size: baseSlide.size,
+            items: baseSlide.elements.map(getItem),
+        }
+    })
+
+    return slides
+}
+
+function getItem(item: any) {
+    let newItem: any = {}
+
+    newItem.text = decodeRTF(item.element.text.rtfData)
+
+    return newItem
+}
+
+function decodeRTF(text: string) {
+    text = decodeBase64(text)
+    text = RTFToText(text)
+    return text
+}
+
+function getColorValue(color: any) {
+    if (!color) return ""
+
+    color = {
+        red: color.red || 0,
+        green: color.green || 0,
+        blue: color.blue || 0,
+        alpha: color.alpha || 1,
+    }
+
+    return "rgb(" + [color.red.toFixed(2), color.green.toFixed(2), color.blue.toFixed(2)].join(" ") + " / " + color.alpha.toFixed(1) + ")"
+}

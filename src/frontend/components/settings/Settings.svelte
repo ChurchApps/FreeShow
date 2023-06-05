@@ -59,7 +59,7 @@
 
     .scroll {
         overflow-y: auto;
-        overflow-x: hidden;
+        /* overflow-x: hidden; */
         height: 100%;
         padding: 0 50px;
     }

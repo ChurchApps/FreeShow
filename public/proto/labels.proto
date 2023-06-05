@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "action.proto";
+
+message ProLabelsDocument {
+  repeated rv.data.Action.Label labels = 1;
+
+}

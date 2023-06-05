@@ -369,6 +369,7 @@
         "remove": "Entfernen",
         "remove_group": "Remove group",
         "choose_group": "Choose group",
+        "goto_group": "Go to group",
         "change_output_style": "Change output style",
         "private": "Privat",
         "import": "Importieren",
@@ -596,7 +597,10 @@
         "velocity": "Velocity",
         "channel": "Channel",
         "start_action": "Start action",
-        "tip": "Values update when receiving a MIDI input. Set velocity to -1 to disable."
+        "use_default_values": "Use default values",
+        "auto_values": "Update values when receiving a MIDI input",
+        "tip_velocity": "Set velocity to -1 to disable.",
+        "tip_action": "To activate spesific slides, right click any slide and choose the midi in action."
     },
     "draw": {
         "focus": "Fokus",
@@ -657,6 +661,8 @@
         "manual_drag_hint": "You can also hold ctrl/cmd over an active output window to manually drag it around.",
         "new_output": "Neue Ausgabe",
         "enable_key_output": "Enable alpha key output",
+        "always_on_top": "Always on top",
+        "change_key_output_position": "Change key output position",
         "position": "Position",
         "enabled": "Aktiviert",
         "color_when_active": "Farbe wenn aktiv",

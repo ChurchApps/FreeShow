@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "cue.proto";
+import "effects.proto";
+
+message PropDocument {
+  rv.data.ApplicationInfo application_info = 1;
+  repeated rv.data.Cue cues = 2;
+  rv.data.Transition transition = 3;
+
+}

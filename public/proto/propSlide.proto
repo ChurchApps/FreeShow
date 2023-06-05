@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "slide.proto";
+import "effects.proto";
+
+message PropSlide {
+  rv.data.Slide base_slide = 1;
+  rv.data.Transition transition = 2;
+
+}

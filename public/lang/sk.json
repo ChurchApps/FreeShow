@@ -369,6 +369,7 @@
         "remove": "Odstrániť",
         "remove_group": "Remove group",
         "choose_group": "Choose group",
+        "goto_group": "Go to group",
         "change_output_style": "Change output style",
         "private": "Súkromné",
         "import": "Import",
@@ -596,7 +597,10 @@
         "velocity": "Velocity",
         "channel": "Kanál",
         "start_action": "Spustiť akciu",
-        "tip": "Hodnoty sa zmenia pri prijaní MIDI vstupu. Vypnete nastavení rýchlosti an -1."
+        "use_default_values": "Use default values",
+        "auto_values": "Update values when receiving a MIDI input",
+        "tip_velocity": "Vypnete nastavení rýchlosti an -1.",
+        "tip_action": "To activate spesific slides, right click any slide and choose the midi in action."
     },
     "draw": {
         "focus": "Focus",
@@ -657,6 +661,8 @@
         "manual_drag_hint": "You can also hold ctrl/cmd over an active output window to manually drag it around.",
         "new_output": "Nový výstup",
         "enable_key_output": "Enable alpha key output",
+        "always_on_top": "Always on top",
+        "change_key_output_position": "Change key output position",
         "position": "Pozícia",
         "enabled": "Zapnuté",
         "color_when_active": "Farba aktívneho",

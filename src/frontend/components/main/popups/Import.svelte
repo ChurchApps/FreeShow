@@ -14,7 +14,7 @@
         { name: "PDF", extensions: ["pdf"], id: "pdf" },
         { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint", tutorial: "This will convert all the text to a show. If you want to import all images and styling, please export/convert to PDF and import as PDF." },
         { name: "FreeShow", extensions: ["show"], id: "freeshow" },
-        { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "json"], id: "propresenter" }, // "pro"
+        { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "pro", "json"], id: "propresenter" },
         {
             name: "EasyWorship",
             extensions: ["db"],
@@ -29,6 +29,7 @@
         },
         { name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
+        { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chord", "pro", "txt"], id: "chordpro" },
     ]
 
     const formats = [
@@ -51,7 +52,12 @@
                     if (format.tutorial) {
                         alertMessage.set(format.tutorial)
                         activePopup.set("alert")
-                    } else activePopup.set(null)
+                    } else if (["pdf"].includes(format.id)) {
+                        activePopup.set("alert")
+                        alertMessage.set("popup.importing")
+                    } else {
+                        activePopup.set(null)
+                    }
                 } else if (format.id === "clipboard") {
                     // clipboard
                     navigator.clipboard

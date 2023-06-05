@@ -14,7 +14,7 @@ export function createOutput(output: Output) {
 
     if (outputWindows[id]) outputWindows[id].close()
 
-    outputWindows[id] = createOutputWindow({ bounds: output.bounds }, id)
+    outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false }, id)
     // outputWindows[id].on("closed", () => removeOutput(id))
 }
 
@@ -47,7 +47,7 @@ export function removeOutput(id: string) {
 }
 
 function createOutputWindow(options: any, id: string) {
-    options = { ...options.bounds, ...outputOptions }
+    options = { ...outputOptions, ...options }
     let window: BrowserWindow | null = new BrowserWindow(options)
 
     // only win & linux
@@ -57,7 +57,7 @@ function createOutputWindow(options: any, id: string) {
     window.setSkipTaskbar(true) // hide from taskbar
     if (process.platform === "darwin") window.minimize() // hide on mac
 
-    window.setAlwaysOnTop(true, "pop-up-menu", 1)
+    if (options.alwaysOnTop) window.setAlwaysOnTop(true, "pop-up-menu", 1)
     // window.setVisibleOnAllWorkspaces(true)
 
     const url: string = isProd ? `file://${join(__dirname, "..", "..", "..", "public", "index.html")}` : "http://localhost:3000"
@@ -250,6 +250,12 @@ export function updateBounds(data: any) {
     // } else window.setBounds(data.bounds)
 }
 
+export function setValue({ id, key, value }: any) {
+    let window: BrowserWindow = outputWindows[id]
+
+    if (key === "alwaysOnTop") window.setAlwaysOnTop(value)
+}
+
 // temporary function to test on mac
 export function toggleValue({ id, key }: any) {
     let window: BrowserWindow = outputWindows[id]
@@ -309,6 +315,7 @@ const outputResponses: any = {
     DISPLAY: (data: any) => displayOutput(data),
     UPDATE: (data: any) => updateOutput(data),
     UPDATE_BOUNDS: (data: any) => updateBounds(data),
+    SET_VALUE: (data: any) => setValue(data),
     TOGGLE_VALUE: (data: any) => toggleValue(data),
     TO_FRONT: (data: any) => moveToFront(data),
 }

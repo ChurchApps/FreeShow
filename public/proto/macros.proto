@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "action.proto";
+
+message MacrosDocument {
+  rv.data.ApplicationInfo application_info = 1;
+  repeated rv.data.MacrosDocument.Macro macros = 2;
+
+  message Macro {
+    rv.data.UUID uuid = 1;
+    string name = 2;
+    rv.data.Color color = 3;
+    repeated rv.data.Action actions = 4;
+    bool trigger_on_startup = 5;
+
+  }
+}

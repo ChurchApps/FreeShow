@@ -1,0 +1,442 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+import "layers.proto";
+import "effects.proto";
+import "graphicsData.proto";
+import "background.proto";
+import "presentationSlide.proto";
+import "propSlide.proto";
+import "timers.proto";
+import "messages.proto";
+import "stage.proto";
+import "input.proto";
+
+message Action {
+  rv.data.UUID uuid = 1;
+  string name = 2;
+  rv.data.Action.Label label = 3;
+  double delay_time = 4;
+  rv.data.Action.OldType old_type = 5;
+  bool isEnabled = 6;
+  rv.data.Action.LayerIdentification layer_identification = 7;
+  double duration = 8;
+  enum ActionType {
+    ACTION_TYPE_UNKNOWN = 0;
+    ACTION_TYPE_STAGE_LAYOUT = 1;
+    ACTION_TYPE_MEDIA = 2;
+    ACTION_TYPE_TIMER = 3;
+    ACTION_TYPE_COMMUNICATION = 4;
+    ACTION_TYPE_CLEAR = 5;
+    ACTION_TYPE_PROP = 6;
+    ACTION_TYPE_MASK = 7;
+    ACTION_TYPE_MESSAGE = 8;
+    ACTION_TYPE_SOCIAL_MEDIA = 9;
+    ACTION_TYPE_MULTISCREEN = 10;
+    ACTION_TYPE_PRESENTATION_SLIDE = 11;
+    ACTION_TYPE_FOREGROUND_MEDIA = 12;
+    ACTION_TYPE_BACKGROUND_MEDIA = 13;
+    ACTION_TYPE_PRESENTATION_DOCUMENT = 14;
+    ACTION_TYPE_PROP_SLIDE = 15;
+    ACTION_TYPE_EXTERNAL_PRESENTATION = 17;
+    ACTION_TYPE_AUDIENCE_LOOK = 18;
+    ACTION_TYPE_AUDIO_INPUT = 19;
+    ACTION_TYPE_AUDIO_BIN_PLAYLIST = 20;
+    ACTION_TYPE_MEDIA_BIN_PLAYLIST = 21;
+    ACTION_TYPE_SLIDE_DESTINATION = 22;
+    ACTION_TYPE_MACRO = 23;
+    ACTION_TYPE_CLEAR_GROUP = 24;
+  }
+  ActionType type = 9;
+  oneof ActionTypeData {
+    rv.data.CollectionElementType collection_element = 16;
+    rv.data.Action.PlaylistItemType playlist_item = 17;
+    rv.data.Action.BlendModeType blend_mode = 18;
+    rv.data.Action.TransitionType transition = 19;
+    rv.data.Action.MediaType media = 20;
+    rv.data.Action.DoubleType double_item = 21;
+    rv.data.Action.EffectsType effects = 22;
+    rv.data.Action.SlideType slide = 23;
+    rv.data.Action.BackgroundType background = 24;
+    rv.data.Action.TimerType timer = 25;
+    rv.data.Action.ClearType clear = 26;
+    rv.data.Action.StageLayoutType stage = 27;
+    rv.data.Action.PropType prop = 28;
+    rv.data.Action.MaskType mask = 29;
+    rv.data.Action.MessageType message = 30;
+    rv.data.Action.SocialMediaType social_media = 31;
+    rv.data.Action.CommunicationType communication = 32;
+    rv.data.Action.MultiScreenType multi_screen = 33;
+    rv.data.Action.DocumentType presentation_document = 34;
+    rv.data.Action.ExternalPresentationType external_presentation = 36;
+    rv.data.Action.AudienceLookType audience_look = 37;
+    rv.data.Action.AudioInputType audio_input = 38;
+    rv.data.Action.SlideDestinationType slide_destination = 39;
+    rv.data.Action.MacroType macro = 40;
+    rv.data.Action.ClearGroupType clear_group = 41;
+    rv.data.Action.TransportControlType transport_control = 42;
+  }
+
+
+  message OldType {
+    enum Category {
+      CATEGORY_UNKNOWN = 0;
+      CATEGORY_MEDIA = 1;
+      CATEGORY_APPLICATION = 2;
+    }
+    Category category = 1;
+    int32 application_type = 2;
+
+  }
+  message Label {
+    string text = 2;
+    rv.data.Color color = 3;
+
+  }
+  message LayerIdentification {
+    rv.data.UUID uuid = 1;
+    string name = 2;
+
+  }
+  message PlaylistItemType {
+    rv.data.UUID playlist_uuid = 1;
+    string playlist_name = 2;
+    rv.data.UUID item_uuid = 3;
+    string item_name = 4;
+    bool select_playlist = 5;
+    bool always_retrigger = 6;
+
+  }
+  message BlendModeType {
+    enum BlendMode {
+      BLEND_MODE_NORMAL = 0;
+      BLEND_MODE_DISSOLVE = 1;
+      BLEND_MODE_DARKEN = 2;
+      BLEND_MODE_MULTIPLY = 3;
+      BLEND_MODE_COLOR_BURN = 4;
+      BLEND_MODE_LINEAR_BURN = 5;
+      BLEND_MODE_DARKER_COLOR = 6;
+      BLEND_MODE_LIGHTEN = 7;
+      BLEND_MODE_SCREEN = 8;
+      BLEND_MODE_COLOR_DODGE = 9;
+      BLEND_MODE_LINEAR_DODGE = 10;
+      BLEND_MODE_LIGHTER_COLOR = 11;
+      BLEND_MODE_OVERLAY = 12;
+      BLEND_MODE_SOFT_LIGHT = 13;
+      BLEND_MODE_HARD_LIGHT = 14;
+      BLEND_MODE_VIVID_LIGHT = 15;
+      BLEND_MODE_LINEAR_LIGHT = 16;
+      BLEND_MODE_PIN_LIGHT = 17;
+      BLEND_MODE_HARD_MIX = 18;
+      BLEND_MODE_DIFFERENCE = 19;
+      BLEND_MODE_EXCLUSION = 20;
+      BLEND_MODE_SUBTRACT = 21;
+      BLEND_MODE_DIVIDE = 22;
+      BLEND_MODE_HUE = 23;
+      BLEND_MODE_SATURATION = 24;
+      BLEND_MODE_COLOR = 25;
+      BLEND_MODE_LUMINOSITY = 26;
+    }
+    BlendMode blend_mode = 1;
+    rv.data.Layer.Blending blend = 2;
+
+  }
+  message TransitionType {
+    string transition_name = 1;
+    rv.data.Transition transition = 2;
+
+  }
+  message DoubleType {
+    double value = 1;
+
+  }
+  message EffectsType {
+    repeated rv.data.Effect effects = 1;
+
+  }
+  message MediaType {
+    double transition_duration = 1;
+    rv.data.UUID selected_effect_preset_uuid = 2;
+    rv.data.Transition transition = 3;
+    repeated rv.data.Effect effects = 4;
+    rv.data.Media element = 5;
+    enum LayerType {
+      LAYER_TYPE_BACKGROUND = 0;
+      LAYER_TYPE_FOREGROUND = 1;
+      LAYER_TYPE_FILL = 2;
+      LAYER_TYPE_INPUT = 3;
+    }
+    LayerType layer_type = 10;
+    bool always_retrigger = 11;
+    repeated rv.data.Action.MediaType.PlaybackMarker markers = 12;
+    oneof MediaType {
+      rv.data.Action.MediaType.Image image = 6;
+      rv.data.Action.MediaType.Video video = 7;
+      rv.data.Action.MediaType.Audio audio = 8;
+      rv.data.Action.MediaType.LiveVideo live_video = 9;
+    }
+
+
+    message Image {
+
+    }
+    message Video {
+      enum PlaybackBehavior {
+        PLAYBACK_BEHAVIOR_STOP = 0;
+        PLAYBACK_BEHAVIOR_LOOP = 1;
+        PLAYBACK_BEHAVIOR_LOOP_FOR_COUNT = 2;
+        PLAYBACK_BEHAVIOR_LOOP_FOR_TIME = 3;
+      }
+      PlaybackBehavior playback_behavior = 1;
+      enum EndBehavior {
+        END_BEHAVIOR_STOP = 0;
+        END_BEHAVIOR_STOP_ON_BLACK = 1;
+        END_BEHAVIOR_STOP_ON_CLEAR = 2;
+        END_BEHAVIOR_FADE_TO_BLACK = 3;
+        END_BEHAVIOR_FADE_TO_CLEAR = 4;
+      }
+      EndBehavior end_behavior = 2;
+      double loop_time = 3;
+      uint32 times_to_loop = 4;
+      bool soft_loop = 5;
+      double soft_loop_duration = 6;
+
+    }
+    message Audio {
+      enum PlaybackBehavior {
+        PLAYBACK_BEHAVIOR_STOP = 0;
+        PLAYBACK_BEHAVIOR_LOOP = 1;
+        PLAYBACK_BEHAVIOR_LOOP_FOR_COUNT = 2;
+        PLAYBACK_BEHAVIOR_LOOP_FOR_TIME = 3;
+      }
+      PlaybackBehavior playback_behavior = 1;
+      double loop_time = 2;
+      uint32 times_to_loop = 3;
+      enum MediaActionAudioType {
+        MEDIA_ACTION_AUDIO_TYPE_TUNE = 0;
+        MEDIA_ACTION_AUDIO_TYPE_SOUND = 1;
+      }
+      MediaActionAudioType audio_type = 4;
+
+    }
+    message LiveVideo {
+
+    }
+    message PlaybackMarker {
+      rv.data.UUID uuid = 1;
+      double time = 2;
+      rv.data.Color color = 3;
+      string name = 4;
+      repeated rv.data.Action actions = 5;
+
+    }
+  }
+  message SlideType {
+    oneof Slide {
+      rv.data.PresentationSlide presentation = 2;
+      rv.data.PropSlide prop = 3;
+    }
+
+
+  }
+  message BackgroundType {
+    rv.data.Background element = 1;
+
+  }
+  message TimerType {
+    enum TimerAction {
+      ACTION_START = 0;
+      ACTION_STOP = 1;
+      ACTION_RESET = 2;
+      ACTION_RESET_AND_START = 3;
+      ACTION_STOP_AND_RESET = 4;
+    }
+    TimerAction action_type = 2;
+    rv.data.CollectionElementType timer_identification = 4;
+    rv.data.Timer.Configuration timer_configuration = 10;
+
+  }
+  message ClearType {
+    enum ClearTargetLayer {
+      CLEAR_TARGET_LAYER_ALL = 0;
+      CLEAR_TARGET_LAYER_AUDIO = 1;
+      CLEAR_TARGET_LAYER_BACKGROUND = 2;
+      CLEAR_TARGET_LAYER_LIVE_VIDEO = 3;
+      CLEAR_TARGET_LAYER_PROP = 4;
+      CLEAR_TARGET_LAYER_SLIDE = 5;
+      CLEAR_TARGET_LAYER_LOGO = 6;
+      CLEAR_TARGET_LAYER_MESSAGES = 7;
+      CLEAR_TARGET_LAYER_AUDIO_EFFECTS = 8;
+    }
+    ClearTargetLayer target_layer = 2;
+    enum ContentDestination {
+      CONTENT_DESTINATION_GLOBAL = 0;
+      CONTENT_DESTINATION_ANNOUNCEMENTS = 1;
+    }
+    ContentDestination content_destination = 4;
+
+  }
+  message ClearGroupType {
+    rv.data.CollectionElementType identification = 1;
+
+  }
+  message TransportControlType {
+    oneof Command {
+      rv.data.Action.TransportControlType.Play play = 1;
+      rv.data.Action.TransportControlType.Pause pause = 2;
+      rv.data.Action.TransportControlType.JumpToTime jumpToTime = 3;
+    }
+
+
+    message Play {
+
+    }
+    message Pause {
+
+    }
+    message JumpToTime {
+      double time = 1;
+
+    }
+  }
+  message StageLayoutType {
+    repeated rv.data.Stage.ScreenAssignment stage_screen_assignments = 4;
+    enum SlideTarget {
+      SLIDE_TARGET_NO_CHANGE = 0;
+      SLIDE_TARGET_STAGE_ONLY = 1;
+      SLIDE_TARGET_ALL = 2;
+    }
+    SlideTarget slide_target = 5;
+
+  }
+  message SlideDestinationType {
+    enum SlideTarget {
+      SLIDE_TARGET_NO_CHANGE = 0;
+      SLIDE_TARGET_STAGE_ONLY = 1;
+      SLIDE_TARGET_ALL = 2;
+    }
+    SlideTarget slide_target = 1;
+
+  }
+  message PropType {
+    rv.data.CollectionElementType identification = 3;
+
+  }
+  message MaskType {
+    rv.data.CollectionElementType identification = 3;
+
+  }
+  message MessageType {
+    rv.data.CollectionElementType message_identificaton = 1;
+    repeated rv.data.Message.TokenValue content = 3;
+
+  }
+  message SocialMediaType {
+    enum SocialMediaAction {
+      SOCIAL_MEDIA_ACTION_LENGTH_OF_GOTO_NEXT_TIMER = 0;
+      SOCIAL_MEDIA_ACTION_SPECIFIED_TIME = 1;
+    }
+    SocialMediaAction action_type = 1;
+    double duration = 2;
+
+  }
+  message CommunicationType {
+    rv.data.CollectionElementType device_identification = 1;
+    string format = 2;
+    string description = 3;
+    repeated rv.data.Action.CommunicationType.Command commands = 4;
+    oneof CommandTypeData {
+      rv.data.Action.CommunicationType.MIDICommand midi_command = 5;
+      rv.data.Action.CommunicationType.GlobalCacheCommand global_cache_command = 6;
+      rv.data.Action.CommunicationType.GVG100Command gvg100_command = 7;
+      rv.data.Action.CommunicationType.SonyBVSCommand sony_BVS_command = 8;
+    }
+
+
+    message Command {
+      string name = 1;
+      string value = 2;
+      rv.data.IntRange replacement_range = 3;
+      repeated string possible_values = 4;
+
+    }
+    message MIDICommand {
+      enum State {
+        STATE_ON = 0;
+        STATE_OFF = 1;
+      }
+      State state = 1;
+      uint32 channel = 2;
+      uint32 note = 3;
+      uint32 intensity = 4;
+
+    }
+    message GlobalCacheCommand {
+      enum CommandAction {
+        COMMAND_ACTION_ON = 0;
+        COMMAND_ACTION_OFF = 1;
+        COMMAND_ACTION_ON_OFF_WITH_INTERVAL = 2;
+        COMMAND_ACTION_OFF_ON_WITH_INTERVAL = 3;
+      }
+      CommandAction command_action = 1;
+      uint32 output = 2;
+      uint32 interval = 3;
+
+    }
+    message GVG100Command {
+      enum CommandAction {
+        COMMAND_ACTION_FADE_TO_BLACK = 0;
+        COMMAND_ACTION_DSK_TOGGLE = 1;
+      }
+      CommandAction command_action = 1;
+
+    }
+    message SonyBVSCommand {
+      enum CommandAction {
+        COMMAND_ACTION_FADE_TO_BLACK = 0;
+        COMMAND_ACTION_KEY_ON = 1;
+        COMMAND_ACTION_KEY_OFF = 2;
+        COMMAND_ACTION_DSK_ON = 3;
+        COMMAND_ACTION_DSK_OFF = 4;
+      }
+      CommandAction command_action = 1;
+
+    }
+  }
+  message MultiScreenType {
+    rv.data.CollectionElementType identification = 3;
+
+  }
+  message DocumentType {
+    rv.data.CollectionElementType identification = 1;
+    rv.data.UUID selected_arrangement = 2;
+    enum ContentDestination {
+      CONTENT_DESTINATION_GLOBAL = 0;
+      CONTENT_DESTINATION_ANNOUNCEMENTS = 1;
+    }
+    ContentDestination content_destination = 3;
+
+  }
+  message ExternalPresentationType {
+    rv.data.URL url = 1;
+
+  }
+  message AudienceLookType {
+    rv.data.CollectionElementType identification = 1;
+
+  }
+  message AudioInputType {
+    int32 index = 1;
+    bool override_mode = 2;
+    rv.data.AudioInput.BehaviorMode behavior_mode = 3;
+    bool override_volume = 4;
+    double volume = 5;
+
+  }
+  message MacroType {
+    rv.data.CollectionElementType identification = 1;
+
+  }
+}

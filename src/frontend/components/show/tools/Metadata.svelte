@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeShow, outputs, showsCache, templates } from "../../../stores"
+    import { activeShow, outputs, showsCache, styles, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -47,7 +47,7 @@
         ]
 
         let outputId = getActiveOutputs($outputs)[0]
-        outputShowSettings = $outputs[outputId]?.show || {}
+        outputShowSettings = $styles[$outputs[outputId]?.style || ""] || {}
     }
 
     const changeValue = (e: any, key: string) => {

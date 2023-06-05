@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "basicTypes.proto";
+
+message AlignmentGuide {
+  rv.data.UUID uuid = 1;
+  enum GuidelineOrientation {
+    GUIDELINE_ORIENTATION_HORIZONTAL = 0;
+    GUIDELINE_ORIENTATION_VERTICAL = 1;
+  }
+  GuidelineOrientation orientation = 2;
+  double location = 3;
+
+}

@@ -1,0 +1,123 @@
+syntax = "proto3";
+
+package rv.data;
+
+import "hotKey.proto";
+import "effects.proto";
+import "basicTypes.proto";
+
+message Layer {
+  rv.data.UUID uuid = 1;
+  string name = 2;
+  rv.data.Color color = 3;
+  bool muted = 4;
+  bool hidden = 5;
+  enum BlendMode {
+    BLEND_MODE_NORMAL = 0;
+    BLEND_MODE_DISSOLVE = 1;
+    BLEND_MODE_DARKEN = 2;
+    BLEND_MODE_MULTIPLY = 3;
+    BLEND_MODE_COLOR_BURN = 4;
+    BLEND_MODE_LINEAR_BURN = 5;
+    BLEND_MODE_DARKER_COLOR = 6;
+    BLEND_MODE_LIGHTEN = 7;
+    BLEND_MODE_SCREEN = 8;
+    BLEND_MODE_COLOR_DODGE = 9;
+    BLEND_MODE_LINEAR_DODGE = 10;
+    BLEND_MODE_LIGHTER_COLOR = 11;
+    BLEND_MODE_OVERLAY = 12;
+    BLEND_MODE_SOFT_LIGHT = 13;
+    BLEND_MODE_HARD_LIGHT = 14;
+    BLEND_MODE_VIVID_LIGHT = 15;
+    BLEND_MODE_LINEAR_LIGHT = 16;
+    BLEND_MODE_PIN_LIGHT = 17;
+    BLEND_MODE_HARD_MIX = 18;
+    BLEND_MODE_DIFFERENCE = 19;
+    BLEND_MODE_EXCLUSION = 20;
+    BLEND_MODE_SUBTRACT = 21;
+    BLEND_MODE_DIVIDE = 22;
+    BLEND_MODE_HUE = 23;
+    BLEND_MODE_SATURATION = 24;
+    BLEND_MODE_COLOR = 25;
+    BLEND_MODE_LUMINOSITY = 26;
+  }
+  BlendMode blend_mode = 6;
+  double opacity = 7;
+  rv.data.UUID selected_target_set_uuid = 8;
+  rv.data.UUID effects_preset_uuid = 9;
+  double effects_build_duration = 10;
+  rv.data.UUID layer_preset_uuid = 11;
+  rv.data.HotKey hot_key = 12;
+  rv.data.Transition transition = 13;
+  repeated rv.data.Effect effects = 14;
+  rv.data.Layer.Blending blend = 15;
+
+  message Preset {
+    rv.data.UUID uuid = 1;
+    string name = 2;
+    rv.data.Layer layer = 3;
+
+  }
+  message Blending {
+    oneof BlendingType {
+      rv.data.Layer.Blending.Standard standard = 1;
+      rv.data.Layer.Blending.Matte matte = 2;
+    }
+
+
+    message Standard {
+      enum BlendMode {
+        BLEND_MODE_NORMAL = 0;
+        BLEND_MODE_DISSOLVE = 1;
+        BLEND_MODE_DARKEN = 2;
+        BLEND_MODE_MULTIPLY = 3;
+        BLEND_MODE_COLOR_BURN = 4;
+        BLEND_MODE_LINEAR_BURN = 5;
+        BLEND_MODE_DARKER_COLOR = 6;
+        BLEND_MODE_LIGHTEN = 7;
+        BLEND_MODE_SCREEN = 8;
+        BLEND_MODE_COLOR_DODGE = 9;
+        BLEND_MODE_LINEAR_DODGE = 10;
+        BLEND_MODE_LIGHTER_COLOR = 11;
+        BLEND_MODE_OVERLAY = 12;
+        BLEND_MODE_SOFT_LIGHT = 13;
+        BLEND_MODE_HARD_LIGHT = 14;
+        BLEND_MODE_VIVID_LIGHT = 15;
+        BLEND_MODE_LINEAR_LIGHT = 16;
+        BLEND_MODE_PIN_LIGHT = 17;
+        BLEND_MODE_HARD_MIX = 18;
+        BLEND_MODE_DIFFERENCE = 19;
+        BLEND_MODE_EXCLUSION = 20;
+        BLEND_MODE_SUBTRACT = 21;
+        BLEND_MODE_DIVIDE = 22;
+        BLEND_MODE_HUE = 23;
+        BLEND_MODE_SATURATION = 24;
+        BLEND_MODE_COLOR = 25;
+        BLEND_MODE_LUMINOSITY = 26;
+      }
+      BlendMode mode = 1;
+      double opacity = 2;
+
+    }
+    message Matte {
+      oneof MatteType {
+        rv.data.Layer.Blending.Matte.Alpha alpha = 1;
+        rv.data.Layer.Blending.Matte.Luma luma = 2;
+        rv.data.Layer.Blending.Matte.White white = 4;
+      }
+
+
+      message Alpha {
+        bool inverted = 1;
+
+      }
+      message Luma {
+        bool inverted = 1;
+
+      }
+      message White {
+
+      }
+    }
+  }
+}

@@ -71,6 +71,7 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { updateSettings, updateSyncedSettings } from "./updateSettings"
+import { convertChordPro } from "../converters/chordpro"
 
 export function startup() {
     loaded.set(false)
@@ -303,6 +304,7 @@ const receiveIMPORT: any = {
     openlp: (a: any) => convertOpenLP(a),
     opensong: (a: any) => convertOpenSong(a),
     propresenter: (a: any) => convertProPresenter(a),
+    chordpro: (a: any) => convertChordPro(a),
     freeshow_bible: (a: any) => importFSB(a),
     beblia_bible: (a: any) => convertBebliaBible(a),
     zefania_bible: (a: any) => convertZefaniaBible(a),
