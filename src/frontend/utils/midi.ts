@@ -1,10 +1,14 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
+import { clearAudio } from "../components/helpers/audio"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
-import { changeOutputStyle, clearAll, nextSlide, playNextGroup, previousSlide, updateOut } from "../components/helpers/showActions"
+import { changeOutputStyle, clearAll, clearOverlays, nextSlide, playNextGroup, previousSlide, selectProjectShow, updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
-import { activeShow, groups, midiIn, outputs, shows } from "../stores"
+import { clearTimers } from "../components/output/clear"
+import { activeProject, activeShow, groups, midiIn, outLocked, outputs, projects, shows } from "../stores"
 import { send } from "./request"
+import { keysToID } from "../components/helpers/array"
+import { newToast } from "./messages"
 
 export function midiInListen() {
     console.log("MIDI IN LISTEN")
@@ -43,14 +47,16 @@ export function midiInListen() {
 
 export const midiActions = {
     next_slide: () => {
-        // nextSlide({ key: " " }, true)
-        nextSlide({})
+        nextSlide({ key: " " }, true)
     },
     previous_slide: () => {
         previousSlide()
     },
-    clear_all: () => {
-        clearAll()
+    next_project_show: () => {
+        selectProjectShow("next")
+    },
+    previous_project_show: () => {
+        selectProjectShow("previous")
     },
     goto_group: (data: any) => {
         // WIP duplicate of Preview.svelte checkGroupShortcuts()
@@ -76,19 +82,111 @@ export const midiActions = {
 
         playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId })
     },
+
+    clear_all: () => {
+        clearAll()
+    },
+    clear_background: () => {
+        // callVideoClear = true
+        setOutput("background", null)
+    },
+    clear_slide: () => {
+        setOutput("slide", null)
+    },
+    clear_overlays: () => {
+        clearOverlays()
+    },
+    clear_audio: () => {
+        clearAudio()
+    },
+    clear_next_timer: () => {
+        clearTimers()
+    },
+
     change_output_style: (data: any) => changeOutputStyle(data.style),
+
+    index_select_project: (_, index: number) => {
+        if (index < 0) return
+        // select project
+        let selectedProject = keysToID(get(projects)).sort((a, b) => a.name.localeCompare(b.name))[index]
+        if (!selectedProject) {
+            newToast("Received MIDI to change project, but no project found at index: " + index)
+            return
+        }
+
+        activeProject.set(selectedProject.id)
+    },
+    index_select_project_show: (_, index: number) => {
+        if (index < 0) return
+        selectProjectShow(index)
+    },
+    index_select_slide: (_, index: number) => {
+        let showRef = _show().layouts("active").ref()[0]
+        if (!showRef) {
+            newToast("Received MIDI to select slide, but no show active")
+            return
+        }
+
+        let slideRef = showRef[index]
+        if (!slideRef) {
+            newToast("Received MIDI to select slide, but no slide found at index: " + index)
+            return
+        }
+
+        // WIP duplicate of Slides.svelte:57 (slideClick)
+        if (get(outLocked)) return
+
+        updateOut("active", index, showRef)
+        let showId = get(activeShow)!.id
+        let activeLayout = _show().get("settings.activeLayout")
+        setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
+    },
 }
 export const midiNames = {
     next_slide: "preview._next_slide",
     previous_slide: "preview._previous_slide",
+    next_project_show: "preview._next_show",
+    previous_project_show: "preview._previous_show",
     clear_all: "clear.all",
+    clear_background: "clear.background",
+    clear_slide: "clear.slide",
+    clear_overlays: "clear.overlays",
+    clear_audio: "clear.audio",
+    clear_next_timer: "clear.nextTimer",
 }
 export const defaultMidiActionChannels = {
-    next_slide: { type: "noteon", values: { note: 1, velocity: -1, channel: 1 } },
-    previous_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 1 } },
-    clear_all: { type: "noteon", values: { note: 3, velocity: -1, channel: 1 } },
-    goto_group: { type: "noteon", values: { note: 10, velocity: -1, channel: 1 } },
-    change_output_style: { type: "noteoff", values: { note: 1, velocity: -1, channel: 1 } },
+    // presentation
+    next_slide: { type: "noteon", values: { note: 0, velocity: -1, channel: 1 } },
+    previous_slide: { type: "noteon", values: { note: 1, velocity: -1, channel: 1 } },
+    next_project_show: { type: "noteon", values: { note: 2, velocity: -1, channel: 1 } },
+    previous_project_show: { type: "noteon", values: { note: 3, velocity: -1, channel: 1 } },
+    goto_group: { type: "noteon", values: { note: 4, velocity: -1, channel: 1 } },
+
+    // media controls
+    // TODO: midi video action (to beginning, play/pause, play, pause)
+
+    // clear
+    clear_all: { type: "noteon", values: { note: 0, velocity: -1, channel: 3 } },
+    clear_background: { type: "noteon", values: { note: 1, velocity: -1, channel: 3 } },
+    clear_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 3 } },
+    clear_overlays: { type: "noteon", values: { note: 3, velocity: -1, channel: 3 } },
+    clear_audio: { type: "noteon", values: { note: 4, velocity: -1, channel: 3 } },
+    clear_next_timer: { type: "noteon", values: { note: 5, velocity: -1, channel: 3 } },
+
+    // change looks
+    change_output_style: { type: "noteon", values: { note: 0, velocity: -1, channel: 4 } },
+
+    // select by index (use velocity to set index, starting at 0)
+    index_select_project: { type: "noteon", values: { note: 0, velocity: -1, channel: 5 } },
+    index_select_project_show: { type: "noteon", values: { note: 1, velocity: -1, channel: 5 } },
+    index_select_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 5 } },
+    // index_select_media: { type: "noteon", values: { note: 3, velocity: -1, channel: 5 } },
+    // index_select_audio: { type: "noteon", values: { note: 4, velocity: -1, channel: 5 } },
+    // index_select_overlay: { type: "noteon", values: { note: 5, velocity: -1, channel: 5 } },
+    // this can be done from slide action:
+    // index_start_timer: { type: "noteon", values: { note: 6, velocity: -1, channel: 5 } },
+    // index_stop_timer: { type: "noteon", values: { note: 7, velocity: -1, channel: 5 } },
+    // index_reset_timer: { type: "noteon", values: { note: 8, velocity: -1, channel: 5 } },
 }
 
 export function playMidiIn(msg) {
@@ -99,7 +197,12 @@ export function playMidiIn(msg) {
     if (JSON.stringify(midi.values) !== JSON.stringify(msg.values)) return
 
     if (midi.action) {
-        midiActions[midi.action](midi.actionData)
+        let index = midi.values.velocity
+        if (midi.action.includes("index_") && index < 0) {
+            newToast("Received MIDI in, but no velocity, defaults to first index.")
+            index = 0
+        }
+        midiActions[midi.action](midi.actionData, index)
         return
     }
 
@@ -117,4 +220,14 @@ export function playMidiIn(msg) {
             })
         })
     })
+}
+
+export function midiToNote(midi: number) {
+    if (midi === undefined) return ""
+
+    const octave = Math.floor(midi / 12) - 2
+    const scaleIndexToNote = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    const note = midi % 12
+
+    return scaleIndexToNote[note] + "(" + octave.toString() + ")"
 }

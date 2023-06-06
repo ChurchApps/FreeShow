@@ -11,9 +11,9 @@
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
 
-    $: active = $activeShow!.id
-    $: layouts = $showsCache[active]?.layouts
-    $: activeLayout = $showsCache[active]?.settings?.activeLayout
+    $: showId = $activeShow?.id || ""
+    $: layouts = $showsCache[showId]?.layouts
+    $: activeLayout = $showsCache[showId]?.settings?.activeLayout
 
     $: sortedLayouts = Object.entries(layouts || {})
         .map(([id, layout]: any) => ({ id, ...layout }))
@@ -22,7 +22,7 @@
     function addLayout(e: any): any {
         if (e.ctrlKey || e.metaKey) return duplicate({ id: "layout" })
 
-        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid() }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_layout" } })
+        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid() }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
     }
 
     const slidesViews: any = { grid: "list", list: "lyrics", lyrics: "text", text: "grid" }
@@ -31,12 +31,12 @@
         let currentLayout = e.detail?.id?.slice("layout_".length)
         if (!currentLayout) return
 
-        history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: e.detail.value }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+        history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: e.detail.value }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
     }
 
     function setLayout(id: string, layoutInfo) {
         showsCache.update((s) => {
-            s[active].settings.activeLayout = id
+            s[showId].settings.activeLayout = id
             return s
         })
 
@@ -55,8 +55,8 @@
 </script>
 
 <div>
-    {#if $showsCache[active]?.reference}
-        <Reference show={$showsCache[active]} />
+    {#if $showsCache[showId]?.reference}
+        <Reference show={$showsCache[showId]} />
     {:else if layouts}
         <!-- TODO: rename glitching -->
         <span style="display: flex;overflow-x: auto;">
@@ -85,7 +85,7 @@
     {/if}
     <span style="display: flex; align-items: center;">
         <!-- TODO: CTRL click = copy current layout, also right click... -->
-        {#if layouts && !$showsCache[active]?.reference}
+        {#if layouts && !$showsCache[showId]?.reference}
             <Button on:click={addLayout} title={$dictionary.show?.new_layout}>
                 <Icon size={1.3} id="add" />
             </Button>

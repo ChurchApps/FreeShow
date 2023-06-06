@@ -224,7 +224,7 @@
     let maxLines: null | number = null
     $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
     $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
-    $: showSlide = outSlide?.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
+    $: showSlide = outSlide?.index !== undefined && ref ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
     $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : Math.round(slideLines / amountOfLinesToShow)) : null
 
@@ -312,6 +312,7 @@
 
     .top {
         display: flex;
+        position: relative;
     }
     .top.hide {
         display: none;

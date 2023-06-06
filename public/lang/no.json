@@ -306,6 +306,7 @@
         "select_show": "Velg show",
         "rename": "Gi nytt navn",
         "color": "Farge",
+        "edit_list": "Rediger liste",
         "timer": "Nedtelling",
         "transition": "Overgang",
         "delete_show": "Slett show",
@@ -425,7 +426,10 @@
         "start_timer": "Start tidtaker",
         "stop_timers": "Stopp pågående tidtakere",
         "next_after_media": "Neste etter medier",
-        "remove_media": "Fjern media"
+        "remove_media": "Fjern media",
+        "index_select_project": "Velg prosjekt fra indeks",
+        "index_select_project_show": "Velg element i prosjekt fra indeks",
+        "index_select_slide": "Velg lysbilde fra indeks"
     },
     "cloud": {
         "info": "Synkroniser filer med Google Disk for sikkerhetskopier, eller dersom du jobber på flere datamaskiner.",
@@ -541,11 +545,13 @@
         "arrange_items": "Ordne elementer",
         "filters": "Filtre",
         "backdrop_filters": "Filtre bak",
+        "interval": "Intervall",
         "video": "Video",
         "choose_media": "Velg media"
     },
     "items": {
         "text": "Tekstboks",
+        "list": "Liste",
         "media": "Media",
         "image": "Bilde",
         "video": "Video",
@@ -565,6 +571,20 @@
         "outset": "Utover",
         "groove": "Riller",
         "ridge": "Rygg"
+    },
+    "list": {
+        "disc": "Disk",
+        "circle": "Sirkel",
+        "square": "Firkant",
+        "disclosure-closed": "Pil",
+        "disclosure-open": "Trekant",
+        "decimal": "Nummer",
+        "decimal-leading-zero": "Nummer med null",
+        "lower-alpha": "Bokstav",
+        "upper-alpha": "Stor bokstav",
+        "lower-roman": "Romertall",
+        "upper-roman": "Store romertall",
+        "lower-greek": "Gresk"
     },
     "timer": {
         "from_to": "Fra start til slutt",
@@ -602,7 +622,8 @@
         "use_default_values": "Bruk standard verdier",
         "auto_values": "Oppdater verdier ved mottak av MIDI-inngang",
         "tip_velocity": "Sett hastighet til -1 for å deaktivere.",
-        "tip_action": "For å aktivere spesifikke lysbilder, høyreklikk et lysbilde og velg handlingen for midi inn."
+        "tip_action": "For å aktivere spesifikke lysbilder, høyreklikk et lysbilde og velg handlingen for midi inn.",
+        "tip_index_by_velocity": "Indeksen bestemmes av den mottatte hastigheten, fra 0."
     },
     "draw": {
         "focus": "Fokus",

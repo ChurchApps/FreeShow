@@ -168,7 +168,6 @@ const storesToSave = ["SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTING
 export async function syncDataDrive(data: any) {
     let files = await listFiles(20, "'" + data.mainFolderId + "' in parents")
     if (files === null) return { error: "Error: Could not get files! Have you shared a folder with the service account?" }
-    if (!files.length) return []
 
     let changes: any[] = []
 

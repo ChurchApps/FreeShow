@@ -16,19 +16,19 @@
     // import { GetLayout } from "../helpers/get"
 
     // let viewWidth: number = window.innerWidth / 3
-    // let resolution: Resolution = $showsCache[$activeShow!.id].settings.resolution || $screen.resolution
+    // let resolution: Resolution = $showsCache[showId].settings.resolution || $screen.resolution
     // let zoom = 0.15
     // console.log(elem)
 
     // = width / main padding - slide padding - extra - columns*gaps/padding / columns / resolution
     // $: zoom = (viewWidth - 20 - 0 - 0 - ($slidesOptions.columns - 1) * (10 + 0)) / $slidesOptions.columns / resolution.width
-    $: id = $activeShow!.id
-    $: currentShow = $showsCache[$activeShow!.id]
-    $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
-    // $: layoutSlides = GetLayout($activeShow!.id, activeLayout)
-    // $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts?.[activeLayout]?.slides, GetLayout($activeShow!.id)][1]
-    // $: layoutSlides = _show($activeShow!.id).layouts(activeLayout).ref()[0]
-    $: layoutSlides = $cachedShowsData[id]?.layout || []
+    $: showId = $activeShow?.id || ""
+    $: currentShow = $showsCache[showId]
+    $: activeLayout = $showsCache[showId]?.settings?.activeLayout
+    // $: layoutSlides = GetLayout(showId, activeLayout)
+    // $: layoutSlides = [$showsCache[showId]?.layouts?.[activeLayout]?.slides, GetLayout(showId)][1]
+    // $: layoutSlides = _show(showId).layouts(activeLayout).ref()[0]
+    $: layoutSlides = $cachedShowsData[showId]?.layout || []
 
     let scrollElem: any
     let offset: number = -1
@@ -37,7 +37,7 @@
     $: {
         // output.out?.slide?.id !== null &&
         let output = $outputs[activeOutputs[0]] || {}
-        if (scrollElem && $activeShow!.id === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
+        if (scrollElem && showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
             let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
             let index = Math.max(0, (output.out.slide.index || 0) - columns)
             offset = (scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5) - 5
@@ -63,7 +63,7 @@
 
         // if (activeOutputs[0]?.out?.slide?.id === id && activeOutputs[0]?.out?.slide?.index === index && activeOutputs[0]?.out?.slide?.layout === activeLayout) return
         // outSlide.set({ id, layout: activeLayout, index })
-        setOutput("slide", { id, layout: activeLayout, index, line: 0 })
+        setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
     }
 
     // disable slides that is after end (only visual)
@@ -76,7 +76,7 @@
         } else endIndex = null
     }
 
-    $: if (id && currentShow?.settings?.template && $cachedShowsData[id]?.template?.slidesUpdated === false) {
+    $: if (showId && currentShow?.settings?.template && $cachedShowsData[showId]?.template?.slidesUpdated === false) {
         // update show by its template
         history({ id: "TEMPLATE", save: false, newData: { id: currentShow.settings.template }, location: { page: "show" } })
     }
@@ -105,7 +105,7 @@
             let outSlide: any = currentOutput.out?.slide || {}
 
             // console.log(s, slideIndex, id, activeLayout)
-            if (!activeSlides[outSlide.index] && outSlide.id === id && outSlide.layout === activeLayout) {
+            if (!activeSlides[outSlide.index] && outSlide.id === showId && outSlide.layout === activeLayout) {
                 // get progress of current line division
                 let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
                 let lineIndex: any = outSlide.line || 0
@@ -133,7 +133,7 @@
     let loaded: boolean = false
 
     // reset loading when changing view modes
-    $: if (id || activeLayout) loaded = false
+    $: if (showId || activeLayout) loaded = false
 
     // WIP this will refresh each time if slides are activated before loading is finished
 
@@ -167,7 +167,7 @@
     on:dragover|preventDefault -->
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
-            {#if $showsCache[id] === undefined}
+            {#if $showsCache[showId] === undefined}
                 <Center faded>
                     <T id="error.no_show" />
                 </Center>

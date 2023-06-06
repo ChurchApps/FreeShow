@@ -9,14 +9,14 @@ import { getMediaType } from "./media"
 import { getActiveOutputs, setOutput } from "./output"
 import { _show } from "./shows"
 
-const keys: any = {
-    ArrowDown: (index: number | null, shows: any) => {
+const getProjectIndex: any = {
+    next: (index: number | null, shows: any) => {
         // change active show in project
         if (index === null) return 0
         index = shows.findIndex((_a: any, i: number) => i - 1 === index)
         return index === null || index < 0 ? null : index
     },
-    ArrowUp: (index: number | null, shows: any) => {
+    previous: (index: number | null, shows: any) => {
         // change active show in project
         if (index === null) return shows.length - 1
         index = shows.findIndex((_a: any, i: number) => i + 1 === index)
@@ -28,20 +28,26 @@ export function checkInput(e: any) {
     if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
     // TODO: combine with ShowButton.svelte click()
 
-    if (keys[e.key]) {
-        if (get(activeProject) === null) return
-        e.preventDefault()
-        let shows = get(projects)[get(activeProject)!].shows
-        let index: null | number = get(activeShow)?.index !== undefined ? get(activeShow)!.index! : null
-        let newIndex: number = keys[e.key](index, shows)
-        if (!shows[newIndex]) return
+    if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
+    if (get(activeProject) === null) return
+    e.preventDefault()
 
-        // show
-        if (get(showsCache)[shows[newIndex].id]) swichProjectItem(newIndex, shows[newIndex].id)
+    let selectItem: "next" | "previous" = e.key === "ArrowDown" ? "next" : "previous"
+    selectProjectShow(selectItem)
+}
 
-        // Set active show in project list
-        if (newIndex !== null && newIndex !== index) activeShow.set({ ...shows[newIndex], index: newIndex })
-    }
+export function selectProjectShow(select: number | "next" | "previous") {
+    let shows = get(projects)[get(activeProject)!].shows
+    let index: null | number = get(activeShow)?.index !== undefined ? get(activeShow)!.index! : null
+    let newIndex: number | null = typeof select === "number" ? select : getProjectIndex[select](index, shows)
+
+    if (newIndex === null || !shows[newIndex]) return
+
+    // show
+    if (get(showsCache)[shows[newIndex].id]) swichProjectItem(newIndex, shows[newIndex].id)
+
+    // set active show in project list
+    if (newIndex !== index) activeShow.set({ ...shows[newIndex], index: newIndex })
 }
 
 export function swichProjectItem(pos: number, id: string) {
@@ -251,11 +257,10 @@ export function getMediaFilter(bakgroundPath: string) {
     return get(media)[bakgroundPath]?.filter || ""
 }
 
-export function updateOut(id: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
+export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
-    console.log(id)
 
-    _show(id).set({ key: "timestamps.used", value: new Date().getTime() })
+    _show(showId).set({ key: "timestamps.used", value: new Date().getTime() })
     let data = layout[index]?.data
 
     // holding "alt" key will disable all extra features
@@ -281,7 +286,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
 
     // background
     if (background) {
-        let bg = _show(id).get("media")[background!]
+        let bg = _show(showId).get("media")[background!]
         if (bg) {
             let bgData: any = {
                 name: bg.name,
@@ -311,7 +316,7 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
     if (data.audio) {
         data.audio.forEach((audio: string) => {
             console.log(audio)
-            let a = _show(id).get("media")[audio]
+            let a = _show(showId).get("media")[audio]
             if (a) playAudio(a, false)
         })
     }
@@ -333,10 +338,10 @@ export function updateOut(id: string, index: number, layout: any, extra: boolean
 
     // actions
     if (data.actions) {
-        if (data.actions.sendMidi) sendMidi(_show(id).get("midi")[data.actions.sendMidi])
+        if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle)
-        if (data.actions.startTimer) playSlideTimers({ showId: id, slideId: layout[index].id })
+        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id })
         if (data.actions.stopTimers) activeTimers.set([])
         if (data.actions.clearBackground) setOutput("background", null, false, outputId)
         if (data.actions.clearOverlays) clearOverlays()

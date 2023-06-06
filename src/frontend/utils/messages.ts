@@ -4,6 +4,7 @@ import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
     activePopup,
+    activeShow,
     audioFolders,
     calendarAddShow,
     categories,
@@ -147,8 +148,6 @@ const cloudHelpers = {
                 a.initializeMethod = "upload"
                 return a
             })
-
-            return
         }
 
         syncDrive()
@@ -159,23 +158,26 @@ const cloudHelpers = {
             return
         }
 
+        driveData.update((a) => {
+            a.initializeMethod = "done"
+            return a
+        })
+
         if (!changes.length) {
+            if (get(activePopup) !== "cloud_update") return
+
             popupData.set({})
             activePopup.set(null)
+
             return
         }
 
         // reload shows cache (because there could be some changes)
         showsCache.set({})
+        activeShow.set(null)
 
         popupData.set(changes)
         activePopup.set("cloud_update")
-
-        if (get(driveData).initializeMethod === "done") return
-        driveData.update((a) => {
-            a.initializeMethod = "done"
-            return a
-        })
     },
 }
 

@@ -56,6 +56,7 @@
 
     $: if (id === "mirror" && box) box.edit.default[0].values.options = getListOfShows(!$activeEdit.id)
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
+    $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
 
     function setValue(input: any) {
         let allItems: number[] = $activeEdit.items
@@ -83,11 +84,11 @@
                 }
             } else {
                 let slideId = _show().layouts("active").ref()[0][$activeEdit.slide!].id
-                let slide = _show().slides([slideId]).get()[0]
+                let slide = clone(_show().slides([slideId]).get()[0])
                 item = slide.items[allItems[0]]
             }
 
-            if (item[splitted[0]]?.[splitted[1]] !== undefined) {
+            if (item[splitted[0]] !== undefined) {
                 input.id = splitted[0]
                 value = item[splitted[0]]
                 value[splitted[1]] = input.value
@@ -219,7 +220,8 @@
 
         let ref: any[] = _show().layouts("active").ref()[0]
 
-        if (id === "timer" || id === "clock" || id === "icon") {
+        const setItemStyle = ["list", "timer", "clock", "icon"]
+        if (setItemStyle.includes(id)) {
             history({
                 id: "setItems",
                 // oldData: { style: { key: "style", values: [oldData] } },

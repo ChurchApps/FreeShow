@@ -21,6 +21,7 @@
     import { getAutoSize } from "./scripts/autoSize"
     import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
+    import ListView from "../slide/views/ListView.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -189,7 +190,7 @@
     }
 
     function deselect(e: any) {
-        if (e.target.closest(".editTools") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu")) return
+        if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
 
         if (e.ctrlKey || e.metaKey || e.target.closest(".item") === itemElem || !$activeEdit.items.includes(index) || e.target.closest(".item")) return
 
@@ -537,6 +538,8 @@ bind:offsetWidth={width} -->
             <!-- on:paste did not work on mac -->
             <!-- on:paste|preventDefault={paste} -->
         </div>
+    {:else if item?.type === "list"}
+        <ListView list={item.list} disableTransition />
     {:else if item?.type === "media"}
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}

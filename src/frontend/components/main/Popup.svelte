@@ -31,6 +31,7 @@
     import ChangeOutputValues from "./popups/ChangeOutputValues.svelte"
     import ChooseStyle from "./popups/ChooseStyle.svelte"
     import SelectShow from "./popups/SelectShow.svelte"
+    import EditList from "./popups/EditList.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -47,6 +48,7 @@
         player: CreatePlayer,
         rename: Rename,
         color: Color,
+        edit_list: EditList,
         timer: Timer,
         transition: Transition,
         import_scripture: ImportScripture,

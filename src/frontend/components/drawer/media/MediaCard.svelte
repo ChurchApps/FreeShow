@@ -42,7 +42,7 @@
 
     function dblclick(e: any) {
         if (!e.ctrlKey && !e.metaKey && !$outLocked) {
-            setOutput("background", { path, type, loop: true, muted: false, filter, flipped, speed })
+            setOutput("background", { path, type, loop: true, muted: false, filter, flipped, fit, speed })
             // TODO: get actual data
             // TODO: output/preview control does not always match
             window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })

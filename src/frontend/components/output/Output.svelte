@@ -263,6 +263,7 @@
                             filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
                             backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                             key={currentOutput.isKeyOutput}
+                            disableListTransition={disableTransitions}
                             {item}
                             {ratio}
                             ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}

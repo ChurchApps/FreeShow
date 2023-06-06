@@ -13,12 +13,14 @@
     import Chords from "./Chords.svelte"
     import Timer from "./views/Timer.svelte"
     import { getStyles } from "../helpers/style"
+    import ListView from "./views/ListView.svelte"
 
     export let item: Item
     export let ratio: number = 1
     export let filter: string = ""
     export let backdropFilter: string = ""
     export let key: boolean = false
+    export let disableListTransition: boolean = false
     export let smallFontSize: boolean = false
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
@@ -138,6 +140,8 @@
                 {/each}
             </div>
         </div>
+    {:else if item?.type === "list"}
+        <ListView list={item.list} disableTransition={disableListTransition} />
     {:else if item?.type === "media"}
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}

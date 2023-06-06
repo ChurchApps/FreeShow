@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { dictionary, imageExtensions, videoExtensions } from "../../../stores"
+    import { activePopup, dictionary, imageExtensions, popupData, videoExtensions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { getFilters } from "../../helpers/style"
     import T from "../../helpers/T.svelte"
@@ -132,6 +132,18 @@
         style = style.replaceAll(";", ";\n").replaceAll(": ", ":").replaceAll(":", ": ").trim()
         return style
     }
+
+    $: if ($activePopup === null && $popupData.value) findChangedInput()
+    function findChangedInput() {
+        console.log($popupData)
+
+        let changedInput = edits[$popupData.section]?.find((a) => a.id === $popupData.id)
+        if (!changedInput) return
+
+        changedInput.value = $popupData.value
+        console.log(changedInput.value, edits)
+        valueChange({ detail: changedInput.value }, changedInput)
+    }
 </script>
 
 {#each Object.keys(edits || {}) as section, i}
@@ -147,6 +159,20 @@
         {#each edits[section] as input}
             {#if input.input === "editTimer"}
                 <EditTimer {item} on:change={(e) => valueChange(e, input)} />
+            {:else if input.input === "popup"}
+                <Button
+                    on:click={() => {
+                        activePopup.set(input.popup || input.id)
+                        let data = { id: input.id, section, value: input.value, type: "" }
+                        if (input.id === "list.items") data.type = edits[section].find((a) => a.id === "list.style")?.value
+                        popupData.set(data)
+                    }}
+                    dark
+                    center
+                >
+                    <Icon id={input.icon || input.id} right />
+                    <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                </Button>
             {:else if input.input === "media"}
                 <MediaPicker title={input.value} style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
                     <Icon id="image" right />
@@ -190,7 +216,7 @@
                     <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: "CSS", value: e.detail })} />
                 </div>
             {:else if !input.name}
-                Missing input: {input.input}
+                Missing input name: {input.input}
             {:else}
                 {@const value = getValue(input, { styles, item })}
                 <div class="input">
@@ -200,6 +226,7 @@
                         {...input.values || {}}
                         {value}
                         checked={item?.[input.id] || value || false}
+                        disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value}
                         on:click={(e) => valueChange(e, input)}
                         on:input={(e) => valueChange(e, input)}
                         on:checked={(e) => valueChange(e, input)}

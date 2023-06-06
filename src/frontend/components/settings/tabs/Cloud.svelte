@@ -1,7 +1,7 @@
 <script lang="ts">
     import { OPEN_FILE } from "../../../../types/Channels"
     import { activePopup, driveData, driveKeys } from "../../../stores"
-    import { driveConnect, syncDrive } from "../../../utils/drive"
+    import { driveConnect } from "../../../utils/drive"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -102,17 +102,7 @@
 <hr />
 
 <div style="display: flex;flex-direction: column;">
-    <Button
-        on:click={() => {
-            save()
-            setTimeout(() => {
-                syncDrive(true)
-            }, 1000)
-        }}
-        disabled={!validKeys}
-        style="width: 100%;"
-        center
-    >
+    <Button on:click={save} disabled={!validKeys} style="width: 100%;" center>
         <Icon id="cloud_sync" right />
         <T id="cloud.sync" />
     </Button>

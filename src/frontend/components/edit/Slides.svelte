@@ -8,7 +8,8 @@
     import DropArea from "../system/DropArea.svelte"
 
     // $: editIndex = $output.slide?.index || 0
-    $: currentShow = $showsCache[$activeShow!.id]
+    $: showId = $activeShow?.id || ""
+    $: currentShow = $showsCache[showId]
 
     // TODO: change on show change...
     // if ($activeEdit.slide === null || $activeEdit.slide === undefined || $activeEdit.slide >= GetLayout().length) {
@@ -28,11 +29,11 @@
     $: console.log($activeEdit)
 
     // let layoutSlides: SlideData[] = []
-    // $: layoutSlides = GetLayout($activeShow!.id)
-    // $: activeLayout = $showsCache[$activeShow!.id]?.settings.activeLayout
+    // $: layoutSlides = GetLayout(showId)
+    // $: activeLayout = $showsCache[showId]?.settings.activeLayout
     // TODO: not getting parent color at first
-    // $: layoutSlides = [$showsCache[$activeShow!.id]?.layouts[activeLayout].slides, GetLayout($activeShow!.id)][1]
-    $: layoutSlides = $cachedShowsData[$activeShow!.id]?.layout || []
+    // $: layoutSlides = [$showsCache[showId]?.layouts[activeLayout].slides, GetLayout(showId)][1]
+    $: layoutSlides = $cachedShowsData[showId]?.layout || []
 
     function keydown(e: any) {
         if (e.altKey) {

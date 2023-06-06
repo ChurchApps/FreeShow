@@ -284,6 +284,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                                 <Textbox
                                     filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
                                     backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
+                                    disableListTransition
                                     {item}
                                     {ratio}
                                     ref={{

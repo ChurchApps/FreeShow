@@ -70,6 +70,7 @@ export interface Slide {
 export interface Item {
     id?: string
     lines?: Line[]
+    list?: List
     auto?: boolean
     style: string
     align?: string
@@ -118,6 +119,16 @@ export interface Line {
         style: string
     }[]
     chords?: Chords[]
+}
+
+export interface List {
+    style?: string
+    interval?: number
+    items: ListItem[]
+}
+export interface ListItem {
+    text: string
+    icon?: string
 }
 
 export interface Chords {
@@ -256,7 +267,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "shape" | "media" | "mirror" | "icon" | "timer" | "clock" // "image" | "video"
+export type ItemType = "text" | "list" | "media" | "timer" | "clock" | "mirror" | "icon" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

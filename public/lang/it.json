@@ -306,6 +306,7 @@
         "select_show": "Select show",
         "rename": "Rinomina",
         "color": "Colore",
+        "edit_list": "Edit list",
         "timer": "Timer",
         "transition": "Transizione",
         "delete_show": "Elimina spettacolo",
@@ -425,7 +426,10 @@
         "start_timer": "Avviare il timer",
         "stop_timers": "Arresta i timer attivi",
         "next_after_media": "Avanti dopo i media",
-        "remove_media": "Rimuovi media"
+        "remove_media": "Rimuovi media",
+        "index_select_project": "Select project by index",
+        "index_select_project_show": "Select project item by index",
+        "index_select_slide": "Select slide by index"
     },
     "cloud": {
         "info": "Sincronizza i file con Google Drive per i backup o se lavori su più computer.",
@@ -541,11 +545,13 @@
         "arrange_items": "Disponi gli elementi",
         "filters": "Filtri",
         "backdrop_filters": "Backdrop filters",
+        "interval": "Interval",
         "video": "Video",
         "choose_media": "Scegli i media"
     },
     "items": {
         "text": "Casella di testo",
+        "list": "List",
         "media": "Media",
         "image": "Immagine",
         "video": "Video",
@@ -565,6 +571,20 @@
         "outset": "Outset",
         "groove": "Scanalatura",
         "ridge": "Ridge"
+    },
+    "list": {
+        "disc": "Disc",
+        "circle": "Circle",
+        "square": "Square",
+        "disclosure-closed": "Arrow",
+        "disclosure-open": "Triangle",
+        "decimal": "Number",
+        "decimal-leading-zero": "Number with zero",
+        "lower-alpha": "Letter",
+        "upper-alpha": "Upper letter",
+        "lower-roman": "Roman",
+        "upper-roman": "Upper roman",
+        "lower-greek": "Greek"
     },
     "timer": {
         "from_to": "Dall'inizio alla fine",
@@ -602,7 +622,8 @@
         "use_default_values": "Use default values",
         "auto_values": "Update values when receiving a MIDI input",
         "tip_velocity": "Imposta la velocità su -1 per disabilitare.",
-        "tip_action": "To activate spesific slides, right click any slide and choose the midi in action."
+        "tip_action": "To activate spesific slides, right click any slide and choose the midi in action.",
+        "tip_index_by_velocity": "Index is determined by the received velocity, starting at 0."
     },
     "draw": {
         "focus": "Messa a fuoco",

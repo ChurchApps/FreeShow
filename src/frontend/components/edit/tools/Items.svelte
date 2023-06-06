@@ -12,6 +12,16 @@
     import { addItem } from "../scripts/addItem"
     import { boxes } from "../values/boxes"
 
+    const items: { id: ItemType; icon?: string; name?: string }[] = [
+        { id: "text" },
+        { id: "list" },
+        // { id: "table" },
+        { id: "media", icon: "image", name: "image" },
+        { id: "timer" },
+        { id: "clock" },
+        { id: "mirror" },
+    ]
+
     export let allSlideItems: Item[]
     $: invertedItemList = clone(allSlideItems)?.reverse() || []
 
@@ -63,13 +73,9 @@
 <Panel>
     <h6><T id="edit.add_items" /></h6>
     <div class="grid">
-        <IconButton name title={$dictionary.items?.text} icon="text" on:click={() => addItem("text")} />
-        <IconButton name title={$dictionary.items?.image} icon="image" on:click={() => addItem("media")} />
-        <!-- TODO: camera box -->
-        <!-- <IconButton name title={$dictionary.items?.live} disabled icon="camera" /> -->
-        <IconButton name title={$dictionary.items?.timer} icon="timer" on:click={() => addItem("timer")} />
-        <IconButton name title={$dictionary.items?.clock} icon="clock" on:click={() => addItem("clock")} />
-        <IconButton name title={$dictionary.items?.mirror} icon="mirror" on:click={() => addItem("mirror")} />
+        {#each items as item}
+            <IconButton name title={$dictionary.items?.[item.name || item.id]} icon={item.icon || item.id} on:click={() => addItem(item.id)} />
+        {/each}
     </div>
     <div>
         <!-- square, circle, triangle, star, heart, ... -->

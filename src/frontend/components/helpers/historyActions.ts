@@ -323,6 +323,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 // then delete showsCache
                 setTimeout(() => {
                     showsCache.set({})
+                    activeShow.set(null)
                 }, 2000)
             }
         },

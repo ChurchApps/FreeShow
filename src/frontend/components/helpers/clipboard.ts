@@ -70,10 +70,12 @@ export function paste(clip: any = null, extraData: any = {}) {
     // edit item has its own paste function
     if (activeElem?.closest(".editItem")) return
 
-    if (clip.id === null) {
+    if (activeElem?.closest(".edit")) {
         pasteText(activeElem)
         return
     }
+
+    if (clip.id === null) return
 
     if (!pasteActions[clip.id]) return
     pasteActions[clip.id](clip.data, extraData)

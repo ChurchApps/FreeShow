@@ -99,7 +99,7 @@
             }
 
             // return if using shortcuts in inputs
-            const exeption = ["e", "i", "n", "o", "s"]
+            const exeption = ["e", "i", "n", "o", "s", "a"]
             if (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key)) {
                 let simulateMac = false
                 if (simulateMac) e.preventDefault()

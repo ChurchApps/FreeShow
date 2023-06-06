@@ -1,7 +1,7 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
     import { activeShow, dictionary, groups, midiIn, popupData, styles } from "../../../stores"
-    import { defaultMidiActionChannels, midiActions, midiInListen, midiNames } from "../../../utils/midi"
+    import { defaultMidiActionChannels, midiActions, midiInListen, midiNames, midiToNote } from "../../../utils/midi"
     import { receive, send } from "../../../utils/request"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
@@ -14,7 +14,7 @@
     let id: string = ""
     $: if ($popupData.id) id = $popupData.id
 
-    let midi: any = { name: "MIDI", type: "noteon", values: { note: 1, velocity: -1, channel: 1 }, defaultValues: true }
+    let midi: any = { name: "MIDI", type: "noteon", values: { note: 0, velocity: -1, channel: 1 }, defaultValues: true }
     $: if (id) setMidi()
     function setMidi() {
         if ($popupData.type === "in") midi = $midiIn[id] || midi
@@ -47,6 +47,7 @@
             if (!autoValues) return
             if (msg.id === id && msg.type === midi.type) {
                 midi.values = msg.values
+                if (midi.action.includes("index_")) midi.values.velocity = -1
             }
         },
     })
@@ -85,7 +86,7 @@
             })
 
             midiInListen()
-        } else {
+        } else if ($activeShow) {
             let showMidi = _show().get("midi") || {}
             if (JSON.stringify(showMidi[id] || {}) === JSON.stringify(midi)) return
             showMidi[id] = midi
@@ -139,13 +140,17 @@
         if (midi.defaultValues && defaultMidiActionChannels[midi.action]) {
             midi = { ...midi, ...defaultMidiActionChannels[midi.action] }
         }
+
+        // reset velocity
+        if (midi.action.includes("index_")) midi.values.velocity = -1
     }
 
     $: canHaveAction = $popupData.action || midi.action
+    if ($popupData.action) midi.action = Object.keys(midiActions)[0] || ""
     $: notActionOrDefaultValues = canHaveAction ? midi.defaultValues : false
 </script>
 
-<div>
+<div style="min-width: 40vw;">
     {#if $popupData.type === "in" && $popupData.index !== undefined}
         <span class="id">
             <Dropdown value={midi.name || "—"} options={midiInOptions} on:click={changeId} />
@@ -182,13 +187,13 @@
             <Checkbox checked={autoValues} on:change={toggleAutoValues} />
         </span>
 
-        <span>
-            {#if $popupData.type === "in"}
+        {#if $popupData.type === "in" && !midi.action?.includes("index_")}
+            <span>
                 <p style="font-size: 0.7em;opacity: 0.8;">
                     <T id="midi.tip_velocity" />
                 </p>
-            {/if}
-        </span>
+            </span>
+        {/if}
     {/if}
 
     <span>
@@ -197,28 +202,41 @@
     </span>
 
     <span>
-        <p><T id="midi.note" /></p>
-        <NumberInput value={midi.values.note} max={127} on:change={(e) => (midi.values.note = e.detail)} disabled={notActionOrDefaultValues} />
+        <span>
+            <p><T id="midi.note" /></p>
+            <span style="opacity: 0.7;">{midiToNote(midi.values.note)}</span>
+        </span>
+        <NumberInput value={midi.values.note} max={127} on:change={(e) => (midi.values.note = Number(e.detail))} disabled={notActionOrDefaultValues} />
     </span>
-    {#if !notActionOrDefaultValues}
+    {#if !notActionOrDefaultValues && !midi.action?.includes("index_")}
         <span>
             <p><T id="midi.velocity" /></p>
-            <NumberInput value={midi.values.velocity} min={$popupData.type === "in" ? -1 : 0} max={127} on:change={(e) => (midi.values.velocity = e.detail)} />
+            <NumberInput value={midi.values.velocity} min={$popupData.type === "in" ? -1 : 0} max={127} on:change={(e) => (midi.values.velocity = Number(e.detail))} />
         </span>
     {/if}
     <span>
         <p><T id="midi.channel" /></p>
-        <NumberInput value={midi.values.channel} max={255} on:change={(e) => (midi.values.channel = e.detail)} disabled={notActionOrDefaultValues} />
+        <NumberInput value={midi.values.channel} max={255} on:change={(e) => (midi.values.channel = Number(e.detail))} disabled={notActionOrDefaultValues} />
     </span>
 
     {#if canHaveAction}
         <br />
 
-        <span>
-            <p style="font-size: 0.7em;opacity: 0.8;">
-                <T id="midi.tip_action" />
-            </p>
-        </span>
+        {#if midi.action?.includes("index_")}
+            <span>
+                <p style="font-size: 0.7em;opacity: 0.8;">
+                    <T id="midi.tip_index_by_velocity" />
+                </p>
+            </span>
+        {/if}
+
+        {#if midi.action === "index_select_slide"}
+            <span>
+                <p style="font-size: 0.7em;opacity: 0.8;">
+                    <T id="midi.tip_action" />
+                </p>
+            </span>
+        {/if}
 
         <span>
             <p><T id="midi.start_action" /></p>

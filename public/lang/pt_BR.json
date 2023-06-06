@@ -306,6 +306,7 @@
         "select_show": "Select show",
         "rename": "Renomear",
         "color": "Cor",
+        "edit_list": "Edit list",
         "timer": "Temporizador",
         "transition": "Transição",
         "delete_show": "Excluir apresentação",
@@ -425,7 +426,10 @@
         "start_timer": "Start timer",
         "stop_timers": "Stop active timers",
         "next_after_media": "Next after media",
-        "remove_media": "Remover mídia"
+        "remove_media": "Remover mídia",
+        "index_select_project": "Select project by index",
+        "index_select_project_show": "Select project item by index",
+        "index_select_slide": "Select slide by index"
     },
     "cloud": {
         "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
@@ -541,11 +545,13 @@
         "arrange_items": "Organizar itens",
         "filters": "Filtros",
         "backdrop_filters": "Backdrop filters",
+        "interval": "Interval",
         "video": "Video",
         "choose_media": "Choose media"
     },
     "items": {
         "text": "Caixa de texto",
+        "list": "List",
         "media": "Mídia",
         "image": "Imagen",
         "video": "Vídeo",
@@ -565,6 +571,20 @@
         "outset": "Outset",
         "groove": "Sulco",
         "ridge": "Cume"
+    },
+    "list": {
+        "disc": "Disc",
+        "circle": "Circle",
+        "square": "Square",
+        "disclosure-closed": "Arrow",
+        "disclosure-open": "Triangle",
+        "decimal": "Number",
+        "decimal-leading-zero": "Number with zero",
+        "lower-alpha": "Letter",
+        "upper-alpha": "Upper letter",
+        "lower-roman": "Roman",
+        "upper-roman": "Upper roman",
+        "lower-greek": "Greek"
     },
     "timer": {
         "from_to": "Do ínico para o final",
@@ -602,7 +622,8 @@
         "use_default_values": "Use default values",
         "auto_values": "Update values when receiving a MIDI input",
         "tip_velocity": "Set velocity to -1 to disable.",
-        "tip_action": "To activate spesific slides, right click any slide and choose the midi in action."
+        "tip_action": "To activate spesific slides, right click any slide and choose the midi in action.",
+        "tip_index_by_velocity": "Index is determined by the received velocity, starting at 0."
     },
     "draw": {
         "focus": "Foco",

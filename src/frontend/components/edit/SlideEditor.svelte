@@ -35,7 +35,7 @@
 
     let ratio: number = 1
 
-    $: layoutSlide = ref?.[$activeEdit.slide!]?.data
+    $: layoutSlide = ref?.[$activeEdit.slide!]?.data || {}
     // get backgruond
     $: bgId = layoutSlide.background
     // $: loadFullImage = !!layoutSlide.background
