@@ -29,7 +29,7 @@ export function getMidiInputs() {
 
 export async function sendMidi(data: any) {
     let port: any = null
-    console.log("OUTPUT", data.output)
+    // console.log("OUTPUT", data.output)
 
     try {
         port = await JZZ().openMidiOut(data.output).or("Could not connect to MIDI out!")
@@ -65,7 +65,7 @@ export function closeMidiInPorts(id: string = "") {
 
 export async function receiveMidi(data: any) {
     // let port: any = null
-    console.log("INPUT", data.input)
+    // console.log("INPUT", data.input)
     if (!data.input) return
     if (openedPorts[data.id]) return
 
