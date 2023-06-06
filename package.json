@@ -41,7 +41,6 @@
         "appId": "com.github.vassbo.freeshow",
         "productName": "FreeShow",
         "files": [
-            "build/public/**/*",
             "build/electron/**/*",
             "build/types/**/*",
             "public/**/*"
