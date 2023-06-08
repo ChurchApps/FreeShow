@@ -116,7 +116,7 @@
         "slide": "Fjern lysbilde",
         "overlays": "Fjern overlegg",
         "audio": "Fjern lyd",
-        "nextTimer": "Fjern Tid til neste lysbilde"
+        "nextTimer": "Fjern tid til neste lysbilde"
     },
     "remove": {
         "background": "Fjern bakgrunn",
@@ -265,6 +265,7 @@
         "media": "Medier",
         "overlays": "Overlegg",
         "audio": "Lyd",
+        "effects": "Effekter",
         "scripture": "Bibelen",
         "player": "Spiller",
         "live": "Direkte",

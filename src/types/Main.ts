@@ -43,6 +43,7 @@ export type SelectIds =
     | "audio"
     | "overlay"
     | "template"
+    | "effect"
     | "camera"
     | "player"
     | "timer"
@@ -66,7 +67,7 @@ export interface MediaOptions {
 
 export interface ActiveEdit {
     // id?: string
-    type?: "show" | "media" | "overlay" | "template" | "audio"
+    type?: "show" | "media" | "overlay" | "template" | "effect" | "audio"
     id?: string
     slide?: null | number
     items: number[]

@@ -149,6 +149,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     overlay_card: ["edit", "lock_to_output", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "rename", "delete"],
     audio_button: ["favourite", "addToProject"],
     // "addToFirstSlide"

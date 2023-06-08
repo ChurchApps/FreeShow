@@ -116,7 +116,7 @@
         "slide": "Clear slide",
         "overlays": "Clear overlays",
         "audio": "Clear audio",
-        "nextTimer": "Clear Next slide timer"
+        "nextTimer": "Clear next slide timer"
     },
     "remove": {
         "background": "Remove background",
@@ -265,6 +265,7 @@
         "media": "Media",
         "overlays": "Overlays",
         "audio": "Audio",
+        "effects": "Effects",
         "scripture": "Scripture",
         "player": "Player",
         "live": "Live",

@@ -258,6 +258,7 @@ function save(data: any) {
     data.path = checkShowsFolder(data.path)
     if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
     function saveShow([id, value]: any) {
+        if (!value) return
         let p: string = path.resolve(data.path, value.name + ".show")
         writeFile(p, JSON.stringify([id, value]), id)
     }
@@ -265,6 +266,7 @@ function save(data: any) {
     // scriptures
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: any) {
+        if (!value) return
         let p: string = path.resolve(getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
         writeFile(p, JSON.stringify([id, value]), id)
     }

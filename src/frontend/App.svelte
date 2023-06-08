@@ -12,6 +12,7 @@
     import Drawer from "./components/drawer/Drawer.svelte"
     import Editor from "./components/edit/Editor.svelte"
     import EditTools from "./components/edit/EditTools.svelte"
+    import EffectTools from "./components/edit/EffectTools.svelte"
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
     import Pdf from "./components/export/Pdf.svelte"
@@ -231,6 +232,8 @@
                             {:else if page === "edit"}
                                 {#if ($activeShow && ($activeShow.type === "image" || $activeShow.type === "video")) || $activeEdit.type === "media"}
                                     <MediaTools />
+                                {:else if $activeEdit.type === "effect"}
+                                    <EffectTools />
                                 {:else}
                                     <EditTools />
                                 {/if}

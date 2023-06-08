@@ -12,6 +12,7 @@
     import Player from "./player/Player.svelte"
     import Shows from "./Shows.svelte"
     import Templates from "./Templates.svelte"
+    import Effects from "./effects/Effects.svelte"
 
     export let id: string
     export let bibles: any
@@ -63,6 +64,8 @@
         <Overlays {active} {searchValue} />
     {:else if id === "audio"}
         <Audio {active} {searchValue} />
+    {:else if id === "effects"}
+        <Effects {active} {searchValue} />
     {:else if id === "scripture"}
         <Scripture {active} bind:searchValue bind:bibles />
     {:else if id === "templates"}
