@@ -17,7 +17,8 @@
         "es": "Spanish",
         "pt_BR": "Brazilian Portuguese",
         "de": "German",
-        "it": "Italian"
+        "it": "Italian",
+        "pl": "Polish"
     },
     "about": {
         "check_updates": "Look for updates",

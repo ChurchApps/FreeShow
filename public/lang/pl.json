@@ -266,6 +266,7 @@
         "media": "Multimedia",
         "overlays": "Nakładki",
         "audio": "Audio",
+        "effects": "Effects",
         "scripture": "Pismo",
         "player": "Odtwarzacz",
         "live": "Na żywo",
@@ -604,7 +605,7 @@
         "no_events": "Brak nadchodzących wydarzeń",
         "edit": "Edytuj",
         "create": "Utwórz"
-        },
+    },
     "clock": {
         "type": "Typ",
         "digital": "Cyfrowy",
