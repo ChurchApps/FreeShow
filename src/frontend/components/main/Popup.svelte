@@ -83,7 +83,7 @@
                         <Icon id="close" size={2} />
                     </Button>
                 </div>
-                <div style="display: flex;flex-direction: column;margin: 20px;">
+                <div style="display: flex;flex-direction: column;margin: 20px;min-width: 35vw;">
                     <svelte:component this={popups[$activePopup]} />
                 </div>
             </div>
@@ -92,6 +92,10 @@
 {/if}
 
 <style>
+    h2 {
+        color: var(--text);
+    }
+
     .popup {
         position: absolute;
         background-color: rgb(0 0 0 / 0.8);

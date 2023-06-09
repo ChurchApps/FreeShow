@@ -12,6 +12,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextArea from "../../inputs/TextArea.svelte"
@@ -69,6 +70,7 @@
     }
 
     let showMore: boolean = false
+    let activateLyrics: boolean = false
 
     let loading = false
     function searchLyrics() {
@@ -95,79 +97,71 @@
 
 <svelte:window on:keydown={keydown} />
 
-<div class="section">
+<CombinedInput>
     <p><T id="show.name" /></p>
-    <span style="display: flex;width: 50%;">
-        <TextInput autofocus value={values.name} on:change={(e) => changeValue(e, "name")} style="height: 30px;" />
-        <div class="search">
-            {#if loading}
-                <Loader />
-            {:else}
-                <Button on:click={searchLyrics} title={$dictionary.create_show?.search_web}>
-                    <Icon id="search" size={1.2} white />
-                </Button>
-            {/if}
-        </div>
-    </span>
-</div>
-<div class="section">
-    <p><T id="show.category" /></p>
-    <Dropdown options={cats} value={selectedCategory.name} on:click={(e) => (selectedCategory = e.detail)} style="width: 50%;" />
-</div>
-<br />
+    <TextInput autofocus value={values.name} on:change={(e) => changeValue(e, "name")} style="height: 30px;" />
+    <div class="search">
+        {#if loading}
+            <Loader />
+        {:else}
+            <Button on:click={searchLyrics} title={$dictionary.create_show?.search_web}>
+                <Icon id="search" size={1.2} white />
+            </Button>
+        {/if}
+    </div>
+</CombinedInput>
 
-<Button on:click={() => (showMore = !showMore)} dark center>
-    <Icon id="options" right />
+<CombinedInput>
+    <p><T id="show.category" /></p>
+    <Dropdown options={cats} value={selectedCategory.name} on:click={(e) => (selectedCategory = e.detail)} />
+</CombinedInput>
+
+<!-- <br /> -->
+
+<Button on:click={() => (showMore = !showMore)} style="margin-top: 10px;" dark center>
+    <Icon id="options" right white={showMore} />
     <T id="create_show.more_options" />
 </Button>
 {#if showMore}
-    <div class="section">
+    <CombinedInput>
         <p><T id="create_show.format_new_show" /></p>
         <Checkbox checked={$formatNewShow} on:change={inputs.formatNewShow} />
-    </div>
-    <div class="section">
+    </CombinedInput>
+    <CombinedInput>
         <p><T id="create_show.split_lines" /></p>
         <NumberInput
             value={$splitLines}
             max={100}
-            buttons={false}
-            outline
             on:change={(e) => {
                 splitLines.set(e.detail)
             }}
         />
-    </div>
+    </CombinedInput>
 {/if}
 
-<br />
-<span><T id="show.quick_lyrics" /></span>
-<TextArea placeholder={$dictionary.create_show?.quick_example} style="height: 250px;min-width: 500px;" value={values.text} on:input={(e) => changeValue(e)} />
-<Button on:click={textToShow} style="width: 100%;margin-top: 10px;color: var(--secondary);" dark center>
+<!-- <br /> -->
+
+<Button on:click={() => (activateLyrics = !activateLyrics)} style="margin-top: 10px;" dark center>
+    <Icon id="text" right white={activateLyrics} />
+    <T id="show.quick_lyrics" />
+</Button>
+
+{#if activateLyrics}
+    <!-- <span><T id="show.quick_lyrics" /></span> -->
+    <TextArea placeholder={$dictionary.create_show?.quick_example} style="height: 250px;min-width: 500px;" value={values.text} on:input={(e) => changeValue(e)} />
+{/if}
+
+<Button on:click={textToShow} style="width: 100%;margin-top: 10px;" dark center>
     {#if values.text.trim().length > 0}
+        <Icon id="showIcon" right />
         <T id="new.show" />
     {:else}
+        <Icon id="showIcon" right white />
         <T id="new.empty_show" />
     {/if}
 </Button>
 
 <style>
-    .section {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 3px 0;
-    }
-
-    .section :global(.dropdown) {
-        position: absolute;
-        width: 100% !important;
-    }
-
-    .section :global(.numberInput input) {
-        width: 80px;
-        background-color: var(--primary-darker);
-    }
-
     .search {
         align-self: center;
     }

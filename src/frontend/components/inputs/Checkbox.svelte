@@ -1,32 +1,47 @@
-<input id={$$props.id} type="checkbox" disabled={$$props.disabled} style={$$props.style} checked={$$props.checked || false} on:change />
+<label class="switch" class:disabled={$$props.disabled}>
+    <input id={$$props.id} type="checkbox" style={$$props.style} checked={$$props.checked || false} disabled={$$props.disabled} on:change />
+    <div class:on={$$props.checked || false} />
+</label>
 
 <style>
-  input {
-    padding: 10px;
-    /* cursor: pointer; */
-    background-color: var(--primary-lighter);
+    .switch input {
+        position: absolute;
+        opacity: 0;
+    }
 
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    -o-appearance: none;
-    appearance: none;
-    /* outline: 2px solid lightblue; */
-    /* box-shadow: none; */
-  }
-  input:not(:disabled) {
-    cursor: pointer;
-  }
-  input:focus,
-  input:active {
-    background-color: var(--focus);
-  }
-  input:hover {
-    background-color: var(--hover);
-  }
-  input:checked {
-    background-color: var(--secondary);
-  }
-  input:disabled {
-    opacity: 0.3;
-  }
+    .switch {
+        display: inline-block;
+        width: 2em;
+        height: 1em;
+        font-size: 25px;
+        background-color: var(--primary-lighter);
+    }
+
+    .switch.disabled {
+        opacity: 0.3;
+    }
+    .switch:not(.disabled) {
+        cursor: pointer;
+    }
+    .switch:hover:not(.disabled) {
+        background-color: var(--hover);
+    }
+    .switch:focus:not(.disabled),
+    .switch:active:not(.disabled) {
+        background-color: var(--focus);
+    }
+
+    .switch div {
+        width: 1em;
+        height: 1em;
+        background-color: var(--text);
+        transition: all 300ms;
+    }
+    .switch div.on {
+        background-color: var(--secondary);
+    }
+
+    .switch input:checked + div {
+        transform: translate3d(100%, 0, 0);
+    }
 </style>
