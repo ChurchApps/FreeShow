@@ -57,7 +57,8 @@
 </ul>
 
 <Button on:click={() => activePopup.set(null)} center>
-    <Icon id="check" />
+    <Icon id="check" right />
+    <T id="actions.done" />
 </Button>
 
 <style>

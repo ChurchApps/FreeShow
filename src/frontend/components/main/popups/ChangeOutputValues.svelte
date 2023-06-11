@@ -6,6 +6,7 @@
     import T from "../../helpers/T.svelte"
     import { displayOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
 
     let currentOutput: any = {}
@@ -45,10 +46,8 @@
         </Button>
     {/if}
 
-    <br />
-
-    <strong><T id="settings.position" /></strong>
-    <div class="input">
+    <h3><T id="settings.position" /></h3>
+    <CombinedInput>
         <p style="width: 80px;"><T id="edit.x" /></p>
         <NumberInput
             value={currentOutput.bounds?.x || 0}
@@ -64,8 +63,8 @@
             buttons={false}
             outline
         />
-    </div>
-    <div class="input">
+    </CombinedInput>
+    <CombinedInput>
         <p style="width: 80px;"><T id="edit.y" /></p>
         <NumberInput
             value={currentOutput.bounds?.y || 0}
@@ -81,14 +80,12 @@
             buttons={false}
             outline
         />
-    </div>
+    </CombinedInput>
 </div>
 
-<br />
-
 <div>
-    <strong><T id="edit.size" /></strong>
-    <div class="input">
+    <h3><T id="edit.size" /></h3>
+    <CombinedInput>
         <p style="width: 80px;"><T id="edit.width" /></p>
         <NumberInput
             value={currentOutput.bounds?.width || 0}
@@ -104,8 +101,8 @@
             buttons={false}
             outline
         />
-    </div>
-    <div class="input">
+    </CombinedInput>
+    <CombinedInput>
         <p style="width: 80px;"><T id="edit.height" /></p>
         <NumberInput
             value={currentOutput.bounds?.height || 0}
@@ -121,25 +118,15 @@
             buttons={false}
             outline
         />
-    </div>
+    </CombinedInput>
 </div>
 
 <style>
-    div {
-        margin: 5px 0;
-    }
-
-    .input {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    div :global(.numberInput) {
-        width: 50%;
-    }
-    div :global(.numberInput input) {
-        background-color: var(--primary-darker);
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
     }
 </style>

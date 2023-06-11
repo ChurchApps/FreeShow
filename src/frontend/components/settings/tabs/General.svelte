@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { alertUpdates, autoOutput, fullColors, groupNumbers, labelsDisabled, timeFormat } from "../../../stores"
+    import { alertUpdates, autoOutput, labelsDisabled, timeFormat } from "../../../stores"
     import { setLanguage } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import LocaleSwitcher from "../LocaleSwitcher.svelte"
 
     const inputs: any = {
@@ -18,36 +19,43 @@
 
     function reset() {
         setLanguage(null)
+        timeFormat.set("24")
         alertUpdates.set(true)
-        labelsDisabled.set(false)
-        fullColors.set(false)
-        groupNumbers.set(true)
         autoOutput.set(false)
+        labelsDisabled.set(false)
     }
 </script>
 
-<div>
+<CombinedInput>
     <p><T id="settings.language" /></p>
     <LocaleSwitcher />
-</div>
-<div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.use24hClock" /></p>
-    <Checkbox checked={$timeFormat === "24"} on:change={inputs.timeFormat} />
-</div>
-<div>
+    <div class="alignRight">
+        <Checkbox checked={$timeFormat === "24"} on:change={inputs.timeFormat} />
+    </div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.alert_updates" /></p>
     <!-- style="width: 200px;" -->
-    <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
-</div>
-<div>
+    <div class="alignRight">
+        <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
+    </div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.auto_output" /></p>
-    <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
-</div>
-<div>
+    <div class="alignRight">
+        <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
+    </div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.disable_labels" /></p>
     <!-- style="width: 200px;" -->
-    <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
-</div>
+    <div class="alignRight">
+        <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
+    </div>
+</CombinedInput>
 
 <!-- <hr /> -->
 <!-- <div>
@@ -107,7 +115,8 @@
   </span>
 </div> -->
 
-<hr />
+<br />
+
 <!-- <Button style="width: 100%;" center><T id="settings.export_settings" /></Button> -->
 <!-- <Button style="width: 100%;" center><T id="settings.import_all" /></Button>
 <Button style="width: 100%;" center><T id="settings.export_all" /></Button> -->
@@ -117,36 +126,5 @@
 </Button>
 
 <!-- project store location... -->
-<style>
-    div:not(.scroll) {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin: 5px 0;
-        /* height: 35px; */
-        min-height: 38px;
-    }
-    /* .flex {
-    display: flex;
-    align-items: center;
-  }
-  .flex span {
-    display: flex;
-  }
 
-  .hoverDelete:hover {
-    color: #ff5050;
-    text-decoration: line-through;
-  } */
-
-    hr {
-        margin: 20px 0;
-        border: none;
-        height: 2px;
-        background-color: var(--primary-lighter);
-    }
-
-    div :global(.numberInput) {
-        width: 80px;
-    }
-</style>
+<br />

@@ -7,6 +7,7 @@
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
@@ -150,19 +151,19 @@
     $: notActionOrDefaultValues = canHaveAction ? midi.defaultValues : false
 </script>
 
-<div style="min-width: 40vw;">
+<div style="min-width: 45vw;">
     {#if $popupData.type === "in" && $popupData.index !== undefined}
-        <span class="id">
+        <span class="id" style="margin-bottom: 10px;">
             <Dropdown value={midi.name || "—"} options={midiInOptions} on:click={changeId} />
         </span>
     {/if}
 
-    <span>
+    <CombinedInput>
         <p><T id="midi.name" /></p>
         <TextInput style="width: 70%;" value={midi.name} on:change={changeName} />
-    </span>
+    </CombinedInput>
 
-    <span>
+    <CombinedInput>
         {#if $popupData.type === "in"}
             <p><T id="midi.input" /></p>
             <Dropdown value={midi.input || "—"} options={inputs} on:click={(e) => (midi.input = e.detail.name)} />
@@ -170,94 +171,98 @@
             <p><T id="midi.output" /></p>
             <Dropdown value={midi.output || "—"} options={outputs} on:click={(e) => (midi.output = e.detail.name)} />
         {/if}
-    </span>
+    </CombinedInput>
 
     <br />
 
     {#if canHaveAction}
-        <span>
+        <CombinedInput>
             <p><T id="midi.use_default_values" /></p>
-            <Checkbox checked={midi.defaultValues} on:change={toggleDefaultValues} />
-        </span>
+            <div class="alignRight">
+                <Checkbox checked={midi.defaultValues} on:change={toggleDefaultValues} />
+            </div>
+        </CombinedInput>
     {/if}
 
     {#if !notActionOrDefaultValues}
-        <span>
+        <CombinedInput>
             <p><T id="midi.auto_values" /></p>
-            <Checkbox checked={autoValues} on:change={toggleAutoValues} />
-        </span>
+            <div class="alignRight">
+                <Checkbox checked={autoValues} on:change={toggleAutoValues} />
+            </div>
+        </CombinedInput>
 
         {#if $popupData.type === "in" && !midi.action?.includes("index_")}
-            <span>
+            <CombinedInput>
                 <p style="font-size: 0.7em;opacity: 0.8;">
                     <T id="midi.tip_velocity" />
                 </p>
-            </span>
+            </CombinedInput>
         {/if}
     {/if}
 
-    <span>
+    <CombinedInput>
         <p><T id="midi.type" /></p>
         <Dropdown value={midi.type} options={types} on:click={(e) => (midi.type = e.detail.name)} disabled={notActionOrDefaultValues} />
-    </span>
+    </CombinedInput>
 
-    <span>
-        <span>
-            <p><T id="midi.note" /></p>
-            <span style="opacity: 0.7;">{midiToNote(midi.values.note)}</span>
-        </span>
+    <CombinedInput>
+        <p>
+            <T id="midi.note" />
+            <span style="opacity: 0.7;padding: 0 10px;display: flex;align-items: center;">{midiToNote(midi.values.note)}</span>
+        </p>
         <NumberInput value={midi.values.note} max={127} on:change={(e) => (midi.values.note = Number(e.detail))} disabled={notActionOrDefaultValues} />
-    </span>
+    </CombinedInput>
     {#if !notActionOrDefaultValues && !midi.action?.includes("index_")}
-        <span>
+        <CombinedInput>
             <p><T id="midi.velocity" /></p>
             <NumberInput value={midi.values.velocity} min={$popupData.type === "in" ? -1 : 0} max={127} on:change={(e) => (midi.values.velocity = Number(e.detail))} />
-        </span>
+        </CombinedInput>
     {/if}
-    <span>
+    <CombinedInput>
         <p><T id="midi.channel" /></p>
         <NumberInput value={midi.values.channel} max={255} on:change={(e) => (midi.values.channel = Number(e.detail))} disabled={notActionOrDefaultValues} />
-    </span>
+    </CombinedInput>
 
     {#if canHaveAction}
         <br />
 
         {#if midi.action?.includes("index_")}
-            <span>
+            <CombinedInput>
                 <p style="font-size: 0.7em;opacity: 0.8;">
                     <T id="midi.tip_index_by_velocity" />
                 </p>
-            </span>
+            </CombinedInput>
         {/if}
 
         {#if midi.action === "index_select_slide"}
-            <span>
+            <CombinedInput>
                 <p style="font-size: 0.7em;opacity: 0.8;">
                     <T id="midi.tip_action" />
                 </p>
-            </span>
+            </CombinedInput>
         {/if}
 
-        <span>
+        <CombinedInput>
             <p><T id="midi.start_action" /></p>
             <Dropdown value={midi.action ? "$:" + (midiNames[midi.action] || "actions." + midi.action) + ":$" : "—"} options={actionOptions} on:click={changeAction} />
-        </span>
+        </CombinedInput>
 
         {#if midi.action === "goto_group"}
-            <span>
+            <CombinedInput>
                 <p><T id="actions.choose_group" /></p>
                 <Dropdown value={groupsList.find((a) => a.id === midi.actionData?.group)?.name || "—"} options={groupsList} on:click={(e) => (midi.actionData = { group: e.detail.id })} />
-            </span>
+            </CombinedInput>
         {:else if midi.action === "change_output_style"}
-            <span>
+            <CombinedInput>
                 <p><T id="actions.change_output_style" /></p>
                 <Dropdown value={$styles[midi.actionData?.style]?.name || "—"} options={stylesList} on:click={(e) => (midi.actionData = { style: e.detail.id })} />
-            </span>
+            </CombinedInput>
         {/if}
     {/if}
 </div>
 
-<style>
+<!-- <style>
     div {
         display: flex;
         flex-direction: column;
@@ -278,4 +283,4 @@
     div span.id :global(.dropdownElem) {
         width: 100%;
     }
-</style>
+</style> -->

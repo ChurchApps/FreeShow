@@ -1,8 +1,11 @@
 <script lang="ts">
     export let style: string = ""
+    export let textWidth: number = 50 // %
+
+    $: customStyle = style + ";--text-width: " + textWidth + "%"
 </script>
 
-<div class="input" {style}>
+<div class="input" style={customStyle}>
     <slot />
 </div>
 
@@ -34,7 +37,7 @@
     .input :global(input),
     .input :global(button),
     .input :global(p),
-    .input :global(div),
+    .input :global(div:not(.loader)),
     .input :global(span) {
         min-height: inherit;
         min-width: inherit;
@@ -43,23 +46,57 @@
     /* .input :global(input:not([type="checkbox"])) {
         background-color: var(--primary-darker);
     } */
+    /* .input :global(input[type="text"]) {
+        flex: 3;
+    } */
+    .input :global(input[type="text"]:not(:disabled)),
+    .input :global(input[type="date"]:not(:disabled)),
+    .input :global(input[type="time"]:not(:disabled)),
+    .input :global(.dropdownElem:not(:disabled)) {
+        background-color: var(--primary-darkest);
+    }
+    .input :global(input[type="text"]:hover:not(:disabled)),
+    .input :global(input[type="date"]:hover:not(:disabled)),
+    .input :global(input[type="time"]:hover:not(:disabled)) {
+        background-color: var(--hover);
+    }
 
-    .input :global(button),
-    .input :global(.numberInput *) {
+    .input :global(button) {
+        white-space: nowrap;
+        padding: 0 10px !important;
+    }
+    .input :global(button p) {
         border: none !important;
     }
 
-    .input :global(.switch) {
-        position: absolute;
-        right: 10px;
+    .input :global(.dropdownElem button),
+    .input :global(.numberInput *) {
+        border: none !important;
+    }
+    .input :global(.color) {
+        border: none;
+        border-left: 1px solid var(--primary);
     }
 
-    .input :global(:nth-child(2):not(.switch)) {
+    .input :global(.switch) {
+        min-width: initial !important;
+    }
+    .input :global(.alignRight) {
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        padding-right: 10px;
+    }
+
+    .input :global(:nth-child(2):not(.switch):not(.numberInput)) {
         flex: 1;
     }
 
+    .input :global(.numberInput) {
+        width: 100%;
+    }
     .input :global(.numberInput span.input) {
-        flex: 4;
+        flex: 5 !important;
     }
 
     .input :global(p) {
@@ -68,7 +105,7 @@
 
         padding: 0 10px;
         overflow: initial;
-        min-width: 30%;
-        /* max-width: 40%; */
+        min-width: var(--text-width);
+        width: var(--text-width);
     }
 </style>

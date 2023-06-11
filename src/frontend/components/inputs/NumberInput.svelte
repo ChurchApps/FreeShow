@@ -6,6 +6,7 @@
 
     export let value: number
     export let title: string = ""
+    export let style: string = ""
     export let inputMultiplier: number = 1
     export let decimals: number = 0
     export let step: number = 1
@@ -58,7 +59,7 @@
     }}
 />
 
-<span class="numberInput" on:mousedown={mousedown} on:wheel={wheel} class:disabled class:outline>
+<span class="numberInput" {style} on:mousedown={mousedown} on:wheel={wheel} class:disabled class:outline>
     {#if buttons}
         <Button id="decrement" on:click={() => decrement()} center style={"flex: 1;"} disabled={disabled || Number(value) - step < min}>
             <Icon id="remove" size={1.2} white />

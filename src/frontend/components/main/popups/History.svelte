@@ -127,7 +127,7 @@
 
     <br />
 
-    <Button on:click={clearHistory} center>
+    <Button on:click={clearHistory} center dark>
         <Icon id="delete" right />
         <T id="actions.clear_history" />
     </Button>

@@ -6,6 +6,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FontDropdown from "../../inputs/FontDropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
@@ -72,9 +73,12 @@
     }
 </script>
 
-<ThemeSwitcher />
-<div class="flex">
-    <TextInput disabled={$theme === "default"} value={themeValue} on:input={changeValue} on:change={() => updateTheme(themeValue, null, "name")} light />
+<CombinedInput>
+    <ThemeSwitcher />
+</CombinedInput>
+
+<CombinedInput>
+    <TextInput disabled={$theme === "default"} value={themeValue} on:input={changeValue} on:change={() => updateTheme(themeValue, null, "name")} />
     <Button
         disabled={$theme === "default"}
         on:click={() => {
@@ -96,27 +100,29 @@
             <T id="actions.duplicate" />
         {/if}
     </Button>
-</div>
-<hr />
+</CombinedInput>
+
 <h3><T id="settings.font" /></h3>
-<div>
+<CombinedInput>
     <p><T id="settings.font_family" /></p>
     <!-- <Dropdown options={fonts} value={$themes[$theme].font.family} on:click={(e) => updateTheme(e.detail.name, "family", "font")} width="200px" /> -->
-    <FontDropdown system value={$theme === "default" ? "" : $themes[$theme].font.family} on:click={(e) => updateTheme(e.detail, "family", "font")} style="width: 200px;" />
-</div>
-<div>
+    <FontDropdown system value={$theme === "default" ? "" : $themes[$theme].font.family} on:click={(e) => updateTheme(e.detail, "family", "font")} />
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.font_size" /></p>
-    <NumberInput value={$themes[$theme].font.size.replace("em", "")} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} outline on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />
-</div>
-<hr />
+    <NumberInput value={$themes[$theme].font.size.replace("em", "")} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />
+</CombinedInput>
+
 <h3><T id="settings.colors" /></h3>
 {#each colors as color}
-    <div>
+    <CombinedInput>
         <p><T id={"theme." + color} /></p>
         <Color value={$themes[$theme].colors[color]} style="width: 200px;" on:input={(e) => updateTheme(e, color)} />
-    </div>
+    </CombinedInput>
 {/each}
-<hr />
+
+<br />
+
 <Button style="width: 100%;" on:click={resetTheme} center>
     <Icon id="reset" right />
     <T id="settings.reset_theme" />
@@ -126,34 +132,14 @@
     <T id="settings.reset_themes" />
 </Button>
 
+<br />
+
 <style>
-    div:not(.scroll) {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin: 5px 0;
-        min-height: 38px;
-    }
-
     h3 {
+        color: var(--text);
+        text-transform: uppercase;
         text-align: center;
-        font-size: 1.8em;
+        font-size: 0.9em;
         margin: 20px 0;
-    }
-    h3 {
-        font-size: initial;
-    }
-
-    hr {
-        background-color: var(--primary-lighter);
-        border: none;
-        height: 2px;
-        margin: 20px 0;
-    }
-
-    .flex {
-        display: flex;
-        align-items: center;
-        gap: 5px;
     }
 </style>

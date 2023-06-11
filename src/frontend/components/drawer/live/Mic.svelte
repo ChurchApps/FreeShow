@@ -115,7 +115,12 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        padding: 5px 10px;
     }
+    .main:nth-child(even) {
+        background-color: var(--primary-darkest);
+    }
+
     .meter {
         background-image: linear-gradient(to right, rgb(200, 0, 0) 1%, rgb(255, 220, 0) 16%, rgb(0, 220, 0) 45%, rgb(0, 120, 0) 100%);
         /* filter: hue-rotate(250deg); */

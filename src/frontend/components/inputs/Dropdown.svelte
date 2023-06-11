@@ -8,6 +8,7 @@
     const dispatch = createEventDispatcher()
     export let options: Option[]
     export let disabled: boolean = false
+    export let center: boolean = false
     let active: boolean = false
     export let value: any
     export let title: string = ""
@@ -27,6 +28,14 @@
     }
 
     // TODO: scroll don't work with multiple of the same name (e.g. EditTimer.svelte)
+
+    $: if (active) scrollToActive()
+    function scrollToActive() {
+        setTimeout(() => {
+            let activeElem = self.querySelector("#" + value.replaceAll(" ", "_"))
+            activeElem?.scrollIntoView()
+        }, 10)
+    }
 </script>
 
 <svelte:window
@@ -37,7 +46,7 @@
     }}
 />
 
-<div class:disabled bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
+<div class:disabled class:center bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
     <button {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
         {translate(normalizedValue, { parts: true }) || value}
         <!-- <T id={value} /> -->
@@ -47,6 +56,7 @@
             {#each options as option}
                 <!-- {#if option.name !== value} -->
                 <span
+                    id={option.name.replaceAll(" ", "_")}
                     on:click={() => {
                         if (disabled) return
                         dispatch("click", option)
@@ -91,6 +101,10 @@
         transform: translateY(-1px);
         /* transform: translateX(-25%); */
         z-index: 10;
+    }
+
+    .center button {
+        text-align: center;
     }
 
     button {

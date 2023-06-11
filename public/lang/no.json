@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Velkommen til FreeShow!",
+        "welcome": "Velkommen",
         "quit": "Avslutt",
         "docs": "Dokumentasjon",
         "about": "Om",
@@ -9,16 +9,6 @@
         "search": "Søk",
         "none": "Ingen",
         "finished": "Fullført"
-    },
-    "languages": {
-        "en": "Engelsk",
-        "no": "Norsk",
-        "sk": "Slovakisk",
-        "es": "Spansk",
-        "pt_BR": "Brasiliansk portugisisk",
-        "de": "Tysk",
-        "it": "Italiensk",
-        "pl": "Polsk"
     },
     "about": {
         "check_updates": "Se etter oppdateringer",
@@ -50,7 +40,7 @@
     },
     "setup": {
         "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
-        "tips": "Finn nyttige tips og tutorials på nettsiden.",
+        "tips": "Finn nyttige tips og guider på nettsiden.",
         "change_later": "Du kan endre dette senere",
         "get_started": "Kom i gang!"
     },
@@ -123,8 +113,8 @@
         "background": "Fjern bakgrunn",
         "overlays": "Fjern overlegg",
         "audio": "Fjern lyd",
-        "nextTimer": "Fjern Tid til neste lysbilde",
-        "to_start": "Fjern Gå til start",
+        "nextTimer": "Fjern tid til neste lysbilde",
+        "to_start": "Fjern gå til start",
         "timer": "Fjern nedtelling",
         "transition": "Fjern overgang"
     },
@@ -330,7 +320,7 @@
         "cloud_method": "Dataplassering",
         "shortcuts": "Hurtigtaster",
         "icon": "Ikoner",
-        "initialize": "Velkommen",
+        "initialize": "Velkommen til FreeShow",
         "unsaved": "Du har ikke lagret enda! Er du sikker på at du vil avslutte?",
         "cancel": "Avbryt",
         "continue": "Fortsett",
@@ -383,6 +373,7 @@
         "delete_all": "Slett alle",
         "close": "Lukk",
         "save": "Lagre",
+        "done": "Ferdig",
         "disable": "Deaktiver",
         "enable": "Aktiver",
         "undo": "Angre",
@@ -788,6 +779,9 @@
         "current_slide": "for valgt lysbilde",
         "text": "Tekstovergang",
         "media": "Medieovergang",
+        "duration": "Varighet",
+        "easing": "Bevegelse",
+        "type": "Type",
         "none": "Ingen",
         "fade": "Falme",
         "blur": "Uklart",

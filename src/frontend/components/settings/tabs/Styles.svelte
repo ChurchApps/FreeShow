@@ -12,6 +12,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import { getFileName } from "../../helpers/media"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     function updateStyle(e: any, key: string) {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -95,14 +96,16 @@
     ]
 </script>
 
-<div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;">
+<div class="info">
     <p><T id="settings.styles_hint" /></p>
 </div>
 
-<Dropdown value={currentStyle.name} options={stylesList} on:click={(e) => (styleId = e.detail?.id)} />
+<CombinedInput>
+    <Dropdown style="width: 100%;" value={currentStyle.name} options={stylesList} on:click={(e) => (styleId = e.detail?.id)} />
+</CombinedInput>
 
-<div class="flex">
-    <TextInput disabled={!styleId} value={currentStyle.name} on:change={(e) => updateStyle(e, "name")} light />
+<CombinedInput>
+    <TextInput disabled={!styleId} value={currentStyle.name} on:change={(e) => updateStyle(e, "name")} />
     <Button
         disabled={!styleId}
         on:click={() => {
@@ -125,20 +128,18 @@
             <T id="actions.duplicate" />
         {/if}
     </Button>
-</div>
-
-<hr />
+</CombinedInput>
 
 <!-- slide -->
 <h3><T id="preview.slide" /></h3>
 <!-- TODO: use stage (dropdown) -->
-<div>
+<CombinedInput>
     <p><T id="edit.background_color" /></p>
     <span style="width: 200px;">
         <Color value={currentStyle.background || "#000000"} on:input={(e) => updateStyle(e, "background")} />
     </span>
-</div>
-<div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="edit.background_image" /></p>
     <MediaPicker title={currentStyle.backgroundImage} filter={{ name: "Image files", extensions: $imageExtensions }} on:picked={(e) => updateStyle(e, "backgroundImage")} clearOnClick={!!currentStyle.backgroundImage}>
         <Icon id="image" right />
@@ -148,23 +149,23 @@
             <T id="edit.choose_media" />
         {/if}
     </MediaPicker>
-</div>
+</CombinedInput>
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->
 <!-- WIP foreground: mask/overlay -->
-<div>
+<CombinedInput>
     <p><T id="settings.resolution" /></p>
     <span class="inputs">
         <!-- defaults dropdown -->
         <!-- custom... -->
-        <p style="width: 80px; text-align: right; font-weight: bold;"><T id="screen.width" /></p>
+        <span class="text"><T id="screen.width" /></span>
         <NumberInput value={currentStyle.resolution?.width || 1920} min={100} max={10000} buttons={false} outline on:change={(e) => updateStyle({ width: Number(e.detail), height: currentStyle.resolution?.height || 1080 }, "resolution")} />
-        <p style="width: 80px; text-align: right; font-weight: bold;"><T id="screen.height" /></p>
+        <span class="text"><T id="screen.height" /></span>
         <NumberInput value={currentStyle.resolution?.height || 1080} min={100} max={10000} buttons={false} outline on:change={(e) => updateStyle({ height: Number(e.detail), width: currentStyle.resolution?.width || 1920 }, "resolution")} />
     </span>
-</div>
+</CombinedInput>
 
-<div>
+<CombinedInput>
     <p><T id="settings.lines" /></p>
     <NumberInput
         value={currentStyle.lines || 0}
@@ -176,10 +177,10 @@
             updateStyle(e, "lines")
         }}
     />
-</div>
-<div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.active_layers" /></p>
-    <span style="display: flex;">
+    <span class="flex">
         <!-- active={activeLayers.includes("background")} -->
         <Button
             on:click={() => {
@@ -226,81 +227,81 @@
             <T id="preview.overlays" />
         </Button>
     </span>
-</div>
+</CombinedInput>
 <!-- WIP toggle meta -->
 
-<div>
+<CombinedInput>
     <p><T id="settings.override_with_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} style="width: 200px;" on:click={(e) => updateStyle(e.detail.id, "template")} />
-</div>
-
-<hr />
+</CombinedInput>
 
 <!-- meta -->
 <h3><T id="tools.metadata" /></h3>
-<div>
+<CombinedInput>
     <p><T id="meta.display_metadata" /></p>
     <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} style="width: 200px;" on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} />
-</div>
-<div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="meta.meta_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} style="width: 200px;" on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} />
-</div>
-<div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="meta.message_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} style="width: 200px;" on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} />
-</div>
+</CombinedInput>
 
 <!-- TODO: override transition ? -->
 
-<hr />
+<br />
+
 <Button style="width: 100%;" on:click={resetStyle} center>
     <Icon id="reset" right />
     <T id="actions.reset" />
 </Button>
 
+<br />
+
 <style>
-    div:not(.scroll) {
+    .info {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        margin: 5px 0;
+        justify-content: center;
+
         min-height: 38px;
+        margin: 5px 0;
+        font-style: italic;
+        opacity: 0.8;
+    }
+
+    .info p {
+        white-space: initial;
     }
 
     h3 {
+        color: var(--text);
+        text-transform: uppercase;
         text-align: center;
-        font-size: 1.8em;
-        margin: 20px 0;
-    }
-    h3 {
-        font-size: initial;
-    }
-
-    .inputs {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-
-    hr {
-        background-color: var(--primary-lighter);
-        border: none;
-        height: 2px;
+        font-size: 0.9em;
         margin: 20px 0;
     }
 
     .flex {
         display: flex;
-        align-items: center;
-        gap: 5px;
     }
-
     .flex :global(button) {
-        white-space: nowrap;
+        flex: 1;
     }
 
-    div :global(.numberInput) {
-        width: 80px;
+    .inputs {
+        display: flex;
+    }
+
+    .text {
+        /* font-weight: bold; */
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        border: none;
     }
 </style>

@@ -76,7 +76,11 @@
     function searchLyrics() {
         let artist = ""
         let title = values.name
-        if (!title) return
+        if (!title) {
+            newToast("No name")
+            return
+        }
+
         send(MAIN, ["SEARCH_LYRICS"], { artist, title })
         loading = true
     }
@@ -90,6 +94,7 @@
             }
 
             values.text = data.lyrics
+            activateLyrics = true
             newToast("Lyrics copied from Google!")
         },
     })
@@ -97,10 +102,10 @@
 
 <svelte:window on:keydown={keydown} />
 
-<CombinedInput>
+<CombinedInput textWidth={30}>
     <p><T id="show.name" /></p>
     <TextInput autofocus value={values.name} on:change={(e) => changeValue(e, "name")} style="height: 30px;" />
-    <div class="search">
+    <div class="search" class:loading>
         {#if loading}
             <Loader />
         {:else}
@@ -111,23 +116,19 @@
     </div>
 </CombinedInput>
 
-<CombinedInput>
+<CombinedInput textWidth={30}>
     <p><T id="show.category" /></p>
-    <Dropdown options={cats} value={selectedCategory.name} on:click={(e) => (selectedCategory = e.detail)} />
+    <Dropdown options={cats} value={selectedCategory?.name} on:click={(e) => (selectedCategory = e.detail)} />
 </CombinedInput>
 
-<!-- <br /> -->
-
-<Button on:click={() => (showMore = !showMore)} style="margin-top: 10px;" dark center>
-    <Icon id="options" right white={showMore} />
-    <T id="create_show.more_options" />
-</Button>
 {#if showMore}
-    <CombinedInput>
+    <CombinedInput textWidth={30}>
         <p><T id="create_show.format_new_show" /></p>
-        <Checkbox checked={$formatNewShow} on:change={inputs.formatNewShow} />
+        <div class="alignRight">
+            <Checkbox checked={$formatNewShow} on:change={inputs.formatNewShow} />
+        </div>
     </CombinedInput>
-    <CombinedInput>
+    <CombinedInput textWidth={30}>
         <p><T id="create_show.split_lines" /></p>
         <NumberInput
             value={$splitLines}
@@ -137,9 +138,14 @@
             }}
         />
     </CombinedInput>
+{:else}
+    <CombinedInput>
+        <Button on:click={() => (showMore = !showMore)} style="width: 100%;" dark center>
+            <Icon id="options" right white={showMore} />
+            <T id="create_show.more_options" />
+        </Button>
+    </CombinedInput>
 {/if}
-
-<!-- <br /> -->
 
 <Button on:click={() => (activateLyrics = !activateLyrics)} style="margin-top: 10px;" dark center>
     <Icon id="text" right white={activateLyrics} />
@@ -163,7 +169,13 @@
 
 <style>
     .search {
+        display: flex;
+        align-items: center;
+
         align-self: center;
+    }
+    .search.loading {
+        padding: 0 6px;
     }
 
     /* loader */

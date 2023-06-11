@@ -168,6 +168,8 @@ function refreshAllShows(data: any) {
 // WIP duplicate of setShow.ts
 function trimShow(showCache: Show) {
     let show: any = {}
+    if (!showCache) return show
+
     show = {
         name: showCache.name,
         category: showCache.category,

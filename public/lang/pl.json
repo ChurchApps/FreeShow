@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Witaj we FreeShow!",
+        "welcome": "Witaj",
         "quit": "Wyjdź",
         "docs": "Dokumentacja",
         "about": "Informacje",
@@ -9,16 +9,6 @@
         "search": "Szukaj",
         "none": "Brak",
         "finished": "Finished"
-    },
-    "languages": {
-        "en": "English",
-        "no": "Norwegian",
-        "sk": "Slovak",
-        "es": "Spanish",
-        "pt_BR": "Brazilian Portuguese",
-        "de": "German",
-        "it": "Italian",
-        "pl": "Polski"
     },
     "about": {
         "check_updates": "Sprawdź aktualizacje",
@@ -330,7 +320,7 @@
         "cloud_method": "Lokalizacja danych",
         "shortcuts": "Skróty",
         "icon": "Ikony",
-        "initialize": "Witaj",
+        "initialize": "Witaj we FreeShow",
         "unsaved": "Nie zapisałeś zmian! Jesteś pewien?",
         "cancel": "Anuluj",
         "continue": "Kontynuuj",
@@ -383,6 +373,7 @@
         "delete_all": "Usuń wszystko",
         "close": "Zamknij",
         "save": "Zapisz",
+        "done": "Done",
         "disable": "Deaktywuj",
         "enable": "Aktywuj",
         "undo": "Cofnij",
@@ -788,6 +779,9 @@
         "current_slide": "dla bieżącego slajdu",
         "text": "Przejście tekstu",
         "media": "Przejście multimediów",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Typ",
         "none": "Brak",
         "fade": "Przebłysk",
         "blur": "Rozmycie",

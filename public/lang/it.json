@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Benvenuto su FreeShow!",
+        "welcome": "Benvenuto",
         "quit": "Esci",
         "docs": "Documenti",
         "about": "Informazioni",
@@ -9,16 +9,6 @@
         "search": "Cerca",
         "none": "Nessuno",
         "finished": "Finito"
-    },
-    "languages": {
-        "en": "Inglese",
-        "no": "Norvegese",
-        "sk": "Slovacco",
-        "es": "Spagnolo",
-        "pt_BR": "Brasiliano Portoghese",
-        "de": "Tedesco",
-        "it": "Italiano",
-        "pl": "Polish"
     },
     "about": {
         "check_updates": "Cerca aggiornamenti",
@@ -330,7 +320,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Scorciatoie",
         "icon": "Icone",
-        "initialize": "Benvenuti",
+        "initialize": "Benvenuto su FreeShow",
         "unsaved": "Non hai ancora salvato! Sei sicuro di voler uscire?",
         "cancel": "Cancella",
         "continue": "Continua",
@@ -383,6 +373,7 @@
         "delete_all": "Elimina tutto",
         "close": "Chiudi",
         "save": "Salva",
+        "done": "Done",
         "disable": "Disabilita",
         "enable": "Abilita",
         "undo": "Annulla",
@@ -788,6 +779,9 @@
         "current_slide": "per la diapositiva corrente",
         "text": "Transizione del testo",
         "media": "Transizione multimediale",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Tipo",
         "none": "Nessuna",
         "fade": "Dissolvenza",
         "blur": "Sfocatura",

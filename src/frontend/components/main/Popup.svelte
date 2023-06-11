@@ -83,7 +83,7 @@
                         <Icon id="close" size={2} />
                     </Button>
                 </div>
-                <div style="display: flex;flex-direction: column;margin: 20px;min-width: 35vw;">
+                <div style="display: flex;flex-direction: column;margin: 20px;min-width: 38vw;">
                     <svelte:component this={popups[$activePopup]} />
                 </div>
             </div>

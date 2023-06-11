@@ -11,9 +11,10 @@
 
     .switch {
         display: inline-block;
+        min-width: 2em;
         width: 2em;
         height: 1em;
-        font-size: 25px;
+        font-size: 22px;
         background-color: var(--primary-lighter);
     }
 

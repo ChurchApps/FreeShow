@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Welcome to FreeShow!",
+        "welcome": "Welcome",
         "quit": "Quit",
         "docs": "Docs",
         "about": "About",
@@ -9,16 +9,6 @@
         "search": "Search",
         "none": "None",
         "finished": "Finished"
-    },
-    "languages": {
-        "en": "English",
-        "no": "Norwegian",
-        "sk": "Slovak",
-        "es": "Spanish",
-        "pt_BR": "Brazilian Portuguese",
-        "de": "German",
-        "it": "Italian",
-        "pl": "Polish"
     },
     "about": {
         "check_updates": "Look for updates",
@@ -123,8 +113,8 @@
         "background": "Remove background",
         "overlays": "Remove overlays",
         "audio": "Remove audio",
-        "nextTimer": "Remove Next slide timer",
-        "to_start": "Remove Go to start",
+        "nextTimer": "Remove next slide timer",
+        "to_start": "Remove go to start",
         "timer": "Remove timer",
         "transition": "Remove transition"
     },
@@ -330,7 +320,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Shortcuts",
         "icon": "Icons",
-        "initialize": "Welcome",
+        "initialize": "Welcome to FreeShow",
         "unsaved": "You have not saved yet! Are you sure you want to quit?",
         "cancel": "Cancel",
         "continue": "Continue",
@@ -383,6 +373,7 @@
         "delete_all": "Delete all",
         "close": "Close",
         "save": "Save",
+        "done": "Done",
         "disable": "Disable",
         "enable": "Enable",
         "undo": "Undo",
@@ -788,6 +779,9 @@
         "current_slide": "for current slide",
         "text": "Text transition",
         "media": "Media transition",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Type",
         "none": "None",
         "fade": "Fade",
         "blur": "Blur",

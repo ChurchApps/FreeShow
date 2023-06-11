@@ -2,6 +2,7 @@
     import { activePopup, selected, shows, showsCache } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import Icon from "../../helpers/Icon.svelte"
     import { loadShows } from "../../helpers/setShow"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -27,6 +28,10 @@
         <li style="font-weight: bold;">{$shows[show.id]?.name}</li>
     {/each}
 </ul>
+
+<br />
+
 <Button style="height: auto;margin-top: 10px;" on:click={deleteSelected} red center>
+    <Icon id="delete" right />
     <T id="actions.delete" />
 </Button>

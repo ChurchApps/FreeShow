@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Willkommen bei FreeShow!",
+        "welcome": "Willkommen",
         "quit": "Beenden",
         "docs": "Doku",
         "about": "Über",
@@ -9,16 +9,6 @@
         "search": "Suche",
         "none": "Nichts",
         "finished": "Finished"
-    },
-    "languages": {
-        "en": "Englisch",
-        "no": "Norwegisch",
-        "sk": "Slovakisch",
-        "es": "Spanisch",
-        "pt_BR": "Portugiesisch (Brasilien)",
-        "de": "Deutsch",
-        "it": "Italian",
-        "pl": "Polish"
     },
     "about": {
         "check_updates": "Auf Updates prüfen",
@@ -330,7 +320,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Tastaturkürzel",
         "icon": "Symbole",
-        "initialize": "Willkommen",
+        "initialize": "Willkommen bei FreeShow",
         "unsaved": "Du hast noch nicht gespeichert! Bist du dir sicher, dass du beenden möchtest?",
         "cancel": "Abbrechen",
         "continue": "Weiter",
@@ -383,6 +373,7 @@
         "delete_all": "Alle Löschen",
         "close": "Schließen",
         "save": "Speichern",
+        "done": "Done",
         "disable": "Deaktivieren",
         "enable": "Enable",
         "undo": "Rückgängig",
@@ -788,6 +779,9 @@
         "current_slide": "für aktuelle Folie",
         "text": "Textübergang",
         "media": "Medienübergang",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Typ",
         "none": "Kein",
         "fade": "Ausblenden",
         "blur": "Verwischen",

@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Seja bem-vindo ao FreeShow!",
+        "welcome": "Seja bem-vindo",
         "quit": "Sair",
         "docs": "Documentos",
         "about": "Sobre",
@@ -9,16 +9,6 @@
         "search": "Buscar",
         "none": "Nenhum",
         "finished": "Finished"
-    },
-    "languages": {
-        "en": "Inglês",
-        "no": "Noruegues",
-        "sk": "Eslovaco",
-        "es": "Espanhol",
-        "pt_BR": "Português do Brasil",
-        "de": "German",
-        "it": "Italian",
-        "pl": "Polish"
     },
     "about": {
         "check_updates": "Verificar por atualizações",
@@ -330,7 +320,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Atalhos",
         "icon": "Icones",
-        "initialize": "Seja bem-vindo",
+        "initialize": "Seja bem-vindo ao FreeShow",
         "unsaved": "Você ainda não salvou seu trabalho! Tem certeza que quer sair?",
         "cancel": "Cancelar",
         "continue": "Continuar",
@@ -383,6 +373,7 @@
         "delete_all": "Excluir tudo",
         "close": "Fechar",
         "save": "Salvar",
+        "done": "Done",
         "disable": "Desabilitar",
         "enable": "Enable",
         "undo": "Desfazer",
@@ -788,6 +779,9 @@
         "current_slide": "para o slide atual",
         "text": "Transição de texto",
         "media": "Transição de mídia",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Tipo",
         "none": "Nenhum",
         "fade": "Desvanecer",
         "blur": "Borar",

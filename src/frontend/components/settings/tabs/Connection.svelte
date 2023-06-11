@@ -8,6 +8,7 @@
     import Button from "../../inputs/Button.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     const setRemotePassword = (e: any) => remotePassword.set(e.target.value)
 
@@ -64,42 +65,49 @@
         </strong>
     </p>
 </div>
+
 <br />
+
 <!-- <div>
   <p><T id="settings.device_name" /></p>
   <TextInput style="max-width: 50%;" value={$os.name} light />
 </div> -->
-<div>
+<CombinedInput>
     <p>RemoteShow <T id="settings.password" /></p>
     <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
-</div>
-<div class="input">
+</CombinedInput>
+<CombinedInput>
     <p>RemoteShow <T id="settings.port" /></p>
-    <NumberInput value={$ports.remote || 5510} on:change={(e) => updatePort(e, "remote")} min={1000} max={10000} buttons={false} outline />
-</div>
-<div class="input">
+    <NumberInput value={$ports.remote || 5510} on:change={(e) => updatePort(e, "remote")} min={1000} max={10000} buttons={false} />
+</CombinedInput>
+<CombinedInput>
     <p>StageShow <T id="settings.port" /></p>
-    <NumberInput value={$ports.stage || 5511} on:change={(e) => updatePort(e, "stage")} min={1000} max={10000} buttons={false} outline />
-</div>
-<div class="input">
+    <NumberInput value={$ports.stage || 5511} on:change={(e) => updatePort(e, "stage")} min={1000} max={10000} buttons={false} />
+</CombinedInput>
+<CombinedInput>
     <p>ControlShow <T id="settings.port" /></p>
-    <NumberInput value={$ports.controller || 5512} on:change={(e) => updatePort(e, "controller")} min={1000} max={10000} buttons={false} outline />
-</div>
-<div>
+    <NumberInput value={$ports.controller || 5512} on:change={(e) => updatePort(e, "controller")} min={1000} max={10000} buttons={false} />
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.max_connections" /></p>
-    <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} outline />
-</div>
+    <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
+</CombinedInput>
 
-<hr />
-<Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections })} center>
-    <Icon id="refresh" right />
-    <T id="settings.restart" />
-</Button>
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections })} center>
+        <Icon id="refresh" right />
+        <T id="settings.restart" />
+    </Button>
+</CombinedInput>
+
 <br />
+
 <Button style="width: 100%;" on:click={reset} center>
     <Icon id="reset" right />
     <T id="actions.reset" />
 </Button>
+
+<br />
 
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>
@@ -112,16 +120,5 @@
         justify-content: space-between;
         margin: 5px 0;
         min-height: 38px;
-    }
-
-    .input :global(input) {
-        width: 80px;
-    }
-
-    hr {
-        margin: 20px 0;
-        border: none;
-        height: 2px;
-        background-color: var(--primary-lighter);
     }
 </style>

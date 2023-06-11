@@ -11,6 +11,7 @@
     import Color from "../../inputs/Color.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     function reset() {
         let n = currentOutput.name
@@ -86,14 +87,16 @@
     }
 </script>
 
-<div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;">
+<div class="info">
     <p><T id="settings.hide_output_hint" /></p>
     <!-- <p><T id="settings.show_output_hint" /></p> -->
 </div>
 
-<Dropdown style="width: 100%;" {options} value={currentOutput?.name || ""} on:click={(e) => currentOutputSettings.set(e.detail.id)} />
+<CombinedInput>
+    <Dropdown style="width: 100%;" {options} value={currentOutput?.name || ""} on:click={(e) => currentOutputSettings.set(e.detail.id)} />
+</CombinedInput>
 
-<div class="flex">
+<CombinedInput>
     <TextInput
         value={name}
         on:input={(e) => (name = getValue(e))}
@@ -115,85 +118,92 @@
             <T id="settings.new_output" />
         {/if}
     </Button>
-</div>
+</CombinedInput>
 
 <!-- main -->
 
 <br />
+
 {#if options.length > 1}
-    <div>
+    <CombinedInput>
         <p><T id="settings.enabled" /></p>
-        <Checkbox
-            checked={currentOutput.enabled}
-            on:change={(e) => {
-                updateOutput("enabled", isChecked(e))
-                if ($outputDisplay) {
-                    let enabled = getActiveOutputs($outputs, false)
-                    Object.entries($outputs).forEach(([id, output]) => {
-                        send(OUTPUT, ["DISPLAY"], { enabled: enabled.includes(id), output: { id, ...output }, one: true })
-                    })
-                }
-            }}
-        />
-    </div>
+        <div class="alignRight">
+            <Checkbox
+                checked={currentOutput.enabled}
+                on:change={(e) => {
+                    updateOutput("enabled", isChecked(e))
+                    if ($outputDisplay) {
+                        let enabled = getActiveOutputs($outputs, false)
+                        Object.entries($outputs).forEach(([id, output]) => {
+                            send(OUTPUT, ["DISPLAY"], { enabled: enabled.includes(id), output: { id, ...output }, one: true })
+                        })
+                    }
+                }}
+            />
+        </div>
+    </CombinedInput>
 {/if}
-<div>
+
+<CombinedInput>
     <p><T id="settings.color_when_active" /></p>
     <span style="width: 200px;">
         <Color value={currentOutput.color} on:input={(e) => updateOutput("color", getValue(e))} />
     </span>
-</div>
+</CombinedInput>
 
-<div>
+<CombinedInput>
     <p><T id="settings.active_style" /></p>
     <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("style", e.detail.id)} />
-</div>
+</CombinedInput>
 
-<div>
+<CombinedInput>
     <p><T id="settings.always_on_top" /></p>
-    <Checkbox checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
-</div>
+    <div class="alignRight">
+        <Checkbox checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
+    </div>
+</CombinedInput>
 
-<div>
+<CombinedInput>
     <p><T id="settings.enable_key_output" /></p>
-    <Checkbox
-        checked={!!currentOutput.keyOutput}
-        on:change={(e) => {
-            let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput.keyOutput
-            let keyValue = isChecked(e) ? outputId : null
-            updateOutput("keyOutput", keyValue)
-            keyOutput(outputId, !isChecked(e))
-        }}
-    />
-</div>
-
-<hr />
+    <div class="alignRight">
+        <Checkbox
+            checked={!!currentOutput.keyOutput}
+            on:change={(e) => {
+                let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput.keyOutput
+                let keyValue = isChecked(e) ? outputId : null
+                updateOutput("keyOutput", keyValue)
+                keyOutput(outputId, !isChecked(e))
+            }}
+        />
+    </div>
+</CombinedInput>
 
 <!-- window -->
 <h3><T id="settings.window" /></h3>
 <!-- <div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;min-height: initial;">
   <p><T id="settings.move_output_hint" /></p>
 </div> -->
-<div>
+<CombinedInput>
     <p><T id="settings.output_screen" /></p>
     <Button on:click={() => activePopup.set("choose_screen")}>
         <Icon id="screen" right />
         <p><T id="popup.choose_screen" /></p>
     </Button>
     <!-- <Screens /> -->
-</div>
-<div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.position" /></p>
     <Button on:click={() => activePopup.set("change_output_values")}>
         <Icon id="screen" right />
         <p><T id="popup.change_output_values" /></p>
     </Button>
-</div>
+</CombinedInput>
 <!-- disable on linux -->
 <!-- {#if $os.platform !== "linux"}
   <div>
     <p><T id="settings.fixed" /></p>
-    <Checkbox
+    <div class="alignRight">
+        <Checkbox
       checked={currentOutput.kiosk}
       on:change={(e) => {
         updateOutput("kiosk", isChecked(e))
@@ -202,60 +212,48 @@
         }, 10)
       }}
     />
+    </div>
   </div>
 {/if} -->
-<div>
+<CombinedInput>
     <p>Advanced</p>
     <Button on:click={() => activePopup.set("advanced_settings")}>
         <Icon id="screen" right />
         <p>Advanced settings</p>
     </Button>
-</div>
+</CombinedInput>
 
-<hr />
+<br />
 
 <Button style="width: 100%;" on:click={reset} center>
     <Icon id="reset" right />
     <T id="actions.reset" />
 </Button>
 
+<br />
+
 <style>
-    div:not(.scroll) {
+    .info {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        margin: 5px 0;
+        justify-content: center;
+
         min-height: 38px;
-        /* height: 35px; */
+        margin: 5px 0;
+        font-style: italic;
+        opacity: 0.8;
+    }
+
+    .info p {
+        white-space: initial;
     }
 
     h3 {
+        color: var(--text);
+        text-transform: uppercase;
         text-align: center;
-        font-size: 1.8em;
+        font-size: 0.9em;
         margin: 20px 0;
-    }
-    h3 {
-        font-size: initial;
-    }
-
-    hr {
-        margin: 20px 0;
-        border: none;
-        height: 2px;
-        background-color: var(--primary-lighter);
-    }
-
-    .flex {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .flex :global(button) {
-        white-space: nowrap;
-    }
-
-    div :global(.numberInput) {
-        width: 80px;
     }
 </style>

@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Vitajte vo FreeShow!",
+        "welcome": "Vitajte",
         "quit": "Ukončiť",
         "docs": "Dokumentácia",
         "about": "O FreeShow",
@@ -9,16 +9,6 @@
         "search": "Hľadať",
         "none": "Nič",
         "finished": "Finished"
-    },
-    "languages": {
-        "en": "Angličtina",
-        "no": "Nórština",
-        "sk": "Slovenčina",
-        "es": "Španielčina",
-        "pt_BR": "Brazílska portugalčina",
-        "de": "Nemčina",
-        "it": "Italian",
-        "pl": "Polish"
     },
     "about": {
         "check_updates": "Skontrolovať aktualizácie",
@@ -330,7 +320,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Skratky",
         "icon": "Ikony",
-        "initialize": "Vitajte",
+        "initialize": "Vitajte vo FreeShow",
         "unsaved": "Máte neuložené zmeny! Naozaj chcete ukončiť?",
         "cancel": "Zrušiť",
         "continue": "Pokračovať",
@@ -383,6 +373,7 @@
         "delete_all": "Zmazať všetko",
         "close": "Zavrieť",
         "save": "Uložiť",
+        "done": "Done",
         "disable": "Vypnúť",
         "enable": "Zapnúť",
         "undo": "Späť",
@@ -788,6 +779,9 @@
         "current_slide": "pre aktuálny snímok",
         "text": "Prechod textu",
         "media": "Prechod média",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Type",
         "none": "Žiadne",
         "fade": "Prelínanie",
         "blur": "Rozostrenia",

@@ -35,6 +35,7 @@
 <style>
     main {
         min-height: 250px;
+        min-width: 50vw;
     }
 
     .error {

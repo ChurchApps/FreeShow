@@ -19,6 +19,7 @@
     import Zoomed from "../../slide/Zoomed.svelte"
     import { joinRange } from "../bible/scripture"
     import { getAutoSize } from "../../edit/scripts/autoSize"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
@@ -247,32 +248,38 @@
     <!-- settings: red jw, verse numbers, verse break, max verses per slide, show version, show book&chapter&verse, text formatting -->
     <!-- settings -->
     <div class="settings">
-        <span>
+        <CombinedInput textWidth={70}>
             <p><T id="info.template" /></p>
             <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 50%;" />
-        </span>
-        <span>
+        </CombinedInput>
+        <CombinedInput textWidth={70}>
             <p><T id="scripture.max_verses" /></p>
             <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={25} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
-        </span>
-        <span>
+        </CombinedInput>
+        <CombinedInput textWidth={70}>
             <p><T id="scripture.verse_numbers" /></p>
-            <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
-        </span>
+            <div class="alignRight">
+                <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
+            </div>
+        </CombinedInput>
         {#if $scriptureSettings.verseNumbers}
-            <span>
+            <CombinedInput textWidth={70}>
                 <p><T id="edit.color" /></p>
                 <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={updateColor} />
-            </span>
+            </CombinedInput>
         {/if}
-        <span>
+        <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
-            <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
-        </span>
-        <span>
+            <div class="alignRight">
+                <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
+            </div>
+        </CombinedInput>
+        <CombinedInput textWidth={70}>
             <p><T id="scripture.reference" /></p>
-            <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
-        </span>
+            <div class="alignRight">
+                <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
+            </div>
+        </CombinedInput>
         <!-- <span>
       <p><T id="scripture.red_jesus" /> (WIP)</p>
       <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
@@ -304,21 +311,12 @@
     .settings {
         display: flex;
         flex-direction: column;
-        gap: 5px;
         padding: 10px;
-    }
-    .settings span {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
     }
 
     .settings :global(.dropdown) {
         position: absolute;
-        width: 100% !important;
-    }
-
-    .settings :global(.numberInput) {
-        width: 50px;
+        width: 250% !important;
+        transform: translateX(-60%);
     }
 </style>

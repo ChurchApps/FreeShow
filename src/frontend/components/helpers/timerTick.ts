@@ -54,18 +54,20 @@ export function startEventTimer() {
             // less than 1 minute
             let timeLeft: number = eventTime.getTime() - currentTime.getTime()
             if (timeLeft <= ONE_MINUTE && timeLeft > ONE_MINUTE - INTERVAL) {
-                // only alert at exactly one minute left
-                console.log("Starting show " + get(shows)[event.show!].name + " in less than a minute")
                 newToast("Starting show " + get(shows)[event.show!].name + " in less than a minute")
+            }
+            // less than 30 seconds
+            if (timeLeft <= ONE_MINUTE / 2 && timeLeft > ONE_MINUTE / 2 - INTERVAL) {
+                newToast("Starting show " + get(shows)[event.show!].name + " in less than 30 seconds")
             }
             // less than 10 seconds
             if (timeLeft <= TEN_SECONDS && timeLeft > TEN_SECONDS - INTERVAL) {
-                console.log("Starting show " + get(shows)[event.show!].name + " in less than 10 seconds")
                 newToast("Starting show " + get(shows)[event.show!].name + " in less than 10 seconds")
                 loadShows([event.show!])
             }
             // start show
             if (timeLeft <= 0 && timeLeft > 0 - INTERVAL) {
+                newToast("Starting show " + get(shows)[event.show!].name + " now!")
                 let activeLayout = _show(event.show).get("settings.activeLayout")
                 setOutput("slide", { id: event.show, layout: activeLayout, index: 0, line: 0 })
             }
