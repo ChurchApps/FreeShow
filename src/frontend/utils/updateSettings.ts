@@ -36,6 +36,7 @@ import {
     projectView,
     remotePassword,
     resized,
+    scripturePath,
     showsPath,
     slidesOptions,
     styles,
@@ -119,6 +120,10 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     exportPath: (v: any) => {
         if (!v) send(MAIN, ["EXPORT_PATH"])
         else exportPath.set(v)
+    },
+    scripturePath: (v: any) => {
+        if (!v) send(MAIN, ["SCRIPTURE_PATH"])
+        else scripturePath.set(v)
     },
     os: (v: any) => {
         if (!v.platform) send(MAIN, ["GET_OS"])

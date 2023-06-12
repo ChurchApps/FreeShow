@@ -163,6 +163,7 @@ export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode:
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 300, rightPanel: 300, leftPanelDrawer: 300, rightPanelDrawer: 300 }) // {default}
 export const exportPath: Writable<null | string> = writable(null) // null
+export const scripturePath: Writable<string> = writable("") // ""
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale

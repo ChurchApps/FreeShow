@@ -30,7 +30,7 @@ export function template(strings: any): any {
             label: strings.titlebar?.file || "File",
             submenu: [
                 // , accelerator: "CmdOrCtrl+S"
-                { label: strings.actions?.save || "Save", accelerator: "Cmd+S", click: () => mc("save") },
+                { label: strings.actions?.save || "Save", click: () => mc("save") },
                 { label: strings.actions?.import || "Import", click: () => mc("import") },
                 { label: strings.actions?.export || "Export", click: () => mc("export_more") },
                 { type: "separator" },
@@ -43,23 +43,23 @@ export function template(strings: any): any {
             label: strings.titlebar?.edit || "Edit",
             submenu: [
                 // , accelerator: "CmdOrCtrl+Z"
-                { label: strings.actions?.undo || "Undo", accelerator: "Cmd+Z", click: () => mc("undo") },
+                { label: strings.actions?.undo || "Undo", click: () => mc("undo") },
                 // , accelerator: "CmdOrCtrl+Y"
                 // CommandOrControl+Shift+Z
-                { label: strings.actions?.redo || "Redo", accelerator: "Cmd+Y", click: () => mc("redo") },
+                { label: strings.actions?.redo || "Redo", click: () => mc("redo") },
                 { label: strings.popup?.history || "History", click: () => mc("history") },
                 { type: "separator" },
-                { label: strings.actions?.cut || "Cut", accelerator: "Cmd+X", click: () => mc("cut") },
+                { label: strings.actions?.cut || "Cut", click: () => mc("cut") },
                 // , accelerator: "CmdOrCtrl+C"
-                { label: strings.actions?.copy || "Copy", accelerator: "Cmd+C", click: () => mc("copy") },
+                { label: strings.actions?.copy || "Copy", click: () => mc("copy") },
                 // , accelerator: "CmdOrCtrl+V"
-                { label: strings.actions?.paste || "Paste", accelerator: "Cmd+V", click: () => mc("paste") },
+                { label: strings.actions?.paste || "Paste", click: () => mc("paste") },
                 ...(isMac
                     ? [
                           // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
                           { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
                           //   , accelerator: "CmdOrCtrl+A"
-                          { label: strings.actions?.selectAll || "Select All", accelerator: "Cmd+A", click: () => mc("selectAll") },
+                          { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") },
                           // { type: "separator" },
                           // {
                           //   label: lang.actions?.speech || "Speech",

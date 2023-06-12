@@ -36,17 +36,34 @@
 
     $: index = allFiles.findIndex((a) => a === path)
 
+    let wait = false
     function click(e: any) {
-        if (!e.ctrlKey && !e.metaKey) activeFile = index
+        if (e.ctrlKey || e.metaKey || $outLocked || wait) return
+
+        // don't hide again when double clicking
+        wait = true
+        setTimeout(() => {
+            wait = false
+        }, 800)
+
+        if (findMatchingOut(path, $outputs)) {
+            setOutput("background", null)
+            // clearPlayingVideo()
+            // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
+
+            return
+        }
+
+        setOutput("background", { path, type, loop: true, muted: false, filter, flipped, fit, speed })
+        // TODO: get actual data
+        // TODO: output/preview control does not always match
+        window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
     }
 
     function dblclick(e: any) {
-        if (!e.ctrlKey && !e.metaKey && !$outLocked) {
-            setOutput("background", { path, type, loop: true, muted: false, filter, flipped, fit, speed })
-            // TODO: get actual data
-            // TODO: output/preview control does not always match
-            window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
-        }
+        if (e.ctrlKey || e.metaKey) return
+
+        activeFile = index
     }
 
     // TODO: Enter play media

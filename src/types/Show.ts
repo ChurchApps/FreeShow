@@ -27,6 +27,7 @@ export interface Show {
         template: string
     }
     metadata?: {
+        autoMedia?: boolean
         override: boolean
         display: string
         template: string

@@ -140,7 +140,6 @@ export const defaultOutput: Output = {
     color: "#e6349c",
     bounds: { x: 0, y: 0, width: 1920, height: 1080 }, // x: 1920 ?
     screen: null,
-    kiosk: true,
 }
 
 export function keyOutput(keyId: string, delOutput: boolean = false) {

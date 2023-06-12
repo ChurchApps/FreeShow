@@ -55,6 +55,12 @@
         updateData(values, "meta")
     }
 
+    function toggleAutoMedia(e: any) {
+        let value = e.target.checked
+        metadata.autoMedia = value
+        updateData(metadata, "metadata")
+    }
+
     function toggleOverride(e: any) {
         let value = e.target.checked
         metadata.override = value
@@ -65,21 +71,38 @@
         let override = "show#" + $activeShow!.id + "_" + key
         history({ id: "UPDATE", newData: { data, key }, oldData: { id: $activeShow!.id }, location: { page: "show", id: "show_key", override } })
     }
+
+    let tempHide = false
+    $: if (metadata.override !== undefined) {
+        tempHide = true
+        setTimeout(() => {
+            tempHide = false
+        }, 10)
+    }
 </script>
 
 <Panel>
-    <div class="gap" style="padding: 10px;">
-        <span class="titles">
-            {#each Object.keys(values) as key}
-                <p><T id="meta.{key}" /></p>
-            {/each}
-        </span>
-        <span style="flex: 1;display: flex;flex-direction: column;gap: 5px;">
-            {#each Object.entries(values) as [key, value]}
-                <TextInput {value} on:change={(e) => changeValue(e, key)} />
-            {/each}
-        </span>
+    <div class="styling">
+        <div>
+            <p><T id="meta.auto_media" /></p>
+            <Checkbox checked={metadata.autoMedia || false} on:change={toggleAutoMedia} />
+        </div>
     </div>
+
+    {#if metadata.autoMedia !== true}
+        <div class="gap" style="padding: 10px;">
+            <span class="titles">
+                {#each Object.keys(values) as key}
+                    <p><T id="meta.{key}" /></p>
+                {/each}
+            </span>
+            <span style="flex: 1;display: flex;flex-direction: column;gap: 5px;">
+                {#each Object.entries(values) as [key, value]}
+                    <TextInput {value} on:change={(e) => changeValue(e, key)} />
+                {/each}
+            </span>
+        </div>
+    {/if}
 
     <!-- message -->
     <h5><T id="meta.message" /></h5>
@@ -91,7 +114,8 @@
     <!-- styling -->
     <h5><T id="edit.style" /></h5>
     <div class="styling">
-        <div>
+        <!-- I have no idea why, but the ui jump around without resetting this new checkbox -->
+        <div class:tempHide>
             <p><T id="meta.override_output" /></p>
             <Checkbox checked={metadata.override || false} on:change={toggleOverride} />
         </div>
@@ -151,6 +175,10 @@
         color: var(--text);
         font-size: 0.8em;
         text-transform: uppercase;
+    }
+
+    .styling div.tempHide {
+        display: none;
     }
 
     .message,

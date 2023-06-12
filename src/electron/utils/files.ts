@@ -1,4 +1,4 @@
-import { OPEN_FILE } from "./../../types/Channels"
+import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 // ----- FreeShow -----
 // Functions to interact with local files
 
@@ -8,6 +8,7 @@ import { Stats } from "original-fs"
 import path from "path"
 import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW } from "../../types/Channels"
 import { mainWindow, toApp } from "./../index"
+import { ExifImage } from "exif"
 
 // GENERAL
 
@@ -183,4 +184,16 @@ export function selectFiles(e: any, msg: { channel: string; title?: string; filt
 export function getFileInfo(e: any, filePath: string) {
     let stats: any = getFileStats(filePath)
     if (stats) e.reply(FILE_INFO, stats)
+}
+
+// READ EXIF
+export function readExifData(e: any, data: any) {
+    try {
+        new ExifImage({ image: data.id }, function (error, exifData) {
+            if (error) console.log("Error: " + error.message)
+            else e.reply(READ_EXIF, { ...data, exif: exifData })
+        })
+    } catch (error) {
+        console.log("Error: " + error.message)
+    }
 }

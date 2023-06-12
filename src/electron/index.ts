@@ -4,10 +4,10 @@
 import { app, BrowserWindow, desktopCapturer, ipcMain, Menu, Rectangle, screen, shell } from "electron"
 import { getFonts } from "font-list"
 import path from "path"
-import { CLOUD, EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { CLOUD, EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, SHOW, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { closeServers } from "./servers"
-import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./utils/output"
@@ -29,7 +29,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 18000)
+    else setTimeout(startApp, 22000)
 })
 
 function startApp() {
@@ -290,6 +290,7 @@ ipcMain.on(READ_FOLDER, getFolderContent)
 ipcMain.on(OPEN_FOLDER, selectFolder)
 ipcMain.on(OPEN_FILE, selectFiles)
 ipcMain.on(FILE_INFO, getFileInfo)
+ipcMain.on(READ_EXIF, readExifData)
 ipcMain.on(CLOUD, cloudConnect)
 
 // ----- HELPERS -----

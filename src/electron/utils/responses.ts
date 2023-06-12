@@ -42,7 +42,10 @@ export function startExport(_e: any, msg: Message) {
 
 // BIBLE
 export function loadScripture(e: any, msg: Message) {
-    let p: string = path.resolve(app.getPath("documents"), "FreeShow", "Bibles", msg.name + ".fsb")
+    let bibleFolder: string = msg.path || ""
+    if (!bibleFolder) bibleFolder = path.resolve(app.getPath("documents"), "FreeShow", "Bibles")
+    let p: string = path.resolve(bibleFolder, msg.name + ".fsb")
+
     let bible: any = loadFile(p, msg.id)
 
     // pre v0.5.6
@@ -74,6 +77,7 @@ const mainResponses: any = {
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     SHOWS_PATH: (): string => getDocumentsFolder(),
     EXPORT_PATH: (): string => getDocumentsFolder(null, "Exports"),
+    SCRIPTURE_PATH: (): string => getDocumentsFolder(null, "Bibles"),
     // READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
     DISPLAY: (): boolean => false,
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),

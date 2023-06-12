@@ -4,14 +4,14 @@
     import Loader from "../../main/Loader.svelte"
     // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
-    import { dictionary, notFound, outLocked, outputs, playScripture, scriptures, scripturesCache, scriptureSettings, templates } from "../../../stores"
+    import { dictionary, notFound, outLocked, outputs, playScripture, scriptures, scripturesCache } from "../../../stores"
+    import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import { fetchBible, joinRange, loadBible } from "./scripture"
-    import { newToast } from "../../../utils/messages"
 
     export let active: any
     export let bibles: Bible[]
@@ -246,6 +246,7 @@
 
     function selectVerse(e: any, id: string) {
         autoComplete = false
+
         if (e.ctrlKey || e.metaKey) {
             console.log("A", activeVerses, id)
             if (activeVerses.includes(id)) activeVerses = activeVerses.filter((a) => a !== id)
@@ -268,47 +269,47 @@
                 if (id === last) found = false
             })
             activeVerses = activeVerses
-        } else if (activeVerses.length === 1 && activeVerses[0] === id) activeVerses = []
-        else activeVerses = [id]
+            // } else if (activeVerses.length === 1 && activeVerses[0] === id) activeVerses = []
+        } else activeVerses = [id]
 
         bibles[0].activeVerses = activeVerses
     }
 
-    $: template = $templates[$scriptureSettings.template]?.items || []
-    $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-    function showVerse(id: string) {
-        if ($outLocked) return
+    // $: template = $templates[$scriptureSettings.template]?.items || []
+    // $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
+    // function showVerse(id: string) {
+    //     if ($outLocked) return
 
-        let value = verses[firstBibleId]?.[id] || ""
-        value = value.replace(/(<([^>]+)>)/gi, "")
-        let text: any[] = []
+    //     let value = verses[firstBibleId]?.[id] || ""
+    //     value = value.replace(/(<([^>]+)>)/gi, "")
+    //     let text: any[] = []
 
-        if ($scriptureSettings.verseNumbers) {
-            text.push({ value: id + " ", style: "font-size: 100px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[0]?.lines?.[0].text?.[0].style || "" })
-        }
+    //     if ($scriptureSettings.verseNumbers) {
+    //         text.push({ value: id + " ", style: "font-size: 100px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[0]?.lines?.[0].text?.[0].style || "" })
+    //     }
 
-        text.push({ style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;", value })
+    //     text.push({ style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;", value })
 
-        let tempItems: any[] = []
-        tempItems.push({
-            style: itemStyle,
-            align: "",
-            lines: [{ align: template[0]?.lines?.[0].align || "text-align: justify;", text }],
-        })
+    //     let tempItems: any[] = []
+    //     tempItems.push({
+    //         style: itemStyle,
+    //         align: "",
+    //         lines: [{ align: template[0]?.lines?.[0].align || "text-align: justify;", text }],
+    //     })
 
-        // add data
-        let lines: any[] = []
-        let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
-        if ($scriptureSettings.showVersion && bibles[0].version) lines.push({ text: [{ value: bibles[0].version, style: verseStyle }], align: "" })
-        if ($scriptureSettings.showVerse) lines.push({ text: [{ value: bibles[0].book + " " + bibles[0].chapter + ":" + id, style: verseStyle }], align: "" })
-        if (($scriptureSettings.showVersion && bibles[0].version) || $scriptureSettings.showVerse)
-            tempItems.push({
-                lines,
-                style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
-            })
+    //     // add data
+    //     let lines: any[] = []
+    //     let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
+    //     if ($scriptureSettings.showVersion && bibles[0].version) lines.push({ text: [{ value: bibles[0].version, style: verseStyle }], align: "" })
+    //     if ($scriptureSettings.showVerse) lines.push({ text: [{ value: bibles[0].book + " " + bibles[0].chapter + ":" + id, style: verseStyle }], align: "" })
+    //     if (($scriptureSettings.showVersion && bibles[0].version) || $scriptureSettings.showVerse)
+    //         tempItems.push({
+    //             lines,
+    //             style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+    //         })
 
-        setOutput("slide", { id: "temp", tempItems })
-    }
+    //     setOutput("slide", { id: "temp", tempItems })
+    // }
 
     // search
     const updateSearchValue = (v: string) => (searchValue = v)
@@ -491,7 +492,7 @@
         }
 
         let currentIndex: number = Number(moveLeft ? activeVerses[0] : activeVerses.at(-1))
-        console.log(verses, currentIndex)
+        
         let newSelection: string[] = []
         ;[...Array(activeVerses.length)].map((_, i: number) => {
             let newIndex: number = moveLeft ? currentIndex - i - 1 : currentIndex + i + 1
@@ -501,12 +502,20 @@
             activeVerses = newSelection.sort((a: any, b: any) => a - b)
             bibles[0].activeVerses = activeVerses
         }
+
+        setTimeout(() => {
+            playScripture.set(true)
+        }, 10)
     }
 
     $: outputIsScripture = $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
 
-    function playOrClearScripture() {
-        if (outputIsScripture) {
+    function playOrClearScripture(forcePlay: boolean = false) {
+        if (outputIsScripture && !forcePlay) {
+            // let id = Object.keys(verses[firstBibleId] || {})[0]
+            // console.log(activeVerses)
+            // console.log(id)
+            // showVerse(id)
             setOutput("slide", null)
             return
         }
@@ -571,7 +580,7 @@
             <div class="verses" class:center={!Object.keys(verses[firstBibleId] || {}).length}>
                 {#if Object.keys(verses[firstBibleId] || {}).length}
                     {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
-                        <p on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => showVerse(id)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
+                        <p on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => playOrClearScripture(true)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
                             <span class="v">{id}</span>{@html content}
                         </p>
                     {/each}
@@ -601,7 +610,7 @@
     <Button disabled={activeVerses.includes("1")} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
         <Icon size={1.3} id="previous" />
     </Button>
-    <Button disabled={$outLocked} title={$dictionary.menu?.[outputIsScripture ? "_title_display_stop" : "_title_display"]} on:click={playOrClearScripture}>
+    <Button disabled={$outLocked} title={$dictionary.menu?.[outputIsScripture ? "_title_display_stop" : "_title_display"]} on:click={() => playOrClearScripture()}>
         <Icon size={1.3} id={outputIsScripture ? "clear" : "play"} />
     </Button>
     <Button disabled={Object.keys(verses[firstBibleId] || {}).length && activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString())} title={$dictionary.preview?._next_slide} on:click={() => moveSelection(false)}>

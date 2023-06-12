@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activePopup, currentOutputSettings, labelsDisabled, outputDisplay, outputs, styles } from "../../../stores"
+    import { activePopup, currentOutputSettings, labelsDisabled, os, outputDisplay, outputs, styles } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { addOutput, defaultOutput, deleteOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
@@ -52,12 +52,12 @@
                 a[currentOutput.id][key] = value
 
                 // update key output style
-                if (["style", "enabled", "alwaysOnTop"].includes(key) && a[currentOutput.id].keyOutput) {
+                if (["style", "enabled", "alwaysOnTop", "kioskMode"].includes(key) && a[currentOutput.id].keyOutput) {
                     a[a[currentOutput.id].keyOutput][key] = value
                 }
             }
 
-            if (key === "alwaysOnTop") {
+            if (key === "alwaysOnTop" || key === "kioskMode") {
                 send(OUTPUT, ["SET_VALUE"], { id: $currentOutputSettings, key, value })
 
                 // update key output
@@ -90,6 +90,9 @@
 <div class="info">
     <p><T id="settings.hide_output_hint" /></p>
     <!-- <p><T id="settings.show_output_hint" /></p> -->
+    {#if $os.platform === "darwin"}
+        <p><T id="settings.hide_menubar_hint" /></p>
+    {/if}
 </div>
 
 <CombinedInput>
@@ -153,14 +156,7 @@
 
 <CombinedInput>
     <p><T id="settings.active_style" /></p>
-    <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} style="width: 200px;" on:click={(e) => updateOutput("style", e.detail.id)} />
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="settings.always_on_top" /></p>
-    <div class="alignRight">
-        <Checkbox checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
-    </div>
+    <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
 </CombinedInput>
 
 <CombinedInput>
@@ -177,6 +173,9 @@
         />
     </div>
 </CombinedInput>
+
+<!-- WIP toggle fullscreen (Mac) ?? Only working one time for some reason -->
+<!-- WIP toggle visibleOnAllWorkspaces (Mac) -->
 
 <!-- window -->
 <h3><T id="settings.window" /></h3>
@@ -198,6 +197,21 @@
         <p><T id="popup.change_output_values" /></p>
     </Button>
 </CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.always_on_top" /></p>
+    <div class="alignRight">
+        <Checkbox checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
+    </div>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.kiosk_mode" /></p>
+    <div class="alignRight">
+        <Checkbox checked={currentOutput.kioskMode === true} on:change={(e) => updateOutput("kioskMode", isChecked(e))} />
+    </div>
+</CombinedInput>
+
 <!-- disable on linux -->
 <!-- {#if $os.platform !== "linux"}
   <div>
@@ -215,13 +229,13 @@
     </div>
   </div>
 {/if} -->
-<CombinedInput>
+<!-- <CombinedInput>
     <p>Advanced</p>
     <Button on:click={() => activePopup.set("advanced_settings")}>
         <Icon id="screen" right />
         <p>Advanced settings</p>
     </Button>
-</CombinedInput>
+</CombinedInput> -->
 
 <br />
 

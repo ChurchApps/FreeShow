@@ -38,7 +38,6 @@
 </CombinedInput>
 <CombinedInput>
     <p><T id="settings.alert_updates" /></p>
-    <!-- style="width: 200px;" -->
     <div class="alignRight">
         <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
     </div>
@@ -51,7 +50,6 @@
 </CombinedInput>
 <CombinedInput>
     <p><T id="settings.disable_labels" /></p>
-    <!-- style="width: 200px;" -->
     <div class="alignRight">
         <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
     </div>
@@ -63,7 +61,6 @@
   <Dropdown
     options={projectNames}
     value={$defaultProjectName}
-    style="width: 200px;"
     on:click={(e) => {
       // history?
       defaultProjectName.set(e.detail.id)

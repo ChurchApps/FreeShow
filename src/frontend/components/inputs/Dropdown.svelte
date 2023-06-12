@@ -31,10 +31,17 @@
 
     $: if (active) scrollToActive()
     function scrollToActive() {
+        let id = formatId(value)
+        if (!id) return
+
         setTimeout(() => {
-            let activeElem = self.querySelector("#" + value.replaceAll(" ", "_"))
+            let activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)
+    }
+
+    function formatId(value: string) {
+        return value.replace(/[\W_]+/g, "")
     }
 </script>
 
@@ -56,7 +63,7 @@
             {#each options as option}
                 <!-- {#if option.name !== value} -->
                 <span
-                    id={option.name.replaceAll(" ", "_")}
+                    id={formatId(option.name)}
                     on:click={() => {
                         if (disabled) return
                         dispatch("click", option)

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, mediaCache, shows, showsPath } from "../../../stores"
+    import { activePopup, exportPath, mediaCache, scripturePath, shows, showsPath } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -31,15 +31,46 @@
     }
 </script>
 
-<CombinedInput>
+<CombinedInput textWidth={30}>
     <p><T id="settings.show_location" /></p>
-    <span class="shows_path">
+    <span class="path" title={$showsPath || ""}>
         <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
         <!-- title={$dictionary.inputs?.change_folder} -->
-        <FolderPicker style="width: 100%;" title={$showsPath || ""} id="SHOWS">
+        <FolderPicker style="width: 100%;" id="SHOWS" center={false}>
             <Icon id="folder" right />
-            {$showsPath}
-            <!-- <T id="inputs.change_folder" /> -->
+            {#if $showsPath}
+                {$showsPath}
+            {:else}
+                <T id="inputs.change_folder" />
+            {/if}
+        </FolderPicker>
+    </span>
+</CombinedInput>
+
+<CombinedInput textWidth={30}>
+    <p><T id="settings.export_location" /></p>
+    <span class="path" title={$exportPath || ""}>
+        <FolderPicker style="width: 100%;" id="EXPORT" center={false}>
+            <Icon id="folder" right />
+            {#if $exportPath}
+                {$exportPath}
+            {:else}
+                <T id="inputs.change_folder" />
+            {/if}
+        </FolderPicker>
+    </span>
+</CombinedInput>
+
+<CombinedInput textWidth={30}>
+    <p><T id="settings.scripture_location" /></p>
+    <span class="path" title={$scripturePath || ""}>
+        <FolderPicker style="width: 100%;" id="SCRIPTURE" center={false}>
+            <Icon id="folder" right />
+            {#if $scripturePath}
+                {$scripturePath}
+            {:else}
+                <T id="inputs.change_folder" />
+            {/if}
         </FolderPicker>
     </span>
 </CombinedInput>
@@ -74,12 +105,12 @@
 </Button>
 
 <style>
-    .shows_path {
+    .path {
         display: flex;
         align-items: center;
         max-width: 70%;
     }
-    .shows_path :global(button) {
+    .path :global(button) {
         white-space: nowrap;
     }
 

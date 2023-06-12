@@ -135,7 +135,7 @@
 <!-- TODO: use stage (dropdown) -->
 <CombinedInput>
     <p><T id="edit.background_color" /></p>
-    <span style="width: 200px;">
+    <span>
         <Color value={currentStyle.background || "#000000"} on:input={(e) => updateStyle(e, "background")} />
     </span>
 </CombinedInput>
@@ -232,22 +232,22 @@
 
 <CombinedInput>
     <p><T id="settings.override_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} style="width: 200px;" on:click={(e) => updateStyle(e.detail.id, "template")} />
+    <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
 </CombinedInput>
 
 <!-- meta -->
 <h3><T id="tools.metadata" /></h3>
 <CombinedInput>
     <p><T id="meta.display_metadata" /></p>
-    <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} style="width: 200px;" on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} />
+    <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} />
 </CombinedInput>
 <CombinedInput>
     <p><T id="meta.meta_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} style="width: 200px;" on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} />
+    <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} />
 </CombinedInput>
 <CombinedInput>
     <p><T id="meta.message_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} style="width: 200px;" on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} />
+    <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} />
 </CombinedInput>
 
 <!-- TODO: override transition ? -->

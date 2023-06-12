@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
-import { scriptures, scripturesCache } from "../../../stores"
+import { scripturePath, scriptures, scripturesCache } from "../../../stores"
 
 // API.Bible key. Will propably change in the future (Please don't abuse)
 let key: string = "320b5b593fa790ced135a98861de51a9"
@@ -56,7 +56,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
             return
         }
 
-        window.api.send(BIBLE, { name, id: scripture.id || id, data: { index } })
+        window.api.send(BIBLE, { name, id: scripture.id || id, data: { index }, path: get(scripturePath) })
     })
 
     return bible

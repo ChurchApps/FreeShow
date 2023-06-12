@@ -117,7 +117,7 @@
 {#each colors as color}
     <CombinedInput>
         <p><T id={"theme." + color} /></p>
-        <Color value={$themes[$theme].colors[color]} style="width: 200px;" on:input={(e) => updateTheme(e, color)} />
+        <Color value={$themes[$theme].colors[color]} on:input={(e) => updateTheme(e, color)} />
     </CombinedInput>
 {/each}
 

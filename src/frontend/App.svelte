@@ -99,12 +99,10 @@
                 return
             }
 
-            // return if using shortcuts in inputs
+            // use default input shortcuts on supported devices (this includes working undo/redo)
             const exeption = ["e", "i", "n", "o", "s", "a"]
-            if (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key)) {
-                let simulateMac = false
-                if (simulateMac) e.preventDefault()
-                else return
+            if (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && $os.platform !== "darwin") {
+                return
             }
 
             if (ctrlKeys[e.key]) {

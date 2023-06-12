@@ -14,7 +14,7 @@ export function createOutput(output: Output) {
 
     if (outputWindows[id]) outputWindows[id].close()
 
-    outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false }, id)
+    outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true }, id)
     // outputWindows[id].on("closed", () => removeOutput(id))
 }
 
@@ -114,32 +114,6 @@ export function displayOutput(data: any) {
 
     // /////////////////////
 
-    // let outputScreen: any = null
-
-    // if (!bounds || (bounds?.width === 0 && bounds?.height === 0) || data.reset) {
-    //   if (data.screen) {
-    //     outputScreen =
-    //       displays.find((display) => {
-    //         return display.id.toString() === data.screen
-    //       }) || null
-    //   }
-    //   if (!outputScreen) {
-    //     outputScreen =
-    //       displays.find((display) => {
-    //         return display.bounds.x !== mainWindow?.getBounds().x || display.bounds.y !== mainWindow?.getBounds().y
-    //       }) || null
-    //     if (outputScreen) toApp(MAIN, { channel: "SET_SCREEN", data: outputScreen })
-    //   }
-    //   // outputScreenId = outputScreen ? outputScreen.id.toString() : null
-
-    //   bounds = outputScreen?.bounds || null
-    //   toApp(OUTPUT, { channel: "POSITION", data: bounds })
-    // }
-
-    // if (outputScreen?.internal && screen.getDisplayMatching(mainWindow!.getBounds()).internal) outputScreen = null
-
-    // /////////////////////
-
     // TODO: set output screen + pos, if nothing set on startup
 
     // console.log("Display: ", bounds?.x, bounds?.y, bounds?.width, bounds?.height)
@@ -149,6 +123,10 @@ export function displayOutput(data: any) {
     let yDif = bounds?.y - mainWindow!.getBounds().y
 
     let windowNotCoveringMain: boolean = xDif > 50 || yDif < -50 || (xDif < -50 && yDif > 50)
+
+    // WIP Enabling output window over internal screen never working on mac!
+    // if (!windowNotCoveringMain && process.platform === "darwin")
+
     // console.log(bounds, xDif, yDif, windowNotCoveringMain)
     if (bounds && (data.force || windowNotCoveringMain)) {
         // , !data.force
@@ -170,36 +148,15 @@ export function displayOutput(data: any) {
     toApp(OUTPUT, { channel: "DISPLAY", data })
 }
 
-// , fullscreen: boolean = false
+// MacOS Menu Bar
+// https://stackoverflow.com/questions/39091964/remove-menubar-from-electron-app
+// https://stackoverflow.com/questions/69629262/how-can-i-hide-the-menubar-from-an-electron-app
+// https://github.com/electron/electron/issues/1415
+// https://github.com/electron/electron/issues/1054
+
 function showWindow(window: BrowserWindow) {
     if (!window) return
-    // TODO: output task bar
-    // window.setVisibleOnAllWorkspaces(true)
     window.showInactive()
-    // window.show()
-    // window.maximize()
-    // window.blur()
-    // mainWindow?.focus()
-    // window.setFullScreen(true)
-    // window.setAlwaysOnTop(true, "pop-up-menu", 1)
-    // window.setAlwaysOnTop(true, "pop-up-menu")
-    // window.setFullScreenable(false)
-    // window.setAlwaysOnTop(true, "screen-saver", 1)
-    // window.setAlwaysOnTop(true, 'floating')
-
-    // if (process.platform === "darwin") {
-    //   setTimeout(() => {
-    //     window.maximize()
-    //     if (fullscreen) {
-    //       // ... ??
-    //       // window.setFullScreen(true)
-    //     }
-    //     setTimeout(() => {
-    //       // focus on mac
-    //       mainWindow?.focus()
-    //     }, 10)
-    //   }, 100)
-    // }
 
     window.moveTop()
 }
@@ -207,12 +164,7 @@ function showWindow(window: BrowserWindow) {
 function hideWindow(window: BrowserWindow) {
     if (!window) return
 
-    // if (process.platform === "darwin") {
-    //   // window.setFullScreen(false)
-    //   // setTimeout(() => {
-    //   window.minimize()
-    //   // }, 100)
-    // }
+    window.setKiosk(false)
     window.hide()
 }
 
@@ -233,56 +185,17 @@ export function updateBounds(data: any) {
 
     disableWindowMoveListener()
 
-    // let wasVisible: boolean = window.isVisible()
-    // window.setKiosk(data.kiosk)
-    // if (!data.kiosk) {
     window.setBounds({ ...data.bounds, height: data.bounds.height - 1 })
-    // window.setAspectRatio(data.bounds.width / data.bounds.height)
     setTimeout(() => {
         window.setBounds(data.bounds)
-
-        // TODO: creating "ghost" window when kiosk is diasabled
-        // setTimeout(() => {
-        //   console.log(window.isVisible(), !wasVisible)
-        //   if (window.isVisible() && !wasVisible) hideWindow(window)
-        // }, 500)
     }, 10)
-    // } else window.setBounds(data.bounds)
 }
 
 export function setValue({ id, key, value }: any) {
     let window: BrowserWindow = outputWindows[id]
 
     if (key === "alwaysOnTop") window.setAlwaysOnTop(value)
-}
-
-// temporary function to test on mac
-export function toggleValue({ id, key }: any) {
-    let window: BrowserWindow = outputWindows[id]
-    if (key === "maximize") window.isMaximized() ? window.unmaximize() : window.maximize()
-    else if (key === "minimize") window.isMinimized() ? false : window.minimize()
-    else if (key === "fullscreen") window.setFullScreen(!window.isFullScreen())
-    else if (key === "kiosk") window.setKiosk(window.isKiosk())
-    else if (key === "hide") window.isVisible() ? window.hide() : window.show()
-    else if (key === "disabled") window.setEnabled(!window.isEnabled())
-    else if (key === "menubar") window.setAutoHideMenuBar(!window.isMenuBarAutoHide())
-    else if (key === "workspaces") window.setVisibleOnAllWorkspaces(!window.isVisibleOnAllWorkspaces())
-    else if (key === "alwaysontop") window.isAlwaysOnTop() ? window.setAlwaysOnTop(false) : window.setAlwaysOnTop(true, "screen-saver", 1)
-    else if (key === "alwaysontop2") window.isAlwaysOnTop() ? window.setAlwaysOnTop(false) : window.setAlwaysOnTop(true, "pop-up-menu", 1)
-    // window.setVisibleOnAllWorkspaces(true, {visibleOnFullScreen: true});
-
-    let state = {
-        maximized: window.isMaximized(),
-        minimized: window.isMinimized(),
-        fullscreen: window.isFullScreen(),
-        kiosk: window.isKiosk(),
-        visible: window.isVisible(),
-        enabled: window.isEnabled(),
-        autoHideMenuBar: window.isMenuBarAutoHide(),
-        allWorkspaces: window.isVisibleOnAllWorkspaces(),
-    }
-
-    console.log("state", JSON.stringify(state))
+    else if (key === "kioskMode") window.setKiosk(value)
 }
 
 export function moveToFront(id: string) {
@@ -316,7 +229,6 @@ const outputResponses: any = {
     UPDATE: (data: any) => updateOutput(data),
     UPDATE_BOUNDS: (data: any) => updateBounds(data),
     SET_VALUE: (data: any) => setValue(data),
-    TOGGLE_VALUE: (data: any) => toggleValue(data),
     TO_FRONT: (data: any) => moveToFront(data),
 }
 

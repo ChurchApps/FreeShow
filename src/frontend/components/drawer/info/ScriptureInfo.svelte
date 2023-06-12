@@ -3,23 +3,23 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, categories, drawerTabsData, outLocked, outputs, playScripture, scriptureSettings, templates } from "../../../stores"
+    import { activeProject, categories, drawerTabsData, outLocked, playScripture, scriptureSettings, templates } from "../../../stores"
+    import { getAutoSize } from "../../edit/scripts/autoSize"
+    import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
-    import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { joinRange } from "../bible/scripture"
-    import { getAutoSize } from "../../edit/scripts/autoSize"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
@@ -210,6 +210,7 @@
 
     function showVerse() {
         if ($outLocked) return
+
         let tempItems: Item[] = slides[0] || []
         setOutput("slide", { id: "temp", tempItems })
     }
@@ -218,8 +219,7 @@
         showVerse()
         playScripture.set(false)
     }
-
-    $: if (verseRange && $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp") showVerse()
+    // $: if (verseRange && $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp") showVerse()
 
     // show on enter
     function keydown(e: any) {
