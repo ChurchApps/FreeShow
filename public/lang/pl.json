@@ -541,7 +541,8 @@
         "backdrop_filters": "Filtry tła",
         "interval": "Interwał",
         "video": "Film",
-        "choose_media": "Wybierz media"
+        "choose_media": "Wybierz media",
+        "recent": "Recently edited"
     },
     "items": {
         "text": "Pole tekstowe",

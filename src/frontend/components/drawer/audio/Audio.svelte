@@ -41,19 +41,24 @@
             if (active !== prevActive) {
                 prevActive = active
                 files = []
-                Object.values($audioFolders).forEach((data) => window.api.send(READ_FOLDER, data.path))
+                Object.values($audioFolders).forEach((data) => window.api.send(READ_FOLDER, { path: data.path }))
             }
         } else if (path.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
-                window.api.send(READ_FOLDER, path)
+                window.api.send(READ_FOLDER, { path, listFilesInFolders: true })
             }
         }
     }
 
+    let filesInFolders: string[] = []
+    $: console.log(filesInFolders)
+
     // receive files
     window.api.receive(READ_FOLDER, (msg: any) => {
+        filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
+
         if (active === "all" || msg.path === path) {
             files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
             files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
@@ -72,7 +77,7 @@
     let fullFilteredFiles: any[] = []
     function filterSearch() {
         fullFilteredFiles = JSON.parse(JSON.stringify(files))
-        if (searchValue.length > 1) fullFilteredFiles = fullFilteredFiles.filter((a) => filter(a.name).includes(searchValue))
+        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(searchValue))
     }
 
     function keydown(e: any) {

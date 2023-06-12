@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { MediaFit } from "../../../types/Main"
-
     import { activeEdit, activeShow, dictionary, media, outputs, showsCache, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import { history } from "../helpers/history"

@@ -111,6 +111,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
     let start: null | number = null
     let end: null | number = null
 
+    console.log(selection)
     if (!selection?.anchorNode) return sel
 
     let parent: Element = selection.anchorNode.parentElement!.closest(".edit")!
@@ -124,7 +125,9 @@ export function getSelectionRange(): { start: number; end: number }[] {
     // console.log(startNode, startOffset, endOffset)
     // console.log(parent.childNodes)
 
-    if (!parent) return sel
+    console.log(parent, sel)
+
+    if (!parent?.closest(".edit")) return sel
 
     new Array(...parent.childNodes).forEach((br: any, line: number) => {
         if (!sel[line]) sel[line] = {}
@@ -164,6 +167,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
         })
     })
 
+    console.log(sel)
     return sel
 }
 

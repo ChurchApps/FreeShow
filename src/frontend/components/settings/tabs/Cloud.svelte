@@ -1,7 +1,7 @@
 <script lang="ts">
     import { OPEN_FILE } from "../../../../types/Channels"
     import { activePopup, driveData, driveKeys } from "../../../stores"
-    import { driveConnect } from "../../../utils/drive"
+    import { driveConnect, syncDrive } from "../../../utils/drive"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -92,7 +92,16 @@
     </div> -->
 
     <CombinedInput>
-        <Button on:click={save} disabled={!validKeys} style="width: 100%;" center>
+        <Button
+            on:click={() => {
+                save()
+                // syncDrive is called by save, but only if it's enabled
+                if ($driveData.disabled) setTimeout(() => syncDrive(true), 2000)
+            }}
+            disabled={!validKeys}
+            style="width: 100%;"
+            center
+        >
             <Icon id="cloud_sync" right />
             <T id="cloud.sync" />
         </Button>

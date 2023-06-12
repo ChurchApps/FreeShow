@@ -248,8 +248,8 @@
   </span>
 {/if} -->
 
-<Button disabled={!shows.length} on:click={exportClick} center>
-    <Icon id="export" right />
+<Button style="margin-top: 10px;" disabled={!shows.length} on:click={exportClick} center dark>
+    <Icon id="export" size={1.2} right />
     <T id="export.export" />
     {#if shows.length > 1 && format.id !== "project"}
         <span style="opacity: 0.5;padding-left: 10px;">({shows.length})</span>

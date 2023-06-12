@@ -63,6 +63,7 @@
         y: () => redo(),
         z: () => undo(),
         Z: () => redo(),
+        // F2: () => menuClick("rename"),
     }
     const keys: any = {
         Escape: () => {

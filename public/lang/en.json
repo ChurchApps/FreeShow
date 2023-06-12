@@ -541,7 +541,8 @@
         "backdrop_filters": "Backdrop filters",
         "interval": "Interval",
         "video": "Video",
-        "choose_media": "Choose media"
+        "choose_media": "Choose media",
+        "recent": "Recently edited"
     },
     "items": {
         "text": "Textbox",

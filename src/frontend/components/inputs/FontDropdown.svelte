@@ -53,10 +53,17 @@
 
     $: if (active) scrollToActive()
     function scrollToActive() {
+        let id = formatId(value)
+        if (!id) return
+
         setTimeout(() => {
-            let activeElem = self.querySelector("#" + value.replaceAll(" ", "_"))
+            let activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)
+    }
+
+    function formatId(value: string) {
+        return value.replace(/[\W_]+/g, "")
     }
 </script>
 
@@ -76,7 +83,7 @@
         <div class="dropdown" transition:slide={{ duration: 200 }}>
             {#each fonts as option}
                 <span
-                    id={option.replaceAll(" ", "_")}
+                    id={formatId(option)}
                     on:click={() => {
                         dispatch("click", option)
                         active = false

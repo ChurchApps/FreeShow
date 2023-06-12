@@ -541,7 +541,8 @@
         "backdrop_filters": "Filtre bak",
         "interval": "Intervall",
         "video": "Video",
-        "choose_media": "Velg media"
+        "choose_media": "Velg media",
+        "recent": "Nylig redigert"
     },
     "items": {
         "text": "Tekstboks",

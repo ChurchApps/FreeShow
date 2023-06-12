@@ -541,7 +541,8 @@
         "backdrop_filters": "Backdrop filters",
         "interval": "Interval",
         "video": "Video",
-        "choose_media": "Elegir medios"
+        "choose_media": "Elegir medios",
+        "recent": "Recently edited"
     },
     "items": {
         "text": "Cuadro de texto",

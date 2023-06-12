@@ -44,6 +44,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let deleting: boolean = id !== undefined
 
             data = clone(deleting ? obj.oldData : data) || {}
+            console.log(data)
+
             let key = data.key
             let subkey = data.subkey
             // insert in array
@@ -54,7 +56,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (!deleting) {
                 let empty = !data?.data
-                data = { ...data, data: data?.data || clone(updater.empty) }
+                data = { ...data, data: data?.data ?? clone(updater.empty) }
                 id = obj.oldData?.id || uid()
                 if (keys && !key) id = "keys"
 

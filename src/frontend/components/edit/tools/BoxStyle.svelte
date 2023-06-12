@@ -24,14 +24,13 @@
 
     function getTextSelection(e: any) {
         let sel: any = window.getSelection()
-        // if (sel.focusNode?.parentElement?.closest(".edit") !== null && !e.target.closest(".editTools")) {
-        // if (e.target.closest(".edit") && !e.target.closest(".editTools")) {
-        if (e.target.closest(".edit") && !e.target.closest(".CSS")) {
-            if (sel.type === "None") selection = null
-            // else if (sel.type === "caret") selection = [sel.anchorOffset, sel.focusOffset]
-            else selection = getSelectionRange() // range
-        }
-        // console.log("SEL: ", selection)
+
+        // mouse up outside of textbox should also update selection
+        if (e.target.closest(".CSS")) return
+
+        if (sel.type === "None") selection = null
+        // else if (sel.type === "caret") selection = [sel.anchorOffset, sel.focusOffset]
+        else selection = getSelectionRange() // range
     }
 
     function keyup(e: any) {

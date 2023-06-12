@@ -43,7 +43,7 @@ import { clone } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
-import { getMediaType } from "../helpers/media"
+import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
 import { getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { sendMidi } from "../helpers/showActions"
@@ -459,6 +459,15 @@ const actions: any = {
     },
 
     // media
+    preview: (obj: any) => {
+        let path: string = obj.sel.data[0].path || obj.sel.data[0].id
+        if (!path) return
+
+        activeEdit.set({ id: path, type: "media", items: [] })
+        let name = removeExtension(getFileName(path))
+        let type = getMediaType(getExtension(path))
+        activeShow.set({ id: path, name, type })
+    },
     play: (obj: any) => {
         if (obj.sel.id === "midi") {
             sendMidi(obj.sel.data[0])

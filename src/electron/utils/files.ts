@@ -144,7 +144,8 @@ export function getPaths(): any {
 }
 
 // READ_FOLDER
-export function getFolderContent(_e: any, folderPath: string) {
+export function getFolderContent(_e: any, data: any) {
+    let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
     if (!fileList.length) return
 
@@ -155,8 +156,24 @@ export function getFolderContent(_e: any, folderPath: string) {
         if (stats) files.push({ ...stats, name })
     }
 
+    // get first "layer" of files inside folder for searching
+    let filesInFolders: string[] = []
+    if (data.listFilesInFolders) {
+        let folders: any[] = files.filter((a) => a.folder)
+        folders.forEach((folder) => {
+            let fileList: string[] = readFolder(folder.path)
+            if (!fileList.length) return
+
+            for (const name of fileList) {
+                let p: string = path.join(folder.path, name)
+                let stats: any = getFileStats(p)
+                if (stats && !stats.folder) filesInFolders.push({ ...stats, name })
+            }
+        })
+    }
+
     if (!files.length) return
-    toApp(READ_FOLDER, { path: folderPath, files })
+    toApp(READ_FOLDER, { path: folderPath, files, filesInFolders })
 }
 
 // OPEN_FOLDER

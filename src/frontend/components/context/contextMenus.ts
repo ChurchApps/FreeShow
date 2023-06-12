@@ -86,6 +86,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     capitalize: { label: "actions.capitalize" },
     trim: { label: "actions.trim" },
     // MEDIA
+    preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },
     play_no_filters: { label: "media.play_no_filters", icon: "play" },
     favourite: { label: "media.favourite", icon: "star" },
@@ -144,7 +145,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media_card: ["play", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
+    media_card: ["preview", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
     // "addToFirstSlide",
     overlay_card: ["edit", "lock_to_output", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",

@@ -541,7 +541,8 @@
         "backdrop_filters": "Backdrop filters",
         "interval": "Interval",
         "video": "Video",
-        "choose_media": "Vyberte médiá"
+        "choose_media": "Vyberte médiá",
+        "recent": "Recently edited"
     },
     "items": {
         "text": "Textové pole",

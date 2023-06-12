@@ -541,7 +541,8 @@
         "backdrop_filters": "Backdrop filters",
         "interval": "Interval",
         "video": "Video",
-        "choose_media": "Scegli i media"
+        "choose_media": "Scegli i media",
+        "recent": "Recently edited"
     },
     "items": {
         "text": "Casella di testo",

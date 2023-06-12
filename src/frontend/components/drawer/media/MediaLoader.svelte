@@ -190,7 +190,9 @@
                 {/if}
             </div>
         {:else if loadFullImage}
-            <img src={path} alt={name} loading="lazy" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;object-fit: contain;pointer-events: none;" />
+            {#key path}
+                <img src={path} alt={name} loading="lazy" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;object-fit: contain;pointer-events: none;" />
+            {/key}
         {:else}
             <canvas style="width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" bind:this={canvas} />
         {/if}

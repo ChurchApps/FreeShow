@@ -53,7 +53,10 @@
             if (!$outLocked) setOutput("background", null)
         },
         F2: () => {
-            if (!$outLocked) setOutput("slide", null)
+            if ($outLocked) return false
+
+            setOutput("slide", null)
+            return true
         },
         F3: () => {
             if (!$outLocked) setOutput("overlays", [])
@@ -125,8 +128,7 @@
 
         // ($activeShow?.type === "show" || $activeShow?.type === undefined) &&
         if (shortcuts[e.key]) {
-            e.preventDefault()
-            shortcuts[e.key](e)
+            if (shortcuts[e.key](e)) e.preventDefault()
             return
         }
 
