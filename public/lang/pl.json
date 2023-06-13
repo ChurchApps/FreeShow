@@ -8,16 +8,16 @@
         "drop": "Upuść tutaj",
         "search": "Szukaj",
         "none": "Brak",
-        "finished": "Finished"
+        "finished": "Zakończono"
     },
     "languages": {
-        "en": "English",
-        "no": "Norwegian",
-        "sk": "Slovak",
-        "es": "Spanish",
-        "pt_BR": "Brazilian Portuguese",
-        "de": "German",
-        "it": "Italian",
+        "en": "Angielski",
+        "no": "Norweski",
+        "sk": "Słowacki",
+        "es": "Hiszpański",
+        "pt_BR": "Brazylijski Portugalski",
+        "de": "Niemiecki",
+        "it": "Włoski",
         "pl": "Polski"
     },
     "about": {
@@ -34,7 +34,7 @@
     },
     "tooltip": {
         "project": "Stwórz nowy projekt gdzie możesz organizować swoje pokazy.",
-        "show": "Stwórz nowy pokaz gdzie możesz dodać teksty pieśni, prezentacje i multimedia. Przytrzymaj Ctrl/Cmd aby stworzyć pusty pokaz.",
+        "show": "Stwórz nowy pokaz gdzie możesz dodać teksty pieśni, prezentacje i multimedia. Przytrzymaj CTRL/CMD aby stworzyć pusty pokaz.",
         "groups": "Wszystkie grupy w bieżącym pokazie oraz wszystkie globalne grupy. Naciśnij i przeciągnij pokaz aby dodać je do bieżącego układu.",
         "layout": "Dodaj przejścia i timery do slajdów w bieżącym układzie.",
         "media": "Wszystkie media w bieżącym pokazie. Wyświetlaj je, albo przeciągaj je do bieżącego układu.",
@@ -46,7 +46,7 @@
         "slide": "Edytuj bieżący slajd.",
         "filters": "Zmień widok zaznaczonego elementu.",
         "options": "Więcej opcji.",
-        "scripture": "Przytrzymaj Hold Ctrl/Cmd lub Shift aby zaznaczyć jednocześnie więcej wersetów."
+        "scripture": "Przytrzymaj CTRL/CMD lub SHIFT aby zaznaczyć jednocześnie więcej wersetów."
     },
     "setup": {
         "good_luck": "Mam nadzieję, że ta aplikacja będzie dla Ciebie pomocna. Powodzenia podczas prezentowania! :)",
@@ -55,7 +55,7 @@
         "get_started": "Zaczynajmy!"
     },
     "example": {
-        "welcome": "Powitanie",
+        "welcome": "Witaj",
         "meetings": "Spotkania",
         "example": "Przykład",
         "example_note": "Zapisz notatki tutaj",
@@ -74,13 +74,13 @@
     "titlebar": {
         "file": "Plik",
         "edit": "Edytuj",
-        "view": "Wyświetl",
+        "view": "Pokaż",
         "help": "Pomoc"
     },
     "screen": {
         "width": "Szerokość",
         "height": "Wysokość",
-        "pixels": "piksele"
+        "pixels": "Piksele"
     },
     "create_show": {
         "search_web": "Poszukaj pieśni w Internecie",
@@ -155,7 +155,7 @@
         "_title_edit": "Edytowanie",
         "stage": "Scena",
         "_title_stage": "Widok sceny",
-        "draw": "Rysuj",
+        "draw": "Rysowanie",
         "_title_draw": "Rysowanie",
         "calendar": "Kalendarz",
         "_title_calendar": "Wydarzenia",
@@ -226,7 +226,7 @@
         "message_template": "Szablon komunikatu"
     },
     "show_at": {
-        "never": "Brak slajdów",
+        "never": "Nie wyświetlaj",
         "always": "Wszystkie slajdy",
         "first": "Pierwszy slajd",
         "last": "Ostatni slajd",
@@ -286,8 +286,8 @@
         "pictures": "Obrazy",
         "videos": "Filmy",
         "music": "Muzyka",
-        "offers": "Kolekta (ofiara)",
-        "notice": "Ogłoszoenia",
+        "offers": "Kolekta",
+        "notice": "Ogłoszenia",
         "visuals": "Animacje"
     },
     "groups": {
@@ -341,8 +341,8 @@
         "save_quit": "Zapisz i wyjdź"
     },
     "new": {
-        "show": "Nowy pokaz",
-        "empty_show": "Nowy pusty pokaz",
+        "show": "Stwórz nowy pokaz",
+        "empty_show": "Stwórz nowy pusty pokaz",
         "project": "Nowy projekt",
         "section": "Nowa sekcja",
         "timer": "Nowy timer",
@@ -359,7 +359,7 @@
     "show": {
         "name": "Nazwa",
         "category": "Kategoria",
-        "quick_lyrics": "Szybkie Słowa Pieśni",
+        "quick_lyrics": "Szybkie wprowadzenie tekstu",
         "new_layout": "Nowy układ",
         "grid": "Widok siatki",
         "list": "Widok listy",
@@ -383,7 +383,7 @@
         "delete_all": "Usuń wszystko",
         "close": "Zamknij",
         "save": "Zapisz",
-        "disable": "Deaktywuj",
+        "disable": "Dezaktywuj",
         "enable": "Aktywuj",
         "undo": "Cofnij",
         "redo": "Przywróć",
@@ -422,9 +422,9 @@
         "custom_key": "Ustaw wartość klucza",
         "play_on_midi": "Graj MIDI na",
         "send_midi": "Wyślij wyjście MIDI",
-        "delete_shows_not_indexed": "Usuń pokazy w folderze 'Shows', które nie są zaindeksowane",
+        "delete_shows_not_indexed": "Usuń z folderu pokazy, które nie są zaindeksowane",
         "delete_thumbnail_cache": "Usuń pamięć podręczną miniaturek",
-        "refresh_all_shows": "Weź wszystkie pokazy z folderu 'Shows'",
+        "refresh_all_shows": "Załaduj ponownie pliki \".show\"",
         "start_timer": "Rozpocznij odliczanie",
         "stop_timers": "Zatrzymaj aktywny timer",
         "next_after_media": "Następny po media",
@@ -502,7 +502,7 @@
         "slide": "Slajd"
     },
     "edit": {
-        "font": "Font (czcionka)",
+        "font": "Font",
         "family": "Rodzina",
         "style": "Styl",
         "options": "Opcje",
@@ -517,8 +517,8 @@
         "chords": "Akordy",
         "auto_size": "Automatyczny rozmiar",
         "line_spacing": "Interlinia",
-        "letter_spacing": "Odstępy między literami",
-        "word_spacing": "Odstępy między wyrazami",
+        "letter_spacing": "Odstępy liter",
+        "word_spacing": "Odstępy wyrazów",
         "align": "Wyrównanie",
         "_title_left": "Wyrównaj do lewej",
         "_title_center": "Wyrównaj do środka",
@@ -549,10 +549,10 @@
         "backdrop_filters": "Filtry tła",
         "interval": "Interwał",
         "video": "Film",
-        "choose_media": "Wybierz media"
+        "choose_media": "Wybierz obraz"
     },
     "items": {
-        "text": "Pole tekstowe",
+        "text": "Tekst",
         "list": "Lista",
         "media": "Multimedia",
         "image": "Obraz",
@@ -639,7 +639,7 @@
         "radius": "Promień",
         "glow": "Poświata",
         "hollow": "Puste w środku",
-        "hold": "Podczas przycisku myszy",
+        "hold": "Przytrzymaj przycisk myszy",
         "rainbow": "Tęcza",
         "threed": "3D",
         "dots": "Kropki"
@@ -659,7 +659,7 @@
         "other": "Inne",
         "message": "Komunikat",
         "color": "Kolor",
-        "font-size": "Rozmiar fontu (czcionki)",
+        "font-size": "Rozmiar fontu",
         "zeros": "Zera",
         "overrun": "Kolor przekroczenia czasu"
     },
@@ -690,7 +690,7 @@
         "change_key_output_position": "Zmień pozycję wyjściową z mapowaniem alfa",
         "position": "Pozycja",
         "enabled": "Włączone",
-        "color_when_active": "Kolor podczas aktywacji",
+        "color_when_active": "Kolor aktywnego wyjścia",
         "fixed": "Stałe",
         "lines": "Linie",
         "override_with_template": "Zastąp styl szablonem",
@@ -709,9 +709,9 @@
         "add": "Dodaj",
         "remove": "Usuń",
         "change_name": "Zmień nazwę",
-        "show_location": "Pokaż lokalizację",
-        "font": "Font (czcionka)",
-        "font_family": "Rodzina fontu",
+        "show_location": "Ścieżka do folderu z plikami \".show\"",
+        "font": "Fonty",
+        "font_family": "Rodzina fontów",
         "font_size": "Rozmiar fontu",
         "colors": "Kolory",
         "add_group": "Dodaj grupę",
@@ -723,11 +723,11 @@
         "connections": "Połączenia",
         "max_connections": "Maksymalna liczba połączeń",
         "allowed_connections": "Dozwolone połączenia",
-        "connect": "Połącz, wpisując to w przeglądarce internetowej",
+        "connect": "Połącz się, wpisując w przeglądarkę",
         "restart": "Uruchom ponownie serwery",
         "reset_all": "Resetuj wszystko",
         "reset_theme": "Resetuj motyw",
-        "reset_themes": "Resetuj motywy",
+        "reset_themes": "Resetuj wszystkie motywy",
         "export_all": "Eksportuj wszystko"
     },
     "calendar": {
