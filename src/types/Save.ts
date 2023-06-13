@@ -13,6 +13,7 @@ export type SaveListSettings =
     | "showsPath"
     | "exportPath"
     | "scripturePath"
+    | "recordingPath"
     | "drawer"
     | "drawerTabsData"
     | "groupNumbers"

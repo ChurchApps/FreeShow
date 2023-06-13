@@ -136,13 +136,10 @@
 
     $: if ($activePopup === null && $popupData.value) findChangedInput()
     function findChangedInput() {
-        console.log($popupData)
-
         let changedInput = edits[$popupData.section]?.find((a) => a.id === $popupData.id)
         if (!changedInput) return
 
         changedInput.value = $popupData.value
-        console.log(changedInput.value, edits)
         valueChange({ detail: changedInput.value }, changedInput)
     }
 </script>
@@ -226,7 +223,7 @@
                 <CombinedInput>
                     <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
                     <div class="alignRight">
-                        <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:checked={(e) => valueChange(e, input)} />
+                        <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
                     </div>
                 </CombinedInput>
             {:else if !input.name}

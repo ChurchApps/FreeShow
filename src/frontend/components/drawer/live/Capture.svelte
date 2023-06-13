@@ -62,6 +62,7 @@
 </script>
 
 <Card
+    mediaData={JSON.stringify(constraints)}
     class="context #live_card"
     {loaded}
     outlineColor={findMatchingOut(screen.id, $outputs)}

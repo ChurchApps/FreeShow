@@ -39,8 +39,8 @@
             if (value.type === globalValues.type && value.duration === globalValues.duration && value.easing === globalValues.easing) value = null
 
             let type = id === "text" ? "transition" : "mediaTransition"
-            let override = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout") + "index#" + $selected.data[0].index + type
-            history({ id: "SHOW_LAYOUT", newData: { key: type, data: value, indexes: [$selected.data[0].index] }, location: { page: "show", override } })
+            let override = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout") + "index#" + $selected.data[0]?.index + type
+            history({ id: "SHOW_LAYOUT", newData: { key: type, data: value, indexes: [$selected.data[0]?.index] }, location: { page: "show", override } })
 
             setTimeout(() => {
                 window.api.send(OUTPUT, { channel: "SHOWS", data: get(showsCache) })
@@ -54,8 +54,8 @@
     }
 
     let isSlide: boolean = $selected.id === "slide"
-    $: slideTextTransition = isSlide && $selected.data[0] ? clone($selected.data[0].transition || $transitionData.text || { type: "fade", duration: 500, easing: "sine" }) : null
-    $: slideMediaTransition = isSlide && $selected.data[0] ? clone($selected.data[0].mediaTransition || $transitionData.media || { type: "fade", duration: 800, easing: "sine" }) : null
+    $: slideTextTransition = isSlide ? clone($selected.data[0]?.transition || $transitionData.text || { type: "fade", duration: 500, easing: "sine" }) : {}
+    $: slideMediaTransition = isSlide ? clone($selected.data[0]?.mediaTransition || $transitionData.media || { type: "fade", duration: 800, easing: "sine" }) : {}
 
     let selectedType: "text" | "media" = "text"
     $: textIsDisabled = (isSlide ? slideTextTransition.type : $transitionData.text.type) === "none"

@@ -90,6 +90,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     play: { label: "media.play", icon: "play" },
     play_no_filters: { label: "media.play_no_filters", icon: "play" },
     favourite: { label: "media.favourite", icon: "star" },
+    // LIVE
+    recording: { label: "actions.start_recording", icon: "record" },
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
     // STAGE
@@ -154,7 +156,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     player_button: ["addToProject", "SEPERATOR", "rename", "delete"],
     audio_button: ["favourite", "addToProject"],
     // "addToFirstSlide"
-    live_card: [],
+    live_card: ["recording"],
 
     // PROJECT
     projects: ["newProject", "newFolder"],

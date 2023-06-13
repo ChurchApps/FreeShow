@@ -22,6 +22,7 @@
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
+    import Recorder from "./components/main/Recorder.svelte"
     import Toast from "./components/main/Toast.svelte"
     import Top from "./components/main/Top.svelte"
     import Output from "./components/output/Output.svelte"
@@ -183,6 +184,7 @@
             <ContextMenu />
             <Popup />
             <Toast />
+            <Recorder />
 
             <div class="column">
                 <Top {isWindows} />

@@ -31,18 +31,18 @@
                 <!-- svelte transition bug, can't change menus without -->
                 {#if transition.type === "none"}
                     <div class="center">
-                        <span>{item.text}</span>
+                        <span>{@html item.text}</span>
                     </div>
                 {:else}
                     <div class="center" transition:custom={transition}>
-                        <span>{item.text}</span>
+                        <span>{@html item.text}</span>
                     </div>
                 {/if}
             {/if}
         {:else}
             <li>
                 <div style="display: inline-flex;">
-                    <span>{item.text}</span>
+                    <span>{@html item.text}</span>
                 </div>
             </li>
         {/if}

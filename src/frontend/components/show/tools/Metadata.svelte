@@ -84,7 +84,7 @@
 <Panel>
     <div class="styling">
         <div>
-            <p><T id="meta.auto_media" /></p>
+            <p><T id="meta.auto_media" /> (JPEG)</p>
             <Checkbox checked={metadata.autoMedia || false} on:change={toggleAutoMedia} />
         </div>
     </div>

@@ -170,7 +170,8 @@
         "groups": "Keine Gruppen",
         "events": "Keine Veranstaltungen",
         "text": "Etwas eingeben",
-        "timers": "No timers"
+        "timers": "No timers",
+        "recording": "Right click a screen or window to start a recording."
     },
     "remote": {
         "projects": "Projekte",
@@ -423,7 +424,9 @@
         "remove_media": "Medien entfernen",
         "index_select_project": "Select project by index",
         "index_select_project_show": "Select project item by index",
-        "index_select_slide": "Select slide by index"
+        "index_select_slide": "Select slide by index",
+        "start_recording": "Start recording",
+        "stop_recording": "Stop recording"
     },
     "cloud": {
         "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
@@ -707,6 +710,7 @@
         "show_location": "Ort anzeigen",
         "export_location": "Export location",
         "scripture_location": "Scripture location",
+        "recording_location": "Recordings location",
         "font": "Schrift",
         "font_family": "Schriftart",
         "font_size": "Schriftgröße",

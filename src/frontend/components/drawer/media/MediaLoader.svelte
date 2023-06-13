@@ -141,6 +141,8 @@
 
         if (!time) {
             duration = videoElem.duration
+            // it's sometimes Infinity for some reason
+            if (duration === Infinity) duration = 0
             videoElem.currentTime = duration / 2
             time = true
         } else {

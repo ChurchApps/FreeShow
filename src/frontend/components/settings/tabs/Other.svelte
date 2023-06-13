@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, exportPath, mediaCache, scripturePath, shows, showsPath } from "../../../stores"
+    import { activePopup, exportPath, mediaCache, recordingPath, scripturePath, shows, showsPath } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -68,6 +68,20 @@
             <Icon id="folder" right />
             {#if $scripturePath}
                 {$scripturePath}
+            {:else}
+                <T id="inputs.change_folder" />
+            {/if}
+        </FolderPicker>
+    </span>
+</CombinedInput>
+
+<CombinedInput textWidth={30}>
+    <p><T id="settings.recording_location" /></p>
+    <span class="path" title={$recordingPath || ""}>
+        <FolderPicker style="width: 100%;" id="RECORDING" center={false}>
+            <Icon id="folder" right />
+            {#if $recordingPath}
+                {$recordingPath}
             {:else}
                 <T id="inputs.change_folder" />
             {/if}

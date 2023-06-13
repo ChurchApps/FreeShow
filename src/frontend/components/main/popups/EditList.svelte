@@ -1,15 +1,16 @@
 <script lang="ts">
     import type { ListItem } from "../../../../types/Show"
     import { activePopup, dictionary, popupData } from "../../../stores"
+    import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
+    import { addToPos } from "../../helpers/mover"
     import Button from "../../inputs/Button.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
     let items: ListItem[] = $popupData.value || []
     $: if (items) popupData.set({ ...$popupData, value: items })
-    $: console.log(items)
-    $: console.log($popupData)
 
     let currentValue = ""
     function updateValue(e: any) {
@@ -17,10 +18,22 @@
     }
 
     function addItem() {
-        if (!currentValue) return
+        if (!currentValue) {
+            newToast("No name")
+            return
+        }
 
-        items = [...items, { text: currentValue }]
+        if (currentlyEditing !== null) items[currentlyEditing].text = currentValue
+        else items = [...items, { text: currentValue }]
+
         currentValue = ""
+        currentlyEditing = null
+    }
+
+    let currentlyEditing: any = null
+    function editItem(index: number) {
+        currentValue = items[index].text
+        currentlyEditing = index
     }
 
     function removeItem(index: number) {
@@ -28,36 +41,69 @@
         items = items
     }
 
+    function moveItem(index: number) {
+        let newItems = clone(items)
+        let currentItem = newItems.splice(index, 1)
+
+        let newIndex = index - 1
+        if (newIndex < 0) newIndex = items.length - 1
+
+        items = addToPos(newItems, currentItem, newIndex)
+    }
+
     let listStyle = $popupData.type || ""
+
+    function keydown(e: any) {
+        if (e.key === "Enter") {
+            updateValue(e)
+            setTimeout(() => {
+                if (e.shiftKey) currentValue += "<br>"
+                else addItem()
+            }, 10)
+        }
+    }
 </script>
 
 <div style="display: flex;gap: 10px;">
-    <TextInput value={currentValue} on:change={updateValue} />
+    <TextInput value={currentValue} on:change={updateValue} on:keydown={keydown} />
     <Button style="white-space: nowrap;" on:click={addItem} dark>
-        <Icon id="add" right />
-        <T id="settings.add" />
+        {#if currentlyEditing !== null}
+            <Icon id="edit" right />
+            <T id="timer.edit" />
+        {:else}
+            <Icon id="add" right />
+            <T id="settings.add" />
+        {/if}
     </Button>
 </div>
 
 <ul style="list-style{listStyle.includes('disclosure') ? '-type:' : ': inside'} {listStyle || 'disc'};">
     {#each items as item, i}
-        <li>
+        <li class:active={currentlyEditing === i}>
             <div style="display: inline-flex;">
-                <span>
+                <span style="padding-right: 120px;">
                     <!-- TODO: list icons ? -->
                     <!-- <Icon id={item.icon || ""} /> -->
-                    <span>{item.text}</span>
+                    <span>{@html item.text}</span>
                 </span>
-                <Button style="right: 0;position: absolute;" title={$dictionary.settings?.remove} on:click={() => removeItem(i)}>
-                    <Icon id="delete" />
-                </Button>
+                <span style="right: 0;position: absolute;display: flex;">
+                    <Button title={$dictionary.timer?.edit} on:click={() => editItem(i)}>
+                        <Icon id="edit" />
+                    </Button>
+                    <Button title={$dictionary.settings?.remove} on:click={() => removeItem(i)} disabled={currentlyEditing !== null}>
+                        <Icon id="delete" />
+                    </Button>
+                    <Button on:click={() => moveItem(i)} disabled={i === 0 || currentlyEditing !== null}>
+                        <Icon id="up" />
+                    </Button>
+                </span>
             </div>
         </li>
     {/each}
 </ul>
 
-<Button on:click={() => activePopup.set(null)} center>
-    <Icon id="check" right />
+<Button on:click={() => activePopup.set(null)} center dark>
+    <Icon id="check" size={1.2} right />
     <T id="actions.done" />
 </Button>
 
@@ -73,6 +119,10 @@
     li {
         position: relative;
         padding: 2px 10px;
+    }
+
+    li.active {
+        opacity: 0.6;
     }
 
     li:nth-child(odd) {

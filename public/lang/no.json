@@ -170,7 +170,8 @@
         "groups": "Ingen grupper",
         "events": "Ingen hendelser",
         "text": "Skriv noe",
-        "timers": "Ingen nedtellinger"
+        "timers": "Ingen nedtellinger",
+        "recording": "Høyreklikk på en skjerm eller vindu for å starte et opptak."
     },
     "remote": {
         "projects": "Prosjekter",
@@ -423,7 +424,9 @@
         "remove_media": "Fjern media",
         "index_select_project": "Velg prosjekt fra indeks",
         "index_select_project_show": "Velg element i prosjekt fra indeks",
-        "index_select_slide": "Velg lysbilde fra indeks"
+        "index_select_slide": "Velg lysbilde fra indeks",
+        "start_recording": "Start opptak",
+        "stop_recording": "Stopp opptak"
     },
     "cloud": {
         "info": "Synkroniser filer med Google Disk for sikkerhetskopier, eller dersom du jobber på flere datamaskiner.",
@@ -707,6 +710,7 @@
         "show_location": "Plassering for show",
         "export_location": "Plassering for eksportering",
         "scripture_location": "Plassering for bibler",
+        "recording_location": "Plassering for opptak",
         "font": "Skrift",
         "font_family": "Skrifttype",
         "font_size": "Skriftstørrelse",

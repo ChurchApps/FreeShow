@@ -11,6 +11,7 @@
     export let outlineColor: string | null = null
     export let label: string
     export let title: string = ""
+    export let mediaData: string = ""
     export let width: number = 0
     export let icon: null | string = null
     export let color: null | string = null
@@ -30,7 +31,7 @@
         {:else}
             <div class="hover overlay" />
         {/if}
-        <div class="card {$$props.class || ''}" style="{$$props.style || ''};aspect-ratio: {resolution.width}/{resolution.height};" on:mouseenter on:mouseleave on:mousemove>
+        <div data-media={mediaData} class="card {$$props.class || ''}" style="{$$props.style || ''};aspect-ratio: {resolution.width}/{resolution.height};" on:mouseenter on:mouseleave on:mousemove>
             {#if !loaded}
                 <div class="loader">
                     <Loader />

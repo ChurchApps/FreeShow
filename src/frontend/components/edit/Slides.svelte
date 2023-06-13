@@ -143,7 +143,7 @@
                                 {altKeyPressed}
                                 {columns}
                                 on:click={(e) => {
-                                    if (!e.ctrlKey && !e.metaKey) activeEdit.set({ slide: i, items: [] })
+                                    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) activeEdit.set({ slide: i, items: [] })
                                 }}
                             />
                         {/if}

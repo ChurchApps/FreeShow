@@ -40,7 +40,7 @@ export function readFolder(path: string): string[] {
     }
 }
 
-export function writeFile(path: string, content: string, id: string = "") {
+export function writeFile(path: string, content: string | NodeJS.ArrayBufferView, id: string = "") {
     // don't know if it's necessary to check the file
     if (fileContentMatches(content, path)) return
 
@@ -106,7 +106,7 @@ export function checkShowsFolder(path: string): string {
 
 // HELPERS
 
-export function fileContentMatches(content: string, path: string): boolean {
+export function fileContentMatches(content: string | NodeJS.ArrayBufferView, path: string): boolean {
     if (doesPathExist(path) && content === readFile(path)) return true
     return false
 }

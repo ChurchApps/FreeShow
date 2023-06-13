@@ -47,6 +47,7 @@ import {
     playerVideos,
     playingVideos,
     projects,
+    recordingPath,
     saved,
     scripturePath,
     shows,
@@ -122,6 +123,7 @@ const receiveMAIN: any = {
     SHOWS_PATH: (a: any) => showsPath.set(a),
     EXPORT_PATH: (a: any) => exportPath.set(a),
     SCRIPTURE_PATH: (a: any) => scripturePath.set(a),
+    RECORDING_PATH: (a: any) => recordingPath.set(a),
     // READ_SAVED_CACHE: (a: any) => {
     //     if (!a) return
     //     Object.entries(JSON.parse(a)).forEach(([key, data]: any) => {
@@ -293,6 +295,7 @@ const receiveFOLDER: any = {
     SHOWS: (a: any) => showsPath.set(a.path),
     EXPORT: (a: any) => exportPath.set(a.path),
     SCRIPTURE: (a: any) => scripturePath.set(a.path),
+    RECORDING: (a: any) => recordingPath.set(a.path),
 }
 
 const receiveIMPORT: any = {

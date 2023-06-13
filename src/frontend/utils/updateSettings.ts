@@ -34,6 +34,7 @@ import {
     ports,
     presenterControllerKeys,
     projectView,
+    recordingPath,
     remotePassword,
     resized,
     scripturePath,
@@ -124,6 +125,10 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     scripturePath: (v: any) => {
         if (!v) send(MAIN, ["SCRIPTURE_PATH"])
         else scripturePath.set(v)
+    },
+    recordingPath: (v: any) => {
+        if (!v) send(MAIN, ["RECORDING_PATH"])
+        else recordingPath.set(v)
     },
     os: (v: any) => {
         if (!v.platform) send(MAIN, ["GET_OS"])

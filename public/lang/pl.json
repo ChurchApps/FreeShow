@@ -170,7 +170,8 @@
         "groups": "Brak grup",
         "events": "Brak wydarzeń",
         "text": "Napisz coś",
-        "timers": "Brak timerów"
+        "timers": "Brak timerów",
+        "recording": "Right click a screen or window to start a recording."
     },
     "remote": {
         "projects": "Projekty",
@@ -423,7 +424,9 @@
         "remove_media": "Usuń media",
         "index_select_project": "Zaznacz projekt po indeksie",
         "index_select_project_show": "Zaznacz element projektu po indeksie",
-        "index_select_slide": "Zaznacz slajd po indeksie"
+        "index_select_slide": "Zaznacz slajd po indeksie",
+        "start_recording": "Start recording",
+        "stop_recording": "Stop recording"
     },
     "cloud": {
         "info": "Synchronizuj pliki z Google Drive dla kopii zapasowych, albo jeśli chcesz pracować na kilku komputerach.",
@@ -707,6 +710,7 @@
         "show_location": "Pokaż lokalizację",
         "export_location": "Export location",
         "scripture_location": "Scripture location",
+        "recording_location": "Recordings location",
         "font": "Font (czcionka)",
         "font_family": "Rodzina fontu",
         "font_size": "Rozmiar fontu",

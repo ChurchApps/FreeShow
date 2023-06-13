@@ -254,7 +254,10 @@ export function history(obj: History, undo: null | boolean = null) {
     }
 
     // deselect selected
-    selected.set({ id: null, data: [] })
+    // not when changing multiple selected slides OR changing slide transition
+    if (obj.location?.page !== "edit" && obj.id !== "SHOW_LAYOUT") {
+        selected.set({ id: null, data: [] })
+    }
 
     console.log("UNDO: ", [...get(undoHistory)])
     console.log("REDO: ", [...get(redoHistory)])

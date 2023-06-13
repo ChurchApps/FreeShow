@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getListOfShows } from "../../helpers/show"
@@ -57,15 +57,7 @@
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
 
-    function setValue(input: any) {
-        let allItems: number[] = $activeEdit.items
-        // update all items if nothing is selected
-        if (!allItems.length) {
-            allItems = []
-            allSlideItems.forEach((_item, i) => allItems.push(i))
-        }
-        // let fullItems = allItems.map((a) => allSlideItems[a])
-
+    function setValue(input: any, allItems: any[]) {
         let value: any = input.value
         if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
@@ -130,11 +122,6 @@
     function updateValue(e: any) {
         let input = e.detail
 
-        if (input.id !== "style" && input.id !== "CSS") {
-            setValue(input)
-            return
-        }
-
         // console.log("original", getOriginalValue(box!.edit, input.key))
         // console.log(input)
 
@@ -143,65 +130,115 @@
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
         allSlideItems = clone(allSlideItems)
 
-        let values: any = []
+        // only same type
+        let currentType = id || allSlideItems[allItems[0]].type || "text"
+        allItems = allItems.filter((index) => (allSlideItems[index].type || "text") === currentType)
+
+        if (input.id !== "style" && input.id !== "CSS") {
+            setValue(input, allItems)
+            return
+        }
+
         let aligns: boolean = input.key === "align-items" || input.key === "text-align"
 
         if (input.id === "CSS") allItems = [allItems[0]]
 
-        allItems.forEach((itemIndex) => {
+        /////
+
+        // this is only for show slides
+        let ref: any[] = _show().layouts("active").ref()[0] || {}
+        let slides: string[] = [ref[$activeEdit.slide || ""]?.id || "other"]
+        let slideItems: number[][] = [allItems]
+        let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
+
+        // get all selected slides
+        if (slides[0] && $selected.id === "slide") {
+            let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
+            slides.push(...selectedSlides.map(({ index }) => ref[index].id))
+
+            slides.forEach((id, i) => {
+                if (i === 0) return
+                if (!showSlides[id]) {
+                    slideItems.push([])
+                    return
+                }
+
+                let currentItems = showSlides[id].items
+                let currentItemIndexes = currentItems.map((_item, i) => i)
+
+                // only same type
+                currentItemIndexes = currentItemIndexes.filter((index) => (currentItems[index].type || "text") === currentType)
+                slideItems.push(currentItemIndexes)
+            })
+        }
+
+        /////
+
+        let values: any = {}
+        slides.forEach((slide, i) => {
+            if (!slideItems[i].length) return
+            values[slide] = []
+            slideItems[i].forEach((i) => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
+        })
+        function getNewItemValues(currentSlideItem: any, slideId: string) {
             let selected = selection
             if (!selected?.length || !selected?.filter((a) => a.start !== a.end).length) {
                 selected = []
-                allSlideItems[itemIndex].lines?.forEach((line) => {
+                currentSlideItem.lines?.forEach((line) => {
                     selected!.push({ start: 0, end: getLineText(line).length })
                 })
             }
 
             if (input.key === "text-align") {
                 let newAligns: any[] = []
-                allSlideItems[itemIndex].lines?.forEach((_a, line) => {
+                currentSlideItem.lines?.forEach((_a, line) => {
                     if (!selection || selection[line].start !== undefined) newAligns.push(input.key + ": " + input.value)
-                    else newAligns.push(allSlideItems[itemIndex].lines![line].align)
+                    else newAligns.push(currentSlideItem.lines![line].align)
                 })
-                values.push(newAligns)
-            } else if (allSlideItems[itemIndex].lines) {
+                values[slideId].push(newAligns)
+            } else if (currentSlideItem.lines) {
                 if (input.id === "CSS") {
-                    values.push(addStyle(selected, allSlideItems[itemIndex], input.value.replaceAll("\n", "")).lines!.map((a) => a.text))
+                    values[slideId].push(addStyle(selected, currentSlideItem, input.value.replaceAll("\n", "")).lines!.map((a) => a.text))
                 } else {
-                    values.push(aligns ? addStyleString(allSlideItems[itemIndex].align || "", [input.key, input.value]) : addStyle(selected, allSlideItems[itemIndex], [input.key, input.value]).lines!.map((a) => a.text))
+                    values[slideId].push(aligns ? addStyleString(currentSlideItem.align || "", [input.key, input.value]) : addStyle(selected, clone(currentSlideItem), [input.key, input.value]).lines!.map((a) => a.text))
                 }
             } else {
                 if (input.id === "CSS") {
-                    values = [input.value.replaceAll("\n", "")]
+                    values[slideId] = [input.value.replaceAll("\n", "")]
                 } else {
-                    values = [addStyleString(item?.style || "", [input.key, input.value])]
+                    values[slideId] = [addStyleString(item?.style || "", [input.key, input.value])]
                 }
             }
             // newData.push(addStyle(selected, allSlideItems[itemIndex], [input.key, input.value]).lines!.map((a) => a.text))
-        })
+        }
 
         // TODO: remove unused (if default)
 
         // TODO: template v-align
-        // console.log(values, input)
 
-        if (!values.length) return
+        if (!Object.values(values).length) return
 
         // update layout
         if ($activeEdit.id) {
             // overlay / template
             let currentItems: any[] = []
-            if ($activeEdit.type === "overlay") currentItems = clone($overlays[$activeEdit.id!].items)
-            if ($activeEdit.type === "template") currentItems = clone($templates[$activeEdit.id!].items)
+            if ($activeEdit.type === "overlay") currentItems = $overlays[$activeEdit.id!].items
+            if ($activeEdit.type === "template") currentItems = $templates[$activeEdit.id!].items
+            // only selected
+            currentItems = clone(currentItems).filter((_item, i) => allItems.includes(i))
 
-            allItems.forEach((itemIndex, i) => {
-                let currentValue = values[i] ?? values[0]
+            allItems.forEach((_itemIndex, i) => {
+                let allValues: any = Object.values(values)[0]
+                let currentValue: any = allValues[i] ?? allValues[0]
+                // some textboxes don't have lines, this will break things, so make sure it has lines!
+                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find((a) => typeof a !== "string") || allValues[0]
 
-                if (input.key === "align-items") currentItems[itemIndex].align = currentValue
+                if (input.key === "align-items") currentItems[i].align = currentValue
+                else if (currentType !== "text") currentItems[i].style = currentValue
                 else {
-                    let lines: any = currentItems[itemIndex].lines
+                    let lines: any = currentItems[i].lines
                     lines?.forEach((_a: any, j: number) => {
-                        currentItems[itemIndex].lines![j][aligns ? "align" : "text"] = currentValue[j]
+                        currentItems[i].lines![j][aligns ? "align" : "text"] = currentValue[j]
                     })
                 }
             })
@@ -217,25 +254,29 @@
             return
         }
 
-        let ref: any[] = _show().layouts("active").ref()[0]
-
         const setItemStyle = ["list", "timer", "clock", "icon"]
         if (setItemStyle.includes(id)) {
-            history({
-                id: "setItems",
-                // oldData: { style: { key: "style", values: [oldData] } },
-                newData: { style: { key: "style", values: values } },
-                location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: allItems },
+            slides.forEach((slide, i) => {
+                if (!slideItems[i].length) return
+                history({
+                    id: "setItems",
+                    // oldData: { style: { key: "style", values: [oldData] } },
+                    newData: { style: { key: "style", values: values[slide] } },
+                    location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slide_" + slide + "_items_" + slideItems[i].join(",") },
+                })
             })
             return
         }
 
         let key: string = input.key === "text-align" || aligns ? "align" : "text"
-        history({
-            // WIP
-            id: input.key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
-            newData: { style: { key, values: values } },
-            location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: allItems },
+        slides.forEach((slide, i) => {
+            if (!slideItems[i].length) return
+            history({
+                // WIP
+                id: input.key === "text-align" ? "textAlign" : aligns ? "setItems" : "textStyle",
+                newData: { style: { key, values: values[slide] } },
+                location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slide_" + slide + "_items_" + slideItems[i].join(",") },
+            })
         })
     }
 </script>

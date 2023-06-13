@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, events, forceClock, media, overlays, redoHistory, scriptures, selected, shows, stageShows, undoHistory } from "../../stores"
+    import { activeProject, activeRecording, activeShow, events, forceClock, media, overlays, redoHistory, scriptures, selected, shows, stageShows, undoHistory } from "../../stores"
     import { GetLayout } from "../helpers/get"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
@@ -78,6 +78,16 @@
         },
         toggle_clock: () => {
             if ($forceClock) enabled = true
+        },
+        recording: () => {
+            if ($activeRecording) {
+                menu.label = "actions.stop_recording"
+                menu.icon = "stop"
+                enabled = true
+            } else {
+                menu.label = "actions.start_recording"
+                menu.icon = "record"
+            }
         },
     }
     if (conditions[id]) conditions[id]()

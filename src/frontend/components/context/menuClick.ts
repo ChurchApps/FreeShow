@@ -8,6 +8,7 @@ import {
     activeEdit,
     activePage,
     activePopup,
+    activeRecording,
     activeRename,
     activeShow,
     currentOutputSettings,
@@ -51,6 +52,7 @@ import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 import { newToast } from "../../utils/messages"
+import { stopMediaRecorder } from "../drawer/live/recorder"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
@@ -504,6 +506,21 @@ const actions: any = {
                 return a
             })
         })
+    },
+
+    // live
+    recording: (obj: any) => {
+        if (get(activeRecording)) {
+            stopMediaRecorder()
+        } else {
+            let media = JSON.parse(obj.contextElem.getAttribute("data-media") || "{}")
+            if (!media.video) {
+                newToast("Could not get media")
+                return
+            }
+
+            activeRecording.set(media)
+        }
     },
 
     // overlays

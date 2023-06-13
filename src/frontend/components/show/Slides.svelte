@@ -56,7 +56,7 @@
 
     function slideClick(e: any, index: number) {
         // TODO: duplicate function of "preview:126 - updateOut"
-        if ($outLocked || e.ctrlKey || e.metaKey) return
+        if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
         let slideRef: any = _show("active").layouts("active").ref()[0]
         updateOut("active", index, slideRef, !e.altKey)
