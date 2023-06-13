@@ -545,7 +545,11 @@
         "interval": "Interwał",
         "video": "Film",
         "choose_media": "Wybierz obraz",
-        "recent": "Ostatnio edytowane"
+        "recent": "Ostatnio edytowane",
+        "enable_stage": "Enable stage",
+        "select_stage": "Select stage",
+        "use_slide_index": "Use active index",
+        "slide_index": "Slide index"
     },
     "items": {
         "text": "Tekst",
@@ -648,6 +652,8 @@
         "next_slide_text": "Tekst następnego slajdu",
         "next_slide": "Następny slajd",
         "next_slide_notes": "Notatki do następnego slajdu",
+        "output": "Wyjście",
+        "current_output": "Current output",
         "time": "Czas",
         "system_clock": "Zegar systemowy",
         "video_time": "Czas wideo",
