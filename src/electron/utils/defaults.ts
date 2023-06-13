@@ -245,14 +245,7 @@ export const defaultStage: any = {
         name: "Stage",
         disabled: false,
         password: "",
-        settings: {
-            background: false,
-            color: "#000000",
-            resolution: false,
-            size: { width: 10, height: 20 },
-            labels: false,
-            showLabelIfEmptySlide: true,
-        },
+        settings: {},
         items: {
             "slide#current_slide_text": {
                 style: "top:40.50px;left:45.50px;color:red;width:1830px;height:1000px;",

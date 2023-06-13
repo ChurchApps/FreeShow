@@ -1,8 +1,12 @@
 <script lang="ts">
-    import { activeStage, stageShows, timers } from "../../stores"
+    import { activeStage, outputs, showsCache, stageShows, styles, timers } from "../../stores"
     import { getAutoSize } from "../edit/scripts/autoSize"
+    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
+    import Output from "../output/Output.svelte"
+    import { getStyleResolution } from "../slide/getStyleResolution"
     import Timer from "../slide/views/Timer.svelte"
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
@@ -16,6 +20,7 @@
     export let ratio: number
     export let edit: boolean = false
     $: currentShow = show === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : show
+    $: next = id.includes("next")
 
     export let mouse: any = null
     function mousedown(e: any) {
@@ -91,6 +96,16 @@
     $: size = getAutoSize(item, { width, height })
     // $: size = Math.min(height, width) / 2
     $: autoSize = fontSize ? Math.min(fontSize, size) : size
+
+    // SLIDE
+    let slide
+    $: currentSlide = $outputs[getActiveOutputs()[0]].out?.slide
+    $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
+    $: layoutSlide = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!] || {} : {}
+    $: slideId = layoutSlide.id
+    $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
+
+    $: resolution = getResolution(resolution, { $outputs, $styles })
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -115,32 +130,41 @@
     {#if edit}
         <Movebox {ratio} active={$activeStage.items.includes(id)} />
     {/if}
-    <!-- TODO: auto size! -->
-    <div class="align" style={item.align}>
-        <div>
-            {#if id.split("#")[0] === "countdowns"}
-                <!--  -->
-            {:else if id.includes("notes")}
-                <SlideNotes next={id.includes("next")} />
-            {:else if id.includes("slide_text")}
-                <SlideText next={id.includes("next")} chords={item.chords} ref={{ type: "stage", id }} {autoSize} parent={{ width, height }} />
-            {:else if id.includes("slide")}
-                <span style="pointer-events: none;">
-                    <SlideText next={id.includes("next")} chords={item.chords} ref={{ type: "stage", id }} parent={{ width, height }} style />
-                </span>
-            {:else if id.includes("clock")}
-                <Clock style={false} {autoSize} />
-            {:else if id.includes("video")}
-                <VideoTime {autoSize} reverse={id.includes("countdown")} />
-            {:else if id.includes("timers")}
-                {#if $timers[id.split("#")[1]]}
-                    <Timer id={id.split("#")[1]} {today} style="font-size: {autoSize}px;" />
+
+    {#if id.includes("current_output")}
+        {#if slide}
+            <span style="pointer-events: none;">
+                <Output bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror />
+            </span>
+        {/if}
+    {:else}
+        <!-- TODO: auto size! -->
+        <div class="align" style={item.align}>
+            <div>
+                {#if id.split("#")[0] === "countdowns"}
+                    <!--  -->
+                {:else if id.includes("notes")}
+                    <SlideNotes {next} />
+                {:else if id.includes("slide_text")}
+                    <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} {autoSize} parent={{ width, height }} />
+                {:else if id.includes("slide")}
+                    <span style="pointer-events: none;">
+                        <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} parent={{ width, height }} style />
+                    </span>
+                {:else if id.includes("clock")}
+                    <Clock style={false} {autoSize} />
+                {:else if id.includes("video")}
+                    <VideoTime {autoSize} reverse={id.includes("countdown")} />
+                {:else if id.includes("timers")}
+                    {#if $timers[id.split("#")[1]]}
+                        <Timer id={id.split("#")[1]} {today} style="font-size: {autoSize}px;" />
+                    {/if}
+                {:else}
+                    {id}
                 {/if}
-            {:else}
-                {id}
-            {/if}
+            </div>
         </div>
-    </div>
+    {/if}
 </div>
 
 <style>
@@ -161,8 +185,8 @@
 
     .align div,
     .align :global(.item) {
-        width: 100%;
-        height: 100%;
+        width: 100% !important;
+        height: 100% !important;
         color: unset;
         /* overflow-wrap: break-word; */
     }

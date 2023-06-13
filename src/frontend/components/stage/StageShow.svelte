@@ -53,17 +53,19 @@
     }
 
     let timeout: any = null
+
+    $: show = $stageShows[$activeStage.id || ""] || {}
 </script>
 
-<Main slide={$activeStage.id ? $stageShows[$activeStage.id] : null} let:width let:height let:resolution>
+<Main slide={$activeStage.id ? show : null} let:width let:height let:resolution>
     <div class="parent">
         {#if $activeStage.id}
             <!-- TODO: stage resolution... -->
-            <Zoomed style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
+            <Zoomed background={show.settings.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
                 <!-- TODO: snapping to top left... -->
                 <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                 <!-- {#key Slide} -->
-                {#each Object.entries($stageShows[$activeStage.id].items) as [id, item]}
+                {#each Object.entries(show.items) as [id, item]}
                     {#if item.enabled}
                         <Stagebox edit {id} {item} {ratio} bind:mouse />
                     {/if}

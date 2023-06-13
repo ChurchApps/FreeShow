@@ -13,7 +13,11 @@ export function stageListen() {
         data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
         timedout(STAGE, { channel: "SHOW", data }, () =>
             eachConnection(STAGE, "SHOW", (connection) => {
-                return connection.active ? data[connection.active] : null
+                if (!connection.active) return
+
+                let currentData = data[connection.active]
+                if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
+                return currentData
             })
         )
     })
@@ -72,7 +76,8 @@ export const receiveSTAGE: any = {
         return msg
     },
     SLIDES: (msg: ClientMessage) => {
-        let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+        let show = get(stageShows)[msg.data?.id] || {}
+        let currentOutput: any = get(outputs)[show.settings?.output || getActiveOutputs()[0]]
         let out: any = currentOutput?.out?.slide || null
         msg.data = []
         console.log(out)

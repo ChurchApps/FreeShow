@@ -3,7 +3,7 @@
     import { activeEdit, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getListOfShows } from "../../helpers/show"
+    import { getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
@@ -53,14 +53,40 @@
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : {}
     $: alignStyle = item?.align ? getStyles(item.align) : {}
 
-    $: if (id === "mirror" && box) box.edit.default[0].values.options = getListOfShows(!$activeEdit.id)
+    $: if (id === "mirror" && box) getMirrorValues()
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
+
+    function getMirrorValues() {
+        if (!item?.mirror || !box) return
+        let enableStage = item.mirror.enableStage || false
+        let useSlideIndex = item.mirror.useSlideIndex
+        let index = item.mirror.index
+
+        if (enableStage) {
+            box!.edit.default[1].name = "select_stage"
+            box!.edit.default[1].values.options = getStageList()
+            box!.edit.default[1].id = "mirror.stage"
+            box.edit.default[2].hidden = true
+            box.edit.default[3].hidden = true
+        } else {
+            box!.edit.default[1].name = "popup.select_show"
+            box!.edit.default[1].values.options = getListOfShows(!$activeEdit.id)
+            box!.edit.default[1].id = "mirror.show"
+            box.edit.default[2].hidden = false
+            box.edit.default[3].hidden = false
+        }
+
+        box.edit.default[0].value = enableStage
+        if (useSlideIndex !== undefined) box.edit.default[2].value = useSlideIndex
+        if (index !== undefined) box.edit.default[3].value = index
+    }
 
     function setValue(input: any, allItems: any[]) {
         let value: any = input.value
         if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
+        console.log(input, value)
 
         // set nested value
         if (input.id.includes(".")) {
@@ -85,6 +111,7 @@
                 value[splitted[1]] = input.value
             }
         }
+        console.log(value)
 
         if ($activeEdit.id) {
             if ($activeEdit.type === "overlay") {
@@ -117,6 +144,9 @@
             newData: { style: { key: input.id, values: [value] } },
             location: { page: "edit", show: $activeShow!, slide: _show().layouts("active").ref()[0][$activeEdit.slide!].id, items: allItems },
         })
+
+        // update values
+        box = box
     }
 
     function updateValue(e: any) {

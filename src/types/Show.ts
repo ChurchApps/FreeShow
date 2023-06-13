@@ -111,6 +111,10 @@ export interface Clock {
 
 export interface Mirror {
     show?: string
+    stage?: string
+    enableStage?: boolean
+    useSlideIndex?: boolean
+    index?: number
 }
 
 export interface Line {

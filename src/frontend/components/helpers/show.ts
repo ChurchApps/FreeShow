@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
-import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sortedShowsList } from "../../stores"
+import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sortedShowsList, stageShows } from "../../stores"
 import { clone, keysToID, removeValues, sortObject } from "./array"
 import { GetLayout } from "./get"
 
@@ -50,6 +50,10 @@ export function getListOfShows(removeCurrent: boolean = false) {
     if (removeCurrent) list = list.filter((a) => a.id !== get(activeShow)?.id)
     list = list.sort((a, b) => a.name?.localeCompare(b.name))
     return list
+}
+
+export function getStageList() {
+    return Object.entries(clone(get(stageShows))).map(([id, stage]: any) => ({ id, name: stage.name }))
 }
 
 // meta

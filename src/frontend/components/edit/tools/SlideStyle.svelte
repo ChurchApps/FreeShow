@@ -61,7 +61,7 @@
 </script>
 
 <div class="section">
-    <h6><T id="edit.style" /></h6>
+    <h6 style="margin-top: 10px;"><T id="edit.style" /></h6>
     <CombinedInput>
         <p><T id="edit.background_color" /></p>
         <Color bind:value={settings.color} on:input={(e) => inputChange(e, "color")} />

@@ -545,7 +545,11 @@
         "interval": "Intervall",
         "video": "Video",
         "choose_media": "Velg media",
-        "recent": "Nylig redigert"
+        "recent": "Nylig redigert",
+        "enable_stage": "Aktiver scene",
+        "select_stage": "Velg scene",
+        "use_slide_index": "Bruk aktiv indeks",
+        "slide_index": "Lysbilde-indeks"
     },
     "items": {
         "text": "Tekstboks",
@@ -648,6 +652,8 @@
         "next_slide": "Neste lysbilde",
         "next_slide_text": "Neste lysbilde tekst",
         "next_slide_notes": "Neste lysbilde notater",
+        "output": "Utgang",
+        "current_output": "Gjeldende utgang",
         "time": "Tid",
         "system_clock": "Systemklokke",
         "video_time": "Videotid",

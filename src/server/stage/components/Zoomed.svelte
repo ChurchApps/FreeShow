@@ -1,15 +1,17 @@
 <script lang="ts">
     export let show: any
     export let disableStyle: boolean = false
+    export let dynamicResolution: boolean = true
+    export let invertZoom: boolean = false
     export let relative: boolean = false
 
-    let resolution: any = show && show.settings.resolution ? show.settings.size : { width: 1920, height: 1080 } // $screen.resolution
+    let resolution: any = show && show.settings.resolution ? show.settings.resolution : { width: 1920, height: 1080 } // $screen.resolution
     let slideWidth: number = 0
     let ratio: number = 1
     $: ratio = slideWidth / resolution.width
 
     // dynamic resolution
-    resolution = { width: window.innerWidth, height: window.innerHeight }
+    if (dynamicResolution) resolution = { width: window.innerWidth, height: window.innerHeight }
 </script>
 
 <div class="center">

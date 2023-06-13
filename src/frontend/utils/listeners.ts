@@ -21,6 +21,7 @@ import {
     projects,
     shows,
     showsCache,
+    stageShows,
     styles,
     templates,
     timers,
@@ -93,6 +94,9 @@ export function listenForUpdates() {
     })
     playerVideos.subscribe((data) => {
         send(OUTPUT, ["PLAYER_VIDEOS"], data)
+    })
+    stageShows.subscribe((data) => {
+        send(OUTPUT, ["STAGE_SHOWS"], data)
     })
 
     draw.subscribe((data) => {

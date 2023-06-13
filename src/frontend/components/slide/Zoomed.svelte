@@ -61,6 +61,22 @@
         height: 150px;
         width: 400px;
     }
+    /* enable styling for stage mirrors */
+    .slide.disableStyle :global(.item) {
+        color: unset;
+        font-size: unset;
+        font-family: unset;
+        line-height: unset;
+        -webkit-text-stroke-color: unset;
+        text-shadow: unset;
+
+        border-style: unset;
+        border-width: unset;
+        border-color: unset;
+
+        height: unset;
+        width: unset;
+    }
 
     .hideOverflow {
         overflow: hidden;

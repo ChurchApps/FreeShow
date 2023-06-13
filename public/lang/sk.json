@@ -545,7 +545,11 @@
         "interval": "Interval",
         "video": "Video",
         "choose_media": "Vyberte médiá",
-        "recent": "Recently edited"
+        "recent": "Recently edited",
+        "enable_stage": "Enable stage",
+        "select_stage": "Select stage",
+        "use_slide_index": "Use active index",
+        "slide_index": "Slide index"
     },
     "items": {
         "text": "Textové pole",
@@ -648,6 +652,8 @@
         "next_slide_text": "Text aktuálneho snímku",
         "next_slide": "Ďalší snímok",
         "next_slide_notes": "Poznámky ďalšieho snímku",
+        "output": "Výstup",
+        "current_output": "Current output",
         "time": "Čas",
         "system_clock": "Systémové hodiny",
         "video_time": "Video čas",

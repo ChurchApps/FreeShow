@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, currentWindow, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -11,17 +11,16 @@
     import { history } from "../helpers/history"
     import { getExtension, getMediaType } from "../helpers/media"
     import { addToPos } from "../helpers/mover"
-    import { loadShows } from "../helpers/setShow"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
-    import Textbox from "../slide/Textbox.svelte"
+    import ListView from "../slide/views/ListView.svelte"
+    import Mirror from "../slide/views/Mirror.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
     import { getAutoSize } from "./scripts/autoSize"
     import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
-    import ListView from "../slide/views/ListView.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -431,18 +430,6 @@
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
     $: autoSize = getAutoSize(item)
-
-    let slideId: string = ""
-    function getMirroredItem() {
-        if (item.mirror!.show === ref.showId) return
-        let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[$activeEdit.slide || 0]
-        if (!newSlideRef) return
-        slideId = newSlideRef.id
-        let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
-        if (!newItem) return
-        newItem.style = "width: 100%;height: 100%;pointer-events: none;"
-        return newItem
-    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
@@ -557,17 +544,7 @@ bind:offsetWidth={width} -->
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "mirror"}
-        {#if item.mirror?.show}
-            {#key item.mirror?.show}
-                {#await loadShows([item.mirror.show])}
-                    {#if !$currentWindow}Loading...{/if}
-                {:then}
-                    {#if getMirroredItem()}
-                        <Textbox item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
-                    {/if}
-                {/await}
-            {/key}
-        {/if}
+        <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
     {:else if item?.type === "icon"}
         <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
     {/if}

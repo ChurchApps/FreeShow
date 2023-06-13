@@ -220,28 +220,32 @@
                 </div>
             {:else if input.input === "checkbox"}
                 {@const value = getValue(input, { styles, item })}
-                <CombinedInput>
-                    <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
-                    <div class="alignRight">
-                        <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
-                    </div>
-                </CombinedInput>
+                {#if !input.hidden}
+                    <CombinedInput>
+                        <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
+                        <div class="alignRight">
+                            <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
+                        </div>
+                    </CombinedInput>
+                {/if}
             {:else if !input.name}
                 Missing input name: {input.input}
             {:else}
                 {@const value = getValue(input, { styles, item })}
-                <CombinedInput>
-                    <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
-                    <svelte:component
-                        this={inputs[input.input]}
-                        {...input.values || {}}
-                        {value}
-                        disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value}
-                        on:click={(e) => valueChange(e, input)}
-                        on:input={(e) => valueChange(e, input)}
-                        on:change={(e) => valueChange(e, input)}
-                    />
-                </CombinedInput>
+                {#if !input.hidden}
+                    <CombinedInput>
+                        <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
+                        <svelte:component
+                            this={inputs[input.input]}
+                            {...input.values || {}}
+                            {value}
+                            disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value}
+                            on:click={(e) => valueChange(e, input)}
+                            on:input={(e) => valueChange(e, input)}
+                            on:change={(e) => valueChange(e, input)}
+                        />
+                    </CombinedInput>
+                {/if}
             {/if}
         {/each}
     </div>

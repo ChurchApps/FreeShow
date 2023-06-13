@@ -1,21 +1,20 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, outputs, slidesOptions } from "../../stores"
+    import { slidesOptions } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
-    import { getActiveOutputs } from "../helpers/output"
-    import { loadShows } from "../helpers/setShow"
-    import { _show } from "../helpers/shows"
+    import { getStyles } from "../helpers/style"
     import Clock from "../system/Clock.svelte"
     import Chords from "./Chords.svelte"
-    import Timer from "./views/Timer.svelte"
-    import { getStyles } from "../helpers/style"
     import ListView from "./views/ListView.svelte"
+    import Mirror from "./views/Mirror.svelte"
+    import Timer from "./views/Timer.svelte"
 
     export let item: Item
+    export let slideIndex: number = 0
     export let ratio: number = 1
     export let filter: string = ""
     export let backdropFilter: string = ""
@@ -52,32 +51,6 @@
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
-
-    $: slideId = ref.slideId || ""
-    function getMirroredItem() {
-        if (item.mirror!.show === ref.showId) return
-
-        let outputId = getActiveOutputs($outputs)[0]
-        let currentOutput = $outputs[outputId] || {}
-
-        let currentSlideIndex: number = 0
-        if (!ref.type || ref.type === "show") {
-            let currentSlideRef: any = _show(currentOutput?.out?.slide?.id || "active")
-                .layouts("active")
-                .ref()[0]
-                .find((a: any) => a.id === ref.slideId)
-
-            currentSlideIndex = currentSlideRef.layoutIndex
-        }
-
-        let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[currentSlideIndex]
-        if (!newSlideRef) return
-        slideId = newSlideRef.id
-        let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
-        if (!newItem) return
-        newItem.style = "width: 100%;height: 100%;"
-        return newItem
-    }
 
     let textElem: any = null
 
@@ -162,17 +135,7 @@
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "mirror"}
-        {#if item.mirror?.show}
-            {#key item.mirror?.show}
-                {#await loadShows([item.mirror.show])}
-                    {#if !$currentWindow}Loading...{/if}
-                {:then}
-                    {#if getMirroredItem()}
-                        <svelte:self item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
-                    {/if}
-                {/await}
-            {/key}
-        {/if}
+        <Mirror {item} {ref} {ratio} index={slideIndex} />
     {:else if item?.type === "icon"}
         <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
     {/if}

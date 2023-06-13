@@ -545,7 +545,11 @@
         "interval": "Interval",
         "video": "Video",
         "choose_media": "Scegli i media",
-        "recent": "Recently edited"
+        "recent": "Recently edited",
+        "enable_stage": "Enable stage",
+        "select_stage": "Select stage",
+        "use_slide_index": "Use active index",
+        "slide_index": "Slide index"
     },
     "items": {
         "text": "Casella di testo",
@@ -648,6 +652,8 @@
         "next_slide_text": "Testo della diapositiva successiva",
         "next_slide": "Prossima diapositiva",
         "next_slide_notes": "Note sulla diapositiva successiva",
+        "output": "Output",
+        "current_output": "Current output",
         "time": "Tempo",
         "system_clock": "Orologio di sistema",
         "video_time": "Tempo del video",

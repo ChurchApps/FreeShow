@@ -289,24 +289,45 @@
 
     {#if slide && layers.includes("slide")}
         {#key slideClone}
-            <!-- TODO: svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
-            <span transition:custom={transition} style="pointer-events: none;display: block;">
-                {#if slideClone?.items}
-                    {#each slideClone?.items as item}
-                        <Textbox
-                            filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                            backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
-                            key={currentOutput.isKeyOutput}
-                            disableListTransition={disableTransitions}
-                            {item}
-                            {ratio}
-                            ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
-                            {linesStart}
-                            {linesEnd}
-                        />
-                    {/each}
-                {/if}
-            </span>
+            <!-- WIP svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
+            <!-- svelte transition bug when changing between pages -->
+            {#if transition.type === "none"}
+                <span style="pointer-events: none;display: block;">
+                    {#if slideClone?.items}
+                        {#each slideClone?.items as item}
+                            <Textbox
+                                filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                                backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                                key={currentOutput.isKeyOutput}
+                                disableListTransition={disableTransitions}
+                                {item}
+                                {ratio}
+                                ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                {linesStart}
+                                {linesEnd}
+                            />
+                        {/each}
+                    {/if}
+                </span>
+            {:else}
+                <span transition:custom={transition} style="pointer-events: none;display: block;">
+                    {#if slideClone?.items}
+                        {#each slideClone?.items as item}
+                            <Textbox
+                                filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                                backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                                key={currentOutput.isKeyOutput}
+                                disableListTransition={disableTransitions}
+                                {item}
+                                {ratio}
+                                ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                {linesStart}
+                                {linesEnd}
+                            />
+                        {/each}
+                    {/if}
+                </span>
+            {/if}
         {/key}
     {/if}
 

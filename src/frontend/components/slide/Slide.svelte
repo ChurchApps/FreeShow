@@ -287,6 +287,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                                     disableListTransition
                                     {item}
                                     {ratio}
+                                    slideIndex={index}
                                     ref={{
                                         showId: $activeShow?.id,
                                         slideId: layoutSlide.id,

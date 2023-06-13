@@ -238,6 +238,7 @@ const receiveOUTPUT: any = {
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
+    STAGE_SHOWS: (a: any) => stageShows.set(a),
     AUDIO_MAIN: async (data: any) => {
         audioChannels.set(data.channels)
         if (!data.id) return
