@@ -8,7 +8,7 @@
         "drop": "Upuść tutaj",
         "search": "Szukaj",
         "none": "Brak",
-        "finished": "Finished"
+        "finished": "Zakończono"
     },
     "about": {
         "check_updates": "Sprawdź aktualizacje",
@@ -24,7 +24,7 @@
     },
     "tooltip": {
         "project": "Stwórz nowy projekt gdzie możesz organizować swoje pokazy.",
-        "show": "Stwórz nowy pokaz gdzie możesz dodać teksty pieśni, prezentacje i multimedia. Przytrzymaj Ctrl/Cmd aby stworzyć pusty pokaz.",
+        "show": "Stwórz nowy pokaz gdzie możesz dodać teksty pieśni, prezentacje i multimedia. Przytrzymaj CTRL/CMD aby stworzyć pusty pokaz.",
         "groups": "Wszystkie grupy w bieżącym pokazie oraz wszystkie globalne grupy. Naciśnij i przeciągnij pokaz aby dodać je do bieżącego układu.",
         "layout": "Dodaj przejścia i timery do slajdów w bieżącym układzie.",
         "media": "Wszystkie media w bieżącym pokazie. Wyświetlaj je, albo przeciągaj je do bieżącego układu.",
@@ -36,7 +36,7 @@
         "slide": "Edytuj bieżący slajd.",
         "filters": "Zmień widok zaznaczonego elementu.",
         "options": "Więcej opcji.",
-        "scripture": "Przytrzymaj Hold Ctrl/Cmd lub Shift aby zaznaczyć jednocześnie więcej wersetów."
+        "scripture": "Przytrzymaj CTRL/CMD lub SHIFT aby zaznaczyć jednocześnie więcej wersetów."
     },
     "setup": {
         "good_luck": "Mam nadzieję, że ta aplikacja będzie dla Ciebie pomocna. Powodzenia podczas prezentowania! :)",
@@ -45,7 +45,7 @@
         "get_started": "Zaczynajmy!"
     },
     "example": {
-        "welcome": "Powitanie",
+        "welcome": "Witaj",
         "meetings": "Spotkania",
         "example": "Przykład",
         "example_note": "Zapisz notatki tutaj",
@@ -64,13 +64,13 @@
     "titlebar": {
         "file": "Plik",
         "edit": "Edytuj",
-        "view": "Wyświetl",
+        "view": "Pokaż",
         "help": "Pomoc"
     },
     "screen": {
         "width": "Szerokość",
         "height": "Wysokość",
-        "pixels": "piksele"
+        "pixels": "Piksele"
     },
     "create_show": {
         "search_web": "Poszukaj pieśni w Internecie",
@@ -145,7 +145,7 @@
         "_title_edit": "Edytowanie",
         "stage": "Scena",
         "_title_stage": "Widok sceny",
-        "draw": "Rysuj",
+        "draw": "Rysowanie",
         "_title_draw": "Rysowanie",
         "calendar": "Kalendarz",
         "_title_calendar": "Wydarzenia",
@@ -171,7 +171,7 @@
         "events": "Brak wydarzeń",
         "text": "Napisz coś",
         "timers": "Brak timerów",
-        "recording": "Right click a screen or window to start a recording."
+        "recording": "Naciśnij prawym przyciskiem myszy aby rozpocząć nagrywanie."
     },
     "remote": {
         "projects": "Projekty",
@@ -218,7 +218,7 @@
         "message_template": "Szablon komunikatu"
     },
     "show_at": {
-        "never": "Brak slajdów",
+        "never": "Nie wyświetlaj",
         "always": "Wszystkie slajdy",
         "first": "Pierwszy slajd",
         "last": "Ostatni slajd",
@@ -278,8 +278,8 @@
         "pictures": "Obrazy",
         "videos": "Filmy",
         "music": "Muzyka",
-        "offers": "Kolekta (ofiara)",
-        "notice": "Ogłoszoenia",
+        "offers": "Kolekta",
+        "notice": "Ogłoszenia",
         "visuals": "Animacje"
     },
     "groups": {
@@ -322,7 +322,7 @@
         "cloud_method": "Lokalizacja danych",
         "shortcuts": "Skróty",
         "icon": "Ikony",
-        "initialize": "Witaj we FreeShow",
+        "initialize": "Witaj",
         "unsaved": "Nie zapisałeś zmian! Jesteś pewien?",
         "cancel": "Anuluj",
         "continue": "Kontynuuj",
@@ -333,8 +333,8 @@
         "save_quit": "Zapisz i wyjdź"
     },
     "new": {
-        "show": "Nowy pokaz",
-        "empty_show": "Nowy pusty pokaz",
+        "show": "Stwórz nowy pokaz",
+        "empty_show": "Stwórz nowy pusty pokaz",
         "project": "Nowy projekt",
         "section": "Nowa sekcja",
         "timer": "Nowy timer",
@@ -351,7 +351,7 @@
     "show": {
         "name": "Nazwa",
         "category": "Kategoria",
-        "quick_lyrics": "Szybkie Słowa Pieśni",
+        "quick_lyrics": "Szybkie wprowadzenie tekstu",
         "new_layout": "Nowy układ",
         "grid": "Widok siatki",
         "list": "Widok listy",
@@ -375,8 +375,8 @@
         "delete_all": "Usuń wszystko",
         "close": "Zamknij",
         "save": "Zapisz",
-        "done": "Done",
-        "disable": "Deaktywuj",
+        "done": "Gotowe",
+        "disable": "Dezaktywuj",
         "enable": "Aktywuj",
         "undo": "Cofnij",
         "redo": "Przywróć",
@@ -415,9 +415,9 @@
         "custom_key": "Ustaw wartość klucza",
         "play_on_midi": "Graj MIDI na",
         "send_midi": "Wyślij wyjście MIDI",
-        "delete_shows_not_indexed": "Usuń pokazy w folderze 'Shows', które nie są zaindeksowane",
+        "delete_shows_not_indexed": "Usuń z folderu pokazy, które nie są zaindeksowane",
         "delete_thumbnail_cache": "Usuń pamięć podręczną miniaturek",
-        "refresh_all_shows": "Weź wszystkie pokazy z folderu 'Shows'",
+        "refresh_all_shows": "Załaduj ponownie pliki \".show\"",
         "start_timer": "Rozpocznij odliczanie",
         "stop_timers": "Zatrzymaj aktywny timer",
         "next_after_media": "Następny po media",
@@ -425,8 +425,8 @@
         "index_select_project": "Zaznacz projekt po indeksie",
         "index_select_project_show": "Zaznacz element projektu po indeksie",
         "index_select_slide": "Zaznacz slajd po indeksie",
-        "start_recording": "Start recording",
-        "stop_recording": "Stop recording"
+        "start_recording": "Rozpocznij nagrywanie",
+        "stop_recording": "Zatrzymaj nagrywanie"
     },
     "cloud": {
         "info": "Synchronizuj pliki z Google Drive dla kopii zapasowych, albo jeśli chcesz pracować na kilku komputerach.",
@@ -497,7 +497,7 @@
         "slide": "Slajd"
     },
     "edit": {
-        "font": "Font (czcionka)",
+        "font": "Font",
         "family": "Rodzina",
         "style": "Styl",
         "options": "Opcje",
@@ -512,8 +512,8 @@
         "chords": "Akordy",
         "auto_size": "Automatyczny rozmiar",
         "line_spacing": "Interlinia",
-        "letter_spacing": "Odstępy między literami",
-        "word_spacing": "Odstępy między wyrazami",
+        "letter_spacing": "Odstępy liter",
+        "word_spacing": "Odstępy wyrazów",
         "align": "Wyrównanie",
         "_title_left": "Wyrównaj do lewej",
         "_title_center": "Wyrównaj do środka",
@@ -544,11 +544,11 @@
         "backdrop_filters": "Filtry tła",
         "interval": "Interwał",
         "video": "Film",
-        "choose_media": "Wybierz media",
-        "recent": "Recently edited"
+        "choose_media": "Wybierz obraz",
+        "recent": "Ostatnio edytowane"
     },
     "items": {
-        "text": "Pole tekstowe",
+        "text": "Tekst",
         "list": "Lista",
         "media": "Multimedia",
         "image": "Obraz",
@@ -635,7 +635,7 @@
         "radius": "Promień",
         "glow": "Poświata",
         "hollow": "Puste w środku",
-        "hold": "Podczas przycisku myszy",
+        "hold": "Przytrzymaj przycisk myszy",
         "rainbow": "Tęcza",
         "threed": "3D",
         "dots": "Kropki"
@@ -655,7 +655,7 @@
         "other": "Inne",
         "message": "Komunikat",
         "color": "Kolor",
-        "font-size": "Rozmiar fontu (czcionki)",
+        "font-size": "Rozmiar fontu",
         "zeros": "Zera",
         "overrun": "Kolor przekroczenia czasu"
     },
@@ -675,7 +675,7 @@
         "use24hClock": "Użyj 24-godzinnego zegara",
         "styles_hint": "Utwórz różne style, które można zastosować do wyjścia, aby zmienić wygląd.",
         "hide_output_hint": "Podwójne kliknięcie na okno wyjścia ukrywa je. Przytrzymaj klawisz CTRL/CMD, aby umożliwić przeciąganie.",
-        "hide_menubar_hint": "To hide the menu bar, enable kiosk mode, or enable \"Automatically hide or show the menu bar\" in the general MacOS settings.",
+        "hide_menubar_hint": "Aby ukryć pasek menu, włącz tryb kiosku lub włącz opcję \"Automatycznie ukrywaj lub pokazuj pasek menu\" w ogólnych ustawieniach systemu macOS.",
         "show_output_hint": "Przytrzymaj klawisz CTRL/CMD podczas klikania przycisku wyświetlania, aby wymusić wyświetlanie na tym monitorze.",
         "move_output_hint": "Nie widzisz swojego ekranu? Zmień pozycję, aż okno pojawi się na drugim ekranie.",
         "select_display": "Kliknij na ekran, na którym chcesz wyświetlać.",
@@ -684,11 +684,11 @@
         "new_output": "Nowe wyjście",
         "enable_key_output": "Włącz wyjście z mapowaniem alfa",
         "always_on_top": "Zawsze na wierzchu",
-        "kiosk_mode": "Kiosk mode",
+        "kiosk_mode": "Tryb kiosku",
         "change_key_output_position": "Zmień pozycję wyjściową z mapowaniem alfa",
         "position": "Pozycja",
         "enabled": "Włączone",
-        "color_when_active": "Kolor podczas aktywacji",
+        "color_when_active": "Kolor aktywnego wyjścia",
         "fixed": "Stałe",
         "lines": "Linie",
         "override_with_template": "Zastąp styl szablonem",
@@ -707,12 +707,12 @@
         "add": "Dodaj",
         "remove": "Usuń",
         "change_name": "Zmień nazwę",
-        "show_location": "Pokaż lokalizację",
-        "export_location": "Export location",
-        "scripture_location": "Scripture location",
-        "recording_location": "Recordings location",
-        "font": "Font (czcionka)",
-        "font_family": "Rodzina fontu",
+        "show_location": "Ścieżka do plików \".show\"",
+        "export_location": "Ścieżka do eksportowania",
+        "scripture_location": "Ścieżka do przekładów Pisma",
+        "recording_location": "Ścieżka do nagrań",
+        "font": "Fonty",
+        "font_family": "Rodzina fontów",
         "font_size": "Rozmiar fontu",
         "colors": "Kolory",
         "add_group": "Dodaj grupę",
@@ -724,11 +724,11 @@
         "connections": "Połączenia",
         "max_connections": "Maksymalna liczba połączeń",
         "allowed_connections": "Dozwolone połączenia",
-        "connect": "Połącz, wpisując to w przeglądarce internetowej",
+        "connect": "Połącz się, wpisując w przeglądarkę",
         "restart": "Uruchom ponownie serwery",
         "reset_all": "Resetuj wszystko",
         "reset_theme": "Resetuj motyw",
-        "reset_themes": "Resetuj motywy",
+        "reset_themes": "Resetuj wszystkie motywy",
         "export_all": "Eksportuj wszystko"
     },
     "calendar": {
