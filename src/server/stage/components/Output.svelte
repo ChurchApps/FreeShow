@@ -1,11 +1,14 @@
 <script lang="ts">
+    import MediaOutput from "./MediaOutput.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
 
     export let show: any
     export let slide: any
     export let style: string = ""
+    export let background: any
     $: console.log("SLIDE", slide)
+    $: console.log("BACKGROUND", background)
 
     // export let video: any = null
     // export let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
@@ -115,11 +118,12 @@
 </script>
 
 <Zoomed {style} background={currentSlide?.settings?.color || currentStyle.background || "black"} {show} dynamicResolution={false} bind:ratio>
-    <!-- {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
-        <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
+    <!-- layers.includes("background") -->
+    {#if background?.path}
+        <div class="media" style="height: 100%;zoom: {1 / ratio};">
+            <MediaOutput {background} />
         </div>
-    {/if} -->
+    {/if}
 
     <!-- layers.includes("slide") -->
     {#if slide}
@@ -131,7 +135,7 @@
                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                     {ratio}
                     ref={{ showId: slide.id, slideId: currentSlide.id, id: currentSlide.id }} -->
-                        <Textbox {item} autoStage={false} />
+                        <Textbox {item} autoStage={false} {ratio} />
                     {/each}
                 {/if}
             </span>

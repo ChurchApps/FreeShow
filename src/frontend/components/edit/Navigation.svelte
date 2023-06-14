@@ -36,13 +36,16 @@
         editHistory.update((a) => {
             let edit: any = { edit: clone($activeEdit) }
             edit.id = edit.edit.id || $activeShow?.id || ""
-            edit.icon = edit.edit.type || "showIcon"
+            let type = edit.edit.type || "show"
+            edit.icon = type === "show" ? "showIcon" : type
             if (edit.icon === "media") edit.icon = getMediaType(getExtension(edit.id))
             if (edit.icon === "template") edit.icon = "templates"
             if (edit.icon === "overlay") edit.icon = "overlays"
 
-            edit.name = names[edit.edit.type || "show"](edit.id)
+            edit.name = names[type](edit.id)
             if (!edit.name) return a
+
+            if (type === "show") edit.show = clone($activeShow)
 
             a.push(edit)
 
@@ -62,13 +65,22 @@
     }
 </script>
 
-{#if $activeEdit.id}
+{#if $activeEdit.id || (!$activeShow && $editHistory.length)}
     <h3><T id="edit.recent" /></h3>
     {#if $editHistory.length}
         <div class="edited">
             {#each clone($editHistory).reverse() as edited, i}
                 <div class="item">
-                    <Button style="width: 100%;" on:click={() => activeEdit.set(edited.edit)} active={i === 0} bold={false} border>
+                    <Button
+                        style="width: 100%;"
+                        on:click={() => {
+                            activeEdit.set(edited.edit)
+                            if (edited.show) activeShow.set(edited.show)
+                        }}
+                        active={i === 0 && !!$activeEdit.id}
+                        bold={false}
+                        border
+                    >
                         <Icon id={edited.icon} right />
                         <p style="margin: 3px 5px;">{edited.name}</p>
                     </Button>

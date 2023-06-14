@@ -14,6 +14,7 @@
     export let id: string
     export let item: any
     export let slides: any
+    export let background: any
 
     // timer
     let today = new Date()
@@ -55,7 +56,7 @@
 
     {#if id.includes("current_output")}
         <span style="pointer-events: none;">
-            <Output {show} {slide} style={getStyleResolution(outputResolution, width, height)} />
+            <Output {show} {slide} style={getStyleResolution(outputResolution, width, height)} {background} />
         </span>
     {:else}
         <div class="align" style={item.align}>
@@ -66,7 +67,7 @@
                     <SlideNotes notes={slide?.notes || ""} />
                 {:else if id.includes("slide_text")}
                     {#key item}
-                        <SlideText {slide} chords={item.chords} {autoSize} parent={{ width, height }} />
+                        <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} />
                     {/key}
                 {:else if id.includes("slide")}
                     <!-- TODO: show slide data (backgrounds, overlays) -->

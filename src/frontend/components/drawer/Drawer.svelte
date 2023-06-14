@@ -20,7 +20,7 @@
     let move: boolean = false
     let mouse: null | { x: number; y: number; offsetY: number } = null
     function mousedown(e: any) {
-        if (!e.target.classList.contains("top")) return
+        if (e.target.closest(".search")) return
 
         maxHeight = window.innerHeight - 50 - ($os.platform === "win32" ? 30 : 0)
         mouse = {
@@ -54,16 +54,30 @@
         }
 
         if (height > minHeight) {
-            if (e === null || e?.target.classList.contains("top")) drawer.set({ height: minHeight, stored: height })
+            // close drawer
+            if (e === null || e?.target.classList.contains("top") || e?.target?.closest("#" + $activeDrawerTab)) drawer.set({ height: minHeight, stored: height })
             return
         }
 
+        // open drawer
         drawer.set({ height: storeHeight === null || storeHeight < defaultHeight ? defaultHeight : storeHeight, stored: null })
     }
 
     function mouseup(e: any) {
         mouse = null
         if (!e.target.closest(".top")) move = false
+    }
+
+    function openDrawerTab(tab: any) {
+        if ($activeDrawerTab === tab.id) return //|| move
+
+        // allow click event first
+        setTimeout(() => {
+            activeDrawerTab.set(tab.id)
+
+            // remove focus for search function to work
+            setTimeout(() => (document.activeElement as any)?.blur(), 10)
+        }, 10)
     }
 
     // TODO: serach for each drawer menu
@@ -135,16 +149,7 @@
         <span class="tabs">
             {#each tabs as tab}
                 {#if $drawerTabsData[tab.id]?.enabled !== false}
-                    <Button
-                        on:click={() => {
-                            activeDrawerTab.set(tab.id)
-                            // remove focus for search function to work
-                            setTimeout(() => document.activeElement?.blur(), 10)
-                        }}
-                        active={$activeDrawerTab === tab.id}
-                        class="context #drawer_top"
-                        title={$labelsDisabled ? $dictionary[tab.name.split(".")[0]]?.[tab.name.split(".")[1]] : ""}
-                    >
+                    <Button id={tab.id} on:click={() => openDrawerTab(tab)} active={$activeDrawerTab === tab.id} class="context #drawer_top" title={$labelsDisabled ? $dictionary[tab.name.split(".")[0]]?.[tab.name.split(".")[1]] : ""}>
                         <Icon id={tab.icon} size={1.3} />
                         {#if !$labelsDisabled}
                             <span><T id={tab.name} /></span>

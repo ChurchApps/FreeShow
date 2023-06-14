@@ -90,6 +90,8 @@
         pageNumbers: true,
         grid: [3, 6],
         oneFile: false,
+        originalTextSize: true,
+        textSize: 80,
     }
 
     function updatePdfOptions(e: any, key: string) {
@@ -137,7 +139,31 @@
         <div class="options">
             <h4 style="text-align: center;"><T id="export.options" /></h4>
             <br />
-            <CombinedInput>
+
+            <div class="line">
+                <Button
+                    on:click={() => (pdfOptions.text = !pdfOptions.text)}
+                    disabled={!pdfOptions.slides}
+                    style={pdfOptions.text ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                    bold={false}
+                    center
+                    dark
+                >
+                    <T id="export.text" />
+                </Button>
+                <Button
+                    on:click={() => (pdfOptions.slides = !pdfOptions.slides)}
+                    disabled={!pdfOptions.text}
+                    style={pdfOptions.slides ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                    bold={false}
+                    center
+                    dark
+                >
+                    <T id="export.slides" />
+                </Button>
+            </div>
+
+            <CombinedInput style="margin-top: 10px;">
                 <p><T id="export.title" /></p>
                 <div class="alignRight">
                     <Checkbox checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} />
@@ -174,19 +200,15 @@
                 </div>
             </CombinedInput>
 
-            <br />
-
-            <CombinedInput>
-                <p><T id="export.text" /></p>
+            <CombinedInput style="margin-top: 10px;">
+                <p><T id="export.original_text_size" /></p>
                 <div class="alignRight">
-                    <Checkbox disabled={!pdfOptions.slides} checked={pdfOptions.text} on:change={(e) => updatePdfOptions(e, "text")} />
+                    <Checkbox disabled={!pdfOptions.text} checked={pdfOptions.originalTextSize !== false} on:change={(e) => updatePdfOptions(e, "originalTextSize")} />
                 </div>
             </CombinedInput>
             <CombinedInput>
-                <p><T id="export.slides" /></p>
-                <div class="alignRight">
-                    <Checkbox disabled={!pdfOptions.text} checked={pdfOptions.slides} on:change={(e) => updatePdfOptions(e, "slides")} />
-                </div>
+                <p><T id="settings.font_size" /></p>
+                <NumberInput disabled={!pdfOptions.text || pdfOptions.originalTextSize !== false} value={pdfOptions.textSize} on:change={(e) => (pdfOptions.textSize = e.detail)} />
             </CombinedInput>
             <!-- <span>
         <p>repeats</p>
@@ -283,6 +305,13 @@
 
     h4 {
         color: var(--text);
+    }
+
+    .line {
+        display: flex;
+        align-items: center;
+        background-color: var(--primary-darker);
+        flex-flow: wrap;
     }
 
     hr {

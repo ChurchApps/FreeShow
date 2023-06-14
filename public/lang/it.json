@@ -70,7 +70,11 @@
     "screen": {
         "width": "Larghezza",
         "height": "Altezza",
-        "pixels": "pixel"
+        "pixels": "pixel",
+        "top": "Top",
+        "right": "Right",
+        "bottom": "Bottom",
+        "left": "Left"
     },
     "create_show": {
         "search_web": "Cerca canzone sul web",
@@ -400,6 +404,8 @@
         "home": "Home",
         "mute": "Muta",
         "unmute": "Smuta",
+        "bind_to": "Bind to",
+        "remove_binding": "Remove binding",
         "format": "Formato",
         "uppercase": "Rendi maiuscolo",
         "lowercase": "Rendi minuscolo",
@@ -463,6 +469,7 @@
         "groups": "Gruppi",
         "numbers": "Diapositive numerate",
         "invert": "Inverti diapositive",
+        "original_text_size": "Original text size",
         "text": "Testo semplice",
         "slides": "Diapositive",
         "rows": "Righe",
@@ -708,6 +715,7 @@
         "auto_output": "Attiva la schermata di output all'avvio",
         "default_project_name": "Nome progetto predefinito",
         "resolution": "Risoluzione",
+        "cropping": "Cropping",
         "video_extensions": "Estensioni video",
         "image_extensions": "Estensioni immagine",
         "add": "Aggiungi",

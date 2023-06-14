@@ -146,10 +146,10 @@
                 {:else if id.includes("notes")}
                     <SlideNotes {next} />
                 {:else if id.includes("slide_text")}
-                    <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} {autoSize} parent={{ width, height }} />
+                    <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} />
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
-                        <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} parent={{ width, height }} style />
+                        <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} style />
                     </span>
                 {:else if id.includes("clock")}
                     <Clock style={false} {autoSize} />

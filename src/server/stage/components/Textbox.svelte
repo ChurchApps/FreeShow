@@ -1,13 +1,17 @@
 <script lang="ts">
     import type { Item } from "../../../types/Show"
     import { getStyles } from "../helpers/style"
+    import Clock from "../items/Clock.svelte"
     import Chords from "./Chords.svelte"
+    import Icon from "./Icon.svelte"
+    import ListView from "./ListView.svelte"
 
     export let item: Item
     export let style: boolean = true
     export let autoStage: boolean = true
     export let chords: boolean = false
     export let autoSize: number = 0
+    export let ratio: number = 1
 
     // dynamic resolution
     let resolution = { width: window.innerWidth, height: window.innerHeight }
@@ -53,6 +57,26 @@
                 {/each}
             </div>
         </div>
+    {:else if item?.type === "list"}
+        <ListView list={item.list} />
+        <!-- {:else if item?.type === "media"}
+        {#if item.src}
+            {#if getMediaType(getExtension(item.src)) === "video"}
+                <video src={item.src} muted={true}>
+                    <track kind="captions" />
+                </video>
+            {:else}
+                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+            {/if}
+        {/if} -->
+        <!-- {:else if item?.type === "timer"}
+        <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" /> -->
+    {:else if item?.type === "clock"}
+        <Clock {autoSize} {...item.clock} />
+        <!-- {:else if item?.type === "mirror"}
+        <Mirror {item} {ref} {ratio} index={slideIndex} /> -->
+    {:else if item?.type === "icon"}
+        <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
     {/if}
 </div>
 

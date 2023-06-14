@@ -4,6 +4,7 @@ import { MAIN, OUTPUT, STAGE } from "../../../types/Channels"
 import type { Slide } from "../../../types/Show"
 import { changeSlideGroups } from "../../show/slides"
 import {
+    $,
     activeDrawerTab,
     activeEdit,
     activePage,
@@ -548,6 +549,57 @@ const actions: any = {
     changeIcon: () => activePopup.set("icon"),
 
     selectAll: (obj: any) => selectAll(obj.sel),
+
+    // bind item
+    stage: (obj: any) => actions.bind_item(obj),
+    bind_item: (obj: any) => {
+        let id = obj.menu?.id
+        let items = get(activeEdit).items
+
+        if (get(activeEdit).id) {
+            let currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
+            let itemValues = items.map((index) => currentItems[index].bindings || [])
+            let newValues: string[][] = []
+            itemValues.forEach((value) => {
+                if (!id) value = []
+                else if (value.includes(id)) value.splice(value.indexOf(id, 1))
+                else value.push(id)
+
+                newValues.push(value)
+            })
+
+            history({
+                id: "UPDATE",
+                oldData: { id: get(activeEdit).id },
+                newData: { key: "items", subkey: "bindings", data: newValues, indexes: items },
+                location: { page: "edit", id: get(activeEdit).type + "_items", override: true },
+            })
+
+            return
+        }
+
+        let slideIndex: number = get(activeEdit).slide || 0
+        let ref = _show().layouts("active").ref()[0]
+        let slideRef = ref[slideIndex]
+
+        let itemValues = _show().slides([slideRef.id]).items(items).get("bindings")[0]
+        itemValues = itemValues.map((a) => a || [])
+        let newValues: string[][] = []
+        itemValues.forEach((value) => {
+            if (!id) value = []
+            else if (value.includes(id)) value.splice(value.indexOf(id, 1))
+            else value.push(id)
+
+            newValues.push(value)
+        })
+
+        history({
+            id: "setItems",
+            newData: { style: { key: "bindings", values: newValues } },
+            location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itembind_" + slideRef.id + "_items_" + items.join(",") },
+        })
+        // _show().slides([slideID!]).set({ key: "items", value: items })
+    },
 
     // formats
     uppercase: (obj: any) => format("uppercase", obj),

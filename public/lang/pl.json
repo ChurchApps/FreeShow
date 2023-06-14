@@ -70,7 +70,11 @@
     "screen": {
         "width": "Szerokość",
         "height": "Wysokość",
-        "pixels": "Piksele"
+        "pixels": "Piksele",
+        "top": "Top",
+        "right": "Right",
+        "bottom": "Bottom",
+        "left": "Left"
     },
     "create_show": {
         "search_web": "Poszukaj pieśni w Internecie",
@@ -400,6 +404,8 @@
         "home": "Ekran główny",
         "mute": "Wycisz dźwięk",
         "unmute": "Przywróć dźwięk",
+        "bind_to": "Bind to",
+        "remove_binding": "Remove binding",
         "format": "Formatuj",
         "uppercase": "Wielkie litery",
         "lowercase": "Małe litery",
@@ -463,6 +469,7 @@
         "groups": "Grupy",
         "numbers": "Liczba slajdów",
         "invert": "Odwróć slajdy",
+        "original_text_size": "Original text size",
         "text": "Zwykły tekst",
         "slides": "Slajdy",
         "rows": "Rzędy",
@@ -708,6 +715,7 @@
         "auto_output": "Aktywuj ekran wyjściowy przy uruchamianiu",
         "default_project_name": "Domyślna nazwa projektu",
         "resolution": "Rozdzielczość",
+        "cropping": "Cropping",
         "video_extensions": "Rozszerzenia wideo",
         "image_extensions": "Rozszerzenia obrazków",
         "add": "Dodaj",

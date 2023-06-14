@@ -678,7 +678,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 return
                             }
 
-                            if (item.auto) slide.items[i].auto = true
+                            if (item.auto !== undefined) slide.items[i].auto = item.auto
+                            if (item.bindings?.length) slide.items[i].bindings = item.bindings
                             slide.items[i].style = item.style || ""
                             slide.items[i].align = item.align || ""
                             slide.items[i].lines?.forEach((line: any, j: number) => {

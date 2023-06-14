@@ -22,6 +22,7 @@ export interface StageShows {
         items: {
             [key: string]: {
                 enabled: boolean
+                auto?: boolean
                 style: string
                 align: string
             }

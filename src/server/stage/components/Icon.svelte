@@ -1,25 +1,48 @@
 <script lang="ts">
-  import icons from "../helpers/icons"
+    import { customIcons } from "../helpers/customIcons"
+    import icons from "../helpers/icons"
 
-  export let id: string
-  export let size: number = 1
-  export let white: boolean = false
+    export let id: string
+    export let size: number = 1
+    export let fill: boolean = false
+    export let white: boolean = false
+    export let custom: boolean = false
 
-  $: width = size + "rem"
-  $: height = size + "rem"
-  let box: number = 24
+    $: icon = custom ? customIcons[id] : icons[id]
+
+    $: width = size + "rem"
+    $: height = size + "rem"
+    let box: number = 24
 </script>
 
-{#if icons[id]}
-  <svg class={$$props.class} class:white style="{$$props.style || ''} min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">{@html icons[id]}</svg>
-{/if}
+<svg class={$$props.class} class:white class:fill style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
+    {@html icon ? icon : icons.noIcon}
+</svg>
 
 <style>
-  svg {
-    fill: var(--secondary);
-  }
+    svg {
+        fill: var(--secondary);
+    }
 
-  svg.white {
-    fill: var(--text);
-  }
+    svg.select {
+        cursor: pointer;
+    }
+
+    svg.select:hover {
+        background-color: var(--hover);
+    }
+
+    svg.white {
+        /* fill: var(--text); */
+        fill: currentColor;
+    }
+
+    svg.right {
+        margin-right: 0.5em;
+    }
+
+    svg.fill {
+        width: 100%;
+        height: 100%;
+    }
 </style>

@@ -11,6 +11,7 @@ export interface Styles {
     background?: string
     backgroundImage?: string
     resolution?: Resolution
+    cropping?: Cropping
     lines?: number
     template?: string
     displayMetadata?: string
@@ -21,6 +22,12 @@ export interface Styles {
 export interface Resolution {
     width: number
     height: number
+}
+export interface Cropping {
+    top: number
+    right: number
+    bottom: number
+    left: number
 }
 
 export interface Dictionary {

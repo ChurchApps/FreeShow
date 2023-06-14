@@ -5,14 +5,14 @@
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { getFileName } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MediaPicker from "../../inputs/MediaPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import MediaPicker from "../../inputs/MediaPicker.svelte"
-    import { getFileName } from "../../helpers/media"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     function updateStyle(e: any, key: string) {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -26,6 +26,12 @@
 
             return a
         })
+    }
+
+    function updateCropping(newValue: number, key: string) {
+        let cropping = currentStyle.cropping || { top: 0, right: 0, bottom: 0, left: 0 }
+        cropping[key] = newValue
+        updateStyle(cropping, "cropping")
     }
 
     // pre v0.8.4: generate styles from old output "show" formatting
@@ -68,6 +74,22 @@
         currentStyle = { name }
         updateStyle(name, "name")
     }
+
+    // resolutions
+    // https://www.wearethefirehouse.com/aspect-ratio-cheat-sheet
+    const resolutions = [
+        { name: "720p 960x720 (4/3)", data: { width: 960, height: 720 } },
+        { name: "720p 1280x720 (16/9)", data: { width: 1280, height: 720 } },
+        { name: "1080p 1440x1080 (4/3)", data: { width: 1440, height: 1080 } },
+        { name: "1080p 1920x1080 (16/9)", data: { width: 1920, height: 1080 } },
+        { name: "2K 2048x1152 (16/9)", data: { width: 2048, height: 1152 } },
+        { name: "4K 3840x2160 (16/9)", data: { width: 3840, height: 2160 } },
+        { name: "8K 7680x4320 (16/9)", data: { width: 7680, height: 4320 } },
+        { name: "Cinema Flat 2K 1998x1080 (1.85)", data: { width: 1998, height: 1080 } },
+        { name: "Cinema Scope 2K 2048x858 (2.39)", data: { width: 2048, height: 858 } },
+        { name: "Cinema Flat 4K 3996x2160 (1.85)", data: { width: 3996, height: 2160 } },
+        { name: "Cinema Scope 4K 4096x1716 (2.39)", data: { width: 4096, height: 1716 } },
+    ]
 
     // slide
 
@@ -158,10 +180,41 @@
     <span class="inputs">
         <!-- defaults dropdown -->
         <!-- custom... -->
-        <span class="text"><T id="screen.width" /></span>
-        <NumberInput value={currentStyle.resolution?.width || 1920} min={100} max={10000} buttons={false} outline on:change={(e) => updateStyle({ width: Number(e.detail), height: currentStyle.resolution?.height || 1080 }, "resolution")} />
-        <span class="text"><T id="screen.height" /></span>
-        <NumberInput value={currentStyle.resolution?.height || 1080} min={100} max={10000} buttons={false} outline on:change={(e) => updateStyle({ height: Number(e.detail), width: currentStyle.resolution?.width || 1920 }, "resolution")} />
+        <!-- <span class="text"><T id="screen.width" /></span> -->
+        <NumberInput
+            title={$dictionary.screen?.width}
+            value={currentStyle.resolution?.width || 1920}
+            min={100}
+            max={10000}
+            buttons={false}
+            on:change={(e) => updateStyle({ width: Number(e.detail), height: currentStyle.resolution?.height || 1080 }, "resolution")}
+        />
+        <!-- <span class="text"><T id="screen.height" /></span> -->
+        <NumberInput
+            title={$dictionary.screen?.height}
+            value={currentStyle.resolution?.height || 1080}
+            min={100}
+            max={10000}
+            buttons={false}
+            on:change={(e) => updateStyle({ height: Number(e.detail), width: currentStyle.resolution?.width || 1920 }, "resolution")}
+        />
+        <Dropdown
+            arrow
+            value={resolutions.find((a) => a.data.height === (currentStyle.resolution?.height || 1080) && a.data.width === (currentStyle.resolution?.width || 1920))?.name || ""}
+            options={resolutions}
+            title={$dictionary.settings?.resolution}
+            on:click={(e) => updateStyle(e.detail?.data, "resolution")}
+        />
+    </span>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.cropping" /></p>
+    <span class="inputs">
+        <NumberInput title={$dictionary.screen?.top} value={currentStyle.cropping?.top || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "top")} />
+        <NumberInput title={$dictionary.screen?.right} value={currentStyle.cropping?.right || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "right")} />
+        <NumberInput title={$dictionary.screen?.bottom} value={currentStyle.cropping?.bottom || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "bottom")} />
+        <NumberInput title={$dictionary.screen?.left} value={currentStyle.cropping?.left || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "left")} />
     </span>
 </CombinedInput>
 
@@ -297,11 +350,10 @@
         display: flex;
     }
 
-    .text {
-        /* font-weight: bold; */
+    /* .text {
         display: flex;
         align-items: center;
         padding: 0 10px;
         border: none;
-    }
+    } */
 </style>

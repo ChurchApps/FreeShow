@@ -21,6 +21,7 @@
     export let key: boolean = false
     export let disableListTransition: boolean = false
     export let smallFontSize: boolean = false
+    export let customFontSize: number | null = null
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -101,10 +102,10 @@
             {#if chords}
                 <Chords {item} {textElem} />
             {/if}
-            <div class="lines" style={smallFontSize ? "--font-size: " + (-1.1 * $slidesOptions.columns + 12) * 5 + "px;" : null} bind:this={textElem}>
+            <div class="lines" style={smallFontSize || customFontSize !== null ? "--font-size: " + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + "px;" : null} bind:this={textElem}>
                 {#each lines as line, i}
                     {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
-                        <div class="break" class:smallFontSize style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
+                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
                             {#each line.text as text}
                                 <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value}</span>
                             {/each}

@@ -75,7 +75,7 @@
     navigator.mediaDevices
         .getUserMedia({
             audio: {
-                deviceId: mic.id,
+                deviceId: { exact: mic.id },
             },
         })
         .then(handleSuccess)

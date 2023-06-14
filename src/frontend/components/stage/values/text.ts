@@ -6,6 +6,7 @@ export const textEdits: { [key: string]: EditInput[] } = {
         { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
         { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
         { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px" },
+        { name: "auto_size", id: "auto", input: "checkbox", value: true },
     ],
     style: [
         { input: "font-style" },

@@ -17,11 +17,11 @@
 
     let videoElem: any
 
-    $: console.log(cam)
-
+    // https://stackoverflow.com/questions/33761770/what-constraints-should-i-pass-to-getusermedia-in-order-to-get-two-video-media
+    // https://blog.addpipe.com/getusermedia-video-constraints/
     let constraints: any = {
         video: {
-            devideId: cam.id,
+            deviceId: { exact: cam.id },
             groupId: cam.group,
             width: { ideal: getResolution().width },
             height: { ideal: getResolution().height },

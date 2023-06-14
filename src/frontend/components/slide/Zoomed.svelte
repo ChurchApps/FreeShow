@@ -1,28 +1,62 @@
 <script lang="ts">
-    import type { Resolution } from "../../../types/Settings"
+    import type { Cropping, Resolution } from "../../../types/Settings"
     import { outputs, styles } from "../../stores"
     import { getActiveOutputs, getResolution } from "../helpers/output"
 
     export let background: string = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background || "#000000"
     export let center: boolean = false
     export let zoom: boolean = true
+    export let mirror: boolean = false
     export let disableStyle: boolean = false
     export let relative: boolean = false
     export let aspectRatio: boolean = true
     export let hideOverflow: boolean = true
     export let customZoom: number = 1
+    export let cropping: Cropping = { top: 0, right: 0, bottom: 0, left: 0 }
     export let resolution: Resolution = getResolution(null, { $outputs, $styles })
     $: resolution = getResolution(resolution, { $outputs, $styles })
     let slideWidth: number = 0
     export let ratio: number = 1
     $: ratio = Math.max(0.01, slideWidth / resolution.width) / customZoom
+
+    $: croppedStyle = getCropping(cropping)
+    function getCropping(cropping) {
+        let style = ""
+        if (!cropping || mirror) return ""
+
+        let minusHeight = cropping.top + cropping.bottom
+        let minusWidth = cropping.right + cropping.left
+
+        let newHeight = resolution.height - minusHeight
+        let newWidth = resolution.width - minusWidth
+        let heightRatio = newHeight / resolution.height
+        let widthRatio = newWidth / resolution.width
+        let paddingSides = (resolution.width - minusWidth - resolution.width * heightRatio) / 2
+        let paddingTops = (resolution.height - minusHeight - resolution.height * widthRatio) / 2
+
+        // if (minusHeight) style += `height: calc(100% - ${minusHeight}px);`
+        style += `margin-top: ${cropping.top + paddingTops}px;`
+        style += `margin-bottom: ${cropping.bottom + paddingTops}px;`
+
+        if (minusWidth) style += `width: calc(100% - ${minusWidth}px);`
+        style += `margin-right: ${cropping.right + paddingSides}px;`
+        style += `margin-left: ${cropping.left + paddingSides}px;`
+
+        return style
+    }
 </script>
 
-<!-- $$props.style ||  -->
 <div class:center class="zoomed" style="width: 100%;height: 100%;">
-    <div bind:offsetWidth={slideWidth} class="slide" class:hideOverflow class:disableStyle class:relative style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};` : ''};">
+    <div
+        bind:offsetWidth={slideWidth}
+        class="slide"
+        class:hideOverflow
+        class:disableStyle
+        class:relative
+        style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
+    >
         {#if zoom}
-            <span style="zoom: {ratio};">
+            <span class="zoom" style="zoom: {ratio};">
                 <slot {ratio} />
             </span>
         {:else}

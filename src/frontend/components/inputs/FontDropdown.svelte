@@ -43,12 +43,21 @@
     let active: boolean = false
     let self: HTMLDivElement
 
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
+        if (nextScrollTimeout) return
+
         e.preventDefault()
         let index = fonts.findIndex((a) => a === value)
         if (e.deltaY > 0) index = Math.min(fonts.length - 1, index + 1)
         else index = Math.max(0, index - 1)
         dispatch("click", fonts[index])
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 
     $: if (active) scrollToActive()

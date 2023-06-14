@@ -70,7 +70,11 @@
     "screen": {
         "width": "Bredde",
         "height": "Høyde",
-        "pixels": "piksler"
+        "pixels": "piksler",
+        "top": "Topp",
+        "right": "Høyre",
+        "bottom": "Bunn",
+        "left": "Venstre"
     },
     "create_show": {
         "search_web": "Søk etter sang på nettet",
@@ -400,6 +404,8 @@
         "home": "Hjem",
         "mute": "Slå av lyden",
         "unmute": "Slå på lyden",
+        "bind_to": "Bind til",
+        "remove_binding": "Fjern binding",
         "format": "Formater",
         "uppercase": "Gjør tekst stor",
         "lowercase": "Gjør tekst liten",
@@ -463,6 +469,7 @@
         "groups": "Grupper",
         "numbers": "Nummererte lysbilder",
         "invert": "Inverter lysbilder",
+        "original_text_size": "Original tekststørrelse",
         "text": "Kun tekst",
         "slides": "Lysbilder",
         "rows": "Rader",
@@ -708,6 +715,7 @@
         "auto_output": "Aktiver utgangsskjerm ved oppstart",
         "default_project_name": "Standard prosjektnavn",
         "resolution": "Oppløsning",
+        "cropping": "Beskjæring",
         "video_extensions": "Videoutvidelse",
         "image_extensions": "Bildeutvidelse",
         "add": "Legg til",

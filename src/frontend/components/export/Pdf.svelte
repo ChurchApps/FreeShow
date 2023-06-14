@@ -83,11 +83,7 @@
             </div>
         {/if}
         {#each layoutSlides[shows[index].id] as slide, i}
-            <div
-                class="slide"
-                class:padding={options.text ? i === 0 : i < options.grid[0]}
-                style={options.slides ? `height: calc(842pt / ${options.grid[1]} - 0.1px);` + (options.text ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}
-            >
+            <div class="slide" class:padding={options.text ? i === 0 : i < options.grid[0]} style={options.slides ? `height: calc(842pt / ${options.grid[1]} - 0.1px);` + (options.text ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
                 <!-- TODO: different slide heights! -->
                 <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
                 {#if options.groups}
@@ -116,7 +112,7 @@
                         {#if slide.items}
                             {#each slide.items as item}
                                 {#if item.type === undefined || item.type === "text" || item.type === "timer"}
-                                    <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} style={false} />
+                                    <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} customFontSize={options.originalTextSize ? null : options.textSize} style={false} />
                                 {/if}
                             {/each}
                         {/if}

@@ -37,7 +37,7 @@
     $: currentOutput = $outputs[outputId] || {}
 
     let currentStyle: Styles = { name: "" }
-    $: currentStyle = currentOutput?.style ? $styles[currentOutput?.style] : { name: "" }
+    $: currentStyle = currentOutput?.style ? $styles[currentOutput?.style] || { name: "" } : { name: "" }
 
     let layers: any = currentStyle.layers || defaultLayers
     let out: any = currentOutput?.out || {}
@@ -280,7 +280,7 @@
     }
 </script>
 
-<Zoomed background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} bind:ratio>
+<Zoomed background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
             <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
@@ -295,17 +295,19 @@
                 <span style="pointer-events: none;display: block;">
                     {#if slideClone?.items}
                         {#each slideClone?.items as item}
-                            <Textbox
-                                filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                                backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
-                                key={currentOutput.isKeyOutput}
-                                disableListTransition={disableTransitions}
-                                {item}
-                                {ratio}
-                                ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
-                                {linesStart}
-                                {linesEnd}
-                            />
+                            {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                <Textbox
+                                    filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                                    backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                                    key={currentOutput.isKeyOutput}
+                                    disableListTransition={disableTransitions}
+                                    {item}
+                                    {ratio}
+                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                    {linesStart}
+                                    {linesEnd}
+                                />
+                            {/if}
                         {/each}
                     {/if}
                 </span>
@@ -313,17 +315,19 @@
                 <span transition:custom={transition} style="pointer-events: none;display: block;">
                     {#if slideClone?.items}
                         {#each slideClone?.items as item}
-                            <Textbox
-                                filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                                backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
-                                key={currentOutput.isKeyOutput}
-                                disableListTransition={disableTransitions}
-                                {item}
-                                {ratio}
-                                ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
-                                {linesStart}
-                                {linesEnd}
-                            />
+                            {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                <Textbox
+                                    filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                                    backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                                    key={currentOutput.isKeyOutput}
+                                    disableListTransition={disableTransitions}
+                                    {item}
+                                    {ratio}
+                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                    {linesStart}
+                                    {linesEnd}
+                                />
+                            {/if}
                         {/each}
                     {/if}
                 </span>
@@ -353,7 +357,9 @@
                     <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
                         <div>
                             {#each $overlays[id].items as item}
-                                <Textbox {item} ref={{ type: "overlay", id }} />
+                                {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                    <Textbox {item} ref={{ type: "overlay", id }} />
+                                {/if}
                             {/each}
                         </div>
                     </div>

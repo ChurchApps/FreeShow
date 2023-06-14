@@ -4,11 +4,13 @@
     import { translate } from "../../utils/language"
     import { language } from "../../stores"
     import type { Option } from "../../../types/Main"
+    import Icon from "../helpers/Icon.svelte"
 
     const dispatch = createEventDispatcher()
     export let options: Option[]
     export let disabled: boolean = false
     export let center: boolean = false
+    export let arrow: boolean = false
     let active: boolean = false
     export let value: any
     export let title: string = ""
@@ -18,13 +20,22 @@
 
     let self: HTMLDivElement
 
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (disabled) return
+        if (nextScrollTimeout) return
+
         e.preventDefault()
         let index = options.findIndex((a) => a.name === (value.name || value))
         if (e.deltaY > 0) index = Math.min(options.length - 1, index + 1)
         else index = Math.max(0, index - 1)
         dispatch("click", options[index])
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 
     // TODO: scroll don't work with multiple of the same name (e.g. EditTimer.svelte)
@@ -41,7 +52,7 @@
     }
 
     function formatId(value: string) {
-        return value.replace(/[\W_]+/g, "")
+        return "id_" + value.replace(/[\W_]+/g, "")
     }
 </script>
 
@@ -55,11 +66,15 @@
 
 <div class:disabled class:center bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
     <button {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
-        {translate(normalizedValue, { parts: true }) || value}
-        <!-- <T id={value} /> -->
+        {#if arrow}
+            <Icon id="expand" size={1.2} white />
+        {:else}
+            {translate(normalizedValue, { parts: true }) || value}
+            <!-- <T id={value} /> -->
+        {/if}
     </button>
     {#if active}
-        <div class="dropdown" style={$$props.style || ""} transition:slide={{ duration: 200 }}>
+        <div class="dropdown" class:arrow style={$$props.style || ""} transition:slide={{ duration: 200 }}>
             {#each options as option}
                 <!-- {#if option.name !== value} -->
                 <span
@@ -110,16 +125,13 @@
         z-index: 10;
     }
 
-    .center button {
-        text-align: center;
+    .dropdown.arrow {
+        right: 0;
+        width: 300px;
     }
 
-    button {
-        /* width: 200px; */
-        color: var(--text);
-        border: 2px solid var(--primary-lighter);
-        /* font-weight: bold; */
-        text-align: left;
+    .center button {
+        text-align: center;
     }
 
     button,
@@ -134,6 +146,17 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    button {
+        /* width: 200px; */
+        color: var(--text);
+        border: 2px solid var(--primary-lighter);
+        /* font-weight: bold; */
+        text-align: left;
+
+        display: flex;
+        align-items: center;
     }
 
     button:hover:not(.disabled button),

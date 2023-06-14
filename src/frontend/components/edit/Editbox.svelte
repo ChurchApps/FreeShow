@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, dictionary, os, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -21,6 +21,7 @@
     import { getAutoSize } from "./scripts/autoSize"
     import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
+    import { menuClick } from "../context/menuClick"
 
     export let item: Item
     export let filter: string = ""
@@ -41,13 +42,28 @@
     export let mouse: any = {}
     function mousedown(e: any) {
         if (e.target.closest(".chords")) return
+        let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         activeEdit.update((ae) => {
+            if (rightClick) {
+                if (ae.items.includes(index)) return ae
+                ae.items = [index]
+
+                return ae
+            }
+
             if (e.ctrlKey || e.metaKey) {
                 if (ae.items.includes(index)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
-                } else ae.items.push(index)
-            } else ae.items = [index]
+                } else {
+                    ae.items.push(index)
+                }
+
+                return ae
+            }
+
+            ae.items = [index]
+
             return ae
         })
 
@@ -372,6 +388,11 @@
         return newLines
     }
 
+    // bindings
+    function removeBindings() {
+        menuClick("bind_item")
+    }
+
     // timer
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
@@ -446,6 +467,15 @@ bind:offsetWidth={width} -->
 >
     {#if !plain}
         <Movebox {ratio} active={$activeEdit.items.includes(index)} />
+
+        <!-- bindings -->
+        {#if item.bindings?.length}
+            <div title={$dictionary.actions?.remove_binding} class="chordsButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+                <Button on:click={removeBindings} redHover>
+                    <Icon id="bind" white />
+                </Button>
+            </div>
+        {/if}
     {/if}
     {#if item?.lines}
         <!-- chords -->

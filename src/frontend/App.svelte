@@ -334,9 +334,8 @@
         width: 100%;
 
         display: flex;
-        background: var(--primary-darkest);
-
-        /* TODO: change electron window resolution...?? */
-        /* background-color: black; */
+        background-color: black;
+        /* enable this to see the actual output window cropped size */
+        /* background: var(--primary-darkest); */
     }
 </style>

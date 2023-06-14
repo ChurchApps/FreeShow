@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { activeStage, stageShows } from "../../../stores"
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
@@ -16,10 +17,22 @@
     let data: { [key: string]: any } = {}
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
 
+    // $: if (textEdits) updateAuto(item?.auto || true)
+    onMount(() => {
+        updateAuto(item?.auto || true)
+    })
+    function updateAuto(value) {
+        let autoIndex = textEdits?.font?.findIndex((a) => a.id === "auto")
+        if (!autoIndex) return
+        textEdits.font[autoIndex].value = value
+    }
+
     function setValue(input: any) {
         let value: any = input.value
         // if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
+
+        if (input.id === "auto") updateAuto(value)
 
         history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
     }

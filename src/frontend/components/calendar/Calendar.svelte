@@ -91,8 +91,10 @@
     }
 
     let calendarElem: any
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!calendarElem) return
+        if (nextScrollTimeout) return
 
         // forward
         if (e.deltaY > 0) {
@@ -106,6 +108,12 @@
         let top = calendarElem.scrollTop === 0
         if (!top) return
         current = new Date(year, month, 0)
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 
     function getEvents(day: Date, currentEvents: any[]) {

@@ -2,7 +2,6 @@
     export let show: any
     export let disableStyle: boolean = false
     export let dynamicResolution: boolean = true
-    export let invertZoom: boolean = false
     export let relative: boolean = false
 
     let resolution: any = show && show.settings.resolution ? show.settings.resolution : { width: 1920, height: 1080 } // $screen.resolution

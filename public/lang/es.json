@@ -70,7 +70,11 @@
     "screen": {
         "width": "Ancho",
         "height": "Altura",
-        "pixels": "Píxeles"
+        "pixels": "Píxeles",
+        "top": "Top",
+        "right": "Right",
+        "bottom": "Bottom",
+        "left": "Left"
     },
     "create_show": {
         "search_web": "Search for song on the web",
@@ -400,6 +404,8 @@
         "home": "Inicio",
         "mute": "Silenciar",
         "unmute": "Activar micrófono",
+        "bind_to": "Bind to",
+        "remove_binding": "Remove binding",
         "format": "Formatear",
         "uppercase": "Mayúscula",
         "lowercase": "Minúscula",
@@ -463,6 +469,7 @@
         "groups": "Grupos",
         "numbers": "Diapositivas enumeradas",
         "invert": "Invertir diapositivas",
+        "original_text_size": "Original text size",
         "text": "Texto sin formato",
         "slides": "Diapositivas",
         "rows": "Filas",
@@ -708,6 +715,7 @@
         "auto_output": "Muestra la ventana de salida en la pantalla de inicio",
         "default_project_name": "Nombre predeterminado del proyecto",
         "resolution": "Solución",
+        "cropping": "Cropping",
         "video_extensions": "Extensiones de video",
         "image_extensions": "Extensiones de imagen",
         "add": "Añadir",

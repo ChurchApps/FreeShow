@@ -70,7 +70,11 @@
     "screen": {
         "width": "Largura",
         "height": "Altura",
-        "pixels": "pixels"
+        "pixels": "pixels",
+        "top": "Top",
+        "right": "Right",
+        "bottom": "Bottom",
+        "left": "Left"
     },
     "create_show": {
         "search_web": "Search for song on the web",
@@ -400,6 +404,8 @@
         "home": "Início",
         "mute": "Silenciar",
         "unmute": "Parar de silenciar",
+        "bind_to": "Bind to",
+        "remove_binding": "Remove binding",
         "format": "Formatar",
         "uppercase": "Transformar em maiúscula",
         "lowercase": "Transformar em minúscula",
@@ -463,6 +469,7 @@
         "groups": "Grupos",
         "numbers": "Slides enumerados",
         "invert": "Inverter slides",
+        "original_text_size": "Original text size",
         "text": "Text puro",
         "slides": "Slides",
         "rows": "Linhas",
@@ -708,6 +715,7 @@
         "auto_output": "Mostrar tela de saída na inicialização",
         "default_project_name": "Nome do projeto padrão",
         "resolution": "Resolução",
+        "cropping": "Cropping",
         "video_extensions": "Extensões de vídeo",
         "image_extensions": "Extensões de imagem",
         "add": "Adicionar",

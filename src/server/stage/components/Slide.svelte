@@ -12,6 +12,7 @@
 
     export let show: Show
     export let slides: any
+    export let background: any
 
     let width: number = 0
     let height: number = 0
@@ -26,7 +27,7 @@
             {#each Object.entries(show.items) as [id, item]}
                 {#if item.enabled}
                     {#key show}
-                        <Stagebox {show} {id} {item} {slides} />
+                        <Stagebox {show} {id} {item} {slides} {background} />
                     {/key}
                 {/if}
             {/each}

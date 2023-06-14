@@ -52,7 +52,7 @@ export function listenForUpdates() {
         // send(REMOTE, ["SHOW"], data )
         timedout(REMOTE, { channel: "SHOW", data }, () =>
             eachConnection(REMOTE, "SHOW", (connection) => {
-                return connection.active ? convertBackgrounds(data[connection.active]) : null
+                return connection.active ? convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
             })
         )
         // TODO: this, timedout +++

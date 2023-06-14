@@ -79,12 +79,21 @@
     //   else columns = 1
     // }
 
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
+        if (nextScrollTimeout) return
+
         e.preventDefault()
         columns = Math.max(1, Math.min(4, columns + (e.deltaY < 0 ? -1 : 1)))
         // if (e.ctrlKey || e.metaKey) columns = Math.max(1, Math.min(10, columns + e.deltaY / 100))
         // if (e.ctrlKey || e.metaKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 
     let altKeyPressed: boolean = false

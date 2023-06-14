@@ -115,10 +115,19 @@
 
     let zoom = 1
 
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
+        if (nextScrollTimeout) return
         if (!e.target.closest(".editArea")) return
+
         zoom = Number(Math.max(0.5, Math.min(2, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 
     // CHORDS

@@ -89,6 +89,9 @@
                 menu.icon = "record"
             }
         },
+        // bind_item: () => {
+        //     if (item is bound) enabled = true
+        // }
     }
     if (conditions[id]) conditions[id]()
 

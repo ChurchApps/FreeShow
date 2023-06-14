@@ -79,7 +79,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
+    bind_to: { label: "actions.bind_to", icon: "bind", items: ["stage", "LOAD_outputs"] },
     format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
+    // stage
+    stage: { label: "menu.stage", id: "stage" },
     // formatting
     uppercase: { label: "actions.uppercase" },
     lowercase: { label: "actions.lowercase" },
@@ -193,7 +196,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
     // EDIT
-    edit_box: ["format", "delete", "SEPERATOR", "duplicate", "copy", "paste"], // TODO: "make stage exlusive"
+    edit_box: ["bind_to", "format", "delete", "SEPERATOR", "duplicate", "copy", "paste"], // TODO: "make stage exlusive"
 
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],
