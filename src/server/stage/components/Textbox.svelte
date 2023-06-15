@@ -51,7 +51,7 @@
                 {#each item.lines as line}
                     <div class="break" style={style ? line.align : null}>
                         {#each line.text as text}
-                            <span style={style ? text.style : "font-size: " + autoSize + "px;"}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                            <span style={style ? text.style + (autoSize ? "font-size: " + autoSize + "px;" : "") : "font-size: " + autoSize + "px;"}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
                     </div>
                 {/each}

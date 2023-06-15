@@ -14,7 +14,7 @@
     {#if icon}
         <Icon id={icon} class="icon" size={1.2} {white} />
     {/if}
-    <span>{label}</span>
+    <span class:alignRight={icon}>{label}</span>
 </div>
 
 <style>
@@ -48,7 +48,7 @@
         position: absolute;
     }
 
-    div :global(span) {
+    div span {
         width: 100%;
         margin: 0 24px;
         text-align: center;
@@ -56,7 +56,11 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-    div.list :global(span) {
+    div span.alignRight {
+        margin: 0;
+        margin-left: 24px;
+    }
+    div.list span {
         text-align: left;
         padding: 0 10px;
     }

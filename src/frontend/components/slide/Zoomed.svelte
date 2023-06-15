@@ -7,6 +7,7 @@
     export let center: boolean = false
     export let zoom: boolean = true
     export let mirror: boolean = false
+    export let showMirror: boolean = false
     export let disableStyle: boolean = false
     export let relative: boolean = false
     export let aspectRatio: boolean = true
@@ -52,6 +53,7 @@
         class="slide"
         class:hideOverflow
         class:disableStyle
+        class:showMirror
         class:relative
         style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
     >
@@ -96,7 +98,7 @@
         width: 400px;
     }
     /* enable styling for stage mirrors */
-    .slide.disableStyle :global(.item) {
+    .slide.showMirror :global(.item) {
         color: unset;
         font-size: unset;
         font-family: unset;
@@ -108,8 +110,8 @@
         border-width: unset;
         border-color: unset;
 
-        height: unset;
-        width: unset;
+        height: 100%;
+        width: 100%;
     }
 
     .hideOverflow {

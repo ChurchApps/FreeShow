@@ -43,7 +43,7 @@
     $: currentRatio = itemStyle.width / itemStyle.height
 </script>
 
-<Zoomed ratio={currentRatio} center style="height: 100%;" disableStyle>
+<Zoomed ratio={currentRatio} center style="height: 100%;" disableStyle showMirror>
     {#if stageEnabled}
         {#if item.mirror?.stage}
             {#key item.mirror?.stage}

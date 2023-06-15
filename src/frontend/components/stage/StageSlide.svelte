@@ -40,7 +40,7 @@
     <div class="slide context #stage_slide" class:disabled={show.disabled} style={show.settings.color ? `background-color: ${show.settings.color};` : ""} tabindex={0} on:click>
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }}>
-                <Zoomed background={show.items.length ? "black" : "transparent"} style="width: 100%;" disableStyle bind:ratio>
+                <Zoomed background={show.items.length ? "black" : "transparent"} style="width: 100%;" disableStyle center bind:ratio>
                     {#each Object.entries(show.items) as [id, item]}
                         {#if item.enabled !== false}
                             <Stagebox {id} {item} {ratio} {show} />

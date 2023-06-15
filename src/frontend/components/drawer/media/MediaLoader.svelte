@@ -24,7 +24,6 @@
     export let videoElem: any = null
 
     // TODO: fit
-    console.log(fit)
 
     // TODO: update
     $: if ((!type || type === "image") && canvas) {
@@ -203,7 +202,7 @@
             {/if}
             {#if loadFullImage}
                 {#key path}
-                    <img src={path} alt={name} loading="lazy" style="pointer-events: none;position: absolute;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;object-fit: contain;" />
+                    <img src={path} alt={name} loading="lazy" style="pointer-events: none;position: absolute;filter: {filter};object-fit: {fit};{flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;" />
                 {/key}
             {/if}
         {/if}

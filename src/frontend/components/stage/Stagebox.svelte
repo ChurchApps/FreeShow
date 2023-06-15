@@ -90,8 +90,7 @@
 
     let height: number = 0
     let width: number = 0
-    $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0)
-    $: console.log(fontSize)
+    $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100
 
     $: size = getAutoSize(item, { width, height })
     // $: size = Math.min(height, width) / 2
@@ -144,20 +143,20 @@
                 {#if id.split("#")[0] === "countdowns"}
                     <!--  -->
                 {:else if id.includes("notes")}
-                    <SlideNotes {next} />
+                    <SlideNotes {next} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} />
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
-                        <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} style />
+                        <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />
                     </span>
                 {:else if id.includes("clock")}
-                    <Clock style={false} {autoSize} />
+                    <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("video")}
-                    <VideoTime {autoSize} reverse={id.includes("countdown")} />
+                    <VideoTime autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
-                        <Timer id={id.split("#")[1]} {today} style="font-size: {autoSize}px;" />
+                        <Timer id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {/if}
                 {:else}
                     {id}
@@ -185,8 +184,8 @@
 
     .align div,
     .align :global(.item) {
-        width: 100% !important;
-        height: 100% !important;
+        width: 100%;
+        height: 100%;
         color: unset;
         /* overflow-wrap: break-word; */
     }

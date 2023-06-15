@@ -689,7 +689,7 @@
         "use24hClock": "Bruk 24-timersklokke",
         "styles_hint": "Opprett forskjellige stiler som kan legges til utgangskjermen for å endre utseendet.",
         "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den. Hold CTRL for å kunne dra den rundt.",
-        "hide_menubar_hint": "For å skjule menylinjen, aktiver kiosk-modus, eller aktiver \"Skjul eller vis menylinjen automatisk\" i de generelle MacOS innstillingene.",
+        "hide_menubar_hint": "For å skjule menylinjen, aktiver kiosk-modus, eller aktiver \"Skjul og vis menylinjen automatisk\" i de generelle MacOS innstillingene.",
         "show_output_hint": "Hold ctrl/cmd mens du trykker på \"vis utgangsskjerm\"-knappen for å tvinge visning over denne skjermen.",
         "move_output_hint": "Finner ikke skjermen din? Endre posisjonen til vinduet viser på den andre skjermen.",
         "select_display": "Trykk på skjermen hvor du vil vise utgangskjermen.",

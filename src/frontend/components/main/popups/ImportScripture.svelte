@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
-    import { activePopup, alertMessage, dictionary, language, scriptures } from "../../../stores"
+    import { activePopup, alertMessage, dictionary, language, os, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -148,10 +148,14 @@
             style="width: 25%;flex-direction: column;min-height: 180px;"
             on:click={() => {
                 send(IMPORT, [format.id + "_bible"], format)
-                if (format.tutorial) {
-                    alertMessage.set(format.tutorial)
+
+                // linux dialog behind window message
+                if ($os.platform === "linux") {
+                    alertMessage.set("The file select dialog might appear behind the window on Linux!<br>Please check that if you don't see it.")
                     activePopup.set("alert")
-                } else activePopup.set(null)
+                } else {
+                    activePopup.set(null)
+                }
             }}
             bold={false}
             center

@@ -11,6 +11,7 @@
     export let style: boolean = false
 
     $: stageAutoSize = autoSize ? (slide ? getAutoSize(slide.items[0], parent) : 1) : fontSize
+    $: console.log("SIZE", autoSize, fontSize, stageAutoSize)
 
     $: items = style ? slide.items : combineSlideItems()
 

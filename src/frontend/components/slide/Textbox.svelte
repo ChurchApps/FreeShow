@@ -21,6 +21,7 @@
     export let key: boolean = false
     export let disableListTransition: boolean = false
     export let smallFontSize: boolean = false
+    export let addDefaultItemStyle: boolean = false
     export let customFontSize: number | null = null
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
@@ -96,6 +97,7 @@
     style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}"
     class:white={key && !lines?.length}
     class:key
+    class:addDefaultItemStyle
 >
     {#if lines}
         <div class="align" style={style ? item.align : null}>
@@ -200,4 +202,21 @@
     /* .height {
         height: 1em;
     } */
+
+    /* stage current slide */
+    .item.addDefaultItemStyle {
+        color: white;
+        font-size: 100px;
+        font-family: unset;
+        line-height: 1.1;
+        -webkit-text-stroke-color: #000000;
+        text-shadow: 2px 2px 10px #000000;
+
+        border-style: solid;
+        border-width: 0px;
+        border-color: #ffffff;
+
+        height: 150px;
+        width: 400px;
+    }
 </style>

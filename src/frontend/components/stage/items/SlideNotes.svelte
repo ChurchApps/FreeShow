@@ -4,6 +4,7 @@
     import { _show } from "../../helpers/shows"
 
     export let next: boolean = false
+    export let autoSize: number = 100
 
     $: currentSlide = $outputs[getActiveOutputs()[0]].out?.slide
     $: index = currentSlide && currentSlide.index !== undefined ? currentSlide.index + (next ? 1 : 0) : null
@@ -13,7 +14,7 @@
 </script>
 
 {#if slide}
-    <div>
+    <div style="font-size: {autoSize}px;">
         {@html notes}
     </div>
 {/if}

@@ -147,13 +147,22 @@ export function getPaths(): any {
 export function getFolderContent(_e: any, data: any) {
     let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
-    if (!fileList.length) return
+
+    if (!fileList.length) {
+        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [] })
+        return
+    }
 
     let files: any[] = []
     for (const name of fileList) {
         let p: string = path.join(folderPath, name)
         let stats: any = getFileStats(p)
         if (stats) files.push({ ...stats, name })
+    }
+
+    if (!files.length) {
+        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [] })
+        return
     }
 
     // get first "layer" of files inside folder for searching
@@ -172,7 +181,6 @@ export function getFolderContent(_e: any, data: any) {
         })
     }
 
-    if (!files.length) return
     toApp(READ_FOLDER, { path: folderPath, files, filesInFolders })
 }
 

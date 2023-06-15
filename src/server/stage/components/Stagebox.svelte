@@ -23,7 +23,7 @@
     let height: number = 0
     let width: number = 0
     let itemStyles: any = getStyles(item.style, true)
-    $: fontSize = Number(itemStyles?.["font-size"] || 0)
+    $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100
 
     // dynamic resolution
     let resolution = { width: window.innerWidth, height: window.innerHeight }
@@ -64,7 +64,7 @@
                 {#if id.split("#")[0] === "countdowns"}
                     <!--  -->
                 {:else if id.includes("notes")}
-                    <SlideNotes notes={slide?.notes || ""} />
+                    <SlideNotes notes={slide?.notes || ""} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     {#key item}
                         <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} />
@@ -72,15 +72,15 @@
                 {:else if id.includes("slide")}
                     <!-- TODO: show slide data (backgrounds, overlays) -->
                     <span style="pointer-events: none;">
-                        <SlideText {slide} chords={item.chords} parent={{ width, height }} style />
+                        <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} style />
                     </span>
                 {:else if id.includes("clock")}
-                    <Clock {autoSize} />
+                    <Clock autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("video")}
-                    <VideoTime {autoSize} />
+                    <VideoTime autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
-                        <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {autoSize}px;" />
+                        <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {/if}
                 {:else}
                     {id}

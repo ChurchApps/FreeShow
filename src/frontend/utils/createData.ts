@@ -318,13 +318,13 @@ export function setExampleTemplates() {
             category: "scripture",
             items: [
                 {
-                    auto: true,
-                    style: "top: 150px;left: 50px;width: 1820px;height: 780px;",
+                    // auto: true,
+                    style: "top: 30px;left: 50px;width: 1820px;height: 890px;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;" }] }],
                 },
                 {
-                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: "top: 920px;left: 50px;width: 1820px;height: 140px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },
@@ -336,13 +336,13 @@ export function setExampleTemplates() {
             category: "scripture",
             items: [
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 40px;left: 50px;width: 1820px;height: 400px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 70px;" }] }],
                 },
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 475px;left: 50px;width: 1820px;height: 400px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 70px;" }] }],
@@ -360,19 +360,19 @@ export function setExampleTemplates() {
             category: "scripture",
             items: [
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 40px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }],
                 },
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 320px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }],
                 },
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 600px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
@@ -390,25 +390,25 @@ export function setExampleTemplates() {
             category: "scripture",
             items: [
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 40px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }],
                 },
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 250px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }],
                 },
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 460px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
                 },
                 {
-                    auto: true,
+                    // auto: true,
                     style: "top: 670px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "4", style: "font-size: 60px;" }] }],
