@@ -163,7 +163,13 @@
 </CombinedInput>
 <CombinedInput>
     <p><T id="edit.background_image" /></p>
-    <MediaPicker title={currentStyle.backgroundImage} filter={{ name: "Image files", extensions: $imageExtensions }} on:picked={(e) => updateStyle(e, "backgroundImage")} clearOnClick={!!currentStyle.backgroundImage}>
+    <MediaPicker
+        title={currentStyle.backgroundImage}
+        filter={{ name: "Image files", extensions: $imageExtensions }}
+        on:picked={(e) => {
+            if (e.detail) updateStyle(e, "backgroundImage")
+        }}
+    >
         <Icon id="image" right />
         {#if currentStyle.backgroundImage}
             {getFileName(currentStyle.backgroundImage)}
@@ -171,6 +177,17 @@
             <T id="edit.choose_media" />
         {/if}
     </MediaPicker>
+    {#if currentStyle.backgroundImage}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "backgroundImage")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->

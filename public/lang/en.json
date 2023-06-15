@@ -514,6 +514,7 @@
         "_title_strikethrough": "Strikethrough",
         "color": "Color",
         "background_color": "Background color",
+        "background_opacity": "Background opacity",
         "background_image": "Background image",
         "size": "Size",
         "chords": "Chords",

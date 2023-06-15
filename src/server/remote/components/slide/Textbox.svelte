@@ -1,60 +1,56 @@
 <script lang="ts">
-  import type { Item } from "../../../../types/Show"
+    import type { Item } from "../../../../types/Show"
 
-  export let item: Item
+    export let item: Item
 </script>
 
 <div class="item" style={item.style}>
-  {#if item.lines}
-    <div class="align" style={item.align}>
-      <div class="lines">
-        {#each item.lines as line}
-          <div class="break" style={line.align} class:height={!line.text[0]?.value.length}>
-            {#each line.text as text}
-              <span style={text.style}>{@html text.value}</span>
-            {/each}
-          </div>
-        {/each}
-      </div>
-    </div>
-  {/if}
+    {#if item.lines}
+        <div class="align" style={item.align}>
+            <div class="lines">
+                {#each item.lines as line}
+                    <div class="break" style={line.align}>
+                        {#each line.text as text}
+                            <span style={text.style}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                        {/each}
+                    </div>
+                {/each}
+            </div>
+        </div>
+    {/if}
 </div>
 
 <style>
-  .align {
-    height: 100%;
-    display: flex;
-    text-align: center;
-    align-items: center;
-  }
+    .align {
+        height: 100%;
+        display: flex;
+        text-align: center;
+        align-items: center;
+    }
 
-  .lines {
-    /* overflow-wrap: break-word;
+    .lines {
+        /* overflow-wrap: break-word;
   font-size: 0; */
-    width: 100%;
-  }
+        width: 100%;
+    }
 
-  .break {
-    width: 100%;
+    .break {
+        width: 100%;
 
-    /* height: 100%; */
+        /* height: 100%; */
 
-    overflow-wrap: break-word;
-    /* line-break: after-white-space;
+        overflow-wrap: break-word;
+        /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
-  }
+    }
 
-  /* span {
+    /* span {
     display: inline;
     white-space: initial;
     color: white;
   } */
 
-  .break :global(span) {
-    font-size: 100px;
-  }
-
-  .height {
-    height: 1em;
-  }
+    .break :global(span) {
+        font-size: 100px;
+    }
 </style>

@@ -234,7 +234,7 @@
                 {@const value = getValue(input, { styles, item })}
                 {#if !input.hidden}
                     <CombinedInput>
-                        <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
+                        <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"][input.name.includes(".") ? input.name.split(".")[1] : input.name]}><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
                         <svelte:component
                             this={inputs[input.input]}
                             {...input.values || {}}
@@ -300,5 +300,7 @@
         opacity: 0.8;
         align-self: center;
         font-size: 0.9em;
+
+        overflow: hidden !important;
     }
 </style>

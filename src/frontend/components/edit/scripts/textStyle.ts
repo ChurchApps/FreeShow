@@ -111,7 +111,6 @@ export function getSelectionRange(): { start: number; end: number }[] {
     let start: null | number = null
     let end: null | number = null
 
-    console.log(selection)
     if (!selection?.anchorNode) return sel
 
     let parent: Element = selection.anchorNode.parentElement!.closest(".edit")!
@@ -120,25 +119,19 @@ export function getSelectionRange(): { start: number; end: number }[] {
     let startOffset = selection.anchorOffset
     let endOffset = selection.focusOffset
 
-    // TODO: can't select empty lines
-    // empty lines don't work at all
-    // console.log(startNode, startOffset, endOffset)
-    // console.log(parent.childNodes)
-
-    console.log(parent, sel)
+    // selecting empty lines
+    if (endNode?.classList.contains("break")) endNode = endNode.children[0]
+    if (startNode?.classList.contains("break")) startNode = startNode.children[0]
 
     if (!parent?.closest(".edit")) return sel
 
     new Array(...parent.childNodes).forEach((br: any, line: number) => {
         if (!sel[line]) sel[line] = {}
         let count: number = 0
+
         new Array(...br.childNodes).forEach((child: any) => {
-            // console.log(child)
-            // console.log(selection)
-
+            console.log(count, child.innerText)
             if (selection!.containsNode(child, true)) {
-                // console.log("contains === true", start, child === endNode, child === startNode, startOffset > endOffset)
-
                 // if start not set & child is start & (child is not end or end is bigger than start)
                 if (start === null && child === startNode && (child !== endNode || endOffset > startOffset)) {
                     start = count + startOffset
@@ -150,9 +143,11 @@ export function getSelectionRange(): { start: number; end: number }[] {
                     startNode = selection!.focusNode?.parentNode!
                     endOffset = startOffset
                 }
+
                 if (start !== null) {
                     if (!sel[line].start) sel[line].start = 0
 
+                    // WIP empty lines: child is not startNode but should be (don't think it's an issue)
                     if ((child === startNode && child !== endNode) || selection!.containsNode(child)) {
                         if (end === null) end = count
                         end += child.innerText?.length || 0
@@ -163,11 +158,11 @@ export function getSelectionRange(): { start: number; end: number }[] {
                     }
                 }
             }
-            count += child.innerText?.length || 0
+
+            count += child.innerText?.replaceAll("\n", "")?.length || 0
         })
     })
 
-    console.log(sel)
     return sel
 }
 

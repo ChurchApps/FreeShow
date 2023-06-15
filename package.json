@@ -54,18 +54,23 @@
             "category": "public.app-category.utilities"
         },
         "dmg": {
+            "backgroundColor": "#2d313b",
             "contents": [
                 {
-                    "x": 110,
-                    "y": 150
+                    "x": 140,
+                    "y": 200
                 },
                 {
-                    "x": 240,
-                    "y": 150,
+                    "x": 400,
+                    "y": 200,
                     "type": "link",
                     "path": "/Applications"
                 }
-            ]
+            ],
+            "window": {
+                "width": 540,
+                "height": 380
+            }
         },
         "linux": {
             "target": [

@@ -221,6 +221,7 @@
     let html: string = ""
     let previousHTML: string = ""
     let currentStyle: string = ""
+    let firstTextStyleArchive: string = ""
 
     onMount(getStyle)
 
@@ -278,10 +279,15 @@
 
         html = ""
         currentStyle = ""
-        item?.lines?.forEach((line) => {
+        item?.lines?.forEach((line, i) => {
             currentStyle += line.align
             let style = line.align ? 'style="' + line.align + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
+
+            // fix removing all text in a line
+            if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
+            if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
+
             line.text?.forEach((a) => {
                 // + (item.auto ? autoSize : "")
                 currentStyle += a.style
@@ -289,7 +295,7 @@
                 let auto: string = item.auto ? "font-size: " + autoSize + "px;" : ""
                 let style = a.style ? 'style="' + a.style + auto + '"' : ""
 
-                html += `<span ${plain ? "" : style}>` + a.value + "</span>"
+                html += `<span ${plain ? "" : style}>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
             })
             html += "</div>"
         })
@@ -384,6 +390,36 @@
             }
         }
         previousLinesCount = linesLength
+
+        // fix removing all text in a line
+        let caret: any = null
+        let align = item.lines?.[0]?.align || ""
+        let textStyle = item.lines?.[0]?.text?.[0]?.style || ""
+
+        if (!newLines.length) {
+            newLines = [{ align, text: [{ style: textStyle, value: "" }] }]
+            caret = { line: 0, pos: 0 }
+        } else {
+            newLines.forEach((line, i) => {
+                if (!line.text?.length) {
+                    newLines[i].text = [{ style: textStyle, value: "" }]
+                    caret = { line: i, pos: 0 }
+                }
+            })
+        }
+
+        if (caret) {
+            item.lines = newLines
+            setTimeout(() => {
+                getStyle()
+                if (newLines.length > 1) {
+                    // set caret position back
+                    setTimeout(() => {
+                        setCaret(textElem, caret)
+                    }, 10)
+                }
+            }, 10)
+        }
 
         return newLines
     }

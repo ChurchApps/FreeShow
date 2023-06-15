@@ -49,9 +49,9 @@
             {/if}
             <div class="lines" bind:this={textElem}>
                 {#each item.lines as line}
-                    <div class="break" style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
+                    <div class="break" style={style ? line.align : null}>
                         {#each line.text as text}
-                            <span style={style ? text.style : "font-size: " + autoSize + "px;"}>{@html text.value}</span>
+                            <span style={style ? text.style : "font-size: " + autoSize + "px;"}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
                     </div>
                 {/each}
@@ -113,9 +113,5 @@
 
     .break :global(span) {
         font-size: 100px;
-    }
-
-    .height {
-        height: 1em;
     }
 </style>

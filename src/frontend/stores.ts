@@ -78,6 +78,7 @@ export const forceClock: Writable<boolean> = writable(false)
 export const lastSavedCache: Writable<any> = writable(null)
 export const playScripture: Writable<boolean> = writable(false)
 export const editHistory: Writable<any[]> = writable([])
+export const refreshEditSlide: Writable<boolean> = writable(false)
 
 // ----- SAVED VARIABLES -----
 

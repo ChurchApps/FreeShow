@@ -514,6 +514,7 @@
         "_title_strikethrough": "Tachado",
         "color": "Cor",
         "background_color": "Cor de plano de fundo",
+        "background_opacity": "Background opacity",
         "background_image": "Background image",
         "size": "Tamanho",
         "chords": "Acordes",

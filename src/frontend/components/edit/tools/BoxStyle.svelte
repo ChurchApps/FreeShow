@@ -177,7 +177,7 @@
 
         // this is only for show slides
         let ref: any[] = _show().layouts("active").ref()[0] || {}
-        let slides: string[] = [ref[$activeEdit.slide || ""]?.id || "other"]
+        let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id || "other"]
         let slideItems: number[][] = [allItems]
         let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
 

@@ -514,6 +514,7 @@
         "_title_strikethrough": "Gjennomstreking",
         "color": "Farge",
         "background_color": "Bakgrunnsfarge",
+        "background_opacity": "Bakgrunnsgjennomsiktighet",
         "background_image": "Bakgrunnsbilde",
         "size": "Størrelse",
         "chords": "Akkorder",

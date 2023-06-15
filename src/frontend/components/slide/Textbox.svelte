@@ -105,9 +105,10 @@
             <div class="lines" style={smallFontSize || customFontSize !== null ? "--font-size: " + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + "px;" : null} bind:this={textElem}>
                 {#each lines as line, i}
                     {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
-                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
+                        <!-- class:height={!line.text[0]?.value.length} -->
+                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style={style ? line.align : null}>
                             {#each line.text as text}
-                                <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value}</span>
+                                <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                             {/each}
                         </div>
                     {/if}
@@ -196,7 +197,7 @@
         font-size: var(--font-size);
     }
 
-    .height {
+    /* .height {
         height: 1em;
-    }
+    } */
 </style>

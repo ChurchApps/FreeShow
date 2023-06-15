@@ -514,6 +514,7 @@
         "_title_strikethrough": "Barrato",
         "color": "Colore",
         "background_color": "Colore di sfondo",
+        "background_opacity": "Background opacity",
         "background_image": "Background image",
         "size": "Dimensione",
         "chords": "Accordi",

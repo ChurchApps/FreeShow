@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, selected, showsCache } from "../../../stores"
+    import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -15,12 +17,47 @@
 
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
 
+    onMount(() => {
+        getBackgroundOpacity()
+    })
+
+    // background opacity
+    function getBackgroundOpacity() {
+        let backgroundValue = data["background-color"] || ""
+        if (!backgroundValue.includes("rgb")) return
+
+        let rgb = splitRgb(backgroundValue)
+        let boIndex = itemEdits.style.findIndex((a) => a.id === "background-opacity")
+        if (boIndex < 0) return
+        itemEdits.style[boIndex].value = rgb.a
+    }
+    function getOldOpacity() {
+        let backgroundValue = data["background-color"] || ""
+        if (!backgroundValue.includes("rgb")) return 1
+
+        let rgb = splitRgb(backgroundValue)
+        return rgb.a
+    }
+
     function updateStyle(e: any) {
         let input = e.detail
 
         if (input.id === "transform") {
             input.value = addFilterString(data.transform || "", [input.key, input.value])
             input.key = "transform"
+        }
+
+        // background opacity
+        if (input.id === "background-opacity" || input.key === "background-color") {
+            let backgroundColor = input.key === "background-color" ? input.value : data["background-color"] || "rgb(0 0 0);"
+            let rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
+            let opacity = input.id === "background-opacity" ? input.value : getOldOpacity()
+            let newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"
+
+            input.key = "background-color"
+            input.value = newColor
+
+            setTimeout(getBackgroundOpacity, 100)
         }
 
         let allItems: number[] = $activeEdit.items
@@ -31,7 +68,7 @@
         /////
 
         let ref: any[] = _show("active").layouts("active").ref()[0] || {}
-        let slides: string[] = [ref[$activeEdit.slide || ""]?.id]
+        let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id]
         let slideItems: number[][] = [allItems]
         let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
 
