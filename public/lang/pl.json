@@ -514,7 +514,7 @@
         "_title_strikethrough": "Przekreślenie",
         "color": "Kolor",
         "background_color": "Kolor tła",
-        "background_opacity": "Background opacity",
+        "background_opacity": "Przezroczystość tła",
         "background_image": "Obraz tła",
         "size": "Rozmiar",
         "chords": "Akordy",
