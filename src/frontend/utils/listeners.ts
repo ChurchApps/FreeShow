@@ -21,6 +21,7 @@ import {
     projects,
     shows,
     showsCache,
+    stageShows,
     styles,
     templates,
     timers,
@@ -51,7 +52,7 @@ export function listenForUpdates() {
         // send(REMOTE, ["SHOW"], data )
         timedout(REMOTE, { channel: "SHOW", data }, () =>
             eachConnection(REMOTE, "SHOW", (connection) => {
-                return connection.active ? convertBackgrounds(data[connection.active]) : null
+                return connection.active ? convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
             })
         )
         // TODO: this, timedout +++
@@ -93,6 +94,9 @@ export function listenForUpdates() {
     })
     playerVideos.subscribe((data) => {
         send(OUTPUT, ["PLAYER_VIDEOS"], data)
+    })
+    stageShows.subscribe((data) => {
+        send(OUTPUT, ["STAGE_SHOWS"], data)
     })
 
     draw.subscribe((data) => {

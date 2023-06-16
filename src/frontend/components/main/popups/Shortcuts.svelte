@@ -85,10 +85,6 @@
         gap: 10px;
     }
 
-    p {
-        font-weight: bold;
-    }
-
     hr {
         height: 3px;
         border: none;

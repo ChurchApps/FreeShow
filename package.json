@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "0.8.4",
+    "version": "0.9.0",
     "private": true,
     "main": "build/electron/index.js",
     "description": "An application for showing song lyrics and more for free!",
@@ -41,7 +41,6 @@
         "appId": "com.github.vassbo.freeshow",
         "productName": "FreeShow",
         "files": [
-            "build/public/**/*",
             "build/electron/**/*",
             "build/types/**/*",
             "public/**/*"
@@ -55,18 +54,23 @@
             "category": "public.app-category.utilities"
         },
         "dmg": {
+            "backgroundColor": "#2d313b",
             "contents": [
                 {
-                    "x": 110,
-                    "y": 150
+                    "x": 140,
+                    "y": 200
                 },
                 {
-                    "x": 240,
-                    "y": 150,
+                    "x": 400,
+                    "y": 200,
                     "type": "link",
                     "path": "/Applications"
                 }
-            ]
+            ],
+            "window": {
+                "width": 540,
+                "height": 380
+            }
         },
         "linux": {
             "target": [
@@ -88,6 +92,7 @@
         "@testing-library/jest-dom": "^5.16.5",
         "@testing-library/svelte": "^3.2.1",
         "@tsconfig/svelte": "^2.0.0",
+        "@types/exif": "^0.6.3",
         "@types/express": "^4.17.13",
         "@types/jest": "^29.0.0",
         "@types/sqlite3": "^3.1.8",
@@ -119,6 +124,7 @@
         "cross-env": "^7.0.3",
         "electron-store": "^8.0.1",
         "electron-updater": "^4.6.1",
+        "exif": "^0.6.0",
         "express": "^4.17.2",
         "font-list": "^1.4.5",
         "jzz": "^1.5.9",

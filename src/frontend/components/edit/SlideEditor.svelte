@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { MediaFit } from "../../../types/Main"
-
     import { activeEdit, activeShow, dictionary, media, outputs, showsCache, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import { history } from "../helpers/history"
@@ -116,10 +115,19 @@
 
     let zoom = 1
 
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
+        if (nextScrollTimeout) return
         if (!e.target.closest(".editArea")) return
+
         zoom = Number(Math.max(0.5, Math.min(2, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 
     // CHORDS
@@ -134,6 +142,24 @@
         slideFilter = ""
         if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
         if (layoutSlide["backdrop-filter"]) slideFilter += "backdrop-filter: " + layoutSlide["backdrop-filter"] + ";"
+    }
+
+    // remove overflow if scrollbars are flickering over 25 times per second
+    let hideOverflow: boolean = false
+    let changedTimes: number = 0
+    $: if (ratio) changedTimes++
+    $: if (!ratioTimeout && changedTimes > 2) startTimeout()
+    $: if (ratio && hideOverflow && !ratioTimeout && changedTimes > 1) hideOverflow = false
+
+    let ratioTimeout: any = null
+    function startTimeout() {
+        ratioTimeout = setTimeout(() => {
+            if (changedTimes > 5) hideOverflow = true
+            changedTimes = 0
+            setTimeout(() => {
+                ratioTimeout = null
+            }, 10)
+        }, 200)
     }
 </script>
 
@@ -150,7 +176,7 @@
                     {resolution}
                     style={getStyleResolution(resolution, width, height, "fit", { zoom })}
                     bind:ratio
-                    hideOverflow={false}
+                    {hideOverflow}
                     center={zoom >= 1}
                 >
                     <!-- <div class="chordsButton" style="zoom: {1 / ratio};">
@@ -227,6 +253,7 @@
         width: 100%;
         height: 100%;
         display: flex;
+        overflow: auto;
         /* justify-content: center;
         align-items: center; */
         /* padding: 10px; */

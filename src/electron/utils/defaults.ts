@@ -51,6 +51,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     formatNewShow: true,
     showsPath: null,
     exportPath: null,
+    scripturePath: null,
+    recordingPath: null,
     splitLines: 0,
     defaultProjectName: "date",
     videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],
@@ -243,14 +245,7 @@ export const defaultStage: any = {
         name: "Stage",
         disabled: false,
         password: "",
-        settings: {
-            background: false,
-            color: "#000000",
-            resolution: false,
-            size: { width: 10, height: 20 },
-            labels: false,
-            showLabelIfEmptySlide: true,
-        },
+        settings: {},
         items: {
             "slide#current_slide_text": {
                 style: "top:40.50px;left:45.50px;color:red;width:1830px;height:1000px;",

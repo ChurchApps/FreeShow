@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, currentWindow, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, dictionary, os, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -11,17 +11,17 @@
     import { history } from "../helpers/history"
     import { getExtension, getMediaType } from "../helpers/media"
     import { addToPos } from "../helpers/mover"
-    import { loadShows } from "../helpers/setShow"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
-    import Textbox from "../slide/Textbox.svelte"
+    import ListView from "../slide/views/ListView.svelte"
+    import Mirror from "../slide/views/Mirror.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
     import { getAutoSize } from "./scripts/autoSize"
     import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
-    import ListView from "../slide/views/ListView.svelte"
+    import { menuClick } from "../context/menuClick"
 
     export let item: Item
     export let filter: string = ""
@@ -42,13 +42,28 @@
     export let mouse: any = {}
     function mousedown(e: any) {
         if (e.target.closest(".chords")) return
+        let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         activeEdit.update((ae) => {
+            if (rightClick) {
+                if (ae.items.includes(index)) return ae
+                ae.items = [index]
+
+                return ae
+            }
+
             if (e.ctrlKey || e.metaKey) {
                 if (ae.items.includes(index)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
-                } else ae.items.push(index)
-            } else ae.items = [index]
+                } else {
+                    ae.items.push(index)
+                }
+
+                return ae
+            }
+
+            ae.items = [index]
+
             return ae
         })
 
@@ -100,7 +115,7 @@
                 else firstLines.push({ align: line.align, text: [] })
 
                 textPos = 0
-                line.text.forEach((text) => {
+                line.text?.forEach((text) => {
                     currentIndex += text.value.length
                     if (sel[i]?.start !== undefined) start = sel[i].start
 
@@ -206,6 +221,7 @@
     let html: string = ""
     let previousHTML: string = ""
     let currentStyle: string = ""
+    let firstTextStyleArchive: string = ""
 
     onMount(getStyle)
 
@@ -263,10 +279,15 @@
 
         html = ""
         currentStyle = ""
-        item?.lines?.forEach((line) => {
+        item?.lines?.forEach((line, i) => {
             currentStyle += line.align
             let style = line.align ? 'style="' + line.align + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
+
+            // fix removing all text in a line
+            if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
+            if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
+
             line.text?.forEach((a) => {
                 // + (item.auto ? autoSize : "")
                 currentStyle += a.style
@@ -274,7 +295,7 @@
                 let auto: string = item.auto ? "font-size: " + autoSize + "px;" : ""
                 let style = a.style ? 'style="' + a.style + auto + '"' : ""
 
-                html += `<span ${plain ? "" : style}>` + a.value + "</span>"
+                html += `<span ${plain ? "" : style}>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
             })
             html += "</div>"
         })
@@ -370,7 +391,42 @@
         }
         previousLinesCount = linesLength
 
+        // fix removing all text in a line
+        let caret: any = null
+        let align = item.lines?.[0]?.align || ""
+        let textStyle = item.lines?.[0]?.text?.[0]?.style || ""
+
+        if (!newLines.length) {
+            newLines = [{ align, text: [{ style: textStyle, value: "" }] }]
+            caret = { line: 0, pos: 0 }
+        } else {
+            newLines.forEach((line, i) => {
+                if (!line.text?.length) {
+                    newLines[i].text = [{ style: textStyle, value: "" }]
+                    caret = { line: i, pos: 0 }
+                }
+            })
+        }
+
+        if (caret) {
+            item.lines = newLines
+            setTimeout(() => {
+                getStyle()
+                if (newLines.length > 1) {
+                    // set caret position back
+                    setTimeout(() => {
+                        setCaret(textElem, caret)
+                    }, 10)
+                }
+            }, 10)
+        }
+
         return newLines
+    }
+
+    // bindings
+    function removeBindings() {
+        menuClick("bind_item")
     }
 
     // timer
@@ -431,18 +487,6 @@
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
     $: autoSize = getAutoSize(item)
-
-    let slideId: string = ""
-    function getMirroredItem() {
-        if (item.mirror!.show === ref.showId) return
-        let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[$activeEdit.slide || 0]
-        if (!newSlideRef) return
-        slideId = newSlideRef.id
-        let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
-        if (!newItem) return
-        newItem.style = "width: 100%;height: 100%;pointer-events: none;"
-        return newItem
-    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
@@ -459,6 +503,15 @@ bind:offsetWidth={width} -->
 >
     {#if !plain}
         <Movebox {ratio} active={$activeEdit.items.includes(index)} />
+
+        <!-- bindings -->
+        {#if item.bindings?.length}
+            <div title={$dictionary.actions?.remove_binding} class="chordsButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+                <Button on:click={removeBindings} redHover>
+                    <Icon id="bind" white />
+                </Button>
+            </div>
+        {/if}
     {/if}
     {#if item?.lines}
         <!-- chords -->
@@ -557,17 +610,7 @@ bind:offsetWidth={width} -->
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "mirror"}
-        {#if item.mirror?.show}
-            {#key item.mirror?.show}
-                {#await loadShows([item.mirror.show])}
-                    {#if !$currentWindow}Loading...{/if}
-                {:then}
-                    {#if getMirroredItem()}
-                        <Textbox item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
-                    {/if}
-                {/await}
-            {/key}
-        {/if}
+        <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
     {:else if item?.type === "icon"}
         <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
     {/if}

@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Welcome to FreeShow!",
+        "welcome": "Welcome",
         "quit": "Quit",
         "docs": "Docs",
         "about": "About",
@@ -9,15 +9,6 @@
         "search": "Search",
         "none": "None",
         "finished": "Finished"
-    },
-    "languages": {
-        "en": "English",
-        "no": "Norwegian",
-        "sk": "Slovak",
-        "es": "Spanish",
-        "pt_BR": "Brazilian Portuguese",
-        "de": "German",
-        "it": "Italian"
     },
     "about": {
         "check_updates": "Look for updates",
@@ -79,7 +70,11 @@
     "screen": {
         "width": "Width",
         "height": "Height",
-        "pixels": "pixels"
+        "pixels": "pixels",
+        "top": "Top",
+        "right": "Right",
+        "bottom": "Bottom",
+        "left": "Left"
     },
     "create_show": {
         "search_web": "Search for song on the web",
@@ -116,14 +111,14 @@
         "slide": "Clear slide",
         "overlays": "Clear overlays",
         "audio": "Clear audio",
-        "nextTimer": "Clear Next slide timer"
+        "nextTimer": "Clear next slide timer"
     },
     "remove": {
         "background": "Remove background",
         "overlays": "Remove overlays",
         "audio": "Remove audio",
-        "nextTimer": "Remove Next slide timer",
-        "to_start": "Remove Go to start",
+        "nextTimer": "Remove next slide timer",
+        "to_start": "Remove go to start",
         "timer": "Remove timer",
         "transition": "Remove transition"
     },
@@ -179,7 +174,8 @@
         "groups": "No groups",
         "events": "No events",
         "text": "Type something",
-        "timers": "No timers"
+        "timers": "No timers",
+        "recording": "Right click a screen or window to start a recording."
     },
     "remote": {
         "projects": "Projects",
@@ -219,6 +215,7 @@
         "year": "Year",
         "message": "Message",
         "message_tip": "Display something on all slides",
+        "auto_media": "Get meta from media content",
         "override_output": "Override styling in output",
         "display_metadata": "Display metadata",
         "meta_template": "Metadata template",
@@ -265,6 +262,7 @@
         "media": "Media",
         "overlays": "Overlays",
         "audio": "Audio",
+        "effects": "Effects",
         "scripture": "Scripture",
         "player": "Player",
         "live": "Live",
@@ -328,7 +326,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Shortcuts",
         "icon": "Icons",
-        "initialize": "Welcome",
+        "initialize": "Welcome to FreeShow",
         "unsaved": "You have not saved yet! Are you sure you want to quit?",
         "cancel": "Cancel",
         "continue": "Continue",
@@ -381,6 +379,7 @@
         "delete_all": "Delete all",
         "close": "Close",
         "save": "Save",
+        "done": "Done",
         "disable": "Disable",
         "enable": "Enable",
         "undo": "Undo",
@@ -405,6 +404,8 @@
         "home": "Home",
         "mute": "Mute",
         "unmute": "Unmute",
+        "bind_to": "Bind to",
+        "remove_binding": "Remove binding",
         "format": "Format",
         "uppercase": "Make uppercase",
         "lowercase": "Make lowercase",
@@ -429,7 +430,9 @@
         "remove_media": "Remove media",
         "index_select_project": "Select project by index",
         "index_select_project_show": "Select project item by index",
-        "index_select_slide": "Select slide by index"
+        "index_select_slide": "Select slide by index",
+        "start_recording": "Start recording",
+        "stop_recording": "Stop recording"
     },
     "cloud": {
         "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
@@ -466,6 +469,7 @@
         "groups": "Groups",
         "numbers": "Numbered slides",
         "invert": "Invert slides",
+        "original_text_size": "Original text size",
         "text": "Plain text",
         "slides": "Slides",
         "rows": "Rows",
@@ -510,6 +514,7 @@
         "_title_strikethrough": "Strikethrough",
         "color": "Color",
         "background_color": "Background color",
+        "background_opacity": "Background opacity",
         "background_image": "Background image",
         "size": "Size",
         "chords": "Chords",
@@ -547,7 +552,12 @@
         "backdrop_filters": "Backdrop filters",
         "interval": "Interval",
         "video": "Video",
-        "choose_media": "Choose media"
+        "choose_media": "Choose media",
+        "recent": "Recently edited",
+        "enable_stage": "Enable stage",
+        "select_stage": "Select stage",
+        "use_slide_index": "Use active index",
+        "slide_index": "Slide index"
     },
     "items": {
         "text": "Textbox",
@@ -650,6 +660,8 @@
         "next_slide_text": "Next slide text",
         "next_slide": "Next slide",
         "next_slide_notes": "Next slide notes",
+        "output": "Output",
+        "current_output": "Current output",
         "time": "Time",
         "system_clock": "System clock",
         "video_time": "Video time",
@@ -677,6 +689,7 @@
         "use24hClock": "Use 24-hour clock",
         "styles_hint": "Create different styles that can be applied to the output to change the look.",
         "hide_output_hint": "Double click on the output window to hide it. Hold CTRL to enable dragging.",
+        "hide_menubar_hint": "To hide the menu bar, enable kiosk mode, or enable \"Automatically hide or show the menu bar\" in the general MacOS settings.",
         "show_output_hint": "Hold ctrl/cmd while clicking the display button to force it to show over this monitor.",
         "move_output_hint": "Don't find your display? Change the position until the window shows up on the second screen.",
         "select_display": "Click on the screen where you wan't to display the output window.",
@@ -685,6 +698,7 @@
         "new_output": "New output",
         "enable_key_output": "Enable alpha key output",
         "always_on_top": "Always on top",
+        "kiosk_mode": "Kiosk mode",
         "change_key_output_position": "Change key output position",
         "position": "Position",
         "enabled": "Enabled",
@@ -702,12 +716,16 @@
         "auto_output": "Activate output screen on startup",
         "default_project_name": "Default project name",
         "resolution": "Resolution",
+        "cropping": "Cropping",
         "video_extensions": "Video extensions",
         "image_extensions": "Image extensions",
         "add": "Add",
         "remove": "Remove",
         "change_name": "Change name",
         "show_location": "Show location",
+        "export_location": "Export location",
+        "scripture_location": "Scripture location",
+        "recording_location": "Recordings location",
         "font": "Font",
         "font_family": "Font family",
         "font_size": "Font size",
@@ -786,6 +804,9 @@
         "current_slide": "for current slide",
         "text": "Text transition",
         "media": "Media transition",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Type",
         "none": "None",
         "fade": "Fade",
         "blur": "Blur",

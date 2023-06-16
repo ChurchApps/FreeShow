@@ -116,8 +116,6 @@
     //   }, 1000)
     // }
 
-    $: console.log(mirror, videoData.muted)
-
     let filter: string = ""
     let flipped: boolean = false
     let fit: MediaFit = "contain"

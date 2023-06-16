@@ -3,7 +3,7 @@ import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
-import { events, outputs, showsCache, stageShows, timeFormat, timers } from "../stores"
+import { events, mediaCache, outputs, showsCache, stageShows, timeFormat, timers } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
@@ -13,17 +13,37 @@ export function stageListen() {
         data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
         timedout(STAGE, { channel: "SHOW", data }, () =>
             eachConnection(STAGE, "SHOW", (connection) => {
-                return connection.active ? data[connection.active] : null
+                if (!connection.active) return
+
+                let currentData = data[connection.active]
+                if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
+                return currentData
             })
         )
-    })
-    outputs.subscribe(() => {
-        sendData(STAGE, { channel: "SLIDES" }, true)
-        // send(STAGE, ["OUTPUTS"], data)
     })
     showsCache.subscribe(() => {
         sendData(STAGE, { channel: "SLIDES" })
     })
+
+    outputs.subscribe((a) => {
+        sendData(STAGE, { channel: "SLIDES" }, true)
+        // send(STAGE, ["OUTPUTS"], data)
+
+        sendBackgroundToStage(a)
+    })
+    mediaCache.subscribe(() => {
+        sendBackgroundToStage(get(outputs))
+    })
+    function sendBackgroundToStage(outputs) {
+        let activeOutput: string = getActiveOutputs(outputs)[0]
+        let path = outputs[activeOutput].out?.background?.path || ""
+        console.log(outputs, activeOutput, path, get(mediaCache))
+
+        let background = null
+        if (path) background = get(mediaCache)[path]?.data || null
+
+        send(STAGE, ["BACKGROUND"], { path: background })
+    }
 
     timers.subscribe((a) => {
         send(STAGE, ["TIMERS"], a)
@@ -72,7 +92,8 @@ export const receiveSTAGE: any = {
         return msg
     },
     SLIDES: (msg: ClientMessage) => {
-        let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+        let show = get(stageShows)[msg.data?.id] || {}
+        let currentOutput: any = get(outputs)[show.settings?.output || getActiveOutputs()[0]]
         let out: any = currentOutput?.out?.slide || null
         msg.data = []
         console.log(out)

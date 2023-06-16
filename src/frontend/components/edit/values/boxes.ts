@@ -18,6 +18,7 @@ export type EditInput = {
     input: string
     value?: string | number | boolean | any[]
     extension?: string
+    hidden?: boolean
     disabled?: string
     valueIndex?: number
     values?: any
@@ -44,7 +45,7 @@ export const boxes: Box = {
             ],
             style: [
                 { input: "font-style" },
-                { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
                 { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
                 { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
             ],
@@ -108,7 +109,7 @@ export const boxes: Box = {
             ],
             style: [
                 { input: "font-style" },
-                { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
                 { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
                 { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
             ],
@@ -215,7 +216,12 @@ export const boxes: Box = {
         icon: "mirror",
         edit: {
             // TODO: select show popup
-            default: [{ name: "remote.show", id: "mirror", key: "show", input: "dropdown", value: "", values: { options: [] } }],
+            default: [
+                { name: "enable_stage", id: "mirror.enableStage", input: "checkbox", value: false },
+                { name: "popup.select_show", id: "mirror.show", input: "dropdown", value: "", values: { options: [] } },
+                { name: "use_slide_index", id: "mirror.useSlideIndex", input: "checkbox", value: true },
+                { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 },
+            ],
             // template, item index
         },
     },

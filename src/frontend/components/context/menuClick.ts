@@ -4,10 +4,12 @@ import { MAIN, OUTPUT, STAGE } from "../../../types/Channels"
 import type { Slide } from "../../../types/Show"
 import { changeSlideGroups } from "../../show/slides"
 import {
+    $,
     activeDrawerTab,
     activeEdit,
     activePage,
     activePopup,
+    activeRecording,
     activeRename,
     activeShow,
     currentOutputSettings,
@@ -43,7 +45,7 @@ import { clone } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
-import { getMediaType } from "../helpers/media"
+import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
 import { getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { sendMidi } from "../helpers/showActions"
@@ -51,6 +53,7 @@ import { _show } from "../helpers/shows"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 import { newToast } from "../../utils/messages"
+import { stopMediaRecorder } from "../drawer/live/recorder"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
@@ -373,11 +376,8 @@ const actions: any = {
         } else if (obj.sel.id === "media") {
             activeEdit.set({ type: "media", id: obj.sel.data[0].path, items: [] })
             activePage.set("edit")
-        } else if (obj.sel.id === "overlay") {
-            activeEdit.set({ type: "overlay", id: obj.sel.data[0], items: [] })
-            activePage.set("edit")
-        } else if (obj.sel.id === "template") {
-            activeEdit.set({ type: "template", id: obj.sel.data[0], items: [] })
+        } else if (["overlay", "template", "effect"].includes(obj.sel.id)) {
+            activeEdit.set({ type: obj.sel.id, id: obj.sel.data[0], items: [] })
             activePage.set("edit")
         } else if (obj.sel.id === "global_group") {
             settingsTab.set("groups")
@@ -462,6 +462,15 @@ const actions: any = {
     },
 
     // media
+    preview: (obj: any) => {
+        let path: string = obj.sel.data[0].path || obj.sel.data[0].id
+        if (!path) return
+
+        activeEdit.set({ id: path, type: "media", items: [] })
+        let name = removeExtension(getFileName(path))
+        let type = getMediaType(getExtension(path))
+        activeShow.set({ id: path, name, type })
+    },
     play: (obj: any) => {
         if (obj.sel.id === "midi") {
             sendMidi(obj.sel.data[0])
@@ -500,6 +509,21 @@ const actions: any = {
         })
     },
 
+    // live
+    recording: (obj: any) => {
+        if (get(activeRecording)) {
+            stopMediaRecorder()
+        } else {
+            let media = JSON.parse(obj.contextElem.getAttribute("data-media") || "{}")
+            if (!media.video) {
+                newToast("Could not get media")
+                return
+            }
+
+            activeRecording.set(media)
+        }
+    },
+
     // overlays
     lock_to_output: (obj: any) => {
         if (obj.sel.id !== "overlay") return
@@ -525,6 +549,57 @@ const actions: any = {
     changeIcon: () => activePopup.set("icon"),
 
     selectAll: (obj: any) => selectAll(obj.sel),
+
+    // bind item
+    stage: (obj: any) => actions.bind_item(obj),
+    bind_item: (obj: any) => {
+        let id = obj.menu?.id
+        let items = get(activeEdit).items
+
+        if (get(activeEdit).id) {
+            let currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
+            let itemValues = items.map((index) => currentItems[index].bindings || [])
+            let newValues: string[][] = []
+            itemValues.forEach((value) => {
+                if (!id) value = []
+                else if (value.includes(id)) value.splice(value.indexOf(id, 1))
+                else value.push(id)
+
+                newValues.push(value)
+            })
+
+            history({
+                id: "UPDATE",
+                oldData: { id: get(activeEdit).id },
+                newData: { key: "items", subkey: "bindings", data: newValues, indexes: items },
+                location: { page: "edit", id: get(activeEdit).type + "_items", override: true },
+            })
+
+            return
+        }
+
+        let slideIndex: number = get(activeEdit).slide || 0
+        let ref = _show().layouts("active").ref()[0]
+        let slideRef = ref[slideIndex]
+
+        let itemValues = _show().slides([slideRef.id]).items(items).get("bindings")[0]
+        itemValues = itemValues.map((a) => a || [])
+        let newValues: string[][] = []
+        itemValues.forEach((value) => {
+            if (!id) value = []
+            else if (value.includes(id)) value.splice(value.indexOf(id, 1))
+            else value.push(id)
+
+            newValues.push(value)
+        })
+
+        history({
+            id: "setItems",
+            newData: { style: { key: "bindings", values: newValues } },
+            location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itembind_" + slideRef.id + "_items_" + items.join(",") },
+        })
+        // _show().slides([slideID!]).set({ key: "items", value: items })
+    },
 
     // formats
     uppercase: (obj: any) => format("uppercase", obj),

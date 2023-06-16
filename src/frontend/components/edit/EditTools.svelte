@@ -81,6 +81,7 @@
     function applyStyleToAllSlides() {
         if (!isShow) return
 
+        // TODO: apply to different active elements
         if (active === "text") {
             // get current text style
             let style = item?.lines?.[0].text?.[0].style
@@ -93,16 +94,18 @@
                     let items: any[] = []
                     let values: any[] = []
                     slide.items.forEach((item: any, i: number) => {
-                        if (item.lines) {
-                            items.push(i)
-                            let text = item.lines.map((a: any) => {
-                                return a.text.map((a: any) => {
-                                    a.style = style
-                                    return a
-                                })
+                        if (!item.lines) return
+
+                        items.push(i)
+                        let text = item.lines.map((a: any) => {
+                            if (!a.text) return
+
+                            return a.text.map((a: any) => {
+                                a.style = style
+                                return a
                             })
-                            values.push(text)
-                        }
+                        })
+                        values.push(text)
                     })
 
                     history({
@@ -122,6 +125,8 @@
         if (active === "item") {
             // get current item style
             let style = item?.style
+
+            // TODO: dont add to icons (etc.)
 
             _show("active")
                 .slides()

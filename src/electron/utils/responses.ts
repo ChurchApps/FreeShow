@@ -2,6 +2,7 @@
 // Respond to messages from the frontend
 
 import { app, Display, screen } from "electron"
+import fs from "fs"
 import lyricsFinder from "lyrics-finder"
 import os from "os"
 import path from "path"
@@ -11,7 +12,7 @@ import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, deleteFile, getDocumentsFolder, getPaths, loadFile, readFile, readFolder, selectFilesDialog, selectFolderDialog } from "./files"
+import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, readFile, readFolder, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 
@@ -42,7 +43,10 @@ export function startExport(_e: any, msg: Message) {
 
 // BIBLE
 export function loadScripture(e: any, msg: Message) {
-    let p: string = path.resolve(app.getPath("documents"), "FreeShow", "Bibles", msg.name + ".fsb")
+    let bibleFolder: string = msg.path || ""
+    if (!bibleFolder) bibleFolder = getDocumentsFolder(null, "Bibles")
+    let p: string = path.resolve(bibleFolder, msg.name + ".fsb")
+
     let bible: any = loadFile(p, msg.id)
 
     // pre v0.5.6
@@ -74,6 +78,8 @@ const mainResponses: any = {
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     SHOWS_PATH: (): string => getDocumentsFolder(),
     EXPORT_PATH: (): string => getDocumentsFolder(null, "Exports"),
+    SCRIPTURE_PATH: (): string => getDocumentsFolder(null, "Bibles"),
+    RECORDING_PATH: (): string => getDocumentsFolder(null, "Recordings"),
     // READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
     DISPLAY: (): boolean => false,
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
@@ -168,6 +174,8 @@ function refreshAllShows(data: any) {
 // WIP duplicate of setShow.ts
 function trimShow(showCache: Show) {
     let show: any = {}
+    if (!showCache) return show
+
     show = {
         name: showCache.name,
         category: showCache.category,
@@ -176,4 +184,17 @@ function trimShow(showCache: Show) {
     if (showCache.private) show.private = true
 
     return show
+}
+
+// RECORDER
+
+export function saveRecording(_: any, msg: any) {
+    let folder: string = msg.path || ""
+    if (!folder) folder = getDocumentsFolder(null, "Recordings")
+    else if (!doesPathExist(folder)) folder = fs.mkdirSync(folder, { recursive: true }) || folder
+
+    let p: string = path.resolve(folder, msg.name)
+
+    const buffer = Buffer.from(msg.blob)
+    writeFile(p, buffer)
 }

@@ -88,6 +88,8 @@
     }
     $: if (activeShow) activeShowID = activeShow.id
 
+    $: console.trace(outShow)
+
     // password
     // https://stackoverflow.com/questions/18279141/javascript-string-encryption-and-decryption
     // if (CryptoJS.AES.decrypt(data, id) === password) { // TODO: encryption
@@ -361,11 +363,7 @@
                                         }}
                                         {activeShow}
                                         show={shows.find((s) => s.id === show.id)}
-                                        icon={shows.find((s) => s.id === show.id).private
-                                            ? "private"
-                                            : shows.find((s) => s.id === show.id).type
-                                            ? shows.find((s) => s.id === show.id).type
-                                            : "noIcon"}
+                                        icon={shows.find((s) => s.id === show.id).private ? "private" : shows.find((s) => s.id === show.id).type ? shows.find((s) => s.id === show.id).type : "noIcon"}
                                     />
                                 {/if}
                             {/each}
@@ -484,7 +482,7 @@
                                             <div class="lyric">
                                                 {#each item.lines as line}
                                                     <div class="break">
-                                                        {#each line.text as text}
+                                                        {#each line.text || [] as text}
                                                             <span>{@html text.value}</span>
                                                         {/each}
                                                     </div>
@@ -548,9 +546,7 @@
                 bind:value={password}
             />
             <Button on:click={submit} style="color: var(--secondary);" bold dark center>{dictionary.remote.submit}</Button>
-            <span style="text-align: center;"
-                ><input type="checkbox" bind:checked={rememberPassword} /><span style="opacity: 0.6;padding-left: 10px;">{dictionary.remote.remember}</span></span
-            >
+            <span style="text-align: center;"><input type="checkbox" bind:checked={rememberPassword} /><span style="opacity: 0.6;padding-left: 10px;">{dictionary.remote.remember}</span></span>
         </div>
     </div>
 {:else}

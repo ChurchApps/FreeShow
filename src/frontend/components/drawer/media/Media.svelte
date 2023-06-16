@@ -2,7 +2,7 @@
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import { Grid } from "svelte-virtual"
     import { READ_FOLDER } from "../../../../types/Channels"
-    import { activeEdit, activePage, activeShow, dictionary, media, mediaFolders, mediaOptions } from "../../../stores"
+    import { activeEdit, activeShow, dictionary, media, mediaFolders, mediaOptions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { splitPath } from "../../helpers/get"
@@ -38,7 +38,11 @@
     // get list of files & folders
     let prevActive: null | string = null
     $: {
+        if (prevActive === "pixabay") activeView = "all"
+
         if (active === "pixabay") {
+            activeView = "image"
+
             prevActive = active
             loadFilesAsync()
         } else if (active === "favourites") {
@@ -59,19 +63,23 @@
             if (active !== prevActive) {
                 prevActive = active
                 files = []
-                Object.values($mediaFolders).forEach((data) => window.api.send(READ_FOLDER, data.path))
+                Object.values($mediaFolders).forEach((data) => window.api.send(READ_FOLDER, { path: data.path }))
             }
         } else if (path.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
-                window.api.send(READ_FOLDER, path)
+                window.api.send(READ_FOLDER, { path, listFilesInFolders: true })
             }
         }
     }
 
+    let filesInFolders: string[] = []
+
     // receive files
     window.api.receive(READ_FOLDER, (msg: any) => {
+        filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
+
         if (active === "all" || msg.path === path) {
             files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
             files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
@@ -128,11 +136,21 @@
     let fullFilteredFiles: any[] = []
     function filterSearch() {
         fullFilteredFiles = JSON.parse(JSON.stringify(filteredFiles))
-        if (searchValue.length > 1) fullFilteredFiles = fullFilteredFiles.filter((a) => filter(a.name).includes(searchValue))
+        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(searchValue))
     }
 
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
-        if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
+        if (!e.ctrlKey && !e.metaKey) return
+        if (nextScrollTimeout) return
+
+        mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 
     const shortcuts: any = {
@@ -154,14 +172,11 @@
 
         let path = allFiles[activeFile]
         if (!path) return
-        if ($activePage === "edit" && $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")) {
-            activeEdit.set({ id: path, type: "media", items: [] })
-        } else {
-            activeEdit.set({ items: [] })
-            let name = removeExtension(getFileName(path))
-            let type = getMediaType(getExtension(path))
-            activeShow.set({ id: path, name, type })
-        }
+
+        activeEdit.set({ id: path, type: "media", items: [] })
+        let name = removeExtension(getFileName(path))
+        let type = getMediaType(getExtension(path))
+        activeShow.set({ id: path, name, type })
     }
 
     function keydown(e: any) {
@@ -281,9 +296,18 @@
         <Icon size={1.3} id="next" />
     </Button>
     <div class="seperator" />
-    <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
-        <Icon size={1.3} id={activeView} white={activeView === "all"} />
-    </Button>
+    {#if active === "pixabay"}
+        <Button title={$dictionary.media?.image} on:click={() => (activeView = "image")}>
+            <Icon size={1.3} id="image" white={activeView !== "image"} />
+        </Button>
+        <Button title={$dictionary.media?.video} on:click={() => (activeView = "video")}>
+            <Icon size={1.3} id="video" white={activeView !== "video"} />
+        </Button>
+    {:else}
+        <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
+            <Icon size={1.3} id={activeView} white={activeView === "all"} />
+        </Button>
+    {/if}
     <Button
         on:click={() =>
             mediaOptions.update((a) => {

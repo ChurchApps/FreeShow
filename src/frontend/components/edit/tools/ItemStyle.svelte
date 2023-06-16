@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activeShow } from "../../../stores"
+    import { activeEdit, activeShow, selected, showsCache } from "../../../stores"
+    import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -15,6 +17,28 @@
 
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
 
+    onMount(() => {
+        getBackgroundOpacity()
+    })
+
+    // background opacity
+    function getBackgroundOpacity() {
+        let backgroundValue = data["background-color"] || ""
+        if (!backgroundValue.includes("rgb")) return
+
+        let rgb = splitRgb(backgroundValue)
+        let boIndex = itemEdits.style.findIndex((a) => a.id === "background-opacity")
+        if (boIndex < 0) return
+        itemEdits.style[boIndex].value = rgb.a
+    }
+    function getOldOpacity() {
+        let backgroundValue = data["background-color"] || ""
+        if (!backgroundValue.includes("rgb")) return 1
+
+        let rgb = splitRgb(backgroundValue)
+        return rgb.a
+    }
+
     function updateStyle(e: any) {
         let input = e.detail
 
@@ -23,16 +47,62 @@
             input.key = "transform"
         }
 
+        // background opacity
+        if (input.id === "background-opacity" || input.key === "background-color") {
+            let backgroundColor = input.key === "background-color" ? input.value : data["background-color"] || "rgb(0 0 0);"
+            let rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
+            let opacity = input.id === "background-opacity" ? input.value : getOldOpacity()
+            let newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"
+
+            input.key = "background-color"
+            input.value = newColor
+
+            setTimeout(getBackgroundOpacity, 100)
+        }
+
         let allItems: number[] = $activeEdit.items
 
         // update all items if nothing is selected
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
 
-        let values: any = []
+        /////
 
-        // loop through all items
-        allItems.forEach((itemIndex) => {
-            values.push(addStyleString(allSlideItems[itemIndex].style, [input.key, input.value]))
+        let ref: any[] = _show("active").layouts("active").ref()[0] || {}
+        let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id]
+        let slideItems: number[][] = [allItems]
+        let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
+
+        // get all selected slides
+        if ($selected.id === "slide") {
+            let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
+            slides.push(...selectedSlides.map(({ index }) => ref[index].id))
+
+            slides.forEach((id, i) => {
+                if (i === 0) return
+                if (!showSlides[id]) {
+                    slideItems.push([])
+                    return
+                }
+
+                let currentItems = showSlides[id].items
+                let currentItemIndexes = currentItems.map((_item, i) => i)
+                slideItems.push(currentItemIndexes)
+            })
+        }
+
+        /////
+
+        let values: any = {}
+
+        slides.forEach((slide, i) => {
+            if (!slideItems[i].length) return
+            values[slide] = []
+
+            // loop through all items
+            slideItems[i].forEach((itemIndex) => {
+                let currentSlideItem = showSlides[slide]?.items?.[itemIndex] || allSlideItems[itemIndex]
+                values[slide].push(addStyleString(currentSlideItem.style, [input.key, input.value]))
+            })
         })
 
         if (input.id === "CSS") {
@@ -41,23 +111,25 @@
             allItems = [allItems[0]]
         }
 
-        if (!values.length) return
+        if (!Object.values(values).length) return
 
         if ($activeEdit.id) {
             history({
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
-                newData: { key: "items", subkey: "style", data: values, indexes: allItems },
+                newData: { key: "items", subkey: "style", data: Object.values(values)[0], indexes: allItems },
                 location: { page: "edit", id: $activeEdit.type + "_items", override: true },
             })
             return
         }
 
-        let ref: any[] = _show("active").layouts("active").ref()[0]
-        history({
-            id: "setItems",
-            newData: { style: { key: "style", values } },
-            location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: allItems },
+        slides.forEach((slide, i) => {
+            if (!slideItems[i].length) return
+            history({
+                id: "setItems",
+                newData: { style: { key: "style", values: values[slide] } },
+                location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slideitem_" + slide + "_items_" + slideItems[i].join(",") },
+            })
         })
     }
 </script>

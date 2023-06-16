@@ -55,7 +55,7 @@ export const receiveREMOTE: any = {
         console.log(msg)
 
         await loadShows([showID])
-        msg.data = { id: showID, ...convertBackgrounds(get(showsCache)[showID]) }
+        msg.data = clone({ ...convertBackgrounds(get(showsCache)[showID]), id: showID })
         // send(REMOTE, ["MEDIA"], { media: msg.data.media })
 
         if (msg.id) {
@@ -73,6 +73,8 @@ export const receiveREMOTE: any = {
         let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
         let out: any = currentOutput?.out?.slide || null
         let id: string = ""
+        console.log(clone(msg))
+
         if (msg.data === "clear") {
             setOutput("slide", null)
             setOutput("background", null)
@@ -90,6 +92,8 @@ export const receiveREMOTE: any = {
             msg.data = null
         } else if (msg.data !== null && msg.data !== undefined && out) {
             id = out.id
+            console.log(msg.data)
+
             let layout = GetLayout(id)
             if (msg.data < layout.length && msg.data >= 0) {
                 let newOutSlide: any = { ...out, index: msg.data }

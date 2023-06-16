@@ -9,6 +9,8 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import { newToast } from "../../../utils/messages"
 
     $: g = Object.entries($groups)
         .map(([id, a]: any) => ({ id, ...a, name: a.default ? $dictionary.groups?.[a.name] : a.name }))
@@ -58,51 +60,55 @@
     })
 
     $: console.log(shortcuts)
+    function addGroup() {
+        if (!value.group.length) {
+            newToast("No name")
+            return
+        }
+
+        history({ id: "UPDATE", newData: { data: { name: value.group, color: value.groupColor } }, location: { page: "settings", id: "global_group" } })
+        value.group = ""
+    }
 </script>
 
-<div>
+<CombinedInput>
     <p><T id="settings.group_numbers" /></p>
-    <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
-</div>
-<div>
+    <div class="alignRight">
+        <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
+    </div>
+</CombinedInput>
+<CombinedInput>
     <p><T id="settings.full_colors" /></p>
-    <Checkbox checked={$fullColors} on:change={inputs.colors} />
-</div>
+    <div class="alignRight">
+        <Checkbox checked={$fullColors} on:change={inputs.colors} />
+    </div>
+</CombinedInput>
 
-<hr />
+<br />
 
 <!-- <h3><T id="settings.add_group" /></h3> -->
-<div>
-    <TextInput value={value.group} on:input={(e) => changeValue(e, "group")} light />
-    <Color value={value.groupColor} on:input={(e) => changeValue(e, "groupColor")} style="width: 200px;" />
-    <Button
-        style="white-space: nowrap;"
-        center
-        on:click={() => {
-            if (value.group.length) {
-                history({ id: "UPDATE", newData: { data: { name: value.group, color: value.groupColor } }, location: { page: "settings", id: "global_group" } })
-                value.group = ""
-            }
-        }}
-    >
+<CombinedInput>
+    <TextInput style="flex: 3;" value={value.group} on:input={(e) => changeValue(e, "group")} />
+    <Color value={value.groupColor} on:input={(e) => changeValue(e, "groupColor")} />
+    <Button style="white-space: nowrap;" center on:click={addGroup}>
         <Icon id="add" right />
         <T id="settings.add" />
     </Button>
-</div>
+</CombinedInput>
 
 <br />
 
 {#each g as group}
-    <div>
-        <TextInput value={group.name} on:change={(e) => changeGroup(e, group.id)} light />
+    <CombinedInput>
+        <TextInput style="flex: 3;" value={group.name} on:change={(e) => changeGroup(e, group.id)} />
         <!-- {#if group.default}
               <T id="groups.{group.name}" />
             {:else}
               {group.name}
             {/if} -->
-        <Color value={group.color} on:input={(e) => changeGroup(e, group.id, "color")} style="width: 200px;" />
+        <Color value={group.color} on:input={(e) => changeGroup(e, group.id, "color")} />
         <!-- shortcut -->
-        <Dropdown title={$dictionary.settings?.group_shortcut} style="text-align: center;" value={group.shortcut || "—"} options={shortcuts} on:click={(e) => changeGroup(e, group.id, "shortcut")} />
+        <Dropdown title={$dictionary.settings?.group_shortcut} style="flex: 0.5;" value={group.shortcut || "—"} options={shortcuts} on:click={(e) => changeGroup(e, group.id, "shortcut")} center />
         <Button
             on:click={() => {
                 history({ id: "UPDATE", newData: { id: group.id }, location: { page: "settings", id: "global_group" } })
@@ -111,13 +117,17 @@
             <Icon id="delete" right />
             <T id="settings.remove" />
         </Button>
-    </div>
+    </CombinedInput>
 {/each}
-<hr />
+
+<br />
+
 <Button
     style="width: 100%;"
     center
     on:click={() => {
+        fullColors.set(false)
+        groupNumbers.set(true)
         groups.set(defaultGroups)
     }}
 >
@@ -125,39 +135,4 @@
     <T id="actions.reset" />
 </Button>
 
-<style>
-    /* h3 {
-    text-align: center;
-    font-size: 1.8em;
-    margin: 20px 0;
-  }
-  h3 {
-    font-size: initial;
-  } */
-
-    hr {
-        background-color: var(--primary-lighter);
-        border: none;
-        height: 2px;
-        width: 100%;
-        margin: 20px 0;
-    }
-
-    div:not(.scroll) {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin: 5px 0;
-        gap: 5px;
-        min-height: 38px;
-    }
-
-    div :global(.dropdownElem) {
-        min-width: 60px;
-        max-height: 30px;
-    }
-    div :global(.dropdownElem button) {
-        text-align: center;
-        padding: 2px 12px;
-    }
-</style>
+<br />

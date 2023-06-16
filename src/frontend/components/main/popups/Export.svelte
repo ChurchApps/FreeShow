@@ -11,6 +11,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
@@ -89,6 +90,8 @@
         pageNumbers: true,
         grid: [3, 6],
         oneFile: false,
+        originalTextSize: true,
+        textSize: 80,
     }
 
     function updatePdfOptions(e: any, key: string) {
@@ -136,62 +139,106 @@
         <div class="options">
             <h4 style="text-align: center;"><T id="export.options" /></h4>
             <br />
-            <span>
+
+            <div class="line">
+                <Button
+                    on:click={() => (pdfOptions.text = !pdfOptions.text)}
+                    disabled={!pdfOptions.slides}
+                    style={pdfOptions.text ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                    bold={false}
+                    center
+                    dark
+                >
+                    <T id="export.text" />
+                </Button>
+                <Button
+                    on:click={() => (pdfOptions.slides = !pdfOptions.slides)}
+                    disabled={!pdfOptions.text}
+                    style={pdfOptions.slides ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                    bold={false}
+                    center
+                    dark
+                >
+                    <T id="export.slides" />
+                </Button>
+            </div>
+
+            <CombinedInput style="margin-top: 10px;">
                 <p><T id="export.title" /></p>
-                <Checkbox checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} />
-            </span>
-            <span>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
                 <p><T id="export.metadata" /></p>
-                <Checkbox checked={pdfOptions.metadata} on:change={(e) => updatePdfOptions(e, "metadata")} />
-            </span>
-            <span>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.metadata} on:change={(e) => updatePdfOptions(e, "metadata")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
                 <p><T id="export.page_numbers" /></p>
-                <Checkbox checked={pdfOptions.pageNumbers} on:change={(e) => updatePdfOptions(e, "pageNumbers")} />
-            </span>
-            <span>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.pageNumbers} on:change={(e) => updatePdfOptions(e, "pageNumbers")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
                 <p><T id="export.groups" /></p>
-                <Checkbox checked={pdfOptions.groups} on:change={(e) => updatePdfOptions(e, "groups")} />
-            </span>
-            <span>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.groups} on:change={(e) => updatePdfOptions(e, "groups")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
                 <p><T id="export.numbers" /></p>
-                <Checkbox checked={pdfOptions.numbers} on:change={(e) => updatePdfOptions(e, "numbers")} />
-            </span>
-            <span>
+                <div class="alignRight">
+                    <Checkbox checked={pdfOptions.numbers} on:change={(e) => updatePdfOptions(e, "numbers")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
                 <p><T id="export.invert" /></p>
-                <Checkbox disabled={!pdfOptions.slides} checked={pdfOptions.invert} on:change={(e) => updatePdfOptions(e, "invert")} />
-            </span>
-            <hr style="height: 1px;" />
-            <span>
-                <p><T id="export.text" /></p>
-                <Checkbox disabled={!pdfOptions.slides} checked={pdfOptions.text} on:change={(e) => updatePdfOptions(e, "text")} />
-            </span>
-            <span>
-                <p><T id="export.slides" /></p>
-                <Checkbox disabled={!pdfOptions.text} checked={pdfOptions.slides} on:change={(e) => updatePdfOptions(e, "slides")} />
-            </span>
+                <div class="alignRight">
+                    <Checkbox disabled={!pdfOptions.slides} checked={pdfOptions.invert} on:change={(e) => updatePdfOptions(e, "invert")} />
+                </div>
+            </CombinedInput>
+
+            <CombinedInput style="margin-top: 10px;">
+                <p><T id="export.original_text_size" /></p>
+                <div class="alignRight">
+                    <Checkbox disabled={!pdfOptions.text} checked={pdfOptions.originalTextSize !== false} on:change={(e) => updatePdfOptions(e, "originalTextSize")} />
+                </div>
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="settings.font_size" /></p>
+                <NumberInput disabled={!pdfOptions.text || pdfOptions.originalTextSize !== false} value={pdfOptions.textSize} on:change={(e) => (pdfOptions.textSize = e.detail)} />
+            </CombinedInput>
             <!-- <span>
         <p>repeats</p>
-        <Checkbox checked={pdfOptions.repeats} on:change={(e) => updatePdfOptions(e, "repeats")} />
+        <div class="alignRight">
+            <Checkbox checked={pdfOptions.repeats} on:change={(e) => updatePdfOptions(e, "repeats")} />
+        </div>
       </span> -->
-            <span>
+            <CombinedInput>
                 <p><T id="export.rows" /></p>
                 <NumberInput disabled={!pdfOptions.slides} value={pdfOptions.grid[1]} min={1} max={7} on:change={(e) => (pdfOptions.grid[1] = e.detail)} />
-            </span>
-            <span>
+            </CombinedInput>
+            <CombinedInput>
                 <p><T id="export.columns" /></p>
                 <NumberInput disabled={pdfOptions.text} value={pdfOptions.grid[0]} min={1} max={6} on:change={(e) => (pdfOptions.grid[0] = e.detail)} />
-            </span>
+            </CombinedInput>
         </div>
+
         <div>
             <h4 style="text-align: center;"><T id="export.preview" /></h4>
+            <br />
             <div class="paper" bind:this={paper}>
                 <Pdf {shows} options={pdfOptions} />
             </div>
         </div>
         <div style="display: flex;flex-direction: column;">
+            <br />
+            <br />
             <!-- aspect-ratio: 1/1.4142; -->
-            <Button style="flex: 1;" on:click={() => paper.scrollBy(0, -paper.offsetHeight + 9.6)}><Icon id="up" /></Button>
-            <Button style="flex: 1;" on:click={() => paper.scrollBy(0, paper.offsetHeight - 7.001)}><Icon id="down" /></Button>
+            <Button style="flex: 1;" on:click={() => paper.scrollBy(0, -paper.offsetHeight + 9.6)} dark><Icon id="up" white /></Button>
+            <Button style="flex: 1;" on:click={() => paper.scrollBy(0, paper.offsetHeight - 7.001)} dark><Icon id="down" white /></Button>
         </div>
     </div>
 
@@ -204,22 +251,27 @@
     </Center>
 {/if}
 
-<span style="display: flex;align-items: center;justify-content: space-between;">
-    {$exportPath}
-    <FolderPicker id="EXPORT">
+<FolderPicker id="EXPORT">
+    <Icon id="folder" right />
+    {#if $exportPath}
+        {$exportPath}
+    {:else}
         <T id="inputs.change_folder" />
-    </FolderPicker>
-</span>
+    {/if}
+</FolderPicker>
 
 <!-- TODO: all as one file -->
 <!-- {#if shows.length > 1 && format.id !== "project"}
   <span>
     <p><T id="export.oneFile" /></p>
-    <Checkbox disabled={shows.length < 2} checked={pdfOptions.oneFile} on:change={(e) => updatePdfOptions(e, "oneFile")} />
+    <div class="alignRight">
+        <Checkbox disabled={shows.length < 2} checked={pdfOptions.oneFile} on:change={(e) => updatePdfOptions(e, "oneFile")} />
+    </div>
   </span>
 {/if} -->
 
-<Button disabled={!shows.length} on:click={exportClick} center>
+<Button style="margin-top: 10px;" disabled={!shows.length} on:click={exportClick} center dark>
+    <Icon id="export" size={1.2} right />
     <T id="export.export" />
     {#if shows.length > 1 && format.id !== "project"}
         <span style="opacity: 0.5;padding-left: 10px;">({shows.length})</span>
@@ -249,12 +301,17 @@
     .options {
         display: flex;
         flex-direction: column;
-        gap: 10px;
     }
 
-    .options span {
+    h4 {
+        color: var(--text);
+    }
+
+    .line {
         display: flex;
-        justify-content: space-between;
+        align-items: center;
+        background-color: var(--primary-darker);
+        flex-flow: wrap;
     }
 
     hr {

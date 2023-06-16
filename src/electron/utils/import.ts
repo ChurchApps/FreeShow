@@ -1,13 +1,13 @@
-import path from "path"
+import { app } from "electron"
 import { readdir, readFileSync } from "fs"
-import { toApp } from ".."
-import { IMPORT } from "./../../types/Channels"
+import path, { join } from "path"
 import PPTX2Json from "pptx2json"
+import protobufjs from "protobufjs"
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
-import { app } from "electron"
+import { toApp } from ".."
+import { IMPORT } from "./../../types/Channels"
 import { getDocumentsFolder } from "./files"
-import protobufjs from "protobufjs"
 
 export async function importShow(id: any, files: string[] | null) {
     if (!files?.length) return
@@ -111,7 +111,8 @@ const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.
 // https://www.npmjs.com/package/protobufjs
 
 async function decodeProto(filePath: string) {
-    const root = await protobufjs.load("public/proto/presentation.proto")
+    const dir = join(__dirname, "..", "..", "..", "public", "proto", "presentation.proto")
+    const root = await protobufjs.load(dir)
 
     const Presentation = root.lookupType("Presentation")
 

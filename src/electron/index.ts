@@ -4,14 +4,14 @@
 import { app, BrowserWindow, desktopCapturer, ipcMain, Menu, Rectangle, screen, shell } from "electron"
 import { getFonts } from "font-list"
 import path from "path"
-import { CLOUD, EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../types/Channels"
+import { CLOUD, EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { closeServers } from "./servers"
-import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./utils/output"
-import { loadScripture, loadShow, receiveMain, startExport, startImport } from "./utils/responses"
+import { loadScripture, loadShow, receiveMain, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { cloudConnect } from "./cloud/cloud"
@@ -29,7 +29,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 15000)
+    else setTimeout(startApp, 22000)
 })
 
 function startApp() {
@@ -258,6 +258,7 @@ function save(data: any) {
     data.path = checkShowsFolder(data.path)
     if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
     function saveShow([id, value]: any) {
+        if (!value) return
         let p: string = path.resolve(data.path, value.name + ".show")
         writeFile(p, JSON.stringify([id, value]), id)
     }
@@ -265,6 +266,7 @@ function save(data: any) {
     // scriptures
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: any) {
+        if (!value) return
         let p: string = path.resolve(getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
         writeFile(p, JSON.stringify([id, value]), id)
     }
@@ -288,7 +290,9 @@ ipcMain.on(READ_FOLDER, getFolderContent)
 ipcMain.on(OPEN_FOLDER, selectFolder)
 ipcMain.on(OPEN_FILE, selectFiles)
 ipcMain.on(FILE_INFO, getFileInfo)
+ipcMain.on(READ_EXIF, readExifData)
 ipcMain.on(CLOUD, cloudConnect)
+ipcMain.on(RECORDER, saveRecording)
 
 // ----- HELPERS -----
 

@@ -12,6 +12,7 @@
     import Drawer from "./components/drawer/Drawer.svelte"
     import Editor from "./components/edit/Editor.svelte"
     import EditTools from "./components/edit/EditTools.svelte"
+    import EffectTools from "./components/edit/EffectTools.svelte"
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
     import Pdf from "./components/export/Pdf.svelte"
@@ -21,6 +22,7 @@
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
+    import Recorder from "./components/main/Recorder.svelte"
     import Toast from "./components/main/Toast.svelte"
     import Top from "./components/main/Top.svelte"
     import Output from "./components/output/Output.svelte"
@@ -62,6 +64,7 @@
         y: () => redo(),
         z: () => undo(),
         Z: () => redo(),
+        // F2: () => menuClick("rename"),
     }
     const keys: any = {
         Escape: () => {
@@ -98,12 +101,10 @@
                 return
             }
 
-            // return if using shortcuts in inputs
+            // use default input shortcuts on supported devices (this includes working undo/redo)
             const exeption = ["e", "i", "n", "o", "s", "a"]
-            if (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key)) {
-                let simulateMac = false
-                if (simulateMac) e.preventDefault()
-                else return
+            if (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && $os.platform !== "darwin") {
+                return
             }
 
             if (ctrlKeys[e.key]) {
@@ -183,6 +184,7 @@
             <ContextMenu />
             <Popup />
             <Toast />
+            <Recorder />
 
             <div class="column">
                 <Top {isWindows} />
@@ -231,6 +233,8 @@
                             {:else if page === "edit"}
                                 {#if ($activeShow && ($activeShow.type === "image" || $activeShow.type === "video")) || $activeEdit.type === "media"}
                                     <MediaTools />
+                                {:else if $activeEdit.type === "effect"}
+                                    <EffectTools />
                                 {:else}
                                     <EditTools />
                                 {/if}
@@ -330,9 +334,8 @@
         width: 100%;
 
         display: flex;
-        background: var(--primary-darkest);
-
-        /* TODO: change electron window resolution...?? */
-        /* background-color: black; */
+        background-color: black;
+        /* enable this to see the actual output window cropped size */
+        /* background: var(--primary-darkest); */
     }
 </style>

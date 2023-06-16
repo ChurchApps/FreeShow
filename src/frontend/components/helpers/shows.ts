@@ -70,7 +70,8 @@ export function _show(id: any = "active") {
             /** Get slides */
             get: (key: null | string = null, addId: boolean = true) => {
                 let a: any[] = []
-                if (!slideIds.length && shows[id]?.slides) slideIds = Object.keys(shows[id].slides)
+                if (!shows[id]) return []
+                if (!slideIds.length && shows[id].slides) slideIds = Object.keys(shows[id].slides)
                 slideIds.forEach((slideId) => {
                     if (key) a.push(shows[id].slides[slideId][key])
                     else {
@@ -231,6 +232,7 @@ export function _show(id: any = "active") {
                         showsCache.update((a: any) => {
                             if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
                             slideIds.forEach((slideId) => {
+                                if (!a[id].slides[slideId]) return
                                 if (!indexes.length) indexes = a[id].slides[slideId].items.map((_: any, i: number) => i)
                                 indexes.forEach((index, i) => {
                                     prev.values.push([])

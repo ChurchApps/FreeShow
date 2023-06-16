@@ -42,8 +42,38 @@
 
         let newData: any
 
+        // shift select range
+        if (e.shiftKey && $selected.data[0]?.index !== undefined) {
+            let lastSelectedIndex = $selected.data[$selected.data.length - 1].index
+            let newIndex = data.index
+            let lowestNumber = Math.min(lastSelectedIndex, newIndex) + 1
+            let highestNumber = Math.max(lastSelectedIndex, newIndex) - 1
+
+            let selectedBetween: number[] = range(lowestNumber, highestNumber)
+            function range(start, end) {
+                return Array(end - start + 1)
+                    .fill("")
+                    .map((_, idx) => start + idx)
+            }
+
+            let numbersBetween = selectedBetween.map((index) => ({ index }))
+            let allNewIndexes = [...$selected.data, ...numbersBetween, data]
+
+            // remove duplicates
+            let alreadyAdded: number[] = []
+            newData = allNewIndexes.filter(({ index }) => {
+                if (alreadyAdded.includes(index)) return false
+
+                alreadyAdded.push(index)
+                return true
+            })
+
+            selected.set({ id, data: newData })
+            return
+        }
+
         let alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
-        let selectMultiple: boolean = e.ctrlKey || e.metaKey
+        let selectMultiple: boolean = e.ctrlKey || e.metaKey || e.shiftKey
         let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         if (dragged) {
@@ -68,7 +98,17 @@
     }
 
     function deselect(e: any) {
-        if (!e.ctrlKey && !e.metaKey && $selected.id === id && !e.target.closest(".menus") && !e.target.closest(".selectElem") && !e.target.closest(".popup") && !e.target.closest(".edit") && !e.target.closest(".contextMenu"))
+        if (
+            !e.ctrlKey &&
+            !e.metaKey &&
+            $selected.id === id &&
+            !e.target.closest(".menus") &&
+            !e.target.closest(".selectElem") &&
+            !e.target.closest(".popup") &&
+            !e.target.closest(".edit") &&
+            !e.target.closest(".contextMenu") &&
+            !e.target.closest(".editTools")
+        )
             selected.set({ id: null, data: [] })
     }
 

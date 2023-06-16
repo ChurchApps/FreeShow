@@ -25,7 +25,7 @@ export function autoSize(items: number[], fullItems: any[], check: boolean = tru
             values.push([])
             item.lines?.forEach((line: any) => {
                 values[i].push(
-                    line.text.map((a: any) => {
+                    line.text?.map((a: any) => {
                         a.style = addStyleString(a.style, ["font-size", size + "px"])
                         return a
                     })

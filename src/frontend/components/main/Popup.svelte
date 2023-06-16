@@ -67,24 +67,37 @@
         cloud_update: CloudUpdate,
         cloud_method: CloudMethod,
     }
+
+    // prevent svelte transition lock
+    let popupCache: any = null
+    let popupTimeout: any = null
+    $: if ($activePopup !== undefined) updatePopup()
+    function updatePopup() {
+        if (popupTimeout) return
+
+        popupTimeout = setTimeout(() => {
+            popupCache = $activePopup
+            popupTimeout = null
+        }, 100)
+    }
 </script>
 
-{#if $activePopup !== null}
-    {#key $activePopup}
+{#if popupCache !== null}
+    {#key popupCache}
         <div style={$os.platform === "win32" ? "height: calc(100% - 30px);" : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
-            <div class="card" class:fill={$activePopup === "import_scripture"} transition:scale={{ duration: 200 }}>
+            <div class="card" class:fill={popupCache === "import_scripture"} transition:scale={{ duration: 200 }}>
                 <div style="position: relative;">
-                    {#if $activePopup !== "alert"}
-                        {#key $activePopup}
-                            <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{$activePopup}" /></h2>
+                    {#if popupCache !== "alert"}
+                        {#key popupCache}
+                            <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{popupCache}" /></h2>
                         {/key}
                     {/if}
                     <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 30px;" on:click={() => activePopup.set(null)}>
                         <Icon id="close" size={2} />
                     </Button>
                 </div>
-                <div style="display: flex;flex-direction: column;margin: 20px;">
-                    <svelte:component this={popups[$activePopup]} />
+                <div style="display: flex;flex-direction: column;margin: 20px;min-width: 38vw;">
+                    <svelte:component this={popups[popupCache]} />
                 </div>
             </div>
         </div>
@@ -92,6 +105,10 @@
 {/if}
 
 <style>
+    h2 {
+        color: var(--text);
+    }
+
     .popup {
         position: absolute;
         background-color: rgb(0 0 0 / 0.8);

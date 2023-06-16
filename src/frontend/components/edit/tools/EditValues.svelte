@@ -16,6 +16,7 @@
     import EditTimer from "./EditTimer.svelte"
     import Button from "../../inputs/Button.svelte"
     import { getFileName } from "../../helpers/media"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     export let edits: any
     export let item: any = null
@@ -135,20 +136,17 @@
 
     $: if ($activePopup === null && $popupData.value) findChangedInput()
     function findChangedInput() {
-        console.log($popupData)
-
         let changedInput = edits[$popupData.section]?.find((a) => a.id === $popupData.id)
         if (!changedInput) return
 
         changedInput.value = $popupData.value
-        console.log(changedInput.value, edits)
         valueChange({ detail: changedInput.value }, changedInput)
     }
 </script>
 
 {#each Object.keys(edits || {}) as section, i}
-    <div class="section" style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
-        {#if i > 0}<hr />{/if}
+    <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
+        <!-- {#if i > 0}<hr />{/if} -->
         {#if section !== "default"}
             {#if section[0] === section[0].toUpperCase()}
                 <h6>{section}</h6>
@@ -160,19 +158,22 @@
             {#if input.input === "editTimer"}
                 <EditTimer {item} on:change={(e) => valueChange(e, input)} />
             {:else if input.input === "popup"}
-                <Button
-                    on:click={() => {
-                        activePopup.set(input.popup || input.id)
-                        let data = { id: input.id, section, value: input.value, type: "" }
-                        if (input.id === "list.items") data.type = edits[section].find((a) => a.id === "list.style")?.value
-                        popupData.set(data)
-                    }}
-                    dark
-                    center
-                >
-                    <Icon id={input.icon || input.id} right />
-                    <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
-                </Button>
+                <CombinedInput>
+                    <Button
+                        style="width: 100%;"
+                        on:click={() => {
+                            activePopup.set(input.popup || input.id)
+                            let data = { id: input.id, section, value: input.value, type: "" }
+                            if (input.id === "list.items") data.type = edits[section].find((a) => a.id === "list.style")?.value
+                            popupData.set(data)
+                        }}
+                        dark
+                        center
+                    >
+                        <Icon id={input.icon || input.id} right />
+                        <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                    </Button>
+                </CombinedInput>
             {:else if input.input === "media"}
                 <MediaPicker title={input.value} style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
                     <Icon id="image" right />
@@ -200,7 +201,8 @@
                     {/each}
                 </div>
             {:else if lineInputs[input.input]}
-                <div class="line" style="margin-bottom: 5px;">
+                <!-- <div class="line" style="border-bottom: 2px solid var(--primary-lighter);"> -->
+                <CombinedInput>
                     {#each lineInputs[input.input] as lineInput}
                         {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
                         <IconButton
@@ -210,29 +212,40 @@
                             active={currentStyle[lineInput.key] ? currentStyle[lineInput.key]?.includes(lineInput.value) : lineInput.default}
                         />
                     {/each}
-                </div>
+                </CombinedInput>
+                <!-- </div> -->
             {:else if input.input === "CSS"}
                 <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
                     <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: "CSS", value: e.detail })} />
                 </div>
+            {:else if input.input === "checkbox"}
+                {@const value = getValue(input, { styles, item })}
+                {#if !input.hidden}
+                    <CombinedInput>
+                        <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
+                        <div class="alignRight">
+                            <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
+                        </div>
+                    </CombinedInput>
+                {/if}
             {:else if !input.name}
                 Missing input name: {input.input}
             {:else}
                 {@const value = getValue(input, { styles, item })}
-                <div class="input">
-                    <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
-                    <svelte:component
-                        this={inputs[input.input]}
-                        {...input.values || {}}
-                        {value}
-                        checked={item?.[input.id] || value || false}
-                        disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value}
-                        on:click={(e) => valueChange(e, input)}
-                        on:input={(e) => valueChange(e, input)}
-                        on:checked={(e) => valueChange(e, input)}
-                        on:change={(e) => valueChange(e, input)}
-                    />
-                </div>
+                {#if !input.hidden}
+                    <CombinedInput>
+                        <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"][input.name.includes(".") ? input.name.split(".")[1] : input.name]}><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
+                        <svelte:component
+                            this={inputs[input.input]}
+                            {...input.values || {}}
+                            {value}
+                            disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value}
+                            on:click={(e) => valueChange(e, input)}
+                            on:input={(e) => valueChange(e, input)}
+                            on:change={(e) => valueChange(e, input)}
+                        />
+                    </CombinedInput>
+                {/if}
             {/if}
         {/each}
     </div>
@@ -242,8 +255,15 @@
     .section {
         display: flex;
         flex-direction: column;
-        margin: 20px 10px;
+        margin: 0 10px;
+        /* margin: 20px 10px; */
         /* gap: 5px; */
+    }
+    .section:last-child {
+        margin-bottom: 10px;
+    }
+    .section.top {
+        margin-top: 10px;
     }
 
     h6 {
@@ -254,12 +274,12 @@
         margin: 20px 0;
     }
 
-    hr {
+    /* hr {
         width: 100%;
         height: 2px;
         background-color: var(--primary-lighter);
         border: none;
-    }
+    } */
 
     .line {
         display: flex;
@@ -268,17 +288,10 @@
         flex-flow: wrap;
     }
 
-    .input {
-        display: flex;
-        gap: 10px;
-        min-height: 35px;
-        align-items: center;
-    }
-
-    .input :global(input[type="color"]),
-    .input :global(.dropdownElem),
-    .input :global(.color) {
-        min-width: 50%;
+    div :global(input[type="color"]),
+    div :global(.dropdownElem),
+    div :global(.color) {
+        min-width: 50% !important;
     }
 
     p {
@@ -287,5 +300,7 @@
         opacity: 0.8;
         align-self: center;
         font-size: 0.9em;
+
+        overflow: hidden !important;
     }
 </style>

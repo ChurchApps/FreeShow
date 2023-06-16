@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Velkommen til FreeShow!",
+        "welcome": "Velkommen",
         "quit": "Avslutt",
         "docs": "Dokumentasjon",
         "about": "Om",
@@ -9,15 +9,6 @@
         "search": "Søk",
         "none": "Ingen",
         "finished": "Fullført"
-    },
-    "languages": {
-        "en": "Engelsk",
-        "no": "Norsk",
-        "sk": "Slovakisk",
-        "es": "Spansk",
-        "pt_BR": "Brasiliansk portugisisk",
-        "de": "Tysk",
-        "it": "Italiensk"
     },
     "about": {
         "check_updates": "Se etter oppdateringer",
@@ -49,7 +40,7 @@
     },
     "setup": {
         "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
-        "tips": "Finn nyttige tips og tutorials på nettsiden.",
+        "tips": "Finn nyttige tips og guider på nettsiden.",
         "change_later": "Du kan endre dette senere",
         "get_started": "Kom i gang!"
     },
@@ -79,7 +70,11 @@
     "screen": {
         "width": "Bredde",
         "height": "Høyde",
-        "pixels": "piksler"
+        "pixels": "piksler",
+        "top": "Topp",
+        "right": "Høyre",
+        "bottom": "Bunn",
+        "left": "Venstre"
     },
     "create_show": {
         "search_web": "Søk etter sang på nettet",
@@ -116,14 +111,14 @@
         "slide": "Fjern lysbilde",
         "overlays": "Fjern overlegg",
         "audio": "Fjern lyd",
-        "nextTimer": "Fjern Tid til neste lysbilde"
+        "nextTimer": "Fjern tid til neste lysbilde"
     },
     "remove": {
         "background": "Fjern bakgrunn",
         "overlays": "Fjern overlegg",
         "audio": "Fjern lyd",
-        "nextTimer": "Fjern Tid til neste lysbilde",
-        "to_start": "Fjern Gå til start",
+        "nextTimer": "Fjern tid til neste lysbilde",
+        "to_start": "Fjern gå til start",
         "timer": "Fjern nedtelling",
         "transition": "Fjern overgang"
     },
@@ -179,7 +174,8 @@
         "groups": "Ingen grupper",
         "events": "Ingen hendelser",
         "text": "Skriv noe",
-        "timers": "Ingen nedtellinger"
+        "timers": "Ingen nedtellinger",
+        "recording": "Høyreklikk på en skjerm eller vindu for å starte et opptak."
     },
     "remote": {
         "projects": "Prosjekter",
@@ -219,6 +215,7 @@
         "year": "År",
         "message": "Melding",
         "message_tip": "Vis noe på alle lysbildene",
+        "auto_media": "Hent meta fra medier",
         "override_output": "Overskriv stil i utgangsskjermen",
         "display_metadata": "Vis metadata",
         "meta_template": "Mal for metadata",
@@ -265,6 +262,7 @@
         "media": "Medier",
         "overlays": "Overlegg",
         "audio": "Lyd",
+        "effects": "Effekter",
         "scripture": "Bibelen",
         "player": "Spiller",
         "live": "Direkte",
@@ -328,7 +326,7 @@
         "cloud_method": "Dataplassering",
         "shortcuts": "Hurtigtaster",
         "icon": "Ikoner",
-        "initialize": "Velkommen",
+        "initialize": "Velkommen til FreeShow",
         "unsaved": "Du har ikke lagret enda! Er du sikker på at du vil avslutte?",
         "cancel": "Avbryt",
         "continue": "Fortsett",
@@ -381,6 +379,7 @@
         "delete_all": "Slett alle",
         "close": "Lukk",
         "save": "Lagre",
+        "done": "Ferdig",
         "disable": "Deaktiver",
         "enable": "Aktiver",
         "undo": "Angre",
@@ -405,6 +404,8 @@
         "home": "Hjem",
         "mute": "Slå av lyden",
         "unmute": "Slå på lyden",
+        "bind_to": "Bind til",
+        "remove_binding": "Fjern binding",
         "format": "Formater",
         "uppercase": "Gjør tekst stor",
         "lowercase": "Gjør tekst liten",
@@ -429,7 +430,9 @@
         "remove_media": "Fjern media",
         "index_select_project": "Velg prosjekt fra indeks",
         "index_select_project_show": "Velg element i prosjekt fra indeks",
-        "index_select_slide": "Velg lysbilde fra indeks"
+        "index_select_slide": "Velg lysbilde fra indeks",
+        "start_recording": "Start opptak",
+        "stop_recording": "Stopp opptak"
     },
     "cloud": {
         "info": "Synkroniser filer med Google Disk for sikkerhetskopier, eller dersom du jobber på flere datamaskiner.",
@@ -466,6 +469,7 @@
         "groups": "Grupper",
         "numbers": "Nummererte lysbilder",
         "invert": "Inverter lysbilder",
+        "original_text_size": "Original tekststørrelse",
         "text": "Kun tekst",
         "slides": "Lysbilder",
         "rows": "Rader",
@@ -510,6 +514,7 @@
         "_title_strikethrough": "Gjennomstreking",
         "color": "Farge",
         "background_color": "Bakgrunnsfarge",
+        "background_opacity": "Bakgrunnsgjennomsiktighet",
         "background_image": "Bakgrunnsbilde",
         "size": "Størrelse",
         "chords": "Akkorder",
@@ -547,7 +552,12 @@
         "backdrop_filters": "Filtre bak",
         "interval": "Intervall",
         "video": "Video",
-        "choose_media": "Velg media"
+        "choose_media": "Velg media",
+        "recent": "Nylig redigert",
+        "enable_stage": "Aktiver scene",
+        "select_stage": "Velg scene",
+        "use_slide_index": "Bruk aktiv indeks",
+        "slide_index": "Lysbilde-indeks"
     },
     "items": {
         "text": "Tekstboks",
@@ -650,6 +660,8 @@
         "next_slide": "Neste lysbilde",
         "next_slide_text": "Neste lysbilde tekst",
         "next_slide_notes": "Neste lysbilde notater",
+        "output": "Utgang",
+        "current_output": "Gjeldende utgang",
         "time": "Tid",
         "system_clock": "Systemklokke",
         "video_time": "Videotid",
@@ -677,6 +689,7 @@
         "use24hClock": "Bruk 24-timersklokke",
         "styles_hint": "Opprett forskjellige stiler som kan legges til utgangskjermen for å endre utseendet.",
         "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den. Hold CTRL for å kunne dra den rundt.",
+        "hide_menubar_hint": "For å skjule menylinjen, aktiver kiosk-modus, eller aktiver \"Skjul og vis menylinjen automatisk\" i de generelle MacOS innstillingene.",
         "show_output_hint": "Hold ctrl/cmd mens du trykker på \"vis utgangsskjerm\"-knappen for å tvinge visning over denne skjermen.",
         "move_output_hint": "Finner ikke skjermen din? Endre posisjonen til vinduet viser på den andre skjermen.",
         "select_display": "Trykk på skjermen hvor du vil vise utgangskjermen.",
@@ -685,6 +698,7 @@
         "new_output": "Ny utgang",
         "enable_key_output": "Aktiver 'alpha key'-utgang",
         "always_on_top": "Alltid øverst",
+        "kiosk_mode": "Kiosk-modus",
         "change_key_output_position": "Endre posisjonen til 'alpha key'-utgangen",
         "position": "Posisjon",
         "enabled": "Aktivert",
@@ -702,12 +716,16 @@
         "auto_output": "Aktiver utgangsskjerm ved oppstart",
         "default_project_name": "Standard prosjektnavn",
         "resolution": "Oppløsning",
+        "cropping": "Beskjæring",
         "video_extensions": "Videoutvidelse",
         "image_extensions": "Bildeutvidelse",
         "add": "Legg til",
         "remove": "Fjern",
         "change_name": "Endre navn",
-        "show_location": "Show plassering",
+        "show_location": "Plassering for show",
+        "export_location": "Plassering for eksportering",
+        "scripture_location": "Plassering for bibler",
+        "recording_location": "Plassering for opptak",
         "font": "Skrift",
         "font_family": "Skrifttype",
         "font_size": "Skriftstørrelse",
@@ -786,6 +804,9 @@
         "current_slide": "for valgt lysbilde",
         "text": "Tekstovergang",
         "media": "Medieovergang",
+        "duration": "Varighet",
+        "easing": "Bevegelse",
+        "type": "Type",
         "none": "Ingen",
         "fade": "Falme",
         "blur": "Uklart",

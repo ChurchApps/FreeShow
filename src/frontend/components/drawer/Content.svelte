@@ -12,6 +12,7 @@
     import Player from "./player/Player.svelte"
     import Shows from "./Shows.svelte"
     import Templates from "./Templates.svelte"
+    import Effects from "./effects/Effects.svelte"
 
     export let id: string
     export let bibles: any
@@ -49,8 +50,18 @@
         })
     }
 
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
-        if (e.ctrlKey || e.metaKey) mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
+        if (!e.ctrlKey && !e.metaKey) return
+        if (nextScrollTimeout) return
+
+        mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 </script>
 
@@ -63,6 +74,8 @@
         <Overlays {active} {searchValue} />
     {:else if id === "audio"}
         <Audio {active} {searchValue} />
+    {:else if id === "effects"}
+        <Effects {active} {searchValue} />
     {:else if id === "scripture"}
         <Scripture {active} bind:searchValue bind:bibles />
     {:else if id === "templates"}

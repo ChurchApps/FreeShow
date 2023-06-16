@@ -47,7 +47,9 @@ import {
     playerVideos,
     playingVideos,
     projects,
+    recordingPath,
     saved,
+    scripturePath,
     shows,
     showsCache,
     showsPath,
@@ -120,6 +122,8 @@ const receiveMAIN: any = {
     MENU: (a: any) => menuClick(a),
     SHOWS_PATH: (a: any) => showsPath.set(a),
     EXPORT_PATH: (a: any) => exportPath.set(a),
+    SCRIPTURE_PATH: (a: any) => scripturePath.set(a),
+    RECORDING_PATH: (a: any) => recordingPath.set(a),
     // READ_SAVED_CACHE: (a: any) => {
     //     if (!a) return
     //     Object.entries(JSON.parse(a)).forEach(([key, data]: any) => {
@@ -234,6 +238,7 @@ const receiveOUTPUT: any = {
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
+    STAGE_SHOWS: (a: any) => stageShows.set(a),
     AUDIO_MAIN: async (data: any) => {
         audioChannels.set(data.channels)
         if (!data.id) return
@@ -290,6 +295,8 @@ const receiveFOLDER: any = {
     AUDIO: (a: any) => receiveFOLDER.MEDIA(a, "audio"),
     SHOWS: (a: any) => showsPath.set(a.path),
     EXPORT: (a: any) => exportPath.set(a.path),
+    SCRIPTURE: (a: any) => scripturePath.set(a.path),
+    RECORDING: (a: any) => recordingPath.set(a.path),
 }
 
 const receiveIMPORT: any = {

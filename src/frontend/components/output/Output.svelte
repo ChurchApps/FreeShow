@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../types/Channels"
+    import { OUTPUT, READ_EXIF } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Transition } from "../../../types/Show"
     import { outputs, overlays, showsCache, styles, templates, transitionData, volume } from "../../stores"
@@ -37,7 +37,7 @@
     $: currentOutput = $outputs[outputId] || {}
 
     let currentStyle: Styles = { name: "" }
-    $: currentStyle = currentOutput?.style ? $styles[currentOutput?.style] : { name: "" }
+    $: currentStyle = currentOutput?.style ? $styles[currentOutput?.style] || { name: "" } : { name: "" }
 
     let layers: any = currentStyle.layers || defaultLayers
     let out: any = currentOutput?.out || {}
@@ -153,7 +153,7 @@
                     currentSlide.items[i].lines?.forEach((line: any, j: number) => {
                         let templateLine = item.lines?.[j] || item.lines?.[0]
                         line.align = templateLine?.align || ""
-                        line.text.forEach((text: any, k: number) => {
+                        line.text?.forEach((text: any, k: number) => {
                             text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
                         })
                     })
@@ -176,6 +176,9 @@
     $: linesEnd = linesStart !== null ? linesStart + amountOfLinesToShow! : null
 
     // metadata
+    $: autoMediaMeta = $showsCache[slide?.id]?.metadata?.autoMedia
+    let metaMessage: { [key: string]: any } = {}
+    $: metaMessage = autoMediaMeta ? {} : $showsCache[slide?.id]?.meta
     $: overrideOutput = $showsCache[slide?.id]?.metadata?.override
     $: metadataTemplate = overrideOutput ? $showsCache[slide?.id]?.metadata?.template : currentStyle.metadataTemplate || "metadata"
     $: metadataDisplay = overrideOutput ? $showsCache[slide?.id]?.metadata?.display : currentStyle.displayMetadata
@@ -187,6 +190,37 @@
     const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
     let messageStyle = defaultMessageStyle
     $: messageStyle = getTemplateStyle(messageTemplate!, $templates) || defaultMessageStyle
+
+    $: if (autoMediaMeta) window.api.send(READ_EXIF, { id: background.path })
+    // https://www.npmjs.com/package/exif
+    window.api.receive(READ_EXIF, (data: any) => {
+        if (!autoMediaMeta || !data.exif) return
+        // console.log(data)
+
+        metaMessage = {}
+        if (data.exif.exif.DateTimeOriginal) metaMessage.taken = "Date: " + data.exif.exif.DateTimeOriginal
+        if (data.exif.exif.ApertureValue) metaMessage.aperture = "Aperture: " + data.exif.exif.ApertureValue
+        if (data.exif.exif.BrightnessValue) metaMessage.brightness = "Brightness: " + data.exif.exif.BrightnessValue
+        if (data.exif.exif.ExposureTime) metaMessage.exposure_time = "Exposure Time: " + data.exif.exif.ExposureTime.toFixed(4)
+        if (data.exif.exif.FNumber) metaMessage.fnumber = "F Number: " + data.exif.exif.FNumber
+        if (data.exif.exif.Flash) metaMessage.flash = "Flash: " + data.exif.exif.Flash
+        if (data.exif.exif.FocalLength) metaMessage.focallength = "Focal Length: " + data.exif.exif.FocalLength
+        if (data.exif.exif.ISO) metaMessage.iso = "ISO: " + data.exif.exif.ISO
+        if (data.exif.exif.InteropOffset) metaMessage.interopoffset = "Interop Offset: " + data.exif.exif.InteropOffset
+        if (data.exif.exif.LightSource) metaMessage.lightsource = "Light Source: " + data.exif.exif.LightSource
+        if (data.exif.exif.ShutterSpeedValue) metaMessage.shutterspeed = "Shutter Speed: " + data.exif.exif.ShutterSpeedValue
+
+        if (data.exif.exif.LensMake) metaMessage.lens = "Lens: " + data.exif.exif.LensMake
+        if (data.exif.exif.LensModel) metaMessage.lensmodel = "Lens Model: " + data.exif.exif.LensModel
+
+        if (data.exif.gps.GPSLatitude) metaMessage.gps = "Position: " + data.exif.gps.GPSLatitudeRef + data.exif.gps.GPSLatitude[0]
+        if (data.exif.gps.GPSLongitude) metaMessage.gps += " " + data.exif.gps.GPSLongitudeRef + data.exif.gps.GPSLongitude[0]
+        if (data.exif.gps.GPSAltitude) metaMessage.gps += " " + data.exif.gps.GPSAltitude
+
+        if (data.exif.image.Make) metaMessage.device = "Device: " + data.exif.image.Make
+        if (data.exif.image.Model) metaMessage.device += " " + data.exif.image.Model
+        if (data.exif.image.Software) metaMessage.software = "Software: " + data.exif.image.Software
+    })
 
     function getTemplateStyle(templateId: string, updater: any) {
         if (!templateId) return
@@ -246,7 +280,7 @@
     }
 </script>
 
-<Zoomed background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} bind:ratio>
+<Zoomed background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
             <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
@@ -255,24 +289,49 @@
 
     {#if slide && layers.includes("slide")}
         {#key slideClone}
-            <!-- TODO: svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
-            <span transition:custom={transition} style="pointer-events: none;display: block;">
-                {#if slideClone?.items}
-                    {#each slideClone?.items as item}
-                        <Textbox
-                            filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                            backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
-                            key={currentOutput.isKeyOutput}
-                            disableListTransition={disableTransitions}
-                            {item}
-                            {ratio}
-                            ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
-                            {linesStart}
-                            {linesEnd}
-                        />
-                    {/each}
-                {/if}
-            </span>
+            <!-- WIP svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
+            <!-- svelte transition bug when changing between pages -->
+            {#if transition.type === "none"}
+                <span style="pointer-events: none;display: block;">
+                    {#if slideClone?.items}
+                        {#each slideClone?.items as item}
+                            {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                <Textbox
+                                    filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                                    backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                                    key={currentOutput.isKeyOutput}
+                                    disableListTransition={disableTransitions}
+                                    {item}
+                                    {ratio}
+                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                    {linesStart}
+                                    {linesEnd}
+                                />
+                            {/if}
+                        {/each}
+                    {/if}
+                </span>
+            {:else}
+                <span transition:custom={transition} style="pointer-events: none;display: block;">
+                    {#if slideClone?.items}
+                        {#each slideClone?.items as item}
+                            {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                <Textbox
+                                    filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                                    backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                                    key={currentOutput.isKeyOutput}
+                                    disableListTransition={disableTransitions}
+                                    {item}
+                                    {ratio}
+                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                    {linesStart}
+                                    {linesEnd}
+                                />
+                            {/if}
+                        {/each}
+                    {/if}
+                </span>
+            {/if}
         {/key}
     {/if}
 
@@ -286,7 +345,7 @@
         <!-- metadata -->
         {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
             <div class="meta" transition:custom={transition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                {Object.values($showsCache[slide?.id].meta)
+                {Object.values(metaMessage)
                     .filter((a) => a.length)
                     .join("; ")}
             </div>
@@ -298,7 +357,9 @@
                     <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
                         <div>
                             {#each $overlays[id].items as item}
-                                <Textbox {item} ref={{ type: "overlay", id }} />
+                                {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                    <Textbox {item} ref={{ type: "overlay", id }} />
+                                {/if}
                             {/each}
                         </div>
                     </div>

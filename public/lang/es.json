@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Bienvenido a FreeShow!",
+        "welcome": "Bienvenido",
         "quit": "Salir",
         "docs": "Documentos",
         "about": "Acerca",
@@ -9,15 +9,6 @@
         "search": "Buscar",
         "none": "Ninguno",
         "finished": "Finished"
-    },
-    "languages": {
-        "en": "Inglés",
-        "no": "Noruego",
-        "sk": "Eslovaco",
-        "es": "Español",
-        "pt_BR": "Brazilian Portuguese",
-        "de": "German",
-        "it": "Italian"
     },
     "about": {
         "check_updates": "Buscar actualizaciones",
@@ -79,7 +70,11 @@
     "screen": {
         "width": "Ancho",
         "height": "Altura",
-        "pixels": "Píxeles"
+        "pixels": "Píxeles",
+        "top": "Top",
+        "right": "Right",
+        "bottom": "Bottom",
+        "left": "Left"
     },
     "create_show": {
         "search_web": "Search for song on the web",
@@ -179,7 +174,8 @@
         "groups": "Sin eventos",
         "events": "Escribir algo",
         "text": "Sin temporizadores en los programas de este proyecto",
-        "timers": "No timers"
+        "timers": "No timers",
+        "recording": "Right click a screen or window to start a recording."
     },
     "remote": {
         "projects": "Proyectos",
@@ -219,6 +215,7 @@
         "year": "Año",
         "message": "Mensaje",
         "message_tip": "Display something on all slides",
+        "auto_media": "Get meta from media content",
         "override_output": "Override styling in output",
         "display_metadata": "Visualizar metadatos",
         "meta_template": "Metadata template",
@@ -265,6 +262,7 @@
         "media": "Medios",
         "overlays": "Capas",
         "audio": "Audio",
+        "effects": "Effects",
         "scripture": "Escritura",
         "player": "Reproductor",
         "live": "En vivo",
@@ -328,7 +326,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Atajos",
         "icon": "Íconos",
-        "initialize": "Bienvenido",
+        "initialize": "Bienvenido a FreeShow",
         "unsaved": "Aún no ha sido guardado! ¿Estás seguro que deseas salir?",
         "cancel": "Cancelar",
         "continue": "Continuar",
@@ -381,6 +379,7 @@
         "delete_all": "Eliminar todos",
         "close": "Cerrar",
         "save": "Guardar",
+        "done": "Done",
         "disable": "Desactivar",
         "enable": "Enable",
         "undo": "Deshacer",
@@ -405,6 +404,8 @@
         "home": "Inicio",
         "mute": "Silenciar",
         "unmute": "Activar micrófono",
+        "bind_to": "Bind to",
+        "remove_binding": "Remove binding",
         "format": "Formatear",
         "uppercase": "Mayúscula",
         "lowercase": "Minúscula",
@@ -429,7 +430,9 @@
         "remove_media": "Remove media",
         "index_select_project": "Select project by index",
         "index_select_project_show": "Select project item by index",
-        "index_select_slide": "Select slide by index"
+        "index_select_slide": "Select slide by index",
+        "start_recording": "Start recording",
+        "stop_recording": "Stop recording"
     },
     "cloud": {
         "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
@@ -466,6 +469,7 @@
         "groups": "Grupos",
         "numbers": "Diapositivas enumeradas",
         "invert": "Invertir diapositivas",
+        "original_text_size": "Original text size",
         "text": "Texto sin formato",
         "slides": "Diapositivas",
         "rows": "Filas",
@@ -510,6 +514,7 @@
         "_title_strikethrough": "Tachado",
         "color": "Color",
         "background_color": "Color de fondo",
+        "background_opacity": "Background opacity",
         "background_image": "Background image",
         "size": "Tamaño",
         "chords": "Acordes",
@@ -547,7 +552,12 @@
         "backdrop_filters": "Backdrop filters",
         "interval": "Interval",
         "video": "Video",
-        "choose_media": "Elegir medios"
+        "choose_media": "Elegir medios",
+        "recent": "Recently edited",
+        "enable_stage": "Enable stage",
+        "select_stage": "Select stage",
+        "use_slide_index": "Use active index",
+        "slide_index": "Slide index"
     },
     "items": {
         "text": "Cuadro de texto",
@@ -650,6 +660,8 @@
         "next_slide_text": "Texto de siguiente diapositiva",
         "next_slide": "Siguiente diapositiva",
         "next_slide_notes": "Notas de siguiente diapositiva",
+        "output": "Output",
+        "current_output": "Current output",
         "time": "Temporizador",
         "system_clock": "Reloj de sistema",
         "video_time": "Tiempo de video",
@@ -677,6 +689,7 @@
         "use24hClock": "Usar reloj de 24 horas",
         "styles_hint": "Create different styles that can be applied to the output to change the look.",
         "hide_output_hint": "Doble click en la ventana de salida para ocultarlo. Hold CTRL to enable dragging.",
+        "hide_menubar_hint": "To hide the menu bar, enable kiosk mode, or enable \"Automatically hide or show the menu bar\" in the general MacOS settings.",
         "show_output_hint": "Presionar ctrl/cmd mientras hace click al botón de visualización para forzarlo a mostrarse delante de pantalla.",
         "move_output_hint": "No se visualiza? Cambiar la posición hasta que la ventana se muestre en una segunda pantalla.",
         "select_display": "Click on the screen where you wan't to display the output window.",
@@ -685,6 +698,7 @@
         "new_output": "Nueva salida",
         "enable_key_output": "Enable alpha key output",
         "always_on_top": "Always on top",
+        "kiosk_mode": "Kiosk mode",
         "change_key_output_position": "Change key output position",
         "position": "Posición",
         "enabled": "Activado",
@@ -702,12 +716,16 @@
         "auto_output": "Muestra la ventana de salida en la pantalla de inicio",
         "default_project_name": "Nombre predeterminado del proyecto",
         "resolution": "Solución",
+        "cropping": "Cropping",
         "video_extensions": "Extensiones de video",
         "image_extensions": "Extensiones de imagen",
         "add": "Añadir",
         "remove": "Eliminar",
         "change_name": "Cambiar nombre",
         "show_location": "Mostrar ubicación",
+        "export_location": "Export location",
+        "scripture_location": "Scripture location",
+        "recording_location": "Recordings location",
         "font": "Fuente",
         "font_family": "Familia de fuentes",
         "font_size": "Tamaño de fuente",
@@ -786,6 +804,9 @@
         "current_slide": "Para diapositivas en curso",
         "text": "Transición de texto",
         "media": "Transición de medio",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Tipo",
         "none": "Ninguno",
         "fade": "Desvanecer",
         "blur": "Desenfocar",

@@ -90,14 +90,17 @@ function getSlidesText(show: any) {
 
     slides.forEach((slide) => {
         slide.items.forEach((item: any) => {
-            if (item.lines) {
-                item.lines.forEach((line: any) => {
-                    line.text.forEach((t: any) => {
-                        text += t.value
-                    })
-                    text += "\n"
+            if (!item.lines) return
+
+            item.lines.forEach((line: any) => {
+                if (!line.text) return
+
+                line.text.forEach((t: any) => {
+                    text += t.value
                 })
-            }
+                text += "\n"
+            })
+
             text += "\n"
         })
     })

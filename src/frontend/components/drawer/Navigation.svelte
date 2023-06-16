@@ -12,7 +12,7 @@
     import SelectElem from "../system/SelectElem.svelte"
     import NavigationButton from "./NavigationButton.svelte"
 
-    export let id: "shows" | "media" | "overlays" | "audio" | "scripture" | "templates" | "player" | "live" | "timers" | "web"
+    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "templates" | "player" | "live" | "timers" | "web"
 
     interface Button extends Category {
         id: string
@@ -56,6 +56,8 @@
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($audioFolders), "name") as Button[]),
             ]
+        } else if (id === "effects") {
+            buttons = [{ id: "effects", name: "tabs.effects", default: true, icon: "effects" }]
         } else if (id === "scripture") {
             buttons = getBibleVersions()
         } else if (id === "player") {
@@ -89,24 +91,16 @@
     }
 
     // TODO: scroll down to selected
-    $: {
-        if (buttons.length && $drawerTabsData[id]?.activeSubTab === null) {
-            setTab(buttons[0].id)
-        }
-    }
+    $: if (buttons.length && !$drawerTabsData[id]?.activeSubTab) setSubTab(buttons[0].id)
 
-    function setTab(tabID: string) {
-        drawerTabsData.update((dt) => {
-            dt[id] = { activeSubTab: tabID, enabled: dt[id]?.enabled !== false }
-            return dt
+    function setSubTab(tabId: string) {
+        drawerTabsData.update((a) => {
+            a[id] = { activeSubTab: tabId, enabled: a[id]?.enabled !== false }
+            return a
         })
     }
 
-    $: if (id === "scripture") {
-        scriptures.subscribe(() => {
-            buttons = getBibleVersions()
-        })
-    }
+    $: if (id === "scripture" && $scriptures) buttons = getBibleVersions()
 
     const getBibleVersions = () =>
         keysToID($scriptures)
@@ -153,7 +147,7 @@
                 while (nextIndex < buttons.length && buttons[nextIndex]?.id === "SEPERATOR") {
                     nextIndex++
                 }
-                if (nextIndex < buttons.length) setTab(buttons[nextIndex].id)
+                if (nextIndex < buttons.length) setSubTab(buttons[nextIndex].id)
             } else if (e.key === "ArrowUp") {
                 // Ctrl + Arrow Up = change active drawer sub tab
                 let index = buttons.findIndex((a) => a.id === $drawerTabsData[id]?.activeSubTab)
@@ -161,7 +155,7 @@
                 while (nextIndex >= 0 && buttons[nextIndex]?.id === "SEPERATOR") {
                     nextIndex--
                 }
-                if (nextIndex >= 0) setTab(buttons[nextIndex].id)
+                if (nextIndex >= 0) setSubTab(buttons[nextIndex].id)
             }
         }
     }

@@ -25,7 +25,7 @@
     <!-- <h6><T id="about.libraries" /></h6>
   <h6><T id="about.thanks" /></h6> -->
     <div>
-        <h6><T id="about.assets" /></h6>
+        <h5><T id="about.assets" /></h5>
         <div style="display: flex;justify-content: space-between;gap: 10px;">
             <span>● CMG Sans (Custom font)</span>
             <span>
@@ -90,7 +90,10 @@
         gap: 5px;
     }
 
-    h6 {
-        font-size: 0.8em;
+    h5 {
+        color: var(--text);
+        text-transform: uppercase;
+        font-size: 0.9em;
+        margin-bottom: 5px;
     }
 </style>

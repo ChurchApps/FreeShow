@@ -27,7 +27,7 @@
             id: "videopsalm",
             tutorial: "1. Find the .vpc or .json file(s)<br>2. If it's .vpc, add .zip to the end & extract<br>3. Import the .json file",
         },
-        { name: "OpenLP (OpenLyrics)", extensions: ["xml"], id: "openlp" },
+        { name: "OpenLP/OpenLyrics", extensions: ["xml"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chord", "pro", "txt"], id: "chordpro" },
     ]
@@ -45,7 +45,7 @@
 <div>
     {#each show_formats as format}
         <Button
-            style="width: 25%;flex-direction: column;min-height: 180px;"
+            style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
                 if (format.extensions) {
                     send(IMPORT, [format.id], format)
@@ -68,6 +68,7 @@
                     activePopup.set(null)
                 }
             }}
+            bold={false}
             center
         >
             <img src="./import-logos/{format.icon || format.id}.png" alt="{format.id}-logo" />
@@ -80,7 +81,7 @@
 <div>
     {#each formats as format}
         <Button
-            style="width: 25%;flex-direction: column;min-height: 180px;"
+            style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
                 if (format.extensions) {
                     send(IMPORT, [format.id], format)
@@ -92,6 +93,7 @@
                     activePopup.set("import_scripture")
                 }
             }}
+            bold={false}
             center
         >
             <img src="./import-logos/{format.icon || format.id}.png" alt="{format.id}-logo" />
@@ -113,7 +115,7 @@
 
     h3 {
         text-transform: uppercase;
-        font-size: 0.9em;
-        /* color: var(--text); */
+        /* font-size: 0.9em; */
+        color: var(--text);
     }
 </style>

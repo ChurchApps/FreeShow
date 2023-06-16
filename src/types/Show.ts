@@ -27,6 +27,7 @@ export interface Show {
         template: string
     }
     metadata?: {
+        autoMedia?: boolean
         override: boolean
         display: string
         template: string
@@ -64,7 +65,6 @@ export interface Slide {
     children?: string[]
     notes: string
     items: Item[]
-    stageItems?: Item[]
 }
 
 export interface Item {
@@ -84,6 +84,7 @@ export interface Item {
     fit?: string
     filter?: string
     flipped?: boolean
+    bindings?: string[] // bind item to stage or an output
     chords?: boolean // stage
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
@@ -110,6 +111,10 @@ export interface Clock {
 
 export interface Mirror {
     show?: string
+    stage?: string
+    enableStage?: boolean
+    useSlideIndex?: boolean
+    index?: number
 }
 
 export interface Line {

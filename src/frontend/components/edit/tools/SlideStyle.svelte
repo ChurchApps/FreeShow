@@ -5,9 +5,9 @@
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Color from "../../inputs/Color.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Notes from "../../show/tools/Notes.svelte"
-    import Panel from "../../system/Panel.svelte"
 
     // TODO: templates / overlays
 
@@ -60,51 +60,66 @@
     }
 </script>
 
-<Panel>
-    <h6><T id="edit.style" /></h6>
-    <div class="gap">
-        <span class="titles">
-            <p><T id="edit.background_color" /></p>
-        </span>
-        <span style="flex: 1;">
-            <Color bind:value={settings.color} on:input={(e) => inputChange(e, "color")} />
-        </span>
-    </div>
-    <hr />
+<div class="section">
+    <h6 style="margin-top: 10px;"><T id="edit.style" /></h6>
+    <CombinedInput>
+        <p><T id="edit.background_color" /></p>
+        <Color bind:value={settings.color} on:input={(e) => inputChange(e, "color")} />
+    </CombinedInput>
+
     <h6><T id="settings.resolution" /></h6>
-    <div class="gap">
-        <span class="titles">
-            <p><T id="edit.width" /></p>
-            <p><T id="edit.height" /></p>
-            <!-- <p><T id="edit.transition" /></p> -->
-        </span>
-        <span style="flex: 1;">
-            <NumberInput
-                value={settings.resolution.width}
-                max={100000}
-                on:change={(e) => {
-                    settings.resolution.width = Number(e.detail)
-                    update()
-                }}
-            />
-            <NumberInput
-                value={settings.resolution.height}
-                max={100000}
-                on:change={(e) => {
-                    settings.resolution.height = Number(e.detail)
-                    update()
-                }}
-            />
-        </span>
-    </div>
-    <hr />
+    <CombinedInput>
+        <p><T id="edit.width" /></p>
+        <NumberInput
+            value={settings.resolution.width}
+            max={100000}
+            on:change={(e) => {
+                settings.resolution.width = Number(e.detail)
+                update()
+            }}
+        />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="edit.height" /></p>
+        <NumberInput
+            value={settings.resolution.height}
+            max={100000}
+            on:change={(e) => {
+                settings.resolution.height = Number(e.detail)
+                update()
+            }}
+        />
+    </CombinedInput>
+
     <h6><T id="tools.notes" /></h6>
     <div class="notes">
         <Notes value={note} on:edit={edit} />
     </div>
-</Panel>
+</div>
 
 <style>
+    .section {
+        display: flex;
+        flex-direction: column;
+        margin: 0 10px;
+    }
+    .section:last-child {
+        margin-bottom: 10px;
+    }
+
+    h6 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
+    }
+
+    p {
+        opacity: 0.8;
+        font-size: 0.9em;
+    }
+
     .notes :global(div) {
         display: block !important;
     }

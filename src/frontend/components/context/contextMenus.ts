@@ -79,16 +79,22 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
+    bind_to: { label: "actions.bind_to", icon: "bind", items: ["stage", "LOAD_outputs"] },
     format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
+    // stage
+    stage: { label: "menu.stage", id: "stage" },
     // formatting
     uppercase: { label: "actions.uppercase" },
     lowercase: { label: "actions.lowercase" },
     capitalize: { label: "actions.capitalize" },
     trim: { label: "actions.trim" },
     // MEDIA
+    preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },
     play_no_filters: { label: "media.play_no_filters", icon: "play" },
     favourite: { label: "media.favourite", icon: "star" },
+    // LIVE
+    recording: { label: "actions.start_recording", icon: "record" },
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
     // STAGE
@@ -144,15 +150,16 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media_card: ["play", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
+    media_card: ["preview", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
     // "addToFirstSlide",
     overlay_card: ["edit", "lock_to_output", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "rename", "delete"],
     audio_button: ["favourite", "addToProject"],
     // "addToFirstSlide"
-    live_card: [],
+    live_card: ["recording"],
 
     // PROJECT
     projects: ["newProject", "newFolder"],
@@ -189,7 +196,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
     // EDIT
-    edit_box: ["format", "delete", "SEPERATOR", "duplicate", "copy", "paste"], // TODO: "make stage exlusive"
+    edit_box: ["bind_to", "format", "delete", "SEPERATOR", "duplicate", "copy", "paste"], // TODO: "make stage exlusive"
 
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],

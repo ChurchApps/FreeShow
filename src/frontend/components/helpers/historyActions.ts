@@ -44,6 +44,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let deleting: boolean = id !== undefined
 
             data = clone(deleting ? obj.oldData : data) || {}
+            console.log(data)
+
             let key = data.key
             let subkey = data.subkey
             // insert in array
@@ -54,7 +56,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (!deleting) {
                 let empty = !data?.data
-                data = { ...data, data: data?.data || clone(updater.empty) }
+                data = { ...data, data: data?.data ?? clone(updater.empty) }
                 id = obj.oldData?.id || uid()
                 if (keys && !key) id = "keys"
 
@@ -186,7 +188,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (keys?.length) {
                     keys.forEach((currentKey) => {
-                        let replacerValue = newValue?.[currentKey] === undefined ? newValue : newValue[currentKey]
+                        let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined ? newValue : newValue[currentKey]
                         if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
                         if (subkey) {
@@ -676,7 +678,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 return
                             }
 
-                            if (item.auto) slide.items[i].auto = true
+                            if (item.auto !== undefined) slide.items[i].auto = item.auto
+                            if (item.bindings?.length) slide.items[i].bindings = item.bindings
                             slide.items[i].style = item.style || ""
                             slide.items[i].align = item.align || ""
                             slide.items[i].lines?.forEach((line: any, j: number) => {

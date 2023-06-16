@@ -1,15 +1,18 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, activeShow, dictionary, overlays, selected, showsCache, templates } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, dictionary, overlays, refreshEditSlide, selected, showsCache, templates, timers } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
+    import { getFileName } from "../../helpers/media"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import IconButton from "../../inputs/IconButton.svelte"
+    import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
     import { addItem } from "../scripts/addItem"
+    import { getItemText } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
 
     const items: { id: ItemType; icon?: string; name?: string }[] = [
@@ -22,11 +25,33 @@
         { id: "mirror" },
     ]
 
+    const getIdentifier = {
+        text: (item: any) => {
+            let text = getItemText(item)
+            return text.slice(0, 10)
+        },
+        list: (item: any) => {
+            let text = item.list.items?.[0]?.text || ""
+            return text.slice(0, 10)
+        },
+        media: (item: any) => {
+            let path = item.src
+            return getFileName(path)
+        },
+        timer: (item: any) => {
+            if (!item.timerId) return ""
+            let timerName = $timers[item.timerId]?.name || ""
+            return timerName
+        },
+        clock: () => "",
+        mirror: (item: any) => {
+            let showName = $showsCache[item.mirror.show]?.name || ""
+            return showName
+        },
+    }
+
     export let allSlideItems: Item[]
     $: invertedItemList = clone(allSlideItems)?.reverse() || []
-
-    $: console.log(allSlideItems, invertedItemList)
-    // TODO: this don't work properly
 
     function move(index: number) {
         let items = []
@@ -57,6 +82,8 @@
         } else {
             _show("active").slides([slideID!]).set({ key: "items", value: items })
         }
+
+        refreshEditSlide.set(true)
     }
 
     function moveItem(items, fromIndex, toIndex) {
@@ -97,41 +124,48 @@
     <hr />
     <h6><T id="edit.arrange_items" /></h6>
     <div class="items" style="display: flex;flex-direction: column;">
-        {#each invertedItemList as currentItem, i}
-            {@const index = invertedItemList.length - i - 1}
-            {@const type = getType(currentItem)}
-            <Button
-                style="width: 100%;justify-content: space-between;"
-                active={$activeEdit.items.includes(index)}
-                dark
-                on:click={(e) => {
-                    if (!e.target?.closest(".up")) {
-                        activeEdit.update((ae) => {
-                            if (e.ctrlKey || e.metaKey) {
-                                if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)
-                                else ae.items.push(index)
-                            } else if (!ae.items.includes(index)) ae.items = [index]
-                            else ae.items = []
-                            return ae
-                        })
-                    }
-                }}
-            >
-                <span style="display: flex;">
-                    <p style="margin-right: 10px;">{i + 1}</p>
-                    <Icon id={boxes[type]?.icon || "text"} />
-                    <p style="margin-left: 10px;">{$dictionary.items?.[type]}</p>
-                </span>
-                <!-- {#if i < allSlideItems.length - 1}
+        {#if invertedItemList.length}
+            {#each invertedItemList as currentItem, i}
+                {@const index = invertedItemList.length - i - 1}
+                {@const type = getType(currentItem)}
+                <Button
+                    style="width: 100%;justify-content: space-between;"
+                    active={$activeEdit.items.includes(index)}
+                    dark
+                    on:click={(e) => {
+                        if (!e.target?.closest(".up")) {
+                            activeEdit.update((ae) => {
+                                if (e.ctrlKey || e.metaKey) {
+                                    if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)
+                                    else ae.items.push(index)
+                                } else if (!ae.items.includes(index)) ae.items = [index]
+                                else ae.items = []
+                                return ae
+                            })
+                        }
+                    }}
+                >
+                    <span style="display: flex;">
+                        <p style="margin-right: 10px;">{i + 1}</p>
+                        <Icon id={type === "icon" ? currentItem.id : boxes[type]?.icon || "text"} custom={type === "icon"} />
+                        <p style="margin-left: 10px;">{$dictionary.items?.[type]}</p>
+                        {#if getIdentifier[type]}<p style="margin-left: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
+                    </span>
+                    <!-- {#if i < allSlideItems.length - 1}
           <Icon id="down" />
         {/if} -->
-                {#if i > 0}
-                    <Button class="up" on:click={() => move(index)}>
-                        <Icon id="up" />
-                    </Button>
-                {/if}
-            </Button>
-        {/each}
+                    {#if i > 0}
+                        <Button class="up" on:click={() => move(index)}>
+                            <Icon id="up" />
+                        </Button>
+                    {/if}
+                </Button>
+            {/each}
+        {:else}
+            <Center faded>
+                <T id="empty.general" />
+            </Center>
+        {/if}
     </div>
 </Panel>
 

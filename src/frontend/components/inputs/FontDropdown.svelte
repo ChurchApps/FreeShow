@@ -1,149 +1,174 @@
 <script lang="ts">
-  import { slide } from "svelte/transition"
-  import { createEventDispatcher, onMount } from "svelte"
-  import { receive, send } from "../../utils/request"
-  import { MAIN } from "../../../types/Channels"
-  import { systemFonts } from "../../stores"
+    import { slide } from "svelte/transition"
+    import { createEventDispatcher, onMount } from "svelte"
+    import { receive, send } from "../../utils/request"
+    import { MAIN } from "../../../types/Channels"
+    import { systemFonts } from "../../stores"
 
-  export let system: boolean = false
+    export let system: boolean = false
 
-  const dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
 
-  let fonts: string[] = [
-    "CMGSans",
-    "Fantasy",
-    "Helvetica",
-    // "Monaco",
-    "Monospace",
-    // "sans-serif",
-  ]
+    let fonts: string[] = [
+        "CMGSans",
+        "Fantasy",
+        "Helvetica",
+        // "Monaco",
+        "Monospace",
+        // "sans-serif",
+    ]
 
-  onMount(() => {
-    if ($systemFonts.length) addFonts($systemFonts)
-    else send(MAIN, ["GET_SYSTEM_FONTS"])
-  })
+    onMount(() => {
+        if ($systemFonts.length) addFonts($systemFonts)
+        else send(MAIN, ["GET_SYSTEM_FONTS"])
+    })
 
-  receive(MAIN, {
-    GET_SYSTEM_FONTS: (fonts: string[]) => {
-      systemFonts.set(fonts)
-      addFonts(fonts)
-    },
-  })
+    receive(MAIN, {
+        GET_SYSTEM_FONTS: (fonts: string[]) => {
+            systemFonts.set(fonts)
+            addFonts(fonts)
+        },
+    })
 
-  function addFonts(newFonts: string[]) {
-    // join and remove duplicates
-    fonts = [...new Set([...fonts, ...newFonts])]
-    // sort
-    fonts = fonts.sort((a, b) => a.localeCompare(b))
-    // add default app font
-    if (system) fonts = ["", ...fonts]
-  }
+    function addFonts(newFonts: string[]) {
+        // join and remove duplicates
+        fonts = [...new Set([...fonts, ...newFonts])]
+        // sort
+        fonts = fonts.sort((a, b) => a.localeCompare(b))
+        // add default app font
+        if (system) fonts = ["", ...fonts]
+    }
 
-  export let value: string
-  let active: boolean = false
-  let self: HTMLDivElement
+    export let value: string
+    let active: boolean = false
+    let self: HTMLDivElement
 
-  function wheel(e: any) {
-    e.preventDefault()
-    let index = fonts.findIndex((a) => a === value)
-    if (e.deltaY > 0) index = Math.min(fonts.length - 1, index + 1)
-    else index = Math.max(0, index - 1)
-    dispatch("click", fonts[index])
-  }
+    let nextScrollTimeout: any = null
+    function wheel(e: any) {
+        if (nextScrollTimeout) return
+
+        e.preventDefault()
+        let index = fonts.findIndex((a) => a === value)
+        if (e.deltaY > 0) index = Math.min(fonts.length - 1, index + 1)
+        else index = Math.max(0, index - 1)
+        dispatch("click", fonts[index])
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
+    }
+
+    $: if (active) scrollToActive()
+    function scrollToActive() {
+        let id = formatId(value)
+        if (!id) return
+
+        setTimeout(() => {
+            let activeElem = self.querySelector("#" + id)
+            activeElem?.scrollIntoView()
+        }, 10)
+    }
+
+    function formatId(value: string) {
+        return value.replace(/[\W_]+/g, "")
+    }
 </script>
 
 <svelte:window
-  on:mousedown={(e) => {
-    if (e.target?.closest(".dropdownElem") !== self && active) {
-      active = false
-    }
-  }}
+    on:mousedown={(e) => {
+        if (e.target?.closest(".dropdownElem") !== self && active) {
+            active = false
+        }
+    }}
 />
 
-<div bind:this={self} class="dropdownElem" style={$$props.style || ""}>
-  <button style="font-family: {value};" on:click={() => (active = !active)} on:wheel={wheel}>
-    <p>{value || "—"}</p>
-  </button>
-  {#if active}
-    <div class="dropdown" transition:slide={{ duration: 200 }}>
-      {#each fonts as option}
-        <span
-          on:click={() => {
-            dispatch("click", option)
-            active = false
-          }}
-          class:active={option === value}
-          style="font-family: {option};"
-        >
-          <p>{option || "—"}</p>
-        </span>
-      {/each}
-    </div>
-  {/if}
+<div bind:this={self} class="dropdownElem" title={value || ""} style={$$props.style || ""}>
+    <button style="font-family: {value};" on:click={() => (active = !active)} on:wheel={wheel}>
+        <p>{value || "—"}</p>
+    </button>
+    {#if active}
+        <div class="dropdown" transition:slide={{ duration: 200 }}>
+            {#each fonts as option}
+                <span
+                    id={formatId(option)}
+                    on:click={() => {
+                        dispatch("click", option)
+                        active = false
+                    }}
+                    class:active={option === value}
+                    style="font-family: {option};"
+                >
+                    <p>{option || "—"}</p>
+                </span>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style>
-  .dropdownElem {
-    position: relative;
-    /* display: grid; */
-  }
+    .dropdownElem {
+        position: relative;
+        /* display: grid; */
+    }
 
-  div {
-    background-color: var(--primary-darker);
-    color: var(--text);
-  }
+    div {
+        background-color: var(--primary-darker);
+        color: var(--text);
+    }
 
-  .dropdown {
-    max-height: 300px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    /* position: absolute;
+    .dropdown {
+        max-height: 300px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        /* position: absolute;
     width: 100%; */
-    position: fixed;
-    display: flex;
-    flex-direction: column;
-    border: 2px solid var(--primary-lighter);
-    transform: translateY(-1px);
-    z-index: 10;
-  }
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        border: 2px solid var(--primary-lighter);
+        transform: translateY(-1px);
+        z-index: 10;
+    }
 
-  button {
-    color: var(--text);
-    border: 2px solid var(--primary-lighter);
-    text-align: left;
-  }
+    button {
+        color: var(--text);
+        border: 2px solid var(--primary-lighter);
+        text-align: left;
+    }
 
-  button,
-  span {
-    display: table;
-    width: 100%;
-    padding: 8px 12px;
-    background-color: transparent;
-    font-family: inherit;
-    font-size: 1em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+    button,
+    span {
+        display: table;
+        width: 100%;
+        /* padding: 8px 12px; */
+        background-color: transparent;
+        font-family: inherit;
+        font-size: 1em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-  span {
-    display: flex;
-    overflow-x: hidden;
-    padding: 12px 10px;
-  }
-  span p,
-  button p {
-    opacity: 1;
-    height: 20px;
-    align-self: center;
-  }
+    span {
+        display: flex;
+        overflow-x: hidden;
+        padding: 12px 10px;
+    }
+    span p,
+    button p {
+        opacity: 1;
+        height: 20px;
+        align-self: center;
+    }
 
-  button:hover,
-  span:hover {
-    background-color: var(--hover);
-  }
-  span.active {
-    background-color: var(--focus);
-    color: var(--secondary);
-  }
+    button:hover,
+    span:hover {
+        background-color: var(--hover);
+    }
+    span.active {
+        background-color: var(--focus);
+        color: var(--secondary);
+    }
 </style>

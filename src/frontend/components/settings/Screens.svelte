@@ -36,11 +36,17 @@
     // send(MAIN, ["GET_SCREENS"])
     receive(MAIN, {
         GET_DISPLAYS: (d: any) => {
+            // d.push(fakeScreen0)
             // d.push(fakeScreen)
             // d.push(fakeScreen2)
+            // d.push(fakeScreen3)
+
             let sortedScreens = d.sort(sortScreensByPosition)
             screens = sortedScreens.sort(internalFirst)
-            totalScreensWidth = screens.reduce((value, current) => (current.bounds.x >= 0 ? value + current.bounds.width : value), 0)
+
+            let negativeWidth = screens.reduce((value, current) => (current.bounds.x < 0 ? value + current.bounds.width : value), 0)
+            let positiveWidth = screens.reduce((value, current) => (current.bounds.x >= 0 ? value + current.bounds.width : value), 0)
+            totalScreensWidth = (positiveWidth - negativeWidth) / 2
         },
         SET_SCREEN: (d: any) => {
             if (currentScreen.screen) return
@@ -53,39 +59,25 @@
         // GET_SCREENS: (d: any) => (screens = d),
     })
 
-    // const fakeScreen = {
-    //     accelerometerSupport: "unknown",
-    //     bounds: { x: -864, y: -452, width: 864, height: 1536 },
-    //     colorDepth: 24,
-    //     colorSpace: "{primaries:BT709, transfer:SRGB, matrix:RGB, range:FULL}",
-    //     depthPerComponent: 8,
-    //     displayFrequency: 144,
+    // const fakeScreen0 = {
+    //     bounds: { x: -864 - 1536, y: -452, width: 1536, height: 1536 },
     //     id: 2528732444,
     //     internal: false,
-    //     monochrome: false,
-    //     rotation: 0,
-    //     scaleFactor: 1.25,
-    //     size: { width: 1536, height: 864 },
-    //     touchSupport: "unknown",
-    //     workArea: { x: 1920, y: 216, width: 1536, height: 824 },
-    //     workAreaSize: { width: 1536, height: 824 },
+    // }
+    // const fakeScreen = {
+    //     bounds: { x: -864, y: -452, width: 864, height: 1536 },
+    //     id: 2528732444,
+    //     internal: false,
     // }
     // const fakeScreen2 = {
-    //     accelerometerSupport: "unknown",
-    //     bounds: { x: 1920 + 1536, y: 0, width: 864, height: 1536 },
-    //     colorDepth: 24,
-    //     colorSpace: "{primaries:BT709, transfer:SRGB, matrix:RGB, range:FULL}",
-    //     depthPerComponent: 8,
-    //     displayFrequency: 144,
+    //     bounds: { x: 1920 + 1536, y: 0, width: 1536, height: 1536 },
     //     id: 2528732444,
     //     internal: false,
-    //     monochrome: false,
-    //     rotation: 0,
-    //     scaleFactor: 1.25,
-    //     size: { width: 1536, height: 864 },
-    //     touchSupport: "unknown",
-    //     workArea: { x: 1920, y: 216, width: 1536, height: 824 },
-    //     workAreaSize: { width: 1536, height: 824 },
+    // }
+    // const fakeScreen3 = {
+    //     bounds: { x: 1920 + 1536 + 1536, y: 0, width: 1536, height: 1536 },
+    //     id: 2528732444,
+    //     internal: false,
     // }
 
     function internalFirst(a, b) {
@@ -138,7 +130,7 @@
 
 <div class="content">
     {#if screens.length}
-        <div class="screens" style="transform: translateX(-{totalScreensWidth / 2}px)">
+        <div class="screens" style="transform: translateX(-{totalScreensWidth}px)">
             {#each screens as screen, i}
                 <div
                     class="screen"

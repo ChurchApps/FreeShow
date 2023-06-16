@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Willkommen bei FreeShow!",
+        "welcome": "Willkommen",
         "quit": "Beenden",
         "docs": "Doku",
         "about": "Über",
@@ -9,15 +9,6 @@
         "search": "Suche",
         "none": "Nichts",
         "finished": "Finished"
-    },
-    "languages": {
-        "en": "Englisch",
-        "no": "Norwegisch",
-        "sk": "Slovakisch",
-        "es": "Spanisch",
-        "pt_BR": "Portugiesisch (Brasilien)",
-        "de": "Deutsch",
-        "it": "Italian"
     },
     "about": {
         "check_updates": "Auf Updates prüfen",
@@ -79,7 +70,11 @@
     "screen": {
         "width": "Breite",
         "height": "Höhe",
-        "pixels": "Pixel"
+        "pixels": "Pixel",
+        "top": "Top",
+        "right": "Right",
+        "bottom": "Bottom",
+        "left": "Left"
     },
     "create_show": {
         "search_web": "Search for song on the web",
@@ -179,7 +174,8 @@
         "groups": "Keine Gruppen",
         "events": "Keine Veranstaltungen",
         "text": "Etwas eingeben",
-        "timers": "No timers"
+        "timers": "No timers",
+        "recording": "Right click a screen or window to start a recording."
     },
     "remote": {
         "projects": "Projekte",
@@ -219,6 +215,7 @@
         "year": "Jahr",
         "message": "Mitteilung",
         "message_tip": "Display something on all slides",
+        "auto_media": "Get meta from media content",
         "override_output": "Override styling in output",
         "display_metadata": "Zeige Metadaten",
         "meta_template": "Metadata template",
@@ -265,6 +262,7 @@
         "media": "Medien",
         "overlays": "Überlagerungen",
         "audio": "Audio",
+        "effects": "Effects",
         "scripture": "Bibel",
         "player": "Player",
         "live": "Live",
@@ -328,7 +326,7 @@
         "cloud_method": "Data location",
         "shortcuts": "Tastaturkürzel",
         "icon": "Symbole",
-        "initialize": "Willkommen",
+        "initialize": "Willkommen bei FreeShow",
         "unsaved": "Du hast noch nicht gespeichert! Bist du dir sicher, dass du beenden möchtest?",
         "cancel": "Abbrechen",
         "continue": "Weiter",
@@ -381,6 +379,7 @@
         "delete_all": "Alle Löschen",
         "close": "Schließen",
         "save": "Speichern",
+        "done": "Done",
         "disable": "Deaktivieren",
         "enable": "Enable",
         "undo": "Rückgängig",
@@ -405,6 +404,8 @@
         "home": "Home",
         "mute": "Stummschalten",
         "unmute": "Aufheben der Stummschaltung",
+        "bind_to": "Bind to",
+        "remove_binding": "Remove binding",
         "format": "Format",
         "uppercase": "Alles großschreiben",
         "lowercase": "Alles kleinschreiben",
@@ -429,7 +430,9 @@
         "remove_media": "Medien entfernen",
         "index_select_project": "Select project by index",
         "index_select_project_show": "Select project item by index",
-        "index_select_slide": "Select slide by index"
+        "index_select_slide": "Select slide by index",
+        "start_recording": "Start recording",
+        "stop_recording": "Stop recording"
     },
     "cloud": {
         "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
@@ -466,6 +469,7 @@
         "groups": "Gruppen",
         "numbers": "Nummerierte Folien",
         "invert": "Invertierte Folien",
+        "original_text_size": "Original text size",
         "text": "Reintext",
         "slides": "Folien",
         "rows": "Zeilen",
@@ -510,6 +514,7 @@
         "_title_strikethrough": "Durchgestrichen",
         "color": "Farbe",
         "background_color": "Hintergrundfarbe",
+        "background_opacity": "Background opacity",
         "background_image": "Background image",
         "size": "Größe",
         "chords": "Akkorde",
@@ -547,7 +552,12 @@
         "backdrop_filters": "Backdrop filters",
         "interval": "Interval",
         "video": "Video",
-        "choose_media": "Medien auswählen"
+        "choose_media": "Medien auswählen",
+        "recent": "Recently edited",
+        "enable_stage": "Enable stage",
+        "select_stage": "Select stage",
+        "use_slide_index": "Use active index",
+        "slide_index": "Slide index"
     },
     "items": {
         "text": "Textbox",
@@ -650,6 +660,8 @@
         "next_slide_text": "Text der nächsten Folie",
         "next_slide": "Nächste Folie",
         "next_slide_notes": "Notizen zur nächsten Folie",
+        "output": "Output",
+        "current_output": "Current output",
         "time": "Uhrzeit",
         "system_clock": "Systemuhr",
         "video_time": "Videozeit",
@@ -677,6 +689,7 @@
         "use24hClock": "24h-Format verwenden",
         "styles_hint": "Create different styles that can be applied to the output to change the look.",
         "hide_output_hint": "Doppelklick auf das Ausgabefenster, um es zu verstecken. Hold CTRL to enable dragging.",
+        "hide_menubar_hint": "To hide the menu bar, enable kiosk mode, or enable \"Automatically hide or show the menu bar\" in the general MacOS settings.",
         "show_output_hint": "Halte Strg/Cmd gedrückt, während du auf die Anzeige-Schaltfläche klickst, um die Anzeige über diesen Monitor zu erzwingen.",
         "move_output_hint": "Findest du deine Anzeige nicht? Ändere die Position, bis das Fenster auf dem zweiten Bildschirm angezeigt wird.",
         "select_display": "Click on the screen where you wan't to display the output window.",
@@ -685,6 +698,7 @@
         "new_output": "Neue Ausgabe",
         "enable_key_output": "Enable alpha key output",
         "always_on_top": "Always on top",
+        "kiosk_mode": "Kiosk mode",
         "change_key_output_position": "Change key output position",
         "position": "Position",
         "enabled": "Aktiviert",
@@ -702,12 +716,16 @@
         "auto_output": "Zeige Ausgabebildschirm beim Start",
         "default_project_name": "Standard Projektname",
         "resolution": "Auflösung",
+        "cropping": "Cropping",
         "video_extensions": "Video-Erweiterungen",
         "image_extensions": "Bild-Erweiterungen",
         "add": "Hinzufügen",
         "remove": "Entfernen",
         "change_name": "Name ändern",
         "show_location": "Ort anzeigen",
+        "export_location": "Export location",
+        "scripture_location": "Scripture location",
+        "recording_location": "Recordings location",
         "font": "Schrift",
         "font_family": "Schriftart",
         "font_size": "Schriftgröße",
@@ -786,6 +804,9 @@
         "current_slide": "für aktuelle Folie",
         "text": "Textübergang",
         "media": "Medienübergang",
+        "duration": "Duration",
+        "easing": "Easing",
+        "type": "Typ",
         "none": "Kein",
         "fade": "Ausblenden",
         "blur": "Verwischen",

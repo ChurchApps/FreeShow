@@ -49,14 +49,23 @@
         }
     }
 
+    let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
+        if (nextScrollTimeout) return
+
         slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + (e.deltaY < 0 ? -1 : 1))) })
+
+        // don't start timeout if scrolling with mouse
+        if (e.deltaY > 100 || e.deltaY < -100) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+        }, 500)
     }
 
     function slideClick(e: any, index: number) {
         // TODO: duplicate function of "preview:126 - updateOut"
-        if ($outLocked || e.ctrlKey || e.metaKey) return
+        if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
         let slideRef: any = _show("active").layouts("active").ref()[0]
         updateOut("active", index, slideRef, !e.altKey)

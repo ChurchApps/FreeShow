@@ -15,7 +15,7 @@ export interface ClientMessage {
 }
 
 type DeviceID = string
-type ClientChannels = "CONNECTION" | "DISCONNECT" | "ERROR" | "DATA" | "PASSWORD" | "ACCESS" | "SWITCH" | "SHOWS" | "SHOWS_CACHE" | "SHOW" | "SLIDES" | "PROJECTS" | "OUT"
+type ClientChannels = "CONNECTION" | "DISCONNECT" | "ERROR" | "DATA" | "PASSWORD" | "ACCESS" | "SWITCH" | "SHOWS" | "SHOWS_CACHE" | "SHOW" | "SLIDES" | "PROJECTS" | "OUT" | "BACKGROUND"
 
 export interface MainData {
     channel: MainChannels

@@ -6,6 +6,7 @@
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
+    import T from "../../helpers/T.svelte"
 
     let value: any = "#FFFFFF"
     $: console.log(value)
@@ -26,6 +27,7 @@
             $selected.data.forEach((a) => {
                 let ref = a.id ? { id: a.id } : _show("active").layouts("active").ref()[0][a.index]
                 if (ref.type === "child") ref = ref.parent
+                console.log(ref)
 
                 // remove global group if active
                 if ($activeShow && $showsCache[$activeShow.id].slides[ref.id].globalGroup)
@@ -62,5 +64,6 @@
 <br />
 
 <Button on:click={updateColor} dark center>
-    <Icon id="check" />
+    <Icon id="save" size={1.2} right />
+    <T id="actions.save" />
 </Button>

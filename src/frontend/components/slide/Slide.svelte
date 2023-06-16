@@ -139,7 +139,7 @@
         // html = `<div class="align" style="${item.align}">`
         html = ""
         slide.items[longest].lines?.forEach((line) => {
-            line.text.forEach((a) => {
+            line.text?.forEach((a) => {
                 html += a.value
             })
         })
@@ -163,7 +163,7 @@
                     let textItems = getItems(textElem.children)
                     if (textItems.length) {
                         lines?.forEach((line) => {
-                            line.text.forEach((a, i) => (a.value = textItems[i]))
+                            line.text?.forEach((a, i) => (a.value = textItems[i]))
                         })
                     }
                     return a
@@ -287,6 +287,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                                     disableListTransition
                                     {item}
                                     {ratio}
+                                    slideIndex={index}
                                     ref={{
                                         showId: $activeShow?.id,
                                         slideId: layoutSlide.id,

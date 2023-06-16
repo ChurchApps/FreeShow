@@ -1,10 +1,11 @@
 import { get } from "svelte/store"
-import { drawerTabsData, groups, overlays, selected } from "../../stores"
+import { drawerTabsData, groups, outputs, overlays, selected } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { keys } from "../edit/values/chords"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
+import { keysToID } from "../helpers/array"
 
 export function loadItems(id: string): [string, ContextMenuItem][] {
     let items: [string, ContextMenuItem][] = []
@@ -86,6 +87,15 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
             break
         case "keys":
             items = keys.map((key) => [id, { id: key, label: key, translate: false }])
+            break
+        case "outputs":
+            let outputList: any[] = keysToID(get(outputs))
+                .filter((a) => !a.isKeyOutput)
+                .sort((a, b) => a.name.localeCompare(b.name))
+
+            outputList = outputList.map((a) => ["bind_item", { id: a.id, label: a.name, translate: false }])
+
+            items.push(...outputList)
             break
     }
     return items

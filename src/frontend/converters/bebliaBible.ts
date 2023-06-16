@@ -1,10 +1,11 @@
 import { scriptures, scripturesCache } from "./../stores"
 import type { Bible } from "../../types/Bible"
 import { uid } from "uid"
+import { xml2json } from "./xml"
 
 export function convertBebliaBible(data: any[]) {
     data.forEach((bible) => {
-        let obj: Bible = XMLtoObject(bible.content)
+        let obj: Bible = convertToBible(xml2json(bible.content))
         if (!obj.name) obj.name = bible.name
 
         let id = uid()
@@ -21,35 +22,70 @@ export function convertBebliaBible(data: any[]) {
     })
 }
 
-function XMLtoObject(xml: string): Bible {
-    let parser = new DOMParser()
-    let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
+function convertToBible(content: any): Bible {
+    let bible: Bible = {
+        name: content.bible["@name"] || content.bible["@translation"] || "",
+        copyright: content.bible["@info"] || "",
+        books: [],
+    }
 
-    let testaments = getChildren(xmlDoc, "testament")
-    let booksObj = [...getChildren(testaments[0], "book"), ...getChildren(testaments[1], "book")]
+    let testaments = content.bible.testament
+    if (!Array.isArray(testaments)) testaments = [testaments]
     let books: any[] = []
-
-    console.log(booksObj)
-    ;[...booksObj].forEach((book: any) => {
-        let number = book.getAttribute("number")
-        let name = defaultNames[number]
-        let chapters: any[] = []
-        ;[...getChildren(book, "chapter")].forEach((chapter: any) => {
-            let number = chapter.getAttribute("number")
-            let verses: any[] = []
-            ;[...getChildren(chapter, "verse")].forEach((verse: any) => {
-                let value = verse.innerHTML.toString()
-                verses.push({ number: verse.getAttribute("number"), value })
-            })
-            chapters.push({ number, verses })
-        })
-        books.push({ name, number, chapters })
+    testaments.forEach((a) => {
+        books.push(...getBooks(a.book))
     })
+    bible.books = books
 
-    return { name: xmlDoc.getAttribute("translation") || "", copyright: xmlDoc.getAttribute("status") || "", books }
+    return bible
 }
 
-const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)
+function getBooks(oldBooks: any[]) {
+    let books: any[] = []
+
+    oldBooks.forEach((book) => {
+        let currentBook = {
+            number: book["@number"],
+            name: book["@name"] || defaultNames[book["@number"]],
+            chapters: getChapters(book.chapter),
+        }
+
+        books.push(currentBook)
+    })
+
+    return books
+}
+
+function getChapters(oldChapters: any[]) {
+    let chapters: any[] = []
+
+    if (!Array.isArray(oldChapters)) oldChapters = [oldChapters]
+    oldChapters.forEach((chapter) => {
+        let currentChapter = {
+            number: chapter["@number"],
+            verses: getVerses(chapter.verse),
+        }
+
+        chapters.push(currentChapter)
+    })
+
+    return chapters
+}
+
+function getVerses(oldVerses: any[]) {
+    let verses: any[] = []
+
+    oldVerses.forEach((verse) => {
+        let currentVerse = {
+            number: verse["@number"],
+            value: verse["#text"],
+        }
+
+        verses.push(currentVerse)
+    })
+
+    return verses
+}
 
 const defaultNames: any = {
     1: "Genesis",

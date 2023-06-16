@@ -41,6 +41,8 @@ export const settingsTab: Writable<SettingsTabs> = writable("general")
 export const projectView: Writable<boolean> = writable(false)
 export const eventEdit: Writable<null | string> = writable(null)
 export const globalGroupViewEnabled: Writable<boolean> = writable(false)
+export const activeRecording: Writable<any> = writable(null)
+export const currentRecordingStream: Writable<any> = writable(null)
 
 // AUDIO
 export const audioChannels: Writable<{ left: number; right: number }> = writable({ left: 0, right: 0 })
@@ -75,6 +77,8 @@ export const projectToolSize: Writable<number> = writable(150)
 export const forceClock: Writable<boolean> = writable(false)
 export const lastSavedCache: Writable<any> = writable(null)
 export const playScripture: Writable<boolean> = writable(false)
+export const editHistory: Writable<any[]> = writable([])
+export const refreshEditSlide: Writable<boolean> = writable(false)
 
 // ----- SAVED VARIABLES -----
 
@@ -163,6 +167,8 @@ export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode:
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 300, rightPanel: 300, leftPanelDrawer: 300, rightPanelDrawer: 300 }) // {default}
 export const exportPath: Writable<null | string> = writable(null) // null
+export const scripturePath: Writable<string> = writable("") // ""
+export const recordingPath: Writable<string> = writable("") // ""
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale

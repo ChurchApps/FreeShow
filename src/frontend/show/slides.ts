@@ -1,12 +1,14 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item } from "../../types/Show"
-import { changeValues, clone, sortObjectNumbers } from "../components/helpers/array"
+import { getSlideText } from "../components/edit/scripts/textStyle"
+import { changeValues, clone, keysToID, sortObjectNumbers } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/layout"
-import { _show } from "../components/helpers/shows"
-import { activeShow } from "../stores"
 import { addToPos } from "../components/helpers/mover"
+import { _show } from "../components/helpers/shows"
+import { similarity } from "../converters/txt"
+import { activeShow } from "../stores"
 
 // what I want:
 // [parent, parent]: change just the parent groups
@@ -287,6 +289,20 @@ export function changeLayout(layout: any, slides: any, ref: any, moved: any, ind
     // update children order
     Object.entries(newChildrenOrder).forEach(([id, children]: any) => {
         slides[id].children = [...new Set(children)]
+
+        // find and remove old children (this is already done but wont remove all always)
+        Object.keys(slides).forEach((slideId) => {
+            if (slideId === id) return
+            children.forEach((childId) => {
+                if (slides[slideId].children?.length) {
+                    let childIndex = slides[slideId].children.indexOf(childId)
+                    if (childIndex < 0) return
+
+                    // remove if it includes child from another slide
+                    slides[slideId].children.splice(childIndex, 1)
+                }
+            })
+        })
     })
 
     return { layout: newLayout, slides }
@@ -401,4 +417,72 @@ export function removeItemValues(items: Item[]) {
     //       })
     //     })
     //   })
+}
+
+// merge duplicates
+const similarityNum: number = 0.95
+export function mergeDuplicateSlides({ slides, layout }) {
+    let newSlides: any = {}
+    let convertedText: any = {}
+    let changedIds: any = {}
+
+    let parentSlides = keysToID(slides).filter((a) => a.group !== null)
+    parentSlides.forEach((slide) => {
+        let fullSlideText: string = getSlideText(slide)
+        slide.children?.forEach((childId) => {
+            let childSlide = slides[childId]
+            fullSlideText += getSlideText(childSlide)
+        })
+
+        let match: false | string = false
+        Object.keys(convertedText).forEach((storedSlideId) => {
+            if (match) return
+
+            let difference = similarity(fullSlideText, convertedText[storedSlideId])
+            if (difference > similarityNum) {
+                match = storedSlideId
+            }
+        })
+
+        if (match) {
+            changedIds[slide.id] = match
+        } else {
+            let slideId = slide.id
+            if (fullSlideText.length > 5) convertedText[slideId] = fullSlideText
+
+            delete slide.id
+            newSlides[slideId] = slide
+
+            // add children
+            slide.children?.forEach((childId) => {
+                let childSlide = slides[childId]
+                newSlides[childId] = childSlide
+            })
+        }
+    })
+
+    // convert layout
+    layout.forEach((layoutSlide, i) => {
+        if (changedIds[layoutSlide.id]) {
+            layout[i].id = changedIds[layoutSlide.id]
+
+            // move children layout data
+            if (layout[i].children) {
+                let oldChildren = slides[layoutSlide.id]?.children || []
+                let replacedChildren = slides[changedIds[layoutSlide.id]].children || []
+                let newChildren: any = {}
+                oldChildren.forEach((childId, j) => {
+                    let layoutData = layout[i].children[childId]
+                    if (!layoutData) return
+
+                    let newChildId = replacedChildren[j]
+                    newChildren[newChildId] = layoutData
+                })
+
+                layout[i].children = newChildren
+            }
+        }
+    })
+
+    return { slides: newSlides, layout }
 }

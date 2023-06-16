@@ -1,4 +1,4 @@
-import { OPEN_FILE } from "./../../types/Channels"
+import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 // ----- FreeShow -----
 // Functions to interact with local files
 
@@ -8,6 +8,7 @@ import { Stats } from "original-fs"
 import path from "path"
 import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW } from "../../types/Channels"
 import { mainWindow, toApp } from "./../index"
+import { ExifImage } from "exif"
 
 // GENERAL
 
@@ -39,7 +40,7 @@ export function readFolder(path: string): string[] {
     }
 }
 
-export function writeFile(path: string, content: string, id: string = "") {
+export function writeFile(path: string, content: string | NodeJS.ArrayBufferView, id: string = "") {
     // don't know if it's necessary to check the file
     if (fileContentMatches(content, path)) return
 
@@ -105,7 +106,7 @@ export function checkShowsFolder(path: string): string {
 
 // HELPERS
 
-export function fileContentMatches(content: string, path: string): boolean {
+export function fileContentMatches(content: string | NodeJS.ArrayBufferView, path: string): boolean {
     if (doesPathExist(path) && content === readFile(path)) return true
     return false
 }
@@ -143,9 +144,14 @@ export function getPaths(): any {
 }
 
 // READ_FOLDER
-export function getFolderContent(_e: any, folderPath: string) {
+export function getFolderContent(_e: any, data: any) {
+    let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
-    if (!fileList.length) return
+
+    if (!fileList.length) {
+        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [] })
+        return
+    }
 
     let files: any[] = []
     for (const name of fileList) {
@@ -154,8 +160,28 @@ export function getFolderContent(_e: any, folderPath: string) {
         if (stats) files.push({ ...stats, name })
     }
 
-    if (!files.length) return
-    toApp(READ_FOLDER, { path: folderPath, files })
+    if (!files.length) {
+        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [] })
+        return
+    }
+
+    // get first "layer" of files inside folder for searching
+    let filesInFolders: string[] = []
+    if (data.listFilesInFolders) {
+        let folders: any[] = files.filter((a) => a.folder)
+        folders.forEach((folder) => {
+            let fileList: string[] = readFolder(folder.path)
+            if (!fileList.length) return
+
+            for (const name of fileList) {
+                let p: string = path.join(folder.path, name)
+                let stats: any = getFileStats(p)
+                if (stats && !stats.folder) filesInFolders.push({ ...stats, name })
+            }
+        })
+    }
+
+    toApp(READ_FOLDER, { path: folderPath, files, filesInFolders })
 }
 
 // OPEN_FOLDER
@@ -183,4 +209,16 @@ export function selectFiles(e: any, msg: { channel: string; title?: string; filt
 export function getFileInfo(e: any, filePath: string) {
     let stats: any = getFileStats(filePath)
     if (stats) e.reply(FILE_INFO, stats)
+}
+
+// READ EXIF
+export function readExifData(e: any, data: any) {
+    try {
+        new ExifImage({ image: data.id }, function (error, exifData) {
+            if (error) console.log("Error: " + error.message)
+            else e.reply(READ_EXIF, { ...data, exif: exifData })
+        })
+    } catch (error) {
+        console.log("Error: " + error.message)
+    }
 }

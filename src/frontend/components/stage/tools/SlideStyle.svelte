@@ -1,21 +1,143 @@
 <script lang="ts">
-  import Panel from "../../system/Panel.svelte"
+    import { activeStage, outputs, stageShows } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
+    import { history } from "../../helpers/history"
+    import Button from "../../inputs/Button.svelte"
+    import Color from "../../inputs/Color.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
+
+    $: currentStage = $stageShows[$activeStage.id || ""]
+    $: settings = currentStage.settings
+
+    function updateStageSettings(e: any, key: string) {
+        let value = e.target?.value || e
+        if (value === settings[key]) return
+
+        history({ id: "UPDATE", newData: { data: value, key: "settings", subkey: key }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage" } })
+    }
+
+    // VALUES
+
+    const defaultSettings = {
+        output: "—",
+        background: false,
+        color: "#000000",
+        resolution: false,
+        size: { width: 10, height: 20 },
+        labels: false,
+        showLabelIfEmptySlide: true,
+    }
+
+    // resolution ?
+    // show labels
+    // flash on update
+    // stage notes/message
+    // password
+
+    let outputList: any[] = []
+    $: outputList = Object.entries($outputs)
+        .map(([id, a]) => ({ id, ...a }))
+        .filter((a) => !a.isKeyOutput)
+        .sort((a, b) => a.name.localeCompare(b.name))
+
+    function reset() {
+        history({ id: "UPDATE", newData: { data: { color: "#000000" }, key: "settings" }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage" } })
+    }
 </script>
 
-<Panel>
-  <h6>Stage</h6>
-  <div class="gap">
-    <div class="titles">
-      <p>Background</p>
-      <p>Color</p>
-      <p>Size</p>
-      <p>Show Labels</p>
-      <p>Flash</p>
-      <p>Color</p>
-      <p>Pswd?</p>
-    </div>
-    <div style="flex: 1;">
-      <!--  -->
-    </div>
-  </div>
-</Panel>
+<div class="section">
+    <CombinedInput>
+        <p><T id="midi.output" /></p>
+        <Dropdown
+            style="width: 100%;"
+            options={[{ id: "", name: "—" }, ...outputList]}
+            value={$outputs[settings.output || ""] ? $outputs[settings.output || ""].name : defaultSettings.output}
+            on:click={(e) => updateStageSettings(e.detail.id, "output")}
+        />
+    </CombinedInput>
+
+    <h6><T id="edit.style" /></h6>
+    <CombinedInput>
+        <p><T id="edit.background_color" /></p>
+        <Color value={settings.color || defaultSettings.color} on:input={(e) => updateStageSettings(e, "color")} />
+    </CombinedInput>
+
+    <!-- <h6><T id="settings.resolution" /></h6>
+  <CombinedInput>
+      <p><T id="edit.width" /></p>
+      <NumberInput
+          value={settings.resolution.width}
+          max={100000}
+          on:change={(e) => {
+              settings.resolution.width = Number(e.detail)
+              update()
+          }}
+      />
+  </CombinedInput>
+  <CombinedInput>
+      <p><T id="edit.height" /></p>
+      <NumberInput
+          value={settings.resolution.height}
+          max={100000}
+          on:change={(e) => {
+              settings.resolution.height = Number(e.detail)
+              update()
+          }}
+      />
+  </CombinedInput>
+
+  <h6><T id="tools.notes" /></h6>
+  <div class="notes">
+      <Notes value={note} on:edit={edit} />
+  </div> -->
+</div>
+
+<div class="bottom">
+    <Button style="flex: 1;" on:click={reset} dark center>
+        <Icon id="reset" right />
+        <T id={"actions.reset"} />
+    </Button>
+</div>
+
+<!-- <EditValues edits={textEdits} styles={data} {item} on:change={updateStyle} /> -->
+
+<style>
+    .section {
+        display: flex;
+        flex-direction: column;
+        margin: 10px;
+        margin-bottom: 40px;
+    }
+
+    h6 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
+    }
+
+    p {
+        opacity: 0.8;
+        font-size: 0.9em;
+    }
+
+    /* .notes :global(div) {
+        display: block !important;
+    }
+
+    .notes :global(div.paper) {
+        position: relative;
+        display: block;
+        background: var(--primary-darker);
+    } */
+
+    .bottom {
+        display: flex;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+    }
+</style>

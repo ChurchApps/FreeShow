@@ -53,7 +53,10 @@
             if (!$outLocked) setOutput("background", null)
         },
         F2: () => {
-            if (!$outLocked) setOutput("slide", null)
+            if ($outLocked) return false
+
+            setOutput("slide", null)
+            return true
         },
         F3: () => {
             if (!$outLocked) setOutput("overlays", [])
@@ -125,8 +128,7 @@
 
         // ($activeShow?.type === "show" || $activeShow?.type === undefined) &&
         if (shortcuts[e.key]) {
-            e.preventDefault()
-            shortcuts[e.key](e)
+            if (shortcuts[e.key](e)) e.preventDefault()
             return
         }
 
@@ -245,6 +247,11 @@
 
         callVideoClear = false
     }
+
+    function toggleFullscreen(e: any) {
+        if (!e.target.closest(".zoomed")) return
+        fullscreen = !fullscreen
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -262,8 +269,11 @@
         <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>
             <Icon id="hide" white />
         </Button>
-        <div on:click={() => (fullscreen = !fullscreen)} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 15px);"}>
+        <div on:click={toggleFullscreen} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 15px);"}>
             {#if fullscreen}
+                <Button class="hide" on:click={() => (fullscreen = false)} style="z-index: 2;opacity: 1;right: 10px;" title={$dictionary.actions?.close} center>
+                    <Icon id="close" size={1.5} white />
+                </Button>
                 <span class="resolution">
                     <!-- TODO: get actual resultion ... -->
                     <p><b><T id="screen.width" />:</b> {resolution.width} <T id="screen.pixels" /></p>

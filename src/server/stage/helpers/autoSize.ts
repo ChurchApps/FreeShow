@@ -1,37 +1,46 @@
 import { getStyles } from "./style"
-import { getItemLines } from "./textStyle"
+import { getItemLines, getItemText } from "./textStyle"
 
-export function getAutoSize(item: any, styles: any = null): number {
-  let size: number = 0
+export function getAutoSize(item: any, styles: any = null, oneLine: boolean = false): number {
+    let size: number = 0
 
-  if (styles === null) styles = getStyles(item.style, true)
+    if (styles === null) styles = getStyles(item.style, true)
 
-  let lines: string[] = item ? getItemLines(item) : []
-  if (!lines.length) lines = ["0000000"]
-  // length of longest line
-  let length: number = lines.sort((a, b) => b.length - a.length)[0].length
+    let lines: string[] = getItemLines(item)
+    if (!lines.length) lines = ["0000000"]
 
-  // let textWidth = length * 12
-  // let textHeight = lines.length * 50
-  // // console.log(textWidth, textHeight)
-  // // console.log(styles.width - textWidth, styles.height - textHeight)
-  // console.log(styles.width, textWidth, styles.height, textHeight)
-  // // console.log(textHeight, styles.height)
+    let itemHeight = styles.height
+    let itemWidth = styles.width
 
-  // TODO: letter spacing....?
-  // console.log(styles.height / lines.length / styles.width)
-  // console.log(length)
-  if (styles.height / lines.length / styles.width > 1.8 / length) {
-    size = (styles.width / length) * 1.5
-  } else {
-    size = (styles.height / lines.length) * 0.6
-  }
+    let fullTextLength = getItemText(item).length
+    if (!oneLine && fullTextLength > 10) {
+        // dont ask me how this works
 
-  // if (styles.height / lines.length / styles.width > 1.8 / length) {
-  //   size = (styles.width / length) * 1.6
-  // } else {
-  //   size = (styles.height / lines.length) * 0.9
-  // }
+        size = (itemHeight / itemWidth / (fullTextLength + fullTextLength)) * 14000
 
-  return size
+        // get low value to multiply by value
+        let hmm = Math.max(1.8, fullTextLength / 200)
+        // increased by higher values
+        let idk = Math.max(220, fullTextLength * hmm)
+        // get lower values with higher length
+        let inverter = Math.max(1, (1.8 / fullTextLength) * idk)
+        // divide on higher values as length grows
+        let reducer = Math.max(40, fullTextLength / inverter)
+        // slowly increment as text grows
+        let divider = Math.max(1, fullTextLength / reducer)
+
+        size *= 1.5 * divider
+
+        return size
+    }
+
+    let longestLine: number = lines.sort((a, b) => b.length - a.length)[0].length
+
+    if (itemHeight / lines.length / itemWidth > 1.8 / longestLine) {
+        size = (itemWidth / longestLine) * 1.5
+    } else {
+        size = (itemHeight / lines.length) * 0.6
+    }
+
+    return size
 }

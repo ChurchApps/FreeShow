@@ -14,7 +14,7 @@ export interface Output {
     color: string
     bounds: { x: number; y: number; width: number; height: number }
     screen: string | null
-    kiosk: boolean
+    kioskMode?: boolean
     alwaysOnTop?: boolean
     style?: string
     show?: any

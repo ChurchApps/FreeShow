@@ -12,6 +12,8 @@ export type SaveListSettings =
     | "defaultProjectName"
     | "showsPath"
     | "exportPath"
+    | "scripturePath"
+    | "recordingPath"
     | "drawer"
     | "drawerTabsData"
     | "groupNumbers"

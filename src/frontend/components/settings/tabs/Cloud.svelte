@@ -1,12 +1,13 @@
 <script lang="ts">
     import { OPEN_FILE } from "../../../../types/Channels"
     import { activePopup, driveData, driveKeys } from "../../../stores"
-    import { driveConnect } from "../../../utils/drive"
+    import { driveConnect, syncDrive } from "../../../utils/drive"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Link from "../../inputs/Link.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
@@ -43,46 +44,44 @@
     }
 </script>
 
-<div style="justify-content: center;flex-direction: column;font-style: italic;opacity: 0.8;">
+<div class="info">
     <p><T id="cloud.info" /></p>
 </div>
 
-<div>
+<CombinedInput>
     <p><T id="cloud.enable" /></p>
-    <span>
+    <div class="alignRight">
         <Checkbox checked={!$driveData.disabled} on:change={(e) => toggleData(e, "disabled", true)} />
-    </span>
-</div>
+    </div>
+</CombinedInput>
 
-<div>
+<CombinedInput>
     <p><T id="cloud.disable_upload" /></p>
-    <span>
+    <div class="alignRight">
         <Checkbox checked={$driveData.disableUpload} on:change={(e) => toggleData(e, "disableUpload")} />
-    </span>
-</div>
+    </div>
+</CombinedInput>
 
-<div>
+<CombinedInput>
     <p><T id="cloud.google_drive_api" /></p>
-    <span>
-        <Button on:click={getKeysFile}>
-            <Icon id="key" right />
-            {#if validKeys}
-                <T id="cloud.update_key" />
-            {:else}
-                <T id="cloud.select_key" />
-            {/if}
-        </Button>
-    </span>
-</div>
+    <Button on:click={getKeysFile} center>
+        <Icon id="key" right />
+        {#if validKeys}
+            <T id="cloud.update_key" />
+        {:else}
+            <T id="cloud.select_key" />
+        {/if}
+    </Button>
+</CombinedInput>
 
 {#if validKeys}
-    <div>
-        <p><T id="cloud.main_folder" /></p>
-        <span style="display: flex;align-items: center;overflow: auto;">
-            <p style="font-size: 0.9em;opacity: 0.7;">drive.google.com/drive/folders/</p>
-            <TextInput style="width: 300px;padding: 3px;border-bottom: 2px solid var(--secondary);background-color: var(--primary-darkest);" value={$driveData?.mainFolderId || ""} on:change={updateMainFolder} />
-        </span>
-    </div>
+    <CombinedInput>
+        <p>
+            <T id="cloud.main_folder" />
+            <span style="font-size: 0.7em;opacity: 0.7;display: flex;align-items: center;justify-content: end;overflow: hidden;">drive.google.com/drive/folders/</span>
+        </p>
+        <TextInput style="z-index: 1;" value={$driveData?.mainFolderId || ""} on:change={updateMainFolder} />
+    </CombinedInput>
     <!-- TODO: media folder -->
     <!-- <div>
         <p><T id="cloud.media_folder" /></p>
@@ -91,7 +90,30 @@
             <TextInput style="width: 300px;padding: 3px;border-bottom: 2px solid var(--secondary);background-color: var(--primary-darkest);" value={$driveData?.mediaFolderId || ""} on:change={updateMediaFolder} />
         </span>
     </div> -->
+
+    <CombinedInput>
+        <Button
+            on:click={() => {
+                save()
+                // syncDrive is called by save, but only if it's enabled
+                if ($driveData.disabled) setTimeout(() => syncDrive(true), 2000)
+            }}
+            disabled={!validKeys}
+            style="width: 100%;"
+            center
+        >
+            <Icon id="cloud_sync" right />
+            <T id="cloud.sync" />
+        </Button>
+    </CombinedInput>
+    <CombinedInput>
+        <Button on:click={() => driveConnect($driveKeys)} disabled={!validKeys} style="width: 100%;" center>
+            <Icon id="refresh" right />
+            <T id="cloud.reconnect" />
+        </Button>
+    </CombinedInput>
 {:else}
+    <br />
     <span class="guide">
         <!-- Keep in mind you have a 750 GB limit per day, and 20,000 queries per second which should be plenty. -->
         <p><T id="cloud.tip_api" /></p>
@@ -99,39 +121,30 @@
     </span>
 {/if}
 
-<hr />
+<br />
 
-<div style="display: flex;flex-direction: column;">
-    <Button on:click={save} disabled={!validKeys} style="width: 100%;" center>
-        <Icon id="cloud_sync" right />
-        <T id="cloud.sync" />
-    </Button>
-    <Button on:click={() => driveConnect($driveKeys)} disabled={!validKeys} style="width: 100%;" center>
-        <Icon id="refresh" right />
-        <T id="cloud.reconnect" />
-    </Button>
-    <br />
-    <Button on:click={reset} style="width: 100%;" center>
-        <Icon id="reset" right />
-        <T id="actions.reset" />
-    </Button>
-</div>
+<Button on:click={reset} style="width: 100%;" center>
+    <Icon id="reset" right />
+    <T id="actions.reset" />
+</Button>
+
+<br />
 
 <style>
-    div {
+    .info {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        margin: 5px 0;
-        /* height: 35px; */
+        justify-content: center;
+
         min-height: 38px;
+        margin: 5px 0;
+        font-style: italic;
+        opacity: 0.8;
     }
 
-    hr {
-        margin: 20px 0;
-        border: none;
-        height: 2px;
-        background-color: var(--primary-lighter);
+    .info p {
+        white-space: initial;
     }
 
     .guide p {

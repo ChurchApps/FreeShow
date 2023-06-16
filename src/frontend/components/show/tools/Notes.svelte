@@ -3,6 +3,7 @@
     import T from "../../helpers/T.svelte"
 
     export let value: string
+    export let disabled: boolean = false
     export let lines: number = 4
     // convert from old value
     value = value?.replaceAll("<br>", "\n")
@@ -30,7 +31,7 @@
             <T id="empty.text" />...
         </div>
     {/if}
-    <textarea class="edit" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} />
+    <textarea class="edit" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} {disabled} />
 </div>
 
 <style>
@@ -62,6 +63,10 @@
         position: absolute;
         pointer-events: none;
         padding: 10px;
+        opacity: 0.5;
+    }
+
+    textarea:disabled {
         opacity: 0.5;
     }
 </style>

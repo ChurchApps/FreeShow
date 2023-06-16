@@ -3,22 +3,24 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, categories, drawerTabsData, outLocked, outputs, playScripture, scriptureSettings, templates } from "../../../stores"
+    import { activeProject, categories, drawerTabsData, outLocked, playScripture, scriptureSettings, templates } from "../../../stores"
+    import { getAutoSize } from "../../edit/scripts/autoSize"
+    import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
-    import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import Notes from "../../show/tools/Notes.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { joinRange } from "../bible/scripture"
-    import { getAutoSize } from "../../edit/scripts/autoSize"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
@@ -100,7 +102,7 @@
 
                 if (bibleIndex + 1 >= bibles.length) {
                     let range: any[] = sorted.slice(i - $scriptureSettings.versesPerSlide + 1, i + 1)
-                    addMeta($scriptureSettings.showVersion, $scriptureSettings.showVerse, joinRange(range), { slideIndex, itemIndex: bibles.length })
+                    addMeta($scriptureSettings, joinRange(range), { slideIndex, itemIndex: bibles.length })
                 }
 
                 if (i + 1 >= sorted.length) return
@@ -124,27 +126,33 @@
             if (bibleIndex + 1 < bibles.length) return
             let remainder = sorted.length % $scriptureSettings.versesPerSlide
             let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
-            if (remainder) addMeta($scriptureSettings.showVersion, $scriptureSettings.showVerse, joinRange(range), { slideIndex, itemIndex: bibles.length })
+            if (remainder) addMeta($scriptureSettings, joinRange(range), { slideIndex, itemIndex: bibles.length })
         })
-
-        console.log(slides)
     }
 
-    function addMeta(showVersion: boolean, showVerse: boolean, range: string, { slideIndex, itemIndex }) {
+    function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
         let lines: any[] = []
 
         let metaTemplate = template[itemIndex] || template[0]
         let verseStyle = metaTemplate?.lines?.[0].text?.[0].style || "font-size: 50px;"
         let versions = bibles.map((a) => a.version).join(" + ")
         let books = [...new Set(bibles.map((a) => a.book))].join(" / ")
-        if (showVersion && versions.length) lines.push({ text: [{ value: versions, style: verseStyle }], align: "" })
-        if (showVerse) lines.push({ text: [{ value: books + " " + bibles[0].chapter + ":" + range, style: verseStyle }], align: "" })
 
-        if ((showVersion && versions.length) || showVerse)
+        let text = customText
+        if (!showVersion && !showVerse) return
+        if (showVersion) text = text.replaceAll(textKeys.showVersion, versions)
+        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + ":" + range)
+
+        text.split("\n").forEach((line) => {
+            lines.push({ text: [{ value: line, style: verseStyle }], align: "" })
+        })
+
+        if (lines.length) {
             slides[slideIndex].push({
                 lines,
                 style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
             })
+        }
     }
 
     function createShow() {
@@ -205,10 +213,13 @@
             a[id] = value
             return a
         })
+
+        if (Object.keys(textKeys).includes(id)) updateCustomText(id, value)
     }
 
     function showVerse() {
         if ($outLocked) return
+
         let tempItems: Item[] = slides[0] || []
         setOutput("slide", { id: "temp", tempItems })
     }
@@ -217,8 +228,7 @@
         showVerse()
         playScripture.set(false)
     }
-
-    $: if (verseRange && $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp") showVerse()
+    // $: if (verseRange && $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp") showVerse()
 
     // show on enter
     function keydown(e: any) {
@@ -226,6 +236,44 @@
         if (e.target.closest("input") || e.target.closest(".edit")) return
 
         showVerse()
+    }
+
+    // custom text
+    $: customText = $scriptureSettings.customText || getDefaultText()
+    function getDefaultText() {
+        let text = ""
+
+        Object.keys(textKeys).forEach((key) => {
+            if ($scriptureSettings[key]) {
+                if (text.length) text += "\n"
+                text += textKeys[key]
+            }
+        })
+
+        update("customText", text)
+
+        return text
+    }
+    const textKeys = {
+        showVersion: "[version]",
+        showVerse: "[reference]",
+    }
+    function updateCustomText(id: string, value: boolean) {
+        let key = textKeys[id]
+
+        if (value) {
+            if (customText.includes(key)) return
+
+            if (customText.length && !customText.includes("\n")) customText += "\n"
+            customText += key
+            update("customText", customText)
+
+            return
+        }
+
+        customText = customText.replaceAll(key, "")
+        if (!customText.split("\n")[0] && customText.length) customText = customText.replaceAll("\n", "")
+        update("customText", customText)
     }
 </script>
 
@@ -247,32 +295,41 @@
     <!-- settings: red jw, verse numbers, verse break, max verses per slide, show version, show book&chapter&verse, text formatting -->
     <!-- settings -->
     <div class="settings">
-        <span>
+        <CombinedInput textWidth={70}>
             <p><T id="info.template" /></p>
             <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 50%;" />
-        </span>
-        <span>
+        </CombinedInput>
+        <CombinedInput textWidth={70}>
             <p><T id="scripture.max_verses" /></p>
             <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={25} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
-        </span>
-        <span>
+        </CombinedInput>
+        <CombinedInput textWidth={70}>
             <p><T id="scripture.verse_numbers" /></p>
-            <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
-        </span>
+            <div class="alignRight">
+                <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
+            </div>
+        </CombinedInput>
         {#if $scriptureSettings.verseNumbers}
-            <span>
+            <CombinedInput textWidth={70}>
                 <p><T id="edit.color" /></p>
                 <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={updateColor} />
-            </span>
+            </CombinedInput>
         {/if}
-        <span>
+        <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
-            <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
-        </span>
-        <span>
+            <div class="alignRight">
+                <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
+            </div>
+        </CombinedInput>
+        <CombinedInput textWidth={70}>
             <p><T id="scripture.reference" /></p>
-            <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
-        </span>
+            <div class="alignRight">
+                <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
+            </div>
+        </CombinedInput>
+        <CombinedInput>
+            <Notes disabled={!$scriptureSettings.showVersion && !$scriptureSettings.showVerse} lines={2} value={customText} on:edit={(e) => update("customText", e.detail)} />
+        </CombinedInput>
         <!-- <span>
       <p><T id="scripture.red_jesus" /> (WIP)</p>
       <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
@@ -304,21 +361,12 @@
     .settings {
         display: flex;
         flex-direction: column;
-        gap: 5px;
         padding: 10px;
-    }
-    .settings span {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
     }
 
     .settings :global(.dropdown) {
         position: absolute;
-        width: 100% !important;
-    }
-
-    .settings :global(.numberInput) {
-        width: 50px;
+        width: 250% !important;
+        transform: translateX(-60%);
     }
 </style>

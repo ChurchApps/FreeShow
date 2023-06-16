@@ -1,27 +1,28 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, outputs, slidesOptions } from "../../stores"
+    import { slidesOptions } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
-    import { getActiveOutputs } from "../helpers/output"
-    import { loadShows } from "../helpers/setShow"
-    import { _show } from "../helpers/shows"
+    import { getStyles } from "../helpers/style"
     import Clock from "../system/Clock.svelte"
     import Chords from "./Chords.svelte"
-    import Timer from "./views/Timer.svelte"
-    import { getStyles } from "../helpers/style"
     import ListView from "./views/ListView.svelte"
+    import Mirror from "./views/Mirror.svelte"
+    import Timer from "./views/Timer.svelte"
 
     export let item: Item
+    export let slideIndex: number = 0
     export let ratio: number = 1
     export let filter: string = ""
     export let backdropFilter: string = ""
     export let key: boolean = false
     export let disableListTransition: boolean = false
     export let smallFontSize: boolean = false
+    export let addDefaultItemStyle: boolean = false
+    export let customFontSize: number | null = null
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -52,32 +53,6 @@
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
-
-    $: slideId = ref.slideId || ""
-    function getMirroredItem() {
-        if (item.mirror!.show === ref.showId) return
-
-        let outputId = getActiveOutputs($outputs)[0]
-        let currentOutput = $outputs[outputId] || {}
-
-        let currentSlideIndex: number = 0
-        if (!ref.type || ref.type === "show") {
-            let currentSlideRef: any = _show(currentOutput?.out?.slide?.id || "active")
-                .layouts("active")
-                .ref()[0]
-                .find((a: any) => a.id === ref.slideId)
-
-            currentSlideIndex = currentSlideRef.layoutIndex
-        }
-
-        let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[currentSlideIndex]
-        if (!newSlideRef) return
-        slideId = newSlideRef.id
-        let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
-        if (!newItem) return
-        newItem.style = "width: 100%;height: 100%;"
-        return newItem
-    }
 
     let textElem: any = null
 
@@ -122,18 +97,20 @@
     style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}"
     class:white={key && !lines?.length}
     class:key
+    class:addDefaultItemStyle
 >
     {#if lines}
         <div class="align" style={style ? item.align : null}>
             {#if chords}
                 <Chords {item} {textElem} />
             {/if}
-            <div class="lines" style={smallFontSize ? "--font-size: " + (-1.1 * $slidesOptions.columns + 12) * 5 + "px;" : null} bind:this={textElem}>
+            <div class="lines" style={smallFontSize || customFontSize !== null ? "--font-size: " + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + "px;" : null} bind:this={textElem}>
                 {#each lines as line, i}
                     {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
-                        <div class="break" class:smallFontSize style={style ? line.align : null} class:height={!line.text[0]?.value.length}>
-                            {#each line.text as text}
-                                <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value}</span>
+                        <!-- class:height={!line.text[0]?.value.length} -->
+                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style={style ? line.align : null}>
+                            {#each line.text || [] as text}
+                                <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                             {/each}
                         </div>
                     {/if}
@@ -162,17 +139,7 @@
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "mirror"}
-        {#if item.mirror?.show}
-            {#key item.mirror?.show}
-                {#await loadShows([item.mirror.show])}
-                    {#if !$currentWindow}Loading...{/if}
-                {:then}
-                    {#if getMirroredItem()}
-                        <svelte:self item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
-                    {/if}
-                {/await}
-            {/key}
-        {/if}
+        <Mirror {item} {ref} {ratio} index={slideIndex} />
     {:else if item?.type === "icon"}
         <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
     {/if}
@@ -232,7 +199,24 @@
         font-size: var(--font-size);
     }
 
-    .height {
+    /* .height {
         height: 1em;
+    } */
+
+    /* stage current slide */
+    .item.addDefaultItemStyle {
+        color: white;
+        font-size: 100px;
+        font-family: unset;
+        line-height: 1.1;
+        -webkit-text-stroke-color: #000000;
+        text-shadow: 2px 2px 10px #000000;
+
+        border-style: solid;
+        border-width: 0px;
+        border-color: #ffffff;
+
+        height: 150px;
+        width: 400px;
     }
 </style>
