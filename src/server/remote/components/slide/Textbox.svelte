@@ -10,7 +10,7 @@
             <div class="lines">
                 {#each item.lines as line}
                     <div class="break" style={line.align}>
-                        {#each line.text as text}
+                        {#each line.text || [] as text}
                             <span style={text.style}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
                     </div>

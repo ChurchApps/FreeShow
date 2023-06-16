@@ -8,7 +8,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
         let newText: any[] = []
         let pos: number = 0
         if (selection[i].start !== undefined) {
-            line.text!.forEach((text: any) => {
+            line.text?.forEach((text: any) => {
                 // , i: number
                 // TODO: .replaceAll("<br>", "")
                 const length: number = text.value.length
@@ -28,7 +28,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
 
                 pos += length
             })
-        } else newText.push(...line.text)
+        } else newText.push(...(line.text || []))
 
         line.text = newText
     })
@@ -41,7 +41,7 @@ function combine(item: Item): Item {
     // TODO: removed one char....
     // TODO: remove if value === "" ???
     item.lines?.forEach((line: any) => {
-        let a = [...line.text!]
+        let a = [...(line.text || [])]
         for (let i = 0; i < a.length; i++) {
             if (a[i + 1]) {
                 let d1: any[] = [],
@@ -204,7 +204,7 @@ export function getItemText(item: Item): string {
     let text: string = ""
     if (item.lines)
         item.lines.forEach((line: any) => {
-            line.text.forEach((content: any) => {
+            line.text?.forEach((content: any) => {
                 text += content.value
             })
         })
@@ -225,14 +225,14 @@ export function getItemLines(item: Item): string[] {
     // return (
     //   item.lines?.map((line) => {
     //     let text = ""
-    //     line.text.map((content) => (text += content.value))
+    //     line.text?.map((content) => (text += content.value))
     //     return text
     //   }) || []
     // )
     let lines: string[] = []
     item.lines?.forEach((line: any) => {
         let text = ""
-        line.text.forEach((content: any) => (text += content.value))
+        line.text?.forEach((content: any) => (text += content.value))
         lines.push(text)
     })
     return lines

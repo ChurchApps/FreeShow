@@ -109,7 +109,7 @@
                     {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
                         <!-- class:height={!line.text[0]?.value.length} -->
                         <div class="break" class:smallFontSize={smallFontSize || customFontSize} style={style ? line.align : null}>
-                            {#each line.text as text}
+                            {#each line.text || [] as text}
                                 <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                             {/each}
                         </div>

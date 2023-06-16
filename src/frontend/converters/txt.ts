@@ -14,7 +14,7 @@ export function convertTexts(files: any[]) {
 }
 
 // convert a plain text input into a show
-export function convertText({ name = "", category = null, text }: any) {
+export function convertText({ name = "", category = null, text }: any, onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }) {
     text = text.replaceAll("\r", "")
     let sections: string[] = removeEmpty(text.split("\n\n"))
 
@@ -36,7 +36,9 @@ export function convertText({ name = "", category = null, text }: any) {
 
     let layoutID: string = uid()
     let show: Show = new ShowObj(false, category, layoutID)
-    let { slides, layouts } = createSlides(labeled)
+    let { slides, layouts } = createSlides(labeled, existingSlides)
+
+    if (onlySlides) return { slides, layouts }
 
     show.name = checkName(name)
     show.slides = slides
@@ -56,12 +58,19 @@ export function convertText({ name = "", category = null, text }: any) {
     }
 
     history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+
+    return show
 }
 
-function createSlides(labeled: any) {
-    let slides: any = {}
+// TODO: this sometimes splits all slides up with no children (when adding [group])
+function createSlides(labeled: any, existingSlides: any = {}) {
+    let slides: any = existingSlides
     let layouts: any[] = []
-    let stored: any = {}
+    let stored: any = initializeStoredSlides()
+    function initializeStoredSlides() {
+        return {}
+        // WIP add existing to stored to prevent duplicates
+    }
 
     labeled.forEach(convertLabeledSlides)
 
@@ -117,7 +126,7 @@ function createSlides(labeled: any) {
                     // .filter((a: any) => !a.type || a.type === "text" || a.lines)
                     .map((item: any) => {
                         item.lines?.forEach((_: any, index: number) => {
-                            item.lines[index].text[0].style = activeItems?.[0]?.lines?.[index]?.text?.[0]?.style || ""
+                            item.lines[index].text[0].style = activeItems?.[0]?.lines?.[0]?.text?.[0]?.style || ""
                         })
                         return item
                     })
@@ -188,7 +197,7 @@ function fixText(text: string): string {
     // remove first line if it's a label
     if (findGroupMatch(label)) lines = lines.slice(1, lines.length)
 
-    text = lines.join("\n")
+    text = lines.filter((a) => a).join("\n")
 
     return text
 }
@@ -288,7 +297,7 @@ function linesSimilarity(text: string): boolean {
 }
 
 // https://stackoverflow.com/questions/10473745/compare-strings-javascript-return-of-likely
-function similarity(s1: string, s2: string) {
+export function similarity(s1: string, s2: string) {
     var longer = s1
     var shorter = s2
     if (s1.length < s2.length) {

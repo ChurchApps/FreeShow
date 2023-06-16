@@ -1,4 +1,4 @@
-import type { Item, Line } from "../../../../types/Show"
+import type { Item, Line, Slide } from "../../../../types/Show"
 
 // add new style to text by selection
 export function addStyle(selection: { start: number; end: number }[], item: Item, style: string | any[]): Item {
@@ -8,7 +8,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
         let newText: any[] = []
         let pos: number = 0
         if (selection[i].start !== undefined) {
-            line.text!.forEach((text: any) => {
+            line.text?.forEach((text: any) => {
                 // , i: number
                 // TODO: .replaceAll("<br>", "")
                 const length: number = text.value.length
@@ -30,7 +30,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
 
                 pos += length
             })
-        } else newText.push(...line.text)
+        } else newText.push(...(line.text || []))
 
         line.text = newText
     })
@@ -43,7 +43,7 @@ function combine(item: Item): Item {
     // TODO: removed one char....
     // TODO: remove if value === "" ???
     item.lines?.forEach((line) => {
-        let a = [...line.text!]
+        let a = [...(line.text || [])]
         for (let i = 0; i < a.length; i++) {
             if (a[i + 1]) {
                 let d1: any[] = [],
@@ -200,15 +200,24 @@ export function getLastLineAlign(item: Item, selection: any): string {
     return last
 }
 
+// get text of slide
+export function getSlideText(slide: Slide) {
+    return slide.items.reduce((value, item) => (value += getItemText(item)), "")
+}
+
 // get text of item.text...
 export function getItemText(item: Item): string {
     let text: string = ""
-    if (item.lines)
-        item.lines.forEach((line) => {
-            line.text.forEach((content) => {
-                text += content.value
-            })
+    if (!item.lines) return ""
+
+    item.lines.forEach((line) => {
+        if (!line.text) return
+
+        line.text.forEach((content) => {
+            text += content.value
         })
+    })
+
     return text
 }
 
@@ -232,7 +241,7 @@ export function getItemLines(item: Item): string[] {
     let lines: string[] = []
     item.lines?.forEach((line) => {
         let text = ""
-        line.text.forEach((content) => (text += content.value))
+        line.text?.forEach((content) => (text += content.value))
         lines.push(text)
     })
     return lines

@@ -115,7 +115,7 @@
                 else firstLines.push({ align: line.align, text: [] })
 
                 textPos = 0
-                line.text.forEach((text) => {
+                line.text?.forEach((text) => {
                     currentIndex += text.value.length
                     if (sel[i]?.start !== undefined) start = sel[i].start
 

@@ -153,7 +153,7 @@
                     currentSlide.items[i].lines?.forEach((line: any, j: number) => {
                         let templateLine = item.lines?.[j] || item.lines?.[0]
                         line.align = templateLine?.align || ""
-                        line.text.forEach((text: any, k: number) => {
+                        line.text?.forEach((text: any, k: number) => {
                             text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
                         })
                     })

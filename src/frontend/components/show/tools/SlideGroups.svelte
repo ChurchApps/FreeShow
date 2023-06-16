@@ -74,7 +74,7 @@
                         >
                             <p>
                                 {slide.group || "—"}
-                                {#if $groups[slide.id].shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
+                                {#if $groups[slide.id]?.shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
                             </p>
                         </div>
                     </SelectElem>

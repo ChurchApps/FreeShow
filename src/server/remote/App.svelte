@@ -482,7 +482,7 @@
                                             <div class="lyric">
                                                 {#each item.lines as line}
                                                     <div class="break">
-                                                        {#each line.text as text}
+                                                        {#each line.text || [] as text}
                                                             <span>{@html text.value}</span>
                                                         {/each}
                                                     </div>

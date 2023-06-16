@@ -308,6 +308,8 @@ const slideDrop: any = {
                 return false
             })
         } else if (drag.id === "group") {
+            // WIP this does not work on children
+
             if (drop.center) {
                 if (drop.trigger?.includes("end")) newIndex--
                 // ref.splice(drop.index, 1)
