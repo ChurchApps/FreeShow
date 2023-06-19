@@ -125,9 +125,7 @@
                             title={$dictionary.media?.play}
                         >
                             <!-- <div style="flex: 2;height: 50px;"> -->
-                            {#key background.path}
-                                <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} {fit} {speed} />
-                            {/key}
+                            <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} {fit} {speed} />
                             <!-- </div> -->
                         </HoverButton>
                         <p on:click={() => activeShow.set({ id: background.path, name: background.name, type: background.type })} title={background.path}>{background.name}</p>

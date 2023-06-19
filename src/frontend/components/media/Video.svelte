@@ -50,6 +50,7 @@
         bind:this={video}
         on:loadedmetadata={loaded}
         on:playing={playing}
+        on:error
         bind:currentTime={videoTime}
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}

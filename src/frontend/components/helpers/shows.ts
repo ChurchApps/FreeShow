@@ -162,8 +162,16 @@ export function _show(id: any = "active") {
                             indexes.forEach((index, i) => {
                                 if (key) {
                                     if (!a[id].slides[slideId].items[index]) return
-                                    prev.values.push(a[id].slides[slideId].items[index][key] ? clone(a[id].slides[slideId].items[index][key]) : null)
-                                    a[id].slides[slideId].items[index][key] = values[i] || values[0]
+
+                                    if (key.includes(".")) {
+                                        let splitted = key.split(".")
+                                        prev.values.push(a[id].slides[slideId].items[index][splitted[0]]?.[splitted[1]] ? clone(a[id].slides[slideId].items[index][splitted[0]][splitted[1]]) : null)
+                                        if (!a[id].slides[slideId].items[index][splitted[0]]) a[id].slides[slideId].items[index][splitted[0]] = {}
+                                        a[id].slides[slideId].items[index][splitted[0]][splitted[1]] = values[i] || values[0]
+                                    } else {
+                                        prev.values.push(a[id].slides[slideId].items[index][key] ? clone(a[id].slides[slideId].items[index][key]) : null)
+                                        a[id].slides[slideId].items[index][key] = values[i] || values[0]
+                                    }
                                 } else {
                                     prev.values.push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index]) : null)
                                     a[id].slides[slideId].items[index] = values[i] || values[0]

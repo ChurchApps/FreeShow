@@ -100,7 +100,14 @@
     class:addDefaultItemStyle
 >
     {#if lines}
-        <div class="align" style={style ? item.align : null}>
+        <div
+            class="align"
+            class:topBottomScrolling={item?.scrolling?.type === "top_bottom"}
+            class:bottomTopScrolling={item?.scrolling?.type === "bottom_top"}
+            class:leftRightScrolling={item?.scrolling?.type === "left_right"}
+            class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
+            style={style ? item.align : null}
+        >
             {#if chords}
                 <Chords {item} {textElem} />
             {/if}
@@ -218,5 +225,54 @@
 
         height: 150px;
         width: 400px;
+    }
+
+    /* scrolling */
+    /* WIP change time */
+    /* WIP scroll with overflow too */
+    .item .topBottomScrolling {
+        animation: topBottom 15s linear infinite normal;
+    }
+    .item .bottomTopScrolling {
+        animation: bottomTop 15s linear infinite normal;
+    }
+    .item .leftRightScrolling {
+        animation: leftRight 15s linear infinite normal;
+    }
+    .item .rightLeftScrolling {
+        animation: rightLeft 15s linear infinite normal;
+    }
+
+    @keyframes topBottom {
+        from {
+            transform: translateY(-100%);
+        }
+        to {
+            transform: translateY(100%);
+        }
+    }
+    @keyframes bottomTop {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(-100%);
+        }
+    }
+    @keyframes leftRight {
+        from {
+            transform: translateX(-100%);
+        }
+        to {
+            transform: translateX(100%);
+        }
+    }
+    @keyframes rightLeft {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(-100%);
+        }
     }
 </style>

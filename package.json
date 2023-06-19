@@ -54,7 +54,7 @@
             "category": "public.app-category.utilities"
         },
         "dmg": {
-            "backgroundColor": "#2d313b",
+            "backgroundColor": "#fff0ff",
             "contents": [
                 {
                     "x": 140,

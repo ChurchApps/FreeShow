@@ -86,6 +86,7 @@ export interface Item {
     flipped?: boolean
     bindings?: string[] // bind item to stage or an output
     chords?: boolean // stage
+    scrolling?: Scrolling
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
 }
@@ -107,6 +108,11 @@ export interface Timer {
 export interface Clock {
     type: "digital" | "analog"
     seconds: boolean
+}
+
+export interface Scrolling {
+    type: "none" | "top_bottom" | "bottom_top" | "left_right" | "right_left"
+    speed?: number
 }
 
 export interface Mirror {

@@ -129,39 +129,51 @@
             change = false
         }, duration + 100)
     }
+
+    // retry on error
+    let retryCount = 0
+    $: if (path) retryCount = 0
+    function reload() {
+        if (retryCount > 3) return
+
+        retryCount++
+    }
 </script>
 
 {#if type === "video"}
     <!-- svelte transition bug, this is to remove media when changing from "draw" view -->
-    {#if transition.type === "none" && mirror}
-        <div class="video">
-            <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded />
-        </div>
-    {:else}
-        {#if video1.active}
-            <div class="video" class:change transition:custom={transition}>
-                <Video path={video1.path} bind:video={video1.video} bind:videoData={video1.data} bind:videoTime={videoTime1} {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded />
+    {#key retryCount}
+        {#if transition.type === "none" && mirror}
+            <div class="video">
+                <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:error={reload} />
             </div>
+        {:else}
+            {#if video1.active}
+                <div class="video" class:change transition:custom={transition}>
+                    <Video path={video1.path} bind:video={video1.video} bind:videoData={video1.data} bind:videoTime={videoTime1} {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:error={reload} />
+                </div>
+            {/if}
+            {#if video2.active}
+                <div class="video" class:change transition:custom={transition}>
+                    <Video path={video2.path} bind:video={video2.video} bind:videoData={video2.data} bind:videoTime={videoTime2} {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:error={reload} />
+                </div>
+            {/if}
         {/if}
-        {#if video2.active}
-            <div class="video" class:change transition:custom={transition}>
-                <Video path={video2.path} bind:video={video2.video} bind:videoData={video2.data} bind:videoTime={videoTime2} {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded />
-            </div>
-        {/if}
-    {/if}
+    {/key}
+
     {#if controls}
         <MediaControls bind:videoData bind:videoTime />
     {/if}
 {:else}
-    {#key path}
+    {#key path || retryCount}
         <!-- svelte transition bug, this is to remove media when changing from "draw" view -->
         {#if transition.type === "none"}
             <div style="height: 100%;">
-                <Image {path} {filter} {flipped} {fit} />
+                <Image {path} {filter} {flipped} {fit} on:error={reload} />
             </div>
         {:else}
             <div style="height: 100%;" transition:custom={transition}>
-                <Image {path} {filter} {flipped} {fit} />
+                <Image {path} {filter} {flipped} {fit} on:error={reload} />
             </div>
         {/if}
     {/key}

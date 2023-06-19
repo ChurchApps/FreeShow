@@ -6,8 +6,6 @@
     import { send } from "../../utils/request"
     import { custom } from "../../utils/transitions"
     import { analyseAudio, getAnalyser } from "../helpers/audio"
-    import { getExtension, getMediaType } from "../helpers/media"
-    import Image from "../media/Image.svelte"
     import Media from "../media/Media.svelte"
     import { getStyleResolution } from "../slide/getStyleResolution"
     import Player from "../system/Player.svelte"
@@ -149,40 +147,49 @@
     $: if (!mirror && video !== null && videoData.paused === false) analyseVideo()
 </script>
 
+<!-- svelte transition bug: the double copies are to remove media when changing from "draw" view -->
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
-    {#if getMediaType(getExtension(path)) === "video"}
-        <Media {path} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
-    {:else}
-        {#key path}
-            <!-- don't know why this don't work in the Media component -->
-            <div style="height: 100%;" transition:custom={transition}>
-                <Image {path} {filter} {flipped} {fit} />
-            </div>
-        {/key}
-    {/if}
+    <Media {path} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
 {:else if type === "screen"}
     {#key id}
-        <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
-            <Window {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" />
-        </div>
+        {#if transition.type === "none"}
+            <div bind:clientWidth={width} bind:clientHeight={height}>
+                <Window {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" />
+            </div>
+        {:else}
+            <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
+                <Window {id} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" />
+            </div>
+        {/if}
     {/key}
 {:else if type === "camera"}
     {#key id}
-        <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
-            <Camera {id} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem={video} />
-        </div>
+        {#if transition.type === "none"}
+            <div bind:clientWidth={width} bind:clientHeight={height}>
+                <Camera {id} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem={video} />
+            </div>
+        {:else}
+            <div transition:custom={transition} bind:clientWidth={width} bind:clientHeight={height}>
+                <Camera {id} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem={video} />
+            </div>
+        {/if}
     {/key}
 {:else if type === "player"}
     {#key id}
-        <div transition:custom={transition}>
-            <!-- remove when finished -->
-            <!-- TODO: this has to be disabled to get rid of ads! -->
-            <!-- {#if mirror} -->
-            <div class="overlay" />
-            <!-- {/if} -->
-            <Player {id} bind:videoData bind:videoTime bind:title {startAt} />
-        </div>
+        {#if transition.type === "none"}
+            <div>
+                <div class="overlay" />
+                <Player {id} bind:videoData bind:videoTime bind:title {startAt} />
+            </div>
+        {:else}
+            <div transition:custom={transition}>
+                <!-- WIP remove when finished -->
+                <!-- TODO: this has to be disabled to get rid of ads! -->
+                <div class="overlay" />
+                <Player {id} bind:videoData bind:videoTime bind:title {startAt} />
+            </div>
+        {/if}
     {/key}
 {/if}
 

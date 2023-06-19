@@ -7,7 +7,7 @@
   export let fit: MediaFit = "contain"
 </script>
 
-<img class="media" style="object-fit: {fit};width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" src={path} alt="" draggable="false" />
+<img class="media" style="object-fit: {fit};width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" src={path} alt="" draggable="false" on:error />
 
 <style>
   /* hide alt text */

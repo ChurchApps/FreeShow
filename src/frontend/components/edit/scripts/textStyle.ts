@@ -93,12 +93,20 @@ export function addFilterString(oldFilter: string, filter: any[]): string {
     let array: string[] = oldFilter.split(" ")
     // remove last if empty
     if (!array[array.length - 1].length) array.pop()
+
     // remove old styles
     array.forEach((s, i) => {
         if (s.split("(")[0].replace(")", "").trim() === filter[0] || !s.length) array.splice(i, 1)
     })
     // add new filter
     if (filter[1] !== null) array.push(filter.join("(") + ")")
+
+    // transform perspective has to be first
+    let perspectiveIndex = array.findIndex((a) => a.includes("perspective"))
+    if (perspectiveIndex >= 0) {
+        let value = array.splice(perspectiveIndex, 1)[0]
+        if (!value.includes("(0px)")) array = [value, ...array]
+    }
 
     let newFilter: string = array.join(" ")
     return newFilter

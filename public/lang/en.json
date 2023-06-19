@@ -394,6 +394,7 @@
         "stopSpeaking": "Stop Speaking",
         "fullscreen": "Toggle Fullscreen",
         "resetZoom": "Reset Zoom",
+        "zoom": "Zoom",
         "zoomIn": "Zoom In",
         "zoomOut": "Zoom Out",
         "reset": "Reset",
@@ -539,6 +540,8 @@
         "item": "Item",
         "height": "Height",
         "rotation": "Rotation",
+        "tilt": "Tilt",
+        "perspective": "Perspective",
         "opacity": "Opacity",
         "corner_radius": "Corner Radius",
         "border": "Border",
@@ -557,7 +560,13 @@
         "enable_stage": "Enable stage",
         "select_stage": "Select stage",
         "use_slide_index": "Use active index",
-        "slide_index": "Slide index"
+        "slide_index": "Slide index",
+        "special": "Special",
+        "scrolling": "Scrolling",
+        "top_bottom": "Top to bottom",
+        "bottom_top": "Bottom to top",
+        "left_right": "Left to right",
+        "right_left": "Right to left"
     },
     "items": {
         "text": "Textbox",

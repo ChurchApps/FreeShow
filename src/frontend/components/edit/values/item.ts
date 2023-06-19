@@ -18,6 +18,8 @@ export const itemEdits: { [key: string]: EditInput[] } = {
         { name: "width", id: "style", key: "width", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px" },
         { name: "height", id: "style", key: "height", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px" },
         { name: "rotation", id: "transform", key: "rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
+        { name: "tilt", id: "transform", key: "rotateX", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
+        { name: "perspective", id: "transform", key: "perspective", input: "number", value: 0, values: { max: 5000 }, extension: "px" },
     ],
     style: [
         { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)" },

@@ -95,7 +95,6 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
                 if (event.notes) v[v.length - 1].value += ":"
                 values.push(v)
                 if (event.notes) values.push([{ value: "&nbsp;&nbsp;&nbsp;&nbsp;" + event.notes, style: "font-size:60px;" }])
-                values.push([{ value: "", style: "font-size:80px;" }])
                 totalLength += event.name.length / 1.5 + (event.notes?.length || 0) / 5 // + event.location.length
             })
         let items: any[] = [

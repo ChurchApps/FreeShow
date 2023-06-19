@@ -394,6 +394,7 @@
         "stopSpeaking": "Parar de falar",
         "fullscreen": "Alternar para o modo tela cheia",
         "resetZoom": "Redefinir zoom",
+        "zoom": "Zoom",
         "zoomIn": "Mais Zoom",
         "zoomOut": "Menos Zoom",
         "reset": "Redefinir",
@@ -539,6 +540,8 @@
         "item": "Item",
         "height": "Altura",
         "rotation": "Rotação",
+        "tilt": "Tilt",
+        "perspective": "Perspective",
         "opacity": "Opacidade",
         "corner_radius": "Raio de canto",
         "border": "Borda",
@@ -557,7 +560,13 @@
         "enable_stage": "Enable stage",
         "select_stage": "Select stage",
         "use_slide_index": "Use active index",
-        "slide_index": "Slide index"
+        "slide_index": "Slide index",
+        "special": "Special",
+        "scrolling": "Scrolling",
+        "top_bottom": "Top to bottom",
+        "bottom_top": "Bottom to top",
+        "left_right": "Left to right",
+        "right_left": "Right to left"
     },
     "items": {
         "text": "Caixa de texto",

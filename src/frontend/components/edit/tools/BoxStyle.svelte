@@ -53,6 +53,7 @@
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : {}
     $: alignStyle = item?.align ? getStyles(item.align) : {}
 
+    $: if (id === "text" && box?.edit?.special) box.edit.special[0].value = item?.scrolling?.type || "none"
     $: if (id === "mirror" && box) getMirrorValues()
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
@@ -117,7 +118,15 @@
             if ($activeEdit.type === "overlay") {
                 overlays.update((a: any) => {
                     allItems.forEach((i: number) => {
-                        if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items[i][input.id] = value
+                        if (a[$activeEdit.id!].items[i]) {
+                            if (input.id.includes(".")) {
+                                let splitted = input.id.split(".")
+                                if (!a[$activeEdit.id!].items[i][splitted[0]]) a[$activeEdit.id!].items[i][splitted[0]] = {}
+                                a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
+                            } else {
+                                a[$activeEdit.id!].items[i][input.id] = value
+                            }
+                        }
                     })
                     return a
                 })
@@ -128,7 +137,15 @@
             if ($activeEdit.type === "template") {
                 templates.update((a: any) => {
                     allItems.forEach((i: number) => {
-                        if (a[$activeEdit.id!].items[i]) a[$activeEdit.id!].items[i][input.id] = value
+                        if (a[$activeEdit.id!].items[i]) {
+                            if (input.id.includes(".")) {
+                                let splitted = input.id.split(".")
+                                if (!a[$activeEdit.id!].items[i][splitted[0]]) a[$activeEdit.id!].items[i][splitted[0]] = {}
+                                a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
+                            } else {
+                                a[$activeEdit.id!].items[i][input.id] = value
+                            }
+                        }
                     })
                     return a
                 })

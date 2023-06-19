@@ -394,6 +394,7 @@
         "stopSpeaking": "Stopp tale",
         "fullscreen": "Fullskjerm",
         "resetZoom": "Tilbakestill zoom",
+        "zoom": "Zoom",
         "zoomIn": "Zoom inn",
         "zoomOut": "Zoom ut",
         "reset": "Tilbakestill",
@@ -539,6 +540,8 @@
         "item": "Element",
         "height": "Høyde",
         "rotation": "Rotasjon",
+        "tilt": "Helning",
+        "perspective": "Perspektiv",
         "opacity": "Gjennomsiktighet",
         "corner_radius": "Hjørneradius",
         "border": "Ramme",
@@ -557,7 +560,13 @@
         "enable_stage": "Aktiver scene",
         "select_stage": "Velg scene",
         "use_slide_index": "Bruk aktiv indeks",
-        "slide_index": "Lysbilde-indeks"
+        "slide_index": "Lysbilde-indeks",
+        "special": "Spesielt",
+        "scrolling": "Rulling",
+        "top_bottom": "Topp til bunn",
+        "bottom_top": "Bunn til topp",
+        "left_right": "Venstre til høyre",
+        "right_left": "Høyre til venstre"
     },
     "items": {
         "text": "Tekstboks",

@@ -25,102 +25,141 @@
         </Button>
     </span>
     <span class="group">
-        <Button
-            disabled={($outLocked && activeClear === "background") || isOutCleared("background", $outputs)}
-            on:click={() => {
-                if (activeClear !== "background") {
-                    // previousActive = activeClear
+        <div class="combinedButton">
+            <Button
+                disabled={($outLocked && activeClear === "background") || isOutCleared("background", $outputs)}
+                on:click={() => {
+                    if (!$outLocked) {
+                        autoChange = true
+                        callVideoClear = true
+                        setOutput("background", null)
+                    }
+                }}
+                title={$dictionary.clear?.background + " [F1]"}
+                dark
+                red
+                center
+            >
+                <Icon id="background" size={1.2} />
+            </Button>
+            <!-- disabled={($outLocked && activeClear === "background") || isOutCleared("background", $outputs)} -->
+            <Button
+                on:click={() => {
                     autoChange = false
                     activeClear = "background"
-                } else if (!$outLocked) {
-                    autoChange = true
-                    callVideoClear = true
-                    setOutput("background", null)
-                }
-            }}
-            title={activeClear === "background" ? $dictionary.clear?.background + " [F1]" : $dictionary.preview?.background}
-            red={activeClear === "background"}
-            dark
-            center
-        >
-            <Icon id="background" size={1.2} />
-        </Button>
-        <Button
-            disabled={($outLocked && activeClear === "slide") || isOutCleared("slide", $outputs)}
-            on:click={() => {
-                if (activeClear !== "slide") {
-                    // previousActive = activeClear
+                }}
+                title={$dictionary.preview?.background}
+                dark={activeClear !== "background"}
+            />
+        </div>
+
+        <div class="combinedButton">
+            <Button
+                disabled={($outLocked && activeClear === "slide") || isOutCleared("slide", $outputs)}
+                on:click={() => {
+                    if (!$outLocked) {
+                        autoChange = true
+                        setOutput("slide", null)
+                    }
+                }}
+                title={$dictionary.clear?.slide + " [F2]"}
+                dark
+                red
+                center
+            >
+                <Icon id="slide" size={1.2} />
+            </Button>
+            <!-- disabled={($outLocked && activeClear === "slide") || isOutCleared("slide", $outputs)} -->
+            <Button
+                on:click={() => {
                     autoChange = false
                     activeClear = "slide"
-                } else if (!$outLocked) {
-                    autoChange = true
-                    setOutput("slide", null)
-                }
-            }}
-            title={activeClear === "slide" ? $dictionary.clear?.slide + " [F2]" : $dictionary.preview?.slide}
-            red={activeClear === "slide"}
-            dark
-            center
-        >
-            <Icon id="slide" size={1.2} />
-        </Button>
-        <Button
-            disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs, true)}
-            on:click={() => {
-                if (activeClear !== "overlays") {
-                    // previousActive = activeClear
+                }}
+                title={$dictionary.preview?.slide}
+                dark={activeClear !== "slide"}
+            />
+        </div>
+
+        <div class="combinedButton">
+            <Button
+                disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs, true)}
+                on:click={() => {
+                    if (!$outLocked) {
+                        autoChange = true
+                        clearOverlays()
+                    }
+                }}
+                title={$dictionary.clear?.overlays + " [F3]"}
+                dark
+                red
+                center
+            >
+                <Icon id="overlays" size={1.2} />
+            </Button>
+            <!-- disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs, true)} -->
+            <Button
+                on:click={() => {
                     autoChange = false
                     activeClear = "overlays"
-                } else if (!$outLocked) {
-                    autoChange = true
-                    clearOverlays()
-                }
-            }}
-            title={activeClear === "overlays" ? $dictionary.clear?.overlays + " [F3]" : $dictionary.preview?.overlays}
-            red={activeClear === "overlays"}
-            dark
-            center
-        >
-            <Icon id="overlays" size={1.2} />
-        </Button>
-        <Button
-            disabled={($outLocked && activeClear === "audio") || !Object.keys($playingAudio).length}
-            on:click={() => {
-                if (activeClear !== "audio") {
-                    // previousActive = activeClear
+                }}
+                title={$dictionary.preview?.overlays}
+                dark={activeClear !== "overlays"}
+            />
+        </div>
+
+        <div class="combinedButton">
+            <Button
+                disabled={($outLocked && activeClear === "audio") || !Object.keys($playingAudio).length}
+                on:click={() => {
+                    if (!$outLocked) {
+                        autoChange = true
+                        clearAudio()
+                    }
+                }}
+                title={$dictionary.clear?.audio + " [F4]"}
+                dark
+                red
+                center
+            >
+                <Icon id="audio" size={1.2} />
+            </Button>
+            <!-- disabled={($outLocked && activeClear === "audio") || !Object.keys($playingAudio).length} -->
+            <Button
+                on:click={() => {
                     autoChange = false
                     activeClear = "audio"
-                } else if (!$outLocked) {
-                    autoChange = true
-                    clearAudio()
-                }
-            }}
-            title={activeClear === "audio" ? $dictionary.clear?.audio + " [F4]" : $dictionary.preview?.audio}
-            red={activeClear === "audio"}
-            dark
-            center
-        >
-            <Icon id="audio" size={1.2} />
-        </Button>
-        <Button
-            disabled={($outLocked && activeClear === "nextTimer") || isOutCleared("transition", $outputs)}
-            on:click={() => {
-                if (activeClear !== "nextTimer") {
-                    // previousActive = activeClear
+                }}
+                title={$dictionary.preview?.audio}
+                dark={activeClear !== "audio"}
+            />
+        </div>
+
+        <div class="combinedButton">
+            <Button
+                disabled={($outLocked && activeClear === "nextTimer") || isOutCleared("transition", $outputs)}
+                on:click={() => {
+                    if (!$outLocked) {
+                        autoChange = true
+                        clearTimers()
+                    }
+                }}
+                title={$dictionary.clear?.nextTimer + ($presenterControllerKeys ? "" : " [F5]")}
+                dark
+                red
+                center
+            >
+                <Icon id="clock" size={1.2} />
+            </Button>
+            <!-- disabled={($outLocked && activeClear === "nextTimer") || isOutCleared("transition", $outputs)} -->
+            <Button
+                on:click={() => {
                     autoChange = false
                     activeClear = "nextTimer"
-                } else if (!$outLocked) {
-                    autoChange = true
-                    clearTimers()
-                }
-            }}
-            title={activeClear === "nextTimer" ? $dictionary.clear?.nextTimer + ($presenterControllerKeys ? "" : " [F5]") : $dictionary.preview?.nextTimer}
-            red={activeClear === "nextTimer"}
-            dark
-            center
-        >
-            <Icon id="clock" size={1.2} />
-        </Button>
+                }}
+                title={$dictionary.preview?.nextTimer}
+                dark={activeClear !== "nextTimer"}
+            />
+        </div>
     </span>
 </div>
 
@@ -142,5 +181,14 @@
     .group :global(button) {
         flex-grow: 1;
         /* height: 40px; */
+    }
+
+    .combinedButton {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    .combinedButton :global(button:last-child) {
+        padding: 5px !important;
     }
 </style>

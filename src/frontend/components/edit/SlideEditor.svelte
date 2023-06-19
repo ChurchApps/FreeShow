@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { slide } from "svelte/transition"
     import type { MediaFit } from "../../../types/Main"
     import { activeEdit, activeShow, dictionary, media, outputs, showsCache, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
@@ -161,9 +162,17 @@
             }, 10)
         }, 200)
     }
+
+    let zoomOpened: boolean = false
+    function mousedown(e: any) {
+        keyup()
+        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
+
+        zoomOpened = false
+    }
 </script>
 
-<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:wheel={wheel} />
+<svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={mousedown} on:wheel={wheel} />
 
 <div class="editArea">
     <!-- zoom: {1 / zoom}; -->
@@ -186,11 +195,9 @@
                     </div> -->
                     <!-- background -->
                     {#if !altKeyPressed && background}
-                        {#key background.path}
-                            <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter}">
-                                <MediaLoader path={background.path || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} {speed} />
-                            </div>
-                        {/key}
+                        <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter}">
+                            <MediaLoader path={background.path || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} {speed} />
+                        </div>
                     {/if}
                     <!-- edit -->
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
@@ -230,14 +237,23 @@
         <Button on:click={toggleChords} title={$dictionary.edit?.chords}>
             <Icon id="chords" white={!chordsMode} />
         </Button>
+
         <div class="seperator" />
-        <Button disabled={zoom >= 2} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
-            <Icon size={1.3} id="remove" white />
+
+        <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+            <Icon size={1.3} id="zoomIn" white />
         </Button>
-        <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
-            <Icon size={1.3} id="add" white />
-        </Button>
-        <p class="text" on:click={() => (zoom = 1)}>{(100 / zoom).toFixed()}%</p>
+        {#if zoomOpened}
+            <div class="zoom_container" transition:slide>
+                <p class="text" on:click={() => (zoom = 1)}>{(100 / zoom).toFixed()}%</p>
+                <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
+                    <Icon size={1.3} id="add" white />
+                </Button>
+                <Button disabled={zoom >= 2} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
+                    <Icon size={1.3} id="remove" white />
+                </Button>
+            </div>
+        {/if}
     </div>
 </div>
 
@@ -277,6 +293,7 @@
     } */
 
     .actions {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: right;
@@ -300,8 +317,22 @@
 
     .text {
         opacity: 0.8;
-        text-align: right;
-        width: 50px;
-        margin-right: 10px;
+        text-align: center;
+        padding: 0.5em 0;
+    }
+
+    .zoom_container {
+        position: absolute;
+        right: 0;
+        top: -3px;
+        transform: translateY(-100%);
+        overflow: hidden;
+        z-index: 30;
+
+        flex-direction: column;
+        width: auto;
+        border-left: 3px solid var(--primary-lighter);
+        border-top: 3px solid var(--primary-lighter);
+        background-color: inherit;
     }
 </style>

@@ -12,6 +12,7 @@
     import Folder from "./Folder.svelte"
     import Media from "./MediaCard.svelte"
     import { loadFromPixabay } from "./pixabay"
+    import { slide } from "svelte/transition"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -223,12 +224,19 @@
 
     let gridHeight
     let gridWidth
+
+    let zoomOpened: boolean = false
+    function mousedown(e: any) {
+        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
+
+        zoomOpened = false
+    }
 </script>
 
 <!-- TODO: download pixabay images!!! -->
 <!-- TODO: pexels images ? -->
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:mousedown={mousedown} />
 
 <!-- TODO: fix: big images & many files -->
 <!-- TODO: autoscroll -->
@@ -272,7 +280,7 @@
     </div>
 </div>
 
-<div class="tabs" style="display: flex;align-items: center;">
+<div class="tabs">
     <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
         <Icon size={1.3} id="back" />
     </Button>
@@ -318,19 +326,29 @@
     >
         <Icon size={1.3} id={$mediaOptions.mode} white />
     </Button>
-    <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title={$dictionary.actions?.zoomOut}>
-        <Icon size={1.3} id="remove" white />
+
+    <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+        <Icon size={1.3} id="zoomIn" white />
     </Button>
-    <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn}>
-        <Icon size={1.3} id="add" white />
-    </Button>
-    <p class="text">{(100 / $mediaOptions.columns).toFixed()}%</p>
+    {#if zoomOpened}
+        <div class="zoom_container" transition:slide>
+            <p class="text" on:click={() => mediaOptions.set({ ...$mediaOptions, columns: 5 })} title={$dictionary.actions?.resetZoom}>{(100 / $mediaOptions.columns).toFixed()}%</p>
+            <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
+                <Icon size={1.3} id="add" white />
+            </Button>
+            <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title={$dictionary.actions?.zoomOut} center>
+                <Icon size={1.3} id="remove" white />
+            </Button>
+        </div>
+    {/if}
 </div>
 
 <style>
     .tabs {
         display: flex;
+        position: relative;
         background-color: var(--primary-darkest);
+        align-items: center;
     }
 
     .grid {
@@ -361,14 +379,25 @@
 
     .text {
         opacity: 0.8;
-        text-align: right;
-        width: 50px;
-        margin-right: 10px;
+        text-align: center;
+        padding: 0.5em 0;
     }
 
     .seperator {
         width: 3px;
         height: 100%;
         background-color: var(--primary-lighter);
+    }
+
+    .zoom_container {
+        position: absolute;
+        right: 0;
+        top: 0;
+        transform: translateY(-100%);
+        overflow: hidden;
+
+        flex-direction: column;
+        width: auto;
+        background-color: inherit;
     }
 </style>

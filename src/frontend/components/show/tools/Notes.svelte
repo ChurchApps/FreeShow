@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import T from "../../helpers/T.svelte"
+    import { dictionary } from "../../../stores"
 
     export let value: string
     export let disabled: boolean = false
@@ -26,12 +26,7 @@
 </script>
 
 <div class="paper">
-    {#if !value?.length}
-        <div class="empty">
-            <T id="empty.text" />...
-        </div>
-    {/if}
-    <textarea class="edit" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} {disabled} />
+    <textarea placeholder="{$dictionary.empty?.text}..." class="edit" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} {disabled} />
 </div>
 
 <style>
@@ -59,10 +54,8 @@
         resize: none;
     }
 
-    .empty {
-        position: absolute;
-        pointer-events: none;
-        padding: 10px;
+    textarea::placeholder {
+        color: inherit;
         opacity: 0.5;
     }
 

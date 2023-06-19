@@ -394,6 +394,7 @@
         "stopSpeaking": "Ferma parlato",
         "fullscreen": "Attiva/disattiva lo schermo intero",
         "resetZoom": "Ripristina Zoom",
+        "zoom": "Zoom",
         "zoomIn": "Ingrandire",
         "zoomOut": "Rimpicciolire",
         "reset": "Ripristina",
@@ -539,6 +540,8 @@
         "item": "Elemento",
         "height": "Altezza",
         "rotation": "Rotazione",
+        "tilt": "Tilt",
+        "perspective": "Perspective",
         "opacity": "Opacità",
         "corner_radius": "Raggio dell'angolo",
         "border": "Bordo",
@@ -557,7 +560,13 @@
         "enable_stage": "Abilita stage",
         "select_stage": "Seleziona stage",
         "use_slide_index": "Usa indice attivo",
-        "slide_index": "Indice diapositiva"
+        "slide_index": "Indice diapositiva",
+        "special": "Special",
+        "scrolling": "Scrolling",
+        "top_bottom": "Top to bottom",
+        "bottom_top": "Bottom to top",
+        "left_right": "Left to right",
+        "right_left": "Right to left"
     },
     "items": {
         "text": "Casella di testo",

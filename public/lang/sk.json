@@ -394,6 +394,7 @@
         "stopSpeaking": "Zastaviť hovorenie",
         "fullscreen": "Na celú obrazovku",
         "resetZoom": "Resetovať priblíženie",
+        "zoom": "Zoom",
         "zoomIn": "Priblížiť",
         "zoomOut": "Oddialiť",
         "reset": "Resetovať",
@@ -539,6 +540,8 @@
         "item": "Položka",
         "height": "Výška",
         "rotation": "Otočenie",
+        "tilt": "Tilt",
+        "perspective": "Perspective",
         "opacity": "Priehľadnosť",
         "corner_radius": "Polomer rohov",
         "border": "Ohraničenie",
@@ -557,7 +560,13 @@
         "enable_stage": "Enable stage",
         "select_stage": "Select stage",
         "use_slide_index": "Use active index",
-        "slide_index": "Slide index"
+        "slide_index": "Slide index",
+        "special": "Special",
+        "scrolling": "Scrolling",
+        "top_bottom": "Top to bottom",
+        "bottom_top": "Bottom to top",
+        "left_right": "Left to right",
+        "right_left": "Right to left"
     },
     "items": {
         "text": "Textové pole",

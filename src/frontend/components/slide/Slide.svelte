@@ -260,21 +260,19 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     relative={$slidesOptions.mode === "lyrics" && !noQuickEdit}
                 >
                     {#if !altKeyPressed && (background || ghostBackground) && ($slidesOptions.mode !== "lyrics" || noQuickEdit)}
-                        {#key background?.path || ghostBackground?.path}
-                            <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader
-                                    name={$dictionary.error?.load}
-                                    path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
-                                    cameraGroup={background?.cameraGroup || ghostBackground?.cameraGroup || ""}
-                                    type={background?.type !== "player" ? background?.type : ghostBackground?.type !== "player" ? ghostBackground?.type : null}
-                                    loadFullImage={!!(background?.path || background?.id)}
-                                    {filter}
-                                    {flipped}
-                                    {fit}
-                                    bind:duration
-                                />
-                            </div>
-                        {/key}
+                        <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
+                            <MediaLoader
+                                name={$dictionary.error?.load}
+                                path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
+                                cameraGroup={background?.cameraGroup || ghostBackground?.cameraGroup || ""}
+                                type={background?.type !== "player" ? background?.type : ghostBackground?.type !== "player" ? ghostBackground?.type : null}
+                                loadFullImage={!!(background?.path || background?.id)}
+                                {filter}
+                                {flipped}
+                                {fit}
+                                bind:duration
+                            />
+                        </div>
                     {/if}
                     <!-- TODO: check if showid exists in shows -->
                     {#if slide.items}

@@ -394,6 +394,7 @@
         "stopSpeaking": "Sprechen beenden",
         "fullscreen": "Vollbild umschalten",
         "resetZoom": "Zoom zurücksetzen",
+        "zoom": "Zoom",
         "zoomIn": "Vergrößern",
         "zoomOut": "Verkleinern",
         "reset": "Zurücksetzen",
@@ -539,6 +540,8 @@
         "item": "Element",
         "height": "Höhe",
         "rotation": "Rotation",
+        "tilt": "Tilt",
+        "perspective": "Perspective",
         "opacity": "Transparenz",
         "corner_radius": "Eckenradius",
         "border": "Rand",
@@ -557,7 +560,13 @@
         "enable_stage": "Enable stage",
         "select_stage": "Select stage",
         "use_slide_index": "Use active index",
-        "slide_index": "Slide index"
+        "slide_index": "Slide index",
+        "special": "Special",
+        "scrolling": "Scrolling",
+        "top_bottom": "Top to bottom",
+        "bottom_top": "Bottom to top",
+        "left_right": "Left to right",
+        "right_left": "Right to left"
     },
     "items": {
         "text": "Textbox",

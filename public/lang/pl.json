@@ -394,6 +394,7 @@
         "stopSpeaking": "Zatrzymaj mowę",
         "fullscreen": "Włącz pełny ekran",
         "resetZoom": "Resetuj widok",
+        "zoom": "Zoom",
         "zoomIn": "Przybliż",
         "zoomOut": "Oddal",
         "reset": "Resetuj",
@@ -539,6 +540,8 @@
         "item": "Element",
         "height": "Wysokość",
         "rotation": "Obrót",
+        "tilt": "Tilt",
+        "perspective": "Perspective",
         "opacity": "Przezroczystość",
         "corner_radius": "Promień narożnika",
         "border": "Ramka",
@@ -557,7 +560,13 @@
         "enable_stage": "Włącz scenę",
         "select_stage": "Wybierz scenę",
         "use_slide_index": "Użyj aktywnego indeksu",
-        "slide_index": "Indeks slajdu"
+        "slide_index": "Indeks slajdu",
+        "special": "Special",
+        "scrolling": "Scrolling",
+        "top_bottom": "Top to bottom",
+        "bottom_top": "Bottom to top",
+        "left_right": "Left to right",
+        "right_left": "Right to left"
     },
     "items": {
         "text": "Tekst",

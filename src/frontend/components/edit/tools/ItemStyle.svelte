@@ -106,7 +106,7 @@
         })
 
         if (input.id === "CSS") {
-            values = [input.value.replaceAll("\n", "")]
+            values = { [slides[0]]: [input.value.replaceAll("\n", "")] }
             // only change one selected
             allItems = [allItems[0]]
         }

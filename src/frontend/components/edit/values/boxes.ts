@@ -60,6 +60,24 @@ export const boxes: Box = {
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
             ],
+            special: [
+                {
+                    name: "scrolling",
+                    input: "dropdown",
+                    id: "scrolling.type",
+                    value: "none",
+                    values: {
+                        options: [
+                            { id: "none", name: "$:main.none:$" },
+                            { id: "top_bottom", name: "$:edit.top_bottom:$" },
+                            { id: "bottom_top", name: "$:edit.bottom_top:$" },
+                            { id: "left_right", name: "$:edit.left_right:$" },
+                            { id: "right_left", name: "$:edit.right_left:$" },
+                        ],
+                    },
+                },
+                // { name: "scrolling_speed", id: "scrolling.speed", input: "number", value: 10, values: { max: 100 } },
+            ],
             CSS: [{ id: "text", input: "CSS" }],
         },
     },
