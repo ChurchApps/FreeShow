@@ -7,6 +7,7 @@ import {
     alertUpdates,
     audioFolders,
     autoOutput,
+    autosave,
     calendarAddShow,
     categories,
     defaultProjectName,
@@ -152,6 +153,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     maxConnections: (v: any) => maxConnections.set(v),
     ports: (v: any) => ports.set(v),
+    autosave: (v: any) => autosave.set(v),
     timeFormat: (v: any) => timeFormat.set(v),
     outputs: (v: any) => {
         Object.keys(v).forEach((id: string) => {

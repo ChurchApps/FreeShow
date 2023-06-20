@@ -4,6 +4,7 @@
     import { findMatchingOut, getResolution } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
+    import { MAIN } from "../../../../types/Channels"
 
     interface Cam {
         id: string
@@ -43,13 +44,17 @@
             })
             .catch((err) => {
                 let msg: string = err.message
-                if (err.name === "NotReadableError") msg += "<br />Maybe it's in use by another program."
+                if (err.name === "NotReadableError") {
+                    msg += "<br />Maybe it's in use by another program."
+                    window.api.send(MAIN, { channel: "ACCESS_CAMERA_PERMISSION" })
+                }
                 error = err.name + ":<br />" + msg
                 loaded = true
             })
     })
 
     onDestroy(() => {
+        if (!videoElem) return
         videoElem.srcObject?.getTracks()?.forEach((track: any) => track.stop())
         videoElem.srcObject = null
     })

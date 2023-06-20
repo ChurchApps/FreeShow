@@ -48,6 +48,7 @@ export const currentRecordingStream: Writable<any> = writable(null)
 export const audioChannels: Writable<{ left: number; right: number }> = writable({ left: 0, right: 0 })
 export const playingAudio: Writable<{ [key: string]: any }> = writable({})
 export const playingVideos: Writable<any[]> = writable([])
+export const visualizerData: Writable<any> = writable(null)
 
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
@@ -172,6 +173,7 @@ export const recordingPath: Writable<string> = writable("") // ""
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale
+export const autosave: Writable<string> = writable("never") // "never"
 export const timeFormat: Writable<string> = writable("24") // "24"
 export const alertUpdates: Writable<boolean> = writable(true) // true
 export const autoOutput: Writable<boolean> = writable(false) // false

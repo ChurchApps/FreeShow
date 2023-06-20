@@ -182,9 +182,11 @@
                                     bold={false}
                                     on:click={(e) => {
                                         if (e.ctrlKey || e.metaKey) return
+                                        playAudio({ path: file.path, name: file.name })
+                                    }}
+                                    on:dblclick={() => {
                                         activeShow.set({ id: file.path, name: file.name, type: "audio" })
                                     }}
-                                    on:dblclick={() => playAudio({ path: file.path, name: file.name }, false)}
                                 >
                                     <span>
                                         <Icon

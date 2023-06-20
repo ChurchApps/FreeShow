@@ -2,6 +2,7 @@
     import { onDestroy } from "svelte"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
+    import { MAIN } from "../../../../types/Channels"
 
     export let mic: any
 
@@ -79,7 +80,10 @@
             },
         })
         .then(handleSuccess)
-        .catch((e) => console.log(e))
+        .catch((e) => {
+            console.log(e)
+            window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
+        })
 
     onDestroy(() => {
         audioStream?.getAudioTracks().forEach((track: any) => track.stop())

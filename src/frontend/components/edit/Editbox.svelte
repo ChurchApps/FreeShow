@@ -22,6 +22,7 @@
     import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
     import { menuClick } from "../context/menuClick"
+    import Visualizer from "../slide/views/Visualizer.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -611,6 +612,8 @@ bind:offsetWidth={width} -->
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
+    {:else if item?.type === "visualizer"}
+        <Visualizer {item} />
     {:else if item?.type === "icon"}
         <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
     {/if}

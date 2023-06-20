@@ -9,6 +9,7 @@ import { checkName } from "../components/helpers/show"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
+import { convertChordPro } from "../converters/chordpro"
 import { convertEasyWorship } from "../converters/easyworship"
 import { setTempShows } from "../converters/importHelpers"
 import { convertOpenLP } from "../converters/openlp"
@@ -61,6 +62,7 @@ import {
     timers,
     transitionData,
     version,
+    visualizerData,
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
 import { redoHistory, undoHistory } from "./../stores"
@@ -73,7 +75,6 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { updateSettings, updateSyncedSettings } from "./updateSettings"
-import { convertChordPro } from "../converters/chordpro"
 
 export function startup() {
     loaded.set(false)
@@ -232,6 +233,7 @@ const receiveOUTPUT: any = {
     DRAW: (a: any) => draw.set(a),
     DRAW_TOOL: (a: any) => drawTool.set(a),
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
+    VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => mediaFolders.set(a),
     TIMERS: (a: any) => timers.set(a),
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),

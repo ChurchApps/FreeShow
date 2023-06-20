@@ -1,7 +1,7 @@
 // ----- FreeShow -----
 // Respond to messages from the frontend
 
-import { app, Display, screen } from "electron"
+import { app, Display, screen, systemPreferences } from "electron"
 import fs from "fs"
 import lyricsFinder from "lyrics-finder"
 import os from "os"
@@ -108,6 +108,8 @@ const mainResponses: any = {
     },
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),
+    ACCESS_CAMERA_PERMISSION: () => systemPreferences.askForMediaAccess("camera"),
+    ACCESS_MICROPHONE_PERMISSION: () => systemPreferences.askForMediaAccess("microphone"),
 }
 
 export function receiveMain(e: any, msg: Message) {

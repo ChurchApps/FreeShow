@@ -23,6 +23,7 @@
         { id: "timer" },
         { id: "clock" },
         { id: "mirror" },
+        { id: "visualizer" },
     ]
 
     const getIdentifier = {

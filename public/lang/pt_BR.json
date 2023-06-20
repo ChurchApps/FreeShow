@@ -561,6 +561,7 @@
         "select_stage": "Select stage",
         "use_slide_index": "Use active index",
         "slide_index": "Slide index",
+        "padding": "Padding",
         "special": "Special",
         "scrolling": "Scrolling",
         "top_bottom": "Top to bottom",
@@ -579,6 +580,7 @@
         "live": "Ao vivo",
         "audio": "Áudio",
         "timer": "Temporizador",
+        "visualizer": "Visualizer",
         "icon": "Ícone"
     },
     "borders": {
@@ -695,6 +697,9 @@
         "calendar": "Calendário",
         "other": "Outro",
         "language": "Idioma",
+        "autosave": "Autosave",
+        "never": "Never",
+        "minutes": "minutes",
         "use24hClock": "Use 24-hour clock",
         "styles_hint": "Create different styles that can be applied to the output to change the look.",
         "hide_output_hint": "Clique duas vezes na janela de saída para ocultá-la. Hold CTRL to enable dragging.",

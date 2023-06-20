@@ -156,8 +156,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     effect_card: ["edit"],
-    player_button: ["addToProject", "SEPERATOR", "rename", "delete"],
-    audio_button: ["favourite", "addToProject"],
+    player_button: ["preview", "addToProject", "SEPERATOR", "rename", "delete"],
+    audio_button: ["preview", "favourite", "addToProject"],
     // "addToFirstSlide"
     live_card: ["recording"],
 

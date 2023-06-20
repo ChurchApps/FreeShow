@@ -37,7 +37,6 @@ export function stageListen() {
     function sendBackgroundToStage(outputs) {
         let activeOutput: string = getActiveOutputs(outputs)[0]
         let path = outputs[activeOutput].out?.background?.path || ""
-        console.log(outputs, activeOutput, path, get(mediaCache))
 
         let background = null
         if (path) background = get(mediaCache)[path]?.data || null

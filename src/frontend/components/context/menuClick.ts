@@ -88,15 +88,17 @@ const actions: any = {
     about: () => activePopup.set("about"),
     // main
     rename: (obj: any) => {
-        if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("rename")
-        else if (obj.sel.id === "show") activeRename.set("show_" + obj.sel.data[0].id + "#" + obj.sel.data[0].index)
-        else if (obj.sel.id === "show_drawer") activeRename.set("show_drawer_" + obj.sel.data[0].id)
-        else if (obj.sel.id === "project") activeRename.set("project_" + obj.sel.data[0].id)
-        else if (obj.sel.id === "folder") activeRename.set("folder_" + obj.sel.data[0].id)
-        else if (obj.sel.id === "layout") activeRename.set("layout_" + obj.sel.data[0])
-        else if (obj.sel.id === "player") activeRename.set("player_" + obj.sel.data[0])
-        else if (obj.sel.id === "stage") activeRename.set("stage_" + obj.sel.data[0].id)
-        else if (obj.sel.id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + obj.sel.data[0])
+        let id = obj.sel.id
+        let data = obj.sel.data[0]
+
+        if (id === "slide" || id === "group" || id === "overlay" || id === "template" || id === "player") activePopup.set("rename")
+        else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
+        else if (id === "show_drawer") activeRename.set("show_drawer_" + data.id)
+        else if (id === "project") activeRename.set("project_" + data.id)
+        else if (id === "folder") activeRename.set("folder_" + data.id)
+        else if (id === "layout") activeRename.set("layout_" + data)
+        else if (id === "stage") activeRename.set("stage_" + data.id)
+        else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
     },
     remove: (obj: any) => {
@@ -463,13 +465,18 @@ const actions: any = {
 
     // media
     preview: (obj: any) => {
-        let path: string = obj.sel.data[0].path || obj.sel.data[0].id
+        let path: string = obj.sel.data[0].path || obj.sel.data[0].id || obj.sel.data[0]
         if (!path) return
 
-        activeEdit.set({ id: path, type: "media", items: [] })
+        let type = obj.sel.id || "media"
+        if (type === "media") activeEdit.set({ id: path, type: "media", items: [] })
+
         let name = removeExtension(getFileName(path))
-        let type = getMediaType(getExtension(path))
-        activeShow.set({ id: path, name, type })
+        let mediaType = type === "media" ? getMediaType(getExtension(path)) : type
+
+        let showRef: any = { id: path, type: mediaType }
+        if (name) showRef.name = name
+        activeShow.set(showRef)
     },
     play: (obj: any) => {
         if (obj.sel.id === "midi") {

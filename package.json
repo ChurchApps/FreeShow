@@ -51,7 +51,13 @@
                 "dmg",
                 "zip"
             ],
-            "category": "public.app-category.utilities"
+            "category": "public.app-category.utilities",
+            "extendInfo": {
+                "NSMicrophoneUsageDescription": "Please give access to your microphone if you want to use it for input.",
+                "NSCameraUsageDescription": "Please give access to your camera if you want to use it for input.",
+                "com.apple.security.device.audio-input": true,
+                "com.apple.security.device.camera": true
+            }
         },
         "dmg": {
             "backgroundColor": "#fff0ff",
