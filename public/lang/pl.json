@@ -561,6 +561,7 @@
         "select_stage": "Wybierz scenę",
         "use_slide_index": "Użyj aktywnego indeksu",
         "slide_index": "Indeks slajdu",
+        "padding": "Padding",
         "special": "Specjalne",
         "scrolling": "Przewijanie",
         "top_bottom": "Od góry do dołu",
@@ -579,6 +580,7 @@
         "live": "Na żywo",
         "audio": "Audio",
         "timer": "Timer",
+        "visualizer": "Visualizer",
         "icon": "Ikona"
     },
     "borders": {
@@ -695,6 +697,9 @@
         "calendar": "Kalendarz",
         "other": "Inne",
         "language": "Język",
+        "autosave": "Autosave",
+        "never": "Never",
+        "minutes": "minutes",
         "use24hClock": "Użyj 24-godzinnego zegara",
         "styles_hint": "Utwórz różne style, które można zastosować do wyjścia, aby zmienić wygląd.",
         "hide_output_hint": "Podwójne kliknięcie na okno wyjścia ukrywa je. Przytrzymaj klawisz CTRL/CMD, aby umożliwić przeciąganie.",

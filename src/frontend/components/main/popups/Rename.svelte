@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
+    import { activePopup, activeShow, overlays, playerVideos, selected, showsCache, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -25,6 +25,8 @@
                 if (i === 0) groupName = name
             })
             list = [...new Set(list)]
+        } else if ($selected.id === "player") {
+            list = [...new Set($selected.data.map((id) => $playerVideos[id].name))]
         }
     }
 
@@ -110,6 +112,15 @@
                 .slides([chord.slideId])
                 .items([chord.itemIndex])
                 .set({ key: "lines", values: [newLines] })
+        },
+        player: () => {
+            playerVideos.update((a) => {
+                $selected.data.forEach((id) => {
+                    a[id].name = groupName
+                })
+
+                return a
+            })
         },
     }
 

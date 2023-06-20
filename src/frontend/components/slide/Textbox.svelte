@@ -12,9 +12,11 @@
     import ListView from "./views/ListView.svelte"
     import Mirror from "./views/Mirror.svelte"
     import Timer from "./views/Timer.svelte"
+    import Visualizer from "./views/Visualizer.svelte"
 
     export let item: Item
     export let slideIndex: number = 0
+    export let preview: boolean = false
     export let ratio: number = 1
     export let filter: string = ""
     export let backdropFilter: string = ""
@@ -147,6 +149,8 @@
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={slideIndex} />
+    {:else if item?.type === "visualizer"}
+        <Visualizer {item} {preview} />
     {:else if item?.type === "icon"}
         <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
     {/if}

@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from "electron"
 import { join } from "path"
-import { dialogClose, mainWindow, toApp } from ".."
+import { mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { Message } from "../../types/Socket"
 import { Output } from "./../../types/Output"
@@ -48,13 +48,18 @@ export function removeOutput(id: string) {
 
 function createOutputWindow(options: any, id: string) {
     options = { ...outputOptions, ...options }
+    if (options.alwaysOnTop === false) {
+        options.skipTaskbar = false
+        options.resizable = true
+    }
+
     let window: BrowserWindow | null = new BrowserWindow(options)
 
     // only win & linux
     // window.removeMenu() // hide menubar
     // window.setAutoHideMenuBar(true) // hide menubar
 
-    window.setSkipTaskbar(true) // hide from taskbar
+    window.setSkipTaskbar(options.skipTaskbar) // hide from taskbar
     if (process.platform === "darwin") window.minimize() // hide on mac
 
     if (options.alwaysOnTop) window.setAlwaysOnTop(true, "pop-up-menu", 1)
@@ -81,8 +86,11 @@ function createOutputWindow(options: any, id: string) {
         toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
     })
 
-    window.on("close", (e) => {
-        if (!dialogClose) e.preventDefault()
+    window.on("close", () => {
+        toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
+    })
+    window.on("closed", () => {
+        delete outputWindows[id]
     })
 
     return window
@@ -194,8 +202,11 @@ export function updateBounds(data: any) {
 export function setValue({ id, key, value }: any) {
     let window: BrowserWindow = outputWindows[id]
 
-    if (key === "alwaysOnTop") window.setAlwaysOnTop(value)
-    else if (key === "kioskMode") window.setKiosk(value)
+    if (key === "alwaysOnTop") {
+        window.setAlwaysOnTop(value)
+        window.setResizable(!value)
+        window.setSkipTaskbar(value)
+    } else if (key === "kioskMode") window.setKiosk(value)
 }
 
 export function moveToFront(id: string) {

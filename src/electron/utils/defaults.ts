@@ -22,6 +22,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     activeProject: null,
     alertUpdates: true,
     autoOutput: false,
+    autosave: "never",
     timeFormat: "24",
     presenterControllerKeys: true,
     remotePassword: "",

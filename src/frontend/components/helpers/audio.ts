@@ -122,11 +122,20 @@ function getHighestNumber(numbers: number[]): number {
     return Math.max(...numbers)
 }
 
-export function clearAudio() {
-    Object.values(get(playingAudio)).forEach((a: any) => {
-        a.audio.pause()
+export function clearAudio(path: string = "") {
+    playingAudio.update((a) => {
+        if (path) {
+            a[path].audio.pause()
+            delete a[path]
+        } else {
+            Object.keys(get(playingAudio)).forEach((currentPath: any) => {
+                a[currentPath].audio.pause()
+                delete a[currentPath]
+            })
+        }
+
+        return a
     })
-    playingAudio.set({})
 }
 
 // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness

@@ -8,6 +8,7 @@ export type SaveListSettings =
     | "alertUpdates"
     | "audioFolders"
     | "autoOutput"
+    | "autosave"
     | "timeFormat"
     | "defaultProjectName"
     | "showsPath"

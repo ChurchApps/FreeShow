@@ -561,6 +561,7 @@
         "select_stage": "Seleziona stage",
         "use_slide_index": "Usa indice attivo",
         "slide_index": "Indice diapositiva",
+        "padding": "Padding",
         "special": "Special",
         "scrolling": "Scrolling",
         "top_bottom": "Top to bottom",
@@ -579,6 +580,7 @@
         "live": "Live",
         "audio": "Audio",
         "timer": "Timer",
+        "visualizer": "Visualizer",
         "icon": "Icona"
     },
     "borders": {
@@ -695,6 +697,9 @@
         "calendar": "Calendario",
         "other": "Altro",
         "language": "Lingua",
+        "autosave": "Autosave",
+        "never": "Never",
+        "minutes": "minutes",
         "use24hClock": "Usa il formato 24 ore",
         "styles_hint": "Crea stili diversi che possono essere applicati all'output per cambiare l'aspetto.",
         "hide_output_hint": "Fare doppio clic sulla finestra di output per nasconderla. Tieni premuto CTRL per abilitare il trascinamento.",

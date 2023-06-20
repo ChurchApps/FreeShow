@@ -16,6 +16,7 @@ export interface Output {
     screen: string | null
     kioskMode?: boolean
     alwaysOnTop?: boolean
+    taskbar?: boolean
     style?: string
     show?: any
     out?: {

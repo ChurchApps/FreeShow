@@ -18,6 +18,7 @@
     export let videoTime: number = 0
     export let title: string = ""
     export let mirror: boolean = false
+    export let preview: boolean = false
 
     // $: if (currentOutput.isKeyOutput) mirror = true
     // $: console.log("MIRROR", mirror, currentOutput.isKeyOutput)
@@ -301,6 +302,7 @@
                                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                                     key={currentOutput.isKeyOutput}
                                     disableListTransition={disableTransitions}
+                                    {preview}
                                     {item}
                                     {ratio}
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
@@ -321,6 +323,7 @@
                                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                                     key={currentOutput.isKeyOutput}
                                     disableListTransition={disableTransitions}
+                                    {preview}
                                     {item}
                                     {ratio}
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
@@ -338,31 +341,59 @@
     {#if layers.includes("overlays")}
         <!-- message -->
         {#if $showsCache[slide?.id]?.message?.text}
-            <div class="meta" transition:custom={transition} style={messageStyle} class:key={currentOutput.isKeyOutput}>
+        {#if overlayTransition.type === "none"}
+            <div class="meta" style={messageStyle} class:key={currentOutput.isKeyOutput}>
+                {$showsCache[slide?.id]?.message?.text}
+            </div>
+            {:else}
+            <div class="meta" transition:custom={overlayTransition} style={messageStyle} class:key={currentOutput.isKeyOutput}>
                 {$showsCache[slide?.id]?.message?.text}
             </div>
         {/if}
+        {/if}
         <!-- metadata -->
         {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
-            <div class="meta" transition:custom={transition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
+        {#if overlayTransition.type === "none"}
+            <div class="meta" style={metadataStyle} class:key={currentOutput.isKeyOutput}>
+                {Object.values(metaMessage)
+                    .filter((a) => a.length)
+                    .join("; ")}
+            </div>
+            {:else}
+            <div class="meta" transition:custom={overlayTransition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
                 {Object.values(metaMessage)
                     .filter((a) => a.length)
                     .join("; ")}
             </div>
         {/if}
+        {/if}
         <!-- overlays -->
         {#if out.overlays?.length}
             {#each out.overlays as id}
                 {#if $overlays[id]}
-                    <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
+                    {#if overlayTransition.type === "none"}
+                    <div class:key={currentOutput.isKeyOutput}>
                         <div>
                             {#each $overlays[id].items as item}
                                 {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                    <Textbox {item} ref={{ type: "overlay", id }} />
+                                    <Textbox {item} ref={{ type: "overlay", id }}
+                                    {preview} />
                                 {/if}
                             {/each}
                         </div>
                     </div>
+                    {:else}
+                    <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
+                        <div>
+                            {#each $overlays[id].items as item}
+                                {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                    <Textbox {item} ref={{ type: "overlay", id }}
+                                    {preview} />
+                                {/if}
+                            {/each}
+                        </div>
+                    </div>
+                    {/if}
                 {/if}
             {/each}
         {/if}

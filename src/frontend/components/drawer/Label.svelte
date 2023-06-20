@@ -50,7 +50,7 @@
 
     div span {
         width: 100%;
-        margin: 0 24px;
+        margin: 0 5px;
         text-align: center;
         overflow-x: hidden;
         text-overflow: ellipsis;

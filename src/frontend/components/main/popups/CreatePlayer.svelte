@@ -19,8 +19,15 @@
         }
 
         let id = data.id
-        if (id.includes("?list")) id = id.slice(0, id.indexOf("?list"))
-        id = id.slice(-11)
+
+        if (active === "youtube") {
+            if (id.includes("?list")) id = id.slice(0, id.indexOf("?list"))
+            id = id.slice(-11)
+        } else if (active === "vimeo") {
+            if (id.includes("?")) id = id.slice(0, id.indexOf("?"))
+            let slash = id.lastIndexOf("/")
+            id = id.slice(slash >= 0 ? slash + 1 : 0)
+        }
 
         let name = data.name
         if (!name) name = id

@@ -280,7 +280,7 @@
                     <p><b><T id="screen.height" />:</b> {resolution.height} <T id="screen.pixels" /></p>
                 </span>
             {/if}
-            <Output center={fullscreen} style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""} mirror bind:video bind:videoData bind:videoTime bind:title />
+            <Output center={fullscreen} style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""} mirror preview bind:video bind:videoData bind:videoTime bind:title />
             <!-- <RecordedOutput /> -->
         </div>
         <AudioMeter />

@@ -6,6 +6,7 @@ import {
     alertUpdates,
     audioFolders,
     autoOutput,
+    autosave,
     calendarAddShow,
     categories,
     defaultProjectName,
@@ -71,6 +72,7 @@ import {
 } from "../stores"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { syncDrive } from "./drive"
+import { newToast } from "./messages"
 
 export function save() {
     console.log("SAVING...")
@@ -83,6 +85,7 @@ export function save() {
         autoOutput: get(autoOutput),
         maxConnections: get(maxConnections),
         ports: get(ports),
+        autosave: get(autosave),
         timeFormat: get(timeFormat),
         defaultProjectName: get(defaultProjectName),
         // events: get(events),
@@ -177,6 +180,7 @@ export function save() {
 
 export function saveComplete() {
     saved.set(true)
+    newToast("Saved!")
 
     let mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId) return

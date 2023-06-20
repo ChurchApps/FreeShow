@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { alertUpdates, autoOutput, labelsDisabled, timeFormat } from "../../../stores"
+    import { alertUpdates, autoOutput, autosave, labelsDisabled, timeFormat } from "../../../stores"
     import { setLanguage } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
     import LocaleSwitcher from "../LocaleSwitcher.svelte"
 
     const inputs: any = {
@@ -14,6 +15,15 @@
         labels: (e: any) => labelsDisabled.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
     }
+
+    const autosaveList: any = [
+        { id: "never", name: "$:settings.never:$" },
+        { id: "2min", name: "2 $:settings.minutes:$" },
+        { id: "5min", name: "5 $:settings.minutes:$" },
+        { id: "10min", name: "10 $:settings.minutes:$" },
+        { id: "15min", name: "15 $:settings.minutes:$" },
+        { id: "30min", name: "30 $:settings.minutes:$" },
+    ]
 
     // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
 
@@ -29,6 +39,10 @@
 <CombinedInput>
     <p><T id="settings.language" /></p>
     <LocaleSwitcher />
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.autosave" /></p>
+    <Dropdown options={autosaveList} value={autosaveList.find((a) => a.id === ($autosave || "never"))?.name || ""} on:click={(e) => autosave.set(e.detail.id)} />
 </CombinedInput>
 <CombinedInput>
     <p><T id="settings.use24hClock" /></p>

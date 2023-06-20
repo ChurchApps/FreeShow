@@ -561,6 +561,7 @@
         "select_stage": "Velg scene",
         "use_slide_index": "Bruk aktiv indeks",
         "slide_index": "Lysbilde-indeks",
+        "padding": "Avstand",
         "special": "Spesielt",
         "scrolling": "Rulling",
         "top_bottom": "Topp til bunn",
@@ -579,6 +580,7 @@
         "live": "Direkte",
         "audio": "Lyd",
         "timer": "Nedtelling",
+        "visualizer": "Visualisering",
         "icon": "Ikon"
     },
     "borders": {
@@ -695,6 +697,9 @@
         "calendar": "Kalender",
         "other": "Annet",
         "language": "Språk",
+        "autosave": "Lagre automatisk",
+        "never": "Aldri",
+        "minutes": "minutter",
         "use24hClock": "Bruk 24-timersklokke",
         "styles_hint": "Opprett forskjellige stiler som kan legges til utgangskjermen for å endre utseendet.",
         "hide_output_hint": "Dobbeltrykk på utgangskjermen for å skjule den. Hold CTRL for å kunne dra den rundt.",

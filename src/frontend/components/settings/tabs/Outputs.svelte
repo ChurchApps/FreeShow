@@ -57,7 +57,7 @@
                 }
             }
 
-            if (key === "alwaysOnTop" || key === "kioskMode") {
+            if (["alwaysOnTop", "kioskMode"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: $currentOutputSettings, key, value })
 
                 // update key output
@@ -205,37 +205,25 @@
     </div>
 </CombinedInput>
 
-<CombinedInput>
-    <p><T id="settings.kiosk_mode" /></p>
-    <div class="alignRight">
-        <Checkbox checked={currentOutput.kioskMode === true} on:change={(e) => updateOutput("kioskMode", isChecked(e))} />
-    </div>
-</CombinedInput>
-
 <!-- disable on linux -->
 <!-- {#if $os.platform !== "linux"}
-  <div>
-    <p><T id="settings.fixed" /></p>
-    <div class="alignRight">
-        <Checkbox
-      checked={currentOutput.kiosk}
-      on:change={(e) => {
-        updateOutput("kiosk", isChecked(e))
-        setTimeout(() => {
-          send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-        }, 10)
-      }}
-    />
-    </div>
-  </div>
+    <CombinedInput>
+        <p><T id="settings.show_in_taskbar" /></p>
+        <div class="alignRight">
+            <Checkbox checked={currentOutput.taskbar === true} on:change={(e) => updateOutput("taskbar", isChecked(e))} />
+        </div>
+    </CombinedInput>
 {/if} -->
-<!-- <CombinedInput>
-    <p>Advanced</p>
-    <Button on:click={() => activePopup.set("advanced_settings")}>
-        <Icon id="screen" right />
-        <p>Advanced settings</p>
-    </Button>
-</CombinedInput> -->
+
+<!-- disable on windows -->
+{#if $os.platform !== "win32"}
+    <CombinedInput>
+        <p><T id="settings.kiosk_mode" /></p>
+        <div class="alignRight">
+            <Checkbox checked={currentOutput.kioskMode === true} on:change={(e) => updateOutput("kioskMode", isChecked(e))} />
+        </div>
+    </CombinedInput>
+{/if}
 
 <br />
 

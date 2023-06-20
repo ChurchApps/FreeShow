@@ -87,6 +87,7 @@ export interface Item {
     bindings?: string[] // bind item to stage or an output
     chords?: boolean // stage
     scrolling?: Scrolling
+    visualizer?: any
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
 }
@@ -278,7 +279,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "list" | "media" | "timer" | "clock" | "mirror" | "icon" // "shape" | "video" | "media" | "camera"
+export type ItemType = "text" | "list" | "media" | "timer" | "clock" | "mirror" | "icon" | "visualizer" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

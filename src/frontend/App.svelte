@@ -37,9 +37,11 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, playingAudio, selected, styles } from "./stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, playingAudio, selected, styles } from "./stores"
+    import { newToast } from "./utils/messages"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
+    import { convertAutosave } from "./values/autosave"
 
     startup()
     $: page = $activePage
@@ -133,6 +135,23 @@
         if (!ctrlKey) return
         outputDisplay.set(false)
         window.api.send(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
+    }
+
+    // autosave
+    let autosaveTimeout: any = null
+    $: if ($autosave) startAutosave()
+    function startAutosave() {
+        if (autosaveTimeout) clearTimeout(autosaveTimeout)
+        if (!convertAutosave[$autosave]) {
+            autosaveTimeout = null
+            return
+        }
+
+        autosaveTimeout = setTimeout(() => {
+            newToast("Saving...")
+            save()
+            startAutosave()
+        }, convertAutosave[$autosave])
     }
 
     // close youtube ad

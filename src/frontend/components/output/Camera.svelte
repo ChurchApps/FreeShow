@@ -28,6 +28,7 @@
 
     onDestroy(stopStream)
     function stopStream() {
+        if (!videoElem) return
         videoElem.srcObject?.getTracks()?.forEach((track: any) => track.stop())
         videoElem.srcObject = null
     }
