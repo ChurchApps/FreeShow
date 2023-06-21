@@ -54,6 +54,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     exportPath: null,
     scripturePath: null,
     recordingPath: null,
+    lockedOverlays: [],
     splitLines: 0,
     defaultProjectName: "date",
     videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],

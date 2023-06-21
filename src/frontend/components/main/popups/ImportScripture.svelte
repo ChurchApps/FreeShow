@@ -143,8 +143,8 @@
 
 <span style="display: flex;">
     {#each formats as format}
-    <!-- style="width: 20%;flex-direction: column;min-height: 160px;" -->
-    <Button
+        <!-- style="width: 20%;flex-direction: column;min-height: 160px;" -->
+        <Button
             style="width: 25%;flex-direction: column;min-height: 180px;"
             on:click={() => {
                 send(IMPORT, [format.id + "_bible"], format)
@@ -160,7 +160,7 @@
             bold={false}
             center
         >
-            <img src="./import-logos/{format.icon || format.id}.png" alt="{format.id}-logo" />
+            <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" />
             <p>{format.name}</p>
         </Button>
     {/each}

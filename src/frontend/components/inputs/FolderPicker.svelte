@@ -5,6 +5,7 @@
 
     export let id: string
     export let title: string | undefined = undefined
+    export let path: string | null = null
     export let style: string = ""
     export let center: boolean = true
 
@@ -15,7 +16,7 @@
             activePopup.set("alert")
         }
 
-        window.api.send(OPEN_FOLDER, { channel: id, title })
+        window.api.send(OPEN_FOLDER, { channel: id, title, path })
     }
 </script>
 

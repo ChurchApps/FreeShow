@@ -10,6 +10,7 @@ import {
     calendarAddShow,
     categories,
     defaultProjectName,
+    deletedShows,
     drawSettings,
     drawer,
     drawerTabsData,
@@ -25,6 +26,7 @@ import {
     imageExtensions,
     labelsDisabled,
     language,
+    lockedOverlays,
     maxConnections,
     media,
     mediaCache,
@@ -93,6 +95,7 @@ export function save() {
         exportPath: get(exportPath),
         scripturePath: get(scripturePath),
         recordingPath: get(recordingPath),
+        lockedOverlays: get(lockedOverlays),
         drawer: get(drawer),
         drawerTabsData: get(drawerTabsData),
         groupNumbers: get(groupNumbers),
@@ -143,9 +146,10 @@ export function save() {
         // SETTINGS
         SETTINGS: settings,
         SYNCED_SETTINGS: syncedSettings,
-        // STORES
+        // SHOWS
         SHOWS: get(shows),
         STAGE_SHOWS: get(stageShows),
+        // STORES
         PROJECTS: { projects: get(projects), folders: get(folders) },
         OVERLAYS: get(overlays),
         TEMPLATES: get(templates),
@@ -156,7 +160,10 @@ export function save() {
         // CACHES SAVED TO MULTIPLE FILES
         showsCache: clone(get(showsCache)),
         scripturesCache: get(scripturesCache),
+        deletedShows: clone(get(deletedShows)),
     }
+
+    deletedShows.set([])
 
     // SAVE STATE
     // let savedAt: number = Date.now()

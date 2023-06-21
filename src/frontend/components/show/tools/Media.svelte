@@ -45,6 +45,7 @@
         backgrounds = {}
         bgs = []
         layoutBackgrounds.forEach((a: any) => {
+            if (!show.media[a]) return
             let id = show.media[a].path || show.media[a].id!
 
             const extension = getExtension(id)

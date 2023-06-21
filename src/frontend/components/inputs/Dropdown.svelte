@@ -132,6 +132,11 @@
 
     .center button {
         text-align: center;
+        justify-content: center;
+    }
+
+    .center .dropdown span {
+        text-align: center;
     }
 
     button,

@@ -508,9 +508,24 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
 
     .quickEdit {
         display: flex;
+        flex-direction: column;
+        gap: 10px;
+        justify-content: space-between;
+
         background-color: rgb(0 0 0 / 0.8);
         color: white;
         padding: 10px;
         flex: 1;
+    }
+    .quickEdit :global(.editItem) {
+        height: 100%;
+    }
+
+    .quickEdit :global(.placeholder) {
+        top: 0;
+        height: 100%;
+        padding: 15px 0;
+        width: unset !important;
+        /* font-size: 1.5em; */
     }
 </style>

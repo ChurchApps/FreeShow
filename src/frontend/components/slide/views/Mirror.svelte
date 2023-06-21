@@ -47,7 +47,7 @@
     {#if stageEnabled}
         {#if item.mirror?.stage}
             {#key item.mirror?.stage}
-                {#each Object.entries($stageShows[item.mirror?.stage].items) as [id, stageItem]}
+                {#each Object.entries($stageShows[item.mirror?.stage]?.items || {}) as [id, stageItem]}
                     {#if stageItem.enabled}
                         <Stagebox {id} item={stageItem} {ratio} />
                     {/if}

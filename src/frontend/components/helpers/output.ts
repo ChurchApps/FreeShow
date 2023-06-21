@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution } from "../../../types/Settings"
-import { currentOutputSettings, outputDisplay, outputs, overlays, playingVideos, showsCache, styles, theme, themes, transitionData } from "../../stores"
+import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, styles, theme, themes, transitionData } from "../../stores"
 import { sendInitialOutputData } from "../../utils/messages"
 import { send } from "../../utils/request"
 import type { Transition } from "../../../types/Show"
@@ -32,12 +32,19 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             let output: any = a[id]
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
+
+            let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
                 if (!Array.isArray(data)) data = [data]
-                if (toggle && a[id].out?.[key]?.includes(data[0])) a[id].out![key]!.splice(a[id].out![key]!.indexOf(data[0]), 1)
-                else if (toggle || add) a[id].out![key] = [...new Set([...(a[id].out?.[key] || []), ...data])]
-                else a[id].out![key] = data
-            } else a[id].out![key] = data
+                if (toggle && outData?.includes(data[0])) outData!.splice(outData!.indexOf(data[0]), 1)
+                else if (toggle || add) outData = [...new Set([...(a[id].out?.[key] || []), ...data])]
+                else outData = data
+            } else outData = data
+
+            a[id].out![key] = outData
+
+            // save locked overlays
+            if (key === "overlays") lockedOverlays.set(outData)
 
             // WIP update bg (muted, loop, time)
             // , time: data.startAt || 0

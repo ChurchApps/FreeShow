@@ -80,9 +80,10 @@ export function selectFilesDialog(title: string = "", filters: any, multiple: bo
     return files
 }
 
-export function selectFolderDialog(title: string = ""): string {
+export function selectFolderDialog(title: string = "", defaultPath: string = ""): string {
     let options: any = { properties: ["openDirectory"] }
     if (title) options.title = title
+    if (defaultPath) options.defaultPath = defaultPath
     let path: string[] = dialog.showOpenDialogSync(mainWindow!, options) || [""]
     return path[0]
 }
@@ -185,8 +186,8 @@ export function getFolderContent(_e: any, data: any) {
 }
 
 // OPEN_FOLDER
-export function selectFolder(e: any, msg: { channel: string; title: string | undefined }) {
-    let folder: any = selectFolderDialog(msg.title)
+export function selectFolder(e: any, msg: { channel: string; title: string | undefined; path: string | undefined }) {
+    let folder: any = selectFolderDialog(msg.title, msg.path)
     if (folder) e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
 }
 

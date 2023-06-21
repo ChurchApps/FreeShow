@@ -29,6 +29,6 @@
 
 <br />
 
-<Button on:click={reset} center>
+<Button on:click={reset} center dark>
     <T id="popup.continue" />
 </Button>

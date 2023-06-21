@@ -24,6 +24,7 @@ import {
     labelsDisabled,
     language,
     loaded,
+    lockedOverlays,
     mediaFolders,
     mediaOptions,
     midiIn,
@@ -31,6 +32,7 @@ import {
     os,
     outLocked,
     overlayCategories,
+    overlays,
     playerVideos,
     ports,
     presenterControllerKeys,
@@ -55,7 +57,7 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { currentWindow, maxConnections, outputs, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
-import { displayOutputs } from "../components/helpers/output"
+import { displayOutputs, setOutput } from "../components/helpers/output"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -130,6 +132,15 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     recordingPath: (v: any) => {
         if (!v) send(MAIN, ["RECORDING_PATH"])
         else recordingPath.set(v)
+    },
+    lockedOverlays: (v: any) => {
+        // only get locked overlays
+        v = v.filter((id) => get(overlays)[id]?.locked === true)
+
+        lockedOverlays.set(v)
+
+        // start overlays
+        setOutput("overlays", v, false, null, true)
     },
     os: (v: any) => {
         if (!v.platform) send(MAIN, ["GET_OS"])

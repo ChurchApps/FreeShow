@@ -4,6 +4,7 @@
     import { getActiveOutputs, getResolution } from "../helpers/output"
 
     export let background: string = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background || "#000000"
+    export let backgroundDuration: number = 800
     export let center: boolean = false
     export let zoom: boolean = true
     export let mirror: boolean = false
@@ -55,7 +56,7 @@
         class:disableStyle
         class:showMirror
         class:relative
-        style="{$$props.style || ''}background-color: {background};{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
+        style="{$$props.style || ''}background-color: {background};transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
     >
         {#if zoom}
             <span class="zoom" style="zoom: {ratio};">
@@ -72,6 +73,8 @@
         position: relative;
         /* TODO: not edit */
         /* z-index: -1; */
+
+        transition: 800ms background-color;
     }
 
     .slide:not(.relative) :global(.item) {

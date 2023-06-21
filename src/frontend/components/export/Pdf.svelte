@@ -32,6 +32,7 @@
 
             show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide: any) => {
                 let slide = show.slides[layoutSlide.id]
+                if (!slide) return
                 a.push(slide)
                 if (slide.children) {
                     slide.children.forEach((childId: string) => {

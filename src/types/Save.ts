@@ -15,6 +15,7 @@ export type SaveListSettings =
     | "exportPath"
     | "scripturePath"
     | "recordingPath"
+    | "lockedOverlays"
     | "drawer"
     | "drawerTabsData"
     | "groupNumbers"

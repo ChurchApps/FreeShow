@@ -62,8 +62,11 @@
     function getSlides() {
         slides = [[]]
 
+        let templateTextItems = template.filter((a) => a.lines)
+        let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
+
         bibles.forEach((bible, bibleIndex) => {
-            let currentTemplate = template[bibleIndex] || template[0]
+            let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
             let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
             let alignStyle = currentTemplate?.lines?.[0].align || "text-align: left;"
             let textStyle = currentTemplate?.lines?.[0].text?.[0].style || "font-size: 80px;"
@@ -79,7 +82,7 @@
                 if ($scriptureSettings.verseNumbers) {
                     let size = 50
                     if (i === 0) size *= 2
-                    let verseNumberStyle = "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[bibleIndex]?.lines?.[0].text?.[0].style || ""
+                    let verseNumberStyle = "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + templateTextItems[bibleIndex]?.lines?.[0].text?.[0].style || ""
 
                     slideArr.lines![0].text.push({
                         value: s + " ",
@@ -128,6 +131,11 @@
             let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
             if (remainder) addMeta($scriptureSettings, joinRange(range), { slideIndex, itemIndex: bibles.length })
         })
+
+        // add other items
+        slides.forEach((items, i) => {
+            slides[i] = [...templateOtherItems, ...items]
+        })
     }
 
     function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
@@ -168,7 +176,8 @@
         slides.forEach((items: any) => {
             let id = uid()
             // TODO: group as verse numbers
-            slides2[id] = { group: items[0].lines[0].text[0]?.value?.split(" ")?.slice(0, 4)?.join(" ") || "", color: null, settings: {}, notes: "", items }
+            let firstTextItem = items.find((a) => a.lines)
+            slides2[id] = { group: firstTextItem.lines[0].text[0]?.value?.split(" ")?.slice(0, 4)?.join(" ") || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
             layouts.push(l)
         })

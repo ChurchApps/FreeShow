@@ -80,6 +80,7 @@ export const lastSavedCache: Writable<any> = writable(null)
 export const playScripture: Writable<boolean> = writable(false)
 export const editHistory: Writable<any[]> = writable([])
 export const refreshEditSlide: Writable<boolean> = writable(false)
+export const deletedShows: Writable<any[]> = writable([])
 
 // ----- SAVED VARIABLES -----
 
@@ -170,6 +171,7 @@ export const resized: Writable<NumberObject> = writable({ leftPanel: 300, rightP
 export const exportPath: Writable<null | string> = writable(null) // null
 export const scripturePath: Writable<string> = writable("") // ""
 export const recordingPath: Writable<string> = writable("") // ""
+export const lockedOverlays: Writable<string[]> = writable([]) // []
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale

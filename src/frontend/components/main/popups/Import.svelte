@@ -71,7 +71,7 @@
             bold={false}
             center
         >
-            <img src="./import-logos/{format.icon || format.id}.png" alt="{format.id}-logo" />
+            <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" />
             <p>{format.name}</p>
         </Button>
     {/each}
@@ -96,7 +96,7 @@
             bold={false}
             center
         >
-            <img src="./import-logos/{format.icon || format.id}.png" alt="{format.id}-logo" />
+            <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" />
             <p>{format.name}</p>
         </Button>
     {/each}

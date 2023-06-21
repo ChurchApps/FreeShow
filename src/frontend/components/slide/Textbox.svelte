@@ -157,6 +157,11 @@
 </div>
 
 <style>
+    .item {
+        /* WIP this is for scrolling, but hides overflow text even on scroll */
+        overflow: hidden;
+    }
+
     .align {
         height: 100%;
         display: flex;

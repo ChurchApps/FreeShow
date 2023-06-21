@@ -114,10 +114,10 @@ export async function loadProjectTimers(projectShows = get(projects)[get(activeP
     return list
 }
 
-export function getCurrentTimerValue(timer: Timer, ref: any, today: Date) {
+export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
     let currentTime: number = 0
     if (timer.type === "counter") {
-        currentTime = get(activeTimers).filter((a) => a.id === ref.id)[0]?.currentTime
+        currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
         if (typeof currentTime !== "number") currentTime = timer.start!
     } else if (timer.type === "clock") {
         let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))

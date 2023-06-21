@@ -42,7 +42,7 @@
 
     export let mouse: any = {}
     function mousedown(e: any) {
-        if (e.target.closest(".chords")) return
+        if (e.target.closest(".chords") || e.target.closest(".editTools")) return
         let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         activeEdit.update((ae) => {
@@ -629,7 +629,7 @@ bind:offsetWidth={width} -->
         outline: 5px solid var(--secondary-opacity);
         overflow: visible;
     }
-    .item .placeholder {
+    .align span.placeholder {
         opacity: 0.5;
         pointer-events: none;
         position: absolute;

@@ -279,9 +279,20 @@
         if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
         if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
     }
+
+    // $: console.log(background, tempVideoBG, layers)
 </script>
 
-<Zoomed background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"} {center} {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
+<Zoomed
+    background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"}
+    backgroundDuration={mediaTransition?.duration || 800}
+    {center}
+    {style}
+    {resolution}
+    {mirror}
+    cropping={currentStyle.cropping}
+    bind:ratio
+>
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
             <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
@@ -341,58 +352,56 @@
     {#if layers.includes("overlays")}
         <!-- message -->
         {#if $showsCache[slide?.id]?.message?.text}
-        {#if overlayTransition.type === "none"}
-            <div class="meta" style={messageStyle} class:key={currentOutput.isKeyOutput}>
-                {$showsCache[slide?.id]?.message?.text}
-            </div>
+            {#if overlayTransition.type === "none"}
+                <div class="meta" style={messageStyle} class:key={currentOutput.isKeyOutput}>
+                    {$showsCache[slide?.id]?.message?.text}
+                </div>
             {:else}
-            <div class="meta" transition:custom={overlayTransition} style={messageStyle} class:key={currentOutput.isKeyOutput}>
-                {$showsCache[slide?.id]?.message?.text}
-            </div>
-        {/if}
+                <div class="meta" transition:custom={overlayTransition} style={messageStyle} class:key={currentOutput.isKeyOutput}>
+                    {$showsCache[slide?.id]?.message?.text}
+                </div>
+            {/if}
         {/if}
         <!-- metadata -->
         {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
-        {#if overlayTransition.type === "none"}
-            <div class="meta" style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                {Object.values(metaMessage)
-                    .filter((a) => a.length)
-                    .join("; ")}
-            </div>
+            {#if overlayTransition.type === "none"}
+                <div class="meta" style={metadataStyle} class:key={currentOutput.isKeyOutput}>
+                    {Object.values(metaMessage)
+                        .filter((a) => a.length)
+                        .join("; ")}
+                </div>
             {:else}
-            <div class="meta" transition:custom={overlayTransition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                {Object.values(metaMessage)
-                    .filter((a) => a.length)
-                    .join("; ")}
-            </div>
-        {/if}
+                <div class="meta" transition:custom={overlayTransition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
+                    {Object.values(metaMessage)
+                        .filter((a) => a.length)
+                        .join("; ")}
+                </div>
+            {/if}
         {/if}
         <!-- overlays -->
         {#if out.overlays?.length}
             {#each out.overlays as id}
                 {#if $overlays[id]}
                     {#if overlayTransition.type === "none"}
-                    <div class:key={currentOutput.isKeyOutput}>
-                        <div>
-                            {#each $overlays[id].items as item}
-                                {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                    <Textbox {item} ref={{ type: "overlay", id }}
-                                    {preview} />
-                                {/if}
-                            {/each}
+                        <div class:key={currentOutput.isKeyOutput}>
+                            <div>
+                                {#each $overlays[id].items as item}
+                                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                        <Textbox {item} ref={{ type: "overlay", id }} {preview} />
+                                    {/if}
+                                {/each}
+                            </div>
                         </div>
-                    </div>
                     {:else}
-                    <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
-                        <div>
-                            {#each $overlays[id].items as item}
-                                {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                    <Textbox {item} ref={{ type: "overlay", id }}
-                                    {preview} />
-                                {/if}
-                            {/each}
+                        <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
+                            <div>
+                                {#each $overlays[id].items as item}
+                                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                        <Textbox {item} ref={{ type: "overlay", id }} {preview} />
+                                    {/if}
+                                {/each}
+                            </div>
                         </div>
-                    </div>
                     {/if}
                 {/if}
             {/each}

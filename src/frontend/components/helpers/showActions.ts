@@ -3,7 +3,7 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { activeEdit, activePage, activeProject, activeShow, activeTimers, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getMediaType } from "./media"
 import { getActiveOutputs, setOutput } from "./output"
@@ -419,6 +419,7 @@ export function clearOverlays() {
     let outOverlays: string[] = get(outputs)[outs[0]]?.out?.overlays || []
     outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
     setOutput("overlays", outOverlays)
+    lockedOverlays.set([])
 }
 
 // TODO: output/clearButtons

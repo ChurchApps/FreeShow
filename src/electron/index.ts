@@ -7,7 +7,7 @@ import path from "path"
 import { CLOUD, EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { closeServers } from "./servers"
-import { checkShowsFolder, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { checkShowsFolder, deleteFile, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./utils/output"
@@ -261,6 +261,14 @@ function save(data: any) {
         if (!value) return
         let p: string = path.resolve(data.path, value.name + ".show")
         writeFile(p, JSON.stringify([id, value]), id)
+    }
+
+    // deleted shows
+    if (data.deletedShows) data.deletedShows.forEach(deleteShow)
+    function deleteShow({ name, id }: any) {
+        if (!name || data.showsCache[id]) return
+        let p: string = path.resolve(data.path, name + ".show")
+        deleteFile(p)
     }
 
     // scriptures

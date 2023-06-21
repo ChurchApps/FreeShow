@@ -3,7 +3,6 @@
 
 import { app, Display, screen, systemPreferences } from "electron"
 import fs from "fs"
-import lyricsFinder from "lyrics-finder"
 import os from "os"
 import path from "path"
 import { closeMain, getScreens, loadFonts, mainWindow, maximizeMain, openURL, setGlobalMenu, toApp } from ".."
@@ -108,6 +107,7 @@ const mainResponses: any = {
     },
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),
+    FULL_SHOWS_LIST: (data: any) => getAllShows(data),
     ACCESS_CAMERA_PERMISSION: () => systemPreferences.askForMediaAccess("camera"),
     ACCESS_MICROPHONE_PERMISSION: () => systemPreferences.askForMediaAccess("microphone"),
 }
@@ -120,7 +120,11 @@ export function receiveMain(e: any, msg: Message) {
 }
 
 async function searchLyrics({ artist, title }: any) {
-    let lyrics: string = await lyricsFinder(artist, title)
+    const Genius = require("genius-lyrics")
+    const Client = new Genius.Client()
+    const songs = await Client.songs.search(title + artist)
+    const lyrics = await songs[0].lyrics()
+
     toApp("MAIN", { channel: "SEARCH_LYRICS", data: { lyrics } })
 }
 
@@ -144,6 +148,11 @@ function deleteShowsNotIndexed(data: any) {
     }
 
     toApp("MAIN", { channel: "DELETE_SHOWS", data: { deleted } })
+}
+
+function getAllShows(data: any) {
+    let filesInFolder: string[] = readFolder(data.path)
+    return filesInFolder
 }
 
 function refreshAllShows(data: any) {

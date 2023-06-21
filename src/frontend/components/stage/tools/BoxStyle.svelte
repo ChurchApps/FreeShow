@@ -68,7 +68,7 @@
     let timeout: any = null
 </script>
 
-{#if item}
+{#if item && !items[0].includes("output")}
     <EditValues edits={textEdits} styles={data} {item} on:change={updateStyle} />
 {:else}
     <Center faded>

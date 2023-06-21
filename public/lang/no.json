@@ -352,7 +352,7 @@
         "no_video_id": "Ingen video-ID",
         "no_name": "Ingen navn",
         "lyrics_undefined": "Kunne ikke finne noen sangtekster!",
-        "lyrics_copied": "Sangtekst kopiert fra Google!",
+        "lyrics_copied": "Sangtekst kopiert fra Genius!",
         "no_pdf_linux": "Kan ikke eksportere som PDF på Linux.",
         "one_output": "Du må ha minst en aktiv utgang!",
         "empty_cache": "Hurtigbuffer er tom.",
@@ -651,7 +651,9 @@
         "event": "Hendelse",
         "no_events": "Det er ingen fremtidige arrangement",
         "edit": "Rediger",
-        "create": "Opprett"
+        "create": "Opprett",
+        "line": "Linje",
+        "mask": "Maske"
     },
     "clock": {
         "type": "Type",

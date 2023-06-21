@@ -23,6 +23,7 @@ import {
     imageExtensions,
     labelsDisabled,
     language,
+    lockedOverlays,
     mediaFolders,
     mediaOptions,
     midiIn,
@@ -94,6 +95,7 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["VOLUME"], get(volume))
     send(OUTPUT, ["TEMPLATES"], get(templates))
     send(OUTPUT, ["OVERLAYS"], get(overlays))
+    send(OUTPUT, ["TIMERS"], get(timers))
 }
 
 export function newToast(msg: string) {
@@ -201,6 +203,7 @@ const saveList: { [key in SaveList]: any } = {
     exportPath: exportPath,
     scripturePath: scripturePath,
     recordingPath: recordingPath,
+    lockedOverlays: lockedOverlays,
     drawer: null,
     drawerTabsData: null,
     drawSettings: drawSettings,

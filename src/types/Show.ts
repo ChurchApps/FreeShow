@@ -96,6 +96,8 @@ export interface Timer {
     id?: string
     name: string
     type: "counter" | "clock" | "event"
+    viewType?: "time" | "line" | "circle"
+    circleMask?: boolean
     start?: number
     end?: number
     event?: string

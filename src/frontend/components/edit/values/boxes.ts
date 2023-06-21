@@ -175,7 +175,23 @@ export const boxes: Box = {
     timer: {
         icon: "timer",
         edit: {
-            default: [{ id: "timerId", input: "editTimer" }],
+            default: [
+                { id: "timerId", input: "editTimer" },
+                {
+                    name: "clock.type",
+                    input: "dropdown",
+                    id: "timer.viewType",
+                    value: "time",
+                    values: {
+                        options: [
+                            { id: "time", name: "$:timer.time:$" },
+                            { id: "line", name: "$:timer.line:$" },
+                            { id: "circle", name: "$:list.circle:$" },
+                        ],
+                    },
+                },
+                { name: "timer.mask", id: "timer.circleMask", input: "checkbox", value: false },
+            ],
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
                 { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },

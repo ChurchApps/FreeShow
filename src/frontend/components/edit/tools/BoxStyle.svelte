@@ -23,10 +23,9 @@
     })
 
     function getTextSelection(e: any) {
-        let sel: any = window.getSelection()
+        if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
 
-        // mouse up outside of textbox should also update selection
-        if (e.target.closest(".CSS")) return
+        let sel: any = window.getSelection()
 
         if (sel.type === "None") selection = null
         // else if (sel.type === "caret") selection = [sel.anchorOffset, sel.focusOffset]
@@ -57,6 +56,7 @@
     $: if (id === "mirror" && box) getMirrorValues()
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
+    $: if (id === "timer" && box) box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
 
     function getMirrorValues() {
         if (!item?.mirror || !box) return

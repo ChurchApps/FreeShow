@@ -44,7 +44,7 @@
     <Button
         on:click={previousSlide}
         title={$dictionary.preview?._previous_slide}
-        disabled={$outLocked || !$activeShow || slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
+        disabled={$outLocked || slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)}
         center
     >
         <Icon id="previous" size={1.2} />
@@ -86,7 +86,7 @@
     <Button
         on:click={nextSlide}
         title={$dictionary.preview?._next_slide}
-        disabled={$outLocked || !$activeShow || slide?.id === "temp" || (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length)}
+        disabled={$outLocked || slide?.id === "temp" || (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)}
         center
     >
         <Icon id="next" size={1.2} />

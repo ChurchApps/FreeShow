@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Slide } from "../../../types/Show"
+import type { ItemType, Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { clone } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
@@ -237,8 +237,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (replace && initializing) obj.oldData = { data: clone(obj.newData.data) }
 
-            console.log("DELETE SHOWS", deleting, showsList)
-
             // check for duplicate names inside itself
             if (!deleting) {
                 showsList.forEach(({ show }, i) => {
@@ -290,12 +288,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         // store show
                         if (!obj.oldData?.data[i]?.show) obj.oldData.data[i] = { id, show: a[id] }
 
+                        // add to deleted so the file can be deleted on save
+                        deletedShows.set([...get(deletedShows), { id, name: a[id].name }])
                         delete a[id]
 
                         return
                     }
 
                     if (!show) return
+
+                    // remove from deleted when restored
+                    deletedShows.set(get(deletedShows).filter((a) => a.id !== id))
 
                     a[id] = {
                         name: show.name || a[id]?.name || "",
@@ -663,14 +666,31 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 console.log("TEMPLATE", template)
 
+                console.log(slides)
+
                 showsCache.update((a) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
                         if ((slideId && slideId !== id) || !slide) return
 
-                        template.items.forEach((item: any, i: number) => {
-                            if (!slide.items[i] && !createItems) return
+                        let itemTypeIndex: any = {}
+                        template.items.forEach((item: any) => {
+                            // find the same type at same index
+                            let type: ItemType = item.type || "text"
+                            if (itemTypeIndex[type] === undefined) itemTypeIndex[type] = -1
+                            itemTypeIndex[type]++
 
-                            if (!slide.items[i]) {
+                            let tempCount = -1
+                            let itemIndex = slide.items.findIndex((a) => {
+                                let itemType = a.type || "text"
+                                if (itemType === type) tempCount++
+                                if (tempCount === itemTypeIndex[type]) return true
+                                return false
+                            })
+
+                            // add item
+                            if (itemIndex < 0) {
+                                if (!createItems) return
+
                                 // remove text from template & add to slide
                                 if (item.lines) item.lines = item.lines.map((line) => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: "" }] }))
                                 slide.items.push(item)
@@ -678,12 +698,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 return
                             }
 
-                            if (item.auto !== undefined) slide.items[i].auto = item.auto
-                            if (item.scrolling !== undefined) slide.items[i].scrolling = item.scrolling
-                            if (item.bindings?.length) slide.items[i].bindings = item.bindings
-                            slide.items[i].style = item.style || ""
-                            slide.items[i].align = item.align || ""
-                            slide.items[i].lines?.forEach((line: any, j: number) => {
+                            if (type !== "text") {
+                                slide.items[itemIndex] = item
+                                return
+                            }
+
+                            if (item.auto !== undefined) slide.items[itemIndex].auto = item.auto
+                            if (item.scrolling !== undefined) slide.items[itemIndex].scrolling = item.scrolling
+                            if (item.bindings?.length) slide.items[itemIndex].bindings = item.bindings
+                            slide.items[itemIndex].style = item.style || ""
+                            slide.items[itemIndex].align = item.align || ""
+                            slide.items[itemIndex].lines?.forEach((line: any, j: number) => {
                                 let templateLine = item.lines?.[j] || item.lines?.[0]
                                 line.align = templateLine?.align || ""
                                 line.text?.forEach((text: any, k: number) => {

@@ -89,6 +89,7 @@ function getSlidesText(show: any) {
     })
 
     slides.forEach((slide) => {
+        if (slide.group) text += "[" + slide.group + "]\n"
         slide.items.forEach((item: any) => {
             if (!item.lines) return
 
@@ -103,8 +104,14 @@ function getSlidesText(show: any) {
 
             text += "\n"
         })
+
+        // no lines in this slide
+        if (text.slice(text.length - 2) === "]\n") text += "\n"
     })
-    return text
+
+    text = text.replaceAll("\n\n\n", "\n\n")
+
+    return text.trim()
 }
 
 // ----- PROJECT -----

@@ -267,6 +267,7 @@ const copyActions: any = {
     slide: (data: any, fullGroup: boolean = false) => {
         let ref = _show().layouts("active").ref()?.[0]
         let layouts: any[] = []
+        let media: any = {}
 
         // dont know why this is like this when ctrl + c
         if (data.slides) data = data.slides
@@ -304,7 +305,16 @@ const copyActions: any = {
             return slide
         })
 
-        return { slides, layouts }
+        let backgrounds = layouts.filter((a) => a.background)
+        let showMedia = _show().get().media
+        backgrounds.forEach((layoutData) => {
+            let bgId = layoutData.background
+            let bg = showMedia[bgId]
+            if (!bg) return
+            media[bgId] = bg
+        })
+
+        return { slides, layouts, media }
     },
     group: (data: any) => copyActions.slide(data, true),
     overlay: (data: any) => {
@@ -425,6 +435,12 @@ const pasteActions: any = {
         console.log(newSlides)
 
         // TODO: undo/redo this is buggy
+
+        // media
+        if (data.media) {
+            let showMedia = _show().get().media
+            _show().set({ key: "media", value: { ...showMedia, ...data.media } })
+        }
 
         history({ id: "SLIDES", newData: { data: newSlides, layouts, index: index !== undefined ? index + 1 : undefined } })
         setTimeout(() => console.log(get(showsCache)), 1000)

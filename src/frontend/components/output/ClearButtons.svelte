@@ -45,8 +45,13 @@
             <!-- disabled={($outLocked && activeClear === "background") || isOutCleared("background", $outputs)} -->
             <Button
                 on:click={() => {
-                    autoChange = false
-                    activeClear = "background"
+                    if (activeClear === "background") {
+                        autoChange = true
+                        activeClear = null
+                    } else {
+                        autoChange = false
+                        activeClear = "background"
+                    }
                 }}
                 title={$dictionary.preview?.background}
                 dark={activeClear !== "background"}
@@ -72,8 +77,13 @@
             <!-- disabled={($outLocked && activeClear === "slide") || isOutCleared("slide", $outputs)} -->
             <Button
                 on:click={() => {
-                    autoChange = false
-                    activeClear = "slide"
+                    if (activeClear === "slide") {
+                        autoChange = true
+                        activeClear = null
+                    } else {
+                        autoChange = false
+                        activeClear = "slide"
+                    }
                 }}
                 title={$dictionary.preview?.slide}
                 dark={activeClear !== "slide"}
@@ -99,8 +109,13 @@
             <!-- disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs, true)} -->
             <Button
                 on:click={() => {
-                    autoChange = false
-                    activeClear = "overlays"
+                    if (activeClear === "overlays") {
+                        autoChange = true
+                        activeClear = null
+                    } else {
+                        autoChange = false
+                        activeClear = "overlays"
+                    }
                 }}
                 title={$dictionary.preview?.overlays}
                 dark={activeClear !== "overlays"}
@@ -126,8 +141,13 @@
             <!-- disabled={($outLocked && activeClear === "audio") || !Object.keys($playingAudio).length} -->
             <Button
                 on:click={() => {
-                    autoChange = false
-                    activeClear = "audio"
+                    if (activeClear === "audio") {
+                        autoChange = true
+                        activeClear = null
+                    } else {
+                        autoChange = false
+                        activeClear = "audio"
+                    }
                 }}
                 title={$dictionary.preview?.audio}
                 dark={activeClear !== "audio"}
@@ -153,8 +173,13 @@
             <!-- disabled={($outLocked && activeClear === "nextTimer") || isOutCleared("transition", $outputs)} -->
             <Button
                 on:click={() => {
-                    autoChange = false
-                    activeClear = "nextTimer"
+                    if (activeClear === "nextTimer") {
+                        autoChange = true
+                        activeClear = null
+                    } else {
+                        autoChange = false
+                        activeClear = "nextTimer"
+                    }
                 }}
                 title={$dictionary.preview?.nextTimer}
                 dark={activeClear !== "nextTimer"}

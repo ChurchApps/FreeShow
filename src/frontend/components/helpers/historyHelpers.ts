@@ -6,6 +6,7 @@ import {
     activeShow,
     activeStage,
     defaultProjectName,
+    deletedShows,
     dictionary,
     drawerTabsData,
     events,
@@ -276,6 +277,9 @@ export const _updaters = {
             // set text cache
             saveTextCache(id, data.data)
 
+            // remove from deleted when restored
+            deletedShows.set(get(deletedShows).filter((a) => a.id !== id))
+
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
                 a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps }
@@ -303,13 +307,14 @@ export const _updaters = {
                 })
             }
 
+            // add to deleted so the file can be deleted on save
+            deletedShows.set([...get(deletedShows), { id, name: get(shows)[id].name }])
+
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
                 delete a[id]
                 return a
             })
-
-            // TODO: delete local file?
         },
     },
 

@@ -19,11 +19,15 @@
 
     // auto scroll
     export let scrollElem: any
+    let lastScrollId = "-1"
     $: {
         if (scrollElem && outSlide !== null && outShow?.id === activeShow.id) {
-            let index = Math.max(0, outSlide - columns)
-            let offset = scrollElem.querySelector(".grid").children[index]?.offsetTop - scrollElem.offsetTop - 4
-            scrollElem.scrollTo(0, offset)
+            let index = Math.max(0, outSlide)
+            if (outShow.id + index !== lastScrollId) {
+                lastScrollId = outShow.id + index
+                let offset = scrollElem.querySelector(".grid").children[index]?.offsetTop - scrollElem.offsetTop - 4 - 50
+                scrollElem.scrollTo(0, offset)
+            }
         }
     }
 

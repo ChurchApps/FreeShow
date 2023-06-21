@@ -651,7 +651,9 @@
         "event": "Evento",
         "no_events": "Non ci sono eventi imminenti",
         "edit": "Modifica",
-        "create": "Crea"
+        "create": "Crea",
+        "line": "Line",
+        "mask": "Mask"
     },
     "clock": {
         "type": "Tipo",
