@@ -169,7 +169,7 @@ const receiveMAIN: any = {
     RECEIVE_MIDI: (msg) => playMidiIn(msg),
     DELETE_SHOWS: (a) => {
         if (!a.deleted.length) {
-            newToast("No shows to delete")
+            newToast("$toast.delete_shows_empty")
             return
         }
 

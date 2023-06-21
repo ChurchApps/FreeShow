@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { Event } from "../../../types/Calendar"
 import { OUTPUT, STAGE } from "../../../types/Channels"
-import { activeTimers, currentWindow, events, shows } from "../../stores"
+import { activeTimers, currentWindow, dictionary, events, shows } from "../../stores"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { setOutput } from "./output"
@@ -50,24 +50,25 @@ export function startEventTimer() {
     showTimeout = setTimeout(() => {
         showEvents.forEach((event) => {
             let eventTime: Date = new Date(event.from)
+            let toast = get(dictionary).toast || {}
 
             // less than 1 minute
             let timeLeft: number = eventTime.getTime() - currentTime.getTime()
             if (timeLeft <= ONE_MINUTE && timeLeft > ONE_MINUTE - INTERVAL) {
-                newToast("Starting show " + get(shows)[event.show!].name + " in less than a minute")
+                newToast(`${toast.starting_show} ${get(shows)[event.show!].name} ${toast.less_than_minute}`)
             }
             // less than 30 seconds
             if (timeLeft <= ONE_MINUTE / 2 && timeLeft > ONE_MINUTE / 2 - INTERVAL) {
-                newToast("Starting show " + get(shows)[event.show!].name + " in less than 30 seconds")
+                newToast(`${toast.starting_show} ${get(shows)[event.show!].name} ${toast.less_than_seconds.replace("{}", "30")}`)
             }
             // less than 10 seconds
             if (timeLeft <= TEN_SECONDS && timeLeft > TEN_SECONDS - INTERVAL) {
-                newToast("Starting show " + get(shows)[event.show!].name + " in less than 10 seconds")
+                newToast(`${toast.starting_show} ${get(shows)[event.show!].name} ${toast.less_than_seconds.replace("{}", "10")}`)
                 loadShows([event.show!])
             }
             // start show
             if (timeLeft <= 0 && timeLeft > 0 - INTERVAL) {
-                newToast("Starting show " + get(shows)[event.show!].name + " now!")
+                newToast(`${toast.starting_show} ${get(shows)[event.show!].name} ${toast.now}`)
                 let activeLayout = _show(event.show).get("settings.activeLayout")
                 setOutput("slide", { id: event.show, layout: activeLayout, index: 0, line: 0 })
             }

@@ -19,7 +19,7 @@
 
     function addItem() {
         if (!currentValue) {
-            newToast("No name")
+            newToast("$toast.no_name")
             return
         }
 

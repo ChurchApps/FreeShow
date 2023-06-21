@@ -62,7 +62,7 @@
     $: console.log(shortcuts)
     function addGroup() {
         if (!value.group.length) {
-            newToast("No name")
+            newToast("$toast.no_name")
             return
         }
 

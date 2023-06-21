@@ -180,7 +180,7 @@ export function save() {
 
 export function saveComplete() {
     saved.set(true)
-    newToast("Saved!")
+    newToast("$toast.saved")
 
     let mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId) return

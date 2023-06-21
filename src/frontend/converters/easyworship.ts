@@ -42,7 +42,7 @@ export function convertEasyWorship(data: any) {
     let songs = data.find((a: any) => a.content.song)?.content.song
     let songsWords = data.find((a: any) => a.content.word)?.content.word
     if (!songsWords) {
-        newToast("Missing SongsWords.db file.")
+        newToast("$toast.no_songswords_easyworship")
         return
     }
     // console.log(songsWords)

@@ -77,7 +77,7 @@
         let artist = ""
         let title = values.name
         if (!title) {
-            newToast("No name")
+            newToast("$toast.no_name")
             return
         }
 
@@ -89,13 +89,13 @@
         SEARCH_LYRICS: (data) => {
             loading = false
             if (!data.lyrics) {
-                newToast("Could not find lyrics!")
+                newToast("$toast.lyrics_undefined")
                 return
             }
 
             values.text = data.lyrics
             activateLyrics = true
-            newToast("Lyrics copied from Google!")
+            newToast("$toast.lyrics_copied")
         },
     })
 </script>

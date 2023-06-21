@@ -5,7 +5,7 @@ import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { changeOutputStyle, clearAll, clearOverlays, nextSlide, playNextGroup, previousSlide, selectProjectShow, updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearTimers } from "../components/output/clear"
-import { activeProject, activeShow, groups, midiIn, outLocked, outputs, projects, shows } from "../stores"
+import { activeProject, activeShow, dictionary, groups, midiIn, outLocked, outputs, projects, shows } from "../stores"
 import { send } from "./request"
 import { keysToID } from "../components/helpers/array"
 import { newToast } from "./messages"
@@ -110,7 +110,7 @@ export const midiActions = {
         // select project
         let selectedProject = keysToID(get(projects)).sort((a, b) => a.name.localeCompare(b.name))[index]
         if (!selectedProject) {
-            newToast("Received MIDI to change project, but no project found at index: " + index)
+            newToast(get(dictionary).toast?.midi_no_project + " " + index)
             return
         }
 
@@ -123,13 +123,13 @@ export const midiActions = {
     index_select_slide: (_, index: number) => {
         let showRef = _show().layouts("active").ref()[0]
         if (!showRef) {
-            newToast("Received MIDI to select slide, but no show active")
+            newToast("$toast.midi_no_show")
             return
         }
 
         let slideRef = showRef[index]
         if (!slideRef) {
-            newToast("Received MIDI to select slide, but no slide found at index: " + index)
+            newToast(get(dictionary).toast?.midi_no_slide + " " + index)
             return
         }
 
@@ -199,7 +199,7 @@ export function playMidiIn(msg) {
     if (midi.action) {
         let index = midi.values.velocity
         if (midi.action.includes("index_") && index < 0) {
-            newToast("Received MIDI in, but no velocity, defaults to first index.")
+            newToast("$toast.midi_no_velocity")
             index = 0
         }
         midiActions[midi.action](midi.actionData, index)

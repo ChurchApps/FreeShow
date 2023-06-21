@@ -7,7 +7,7 @@ let mediaRecorder
 let recordedChunks: any[] = []
 const options: any = { mimeType: "video/webm; codecs=vp9" }
 export function createMediaRecorder(stream) {
-    newToast("Recording started!")
+    newToast("$toast.recording_started")
     mediaRecorder = new MediaRecorder(stream, options)
     mediaRecorder.start()
 
@@ -35,7 +35,7 @@ function handleDataAvailable(e: any) {
 }
 
 async function handleStop() {
-    newToast("Recording stopped!")
+    newToast("$toast.recording_stopped")
 
     const blob = new Blob(recordedChunks, options)
     const arraybuffer = await blob.arrayBuffer()

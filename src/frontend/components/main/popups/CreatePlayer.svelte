@@ -14,7 +14,7 @@
     function add() {
         // TODO: remove url (keep only id)
         if (!data.id.length) {
-            newToast("No video ID")
+            newToast("$toast.no_video_id")
             return activePopup.set(null)
         }
 

@@ -429,7 +429,9 @@
         })
 
         if (formattedChapter === null) {
-            newToast("Chapter " + chapter + " does not exist in this book.")
+            let msg = $dictionary.toast?.chapter_undefined
+            msg.replace("{}", chapter)
+            newToast(msg)
             return ""
         }
 
@@ -465,7 +467,9 @@
             return []
         } else if (currentVerses.length === 1 && verses[firstBibleId]) {
             if (currentVerses[0] > Object.keys(verses[firstBibleId]).length) {
-                newToast("Verse " + verse + " does not exist in this chapter.")
+                let msg = $dictionary.toast?.verse_undefined
+                msg.replace("{}", verse)
+                newToast(msg)
             }
         }
 
@@ -492,7 +496,7 @@
         }
 
         let currentIndex: number = Number(moveLeft ? activeVerses[0] : activeVerses.at(-1))
-        
+
         let newSelection: string[] = []
         ;[...Array(activeVerses.length)].map((_, i: number) => {
             let newIndex: number = moveLeft ? currentIndex - i - 1 : currentIndex + i + 1

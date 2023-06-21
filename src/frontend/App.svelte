@@ -148,7 +148,7 @@
         }
 
         autosaveTimeout = setTimeout(() => {
-            newToast("Saving...")
+            newToast("$toast.saving")
             save()
             startAutosave()
         }, convertAutosave[$autosave])

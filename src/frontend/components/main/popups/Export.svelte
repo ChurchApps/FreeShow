@@ -100,7 +100,7 @@
 
     function exportClick() {
         if ($os.platform === "linux" && format.id === "pdf") {
-            newToast("Can't export as PDF on Linux.")
+            newToast("$toast.no_pdf_linux")
             return
         }
 

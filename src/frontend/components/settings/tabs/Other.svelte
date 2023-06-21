@@ -22,11 +22,11 @@
     // delete media thumbnail cache
     function deleteCache() {
         if (!Object.keys($mediaCache).length) {
-            newToast("Empty cache")
+            newToast("$toast.empty_cache")
             return
         }
 
-        newToast("Deleted media thumbnail cache")
+        newToast("$toast.deleted_cache")
         mediaCache.set({})
     }
 </script>

@@ -29,7 +29,7 @@
                 let activeList = Object.values(a).filter((a) => a.active === true)
                 if (!activeList.length) {
                     a[id].active = true
-                    newToast("You have to have at least one active output")
+                    newToast("$toast.one_output")
                 }
             }
 

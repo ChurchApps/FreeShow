@@ -523,7 +523,7 @@ const actions: any = {
         } else {
             let media = JSON.parse(obj.contextElem.getAttribute("data-media") || "{}")
             if (!media.video) {
-                newToast("Could not get media")
+                newToast("$toast.error_media")
                 return
             }
 
@@ -643,7 +643,7 @@ function changeSlideAction(obj: any, id: string) {
         let styleId: string = actions[id] || Object.keys(get(styles))[0]
 
         if (!styleId) {
-            newToast("No styles")
+            newToast("$toast.empty_styles")
             return
         }
 
