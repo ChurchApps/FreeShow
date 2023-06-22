@@ -70,7 +70,7 @@
     "screen": {
         "width": "Szerokość",
         "height": "Wysokość",
-        "pixels": "Pikseli",
+        "pixels": "pikseli",
         "top": "Góra",
         "right": "Prawo",
         "bottom": "Dół",
@@ -433,11 +433,11 @@
         "home": "Ekran główny",
         "mute": "Wycisz dźwięk",
         "unmute": "Przywróć dźwięk",
-        "toggle_time_marker": "Toggle time markers",
-        "add_time_marker": "Add time marker",
+        "toggle_time_marker": "Zaznacz czas",
+        "add_time_marker": "Dodaj znacznik czasu",
         "bind_to": "Powiąż z",
         "remove_binding": "Usuń powiązanie",
-        "choose_custom": "Choose custom",
+        "choose_custom": "Wybierz własny",
         "format": "Formatuj",
         "uppercase": "Wielkie litery",
         "lowercase": "Małe litery",
@@ -655,8 +655,8 @@
         "no_events": "Brak nadchodzących wydarzeń",
         "edit": "Edytuj",
         "create": "Utwórz",
-        "line": "Line",
-        "mask": "Mask"
+        "line": "Linia",
+        "mask": "Maska"
     },
     "clock": {
         "type": "Typ",
@@ -824,7 +824,7 @@
     "scripture": {
         "bibles": "Biblie z API.Bible",
         "custom": "Lub zaimportuj swoje",
-        "max_verses": "Maksymalna liczba wersetów na slajd",
+        "max_verses": "Wersetów na slajd",
         "verse_numbers": "Numeracja wersetów",
         "version": "Pokaż wersję",
         "reference": "Pokaż odniesienie",
