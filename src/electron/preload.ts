@@ -10,7 +10,7 @@ let ready: boolean = true
 let debug: boolean = true
 contextBridge.exposeInMainWorld("api", {
     send: (channel: ValidChannels, data: any) => {
-        if (!filters.includes(channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
+        if (!filters.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
         if (!channels.includes(channel) || data.id || ready || debug) {
             ipcRenderer.send(channel, data)
             ready = false

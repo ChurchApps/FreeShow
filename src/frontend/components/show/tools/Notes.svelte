@@ -3,6 +3,7 @@
     import { dictionary } from "../../../stores"
 
     export let value: string
+    export let placeholder: string = ""
     export let disabled: boolean = false
     export let lines: number = 4
     // convert from old value
@@ -26,7 +27,7 @@
 </script>
 
 <div class="paper">
-    <textarea placeholder="{$dictionary.empty?.text}..." class="edit" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} {disabled} />
+    <textarea placeholder={placeholder || $dictionary.empty?.text + "..."} class="edit" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} {disabled} />
 </div>
 
 <style>

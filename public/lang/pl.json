@@ -81,7 +81,7 @@
         "more_options": "Więcej opcji",
         "format_new_show": "Formatuj tekst",
         "split_lines": "Liczba linii",
-        "quick_example": "[Werset]\nLinia 1\nLinia 2\n\n[Refren]\nLinia 1\nLinia 2\nx2"
+        "quick_lyrics_example_text": "Linia"
     },
     "preview": {
         "_previous_show": "Podgląd pokazu",
@@ -433,8 +433,11 @@
         "home": "Ekran główny",
         "mute": "Wycisz dźwięk",
         "unmute": "Przywróć dźwięk",
+        "toggle_time_marker": "Toggle time markers",
+        "add_time_marker": "Add time marker",
         "bind_to": "Powiąż z",
         "remove_binding": "Usuń powiązanie",
+        "choose_custom": "Choose custom",
         "format": "Formatuj",
         "uppercase": "Wielkie litery",
         "lowercase": "Małe litery",

@@ -51,7 +51,6 @@
         },
     }
 
-    const input = (e: any, key: string) => update(key, e.target.value)
     const change = (e: any, key: string) => update(key, e.detail)
     const check = (e: any, key: string) => update(key, e.target.checked)
 
@@ -83,7 +82,7 @@
                                 <p><T id="draw.{key}" /></p>
                             {/if}
                             {#if key === "color"}
-                                <Color {value} on:input={(e) => input(e, key)} style="width: 100%;" />
+                                <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
                             {:else if (key !== "hold" || $drawTool !== "paint") && ["glow", "hold", "rainbow", "hollow", "dots", "threed"].includes(key)}
                                 <div class="alignRight">
                                     <Checkbox checked={value} on:change={(e) => check(e, key)} />

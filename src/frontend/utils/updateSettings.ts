@@ -50,6 +50,7 @@ import {
     timeFormat,
     timers,
     videoExtensions,
+    videoMarkers,
     webFavorites,
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
@@ -184,7 +185,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     fullColors: (v: any) => fullColors.set(v),
     formatNewShow: (v: any) => formatNewShow.set(v),
     groups: (v: any) => groups.set(v),
-    imageExtensions: (v: any) => imageExtensions.set(v),
     labelsDisabled: (v: any) => labelsDisabled.set(v),
     mediaFolders: (v: any) => mediaFolders.set(v),
     mediaOptions: (v: any) => mediaOptions.set(v),
@@ -204,10 +204,16 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     theme: (v: any) => theme.set(v),
     transitionData: (v: any) => transitionData.set(v),
     // themes: (v: any) => themes.set(v),
+    imageExtensions: (v: any) => {
+        // set this in case it's not up to date with stores
+        if (!v.includes("webp")) v.push("webp")
+        imageExtensions.set(v)
+    },
     videoExtensions: (v: any) => videoExtensions.set(v),
     webFavorites: (v: any) => webFavorites.set(v),
     volume: (v: any) => volume.set(v),
     midiIn: (v: any) => midiIn.set(v),
+    videoMarkers: (v: any) => videoMarkers.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
 }

@@ -81,7 +81,7 @@
         "more_options": "More options",
         "format_new_show": "Dar formato al texto",
         "split_lines": "Número de líneas",
-        "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
+        "quick_lyrics_example_text": "Line"
     },
     "preview": {
         "_previous_show": "Programa anterior",
@@ -433,8 +433,11 @@
         "home": "Inicio",
         "mute": "Silenciar",
         "unmute": "Activar micrófono",
+        "toggle_time_marker": "Toggle time markers",
+        "add_time_marker": "Add time marker",
         "bind_to": "Bind to",
         "remove_binding": "Remove binding",
+        "choose_custom": "Choose custom",
         "format": "Formatear",
         "uppercase": "Mayúscula",
         "lowercase": "Minúscula",

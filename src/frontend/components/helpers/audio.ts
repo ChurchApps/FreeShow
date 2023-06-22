@@ -27,6 +27,7 @@ export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolea
     let audio = new Audio(path)
     let analyser: any = await getAnalyser(audio)
     playingAudio.update((a) => {
+        if (!analyser) return a
         a[path] = {
             name: name.indexOf(".") > -1 ? name.slice(0, name.lastIndexOf(".")) : name,
             paused: false,
@@ -141,7 +142,15 @@ export function clearAudio(path: string = "") {
 // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
 export async function getAnalyser(elem: any) {
     let ac = new AudioContext()
-    let source = ac.createMediaElementSource(elem)
+    let source
+
+    try {
+        source = ac.createMediaElementSource(elem)
+    } catch (err) {
+        console.error(err)
+
+        return
+    }
 
     // let analyser = ac.createAnalyser()
     // analyser.smoothingTimeConstant = 0.9

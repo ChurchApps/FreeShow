@@ -53,13 +53,9 @@
         if ($selected.id) actions[$selected.id]()
         activePopup.set(null)
     }
-
-    function colorChange(e: any) {
-        value = e.target.value
-    }
 </script>
 
-<Color {value} on:input={colorChange} height={100} />
+<Color {value} on:input={(e) => (value = e.detail)} visible />
 
 <br />
 

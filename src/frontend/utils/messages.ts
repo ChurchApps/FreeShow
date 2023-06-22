@@ -51,6 +51,7 @@ import {
     timers,
     toastMessages,
     videoExtensions,
+    videoMarkers,
     webFavorites,
 } from "../stores"
 import { alertUpdates, autoOutput, maxConnections, ports, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
@@ -240,6 +241,7 @@ const saveList: { [key in SaveList]: any } = {
     webFavorites: webFavorites,
     volume: null,
     midiIn: midiIn,
+    videoMarkers: videoMarkers,
     driveKeys: driveKeys,
     driveData: driveData,
     calendarAddShow: calendarAddShow,

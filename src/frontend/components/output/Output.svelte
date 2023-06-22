@@ -90,6 +90,7 @@
         UPDATE_VIDEO: (a: any) => {
             if (mirror) return
             let returnData: any = { id: outputId }
+
             if (a.data) {
                 videoData = a.data
                 returnData.data = videoData
@@ -98,15 +99,18 @@
                     // send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime })
                 }, 500)
             }
+
             if (a.time !== undefined) {
                 setTime(a.time)
                 returnData.time = videoTime
+                // returnData.updatePreview = true
             } else if (videoData.paused) {
                 returnData.time = videoTime
                 setTimeout(() => {
                     if (videoData.paused) send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime, updatePreview: a.updatePreview })
                 }, 500)
             }
+
             send(OUTPUT, ["MAIN_VIDEO"], returnData)
         },
         BACKGROUND: (a: any) => {
@@ -238,6 +242,7 @@
     let tempVideoBG: any = null
     $: if (background || currentStyle?.backgroundImage) getTempBG()
     else setTimeout(resetTempBG, 100)
+
     function getTempBG() {
         if (!background || !layers.includes("background")) {
             if (!currentStyle?.backgroundImage) {
@@ -252,6 +257,8 @@
         tempVideoBG = background
     }
     function resetTempBG() {
+        if (background || currentStyle?.backgroundImage) return
+
         tempVideoBG = null
     }
 
@@ -279,8 +286,6 @@
         if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
         if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
     }
-
-    // $: console.log(background, tempVideoBG, layers)
 </script>
 
 <Zoomed
@@ -295,7 +300,7 @@
 >
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} background={tempVideoBG} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
+            <MediaOutput {...tempVideoBG} {background} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
         </div>
     {/if}
 

@@ -18,12 +18,14 @@ import {
     midiIn,
     overlays,
     projects,
+    refreshEditSlide,
     scriptures,
     selected,
     shows,
     showsCache,
     stageShows,
     templates,
+    videoMarkers,
 } from "../../stores"
 import { newToast } from "../../utils/messages"
 import { removeSlide } from "../context/menuClick"
@@ -477,14 +479,15 @@ const deleteActions = {
                 if (currentItems[i]) currentItems.splice(i, 1)
             })
 
-            let override = editId + "#" + get(activeEdit).items?.join(",")
+            let override = editId + "_delete#" + get(activeEdit).items?.join(",")
             history({
                 id: "UPDATE",
                 oldData: { id: editId },
-                newData: { key: "items", data: currentItems, indexes: get(activeEdit).items },
+                newData: { key: "items", data: currentItems },
                 location: { page: "edit", id: get(activeEdit).type + "_items", override },
             })
 
+            refreshEditSlide.set(true)
             return
         }
 
@@ -500,6 +503,8 @@ const deleteActions = {
                 slide,
             },
         })
+
+        refreshEditSlide.set(true)
     },
     slide: (data) => {
         removeSlide(data)
@@ -607,6 +612,17 @@ const deleteActions = {
         } else {
             newToast("$error.keep_one_layout")
         }
+    },
+    video_marker: (data: any) => {
+        let index = data.index
+        let id = get(activeShow)?.id || ""
+        if (!id) return
+
+        videoMarkers.update((a) => {
+            a[id].splice(index, 1)
+
+            return a
+        })
     },
 }
 

@@ -81,7 +81,7 @@
         "more_options": "Flere alternativer",
         "format_new_show": "Formater tekst",
         "split_lines": "Antall linjer",
-        "quick_example": "[Verse]\nLinje 1\nLinje 2\n\n[Chorus]\nLinje 1\nLinje 2\nx2"
+        "quick_lyrics_example_text": "Linje"
     },
     "preview": {
         "_previous_show": "Forrige show",
@@ -433,8 +433,11 @@
         "home": "Hjem",
         "mute": "Slå av lyden",
         "unmute": "Slå på lyden",
+        "toggle_time_marker": "Veksle tidsmarkører",
+        "add_time_marker": "Legg til tidsmarkør",
         "bind_to": "Bind til",
         "remove_binding": "Fjern binding",
+        "choose_custom": "Velg egen",
         "format": "Formater",
         "uppercase": "Gjør tekst stor",
         "lowercase": "Gjør tekst liten",

@@ -54,10 +54,10 @@
     //   background = currentOutput.out?.background || {}
     // }
 
-    // TODO: works for youtube, but not regular videos...
-    $: if (!mirror && !hasLoaded && background?.startAt !== undefined) {
+    $: if (!mirror && !hasLoaded && background?.startAt !== undefined) changeTime()
+    function changeTime() {
         setTimeout(() => {
-            send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: background.startAt })
+            send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: background.startAt, updatePreview: true })
             delete background.startAt
         }, 100)
     }
@@ -138,6 +138,8 @@
             currentAnalyser = await getAnalyser(video)
             currentAnalysedElem = video
         }
+        if (!currentAnalyser) return
+
         playingVideos.set([{ video, analyser: currentAnalyser }])
         analyseAudio()
     }

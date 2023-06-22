@@ -48,7 +48,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 
             // WIP update bg (muted, loop, time)
             // , time: data.startAt || 0
-            if (key === "background" && data) send(OUTPUT, ["UPDATE_VIDEO"], { id, data: { muted: data.muted || false, loop: data.loop || false } })
+            if (key === "background" && data) send(OUTPUT, ["UPDATE_VIDEO"], { id, data: { muted: data.muted || false, loop: data.loop || false }, time: data.startAt || 0 })
         })
 
         return a

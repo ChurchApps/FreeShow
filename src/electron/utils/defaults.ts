@@ -58,7 +58,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     splitLines: 0,
     defaultProjectName: "date",
     videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],
-    imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif"],
+    imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp"],
     theme: "default",
     transitionData: {
         text: { type: "fade", duration: 500, easing: "sine" },
@@ -112,6 +112,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         verse: { name: "verse", default: true, color: "#5825f5" },
     },
     midiIn: {},
+    videoMarkers: {},
 }
 
 export const defaultThemes: any = {

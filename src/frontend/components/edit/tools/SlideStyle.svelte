@@ -30,11 +30,6 @@
         }
     }
 
-    const inputChange = (e: any, key: string) => {
-        settings[key] = e.target.value
-        update()
-    }
-
     function update() {
         if (!editSlide) return
 
@@ -64,7 +59,13 @@
     <h6 style="margin-top: 10px;"><T id="edit.style" /></h6>
     <CombinedInput>
         <p><T id="edit.background_color" /></p>
-        <Color bind:value={settings.color} on:input={(e) => inputChange(e, "color")} />
+        <Color
+            bind:value={settings.color}
+            on:input={(e) => {
+                settings.color = e.detail
+                update()
+            }}
+        />
     </CombinedInput>
 
     <h6><T id="settings.resolution" /></h6>

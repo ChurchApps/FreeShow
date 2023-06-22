@@ -43,7 +43,7 @@
             if (edit.icon === "overlay") edit.icon = "overlays"
 
             edit.name = names[type](edit.id)
-            if (!edit.name) return a
+            if (edit.name === undefined) return a
 
             if (type === "show") edit.show = clone($activeShow)
 
@@ -82,7 +82,7 @@
                         border
                     >
                         <Icon id={edited.icon} right />
-                        <p style="margin: 3px 5px;">{edited.name}</p>
+                        <p style="margin: 3px 5px;">{edited.name || "—"}</p>
                     </Button>
                 </div>
             {/each}

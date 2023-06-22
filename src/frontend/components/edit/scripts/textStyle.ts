@@ -313,8 +313,14 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd: boolean = f
     let lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
     let currentEndTextLength = lastEndChild.innerText.length
 
-    range.setStart(lineElem.childNodes[childElem].childNodes[0], pos - currentTextLength)
-    if (toEnd) range.setEnd(lastEndChild.childNodes[0], currentEndTextLength)
+    let breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
+    if (breakElem) return
+
+    let startElem = lineElem.childNodes[childElem].childNodes[0]
+    let endElem = lastEndChild.childNodes[0]
+
+    range.setStart(startElem, pos - currentTextLength)
+    if (toEnd) range.setEnd(endElem, currentEndTextLength)
     else range.collapse(true)
 
     sel?.removeAllRanges()

@@ -21,7 +21,7 @@
         groups.update((a) => {
             if (key === "name" && a[id].default) delete a[id].default
 
-            let value = e.target?.value
+            let value = e.target?.value || e
             if (key === "shortcut") value = e.detail.name
             if (value === "—") value = ""
 
@@ -89,7 +89,7 @@
 <!-- <h3><T id="settings.add_group" /></h3> -->
 <CombinedInput>
     <TextInput style="flex: 3;" value={value.group} on:input={(e) => changeValue(e, "group")} />
-    <Color value={value.groupColor} on:input={(e) => changeValue(e, "groupColor")} />
+    <Color value={value.groupColor} on:input={(e) => (value.groupColor = e.detail)} />
     <Button style="white-space: nowrap;" center on:click={addGroup}>
         <Icon id="add" right />
         <T id="settings.add" />
@@ -106,7 +106,7 @@
             {:else}
               {group.name}
             {/if} -->
-        <Color value={group.color} on:input={(e) => changeGroup(e, group.id, "color")} />
+        <Color value={group.color} on:input={(e) => changeGroup(e.detail, group.id, "color")} />
         <!-- shortcut -->
         <Dropdown title={$dictionary.settings?.group_shortcut} style="flex: 0.5;" value={group.shortcut || "—"} options={shortcuts} on:click={(e) => changeGroup(e, group.id, "shortcut")} center />
         <Button

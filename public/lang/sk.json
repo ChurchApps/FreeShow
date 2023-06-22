@@ -81,7 +81,7 @@
         "more_options": "Viac možností",
         "format_new_show": "Format text",
         "split_lines": "Počty riadkov",
-        "quick_example": "[Verse]\nRiadok 1\nRiadok 2\n\n[Chorus]\nRiadok 1\nRiadok 2\nx2"
+        "quick_lyrics_example_text": "Riadok"
     },
     "preview": {
         "_previous_show": "Predchádzajúca prezentácia",
@@ -433,8 +433,11 @@
         "home": "Domov",
         "mute": "Stíšiť",
         "unmute": "Zapnúť zvuk",
+        "toggle_time_marker": "Toggle time markers",
+        "add_time_marker": "Add time marker",
         "bind_to": "Bind to",
         "remove_binding": "Remove binding",
+        "choose_custom": "Choose custom",
         "format": "Formát",
         "uppercase": "Veľké písmená",
         "lowercase": "Malé písmená",

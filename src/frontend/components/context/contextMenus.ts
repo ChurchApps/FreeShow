@@ -192,6 +192,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // https://www.musicnotes.com/now/tips/a-complete-guide-to-chord-symbols-in-music/
     chord: ["set_key", "custom_key"],
 
+    // MEDIA
+    video_marker: ["rename", "delete"],
+
     // STAGE
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
 

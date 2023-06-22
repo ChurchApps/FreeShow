@@ -1,7 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Item } from "../../../types/Show"
-    import { convertText } from "../../converters/txt"
+    import { convertText, getQuickExample } from "../../converters/txt"
+    import { mergeDuplicateSlides } from "../../show/slides"
     import { slidesOptions } from "../../stores"
     import { removeSlide } from "../context/menuClick"
     import { clone } from "../helpers/array"
@@ -9,7 +10,6 @@
     import { getGlobalGroup } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import Notes from "./tools/Notes.svelte"
-    import { mergeDuplicateSlides } from "../../show/slides"
 
     export let currentShow: any
 
@@ -330,4 +330,4 @@
     }
 </script>
 
-<Notes style="padding: 30px;font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" value={text} on:change={editText} />
+<Notes style="padding: 30px;font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" placeholder={getQuickExample()} value={text} on:change={editText} />

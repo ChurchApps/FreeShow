@@ -215,8 +215,6 @@
     // TODO: sort by name
     $: templateList = Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name }))
 
-    const updateColor = (e: any) => update("numberColor", e.target.value)
-
     function update(id: string, value: any) {
         scriptureSettings.update((a) => {
             a[id] = value
@@ -321,7 +319,7 @@
         {#if $scriptureSettings.verseNumbers}
             <CombinedInput textWidth={70}>
                 <p><T id="edit.color" /></p>
-                <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={updateColor} />
+                <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={(e) => update("numberColor", e.detail)} />
             </CombinedInput>
         {/if}
         <CombinedInput textWidth={70}>

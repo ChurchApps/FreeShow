@@ -150,7 +150,7 @@
 <CombinedInput>
     <p><T id="settings.color_when_active" /></p>
     <span style="width: 200px;">
-        <Color value={currentOutput.color} on:input={(e) => updateOutput("color", getValue(e))} />
+        <Color value={currentOutput.color} on:input={(e) => updateOutput("color", e.detail)} />
     </span>
 </CombinedInput>
 

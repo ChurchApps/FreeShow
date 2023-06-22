@@ -61,7 +61,7 @@
     <h6><T id="edit.style" /></h6>
     <CombinedInput>
         <p><T id="edit.background_color" /></p>
-        <Color value={settings.color || defaultSettings.color} on:input={(e) => updateStageSettings(e, "color")} />
+        <Color value={settings.color || defaultSettings.color} on:input={(e) => updateStageSettings(e.detail, "color")} />
     </CombinedInput>
 
     <!-- <h6><T id="settings.resolution" /></h6>

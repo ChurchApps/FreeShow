@@ -312,7 +312,7 @@
             <Icon id="theme" size={1.2} right />
             <T id="calendar.color" />
         </p>
-        <Color bind:value={editEvent.color} style="width: 50%;" />
+        <Color value={editEvent.color} on:input={(e) => (editEvent.color = e.detail)} style="width: 50%;" />
     </CombinedInput>
 
     <CombinedInput textWidth={30}>
@@ -348,120 +348,6 @@
     </CombinedInput>
 {/if}
 <!-- TODO: timers -->
-
-<!-- <main>
-    <div class="sections">
-        <section>
-            <Dropdown style="width: 100%;" options={types} value={selectedType.name} on:click={(e) => (selectedType = e.detail)} />
-        </section>
-
-        <br />
-
-        {#if selectedType.id === "event"}
-            <section>
-                <span>
-                    <Icon id="clock" size={1.2} right />
-                    <p><T id="calendar.time" /></p>
-                </span>
-                <Checkbox checked={editEvent.time} on:change={(e) => check(e, "time")} />
-            </section>
-        {/if}
-
-        <section style="flex-direction: column;align-items: initial;">
-            <span>
-                <span>
-                    <input type="date" title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
-                    <input type="time" title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} disabled={!editEvent.time} />
-                </span>
-                <p style="padding: 0.5em;display: flex;justify-content: center;">
-                    <Icon id="next" size={1.5} />
-                </p>
-                <span>
-                    <input type="date" title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
-                    <input type="time" title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} disabled={!editEvent.time} />
-                </span>
-            </span>
-        </section>
-
-        <br />
-
-        <section>
-            <span>
-                <Icon id="loop" size={1.2} right />
-                <p><T id="calendar.repeat" /></p>
-            </span>
-            <Checkbox checked={editEvent.repeat} on:change={(e) => check(e, "repeat")} />
-        </section>
-
-        {#if editEvent.repeat}
-            <section>
-                <span>
-                    <p><T id="calendar.repeat_every" /></p>
-                    <NumberInput value={editEvent.repeatData.count} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
-                    <Dropdown style="width: 100px;" options={repeats} value={repeats.find((a) => a.id === editEvent.repeatData.type)?.name || ""} on:click={(e) => (editEvent.repeatData.type = e.detail.id)} />
-                    <p><T id="calendar.repeat_until" /></p>
-                    <Dropdown style="width: 150px;" options={endings} value={endings.find((a) => a.id === editEvent.repeatData.ending)?.name || ""} on:click={(e) => (editEvent.repeatData.ending = e.detail.id)} />
-
-                    {#if editEvent.repeatData.ending === "date"}
-                        <input type="date" bind:value={editEvent.repeatData.endingDate} />
-                    {:else if editEvent.repeatData.ending === "after"}
-                        <NumberInput value={editEvent.repeatData.afterRepeats} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
-                        <T id="calendar.ending_times" />
-                    {/if}
-                </span>
-            </section>
-        {/if}
-
-        <hr />
-
-        {#if selectedType.id === "event"}
-            <section>
-                <span>
-                    <Icon id="edit" size={1.2} right />
-                    <p><T id="calendar.name" /></p>
-                </span>
-                <TextInput value={editEvent.name} style="width: 50%;" on:input={(e) => inputChange(e, "name")} />
-            </section>
-
-            <section>
-                <span>
-                    <Icon id="theme" size={1.2} right />
-                    <p><T id="calendar.color" /></p>
-                </span>
-                <Color bind:value={editEvent.color} style="width: 50%;" />
-            </section>
-
-            <section>
-                <span>
-                    <Icon id="location" size={1.2} right />
-                    <p><T id="calendar.location" /></p>
-                </span>
-                <TextInput value={editEvent.location} style="width: 50%;" on:input={(e) => inputChange(e, "location")} />
-            </section>
-
-            <section>
-                <span>
-                    <Icon id="notes" size={1.2} right />
-                    <p><T id="calendar.notes" /></p>
-                </span>
-                <TextInput value={editEvent.notes} style="width: 50%;" on:input={(e) => inputChange(e, "notes")} />
-            </section>
-        {:else if selectedType.id === "show"}
-            <Button
-                on:click={() => {
-                    popupData.set({ action: "select_show", location: "event" })
-                    activePopup.set("select_show")
-                }}
-                style="flex: 1;overflow: hidden;"
-                dark
-                center
-            >
-                <Icon id="showIcon" right />
-                <p style="white-space: normal;"><T id="popup.select_show" />: {selectedShow.name || "—"}</p>
-            </Button>
-        {/if}
-    </div>
-</main> -->
 
 <br />
 

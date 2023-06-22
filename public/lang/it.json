@@ -81,7 +81,7 @@
         "more_options": "Altre opzioni",
         "format_new_show": "Formato del testo",
         "split_lines": "Nummero di linee",
-        "quick_example": "[Verse]\nLine 1\nLine 2\n\n[Chorus]\nLine 1\nLine 2\nx2"
+        "quick_lyrics_example_text": "Line"
     },
     "preview": {
         "_previous_show": "Spettacolo precedente",
@@ -433,8 +433,11 @@
         "home": "Home",
         "mute": "Muta",
         "unmute": "Smuta",
+        "toggle_time_marker": "Toggle time markers",
+        "add_time_marker": "Add time marker",
         "bind_to": "Bind to",
         "remove_binding": "Remove binding",
+        "choose_custom": "Choose custom",
         "format": "Formato",
         "uppercase": "Rendi maiuscolo",
         "lowercase": "Rendi minuscolo",

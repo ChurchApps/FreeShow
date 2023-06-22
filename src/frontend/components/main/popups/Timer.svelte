@@ -97,9 +97,6 @@
     function toggleOverflow(e: any) {
         timer.overflow = e.target.checked
     }
-    function changeOverflowColor(e: any) {
-        timer.overflowColor = e.target.value
-    }
 
     // timer
     function createTimer() {
@@ -181,7 +178,7 @@
     {#if timer.overflow}
         <CombinedInput>
             <p><T id="timer.overflow_color" /></p>
-            <Color style="width: 30%;" value={timer.overflowColor || "red"} on:input={changeOverflowColor} />
+            <Color style="width: 30%;" value={timer.overflowColor || "red"} on:input={(e) => (timer.overflowColor = e.detail)} />
         </CombinedInput>
     {/if}
 

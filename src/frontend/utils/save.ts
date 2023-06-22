@@ -69,6 +69,7 @@ import {
     transitionData,
     undoHistory,
     videoExtensions,
+    videoMarkers,
     volume,
     webFavorites,
 } from "../stores"
@@ -139,6 +140,7 @@ export function save() {
         templateCategories: get(templateCategories),
         timers: get(timers),
         midiIn: get(midiIn),
+        videoMarkers: get(videoMarkers),
     }
 
     let allSavedData: any = {

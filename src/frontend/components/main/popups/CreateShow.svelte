@@ -1,7 +1,7 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
     import { ShowObj } from "../../../classes/Show"
-    import { convertText } from "../../../converters/txt"
+    import { convertText, getQuickExample } from "../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, shows, splitLines } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
@@ -154,7 +154,7 @@
 
 {#if activateLyrics}
     <!-- <span><T id="show.quick_lyrics" /></span> -->
-    <TextArea placeholder={$dictionary.create_show?.quick_example} style="height: 250px;min-width: 500px;" value={values.text} on:input={(e) => changeValue(e)} />
+    <TextArea placeholder={getQuickExample()} style="height: 250px;min-width: 500px;" value={values.text} on:input={(e) => changeValue(e)} />
 {/if}
 
 <Button on:click={textToShow} style="width: 100%;margin-top: 10px;" dark center>

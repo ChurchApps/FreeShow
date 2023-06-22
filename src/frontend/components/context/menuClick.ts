@@ -26,6 +26,7 @@ import {
     previousShow,
     projectView,
     projects,
+    refreshEditSlide,
     saved,
     scriptures,
     selected,
@@ -35,6 +36,7 @@ import {
     slidesOptions,
     stageShows,
     styles,
+    templates,
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
@@ -98,6 +100,7 @@ const actions: any = {
         else if (id === "folder") activeRename.set("folder_" + data.id)
         else if (id === "layout") activeRename.set("layout_" + data)
         else if (id === "stage") activeRename.set("stage_" + data.id)
+        else if (obj.contextElem.classList.contains("#video_marker")) activeRename.set("marker_" + obj.contextElem.id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
     },
@@ -121,6 +124,10 @@ const actions: any = {
     delete: (obj: any) => {
         if (deleteAction(obj.sel)) return
 
+        if (obj.contextElem?.classList.value.includes("#video_marker")) {
+            deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
+            return
+        }
         if (obj.contextElem?.classList.value.includes("#edit_box")) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
             return
@@ -777,6 +784,37 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
 
 function format(id: string, obj: any) {
     let slides: any[] = []
+
+    let editing = get(activeEdit)
+    let items = editing.items || []
+
+    if (editing.id) {
+        let currentItems: any[] = []
+        if (editing.type === "overlay") currentItems = get(overlays)[editing.id].items
+        if (editing.type === "template") currentItems = get(templates)[editing.id].items
+
+        let newItems: any[] = []
+        currentItems.forEach((item: any) => {
+            item.lines?.forEach((line: any, j: number) => {
+                line.text?.forEach((text: any, k: number) => {
+                    item.lines[j].text[k].value = formatting[id](text.value)
+                })
+            })
+            newItems.push(item)
+        })
+
+        let override = editing.id + "_format#" + items.join(",")
+        history({
+            id: "UPDATE",
+            oldData: { id: editing.id },
+            newData: { key: "items", data: newItems, indexes: items },
+            location: { page: "edit", id: editing.type + "_items", override },
+        })
+
+        refreshEditSlide.set(true)
+        return
+    }
+
     let ref: any = _show().layouts("active").ref()[0]
     if (obj.sel.id?.includes("slide")) {
         slides = obj.sel.data.map((a: any) => ref[a.index].id)
@@ -789,11 +827,11 @@ function format(id: string, obj: any) {
     }
 
     slides.forEach((slide) => {
-        let items: any = _show().slides([slide]).items(get(activeEdit).items).get()[0]
+        let slideItems: any = _show().slides([slide]).items(get(activeEdit).items).get()[0]
         let newData: any = { style: { values: [] } }
 
         let newItems: any[] = []
-        items.forEach((item: any) => {
+        slideItems.forEach((item: any) => {
             item.lines?.forEach((line: any, j: number) => {
                 line.text?.forEach((text: any, k: number) => {
                     item.lines[j].text[k].value = formatting[id](text.value)
@@ -803,8 +841,10 @@ function format(id: string, obj: any) {
         })
         newData.style.values = newItems
 
-        history({ id: "setItems", newData, location: { page: get(activePage) as any, show: get(activeShow)!, items: get(activeEdit).items, slide: slide } })
+        history({ id: "setItems", newData, location: { page: get(activePage) as any, show: get(activeShow)!, items, slide } })
     })
+
+    refreshEditSlide.set(true)
 }
 
 const formatting: any = {
