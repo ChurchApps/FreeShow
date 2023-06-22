@@ -178,7 +178,8 @@ export const dropActions: any = {
     },
     overlays: ({ drag, drop }: any) => dropActions.templates({ drag, drop }),
     edit: ({ drag }: any) => {
-        if (drag.id !== "media") return
+        if (drag.id !== "media" && drag.id !== "files") return
+
         drag.data.forEach(({ path }: any) => addItem("media", null, { src: path }))
     },
 }
