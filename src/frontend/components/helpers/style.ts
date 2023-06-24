@@ -12,7 +12,7 @@ export const getStyles = (str: string | null | undefined, removeTxt: boolean = f
 
         let replaced: string = removeText(style)
 
-        const dontReplace: string[] = ["text-decoration", "text-shadow", "box-shadow", "font-family", "transform"]
+        const dontReplace: string[] = ["text-decoration", "text-transform", "text-shadow", "box-shadow", "font-family", "transform"]
 
         // remove text
         if (!key.includes("color") && !dontReplace.includes(key) && removeTxt && style.length > replaced.length && replaced.length > 0) style = replaced

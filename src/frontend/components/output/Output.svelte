@@ -97,7 +97,7 @@
                 setTimeout(() => {
                     send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData })
                     // send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime })
-                }, 500)
+                }, 300)
             }
 
             if (a.time !== undefined) {
@@ -141,6 +141,13 @@
                 if (autoPaused) videoData.paused = false
             }, 80)
         }, 10)
+
+        if (background.startAt && mirror) {
+            outputs.update((a) => {
+                delete a[outputId].out?.background?.startAt
+                return a
+            })
+        }
     }
 
     $: currentLayout = slide ? _show(slide.id).layouts([slide.layout]).ref()[0] : []

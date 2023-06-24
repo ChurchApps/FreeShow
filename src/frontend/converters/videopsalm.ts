@@ -134,9 +134,9 @@ export function convertVideopsalm(data: any) {
                 CCLI: song.CCLI || "",
             }
 
-            let { slides, layout }: any = createSlides(song)
+            let { slides, layout, notes }: any = createSlides(song)
             show.slides = slides
-            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: notes || "", slides: layout } }
 
             tempShows.push({ id: song.Guid || uid(), show })
 
@@ -180,13 +180,16 @@ function fixJSON(s: string) {
     return notKey ? s : s.slice(0, index + 1) + '"' + word + '"'
 }
 
-const VPgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
+const VPgroups: any = { V: "verse", C: "chorus", P: "pre_chorus", B: "bridge", T: "tag", I: "intro", O: "outro", N: "break" }
+// S: slide, R: other
 function createSlides({ Verses, Sequence }: Song) {
     // VerseOrderIndex
     let slides: any = {}
     let layout: any[] = []
     let sequence: string[] = Sequence?.split(" ") || []
     let sequences: any = {}
+
+    // console.log(Verses, Verses[0].Text)
     Verses.forEach((verse, i) => {
         if (verse.Text) {
             let id: string = uid()
@@ -210,12 +213,14 @@ function createSlides({ Verses, Sequence }: Song) {
             if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
         }
     })
-    if (sequence.length) {
+
+    let notes = ""
+    if (sequence.length >= layout.length) {
         layout = []
         sequence.forEach((group) => {
             if (sequences[group]) layout.push({ id: sequences[group] })
         })
-    }
+    } else if (sequence.length > 1) notes = sequence.join(", ")
 
-    return { slides, layout }
+    return { slides, layout, notes }
 }

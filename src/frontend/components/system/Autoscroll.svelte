@@ -7,11 +7,19 @@
     setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 800)
 
     let t: any = null
-    $: {
-        if (offset >= 0) {
-            if (t !== null) clearTimeout(t)
-            t = setTimeout(() => scrollElem?.scrollTo(0, offset), timeout)
-        }
+    $: if (offset >= 0) scroll()
+    function scroll() {
+        if (t !== null) return
+
+        t = setTimeout(() => {
+            scrollElem?.scrollTo(0, offset)
+            t = null
+        }, timeout)
+
+        // make sure its scrolled
+        setTimeout(() => {
+            if (offset !== scrollElem?.scrollTop) scroll()
+        }, timeout + 400)
     }
 </script>
 

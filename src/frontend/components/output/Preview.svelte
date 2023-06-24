@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../types/Channels"
     import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
-    import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
@@ -96,6 +94,7 @@
         " ": (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
             // TODO: ...
+            e.preventDefault()
             if (currentOutput.out?.slide?.id !== $activeShow?.id || ($activeShow && currentOutput.out?.slide?.layout !== $showsCache[$activeShow.id].settings.activeLayout)) nextSlide(e, true)
             else {
                 if (e.shiftKey) previousSlide()
@@ -132,14 +131,18 @@
             return
         }
 
-        if (["media", "video", "player"].includes(currentOutput.out?.background?.type || "")) {
-            e.preventDefault()
-            if (e.key === " ") {
-                videoData.paused = !videoData.paused
-                send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
-                // send(OUTPUT, ["UPDATE_VIDEO_TIME"], videoTime)
-            }
-        }
+        // if (["media", "video", "player"].includes(currentOutput.out?.background?.type || "")) {
+        //     e.preventDefault()
+        //     if (e.key === " ") {
+        //         videoData.paused = !videoData.paused
+        //         // send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
+        //         // // send(OUTPUT, ["UPDATE_VIDEO_TIME"], videoTime)
+
+        //         // Media.svelte sentToOutput()
+        //         send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData, updatePreview: true })
+        //         if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, data: videoData, updatePreview: true })
+        //     }
+        // }
     }
 
     function checkGroupShortcuts(e: any) {

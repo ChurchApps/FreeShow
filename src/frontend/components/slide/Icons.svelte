@@ -18,7 +18,7 @@
     export let style: string
 
     $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
-    $: notMuted = background?.muted === false
+    $: muted = background?.muted !== false
 
     $: nextTimer = (layoutSlide.nextTimer || 0) > 0 ? (layoutSlide.nextTimer > 59 ? joinTime(secondsToTime(layoutSlide.nextTimer)) : layoutSlide.nextTimer + "s") : null
     $: transition = layoutSlide?.transition || layoutSlide?.mediaTransition
@@ -29,7 +29,7 @@
 
     // TODO: history
     function mute() {
-        _show("active").media([layoutSlide.background]).set({ key: "muted", value: undefined })
+        _show("active").media([layoutSlide.background]).set({ key: "muted", value: false })
     }
 
     function resetTimer() {
@@ -106,11 +106,11 @@
             {/if}
         </div>
     {/if}
-    {#if notMuted}
+    {#if background && muted}
         <div>
             <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.actions?.mute} on:click={() => mute()}>
-                    <Icon id="volume" white />
+                <Button style="padding: 5px;" redHover title={$dictionary.actions?.unmute} on:click={() => mute()}>
+                    <Icon id="muted" white />
                 </Button>
             </div>
         </div>

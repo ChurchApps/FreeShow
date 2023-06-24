@@ -287,7 +287,9 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     // background
     if (background) {
         let bg = _show(showId).get("media")[background!]
-        if (bg) {
+        let outputBg = get(outputs)[outputIds[0]]?.out?.background
+
+        if (bg && bg.path !== outputBg?.path) {
             let bgData: any = {
                 name: bg.name,
                 type: bg.type || getMediaType(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)),

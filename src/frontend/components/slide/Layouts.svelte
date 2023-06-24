@@ -60,6 +60,15 @@
 
         zoomOpened = false
     }
+
+    let loading: boolean = false
+    $: if (showId) startLoading()
+    function startLoading() {
+        loading = true
+        setTimeout(() => {
+            loading = false
+        }, 8000)
+    }
 </script>
 
 <svelte:window on:mousedown={mousedown} />
@@ -90,7 +99,11 @@
         </span>
     {:else}
         <Center faded>
-            <T id="error.no_layouts" />
+            {#if loading}
+                <T id="remote.loading" />
+            {:else}
+                <T id="error.no_layouts" />
+            {/if}
         </Center>
     {/if}
     <span style="display: flex; align-items: center;position: relative;">

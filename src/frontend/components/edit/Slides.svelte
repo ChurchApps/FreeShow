@@ -132,8 +132,8 @@
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
 <Autoscroll {offset} bind:scrollElem style="display: flex;background-color: var(--primary-darker);">
-    <DropArea id="all_slides" selectChildren>
-        <DropArea id="slides" hoverTimeout={0} selectChildren>
+    <DropArea id="all_slides" scroll={false} selectChildren>
+        <DropArea id="slides" hoverTimeout={0} scroll={false} selectChildren>
             {#if layoutSlides.length}
                 <div class="grid" on:wheel={wheel}>
                     {#each layoutSlides as slide, i}

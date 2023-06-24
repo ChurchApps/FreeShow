@@ -70,13 +70,16 @@
     }
 
     function keydown(e: any) {
-        // WIP duplicate of Preview.svelte
         if (e.key !== " ") return
         if (e.target.closest(".edit") || e.target.closest("input")) return
 
-        // return if slide is outputted
+        let show = $activeShow
+        if (show && (show.type === "show" || show.type === undefined)) return
+
         let currentOutput = $outputs[getActiveOutputs()[0]]
-        if (currentOutput?.out?.slide) return
+        let outputPath = currentOutput.out?.background?.path
+
+        if (!outputPath || show?.id !== outputPath) return
 
         // play / pause video
         e.preventDefault()

@@ -5,6 +5,7 @@
 
     export let id: "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation"
     export let selectChildren: boolean = false
+    export let scroll: boolean = true
     export let hoverTimeout: number = 500
     export let file: boolean = false
     let active: boolean = false
@@ -74,6 +75,7 @@
 <div
     class="droparea"
     class:hover
+    class:scroll
     on:drop|preventDefault={(e) => {
         let files = getFiles(e)
         if (files.length) selected.set({ id: "files", data: files })
@@ -108,6 +110,8 @@
         align-self: flex-start;
         transition: 0.3s opacity;
         position: relative;
+    }
+    .droparea.scroll {
         overflow: auto;
     }
     .droparea.hover {
