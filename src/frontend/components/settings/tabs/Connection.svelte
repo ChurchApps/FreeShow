@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { connections, maxConnections, ports, remotePassword } from "../../../stores"
+    import { activePopup, connections, dictionary, maxConnections, popupData, ports, remotePassword } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -48,10 +48,12 @@
             return a
         })
     }
+
+    $: console.log($connections)
 </script>
 
 <!-- TODO: connection -->
-<div style="min-height: initial;justify-content: center;">
+<!-- <div style="min-height: initial;justify-content: center;">
     <p>
         <T id="settings.connect" />:
         <strong style="font-size: 1.2em;">{ip}:[<T id="settings.port" />]</strong>
@@ -64,9 +66,60 @@
             {Object.values($connections).reduce((value, connections) => (value += Object.keys(connections).length), 0)}
         </strong>
     </p>
-</div>
+</div> -->
 
 <br />
+
+<CombinedInput title={$dictionary.popup?.connect}>
+    <Button
+        style="flex: 1;"
+        on:click={() => {
+            popupData.set({ ip, id: "remote" })
+            activePopup.set("connect")
+        }}
+        center
+    >
+        <div style="margin: 0;">
+            <Icon id="connection" right />
+            <p>
+                RemoteShow
+                <span class="connections">{Object.keys($connections.REMOTE || {})?.length || ""}</span>
+            </p>
+        </div>
+    </Button>
+    <Button
+        style="flex: 1;"
+        on:click={() => {
+            popupData.set({ ip, id: "stage" })
+            activePopup.set("connect")
+        }}
+        center
+    >
+        <div style="margin: 0;">
+            <Icon id="connection" right />
+            <p>
+                StageShow
+                <span class="connections">{Object.keys($connections.STAGE || {})?.length || ""}</span>
+            </p>
+        </div>
+    </Button>
+    <Button
+        style="flex: 1;"
+        on:click={() => {
+            popupData.set({ ip, id: "controller" })
+            activePopup.set("connect")
+        }}
+        center
+    >
+        <div style="margin: 0;">
+            <Icon id="connection" right />
+            <p>
+                ControlShow
+                <span class="connections">{Object.keys($connections.CONTROLLER || {})?.length || ""}</span>
+            </p>
+        </div>
+    </Button>
+</CombinedInput>
 
 <!-- <div>
   <p><T id="settings.device_name" /></p>
@@ -120,5 +173,13 @@
         justify-content: space-between;
         margin: 5px 0;
         min-height: 38px;
+    }
+
+    .connections {
+        display: flex;
+        align-items: center;
+        padding-left: 10px;
+        opacity: 0.5;
+        font-weight: normal;
     }
 </style>

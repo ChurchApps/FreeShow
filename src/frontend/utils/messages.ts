@@ -77,6 +77,9 @@ export function listen() {
     // TO STAGE
     stageListen()
 
+    // think this is just needed for the dev server to update
+    setTimeout(sendInitialOutputData, 1000)
+
     // SAVE
     // TODO: better saving!
     let s = { ...saveList, folders: folders, overlays: overlays, projects: projects, showsCache: showsCache, stageShows: stageShows }

@@ -25,7 +25,7 @@ export type EditInput = {
     popup?: string
 }
 
-const mediaFitOptions: any[] = [
+export const mediaFitOptions: any[] = [
     { id: "contain", name: "$:media.contain:$" },
     { id: "cover", name: "$:media.cover:$" },
     { id: "fill", name: "$:media.fill:$" },

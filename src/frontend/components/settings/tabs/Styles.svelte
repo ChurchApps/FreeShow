@@ -13,6 +13,7 @@
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import { mediaFitOptions } from "../../edit/values/boxes"
 
     function updateStyle(e: any, key: string) {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -188,6 +189,10 @@
             <Icon id="close" size={1.2} white />
         </Button>
     {/if}
+</CombinedInput>
+<CombinedInput>
+    <p><T id="edit.media_fit" /></p>
+    <Dropdown value={mediaFitOptions.find((a) => a.id === currentStyle.fit)?.name || "—"} options={[{ id: null, name: "—" }, ...mediaFitOptions]} on:click={(e) => updateStyle(e.detail.id, "fit")} />
 </CombinedInput>
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->

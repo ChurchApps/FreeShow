@@ -7,8 +7,9 @@
     setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 800)
 
     let t: any = null
-    $: if (offset >= 0) scroll()
-    function scroll() {
+    let st: any = null
+    $: if (offset >= 0) scroll(0)
+    function scroll(index) {
         if (t !== null) return
 
         t = setTimeout(() => {
@@ -17,8 +18,12 @@
         }, timeout)
 
         // make sure its scrolled
-        setTimeout(() => {
-            if (offset !== scrollElem?.scrollTop) scroll()
+        if (index > 5 || offset === scrollElem?.scrollTop) return
+        index++
+        if (st) return
+        st = setTimeout(() => {
+            if (offset !== scrollElem?.scrollTop) scroll(index)
+            st = null
         }, timeout + 400)
     }
 </script>

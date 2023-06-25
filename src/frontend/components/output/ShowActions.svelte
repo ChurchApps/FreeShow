@@ -13,6 +13,7 @@
     export let maxLines: null | number
 
     $: slide = currentOutput?.out?.slide
+    $: overlays = currentOutput?.out?.overlays?.length
 
     function previousShow() {
         if ($activeProject) {
@@ -30,6 +31,8 @@
     }
 
     $: length = ref?.length || 0
+
+    $: showIsNotOutputtedSlide = ($activePage === "edit" && slide?.index !== $activeEdit.slide) || !slide || slide.id !== $activeShow?.id || !$activeShow || slide.layout !== $showsCache[$activeShow.id]?.settings?.activeLayout
 </script>
 
 <span class="group">
@@ -52,7 +55,7 @@
     <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
         <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
     </Button>
-    {#if ($activePage === "edit" && slide?.index !== $activeEdit.slide) || !slide || slide.id !== $activeShow?.id || !$activeShow || slide.layout !== $showsCache[$activeShow.id]?.settings?.activeLayout}
+    {#if showIsNotOutputtedSlide && (slide || !overlays)}
         <Button
             on:click={(e) => {
                 if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null && $activeEdit.slide !== undefined)
@@ -70,16 +73,7 @@
             <Icon id="play" size={1.2} />
         </Button>
     {:else}
-        <Button
-            on:click={() => {
-                // outBackground.set($outBackground)
-                // setOutput("slide", slide)
-                refreshOut()
-            }}
-            title={$dictionary.preview?._update}
-            disabled={!slide || $outLocked}
-            center
-        >
+        <Button on:click={() => refreshOut()} title={$dictionary.preview?._update} disabled={(!slide && !overlays) || $outLocked} center>
             <Icon id="refresh" size={1.2} />
         </Button>
     {/if}

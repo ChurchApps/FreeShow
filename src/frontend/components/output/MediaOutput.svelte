@@ -13,6 +13,7 @@
     import Window from "./Window.svelte"
 
     export let background: any = {}
+    export let currentStyle: any = {}
     export let outputId: string
     export let transition: Transition
     export let path: string = ""
@@ -119,12 +120,12 @@
     let fit: MediaFit = "contain"
     let speed: string = "1"
 
-    $: if (background !== null) updateFilter()
+    $: if (background !== null || currentStyle) updateFilter()
     function updateFilter() {
         let temp: any = { ...background }
         filter = temp.filter || ""
         flipped = temp.flipped || false
-        fit = temp.fit || "contain"
+        fit = currentStyle?.fit || temp.fit || "contain"
         speed = temp.speed || "1"
     }
 
@@ -152,7 +153,7 @@
 <!-- svelte transition bug: the double copies are to remove media when changing from "draw" view -->
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
-    <Media {path} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
+    <Media {path} {currentStyle} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
 {:else if type === "screen"}
     {#key id}
         {#if transition.type === "none"}

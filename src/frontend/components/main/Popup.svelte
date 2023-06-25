@@ -32,6 +32,7 @@
     import ChooseStyle from "./popups/ChooseStyle.svelte"
     import SelectShow from "./popups/SelectShow.svelte"
     import EditList from "./popups/EditList.svelte"
+    import Connect from "./popups/Connect.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -64,6 +65,7 @@
         alert: Alert,
         history: History,
         midi: Midi,
+        connect: Connect,
         cloud_update: CloudUpdate,
         cloud_method: CloudMethod,
     }

@@ -111,6 +111,7 @@ export type Popups =
     | "alert"
     | "history"
     | "midi"
+    | "connect"
     | "cloud_update"
     | "cloud_method"
 

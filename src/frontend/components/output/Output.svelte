@@ -293,6 +293,13 @@
         if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
         if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
     }
+
+    // OVERLAYS
+    let clonedOverlays = {}
+    $: if (out.overlays) cloneOverlays()
+    function cloneOverlays() {
+        clonedOverlays = clone($overlays)
+    }
 </script>
 
 <Zoomed
@@ -307,7 +314,7 @@
 >
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} {background} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
+            <MediaOutput {...tempVideoBG} {background} {outputId} {currentStyle} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
         </div>
     {/if}
 
@@ -393,11 +400,11 @@
         <!-- overlays -->
         {#if out.overlays?.length}
             {#each out.overlays as id}
-                {#if $overlays[id]}
+                {#if clonedOverlays[id]}
                     {#if overlayTransition.type === "none"}
                         <div class:key={currentOutput.isKeyOutput}>
                             <div>
-                                {#each $overlays[id].items as item}
+                                {#each clonedOverlays[id].items as item}
                                     {#if !item.bindings?.length || item.bindings.includes(outputId)}
                                         <Textbox {item} ref={{ type: "overlay", id }} {preview} />
                                     {/if}
@@ -407,7 +414,7 @@
                     {:else}
                         <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
                             <div>
-                                {#each $overlays[id].items as item}
+                                {#each clonedOverlays[id].items as item}
                                     {#if !item.bindings?.length || item.bindings.includes(outputId)}
                                         <Textbox {item} ref={{ type: "overlay", id }} {preview} />
                                     {/if}

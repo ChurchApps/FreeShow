@@ -10,6 +10,7 @@
     import Video from "./Video.svelte"
 
     export let path: string
+    export let currentStyle: any = {}
     export let controls: boolean = false
     export let transition: Transition = { type: "none", duration: 0, easing: "linear" }
 
@@ -26,11 +27,11 @@
 
     // get styling
     $: mediaId = $activeEdit.id || $activeShow?.id
-    $: if (mediaId && $media[mediaId]) {
+    $: if (mediaId && ($media[mediaId] || currentStyle)) {
         // TODO: get local show styles?!
         filter = $media[mediaId]?.filter || ""
         flipped = $media[mediaId]?.flipped || false
-        fit = $media[mediaId]?.fit || "contain"
+        fit = currentStyle?.fit || $media[mediaId]?.fit || "contain"
         speed = $media[mediaId]?.speed || "1"
     }
 
