@@ -142,7 +142,7 @@
             }, 80)
         }, 10)
 
-        if (background.startAt && mirror) {
+        if (background?.startAt !== undefined && mirror) {
             outputs.update((a) => {
                 delete a[outputId].out?.background?.startAt
                 return a

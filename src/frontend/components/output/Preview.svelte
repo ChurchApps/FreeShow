@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { OUTPUT } from "../../../types/Channels"
     import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
+    import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
@@ -254,6 +256,45 @@
     function toggleFullscreen(e: any) {
         if (!e.target.closest(".zoomed")) return
         fullscreen = !fullscreen
+    }
+
+    // MEDIA
+
+    // auto clear video on finish
+    $: if (videoTime && videoData.duration && !videoData.paused && videoTime + 0.5 >= videoData.duration) {
+        // this will start changing 0.2s before video ends (video is paused when changing)
+        setTimeout(clearVideo2, 300)
+    }
+
+    let clearing: boolean = false
+    function clearVideo2() {
+        if (clearing) return
+
+        clearing = true
+        setTimeout(() => {
+            clearing = false
+        }, 1000)
+
+        // check nextAfterMedia
+        let slideOut = currentOutput.out?.slide
+        if (slideOut) {
+            let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
+            let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
+            if (nextAfterMedia) {
+                // videoTime = 0
+                setTimeout(() => {
+                    nextSlide(null, false, false, true, true, outputId)
+                }, 100)
+                return
+            }
+        }
+
+        if (videoData.loop) return
+
+        setOutput("background", null)
+        videoTime = 0
+        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
+        if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })
     }
 </script>
 

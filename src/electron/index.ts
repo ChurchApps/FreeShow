@@ -259,7 +259,7 @@ function save(data: any) {
     if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
     function saveShow([id, value]: any) {
         if (!value) return
-        let p: string = path.resolve(data.path, value.name + ".show")
+        let p: string = path.resolve(data.path, (value.name || id) + ".show")
         writeFile(p, JSON.stringify([id, value]), id)
     }
 
@@ -267,7 +267,7 @@ function save(data: any) {
     if (data.deletedShows) data.deletedShows.forEach(deleteShow)
     function deleteShow({ name, id }: any) {
         if (!name || data.showsCache[id]) return
-        let p: string = path.resolve(data.path, name + ".show")
+        let p: string = path.resolve(data.path, (name || id) + ".show")
         deleteFile(p)
     }
 

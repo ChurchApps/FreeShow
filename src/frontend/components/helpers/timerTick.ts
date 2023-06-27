@@ -8,6 +8,7 @@ import { setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { clone } from "./array"
+import { updateOut } from "./showActions"
 
 const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
@@ -51,26 +52,34 @@ export function startEventTimer() {
         showEvents.forEach((event) => {
             let eventTime: Date = new Date(event.from)
             let toast = get(dictionary).toast || {}
+            let showId = event.show || ""
+            let show = get(shows)[showId]
+            if (!show) return
 
             // less than 1 minute
             let timeLeft: number = eventTime.getTime() - currentTime.getTime()
             if (timeLeft <= ONE_MINUTE && timeLeft > ONE_MINUTE - INTERVAL) {
-                newToast(`${toast.starting_show} ${get(shows)[event.show!].name} ${toast.less_than_minute}`)
+                newToast(`${toast.starting_show} ${show.name} ${toast.less_than_minute}`)
             }
             // less than 30 seconds
             if (timeLeft <= ONE_MINUTE / 2 && timeLeft > ONE_MINUTE / 2 - INTERVAL) {
-                newToast(`${toast.starting_show} ${get(shows)[event.show!].name} ${toast.less_than_seconds.replace("{}", "30")}`)
+                newToast(`${toast.starting_show} ${show.name} ${toast.less_than_seconds.replace("{}", "30")}`)
             }
             // less than 10 seconds
             if (timeLeft <= TEN_SECONDS && timeLeft > TEN_SECONDS - INTERVAL) {
-                newToast(`${toast.starting_show} ${get(shows)[event.show!].name} ${toast.less_than_seconds.replace("{}", "10")}`)
-                loadShows([event.show!])
+                newToast(`${toast.starting_show} ${show.name} ${toast.less_than_seconds.replace("{}", "10")}`)
+                loadShows([showId])
             }
             // start show
             if (timeLeft <= 0 && timeLeft > 0 - INTERVAL) {
-                newToast(`${toast.starting_show} ${get(shows)[event.show!].name} ${toast.now}`)
+                newToast(`${toast.starting_show} ${show.name} ${toast.now}`)
+                loadShows([showId])
                 let activeLayout = _show(event.show).get("settings.activeLayout")
-                setOutput("slide", { id: event.show, layout: activeLayout, index: 0, line: 0 })
+
+                // slideClick() - Slides.svelte
+                let slideRef: any = _show(showId).layouts("active").ref()[0]
+                updateOut(showId, 0, slideRef)
+                setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
             }
         })
 

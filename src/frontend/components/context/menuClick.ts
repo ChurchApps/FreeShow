@@ -34,6 +34,7 @@ import {
     shows,
     showsCache,
     slidesOptions,
+    sortedShowsList,
     stageShows,
     styles,
     templates,
@@ -641,6 +642,35 @@ function changeSlideAction(obj: any, id: string) {
 
         popupData.set(data)
         activePopup.set("midi")
+
+        return
+    }
+
+    if (id === "startShow") {
+        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
+        let showId: string = actions[id]?.id || get(sortedShowsList)[0]
+
+        if (!showId) {
+            newToast("$empty.shows")
+            return
+        }
+
+        if (!actions[id]) actions[id] = { id: showId }
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] }, location: { page: "show", override: "start_show_action" } })
+
+        let data: any = {
+            action: "select_show",
+            active: showId,
+            trigger: (showId: string) => {
+                if (!showId) return
+                actions[id] = { id: showId }
+                history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] }, location: { page: "show", override: "start_show_action" } })
+            },
+        }
+
+        popupData.set(data)
+        activePopup.set("select_show")
 
         return
     }

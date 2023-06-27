@@ -330,7 +330,7 @@ export async function syncDataDrive(data: any) {
 
         await Promise.all(Object.entries(shows).map(checkShow))
         async function checkShow([id, show]: any) {
-            let name = show.name + ".show"
+            let name = (show.name || id) + ".show"
             let localShowPath = path.join(showsPath, name)
 
             // check existing content

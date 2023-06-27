@@ -147,7 +147,7 @@
 
     $: if (!mirror && $audioChannels) send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: $audioChannels })
     $: if (!mirror && (video === null || videoData.paused === true)) playingVideos.set([])
-    $: if (!mirror && video !== null && videoData.paused === false) analyseVideo()
+    $: if (!mirror && video !== null && videoData.paused === false) setTimeout(analyseVideo, 100)
 </script>
 
 <!-- svelte transition bug: the double copies are to remove media when changing from "draw" view -->

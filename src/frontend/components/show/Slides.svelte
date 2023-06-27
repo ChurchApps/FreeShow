@@ -2,7 +2,7 @@
     // import {flip} from 'svelte/animate';
     // import type { Resolution } from "../../../types/Settings"
 
-    import { activeShow, cachedShowsData, outLocked, outputs, showsCache, slidesOptions, styles } from "../../stores"
+    import { activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, styles } from "../../stores"
     import { history } from "../helpers/history"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
@@ -166,6 +166,7 @@
 
     let loading: boolean = false
     $: if (showId) startLoading()
+    $: if ($notFound.show?.includes(showId)) loading = false
     function startLoading() {
         loading = true
         setTimeout(() => {

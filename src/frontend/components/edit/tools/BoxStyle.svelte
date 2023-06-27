@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, refreshEditSlide, selected, showsCache, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getListOfShows, getStageList } from "../../helpers/show"
@@ -88,6 +88,12 @@
         if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
         console.log(input, value)
+
+        if (input.id === "auto") {
+            setTimeout(() => {
+                refreshEditSlide.set(true)
+            }, 100)
+        }
 
         // set nested value
         if (input.id.includes(".")) {

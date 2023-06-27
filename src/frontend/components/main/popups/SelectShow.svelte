@@ -1,44 +1,70 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
-    import { activePopup, dictionary, popupData, sortedShowsList } from "../../../stores"
+    import { activePopup, dictionary, popupData, shows, sortedShowsList } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
+    import { clone, keysToID } from "../../helpers/array"
+    import Icon from "../../helpers/Icon.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
 
     $: sortedShows = $sortedShowsList
+    $: privateShows = keysToID($shows)
+        .filter((a) => a.private === true)
+        .sort((a, b) => a.name.localeCompare(b.name))
 
-    $: searchedShows = sortedShows
+    $: defaultShows = clone([...(showPrivate ? privateShows : []), ...sortedShows])
+    $: if (defaultShows) search()
+
+    $: active = $popupData.active || ""
+
+    let searchedShows = defaultShows
     let searchValue = ""
-    function search(e: any) {
-        searchValue = e.target.value.toLowerCase()
+    function search(e: any = null) {
+        searchValue = e?.target?.value?.toLowerCase() || ""
 
         if (searchValue.length < 2) {
-            searchedShows = sortedShows
+            searchedShows = defaultShows
             return
         }
 
-        searchedShows = sortedShows.filter((a) => searchValue.split(" ").find((value) => a.name.toLowerCase().includes(value)))
+        searchedShows = defaultShows.filter((a) => searchValue.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
 
     function selectShow(show: any) {
         if ($popupData.action !== "select_show") return
 
         activePopup.set(null)
-        popupData.set({ ...$popupData, id: show.id })
+
+        if ($popupData.trigger) {
+            $popupData.trigger(show.id)
+        } else {
+            popupData.set({ ...$popupData, id: show.id })
+        }
     }
+
+    let showPrivate = false
 </script>
 
 <div style="display: flex;justify-content: space-between;">
     <TextInput placeholder={$dictionary.main?.search} value={searchValue} on:input={search} />
 </div>
+<CombinedInput>
+    <p><T id="actions.private" /></p>
+    <div class="alignRight">
+        <Checkbox checked={showPrivate} on:change={() => (showPrivate = !showPrivate)} />
+    </div>
+</CombinedInput>
 <div class="list">
     {#if sortedShows.length}
         {#if searchValue.length > 1 && searchedShows.length === 0}
             <Center size={1.2} faded><T id="empty.search" /></Center>
         {:else}
             <VirtualList items={searchedShows} let:item={show}>
-                <Button on:click={() => selectShow(show)} bold={false} style="width: 100%;">
+                <Button on:click={() => selectShow(show)} outline={active === show.id} bold={false} style="width: 100%;">
+                    {#if show.private}<Icon id="locked" right />{/if}
                     {show.name}
                 </Button>
             </VirtualList>

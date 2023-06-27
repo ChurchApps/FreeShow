@@ -37,7 +37,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, playingAudio, selected, styles } from "./stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, audioChannels, autosave, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, playingAudio, selected, styles } from "./stores"
     import { newToast } from "./utils/messages"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
@@ -170,6 +170,8 @@
         if (e.ctrlKey || e.metaKey || e.target.closest(".dragger")) enableOutputMove = true
         else enableOutputMove = false
     }
+
+    $: console.log($audioChannels)
 </script>
 
 <svelte:window on:keydown={keydown} />

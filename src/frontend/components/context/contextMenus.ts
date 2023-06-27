@@ -146,7 +146,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "play", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
     // , "delete_all"
-    show_media: ["play", "play_no_filters", "SEPERATOR", "edit"],
+    show_media: ["play", "play_no_filters", "preview", "SEPERATOR", "edit"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
@@ -165,7 +165,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projects: ["newProject", "newFolder"],
     projectTab: ["export", "close"],
     project: ["newShowPopup", "newPrivateShow", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "delete", "duplicate", "export"],
+    project_button: ["rename", "delete", "duplicate", "export"], // "open",
     folder: ["rename", "delete", "duplicate"],
     project_media: ["play", "play_no_filters", "remove"],
     project_audio: ["remove"],

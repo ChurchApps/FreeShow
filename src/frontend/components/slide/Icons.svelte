@@ -106,7 +106,7 @@
             {/if}
         </div>
     {/if}
-    {#if background && muted}
+    {#if background && muted && duration}
         <div>
             <div class="button">
                 <Button style="padding: 5px;" redHover title={$dictionary.actions?.unmute} on:click={() => mute()}>

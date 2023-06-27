@@ -119,7 +119,7 @@
         else if (type === "player") setOutput("background", { id, type: "player" })
     }
 
-    function edit(e: any) {
+    function rename(e: any) {
         historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name: checkName(e.detail.value) } }], replace: true }, location: { page: "drawer" } })
     }
 
@@ -137,7 +137,7 @@
                 <Icon id={iconID} {custom} right />
             {/if}
             <!-- <p style="margin: 5px;">{newName}</p> -->
-            <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={edit} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
+            <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
             {#if show.layoutInfo?.name}
                 <span class="layout">{show.layoutInfo.name}</span>
             {/if}

@@ -123,7 +123,7 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
             if (output.out?.[key]) {
                 if (key === "overlays") {
                     if (checkLocked && output.out.overlays.length) cleared = false
-                    else if (!checkLocked && output.out.overlays.filter((id: string) => !get(overlays)[id].locked).length) cleared = false
+                    else if (!checkLocked && output.out.overlays.filter((id: string) => !get(overlays)[id]?.locked).length) cleared = false
                 } else if (output.out[key] !== null) cleared = false
             }
         })

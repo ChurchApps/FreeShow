@@ -2,13 +2,15 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { ItemType, Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, shows, showsCache, showsPath, templates } from "../../stores"
 import { save } from "../../utils/save"
-import { clone } from "./array"
+import { clone, keysToID } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { _show } from "./shows"
+import { send } from "../../utils/request"
+import { MAIN } from "../../../types/Channels"
 
 // TODO: move history switch to actions
 
@@ -254,6 +256,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             let duplicates: string[] = []
+            let rename: any = {}
 
             showsCache.update((a) => {
                 showsList.forEach(({ show, id }, i: number) => {
@@ -265,11 +268,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                         delete a[id]
                     } else {
-                        if (!show.slides) return
+                        if (!show) return
 
                         if (replace) {
                             if (initializing) obj.oldData.data[i].show = clone(a[id])
                             a[id] = { ...a[id], ...show }
+
+                            // rename
+                            let oldName = get(shows)[id].name
+                            if (show.name !== undefined && oldName !== show.name) {
+                                rename[id] = { name: show.name || id, oldName: oldName }
+                            }
                             return
                         }
 
@@ -311,6 +320,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 })
                 return a
             })
+
+            // rename shows file
+            if (Object.keys(rename).length) {
+                send(MAIN, ["RENAME_SHOWS"], { shows: keysToID(rename), path: get(showsPath) })
+            }
 
             // TODO: choose to overwrite or just skip
             if (duplicates.length) {

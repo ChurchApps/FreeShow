@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activePopup, activeProject, activeShow, dictionary, projects, showsCache, slidesOptions } from "../../stores"
+    import { activePopup, activeProject, activeShow, dictionary, notFound, projects, showsCache, slidesOptions } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { duplicate } from "../helpers/clipboard"
@@ -63,6 +63,7 @@
 
     let loading: boolean = false
     $: if (showId) startLoading()
+    $: if ($notFound.show?.includes(showId)) loading = false
     function startLoading() {
         loading = true
         setTimeout(() => {

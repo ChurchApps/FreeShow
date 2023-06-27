@@ -5,6 +5,7 @@
     import { custom } from "../../utils/transitions"
     import { clone } from "../helpers/array"
     import { getExtension, getMediaType } from "../helpers/media"
+    import { setOutput } from "../helpers/output"
     import Image from "./Image.svelte"
     import MediaControls from "./MediaControls.svelte"
     import Video from "./Video.svelte"
@@ -42,16 +43,10 @@
     let video2: any = {}
     let videoTime1: number = 0
     let videoTime2: number = 0
+
     // initialize
-    resetVideos()
-
-    $: if (type === "video" && path) startVideoTransition()
-    else resetVideos()
-
-    // quick fix remove video on end (in output)
-    $: if (video1.video?.ended || video2.video?.ended) resetVideos()
-
-    function resetVideos() {
+    resetData()
+    function resetData() {
         video = null
         video1 = {
             active: false,
@@ -61,8 +56,39 @@
         }
         video2 = clone(video1)
         video1.active = true
+    }
 
-        playingVideos.set([])
+    $: if (type === "video" && path) startVideoTransition()
+    else resetData()
+
+    function resetVideos() {
+        // WIP console.log("PREVIEW RESET")
+        if (videoData.loop) return
+
+        resetData()
+
+        setTimeout(() => {
+            playingVideos.set([])
+
+            videoTime = 0
+            videoTime1 = 0
+            videoTime2 = 0
+
+            // preview tools Media.svelte
+            setOutput("background", null)
+            // videoTime = 0
+            // send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
+            // if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })
+
+            // videoData = {
+            //     duration: 0,
+            //     paused: true,
+            //     muted: false,
+            //     loop: false,
+            // }
+
+            // clearPlayingVideo()
+        }, 500)
     }
 
     $: if (videoData) updateVideo("data")
@@ -98,7 +124,7 @@
 
         let duration = transition.duration
         if (!duration || (!playingVideo.path && !playingVideo.video)) {
-            resetVideos()
+            resetData()
             video1.path = path
             video = video1.video
             return
@@ -145,18 +171,50 @@
     <!-- svelte transition bug, this is to remove media when changing from "draw" view -->
     {#key retryCount}
         {#if transition.type === "none" && mirror}
-            <div class="video">
-                <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:error={reload} />
-            </div>
-        {:else}
-            {#if video1.active}
-                <div class="video" class:change transition:custom={transition}>
-                    <Video path={video1.path} bind:video={video1.video} bind:videoData={video1.data} bind:videoTime={videoTime1} {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:error={reload} />
+            {#if path}
+                <div class="video">
+                    <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:ended={() => resetVideos()} on:error={reload} />
                 </div>
             {/if}
-            {#if video2.active}
+        {:else}
+            {#if video1.active && video1.path}
                 <div class="video" class:change transition:custom={transition}>
-                    <Video path={video2.path} bind:video={video2.video} bind:videoData={video2.data} bind:videoTime={videoTime2} {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:error={reload} />
+                    <Video
+                        path={video1.path}
+                        bind:video={video1.video}
+                        bind:videoData={video1.data}
+                        bind:videoTime={videoTime1}
+                        {startAt}
+                        {mirror}
+                        {filter}
+                        {flipped}
+                        {fit}
+                        {speed}
+                        on:playing
+                        on:loaded
+                        on:ended={() => resetVideos()}
+                        on:error={reload}
+                    />
+                </div>
+            {/if}
+            {#if video2.active && video2.path}
+                <div class="video" class:change transition:custom={transition}>
+                    <Video
+                        path={video2.path}
+                        bind:video={video2.video}
+                        bind:videoData={video2.data}
+                        bind:videoTime={videoTime2}
+                        {startAt}
+                        {mirror}
+                        {filter}
+                        {flipped}
+                        {fit}
+                        {speed}
+                        on:playing
+                        on:loaded
+                        on:ended={() => resetVideos()}
+                        on:error={reload}
+                    />
                 </div>
             {/if}
         {/if}
