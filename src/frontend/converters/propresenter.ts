@@ -283,6 +283,9 @@ function decodeBase64(text: string) {
         if (l >= 8) r += String.fromCharCode((b >>> (l -= 8)) & 0xff)
     })
 
+    // WIP convert ‘ & ’ to '
+    r = r.replaceAll("\\u8217 ?", "'")
+
     return r
 }
 
@@ -363,6 +366,8 @@ function convertProToSlides(song: any) {
     let media: any = {}
     let layouts: any = []
 
+    console.log(song)
+
     let tempLayouts: any = {}
     const tempArrangements: any[] = getArrangements(song.arrangements)
     const tempGroups: any[] = getGroups(song.cueGroups)
@@ -442,13 +447,23 @@ function convertProToSlides(song: any) {
     return { slides, layouts, media }
 }
 
-function convertItem({ text }: any) {
-    let item: Item = {
-        style: itemStyle,
+function convertItem(item: any) {
+    let text = item.text
+    let style = itemStyle
+    if (item.bounds) {
+        let pos = item.bounds.origin
+        let size = item.bounds.size
+        if (Object.keys(pos).length === 2 && Object.keys(size).length === 2) {
+            style = `left:${pos.x}px;top:${pos.y}px;width:${size.width}px;height:${size.height}px;`
+        }
+    }
+
+    let newItem: Item = {
+        style,
         lines: text.split("\n").map(getLine),
     }
 
-    return item
+    return newItem
 
     function getLine(text: string) {
         return { align: "", text: [{ value: text, style: "" }] }
@@ -507,6 +522,7 @@ function getSlides(cues: any) {
 function getItem(item: any) {
     let newItem: any = {}
 
+    newItem.bounds = item.element.bounds
     newItem.text = decodeRTF(item.element.text.rtfData)
 
     return newItem

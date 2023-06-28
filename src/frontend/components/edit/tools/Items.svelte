@@ -22,6 +22,7 @@
         { id: "media", icon: "image", name: "image" },
         { id: "timer" },
         { id: "clock" },
+        { id: "events", icon: "calendar" },
         { id: "mirror" },
         { id: "visualizer" },
     ]

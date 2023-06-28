@@ -46,7 +46,7 @@
         pickerOpen = !pickerOpen
     }
     function mousedown(e: any) {
-        if (e.target.closest("#" + pickerId) || e.target.closest(".colorpicker")) return
+        if (e.target.closest("#" + pickerId) || (e.target.closest(".colorpicker") && !e.target.closest(".pickColor"))) return
 
         pickerOpen = false
     }
@@ -82,7 +82,18 @@
             <div class="picker" class:clipRight bind:this={colorElem}>
                 <div class="colors">
                     {#each colors as color}
-                        <div class="pickColor" class:active={value === color.value} title={color.name} style="background-color: {color.value};" on:click={() => change(color.value)} />
+                        <div
+                            class="pickColor"
+                            class:active={value === color.value}
+                            title={color.name}
+                            style="background-color: {color.value};"
+                            on:click={() => {
+                                change(color.value)
+                                setTimeout(() => {
+                                    pickerOpen = false
+                                }, 10)
+                            }}
+                        />
                     {/each}
                 </div>
 

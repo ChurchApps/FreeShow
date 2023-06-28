@@ -33,6 +33,7 @@
     import SelectShow from "./popups/SelectShow.svelte"
     import EditList from "./popups/EditList.svelte"
     import Connect from "./popups/Connect.svelte"
+    import FindReplace from "./popups/FindReplace.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -49,6 +50,7 @@
         player: CreatePlayer,
         rename: Rename,
         color: Color,
+        find_replace: FindReplace,
         edit_list: EditList,
         timer: Timer,
         transition: Transition,

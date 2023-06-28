@@ -81,6 +81,7 @@ export const playScripture: Writable<boolean> = writable(false)
 export const editHistory: Writable<any[]> = writable([])
 export const refreshEditSlide: Writable<boolean> = writable(false)
 export const deletedShows: Writable<any[]> = writable([])
+export const renamedShows: Writable<any[]> = writable([])
 
 // ----- SAVED VARIABLES -----
 

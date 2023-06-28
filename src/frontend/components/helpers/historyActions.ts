@@ -2,15 +2,14 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { ItemType, Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, shows, showsCache, showsPath, templates } from "../../stores"
+import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { clone, keysToID } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { _show } from "./shows"
-import { send } from "../../utils/request"
-import { MAIN } from "../../../types/Channels"
+import { loadShows } from "./setShow"
 
 // TODO: move history switch to actions
 
@@ -228,7 +227,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return a
             }
         },
-        SHOWS: () => {
+        SHOWS: async () => {
             // bulk add/remove/duplicate shows
             let showsList = obj.newData?.data || obj.oldData?.data || []
             if (!showsList.length) return
@@ -256,7 +255,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             let duplicates: string[] = []
+            let oldShows: any = {}
             let rename: any = {}
+
+            // load shows cache
+            if (deleting) {
+                await loadShows(showsList.map((a) => a.id))
+            }
 
             showsCache.update((a) => {
                 showsList.forEach(({ show, id }, i: number) => {
@@ -266,6 +271,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             return
                         }
 
+                        oldShows[id] = clone(a[id])
                         delete a[id]
                     } else {
                         if (!show) return
@@ -295,7 +301,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 showsList.forEach(({ show, id }, i) => {
                     if (deleting && !replace) {
                         // store show
-                        if (!obj.oldData?.data[i]?.show) obj.oldData.data[i] = { id, show: a[id] }
+                        if (!obj.oldData?.data[i]?.show) obj.oldData.data[i] = { id, show: oldShows[id] }
 
                         // add to deleted so the file can be deleted on save
                         deletedShows.set([...get(deletedShows), { id, name: a[id].name }])
@@ -322,8 +328,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
             })
 
             // rename shows file
-            if (Object.keys(rename).length) {
-                send(MAIN, ["RENAME_SHOWS"], { shows: keysToID(rename), path: get(showsPath) })
+            let renamedIds = Object.keys(rename)
+            if (renamedIds.length) {
+                let newRenamed = get(renamedShows).filter((a) => !renamedIds.includes(a.id))
+                renamedShows.set([...newRenamed, ...keysToID(rename)])
             }
 
             // TODO: choose to overwrite or just skip

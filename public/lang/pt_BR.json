@@ -175,6 +175,7 @@
         "events": "Não há eventos",
         "text": "Digite algo",
         "timers": "No timers",
+        "input": "Missing value in input",
         "recording": "Right click a screen or window to start a recording."
     },
     "remote": {
@@ -304,6 +305,7 @@
         "select_show": "Select show",
         "rename": "Renomear",
         "color": "Cor",
+        "find_replace": "Find and replace",
         "edit_list": "Edit list",
         "timer": "Temporizador",
         "transition": "Transição",
@@ -400,7 +402,8 @@
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "change_output_style": "Change output style",
-        "private": "Privado",
+        "toggle_private": "Privado",
+        "view_private": "Show private",
         "import": "Importar",
         "export": "Exportar",
         "duplicate": "Duplicar",
@@ -440,6 +443,10 @@
         "remove_binding": "Remove binding",
         "choose_custom": "Choose custom",
         "format": "Formatar",
+        "find_replace": "Find and replace text",
+        "find": "Find",
+        "replace": "Replace",
+        "case_sensitive": "Case sensitive",
         "uppercase": "Transformar em maiúscula",
         "lowercase": "Transformar em minúscula",
         "capitalize": "Capitalizar",
@@ -604,7 +611,11 @@
         "top_bottom": "Top to bottom",
         "bottom_top": "Bottom to top",
         "left_right": "Left to right",
-        "right_left": "Right to left"
+        "right_left": "Right to left",
+        "max_events": "Max events",
+        "start_days_from_today": "Start at days from today",
+        "just_one_day": "Just one day",
+        "enable_start_date": "Enable start date"
     },
     "items": {
         "text": "Caixa de texto",
@@ -614,6 +625,7 @@
         "video": "Vídeo",
         "mirror": "Mirror",
         "clock": "Relógio",
+        "events": "Eventos",
         "live": "Ao vivo",
         "audio": "Áudio",
         "timer": "Temporizador",
@@ -721,7 +733,8 @@
         "color": "Cor",
         "font-size": "Tamanho da fonte",
         "zeros": "Zeros",
-        "overrun": "Cor excedida"
+        "overrun": "Cor excedida",
+        "auto_stretch": "Auto stretch content"
     },
     "settings": {
         "general": "Geral",

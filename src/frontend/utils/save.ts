@@ -46,6 +46,7 @@ import {
     recordingPath,
     redoHistory,
     remotePassword,
+    renamedShows,
     resized,
     saved,
     scripturePath,
@@ -163,19 +164,11 @@ export function save() {
         showsCache: clone(get(showsCache)),
         scripturesCache: get(scripturesCache),
         deletedShows: clone(get(deletedShows)),
+        renamedShows: clone(get(renamedShows)),
     }
 
     deletedShows.set([])
-
-    // SAVE STATE
-    // let savedAt: number = Date.now()
-    // // only save if it's not the same as last save
-    // if (JSON.stringify(allSavedData) !== get(lastSavedCache)) {
-    //     lastSavedCache.set(JSON.stringify(allSavedData))
-    //     history({ id: "SAVE", newData: { id: savedAt } })
-    //     // store saved data to it's own files
-    //     allSavedData.savedCache = { name: savedAt, data: clone(allSavedData) }
-    // }
+    renamedShows.set([])
 
     // CACHES
     allSavedData = {

@@ -48,15 +48,16 @@
     let showPrivate = false
 </script>
 
-<div style="display: flex;justify-content: space-between;">
-    <TextInput placeholder={$dictionary.main?.search} value={searchValue} on:input={search} />
-</div>
 <CombinedInput>
-    <p><T id="actions.private" /></p>
+    <TextInput placeholder={$dictionary.main?.search} value={searchValue} on:input={search} />
+</CombinedInput>
+<CombinedInput>
+    <p><T id="actions.view_private" /></p>
     <div class="alignRight">
         <Checkbox checked={showPrivate} on:change={() => (showPrivate = !showPrivate)} />
     </div>
 </CombinedInput>
+
 <div class="list">
     {#if sortedShows.length}
         {#if searchValue.length > 1 && searchedShows.length === 0}

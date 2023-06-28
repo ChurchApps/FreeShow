@@ -248,7 +248,7 @@
     // give time for video to clear
     let tempVideoBG: any = null
     $: if (background || currentStyle?.backgroundImage) getTempBG()
-    else setTimeout(resetTempBG, 100)
+    else setTimeout(resetTempBG, mediaTransition.duration + 100)
 
     function getTempBG() {
         if (!background || !layers.includes("background")) {
@@ -314,7 +314,7 @@
 >
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} {background} {outputId} {currentStyle} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
+            <MediaOutput {...tempVideoBG} background={tempVideoBG} path={background?.path} {outputId} {currentStyle} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
         </div>
     {/if}
 
@@ -399,31 +399,33 @@
         {/if}
         <!-- overlays -->
         {#if out.overlays?.length}
-            {#each out.overlays as id}
-                {#if clonedOverlays[id]}
-                    {#if overlayTransition.type === "none"}
-                        <div class:key={currentOutput.isKeyOutput}>
-                            <div>
-                                {#each clonedOverlays[id].items as item}
-                                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                        <Textbox {item} ref={{ type: "overlay", id }} {preview} />
-                                    {/if}
-                                {/each}
+            {#key out.refresh}
+                {#each out.overlays as id}
+                    {#if clonedOverlays[id]}
+                        {#if overlayTransition.type === "none"}
+                            <div class:key={currentOutput.isKeyOutput}>
+                                <div>
+                                    {#each clonedOverlays[id].items as item}
+                                        {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} />
+                                        {/if}
+                                    {/each}
+                                </div>
                             </div>
-                        </div>
-                    {:else}
-                        <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
-                            <div>
-                                {#each clonedOverlays[id].items as item}
-                                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                        <Textbox {item} ref={{ type: "overlay", id }} {preview} />
-                                    {/if}
-                                {/each}
+                        {:else}
+                            <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
+                                <div>
+                                    {#each clonedOverlays[id].items as item}
+                                        {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} />
+                                        {/if}
+                                    {/each}
+                                </div>
                             </div>
-                        </div>
+                        {/if}
                     {/if}
-                {/if}
-            {/each}
+                {/each}
+            {/key}
         {/if}
     {/if}
     {#if mirror || currentOutput.active}

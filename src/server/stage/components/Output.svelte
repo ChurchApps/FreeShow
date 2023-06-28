@@ -135,7 +135,7 @@
                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                     {ratio}
                     ref={{ showId: slide.id, slideId: currentSlide.id, id: currentSlide.id }} -->
-                        <Textbox {item} autoStage={false} {ratio} />
+                        <Textbox {item} autoStage={currentSlide?.settings?.autoStretch} {ratio} />
                     {/each}
                 {/if}
             </span>

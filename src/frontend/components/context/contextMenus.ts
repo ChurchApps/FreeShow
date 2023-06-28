@@ -52,7 +52,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newShowPopup: { label: "new.show", icon: "add" },
     newShow: { label: "new.empty_show", icon: "add" },
     newPrivateShow: { label: "new.private", icon: "private" },
-    private: { label: "actions.private", icon: "private" },
+    private: { label: "actions.toggle_private", icon: "private" },
     duplicate: { label: "actions.duplicate", icon: "duplicate" },
     section: { label: "new.section", icon: "section" },
     // SHOWS
@@ -80,14 +80,15 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
     bind_to: { label: "actions.bind_to", icon: "bind", items: ["stage", "LOAD_outputs"] },
-    format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
+    format: { label: "actions.format", icon: "format", items: ["find_replace", "uppercase", "lowercase", "capitalize", "trim"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
-    uppercase: { label: "actions.uppercase" },
-    lowercase: { label: "actions.lowercase" },
-    capitalize: { label: "actions.capitalize" },
-    trim: { label: "actions.trim" },
+    find_replace: { label: "actions.find_replace", icon: "find_replace" },
+    uppercase: { label: "actions.uppercase", icon: "increase_text" },
+    lowercase: { label: "actions.lowercase", icon: "decrease_text" },
+    capitalize: { label: "actions.capitalize", icon: "capitalize" },
+    trim: { label: "actions.trim", icon: "cut" },
     // MEDIA
     preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },

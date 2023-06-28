@@ -22,16 +22,18 @@
 </script>
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <div class="slide" style={show.settings.color ? `background-color: ${show.settings.color};` : ""}>
-        <Zoomed {show} style={getStyleResolution(resolution, width, height)} disableStyle>
-            {#each Object.entries(show.items) as [id, item]}
-                {#if item.enabled}
-                    {#key show}
-                        <Stagebox {show} {id} {item} {slides} {background} />
-                    {/key}
-                {/if}
-            {/each}
-        </Zoomed>
+    <div class="slide">
+        {#key show.settings.autoStretch}
+            <Zoomed {show} style={getStyleResolution(resolution, width, height) + ";" + (show.settings.color ? `background-color: ${show.settings.color};` : "")} dynamicResolution={show.settings.autoStretch !== false} disableStyle>
+                {#each Object.entries(show.items) as [id, item]}
+                    {#if item.enabled}
+                        {#key show}
+                            <Stagebox {show} {id} {item} {slides} {background} />
+                        {/key}
+                    {/if}
+                {/each}
+            </Zoomed>
+        {/key}
     </div>
 </div>
 
@@ -40,8 +42,8 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        /* background: var(--primary-darkest); */
-        background: black;
+        background: var(--primary-darkest);
+        /* background: black; */
     }
 
     .slide {

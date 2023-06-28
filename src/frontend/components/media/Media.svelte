@@ -58,7 +58,7 @@
         video1.active = true
     }
 
-    $: if (type === "video" && path) startVideoTransition()
+    $: if (type === "video" && path && !noTransitions) startVideoTransition()
     else resetData()
 
     function resetVideos() {
@@ -103,7 +103,10 @@
     }
 
     $: if (videoData.paused && videoTime !== undefined) updateVideo("time")
-    $: video = video1.video || video2.video
+    $: if (video1.video || video2.video) {
+        if (!path && video === null) resetData()
+        else video = true
+    }
 
     $: if (video1.data || video2.data) updateData("data")
     function updateData(key) {
@@ -165,12 +168,14 @@
 
         retryCount++
     }
+
+    $: noTransitions = transition.type === "none" && mirror
 </script>
 
 {#if type === "video"}
     <!-- svelte transition bug, this is to remove media when changing from "draw" view -->
     {#key retryCount}
-        {#if transition.type === "none" && mirror}
+        {#if noTransitions}
             {#if path}
                 <div class="video">
                     <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:ended={() => resetVideos()} on:error={reload} />
@@ -223,7 +228,7 @@
     {#if controls}
         <MediaControls bind:videoData bind:videoTime />
     {/if}
-{:else}
+{:else if path}
     {#key path || retryCount}
         <!-- svelte transition bug, this is to remove media when changing from "draw" view -->
         {#if transition.type === "none"}

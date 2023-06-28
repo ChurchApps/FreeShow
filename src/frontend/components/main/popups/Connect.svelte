@@ -12,7 +12,7 @@
     onMount(() => {
         id = $popupData.id
         ip = $popupData.ip
-        popupData.set(null)
+        popupData.set({})
     })
 
     const defaultPorts = {

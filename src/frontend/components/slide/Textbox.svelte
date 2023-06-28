@@ -13,6 +13,7 @@
     import Mirror from "./views/Mirror.svelte"
     import Timer from "./views/Timer.svelte"
     import Visualizer from "./views/Visualizer.svelte"
+    import DynamicEvents from "./views/DynamicEvents.svelte"
 
     export let item: Item
     export let slideIndex: number = 0
@@ -147,6 +148,8 @@
         <!-- {/key} -->
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
+    {:else if item?.type === "events"}
+        <DynamicEvents {...item.events} textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={slideIndex} />
     {:else if item?.type === "visualizer"}

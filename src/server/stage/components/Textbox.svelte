@@ -73,6 +73,8 @@
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" /> -->
     {:else if item?.type === "clock"}
         <Clock {autoSize} {...item.clock} />
+        <!-- {:else if item?.type === "events"}
+        <DynamicEvents {...item.events} /> -->
         <!-- {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={slideIndex} /> -->
     {:else if item?.type === "icon"}

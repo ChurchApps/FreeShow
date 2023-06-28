@@ -175,6 +175,7 @@
         "events": "Ingen hendelser",
         "text": "Skriv noe",
         "timers": "Ingen nedtellinger",
+        "input": "Mangler verdi i inndata",
         "recording": "Høyreklikk på en skjerm eller vindu for å starte et opptak."
     },
     "remote": {
@@ -304,6 +305,7 @@
         "select_show": "Velg show",
         "rename": "Gi nytt navn",
         "color": "Farge",
+        "find_replace": "Finn og erstatt",
         "edit_list": "Rediger liste",
         "timer": "Nedtelling",
         "transition": "Overgang",
@@ -400,7 +402,8 @@
         "choose_group": "Velg gruppe",
         "goto_group": "Gå til gruppe",
         "change_output_style": "Endre stil for utgangsskjerm",
-        "private": "Privat",
+        "toggle_private": "Privat",
+        "view_private": "Vis private",
         "import": "Importer",
         "export": "Eksporter",
         "duplicate": "Dupliser",
@@ -440,6 +443,10 @@
         "remove_binding": "Fjern binding",
         "choose_custom": "Velg egen",
         "format": "Formater",
+        "find_replace": "Finn og erstatt tekst",
+        "find": "Finn",
+        "replace": "Erstatt",
+        "case_sensitive": "Skill mellom små og store bokstaver",
         "uppercase": "Gjør tekst stor",
         "lowercase": "Gjør tekst liten",
         "capitalize": "Gjør første bokstav stor",
@@ -604,7 +611,11 @@
         "top_bottom": "Topp til bunn",
         "bottom_top": "Bunn til topp",
         "left_right": "Venstre til høyre",
-        "right_left": "Høyre til venstre"
+        "right_left": "Høyre til venstre",
+        "max_events": "Maks hendelser",
+        "start_days_from_today": "Start på antall dager fra i dag",
+        "just_one_day": "Bare en dag",
+        "enable_start_date": "Aktiver startdato"
     },
     "items": {
         "text": "Tekstboks",
@@ -614,6 +625,7 @@
         "video": "Video",
         "mirror": "Speil",
         "clock": "Klokke",
+        "events": "Hendelser",
         "live": "Direkte",
         "audio": "Lyd",
         "timer": "Nedtelling",
@@ -721,7 +733,8 @@
         "color": "Farge",
         "font-size": "Tekststørrelse",
         "zeros": "Null",
-        "overrun": "Utløpt Farge"
+        "overrun": "Utløpt Farge",
+        "auto_stretch": "Strekk ut innhold automatisk"
     },
     "settings": {
         "general": "Generelt",

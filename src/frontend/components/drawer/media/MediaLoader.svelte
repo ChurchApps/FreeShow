@@ -181,9 +181,12 @@
     let retryCount = 0
     $: if (path) retryCount = 0
     function reload() {
-        if (retryCount > 3) return
+        if (retryCount > 5) return
 
-        retryCount++
+        setTimeout(() => {
+            loaded = false
+            retryCount++
+        }, 100)
     }
 </script>
 
@@ -200,15 +203,17 @@
             <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">
                 <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
                 {#if !loaded || hover || loadFullImage}
-                    <video
-                        style="pointer-events: none;position: absolute;{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, 'cover')}"
-                        bind:this={videoElem}
-                        on:error={reload}
-                        src={path}
-                        on:canplaythrough={ready}
-                    >
-                        <track kind="captions" />
-                    </video>
+                    {#key retryCount}
+                        <video
+                            style="pointer-events: none;position: absolute;{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, 'cover')}"
+                            bind:this={videoElem}
+                            on:error={reload}
+                            src={path}
+                            on:canplaythrough={ready}
+                        >
+                            <track kind="captions" />
+                        </video>
+                    {/key}
                 {/if}
             </div>
         {:else}
@@ -216,7 +221,9 @@
                 <canvas style="width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" bind:this={canvas} />
             {/if}
             {#if loadFullImage}
-                <img src={path} alt={name} loading="lazy" style="pointer-events: none;position: absolute;filter: {filter};object-fit: {fit};{flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;" on:error={reload} />
+                {#key retryCount}
+                    <img src={path} alt={name} loading="lazy" style="pointer-events: none;position: absolute;filter: {filter};object-fit: {fit};{flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;" on:error={reload} />
+                {/key}
             {/if}
         {/if}
     {/key}

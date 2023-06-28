@@ -57,6 +57,10 @@
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
     $: if (id === "timer" && box) box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
+    $: if (id === "events" && box) {
+        box.edit.default[4].hidden = !item?.events?.enableStartDate
+        box.edit.default[5].hidden = !item?.events?.enableStartDate
+    }
 
     function getMirrorValues() {
         if (!item?.mirror || !box) return
@@ -307,7 +311,7 @@
             return
         }
 
-        const setItemStyle = ["list", "timer", "clock", "icon"]
+        const setItemStyle = ["list", "timer", "clock", "icon", "events"]
         if (setItemStyle.includes(id)) {
             slides.forEach((slide, i) => {
                 if (!slideItems[i].length) return

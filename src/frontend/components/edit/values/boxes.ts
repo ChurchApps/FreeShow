@@ -260,6 +260,58 @@ export const boxes: Box = {
             ],
         },
     },
+    events: {
+        icon: "calendar",
+        edit: {
+            default: [
+                { name: "max_events", id: "events.maxEvents", input: "number", value: 5, values: { max: 20 } },
+                { name: "start_days_from_today", id: "events.startDaysFromToday", disabled: "events.enableStartDate", input: "number", value: 0, values: { max: 10000 } },
+                { name: "just_one_day", id: "events.justOneDay", input: "checkbox", value: false },
+                { name: "enable_start_date", id: "events.enableStartDate", input: "checkbox", value: false },
+                { name: "calendar.from_date", id: "events.startDate", hidden: true, input: "date" },
+                { name: "calendar.from_time", id: "events.startTime", hidden: true, input: "time" },
+            ],
+            font: [
+                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
+                { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
+                { name: "size", id: "style", key: "font-size", input: "number", value: 80, extension: "px" }, // , disabled: "item.autoSize"
+                // { name: "auto_size", id: "auto", input: "checkbox", value: false },
+            ],
+            style: [
+                { input: "font-style" },
+                { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 0.9, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
+                { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
+                {
+                    name: "transform",
+                    input: "dropdown",
+                    id: "style",
+                    key: "text-transform",
+                    value: "none",
+                    values: {
+                        options: [
+                            { id: "none", name: "$:main.none:$" },
+                            { id: "uppercase", name: "$:edit.uppercase:$" },
+                            { id: "lowercase", name: "$:edit.lowercase:$" },
+                            { id: "capitalize", name: "$:edit.capitalize:$" },
+                        ],
+                    },
+                },
+            ],
+            // align: [{ input: "align-x" //, value: "left" }, { input: "align-y" }],
+            outline: [
+                { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
+                { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
+            ],
+            shadow: [
+                { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
+                { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
+                { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
+                { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
+            ],
+            CSS: [{ id: "text", input: "CSS" }],
+        },
+    },
     // mirror other shows content on the same slide index
     mirror: {
         icon: "mirror",

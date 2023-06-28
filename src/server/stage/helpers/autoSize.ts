@@ -16,7 +16,7 @@ export function getAutoSize(item: any, styles: any = null, oneLine: boolean = fa
     if (!oneLine && fullTextLength > 10) {
         // dont ask me how this works
 
-        size = (itemHeight / itemWidth / (fullTextLength + fullTextLength)) * 14000
+        size = ((itemHeight * itemWidth) / 3500000 / (fullTextLength + fullTextLength)) * 14000
 
         // get low value to multiply by value
         let hmm = Math.max(1.8, fullTextLength / 200)

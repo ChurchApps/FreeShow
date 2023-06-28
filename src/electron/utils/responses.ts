@@ -107,7 +107,6 @@ const mainResponses: any = {
     },
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),
-    RENAME_SHOWS: (data: any) => renameShows(data),
     FULL_SHOWS_LIST: (data: any) => getAllShows(data),
     ACCESS_CAMERA_PERMISSION: () => {
         if (process.platform !== "darwin") return
@@ -182,22 +181,20 @@ function refreshAllShows(data: any) {
         }
         if (!show || !show[1]) return
 
-        newShows[show[0]] = trimShow(show[1])
+        newShows[show[0]] = trimShow({ ...show[1], name: name.replace(".show", "") })
     }
 
     if (!Object.keys(newShows).length) return
     toApp("MAIN", { channel: "REFRESH_SHOWS", data: newShows })
 }
 
-function renameShows(msg: any) {
-    let shows = msg.shows
-
+export function renameShows(shows: any, path: string) {
     for (const show of shows) checkFile(show)
     function checkFile(show: any) {
         let oldName = show.oldName + ".show"
         let newName = (show.name || show.id) + ".show"
 
-        renameFile(msg.path, oldName, newName)
+        renameFile(path, oldName, newName)
     }
 }
 

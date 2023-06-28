@@ -96,6 +96,7 @@ export type Popups =
     | "player"
     | "rename"
     | "color"
+    | "find_replace"
     | "timer"
     | "transition"
     | "import_scripture"

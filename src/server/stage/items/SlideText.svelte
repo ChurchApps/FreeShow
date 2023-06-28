@@ -6,11 +6,13 @@
     export let parent: any
     export let chords: boolean = false
     export let autoSize: boolean = false
+    export let autoStage: boolean = true
     export let fontSize: number = 0
 
     export let style: boolean = false
 
     $: stageAutoSize = autoSize ? (slide ? getAutoSize(slide.items[0], parent) : 1) : fontSize
+    $: console.log(slide, slide?.items[0], parent)
     $: console.log("SIZE", autoSize, fontSize, stageAutoSize)
 
     $: items = style ? slide.items : combineSlideItems()
@@ -31,6 +33,6 @@
 
 {#if slide}
     {#each items as item}
-        <Textbox {item} {style} {chords} autoSize={stageAutoSize} />
+        <Textbox {item} {style} {chords} autoSize={stageAutoSize} {autoStage} />
     {/each}
 {/if}

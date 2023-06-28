@@ -37,6 +37,17 @@
             <Loader />
         </Center>
     </div>
+
+    <!-- <Button
+        on:click={() => {
+            send(CLOUD, ["CANCEL"])
+            activePopup.set(null)
+        }}
+        dark
+    >
+        <Icon id="close" right />
+        <T id="popup.cancel" />
+    </Button> -->
 {/if}
 
 <style>

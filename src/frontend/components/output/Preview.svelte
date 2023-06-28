@@ -295,7 +295,16 @@
         videoTime = 0
         send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
         if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })
+
+        // dont think this is nessesary
+        setTimeout(() => {
+            if (!currentOutput.out?.background) video = null
+        }, 500)
     }
+
+    // $: if (currentOutput.out?.background === null) {
+    //     clearVideo()
+    // }
 </script>
 
 <svelte:window on:keydown={keydown} />

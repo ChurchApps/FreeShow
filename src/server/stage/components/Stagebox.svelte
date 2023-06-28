@@ -37,7 +37,7 @@
   `
 
     $: size = getAutoSize(item, { width, height })
-    $: autoSize = fontSize ? Math.min(fontSize, size) : size
+    $: autoSize = fontSize ? Math.max(fontSize, size) : size
 
     $: next = id.includes("next")
     $: slide = slides[next ? 1 : 0]
@@ -46,7 +46,7 @@
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
-<div class="item" style={style + newSizes} bind:offsetHeight={height} bind:offsetWidth={width}>
+<div class="item" style={style + (show.settings.autoStretch === false ? "" : newSizes)} bind:offsetHeight={height} bind:offsetWidth={width}>
     {#if show?.settings.labels}
         <div class="label">
             {item.label}
@@ -67,12 +67,12 @@
                     <SlideNotes notes={slide?.notes || ""} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     {#key item}
-                        <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} />
+                        <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} />
                     {/key}
                 {:else if id.includes("slide")}
                     <!-- TODO: show slide data (backgrounds, overlays) -->
                     <span style="pointer-events: none;">
-                        <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} style />
+                        <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} style />
                     </span>
                 {:else if id.includes("clock")}
                     <Clock autoSize={item.auto !== false ? autoSize : fontSize} />

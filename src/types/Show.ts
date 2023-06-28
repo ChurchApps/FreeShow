@@ -78,6 +78,7 @@ export interface Item {
     timer?: Timer // pre 0.8.3 // also local backup?
     timerId?: string
     clock?: Clock
+    events?: DynamicEvent
     type?: ItemType
     mirror?: Mirror
     src?: string
@@ -111,6 +112,15 @@ export interface Timer {
 export interface Clock {
     type: "digital" | "analog"
     seconds: boolean
+}
+
+export interface DynamicEvent {
+    maxEvents: number
+    startDaysFromToday: number
+    justOneDay: boolean
+    enableStartDate: boolean
+    startDate?: string
+    startTime?: string
 }
 
 export interface Scrolling {
@@ -281,7 +291,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "list" | "media" | "timer" | "clock" | "mirror" | "icon" | "visualizer" // "shape" | "video" | "media" | "camera"
+export type ItemType = "text" | "list" | "media" | "timer" | "clock" | "events" | "mirror" | "icon" | "visualizer" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

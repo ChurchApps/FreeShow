@@ -23,6 +23,8 @@
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
     import { menuClick } from "../context/menuClick"
     import Visualizer from "../slide/views/Visualizer.svelte"
+    import DynamicEvents from "../slide/views/DynamicEvents.svelte"
+    import { getStyles } from "../helpers/style"
 
     export let item: Item
     export let filter: string = ""
@@ -261,14 +263,20 @@
         item?.lines?.forEach((line) => {
             s += line.align
             line.text?.forEach((a) => {
-                // + (item.auto ? autoSize : "")
-                s += a.style
+                s += getTextStyle(a)
             })
         })
 
         // dont replace while typing
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
+        console.log(currentStyle !== s, currentStyle, s)
         if (currentStyle !== s) getStyle()
+    }
+    function getTextStyle(lineText) {
+        let textActive = document.activeElement?.closest(".edit")
+        let auto: string = item.auto && !textActive ? autoSize + "" : ""
+        let style = lineText.style ? lineText.style + auto : ""
+        return style
     }
 
     function getStyle() {
@@ -290,8 +298,7 @@
             if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
 
             line.text?.forEach((a) => {
-                // + (item.auto ? autoSize : "")
-                currentStyle += a.style
+                currentStyle += getTextStyle(a)
 
                 let auto: string = item.auto ? "font-size: " + autoSize + "px;" : ""
                 let style = a.style ? 'style="' + a.style + auto + '"' : ""
@@ -610,6 +617,8 @@ bind:offsetWidth={width} -->
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
+    {:else if item?.type === "events"}
+        <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
     {:else if item?.type === "visualizer"}

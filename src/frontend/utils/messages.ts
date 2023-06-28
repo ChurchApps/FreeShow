@@ -100,6 +100,7 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["TEMPLATES"], get(templates))
     send(OUTPUT, ["OVERLAYS"], get(overlays))
     send(OUTPUT, ["TIMERS"], get(timers))
+    send(OUTPUT, ["EVENTS"], get(events))
 }
 
 export function newToast(msg: string) {

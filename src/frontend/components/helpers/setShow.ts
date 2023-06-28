@@ -6,6 +6,17 @@ import { notFound, shows, showsCache, showsPath, textCache } from "../../stores"
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
 
+    // update cache data if loading from shows list
+    if (value !== "delete" && !get(showsCache)[id]) {
+        let showRef = get(shows)[id]
+        if (showRef) {
+            value.name = showRef.name
+            value.category = showRef.category
+            value.timestamps = showRef.timestamps
+            if (showRef.private) value.private = true
+        }
+    }
+
     showsCache.update((a) => {
         previousValue = a[id]
         if (value === "delete") delete a[id]
@@ -14,21 +25,17 @@ export function setShow(id: string, value: "delete" | Show): Show {
             a[id] = value
         }
         // send(OUTPUT, ["SHOWS"], a)
+
         return a
     })
 
-    shows.update((a) => {
-        if (value === "delete") delete a[id]
-        else {
-            a[id] = {
-                name: value.name,
-                category: value.category,
-                timestamps: value.timestamps,
-            }
-            if (value.private) a[id].private = true
-        }
-        return a
-    })
+    if (value === "delete") {
+        shows.update((a) => {
+            delete a[id]
+
+            return a
+        })
+    }
 
     console.log("SHOW UPDATED: ", id, value)
 

@@ -128,6 +128,9 @@
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: -1, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
             searchValue = ""
+            setTimeout(() => {
+                searchElem.blur()
+            }, 10)
 
             if (!autoDrawer || storeHeight !== null) {
                 click(null)
@@ -171,7 +174,7 @@
                 {/if}
             {/each}
         </span>
-        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder="{$dictionary.main?.search}..." bind:value={searchValue} on:input={search} use:selectTextOnFocus />
+        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder={$dictionary.main?.search} bind:value={searchValue} on:input={search} use:selectTextOnFocus />
         {#if !searchActive && !searchValue.length}
             <Button on:click={() => (searchActive = true)} title={$dictionary.main?.search}>
                 <Icon id="search" size={1.3} white />

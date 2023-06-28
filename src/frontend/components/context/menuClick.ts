@@ -617,6 +617,11 @@ const actions: any = {
     },
 
     // formats
+    find_replace: (obj: any) => {
+        popupData.set(obj)
+        activePopup.set("find_replace")
+        // format("find_replace", obj)
+    },
     uppercase: (obj: any) => format("uppercase", obj),
     lowercase: (obj: any) => format("lowercase", obj),
     capitalize: (obj: any) => format("capitalize", obj),
@@ -812,7 +817,7 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
     history({ id: "SLIDES", oldData: { type, data: slides } })
 }
 
-function format(id: string, obj: any) {
+export function format(id: string, obj: any, data: any = null) {
     let slides: any[] = []
 
     let editing = get(activeEdit)
@@ -827,7 +832,7 @@ function format(id: string, obj: any) {
         currentItems.forEach((item: any) => {
             item.lines?.forEach((line: any, j: number) => {
                 line.text?.forEach((text: any, k: number) => {
-                    item.lines[j].text[k].value = formatting[id](text.value)
+                    item.lines[j].text[k].value = formatting[id](text.value, data)
                 })
             })
             newItems.push(item)
@@ -864,7 +869,7 @@ function format(id: string, obj: any) {
         slideItems.forEach((item: any) => {
             item.lines?.forEach((line: any, j: number) => {
                 line.text?.forEach((text: any, k: number) => {
-                    item.lines[j].text[k].value = formatting[id](text.value)
+                    item.lines[j].text[k].value = formatting[id](text.value, data)
                 })
             })
             newItems.push(item)
@@ -878,6 +883,14 @@ function format(id: string, obj: any) {
 }
 
 const formatting: any = {
+    find_replace: (t: string, data) => {
+        if (!data.findValue) return t
+
+        let flags = "g"
+        if (data.caseSentitive === false) flags += "i"
+        var regExp = new RegExp(data.findValue, flags)
+        return t.replace(regExp, data.replaceValue)
+    },
     uppercase: (t: string) => t.toUpperCase(),
     lowercase: (t: string) => t.toLowerCase(),
     capitalize: (t: string) => (t.length > 1 ? t[0].toUpperCase() + t.slice(1, t.length) : t.toUpperCase()),

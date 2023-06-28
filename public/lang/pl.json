@@ -175,6 +175,7 @@
         "events": "Brak wydarzeń",
         "text": "Napisz coś",
         "timers": "Brak timerów",
+        "input": "Missing value in input",
         "recording": "Naciśnij prawym przyciskiem myszy aby rozpocząć nagrywanie."
     },
     "remote": {
@@ -304,6 +305,7 @@
         "select_show": "Zaznacz pokaz",
         "rename": "Zmień nazwę",
         "color": "Kolor",
+        "find_replace": "Find and replace",
         "edit_list": "Edytuj listę",
         "timer": "Timer",
         "transition": "Przejście",
@@ -400,7 +402,8 @@
         "choose_group": "Wybierz grupę",
         "goto_group": "Idź do grupy",
         "change_output_style": "Zmień styl wyjściowy",
-        "private": "Prywatne",
+        "toggle_private": "Prywatne",
+        "view_private": "Show private",
         "import": "Importuj",
         "export": "Eksportuj",
         "duplicate": "Duplikuj",
@@ -440,6 +443,10 @@
         "remove_binding": "Usuń powiązanie",
         "choose_custom": "Wybierz własny",
         "format": "Formatuj",
+        "find_replace": "Find and replace text",
+        "find": "Find",
+        "replace": "Replace",
+        "case_sensitive": "Case sensitive",
         "uppercase": "Wielkie litery",
         "lowercase": "Małe litery",
         "capitalize": "Wielkie na początku",
@@ -604,7 +611,11 @@
         "top_bottom": "Od góry",
         "bottom_top": "Od dołu",
         "left_right": "Od lewej",
-        "right_left": "Od prawej"
+        "right_left": "Od prawej",
+        "max_events": "Max events",
+        "start_days_from_today": "Start at days from today",
+        "just_one_day": "Just one day",
+        "enable_start_date": "Enable start date"
     },
     "items": {
         "text": "Tekst",
@@ -614,6 +625,7 @@
         "video": "Wideo",
         "mirror": "Lustro",
         "clock": "Zegar",
+        "events": "Wydarzenia",
         "live": "Na żywo",
         "audio": "Audio",
         "timer": "Timer",
@@ -721,7 +733,8 @@
         "color": "Kolor",
         "font-size": "Rozmiar fontu",
         "zeros": "Zera",
-        "overrun": "Kolor przekroczenia czasu"
+        "overrun": "Kolor przekroczenia czasu",
+        "auto_stretch": "Auto stretch content"
     },
     "settings": {
         "general": "Ogólne",

@@ -27,7 +27,7 @@
     <span class="group">
         <div class="combinedButton">
             <Button
-                disabled={($outLocked && activeClear === "background") || isOutCleared("background", $outputs)}
+                disabled={$outLocked || isOutCleared("background", $outputs)}
                 on:click={() => {
                     if (!$outLocked) {
                         autoChange = true
@@ -42,7 +42,7 @@
             >
                 <Icon id="background" size={1.2} />
             </Button>
-            <!-- disabled={($outLocked && activeClear === "background") || isOutCleared("background", $outputs)} -->
+            <!-- disabled={($outLocked) || isOutCleared("background", $outputs)} -->
             <Button
                 on:click={() => {
                     if (activeClear === "background") {
@@ -60,7 +60,7 @@
 
         <div class="combinedButton">
             <Button
-                disabled={($outLocked && activeClear === "slide") || isOutCleared("slide", $outputs)}
+                disabled={$outLocked || isOutCleared("slide", $outputs)}
                 on:click={() => {
                     if (!$outLocked) {
                         autoChange = true
@@ -74,7 +74,7 @@
             >
                 <Icon id="slide" size={1.2} />
             </Button>
-            <!-- disabled={($outLocked && activeClear === "slide") || isOutCleared("slide", $outputs)} -->
+            <!-- disabled={($outLocked) || isOutCleared("slide", $outputs)} -->
             <Button
                 on:click={() => {
                     if (activeClear === "slide") {
@@ -92,7 +92,7 @@
 
         <div class="combinedButton">
             <Button
-                disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs, true)}
+                disabled={$outLocked || isOutCleared("overlays", $outputs, true)}
                 on:click={() => {
                     if (!$outLocked) {
                         autoChange = true
@@ -106,7 +106,7 @@
             >
                 <Icon id="overlays" size={1.2} />
             </Button>
-            <!-- disabled={($outLocked && activeClear === "overlays") || isOutCleared("overlays", $outputs, true)} -->
+            <!-- disabled={($outLocked) || isOutCleared("overlays", $outputs, true)} -->
             <Button
                 on:click={() => {
                     if (activeClear === "overlays") {
@@ -124,7 +124,7 @@
 
         <div class="combinedButton">
             <Button
-                disabled={($outLocked && activeClear === "audio") || !Object.keys($playingAudio).length}
+                disabled={$outLocked || !Object.keys($playingAudio).length}
                 on:click={() => {
                     if (!$outLocked) {
                         autoChange = true
@@ -138,7 +138,7 @@
             >
                 <Icon id="audio" size={1.2} />
             </Button>
-            <!-- disabled={($outLocked && activeClear === "audio") || !Object.keys($playingAudio).length} -->
+            <!-- disabled={($outLocked) || !Object.keys($playingAudio).length} -->
             <Button
                 on:click={() => {
                     if (activeClear === "audio") {
@@ -156,7 +156,7 @@
 
         <div class="combinedButton">
             <Button
-                disabled={($outLocked && activeClear === "nextTimer") || isOutCleared("transition", $outputs)}
+                disabled={$outLocked || isOutCleared("transition", $outputs)}
                 on:click={() => {
                     if (!$outLocked) {
                         autoChange = true
@@ -170,7 +170,7 @@
             >
                 <Icon id="clock" size={1.2} />
             </Button>
-            <!-- disabled={($outLocked && activeClear === "nextTimer") || isOutCleared("transition", $outputs)} -->
+            <!-- disabled={($outLocked) || isOutCleared("transition", $outputs)} -->
             <Button
                 on:click={() => {
                     if (activeClear === "nextTimer") {

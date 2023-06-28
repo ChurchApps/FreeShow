@@ -14,6 +14,7 @@ export interface StageShows {
             output?: string
             background?: boolean
             color?: string
+            autoStretch?: string
             resolution?: boolean
             size?: Resolution
             labels?: boolean

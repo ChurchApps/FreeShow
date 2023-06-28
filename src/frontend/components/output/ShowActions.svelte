@@ -32,7 +32,8 @@
 
     $: length = ref?.length || 0
 
-    $: showIsNotOutputtedSlide = ($activePage === "edit" && slide?.index !== $activeEdit.slide) || !slide || slide.id !== $activeShow?.id || !$activeShow || slide.layout !== $showsCache[$activeShow.id]?.settings?.activeLayout
+    $: newEditSlide = $activePage === "edit" && slide?.index !== $activeEdit.slide
+    $: showIsNotOutputtedSlide = newEditSlide || !slide || slide.id !== $activeShow?.id || !$activeShow || slide.layout !== $showsCache[$activeShow.id]?.settings?.activeLayout
 </script>
 
 <span class="group">
@@ -55,7 +56,7 @@
     <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
         <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
     </Button>
-    {#if showIsNotOutputtedSlide && (slide || !overlays)}
+    {#if showIsNotOutputtedSlide && (slide || newEditSlide || !overlays)}
         <Button
             on:click={(e) => {
                 if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null && $activeEdit.slide !== undefined)

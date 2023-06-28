@@ -47,7 +47,7 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
     if (!showId) return
 
     showsCache.update((a) => {
-        if (!a[showId]) return a
+        if (!a[showId]?.slides) return a
 
         Object.keys(a[showId].slides).forEach(checkSlide)
         function checkSlide(slideId) {

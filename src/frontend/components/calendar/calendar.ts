@@ -20,7 +20,7 @@ export const getDateString = (date: Date) => {
     return d + "." + m + "." + y
 }
 
-function getTime(date: Date) {
+export function getTime(date: Date) {
     let h = ("0" + date.getHours()).slice(-2)
     let m = ("0" + date.getMinutes()).slice(-2)
     return h + ":" + m
