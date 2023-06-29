@@ -34,6 +34,7 @@
     import EditList from "./popups/EditList.svelte"
     import Connect from "./popups/Connect.svelte"
     import FindReplace from "./popups/FindReplace.svelte"
+    import NextTimer from "./popups/NextTimer.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -59,6 +60,7 @@
         choose_screen: ChooseScreen,
         change_output_values: ChangeOutputValues,
         choose_style: ChooseStyle,
+        next_timer: NextTimer,
         advanced_settings: AdvancedScreen,
         about: About,
         shortcuts: Shortcuts,

@@ -34,7 +34,9 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
         case "actions":
             let slideRef: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]
             let currentActions: any = slideRef?.data?.actions
+            console.log(slideRef)
             let actions: any = [
+                { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
                 { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
                 { id: "startShow", label: "preview._start", icon: "showIcon", enabled: currentActions?.startShow || false },
                 { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },

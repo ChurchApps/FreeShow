@@ -85,13 +85,13 @@ export function setExampleOverlays() {
     overlays.update((a) => {
         a.watermark = {
             name: get(dictionary).example?.watermark || "Watermark",
-            color: "#e6349c",
+            color: "#F0008C",
             category: "notice",
             items: [
                 {
                     style: "top:870px;left:1248px;height:170px;width:630px;",
                     align: "align-items:flex-end;",
-                    lines: [{ align: "text-align: right;", text: [{ value: "FreeShow", style: "font-size:50px;font-weight:bold;color:#e6349c;" }] }],
+                    lines: [{ align: "text-align: right;", text: [{ value: "FreeShow", style: "font-size:50px;font-weight:bold;color:#F0008C;" }] }],
                 },
             ],
         }

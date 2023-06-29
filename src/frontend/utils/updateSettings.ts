@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
-import { convertObject } from "../components/helpers/array"
+import { clone, convertObject } from "../components/helpers/array"
+import { displayOutputs, setOutput } from "../components/helpers/output"
 import {
     activePopup,
     activeProject,
@@ -11,9 +12,9 @@ import {
     calendarAddShow,
     categories,
     defaultProjectName,
+    drawSettings,
     drawer,
     drawerTabsData,
-    drawSettings,
     driveData,
     exportPath,
     formatNewShow,
@@ -55,10 +56,9 @@ import {
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
-import { currentWindow, maxConnections, outputs, scriptures, scriptureSettings, splitLines, transitionData, volume } from "./../stores"
+import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
-import { displayOutputs, setOutput } from "../components/helpers/output"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -92,9 +92,23 @@ export function updateSettings(data: any) {
     send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
 
     // theme
-    if (get(themes)[data.theme]) {
-        Object.entries(get(themes)[data.theme].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-        Object.entries(get(themes)[data.theme].font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
+    let currentTheme = get(themes)[data.theme]
+    if (currentTheme) {
+        // update color (upgrading from < v0.9.2)
+        if (data.theme === "default" && currentTheme.colors.secondary?.toLowerCase() === "#e6349c") {
+            let newTheme = clone(currentTheme)
+            newTheme.colors.secondary = "#F0008C"
+            newTheme.colors["secondary-opacity"] = "rgba(240, 0, 140, 0.5)"
+
+            themes.update((a) => {
+                a[data.theme] = newTheme
+                return a
+            })
+
+            currentTheme = newTheme
+        }
+
+        updateThemeValues(currentTheme)
     }
 
     // load all shows
@@ -105,6 +119,15 @@ export function updateSettings(data: any) {
     setTimeout(() => {
         window.api.send("LOADED")
     }, 100)
+}
+
+export function updateThemeValues(themes: any) {
+    Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
+    Object.entries(themes.font).forEach(([key, value]: any) => {
+        // || themeId === "default"
+        if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
+        document.documentElement.style.setProperty("--font-" + key, value)
+    })
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {

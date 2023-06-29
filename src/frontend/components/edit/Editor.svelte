@@ -25,7 +25,7 @@
         <TemplateEditor />
     {:else if $activeEdit.type === "effect"}
         <EffectEditor />
-    {:else if $activeShow?.type === "image" || $activeShow?.type === "video" || $activeEdit.type === "media"}
+    {:else if $activeEdit.type === "media"}
         <MediaEditor />
     {:else if $activeEdit.type === "audio"}
         <!--  -->

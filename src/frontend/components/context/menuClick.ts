@@ -337,6 +337,11 @@ const actions: any = {
     },
 
     // show
+    slide_transition: (obj: any) => {
+        if (obj.sel.id !== "slide") return
+
+        activePopup.set("transition")
+    },
     disable: (obj: any) => {
         if (obj.sel.id === "slide") {
             showsCache.update((a) => {
@@ -651,6 +656,8 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
+    let indexes: number[] = obj.sel.data.map(({ index }) => index)
+
     if (id === "startShow") {
         let actions = clone(ref[layoutSlide]?.data?.actions) || {}
         let showId: string = actions[id]?.id || get(sortedShowsList)[0]
@@ -662,7 +669,7 @@ function changeSlideAction(obj: any, id: string) {
 
         if (!actions[id]) actions[id] = { id: showId }
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] }, location: { page: "show", override: "start_show_action" } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
 
         let data: any = {
             action: "select_show",
@@ -670,7 +677,7 @@ function changeSlideAction(obj: any, id: string) {
             trigger: (showId: string) => {
                 if (!showId) return
                 actions[id] = { id: showId }
-                history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] }, location: { page: "show", override: "start_show_action" } })
+                history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
             },
         }
 
@@ -691,9 +698,9 @@ function changeSlideAction(obj: any, id: string) {
 
         if (!actions[id]) actions[id] = styleId
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] }, location: { page: "show", override: "change_style_slide" } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "change_style_slide" } })
 
-        let data: any = { id: styleId, index: layoutSlide }
+        let data: any = { id: styleId, indexes }
 
         popupData.set(data)
         activePopup.set("choose_style")
@@ -701,12 +708,22 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
-    let indexes: number[] = obj.sel.data.map(({ index }) => index)
+    if (id === "nextTimer") {
+        let nextTimer = clone(ref[layoutSlide]?.data?.nextTimer) || 0
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: nextTimer, indexes }, location: { page: "show", override: "change_style_slide" } })
+
+        let data: any = { value: nextTimer, indexes }
+
+        popupData.set(data)
+        activePopup.set("next_timer")
+
+        return
+    }
 
     // this is old and has to be stored as this
     if (id === "loop") {
         let loop = ref[layoutSlide]?.data?.end || false
-        // WIP this does not work with multiple for some reason
         history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !loop, indexes } })
 
         return

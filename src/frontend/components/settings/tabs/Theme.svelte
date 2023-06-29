@@ -1,5 +1,6 @@
 <script lang="ts">
     import { dictionary, labelsDisabled, theme, themes } from "../../../stores"
+    import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -43,35 +44,30 @@
             }
 
             history({ id: "UPDATE", newData: { data }, location: { page: "settings", id: "settings_theme" } })
-            updateStyle(data)
+            updateThemeValues(data)
         } else {
             history({ id: "UPDATE", newData: { key, subkey: id, data: value }, oldData: { id: $theme }, location: { page: "settings", id: "settings_theme", override: "theme#" + $theme + "." + id } })
 
             setTimeout(() => {
-                updateStyle($themes[$theme])
+                updateThemeValues($themes[$theme])
             }, 20)
         }
     }
 
     const changeValue = (e: any) => (themeValue = e.target.value)
     let themeValue: any
-    $: themeValue = $themes[$theme].default ? $dictionary.themes[$themes[$theme].name] : $themes[$theme].name
+    $: themeValue = $themes[$theme]?.default ? $dictionary.themes[$themes[$theme].name] : $themes[$theme]?.name || ""
 
     function resetTheme() {
         let data = { ...defaultThemes.default, default: false, name: themeValue }
         history({ id: "UPDATE", newData: { data }, oldData: { id: $theme }, location: { page: "settings", id: "settings_theme" } })
-        updateStyle($themes[$theme])
+        updateThemeValues($themes[$theme])
     }
 
     function resetThemes() {
         theme.set("default")
         themes.set(JSON.parse(JSON.stringify(defaultThemes)))
-        updateStyle(defaultThemes.default)
-    }
-
-    function updateStyle(themes: any) {
-        Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-        Object.entries(themes.font).forEach(([key, value]: any) => document.documentElement.style.setProperty("--font-" + key, value))
+        updateThemeValues(defaultThemes.default)
     }
 </script>
 
@@ -107,19 +103,19 @@
 <h3><T id="settings.font" /></h3>
 <CombinedInput>
     <p><T id="settings.font_family" /></p>
-    <!-- <Dropdown options={fonts} value={$themes[$theme].font.family} on:click={(e) => updateTheme(e.detail.name, "family", "font")} width="200px" /> -->
-    <FontDropdown system value={$theme === "default" ? "" : $themes[$theme].font.family} on:click={(e) => updateTheme(e.detail, "family", "font")} />
+    <!-- <Dropdown options={fonts} value={$themes[$theme]?.font?.family} on:click={(e) => updateTheme(e.detail.name, "family", "font")} width="200px" /> -->
+    <FontDropdown system value={$theme === "default" ? "" : $themes[$theme]?.font?.family} on:click={(e) => updateTheme(e.detail, "family", "font")} />
 </CombinedInput>
 <CombinedInput>
     <p><T id="settings.font_size" /></p>
-    <NumberInput value={$themes[$theme].font.size.replace("em", "")} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />
+    <NumberInput value={$themes[$theme]?.font?.size.replace("em", "") ?? 1} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />
 </CombinedInput>
 
 <h3><T id="settings.colors" /></h3>
 {#each colors as color}
     <CombinedInput>
         <p><T id={"theme." + color} /></p>
-        <Color value={$themes[$theme].colors[color]} on:input={(e) => updateTheme(e.detail, color)} />
+        <Color value={$themes[$theme]?.colors?.[color]} on:input={(e) => updateTheme(e.detail, color)} />
     </CombinedInput>
 {/each}
 

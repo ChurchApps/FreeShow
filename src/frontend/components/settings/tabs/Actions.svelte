@@ -57,7 +57,9 @@
         </div>
     {/each}
 {:else}
-    <T id="empty.general" />
+    <p style="text-align: center;opacity: 0.5;padding: 10px;">
+        <T id="empty.general" />
+    </p>
 {/if}
 
 <CombinedInput>

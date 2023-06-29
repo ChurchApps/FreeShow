@@ -1,16 +1,18 @@
 <script lang="ts">
+    import { slide } from "svelte/transition"
     import { uid } from "uid"
     import { activePopup, activeProject, activeShow, dictionary, notFound, projects, showsCache, slidesOptions } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
+    import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
-    import { slide } from "svelte/transition"
+    import { _show } from "../helpers/shows"
 
     $: showId = $activeShow?.id || ""
     $: layouts = $showsCache[showId]?.layouts
@@ -19,6 +21,16 @@
     $: sortedLayouts = Object.entries(layouts || {})
         .map(([id, layout]: any) => ({ id, ...layout }))
         .sort((a, b) => a.name?.localeCompare(b.name))
+
+    let totalTime: string = "0s"
+    $: if (layouts?.[activeLayout]?.slides?.length) getTotalTime()
+    function getTotalTime() {
+        let ref = _show().layouts("active").ref()[0]
+        let total = ref.reduce((value, slide) => (value += Number(slide.nextTimer || 0)), 0)
+        console.log(layouts[activeLayout].slides, total)
+
+        totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
+    }
 
     function addLayout(e: any): any {
         if (e.ctrlKey || e.metaKey) return duplicate({ id: "layout" })
@@ -114,9 +126,14 @@
                 <Icon size={1.3} id="add" />
             </Button>
         {/if}
+
         <div class="seperator" />
+
         <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition}>
             <Icon size={1.3} id="transition" white />
+        </Button>
+        <Button on:click={() => activePopup.set("next_timer")} title="{$dictionary.popup?.next_timer}{totalTime !== '0s' ? ': ' + totalTime : ''}">
+            <Icon size={1.2} id="clock" white />
         </Button>
         <Button class="context #slideViews" on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
             <Icon size={1.3} id={$slidesOptions.mode} white />

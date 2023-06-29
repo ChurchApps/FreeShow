@@ -817,7 +817,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 keys.forEach((key, i) => {
                     // for overlays, add full array
-                    let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : values[i]?.[valueIndex] || values[valueIndex]
+                    let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : values[i]?.[valueIndex] || values[valueIndex] || values[i]
+                    console.log(value, valueIndex, values, keys, key, data)
+
                     if (!data.dataIsArray && typeof values[i] === "string") value = values[i]
 
                     if (value === undefined) delete l[key]

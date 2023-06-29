@@ -584,8 +584,8 @@
         --primary-darkest: #191923;
         --text: #f0f0ff;
         --textInvert: #131313;
-        --secondary: #e6349c;
-        --secondary-opacity: rgba(230, 52, 156, 0.5);
+        --secondary: #f0008c;
+        --secondary-opacity: rgba(240, 0, 140, 0.5);
         --secondary-text: #f0f0ff;
 
         --hover: rgb(255 255 255 / 0.05);

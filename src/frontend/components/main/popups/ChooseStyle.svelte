@@ -19,12 +19,12 @@
 
     function updateStyle(e: any) {
         let ref = _show().layouts("active").ref()[0]
-        let actions = clone(ref[$popupData.index]?.data?.actions) || {}
+        let actions = clone(ref[$popupData.indexes[0]]?.data?.actions) || {}
 
         currentStyleId = e.detail.id
         actions.outputStyle = currentStyleId
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [$popupData.index] }, location: { page: "show", override: "change_style_slide" } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: $popupData.indexes }, location: { page: "show", override: "change_style_slide" } })
     }
 </script>
 

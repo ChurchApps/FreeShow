@@ -91,7 +91,8 @@ export function updateCachedShows(shows: Shows) {
 
 // update cached show
 export function updateCachedShow(id: string, show: Show) {
-    console.log(id, show)
+    // WIP looped many times when show not loading
+    // console.log(id, show)
     if (!show) return
 
     let layout = GetLayout(id)

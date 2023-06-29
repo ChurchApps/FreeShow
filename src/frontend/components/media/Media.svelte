@@ -105,7 +105,7 @@
     $: if (videoData.paused && videoTime !== undefined) updateVideo("time")
     $: if (video1.video || video2.video) {
         if (!path && video === null) resetData()
-        else video = true
+        else video = video1.active ? video1.video : video2.video
     }
 
     $: if (video1.data || video2.data) updateData("data")
@@ -163,10 +163,15 @@
     // retry on error
     let retryCount = 0
     $: if (path) retryCount = 0
+    let timeout: any = null
     function reload() {
-        if (retryCount > 3) return
+        if (retryCount > 3 || timeout) return
 
-        retryCount++
+        timeout = setTimeout(() => {
+            if (!path || !type) return
+            retryCount++
+            timeout = null
+        }, 100)
     }
 
     $: noTransitions = transition.type === "none" && mirror

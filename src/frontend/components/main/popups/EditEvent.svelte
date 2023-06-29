@@ -295,7 +295,7 @@
 <CombinedInput textWidth={30}>
     <p><T id="calendar.repeat" /></p>
     <div class="alignRight">
-        <Checkbox checked={editEvent.repeat} on:change={(e) => check(e, "repeat")} />
+        <Checkbox disabled={editEvent.group} checked={editEvent.repeat} on:change={(e) => check(e, "repeat")} />
     </div>
 </CombinedInput>
 
@@ -303,20 +303,20 @@
     <CombinedInput textWidth={30}>
         <div style="display: flex;">
             <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
-            <NumberInput style="width: 50px;" value={editEvent.repeatData.count} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
-            <Dropdown style="width: 100px;" options={repeats} value={repeats.find((a) => a.id === editEvent.repeatData.type)?.name || ""} on:click={(e) => (editEvent.repeatData.type = e.detail.id)} />
+            <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.count} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
+            <Dropdown disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={repeats.find((a) => a.id === editEvent.repeatData.type)?.name || ""} on:click={(e) => (editEvent.repeatData.type = e.detail.id)} />
             <!-- TODO: select weekdays? -->
             <!-- {#if selectedRepeat.id === "week"}
 <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_on" /></span>
 <Dropdown style="width: 100px;" options={weekdays} value={selectedWeekday.name} on:click={(e) => (selectedWeekday = e.detail)} />
 {/if} -->
             <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_until" /></span>
-            <Dropdown style="width: 130px;" options={endings} value={endings.find((a) => a.id === editEvent.repeatData.ending)?.name || ""} on:click={(e) => (editEvent.repeatData.ending = e.detail.id)} />
+            <Dropdown disabled={!!editEvent.group} style="width: 130px;" options={endings} value={endings.find((a) => a.id === editEvent.repeatData.ending)?.name || ""} on:click={(e) => (editEvent.repeatData.ending = e.detail.id)} />
 
             {#if editEvent.repeatData.ending === "date"}
-                <input type="date" bind:value={editEvent.repeatData.endingDate} />
+                <input disabled={!!editEvent.group} type="date" bind:value={editEvent.repeatData.endingDate} />
             {:else if editEvent.repeatData.ending === "after"}
-                <NumberInput style="width: 50px;" value={editEvent.repeatData.afterRepeats} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
+                <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.afterRepeats} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
                 <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.ending_times" /></span>
             {/if}
         </div>

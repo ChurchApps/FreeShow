@@ -43,9 +43,11 @@
     let offset: number = -1
     $: offset = autoscroll(scrollElem, ($activeShow?.index || 1) - 1)
 
+    // close if not existing
+    $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null)
     $: {
         // get pos if clicked in drawer
-        if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject!].shows[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
+        if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject]?.shows[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
     }
 
     function findShowInProject() {

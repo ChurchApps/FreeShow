@@ -91,6 +91,8 @@
             if (mirror) return
             let returnData: any = { id: outputId }
 
+            console.log("UPDATE", a)
+
             if (a.data) {
                 videoData = a.data
                 returnData.data = videoData
@@ -247,10 +249,36 @@
 
     // give time for video to clear
     let tempVideoBG: any = null
+    // let getTimeout: any = null
     $: if (background || currentStyle?.backgroundImage) getTempBG()
-    else setTimeout(resetTempBG, mediaTransition.duration + 100)
+    else resetTempBG()
+
+    // svelte bug: dont allow path to change while video is transitioning
+    let mediaPath: string = ""
+    let oldPath: string = ""
+    let pathTimeout: any = null
+    $: if (background?.path) getPath()
+    function getPath() {
+        clearTimeout(pathTimeout)
+
+        if (oldPath === background.path) {
+            pathTimeout = setTimeout(() => {
+                mediaPath = background.path
+            }, mediaTransition.duration + 100)
+            return
+        }
+
+        mediaPath = background.path
+        oldPath = mediaPath
+
+        pathTimeout = setTimeout(() => {
+            oldPath = ""
+        }, mediaTransition.duration + 100)
+    }
 
     function getTempBG() {
+        if (clearing) return
+
         if (!background || !layers.includes("background")) {
             if (!currentStyle?.backgroundImage) {
                 tempVideoBG = null
@@ -263,10 +291,18 @@
 
         tempVideoBG = background
     }
-    function resetTempBG() {
-        if (background || currentStyle?.backgroundImage) return
 
+    let clearing: boolean = false
+    function resetTempBG() {
+        // if (background || currentStyle?.backgroundImage) return
+
+        clearing = true
         tempVideoBG = null
+
+        setTimeout(() => {
+            clearing = false
+            if (background || currentStyle?.backgroundImage) getTempBG()
+        }, mediaTransition.duration + 100)
     }
 
     // fix videoTime resetting to 0 in Preview.svelte
@@ -314,7 +350,7 @@
 >
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} background={tempVideoBG} path={background?.path} {outputId} {currentStyle} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
+            <MediaOutput {...tempVideoBG} background={tempVideoBG} path={mediaPath} {outputId} {currentStyle} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
         </div>
     {/if}
 
@@ -407,7 +443,7 @@
                                 <div>
                                     {#each clonedOverlays[id].items as item}
                                         {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} />
+                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} />
                                         {/if}
                                     {/each}
                                 </div>
@@ -417,7 +453,7 @@
                                 <div>
                                     {#each clonedOverlays[id].items as item}
                                         {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} />
+                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} />
                                         {/if}
                                     {/each}
                                 </div>

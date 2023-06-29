@@ -71,6 +71,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     view_lyrics: { label: "show.lyrics", icon: "lyrics" },
     view_text: { label: "show.text", icon: "text" },
     // SLIDE
+    slide_transition: { label: "popup.transition", icon: "transition" },
     disable: { label: "actions.disable", icon: "disable" },
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
@@ -180,8 +181,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
-    slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
+    slide: ["slideGroups", "actions", "remove_media", "format", "disable", "slide_transition", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
+    slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "slide_transition", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
     group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
     global_group: ["edit"],
     // global_group: ["rename"],

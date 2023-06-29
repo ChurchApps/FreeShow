@@ -40,7 +40,7 @@
     <Button
         on:click={previousShow}
         title={$dictionary.preview?._previous_show}
-        disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject].shows.length || (typeof $activeShow?.index === "number" ? $activeShow.index < 1 : false)}
+        disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject]?.shows.length || (typeof $activeShow?.index === "number" ? $activeShow.index < 1 : false)}
         center
     >
         <Icon id="previousFull" size={1.2} />
@@ -89,7 +89,7 @@
     <Button
         on:click={nextShow}
         title={$dictionary.preview?._next_show}
-        disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject].shows.length || ($activeShow !== null && $activeShow.index !== undefined && $activeShow.index + 1 >= $projects[$activeProject].shows.length)}
+        disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject]?.shows.length || ($activeShow !== null && $activeShow.index !== undefined && $activeShow.index + 1 >= $projects[$activeProject].shows.length)}
         center
     >
         <Icon id="nextFull" size={1.2} />

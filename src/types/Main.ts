@@ -104,6 +104,7 @@ export type Popups =
     | "choose_screen"
     | "change_output_values"
     | "choose_style"
+    | "next_timer"
     | "advanced_settings"
     | "about"
     | "shortcuts"

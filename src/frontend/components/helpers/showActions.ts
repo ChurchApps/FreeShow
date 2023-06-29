@@ -90,6 +90,7 @@ function getOutputWithLines() {
         if (!output.style) return
 
         let style = get(styles)[output.style]
+        if (!style) return
         let lines = style.lines
         if (!lines) return
 
@@ -317,9 +318,10 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     // overlays
     if (data.overlays?.length) {
-        setOutput("overlays", data.overlays, false, outputId, true)
         // send overlays again, because it sometimes don't have it for some reason
         send(OUTPUT, ["OVERLAYS"], get(overlays))
+
+        setOutput("overlays", data.overlays, false, outputId, true)
     }
 
     // audio

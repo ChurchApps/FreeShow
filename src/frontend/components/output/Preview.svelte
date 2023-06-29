@@ -119,10 +119,10 @@
             ctrlShortcuts[e.key]()
         }
 
-        if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow) return
+        if (e.target.closest("input") || e.target.closest(".edit")) return
 
         // group shortcuts
-        if (!e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
+        if ($activeShow && !e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
             e.preventDefault()
             return
         }
