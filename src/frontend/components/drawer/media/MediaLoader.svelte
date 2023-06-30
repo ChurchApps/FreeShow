@@ -3,6 +3,7 @@
     import type { Resolution } from "../../../../types/Settings"
 
     import { mediaCache, outputs, styles, videoExtensions } from "../../../stores"
+    import { getExtension } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -106,11 +107,9 @@
     }
 
     // type
-    $: {
-        if (type === null) {
-            const extension = path.slice(path.lastIndexOf(".") + 1, path.length) || ""
-            if ($videoExtensions.includes(extension)) type = "video"
-        }
+    $: if (!type && path) {
+        const extension = getExtension(path)
+        if ($videoExtensions.includes(extension)) type = "video"
     }
 
     $: if (path) loaded = false
@@ -177,7 +176,7 @@
 
     $: if (speed && videoElem) videoElem.playbackRate = speed
 
-    // retry on error
+    // retry on error (don't think this is neccesary)
     let retryCount = 0
     $: if (path) retryCount = 0
     function reload() {

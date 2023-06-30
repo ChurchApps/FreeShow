@@ -184,8 +184,8 @@
       if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
     }}
     on:dragover|preventDefault -->
-    <DropArea id="all_slides" scroll={false} selectChildren>
-        <DropArea id="slides" hoverTimeout={0} scroll={false} selectChildren>
+    <DropArea id="all_slides" selectChildren>
+        <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
                 <Center faded={!loading}>
                     {#if loading}

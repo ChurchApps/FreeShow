@@ -490,6 +490,8 @@ const actions: any = {
         let showRef: any = { id: path, type: mediaType }
         if (name) showRef.name = name
         activeShow.set(showRef)
+
+        activePage.set("show")
     },
     play: (obj: any) => {
         if (obj.sel.id === "midi") {

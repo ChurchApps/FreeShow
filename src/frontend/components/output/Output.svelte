@@ -290,11 +290,17 @@
         }
 
         tempVideoBG = background
+
+        // WIP sync with preview
+        // setTimeout(() => {
+        //     if (!videoTime) return
+        //     send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime, updatePreview: true })
+        // }, 1000)
     }
 
     let clearing: boolean = false
     function resetTempBG() {
-        // if (background || currentStyle?.backgroundImage) return
+        if (tempVideoBG === null) return
 
         clearing = true
         tempVideoBG = null

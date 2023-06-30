@@ -330,8 +330,15 @@ export const historyActions = ({ obj, undo = null }: any) => {
             // rename shows file
             let renamedIds = Object.keys(rename)
             if (renamedIds.length) {
+                // renaming multiple times
                 let newRenamed = get(renamedShows).filter((a) => !renamedIds.includes(a.id))
-                renamedShows.set([...newRenamed, ...keysToID(rename)])
+                let newRenamedList = keysToID(rename).map((a) => {
+                    let previous = get(renamedShows).find((r) => r.id === a.id)
+                    if (!previous) return a
+                    return { ...a, oldName: previous.oldName }
+                })
+
+                renamedShows.set([...newRenamed, ...newRenamedList])
             }
 
             // TODO: choose to overwrite or just skip

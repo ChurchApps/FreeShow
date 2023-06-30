@@ -147,7 +147,7 @@
     {:else if $activeProject !== null}
         <div class="list context #project">
             <Autoscroll {offset} bind:scrollElem timeout={150}>
-                <DropArea id="project" selectChildren scroll={false} let:fileOver file>
+                <DropArea id="project" selectChildren let:fileOver file>
                     <!-- {/* WIP: live on double click?? */} -->
                     {#if $projects[$activeProject]?.shows.length}
                         {#each $projects[$activeProject]?.shows as show, index}

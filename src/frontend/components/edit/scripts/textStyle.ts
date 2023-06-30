@@ -314,7 +314,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd: boolean = f
     let currentEndTextLength = lastEndChild.innerText.length
 
     let breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
-    if (breakElem) return
+    if (line === 0 && breakElem) return
 
     let startElem = lineElem.childNodes[childElem].childNodes[0]
     let endElem = lastEndChild.childNodes[0]

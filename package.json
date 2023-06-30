@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "0.9.1",
+    "version": "0.9.2",
     "private": true,
     "main": "build/electron/index.js",
     "description": "An application for showing song lyrics and more for free!",
@@ -60,7 +60,7 @@
             }
         },
         "dmg": {
-            "backgroundColor": "#fff0ff",
+            "background": "build/public/dmg.png",
             "contents": [
                 {
                     "x": 140,
@@ -72,11 +72,7 @@
                     "type": "link",
                     "path": "/Applications"
                 }
-            ],
-            "window": {
-                "width": 540,
-                "height": 380
-            }
+            ]
         },
         "linux": {
             "target": [

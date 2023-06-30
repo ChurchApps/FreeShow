@@ -97,7 +97,7 @@
 
     function keydown(e: any) {
         // TODO: get working in list view
-        if (e.key === "Enter" && e.altKey && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
+        if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
             // incorrect editbox
             if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
 
@@ -112,6 +112,19 @@
             let currentIndex = 0,
                 textPos = 0
             let start = -1
+
+            // TODO: auto bullets
+            if (!e.altKey) {
+                // console.log(lines, textPos, start, currentIndex, sel)
+                // let lastLine = lines[lines.length - 1]
+                // let lineText = lastLine.text?.[lastLine.text?.length - 1]?.value
+                // if (!lineText?.includes("\n") || !lineText?.includes("• ")) return
+                // lines[lines.length - 1].text[lastLine.text.length - 1].value += "• "
+
+                // updateLines(lines)
+
+                return
+            }
 
             lines.forEach((line, i) => {
                 if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
@@ -269,7 +282,6 @@
 
         // dont replace while typing
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
-        console.log(currentStyle !== s, currentStyle, s)
         if (currentStyle !== s) getStyle()
     }
     function getTextStyle(lineText) {

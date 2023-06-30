@@ -294,6 +294,23 @@ export function setExampleTemplates() {
                 },
             ],
         }
+        a.blur_box = {
+            name: "Blur box",
+            color: null,
+            category: "song",
+            items: [
+                {
+                    style: "top:310px;left:0px;height:460px;width:1920px;background-color: rgb(0 0 0 / 0.5);backdrop-filter: blur(10px);",
+                    align: "",
+                    lines: [
+                        { align: "", text: [{ value: "1", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "2", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "3", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "4", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                    ],
+                },
+            ],
+        }
         a.box = {
             name: "Box",
             color: null,

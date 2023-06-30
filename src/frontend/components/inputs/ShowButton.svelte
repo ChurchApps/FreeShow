@@ -87,7 +87,8 @@
         }
 
         activeShow.set(newShow)
-        if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [] })
+        if (type === "image" || type === "video") activeEdit.set({ id, type: "media", items: [] })
+        else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [] })
     }
 
     function doubleClick(e: any) {
