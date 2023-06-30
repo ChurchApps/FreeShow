@@ -138,9 +138,9 @@
         "image": "Tylko obrazy",
         "video": "Tylko filmy",
         "fit": "Dopasuj",
-        "contain": "Zachowaj proporcje",
-        "fill": "Wypełnij",
-        "cover": "Wykadruj"
+        "contain": "Proporcje",
+        "fill": "Wypełnienie",
+        "cover": "Kadrowanie"
     },
     "menu": {
         "show": "Pokaz",
@@ -175,7 +175,7 @@
         "events": "Brak wydarzeń",
         "text": "Napisz coś",
         "timers": "Brak timerów",
-        "input": "Missing value in input",
+        "input": "Brak wartości na wejściu",
         "recording": "Naciśnij prawym przyciskiem myszy aby rozpocząć nagrywanie."
     },
     "remote": {
@@ -305,7 +305,7 @@
         "select_show": "Zaznacz pokaz",
         "rename": "Zmień nazwę",
         "color": "Kolor",
-        "find_replace": "Find and replace",
+        "find_replace": "Znajdź i zastąp",
         "edit_list": "Edytuj listę",
         "timer": "Timer",
         "transition": "Przejście",
@@ -404,7 +404,7 @@
         "goto_group": "Idź do grupy",
         "change_output_style": "Zmień styl wyjściowy",
         "toggle_private": "Prywatne",
-        "view_private": "Show private",
+        "view_private": "Pokaż prywatne",
         "import": "Importuj",
         "export": "Eksportuj",
         "duplicate": "Duplikuj",
@@ -444,10 +444,10 @@
         "remove_binding": "Usuń powiązanie",
         "choose_custom": "Wybierz własny",
         "format": "Formatuj",
-        "find_replace": "Find and replace text",
-        "find": "Find",
-        "replace": "Replace",
-        "case_sensitive": "Case sensitive",
+        "find_replace": "Znajdź i zastąp tekst",
+        "find": "Znajdź",
+        "replace": "Zastąp",
+        "case_sensitive": "Uwzględniaj wielkość liter",
         "uppercase": "Wielkie litery",
         "lowercase": "Małe litery",
         "capitalize": "Wielkie na początku",
@@ -555,7 +555,7 @@
         "_title_strikethrough": "Przekreślenie",
         "color": "Kolor",
         "background_color": "Kolor tła",
-        "background_opacity": "Przezroczystość tła",
+        "background_opacity": "Przezr. tła",
         "background_image": "Obraz tła",
         "media_fit": "Dopasuj do mediów",
         "size": "Rozmiar",
@@ -604,19 +604,19 @@
         "recent": "Ostatnio edytowane",
         "enable_stage": "Włącz scenę",
         "select_stage": "Wybierz scenę",
-        "use_slide_index": "Użyj aktywnego indeksu",
+        "use_slide_index": "Użyj akt. indeksu",
         "slide_index": "Indeks slajdu",
-        "padding": "Padding",
+        "padding": "Wypełnienie",
         "special": "Specjalne",
         "scrolling": "Przewijanie",
         "top_bottom": "Od góry",
         "bottom_top": "Od dołu",
         "left_right": "Od lewej",
         "right_left": "Od prawej",
-        "max_events": "Max events",
-        "start_days_from_today": "Start at days from today",
-        "just_one_day": "Just one day",
-        "enable_start_date": "Enable start date"
+        "max_events": "Limit wydarzeń",
+        "start_days_from_today": "Zacznij za dni",
+        "just_one_day": "Tylko jeden dzień",
+        "enable_start_date": "Rozpocznij w dniu"
     },
     "items": {
         "text": "Tekst",
@@ -735,7 +735,7 @@
         "font-size": "Rozmiar fontu",
         "zeros": "Zera",
         "overrun": "Kolor przekroczenia czasu",
-        "auto_stretch": "Auto stretch content"
+        "auto_stretch": "Auto. rozciąganie zawartości"
     },
     "settings": {
         "general": "Ogólne",
