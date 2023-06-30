@@ -4,8 +4,8 @@
     "short_name": "ControlShow",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#2d313b",
-    "theme_color": "#2d313b",
+    "background_color": "#292c36",
+    "theme_color": "#292c36",
     "description": "A remote controller app for FreeShow.",
     "icons": [
         {

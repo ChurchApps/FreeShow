@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { popupData } from "../../../stores"
+    import { activePopup, popupData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
@@ -25,14 +25,16 @@
         value = e?.detail ?? e
         if (value) value = Number(value)
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: value, indexes }, location: { page: "show", override: "change_style_slide" } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: value, indexes }, location: { page: "show", override: "change_slide_action_timer" } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !!value, indexes: [indexes[indexes.length - 1]] }, location: { page: "show", override: "change_slide_action_loop" } })
 
-        if (allSlides) getTotalTime()
+        if (allSlides) activePopup.set(null)
     }
 
     // total time
     let totalTime: string = "0s"
     function getTotalTime() {
+        layoutRef = _show().layouts("active").ref()[0]
         let total = layoutRef.reduce((value, ref) => (value += Number(ref.data?.nextTimer || 0)), 0)
 
         totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"

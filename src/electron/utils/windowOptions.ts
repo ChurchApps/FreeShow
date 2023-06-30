@@ -10,7 +10,7 @@ export const loadingOptions: any = {
     width: 500,
     height: 300,
     icon: "public/icon.png",
-    backgroundColor: "#2d313b",
+    backgroundColor: "#292c36",
     transparent: true,
     alwaysOnTop: true,
     resizable: false,
@@ -25,7 +25,7 @@ export const mainOptions: any = {
     // https://github.com/electron-userland/electron-builder/issues/2577
     // icon: join(__dirname, "build", "public", "icon.png"), // linux ?
     icon: "public/icon.png",
-    backgroundColor: "#2d313b",
+    backgroundColor: "#292c36",
     titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
     trafficLightPosition: { x: 10, y: 17 },
     show: false,

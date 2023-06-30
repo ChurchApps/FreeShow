@@ -578,10 +578,10 @@
   } */
 
     :root {
-        --primary: #2d313b;
-        --primary-lighter: #41444c;
-        --primary-darker: #202129;
-        --primary-darkest: #191923;
+        --primary: #292c36;
+        --primary-lighter: #363945;
+        --primary-darker: #191923;
+        --primary-darkest: #0f0f14;
         --text: #f0f0ff;
         --textInvert: #131313;
         --secondary: #f0008c;

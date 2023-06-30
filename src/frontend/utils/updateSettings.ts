@@ -94,9 +94,13 @@ export function updateSettings(data: any) {
     // theme
     let currentTheme = get(themes)[data.theme]
     if (currentTheme) {
-        // update color (upgrading from < v0.9.2)
+        // update colors (upgrading from < v0.9.2)
         if (data.theme === "default" && currentTheme.colors.secondary?.toLowerCase() === "#e6349c") {
             let newTheme = clone(currentTheme)
+            newTheme.colors["primary"] = "#292c36"
+            newTheme.colors["primary-lighter"] = "#363945"
+            newTheme.colors["primary-darker"] = "#191923"
+            newTheme.colors["primary-darkest"] = "#0f0f14"
             newTheme.colors.secondary = "#F0008C"
             newTheme.colors["secondary-opacity"] = "rgba(240, 0, 140, 0.5)"
 

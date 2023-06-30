@@ -228,6 +228,7 @@ function getSlideItems(slide: any): any[] {
         // text = convertFromRTFToPlain(text)
         text = decodeHex(text)
 
+        if (text === "Double-click to edit") text = ""
         items.push({ style: itemStyle, lines: splitTextToLines(text) })
     })
 
@@ -267,6 +268,7 @@ function splitTextToLines(text: string) {
     let lines: any[] = []
     let data = text.split("\n\n")
     lines = data.map((text: any) => ({ align: "", text: [{ style: "", value: text }] }))
+    console.log(lines)
 
     return lines
 }
@@ -302,6 +304,19 @@ function RTFToText(input: string) {
     return splitted.join("\n").trim()
 }
 
+// {\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf610
+// {\fonttbl\f0\fnil\fcharset0 Avenir-Book;}
+// {\colortbl;\red255\green255\blue255;\red255\green255\blue255;}
+// {\*\expandedcolortbl;;\csgray\c100000;}
+// \deftab720
+// \pard\pardeftab720\slleading200\qc\partightenfactor0
+
+// \f0\fs120 \cf2 \kerning1\expnd12\expndtw60
+// Her er jeg Gud\
+// Med mine byrder\
+// Jeg kommer n\'e5\
+// Med mine s\'e5r}
+
 function decodeHex(input: string) {
     let textStart = input.indexOf("\\cf2\\ltrch")
     // remove RTF before text
@@ -318,12 +333,18 @@ function decodeHex(input: string) {
     }
 
     input = input.replaceAll("\\\n", "<br>")
-    var hex = input.split("\\'")
-    var str = ""
+    let hex = input.split("\\'")
+    let str = ""
     hex.map((txt, i) => {
         let styles: any[] = []
-        let styleIndex = txt.indexOf("\\")
 
+        // fix skipping first word sometimes
+        txt = txt.replaceAll("\r\n", "")
+        let breakPos = txt.indexOf("\n")
+        let lineFormattingPos = txt.indexOf("\\f0")
+        if (breakPos >= 0 && lineFormattingPos >= 0 && lineFormattingPos < breakPos) txt = txt.slice(breakPos, txt.length)
+
+        let styleIndex = txt.indexOf("\\")
         while (styleIndex >= 0) {
             let nextSpace = txt.indexOf(" ", styleIndex)
             if (nextSpace < 1) nextSpace = txt.length

@@ -71,7 +71,7 @@
     }
 
     function openDrawerTab(tab: any) {
-        if ($activeDrawerTab === tab.id) return //|| move
+        if ($activeDrawerTab === tab.id || move) return
 
         // allow click event first
         setTimeout(() => {

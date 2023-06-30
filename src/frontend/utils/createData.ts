@@ -317,7 +317,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:387.50px;left:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);outline: 8px solid rgb(255 255 255);",
+                    style: "top:387.50px;left:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);",
                     align: "",
                     lines: [
                         { align: "", text: [{ value: "1", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
@@ -354,13 +354,13 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 400px;outline: 1px solid #cccccc;",
+                    style: "top: 40px;left: 50px;width: 1820px;height: 400px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 70px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 475px;left: 50px;width: 1820px;height: 400px;outline: 1px solid #cccccc;",
+                    style: "top: 475px;left: 50px;width: 1820px;height: 400px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 70px;" }] }],
                 },
@@ -378,19 +378,19 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    style: "top: 40px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 320px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    style: "top: 320px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 600px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    style: "top: 600px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
                 },
@@ -408,25 +408,25 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    style: "top: 40px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 250px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    style: "top: 250px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 460px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    style: "top: 460px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 670px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    style: "top: 670px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "4", style: "font-size: 60px;" }] }],
                 },

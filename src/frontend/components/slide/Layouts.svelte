@@ -26,8 +26,7 @@
     $: if (layouts?.[activeLayout]?.slides?.length) getTotalTime()
     function getTotalTime() {
         let ref = _show().layouts("active").ref()[0]
-        let total = ref.reduce((value, slide) => (value += Number(slide.nextTimer || 0)), 0)
-        console.log(layouts[activeLayout].slides, total)
+        let total = ref.reduce((value, slide) => (value += Number(slide.data?.nextTimer || 0)), 0)
 
         totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
     }

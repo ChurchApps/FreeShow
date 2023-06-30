@@ -15,7 +15,7 @@
     $: active = $activeProject === id
 
     function open(e: any) {
-        if (e.target.closest(".edit")) return
+        if (e.target.closest(".edit") || e.target.querySelector(".edit") || editActive) return
 
         // set new project
         activeProject.set(id)
