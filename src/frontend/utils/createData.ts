@@ -85,13 +85,13 @@ export function setExampleOverlays() {
     overlays.update((a) => {
         a.watermark = {
             name: get(dictionary).example?.watermark || "Watermark",
-            color: "#e6349c",
+            color: "#F0008C",
             category: "notice",
             items: [
                 {
                     style: "top:870px;left:1248px;height:170px;width:630px;",
                     align: "align-items:flex-end;",
-                    lines: [{ align: "text-align: right;", text: [{ value: "FreeShow", style: "font-size:50px;font-weight:bold;color:#e6349c;" }] }],
+                    lines: [{ align: "text-align: right;", text: [{ value: "FreeShow", style: "font-size:50px;font-weight:bold;color:#F0008C;" }] }],
                 },
             ],
         }
@@ -294,13 +294,30 @@ export function setExampleTemplates() {
                 },
             ],
         }
+        a.blur_box = {
+            name: "Blur box",
+            color: null,
+            category: "song",
+            items: [
+                {
+                    style: "top:310px;left:0px;height:460px;width:1920px;background-color: rgb(0 0 0 / 0.5);backdrop-filter: blur(10px);",
+                    align: "",
+                    lines: [
+                        { align: "", text: [{ value: "1", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "2", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "3", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "4", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                    ],
+                },
+            ],
+        }
         a.box = {
             name: "Box",
             color: null,
             category: "song",
             items: [
                 {
-                    style: "top:387.50px;left:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);outline: 8px solid rgb(255 255 255);",
+                    style: "top:387.50px;left:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);",
                     align: "",
                     lines: [
                         { align: "", text: [{ value: "1", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
@@ -337,13 +354,13 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 400px;outline: 1px solid #cccccc;",
+                    style: "top: 40px;left: 50px;width: 1820px;height: 400px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 70px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 475px;left: 50px;width: 1820px;height: 400px;outline: 1px solid #cccccc;",
+                    style: "top: 475px;left: 50px;width: 1820px;height: 400px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 70px;" }] }],
                 },
@@ -361,19 +378,19 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    style: "top: 40px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 320px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    style: "top: 320px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 600px;left: 50px;width: 1820px;height: 250px;outline: 1px solid #cccccc;",
+                    style: "top: 600px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
                 },
@@ -391,25 +408,25 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    style: "top: 40px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 250px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    style: "top: 250px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 460px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    style: "top: 460px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 670px;left: 50px;width: 1820px;height: 200px;outline: 1px solid #cccccc;",
+                    style: "top: 670px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "4", style: "font-size: 60px;" }] }],
                 },

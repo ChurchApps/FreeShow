@@ -1,11 +1,12 @@
 <script lang="ts">
     export let style: string = ""
+    export let title: string = ""
     export let textWidth: number = 50 // %
 
     $: customStyle = style + ";--text-width: " + textWidth + "%"
 </script>
 
-<div class="input" style={customStyle}>
+<div class="input" {title} style={customStyle}>
     <slot />
 </div>
 

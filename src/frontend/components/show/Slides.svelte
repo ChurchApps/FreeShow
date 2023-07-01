@@ -2,12 +2,13 @@
     // import {flip} from 'svelte/animate';
     // import type { Resolution } from "../../../types/Settings"
 
-    import { activeShow, cachedShowsData, outLocked, outputs, showsCache, slidesOptions, styles } from "../../stores"
+    import { activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, styles } from "../../stores"
     import { history } from "../helpers/history"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
+    import Loader from "../main/Loader.svelte"
     import Slide from "../slide/Slide.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
@@ -41,7 +42,6 @@
             let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
             let index = Math.max(0, (output.out.slide.index || 0) - columns)
             offset = (scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5) - 5
-            console.log(offset)
 
             // TODO: always show active slide....
             // console.log(offset, scrollElem.scrollTop, scrollElem.scrollTop + scrollElem.offsetHeight)
@@ -163,6 +163,16 @@
             startLazyLoader()
         }, 10)
     }
+
+    let loading: boolean = false
+    $: if (showId) startLoading()
+    $: if ($notFound.show?.includes(showId)) loading = false
+    function startLoading() {
+        loading = true
+        setTimeout(() => {
+            loading = false
+        }, 8000)
+    }
 </script>
 
 <!-- TODO: tab enter not woring -->
@@ -177,8 +187,12 @@
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
-                <Center faded>
-                    <T id="error.no_show" />
+                <Center faded={!loading}>
+                    {#if loading}
+                        <Loader />
+                    {:else}
+                        <T id="error.no_show" />
+                    {/if}
                 </Center>
             {:else if $slidesOptions.mode === "text"}
                 <TextEditor {currentShow} />

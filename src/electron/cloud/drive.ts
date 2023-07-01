@@ -13,9 +13,12 @@ export async function authenticate(keysFilePath: string) {
     try {
         const authData = new auth.GoogleAuth({ keyFile: keysFilePath, scopes: ["https://www.googleapis.com/auth/drive"] })
         const authClient = await authData.getClient()
-        driveClient = drive({ version: "v3", auth: authClient })
-
-        status = { status: "connected" }
+        if ("refreshAccessToken" in authClient) {
+            driveClient = drive({ version: "v3", auth: authClient })
+            status = { status: "connected" }
+        } else {
+            status = { error: "Client error!" }
+        }
     } catch (err) {
         console.error(err)
         status = { error: "Could not connect to the account!" }
@@ -330,7 +333,7 @@ export async function syncDataDrive(data: any) {
 
         await Promise.all(Object.entries(shows).map(checkShow))
         async function checkShow([id, show]: any) {
-            let name = show.name + ".show"
+            let name = (show.name || id) + ".show"
             let localShowPath = path.join(showsPath, name)
 
             // check existing content

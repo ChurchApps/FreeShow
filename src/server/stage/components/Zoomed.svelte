@@ -7,14 +7,14 @@
     let resolution: any = show && show.settings.resolution ? show.settings.resolution : { width: 1920, height: 1080 } // $screen.resolution
     let slideWidth: number = 0
     let ratio: number = 1
-    $: ratio = slideWidth / resolution.width
+    $: ratio = slideWidth / resolution?.width
 
     // dynamic resolution
     if (dynamicResolution) resolution = { width: window.innerWidth, height: window.innerHeight }
 </script>
 
 <div class="center">
-    <div bind:offsetWidth={slideWidth} class:disableStyle class:relative class="slide" style="{$$props.style || ''}aspect-ratio: {resolution.width}/{resolution.height};">
+    <div bind:offsetWidth={slideWidth} class:disableStyle class:relative class="slide" style="{$$props.style || ''}aspect-ratio: {resolution?.width}/{resolution?.height};">
         <span style="zoom: {ratio};">
             <slot />
         </span>

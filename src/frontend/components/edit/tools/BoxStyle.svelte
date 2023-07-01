@@ -1,12 +1,13 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, refreshEditSlide, selected, showsCache, templates } from "../../../stores"
+    import { newToast } from "../../../utils/messages"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
+    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
 
@@ -57,6 +58,10 @@
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
     $: if (id === "timer" && box) box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
+    $: if (id === "events" && box) {
+        box.edit.default[4].hidden = !item?.events?.enableStartDate
+        box.edit.default[5].hidden = !item?.events?.enableStartDate
+    }
 
     function getMirrorValues() {
         if (!item?.mirror || !box) return
@@ -88,6 +93,12 @@
         if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
         console.log(input, value)
+
+        if (input.id === "auto") {
+            setTimeout(() => {
+                refreshEditSlide.set(true)
+            }, 100)
+        }
 
         // set nested value
         if (input.id.includes(".")) {
@@ -290,6 +301,13 @@
                 }
             })
 
+            // no text
+            let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
+            if (!textLength) {
+                newToast("$empty.text")
+                return
+            }
+
             let override = $activeEdit.id + "#" + allItems.join(",")
             history({
                 id: "UPDATE",
@@ -301,7 +319,7 @@
             return
         }
 
-        const setItemStyle = ["list", "timer", "clock", "icon"]
+        const setItemStyle = ["list", "timer", "clock", "icon", "events"]
         if (setItemStyle.includes(id)) {
             slides.forEach((slide, i) => {
                 if (!slideItems[i].length) return
@@ -312,6 +330,14 @@
                     location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slide_" + slide + "_items_" + slideItems[i].join(",") },
                 })
             })
+            return
+        }
+
+        // no text
+        // values: {key: [[[]]]}
+        let textLength = Object.values(values).reduce((length: number, value: any) => (length += value.flat(2)?.length || 0), 0)
+        if (!textLength) {
+            newToast("$empty.text")
             return
         }
 
@@ -330,4 +356,6 @@
 
 <svelte:window on:keyup={keyup} on:mouseup={getTextSelection} />
 
-<EditValues edits={box?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} />
+{#key id}
+    <EditValues edits={box?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} />
+{/key}

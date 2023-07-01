@@ -183,6 +183,7 @@
     }
 
     /* tooltip */
+    /* WIP clipping on right side & placed under (Slice icons) */
     button:hover > .tooltip {
         /* display: block; */
         display: table;

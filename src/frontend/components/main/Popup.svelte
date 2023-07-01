@@ -32,6 +32,9 @@
     import ChooseStyle from "./popups/ChooseStyle.svelte"
     import SelectShow from "./popups/SelectShow.svelte"
     import EditList from "./popups/EditList.svelte"
+    import Connect from "./popups/Connect.svelte"
+    import FindReplace from "./popups/FindReplace.svelte"
+    import NextTimer from "./popups/NextTimer.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -48,6 +51,7 @@
         player: CreatePlayer,
         rename: Rename,
         color: Color,
+        find_replace: FindReplace,
         edit_list: EditList,
         timer: Timer,
         transition: Transition,
@@ -56,6 +60,7 @@
         choose_screen: ChooseScreen,
         change_output_values: ChangeOutputValues,
         choose_style: ChooseStyle,
+        next_timer: NextTimer,
         advanced_settings: AdvancedScreen,
         about: About,
         shortcuts: Shortcuts,
@@ -64,6 +69,7 @@
         alert: Alert,
         history: History,
         midi: Midi,
+        connect: Connect,
         cloud_update: CloudUpdate,
         cloud_method: CloudMethod,
     }

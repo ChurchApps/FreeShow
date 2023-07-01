@@ -215,7 +215,7 @@ const slideDrop: any = {
         else if (!data[0].name) data[0].name = data[0].path
 
         let center = drop.center
-        if (drag.id === "files" && _show().layouts("active").ref()[0][drop.index - 1]) center = true
+        if (drag.id === "files" && drop.index !== undefined) center = true
 
         if (center) {
             history.id = "showMedia"

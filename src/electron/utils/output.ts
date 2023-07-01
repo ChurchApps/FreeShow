@@ -136,7 +136,7 @@ export function displayOutput(data: any) {
     // if (!windowNotCoveringMain && process.platform === "darwin")
 
     // console.log(bounds, xDif, yDif, windowNotCoveringMain)
-    if (bounds && (data.force || windowNotCoveringMain)) {
+    if (bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
         // , !data.force
         showWindow(window)
 

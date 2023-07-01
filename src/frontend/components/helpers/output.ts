@@ -47,8 +47,12 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (key === "overlays") lockedOverlays.set(outData)
 
             // WIP update bg (muted, loop, time)
-            // , time: data.startAt || 0
-            if (key === "background" && data) send(OUTPUT, ["UPDATE_VIDEO"], { id, data: { muted: data.muted || false, loop: data.loop || false }, time: data.startAt || 0 })
+            if (key === "background" && data) {
+                let msg: any = { id, data: { muted: data.muted || false, loop: data.loop || false } }
+                if (data.startAt !== undefined) msg.time = data.startAt || 0
+
+                send(OUTPUT, ["UPDATE_VIDEO"], msg)
+            }
         })
 
         return a
@@ -89,7 +93,7 @@ export function findMatchingOut(id: string, updater: any = get(outputs)): string
         }
     })
 
-    // if (match && match === "#e6349c" && get(themes)[get(theme)]?.colors?.secondary) {
+    // if (match && match === "#F0008C" && get(themes)[get(theme)]?.colors?.secondary) {
     //   match = get(themes)[get(theme)]?.colors?.secondary
     // }
 
@@ -123,7 +127,7 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
             if (output.out?.[key]) {
                 if (key === "overlays") {
                     if (checkLocked && output.out.overlays.length) cleared = false
-                    else if (!checkLocked && output.out.overlays.filter((id: string) => !get(overlays)[id].locked).length) cleared = false
+                    else if (!checkLocked && output.out.overlays.filter((id: string) => !get(overlays)[id]?.locked).length) cleared = false
                 } else if (output.out[key] !== null) cleared = false
             }
         })
@@ -144,7 +148,7 @@ export const defaultOutput: Output = {
     enabled: true,
     active: true,
     name: "Output",
-    color: "#e6349c",
+    color: "#F0008C",
     bounds: { x: 0, y: 0, width: 1920, height: 1080 }, // x: 1920 ?
     screen: null,
 }

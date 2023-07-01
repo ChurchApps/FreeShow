@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeStage, connections, stageShows } from "../../stores"
+    import { activeStage, stageShows } from "../../stores"
     import { history } from "../helpers/history"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
@@ -78,10 +78,9 @@
             </Center>
         {/if}
     </div>
-    <div class="bar">
-        <!-- TODO: get already connected... -->
+    <!-- <div class="bar">
         <T id="settings.connections" />: {Object.keys($connections.STAGE || {}).length}
-    </div>
+    </div> -->
 </Main>
 
 <style>
@@ -95,12 +94,12 @@
         overflow: auto;
     }
 
-    .bar {
+    /* .bar {
         display: flex;
         justify-content: center;
         padding: 2px;
         width: 100%;
         background-color: var(--primary);
         border-top: 2px solid var(--primary-lighter);
-    }
+    } */
 </style>

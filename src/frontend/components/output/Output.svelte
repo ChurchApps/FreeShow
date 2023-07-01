@@ -91,13 +91,15 @@
             if (mirror) return
             let returnData: any = { id: outputId }
 
+            console.log("UPDATE", a)
+
             if (a.data) {
                 videoData = a.data
                 returnData.data = videoData
                 setTimeout(() => {
                     send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData })
                     // send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime })
-                }, 500)
+                }, 300)
             }
 
             if (a.time !== undefined) {
@@ -141,6 +143,13 @@
                 if (autoPaused) videoData.paused = false
             }, 80)
         }, 10)
+
+        if (background?.startAt !== undefined && mirror) {
+            outputs.update((a) => {
+                delete a[outputId].out?.background?.startAt
+                return a
+            })
+        }
     }
 
     $: currentLayout = slide ? _show(slide.id).layouts([slide.layout]).ref()[0] : []
@@ -240,10 +249,36 @@
 
     // give time for video to clear
     let tempVideoBG: any = null
+    // let getTimeout: any = null
     $: if (background || currentStyle?.backgroundImage) getTempBG()
-    else setTimeout(resetTempBG, 100)
+    else resetTempBG()
+
+    // svelte bug: dont allow path to change while video is transitioning
+    let mediaPath: string = ""
+    let oldPath: string = ""
+    let pathTimeout: any = null
+    $: if (background?.path) getPath()
+    function getPath() {
+        clearTimeout(pathTimeout)
+
+        if (oldPath === background.path) {
+            pathTimeout = setTimeout(() => {
+                mediaPath = background.path
+            }, mediaTransition.duration + 100)
+            return
+        }
+
+        mediaPath = background.path
+        oldPath = mediaPath
+
+        pathTimeout = setTimeout(() => {
+            oldPath = ""
+        }, mediaTransition.duration + 100)
+    }
 
     function getTempBG() {
+        if (clearing) return
+
         if (!background || !layers.includes("background")) {
             if (!currentStyle?.backgroundImage) {
                 tempVideoBG = null
@@ -255,11 +290,25 @@
         }
 
         tempVideoBG = background
-    }
-    function resetTempBG() {
-        if (background || currentStyle?.backgroundImage) return
 
+        // WIP sync with preview
+        // setTimeout(() => {
+        //     if (!videoTime) return
+        //     send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime, updatePreview: true })
+        // }, 1000)
+    }
+
+    let clearing: boolean = false
+    function resetTempBG() {
+        if (tempVideoBG === null) return
+
+        clearing = true
         tempVideoBG = null
+
+        setTimeout(() => {
+            clearing = false
+            if (background || currentStyle?.backgroundImage) getTempBG()
+        }, mediaTransition.duration + 100)
     }
 
     // fix videoTime resetting to 0 in Preview.svelte
@@ -286,6 +335,13 @@
         if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
         if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
     }
+
+    // OVERLAYS
+    let clonedOverlays = {}
+    $: if (out.overlays) cloneOverlays()
+    function cloneOverlays() {
+        clonedOverlays = clone($overlays)
+    }
 </script>
 
 <Zoomed
@@ -300,7 +356,7 @@
 >
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} {background} {outputId} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
+            <MediaOutput {...tempVideoBG} background={tempVideoBG} path={mediaPath} {outputId} {currentStyle} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
         </div>
     {/if}
 
@@ -371,45 +427,47 @@
         {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
             {#if overlayTransition.type === "none"}
                 <div class="meta" style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                    {Object.values(metaMessage)
+                    {@html Object.values(metaMessage)
                         .filter((a) => a.length)
-                        .join("; ")}
+                        .join(currentStyle.metadataDivider || "; ")}
                 </div>
             {:else}
                 <div class="meta" transition:custom={overlayTransition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                    {Object.values(metaMessage)
+                    {@html Object.values(metaMessage)
                         .filter((a) => a.length)
-                        .join("; ")}
+                        .join(currentStyle.metadataDivider || "; ")}
                 </div>
             {/if}
         {/if}
         <!-- overlays -->
         {#if out.overlays?.length}
-            {#each out.overlays as id}
-                {#if $overlays[id]}
-                    {#if overlayTransition.type === "none"}
-                        <div class:key={currentOutput.isKeyOutput}>
-                            <div>
-                                {#each $overlays[id].items as item}
-                                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                        <Textbox {item} ref={{ type: "overlay", id }} {preview} />
-                                    {/if}
-                                {/each}
+            {#key out.refresh}
+                {#each out.overlays as id}
+                    {#if clonedOverlays[id]}
+                        {#if overlayTransition.type === "none"}
+                            <div class:key={currentOutput.isKeyOutput}>
+                                <div>
+                                    {#each clonedOverlays[id].items as item}
+                                        {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} />
+                                        {/if}
+                                    {/each}
+                                </div>
                             </div>
-                        </div>
-                    {:else}
-                        <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
-                            <div>
-                                {#each $overlays[id].items as item}
-                                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                        <Textbox {item} ref={{ type: "overlay", id }} {preview} />
-                                    {/if}
-                                {/each}
+                        {:else}
+                            <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
+                                <div>
+                                    {#each clonedOverlays[id].items as item}
+                                        {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} />
+                                        {/if}
+                                    {/each}
+                                </div>
                             </div>
-                        </div>
+                        {/if}
                     {/if}
-                {/if}
-            {/each}
+                {/each}
+            {/key}
         {/if}
     {/if}
     {#if mirror || currentOutput.active}

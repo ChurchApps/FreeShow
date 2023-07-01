@@ -1,14 +1,12 @@
 <!-- https://dev.to/josef/theming-in-svelte-with-css-variables-53kd -->
 <script lang="ts">
     import { theme, language, themes, dictionary } from "../../stores"
+    import { updateThemeValues } from "../../utils/updateSettings"
     import Dropdown from "../inputs/Dropdown.svelte"
 
     theme.subscribe((a: string) => {
-        Object.entries($themes[a].colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-        Object.entries($themes[a].font).forEach(([key, value]: any) => {
-            if ((key === "family" && !value) || a === "default") value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
-            document.documentElement.style.setProperty("--font-" + key, value)
-        })
+        if (!$themes[a]) return
+        updateThemeValues($themes[a])
     })
 
     $: themeNames = getThemesArray($themes)
@@ -26,4 +24,4 @@
     }
 </script>
 
-<Dropdown style="width: 100%;" value={$themes[$theme].default ? `$:themes.${$themes[$theme].name}:$` : $themes[$theme].name} options={themeNames} on:click={(e) => theme.set(e.detail.id)} />
+<Dropdown style="width: 100%;" value={$themes[$theme]?.default ? `$:themes.${$themes[$theme].name}:$` : $themes[$theme]?.name || ""} options={themeNames} on:click={(e) => theme.set(e.detail.id)} />

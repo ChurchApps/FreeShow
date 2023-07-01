@@ -6,15 +6,15 @@ import { getFonts } from "font-list"
 import path from "path"
 import { CLOUD, EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
+import { cloudConnect } from "./cloud/cloud"
 import { closeServers } from "./servers"
 import { checkShowsFolder, deleteFile, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./utils/output"
-import { loadScripture, loadShow, receiveMain, saveRecording, startExport, startImport } from "./utils/responses"
+import { loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { cloudConnect } from "./cloud/cloud"
 // import checkForUpdates from "./utils/updater"
 
 // ----- STARTUP -----
@@ -254,23 +254,6 @@ function save(data: any) {
         store.set(data[key])
     }
 
-    // shows
-    data.path = checkShowsFolder(data.path)
-    if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
-    function saveShow([id, value]: any) {
-        if (!value) return
-        let p: string = path.resolve(data.path, value.name + ".show")
-        writeFile(p, JSON.stringify([id, value]), id)
-    }
-
-    // deleted shows
-    if (data.deletedShows) data.deletedShows.forEach(deleteShow)
-    function deleteShow({ name, id }: any) {
-        if (!name || data.showsCache[id]) return
-        let p: string = path.resolve(data.path, name + ".show")
-        deleteFile(p)
-    }
-
     // scriptures
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: any) {
@@ -279,11 +262,31 @@ function save(data: any) {
         writeFile(p, JSON.stringify([id, value]), id)
     }
 
-    // saved cache
-    if (data.savedCache) {
-        let p: string = path.resolve(getDocumentsFolder(null, "Saves"), data.savedCache.name + ".json")
-        writeFile(p, JSON.stringify(data.savedCache.data))
+    data.path = checkShowsFolder(data.path)
+    // rename shows
+    if (data.renamedShows) {
+        let renamedShows = data.renamedShows.filter(({ id }: any) => !data.deletedShows[id])
+        renameShows(renamedShows, data.path)
     }
+
+    // let rename finish
+    setTimeout(() => {
+        // shows
+        if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
+        function saveShow([id, value]: any) {
+            if (!value) return
+            let p: string = path.resolve(data.path, (value.name || id) + ".show")
+            writeFile(p, JSON.stringify([id, value]), id)
+        }
+
+        // delete shows
+        if (data.deletedShows) data.deletedShows.forEach(deleteShow)
+        function deleteShow({ name, id }: any) {
+            if (!name || data.showsCache[id]) return
+            let p: string = path.resolve(data.path, (name || id) + ".show")
+            deleteFile(p)
+        }
+    }, 1000)
 }
 
 // ----- LISTENERS -----

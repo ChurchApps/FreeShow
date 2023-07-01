@@ -16,6 +16,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import { isSameDay } from "../../calendar/calendar"
 
     let stored: string = ""
 
@@ -226,6 +227,30 @@
 
     let showsList: any[] = getListOfShows()
     let selectedShow: any = showsList[0]
+
+    function updateTime(changed: "from" | "to") {
+        if (!editEvent.isoFrom || !editEvent.isoTo) return
+        if (!isSameDay(new Date(editEvent.isoFrom), new Date(editEvent.isoTo))) return
+        if (!editEvent.fromTime || !editEvent.toTime) return
+
+        let from = Number(editEvent.fromTime.replace(":", ""))
+        let to = Number(editEvent.toTime.replace(":", ""))
+
+        if (changed === "to" && editEvent.toTime[0] === "0") return
+        if (changed === "from" ? from <= to : to >= from) return
+
+        if (changed === "from") {
+            let newTime = from + 100
+            if (newTime >= 2400) newTime = 2359
+            let sliced = newTime.toString() + "000"
+            editEvent.toTime = sliced.slice(0, 2) + ":" + sliced.slice(2, 4)
+        } else if (changed === "to") {
+            let newTime = to - 100
+            if (newTime < 0) newTime = 0
+            let sliced = newTime.toString() + "000"
+            editEvent.fromTime = sliced.slice(0, 2) + ":" + sliced.slice(2, 4)
+        }
+    }
 </script>
 
 {#if !$eventEdit}
@@ -254,7 +279,7 @@
     <p><T id="timer.from" /></p>
     <div style="display: flex;">
         <input style="flex: 2;" type="date" title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
-        <input style="flex: 1;" type="time" title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} disabled={!editEvent.time} />
+        <input style="flex: 1;" type="time" title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} on:change={() => updateTime("from")} disabled={!editEvent.time} />
     </div>
 </CombinedInput>
 {#if selectedType.id === "event"}
@@ -262,7 +287,7 @@
         <p><T id="timer.to" /></p>
         <div style="display: flex;">
             <input style="flex: 2;" type="date" title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
-            <input style="flex: 1;" type="time" title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} disabled={!editEvent.time} />
+            <input style="flex: 1;" type="time" title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} on:change={() => updateTime("to")} disabled={!editEvent.time} />
         </div>
     </CombinedInput>
 {/if}
@@ -270,7 +295,7 @@
 <CombinedInput textWidth={30}>
     <p><T id="calendar.repeat" /></p>
     <div class="alignRight">
-        <Checkbox checked={editEvent.repeat} on:change={(e) => check(e, "repeat")} />
+        <Checkbox disabled={editEvent.group} checked={editEvent.repeat} on:change={(e) => check(e, "repeat")} />
     </div>
 </CombinedInput>
 
@@ -278,20 +303,20 @@
     <CombinedInput textWidth={30}>
         <div style="display: flex;">
             <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
-            <NumberInput style="width: 50px;" value={editEvent.repeatData.count} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
-            <Dropdown style="width: 100px;" options={repeats} value={repeats.find((a) => a.id === editEvent.repeatData.type)?.name || ""} on:click={(e) => (editEvent.repeatData.type = e.detail.id)} />
+            <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.count} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
+            <Dropdown disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={repeats.find((a) => a.id === editEvent.repeatData.type)?.name || ""} on:click={(e) => (editEvent.repeatData.type = e.detail.id)} />
             <!-- TODO: select weekdays? -->
             <!-- {#if selectedRepeat.id === "week"}
 <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_on" /></span>
 <Dropdown style="width: 100px;" options={weekdays} value={selectedWeekday.name} on:click={(e) => (selectedWeekday = e.detail)} />
 {/if} -->
             <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_until" /></span>
-            <Dropdown style="width: 130px;" options={endings} value={endings.find((a) => a.id === editEvent.repeatData.ending)?.name || ""} on:click={(e) => (editEvent.repeatData.ending = e.detail.id)} />
+            <Dropdown disabled={!!editEvent.group} style="width: 130px;" options={endings} value={endings.find((a) => a.id === editEvent.repeatData.ending)?.name || ""} on:click={(e) => (editEvent.repeatData.ending = e.detail.id)} />
 
             {#if editEvent.repeatData.ending === "date"}
-                <input type="date" bind:value={editEvent.repeatData.endingDate} />
+                <input disabled={!!editEvent.group} type="date" bind:value={editEvent.repeatData.endingDate} />
             {:else if editEvent.repeatData.ending === "after"}
-                <NumberInput style="width: 50px;" value={editEvent.repeatData.afterRepeats} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
+                <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.afterRepeats} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
                 <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.ending_times" /></span>
             {/if}
         </div>

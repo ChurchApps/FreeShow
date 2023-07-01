@@ -17,6 +17,8 @@
     import Button from "../../inputs/Button.svelte"
     import { getFileName } from "../../helpers/media"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import DateInput from "../../inputs/DateInput.svelte"
+    import TimeInput from "../../inputs/TimeInput.svelte"
 
     export let edits: any
     export let item: any = null
@@ -30,6 +32,8 @@
         number: NumberInput,
         dropdown: Dropdown,
         checkbox: Checkbox,
+        date: DateInput,
+        time: TimeInput,
     }
 
     let dispatch = createEventDispatcher()
@@ -234,7 +238,9 @@
                 {@const value = getValue(input, { styles, item })}
                 {#if !input.hidden}
                     <CombinedInput>
-                        <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"][input.name.includes(".") ? input.name.split(".")[1] : input.name]}><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
+                        <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
+                            <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                        </p>
                         <svelte:component
                             this={inputs[input.input]}
                             {...input.values || {}}

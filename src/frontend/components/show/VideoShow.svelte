@@ -27,11 +27,13 @@
     }
     $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false }
 
-    let prevId: string | undefined = show?.id
+    let prevId: string | undefined = undefined
     $: if (show?.id !== prevId) {
         videoTime = 0
         autoPause = true
         prevId = show?.id
+
+        timeMarkersEnabled = !!$videoMarkers[show.id]?.length || false
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
@@ -54,7 +56,6 @@
 
     let previewControls: boolean = false
     let timeMarkersEnabled: boolean = false
-    $: if (show.id) timeMarkersEnabled = !!$videoMarkers[show.id]?.length || false
 
     function onLoad() {
         hasLoaded = true
@@ -92,9 +93,13 @@
 
     function keydown(e: any) {
         if (e.target.closest("input") || e.target.closest(".edit")) return
-        if (e.key === " " && show) {
+
+        let output = $outputs[getActiveOutputs()[0]] || {}
+        let outputPath = output.out?.background?.path
+
+        if (e.key === " " && show && (!outputPath || outputPath !== show.id)) {
             e.preventDefault()
-            if ((show!.type === "video" && getActiveOutputs()[0].out?.background?.path !== show.id) || (show!.type === "player" && getActiveOutputs()[0].out?.background?.id !== show.id)) playVideo()
+            if ((show!.type === "video" && outputPath !== show.id) || (show!.type === "player" && output.out?.background?.id !== show.id)) playVideo()
             else if (show!.type === "image" && !$outLocked) setOutput("background", { path: show?.id, filter })
             // TODO: this will play first slide
             // else if (show.type === "section") goToNextProjectItem()

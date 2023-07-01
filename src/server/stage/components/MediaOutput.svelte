@@ -15,12 +15,20 @@
     //     fit = temp.fit || "contain"
     //     speed = temp.speed || "1"
     // }
+
+    let errorLoading = false
+    $: if (path) errorLoading = false
+    function error() {
+        errorLoading = true
+    }
 </script>
 
 {#key path}
     <div style="height: 100%;">
         <!-- {filter} {flipped} {fit} -->
-        <img src={path} />
+        {#if !errorLoading}
+            <img src={path} on:error={error} />
+        {/if}
     </div>
 {/key}
 

@@ -578,14 +578,14 @@
   } */
 
     :root {
-        --primary: #2d313b;
-        --primary-lighter: #41444c;
-        --primary-darker: #202129;
-        --primary-darkest: #191923;
+        --primary: #292c36;
+        --primary-lighter: #363945;
+        --primary-darker: #191923;
+        --primary-darkest: #12121c;
         --text: #f0f0ff;
         --textInvert: #131313;
-        --secondary: #e6349c;
-        --secondary-opacity: rgba(230, 52, 156, 0.5);
+        --secondary: #f0008c;
+        --secondary-opacity: rgba(240, 0, 140, 0.5);
         --secondary-text: #f0f0ff;
 
         --hover: rgb(255 255 255 / 0.05);

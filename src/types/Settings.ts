@@ -1,3 +1,5 @@
+import type { MediaFit } from "./Main"
+
 export interface Themes {
     name: string
     default?: boolean
@@ -10,10 +12,12 @@ export interface Styles {
     layers?: ["background", "slide", "overlays"][]
     background?: string
     backgroundImage?: string
+    fit?: MediaFit | null
     resolution?: Resolution
     cropping?: Cropping
     lines?: number
     template?: string
+    metadataDivider?: string
     displayMetadata?: string
     metadataTemplate?: string
     messageTemplate?: string

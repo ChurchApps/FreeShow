@@ -1,36 +1,58 @@
 import { get } from "svelte/store"
 import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
-import { notFound, shows, showsCache, showsPath, textCache } from "../../stores"
+import { cachedShowsData, notFound, shows, showsCache, showsPath, textCache } from "../../stores"
+import { updateCachedShow } from "./show"
 
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
 
+    // update cache data if loading from shows list
+    if (value !== "delete" && !get(showsCache)[id]) {
+        let showRef = get(shows)[id]
+        if (showRef && value) {
+            value.name = showRef.name
+            value.category = showRef.category
+            value.timestamps = showRef.timestamps
+            if (showRef.private) value.private = true
+        }
+    }
+
     showsCache.update((a) => {
         previousValue = a[id]
         if (value === "delete") delete a[id]
-        else {
+        else if (value) {
             saveTextCache(id, value)
             a[id] = value
         }
         // send(OUTPUT, ["SHOWS"], a)
+
         return a
     })
 
     shows.update((a) => {
         if (value === "delete") delete a[id]
-        else {
+        else if (!a[id] && value) {
             a[id] = {
                 name: value.name,
                 category: value.category,
                 timestamps: value.timestamps,
             }
+
             if (value.private) a[id].private = true
         }
+
         return a
     })
 
     console.log("SHOW UPDATED: ", id, value)
+
+    if (value && value !== "delete") {
+        cachedShowsData.update((a) => {
+            a[id] = updateCachedShow(id, value)
+            return a
+        })
+    }
 
     // add to shows index
     // if (update) {

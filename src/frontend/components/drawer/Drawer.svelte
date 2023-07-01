@@ -64,12 +64,14 @@
     }
 
     function mouseup(e: any) {
+        if (!e.target.closest("input")) searchActive = false
+
         mouse = null
         if (!e.target.closest(".top")) move = false
     }
 
     function openDrawerTab(tab: any) {
-        if ($activeDrawerTab === tab.id) return //|| move
+        if ($activeDrawerTab === tab.id || move) return
 
         // allow click event first
         setTimeout(() => {
@@ -108,7 +110,11 @@
         if (document.activeElement === document.body && !e.ctrlKey && !e.metaKey && !e.altKey) {
             // Alphabet upper case | Alphabet lower case
             if (/^[A-Z]{1}$/i.test(e.key)) {
-                searchElem.focus()
+                searchActive = true
+                // searchElem.focus()
+                setTimeout(() => {
+                    searchValue = e.key
+                }, 20)
 
                 // change to "Show" when searching when drawer is closed
                 if ($drawer.height <= minHeight) activeDrawerTab.set("shows")
@@ -122,6 +128,9 @@
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: -1, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
             searchValue = ""
+            setTimeout(() => {
+                searchElem.blur()
+            }, 10)
 
             if (!autoDrawer || storeHeight !== null) {
                 click(null)
@@ -139,6 +148,13 @@
     }
 
     $: tabs = Object.entries(drawerTabs).map(([id, tab]: any) => ({ id, ...tab }))
+
+    let searchActive: boolean = false
+    $: if (searchActive) {
+        setTimeout(() => {
+            searchElem?.focus()
+        }, 10)
+    }
 </script>
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} on:keydown={keydown} />
@@ -158,7 +174,12 @@
                 {/if}
             {/each}
         </span>
-        <input bind:this={searchElem} class="search edit" type="text" placeholder="{$dictionary.main?.search}..." bind:value={searchValue} on:input={search} use:selectTextOnFocus />
+        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder={$dictionary.main?.search} bind:value={searchValue} on:input={search} use:selectTextOnFocus />
+        {#if !searchActive && !searchValue.length}
+            <Button on:click={() => (searchActive = true)} title={$dictionary.main?.search}>
+                <Icon id="search" size={1.3} white />
+            </Button>
+        {/if}
     </div>
     <div class="content">
         <Resizeable id={"drawerNavigation"}>
@@ -225,6 +246,10 @@
     .search::placeholder {
         color: inherit;
         opacity: 0.4;
+    }
+
+    .hidden {
+        display: none;
     }
 
     .content {

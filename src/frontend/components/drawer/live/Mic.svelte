@@ -80,9 +80,11 @@
             },
         })
         .then(handleSuccess)
-        .catch((e) => {
-            console.log(e)
-            window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
+        .catch((err) => {
+            console.log(err)
+            if (err.name === "NotReadableError") {
+                window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
+            }
         })
 
     onDestroy(() => {

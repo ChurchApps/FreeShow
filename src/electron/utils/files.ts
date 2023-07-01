@@ -60,6 +60,17 @@ export function deleteFile(path: string) {
     })
 }
 
+export function renameFile(p: string, oldName: string, newName: string) {
+    let oldPath = path.join(p, oldName)
+    let newPath = path.join(p, newName)
+
+    fs.rename(oldPath, newPath, (err) => {
+        if (err) {
+            console.error("Could not delete file:", err)
+        }
+    })
+}
+
 export function getFileStats(p: string) {
     try {
         const stat: Stats = fs.statSync(p)

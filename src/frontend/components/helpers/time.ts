@@ -97,6 +97,14 @@ export function changeTime(date: string | Date, time: string | Date) {
     return new Date(splittedDate.year, splittedDate.month, splittedDate.date, splittedTime.hours, splittedTime.minutes)
 }
 
+export function combineDateAndTime(date: string | Date, time: string) {
+    date = new Date(date)
+    let splittedDate = splitDate(date)
+    let splittedTime = { hours: Number(time.slice(0, 2)), minutes: Number(time.slice(3, 5)) }
+
+    return new Date(splittedDate.year, splittedDate.month, splittedDate.date, splittedTime.hours, splittedTime.minutes)
+}
+
 const intervals = [
     { label: "year", seconds: 31536000 },
     { label: "month", seconds: 2592000 },

@@ -128,7 +128,7 @@ export function history(obj: History, undo: null | boolean = null) {
             // show
             case "showMedia":
                 let bgid: null | string = null
-                if (obj.newData.id)
+                if (obj.newData?.id)
                     _show(showID)
                         .media()
                         .get()

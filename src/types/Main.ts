@@ -96,6 +96,7 @@ export type Popups =
     | "player"
     | "rename"
     | "color"
+    | "find_replace"
     | "timer"
     | "transition"
     | "import_scripture"
@@ -103,6 +104,7 @@ export type Popups =
     | "choose_screen"
     | "change_output_values"
     | "choose_style"
+    | "next_timer"
     | "advanced_settings"
     | "about"
     | "shortcuts"
@@ -111,6 +113,7 @@ export type Popups =
     | "alert"
     | "history"
     | "midi"
+    | "connect"
     | "cloud_update"
     | "cloud_method"
 

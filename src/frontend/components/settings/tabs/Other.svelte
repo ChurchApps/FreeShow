@@ -39,8 +39,8 @@
     function getBrokenShows() {
         brokenShows = 0
 
-        Object.values($shows).forEach(({ name }: any) => {
-            if (!hiddenShows.includes(name + ".show")) brokenShows++
+        Object.entries($shows).forEach(([id, { name }]: any) => {
+            if (!hiddenShows.includes(name + ".show") && !hiddenShows.includes(id + ".show")) brokenShows++
         })
     }
 
@@ -136,7 +136,7 @@
 {#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={refreshShows}>
-            <Icon id="refresh" right />
+            <Icon id="refresh" style="border: 0;" right />
             <p style="padding: 0;">
                 <T id="actions.refresh_all_shows" />
                 <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({brokenShows || hiddenShows.length - Object.keys($shows).length})</span>
@@ -147,7 +147,7 @@
 {#if hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={deleteShows}>
-            <Icon id="delete" right />
+            <Icon id="delete" style="border: 0;" right />
             <p style="padding: 0;">
                 <T id="actions.delete_shows_not_indexed" />
                 <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({hiddenShows.length - Object.keys($shows).length})</span>

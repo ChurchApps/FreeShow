@@ -13,6 +13,7 @@
     export let maxLines: null | number
 
     $: slide = currentOutput?.out?.slide
+    $: overlays = currentOutput?.out?.overlays?.length
 
     function previousShow() {
         if ($activeProject) {
@@ -30,13 +31,16 @@
     }
 
     $: length = ref?.length || 0
+
+    $: newEditSlide = $activePage === "edit" && slide?.index !== $activeEdit.slide
+    $: showIsNotOutputtedSlide = newEditSlide || !slide || slide.id !== $activeShow?.id || !$activeShow || slide.layout !== $showsCache[$activeShow.id]?.settings?.activeLayout
 </script>
 
 <span class="group">
     <Button
         on:click={previousShow}
         title={$dictionary.preview?._previous_show}
-        disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject].shows.length || (typeof $activeShow?.index === "number" ? $activeShow.index < 1 : false)}
+        disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject]?.shows.length || (typeof $activeShow?.index === "number" ? $activeShow.index < 1 : false)}
         center
     >
         <Icon id="previousFull" size={1.2} />
@@ -52,7 +56,7 @@
     <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
         <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
     </Button>
-    {#if ($activePage === "edit" && slide?.index !== $activeEdit.slide) || !slide || slide.id !== $activeShow?.id || !$activeShow || slide.layout !== $showsCache[$activeShow.id]?.settings?.activeLayout}
+    {#if showIsNotOutputtedSlide && (slide || newEditSlide || !overlays)}
         <Button
             on:click={(e) => {
                 if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null && $activeEdit.slide !== undefined)
@@ -70,16 +74,7 @@
             <Icon id="play" size={1.2} />
         </Button>
     {:else}
-        <Button
-            on:click={() => {
-                // outBackground.set($outBackground)
-                // setOutput("slide", slide)
-                refreshOut()
-            }}
-            title={$dictionary.preview?._update}
-            disabled={!slide || $outLocked}
-            center
-        >
+        <Button on:click={() => refreshOut()} title={$dictionary.preview?._update} disabled={(!slide && !overlays) || $outLocked} center>
             <Icon id="refresh" size={1.2} />
         </Button>
     {/if}
@@ -94,7 +89,7 @@
     <Button
         on:click={nextShow}
         title={$dictionary.preview?._next_show}
-        disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject].shows.length || ($activeShow !== null && $activeShow.index !== undefined && $activeShow.index + 1 >= $projects[$activeProject].shows.length)}
+        disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject]?.shows.length || ($activeShow !== null && $activeShow.index !== undefined && $activeShow.index + 1 >= $projects[$activeProject].shows.length)}
         center
     >
         <Icon id="nextFull" size={1.2} />

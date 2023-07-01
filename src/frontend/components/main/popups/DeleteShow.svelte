@@ -22,10 +22,10 @@
     }
 </script>
 
-<p><T id="popup.delete_show_confirmation" /> ({$selected.data.length}):</p>
+<p style="font-weight: bold;"><T id="popup.delete_show_confirmation" /> ({$selected.data.length}):</p>
 <ul style="list-style-position: inside;">
     {#each $selected.data as show}
-        <li style="font-weight: bold;">{$shows[show.id]?.name}</li>
+        <li>{$shows[show.id]?.name}</li>
     {/each}
 </ul>
 

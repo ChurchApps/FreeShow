@@ -228,6 +228,7 @@ function getSlideItems(slide: any): any[] {
         // text = convertFromRTFToPlain(text)
         text = decodeHex(text)
 
+        if (text === "Double-click to edit") text = ""
         items.push({ style: itemStyle, lines: splitTextToLines(text) })
     })
 
@@ -267,6 +268,7 @@ function splitTextToLines(text: string) {
     let lines: any[] = []
     let data = text.split("\n\n")
     lines = data.map((text: any) => ({ align: "", text: [{ style: "", value: text }] }))
+    console.log(lines)
 
     return lines
 }
@@ -282,6 +284,9 @@ function decodeBase64(text: string) {
         l += 6
         if (l >= 8) r += String.fromCharCode((b >>> (l -= 8)) & 0xff)
     })
+
+    // WIP convert ‘ & ’ to '
+    r = r.replaceAll("\\u8217 ?", "'")
 
     return r
 }
@@ -299,6 +304,19 @@ function RTFToText(input: string) {
     return splitted.join("\n").trim()
 }
 
+// {\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf610
+// {\fonttbl\f0\fnil\fcharset0 Avenir-Book;}
+// {\colortbl;\red255\green255\blue255;\red255\green255\blue255;}
+// {\*\expandedcolortbl;;\csgray\c100000;}
+// \deftab720
+// \pard\pardeftab720\slleading200\qc\partightenfactor0
+
+// \f0\fs120 \cf2 \kerning1\expnd12\expndtw60
+// Her er jeg Gud\
+// Med mine byrder\
+// Jeg kommer n\'e5\
+// Med mine s\'e5r}
+
 function decodeHex(input: string) {
     let textStart = input.indexOf("\\cf2\\ltrch")
     // remove RTF before text
@@ -315,12 +333,18 @@ function decodeHex(input: string) {
     }
 
     input = input.replaceAll("\\\n", "<br>")
-    var hex = input.split("\\'")
-    var str = ""
+    let hex = input.split("\\'")
+    let str = ""
     hex.map((txt, i) => {
         let styles: any[] = []
-        let styleIndex = txt.indexOf("\\")
 
+        // fix skipping first word sometimes
+        txt = txt.replaceAll("\r\n", "")
+        let breakPos = txt.indexOf("\n")
+        let lineFormattingPos = txt.indexOf("\\f0")
+        if (breakPos >= 0 && lineFormattingPos >= 0 && lineFormattingPos < breakPos) txt = txt.slice(breakPos, txt.length)
+
+        let styleIndex = txt.indexOf("\\")
         while (styleIndex >= 0) {
             let nextSpace = txt.indexOf(" ", styleIndex)
             if (nextSpace < 1) nextSpace = txt.length
@@ -362,6 +386,8 @@ function convertProToSlides(song: any) {
     let slides: any = {}
     let media: any = {}
     let layouts: any = []
+
+    console.log(song)
 
     let tempLayouts: any = {}
     const tempArrangements: any[] = getArrangements(song.arrangements)
@@ -442,13 +468,23 @@ function convertProToSlides(song: any) {
     return { slides, layouts, media }
 }
 
-function convertItem({ text }: any) {
-    let item: Item = {
-        style: itemStyle,
+function convertItem(item: any) {
+    let text = item.text
+    let style = itemStyle
+    if (item.bounds) {
+        let pos = item.bounds.origin
+        let size = item.bounds.size
+        if (Object.keys(pos).length === 2 && Object.keys(size).length === 2) {
+            style = `left:${pos.x}px;top:${pos.y}px;width:${size.width}px;height:${size.height}px;`
+        }
+    }
+
+    let newItem: Item = {
+        style,
         lines: text.split("\n").map(getLine),
     }
 
-    return item
+    return newItem
 
     function getLine(text: string) {
         return { align: "", text: [{ value: text, style: "" }] }
@@ -507,6 +543,7 @@ function getSlides(cues: any) {
 function getItem(item: any) {
     let newItem: any = {}
 
+    newItem.bounds = item.element.bounds
     newItem.text = decodeRTF(item.element.text.rtfData)
 
     return newItem

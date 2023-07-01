@@ -30,6 +30,7 @@ export function _show(id: any = "active") {
             let prev: any[] = []
             showsCache.update((a: any) => {
                 if (!a[id]) return a
+
                 let double = key.split(".")
                 if (double.length > 1) {
                     prev = a[id][double[0]][double[1]]
@@ -44,6 +45,11 @@ export function _show(id: any = "active") {
             })
             allShows.update((a: any) => {
                 let double = key.split(".")
+                if (!a[id]) {
+                    if (!get(showsCache)[id]) return a
+                    a[id] = get(showsCache)[id]
+                }
+
                 if (double.length > 1 && a[id][double[0]]?.[double[1]]) a[id][double[0]][double[1]] = value
                 else if (a[id][key]) a[id][key] = value
 

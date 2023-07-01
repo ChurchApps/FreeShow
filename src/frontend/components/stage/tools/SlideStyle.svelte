@@ -4,6 +4,7 @@
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
@@ -16,6 +17,11 @@
         if (value === settings[key]) return
 
         history({ id: "UPDATE", newData: { data: value, key: "settings", subkey: key }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage" } })
+    }
+
+    function toggleValue(e: any, key: string) {
+        let value = e.target.checked
+        updateStageSettings(value, key)
     }
 
     // VALUES
@@ -62,6 +68,12 @@
     <CombinedInput>
         <p><T id="edit.background_color" /></p>
         <Color value={settings.color || defaultSettings.color} on:input={(e) => updateStageSettings(e.detail, "color")} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="stage.auto_stretch" /></p>
+        <div class="alignRight">
+            <Checkbox checked={settings.autoStretch ?? true} on:change={(e) => toggleValue(e, "autoStretch")} />
+        </div>
     </CombinedInput>
 
     <!-- <h6><T id="settings.resolution" /></h6>

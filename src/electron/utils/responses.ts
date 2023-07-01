@@ -11,7 +11,7 @@ import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, readFile, readFolder, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
+import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 
@@ -59,7 +59,7 @@ export function loadScripture(e: any, msg: Message) {
 // SHOW
 export function loadShow(e: any, msg: Message) {
     let p: string = checkShowsFolder(msg.path || "")
-    p = path.resolve(p, msg.name + ".show")
+    p = path.resolve(p, (msg.name || msg.id) + ".show")
     let show: any = loadFile(p, msg.id)
 
     e.reply(SHOW, show)
@@ -108,8 +108,14 @@ const mainResponses: any = {
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),
     FULL_SHOWS_LIST: (data: any) => getAllShows(data),
-    ACCESS_CAMERA_PERMISSION: () => systemPreferences.askForMediaAccess("camera"),
-    ACCESS_MICROPHONE_PERMISSION: () => systemPreferences.askForMediaAccess("microphone"),
+    ACCESS_CAMERA_PERMISSION: () => {
+        if (process.platform !== "darwin") return
+        systemPreferences.askForMediaAccess("camera")
+    },
+    ACCESS_MICROPHONE_PERMISSION: () => {
+        if (process.platform !== "darwin") return
+        systemPreferences.askForMediaAccess("microphone")
+    },
 }
 
 export function receiveMain(e: any, msg: Message) {
@@ -130,7 +136,7 @@ async function searchLyrics({ artist, title }: any) {
 
 function deleteShowsNotIndexed(data: any) {
     // get all names
-    let names: string[] = Object.values(data.shows).map(({ name }: any) => name + ".show")
+    let names: string[] = Object.entries(data.shows).map(([id, { name }]: any) => (name || id) + ".show")
 
     // list all shows in folder
     let filesInFolder: string[] = readFolder(data.path)
@@ -175,11 +181,21 @@ function refreshAllShows(data: any) {
         }
         if (!show || !show[1]) return
 
-        newShows[show[0]] = trimShow(show[1])
+        newShows[show[0]] = trimShow({ ...show[1], name: name.replace(".show", "") })
     }
 
     if (!Object.keys(newShows).length) return
     toApp("MAIN", { channel: "REFRESH_SHOWS", data: newShows })
+}
+
+export function renameShows(shows: any, path: string) {
+    for (const show of shows) checkFile(show)
+    function checkFile(show: any) {
+        let oldName = show.oldName + ".show"
+        let newName = (show.name || show.id) + ".show"
+
+        renameFile(path, oldName, newName)
+    }
 }
 
 // WIP duplicate of setShow.ts

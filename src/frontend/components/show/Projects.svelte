@@ -43,9 +43,11 @@
     let offset: number = -1
     $: offset = autoscroll(scrollElem, ($activeShow?.index || 1) - 1)
 
+    // close if not existing
+    $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null)
     $: {
         // get pos if clicked in drawer
-        if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject!].shows[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
+        if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject]?.shows[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
     }
 
     function findShowInProject() {
@@ -126,7 +128,7 @@
     <button onClick={() => setProject(false)} style={{width: '50%', backgroundColor: (project ? '' : 'transparent'), color: (project ? '' : 'var(--secondary)')}}>Timeline</button> -->
     </span>
     {#if $projectView}
-        <div class="list context #projects" style="overflow: auto;">
+        <div class="list projects context #projects" style="overflow: auto;">
             <DropArea id="projects">
                 <ProjectList {tree} />
                 <!-- <ProjectsFolder id="/" name="All Projects" {tree} opened index={0} /> -->
@@ -228,6 +230,11 @@
     overflow-x: hidden; */
         overflow: hidden;
         height: 100%;
+    }
+
+    .list.projects :global(.droparea) {
+        /* this is to be able to right click and add a folder/project at "root" level */
+        padding-bottom: 10px;
     }
 
     .list :global(.section) {

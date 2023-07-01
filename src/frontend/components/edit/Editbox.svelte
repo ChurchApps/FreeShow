@@ -23,6 +23,8 @@
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
     import { menuClick } from "../context/menuClick"
     import Visualizer from "../slide/views/Visualizer.svelte"
+    import DynamicEvents from "../slide/views/DynamicEvents.svelte"
+    import { getStyles } from "../helpers/style"
 
     export let item: Item
     export let filter: string = ""
@@ -95,7 +97,7 @@
 
     function keydown(e: any) {
         // TODO: get working in list view
-        if (e.key === "Enter" && e.altKey && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
+        if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
             // incorrect editbox
             if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
 
@@ -110,6 +112,19 @@
             let currentIndex = 0,
                 textPos = 0
             let start = -1
+
+            // TODO: auto bullets
+            if (!e.altKey) {
+                // console.log(lines, textPos, start, currentIndex, sel)
+                // let lastLine = lines[lines.length - 1]
+                // let lineText = lastLine.text?.[lastLine.text?.length - 1]?.value
+                // if (!lineText?.includes("\n") || !lineText?.includes("• ")) return
+                // lines[lines.length - 1].text[lastLine.text.length - 1].value += "• "
+
+                // updateLines(lines)
+
+                return
+            }
 
             lines.forEach((line, i) => {
                 if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
@@ -261,14 +276,19 @@
         item?.lines?.forEach((line) => {
             s += line.align
             line.text?.forEach((a) => {
-                // + (item.auto ? autoSize : "")
-                s += a.style
+                s += getTextStyle(a)
             })
         })
 
         // dont replace while typing
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
         if (currentStyle !== s) getStyle()
+    }
+    function getTextStyle(lineText) {
+        let textActive = document.activeElement?.closest(".edit")
+        let auto: string = item.auto && !textActive ? autoSize + "" : ""
+        let style = lineText.style ? lineText.style + auto : ""
+        return style
     }
 
     function getStyle() {
@@ -290,8 +310,7 @@
             if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
 
             line.text?.forEach((a) => {
-                // + (item.auto ? autoSize : "")
-                currentStyle += a.style
+                currentStyle += getTextStyle(a)
 
                 let auto: string = item.auto ? "font-size: " + autoSize + "px;" : ""
                 let style = a.style ? 'style="' + a.style + auto + '"' : ""
@@ -598,7 +617,7 @@ bind:offsetWidth={width} -->
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}
                 <!-- video -->
-                <video src={item.src} muted={true} loop>
+                <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={true} autoplay loop>
                     <track kind="captions" />
                 </video>
             {:else}
@@ -610,6 +629,8 @@ bind:offsetWidth={width} -->
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
+    {:else if item?.type === "events"}
+        <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
     {:else if item?.type === "visualizer"}

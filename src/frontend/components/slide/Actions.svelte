@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary } from "../../stores"
+    import { dictionary, shows } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import Button from "../inputs/Button.svelte"
@@ -19,6 +19,7 @@
     // }
 
     const actionsList = [
+        { id: "startShow", name: ({ id }) => $shows[id]?.name || "", title: $dictionary.preview?._start, icon: "showIcon", white: true },
         { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward", white: true },
         { id: "startTimer", title: $dictionary.actions?.start_timer, icon: "timer", white: true },
         { id: "outputStyle", title: $dictionary.actions?.change_output_style, icon: "styles", white: true },
@@ -36,7 +37,10 @@
         {#if actions[action.id]}
             <div>
                 <div class="button {action.white ? 'white' : ''}">
-                    <Button style="padding: 5px;" redHover title={action.title} on:click={() => changeSlideAction(action.id)}>
+                    <Button style="padding: 5px;" redHover title={$dictionary.actions?.remove + ": " + action.title} on:click={() => changeSlideAction(action.id)}>
+                        {#if action.name}
+                            <p>{action.name(actions[action.id])}</p>
+                        {/if}
                         <Icon id={action.icon} white />
                     </Button>
                 </div>
@@ -56,6 +60,7 @@
 
         height: 80%;
         flex-wrap: wrap-reverse;
+        place-items: end;
     }
     .icons div {
         opacity: 0.9;
@@ -68,5 +73,14 @@
 
     .button:not(.white) :global(svg) {
         fill: #ff5050;
+    }
+
+    .button p {
+        pointer-events: all;
+        background-color: rgb(0 0 0 / 0.4);
+        padding-right: 5px;
+        font-size: 0.8em;
+        font-weight: normal;
+        max-width: 60px;
     }
 </style>

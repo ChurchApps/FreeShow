@@ -96,6 +96,7 @@
         " ": (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
             // TODO: ...
+            e.preventDefault()
             if (currentOutput.out?.slide?.id !== $activeShow?.id || ($activeShow && currentOutput.out?.slide?.layout !== $showsCache[$activeShow.id].settings.activeLayout)) nextSlide(e, true)
             else {
                 if (e.shiftKey) previousSlide()
@@ -118,10 +119,10 @@
             ctrlShortcuts[e.key]()
         }
 
-        if (e.target.closest("input") || e.target.closest(".edit") || !$activeShow) return
+        if (e.target.closest("input") || e.target.closest(".edit")) return
 
         // group shortcuts
-        if (!e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
+        if ($activeShow && !e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
             e.preventDefault()
             return
         }
@@ -132,14 +133,18 @@
             return
         }
 
-        if (["media", "video", "player"].includes(currentOutput.out?.background?.type || "")) {
-            e.preventDefault()
-            if (e.key === " ") {
-                videoData.paused = !videoData.paused
-                send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
-                // send(OUTPUT, ["UPDATE_VIDEO_TIME"], videoTime)
-            }
-        }
+        // if (["media", "video", "player"].includes(currentOutput.out?.background?.type || "")) {
+        //     e.preventDefault()
+        //     if (e.key === " ") {
+        //         videoData.paused = !videoData.paused
+        //         // send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
+        //         // // send(OUTPUT, ["UPDATE_VIDEO_TIME"], videoTime)
+
+        //         // Media.svelte sentToOutput()
+        //         send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData, updatePreview: true })
+        //         if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, data: videoData, updatePreview: true })
+        //     }
+        // }
     }
 
     function checkGroupShortcuts(e: any) {
@@ -252,6 +257,54 @@
         if (!e.target.closest(".zoomed")) return
         fullscreen = !fullscreen
     }
+
+    // MEDIA
+
+    // auto clear video on finish
+    $: if (videoTime && videoData.duration && !videoData.paused && videoTime + 0.5 >= videoData.duration) {
+        // this will start changing 0.2s before video ends (video is paused when changing)
+        setTimeout(clearVideo2, 300)
+    }
+
+    let clearing: boolean = false
+    function clearVideo2() {
+        if (clearing) return
+
+        clearing = true
+        setTimeout(() => {
+            clearing = false
+        }, 1000)
+
+        // check nextAfterMedia
+        let slideOut = currentOutput.out?.slide
+        if (slideOut) {
+            let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
+            let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
+            if (nextAfterMedia) {
+                // videoTime = 0
+                setTimeout(() => {
+                    nextSlide(null, false, false, true, true, outputId)
+                }, 100)
+                return
+            }
+        }
+
+        if (videoData.loop) return
+
+        setOutput("background", null)
+        videoTime = 0
+        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
+        if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })
+
+        // dont think this is nessesary
+        setTimeout(() => {
+            if (!currentOutput.out?.background) video = null
+        }, 500)
+    }
+
+    // $: if (currentOutput.out?.background === null) {
+    //     clearVideo()
+    // }
 </script>
 
 <svelte:window on:keydown={keydown} />

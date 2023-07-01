@@ -33,6 +33,7 @@ import { checkName } from "./show"
 import { _show } from "./shows"
 import { dateToString } from "./time"
 import { clone } from "./array"
+import { updateThemeValues } from "../../utils/updateSettings"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -359,7 +360,7 @@ export const _updaters = {
 
             setTimeout(() => {
                 if (data.subkey) updateTransparentColors(id)
-                updateTheme(id)
+                updateThemeValues(get(themes)[id])
             }, 100)
         },
         deselect: (id: string, data: any) => {
@@ -375,25 +376,13 @@ export const _updaters = {
             setTimeout(() => {
                 // setTheme({ ...data, data: data.previousValue })
                 if (data.subkey) updateTransparentColors(id)
-                updateTheme(id)
+                updateThemeValues(get(themes)[id])
             }, 100)
         },
     },
     settings_style: { store: styles },
 }
 
-function updateTheme(id: string) {
-    Object.entries(get(themes)[id].colors).forEach(([subId, color]: any) => {
-        document.documentElement.style.setProperty("--" + subId, color)
-    })
-}
-// function setTheme(data: any) {
-//     let key = data.subkey || data.key
-//     if (!key || !data.data) return
-
-//     if (data.key === "font") key = data.key + "-" + key
-//     document.documentElement.style.setProperty("--" + key, data.data)
-// }
 function updateTransparentColors(id: string) {
     themes.update((a) => {
         Object.entries(a[id].colors).forEach(([subId, color]: any) => {

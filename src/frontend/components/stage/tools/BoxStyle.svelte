@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { activeStage, stageShows } from "../../../stores"
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
+    import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import { getStyles } from "../../helpers/style"
-    import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import { updateStageShow } from "../stage"
     import { textEdits } from "../values/text"
@@ -18,9 +17,8 @@
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
 
     // $: if (textEdits) updateAuto(item?.auto || true)
-    onMount(() => {
-        updateAuto(item?.auto || true)
-    })
+    $: if (item) updateAuto(item?.auto ?? true)
+
     function updateAuto(value) {
         let autoIndex = textEdits?.font?.findIndex((a) => a.id === "auto")
         if (!autoIndex) return

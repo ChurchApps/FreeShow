@@ -20,7 +20,7 @@ export const getDateString = (date: Date) => {
     return d + "." + m + "." + y
 }
 
-function getTime(date: Date) {
+export function getTime(date: Date) {
     let h = ("0" + date.getHours()).slice(-2)
     let m = ("0" + date.getMinutes()).slice(-2)
     return h + ":" + m
@@ -225,11 +225,12 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
 
     // sort
     temp = temp
-        .filter((a) => a.events.length)
         .map((a) => {
-            a.events = a.events.sort((a: any, b: any) => new Date(a.from).getTime() - new Date(b.from).getTime())
+            // only get actual events
+            a.events = a.events.filter((a) => a.type === "event").sort((a: any, b: any) => new Date(a.from).getTime() - new Date(b.from).getTime())
             return a
         })
+        .filter((a) => a.events.length)
 
     currentEvents = temp.sort((a, b) => a.date - b.date)
     return currentEvents

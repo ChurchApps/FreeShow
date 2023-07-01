@@ -2,13 +2,14 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { ItemType, Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
-import { clone } from "./array"
+import { clone, keysToID } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { _show } from "./shows"
+import { loadShows } from "./setShow"
 
 // TODO: move history switch to actions
 
@@ -226,7 +227,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return a
             }
         },
-        SHOWS: () => {
+        SHOWS: async () => {
             // bulk add/remove/duplicate shows
             let showsList = obj.newData?.data || obj.oldData?.data || []
             if (!showsList.length) return
@@ -254,6 +255,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             let duplicates: string[] = []
+            let oldShows: any = {}
+            let rename: any = {}
+
+            // load shows cache
+            if (deleting) {
+                await loadShows(showsList.map((a) => a.id))
+            }
 
             showsCache.update((a) => {
                 showsList.forEach(({ show, id }, i: number) => {
@@ -263,13 +271,20 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             return
                         }
 
+                        oldShows[id] = clone(a[id])
                         delete a[id]
                     } else {
-                        if (!show.slides) return
+                        if (!show) return
 
                         if (replace) {
                             if (initializing) obj.oldData.data[i].show = clone(a[id])
                             a[id] = { ...a[id], ...show }
+
+                            // rename
+                            let oldName = get(shows)[id].name
+                            if (show.name !== undefined && oldName !== show.name) {
+                                rename[id] = { name: show.name || id, oldName: oldName }
+                            }
                             return
                         }
 
@@ -286,7 +301,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 showsList.forEach(({ show, id }, i) => {
                     if (deleting && !replace) {
                         // store show
-                        if (!obj.oldData?.data[i]?.show) obj.oldData.data[i] = { id, show: a[id] }
+                        if (!obj.oldData?.data[i]?.show) obj.oldData.data[i] = { id, show: oldShows[id] }
 
                         // add to deleted so the file can be deleted on save
                         deletedShows.set([...get(deletedShows), { id, name: a[id].name }])
@@ -311,6 +326,20 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 })
                 return a
             })
+
+            // rename shows file
+            let renamedIds = Object.keys(rename)
+            if (renamedIds.length) {
+                // renaming multiple times
+                let newRenamed = get(renamedShows).filter((a) => !renamedIds.includes(a.id))
+                let newRenamedList = keysToID(rename).map((a) => {
+                    let previous = get(renamedShows).find((r) => r.id === a.id)
+                    if (!previous) return a
+                    return { ...a, oldName: previous.oldName }
+                })
+
+                renamedShows.set([...newRenamed, ...newRenamedList])
+            }
 
             // TODO: choose to overwrite or just skip
             if (duplicates.length) {
@@ -795,7 +824,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 keys.forEach((key, i) => {
                     // for overlays, add full array
-                    let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : values[i]?.[valueIndex] || values[valueIndex]
+                    let value = valueIndex < 0 ? values[i] : data.dataIsArray ? values : values[i]?.[valueIndex] || values[valueIndex] || values[i]
+                    console.log(value, valueIndex, values, keys, key, data)
+
                     if (!data.dataIsArray && typeof values[i] === "string") value = values[i]
 
                     if (value === undefined) delete l[key]

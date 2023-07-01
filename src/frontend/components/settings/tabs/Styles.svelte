@@ -1,6 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { dictionary, imageExtensions, labelsDisabled, outputs, styles, templates } from "../../../stores"
+    import { activeStyle, dictionary, imageExtensions, labelsDisabled, outputs, styles, templates } from "../../../stores"
+    import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -18,7 +19,7 @@
         let value = e?.detail ?? e?.target?.value ?? e
 
         currentStyle[key] = value
-        if (!styleId) styleId = uid()
+        if (!styleId) styleId = $styles.default ? uid() : "default"
 
         // TODO: history
         styles.update((a) => {
@@ -66,8 +67,10 @@
         return list.sort((a, b) => a.name.localeCompare(b.name))
     }
 
-    let styleId = Object.keys($styles)[0]
-    $: currentStyle = $styles[styleId] || defaultStyle
+    let styleId = $activeStyle || Object.keys($styles)[0] || ""
+    $: currentStyle = $styles[styleId] || clone(defaultStyle)
+
+    $: activeStyle.set(styleId || "")
 
     function resetStyle() {
         let name = currentStyle.name
@@ -116,6 +119,14 @@
             .map(([id, template]: any) => ({ id, name: template.name }))
             .sort((a, b) => a.name.localeCompare(b.name)),
     ]
+
+    // text divider
+    function keydown(e: any) {
+        if (e.key === "Enter") {
+            currentStyle.metadataDivider = (currentStyle.metadataDivider || "; ") + "<br>"
+            updateStyle(currentStyle.metadataDivider, "metadataDivider")
+        }
+    }
 </script>
 
 <div class="info">
@@ -132,6 +143,8 @@
         disabled={!styleId}
         on:click={() => {
             history({ id: "UPDATE", newData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
+            styleId = ""
+            currentStyle = clone(defaultStyle)
         }}
     >
         <Icon id="delete" right />
@@ -188,6 +201,10 @@
             <Icon id="close" size={1.2} white />
         </Button>
     {/if}
+</CombinedInput>
+<CombinedInput>
+    <p><T id="edit.media_fit" /></p>
+    <Dropdown value={mediaFitOptions.find((a) => a.id === currentStyle.fit)?.name || "—"} options={[{ id: null, name: "—" }, ...mediaFitOptions]} on:click={(e) => updateStyle(e.detail.id, "fit")} />
 </CombinedInput>
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->
@@ -314,6 +331,10 @@
 <CombinedInput>
     <p><T id="meta.meta_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} />
+</CombinedInput>
+<CombinedInput>
+    <p><T id="meta.text_divider" /></p>
+    <TextInput value={currentStyle.metadataDivider === undefined ? "; " : currentStyle.metadataDivider} on:change={(e) => updateStyle(e, "metadataDivider")} on:keydown={keydown} />
 </CombinedInput>
 <CombinedInput>
     <p><T id="meta.message_template" /></p>

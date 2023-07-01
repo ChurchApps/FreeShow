@@ -77,6 +77,9 @@ export function listen() {
     // TO STAGE
     stageListen()
 
+    // think this is just needed for the dev server to update
+    setTimeout(sendInitialOutputData, 1000)
+
     // SAVE
     // TODO: better saving!
     let s = { ...saveList, folders: folders, overlays: overlays, projects: projects, showsCache: showsCache, stageShows: stageShows }
@@ -97,6 +100,7 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["TEMPLATES"], get(templates))
     send(OUTPUT, ["OVERLAYS"], get(overlays))
     send(OUTPUT, ["TIMERS"], get(timers))
+    send(OUTPUT, ["EVENTS"], get(events))
 }
 
 export function newToast(msg: string) {

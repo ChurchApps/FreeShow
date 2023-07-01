@@ -250,7 +250,7 @@
                                     <ShowTools />
                                 {/if}
                             {:else if page === "edit"}
-                                {#if ($activeShow && ($activeShow.type === "image" || $activeShow.type === "video")) || $activeEdit.type === "media"}
+                                {#if $activeEdit.type === "media"}
                                     <MediaTools />
                                 {:else if $activeEdit.type === "effect"}
                                     <EffectTools />

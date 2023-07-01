@@ -52,7 +52,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newShowPopup: { label: "new.show", icon: "add" },
     newShow: { label: "new.empty_show", icon: "add" },
     newPrivateShow: { label: "new.private", icon: "private" },
-    private: { label: "actions.private", icon: "private" },
+    private: { label: "actions.toggle_private", icon: "private" },
     duplicate: { label: "actions.duplicate", icon: "duplicate" },
     section: { label: "new.section", icon: "section" },
     // SHOWS
@@ -71,6 +71,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     view_lyrics: { label: "show.lyrics", icon: "lyrics" },
     view_text: { label: "show.text", icon: "text" },
     // SLIDE
+    slide_transition: { label: "popup.transition", icon: "transition" },
     disable: { label: "actions.disable", icon: "disable" },
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
@@ -80,14 +81,15 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
     bind_to: { label: "actions.bind_to", icon: "bind", items: ["stage", "LOAD_outputs"] },
-    format: { label: "actions.format", icon: "format", items: ["uppercase", "lowercase", "capitalize", "trim"] },
+    format: { label: "actions.format", icon: "format", items: ["find_replace", "uppercase", "lowercase", "capitalize", "trim"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
-    uppercase: { label: "actions.uppercase" },
-    lowercase: { label: "actions.lowercase" },
-    capitalize: { label: "actions.capitalize" },
-    trim: { label: "actions.trim" },
+    find_replace: { label: "actions.find_replace", icon: "find_replace" },
+    uppercase: { label: "actions.uppercase", icon: "increase_text" },
+    lowercase: { label: "actions.lowercase", icon: "decrease_text" },
+    capitalize: { label: "actions.capitalize", icon: "capitalize" },
+    trim: { label: "actions.trim", icon: "cut" },
     // MEDIA
     preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },
@@ -146,7 +148,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "play", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
     // , "delete_all"
-    show_media: ["play", "play_no_filters", "SEPERATOR", "edit"],
+    show_media: ["play", "play_no_filters", "preview", "SEPERATOR", "edit"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
@@ -165,7 +167,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projects: ["newProject", "newFolder"],
     projectTab: ["export", "close"],
     project: ["newShowPopup", "newPrivateShow", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "delete", "duplicate", "export"],
+    project_button: ["rename", "delete", "duplicate", "export"], // "open",
     folder: ["rename", "delete", "duplicate"],
     project_media: ["play", "play_no_filters", "remove"],
     project_audio: ["remove"],
@@ -179,8 +181,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
-    slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
+    slide: ["slideGroups", "actions", "remove_media", "format", "disable", "slide_transition", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
+    slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "slide_transition", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
     group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
     global_group: ["edit"],
     // global_group: ["rename"],

@@ -34,6 +34,7 @@ import {
     shows,
     showsCache,
     slidesOptions,
+    sortedShowsList,
     stageShows,
     styles,
     templates,
@@ -336,6 +337,11 @@ const actions: any = {
     },
 
     // show
+    slide_transition: (obj: any) => {
+        if (obj.sel.id !== "slide") return
+
+        activePopup.set("transition")
+    },
     disable: (obj: any) => {
         if (obj.sel.id === "slide") {
             showsCache.update((a) => {
@@ -484,6 +490,8 @@ const actions: any = {
         let showRef: any = { id: path, type: mediaType }
         if (name) showRef.name = name
         activeShow.set(showRef)
+
+        activePage.set("show")
     },
     play: (obj: any) => {
         if (obj.sel.id === "midi") {
@@ -616,6 +624,11 @@ const actions: any = {
     },
 
     // formats
+    find_replace: (obj: any) => {
+        popupData.set(obj)
+        activePopup.set("find_replace")
+        // format("find_replace", obj)
+    },
     uppercase: (obj: any) => format("uppercase", obj),
     lowercase: (obj: any) => format("lowercase", obj),
     capitalize: (obj: any) => format("capitalize", obj),
@@ -645,6 +658,37 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
+    let indexes: number[] = obj.sel.data.map(({ index }) => index)
+
+    if (id === "startShow") {
+        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
+        let showId: string = actions[id]?.id || get(sortedShowsList)[0]
+
+        if (!showId) {
+            newToast("$empty.shows")
+            return
+        }
+
+        if (!actions[id]) actions[id] = { id: showId }
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
+
+        let data: any = {
+            action: "select_show",
+            active: showId,
+            trigger: (showId: string) => {
+                if (!showId) return
+                actions[id] = { id: showId }
+                history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
+            },
+        }
+
+        popupData.set(data)
+        activePopup.set("select_show")
+
+        return
+    }
+
     if (id === "outputStyle") {
         let actions = clone(ref[layoutSlide]?.data?.actions) || {}
         let styleId: string = actions[id] || Object.keys(get(styles))[0]
@@ -656,9 +700,9 @@ function changeSlideAction(obj: any, id: string) {
 
         if (!actions[id]) actions[id] = styleId
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] }, location: { page: "show", override: "change_style_slide" } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "change_style_slide" } })
 
-        let data: any = { id: styleId, index: layoutSlide }
+        let data: any = { id: styleId, indexes }
 
         popupData.set(data)
         activePopup.set("choose_style")
@@ -666,12 +710,22 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
-    let indexes: number[] = obj.sel.data.map(({ index }) => index)
+    if (id === "nextTimer") {
+        let nextTimer = clone(ref[layoutSlide]?.data?.nextTimer) || 0
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: nextTimer, indexes }, location: { page: "show", override: "change_style_slide" } })
+
+        let data: any = { value: nextTimer, indexes }
+
+        popupData.set(data)
+        activePopup.set("next_timer")
+
+        return
+    }
 
     // this is old and has to be stored as this
     if (id === "loop") {
         let loop = ref[layoutSlide]?.data?.end || false
-        // WIP this does not work with multiple for some reason
         history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !loop, indexes } })
 
         return
@@ -782,7 +836,7 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
     history({ id: "SLIDES", oldData: { type, data: slides } })
 }
 
-function format(id: string, obj: any) {
+export function format(id: string, obj: any, data: any = null) {
     let slides: any[] = []
 
     let editing = get(activeEdit)
@@ -797,7 +851,7 @@ function format(id: string, obj: any) {
         currentItems.forEach((item: any) => {
             item.lines?.forEach((line: any, j: number) => {
                 line.text?.forEach((text: any, k: number) => {
-                    item.lines[j].text[k].value = formatting[id](text.value)
+                    item.lines[j].text[k].value = formatting[id](text.value, data)
                 })
             })
             newItems.push(item)
@@ -834,7 +888,7 @@ function format(id: string, obj: any) {
         slideItems.forEach((item: any) => {
             item.lines?.forEach((line: any, j: number) => {
                 line.text?.forEach((text: any, k: number) => {
-                    item.lines[j].text[k].value = formatting[id](text.value)
+                    item.lines[j].text[k].value = formatting[id](text.value, data)
                 })
             })
             newItems.push(item)
@@ -848,6 +902,14 @@ function format(id: string, obj: any) {
 }
 
 const formatting: any = {
+    find_replace: (t: string, data) => {
+        if (!data.findValue) return t
+
+        let flags = "g"
+        if (data.caseSentitive === false) flags += "i"
+        var regExp = new RegExp(data.findValue, flags)
+        return t.replace(regExp, data.replaceValue)
+    },
     uppercase: (t: string) => t.toUpperCase(),
     lowercase: (t: string) => t.toLowerCase(),
     capitalize: (t: string) => (t.length > 1 ? t[0].toUpperCase() + t.slice(1, t.length) : t.toUpperCase()),

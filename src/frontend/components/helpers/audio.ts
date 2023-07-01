@@ -58,7 +58,7 @@ export function analyseAudio() {
     interval = setInterval(() => {
         // get new audio
         updateAudio++
-        if (updateAudio > 10) {
+        if (updateAudio >= 10) {
             updateAudio = 0
             allAudio = Object.entries(get(playingAudio))
                 .map(([id, a]: any) => ({ id, ...a }))
@@ -179,6 +179,8 @@ export async function getAnalyser(elem: any) {
     splitter.connect(merger, 1, 1) // right audio
     // merger.connect(gain);
     merger.connect(ac.destination)
+
+    console.log("ANALYZING VIDEO", elem)
 
     return { left: leftAnalyser, right: rightAnalyser }
 }

@@ -36,6 +36,8 @@
         editHistory.update((a) => {
             let edit: any = { edit: clone($activeEdit) }
             edit.id = edit.edit.id || $activeShow?.id || ""
+            if (!edit.id) return a
+
             let type = edit.edit.type || "show"
             edit.icon = type === "show" ? "showIcon" : type
             if (edit.icon === "media") edit.icon = getMediaType(getExtension(edit.id))

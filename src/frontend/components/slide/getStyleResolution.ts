@@ -36,5 +36,5 @@ export function getStyleResolution(resolution: Resolution, width: any, height: a
         }
     }
 
-    return style.width ? "width: " + style.width + ";" : "" + style.height ? "height: " + style.height + ";" : ""
+    return (style.width ? "width: " + style.width + ";" : "") + (style.height ? "height: " + style.height + ";" : "")
 }

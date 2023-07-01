@@ -94,7 +94,7 @@
 
     $: size = getAutoSize(item, { width, height })
     // $: size = Math.min(height, width) / 2
-    $: autoSize = fontSize ? Math.min(fontSize, size) : size
+    $: autoSize = fontSize ? Math.max(fontSize, size) : size
 
     // SLIDE
     let slide

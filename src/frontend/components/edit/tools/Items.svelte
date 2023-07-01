@@ -19,9 +19,10 @@
         { id: "text" },
         { id: "list" },
         // { id: "table" },
-        { id: "media", icon: "image", name: "image" },
+        { id: "media", icon: "image" },
         { id: "timer" },
         { id: "clock" },
+        { id: "events", icon: "calendar" },
         { id: "mirror" },
         { id: "visualizer" },
     ]

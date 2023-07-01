@@ -37,6 +37,7 @@ export const activeDays: Writable<number[]> = writable([])
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
 export const activeDrawerTab: Writable<DrawerTabIds> = writable("shows")
+export const activeStyle: Writable<string> = writable("")
 export const settingsTab: Writable<SettingsTabs> = writable("general")
 export const projectView: Writable<boolean> = writable(false)
 export const eventEdit: Writable<null | string> = writable(null)
@@ -81,6 +82,7 @@ export const playScripture: Writable<boolean> = writable(false)
 export const editHistory: Writable<any[]> = writable([])
 export const refreshEditSlide: Writable<boolean> = writable(false)
 export const deletedShows: Writable<any[]> = writable([])
+export const renamedShows: Writable<any[]> = writable([])
 
 // ----- SAVED VARIABLES -----
 
@@ -182,7 +184,7 @@ export const alertUpdates: Writable<boolean> = writable(true) // true
 export const autoOutput: Writable<boolean> = writable(false) // false
 export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
-export const fullColors: Writable<boolean> = writable(true) // true
+export const fullColors: Writable<boolean> = writable(false) // false
 export const formatNewShow: Writable<boolean> = writable(true) // true
 export const splitLines: Writable<number> = writable(0) // 0
 export const showsPath: Writable<null | string> = writable(null) // null

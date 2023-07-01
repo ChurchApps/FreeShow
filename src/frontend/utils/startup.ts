@@ -194,8 +194,8 @@ export const receiveSTORE: any = {
     SHOWS: (a: any) => shows.set(a),
     STAGE_SHOWS: (a: any) => stageShows.set(a),
     PROJECTS: (a: any) => {
-        projects.set(a.projects)
-        folders.set(a.folders)
+        projects.set(a.projects || {})
+        folders.set(a.folders || {})
     },
     OVERLAYS: (a: any) => overlays.set(a),
     TEMPLATES: (a: any) => templates.set(a),

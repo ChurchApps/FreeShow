@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { slidesOptions } from "../../stores"
+    import { slidesOptions, volume } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
@@ -13,10 +13,12 @@
     import Mirror from "./views/Mirror.svelte"
     import Timer from "./views/Timer.svelte"
     import Visualizer from "./views/Visualizer.svelte"
+    import DynamicEvents from "./views/DynamicEvents.svelte"
 
     export let item: Item
     export let slideIndex: number = 0
     export let preview: boolean = false
+    export let mirror: boolean = true
     export let ratio: number = 1
     export let filter: string = ""
     export let backdropFilter: string = ""
@@ -132,7 +134,7 @@
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}
                 <!-- video -->
-                <video src={item.src} muted={true}>
+                <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={mirror} volume={Math.max(1, $volume)} autoplay loop>
                     <track kind="captions" />
                 </video>
             {:else}
@@ -147,6 +149,8 @@
         <!-- {/key} -->
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
+    {:else if item?.type === "events"}
+        <DynamicEvents {...item.events} textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={slideIndex} />
     {:else if item?.type === "visualizer"}

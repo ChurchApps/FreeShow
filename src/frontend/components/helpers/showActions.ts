@@ -8,6 +8,7 @@ import { clearAudio, playAudio } from "./audio"
 import { getMediaType } from "./media"
 import { getActiveOutputs, setOutput } from "./output"
 import { _show } from "./shows"
+import { loadShows } from "./setShow"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -89,6 +90,7 @@ function getOutputWithLines() {
         if (!output.style) return
 
         let style = get(styles)[output.style]
+        if (!style) return
         let lines = style.lines
         if (!lines) return
 
@@ -261,10 +263,17 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
     _show(showId).set({ key: "timestamps.used", value: new Date().getTime() })
+    if (!layout) return
     let data = layout[index]?.data
 
     // holding "alt" key will disable all extra features
     if (!extra || !data) return
+
+    // trigger start show action first
+    if (data.actions?.startShow) {
+        startShow(data.actions.startShow?.id)
+        return
+    }
 
     // get output slide
     let outputIds = getActiveOutputs()
@@ -287,7 +296,9 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     // background
     if (background) {
         let bg = _show(showId).get("media")[background!]
-        if (bg) {
+        let outputBg = get(outputs)[outputIds[0]]?.out?.background
+
+        if (bg && bg.path !== outputBg?.path) {
             let bgData: any = {
                 name: bg.name,
                 type: bg.type || getMediaType(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)),
@@ -307,9 +318,10 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     // overlays
     if (data.overlays?.length) {
-        setOutput("overlays", data.overlays, false, outputId, true)
         // send overlays again, because it sometimes don't have it for some reason
         send(OUTPUT, ["OVERLAYS"], get(overlays))
+
+        setOutput("overlays", data.overlays, false, outputId, true)
     }
 
     // audio
@@ -338,6 +350,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     // actions
     if (data.actions) {
+        // startShow is at the top
         if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle)
@@ -347,6 +360,21 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         if (data.actions.clearOverlays) clearOverlays()
         if (data.actions.clearAudio) clearAudio()
     }
+}
+
+export async function startShow(showId: string) {
+    console.log("start show", showId)
+    if (!showId) return
+
+    let show = await loadShows([showId])
+    if (show !== "loaded") return
+
+    let activeLayout = get(showsCache)[showId].settings?.activeLayout || ""
+
+    // slideClick() - Slides.svelte
+    let slideRef: any = _show(showId).layouts("active").ref()[0]
+    updateOut(showId, 0, slideRef)
+    setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
 }
 
 export function changeOutputStyle(styleId: string) {
