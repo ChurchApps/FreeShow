@@ -181,8 +181,8 @@
     "remote": {
         "projects": "Progetti",
         "project": "Progetto",
-        "shows": "Shows",
-        "show": "Show",
+        "shows": "Spettacoli",
+        "show": "Spettacolo",
         "slide": "Diapositiva",
         "lyrics": "Lirica",
         "end": "Fine",
@@ -220,8 +220,8 @@
         "override_output": "Sostituisci lo stile nell'output",
         "display_metadata": "Mostra i metadati",
         "meta_template": "Metadata template",
-        "text_divider": "Text separator",
-        "message_template": "Message template"
+        "text_divider": "Separatore di testo",
+        "message_template": "Modello di messaggio"
     },
     "show_at": {
         "never": "Nessuna diapositiva",
@@ -405,7 +405,7 @@
         "goto_group": "Vai al gruppo",
         "change_output_style": "Cambia stile di output",
         "toggle_private": "Privato",
-        "view_private": "Show private",
+        "view_private": "Spettacolo privato",
         "import": "Importa",
         "export": "Esporta",
         "duplicate": "Duplica",
@@ -446,7 +446,7 @@
         "choose_custom": "Scelta personalizzata",
         "format": "Formato",
         "find_replace": "Find and replace text",
-        "find": "Find",
+        "find": "Trova",
         "replace": "Replace",
         "case_sensitive": "Case sensitive",
         "uppercase": "Rendi maiuscolo",
@@ -558,15 +558,15 @@
         "background_color": "Colore di sfondo",
         "background_opacity": "Opacità dello sfondo",
         "background_image": "Immagine di sfondo",
-        "media_fit": "Media fit",
+        "media_fit": "Adatta media",
         "size": "Dimensione",
         "chords": "Accordi",
         "auto_size": "Dimensione automatica",
         "line_spacing": "Interlinea",
         "letter_spacing": "Spaziatura lettera",
         "word_spacing": "Spaziatura delle parole",
-        "transform": "Transform",
-        "uppercase": "Uppercase",
+        "transform": "Trasforma",
+        "uppercase": "Maiuscolo",
         "lowercase": "Lowercase",
         "capitalize": "Capitalize",
         "align": "Allineamento",
@@ -614,10 +614,10 @@
         "bottom_top": "Dal basso verso l'alto",
         "left_right": "Da sinistra a destra",
         "right_left": "Da destra a sinistra",
-        "max_events": "Max events",
-        "start_days_from_today": "Start at days from today",
-        "just_one_day": "Just one day",
-        "enable_start_date": "Enable start date"
+        "max_events": "Eventi massimi",
+        "start_days_from_today": "Inizia i giorni da oggi",
+        "just_one_day": "Solo un giorno",
+        "enable_start_date": "Abilita data di inizio"
     },
     "items": {
         "text": "Casella di testo",
@@ -736,7 +736,7 @@
         "font-size": "Dimensione font",
         "zeros": "Zero",
         "overrun": "Colore in eccesso",
-        "auto_stretch": "Auto stretch content"
+        "auto_stretch": "Estensione automatica dei contenuti"
     },
     "settings": {
         "general": "Generale",
@@ -874,7 +874,7 @@
         "text": "Transizione del testo",
         "media": "Transizione multimediale",
         "duration": "Durata",
-        "easing": "Easing",
+        "easing": "Facilità",
         "type": "Tipo",
         "none": "Nessuna",
         "fade": "Dissolvenza",
