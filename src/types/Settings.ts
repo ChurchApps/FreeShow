@@ -17,6 +17,7 @@ export interface Styles {
     cropping?: Cropping
     lines?: number
     template?: string
+    metadataDivider?: string
     displayMetadata?: string
     metadataTemplate?: string
     messageTemplate?: string

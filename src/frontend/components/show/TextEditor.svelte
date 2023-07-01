@@ -328,6 +328,10 @@
 
         return items
     }
+
+    function checkValue(e: any) {
+        if (!e.detail) editText(e)
+    }
 </script>
 
-<Notes style="padding: 30px;font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" placeholder={getQuickExample()} value={text} on:change={editText} />
+<Notes style="padding: 30px;font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" placeholder={getQuickExample()} value={text} on:change={editText} on:edit={checkValue} />

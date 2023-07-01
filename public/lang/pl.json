@@ -220,6 +220,7 @@
         "override_output": "Nadpisz styl na wyjściu",
         "display_metadata": "Wyświetl metadane",
         "meta_template": "Szablon metadanych",
+        "text_divider": "Separator tekstu",
         "message_template": "Szablon komunikatu"
     },
     "show_at": {

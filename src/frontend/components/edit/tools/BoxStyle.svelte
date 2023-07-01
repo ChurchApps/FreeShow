@@ -1,12 +1,13 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, refreshEditSlide, selected, showsCache, templates } from "../../../stores"
+    import { newToast } from "../../../utils/messages"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
+    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
 
@@ -300,6 +301,13 @@
                 }
             })
 
+            // no text
+            let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
+            if (!textLength) {
+                newToast("$empty.text")
+                return
+            }
+
             let override = $activeEdit.id + "#" + allItems.join(",")
             history({
                 id: "UPDATE",
@@ -325,6 +333,14 @@
             return
         }
 
+        // no text
+        // values: {key: [[[]]]}
+        let textLength = Object.values(values).reduce((length: number, value: any) => (length += value.flat(2)?.length || 0), 0)
+        if (!textLength) {
+            newToast("$empty.text")
+            return
+        }
+
         let key: string = input.key === "text-align" || aligns ? "align" : "text"
         slides.forEach((slide, i) => {
             if (!slideItems[i].length) return
@@ -340,4 +356,6 @@
 
 <svelte:window on:keyup={keyup} on:mouseup={getTextSelection} />
 
-<EditValues edits={box?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} />
+{#key id}
+    <EditValues edits={box?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} />
+{/key}

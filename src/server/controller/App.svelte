@@ -124,7 +124,7 @@
         --primary: #292c36;
         --primary-lighter: #363945;
         --primary-darker: #191923;
-        --primary-darkest: #0f0f14;
+        --primary-darkest: #12121c;
         --text: #f0f0ff;
         --textInvert: #131313;
         --secondary: #f0008c;

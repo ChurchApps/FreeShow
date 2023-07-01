@@ -59,20 +59,20 @@ export function startEventTimer() {
             // less than 1 minute
             let timeLeft: number = eventTime.getTime() - currentTime.getTime()
             if (timeLeft <= ONE_MINUTE && timeLeft > ONE_MINUTE - INTERVAL) {
-                newToast(`${toast.starting_show} ${show.name} ${toast.less_than_minute}`)
+                newToast(`${toast.starting_show} "${show.name}" ${toast.less_than_minute}`)
             }
             // less than 30 seconds
             if (timeLeft <= ONE_MINUTE / 2 && timeLeft > ONE_MINUTE / 2 - INTERVAL) {
-                newToast(`${toast.starting_show} ${show.name} ${toast.less_than_seconds.replace("{}", "30")}`)
+                newToast(`${toast.starting_show} "${show.name}" ${toast.less_than_seconds.replace("{}", "30")}`)
             }
             // less than 10 seconds
             if (timeLeft <= TEN_SECONDS && timeLeft > TEN_SECONDS - INTERVAL) {
-                newToast(`${toast.starting_show} ${show.name} ${toast.less_than_seconds.replace("{}", "10")}`)
+                newToast(`${toast.starting_show} "${show.name}" ${toast.less_than_seconds.replace("{}", "10")}`)
                 loadShows([showId])
             }
             // start show
             if (timeLeft <= 0 && timeLeft > 0 - INTERVAL) {
-                newToast(`${toast.starting_show} ${show.name} ${toast.now}`)
+                newToast(`${toast.starting_show} "${show.name}" ${toast.now}`)
                 loadShows([showId])
                 let activeLayout = _show(event.show).get("settings.activeLayout")
 

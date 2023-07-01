@@ -427,15 +427,15 @@
         {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
             {#if overlayTransition.type === "none"}
                 <div class="meta" style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                    {Object.values(metaMessage)
+                    {@html Object.values(metaMessage)
                         .filter((a) => a.length)
-                        .join("; ")}
+                        .join(currentStyle.metadataDivider || "; ")}
                 </div>
             {:else}
                 <div class="meta" transition:custom={overlayTransition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                    {Object.values(metaMessage)
+                    {@html Object.values(metaMessage)
                         .filter((a) => a.length)
-                        .join("; ")}
+                        .join(currentStyle.metadataDivider || "; ")}
                 </div>
             {/if}
         {/if}

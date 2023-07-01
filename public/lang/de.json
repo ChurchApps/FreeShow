@@ -220,6 +220,7 @@
         "override_output": "Override styling in output",
         "display_metadata": "Zeige Metadaten",
         "meta_template": "Metadata template",
+        "text_divider": "Text separator",
         "message_template": "Message template"
     },
     "show_at": {

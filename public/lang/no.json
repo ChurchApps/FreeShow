@@ -220,6 +220,7 @@
         "override_output": "Overskriv stil i utgangsskjermen",
         "display_metadata": "Vis metadata",
         "meta_template": "Mal for metadata",
+        "text_divider": "Tekstskilletegn",
         "message_template": "Mal for melding"
     },
     "show_at": {
