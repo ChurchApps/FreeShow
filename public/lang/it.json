@@ -482,7 +482,7 @@
         "tip_how": "Non sai come ottenerne una?",
         "tip_guide": "Clicca qui per una guida.",
         "enable": "Sincronizzazione automatica all'avvio e salvataggio",
-        "disable_upload": "Disable uploading data",
+        "disable_upload": "Disabilita l'upload",
         "google_drive_api": "Chiave dell'account di servizio dell'API di Google",
         "select_key": "Importa il file delle chiavi",
         "update_key": "Aggiorna il file delle chiavi",
@@ -498,9 +498,9 @@
         "export_as": "Esporta {} come",
         "exported": "Esportato!",
         "oneFile": "Un file",
-        "selected_shows": "Spettacolo selezionato",
+        "selected_shows": "Scena selezionata",
         "current_project": "Progetto corrente",
-        "all_shows": "Tutti gli spettacoli",
+        "all_shows": "Tutte le scene",
         "all_projects": "Tutti i progetti",
         "project": "Progetto",
         "options": "Opzioni",
@@ -818,7 +818,7 @@
     "calendar": {
         "type": "Tipo",
         "event": "Evento",
-        "show": "Programma spettacolo",
+        "show": "Programma scena",
         "name": "Nome",
         "color": "Colore",
         "time": "Tempo",
@@ -841,7 +841,7 @@
         "ending_repeated": "ripetuto",
         "ending_times": "Tempi",
         "save_all": "Salva e aggiorna tutto",
-        "add_slides_from_show": "Includi diapositive dallo spettacolo"
+        "add_slides_from_show": "Includi diapositive dalla scena"
     },
     "scripture": {
         "bibles": "Bibbie da API.Bible",
