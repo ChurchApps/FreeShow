@@ -8,7 +8,8 @@ export const languages: any = {
     de: "Deutsch",
     it: "Italiano",
     pl: "Polski",
-    hu: "Magyar"
+    hu: "Magyar",
+    sr: "Srpski"
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -24,5 +25,6 @@ export const replace: any = {
     de: ["de"],
     it: ["it"],
     pl: ["pl"],
-    hu: ["hu"]
+    hu: ["hu"],
+    sr: ["sr"]
 }
