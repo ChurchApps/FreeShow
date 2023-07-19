@@ -93,9 +93,9 @@ export function cut(data: any = {}) {
     console.log("CUTTED:", copyData)
 }
 
-export function deleteAction({ id, data }) {
+export function deleteAction({ id, data }, type: string = "delete") {
     if (!deleteActions[id]) return false
-    let deleted: any = deleteActions[id](data)
+    let deleted: any = deleteActions[id](data, type)
 
     console.log("DELETED:", { id, data })
     if (deleted !== false) selected.set({ id: null, data: [] })
@@ -506,8 +506,8 @@ const deleteActions = {
 
         refreshEditSlide.set(true)
     },
-    slide: (data) => {
-        removeSlide(data)
+    slide: (data, type: "delete" | "remove" = "delete") => {
+        removeSlide(data, type)
     },
     group: (data: any) => {
         history({ id: "SLIDES", oldData: { type: "delete_group", data: data.map(({ id }: any) => ({ id })) } })
@@ -658,9 +658,12 @@ const duplicateActions = {
         let stage = get(stageShows)[stageId]
         history({ id: "UPDATE", newData: { data: clone(stage) }, location: { page: "stage", id: "stage" } })
     },
-    layout: () => {
-        let data = clone(get(showsCache)[get(activeShow)!.id].layouts[get(showsCache)[get(activeShow)!.id].settings.activeLayout])
-        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid(), data }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
+    layout: (data: any) => {
+        let layoutId = data?.[0] || get(showsCache)[get(activeShow)!.id].settings.activeLayout
+
+        let newLayout = clone(get(showsCache)[get(activeShow)!.id].layouts[layoutId])
+        newLayout.name += " 2"
+        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid(), data: newLayout }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
     },
     folder: (data: any) => {
         // duplicate projects folder and all of the projects inside

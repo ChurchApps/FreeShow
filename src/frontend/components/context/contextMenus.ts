@@ -67,6 +67,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // newGroup: { label: "context.createNew", icon: "add" },
     // SLIDE VIEWS
     view_grid: { label: "show.grid", icon: "grid" },
+    view_simple: { label: "show.simple", icon: "simple" },
     view_list: { label: "show.list", icon: "list" },
     view_lyrics: { label: "show.lyrics", icon: "lyrics" },
     view_text: { label: "show.text", icon: "text" },
@@ -187,7 +188,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     global_group: ["edit"],
     // global_group: ["rename"],
     layout: ["rename", "remove", "duplicate"],
-    slideViews: ["view_grid", "view_list", "view_lyrics", "view_text"],
+    slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics", "view_text"],
     // TODO: change chords (m, dim, sus, left, guitar, custom value, ...)
     // chord notations
     // https://jazz-library.com/articles/chord-symbols/

@@ -94,6 +94,7 @@
         "_next_show": "Következő műsor",
         "_hide_preview": "Elrejti az előnézetet",
         "show_preview": "Mutassa az előnézetet",
+        "restore_output": "Restore output",
         "enable_controls": "Média előnézeti vezérlők megjelenítése",
         "background": "Háttér",
         "foreground": "Előtér",
@@ -355,7 +356,7 @@
         "less_than_seconds": "{} másodperc múlva.",
         "now": "most!",
         "no_video_id": "Nincs videó azonosító",
-        "no_name": "Nincs név"
+        "no_name": "Nincs név",
         "lyrics_undefined": "Nem találtunk dalszöveget!",
         "lyrics_copied": "Dalszöveg másolva a Genius-ról!",
         "no_pdf_linux": "Nem lehet PDF-ként exportálni Linuxon.",
@@ -391,6 +392,7 @@
         "quick_lyrics": "Gyors dalszöveg",
         "new_layout": "Új elrendezés",
         "grid": "Rács nézet",
+        "simple": "Simple view",
         "list": "Lista nézet",
         "lyrics": "Dalszöveg nézet",
         "text": "Szövegszerkesztés",
@@ -763,7 +765,7 @@
         "select_display": "Kattints a képernyőre, ahol meg szeretnéd jeleníteni a kimeneti ablakot.",
         "manual_input_hint": "Nem találod a kijelzőt? Kattints ide a helyzet kézi megváltoztatásához.",
         "manual_drag_hint": "Az aktív kimeneti ablak fölé történő manuális húzáshoz tartsd lenyomva a CTRL/CMD billentyűt.",
-        "new_output": "Új kimenet"
+        "new_output": "Új kimenet",
         "enable_key_output": "Alfa kulcs kimenet engedélyezése",
         "always_on_top": "Mindig legfelül",
         "kiosk_mode": "Kioszk mód",
@@ -786,7 +788,7 @@
         "resolution": "Felbontás",
         "cropping": "Vágás",
         "video_extensions": "Videó kiterjesztések",
-        "image_extensions": "Kép kiterjesztések"
+        "image_extensions": "Kép kiterjesztések",
         "add": "Hozzáadás",
         "remove": "Eltávolítás",
         "change_name": "Név megváltoztatása",

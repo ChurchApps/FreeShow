@@ -81,7 +81,7 @@
             //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
             //   else drawer.set({ height: 40, stored: $drawer.height })
         },
-        Delete: () => deleteAction($selected),
+        Delete: () => deleteAction($selected, "remove"),
         Backspace: () => keys.Delete(),
         // Enter: (e: any) => {
         //   if (!e.target.closest(".edit")) {

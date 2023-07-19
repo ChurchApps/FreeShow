@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activePage, activeProject, activeShow, dictionary, outLocked, projects, showsCache } from "../../stores"
+    import { activeEdit, activePage, activeShow, dictionary, outLocked, showsCache } from "../../stores"
     import { GetLayout } from "../helpers/get"
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
@@ -15,20 +15,20 @@
     $: slide = currentOutput?.out?.slide
     $: overlays = currentOutput?.out?.overlays?.length
 
-    function previousShow() {
-        if ($activeProject) {
-            let index = typeof $activeShow?.index === "number" ? $activeShow?.index : $projects[$activeProject].shows.length
-            if (index > 0) index--
-            if (index !== $activeShow?.index) activeShow.set({ ...$projects[$activeProject].shows[index], index })
-        }
-    }
-    function nextShow() {
-        if ($activeProject) {
-            let index = typeof $activeShow?.index === "number" ? $activeShow?.index : -1
-            if (index + 1 < $projects[$activeProject].shows.length) index++
-            if (index > -1 && index !== $activeShow?.index) activeShow.set({ ...$projects[$activeProject].shows[index], index })
-        }
-    }
+    // function previousShow() {
+    //     if ($activeProject) {
+    //         let index = typeof $activeShow?.index === "number" ? $activeShow?.index : $projects[$activeProject].shows.length
+    //         if (index > 0) index--
+    //         if (index !== $activeShow?.index) activeShow.set({ ...$projects[$activeProject].shows[index], index })
+    //     }
+    // }
+    // function nextShow() {
+    //     if ($activeProject) {
+    //         let index = typeof $activeShow?.index === "number" ? $activeShow?.index : -1
+    //         if (index + 1 < $projects[$activeProject].shows.length) index++
+    //         if (index > -1 && index !== $activeShow?.index) activeShow.set({ ...$projects[$activeProject].shows[index], index })
+    //     }
+    // }
 
     $: length = ref?.length || 0
 
@@ -37,25 +37,14 @@
 </script>
 
 <span class="group">
-    <Button
+    <!-- <Button
         on:click={previousShow}
         title={$dictionary.preview?._previous_show}
         disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject]?.shows.length || (typeof $activeShow?.index === "number" ? $activeShow.index < 1 : false)}
         center
     >
         <Icon id="previousFull" size={1.2} />
-    </Button>
-    <Button
-        on:click={previousSlide}
-        title={$dictionary.preview?._previous_slide}
-        disabled={$outLocked || slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)}
-        center
-    >
-        <Icon id="previous" size={1.2} />
-    </Button>
-    <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
-        <Icon id={$outLocked ? "locked" : "unlocked"} size={1.2} />
-    </Button>
+    </Button> -->
     {#if showIsNotOutputtedSlide && (slide || newEditSlide || !overlays)}
         <Button
             on:click={(e) => {
@@ -78,6 +67,16 @@
             <Icon id="refresh" size={1.2} />
         </Button>
     {/if}
+    <!-- style="flex: 5;" -->
+    <Button
+        on:click={previousSlide}
+        title={$dictionary.preview?._previous_slide}
+        disabled={$outLocked || slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)}
+        center
+    >
+        <Icon id="previous" size={1.2} />
+    </Button>
+    <!-- style="flex: 5;" -->
     <Button
         on:click={nextSlide}
         title={$dictionary.preview?._next_slide}
@@ -86,14 +85,17 @@
     >
         <Icon id="next" size={1.2} />
     </Button>
-    <Button
+    <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
+        <Icon id={$outLocked ? "locked" : "unlocked"} size={1.1} />
+    </Button>
+    <!-- <Button
         on:click={nextShow}
         title={$dictionary.preview?._next_show}
         disabled={!Object.keys($projects).length || !$activeProject || !$projects[$activeProject]?.shows.length || ($activeShow !== null && $activeShow.index !== undefined && $activeShow.index + 1 >= $projects[$activeProject].shows.length)}
         center
     >
         <Icon id="nextFull" size={1.2} />
-    </Button>
+    </Button> -->
 </span>
 
 <style>

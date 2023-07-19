@@ -60,6 +60,7 @@ export const paintCache: Writable<any[]> = writable([])
 export const outputDisplay: Writable<boolean> = writable(false)
 export const currentOutputSettings: Writable<string | null> = writable(null)
 export const slideTimers: Writable<{ [key: string]: any }> = writable({})
+export const outputCache: Writable<any> = writable(null)
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })

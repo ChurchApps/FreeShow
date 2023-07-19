@@ -326,6 +326,9 @@ const actions: any = {
     view_grid: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "grid" })
     },
+    view_simple: () => {
+        slidesOptions.set({ ...get(slidesOptions), mode: "simple" })
+    },
     view_list: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "list" })
     },

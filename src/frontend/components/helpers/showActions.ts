@@ -3,12 +3,13 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputCache, outputs, overlays, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getMediaType } from "./media"
 import { getActiveOutputs, setOutput } from "./output"
 import { _show } from "./shows"
 import { loadShows } from "./setShow"
+import { clone } from "./array"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -453,6 +454,8 @@ export function clearOverlays() {
 // TODO: output/clearButtons
 export function clearAll() {
     if (get(outLocked)) return
+
+    if (!get(outputCache)) outputCache.set(clone(get(outputs)))
 
     // clearVideo()
     setOutput("background", null)

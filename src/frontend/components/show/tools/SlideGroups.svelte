@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeShow, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, selected } from "../../../stores"
+    import { activeShow, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected } from "../../../stores"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import T from "../../helpers/T.svelte"
@@ -90,8 +90,8 @@
 
 <div class="bottom">
     <Button style="width: 100%;" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)} dark center>
-        <Icon id="groups" right white={$globalGroupViewEnabled} />
-        <T id="groups.toggle_global_group" />
+        <Icon id="groups" right={!$labelsDisabled} white={$globalGroupViewEnabled} />
+        {#if !$labelsDisabled}<T id="groups.toggle_global_group" />{/if}
     </Button>
 </div>
 

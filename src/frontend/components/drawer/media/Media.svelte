@@ -332,7 +332,9 @@
     </Button>
     {#if zoomOpened}
         <div class="zoom_container" transition:slide>
-            <p class="text" on:click={() => mediaOptions.set({ ...$mediaOptions, columns: 5 })} title={$dictionary.actions?.resetZoom}>{(100 / $mediaOptions.columns).toFixed()}%</p>
+            <Button style="padding: 0 !important;width: 100%;" on:click={() => mediaOptions.set({ ...$mediaOptions, columns: 5 })} bold={false} center>
+                <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $mediaOptions.columns).toFixed()}%</p>
+            </Button>
             <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
                 <Icon size={1.3} id="add" white />
             </Button>

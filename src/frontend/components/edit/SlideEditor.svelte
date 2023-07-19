@@ -245,7 +245,9 @@
         </Button>
         {#if zoomOpened}
             <div class="zoom_container" transition:slide>
-                <p class="text" on:click={() => (zoom = 1)}>{(100 / zoom).toFixed()}%</p>
+                <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
+                    <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
+                </Button>
                 <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
                     <Icon size={1.3} id="add" white />
                 </Button>
@@ -298,14 +300,14 @@
         align-items: center;
         justify-content: right;
         width: 100%;
-        background-color: var(--primary);
-        border-top: 3px solid var(--primary-lighter);
+        background-color: var(--primary-darkest);
+        /* border-top: 3px solid var(--primary-lighter); */
     }
 
     /* fixed height for consistent heights */
     .actions :global(button) {
-        min-height: 35px;
-        padding: 0.2em 0.8em !important;
+        min-height: 28px;
+        padding: 0 0.8em !important;
     }
 
     .seperator {
@@ -324,15 +326,15 @@
     .zoom_container {
         position: absolute;
         right: 0;
-        top: -3px;
+        top: 0;
         transform: translateY(-100%);
         overflow: hidden;
         z-index: 30;
 
         flex-direction: column;
         width: auto;
-        border-left: 3px solid var(--primary-lighter);
-        border-top: 3px solid var(--primary-lighter);
+        /* border-left: 3px solid var(--primary-lighter);
+        border-top: 3px solid var(--primary-lighter); */
         background-color: inherit;
     }
 </style>

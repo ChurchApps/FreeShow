@@ -1,7 +1,8 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
+    import { activePage, activeShow, dictionary, groups, outLocked, outputCache, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
     import { send } from "../../utils/request"
+    import { clone } from "../helpers/array"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
@@ -45,7 +46,7 @@
         Escape: () => {
             // if ($activePage !== "show") return
             if ($presenterControllerKeys) {
-                clearVideo()
+                // clearVideo()
                 clearAll()
             } else if (fullscreen) fullscreen = false
         },
@@ -67,7 +68,8 @@
         ".": () => {
             if ($activePage !== "show") return
             // if ($presenterControllerKeys)
-            clearVideo()
+
+            // clearVideo()
             clearAll()
         },
         F5: () => {
@@ -243,6 +245,8 @@
     let callVideoClear: boolean = false
     $: if (callVideoClear) clearVideo()
     async function clearVideo() {
+        // outputCache.set(clone($outputs))
+
         // videoData.paused = true // ?
         videoData = await clearPlayingVideo()
 

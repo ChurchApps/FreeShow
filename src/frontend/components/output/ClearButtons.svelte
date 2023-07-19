@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, outLocked, outputs, playingAudio, presenterControllerKeys } from "../../stores"
+    import { dictionary, outLocked, outputCache, outputs, playingAudio, presenterControllerKeys } from "../../stores"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { isOutCleared, setOutput } from "../helpers/output"
@@ -15,14 +15,37 @@
     // $: allCleared = !$outBackground && !$outSlide && !$outOverlays.length && !Object.keys($playingAudio).length && !$outTransition
     $: allCleared = isOutCleared(null, $outputs) && !Object.keys($playingAudio).length
     $: if (allCleared) autoChange = true
+
+    function restoreOutput() {
+        outputs.set($outputCache)
+        outputCache.set(null)
+    }
+
+    let enableRestore: boolean = false
+    $: if (!allCleared) {
+        enableRestore = false
+        outputCache.set(null)
+    }
+    $: if ($outputCache) {
+        setTimeout(() => {
+            enableRestore = true
+        }, 1000)
+    }
 </script>
 
 <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
     <span>
-        <Button class="clearAll" disabled={$outLocked || allCleared} on:click={clearAll} title="{$dictionary.clear?.all} [esc]" red dark center>
-            <Icon id="clear" size={1.2} />
-            <span style="padding-left: 10px;"><T id={"clear.all"} /></span>
-        </Button>
+        {#if allCleared && $outputCache}
+            <Button class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput} dark center>
+                <Icon id="reset" size={1.2} />
+                <span style="padding-left: 10px;"><T id={"preview.restore_output"} /></span>
+            </Button>
+        {:else}
+            <Button class="clearAll" disabled={$outLocked || allCleared} on:click={clearAll} title="{$dictionary.clear?.all} [esc]" red dark center>
+                <Icon id="clear" size={1.2} />
+                <span style="padding-left: 10px;"><T id={"clear.all"} /></span>
+            </Button>
+        {/if}
     </span>
     <span class="group">
         <div class="combinedButton">
