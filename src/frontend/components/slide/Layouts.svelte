@@ -25,8 +25,11 @@
     let totalTime: string = "0s"
     $: if (layouts?.[activeLayout]?.slides?.length) getTotalTime()
     function getTotalTime() {
-        let ref = _show().layouts("active").ref()[0]
-        let total = ref.reduce((value, slide) => (value += Number(slide.data?.nextTimer || 0)), 0)
+        let ref = _show()
+            .layouts("active")
+            .ref()[0]
+            .filter((a) => !a.data.disabled)
+        let total = ref.reduce((value, slide) => (value += Number(slide.data.nextTimer || 0)), 0)
 
         totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
     }
@@ -138,9 +141,6 @@
             <Icon size={1.1} id="clock" white={totalTime === "0s"} />
         </Button>
 
-        <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition}>
-            <Icon size={1.3} id="transition" white />
-        </Button>
         <Button class="context #slideViews" on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
             <Icon size={1.3} id={$slidesOptions.mode} white />
         </Button>

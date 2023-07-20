@@ -141,7 +141,8 @@
         "fit": "Dopasuj",
         "contain": "Proporcje",
         "fill": "Wypełnienie",
-        "cover": "Kadrowanie"
+        "cover": "Kadrowanie",
+        "online": "Online"
     },
     "menu": {
         "show": "Pokaz",
@@ -267,6 +268,7 @@
         "audio": "Audio",
         "effects": "Effects",
         "scripture": "Pismo",
+        "calendar": "Kalendarz",
         "player": "Odtwarzacz",
         "live": "Na żywo",
         "timers": "Timery",

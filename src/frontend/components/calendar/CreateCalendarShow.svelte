@@ -1,19 +1,13 @@
 <script lang="ts">
-    import { activeDays, activePopup, activeProject, calendarAddShow, dictionary, events, popupData, shows } from "../../stores"
+    import { activePopup, activeProject, calendarAddShow, dictionary, popupData, shows } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import Center from "../system/Center.svelte"
-    import { createSlides, getSelectedEvents } from "./calendar"
+    import { createSlides } from "./calendar"
 
-    let currentEvents: any[] = []
-    activeDays.subscribe(() => {
-        currentEvents = getSelectedEvents()
-    })
-    events.subscribe(() => {
-        currentEvents = getSelectedEvents()
-    })
+    export let currentEvents: any[] = []
 
     async function createShow() {
         let { show } = await createSlides(currentEvents)
@@ -32,9 +26,7 @@
     <div class="main" style="padding: 10px;">
         {#if currentEvents.length}
             {#each currentEvents as day}
-                {#if currentEvents.length > 1}
-                    <b style="margin-top: 10px;">{new Date(day.date).getDate()}. {$dictionary.month?.[new Date(day.date).getMonth() + 1]}</b>
-                {/if}
+                <b style="margin-top: 10px;">{new Date(day.date).getDate()}. {$dictionary.month?.[new Date(day.date).getMonth() + 1]}</b>
                 <ul style="list-style-position: inside;">
                     {#each day.events as event}
                         <li class="event">
@@ -74,7 +66,7 @@
             center
         >
             <Icon id="showIcon" right />
-            <p style="white-space: normal;"><T id="calendar.add_slides_from_show" />: {$calendarAddShow ? $shows[$calendarAddShow]?.name || "—" : "—"}</p>
+            <p style="white-space: normal;"><T id="calendar.add_slides_from_show" />{$calendarAddShow ? ": " + $shows[$calendarAddShow]?.name || "—" : ""}</p>
         </Button>
     </div>
 

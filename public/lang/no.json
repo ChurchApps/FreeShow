@@ -141,7 +141,8 @@
         "fit": "Tilpass",
         "contain": "Opprinnelig",
         "fill": "Fyll",
-        "cover": "Dekk"
+        "cover": "Dekk",
+        "online": "Online"
     },
     "menu": {
         "show": "Presenter",
@@ -267,6 +268,7 @@
         "audio": "Lyd",
         "effects": "Effekter",
         "scripture": "Bibelen",
+        "calendar": "Kalender",
         "player": "Spiller",
         "live": "Direkte",
         "timers": "Tidtakere",

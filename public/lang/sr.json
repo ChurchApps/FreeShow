@@ -141,7 +141,8 @@
         "fit": "Uklopi",
         "contain": "Sadrži",
         "fill": "Popuni",
-        "cover": "Prekrij"
+        "cover": "Prekrij",
+        "online": "Online"
     },
     "menu": {
         "show": "Prikaži",
@@ -267,6 +268,7 @@
         "audio": "Audio",
         "effects": "Efekti",
         "scripture": "Biblija",
+        "calendar": "Kalendar",
         "player": "Plejer",
         "live": "Uživo",
         "timers": "Tajmeri",

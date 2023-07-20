@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Event } from "../../../../types/Calendar"
-    import { activeDays, activePopup, dictionary, eventEdit, events, popupData, shows } from "../../../stores"
+    import { activeDays, activePopup, dictionary, drawerTabsData, eventEdit, events, popupData, shows } from "../../../stores"
     import { createRepeatedEvents, updateEventData } from "../../calendar/event"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -146,7 +146,7 @@
             }
         })
 
-        history({ id: "UPDATE", newData: { data: updatedData, keys: Object.keys(updatedData) }, location: { page: "calendar", id: "event" } })
+        history({ id: "UPDATE", newData: { data: updatedData, keys: Object.keys(updatedData) }, location: { page: "drawer", id: "event" } })
 
         if (data.repeat) {
             createRepeatedEvents(data, true)
@@ -168,7 +168,7 @@
             data.group = id
             createRepeatedEvents(data)
         } else {
-            history({ id: "UPDATE", newData: { data }, oldData: { id }, location: { page: "calendar", id: "event" } })
+            history({ id: "UPDATE", newData: { data }, oldData: { id }, location: { page: "drawer", id: "event" } })
         }
 
         // activeDays.set([copy(data.from).getTime()])
@@ -251,19 +251,20 @@
             editEvent.fromTime = sliced.slice(0, 2) + ":" + sliced.slice(2, 4)
         }
     }
+
+    $: if (!$eventEdit) {
+        let type = $drawerTabsData.calendar?.activeSubTab || "event"
+        selectedType = types.find((a) => a.id === type)!
+    }
 </script>
 
-{#if !$eventEdit}
+<!-- {#if !$eventEdit}
     <CombinedInput>
-        <!-- <span>
-<Icon id="type" size={1.2} right />
-<p><T id="calendar.type" /></p>
-</span> -->
         <Dropdown style="width: 100%;" options={types} value={selectedType.name} on:click={(e) => (selectedType = e.detail)} />
     </CombinedInput>
 
     <br />
-{/if}
+{/if} -->
 
 {#if selectedType.id === "event"}
     <CombinedInput textWidth={30}>

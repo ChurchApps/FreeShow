@@ -1,51 +1,54 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import { Grid } from "svelte-virtual"
+    import { slide } from "svelte/transition"
     import { READ_FOLDER } from "../../../../types/Channels"
-    import { activeEdit, activeShow, dictionary, media, mediaFolders, mediaOptions } from "../../../stores"
+    import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, popupData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
+    import PlayerVideos from "../player/PlayerVideos.svelte"
     import Folder from "./Folder.svelte"
     import Media from "./MediaCard.svelte"
     import { loadFromPixabay } from "./pixabay"
-    import { slide } from "svelte/transition"
 
     export let active: string | null
     export let searchValue: string = ""
 
     let files: any[] = []
 
-    let notFolders = ["all", "favourites", "pixabay"]
+    let notFolders = ["all", "favourites", "online"]
     $: console.log(active)
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path! || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
-    $: folderName = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : active === "pixabay" ? "Pixabay" : rootPath === path ? (active !== null ? $mediaFolders[active]?.name || "" : "") : splitPath(path).name
+    $: folderName = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : active === "online" ? "Online" : rootPath === path ? (active !== null ? $mediaFolders[active]?.name || "" : "") : splitPath(path).name
 
     async function loadFilesAsync() {
         fullFilteredFiles = []
-        if (activeView === "folder") return
+        if (onlineTab !== "pixabay" || activeView === "folder") return
 
         fullFilteredFiles = await loadFromPixabay(searchValue || "landscape", activeView === "video")
         loadAllFiles(fullFilteredFiles)
     }
 
-    $: if (active === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
+    let onlineTab = "youtube"
+    $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
+    // only for info!
+    $: if (onlineTab) activeDrawerOnlineTab.set(onlineTab)
 
     // get list of files & folders
     let prevActive: null | string = null
     $: {
-        if (prevActive === "pixabay") activeView = "all"
+        if (prevActive === "online") activeView = "all"
 
-        if (active === "pixabay") {
+        if (active === "online") {
             activeView = "image"
 
             prevActive = active
-            loadFilesAsync()
         } else if (active === "favourites") {
             prevActive = active
             files = Object.entries($media)
@@ -110,7 +113,7 @@
     $: if (searchValue !== undefined) filterSearch()
 
     function filterFiles() {
-        if (active === "pixabay") return
+        if (active === "online") return
 
         // filter files
         if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
@@ -242,8 +245,11 @@
 <!-- TODO: autoscroll -->
 <!-- TODO: ctrl+arrow keys change drawer item... -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
+    <!-- {active === 'online' && (onlineTab === 'youtube' || onlineTab === 'vimeo') ? 'padding: 5px;' : ''} -->
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;" bind:clientHeight={gridHeight} bind:clientWidth={gridWidth}>
-        {#if fullFilteredFiles.length}
+        {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
+            <PlayerVideos active={onlineTab} {searchValue} />
+        {:else if fullFilteredFiles.length}
             {#key rootPath}
                 {#key path}
                     {#if $mediaOptions.mode === "grid"}
@@ -281,67 +287,102 @@
 </div>
 
 <div class="tabs">
-    <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
-        <Icon size={1.3} id="back" />
-    </Button>
-    <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
-        <Icon size={1.3} id="home" />
-    </Button>
-    <span style="flex: 1;text-align: center;">
-        {#key folderName}
-            {#if folderName.includes(".")}
-                <T id={folderName} />
-            {:else}
-                {folderName}
-            {/if}
-        {/key}
-    </span>
-    <Button disabled={!allFiles.length || activeFile === 0} on:click={() => (activeFile = activeFile === null ? content - 1 : activeFile - 1)}>
-        <Icon size={1.3} id="previous" />
-    </Button>
-    {activeFile === null ? "" : activeFile + 1 + "/"}{content}
-    <Button disabled={!allFiles.length || activeFile === content - 1} on:click={() => (activeFile = activeFile === null ? 0 : activeFile + 1)}>
-        <Icon size={1.3} id="next" />
-    </Button>
-    <div class="seperator" />
-    {#if active === "pixabay"}
-        <Button title={$dictionary.media?.image} on:click={() => (activeView = "image")}>
-            <Icon size={1.3} id="image" white={activeView !== "image"} />
+    {#if active === "online"}
+        <Button style="flex: 1;" active={onlineTab === "youtube"} on:click={() => (onlineTab = "youtube")} center>
+            <Icon style="fill: {onlineTab !== 'youtube' ? 'white' : '#ff0000'};" size={1.2} id="youtube" right />
+            <p>YouTube</p>
         </Button>
-        <Button title={$dictionary.media?.video} on:click={() => (activeView = "video")}>
-            <Icon size={1.3} id="video" white={activeView !== "video"} />
+        <Button style="flex: 1;" active={onlineTab === "vimeo"} on:click={() => (onlineTab = "vimeo")} center>
+            <Icon style="fill: {onlineTab !== 'vimeo' ? 'white' : '#17d5ff'};" size={1.2} id="vimeo" right />
+            <p>Vimeo</p>
+        </Button>
+        <Button style="flex: 1;" active={onlineTab === "pixabay"} on:click={() => (onlineTab = "pixabay")} center>
+            <Icon style="fill: {onlineTab !== 'pixabay' ? 'white' : '#00ab6b'};" size={1.2} id="pixabay" box={48} right />
+            <p>Pixabay</p>
         </Button>
     {:else}
-        <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
-            <Icon size={1.3} id={activeView} white={activeView === "all"} />
+        <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
+            <Icon size={1.3} id="back" />
+        </Button>
+        <!-- <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
+            <Icon size={1.3} id="home" />
+        </Button> -->
+        <span style="flex: 1;text-align: center;">
+            {#key folderName}
+                {#if folderName.includes(".")}
+                    <T id={folderName} />
+                {:else}
+                    {folderName}
+                {/if}
+            {/key}
+        </span>
+
+        <div class="seperator" />
+
+        <Button disabled={!allFiles.length || activeFile === 0} on:click={() => (activeFile = activeFile === null ? content - 1 : activeFile - 1)}>
+            <Icon size={1.3} id="previous" />
+        </Button>
+        <p style="opacity: 0.8;">{activeFile === null ? "" : activeFile + 1 + "/"}{content}</p>
+        <Button disabled={!allFiles.length || activeFile === content - 1} on:click={() => (activeFile = activeFile === null ? 0 : activeFile + 1)}>
+            <Icon size={1.3} id="next" />
         </Button>
     {/if}
-    <Button
-        on:click={() =>
-            mediaOptions.update((a) => {
-                a.mode = slidesViews[$mediaOptions.mode]
-                return a
-            })}
-        title={$dictionary.show?.[$mediaOptions.mode]}
-    >
-        <Icon size={1.3} id={$mediaOptions.mode} white />
-    </Button>
 
-    <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
-        <Icon size={1.3} id="zoomIn" white />
-    </Button>
-    {#if zoomOpened}
-        <div class="zoom_container" transition:slide>
-            <Button style="padding: 0 !important;width: 100%;" on:click={() => mediaOptions.set({ ...$mediaOptions, columns: 5 })} bold={false} center>
-                <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $mediaOptions.columns).toFixed()}%</p>
+    <div class="seperator" />
+
+    {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
+        <Button
+            style="min-width: 170px;"
+            on:click={() => {
+                popupData.set({ active: onlineTab })
+                activePopup.set("player")
+            }}
+            center
+        >
+            <Icon id="add" right={!$labelsDisabled} />
+            {#if !$labelsDisabled}<T id="settings.add" />{/if}
+        </Button>
+    {:else}
+        {#if active === "online"}
+            <Button title={$dictionary.media?.image} on:click={() => (activeView = "image")}>
+                <Icon size={1.3} id="image" white={activeView !== "image"} />
             </Button>
-            <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
-                <Icon size={1.3} id="add" white />
+            <Button title={$dictionary.media?.video} on:click={() => (activeView = "video")}>
+                <Icon size={1.3} id="video" white={activeView !== "video"} />
             </Button>
-            <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title={$dictionary.actions?.zoomOut} center>
-                <Icon size={1.3} id="remove" white />
+        {:else}
+            <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
+                <Icon size={1.3} id={activeView} white={activeView === "all"} />
             </Button>
-        </div>
+        {/if}
+
+        <Button
+            on:click={() =>
+                mediaOptions.update((a) => {
+                    a.mode = slidesViews[$mediaOptions.mode]
+                    return a
+                })}
+            title={$dictionary.show?.[$mediaOptions.mode]}
+        >
+            <Icon size={1.3} id={$mediaOptions.mode} white />
+        </Button>
+
+        <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+            <Icon size={1.3} id="zoomIn" white />
+        </Button>
+        {#if zoomOpened}
+            <div class="zoom_container" transition:slide>
+                <Button style="padding: 0 !important;width: 100%;" on:click={() => mediaOptions.set({ ...$mediaOptions, columns: 5 })} bold={false} center>
+                    <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $mediaOptions.columns).toFixed()}%</p>
+                </Button>
+                <Button disabled={$mediaOptions.columns <= 2} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, $mediaOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
+                    <Icon size={1.3} id="add" white />
+                </Button>
+                <Button disabled={$mediaOptions.columns >= 10} on:click={() => mediaOptions.set({ ...$mediaOptions, columns: Math.min(10, $mediaOptions.columns + 1) })} title={$dictionary.actions?.zoomOut} center>
+                    <Icon size={1.3} id="remove" white />
+                </Button>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -363,8 +404,14 @@
         place-content: flex-start;
     }
 
+    /* WIP padding in virtual grid - scrolling */
+    /* .grid :global(div:first-child) {
+        padding: 5px;
+    } */
+
     .grid :global(svelte-virtual-list-viewport) {
         width: 100%;
+        padding: 5px;
     }
 
     /* .grid :global(svelte-virtual-list-viewport) {

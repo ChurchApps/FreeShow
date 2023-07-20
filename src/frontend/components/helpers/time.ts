@@ -27,6 +27,17 @@ export function joinTime(time: Time, ms: boolean = false): string {
     return arr.join(":")
 }
 
+export function joinTimeBig(time: number) {
+    let allTimes: any = secondsToTime(time)
+
+    let timeValue = (allTimes.d === 0 ? "" : allTimes.d + ", ") + [allTimes.h === "00" ? "" : allTimes.h, allTimes.m, allTimes.s].join(":")
+    while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
+
+    timeValue = timeValue.replace(" :", " ")
+
+    return timeValue
+}
+
 export function dateToString(date: any, full: boolean = false, d: any = {}): string {
     date = new Date(date)
     let year: any = date.getFullYear()

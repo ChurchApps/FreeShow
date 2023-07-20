@@ -53,6 +53,7 @@
 
 <button
     on:mousemove={mousemove}
+    on:mousedown={hideTooltip}
     on:mouseleave={hideTooltip}
     id={$$props.id}
     style="{outlineColor ? 'outline-offset: -2px;outline: 2px solid ' + outlineColor + ' !important;' : ''}{$$props.style || ''}"

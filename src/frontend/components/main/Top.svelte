@@ -22,7 +22,6 @@
     <span>
         <TopButton id="show" />
         <TopButton id="edit" />
-        <TopButton id="calendar" />
         <TopButton id="draw" />
         <TopButton id="stage" />
     </span>

@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
     import { activePopup, audioFolders, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates, webFavorites } from "../../stores"
+    import { send } from "../../utils/request"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -12,7 +14,7 @@
     import SelectElem from "../system/SelectElem.svelte"
     import NavigationButton from "./NavigationButton.svelte"
 
-    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "templates" | "player" | "live" | "timers" | "web"
+    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "templates" | "live" | "timers" | "web"
 
     interface Button extends Category {
         id: string
@@ -31,7 +33,7 @@
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "favourites", name: "category.favourites", default: true, icon: "star" },
-                { id: "pixabay", name: "Pixabay", icon: "web" },
+                { id: "online", name: "media.online", default: true, icon: "web" },
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($mediaFolders), "name") as Button[]),
             ]
@@ -60,10 +62,10 @@
             buttons = [{ id: "effects", name: "tabs.effects", default: true, icon: "effects" }]
         } else if (id === "scripture") {
             buttons = getBibleVersions()
-        } else if (id === "player") {
+        } else if (id === "calendar") {
             buttons = [
-                { id: "youtube", name: "YouTube", icon: "youtube" },
-                { id: "vimeo", name: "Vimeo", icon: "vimeo" },
+                { id: "event", name: "calendar.event", default: true, icon: "calendar" },
+                { id: "show", name: "calendar.show", default: true, icon: "showIcon" },
             ]
         } else if (id === "timers") {
             buttons = [
@@ -222,6 +224,13 @@
             <Button on:click={() => activePopup.set("import_scripture")} center title={$dictionary.new?.scripture}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="new.scripture" />{/if}
+            </Button>
+        </div>
+    {:else if id === "calendar"}
+        <div class="tabs">
+            <Button on:click={() => send(IMPORT, ["calendar"], { name: "Calendar", extensions: ["ics"] })} center title={$dictionary.actions?.import}>
+                <Icon id="add" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="actions.import" />{/if}
             </Button>
         </div>
     {/if}

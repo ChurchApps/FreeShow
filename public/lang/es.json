@@ -141,7 +141,8 @@
         "fit": "Adaptar",
         "contain": "Contener",
         "fill": "Llenar",
-        "cover": "Cubrir"
+        "cover": "Cubrir",
+        "online": "Online"
     },
     "menu": {
         "show": "Programa",
@@ -267,6 +268,7 @@
         "audio": "Audio",
         "effects": "Effects",
         "scripture": "Escritura",
+        "calendar": "Calendario",
         "player": "Reproductor",
         "live": "En vivo",
         "timers": "Temporizadores",

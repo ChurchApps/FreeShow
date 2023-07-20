@@ -58,7 +58,7 @@
             right
         />
         <span id={category.id} style="width: calc(100% - 15px);text-align: left;">
-            {#if id === "scripture" || id === "player"}
+            {#if id === "scripture"}
                 <p style="margin: 5px;">{category.name}</p>
             {:else if category.id === "all" || category.id === "unlabeled" || category.id === "favourites"}
                 <p style="margin: 5px;"><T id={category.name} /></p>

@@ -4,7 +4,7 @@
     import { getCurrentTimerValue } from "../../drawer/timers/timers"
     import { getStyles } from "../../helpers/style"
     // import { blur } from "svelte/transition"
-    import { secondsToTime } from "../../helpers/time"
+    import { joinTimeBig } from "../../helpers/time"
 
     export let item: null | Item = null
     // export let timer: any = item?.timer
@@ -23,19 +23,10 @@
     let timeValue: string = "00:00"
     let currentTime: number
     // $: currentTime = getCurrentTime()
-    $: numberToText(typeof currentTime === "number" ? currentTime : 0)
+    $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
 
     $: if (timer) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
     $: console.log(currentTime, $activeTimers, $timers, id, timer)
-
-    function numberToText(time: number) {
-        let allTimes: any = secondsToTime(time)
-
-        timeValue = (allTimes.d === 0 ? "" : allTimes.d + ", ") + [allTimes.h === "00" ? "" : allTimes.h, allTimes.m, allTimes.s].join(":")
-        while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
-
-        timeValue = timeValue.replace(" :", " ")
-    }
 
     $: min = Math.min(timer.start || 0, timer.end || 0)
     $: max = Math.max(timer.start || 0, timer.end || 0)

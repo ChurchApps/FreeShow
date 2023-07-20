@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fullColors } from "../../stores"
     import { getContrast } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
 
@@ -10,9 +11,9 @@
     export let mode: "grid" | "list" | "lyrics" = "grid"
 </script>
 
-<div class="label" {title} class:list={mode !== "grid"} style={color ? "color: " + getContrast(color) + ";background-color:" + color : ""}>
+<div class="label" {title} class:list={mode !== "grid"} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : mode !== "list" ? `border-bottom: 2px solid ${color};` : ""}>
     {#if icon}
-        <Icon id={icon} class="icon" size={1.2} {white} />
+        <Icon id={icon} class="icon" {white} />
     {/if}
     <span class:alignRight={icon}>{label}</span>
 </div>
@@ -22,10 +23,13 @@
         position: relative;
         display: flex;
         align-items: center;
+        background-color: var(--primary-darkest);
 
-        padding: 4px 6px;
-        background-color: var(--primary-lighter);
+        padding: 4px 5px;
+        padding-bottom: 3px;
         font-size: 0.8em;
+        /* font-weight: bold; */
+
         height: 25px;
         flex: 1;
 

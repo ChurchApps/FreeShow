@@ -544,7 +544,7 @@ const deleteActions = {
         })
     },
     event: (data: any) => {
-        history({ id: "UPDATE", newData: { id: data.id }, location: { page: "calendar", id: "event" } })
+        history({ id: "UPDATE", newData: { id: data.id }, location: { page: "drawer", id: "event" } })
     },
     midi: (data: any) => {
         data = data[0]
@@ -634,7 +634,7 @@ const duplicateActions = {
         delete event.group
         delete event.repeatData
 
-        history({ id: "UPDATE", newData: { data: event }, location: { page: "calendar", id: "event" } })
+        history({ id: "UPDATE", newData: { data: event }, location: { page: "drawer", id: "event" } })
     },
     show: (data: any) => {
         if (!get(activeProject)) return

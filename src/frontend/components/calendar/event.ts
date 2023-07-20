@@ -105,7 +105,7 @@ export function createRepeatedEvents(event: Event, onlyMissing: boolean = false)
     // TODO: remove existing events after last newEvent.from
 
     if (!Object.keys(newEvents).length) return
-    history({ id: "UPDATE", newData: { data: newEvents, keys: Object.keys(newEvents) }, location: { page: "calendar", id: "event" } })
+    history({ id: "UPDATE", newData: { data: newEvents, keys: Object.keys(newEvents) }, location: { page: "drawer", id: "event" } })
 }
 
 const setDate = (date: Date, options: any): Date => {

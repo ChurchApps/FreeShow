@@ -71,7 +71,9 @@
     }
 
     function openDrawerTab(tab: any) {
-        if ($activeDrawerTab === tab.id || move) return
+        // || move
+        // TODO: don't open if move is greater than 10px
+        if ($activeDrawerTab === tab.id) return
 
         // allow click event first
         setTimeout(() => {

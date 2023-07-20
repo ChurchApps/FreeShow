@@ -201,7 +201,7 @@
                     <!-- {#each Object.values($showsCache[id].slides) as slide, i} -->
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id] && ($slidesOptions.mode !== "simple" || !slide.disabled)}
+                            {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled)}
                                 <Slide
                                     slide={currentShow.slides[slide.id]}
                                     show={currentShow}

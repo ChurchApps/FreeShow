@@ -141,7 +141,8 @@
         "fit": "Adatta/fit",
         "contain": "Contiene/contain",
         "fill": "Riempi/fill",
-        "cover": "Copertina/cover"
+        "cover": "Copertina/cover",
+        "online": "Online"
     },
     "menu": {
         "show": "Mostra",
@@ -267,6 +268,7 @@
         "audio": "Audio",
         "effects": "Effetti",
         "scripture": "Scritture",
+        "calendar": "Calendario",
         "player": "Player",
         "live": "Live",
         "timers": "Timer",

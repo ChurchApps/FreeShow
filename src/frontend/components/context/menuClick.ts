@@ -150,7 +150,7 @@ const actions: any = {
                 if (event.group === group) eventIds.push(id)
             })
 
-            history({ id: "UPDATE", newData: { id: "keys" }, oldData: { keys: eventIds }, location: { page: "calendar", id: "event" } })
+            history({ id: "UPDATE", newData: { id: "keys" }, oldData: { keys: eventIds }, location: { page: "drawer", id: "event" } })
         }
     },
     duplicate: (obj: any) => {
@@ -165,6 +165,7 @@ const actions: any = {
     enabled_drawer_tabs: (obj: any) => {
         let m = { hide: false, enabled: !obj.enabled }
         drawerTabsData.update((a) => {
+            if (!a[obj.menu.id!]) a[obj.menu.id] = { enabled: false, activeSubTab: null }
             a[obj.menu.id!].enabled = !obj.enabled
             return a
         })

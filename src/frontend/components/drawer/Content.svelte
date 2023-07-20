@@ -1,18 +1,18 @@
 <script lang="ts">
     import { drawerTabsData, mediaOptions } from "../../stores"
-    import Timers from "./timers/Timers.svelte"
+    import Calendar from "../calendar/Calendar.svelte"
+    import Overlays from "./Overlays.svelte"
+    import Shows from "./Shows.svelte"
+    import Templates from "./Templates.svelte"
     import Audio from "./audio/Audio.svelte"
     import Scripture from "./bible/Scripture.svelte"
+    import Effects from "./effects/Effects.svelte"
     import Cameras from "./live/Cameras.svelte"
     import Microphones from "./live/Microphones.svelte"
     import Screens from "./live/Screens.svelte"
     import Windows from "./live/Windows.svelte"
     import Media from "./media/Media.svelte"
-    import Overlays from "./Overlays.svelte"
-    import Player from "./player/Player.svelte"
-    import Shows from "./Shows.svelte"
-    import Templates from "./Templates.svelte"
-    import Effects from "./effects/Effects.svelte"
+    import Timers from "./timers/Timers.svelte"
 
     export let id: string
     export let bibles: any
@@ -78,10 +78,10 @@
         <Effects {active} {searchValue} />
     {:else if id === "scripture"}
         <Scripture {active} bind:searchValue bind:bibles />
+    {:else if id === "calendar"}
+        <Calendar {active} {searchValue} />
     {:else if id === "templates"}
         <Templates {active} {searchValue} />
-    {:else if id === "player"}
-        <Player {active} {searchValue} />
     {:else if id === "timers"}
         <Timers {active} {searchValue} />
         <!-- {:else if id === "web"}

@@ -221,9 +221,9 @@
     <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
         <Icon size={1.3} id="back" />
     </Button>
-    <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
+    <!-- <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
         <Icon size={1.3} id="home" />
-    </Button>
+    </Button> -->
     <span style="flex: 1;text-align: center;">
         {#key name}
             {#if name.includes(".")}
@@ -260,6 +260,7 @@
     }
     .grid span {
         display: flex;
+        align-items: center;
         gap: 5px;
     }
 </style>

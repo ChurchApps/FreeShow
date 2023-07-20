@@ -2,9 +2,6 @@
     import { OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
     import type { DrawerTabIds, TopViews } from "../types/Tabs"
-    import Calendar from "./components/calendar/Calendar.svelte"
-    import CreateCalendarShow from "./components/calendar/CreateCalendarShow.svelte"
-    import Day from "./components/calendar/Day.svelte"
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
     import DrawTools from "./components/draw/DrawTools.svelte"
@@ -51,8 +48,8 @@
     let resolution: Resolution = getResolution()
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    const menus: TopViews[] = ["show", "edit", "calendar", "draw", "stage", "settings"]
-    const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "player", "live", "templates"]
+    const menus: TopViews[] = ["show", "edit", "draw", "stage", "settings"]
+    const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "calendar", "live", "timers", "templates"]
     const ctrlKeys: any = {
         a: () => selectAll(),
         c: () => copy(),
@@ -218,8 +215,6 @@
                                 <Shows />
                             {:else if page === "draw"}
                                 <DrawTools />
-                            {:else if page === "calendar"}
-                                <Day />
                             {:else if page === "settings"}
                                 <SettingsTabs />
                             {/if}
@@ -237,8 +232,6 @@
                             <Settings />
                         {:else if page === "stage"}
                             <StageShow />
-                        {:else if page === "calendar"}
-                            <Calendar />
                         {/if}
                     </div>
 
@@ -261,8 +254,6 @@
                                 <DrawSettings />
                             {:else if page === "stage" && $activeStage.id}
                                 <StageTools />
-                            {:else if page === "calendar"}
-                                <CreateCalendarShow />
                             {/if}
                         </div>
                     </Resizeable>

@@ -141,7 +141,8 @@
         "fit": "Fit",
         "contain": "Contain",
         "fill": "Fill",
-        "cover": "Cover"
+        "cover": "Cover",
+        "online": "Online"
     },
     "menu": {
         "show": "Show",
@@ -267,6 +268,7 @@
         "audio": "Audio",
         "effects": "Effects",
         "scripture": "Scripture",
+        "calendar": "Calendar",
         "player": "Player",
         "live": "Live",
         "timers": "Timers",

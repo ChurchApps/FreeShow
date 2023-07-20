@@ -141,7 +141,8 @@
         "fit": "Fit",
         "contain": "Contain",
         "fill": "Fill",
-        "cover": "Cover"
+        "cover": "Cover",
+        "online": "Online"
     },
     "menu": {
         "show": "Mostrar",
@@ -267,6 +268,7 @@
         "audio": "Áudio",
         "effects": "Effects",
         "scripture": "Bíblia",
+        "calendar": "Calendário",
         "player": "Reprodutor",
         "live": "Ao Vivo",
         "timers": "Temporizadores",

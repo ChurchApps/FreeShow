@@ -455,6 +455,7 @@ export function clearOverlays() {
 export function clearAll() {
     if (get(outLocked)) return
 
+    // TODO: audio
     if (!get(outputCache)) outputCache.set(clone(get(outputs)))
 
     // clearVideo()

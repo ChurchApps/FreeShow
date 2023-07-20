@@ -141,7 +141,8 @@
         "fit": "Illeszkedik",
         "contain": "Tartalmazza",
         "fill": "Kitöltés",
-        "cover": "Borító"
+        "cover": "Borító",
+        "online": "Online"
     },
     "menu": {
         "show": "Műsor",
@@ -267,6 +268,7 @@
         "audio": "Audió",
         "effects": "Effektek",
         "scripture": "Ige",
+        "calendar": "Naptár",
         "player": "Lejátszó",
         "live": "Élő",
         "timers": "Időzítők",
