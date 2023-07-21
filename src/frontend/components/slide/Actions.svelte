@@ -37,11 +37,11 @@
         {#if actions[action.id]}
             <div>
                 <div class="button {action.white ? 'white' : ''}">
-                    <Button style="padding: 5px;" redHover title={$dictionary.actions?.remove + ": " + action.title} on:click={() => changeSlideAction(action.id)}>
+                    <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove + ": " + action.title} on:click={() => changeSlideAction(action.id)}>
                         {#if action.name}
                             <p>{action.name(actions[action.id])}</p>
                         {/if}
-                        <Icon id={action.icon} white />
+                        <Icon id={action.icon} size={0.9} white />
                     </Button>
                 </div>
             </div>
@@ -55,8 +55,9 @@
         display: flex;
         flex-direction: column;
         position: absolute;
-        right: 5px;
+        right: 2px;
         z-index: 1;
+        font-size: 0.9em;
 
         height: 80%;
         flex-wrap: wrap-reverse;

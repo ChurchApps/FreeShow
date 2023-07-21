@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, dictionary, drawerTabsData, events, nextShowEventPaused, nextShowEventStart } from "../../../stores"
+    import { activeDays, activeTimers, dictionary, drawerTabsData, events, nextShowEventPaused, nextShowEventStart } from "../../../stores"
     import CreateCalendarShow from "../../calendar/CreateCalendarShow.svelte"
     import Day from "../../calendar/Day.svelte"
     import { getSelectedEvents } from "../../calendar/calendar"
@@ -7,6 +7,7 @@
     import T from "../../helpers/T.svelte"
     import { joinTimeBig } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
+    import TimerInfo from "../timers/TimerInfo.svelte"
 
     let type: string = "event"
     $: type = $drawerTabsData.calendar?.activeSubTab || "event"
@@ -22,7 +23,11 @@
     // $: currentEvents = currentEvents.filter((a) => a.type === type)
 </script>
 
-{#if type === "event"}
+{#if type === "timer"}
+    {#if $activeTimers.length}
+        <TimerInfo />
+    {/if}
+{:else if type === "event"}
     {#if $activeDays.length > 1}
         <CreateCalendarShow {currentEvents} />
     {:else}

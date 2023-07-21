@@ -162,6 +162,9 @@
         justify-content: space-between;
         padding: 0.15em 0.8em;
     }
+    .main :global(button p) {
+        margin: 3px 5px;
+    }
 
     .layout {
         opacity: 0.6;

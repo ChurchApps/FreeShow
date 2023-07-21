@@ -1,14 +1,30 @@
 <script lang="ts">
     import { audioChannels } from "../../stores"
+
+    export let advanced: boolean = false
+    const numbers: number = 8
 </script>
 
-<div class="main">
+<div class="main" class:advanced>
     <span class="left">
         <div style="height: {100 - $audioChannels.left}%" />
     </span>
     <span class="right">
         <div style="height: {100 - $audioChannels.right}%" />
     </span>
+
+    {#if advanced}
+        <div class="lines">
+            {#each { length: numbers } as _}
+                <div class="line" />
+            {/each}
+        </div>
+        <div class="lines">
+            {#each { length: numbers } as _, i}
+                <p>{numbers - i}</p>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -19,6 +35,25 @@
         /* position: absolute;
         right: 0;
         height: 100%; */
+    }
+
+    .main.advanced {
+        width: 60px;
+    }
+    .lines {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+
+        text-align: center;
+        opacity: 0.8;
+    }
+    .lines .line {
+        height: 1px;
+        width: 10px;
+        background-color: var(--text);
+        opacity: 0.4;
+        margin: 0 5px;
     }
 
     span {

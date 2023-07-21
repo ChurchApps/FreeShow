@@ -25,15 +25,15 @@
     let note: string = ""
     $: if (showId && $showsCache[showId]?.settings?.activeLayout !== currentLayout) updateNote()
 
-    let previousShow = showId
+    // let previousShow = showId
     function updateNote() {
         if (!showId) return
         note = showId ? _show().layouts("active").get("notes")[0] || "" : ""
         currentLayout = $showsCache[showId]?.settings?.activeLayout
 
-        if (note.length && previousShow !== showId && active === "groups") active = "notes"
-        else if (!note.length && previousShow !== showId && active === "notes") active = "groups"
-        previousShow = showId
+        // if (note.length && previousShow !== showId && active === "groups") active = "notes"
+        // else if (!note.length && previousShow !== showId && active === "notes") active = "groups"
+        // previousShow = showId
     }
 
     function edit(e: any) {

@@ -3,6 +3,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
     import { MAIN } from "../../../../types/Channels"
+    import { volume } from "../../../stores"
 
     export let mic: any
 
@@ -71,6 +72,8 @@
         audio.play()
         audio.volume = 0
         console.log(audio)
+
+        // TODO: add this to audioChannels / audioAnalyzer
     }
 
     navigator.mediaDevices
@@ -90,38 +93,33 @@
     onDestroy(() => {
         audioStream?.getAudioTracks().forEach((track: any) => track.stop())
     })
+
+    let muted: boolean = true
+    $: if (audio) {
+        if (!muted) audio.volume = $volume ?? 1
+        else audio.volume = 0
+    }
 </script>
 
 {#if context}
     <div class="main context #live_card">
-        <span>
-            {mic.name}
-        </span>
+        <Button style="width: 100%;" bold={false} on:click={() => (muted = !muted)}>
+            <span style="display: flex;gap: 5px;flex: 3;align-items: center;">
+                <Icon id={muted ? "muted" : "volume"} white={muted} right />
+                <p>{mic.name}</p>
+            </span>
 
-        <span style="display: flex;align-items: center;width: 50%;">
             <span class="meter">
                 <!-- <p>L</p> -->
                 <div style="width: {100 - soundLevel}%" />
             </span>
-            <Button
-                style="margin-left: 5px;"
-                on:click={() => {
-                    if (audio?.volume === 0) audio.volume = 1
-                    else audio.volume = 0
-                }}
-            >
-                <Icon id={audio?.volume === 0 ? "muted" : "volume"} white={audio?.volume === 0} />
-            </Button>
-        </span>
+        </Button>
     </div>
 {/if}
 
 <style>
     .main {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 5px 10px;
     }
     .main:nth-child(even) {
         background-color: var(--primary-darkest);
@@ -132,6 +130,8 @@
         /* filter: hue-rotate(250deg); */
         height: 5px;
         flex: 1;
+
+        transform: rotate(180deg);
     }
 
     .meter div {

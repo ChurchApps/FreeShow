@@ -91,6 +91,13 @@
 
 <svelte:window on:mousedown={mousedown} />
 
+{#if layouts?.[activeLayout]?.notes}
+    <div class="notes">
+        <Icon id="notes" right white />
+        {@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}
+    </div>
+{/if}
+
 <div>
     {#if reference}
         <Reference show={$showsCache[showId]} />
@@ -164,6 +171,18 @@
 </div>
 
 <style>
+    .notes {
+        background-color: var(--primary);
+        /* position: absolute;bottom: 0;transform: translateY(-100%); */
+        padding: 0 8px;
+        height: 28px;
+
+        display: flex;
+        align-items: center;
+        justify-content: left;
+        /* justify-content: center; */
+    }
+
     div {
         display: flex;
         justify-content: space-between;
@@ -186,9 +205,9 @@
     }
 
     .seperator {
-        width: 3px;
+        width: 2px;
         height: 100%;
-        background-color: var(--primary-lighter);
+        background-color: var(--primary);
         /* margin: 0 10px; */
     }
 

@@ -200,7 +200,11 @@
         show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
 
         let versions = bibles.map((a) => a.version).join(" + ")
-        show.reference = { type: "scripture", data: { collection: $drawerTabsData.scripture?.activeSubTab || "", version: versions } }
+        console.log(bibles)
+        show.reference = {
+            type: "scripture",
+            data: { collection: $drawerTabsData.scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId || bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses },
+        }
 
         return { show }
     }

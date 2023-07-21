@@ -5,6 +5,7 @@
     import { getFileName, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import Date from "../../system/Date.svelte"
+    import LiveInfo from "../live/LiveInfo.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
 
     $: name = $activeShow?.name || ""
@@ -21,11 +22,13 @@
 
     // $: accessed = info.atime
 
-    $: online = $drawerTabsData.media?.activeSubTab === "online"
+    $: subTab = $drawerTabsData.media?.activeSubTab
 </script>
 
-{#if online}
+{#if subTab === "online"}
     <PlayerInfo />
+{:else if subTab === "screens"}
+    <LiveInfo />
 {:else}
     <main style="overflow-y: auto;">
         <h2 style="text-align: center" title={name}>

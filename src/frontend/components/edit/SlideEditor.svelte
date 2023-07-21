@@ -311,9 +311,9 @@
     }
 
     .seperator {
-        width: 3px;
+        width: 2px;
         height: 100%;
-        background-color: var(--primary-lighter);
+        background-color: var(--primary);
         /* margin: 0 10px; */
     }
 

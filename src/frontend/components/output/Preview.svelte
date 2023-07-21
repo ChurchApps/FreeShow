@@ -1,8 +1,7 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activePage, activeShow, dictionary, groups, outLocked, outputCache, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
+    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
     import { send } from "../../utils/request"
-    import { clone } from "../helpers/array"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
@@ -30,7 +29,7 @@
 
     const ctrlShortcuts: any = {
         // c: () => (callClear = true),
-        f: () => (fullscreen = !fullscreen),
+        // f: () => (fullscreen = !fullscreen),
         l: () => outLocked.set(!$outLocked),
         r: () => {
             if (!$outLocked) {

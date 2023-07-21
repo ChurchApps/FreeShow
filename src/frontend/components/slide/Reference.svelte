@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
-    import { activeDrawerTab, activeShow, drawer, drawerTabsData, labelsDisabled, scriptures, shows } from "../../stores"
+    import { activeDrawerTab, activeShow, drawer, drawerTabsData, labelsDisabled, openScripture, scriptures, shows } from "../../stores"
     import { createSlides, getDateString, getSelectedEvents, sortDays } from "../calendar/calendar"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -29,7 +29,12 @@
 
     function openTab() {
         let collection = show.reference?.data?.collection
-        if (!collection || !$scriptures[collection]) return
+        if (!collection) return
+
+        let scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find((a: any) => a.id === collection)
+        if (!scriptureId) return
+
+        openScripture.set(show.reference!.data)
 
         drawerTabsData.update((a) => {
             a.scripture.activeSubTab = collection

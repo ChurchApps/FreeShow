@@ -3,10 +3,10 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputCache, outputs, overlays, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
+import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputCache, outputs, overlays, playingAudio, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
 import { clearAudio, playAudio } from "./audio"
 import { getMediaType } from "./media"
-import { getActiveOutputs, setOutput } from "./output"
+import { getActiveOutputs, isOutCleared, setOutput } from "./output"
 import { _show } from "./shows"
 import { loadShows } from "./setShow"
 import { clone } from "./array"
@@ -454,6 +454,9 @@ export function clearOverlays() {
 // TODO: output/clearButtons
 export function clearAll() {
     if (get(outLocked)) return
+
+    let allCleared = isOutCleared(null) && !Object.keys(get(playingAudio)).length
+    if (allCleared) return
 
     // TODO: audio
     if (!get(outputCache)) outputCache.set(clone(get(outputs)))

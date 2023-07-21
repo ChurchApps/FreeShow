@@ -83,5 +83,7 @@
     .group :global(button) {
         flex-grow: 1;
         /* height: 40px; */
+
+        padding: 0.2em 0.8em !important;
     }
 </style>

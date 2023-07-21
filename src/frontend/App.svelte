@@ -15,7 +15,7 @@
     import Pdf from "./components/export/Pdf.svelte"
     import { copy, cut, deleteAction, paste, selectAll } from "./components/helpers/clipboard"
     import { redo, undo } from "./components/helpers/history"
-    import { displayOutputs, getResolution, isOutCleared } from "./components/helpers/output"
+    import { displayOutputs, getResolution } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -34,7 +34,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, playingAudio, selected, styles } from "./stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, selected, styles } from "./stores"
     import { newToast } from "./utils/messages"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
@@ -48,8 +48,8 @@
     let resolution: Resolution = getResolution()
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    const menus: TopViews[] = ["show", "edit", "draw", "stage", "settings"]
-    const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "calendar", "live", "timers", "templates"]
+    const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
+    const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "calendar", "templates"]
     const ctrlKeys: any = {
         a: () => selectAll(),
         c: () => copy(),
@@ -67,7 +67,7 @@
     }
     const keys: any = {
         Escape: () => {
-            if (!isOutCleared() || Object.keys($playingAudio).length) return
+            // if (!isOutCleared() || Object.keys($playingAudio).length) return
 
             // close popup
             if ($activePopup !== null) activePopup.set(null)
@@ -236,7 +236,7 @@
                     </div>
 
                     <Resizeable id="mainRight" let:width side="right">
-                        <div class="right" class:row={width > 600}>
+                        <div class="right" class:row={width > 300 * 1.5}>
                             <Preview />
                             {#if page === "show"}
                                 {#if $activeShow && ($activeShow.type === "show" || $activeShow.type === undefined)}

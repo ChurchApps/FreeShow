@@ -46,8 +46,8 @@
     {#if timer.length}
         <div>
             <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.remove?.timer} on:click={() => resetTimer()}>
-                    <Icon id="timer" white />
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.timer} on:click={() => resetTimer()}>
+                    <Icon id="timer" size={0.9} white />
                 </Button>
             </div>
             {#if timer.length > 1}
@@ -58,8 +58,8 @@
     {#if nextTimer}
         <div>
             <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.remove?.nextTimer} on:click={() => removeLayout("nextTimer")}>
-                    <Icon id="clock" white />
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.nextTimer} on:click={() => removeLayout("nextTimer")}>
+                    <Icon id="clock" size={0.9} white />
                 </Button>
             </div>
             <span><p>{nextTimer}</p></span>
@@ -69,8 +69,8 @@
         <!-- WIP move this to Actions.svelte (right side) -->
         <div>
             <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.remove?.to_start} on:click={() => removeLayout("end")}>
-                    <Icon id="restart" white />
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.to_start} on:click={() => removeLayout("end")}>
+                    <Icon id="restart" size={0.9} white />
                 </Button>
             </div>
         </div>
@@ -79,7 +79,7 @@
         <div>
             <div class="button">
                 <Button
-                    style="padding: 5px;"
+                    style="padding: 3px;"
                     redHover
                     title={$dictionary.remove?.transition}
                     on:click={() => {
@@ -87,7 +87,7 @@
                         removeLayout("mediaTransition")
                     }}
                 >
-                    <Icon id="transition" white />
+                    <Icon id="transition" size={0.9} white />
                 </Button>
             </div>
         </div>
@@ -95,9 +95,9 @@
     {#if background}
         <div>
             <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.remove?.background} on:click={() => removeLayout("background")}>
-                    <!-- <Icon id={background.type || "image"} white /> -->
-                    <Icon id="image" white />
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.background} on:click={() => removeLayout("background")}>
+                    <!-- <Icon id={background.type || "image"} size={0.9} white /> -->
+                    <Icon id="image" size={0.9} white />
                 </Button>
             </div>
             {#if videoDuration}
@@ -109,8 +109,8 @@
     {#if background && muted && duration}
         <div>
             <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.actions?.unmute} on:click={() => mute()}>
-                    <Icon id="muted" white />
+                <Button style="padding: 3px;" redHover title={$dictionary.actions?.unmute} on:click={() => mute()}>
+                    <Icon id="muted" size={0.9} white />
                 </Button>
             </div>
         </div>
@@ -118,8 +118,8 @@
     {#if layoutSlide.overlays?.length}
         <div>
             <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.remove?.overlays} on:click={() => removeLayout("overlays")}>
-                    <Icon id="overlays" white />
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.overlays} on:click={() => removeLayout("overlays")}>
+                    <Icon id="overlays" size={0.9} white />
                 </Button>
             </div>
             {#if layoutSlide.overlays.length > 1}
@@ -130,8 +130,8 @@
     {#if layoutSlide.audio?.length}
         <div>
             <div class="button">
-                <Button style="padding: 5px;" redHover title={$dictionary.remove?.audio} on:click={() => removeLayout("audio")}>
-                    <Icon id="audio" white />
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.audio} on:click={() => removeLayout("audio")}>
+                    <Icon id="audio" size={0.9} white />
                 </Button>
             </div>
             <span>
@@ -156,6 +156,7 @@
         flex-direction: column;
         position: absolute;
         z-index: 1;
+        font-size: 0.9em;
 
         height: 80%;
         flex-wrap: wrap;
@@ -171,7 +172,7 @@
     .icons span {
         pointer-events: all;
         background-color: rgb(0 0 0 / 0.6);
-        padding: 5px;
+        padding: 3px;
         font-size: 0.75em;
         font-weight: bold;
         display: flex;

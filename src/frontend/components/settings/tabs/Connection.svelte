@@ -80,7 +80,7 @@
         center
     >
         <div style="margin: 0;">
-            <Icon id="connection" right />
+            <Icon id="connection" size={1.1} right />
             <p>
                 RemoteShow
                 <span class="connections">{Object.keys($connections.REMOTE || {})?.length || ""}</span>
@@ -96,7 +96,7 @@
         center
     >
         <div style="margin: 0;">
-            <Icon id="connection" right />
+            <Icon id="stage" size={1.3} right />
             <p>
                 StageShow
                 <span class="connections">{Object.keys($connections.STAGE || {})?.length || ""}</span>
@@ -112,7 +112,7 @@
         center
     >
         <div style="margin: 0;">
-            <Icon id="connection" right />
+            <Icon id="connection" size={1.1} right />
             <p>
                 ControlShow
                 <span class="connections">{Object.keys($connections.CONTROLLER || {})?.length || ""}</span>

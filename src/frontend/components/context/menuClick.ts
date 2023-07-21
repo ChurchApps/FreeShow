@@ -225,7 +225,7 @@ const actions: any = {
             return
         }
 
-        if (obj.contextElem.classList.contains("#category_media_button__category_media")) {
+        if (obj.contextElem.classList.contains("#category_media")) {
             window.api.send(OPEN_FOLDER, { channel: "MEDIA", title: get(dictionary).new?.folder })
             return
         }
@@ -301,6 +301,7 @@ const actions: any = {
         // shows
         if (!obj.contextElem.closest(".center")) return
         activeShow.set(null)
+        activeEdit.set({ items: [] })
     },
     private: (obj: any) => {
         showsCache.update((a: any) => {

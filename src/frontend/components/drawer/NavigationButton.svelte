@@ -37,10 +37,12 @@
     let editActive: boolean = false
 
     $: red = id === "scripture" && $notFound.bible.find((a: any) => a.id === category.id)
+
+    const defaultFolders = ["all", "unlabeled", "favourites", "online", "screens", "cameras", "microphones"]
 </script>
 
 <Button
-    class={category.id === "all" || category.id === "unlabeled" || category.id === "favourites" ? "" : `context #category_${id}_button__category_${id}`}
+    class={defaultFolders.includes(category.id) ? "" : `context #category_${id}_button__category_${id}`}
     active={category.id === $drawerTabsData[id]?.activeSubTab}
     {red}
     on:click={(e) => {

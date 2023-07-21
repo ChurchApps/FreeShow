@@ -104,7 +104,7 @@
         <!-- TODO: set different project system folders.... -->
         <!-- TODO: right click change... -->
         <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
-            <Icon id="folder" right />
+            <Icon id="folder" size={1.2} right />
             <!-- ={!$labelsDisabled} -->
             <!-- {#if !$labelsDisabled}
                 <T id="remote.projects" />
@@ -116,6 +116,7 @@
             on:click={() => projectView.set(false)}
             class="context #projectTab _close"
             active={!$projectView}
+            bold={false}
             dark
             center
             disabled={$activeProject === null}

@@ -214,6 +214,11 @@
         height: 100%;
     }
 
+    /* THIS don't work with virtual list */
+    /* .column :global(svelte-virtual-list-contents:nth-child(even) button) {
+        background-color: var(--primary-darkest);
+    } */
+
     .tabs {
         display: flex;
         background-color: var(--primary-darkest);
