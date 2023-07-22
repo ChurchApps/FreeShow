@@ -177,7 +177,7 @@
             let id = uid()
             // TODO: group as verse numbers
             let firstTextItem = items.find((a) => a.lines)
-            slides2[id] = { group: firstTextItem.lines[0].text[0]?.value?.split(" ")?.slice(0, 4)?.join(" ") || "", color: null, settings: {}, notes: "", items }
+            slides2[id] = { group: firstTextItem.lines[0].text[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
             layouts.push(l)
         })

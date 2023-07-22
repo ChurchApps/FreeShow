@@ -140,44 +140,44 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_templates_button: ["rename", "changeIcon", "delete"],
     category_media_button: ["rename", "delete"],
     category_audio_button: ["rename", "delete"],
-    category_scripture_button: ["delete", "createCollection"],
+    category_scripture_button: ["createCollection", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow"],
+    drawer_show: ["newShowPopup", "newShow", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete", "selectAll"],
+    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete"],
     drawer_new_show: ["newShowPopup", "newShow"],
     // media / audio
     // "play", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
     // , "delete_all"
-    show_media: ["play", "play_no_filters", "preview", "SEPERATOR", "edit"],
+    show_media: ["preview", "play", "play_no_filters", "SEPERATOR", "edit"],
     show_audio: ["preview"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media_card: ["preview", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
+    media_card: ["addToProject", "SEPERATOR", "preview", "play_no_filters", "SEPERATOR", "edit", "favourite"],
     // "addToFirstSlide",
     overlay_card: ["edit", "lock_to_output", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     effect_card: ["edit"],
-    player_button: ["preview", "addToProject", "SEPERATOR", "rename", "delete"],
-    audio_button: ["preview", "favourite", "addToProject"],
+    player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
+    audio_button: ["addToProject", "SEPERATOR", "preview", "favourite"],
     // "addToFirstSlide"
     live_card: ["recording"],
 
     // PROJECT
     projects: ["newProject", "newFolder"],
-    projectTab: ["export", "close"],
+    projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "newPrivateShow", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "delete", "duplicate", "export"], // "open",
-    folder: ["rename", "delete", "duplicate"],
+    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export"], // "open",
+    folder: ["rename", "duplicate", "delete"],
     project_media: ["play", "play_no_filters", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
-    project_show: ["rename", "remove", "private", "duplicate"],
+    project_show: ["rename", "private", "duplicate", "remove"],
     project_section: ["remove"],
     shows: ["newSlide", "selectAll"],
     // TIMER

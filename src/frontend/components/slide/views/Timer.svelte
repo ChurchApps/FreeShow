@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeTimers, timers } from "../../../stores"
+    import { activeDrawerTab, activeTimers, drawer, drawerTabsData, timers } from "../../../stores"
     import { getCurrentTimerValue } from "../../drawer/timers/timers"
     import { getStyles } from "../../helpers/style"
     // import { blur } from "svelte/transition"
@@ -12,6 +12,7 @@
     export let id: string
     export let today: Date
     export let style: string = ""
+    export let edit: boolean = false
 
     $: ref = { id }
     $: timer = $timers[id] || {}
@@ -49,14 +50,27 @@
         if (time < end) return true
         return false
     }
+
+    function openInDrawer() {
+        if (!edit) return
+
+        drawerTabsData.update((a) => {
+            a.calendar.activeSubTab = "timer"
+            return a
+        })
+        activeDrawerTab.set("calendar")
+
+        // open drawer if closed
+        if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+    }
 </script>
 
 {#if item?.timer?.viewType === "line"}
-    <div class="line" style="width: {percentage}%;background-color: {itemColor};" />
+    <div class="line" style="width: {percentage}%;background-color: {itemColor};" on:dblclick={openInDrawer} />
 {:else if item?.timer?.viewType === "circle"}
-    <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" />
+    <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" on:dblclick={openInDrawer} />
 {:else}
-    <div class="align" style="{style}{item?.align || ''}">
+    <div class="align" style="{style}{item?.align || ''}" on:dblclick={openInDrawer}>
         <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
             {#if overflow && negative}
                 <span>-</span>

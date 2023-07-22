@@ -25,7 +25,7 @@ export function convertTexts(files: any[]) {
 
 // convert a plain text input into a show
 export function convertText({ name = "", category = null, text }: any, onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }) {
-    text = text.replaceAll("\r", "")
+    text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
     let sections: string[] = removeEmpty(text.split("\n\n"))
 
     // get ccli
@@ -47,7 +47,7 @@ export function convertText({ name = "", category = null, text }: any, onlySlide
     if (!name) {
         let firstSlideText = labeled[0].text.split("\n")
         name = firstSlideText[0]
-        if (firstSlideText.length > 1 && name.includes("[")) name = firstSlideText[1]
+        if (firstSlideText.length > 1 && (name.includes("[") || name.includes(":"))) name = firstSlideText[1]
     }
 
     let layoutID: string = uid()
@@ -106,7 +106,7 @@ function createSlides(labeled: any, existingSlides: any = {}) {
         let text: string = fixText(a.text)
         if (stored[a.type]) id = stored[a.type].find((b: any) => b.text === text)?.id
 
-        let hasTextGroup: boolean = a.text.trim()[0] === "[" && a.text.includes("]")
+        let hasTextGroup: boolean = (a.text.trim()[0] === "[" && a.text.includes("]")) || a.text.trim()[a.text.length - 1] === ":"
 
         if (id) {
             if (activeGroup && !hasTextGroup) return
@@ -207,6 +207,18 @@ function fixText(text: string): string {
     if (formatText) text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
     // remove group from text
     if (text[0] === "[" && text.includes("]")) text = text.slice(text.indexOf("]") + 1)
+    if (text.indexOf(":") === text.split("\n")[0].length - 1) text = text.slice(text.indexOf(":") + 1)
+
+    // repeat text
+    let firstRepeater = text.indexOf(":/:")
+    let secondRepeater = text.indexOf(":/:", firstRepeater + 1)
+    while (firstRepeater >= 0 && secondRepeater >= 0) {
+        let repeated = text.slice(firstRepeater + 3, secondRepeater)
+        text = text.slice(0, firstRepeater) + repeated + repeated + text.slice(secondRepeater + 3)
+
+        firstRepeater = text.indexOf(":/:")
+        secondRepeater = text.indexOf(":/:", firstRepeater + 1)
+    }
 
     let newText: string = ""
     text.split("\n").forEach((t: any) => {

@@ -884,6 +884,7 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
 
         if (type === "remove") {
             index = ref[index].parent?.layoutIndex ?? index
+            if (parents.find((a) => a.id === ref[index].id)) return
             parents.push({ index: ref[index].index, id: ref[index].id })
             return
         }

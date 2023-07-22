@@ -3,7 +3,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { volume } from "../../../stores"
+    import { outLocked, volume } from "../../../stores"
 
     export let mic: any
 
@@ -103,7 +103,14 @@
 
 {#if context}
     <div class="main context #live_card">
-        <Button style="width: 100%;" bold={false} on:click={() => (muted = !muted)}>
+        <Button
+            style="width: 100%;"
+            bold={false}
+            on:click={() => {
+                if ($outLocked) return
+                muted = !muted
+            }}
+        >
             <span style="display: flex;gap: 5px;flex: 3;align-items: center;">
                 <Icon id={muted ? "muted" : "volume"} white={muted} right />
                 <p>{mic.name}</p>

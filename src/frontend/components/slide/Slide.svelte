@@ -54,9 +54,9 @@
     $: if (!background) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
-            if (i <= index && !a.disabled) {
-                if (a.actions?.clearBackground) ghostBackground = null
-                else if (a.background) ghostBackground = show.media[a.background]
+            if (i <= index) {
+                if (a.actions?.clearBackground && (!a.disabled || i === index)) ghostBackground = null
+                else if (a.background && !a.disabled) ghostBackground = show.media[a.background]
             }
         })
     }
@@ -282,7 +282,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     {#if slide.items}
                         {#each slide.items as item}
                             <!-- TODO: lyrics zoom on text -->
-                            {#if viewMode !== "lyrics" || item.type === undefined || item.type === "text" || item.type === "timer"}
+                            {#if viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type)}
                                 <Textbox
                                     filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
                                     backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}

@@ -4,7 +4,7 @@
 
     import { activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, styles } from "../../stores"
     import { history } from "../helpers/history"
-    import { getActiveOutputs, setOutput } from "../helpers/output"
+    import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -50,7 +50,8 @@
     }
 
     let nextScrollTimeout: any = null
-    function wheel(e: any) {
+    function wheel({ detail }: any) {
+        let e: any = detail.event
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
 
@@ -73,6 +74,9 @@
         // if (activeOutputs[0]?.out?.slide?.id === id && activeOutputs[0]?.out?.slide?.index === index && activeOutputs[0]?.out?.slide?.layout === activeLayout) return
         // outSlide.set({ id, layout: activeLayout, index })
         setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
+
+        // force update output if index is the same as previous
+        if (activeSlides[index]) refreshOut()
     }
 
     // disable slides that is after end (only visual)

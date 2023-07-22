@@ -66,7 +66,7 @@
                 {#if id === "SEPERATOR"}
                     <hr />
                 {:else if contextMenuItems[id]?.items}
-                    <ContextChild {id} {contextElem} bind:contextActive {side} />
+                    <ContextChild {id} {contextElem} bind:contextActive {side} {translate} />
                 {:else}
                     <ContextItem {id} {contextElem} bind:contextActive />
                 {/if}

@@ -73,6 +73,7 @@ export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 
 // CACHE
 export const sortedShowsList: Writable<ShowList[]> = writable([])
 export const cachedShowsData: Writable<any> = writable({})
+export const quickTextCache: Writable<string> = writable("")
 
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })

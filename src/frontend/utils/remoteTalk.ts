@@ -102,7 +102,8 @@ export const receiveREMOTE: any = {
             msg.data = null
         } else {
             msg.data = { slide: out ? out.index : null, layout: out?.layout || null }
-            if (out && out.id !== "temp" && out.id !== oldOutSlide) {
+            // && out.id !== oldOutSlide
+            if (out && out.id !== "temp") {
                 id = out.id
                 oldOutSlide = id
                 msg.data.show = convertBackgrounds(get(showsCache)[id])

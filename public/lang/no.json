@@ -130,6 +130,8 @@
         "favourite": "Favoritt",
         "pause": "Sett på pause",
         "stop": "Stopp",
+        "back10": "Gå tilbake 10 sekunder",
+        "forward10": "Gå frem 10 sekunder",
         "volume": "Volum",
         "speed": "Hastighet",
         "show": "Vis",

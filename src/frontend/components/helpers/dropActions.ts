@@ -233,6 +233,7 @@ const slideDrop: any = {
         history.id = "SLIDES"
         let slides: any[] = drag.data.map((a: any) => ({ id: a.id || uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: [] }))
 
+        data = data.map((a) => ({ ...a, path: a.path || a.id }))
         history.newData = { index: drop.index, data: slides, layout: { backgrounds: data } }
 
         return history

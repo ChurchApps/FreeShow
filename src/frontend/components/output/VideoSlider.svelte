@@ -9,6 +9,20 @@
     export let outputId: string = ""
     export let toOutput: boolean = false
     export let disabled: boolean = false
+    export let changeValue: number = 0
+
+    $: if (changeValue) updateValue()
+    function updateValue() {
+        if (!videoData.paused) pauseAtMove()
+        sliderValue = changeValue
+        sliderInput(changeValue)
+
+        setTimeout(() => {
+            sendToOutput()
+            // if (movePause) pauseAtMove(false)
+            changeValue = 0
+        }, 50)
+    }
 
     let sliderValue = 0
 
@@ -39,7 +53,7 @@
     let changeVideoTimeout: any = null
     let latestValue: string = "0"
     function sliderInput(e: any) {
-        latestValue = e?.target?.value
+        latestValue = e?.target?.value || e
         if (changeVideoTimeout || (!movePause && !videoData.paused) || !latestValue) return
 
         videoTime = Number(latestValue)
@@ -122,7 +136,7 @@
             on:input={sliderInput}
         />
     </div>
-    {joinTime(secondsToTime(videoData.duration || 0))}
+    <span>{joinTime(secondsToTime(videoData.duration || 0))}</span>
 </div>
 
 <style>
@@ -130,12 +144,13 @@
         display: flex;
         flex: 1;
         align-items: center;
-        margin: 0 10px;
+        margin: 0 5px;
+        font-size: 0.8em;
     }
 
     .slider {
         flex: 1;
-        margin: 0 10px;
+        margin: 0 5px;
         height: 100%;
         display: flex;
         align-items: center;

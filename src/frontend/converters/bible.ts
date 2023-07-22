@@ -1,3 +1,4 @@
+import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "../stores"
 
 export function importFSB(data: any[]) {
@@ -19,8 +20,10 @@ export function importFSB(data: any[]) {
             return a
         })
 
+        name = formatToFileName(bible.name || name)
+
         scriptures.update((a) => {
-            a[id] = { name: bible.name || name, id }
+            a[id] = { name, id }
             return a
         })
     })

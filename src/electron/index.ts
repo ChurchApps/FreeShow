@@ -258,7 +258,7 @@ function save(data: any) {
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: any) {
         if (!value) return
-        let p: string = path.resolve(getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
+        let p: string = path.resolve(data.scripturePath || getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
         writeFile(p, JSON.stringify([id, value]), id)
     }
 

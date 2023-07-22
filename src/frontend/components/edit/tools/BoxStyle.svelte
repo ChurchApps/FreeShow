@@ -37,6 +37,24 @@
         if (e.key.includes("Arrow") || e.key.toUpperCase() === "A") getTextSelection(e)
     }
 
+    const formatting = {
+        b: () => ({ id: "style", key: "font-weight", value: "bold" }),
+        i: () => ({ id: "style", key: "font-style", value: "italic" }),
+        u: () => ({ id: "style", key: "text-decoration", value: "underline" }),
+    }
+    function keydown(e: any) {
+        if (selection && (e.ctrlKey || e.metaKey) && formatting[e.key]) {
+            e.preventDefault()
+            let value = formatting[e.key]()
+            // WIP line-through is removed
+            if (styles[value.key]?.includes(value.value)) value.value = ""
+            updateValue({ detail: value })
+
+            // WIP reset selection (caret is at start, but it remembers the selection)
+            return
+        }
+    }
+
     // TODO: clean here!!!
 
     // -----
@@ -302,10 +320,12 @@
             })
 
             // no text
-            let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
-            if (!textLength) {
-                newToast("$empty.text")
-                return
+            if (currentItems[0].lines) {
+                let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
+                if (!textLength) {
+                    newToast("$empty.text")
+                    return
+                }
             }
 
             let override = $activeEdit.id + "#" + allItems.join(",")
@@ -354,7 +374,7 @@
     }
 </script>
 
-<svelte:window on:keyup={keyup} on:mouseup={getTextSelection} />
+<svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
 {#key id}
     <EditValues edits={box?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} />

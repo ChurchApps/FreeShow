@@ -2,7 +2,7 @@
     import { MAIN } from "../../../../types/Channels"
     import { ShowObj } from "../../../classes/Show"
     import { convertText, getQuickExample } from "../../../converters/txt"
-    import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, shows, splitLines } from "../../../stores"
+    import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, splitLines } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
     import { sortObject } from "../../helpers/array"
@@ -33,15 +33,20 @@
             show.name = checkName(values.name)
             history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
         }
+
         values = { name: "", text: "" }
+        quickTextCache.set("")
         activePopup.set(null)
     }
 
-    $: console.log(values.text)
+    const changeValue = (e: any, key: string = "text") => {
+        values[key] = e.target.value
 
-    const changeValue = (e: any, key: string = "text") => (values[key] = e.target.value)
+        // store text if popup is closed
+        if (key === "text") quickTextCache.set(values.text)
+    }
     let values: any = {
-        text: "",
+        text: $quickTextCache.length > 20 ? $quickTextCache : "",
         name: "",
     }
 
@@ -70,7 +75,7 @@
     }
 
     let showMore: boolean = false
-    let activateLyrics: boolean = false
+    let activateLyrics: boolean = !!values.text.length
 
     let loading = false
     function searchLyrics() {

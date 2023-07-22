@@ -327,11 +327,12 @@
         }, 50)
     }
 
-    $: slideFilter = ""
+    $: slideFilter = ""    
     $: if (!slideData?.filterEnabled || slideData?.filterEnabled?.includes("background")) getSlideFilter()
     function getSlideFilter() {
-        if (!slideData) return
         slideFilter = ""
+        if (!slideData) return
+
         if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
         if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
     }

@@ -402,6 +402,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // sort in descending order so indexes are correct while adding/removing
             slides = slides.sort((a, b) => (a.index < b.index ? 1 : -1))
+            if (data.layout?.backgrounds?.[1]) data.layout.backgrounds.reverse()
 
             slides.forEach((slide, i) => {
                 let id = slide.id

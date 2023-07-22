@@ -102,7 +102,7 @@
 
             // use default input shortcuts on supported devices (this includes working undo/redo)
             const exeption = ["e", "i", "n", "o", "s", "a"]
-            if (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && $os.platform !== "darwin") {
+            if ((e.key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && $os.platform !== "darwin")) {
                 return
             }
 
@@ -167,6 +167,7 @@
         if (e.ctrlKey || e.metaKey || e.target.closest(".dragger")) enableOutputMove = true
         else enableOutputMove = false
     }
+    $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
 </script>
 
 <svelte:window on:keydown={keydown} />

@@ -130,6 +130,8 @@
         "favourite": "Ulubione",
         "pause": "Pauza",
         "stop": "Stop",
+        "back10": "Go back 10 seconds",
+        "forward10": "Go forward 10 seconds",
         "volume": "Głośność",
         "speed": "Prędkość",
         "show": "Pokaż",

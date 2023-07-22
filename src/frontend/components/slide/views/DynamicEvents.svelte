@@ -69,23 +69,22 @@
 
         return html
     }
+
+    function openInDrawer() {
+        if (!edit) return
+
+        drawerTabsData.update((a) => {
+            a.calendar.activeSubTab = "event"
+            return a
+        })
+        activeDrawerTab.set("calendar")
+
+        // open drawer if closed
+        if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+    }
 </script>
 
-<div
-    class="events"
-    on:dblclick={() => {
-        if (edit) {
-            drawerTabsData.update((a) => {
-                a.calendar.activeSubTab = "event"
-                return a
-            })
-            activeDrawerTab.set("calendar")
-
-            // open drawer if closed
-            if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
-        }
-    }}
->
+<div class="events" on:dblclick={openInDrawer}>
     {#each filteredEvents as event}
         {#if event.name}
             {@html getEventElement(event, textSize)}

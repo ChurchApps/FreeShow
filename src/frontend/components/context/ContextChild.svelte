@@ -9,6 +9,7 @@
     export let contextActive: boolean
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
+    export let translate: number = 0
     export let side: "right" | "left" = "right"
     $: transform = side === "right" ? "100%" : "-100%"
 
@@ -68,7 +69,7 @@
         {/key}
     </span>
     {#if open}
-        <div class="submenu" style="{side}: 0; transform: translate({transform}, -10px);">
+        <div class="submenu" style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-10px'});">
             {#if menu.items?.length}
                 {#each menu.items as itemId}
                     {#if itemId === "SEPERATOR"}

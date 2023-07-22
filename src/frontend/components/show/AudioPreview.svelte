@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary, playingAudio } from "../../stores"
+    import { activeShow, dictionary, outLocked, playingAudio } from "../../stores"
     import { clearAudio, getAudioDuration, playAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -121,7 +121,16 @@
 
 <div class="main media context #media_preview">
     <div class="buttons">
-        <Button style="flex: 0" center title={paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => playAudio({ path, name }, true, currentTime)}>
+        <Button
+            style="flex: 0"
+            disabled={$outLocked}
+            center
+            title={paused ? $dictionary.media?.play : $dictionary.media?.pause}
+            on:click={() => {
+                if ($outLocked) return
+                playAudio({ path, name }, true, currentTime)
+            }}
+        >
             <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />
         </Button>
         {#if sliderValue !== null}

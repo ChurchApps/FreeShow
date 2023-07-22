@@ -130,6 +130,8 @@
         "favourite": "Favoritar",
         "pause": "Pausa",
         "stop": "Parar",
+        "back10": "Go back 10 seconds",
+        "forward10": "Go forward 10 seconds",
         "volume": "Volume",
         "speed": "Speed",
         "show": "Mostrar",

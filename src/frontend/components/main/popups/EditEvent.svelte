@@ -160,6 +160,7 @@
         if (selectedType.id === "event" && stored === JSON.stringify(editEvent)) return activePopup.set(null)
         if (selectedType.id === "event" && !editEvent.name?.length) return activePopup.set(null)
         if (selectedType.id === "show" && (!selectedShow || !$shows[selectedShow.id])) return activePopup.set(null)
+        if (selectedType.id === "show") editEvent.isoTo = editEvent.isoFrom
 
         let { data, id } = updateEventData(editEvent, stored, { type: selectedType, show: selectedShow })
         if (!data) return

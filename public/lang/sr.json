@@ -130,6 +130,8 @@
         "favourite": "Omiljeno",
         "pause": "Pauza",
         "stop": "Zaustavi",
+        "back10": "Go back 10 seconds",
+        "forward10": "Go forward 10 seconds",
         "volume": "Zvuk",
         "speed": "Brzina",
         "show": "Prikaži",

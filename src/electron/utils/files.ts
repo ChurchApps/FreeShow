@@ -134,6 +134,7 @@ export function loadFile(p: string, contentId: string = ""): any {
     try {
         content = JSON.parse(content)
     } catch (error) {
+        console.log(error)
         return { error: "not_found", id: contentId }
     }
     if (contentId && content[0] !== contentId) return { error: "not_found", id: contentId, file_id: content[0] }

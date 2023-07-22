@@ -114,8 +114,10 @@
         altKeyPressed = false
     }
 
+    // ZOOM
     let zoom = 1
 
+    // shortcut
     let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
@@ -129,6 +131,15 @@
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
+    }
+
+    // menu
+    let zoomOpened: boolean = false
+    function mousedown(e: any) {
+        keyup()
+        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
+
+        zoomOpened = false
     }
 
     // CHORDS
@@ -147,29 +158,21 @@
 
     // remove overflow if scrollbars are flickering over 25 times per second
     let hideOverflow: boolean = false
-    let changedTimes: number = 0
-    $: if (ratio) changedTimes++
-    $: if (!ratioTimeout && changedTimes > 2) startTimeout()
-    $: if (ratio && hideOverflow && !ratioTimeout && changedTimes > 1) hideOverflow = false
+    // let changedTimes: number = 0
+    // $: if (ratio) changedTimes++
+    // $: if (!ratioTimeout && changedTimes > 2) startTimeout()
+    // $: if (ratio && hideOverflow && !ratioTimeout && changedTimes > 1) hideOverflow = false
 
-    let ratioTimeout: any = null
-    function startTimeout() {
-        ratioTimeout = setTimeout(() => {
-            if (changedTimes > 5) hideOverflow = true
-            changedTimes = 0
-            setTimeout(() => {
-                ratioTimeout = null
-            }, 10)
-        }, 200)
-    }
-
-    let zoomOpened: boolean = false
-    function mousedown(e: any) {
-        keyup()
-        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
-
-        zoomOpened = false
-    }
+    // let ratioTimeout: any = null
+    // function startTimeout() {
+    //     ratioTimeout = setTimeout(() => {
+    //         if (changedTimes > 5) hideOverflow = true
+    //         changedTimes = 0
+    //         setTimeout(() => {
+    //             ratioTimeout = null
+    //         }, 10)
+    //     }, 200)
+    // }
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={mousedown} on:wheel={wheel} />

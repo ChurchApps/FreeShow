@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, outputs, playerVideos } from "../../../stores"
+    import { activeShow, outLocked, outputs, playerVideos } from "../../../stores"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
@@ -54,8 +54,13 @@
             label={video.name || ""}
             title={video.id || ""}
             on:click={(e) => {
-                if (e.ctrlKey || e.metaKey) return
-                setOutput("background", { id: video.rid, type: "player" })
+                if ($outLocked || e.ctrlKey || e.metaKey) return
+                if (findMatchingOut(video.rid, $outputs)) {
+                    setOutput("background", null)
+                    return
+                }
+
+                setOutput("background", { id: video.rid, type: "player", startAt: 0 })
             }}
             on:dblclick={() => {
                 activeShow.set({ id: video.rid, type: "player" })

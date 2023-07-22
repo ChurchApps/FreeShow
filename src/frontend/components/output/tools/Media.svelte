@@ -64,6 +64,8 @@
         videoData.paused = !videoData.paused
         sendToOutput()
     }
+
+    let changeValue: number = 0
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -83,17 +85,24 @@
             <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
             </Button>
-            <VideoSlider disabled={$outLocked} {outputId} bind:videoData bind:videoTime toOutput />
+            <VideoSlider disabled={$outLocked} {outputId} bind:videoData bind:videoTime bind:changeValue toOutput />
             <Button
                 center
-                title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
-                disabled={$outLocked}
+                title={$dictionary.media?.back10}
                 on:click={() => {
-                    videoData.muted = !videoData.muted
-                    sendToOutput()
+                    changeValue = Math.max(videoTime - 10, 0.01)
                 }}
             >
-                <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
+                <Icon id="back_10" white size={1.2} />
+            </Button>
+            <Button
+                center
+                title={$dictionary.media?.forward10}
+                on:click={() => {
+                    changeValue = Math.min(videoTime + 10, videoData.duration - 0.1)
+                }}
+            >
+                <Icon id="forward_10" white size={1.2} />
             </Button>
             <Button
                 center
@@ -104,6 +113,17 @@
                 }}
             >
                 <Icon id="loop" white={!videoData.loop} size={1.2} />
+            </Button>
+            <Button
+                center
+                title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
+                disabled={$outLocked}
+                on:click={() => {
+                    videoData.muted = !videoData.muted
+                    sendToOutput()
+                }}
+            >
+                <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
             </Button>
         </span>
     {/if}

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte"
+
     export let scrollElem: any = null
     export let timeout: number = 0
     export let offset: number = -1
@@ -21,6 +23,7 @@
         elem.setAttribute("style", (elem.getAttribute("style") || "") + behaviour)
 
         t = setTimeout(() => {
+            if (!t) return
             elem.scrollTo(0, offset)
             t = null
         }, timeout)
@@ -30,13 +33,21 @@
         index++
         if (st) return
         st = setTimeout(() => {
+            if (!st) return
             if (offset !== elem.scrollTop) scroll(index)
             st = null
         }, timeout + 400)
     }
+
+    let dispatch = createEventDispatcher()
+    function wheel(event: any) {
+        dispatch("wheel", { event })
+        t = null
+        st = null
+    }
 </script>
 
-<div class="scroll {$$props.class}" on:wheel bind:this={scrollElem} style={($$props.style || "") + behaviour}>
+<div class="scroll {$$props.class}" on:wheel={wheel} bind:this={scrollElem} style={($$props.style || "") + behaviour}>
     <slot />
 </div>
 

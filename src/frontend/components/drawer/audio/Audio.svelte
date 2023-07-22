@@ -1,6 +1,6 @@
 <script lang="ts">
     import { READ_FOLDER } from "../../../../types/Channels"
-    import { activeShow, audioFolders, dictionary, media, playingAudio } from "../../../stores"
+    import { activeShow, audioFolders, dictionary, media, outLocked, playingAudio } from "../../../stores"
     import { getAudioDuration, playAudio } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
     import Icon from "../../helpers/Icon.svelte"
@@ -187,7 +187,7 @@
                                     title={file.path}
                                     bold={false}
                                     on:click={(e) => {
-                                        if (e.ctrlKey || e.metaKey) return
+                                        if ($outLocked || e.ctrlKey || e.metaKey) return
                                         playAudio({ path: file.path, name: file.name })
                                     }}
                                     on:dblclick={() => {

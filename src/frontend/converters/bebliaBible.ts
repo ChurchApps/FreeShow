@@ -2,11 +2,13 @@ import { scriptures, scripturesCache } from "./../stores"
 import type { Bible } from "../../types/Bible"
 import { uid } from "uid"
 import { xml2json } from "./xml"
+import { formatToFileName } from "../components/helpers/show"
 
 export function convertBebliaBible(data: any[]) {
     data.forEach((bible) => {
         let obj: Bible = convertToBible(xml2json(bible.content))
         if (!obj.name) obj.name = bible.name
+        obj.name = formatToFileName(obj.name)
 
         let id = uid()
         // create folder & file

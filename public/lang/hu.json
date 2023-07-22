@@ -130,6 +130,8 @@
         "favourite": "Kedvenc",
         "pause": "Szüneteltetés",
         "stop": "Leállítás",
+        "back10": "Go back 10 seconds",
+        "forward10": "Go forward 10 seconds",
         "volume": "Hangerő",
         "speed": "Sebesség",
         "show": "Megjelenítés",

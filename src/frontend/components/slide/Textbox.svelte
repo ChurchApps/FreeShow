@@ -150,7 +150,7 @@
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "events"}
-        <DynamicEvents {...item.events} textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
+        <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={slideIndex} />
     {:else if item?.type === "visualizer"}
