@@ -6,17 +6,18 @@
     import T from "../helpers/T.svelte"
     import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
+    import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
-    import { _show } from "../helpers/shows"
 
     $: showId = $activeShow?.id || ""
-    $: layouts = $showsCache[showId]?.layouts
-    $: activeLayout = $showsCache[showId]?.settings?.activeLayout
+    $: currentShow = $showsCache[showId] || {}
+    $: layouts = currentShow.layouts
+    $: activeLayout = currentShow.settings?.activeLayout
 
     $: sortedLayouts = Object.entries(layouts || {})
         .map(([id, layout]: any) => ({ id, ...layout }))
@@ -85,16 +86,29 @@
         }, 8000)
     }
 
-    $: reference = $showsCache[showId]?.reference
+    $: reference = currentShow.reference
     $: multipleLayouts = sortedLayouts.length > 1
 </script>
 
 <svelte:window on:mousedown={mousedown} />
 
+<!-- one at a time, in prioritized order -->
 {#if layouts?.[activeLayout]?.notes}
-    <div class="notes">
+    <div class="notes" title={$dictionary.tools?.notes}>
         <Icon id="notes" right white />
         {@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}
+    </div>
+{:else if currentShow.message?.text}
+    <div class="notes" title={$dictionary.meta?.message}>
+        <Icon id="message" right white />
+        {@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}
+    </div>
+{:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
+    <div class="notes" title={$dictionary.tools?.metadata}>
+        <Icon id="info" right white />
+        {@html Object.values(currentShow.meta)
+            .filter((a) => a.length)
+            .join("; ")}
     </div>
 {/if}
 
@@ -108,7 +122,7 @@
             {#if multipleLayouts}
                 {#each sortedLayouts as layout}
                     <!-- <SelectElem id="layout" data={id} borders="edges" trigger="row" draggable fill> -->
-                    <SelectElem id="layout" data={layout.id} fill>
+                    <SelectElem id="layout" data={layout.id} fill={!edit || edit === layout.id}>
                         <Button
                             class="context #layout"
                             on:click={() => {

@@ -57,15 +57,15 @@
     </div>
 </CombinedInput>
 <CombinedInput>
-    <p><T id="settings.auto_output" /></p>
-    <div class="alignRight">
-        <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
-    </div>
-</CombinedInput>
-<CombinedInput>
     <p><T id="settings.disable_labels" /></p>
     <div class="alignRight">
         <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.auto_output" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
     </div>
 </CombinedInput>
 
@@ -126,16 +126,32 @@
   </span>
 </div> -->
 
-<br />
-
 <!-- <Button style="width: 100%;" center><T id="settings.export_settings" /></Button> -->
 <!-- <Button style="width: 100%;" center><T id="settings.import_all" /></Button>
 <Button style="width: 100%;" center><T id="settings.export_all" /></Button> -->
-<Button style="width: 100%;" on:click={reset} center>
-    <Icon id="reset" right />
-    <T id="actions.reset" />
-</Button>
 
 <!-- project store location... -->
 
-<br />
+<div class="filler" />
+<div class="bottom">
+    <Button style="width: 100%;" on:click={reset} center>
+        <Icon id="reset" right />
+        <T id="actions.reset" />
+    </Button>
+</div>
+
+<style>
+    .filler {
+        height: 48px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
+    }
+</style>

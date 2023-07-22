@@ -207,14 +207,17 @@ export function playMidiIn(msg) {
     }
 
     let shows: any[] = midi?.shows || []
+    let slidePlayed: boolean = false
     shows.forEach(({ id }) => {
         let refs = _show(id).layouts().ref()
         refs.forEach((ref) => {
             ref.forEach((slideRef) => {
                 let receiveMidi = slideRef.data.actions?.receiveMidi
                 if (!receiveMidi) return
-                if (receiveMidi !== msg.id) return
+                if (slidePlayed || receiveMidi !== msg.id) return
+
                 // start slide
+                slidePlayed = true
                 updateOut(id, slideRef.layoutIndex, ref)
                 setOutput("slide", { id, layout: slideRef.layoutId, index: slideRef.layoutIndex, line: 0 })
             })

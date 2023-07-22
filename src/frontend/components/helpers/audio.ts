@@ -80,7 +80,7 @@ export function analyseAudio() {
             // remove cleared videos
             let videos: any[] = get(playingVideos).filter((a) => document.contains(a.video))
 
-            if (get(volume) && videos.length) {
+            if (videos.length) {
                 videos.map((a) => {
                     if (!a.paused) allAudio.push({ ...a })
                 })

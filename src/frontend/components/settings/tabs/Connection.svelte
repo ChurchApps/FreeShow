@@ -68,7 +68,7 @@
     </p>
 </div> -->
 
-<br />
+<!-- <br /> -->
 
 <CombinedInput title={$dictionary.popup?.connect}>
     <Button
@@ -121,6 +121,13 @@
     </Button>
 </CombinedInput>
 
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections })} center>
+        <Icon id="refresh" right />
+        <T id="settings.restart" />
+    </Button>
+</CombinedInput>
+
 <!-- <div>
   <p><T id="settings.device_name" /></p>
   <TextInput style="max-width: 50%;" value={$os.name} light />
@@ -146,28 +153,21 @@
     <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
 </CombinedInput>
 
-<CombinedInput>
-    <Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections })} center>
-        <Icon id="refresh" right />
-        <T id="settings.restart" />
-    </Button>
-</CombinedInput>
-
-<br />
-
-<Button style="width: 100%;" on:click={reset} center>
-    <Icon id="reset" right />
-    <T id="actions.reset" />
-</Button>
-
-<br />
-
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>
   <span>(all, only phones, (laptops), ...)</span>
 </div> -->
+
+<div class="filler" />
+<div class="bottom">
+    <Button style="width: 100%;" on:click={reset} center>
+        <Icon id="reset" right />
+        <T id="actions.reset" />
+    </Button>
+</div>
+
 <style>
-    div:not(.scroll) {
+    div:not(.scroll):not(.bottom):not(.filler) {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -181,5 +181,19 @@
         padding-left: 10px;
         opacity: 0.5;
         font-weight: normal;
+    }
+
+    .filler {
+        height: 48px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
     }
 </style>

@@ -100,6 +100,10 @@
     }
     button.center {
         justify-content: center;
+        text-align: center;
+    }
+    button.center :global(p) {
+        text-align: center;
     }
     button.bold {
         font-weight: bold;

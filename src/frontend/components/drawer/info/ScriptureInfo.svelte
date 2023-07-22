@@ -308,11 +308,11 @@
     <div class="settings">
         <CombinedInput textWidth={70}>
             <p><T id="info.template" /></p>
-            <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 50%;" />
+            <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 30%;" />
         </CombinedInput>
         <CombinedInput textWidth={70}>
             <p><T id="scripture.max_verses" /></p>
-            <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={25} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
+            <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
         </CombinedInput>
         <CombinedInput textWidth={70}>
             <p><T id="scripture.verse_numbers" /></p>
@@ -338,9 +338,11 @@
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
         </CombinedInput>
-        <CombinedInput>
-            <Notes disabled={!$scriptureSettings.showVersion && !$scriptureSettings.showVerse} lines={2} value={customText} on:edit={(e) => update("customText", e.detail)} />
-        </CombinedInput>
+        {#if $scriptureSettings.showVersion || ($scriptureSettings.showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
+            <CombinedInput>
+                <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
+            </CombinedInput>
+        {/if}
         <!-- <span>
       <p><T id="scripture.red_jesus" /> (WIP)</p>
       <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />

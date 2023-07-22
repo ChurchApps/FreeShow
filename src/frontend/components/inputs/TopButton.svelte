@@ -6,6 +6,7 @@
     import Button from "./Button.svelte"
 
     export let id: TopViews
+    export let red: boolean = false
     export let disabled: boolean = false
     export let hideLabel: null | boolean = null
     $: label = hideLabel === null ? !$labelsDisabled : !hideLabel
@@ -15,7 +16,7 @@
 
 <div>
     <!-- width: 140px; -->
-    <Button style={label ? "padding: 0.3em 1.2em;" : ""} {title} {disabled} active={$activePage === id} on:click={() => activePage.set(id)}>
+    <Button style={label ? "padding: 0.3em 1.2em;" : ""} {title} {disabled} active={$activePage === id} {red} on:click={() => activePage.set(id)}>
         <Icon {id} size={1.6} right={label} />
         {#if label}
             <span><T id={"menu." + id} /></span>

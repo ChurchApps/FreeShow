@@ -1,5 +1,5 @@
 <script type="ts">
-    import { activeEdit, activeShow, dictionary, os, outputDisplay, saved } from "../../stores"
+    import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, paintCache, saved } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { displayOutputs } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
@@ -27,7 +27,7 @@
     </span>
     <span style="width: 300px;justify-content: flex-end;">
         <!-- <TopButton id="stage" hideLabel /> -->
-        <TopButton id="draw" hideLabel />
+        <TopButton id="draw" red={$drawTool === "fill" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         <TopButton id="settings" hideLabel />
         <Button title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display} on:click={displayOutputs} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay}>
             {#if $outputDisplay}

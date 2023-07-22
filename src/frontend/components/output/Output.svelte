@@ -415,11 +415,11 @@
         {#if $showsCache[slide?.id]?.message?.text}
             {#if overlayTransition.type === "none"}
                 <div class="meta" style={messageStyle} class:key={currentOutput.isKeyOutput}>
-                    {$showsCache[slide?.id]?.message?.text}
+                    {@html $showsCache[slide?.id]?.message?.text.replaceAll("\n", "<br>")}
                 </div>
             {:else}
                 <div class="meta" transition:custom={overlayTransition} style={messageStyle} class:key={currentOutput.isKeyOutput}>
-                    {$showsCache[slide?.id]?.message?.text}
+                    {@html $showsCache[slide?.id]?.message?.text.replaceAll("\n", "<br>")}
                 </div>
             {/if}
         {/if}

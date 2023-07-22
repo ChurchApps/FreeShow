@@ -19,7 +19,7 @@
                 <div class="line" />
             {/each}
         </div>
-        <div class="lines">
+        <div class="lines" style="padding: 0 8px;">
             {#each { length: numbers } as _, i}
                 <p>{numbers - i}</p>
             {/each}
@@ -38,7 +38,7 @@
     }
 
     .main.advanced {
-        width: 60px;
+        width: 70px;
     }
     .lines {
         display: flex;
@@ -47,10 +47,12 @@
 
         text-align: center;
         opacity: 0.8;
+
+        background: var(--primary-lighter);
     }
     .lines .line {
         height: 1px;
-        width: 10px;
+        width: 8px;
         background-color: var(--text);
         opacity: 0.4;
         margin: 0 5px;

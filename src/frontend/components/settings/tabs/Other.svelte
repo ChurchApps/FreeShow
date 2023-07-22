@@ -156,8 +156,6 @@
     </CombinedInput>
 {/if}
 
-<!-- <br /> -->
-
 <CombinedInput>
     <Button style="width: 100%;" on:click={deleteCache}>
         <Icon id="delete" style="border: 0;" right />
@@ -168,12 +166,11 @@
     </Button>
 </CombinedInput>
 
-<!-- <hr /> -->
-<br />
-
-<Button style="width: 100%;" on:click={() => activePopup.set("reset_all")} center red>
-    <Icon id="reset" right /><T id="settings.reset_all" />
-</Button>
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => activePopup.set("reset_all")} center red>
+        <Icon id="reset" right /><T id="settings.reset_all" />
+    </Button>
+</CombinedInput>
 
 <style>
     .path {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, media, midiIn, outLocked, playingAudio, showsCache } from "../../../stores"
+    import { activeShow, dictionary, media, midiIn, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
     import { playMidiIn } from "../../../utils/midi"
     import { send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
@@ -105,14 +105,14 @@
 <div class="main">
     {#if bgs.length || audio.length || midi.length}
         {#if bgs.length}
-            <h5><T id="tools.media" /></h5>
+            <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
                 {@const filter = getMediaFilter(background.path)}
                 {@const flipped = $media[background.path]?.flipped || false}
                 {@const fit = $media[background.path]?.fit || "contain"}
                 {@const speed = $media[background.path]?.speed || "1"}
                 <SelectElem id="media" data={{ ...background }} draggable>
-                    <div class="item context #show_media" class:active={findMatchingOut(background.path)}>
+                    <div class="media_item item context #show_media" class:active={findMatchingOut(background.path, $outputs)}>
                         <HoverButton
                             style="flex: 2;height: 50px;max-width: 100px;"
                             icon="play"
@@ -129,15 +129,22 @@
                             <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} {fit} {speed} />
                             <!-- </div> -->
                         </HoverButton>
-                        <p on:click={() => activeShow.set({ id: background.path, name: background.name, type: background.type })} title={background.path}>{background.name}</p>
+                        <!-- on:click={() => activeShow.set({ id: background.path, name: background.name, type: background.type })} -->
+                        <p title={background.path}>{background.name}</p>
                         {#if background.count > 1}
-                            <span style="color: var(--secondary);">{background.count}</span>
+                            <span style="color: var(--secondary);font-weight: bold;">{background.count}</span>
                         {/if}
                         {#if background.type === "video"}
-                            <Button style="flex: 0" center title={background.muted !== false ? $dictionary.actions?.unmute : $dictionary.actions?.mute} on:click={() => setBG(background.id, "muted", background.muted === false)}>
+                            <Button
+                                style="flex: 0;padding: 14px 5px;"
+                                center
+                                title={background.muted !== false ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
+                                on:click={() => setBG(background.id, "muted", background.muted === false)}
+                                dark
+                            >
                                 <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
                             </Button>
-                            <Button style="flex: 0" center title={$dictionary.media?._loop} on:click={() => setBG(background.id, "loop", background.loop === false)}>
+                            <Button style="flex: 0;padding: 14px 5px;" center title={$dictionary.media?._loop} on:click={() => setBG(background.id, "loop", background.loop === false)} dark>
                                 <Icon id="loop" white={background.loop === false} size={1.2} />
                             </Button>
                         {/if}
@@ -150,12 +157,12 @@
             <h5><T id="preview.audio" /></h5>
             {#each audio as file}
                 <SelectElem id="audio" data={{ path: file.path, name: file.name }} draggable>
-                    <Button on:click={() => playAudio(file)} outline={$playingAudio[file.path]} style="width: 100%;" title={file.path} bold={false}>
+                    <Button class="context #show_audio" on:click={() => playAudio(file)} outline={$playingAudio[file.path]} style="padding: 8px;width: 100%;" title={file.path} bold={false}>
                         <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
-                        <p>{file.name.slice(0, file.name.lastIndexOf("."))}</p>
+                        <p style="width: 100%;text-align: left;">{file.name.slice(0, file.name.lastIndexOf("."))}</p>
 
                         {#if file.count > 1}
-                            <span style="color: var(--secondary);">{file.count}</span>
+                            <span style="color: var(--secondary);font-weight: bold;">{file.count}</span>
                         {/if}
                     </Button>
                 </SelectElem>
@@ -201,6 +208,18 @@
         text-transform: uppercase;
     }
 
+    .media_item {
+        padding-right: 2px;
+    }
+
+    .media_item:hover {
+        background-color: var(--hover);
+    }
+    .media_item:active,
+    .media_item:focus {
+        background-color: var(--focus);
+    }
+
     .item {
         display: flex;
         width: 100%;
@@ -212,15 +231,15 @@
     .item p {
         padding: 10px;
         flex: 3;
-        cursor: pointer;
+        /* cursor: pointer; */
     }
-    .item p:hover {
+    /* .item p:hover {
         background-color: var(--hover);
     }
     .item p:active,
     .item p:focus {
         background-color: var(--focus);
-    }
+    } */
 
     .item.active {
         outline: 2px solid var(--secondary);

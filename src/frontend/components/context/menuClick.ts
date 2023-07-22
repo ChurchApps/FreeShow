@@ -38,6 +38,7 @@ import {
     stageShows,
     styles,
     templates,
+    themes,
 } from "../../stores"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
@@ -49,7 +50,7 @@ import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers
 import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
-import { getActiveOutputs, setOutput } from "../helpers/output"
+import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
@@ -57,6 +58,8 @@ import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 import { newToast } from "../../utils/messages"
 import { stopMediaRecorder } from "../drawer/live/recorder"
+import { defaultThemes } from "../settings/tabs/defaultThemes"
+import { updateThemeValues } from "../../utils/updateSettings"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
@@ -101,6 +104,9 @@ const actions: any = {
         else if (id === "folder") activeRename.set("folder_" + data.id)
         else if (id === "layout") activeRename.set("layout_" + data)
         else if (id === "stage") activeRename.set("stage_" + data.id)
+        else if (id === "theme") activeRename.set("theme_" + data.id)
+        else if (id === "style") activeRename.set("style_" + data.id)
+        else if (id === "output") activeRename.set("output_" + data.id)
         else if (obj.contextElem.classList.contains("#video_marker")) activeRename.set("marker_" + obj.contextElem.id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
@@ -110,8 +116,9 @@ const actions: any = {
 
         console.error("COULD NOT REMOVE", obj)
     },
-    recolor: (obj: any) => {
-        if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
+    recolor: () => {
+        // "slide" || "group" || "overlay" || "template" || "output"
+        activePopup.set("color")
     },
     remove_group: (obj: any) => removeGroup(obj.sel.data),
     remove_slide: (obj: any) => removeSlide(obj.sel.data, "remove"),
@@ -638,6 +645,60 @@ const actions: any = {
     lowercase: (obj: any) => format("lowercase", obj),
     capitalize: (obj: any) => format("capitalize", obj),
     trim: (obj: any) => format("trim", obj),
+
+    // settings
+    reset_theme: (obj: any) => {
+        obj.sel.data.forEach(({ id }) => {
+            let oldTheme = get(themes)[id]
+            let defaultTheme = defaultThemes[id] || defaultThemes.default
+            let data = { ...defaultTheme, default: oldTheme.default || false, name: oldTheme.name }
+
+            history({ id: "UPDATE", newData: { data }, oldData: { id }, location: { page: "settings", id: "settings_theme" } })
+            updateThemeValues(get(themes)[id])
+        })
+    },
+    reset: (obj: any) => {
+        if (obj.sel.id === "style") {
+            const defaultStyle = { name: get(dictionary).example?.default || "Default" }
+
+            obj.sel.data.forEach(({ id }) => {
+                let styleId = id || (get(styles).default ? uid() : "default")
+                let style = get(styles)[styleId] || clone(defaultStyle)
+
+                let name = style?.name || ""
+                style = { name }
+
+                styles.update((a) => {
+                    a[styleId] = style
+
+                    return a
+                })
+            })
+
+            return
+        }
+
+        if (obj.sel.id === "output") {
+            obj.sel.data.forEach(({ id }) => {
+                let currentOutput = clone(get(outputs)[id] || defaultOutput)
+
+                // TODO: history
+                outputs.update((a) => {
+                    a[id] = clone(defaultOutput)
+
+                    // don't reset these values
+                    a[id].name = currentOutput.name
+                    a[id].active = currentOutput.active
+                    a[id].out = currentOutput.out
+
+                    currentOutputSettings.set(id)
+                    return a
+                })
+            })
+
+            return
+        }
+    },
 }
 
 function changeSlideAction(obj: any, id: string) {

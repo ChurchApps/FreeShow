@@ -234,28 +234,37 @@
         {/if}
     </div>
     <div class="actions">
-        <Button on:click={toggleChords} title={$dictionary.edit?.chords}>
-            <Icon id="chords" white={!chordsMode} />
-        </Button>
-
-        <div class="seperator" />
-
-        <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
-            <Icon size={1.3} id="zoomIn" white />
-        </Button>
-        {#if zoomOpened}
-            <div class="zoom_container" transition:slide>
-                <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
-                    <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
-                </Button>
-                <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
-                    <Icon size={1.3} id="add" white />
-                </Button>
-                <Button disabled={zoom >= 2} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
-                    <Icon size={1.3} id="remove" white />
-                </Button>
+        {#if Slide?.notes}
+            <div class="notes">
+                <Icon id="notes" right white />
+                {@html Slide.notes.replaceAll("\n", "&nbsp;")}
             </div>
         {/if}
+
+        <div class="actions" style="height: 100%;justify-content: right;">
+            <Button on:click={toggleChords} title={$dictionary.edit?.chords}>
+                <Icon id="chords" white={!chordsMode} />
+            </Button>
+
+            <div class="seperator" />
+
+            <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+                <Icon size={1.3} id="zoomIn" white />
+            </Button>
+            {#if zoomOpened}
+                <div class="zoom_container" transition:slide>
+                    <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
+                        <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
+                    </Button>
+                    <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
+                        <Icon size={1.3} id="add" white />
+                    </Button>
+                    <Button disabled={zoom >= 2} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
+                        <Icon size={1.3} id="remove" white />
+                    </Button>
+                </div>
+            {/if}
+        </div>
     </div>
 </div>
 
@@ -298,10 +307,16 @@
         position: relative;
         display: flex;
         align-items: center;
-        justify-content: right;
+        justify-content: space-between;
         width: 100%;
         background-color: var(--primary-darkest);
         /* border-top: 3px solid var(--primary-lighter); */
+    }
+
+    .notes {
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
     }
 
     /* fixed height for consistent heights */

@@ -50,6 +50,9 @@ export type SelectIds =
     | "global_timer"
     | "chord"
     | "midi"
+    | "theme"
+    | "style"
+    | "output"
 
 export interface Selected {
     id: null | SelectIds

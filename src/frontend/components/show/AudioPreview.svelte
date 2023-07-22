@@ -119,42 +119,54 @@
 
 <canvas bind:this={canvas} />
 
-<div class="buttons">
-    <Button style="flex: 0" center title={paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => playAudio({ path, name }, true, currentTime)}>
-        <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />
-    </Button>
-    {#if sliderValue !== null}
+<div class="main media context #media_preview">
+    <div class="buttons">
+        <Button style="flex: 0" center title={paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => playAudio({ path, name }, true, currentTime)}>
+            <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />
+        </Button>
+        {#if sliderValue !== null}
+            <span>
+                {joinTime(secondsToTime(sliderValue))}
+            </span>
+        {:else}
+            <span style="color: var(--secondary)">
+                {joinTime(secondsToTime(currentTime))}
+            </span>
+        {/if}
+        <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
         <span>
-            {joinTime(secondsToTime(sliderValue))}
+            {joinTime(secondsToTime(duration))}
         </span>
-    {:else}
-        <span style="color: var(--secondary)">
-            {joinTime(secondsToTime(currentTime))}
-        </span>
-    {/if}
-    <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
-    <span>
-        {joinTime(secondsToTime(duration))}
-    </span>
-    <Button
-        disabled={!playing.audio}
-        style="flex: 0"
-        center
-        title={$dictionary.media?.stop}
-        on:click={() => {
-            clearAudio(path)
-            currentTime = 0
-        }}
-    >
-        <Icon id={"stop"} white size={1.2} />
-    </Button>
+        <Button
+            disabled={!playing.audio}
+            style="flex: 0"
+            center
+            title={$dictionary.media?.stop}
+            on:click={() => {
+                clearAudio(path)
+                currentTime = 0
+            }}
+        >
+            <Icon id={"stop"} white size={1.2} />
+        </Button>
 
-    <!-- TODO: individual volume -->
+        <!-- TODO: individual volume -->
+    </div>
 </div>
 
 <style>
+    .main {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+    }
+
     .buttons {
         display: flex;
+        width: 100%;
+        height: fit-content;
         gap: 10px;
         align-items: center;
 
@@ -171,6 +183,7 @@
     }
 
     canvas {
+        pointer-events: none;
         position: absolute;
         bottom: 0;
         left: 0;

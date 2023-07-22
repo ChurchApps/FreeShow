@@ -12,10 +12,13 @@ import {
     activeStage,
     categories,
     clipboard,
+    currentOutputSettings,
+    dictionary,
     drawerTabsData,
     events,
     folders,
     midiIn,
+    outputs,
     overlays,
     projects,
     refreshEditSlide,
@@ -24,7 +27,9 @@ import {
     shows,
     showsCache,
     stageShows,
+    styles,
     templates,
+    themes,
     videoMarkers,
 } from "../../stores"
 import { newToast } from "../../utils/messages"
@@ -624,6 +629,24 @@ const deleteActions = {
             return a
         })
     },
+    theme: (data: any) => {
+        data.forEach(({ id }) => {
+            if (id === "default") return
+            history({ id: "UPDATE", newData: { id: id }, location: { page: "settings", id: "settings_theme" } })
+        })
+    },
+    style: (data: any) => {
+        data.forEach(({ id }) => {
+            history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_style" } })
+        })
+    },
+    output: (data: any) => {
+        data.forEach(({ id }) => {
+            history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_output" } })
+        })
+
+        currentOutputSettings.set(Object.keys(get(outputs))[0])
+    },
 }
 
 const duplicateActions = {
@@ -717,6 +740,29 @@ const duplicateActions = {
                 return a
             })
             return a
+        })
+    },
+    theme: (data: any) => {
+        data.forEach(({ id }) => {
+            let theme = clone(get(themes)[id])
+            let name = theme.name
+            if (theme.default) name = get(dictionary).themes?.[name] || name
+
+            history({ id: "UPDATE", newData: { data: theme, replace: { default: false, name: name + " 2" } }, location: { page: "settings", id: "settings_theme" } })
+        })
+    },
+    style: (data: any) => {
+        data.forEach(({ id }) => {
+            let style = clone(get(styles)[id])
+            id = uid()
+            history({ id: "UPDATE", newData: { data: style, replace: { name: style.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_style" } })
+        })
+    },
+    output: (data: any) => {
+        data.forEach(({ id }) => {
+            let output = clone(get(outputs)[id])
+            id = uid()
+            history({ id: "UPDATE", newData: { data: output, replace: { name: output.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
         })
     },
 }

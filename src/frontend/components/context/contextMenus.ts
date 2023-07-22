@@ -102,6 +102,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
+    // SETTINGS
+    reset_theme: { label: "settings.reset_theme", icon: "reset" },
+    reset: { label: "actions.reset", icon: "reset" },
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -150,6 +153,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     media_preview: ["close"],
     // , "delete_all"
     show_media: ["play", "play_no_filters", "preview", "SEPERATOR", "edit"],
+    show_audio: ["preview"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
@@ -206,4 +210,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],
+
+    // SETTINGS
+    theme: ["rename", "duplicate", "delete", "SEPERATOR", "reset_theme"],
+    style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
+    output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
 }

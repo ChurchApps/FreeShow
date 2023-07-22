@@ -80,12 +80,11 @@
     {/if}
     {#if (video && getMediaType(getExtension(outName)) === "video") || background?.type === "player"}
         <span class="group">
-            <Button style="flex: 0" center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
+            <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
             </Button>
             <VideoSlider disabled={$outLocked} {outputId} bind:videoData bind:videoTime toOutput />
             <Button
-                style="flex: 0"
                 center
                 title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
                 disabled={$outLocked}
@@ -97,7 +96,6 @@
                 <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
             </Button>
             <Button
-                style="flex: 0"
                 center
                 title={$dictionary.media?._loop}
                 on:click={() => {
@@ -118,8 +116,7 @@
         align-items: center;
     }
     .group :global(button) {
-        flex-grow: 1;
-        /* height: 40px; */
+        padding: 0.3em !important;
     }
 
     .name {

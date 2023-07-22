@@ -109,8 +109,9 @@
 <style>
     h3 {
         color: var(--text);
+        background-color: var(--primary-darkest);
         text-align: center;
-        margin-bottom: 10px;
+        padding: 5px 0;
         overflow: initial;
     }
 

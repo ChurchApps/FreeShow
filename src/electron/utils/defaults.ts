@@ -2,6 +2,17 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 
 export const defaultConfig: any = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 } }
 
+export const defaultGroups: any = {
+    break: { name: "break", default: true, color: "#f5255e" },
+    bridge: { name: "bridge", default: true, color: "#f52598" },
+    chorus: { name: "chorus", default: true, color: "#f525d2" },
+    intro: { name: "intro", default: true, color: "#d525f5" },
+    outro: { name: "outro", default: true, color: "#a525f5" },
+    pre_chorus: { name: "pre_chorus", default: true, color: "#8825f5" },
+    tag: { name: "tag", default: true, color: "#7525f5" },
+    verse: { name: "verse", default: true, color: "#5825f5" },
+}
+
 export const defaultSettings: { [key in SaveListSettings]: any } = {
     initialized: false,
     outLocked: false,
@@ -102,16 +113,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         showVersion: false,
         showVerse: true,
     },
-    groups: {
-        break: { name: "break", default: true, color: "#f5255e" },
-        bridge: { name: "bridge", default: true, color: "#f52598" },
-        chorus: { name: "chorus", default: true, color: "#f525d2" },
-        intro: { name: "intro", default: true, color: "#d525f5" },
-        outro: { name: "outro", default: true, color: "#a525f5" },
-        pre_chorus: { name: "pre_chorus", default: true, color: "#8825f5" },
-        tag: { name: "tag", default: true, color: "#7525f5" },
-        verse: { name: "verse", default: true, color: "#5825f5" },
-    },
+    groups: defaultGroups,
     midiIn: {},
     videoMarkers: {},
 }

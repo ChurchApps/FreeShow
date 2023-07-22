@@ -201,6 +201,7 @@ export function updateBounds(data: any) {
 
 export function setValue({ id, key, value }: any) {
     let window: BrowserWindow = outputWindows[id]
+    if (!window) return
 
     if (key === "alwaysOnTop") {
         window.setAlwaysOnTop(value)

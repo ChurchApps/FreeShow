@@ -121,14 +121,13 @@
     </span>
 {/if}
 
-<br />
-
-<Button on:click={reset} style="width: 100%;" center>
-    <Icon id="reset" right />
-    <T id="actions.reset" />
-</Button>
-
-<br />
+<div class="filler" />
+<div class="bottom">
+    <Button style="width: 100%;" on:click={reset} center>
+        <Icon id="reset" right />
+        <T id="actions.reset" />
+    </Button>
+</div>
 
 <style>
     .info {
@@ -151,5 +150,19 @@
         white-space: normal;
         /* font-style: italic; */
         opacity: 0.8;
+    }
+
+    .filler {
+        height: 48px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
     }
 </style>

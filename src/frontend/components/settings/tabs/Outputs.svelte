@@ -1,46 +1,28 @@
 <script lang="ts">
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activePopup, currentOutputSettings, labelsDisabled, os, outputDisplay, outputs, styles } from "../../../stores"
+    import { activePopup, currentOutputSettings, os, outputDisplay, outputs, styles } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
-    import { addOutput, defaultOutput, deleteOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
+    import { addOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
-    import Color from "../../inputs/Color.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
+    import HiddenInput from "../../inputs/HiddenInput.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
 
-    function reset() {
-        let n = currentOutput.name
-        let active = currentOutput.active
-        let out = currentOutput.out
-        outputs.update((output) => {
-            let id: string = currentOutput.id
-            output[id] = JSON.parse(JSON.stringify(defaultOutput))
-            output[id].name = n
-            output[id].active = active
-            output[id].out = out
-
-            currentOutputSettings.set(id)
-            return output
-        })
-    }
-
-    let options: any[] = []
-    $: options = Object.entries($outputs)
+    let outputsList: any[] = []
+    $: outputsList = Object.entries($outputs)
         .map(([id, a]) => ({ id, ...a }))
         .filter((a) => !a.isKeyOutput)
         .sort((a, b) => a.name.localeCompare(b.name))
 
-    $: if (options.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(options[0].id)
+    $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList[0].id)
 
     let currentOutput: any = {}
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
-
-    $: name = currentOutput?.name || ""
 
     function updateOutput(key: string, value: any) {
         outputs.update((a: any) => {
@@ -72,7 +54,6 @@
     }
 
     const isChecked = (e: any) => e.target.checked
-    const getValue = (e: any) => e.target.value
 
     // styles
     $: stylesList = getList($styles)
@@ -85,6 +66,8 @@
 
         return [{ id: null, name: "—" }, ...sortedList]
     }
+
+    let edit: any
 </script>
 
 <div class="info">
@@ -95,39 +78,11 @@
     {/if}
 </div>
 
-<CombinedInput>
-    <Dropdown style="width: 100%;" {options} value={currentOutput?.name || ""} on:click={(e) => currentOutputSettings.set(e.detail.id)} />
-</CombinedInput>
-
-<CombinedInput>
-    <TextInput
-        value={name}
-        on:input={(e) => (name = getValue(e))}
-        on:change={() => {
-            if (name) updateOutput("name", name)
-        }}
-        light
-    />
-    <Button on:click={() => deleteOutput(currentOutput.id)} disabled={options.length <= 1}>
-        <Icon id="delete" right />
-        {#if !$labelsDisabled}
-            <T id="actions.delete" />
-        {/if}
-    </Button>
-
-    <Button on:click={() => addOutput()}>
-        <Icon id="add" right />
-        {#if !$labelsDisabled}
-            <T id="settings.new_output" />
-        {/if}
-    </Button>
-</CombinedInput>
-
 <!-- main -->
 
 <br />
 
-{#if options.length > 1}
+{#if outputsList.length > 1}
     <CombinedInput>
         <p><T id="settings.enabled" /></p>
         <div class="alignRight">
@@ -146,13 +101,6 @@
         </div>
     </CombinedInput>
 {/if}
-
-<CombinedInput>
-    <p><T id="settings.color_when_active" /></p>
-    <span style="width: 200px;">
-        <Color value={currentOutput.color} on:input={(e) => updateOutput("color", e.detail)} />
-    </span>
-</CombinedInput>
 
 <CombinedInput>
     <p><T id="settings.active_style" /></p>
@@ -193,7 +141,7 @@
 <CombinedInput>
     <p><T id="settings.position" /></p>
     <Button on:click={() => activePopup.set("change_output_values")}>
-        <Icon id="screen" right />
+        <Icon id="window" right />
         <p><T id="popup.change_output_values" /></p>
     </Button>
 </CombinedInput>
@@ -225,14 +173,37 @@
     </CombinedInput>
 {/if}
 
-<br />
+<div class="filler" style={outputsList.length > 1 ? "height: 76px;" : ""} />
+<div class="bottom">
+    {#if outputsList.length > 1}
+        <div style="display: flex;overflow-x: auto;">
+            {#each outputsList as currentOutput}
+                {@const active = $currentOutputSettings === currentOutput.id}
 
-<Button style="width: 100%;" on:click={reset} center>
-    <Icon id="reset" right />
-    <T id="actions.reset" />
-</Button>
+                <SelectElem id="output" data={{ id: currentOutput.id }} fill>
+                    <Button
+                        border={active}
+                        class="context #output_screen"
+                        {active}
+                        style="width: 100%;outline-offset: -4px;border-bottom: 2px solid {currentOutput.color};"
+                        on:click={() => currentOutputSettings.set(currentOutput.id)}
+                        bold={false}
+                        center
+                    >
+                        <HiddenInput value={currentOutput.name} id={"output_" + currentOutput.id} on:edit={(e) => updateOutput("name", e.detail.value)} bind:edit />
+                    </Button>
+                </SelectElem>
+            {/each}
+        </div>
+    {/if}
 
-<br />
+    <div style="display: flex;">
+        <Button style="width: 100%;" on:click={() => addOutput()} center>
+            <Icon id="add" right />
+            <T id="settings.add" />
+        </Button>
+    </div>
+</div>
 
 <style>
     .info {
@@ -257,5 +228,19 @@
         text-align: center;
         font-size: 0.9em;
         margin: 20px 0;
+    }
+
+    .filler {
+        height: 48px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
     }
 </style>

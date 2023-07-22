@@ -381,6 +381,7 @@ export const _updaters = {
         },
     },
     settings_style: { store: styles },
+    settings_output: { store: outputs },
 }
 
 function updateTransparentColors(id: string) {
