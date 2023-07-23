@@ -30,7 +30,7 @@
         "actions.copy": ctrl + " + c",
         "actions.duplicate": ctrl + " + d",
         "actions.export": ctrl + " + e",
-        "actions.fullscreen_preview": ctrl + " + f",
+        "main.search": ctrl + " + f",
         "actions.import": ctrl + " + i",
         "preview._lock": ctrl + " + l",
         "actions.mute": ctrl + " + m",

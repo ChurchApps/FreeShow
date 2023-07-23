@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OUTPUT, STAGE } from "../../../types/Channels"
 import type { Slide } from "../../../types/Show"
-import { changeSlideGroups } from "../../show/slides"
+import { changeSlideGroups, splitItemInTwo } from "../../show/slides"
 import {
     $,
     activeDrawerTab,
@@ -40,8 +40,11 @@ import {
     templates,
     themes,
 } from "../../stores"
+import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
+import { updateThemeValues } from "../../utils/updateSettings"
+import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
@@ -54,12 +57,9 @@ import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
-import { newToast } from "../../utils/messages"
-import { stopMediaRecorder } from "../drawer/live/recorder"
-import { defaultThemes } from "../settings/tabs/defaultThemes"
-import { updateThemeValues } from "../../utils/updateSettings"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
@@ -121,7 +121,10 @@ const actions: any = {
         activePopup.set("color")
     },
     remove_group: (obj: any) => removeGroup(obj.sel.data),
-    remove_slide: (obj: any) => removeSlide(obj.sel.data, "remove"),
+    remove_slide: (obj: any) => {
+        removeSlide(obj.sel.data, "remove")
+        if (get(activePage) === "edit") refreshEditSlide.set(true)
+    },
     delete_slide: (obj: any) => {
         let ref: any[] = _show().layouts("active").ref()[0]
         let slideId: string = ref[obj.sel.data[0].index].id
@@ -406,6 +409,7 @@ const actions: any = {
         } else if (["overlay", "template", "effect"].includes(obj.sel.id)) {
             activeEdit.set({ type: obj.sel.id, id: obj.sel.data[0], items: [] })
             activePage.set("edit")
+            refreshEditSlide.set(true)
         } else if (obj.sel.id === "global_group") {
             settingsTab.set("groups")
             activePage.set("settings")
@@ -640,6 +644,35 @@ const actions: any = {
         popupData.set(obj)
         activePopup.set("find_replace")
         // format("find_replace", obj)
+    },
+    cut_in_half: (obj: any) => {
+        if (obj.sel.id === "slide") {
+            let oldLayoutRef = _show().layouts("active").ref()[0]
+            let previousSpiltIds: string[] = []
+
+            obj.sel.data.forEach(({ index }) => {
+                let slideRef = oldLayoutRef[index]
+                if (!slideRef || previousSpiltIds.includes(slideRef.id)) return
+                previousSpiltIds.push(slideRef.id)
+
+                let slideItems = _show().slides([slideRef.id]).get("items")[0]
+
+                let firstTextItemIndex = slideItems.findIndex((a) => a.lines) ?? -1
+                if (firstTextItemIndex < 0) return
+
+                splitItemInTwo(slideRef, firstTextItemIndex)
+            })
+        } else if (!obj.sel.id) {
+            let editSlideIndex: number = get(activeEdit).slide ?? -1
+            if (editSlideIndex < 0) return
+
+            let textItemIndex: number = get(activeEdit).items[0] ?? -1
+            if (textItemIndex < 0) return
+
+            let slideRef = _show().layouts("active").ref()[0][editSlideIndex]
+            if (!slideRef) return
+            splitItemInTwo(slideRef, textItemIndex)
+        }
     },
     uppercase: (obj: any) => format("uppercase", obj),
     lowercase: (obj: any) => format("lowercase", obj),

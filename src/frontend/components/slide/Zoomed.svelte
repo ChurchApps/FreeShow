@@ -3,6 +3,7 @@
     import { outputs, styles } from "../../stores"
     import { getActiveOutputs, getResolution } from "../helpers/output"
 
+    export let id: string = ""
     export let background: string = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background || "#000000"
     export let backgroundDuration: number = 800
     export let center: boolean = false
@@ -10,6 +11,10 @@
     export let mirror: boolean = false
     export let showMirror: boolean = false
     export let disableStyle: boolean = false
+
+    export let outline: string = ""
+    export let disabled: boolean = false
+
     export let relative: boolean = false
     export let aspectRatio: boolean = true
     export let hideOverflow: boolean = true
@@ -17,6 +22,7 @@
     export let cropping: Cropping = { top: 0, right: 0, bottom: 0, left: 0 }
     export let resolution: Resolution = getResolution(null, { $outputs, $styles })
     $: resolution = getResolution(resolution, { $outputs, $styles })
+
     let slideWidth: number = 0
     export let ratio: number = 1
     $: ratio = Math.max(0.01, slideWidth / resolution.width) / customZoom
@@ -48,7 +54,7 @@
     }
 </script>
 
-<div class:center class="zoomed" style="width: 100%;height: 100%;">
+<div {id} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}">
     <div
         bind:offsetWidth={slideWidth}
         class="slide"
@@ -69,6 +75,10 @@
 </div>
 
 <style>
+    .disabled {
+        opacity: 0.5;
+    }
+
     .slide {
         position: relative;
         /* TODO: not edit */

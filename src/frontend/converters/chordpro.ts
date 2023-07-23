@@ -5,7 +5,7 @@ import { uid } from "uid"
 import type { Show, Slide } from "../../types/Show"
 import { clone } from "../components/helpers/array"
 import { ShowObj } from "../classes/Show"
-import { checkName } from "../components/helpers/show"
+import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { history } from "../components/helpers/history"
 import { get } from "svelte/store"
 import { activeProject } from "../stores"
@@ -26,8 +26,30 @@ export function convertChordPro(data: any) {
         let metadata: any = {}
         let notes: string = ""
 
+        let newSection: boolean = false
         content.split("\n").forEach(checkLine)
         function checkLine(line: string) {
+            if (newSection) {
+                newSection = false
+
+                console.log(newSection, line)
+                let trimmed = line.trim()
+                if (trimmed[trimmed.length - 1] === ":") {
+                    // WIP "Bridge (x2):"
+                    let group = trimmed.slice(0, -1).replace(/\d+/g, "").trim()
+                    console.log(group)
+                    group = group.replace("(x)", "").trim()
+                    let globalGroup = getGlobalGroup(group)
+
+                    if (globalGroup) slides[slides.length - 1].globalGroup = globalGroup
+                    else delete slides[slides.length - 1].globalGroup
+
+                    slides[slides.length - 1].group = globalGroup || group
+                    console.log(slides)
+                    return
+                }
+            }
+
             // comment
             if (line[0] === "#") {
                 notes += line.slice(2) + "\n"
@@ -64,6 +86,7 @@ export function convertChordPro(data: any) {
             if (!line.trim()) {
                 if (slides[slides.length - 1].items.length) {
                     slides.push(clone(defaultSlide))
+                    newSection = true
                 }
 
                 return

@@ -83,11 +83,12 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
     bind_to: { label: "actions.bind_to", icon: "bind", items: ["stage", "LOAD_outputs"] },
-    format: { label: "actions.format", icon: "format", items: ["find_replace", "uppercase", "lowercase", "capitalize", "trim"] },
+    format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
     find_replace: { label: "actions.find_replace", icon: "find_replace" },
+    cut_in_half: { label: "actions.cut_in_half", icon: "simple" },
     uppercase: { label: "actions.uppercase", icon: "increase_text" },
     lowercase: { label: "actions.lowercase", icon: "decrease_text" },
     capitalize: { label: "actions.capitalize", icon: "capitalize" },

@@ -196,9 +196,7 @@
                 <!-- TODO: media height -->
                 <Camera id={path} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem />
             </div>
-        {/if}
-
-        {#if type === "video"}
+        {:else if type === "video"}
             <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">
                 <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
                 {#if !loaded || hover || loadFullImage}

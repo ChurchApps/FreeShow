@@ -75,6 +75,11 @@ export const sortedShowsList: Writable<ShowList[]> = writable([])
 export const cachedShowsData: Writable<any> = writable({})
 export const quickTextCache: Writable<string> = writable("")
 
+// EDIT
+export const editHistory: Writable<any[]> = writable([])
+export const refreshEditSlide: Writable<boolean> = writable(false)
+export const triggerAutoSplit: Writable<boolean> = writable(false)
+
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })
 export const toastMessages: Writable<string[]> = writable([])
@@ -87,8 +92,6 @@ export const forceClock: Writable<boolean> = writable(false)
 export const lastSavedCache: Writable<any> = writable(null)
 export const playScripture: Writable<boolean> = writable(false)
 export const openScripture: Writable<any> = writable(null)
-export const editHistory: Writable<any[]> = writable([])
-export const refreshEditSlide: Writable<boolean> = writable(false)
 export const deletedShows: Writable<any[]> = writable([])
 export const renamedShows: Writable<any[]> = writable([])
 

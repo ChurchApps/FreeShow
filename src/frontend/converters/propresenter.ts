@@ -537,7 +537,7 @@ function getSlides(cues: any) {
             media: slide.actions.find((a) => a.media?.element)?.media?.element?.url?.absoluteString,
             backgroundColor: getColorValue(baseSlide.backgroundColor),
             size: baseSlide.size,
-            items: baseSlide.elements.map(getItem),
+            items: baseSlide.elements?.map(getItem) || [],
         }
     })
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
-    import { activeProject, activeShow, dictionary, folders, labelsDisabled, projects, projectView } from "../../stores"
+    import { activeProject, activeShow, dictionary, drawer, folders, labelsDisabled, projects, projectView } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
@@ -41,7 +41,8 @@
     // autoscroll
     let scrollElem: any
     let offset: number = -1
-    $: offset = autoscroll(scrollElem, Math.max(0, ($activeShow?.index || 0) - 5))
+    $: itemsBefore = $drawer.height < 400 ? 5 : 1
+    $: offset = autoscroll(scrollElem, Math.max(0, ($activeShow?.index || 0) - itemsBefore))
 
     // close if not existing
     $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null)
@@ -192,8 +193,6 @@
     {/if}
 </div>
 {#if $activeProject && !$projectView}
-    <!-- <ProjectTools /> -->
-    <!-- TODO: add section button -->
     <div class="tabs">
         <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
             <Icon id="section" right={!$labelsDisabled} />

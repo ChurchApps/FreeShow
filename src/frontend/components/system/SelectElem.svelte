@@ -73,7 +73,7 @@
         }
 
         let alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
-        let selectMultiple: boolean = e.ctrlKey || e.metaKey || e.shiftKey
+        let selectMultiple: boolean = e.ctrlKey || e.metaKey || e.shiftKey || e.buttons === 4 // middle mouse button
         let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         if (dragged) {

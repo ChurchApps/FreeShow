@@ -304,7 +304,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 name: bg.name,
                 type: bg.type || getMediaType(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)),
                 path: bg.path,
-                id: bg.id,
+                cameraGroup: bg.cameraGroup || "",
+                id: bg.id || bg.path, // path = cameras
                 muted: bg.muted !== false,
                 loop: bg.loop !== false,
                 filter: getMediaFilter(bg.path),

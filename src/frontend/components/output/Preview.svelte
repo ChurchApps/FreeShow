@@ -10,10 +10,9 @@
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
     import Button from "../inputs/Button.svelte"
-    import { getStyleResolution } from "../slide/getStyleResolution"
     import AudioMeter from "./AudioMeter.svelte"
     import ClearButtons from "./ClearButtons.svelte"
-    import Output from "./Output.svelte"
+    import MultiOutputs from "./MultiOutputs.svelte"
     import PreviewOutputs from "./PreviewOutputs.svelte"
     import ShowActions from "./ShowActions.svelte"
     import Audio from "./tools/Audio.svelte"
@@ -256,11 +255,6 @@
         callVideoClear = false
     }
 
-    function toggleFullscreen(e: any) {
-        if (!e.target.closest(".zoomed")) return
-        fullscreen = !fullscreen
-    }
-
     // MEDIA
 
     // auto clear video on finish
@@ -325,26 +319,11 @@
         <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>
             <Icon id="hide" white />
         </Button>
-        <div on:click={toggleFullscreen} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 6px);"}>
-            {#if fullscreen}
-                <Button class="hide" on:click={() => (fullscreen = false)} style="z-index: 2;opacity: 1;right: 10px;" title={$dictionary.actions?.close} center>
-                    <Icon id="close" size={1.5} white />
-                </Button>
-                <span class="resolution">
-                    <!-- TODO: get actual resultion ... -->
-                    <p><b><T id="screen.width" />:</b> {resolution.width} <T id="screen.pixels" /></p>
-                    <p><b><T id="screen.height" />:</b> {resolution.height} <T id="screen.pixels" /></p>
-                </span>
-            {/if}
-            <Output center={fullscreen} style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""} mirror preview bind:video bind:videoData bind:videoTime bind:title />
-            <!-- <RecordedOutput /> -->
-        </div>
+        <MultiOutputs {resolution} mirror preview bind:video bind:videoData bind:videoTime bind:title />
         <AudioMeter />
-        <!-- {#if $activePage === 'live'}
-    {/if} -->
     </div>
 
-    <!-- TODO: enable stage output -->
+    <!-- TODO: show stage output -->
 
     <!-- TODO: title keyboard shortcuts -->
 
@@ -403,41 +382,5 @@
     }
     .top:hover > :global(.hide) {
         opacity: 1;
-    }
-
-    .fullscreen {
-        position: fixed;
-        background-color: var(--primary-darkest);
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        /* border: 4px solid var(--secondary); */
-        z-index: 90;
-    }
-    .resolution {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-
-        color: var(--secondary-text);
-        /* background-color: var(--primary);
-    background-color: black; */
-        text-align: right;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        padding: 10px 12px;
-        opacity: 0.8;
-        transition: opacity ease-in-out 0.2s;
-
-        z-index: 30;
-    }
-    .resolution:hover {
-        opacity: 0;
-    }
-    .resolution p {
-        display: flex;
-        gap: 5px;
-        justify-content: space-between;
     }
 </style>

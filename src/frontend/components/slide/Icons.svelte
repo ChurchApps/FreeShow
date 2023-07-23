@@ -96,12 +96,10 @@
         <div>
             <div class="button">
                 <Button style="padding: 3px;" redHover title={$dictionary.remove?.background} on:click={() => removeLayout("background")}>
-                    <!-- <Icon id={background.type || "image"} size={0.9} white /> -->
-                    <Icon id="image" size={0.9} white />
+                    <Icon id={background.type === "camera" ? "camera" : "image"} size={0.9} white />
                 </Button>
             </div>
             {#if videoDuration}
-                <!-- <span>01:13</span> -->
                 <span><p>{videoDuration}</p></span>
             {/if}
         </div>

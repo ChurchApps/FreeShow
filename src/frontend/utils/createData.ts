@@ -1,4 +1,4 @@
-import { templateCategories } from "./../stores"
+import { stageShows, templateCategories } from "./../stores"
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
 import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, showsPath, templates } from "../stores"
@@ -44,6 +44,27 @@ export function createData(paths: any) {
             media: {},
         })
     }
+
+    stageShows.set({
+        default: {
+            name: get(dictionary).example?.default || "Stage",
+            disabled: false,
+            password: "",
+            settings: {},
+            items: {
+                "slide#current_slide_text": {
+                    enabled: true,
+                    style: "width:1870px;height:680px;left:25px;top:25px;font-weight:bold;",
+                    align: "",
+                },
+                "slide#next_slide_text": {
+                    enabled: true,
+                    style: "width:1870px;height:330px;left:25px;top:725px;color:#aaaaaa;font-weight:bold;",
+                    align: "",
+                },
+            },
+        },
+    })
 
     setExampleOverlays()
 

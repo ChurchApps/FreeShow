@@ -199,6 +199,10 @@
         /* justify-content: center; */
     }
 
+    .notes p :global(*) {
+        display: inline;
+    }
+
     div {
         display: flex;
         justify-content: space-between;

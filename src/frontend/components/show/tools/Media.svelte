@@ -107,6 +107,7 @@
         {#if bgs.length}
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
+                <!-- TODO: cameras -->
                 {@const filter = getMediaFilter(background.path)}
                 {@const flipped = $media[background.path]?.flipped || false}
                 {@const fit = $media[background.path]?.fit || "contain"}

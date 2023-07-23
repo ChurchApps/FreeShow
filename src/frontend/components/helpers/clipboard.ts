@@ -455,16 +455,16 @@ const pasteActions: any = {
     group: (data: any) => pasteActions.slide(data),
     overlay: (data: any) => {
         data?.forEach((slide: any) => {
-            slide = JSON.parse(JSON.stringify(slide))
-            slide.name += " 2"
-            history({ id: "UPDATE", newData: { data: slide }, location: { page: "drawer", id: "overlay" } })
+            let newSlide = clone(slide)
+            newSlide.name += " 2"
+            history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "overlay" } })
         })
     },
     template: (data: any) => {
         data?.forEach((slide: any) => {
-            slide = JSON.parse(JSON.stringify(slide))
-            slide.name += " 2"
-            history({ id: "UPDATE", newData: { data: slide }, location: { page: "drawer", id: "template" } })
+            let newSlide = clone(slide)
+            newSlide.name += " 2"
+            history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "template" } })
         })
     },
 }
@@ -513,6 +513,7 @@ const deleteActions = {
     },
     slide: (data, type: "delete" | "remove" = "delete") => {
         removeSlide(data, type)
+        if (get(activePage) === "edit") refreshEditSlide.set(true)
     },
     group: (data: any) => {
         history({ id: "SLIDES", oldData: { type: "delete_group", data: data.map(({ id }: any) => ({ id })) } })
@@ -735,8 +736,8 @@ const duplicateActions = {
         // TODO: history
         projects.update((a) => {
             data.forEach((project) => {
-                project = a[project.id]
-                a[uid()] = { ...clone(project), name: project.name + " 2" }
+                let newProject = clone(a[project.id])
+                a[uid()] = { ...newProject, name: newProject.name + " 2" }
                 return a
             })
             return a
@@ -778,7 +779,7 @@ function historyDelete(id, data, { updater } = { updater: "" }) {
 async function duplicateShows(selected: any) {
     await loadShows(selected.map(({ id }: any) => id))
     selected.forEach(({ id }: any) => {
-        let show = JSON.parse(JSON.stringify(get(showsCache)[id]))
+        let show = clone(get(showsCache)[id])
         show.name += " 2"
         show.timestamps.modified = new Date().getTime()
         history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, location: { page: "show", id: "show" } })

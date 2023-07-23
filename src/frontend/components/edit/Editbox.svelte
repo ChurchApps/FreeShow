@@ -95,38 +95,11 @@
     $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
     // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
-    function keydown(e: any) {
-        // TODO: get working in list view
-        if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
-            // incorrect editbox
-            if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
-
-            // split
-            let sel = getSelectionRange()
-            if (!sel?.length || (sel.length === 1 && !Object.keys(sel[0]).length)) return
-
-            // if (sel.start === sel.end) {
-            let lines: Line[] = getNewLines()
+    function cutInTwo({e, sel, lines, currentIndex, textPos, start}) {
             let firstLines: Line[] = []
             let secondLines: Line[] = []
-            let currentIndex = 0,
-                textPos = 0
-            let start = -1
 
-            // TODO: auto bullets
-            if (!e.altKey) {
-                // console.log(lines, textPos, start, currentIndex, sel)
-                // let lastLine = lines[lines.length - 1]
-                // let lineText = lastLine.text?.[lastLine.text?.length - 1]?.value
-                // if (!lineText?.includes("\n") || !lineText?.includes("• ")) return
-                // lines[lines.length - 1].text[lastLine.text.length - 1].value += "• "
-
-                // updateLines(lines)
-
-                return
-            }
-
-            lines.forEach((line, i) => {
+        lines.forEach((line, i) => {
                 if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
                 else firstLines.push({ align: line.align, text: [] })
 
@@ -169,7 +142,7 @@
             if (!secondLines.length) secondLines = defaultLine
 
             if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
-            let editItemIndex: number = $activeEdit.items[0] || Number(e.target.closest(".editItem").getAttribute("data-index")) || 0
+            let editItemIndex: number = $activeEdit.items[0] || Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) || 0
 
             let slideRef: any = _show().layouts("active").ref()[0][editIndex]
             if (!slideRef) return
@@ -198,8 +171,40 @@
             children = addToPos(children, [id], slideIndex)
             _show().slides([parentId]).set({ key: "children", value: children })
 
-            if (e.target.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
+            if (e?.target?.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
             else getStyle()
+    }
+
+    function keydown(e: any) {
+        // TODO: get working in list view
+        if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
+            // incorrect editbox
+            if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
+
+            // split
+            let sel = getSelectionRange()
+            if (!sel?.length || (sel.length === 1 && !Object.keys(sel[0]).length)) return
+
+            // if (sel.start === sel.end) {
+            let lines: Line[] = getNewLines()
+            let currentIndex = 0,
+                textPos = 0
+            let start = -1
+
+            // TODO: auto bullets
+            if (!e.altKey) {
+                // console.log(lines, textPos, start, currentIndex, sel)
+                // let lastLine = lines[lines.length - 1]
+                // let lineText = lastLine.text?.[lastLine.text?.length - 1]?.value
+                // if (!lineText?.includes("\n") || !lineText?.includes("• ")) return
+                // lines[lines.length - 1].text[lastLine.text.length - 1].value += "• "
+
+                // updateLines(lines)
+
+                return
+            }
+
+            cutInTwo({e, sel, lines, currentIndex, textPos, start})
         }
 
         if (e.key === "Escape") {

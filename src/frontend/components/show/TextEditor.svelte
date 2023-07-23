@@ -62,8 +62,10 @@
         let hasTextboxItem: boolean = false
 
         items.forEach((item) => {
-            // console.log(item)
             if (!item.lines) return
+            // only return first textbox!
+            if (hasTextboxItem) return
+
             hasTextboxItem = true
 
             let filteredLines = item.lines?.filter((line) => line.text?.filter((text) => text.value.length).length)
@@ -308,12 +310,22 @@
     }
 
     function createItems(oldItems, newItemsText, onlyStyles: boolean = false) {
-        let items: Item[] = oldItems.filter((item) => !item.lines?.length)
+        // get all items, except first textbox
+        let textboxFound: boolean = false
+        let items: Item[] = oldItems.filter((item) => {
+            if (textboxFound) return true
+            if (item.lines) {
+                textboxFound = true
+                return false
+            } else return true
+        })
+        // let items: Item[] = oldItems.filter((item) => !item.lines?.length)
         if (onlyStyles) items = []
         console.log(items, oldItems)
 
         // get old style
         let styleItem = oldItems.find((item) => item.lines?.length) || {}
+        let newItems: Item[] = []
         console.log("OLD STYLE ITEM", styleItem)
         newItemsText.forEach((text) => {
             let lines = text.split(br).filter((a) => a)
@@ -323,10 +335,10 @@
                 style: styleItem.style || "top:120px;left:50px;height:840px;width:1820px;",
                 lines: lines.map((line) => ({ align: styleItem.lines?.[0]?.align || "", text: [{ style: styleItem.lines?.[0]?.text?.[0]?.style || "", value: line }] })),
             }
-            items.push(textItem)
+            newItems.push(textItem)
         })
 
-        return items
+        return [...newItems, ...items]
     }
 
     function checkValue(e: any) {

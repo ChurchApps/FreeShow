@@ -349,12 +349,16 @@
 
     $: if (searchValue) updateSearch()
 
-    // TODO: what if it's spaces: 1 Peter, Songs of Solomon
+    let tempDisableInputs: boolean = false
+    let storedSearch = ""
+    $: if (tempDisableInputs && searchValue) updateSearchValue(storedSearch)
 
     function updateSearch() {
+        if (tempDisableInputs) return
         // if (!autoComplete) return
         if (searchValue.length < 2) {
             autoComplete = true
+            searchValues = { bookName: "", book: "", chapter: "", verses: [] }
             return
         }
 
@@ -421,6 +425,11 @@
             if (matchingArray.length) findMatches = matchingArray
         })
 
+        // remove books with number if no number in start of search
+        if (findMatches.length && !hasNumber(lowerSearch.slice(0, 3))) {
+            findMatches = findMatches.filter((a) => !hasNumber(a.name))
+        }
+
         let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName)
         if (!exactMatch && findMatches.length !== 1) return ""
 
@@ -434,9 +443,19 @@
         // auto complete
         // let rest = searchValue.slice(match.length)
         updateSearchValue(matchingBook.name + " ") // + rest.trim()
+
+        storedSearch = matchingBook.name + " "
+        tempDisableInputs = true
+        setTimeout(() => {
+            tempDisableInputs = false
+        }, 500)
+
         autoComplete = false
 
         return matchingBook.id
+    }
+    function hasNumber(str) {
+        return /\d/.test(str)
     }
 
     function findChapter({ splittedEnd }) {
@@ -452,8 +471,10 @@
         })
 
         if (formattedChapter === null) {
+            // if (isNaN(Number(chapter))) return ""
+            if (chapter.length > 2) return ""
             let msg = $dictionary.toast?.chapter_undefined
-            msg.replace("{}", chapter)
+            msg = msg.replace("{}", chapter)
             newToast(msg)
             return ""
         }
@@ -491,8 +512,8 @@
         } else if (currentVerses.length === 1 && verses[firstBibleId]) {
             if (currentVerses[0] > Object.keys(verses[firstBibleId]).length) {
                 let msg = $dictionary.toast?.verse_undefined
-                msg.replace("{}", verse)
-                newToast(msg)
+                msg = msg.replace("{}", verse)
+                if (verse.length < 3) newToast(msg)
             }
         }
 

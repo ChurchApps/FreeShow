@@ -173,8 +173,8 @@
         padding-left: 5px;
 
         /* overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap; */
+        text-overflow: ellipsis; */
+        white-space: nowrap;
         max-width: 40%;
     }
 </style>

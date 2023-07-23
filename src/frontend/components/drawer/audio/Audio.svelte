@@ -190,7 +190,8 @@
                                         if ($outLocked || e.ctrlKey || e.metaKey) return
                                         playAudio({ path: file.path, name: file.name })
                                     }}
-                                    on:dblclick={() => {
+                                    on:dblclick={(e) => {
+                                        if (e.ctrlKey || e.metaKey) return
                                         activeShow.set({ id: file.path, name: file.name, type: "audio" })
                                     }}
                                 >
@@ -262,11 +263,11 @@
 
     .grid :global(button) {
         /* font-size: 1em; */
-        padding: 8px 15px;
+        padding: 6px 15px;
 
         justify-content: space-between;
     }
-    .grid :global(.selectElem:nth-child(even)) {
+    .grid :global(.selectElem:not(.isSelected):nth-child(even)) {
         background-color: var(--primary-darkest);
     }
     .grid span {

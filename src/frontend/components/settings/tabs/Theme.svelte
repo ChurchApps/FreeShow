@@ -81,7 +81,7 @@
 
     function resetThemes() {
         theme.set("default")
-        themes.set(JSON.parse(JSON.stringify(defaultThemes)))
+        themes.set(clone(defaultThemes))
         updateThemeValues(defaultThemes.default)
     }
 

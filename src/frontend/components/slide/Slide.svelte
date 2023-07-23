@@ -269,7 +269,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                                 name={$dictionary.error?.load}
                                 path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
                                 cameraGroup={background?.cameraGroup || ghostBackground?.cameraGroup || ""}
-                                type={background?.type !== "player" ? background?.type : ghostBackground?.type !== "player" ? ghostBackground?.type : null}
+                                type={background && background?.type !== "player" ? background?.type : ghostBackground?.type !== "player" ? ghostBackground?.type : null}
                                 loadFullImage={!!(background?.path || background?.id)}
                                 {filter}
                                 {flipped}

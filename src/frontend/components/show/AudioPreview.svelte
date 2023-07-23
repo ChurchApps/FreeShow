@@ -47,7 +47,8 @@
     }
 
     function keydown(e: any) {
-        if (e.target.closest("input") || e.target.closest(".edit")) return
+        // if (e.target.closest("input") || e.target.closest(".edit")) return
+        if (document.activeElement !== document.body) return
 
         if (e.key === " ") playAudio({ path, name }, true, currentTime)
     }
@@ -105,6 +106,11 @@
                 let r = barHeight * 1.5 + 5 // * (i / bufferLengthLeft)
                 let g = 5 // 250 * (i / bufferLengthLeft)
                 let b = 150
+                // if (barHeight > 125) b = 120
+                // green - yellow - red
+                // let r = barHeight * 5 + 5
+                // let g = barHeight > 120 ? 10 : 10 * barHeight
+                // let b = 20
 
                 ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")"
                 ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight)
@@ -148,18 +154,37 @@
         <span>
             {joinTime(secondsToTime(duration))}
         </span>
-        <Button
-            disabled={!playing.audio}
-            style="flex: 0"
-            center
-            title={$dictionary.media?.stop}
-            on:click={() => {
-                clearAudio(path)
-                currentTime = 0
-            }}
-        >
-            <Icon id={"stop"} white size={1.2} />
-        </Button>
+
+        <div style="display: flex;">
+            <Button
+                disabled={!playing.audio}
+                style="flex: 0"
+                center
+                title={$dictionary.media?.stop}
+                on:click={() => {
+                    clearAudio(path)
+                    currentTime = 0
+                }}
+            >
+                <Icon id={"stop"} white size={1.2} />
+            </Button>
+            <Button
+                center
+                title={$dictionary.media?._loop}
+                disabled={!$playingAudio[path]}
+                on:click={() => {
+                    if (!$playingAudio[path]) return
+
+                    playingAudio.update((a) => {
+                        a[path].loop = !playing.loop
+
+                        return a
+                    })
+                }}
+            >
+                <Icon id="loop" white={!playing.loop} size={1.2} />
+            </Button>
+        </div>
 
         <!-- TODO: individual volume -->
     </div>

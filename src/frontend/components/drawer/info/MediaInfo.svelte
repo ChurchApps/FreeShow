@@ -9,7 +9,7 @@
     import PlayerInfo from "./PlayerInfo.svelte"
 
     $: name = $activeShow?.name || ""
-    $: if ($activeShow?.id) {
+    $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "")) {
         info = {}
         window.api.send(FILE_INFO, $activeShow?.id)
     }

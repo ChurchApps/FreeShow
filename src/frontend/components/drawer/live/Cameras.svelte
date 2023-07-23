@@ -21,7 +21,7 @@
             on:click={(e) => {
                 if ($outLocked || e.ctrlKey || e.metaKey) return
                 if (currentOutput.out?.background?.id === cam.id) setOutput("background", null)
-                else setOutput("background", { name: cam.name, id: cam.id, type: "camera" })
+                else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
             }}
         />
     {/each}

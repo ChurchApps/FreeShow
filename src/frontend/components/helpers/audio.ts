@@ -65,13 +65,18 @@ export function analyseAudio() {
                 .filter((audio) => {
                     // check if finished
                     if (!audio.paused && audio.audio.currentTime >= audio.audio.duration) {
-                        playingAudio.update((a: any) => {
-                            // a[audio.id].paused = true
-                            // TODO: check audio nextAfterMedia
-                            delete a[audio.id]
-                            return a
-                        })
-                        return false
+                        if (get(playingAudio)[audio.id].loop) {
+                            get(playingAudio)[audio.id].audio.currentTime = 0
+                            get(playingAudio)[audio.id].audio.play()
+                        } else {
+                            playingAudio.update((a: any) => {
+                                // a[audio.id].paused = true
+                                // TODO: check audio nextAfterMedia
+                                delete a[audio.id]
+                                return a
+                            })
+                            return false
+                        }
                     }
 
                     return audio.paused === false && audio.audio.volume

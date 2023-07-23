@@ -241,7 +241,7 @@
 
     .categories :global(button) {
         width: 100%;
-        padding: 0.2em 0.8em;
+        padding: 0.1em 0.8em !important;
         justify-content: space-between;
     }
     .tabs :global(button) {

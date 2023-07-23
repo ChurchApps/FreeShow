@@ -13,14 +13,18 @@
     {#each tabs as tab}
         <Button id="button" on:click={() => settingsTab.set(tab)} active={$settingsTab === tab} bold={false}>
             <Icon id={tab} right />
-            <T id="settings.{tab}" />
+            <p style="margin: 5px;"><T id="settings.{tab}" /></p>
         </Button>
     {/each}
 </div>
 
 <style>
     .main :global(#button) {
-        padding: 12px;
+        padding: 0.3em 0.8em;
         width: 100%;
+    }
+
+    .main :global(button:nth-child(even)) {
+        background-color: rgb(0 0 0 / 0.1);
     }
 </style>
