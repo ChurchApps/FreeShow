@@ -79,7 +79,7 @@
                             {#if id === "SEPERATOR"}
                                 <hr />
                             {:else}
-                                <ContextItem {id} {contextElem} {menu} bind:contextActive />
+                                <ContextItem {id} {contextElem} {menu} disabled={menu.disabled === true} bind:contextActive />
                             {/if}
                         {/each}
                     {:else}

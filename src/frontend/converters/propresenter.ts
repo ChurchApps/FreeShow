@@ -36,7 +36,7 @@ export function convertProPresenter(data: any) {
 
             let layoutID = uid()
             let show = new ShowObj(false, "propresenter", layoutID)
-            show.name = checkName(song.name || name)
+            show.name = checkName(song.name === "Untitled" ? name : song.name || name)
 
             let converted: any = {}
 
@@ -294,7 +294,10 @@ function decodeBase64(text: string) {
 function RTFToText(input: string) {
     input = input.slice(0, input.lastIndexOf("}"))
     input = input.replaceAll("\\pard", "\\remove")
+    input = input.replaceAll("\\part", "\\remove")
     input = input.replaceAll("\\par", "__BREAK__")
+    input = input.replaceAll("\\\n", "__BREAK__")
+    input = input.replaceAll("\n", "__BREAK__")
 
     // https://stackoverflow.com/a/188877
     const regex = /\{\*?\\[^{}]+}|[{}]|\\\n?[A-Za-z]+\n?(?:-?\d+)?[ ]?/gm
@@ -393,6 +396,7 @@ function convertProToSlides(song: any) {
     const tempArrangements: any[] = getArrangements(song.arrangements)
     const tempGroups: any[] = getGroups(song.cueGroups)
     const tempSlides: any[] = getSlides(song.cues)
+    console.log(tempArrangements, tempGroups, tempSlides)
 
     if (!tempArrangements?.length) {
         tempArrangements.push({ groups: Object.keys(tempGroups), name: "" })
@@ -551,7 +555,9 @@ function getItem(item: any) {
 
 function decodeRTF(text: string) {
     text = decodeBase64(text)
+    console.log(text)
     text = RTFToText(text)
+    console.log(text)
     return text
 }
 

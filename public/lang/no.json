@@ -476,6 +476,7 @@
         "stop_timers": "Stopp pågående tidtakere",
         "next_after_media": "Neste etter medier",
         "remove_media": "Fjern media",
+        "remove_layers": "Fjern lag",
         "index_select_project": "Velg prosjekt fra indeks",
         "index_select_project_show": "Velg element i prosjekt fra indeks",
         "index_select_slide": "Velg lysbilde fra indeks",

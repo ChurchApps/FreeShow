@@ -130,6 +130,7 @@
     on:dragend={endDrag}
     on:click={() => {
         dragActive = false
+        fileOver = false
         dragover = null
     }}
 />

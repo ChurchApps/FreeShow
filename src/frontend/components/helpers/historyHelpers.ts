@@ -6,7 +6,6 @@ import {
     activeShow,
     activeStage,
     defaultProjectName,
-    deletedShows,
     dictionary,
     drawerTabsData,
     events,
@@ -25,15 +24,15 @@ import {
     theme,
     themes,
 } from "../../stores"
+import { updateThemeValues } from "../../utils/updateSettings"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
+import { clone } from "./array"
 import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "./empty"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 import { dateToString } from "./time"
-import { clone } from "./array"
-import { updateThemeValues } from "../../utils/updateSettings"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -278,9 +277,6 @@ export const _updaters = {
             // set text cache
             saveTextCache(id, data.data)
 
-            // remove from deleted when restored
-            deletedShows.set(get(deletedShows).filter((a) => a.id !== id))
-
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
                 a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps }
@@ -307,9 +303,6 @@ export const _updaters = {
                     return a
                 })
             }
-
-            // add to deleted so the file can be deleted on save
-            deletedShows.set([...get(deletedShows), { id, name: get(shows)[id].name }])
 
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {

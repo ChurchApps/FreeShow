@@ -96,19 +96,21 @@
 {#if layouts?.[activeLayout]?.notes}
     <div class="notes" title={$dictionary.tools?.notes}>
         <Icon id="notes" right white />
-        {@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}
+        <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
     </div>
 {:else if currentShow.message?.text}
     <div class="notes" title={$dictionary.meta?.message}>
         <Icon id="message" right white />
-        {@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}
+        <p>{@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}</p>
     </div>
 {:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
     <div class="notes" title={$dictionary.tools?.metadata}>
         <Icon id="info" right white />
-        {@html Object.values(currentShow.meta)
-            .filter((a) => a.length)
-            .join("; ")}
+        <p>
+            {@html Object.values(currentShow.meta)
+                .filter((a) => a.length)
+                .join("; ")}
+        </p>
     </div>
 {/if}
 

@@ -67,7 +67,7 @@
 
     <div class="nocontext menus" on:mousemove={move} on:click={menu} on:contextmenu={menu}>
         {#each menus as menu}
-            <Button id={menu} active={activeID === menu} dark red={menu === "file" && !$saved}>
+            <Button id={menu} active={activeID === menu} red={menu === "file" && !$saved}>
                 <T id="titlebar.{menu}" />
             </Button>
         {/each}

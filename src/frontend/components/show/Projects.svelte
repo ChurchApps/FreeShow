@@ -41,7 +41,7 @@
     // autoscroll
     let scrollElem: any
     let offset: number = -1
-    $: offset = autoscroll(scrollElem, ($activeShow?.index || 1) - 1)
+    $: offset = autoscroll(scrollElem, Math.max(0, ($activeShow?.index || 0) - 5))
 
     // close if not existing
     $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null)

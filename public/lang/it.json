@@ -476,6 +476,7 @@
         "stop_timers": "Arresta i timer attivi",
         "next_after_media": "Avanti dopo i media",
         "remove_media": "Rimuovi media",
+        "remove_layers": "Remove layers",
         "index_select_project": "Seleziona progetto per indice",
         "index_select_project_show": "Seleziona l'elemento del progetto in base all'indice",
         "index_select_slide": "Seleziona la diapositiva per indice",

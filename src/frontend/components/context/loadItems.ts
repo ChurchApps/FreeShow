@@ -53,7 +53,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
             ]
             items = [...items, ...actions.map((a) => [id, a]), ["SEPERATOR"], ...clearActions.map((a) => [id, a])]
             break
-        case "remove_media":
+        case "remove_layers":
             let data: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]?.data
             if (!data) return []
             let showMedia: any = _show().get().media
@@ -68,25 +68,34 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
                     translate: false,
                     icon: "image",
                 })
+
             // get overlays
             let ol = data.overlays || []
-            if (ol.length) media.push(...ol.map((id: string) => ({ id, label: get(overlays)[id].name, translate: false, icon: "overlays" })))
+            if (ol.length) {
+                if (media.length) media.push({ id: "SEPERATOR", label: "" })
+                media.push(...ol.map((id: string) => ({ id, label: get(overlays)[id].name, translate: false, icon: "overlays" })).sort((a, b) => a.label.localeCompare(b.label)))
+            }
+
             // get audio
             let audio = data.audio || []
-            if (audio.length)
+            if (audio.length) {
+                if (media.length) media.push({ id: "SEPERATOR", label: "" })
                 media.push(
-                    ...audio.map((id: string) => ({
-                        id,
-                        label: showMedia[id].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name,
-                        translate: false,
-                        icon: "music",
-                    }))
+                    ...audio
+                        .map((id: string) => ({
+                            id,
+                            label: showMedia[id].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name,
+                            translate: false,
+                            icon: "music",
+                        }))
+                        .sort((a, b) => a.label.localeCompare(b.label))
                 )
+            }
 
-            if (media.length) media.forEach((action: any) => items.push([id, action]))
-            else items = [[id, { label: "empty.general" }]]
+            if (media.length) media.forEach((action: any) => items.push([action.id === "SEPERATOR" ? action.id : id, action]))
+            else items = [[id, { label: "empty.general", disabled: true }]]
 
-            items = items.sort((a, b) => a[1].label.localeCompare(b[1].label))
+            // items = items.sort((a, b) => a[1].label.localeCompare(b[1].label))
             break
         case "keys":
             items = keys.map((key) => [id, { id: key, label: key, translate: false }])

@@ -476,6 +476,7 @@
         "stop_timers": "Zaustavi aktivne tajmere",
         "next_after_media": "Sledeća nakon medija",
         "remove_media": "Ukloni medije",
+        "remove_layers": "Remove layers",
         "index_select_project": "Izaberi projekt po indeksu",
         "index_select_project_show": "Izaberi stavku projekta po indeksu",
         "index_select_slide": "Izaberi slajjd po indeksu",

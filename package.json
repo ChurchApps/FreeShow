@@ -64,11 +64,11 @@
             "contents": [
                 {
                     "x": 140,
-                    "y": 200
+                    "y": 150
                 },
                 {
                     "x": 400,
-                    "y": 200,
+                    "y": 150,
                     "type": "link",
                     "path": "/Applications"
                 }

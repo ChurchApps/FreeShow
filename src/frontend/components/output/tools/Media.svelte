@@ -142,7 +142,7 @@
     .name {
         display: flex;
         justify-content: center;
-        padding: 10px;
+        padding: 5px 10px;
         opacity: 0.8;
 
         cursor: pointer;

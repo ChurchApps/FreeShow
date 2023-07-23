@@ -126,6 +126,8 @@ export function updateSettings(data: any) {
 }
 
 export function updateThemeValues(themes: any) {
+    if (!themes) return
+
     Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
     Object.entries(themes.font).forEach(([key, value]: any) => {
         // || themeId === "default"

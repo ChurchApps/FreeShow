@@ -1,21 +1,13 @@
 <script lang="ts">
-    import { activePopup, selected, shows, showsCache } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import { activePopup, selected, shows } from "../../../stores"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
-    import { loadShows } from "../../helpers/setShow"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
 
     async function deleteSelected() {
         let shows = $selected.data
-
-        if (shows.length === 1) {
-            await loadShows([shows[0].id])
-            history({ id: "UPDATE", newData: { id: shows[0].id }, oldData: { data: clone($showsCache[shows[0].id]) }, location: { page: "drawer", id: "show" } })
-        } else {
-            history({ id: "SHOWS", oldData: { data: shows }, location: { page: "drawer" } })
-        }
+        history({ id: "SHOWS", oldData: { data: shows }, location: { page: "drawer" } })
 
         selected.set({ id: null, data: [] })
         activePopup.set(null)

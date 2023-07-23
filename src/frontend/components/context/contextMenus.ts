@@ -7,6 +7,7 @@ export interface ContextMenuItem {
     icon?: string
     shortcuts?: string[]
     enabled?: boolean
+    disabled?: boolean
 }
 
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
@@ -77,7 +78,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
     actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
-    remove_media: { label: "actions.remove_media", icon: "media", items: ["LOAD_remove_media"] },
+    remove_layers: { label: "actions.remove_layers", icon: "media", items: ["LOAD_remove_layers"] },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
@@ -186,12 +187,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["slideGroups", "actions", "remove_media", "format", "disable", "slide_transition", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
-    slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "slide_transition", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
+    slide: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
+    slideChild: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
     group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
     global_group: ["edit"],
     // global_group: ["rename"],
-    layout: ["rename", "remove", "duplicate"],
+    layout: ["rename", "duplicate", "remove"],
     slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics", "view_text"],
     // TODO: change chords (m, dim, sus, left, guitar, custom value, ...)
     // chord notations

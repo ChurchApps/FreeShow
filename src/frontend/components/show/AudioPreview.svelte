@@ -47,6 +47,8 @@
     }
 
     function keydown(e: any) {
+        if (e.target.closest("input") || e.target.closest(".edit")) return
+
         if (e.key === " ") playAudio({ path, name }, true, currentTime)
     }
 

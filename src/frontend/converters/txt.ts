@@ -221,6 +221,7 @@ function fixText(text: string): string {
     }
 
     let newText: string = ""
+    const commaDividerMinLength = 22 // shouldn't be much less
     text.split("\n").forEach((t: any) => {
         let newLineText: string = ""
 
@@ -231,7 +232,7 @@ function fixText(text: string): string {
 
             if (i >= commas.length - 1) newLineText += "\n"
             else if (!formatText) newLineText += ","
-            else if (a.length < 13 || (commas[i + 1] && commas[i + 1].length < 13)) newLineText += ","
+            else if (a.length < commaDividerMinLength || (commas[i + 1] && commas[i + 1].length < commaDividerMinLength)) newLineText += ","
             else newLineText += "\n"
         })
 

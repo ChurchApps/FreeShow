@@ -445,7 +445,7 @@ const actions: any = {
     slide_groups: (obj: any) => changeSlideGroups(obj),
 
     actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
-    remove_media: (obj: any) => {
+    remove_layers: (obj: any) => {
         let type: "image" | "overlays" | "music" = obj.menu.icon
         let slide: number = obj.sel.data[0].index
         let newData: any = null

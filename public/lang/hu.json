@@ -476,6 +476,7 @@
         "stop_timers": "Aktív időzítők leállítása",
         "next_after_media": "Következő média után",
         "remove_media": "Média eltávolítása",
+        "remove_layers": "Remove layers",
         "index_select_project": "Projekt kiválasztása index alapján",
         "index_select_project_show": "Projekt elem kiválasztása index alapján",
         "index_select_slide": "Dia kiválasztása index alapján",

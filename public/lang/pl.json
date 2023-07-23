@@ -476,6 +476,7 @@
         "stop_timers": "Zatrzymaj aktywny timer",
         "next_after_media": "Następny po media",
         "remove_media": "Usuń media",
+        "remove_layers": "Remove layers",
         "index_select_project": "Zaznacz projekt po indeksie",
         "index_select_project_show": "Zaznacz element projektu po indeksie",
         "index_select_slide": "Zaznacz slajd po indeksie",
