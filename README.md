@@ -14,12 +14,12 @@
 ## Preview
 
 <div style="display: flex;gap: 10px;">
-    <img style="width: 50%;" src="https://github.com/vassbo/freeshow/assets/17619496/e74ed3c3-75ee-44a0-a3ee-1f8155c83220">
-    <img style="width: 50%;" src="https://github.com/vassbo/freeshow/assets/17619496/5b23c324-e21b-4a39-ad19-83bd91bb7b40">
+    <img style="width: 49%;" src="https://github.com/vassbo/freeshow/assets/17619496/e74ed3c3-75ee-44a0-a3ee-1f8155c83220">
+    <img style="width: 49%;" src="https://github.com/vassbo/freeshow/assets/17619496/5b23c324-e21b-4a39-ad19-83bd91bb7b40">
 </div>
 <div style="display: flex;gap: 10px;margin-top: 10px;">
-    <img style="width: 50%;" src="https://github.com/vassbo/freeshow/assets/17619496/f6281d2a-fec9-41ae-baa3-cbdcced051ec">
-    <img style="width: 50%;" src="https://github.com/vassbo/freeshow/assets/17619496/9c315a85-6abb-4511-af94-3b276fff1f96">
+    <img style="width: 49%;" src="https://github.com/vassbo/freeshow/assets/17619496/f6281d2a-fec9-41ae-baa3-cbdcced051ec">
+    <img style="width: 49%;" src="https://github.com/vassbo/freeshow/assets/17619496/9c315a85-6abb-4511-af94-3b276fff1f96">
 </div>
 
 ## Short description
