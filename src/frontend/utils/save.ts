@@ -9,6 +9,7 @@ import {
     autosave,
     calendarAddShow,
     categories,
+    customizedIcons,
     defaultProjectName,
     deletedShows,
     drawSettings,
@@ -142,6 +143,7 @@ export function save() {
         timers: get(timers),
         midiIn: get(midiIn),
         videoMarkers: get(videoMarkers),
+        customizedIcons: get(customizedIcons),
     }
 
     let allSavedData: any = {

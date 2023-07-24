@@ -4,7 +4,7 @@
     import { playMidiIn } from "../../../utils/midi"
     import { send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
-    import { playAudio } from "../../helpers/audio"
+    import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../../helpers/media"
     import { findMatchingOut, setOutput } from "../../helpers/output"
@@ -20,17 +20,26 @@
 
     let layoutBackgrounds: any[] = []
     let layoutAudio: any[] = []
+    let layoutMics: any[] = []
 
     $: {
         if (show) {
             layoutBackgrounds = []
             layoutAudio = []
+            layoutMics = []
+
             let refs = _show("active").layouts().ref()
             refs.forEach((slides: any) => {
                 layoutBackgrounds.push(...slides.map((a: any) => a.data.background).filter((a: any) => a !== undefined))
                 layoutAudio.push(
                     ...slides
                         .map((a: any) => a.data.audio)
+                        .filter((a: any) => a !== undefined)
+                        .flat()
+                )
+                layoutMics.push(
+                    ...slides
+                        .map((a: any) => a.data.mics)
                         .filter((a: any) => a !== undefined)
                         .flat()
                 )
@@ -60,7 +69,6 @@
     let audio: any = []
     $: if (layoutAudio.length) {
         audio = {}
-        // TODO: count...
         layoutAudio.forEach((a: any) => {
             let id = show.media[a].path!
             let type = "audio"
@@ -70,8 +78,20 @@
         })
 
         audio = Object.values(audio)
-        console.log(audio)
     } else audio = []
+
+    let mics: any = []
+    $: if (layoutMics.length) {
+        mics = {}
+        layoutMics.forEach((a: any) => {
+            let id = a.id
+
+            if (mics[id]) mics[id].count++
+            else mics[id] = { ...a, count: 1 }
+        })
+
+        mics = Object.values(mics)
+    } else mics = []
 
     function setBG(id: string, key: string, value: boolean) {
         showsCache.update((a: any) => {
@@ -103,7 +123,7 @@
 <!-- TODO: transition type & duration -->
 
 <div class="main">
-    {#if bgs.length || audio.length || midi.length}
+    {#if bgs.length || audio.length || mics.length || midi.length}
         {#if bgs.length}
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
@@ -164,6 +184,41 @@
 
                         {#if file.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{file.count}</span>
+                        {/if}
+                    </Button>
+                </SelectElem>
+            {/each}
+        {/if}
+
+        {#if mics.length}
+            <h5><T id="live.microphones" /></h5>
+            {#each mics as mic}
+                {@const muted = !$playingAudio[mic.id]}
+
+                <SelectElem id="microphone" data={{ id: mic.id, type: "microphone", name: mic.name }} draggable>
+                    <Button
+                        style="padding: 8px;width: 100%;"
+                        bold={false}
+                        on:click={() => {
+                            if ($outLocked) return
+
+                            if (muted) {
+                                startMicrophone(mic)
+                                return
+                            }
+
+                            playingAudio.update((a) => {
+                                delete a[mic.id]
+                                return a
+                            })
+                            clearAudioStreams(mic.id)
+                        }}
+                    >
+                        <Icon id="microphone" white={muted} right />
+                        <p style="width: 100%;text-align: left;">{mic.name}</p>
+
+                        {#if mic.count > 1}
+                            <span style="color: var(--secondary);font-weight: bold;">{mic.count}</span>
                         {/if}
                     </Button>
                 </SelectElem>

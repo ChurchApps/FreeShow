@@ -69,6 +69,7 @@
                 <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
             {/if}
         {/if} -->
+        <!-- {:else if item?.type === "camera"} -->
         <!-- {:else if item?.type === "timer"}
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" /> -->
     {:else if item?.type === "clock"}
@@ -78,7 +79,13 @@
         <!-- {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={slideIndex} /> -->
     {:else if item?.type === "icon"}
-        <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {#if item.customSvg}
+            <div class="customIcon">
+                {@html item.customSvg}
+            </div>
+        {:else}
+            <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {/if}
     {/if}
 </div>
 
@@ -115,5 +122,11 @@
 
     .break :global(span) {
         font-size: 100px;
+    }
+
+    .customIcon,
+    .customIcon :global(svg) {
+        width: 100%;
+        height: 100%;
     }
 </style>

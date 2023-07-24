@@ -79,7 +79,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return updateElement(a)
             })
 
-            if (!deleting && updater.select) updater.select(id, data)
+            if (!deleting && updater.select) updater.select(id, data, initializing)
 
             if (!initializing) return
 

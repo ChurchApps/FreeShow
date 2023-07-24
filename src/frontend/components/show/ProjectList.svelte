@@ -20,7 +20,8 @@
     {@const opened = $openedFolders.includes(project.id || "")}
     {@const shown = checkIfShown(project)}
     <div style="margin-left: {8 * (project.index || 0)}px;background-color: rgb(255 255 255 / {0.01 * (project.index || 0)});">
-        <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id, path: project.path }} draggable trigger="column" borders="center">
+        <!-- , path: project.path -->
+        <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id }} draggable trigger="column" borders="center">
             {#if project.type === "folder" && (project.parent === "/" || shown)}
                 <ProjectFolder {project} {opened} />
             {:else if project.id && shown}

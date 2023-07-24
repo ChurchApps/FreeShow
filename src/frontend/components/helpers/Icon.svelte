@@ -19,10 +19,10 @@
     $: icon = custom ? customIcons[id] : icons[id]
 
     const click = () => {
-        if (select) {
-            if (selectData && !$selected.data.includes(selectData.data[0])) selected.set(selectData)
-            activePopup.set("icon")
-        }
+        if (!select) return
+
+        if (selectData && !$selected.data.includes(selectData.data[0])) selected.set(selectData)
+        activePopup.set("icon")
     }
 </script>
 

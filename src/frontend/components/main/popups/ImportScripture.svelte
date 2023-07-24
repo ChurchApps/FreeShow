@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
-    import { activePopup, alertMessage, dictionary, language, os, scriptures } from "../../../stores"
+    import { activePopup, alertMessage, bibleApiKey, dictionary, language, os, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -37,7 +37,7 @@
     let sortedBibles: any[] = []
     let recommended: any[] = []
     $: {
-        if (bibles.length) {
+        if (bibles?.length) {
             let langCode = window.navigator.language.slice(-2).toLowerCase()
             sortedBibles = bibles.sort((a, b) => a.name.localeCompare(b.name))
             let newSorted: any[] = []
@@ -81,15 +81,18 @@
     ]
 
     $: searchedBibles = sortedBibles
+    $: searchedRecommendedBibles = recommended
     function search(e: any) {
         let value = e.target.value.toLowerCase()
 
         if (value.length < 2) {
             searchedBibles = sortedBibles
+            searchedRecommendedBibles = recommended
             return
         }
 
         searchedBibles = sortedBibles.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
+        searchedRecommendedBibles = recommended.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
 </script>
 
@@ -100,39 +103,45 @@
         <h2>
             <T id="scripture.bibles" />
         </h2>
-        <TextInput style="width: 50%;" placeholder={$dictionary.main?.search} value="" on:input={search} />
+        {#if $bibleApiKey}
+            <TextInput style="width: 50%;" placeholder={$dictionary.main?.search} value="" on:input={search} />
+        {/if}
     </div>
     <div class="list">
-        {#if recommended.length}
-            {#each recommended as bible}
-                <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
-                    <Icon id="noIcon" right />{bible.nameLocal}
-                    {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
-                        <span class="description" title={bible.description}>({bible.description})</span>
-                    {/if}
-                </Button>
-            {/each}
-            <hr />
-        {/if}
-        {#if sortedBibles.length}
-            {#if searchedBibles.length}
-                {#each searchedBibles as bible}
+        <!-- <BibleApiKey /> -->
+
+        {#if $bibleApiKey}
+            {#if searchedRecommendedBibles.length}
+                {#each searchedRecommendedBibles as bible}
                     <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
-                        <Icon id="noIcon" right />{bible.name}
-                        {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
+                        <Icon id="noIcon" right />{bible.nameLocal}
+                        {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
                             <span class="description" title={bible.description}>({bible.description})</span>
                         {/if}
                     </Button>
                 {/each}
+                <hr />
+            {/if}
+            {#if sortedBibles.length}
+                {#if searchedBibles.length}
+                    {#each searchedBibles as bible}
+                        <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
+                            <Icon id="noIcon" right />{bible.name}
+                            {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
+                                <span class="description" title={bible.description}>({bible.description})</span>
+                            {/if}
+                        </Button>
+                    {/each}
+                {:else}
+                    <Center faded>
+                        <T id="empty.search" />
+                    </Center>
+                {/if}
             {:else}
-                <Center faded>
-                    <T id="empty.search" />
+                <Center>
+                    <Loader />
                 </Center>
             {/if}
-        {:else}
-            <Center>
-                <Loader />
-            </Center>
         {/if}
     </div>
 {/if}

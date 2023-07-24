@@ -136,6 +136,7 @@
 />
 
 <div
+    {id}
     data={JSON.stringify(data)}
     {draggable}
     style={$$props.style}

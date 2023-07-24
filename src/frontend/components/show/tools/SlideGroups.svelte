@@ -20,8 +20,6 @@
     $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group?.localeCompare(b.group))
 </script>
 
-<!-- TODO: tooltips... (Click or drag to add groups) -->
-
 <div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;">
     <div class="main">
         {#if $globalGroupViewEnabled}
@@ -105,7 +103,7 @@
         flex-wrap: wrap;
         align-content: flex-start; */
 
-        gap: 5px;
+        gap: 3px;
         flex: 1;
         overflow-x: clip;
     }

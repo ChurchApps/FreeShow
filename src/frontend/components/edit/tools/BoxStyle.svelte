@@ -59,6 +59,8 @@
 
     // -----
 
+    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera"]
+
     $: box = boxes[id]
 
     // get item values
@@ -230,10 +232,10 @@
         // get all selected slides
         if (slides[0] && $selected.id === "slide") {
             let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
-            slides.push(...selectedSlides.map(({ index }) => ref[index].id))
+            slides.push(...selectedSlides.map(({ index }) => ref[index]?.id))
 
             slides.forEach((id, i) => {
-                if (i === 0) return
+                if (!id || i === 0) return
                 if (!showSlides[id]) {
                     slideItems.push([])
                     return
@@ -339,7 +341,6 @@
             return
         }
 
-        const setItemStyle = ["list", "timer", "clock", "icon", "events"]
         if (setItemStyle.includes(id)) {
             slides.forEach((slide, i) => {
                 if (!slideItems[i].length) return

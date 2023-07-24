@@ -1,10 +1,10 @@
 import { get } from "svelte/store"
-import { audioChannels, playingAudio, playingVideos, volume } from "../../stores"
-import { audioAnalyser } from "../output/audioAnalyser"
-import { OUTPUT } from "../../../types/Channels"
+import { MAIN, OUTPUT } from "../../../types/Channels"
+import { audioChannels, gain, playingAudio, playingVideos, volume } from "../../stores"
 import { send } from "../../utils/request"
+import { audioAnalyser } from "../output/audioAnalyser"
 
-export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolean = true, startAt: number = 0) {
+export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0) {
     let existing: any = get(playingAudio)[path]
     if (existing) {
         if (!pauseIfPlaying) {
@@ -24,23 +24,60 @@ export async function playAudio({ path, name = "" }: any, pauseIfPlaying: boolea
         return
     }
 
-    let audio = new Audio(path)
-    let analyser: any = await getAnalyser(audio)
+    audio = audio || new Audio(path)
+    let analyser: any = await getAnalyser(audio, stream)
     playingAudio.update((a) => {
         if (!analyser) return a
         a[path] = {
             name: name.indexOf(".") > -1 ? name.slice(0, name.lastIndexOf(".")) : name,
             paused: false,
+            mic: !!stream,
             analyser,
             audio,
         }
         return a
     })
 
-    audio.volume = get(volume)
+    if (analyser.gainNode) analyser.gainNode.gain.value = get(volume) * (get(gain) || 1)
+    else audio.volume = get(volume)
+
     if (startAt > 0) audio.currentTime = startAt
     audio.play()
+
     analyseAudio()
+}
+
+let audioStreams: any = {}
+export function startMicrophone(mic) {
+    navigator.mediaDevices
+        .getUserMedia({
+            audio: {
+                deviceId: { exact: mic.id },
+            },
+        })
+        .then((stream: any) => {
+            audioStreams[mic.id] = stream
+
+            let audio = new Audio()
+            audio.srcObject = stream
+
+            playAudio({ path: mic.id, name: mic.name, audio, stream }, false)
+        })
+        .catch((err) => {
+            console.log(err)
+            if (err.name === "NotReadableError") {
+                window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
+            }
+        })
+}
+
+export function clearAudioStreams(id: string = "") {
+    let ids = id ? [id] : Object.keys(audioStreams)
+
+    ids.forEach((streamId) => {
+        let stream = audioStreams[streamId]
+        stream?.getAudioTracks().forEach((track: any) => track.stop())
+    })
 }
 
 // const audioUpdateInterval: number = 100 // ms
@@ -142,20 +179,39 @@ export function clearAudio(path: string = "") {
 
         return a
     })
+
+    clearAudioStreams()
 }
 
 // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
-export async function getAnalyser(elem: any) {
+export async function getAnalyser(elem: any, stream: any = null) {
     let ac = new AudioContext()
     let source
 
     try {
-        source = ac.createMediaElementSource(elem)
+        if (stream) source = ac.createMediaStreamSource(stream)
+        else source = ac.createMediaElementSource(elem)
     } catch (err) {
         console.error(err)
 
         return
     }
+
+    // if (stream) {
+    //     let audioDestination = ac.createMediaStreamDestination()
+
+    //     let analyser = ac.createAnalyser()
+    //     analyser.smoothingTimeConstant = 0.9
+    //     analyser.fftSize = 256
+
+    //     let gainNode = ac.createGain()
+    //     source.connect(gainNode)
+
+    //     gainNode.connect(analyser)
+    //     gainNode.connect(audioDestination)
+
+    //     return { left: analyser, right: analyser, gainNode }
+    // }
 
     // let analyser = ac.createAnalyser()
     // analyser.smoothingTimeConstant = 0.9
@@ -182,12 +238,16 @@ export async function getAnalyser(elem: any) {
 
     splitter.connect(merger, 0, 0) // left audio
     splitter.connect(merger, 1, 1) // right audio
-    // merger.connect(gain);
-    merger.connect(ac.destination)
+
+    // gain (volume)
+    // https://stackoverflow.com/questions/43698961/how-to-set-volumes-in-webrtc
+    let gainNode = ac.createGain()
+    source.connect(gainNode)
+    gainNode.connect(ac.destination)
 
     console.log("ANALYZING VIDEO", elem)
 
-    return { left: leftAnalyser, right: rightAnalyser }
+    return { left: leftAnalyser, right: rightAnalyser, gainNode }
 }
 
 export async function getAudioDuration(path: string) {

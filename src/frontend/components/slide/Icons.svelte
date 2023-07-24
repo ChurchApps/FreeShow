@@ -96,7 +96,7 @@
         <div>
             <div class="button">
                 <Button style="padding: 3px;" redHover title={$dictionary.remove?.background} on:click={() => removeLayout("background")}>
-                    <Icon id={background.type === "camera" ? "camera" : "image"} size={0.9} white />
+                    <Icon id={["camera", "screen"].includes(background.type) ? background.type : background.path?.includes("http") ? "web" : "image"} size={0.9} white />
                 </Button>
             </div>
             {#if videoDuration}
@@ -113,15 +113,17 @@
             </div>
         </div>
     {/if}
-    {#if layoutSlide.overlays?.length}
+    {#if layoutSlide.mics?.length}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.remove?.overlays} on:click={() => removeLayout("overlays")}>
-                    <Icon id="overlays" size={0.9} white />
+                <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeLayout("mics")}>
+                    <Icon id="microphone" size={0.9} white />
                 </Button>
             </div>
-            {#if layoutSlide.overlays.length > 1}
-                <span><p>{layoutSlide.overlays.length}</p></span>
+            {#if layoutSlide.mics.length > 1}
+                <span>
+                    <p>{layoutSlide.mics.length}</p>
+                </span>
             {/if}
         </div>
     {/if}
@@ -143,6 +145,18 @@
                     <p>{layoutSlide.audio.length}</p>
                 {/if}
             </span>
+        </div>
+    {/if}
+    {#if layoutSlide.overlays?.length}
+        <div>
+            <div class="button">
+                <Button style="padding: 3px;" redHover title={$dictionary.remove?.overlays} on:click={() => removeLayout("overlays")}>
+                    <Icon id="overlays" size={0.9} white />
+                </Button>
+            </div>
+            {#if layoutSlide.overlays.length > 1}
+                <span><p>{layoutSlide.overlays.length}</p></span>
+            {/if}
         </div>
     {/if}
 </div>

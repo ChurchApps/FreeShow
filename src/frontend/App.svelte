@@ -34,7 +34,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, selected, styles, volume } from "./stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, focusedArea, loaded, os, outputDisplay, outputs, selected, styles, volume } from "./stores"
     import { newToast } from "./utils/messages"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
@@ -64,6 +64,7 @@
         y: () => redo(),
         z: () => undo(),
         Z: () => redo(),
+        "?": () => activePopup.set("shortcuts"),
         // F2: () => menuClick("rename"),
     }
     const keys: any = {
@@ -123,6 +124,11 @@
         }
     }
 
+    function focusArea(e: any) {
+        if (e.target.closest(".menus") || e.target.closest(".contextMenu")) return
+        focusedArea.set(e.target.closest(".selectElem")?.id || e.target.querySelector(".selectElem")?.id || "")
+    }
+
     // countdown timer tick
     $: if ($activeTimers.length) startTimer()
 
@@ -171,7 +177,7 @@
     $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:mousedown={focusArea} />
 
 {#if $currentWindow === "pdf"}
     <Pdf />

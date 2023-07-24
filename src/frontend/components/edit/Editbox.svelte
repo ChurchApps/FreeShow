@@ -25,6 +25,7 @@
     import Visualizer from "../slide/views/Visualizer.svelte"
     import DynamicEvents from "../slide/views/DynamicEvents.svelte"
     import { getStyles } from "../helpers/style"
+    import Cam from "../drawer/live/Cam.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -95,84 +96,84 @@
     $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
     // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
-    function cutInTwo({e, sel, lines, currentIndex, textPos, start}) {
-            let firstLines: Line[] = []
-            let secondLines: Line[] = []
+    function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
+        let firstLines: Line[] = []
+        let secondLines: Line[] = []
 
         lines.forEach((line, i) => {
-                if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
-                else firstLines.push({ align: line.align, text: [] })
+            if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
+            else firstLines.push({ align: line.align, text: [] })
 
-                textPos = 0
-                line.text?.forEach((text) => {
-                    currentIndex += text.value.length
-                    if (sel[i]?.start !== undefined) start = sel[i].start
+            textPos = 0
+            line.text?.forEach((text) => {
+                currentIndex += text.value.length
+                if (sel[i]?.start !== undefined) start = sel[i].start
 
-                    if (start > -1 && currentIndex >= start) {
-                        if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-                        let pos = sel[i].start - textPos
-                        if (pos > 0)
-                            firstLines[firstLines.length - 1].text.push({
-                                style: text.style,
-                                value: text.value.slice(0, pos),
-                            })
-                        secondLines[secondLines.length - 1].text.push({
-                            style: text.style,
-                            value: text.value.slice(pos, text.value.length),
-                        })
-                    } else {
+                if (start > -1 && currentIndex >= start) {
+                    if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
+                    let pos = sel[i].start - textPos
+                    if (pos > 0)
                         firstLines[firstLines.length - 1].text.push({
                             style: text.style,
-                            value: text.value,
+                            value: text.value.slice(0, pos),
                         })
-                    }
-                    textPos += text.value.length
-                })
-
-                if (!firstLines.at(-1)?.text.length) firstLines.pop()
+                    secondLines[secondLines.length - 1].text.push({
+                        style: text.style,
+                        value: text.value.slice(pos, text.value.length),
+                    })
+                } else {
+                    firstLines[firstLines.length - 1].text.push({
+                        style: text.style,
+                        value: text.value,
+                    })
+                }
+                textPos += text.value.length
             })
 
-            let defaultLine = [
-                {
-                    align: lines[0].align || "",
-                    text: [{ style: lines[0].text[0]?.style || "", value: "" }],
-                },
-            ]
-            if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
-            if (!secondLines.length) secondLines = defaultLine
+            if (!firstLines.at(-1)?.text.length) firstLines.pop()
+        })
 
-            if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
-            let editItemIndex: number = $activeEdit.items[0] || Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) || 0
+        let defaultLine = [
+            {
+                align: lines[0].align || "",
+                text: [{ style: lines[0].text[0]?.style || "", value: "" }],
+            },
+        ]
+        if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
+        if (!secondLines.length) secondLines = defaultLine
 
-            let slideRef: any = _show().layouts("active").ref()[0][editIndex]
-            if (!slideRef) return
+        if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
+        let editItemIndex: number = $activeEdit.items[0] || Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) || 0
 
-            // create new slide
-            let newSlide = { ..._show().slides([ref.id]).get()[0] }
-            newSlide.items[editItemIndex].lines = secondLines
-            delete newSlide.id
-            delete newSlide.globalGroup
-            newSlide.group = null
-            newSlide.color = null
+        let slideRef: any = _show().layouts("active").ref()[0][editIndex]
+        if (!slideRef) return
 
-            // add new slide
-            let id = uid()
-            _show()
-                .slides([id])
-                .add([clone(newSlide)])
+        // create new slide
+        let newSlide = { ..._show().slides([ref.id]).get()[0] }
+        newSlide.items[editItemIndex].lines = secondLines
+        delete newSlide.id
+        delete newSlide.globalGroup
+        newSlide.group = null
+        newSlide.color = null
 
-            // update slide
-            updateLines(firstLines)
+        // add new slide
+        let id = uid()
+        _show()
+            .slides([id])
+            .add([clone(newSlide)])
 
-            // set child
-            let parentId = slideRef.type === "child" ? slideRef.parent.id : slideRef.id
-            let children = _show().slides([parentId]).get("children")[0] || []
-            let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
-            children = addToPos(children, [id], slideIndex)
-            _show().slides([parentId]).set({ key: "children", value: children })
+        // update slide
+        updateLines(firstLines)
 
-            if (e?.target?.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
-            else getStyle()
+        // set child
+        let parentId = slideRef.type === "child" ? slideRef.parent.id : slideRef.id
+        let children = _show().slides([parentId]).get("children")[0] || []
+        let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
+        children = addToPos(children, [id], slideIndex)
+        _show().slides([parentId]).set({ key: "children", value: children })
+
+        if (e?.target?.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
+        else getStyle()
     }
 
     function keydown(e: any) {
@@ -204,7 +205,7 @@
                 return
             }
 
-            cutInTwo({e, sel, lines, currentIndex, textPos, start})
+            cutInTwo({ e, sel, lines, currentIndex, textPos, start })
         }
 
         if (e.key === "Escape") {
@@ -630,6 +631,10 @@ bind:offsetWidth={width} -->
                 <!-- <MediaLoader path={item.src} /> -->
             {/if}
         {/if}
+    {:else if item?.type === "camera"}
+        {#if item.device}
+            <Cam cam={item.device} item />
+        {/if}
     {:else if item?.type === "timer"}
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" edit />
     {:else if item?.type === "clock"}
@@ -641,7 +646,13 @@ bind:offsetWidth={width} -->
     {:else if item?.type === "visualizer"}
         <Visualizer {item} />
     {:else if item?.type === "icon"}
-        <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {#if item.customSvg}
+            <div class="customIcon">
+                {@html item.customSvg}
+            </div>
+        {:else}
+            <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {/if}
     {/if}
 </div>
 
@@ -779,5 +790,11 @@ bind:offsetWidth={width} -->
         /* min-height: 100px;
     min-width: 100px;
     display: inline-table; */
+    }
+
+    .customIcon,
+    .customIcon :global(svg) {
+        width: 100%;
+        height: 100%;
     }
 </style>

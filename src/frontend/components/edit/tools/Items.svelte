@@ -20,6 +20,7 @@
         { id: "list" },
         // { id: "table" },
         { id: "media", icon: "image" },
+        { id: "camera" },
         { id: "timer" },
         { id: "clock" },
         { id: "events", icon: "calendar" },

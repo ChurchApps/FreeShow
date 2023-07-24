@@ -3,20 +3,21 @@
     import { Grid } from "svelte-virtual"
     import { slide } from "svelte/transition"
     import { READ_FOLDER } from "../../../../types/Channels"
-    import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, popupData } from "../../../stores"
+    import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
+    import Cameras from "../live/Cameras.svelte"
+    import Screens from "../live/Screens.svelte"
+    import Windows from "../live/Windows.svelte"
     import PlayerVideos from "../player/PlayerVideos.svelte"
     import Folder from "./Folder.svelte"
     import Media from "./MediaCard.svelte"
     import { loadFromPixabay } from "./pixabay"
-    import Cameras from "../live/Cameras.svelte"
-    import Screens from "../live/Screens.svelte"
-    import Windows from "../live/Windows.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -243,6 +244,8 @@
 
         zoomOpened = false
     }
+
+    $: currentOutput = $outputs[getActiveOutputs()[0]]
 </script>
 
 <!-- TODO: download pixabay images!!! -->
@@ -255,13 +258,7 @@
 <!-- TODO: ctrl+arrow keys change drawer item... -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
     <!-- {active === 'screens' || active === 'cameras' || (active === 'online' && (onlineTab === 'youtube' || onlineTab === 'vimeo')) ? 'padding: 5px;' : ''} -->
-    <div
-        class="grid"
-        class:list={$mediaOptions.mode === "list"}
-        style="height: 100%;"
-        bind:clientHeight={gridHeight}
-        bind:clientWidth={gridWidth}
-    >
+    <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;" bind:clientHeight={gridHeight} bind:clientWidth={gridWidth}>
         {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <PlayerVideos active={onlineTab} {searchValue} />
         {:else if active === "screens"}
@@ -271,7 +268,16 @@
                 <Windows bind:streams {searchValue} />
             {/if}
         {:else if active === "cameras"}
-            <Cameras />
+            <Cameras
+                on:click={({ detail }) => {
+                    let e = detail.event
+                    let cam = detail.cam
+
+                    if ($outLocked || e.ctrlKey || e.metaKey) return
+                    if (currentOutput.out?.background?.id === cam.id) setOutput("background", null)
+                    else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
+                }}
+            />
         {:else if fullFilteredFiles.length}
             {#key rootPath}
                 {#key path}

@@ -1,9 +1,10 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import Icon from "../../helpers/Icon.svelte"
-    import Button from "../../inputs/Button.svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { outLocked, volume } from "../../../stores"
+    import { activeShow, outLocked, playingAudio } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
+    import { clearAudioStreams, startMicrophone } from "../../helpers/audio"
+    import Button from "../../inputs/Button.svelte"
 
     export let mic: any
 
@@ -94,35 +95,46 @@
         audioStream?.getAudioTracks().forEach((track: any) => track.stop())
     })
 
-    let muted: boolean = true
-    $: if (audio) {
-        if (!muted) audio.volume = $volume ?? 1
-        else audio.volume = 0
-    }
+    $: muted = !$playingAudio[mic.id]
 </script>
 
-{#if context}
-    <div class="main context #live_card">
-        <Button
-            style="width: 100%;"
-            bold={false}
-            on:click={() => {
-                if ($outLocked) return
-                muted = !muted
-            }}
-        >
-            <span style="display: flex;gap: 5px;flex: 3;align-items: center;">
-                <Icon id={muted ? "muted" : "volume"} white={muted} right />
-                <p>{mic.name}</p>
-            </span>
+<div class="main">
+    <Button
+        style="width: 100%;"
+        bold={false}
+        disabled={!context}
+        on:click={() => {
+            if ($outLocked || !context) return
 
+            if (muted) {
+                startMicrophone(mic)
+                return
+            }
+
+            playingAudio.update((a) => {
+                delete a[mic.id]
+                return a
+            })
+            clearAudioStreams(mic.id)
+        }}
+        on:dblclick={(e) => {
+            if (e.ctrlKey || e.metaKey) return
+            activeShow.set({ id: mic.id, name: mic.name, type: "audio", data: { isMic: true } })
+        }}
+    >
+        <span style="display: flex;gap: 5px;flex: 3;align-items: center;">
+            <Icon id={muted ? "muted" : "volume"} white={muted} right />
+            <p>{mic.name}</p>
+        </span>
+
+        {#if context}
             <span class="meter">
                 <!-- <p>L</p> -->
                 <div style="width: {100 - soundLevel}%" />
             </span>
-        </Button>
-    </div>
-{/if}
+        {/if}
+    </Button>
+</div>
 
 <style>
     .main {

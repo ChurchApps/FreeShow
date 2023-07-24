@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { drawer, playingAudio, volume } from "../../../stores"
+    import { drawer, gain, playingAudio, volume } from "../../../stores"
     import { analyseAudio } from "../../helpers/audio"
     import T from "../../helpers/T.svelte"
     import Slider from "../../inputs/Slider.svelte"
@@ -11,18 +11,22 @@
 
     // let volume: number = 100
 
-    function updateVolume(e: any) {
-        volume.set(Number(Number(e.target.value).toFixed(2)))
+    function updateVolume(e: any, changeGain: boolean = false) {
+        if (changeGain) gain.set(Number(Number(e.target.value).toFixed(2)))
+        else volume.set(Number(Number(e.target.value).toFixed(2)))
 
         // update volume
         playingAudio.update((a) => {
             Object.keys(a).forEach((id) => {
-                // a[id].volume = volume
-                a[id].audio.volume = $volume
+                if (a[id].analyser.gainNode) {
+                    let gainedValue = $volume * ($gain || 1)
+                    a[id].analyser.gainNode.gain.value = gainedValue
+                } else a[id].audio.volume = $volume
             })
             return a
         })
-        if (volume) analyseAudio()
+
+        if ($volume) analyseAudio()
     }
 
     $: drawerHeight = $drawer.height - 40 - 100
@@ -40,6 +44,13 @@
             <Slider value={$volume} step={0.01} max={1} on:input={updateVolume} />
         </div>
         <p style="font-size: 1em;margin: 10px;{$volume === 1 || $volume === 0 ? 'color: var(--secondary);' : ''}">{($volume * 100).toFixed()}</p>
+    </div>
+    <div class="volume" style="left: 75%">
+        <p style="font-size: 0.9em;"><T id="media.gain" /></p>
+        <div class="slider">
+            <Slider value={$gain} step={0.01} min={1} max={3} on:input={(e) => updateVolume(e, true)} />
+        </div>
+        <p style="font-size: 1em;margin: 10px;{$gain === 1 ? 'color: var(--secondary);' : ''}">{(($gain - 1) * 100).toFixed()}</p>
     </div>
 </main>
 
@@ -65,6 +76,7 @@
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
+        pointer-events: none;
     }
 
     .slider {
@@ -83,6 +95,8 @@
 
         transform: rotate(270deg) translateX(-50%);
         /* appearance: slider-vertical; */
+
+        pointer-events: auto;
     }
 
     .slider :global(input)::-webkit-slider-thumb {

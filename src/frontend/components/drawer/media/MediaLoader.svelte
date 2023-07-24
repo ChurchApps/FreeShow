@@ -7,6 +7,7 @@
     import { getResolution } from "../../helpers/output"
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
+    import Capture from "../live/Capture.svelte"
     // import Image from "./Image.svelte"
 
     export let name: any = ""
@@ -196,6 +197,8 @@
                 <!-- TODO: media height -->
                 <Camera id={path} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem />
             </div>
+        {:else if type === "screen"}
+            <Capture screen={{ id: path, name }} streams={[]} background />
         {:else if type === "video"}
             <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">
                 <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />

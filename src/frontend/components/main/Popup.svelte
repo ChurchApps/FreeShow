@@ -35,6 +35,8 @@
     import Connect from "./popups/Connect.svelte"
     import FindReplace from "./popups/FindReplace.svelte"
     import NextTimer from "./popups/NextTimer.svelte"
+    import ManageIcons from "./popups/ManageIcons.svelte"
+    import ChooseCamera from "./popups/ChooseCamera.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -48,6 +50,8 @@
         delete_show: DeleteShow,
         select_show: SelectShow,
         icon: ChangeIcon,
+        manage_icons: ManageIcons,
+        choose_camera: ChooseCamera,
         player: CreatePlayer,
         rename: Rename,
         color: Color,

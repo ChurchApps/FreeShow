@@ -35,7 +35,10 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
             styleString += `${key}: ${value};`
         })
         newData.style = styleString
+    } else if (type === "icon" && options.path) {
+        newData.customSvg = options.path
     }
+
     console.log(newData)
 
     if (!get(activeEdit).id) {

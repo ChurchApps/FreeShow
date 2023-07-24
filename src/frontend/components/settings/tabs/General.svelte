@@ -34,6 +34,9 @@
         autoOutput.set(false)
         labelsDisabled.set(false)
     }
+
+    // WIP set calendar starting day
+    // WIP change date format (DD.MM.YYYY, YYYY-MM-DD)
 </script>
 
 <CombinedInput>

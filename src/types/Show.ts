@@ -82,6 +82,8 @@ export interface Item {
     type?: ItemType
     mirror?: Mirror
     src?: string
+    customSvg?: string
+    device?: any // camera
     fit?: string
     filter?: string
     flipped?: boolean
@@ -291,7 +293,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "list" | "media" | "timer" | "clock" | "events" | "mirror" | "icon" | "visualizer" // "shape" | "video" | "media" | "camera"
+export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "events" | "mirror" | "icon" | "visualizer" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

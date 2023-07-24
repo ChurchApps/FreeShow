@@ -43,6 +43,7 @@ export const projectView: Writable<boolean> = writable(false)
 export const globalGroupViewEnabled: Writable<boolean> = writable(false)
 export const activeRecording: Writable<any> = writable(null)
 export const currentRecordingStream: Writable<any> = writable(null)
+export const focusedArea: Writable<string> = writable("")
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -139,6 +140,7 @@ export const overlays: Writable<Overlays> = writable({}) // {default}
 // AUDIO
 export const audioFolders: Writable<Categories> = writable({}) // {default}
 export const volume: Writable<number> = writable(100) // 100
+export const gain: Writable<number> = writable(1) // 1
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}
@@ -174,6 +176,7 @@ interface BibleCategories extends Category {
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
 export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true }) // {default}
+export const bibleApiKey: Writable<string> = writable("320b5b593fa790ced135a98861de51a9") // WIP ""
 
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
@@ -199,6 +202,7 @@ export const fullColors: Writable<boolean> = writable(false) // false
 export const formatNewShow: Writable<boolean> = writable(true) // true
 export const splitLines: Writable<number> = writable(0) // 0
 export const showsPath: Writable<null | string> = writable(null) // null
+export const customizedIcons: Writable<any> = writable({ disabled: [], svg: [] }) // {disabled: [], svg: []}
 
 // THEME
 export const theme: Writable<string> = writable("default") // "default"

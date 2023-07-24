@@ -26,6 +26,7 @@ export interface ShowRef {
     index?: number
     name?: string
     type?: ShowType
+    data?: any
     // private?: boolean
     // location?: string;
 }

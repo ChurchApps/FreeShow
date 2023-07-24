@@ -92,6 +92,22 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
                 )
             }
 
+            // get mics
+            let mics = data.mics || []
+            if (mics.length) {
+                if (media.length) media.push({ id: "SEPERATOR", label: "" })
+                media.push(
+                    ...mics
+                        .map((mic: any) => ({
+                            id: mic.id,
+                            label: mic.name,
+                            translate: false,
+                            icon: "microphone",
+                        }))
+                        .sort((a, b) => a.label.localeCompare(b.label))
+                )
+            }
+
             if (media.length) media.forEach((action: any) => items.push([action.id === "SEPERATOR" ? action.id : id, action]))
             else items = [[id, { label: "empty.general", disabled: true }]]
 

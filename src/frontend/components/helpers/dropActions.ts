@@ -16,7 +16,7 @@ function getId(drag: any): string {
     const extension: string = getExtension(drag.data[0].name)
     if (drag.id === "files" && getMediaType(extension) === "audio") return "audio"
     if (drag.id === "show" && drag.data[0].type === "audio") return "audio"
-    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera") return "media"
+    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen") return "media"
     // if (drag.id === "audio") return "audio"
     // if (drag.id === "global_group") return "global_group"
     return drag.id || id
@@ -166,7 +166,8 @@ export const dropActions: any = {
             let ref: any = _show().layouts("active").ref()[0][index]
             let slides: any[] = _show().get().slides
             let slide: any = ref.type === "child" ? slides[ref.parent.id] : slides[ref.id]
-            let activeTab: string | null = get(drawerTabsData).templates?.activeSubTab
+            let activeTab: string | null = get(drawerTabsData)[get(activeDrawerTab)]?.activeSubTab
+
             let data: any = {
                 name: slide.group || "",
                 color: slide.color || "",
@@ -212,6 +213,7 @@ const slideDrop: any = {
                 }
             })
         } else if (drag.id === "camera") data[0].type = "camera"
+        else if (drag.id === "screen") data[0].type = "screen"
         else if (!data[0].name) data[0].name = data[0].path
 
         let center = drop.center
@@ -265,6 +267,22 @@ const slideDrop: any = {
             h.newData = { name: audio.name || audio.path || audio.id, path: audio.path || audio.id, type: "audio" }
             history(h)
         })
+    },
+    microphone: ({ drag, drop }: any, h: any) => {
+        h.id = "SHOW_LAYOUT"
+
+        if (drop.trigger?.includes("end")) drop.index!--
+        let layoutSlide = drop.index
+
+        let oldMics = _show().layouts("active").ref()[0][layoutSlide]?.data?.mics || []
+        let mics = drag.data
+        // remove duplicates
+        oldMics.forEach((oldMic) => {
+            if (!mics.find((a) => a.id === oldMic.id)) mics.push(oldMic)
+        })
+
+        h.newData = { key: "mics", data: mics, dataIsArray: true, indexes: [layoutSlide] }
+        history(h)
     },
     slide: ({ drag, drop }: any, history: any) => {
         history.id = "slide"

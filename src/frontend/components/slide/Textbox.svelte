@@ -14,6 +14,7 @@
     import Timer from "./views/Timer.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import DynamicEvents from "./views/DynamicEvents.svelte"
+    import Cam from "../drawer/live/Cam.svelte"
 
     export let item: Item
     export let slideIndex: number = 0
@@ -143,6 +144,10 @@
                 <!-- <MediaLoader path={item.src} /> -->
             {/if}
         {/if}
+    {:else if item?.type === "camera"}
+        {#if item.device}
+            <Cam cam={item.device} item />
+        {/if}
     {:else if item?.type === "timer"}
         <!-- {#key item.timer} -->
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
@@ -156,7 +161,13 @@
     {:else if item?.type === "visualizer"}
         <Visualizer {item} {preview} />
     {:else if item?.type === "icon"}
-        <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {#if item.customSvg}
+            <div class="customIcon">
+                {@html item.customSvg}
+            </div>
+        {:else}
+            <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {/if}
     {/if}
 </div>
 
@@ -287,5 +298,11 @@
         to {
             transform: translateX(-100%);
         }
+    }
+
+    .customIcon,
+    .customIcon :global(svg) {
+        width: 100%;
+        height: 100%;
     }
 </style>

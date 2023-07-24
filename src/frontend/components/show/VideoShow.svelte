@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, dictionary, outLocked, outputs, playingVideos, projects, videoMarkers, volume } from "../../stores"
+    import { activeProject, activeRename, dictionary, outLocked, outputs, playingVideos, projects, videoMarkers, volume } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { analyseAudio, getAnalyser } from "../helpers/audio"
@@ -142,6 +142,8 @@
 
             // sort by time
             a[show.id] = a[show.id].sort((a, b) => a.time - b.time)
+
+            activeRename.set("marker_" + (a[show.id].length - 1))
 
             return a
         })

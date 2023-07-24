@@ -4,12 +4,12 @@ import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputCache, outputs, overlays, playingAudio, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
-import { clearAudio, playAudio } from "./audio"
+import { clone } from "./array"
+import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getMediaType } from "./media"
 import { getActiveOutputs, isOutCleared, setOutput } from "./output"
-import { _show } from "./shows"
 import { loadShows } from "./setShow"
-import { clone } from "./array"
+import { _show } from "./shows"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -318,21 +318,30 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         }
     }
 
+    // mics
+    if (data.mics) {
+        data.mics.forEach((mic: any) => {
+            // setTimeout(() => {
+            //     setMicState.set({ id: mic.id, muted: false })
+            // }, 10 * i)
+            startMicrophone(mic)
+        })
+    }
+
+    // audio
+    if (data.audio) {
+        data.audio.forEach((audio: string) => {
+            let a = _show(showId).get("media")[audio]
+            if (a) playAudio(a, false)
+        })
+    }
+
     // overlays
     if (data.overlays?.length) {
         // send overlays again, because it sometimes don't have it for some reason
         send(OUTPUT, ["OVERLAYS"], get(overlays))
 
         setOutput("overlays", data.overlays, false, outputId, true)
-    }
-
-    // audio
-    if (data.audio) {
-        data.audio.forEach((audio: string) => {
-            console.log(audio)
-            let a = _show(showId).get("media")[audio]
-            if (a) playAudio(a, false)
-        })
     }
 
     // nextTimer

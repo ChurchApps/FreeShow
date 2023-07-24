@@ -25,6 +25,6 @@
     }
 
     .main :global(button:nth-child(even)) {
-        background-color: rgb(0 0 0 / 0.1);
+        background-color: rgb(0 0 20 / 0.08);
     }
 </style>

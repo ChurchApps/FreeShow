@@ -4,7 +4,7 @@
     import Loader from "../../main/Loader.svelte"
     // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
-    import { dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache } from "../../../stores"
+    import { bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -12,6 +12,7 @@
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import { fetchBible, joinRange, loadBible } from "./scripture"
+    import BibleApiKey from "./BibleApiKey.svelte"
 
     export let active: any
     export let bibles: Bible[]
@@ -585,6 +586,8 @@
             <Center faded>
                 <T id="error.bible" />
             </Center>
+        {:else if bibles[0].api && !$bibleApiKey}
+            <BibleApiKey />
         {:else if error}
             <Center faded>
                 <T id="error.bible_api" />

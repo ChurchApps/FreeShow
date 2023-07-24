@@ -450,7 +450,7 @@ const actions: any = {
 
     actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
     remove_layers: (obj: any) => {
-        let type: "image" | "overlays" | "music" = obj.menu.icon
+        let type: "image" | "overlays" | "music" | "microphone" = obj.menu.icon
         let slide: number = obj.sel.data[0].index
         let newData: any = null
 
@@ -467,6 +467,11 @@ const actions: any = {
             // remove clicked
             audio.splice(audio.indexOf(obj.menu.id), 1)
             newData = { key: "audio", data: audio, dataIsArray: true, indexes: [slide] }
+        } else if (type === "microphone") {
+            let mics = layoutSlide.mics
+            // remove clicked
+            mics.splice(mics.indexOf(obj.menu.id), 1)
+            newData = { key: "mics", data: mics, dataIsArray: true, indexes: [slide] }
         }
 
         if (newData) history({ id: "SHOW_LAYOUT", newData })
@@ -916,8 +921,9 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
         if (!ref[index]) return
 
         if (type === "remove") {
+            if (ref[index].type === "child" && parents.find((a) => a.id === ref[index].parent?.id)) return
+
             index = ref[index].parent?.layoutIndex ?? index
-            if (parents.find((a) => a.id === ref[index].id)) return
             parents.push({ index: ref[index].index, id: ref[index].id })
             return
         }

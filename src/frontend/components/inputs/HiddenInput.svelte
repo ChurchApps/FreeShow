@@ -55,6 +55,11 @@
         let value = e.target.value
         if (allowEmpty || value.length) dispatch("edit", { value, id })
     }
+
+    $: if (edit === id && allowEdit) setTimeout(selectText, 10)
+    function selectText() {
+        inputElem?.select()
+    }
 </script>
 
 <svelte:window

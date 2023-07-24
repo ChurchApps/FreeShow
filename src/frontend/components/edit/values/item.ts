@@ -20,6 +20,7 @@ export const itemEdits: { [key: string]: EditInput[] } = {
         { name: "rotation", id: "transform", key: "rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
         { name: "tilt", id: "transform", key: "rotateX", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
         { name: "perspective", id: "transform", key: "perspective", input: "number", value: 0, values: { max: 5000 }, extension: "px" },
+        { name: "media.flip", id: "transform", key: "scaleX", input: "number", value: 1, values: { min: -1, max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
     ],
     style: [
         { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)" },

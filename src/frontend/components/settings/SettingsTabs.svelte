@@ -5,8 +5,7 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    // , "calendar"
-    const tabs: SettingsTabs[] = ["general", "theme", "groups", "styles", "outputs", "actions", "connection", "cloud", "other"]
+    const tabs: SettingsTabs[] = ["general", "outputs", "styles", "groups", "actions", "connection", "cloud", "theme", "other"]
 </script>
 
 <div class="main">
@@ -25,6 +24,6 @@
     }
 
     .main :global(button:nth-child(even)) {
-        background-color: rgb(0 0 0 / 0.1);
+        background-color: rgb(0 0 20 / 0.08);
     }
 </style>

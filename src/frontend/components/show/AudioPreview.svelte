@@ -8,6 +8,7 @@
 
     $: path = $activeShow?.id || ""
     $: name = $activeShow?.name || ""
+    $: isMic = $activeShow?.data?.isMic
     $: playing = $playingAudio[path] || {}
     $: paused = playing.paused !== false
 
@@ -15,6 +16,7 @@
     let duration: any = 0
     $: if (path) getDuration()
     async function getDuration() {
+        duration = 0
         duration = await getAudioDuration(path)
         currentTime = playing.audio?.currentTime || 0
     }
@@ -48,7 +50,7 @@
 
     function keydown(e: any) {
         // if (e.target.closest("input") || e.target.closest(".edit")) return
-        if (document.activeElement !== document.body) return
+        if ($outLocked || isMic || document.activeElement !== document.body) return
 
         if (e.key === " ") playAudio({ path, name }, true, currentTime)
     }
@@ -131,7 +133,7 @@
     <div class="buttons">
         <Button
             style="flex: 0"
-            disabled={$outLocked}
+            disabled={$outLocked || isMic}
             center
             title={paused ? $dictionary.media?.play : $dictionary.media?.pause}
             on:click={() => {
@@ -150,8 +152,8 @@
                 {joinTime(secondsToTime(currentTime))}
             </span>
         {/if}
-        <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
-        <span>
+        <Slider disabled={isMic} value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
+        <span style={isMic ? "opacity: 0.5;" : ""}>
             {joinTime(secondsToTime(duration))}
         </span>
 
@@ -168,22 +170,24 @@
             >
                 <Icon id={"stop"} white size={1.2} />
             </Button>
-            <Button
-                center
-                title={$dictionary.media?._loop}
-                disabled={!$playingAudio[path]}
-                on:click={() => {
-                    if (!$playingAudio[path]) return
+            {#if !isMic}
+                <Button
+                    center
+                    title={$dictionary.media?._loop}
+                    disabled={!$playingAudio[path]}
+                    on:click={() => {
+                        if (!$playingAudio[path]) return
 
-                    playingAudio.update((a) => {
-                        a[path].loop = !playing.loop
+                        playingAudio.update((a) => {
+                            a[path].loop = !playing.loop
 
-                        return a
-                    })
-                }}
-            >
-                <Icon id="loop" white={!playing.loop} size={1.2} />
-            </Button>
+                            return a
+                        })
+                    }}
+                >
+                    <Icon id="loop" white={!playing.loop} size={1.2} />
+                </Button>
+            {/if}
         </div>
 
         <!-- TODO: individual volume -->

@@ -2,7 +2,6 @@
     import { settingsTab } from "../../stores"
     import T from "../helpers/T.svelte"
     import Actions from "./tabs/Actions.svelte"
-    import Calendar from "./tabs/Calendar.svelte"
     import Cloud from "./tabs/Cloud.svelte"
     import Connection from "./tabs/Connection.svelte"
     import General from "./tabs/General.svelte"
@@ -36,8 +35,6 @@
             <Connection />
         {:else if $settingsTab === "cloud"}
             <Cloud />
-        {:else if $settingsTab === "calendar"}
-            <Calendar />
         {:else if $settingsTab === "other"}
             <Other />
         {/if}
