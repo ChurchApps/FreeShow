@@ -3,6 +3,7 @@
     import { activeRename, dictionary } from "../../stores"
 
     export let value: string = ""
+    export let style: string = ""
     export let id: string
     export let allowEmpty: boolean = true
     export let allowEdit: boolean = true
@@ -16,13 +17,13 @@
             .join(" ")
 
     let nameElem: HTMLParagraphElement, inputElem: HTMLInputElement
-    export let edit: boolean = false
+    export let edit: boolean | string = false
     let prevVal: string = ""
     $: if (!edit && !value.length && prevVal.length) value = prevVal
     const click = (e: any) => {
         if (e.target === nameElem) {
             //  || e.target.closest(".contextMenu")
-            edit = true
+            edit = id
             prevVal = value
             setTimeout(() => inputElem?.focus(), 10)
         } else if (e.target !== inputElem) {
@@ -32,7 +33,7 @@
     }
 
     $: if ($activeRename === id) {
-        edit = true
+        edit = id
         setTimeout(() => inputElem?.focus(), 10)
         // prevVal = value
     }
@@ -54,6 +55,11 @@
         let value = e.target.value
         if (allowEmpty || value.length) dispatch("edit", { value, id })
     }
+
+    $: if (edit === id && allowEdit) setTimeout(selectText, 10)
+    function selectText() {
+        inputElem?.select()
+    }
 </script>
 
 <svelte:window
@@ -61,6 +67,13 @@
     on:mouseup={() => clearTimeout(timeout)}
     on:dragstart={() => clearTimeout(timeout)}
     on:keydown={(e) => {
+        // disable space clicking on button
+        if (e.target?.classList.contains("_rename") && e.key === " ") {
+            e.preventDefault()
+            value += " "
+            return
+        }
+
         if (e.key === "Enter" || e.key === "Tab") {
             edit = false
             activeRename.set(null)
@@ -69,10 +82,10 @@
 />
 <!-- on:contextmenu={click} -->
 
-{#if edit && allowEdit}
+{#if edit === id && allowEdit}
     <input bind:this={inputElem} on:change={change} class="edit nocontext _rename name" bind:value />
 {:else}
-    <p bind:this={nameElem} class="_rename">
+    <p {id} {style} bind:this={nameElem} class="_rename">
         {#if value.length}
             {value}
         {:else}
@@ -84,6 +97,8 @@
 <style>
     p {
         margin: 5px;
+        width: 100%;
+        text-align: left;
         /* cursor: text; */
     }
     input {
@@ -94,5 +109,6 @@
         color: inherit;
         border: none;
         width: 100%;
+        min-width: 80px;
     }
 </style>

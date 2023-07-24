@@ -7,7 +7,9 @@ export const languages: any = {
     pt_BR: "Português do Brasil",
     de: "Deutsch",
     it: "Italiano",
-    pl: "Polski"
+    pl: "Polski",
+    hu: "Magyar",
+    sr: "Srpski"
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -22,5 +24,7 @@ export const replace: any = {
     pt_BR: ["pt-BR"],
     de: ["de"],
     it: ["it"],
-    pl: ["pl"]
+    pl: ["pl"],
+    hu: ["hu"],
+    sr: ["sr"]
 }

@@ -5,7 +5,7 @@ import { history } from "./history"
 
 const areas: any = {
     all_slides: ["template"],
-    slides: ["media", "audio", "overlay", "sound", "camera", "show", "midi"], // group
+    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "show", "midi"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
     project: ["show_drawer", "media", "audio", "player"],
@@ -17,7 +17,7 @@ const areas: any = {
 const areaChildren: any = {
     projects: ["folder", "project"],
     project: ["show", "media", "audio", "show_drawer", "player"],
-    slides: ["slide", "group", "global_group", "camera", "media", "audio", "show"],
+    slides: ["slide", "group", "global_group", "screen", "camera", "microphone", "media", "audio", "show"],
     all_slides: [],
     navigation: ["show", "show_drawer", "media", "overlay", "template"],
 }

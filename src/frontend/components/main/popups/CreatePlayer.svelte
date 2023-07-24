@@ -1,14 +1,15 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeDrawerTab, activePopup, drawerTabsData, playerVideos } from "../../../stores"
+    import { activePopup, playerVideos, popupData } from "../../../stores"
+    import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import { newToast } from "../../../utils/messages"
 
-    let active: string | null = $drawerTabsData[$activeDrawerTab]?.activeSubTab
+    let active: string | null = $popupData.active
+    $: if (active) popupData.set({})
 
     let data: any = { name: "", id: "" }
     function add() {

@@ -1,5 +1,5 @@
 <script type="ts">
-    import { dictionary, os, outputDisplay, saved } from "../../stores"
+    import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, paintCache, saved } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { displayOutputs } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
@@ -17,22 +17,23 @@
             <div class="unsaved" />
         {/if}
         <!-- logo -->
-        <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;">FreeShow</h1>
+        <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;font-size: 1.8em;">FreeShow</h1>
     </span>
     <span>
         <TopButton id="show" />
-        <TopButton id="edit" />
-        <TopButton id="calendar" />
-        <TopButton id="draw" />
+        <TopButton id="edit" disabled={!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)} />
+        <!-- <TopButton id="draw" /> -->
         <TopButton id="stage" />
     </span>
     <span style="width: 300px;justify-content: flex-end;">
+        <!-- <TopButton id="stage" hideLabel /> -->
+        <TopButton id="draw" red={$drawTool === "fill" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         <TopButton id="settings" hideLabel />
         <Button title={$outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display} on:click={displayOutputs} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay}>
             {#if $outputDisplay}
-                <Icon id="cancelDisplay" size={1.8} white />
+                <Icon id="cancelDisplay" size={1.6} white />
             {:else}
-                <Icon id="outputs" size={1.8} white />
+                <Icon id="outputs" size={1.6} white />
             {/if}
         </Button>
     </span>
@@ -44,8 +45,8 @@
         display: flex;
         justify-content: space-between;
         z-index: 30;
-        min-height: 50px;
-        height: 50px;
+        min-height: 40px;
+        height: 40px;
 
         /* disabled because it's causing unexpected behaviour in Windows 11 */
         /* -webkit-app-region: drag; */

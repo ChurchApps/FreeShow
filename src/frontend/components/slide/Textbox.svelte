@@ -14,6 +14,7 @@
     import Timer from "./views/Timer.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import DynamicEvents from "./views/DynamicEvents.svelte"
+    import Cam from "../drawer/live/Cam.svelte"
 
     export let item: Item
     export let slideIndex: number = 0
@@ -93,6 +94,9 @@
         if (colorValue.includes("/")) return parseFloat(colorValue.substring(colorValue.indexOf("/") + 1))
         return 1
     }
+
+    $: lineGap = item?.specialStyle?.lineGap
+    $: lineBg = item?.specialStyle?.lineBg
 </script>
 
 <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
@@ -115,11 +119,15 @@
             {#if chords}
                 <Chords {item} {textElem} />
             {/if}
-            <div class="lines" style={smallFontSize || customFontSize !== null ? "--font-size: " + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + "px;" : null} bind:this={textElem}>
+            <div
+                class="lines"
+                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}"
+                bind:this={textElem}
+            >
                 {#each lines as line, i}
                     {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
                         <!-- class:height={!line.text[0]?.value.length} -->
-                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style={style ? line.align : null}>
+                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
                                 <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                             {/each}
@@ -143,6 +151,10 @@
                 <!-- <MediaLoader path={item.src} /> -->
             {/if}
         {/if}
+    {:else if item?.type === "camera"}
+        {#if item.device}
+            <Cam cam={item.device} item />
+        {/if}
     {:else if item?.type === "timer"}
         <!-- {#key item.timer} -->
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
@@ -150,13 +162,19 @@
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "events"}
-        <DynamicEvents {...item.events} textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
+        <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={slideIndex} />
     {:else if item?.type === "visualizer"}
         <Visualizer {item} {preview} />
     {:else if item?.type === "icon"}
-        <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {#if item.customSvg}
+            <div class="customIcon">
+                {@html item.customSvg}
+            </div>
+        {:else}
+            <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {/if}
     {/if}
 </div>
 
@@ -173,10 +191,16 @@
         align-items: center;
     }
 
+    /* should match .edit in Editbox.svelte */
     .lines {
         /* overflow-wrap: break-word;
   font-size: 0; */
         width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
     }
 
     .break {
@@ -287,5 +311,11 @@
         to {
             transform: translateX(-100%);
         }
+    }
+
+    .customIcon,
+    .customIcon :global(svg) {
+        width: 100%;
+        height: 100%;
     }
 </style>

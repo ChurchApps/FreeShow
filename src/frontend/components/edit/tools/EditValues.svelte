@@ -246,6 +246,7 @@
                             {...input.values || {}}
                             {value}
                             disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value}
+                            enableNoColor={input.enableNoColor}
                             on:click={(e) => valueChange(e, input)}
                             on:input={(e) => valueChange(e, input)}
                             on:change={(e) => valueChange(e, input)}

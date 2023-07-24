@@ -1,12 +1,12 @@
 <script>
     import { OUTPUT } from "../../../../types/Channels"
-    import { drawerTabsData } from "../../../stores"
+    import { activeDrawerOnlineTab } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
 
-    $: active = $drawerTabsData.player?.activeSubTab
+    $: active = $activeDrawerOnlineTab
 </script>
 
 {#if active === "youtube"}

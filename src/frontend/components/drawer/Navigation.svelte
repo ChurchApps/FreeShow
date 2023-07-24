@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
     import { activePopup, audioFolders, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates, webFavorites } from "../../stores"
+    import { send } from "../../utils/request"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -12,7 +14,7 @@
     import SelectElem from "../system/SelectElem.svelte"
     import NavigationButton from "./NavigationButton.svelte"
 
-    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "templates" | "player" | "live" | "timers" | "web"
+    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "templates" | "timers" | "web"
 
     interface Button extends Category {
         id: string
@@ -31,7 +33,10 @@
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "favourites", name: "category.favourites", default: true, icon: "star" },
-                { id: "pixabay", name: "Pixabay", icon: "web" },
+                { id: "SEPERATOR", name: "" },
+                { id: "online", name: "media.online", default: true, icon: "web" },
+                { id: "screens", name: "live.screens", default: true, icon: "screen" },
+                { id: "cameras", name: "live.cameras", default: true, icon: "camera" },
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($mediaFolders), "name") as Button[]),
             ]
@@ -54,40 +59,30 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "favourites", name: "category.favourites", default: true, icon: "star" },
                 { id: "SEPERATOR", name: "" },
+                { id: "microphones", name: "live.microphones", default: true, icon: "microphone" },
+                { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($audioFolders), "name") as Button[]),
             ]
         } else if (id === "effects") {
             buttons = [{ id: "effects", name: "tabs.effects", default: true, icon: "effects" }]
         } else if (id === "scripture") {
             buttons = getBibleVersions()
-        } else if (id === "player") {
+        } else if (id === "calendar") {
             buttons = [
-                { id: "youtube", name: "YouTube", icon: "youtube" },
-                { id: "vimeo", name: "Vimeo", icon: "vimeo" },
-            ]
-        } else if (id === "timers") {
-            buttons = [
-                // { id: "all", name: "all", default: true, icon: "all" }, ???????
+                { id: "event", name: "calendar.event", default: true, icon: "calendar" },
+                { id: "show", name: "calendar.show", default: true, icon: "showIcon" },
                 // TODO: split event timers to it's own space & create popup ???????
                 { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
-                // { id: "events", name: "event timers...", default: true, icon: "event" },
                 // TODO: all active in output, not project!!
-                // { id: "project", name: "remote.project", default: true, icon: "project" },
             ]
         } else if (id === "web") {
             buttons = [...(sortObject(keysToID($webFavorites), "name") as Button[])]
-        } else if (id === "live") {
-            buttons = [
-                { id: "screens", name: "live.screens", default: true, icon: "screen" },
-                { id: "windows", name: "live.windows", default: true, icon: "window" },
-                { id: "cameras", name: "live.cameras", default: true, icon: "camera" },
-                { id: "microphones", name: "live.microphones", default: true, icon: "microphone" },
-            ]
-        } else
+        } else {
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "SEPERATOR", name: "" },
             ]
+        }
     }
 
     // TODO: scroll down to selected
@@ -224,6 +219,13 @@
                 {#if !$labelsDisabled}<T id="new.scripture" />{/if}
             </Button>
         </div>
+    {:else if id === "calendar"}
+        <div class="tabs">
+            <Button on:click={() => send(IMPORT, ["calendar"], { name: "Calendar", extensions: ["ics"] })} center title={$dictionary.actions?.import}>
+                <Icon id="add" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="actions.import" />{/if}
+            </Button>
+        </div>
     {/if}
 </div>
 
@@ -239,7 +241,7 @@
 
     .categories :global(button) {
         width: 100%;
-        padding: 0.2em 0.8em;
+        padding: 0.1em 0.8em !important;
         justify-content: space-between;
     }
     .tabs :global(button) {

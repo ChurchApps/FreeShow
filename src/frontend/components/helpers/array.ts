@@ -86,3 +86,18 @@ export function clone(object: any) {
     if (!object) return object
     return JSON.parse(JSON.stringify(object))
 }
+
+// not currently in use, but could be handy
+export function slowLoop(array, interval, returnFunc) {
+    loopFunction(0)
+
+    function loopFunction(index) {
+        returnFunc(array[index])
+
+        if (index < array.length - 1) {
+            setTimeout(() => {
+                loopFunction(index + 1)
+            }, interval)
+        }
+    }
+}

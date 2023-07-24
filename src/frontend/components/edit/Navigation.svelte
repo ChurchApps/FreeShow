@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeShow, editHistory, labelsDisabled, overlays, templates } from "../../stores"
+    import { activeEdit, activeShow, editHistory, labelsDisabled, overlays, refreshEditSlide, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -77,6 +77,7 @@
                         style="width: 100%;"
                         on:click={() => {
                             activeEdit.set(edited.edit)
+                            refreshEditSlide.set(true)
                             if (edited.show) activeShow.set(edited.show)
                         }}
                         active={i === 0 && !!$activeEdit.id}
@@ -109,8 +110,9 @@
 <style>
     h3 {
         color: var(--text);
+        background-color: var(--primary-darkest);
         text-align: center;
-        margin-bottom: 10px;
+        padding: 5px 0;
         overflow: initial;
     }
 

@@ -43,7 +43,7 @@
     <!-- Add -->
     <Button on:click={addSlide} center dark>
         <Icon id="add" right={!$labelsDisabled} />
-        {#if !$labelsDisabled}<T id="new.slide" />{/if}
+        {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
     </Button>
 </div>
 

@@ -3,9 +3,12 @@
     import { uid } from "uid"
     import { getContrast } from "../helpers/color"
     import T from "../helpers/T.svelte"
+    import { dictionary } from "../../stores"
+    import Icon from "../helpers/Icon.svelte"
 
     export let value: any = "#FFF"
     export let visible: boolean = false
+    export let enableNoColor: boolean = false
     export let height: number = 0
     export let width: number = 0
 
@@ -33,7 +36,7 @@
     let dispatch = createEventDispatcher()
     function change(e) {
         let value = e.target?.value || e
-        if (!value) return
+        if (value === undefined) return
 
         dispatch("input", value)
     }
@@ -81,6 +84,21 @@
         {#if pickerOpen}
             <div class="picker" class:clipRight bind:this={colorElem}>
                 <div class="colors">
+                    {#if enableNoColor}
+                        <div
+                            class="pickColor noColor"
+                            class:active={!value}
+                            title={$dictionary.settings?.remove}
+                            on:click={() => {
+                                change("")
+                                setTimeout(() => {
+                                    pickerOpen = false
+                                }, 10)
+                            }}
+                        >
+                            <Icon id="close" white />
+                        </div>
+                    {/if}
                     {#each colors as color}
                         <div
                             class="pickColor"
@@ -180,5 +198,12 @@
     }
     .pickColor.active {
         border: 2px solid var(--secondary) !important;
+    }
+
+    .noColor {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--primary);
     }
 </style>

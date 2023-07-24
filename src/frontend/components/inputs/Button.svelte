@@ -53,6 +53,7 @@
 
 <button
     on:mousemove={mousemove}
+    on:mousedown={hideTooltip}
     on:mouseleave={hideTooltip}
     id={$$props.id}
     style="{outlineColor ? 'outline-offset: -2px;outline: 2px solid ' + outlineColor + ' !important;' : ''}{$$props.style || ''}"
@@ -99,6 +100,10 @@
     }
     button.center {
         justify-content: center;
+        text-align: center;
+    }
+    button.center :global(p) {
+        text-align: center;
     }
     button.bold {
         font-weight: bold;

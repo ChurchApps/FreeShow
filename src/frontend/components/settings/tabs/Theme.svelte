@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { dictionary, labelsDisabled, theme, themes } from "../../../stores"
+    import { dictionary, selected, theme, themes } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -9,9 +10,9 @@
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FontDropdown from "../../inputs/FontDropdown.svelte"
+    import HiddenInput from "../../inputs/HiddenInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import ThemeSwitcher from "../ThemeSwitcher.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
     import { defaultThemes } from "./defaultThemes"
 
     const colors: string[] = [
@@ -28,79 +29,66 @@
         // "focus",
     ]
 
+    theme.subscribe((a: string) => {
+        if (!$themes[a]) return
+        updateThemeValues($themes[a])
+    })
+
+    $: themeNames = getThemesArray($themes)
+
+    function getThemesArray(themes: any) {
+        let names: any[] = []
+        Object.entries(themes).forEach(([id, obj]: any) => {
+            names.push({ name: obj.default ? `$:themes.${obj.name}:$` : obj.name, id, default: obj.default })
+        })
+        return names.sort((a, b) =>
+            a.id === "default" || b.id === "default"
+                ? 1
+                : (a.default ? $dictionary.themes?.[a.name.slice(a.name.indexOf(".") + 1, a.name.length - 2)] || "" : a.name).localeCompare(b.default ? $dictionary.themes?.[b.name.slice(b.name.indexOf(".") + 1, b.name.length - 2)] || "" : b.name)
+        )
+    }
+
     function updateTheme(e: any, id: null | string, key: string = "colors") {
         let value: string = e.target?.value ?? e
 
-        if ($theme === "default") {
+        let themeId = $selected.data[0]?.id || $theme
+
+        if (themeId === "default") {
             if (!value) return
 
             // duplicate
-            let thisTheme: any = clone($themes[$theme])
+            let thisTheme: any = clone($themes[themeId])
             let data: any = {
                 ...thisTheme,
                 default: false,
-                name: themeValue + " 2",
-                [key]: { ...thisTheme[key], [id!]: value },
+                name: (key === "name" ? value : thisTheme.name) + " 2",
             }
+            if (key !== "name") data[key] = { ...thisTheme[key], [id!]: value }
 
             history({ id: "UPDATE", newData: { data }, location: { page: "settings", id: "settings_theme" } })
             updateThemeValues(data)
         } else {
-            history({ id: "UPDATE", newData: { key, subkey: id, data: value }, oldData: { id: $theme }, location: { page: "settings", id: "settings_theme", override: "theme#" + $theme + "." + id } })
+            history({ id: "UPDATE", newData: { key, subkey: id, data: value }, oldData: { id: themeId }, location: { page: "settings", id: "settings_theme", override: "theme#" + themeId + "." + id } })
 
             setTimeout(() => {
-                updateThemeValues($themes[$theme])
+                updateThemeValues($themes[themeId])
             }, 20)
         }
     }
 
-    const changeValue = (e: any) => (themeValue = e.target.value)
     let themeValue: any
     $: themeValue = $themes[$theme]?.default ? $dictionary.themes[$themes[$theme].name] : $themes[$theme]?.name || ""
 
-    function resetTheme() {
-        let data = { ...defaultThemes.default, default: false, name: themeValue }
-        history({ id: "UPDATE", newData: { data }, oldData: { id: $theme }, location: { page: "settings", id: "settings_theme" } })
-        updateThemeValues($themes[$theme])
-    }
-
     function resetThemes() {
         theme.set("default")
-        themes.set(JSON.parse(JSON.stringify(defaultThemes)))
+        themes.set(clone(defaultThemes))
         updateThemeValues(defaultThemes.default)
     }
+
+    let edit: boolean = false
 </script>
 
-<CombinedInput>
-    <ThemeSwitcher />
-</CombinedInput>
-
-<CombinedInput>
-    <TextInput disabled={$theme === "default"} value={themeValue} on:input={changeValue} on:change={() => updateTheme(themeValue, null, "name")} />
-    <Button
-        disabled={$theme === "default"}
-        on:click={() => {
-            history({ id: "UPDATE", newData: { id: $theme }, location: { page: "settings", id: "settings_theme" } })
-        }}
-    >
-        <Icon id="delete" right />
-        {#if !$labelsDisabled}
-            <T id="actions.delete" />
-        {/if}
-    </Button>
-    <Button
-        on:click={() => {
-            history({ id: "UPDATE", newData: { data: clone($themes[$theme]), replace: { default: false, name: themeValue + " 2" } }, location: { page: "settings", id: "settings_theme" } })
-        }}
-    >
-        <Icon id="duplicate" right />
-        {#if !$labelsDisabled}
-            <T id="actions.duplicate" />
-        {/if}
-    </Button>
-</CombinedInput>
-
-<h3><T id="settings.font" /></h3>
+<!-- <h3><T id="settings.font" /></h3> -->
 <CombinedInput>
     <p><T id="settings.font_family" /></p>
     <!-- <Dropdown options={fonts} value={$themes[$theme]?.font?.family} on:click={(e) => updateTheme(e.detail.name, "family", "font")} width="200px" /> -->
@@ -119,18 +107,48 @@
     </CombinedInput>
 {/each}
 
-<br />
+<div class="filler" />
+<div class="bottom">
+    <div class="themes" style="display: flex;overflow-x: auto;">
+        {#each themeNames as currentTheme}
+            {@const active = $theme === currentTheme.id}
+            {@const currentColors = $themes[currentTheme.id].colors}
+            {@const name = translate(currentTheme.name, { parts: true })}
 
-<Button style="width: 100%;" on:click={resetTheme} center>
-    <Icon id="reset" right />
-    <T id="settings.reset_theme" />
-</Button>
-<Button style="width: 100%;" on:click={resetThemes} center>
-    <Icon id="reset" right />
-    <T id="settings.reset_themes" />
-</Button>
+            <SelectElem id="theme" data={{ id: currentTheme.id }} fill>
+                <Button
+                    outline={active}
+                    class={currentTheme.id === "default" ? "" : "context #theme"}
+                    {active}
+                    style="width: 100%;{active ? '' : `background-color: ${currentColors.primary};`}"
+                    on:click={() => theme.set(currentTheme.id)}
+                    bold={false}
+                    center
+                >
+                    {#if active}<Icon id="theme" right white />{/if}
+                    <HiddenInput style="color: {currentColors.secondary};" value={name} id={"theme_" + currentTheme.id} on:edit={(e) => updateTheme(e.detail.value, null, "name")} bind:edit />
+                </Button>
+            </SelectElem>
+        {/each}
+    </div>
 
-<br />
+    <div style="display: flex;">
+        <Button
+            style="width: 100%;"
+            on:click={() => {
+                history({ id: "UPDATE", newData: { data: clone($themes[$theme]), replace: { default: false, name: themeValue + " 2" } }, location: { page: "settings", id: "settings_theme" } })
+            }}
+            center
+        >
+            <Icon id="add" right />
+            <T id="settings.add" />
+        </Button>
+        <Button style="width: 100%;" on:click={resetThemes} center>
+            <Icon id="reset" right />
+            <T id="settings.reset_themes" />
+        </Button>
+    </div>
+</div>
 
 <style>
     h3 {
@@ -139,5 +157,28 @@
         text-align: center;
         font-size: 0.9em;
         margin: 20px 0;
+    }
+
+    .filler {
+        height: 76px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
+    }
+
+    .bottom .themes :global(button) {
+        padding: 0 0.8em !important;
+        font-size: 14px;
+        font-family: sans-serif;
+    }
+    .bottom .themes :global(button.outline) {
+        outline: 2px solid white !important;
     }
 </style>

@@ -101,8 +101,9 @@
         renderFrame()
 
         function generateBar(barHeight) {
-            let r = barHeight * 1.5 + 5 // * (i / bufferLength)
-            let g = 5 // 250 * (i / bufferLength)
+            // see values in AudioPreview.svelte
+            let r = barHeight * 1.5 + 5
+            let g = 5
             let b = 150
 
             ctx.fillStyle = color || "rgb(" + r + "," + g + "," + b + ")"

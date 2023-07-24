@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Item } from "../../types/Show"
+import type { Item, Line } from "../../types/Show"
 import { getSlideText } from "../components/edit/scripts/textStyle"
 import { changeValues, clone, keysToID, sortObjectNumbers } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
@@ -8,7 +8,7 @@ import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/
 import { addToPos } from "../components/helpers/mover"
 import { _show } from "../components/helpers/shows"
 import { similarity } from "../converters/txt"
-import { activeShow } from "../stores"
+import { activeShow, refreshEditSlide } from "../stores"
 
 // what I want:
 // [parent, parent]: change just the parent groups
@@ -485,4 +485,103 @@ export function mergeDuplicateSlides({ slides, layout }) {
     })
 
     return { slides: newSlides, layout }
+}
+
+// split in half
+// WIP simular to Editbox.svelte
+export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) {
+    let lines: Line[] = _show().slides([slideRef.id]).items([itemIndex]).get("lines")[0][0]
+
+    console.log(lines)
+    console.log(slideRef)
+
+    // auto find center line
+    if (!sel.length) {
+        // round up to 5 = 3+2
+        let centerLineIndex = Math.ceil(lines.length / 2)
+        sel[centerLineIndex] = { start: 0 }
+    }
+
+    let firstLines: Line[] = []
+    let secondLines: Line[] = []
+
+    let currentIndex = 0
+    let textPos = 0
+    let start = -1
+
+    // split lines in two
+    lines.forEach((line, i) => {
+        if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
+        else firstLines.push({ align: line.align, text: [] })
+
+        textPos = 0
+        line.text?.forEach((text) => {
+            currentIndex += text.value.length
+            if (sel[i]?.start !== undefined) start = sel[i].start
+
+            if (start > -1 && currentIndex >= start) {
+                if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
+                let pos = (sel[i]?.start || 0) - textPos
+                if (pos > 0)
+                    firstLines[firstLines.length - 1].text.push({
+                        style: text.style,
+                        value: text.value.slice(0, pos),
+                    })
+                secondLines[secondLines.length - 1].text.push({
+                    style: text.style,
+                    value: text.value.slice(pos, text.value.length),
+                })
+            } else {
+                firstLines[firstLines.length - 1].text.push({
+                    style: text.style,
+                    value: text.value,
+                })
+            }
+            textPos += text.value.length
+        })
+
+        if (!firstLines.at(-1)?.text.length) firstLines.pop()
+    })
+
+    console.log(lines)
+    console.log(firstLines)
+    console.log(secondLines)
+
+    let defaultLine = [
+        {
+            align: lines[0].align || "",
+            text: [{ style: lines[0].text[0]?.style || "", value: "" }],
+        },
+    ]
+    if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
+    if (!secondLines.length) secondLines = defaultLine
+
+    // create new slide
+    let newSlide = { ..._show().slides([slideRef.id]).get()[0] }
+    newSlide.items[itemIndex].lines = secondLines
+    delete newSlide.id
+    delete newSlide.globalGroup
+    newSlide.group = null
+    newSlide.color = null
+
+    // add new slide
+    // TODO: history
+    let id = uid()
+    _show()
+        .slides([id])
+        .add([clone(newSlide)])
+    // newSlide.id = id
+    // history({ id: "SLIDES", newData: { data: clone(newSlide) } })
+
+    // update slide
+    history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([firstLines]), slides: [slideRef.id], items: [itemIndex] }, location: { page: "none", override: slideRef.id + itemIndex } })
+
+    // set child
+    let parentId = slideRef.type === "child" ? slideRef.parent.id : slideRef.id
+    let children = _show().slides([parentId]).get("children")[0] || []
+    let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
+    children = addToPos(children, [id], slideIndex)
+    _show().slides([parentId]).set({ key: "children", value: children })
+
+    refreshEditSlide.set(true)
 }

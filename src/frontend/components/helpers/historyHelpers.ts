@@ -2,11 +2,12 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { ShowObj } from "../../classes/Show"
 import {
+    activeDrawerTab,
     activeProject,
+    activeRename,
     activeShow,
     activeStage,
     defaultProjectName,
-    deletedShows,
     dictionary,
     drawerTabsData,
     events,
@@ -25,15 +26,15 @@ import {
     theme,
     themes,
 } from "../../stores"
+import { updateThemeValues } from "../../utils/updateSettings"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
+import { clone } from "./array"
 import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "./empty"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 import { dateToString } from "./time"
-import { clone } from "./array"
-import { updateThemeValues } from "../../utils/updateSettings"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -53,8 +54,11 @@ export const _updaters = {
     stage: {
         store: stageShows,
         empty: EMPTY_STAGE,
-        select: (id: string) => {
+        select: (id: string, _data: any, initializing: boolean) => {
             activeStage.set({ id, items: [] })
+
+            if (!initializing) return
+            activeRename.set("stage_" + id)
         },
         deselect: (id: string) => {
             if (get(activeStage).id === id) {
@@ -69,7 +73,7 @@ export const _updaters = {
         initialize: (data) => {
             return replaceEmptyValues(data, { name: getProjectName(), created: Date.now() })
         },
-        select: (id: string, { data }: any) => {
+        select: (id: string, { data }: any, initializing: boolean) => {
             activeProject.set(id)
 
             // remove active show index
@@ -86,6 +90,9 @@ export const _updaters = {
                     return f
                 })
             }
+
+            if (!initializing) return
+            activeRename.set("project_" + id)
         },
         deselect: (id: string) => {
             if (get(activeProject) === id) {
@@ -97,7 +104,7 @@ export const _updaters = {
     project_folder: {
         store: folders,
         empty: EMPTY_PROJECT_FOLDER,
-        select: (id: string, { data, changed }: any) => {
+        select: (id: string, { data, changed }: any, initializing: boolean) => {
             // add folder to opened folders
             openedFolders.update((a) => {
                 // open parent folders
@@ -110,6 +117,10 @@ export const _updaters = {
                 a.push(id)
                 return a
             })
+
+            if (initializing) {
+                activeRename.set("folder_" + id)
+            }
 
             if (!changed) return
 
@@ -182,9 +193,30 @@ export const _updaters = {
         },
     },
 
-    category_shows: { store: categories, ...getDefaultCategoryUpdater("shows") },
-    category_overlays: { store: overlayCategories, ...getDefaultCategoryUpdater("overlays") },
-    category_templates: { store: templateCategories, ...getDefaultCategoryUpdater("templates") },
+    category_shows: {
+        store: categories,
+        ...getDefaultCategoryUpdater("shows"),
+        select: (id: string, _data, initializing: boolean) => {
+            if (!initializing) return
+            activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
+        },
+    },
+    category_overlays: {
+        store: overlayCategories,
+        ...getDefaultCategoryUpdater("overlays"),
+        select: (id: string, _data, initializing: boolean) => {
+            if (!initializing) return
+            activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
+        },
+    },
+    category_templates: {
+        store: templateCategories,
+        ...getDefaultCategoryUpdater("templates"),
+        select: (id: string, _data, initializing: boolean) => {
+            if (!initializing) return
+            activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
+        },
+    },
     category_media: { store: mediaFolders, ...getDefaultCategoryUpdater("media") },
     category_audio: { store: audioFolders, ...getDefaultCategoryUpdater("audio") },
 
@@ -196,6 +228,14 @@ export const _updaters = {
             if (get(drawerTabsData).overlays?.activeSubTab && get(overlayCategories)[get(drawerTabsData).overlays.activeSubTab!]) {
                 data.category = get(drawerTabsData).overlays.activeSubTab
             }
+
+            // auto name
+            let newName = 1
+            while (Object.values(get(overlays)).find((a) => a.name === newName.toString())) {
+                newName++
+            }
+            data.name = newName.toString()
+
             return data
         },
         deselect: (id: string) => clearOverlayOutput(id),
@@ -203,7 +243,7 @@ export const _updaters = {
     overlay_items: { store: overlays, empty: [] },
     overlay_name: { store: overlays, empty: "" },
     overlay_color: { store: overlays, empty: null },
-    overlay_category: { store: overlays, empty: "unlabeled" },
+    overlay_category: { store: overlays, empty: null },
 
     template: {
         store: templates,
@@ -213,13 +253,21 @@ export const _updaters = {
             if (get(drawerTabsData).templates?.activeSubTab && get(categories)[get(drawerTabsData).templates.activeSubTab!]) {
                 data.category = get(drawerTabsData).templates.activeSubTab
             }
+
+            // auto name
+            let newName = 1
+            while (Object.values(get(templates)).find((a) => a.name === newName.toString())) {
+                newName++
+            }
+            data.name = newName.toString()
+
             return data
         },
     },
     template_items: { store: templates, empty: [] },
     template_name: { store: templates, empty: "" },
     template_color: { store: templates, empty: null },
-    template_category: { store: templates, empty: "unlabeled" },
+    template_category: { store: templates, empty: null },
 
     player_video: { store: playerVideos, empty: EMPTY_PLAYER_VIDEO },
 
@@ -278,9 +326,6 @@ export const _updaters = {
             // set text cache
             saveTextCache(id, data.data)
 
-            // remove from deleted when restored
-            deletedShows.set(get(deletedShows).filter((a) => a.id !== id))
-
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
                 a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps }
@@ -308,9 +353,6 @@ export const _updaters = {
                 })
             }
 
-            // add to deleted so the file can be deleted on save
-            deletedShows.set([...get(deletedShows), { id, name: get(shows)[id].name }])
-
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
                 delete a[id]
@@ -322,7 +364,7 @@ export const _updaters = {
     show_layout: {
         store: showsCache,
         empty: EMPTY_LAYOUT,
-        select: (id: string, { subkey }: any) => {
+        select: (id: string, { subkey }: any, initializing: boolean) => {
             _show(id).set({ key: "settings.activeLayout", value: subkey })
 
             // set active layout in project
@@ -332,6 +374,9 @@ export const _updaters = {
                     return a
                 })
             }
+
+            if (!initializing) return
+            activeRename.set("layout_" + subkey)
         },
         deselect: (id: string, { subkey }: any) => {
             if (_show(id).get("settings.activeLayout") !== subkey) return
@@ -347,7 +392,7 @@ export const _updaters = {
 
     settings_theme: {
         store: themes,
-        select: (id: string, data: any) => {
+        select: (id: string, data: any, initializing: boolean) => {
             // TODO: remove default if name change; if (a[obj.location!.theme!].default) groupValue
             if (data.key === "name" && get(themes)[id].default) {
                 themes.update((a) => {
@@ -362,6 +407,9 @@ export const _updaters = {
                 if (data.subkey) updateTransparentColors(id)
                 updateThemeValues(get(themes)[id])
             }, 100)
+
+            if (!initializing) return
+            activeRename.set("theme_" + id)
         },
         deselect: (id: string, data: any) => {
             if (!data.key && get(theme) === id) {
@@ -380,7 +428,14 @@ export const _updaters = {
             }, 100)
         },
     },
-    settings_style: { store: styles },
+    settings_style: {
+        store: styles,
+        select: (id: string, _data, initializing: boolean) => {
+            if (!initializing) return
+            activeRename.set("style_" + id)
+        },
+    },
+    settings_output: { store: outputs },
 }
 
 function updateTransparentColors(id: string) {

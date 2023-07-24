@@ -32,7 +32,7 @@
 
 <div class="parent" style="display: flex;flex-direction: column;height: 100%;">
     <div class="media" style="flex: 1;overflow: hidden;">
-        <Media {path} bind:videoData bind:videoTime controls on:loaded={onLoad} on:playing={onPlay} />
+        <Media {path} bind:videoData bind:videoTime transition={{ type: "none", duration: 0, easing: "" }} controls on:loaded={onLoad} on:playing={onPlay} mirror />
     </div>
 </div>
 

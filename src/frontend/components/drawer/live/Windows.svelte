@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { outputs } from "../../../stores"
+    import { outLocked, outputs } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -43,7 +43,7 @@
                 bind:streams
                 screen={window}
                 on:click={(e) => {
-                    if (e.ctrlKey || e.metaKey) return
+                    if ($outLocked || e.ctrlKey || e.metaKey) return
                     if (currentOutput.out?.background?.id === window.id) setOutput("background", null)
                     else setOutput("background", { id: window.id, type: "screen" })
                 }}

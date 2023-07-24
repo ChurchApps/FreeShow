@@ -3,12 +3,13 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
-import { clearAudio, playAudio } from "./audio"
+import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputCache, outputs, overlays, playingAudio, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
+import { clone } from "./array"
+import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getMediaType } from "./media"
-import { getActiveOutputs, setOutput } from "./output"
-import { _show } from "./shows"
+import { getActiveOutputs, isOutCleared, setOutput } from "./output"
 import { loadShows } from "./setShow"
+import { _show } from "./shows"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -303,7 +304,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 name: bg.name,
                 type: bg.type || getMediaType(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)),
                 path: bg.path,
-                id: bg.id,
+                cameraGroup: bg.cameraGroup || "",
+                id: bg.id || bg.path, // path = cameras
                 muted: bg.muted !== false,
                 loop: bg.loop !== false,
                 filter: getMediaFilter(bg.path),
@@ -316,21 +318,30 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         }
     }
 
+    // mics
+    if (data.mics) {
+        data.mics.forEach((mic: any) => {
+            // setTimeout(() => {
+            //     setMicState.set({ id: mic.id, muted: false })
+            // }, 10 * i)
+            startMicrophone(mic)
+        })
+    }
+
+    // audio
+    if (data.audio) {
+        data.audio.forEach((audio: string) => {
+            let a = _show(showId).get("media")[audio]
+            if (a) playAudio(a, false)
+        })
+    }
+
     // overlays
     if (data.overlays?.length) {
         // send overlays again, because it sometimes don't have it for some reason
         send(OUTPUT, ["OVERLAYS"], get(overlays))
 
         setOutput("overlays", data.overlays, false, outputId, true)
-    }
-
-    // audio
-    if (data.audio) {
-        data.audio.forEach((audio: string) => {
-            console.log(audio)
-            let a = _show(showId).get("media")[audio]
-            if (a) playAudio(a, false)
-        })
     }
 
     // nextTimer
@@ -453,6 +464,12 @@ export function clearOverlays() {
 // TODO: output/clearButtons
 export function clearAll() {
     if (get(outLocked)) return
+
+    let allCleared = isOutCleared(null) && !Object.keys(get(playingAudio)).length
+    if (allCleared) return
+
+    // TODO: audio
+    if (!get(outputCache)) outputCache.set(clone(get(outputs)))
 
     // clearVideo()
     setOutput("background", null)

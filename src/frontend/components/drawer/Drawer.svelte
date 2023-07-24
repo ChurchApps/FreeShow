@@ -13,7 +13,8 @@
     import Info from "./info/Info.svelte"
 
     const minHeight = 40
-    let maxHeight = window.innerHeight - 50 - ($os.platform === "win32" ? 30 : 0)
+    const topHeight = 40
+    let maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? 30 : 0)
     let defaultHeight: number = 300
     $: height = $drawer.height
 
@@ -22,7 +23,7 @@
     function mousedown(e: any) {
         if (e.target.closest(".search")) return
 
-        maxHeight = window.innerHeight - 50 - ($os.platform === "win32" ? 30 : 0)
+        maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? 30 : 0)
         mouse = {
             x: e.clientX,
             y: e.clientY,
@@ -71,7 +72,9 @@
     }
 
     function openDrawerTab(tab: any) {
-        if ($activeDrawerTab === tab.id || move) return
+        // || move
+        // TODO: don't open if move is greater than 10px
+        if ($activeDrawerTab === tab.id) return
 
         // allow click event first
         setTimeout(() => {
@@ -107,18 +110,12 @@
     let searchElem: any
     let autoDrawer: boolean = false
     function keydown(e: any) {
-        if (document.activeElement === document.body && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            // Alphabet upper case | Alphabet lower case
-            if (/^[A-Z]{1}$/i.test(e.key)) {
-                searchActive = true
-                // searchElem.focus()
-                setTimeout(() => {
-                    searchValue = e.key
-                }, 20)
+        if (e.ctrlKey && e.key.toLowerCase() === "f") {
+            searchActive = false
+            searchActive = true
 
-                // change to "Show" when searching when drawer is closed
-                if ($drawer.height <= minHeight) activeDrawerTab.set("shows")
-            }
+            // change to "Show" when searching when drawer is closed
+            if ($drawer.height <= minHeight) activeDrawerTab.set("shows")
         } else if (e.key === "Enter") {
             // TODO: first match
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject) return

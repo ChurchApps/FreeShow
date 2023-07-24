@@ -11,6 +11,7 @@ import {
     autosave,
     calendarAddShow,
     categories,
+    customizedIcons,
     defaultProjectName,
     drawSettings,
     drawer,
@@ -126,6 +127,8 @@ export function updateSettings(data: any) {
 }
 
 export function updateThemeValues(themes: any) {
+    if (!themes) return
+
     Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
     Object.entries(themes.font).forEach(([key, value]: any) => {
         // || themeId === "default"
@@ -241,6 +244,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     volume: (v: any) => volume.set(v),
     midiIn: (v: any) => midiIn.set(v),
     videoMarkers: (v: any) => videoMarkers.set(v),
+    customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
 }

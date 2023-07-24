@@ -1,34 +1,36 @@
-<img align="right" width="150" height="150" src="https://user-images.githubusercontent.com/17619496/188226360-0f79751e-4fc1-4a0b-bcce-b7c6642d9e04.png">
+<img align="right" width="150" height="150" src="https://github.com/vassbo/freeshow/assets/17619496/ddcdb667-db87-4844-b102-c928ac15f074">
 
 [![Downloads](https://img.shields.io/github/downloads/vassbo/freeshow/total)](https://github.com/vassbo/freeshow/releases)
 [![Licence](https://img.shields.io/badge/licence-GPL-blue.svg)](https://github.com/vassbo/freeshow/blob/main/LICENSE)
 
 # FreeShow
 
-> Easy and free for anyone to use anywhere!
+> FreeShow is a free software with a user-friendly interface that offers powerful features for creating and editing slideshows.
 
-## Trailer
+## Get Started Using FreeShow
 
-[Watch the trailer on Youtube](https://www.youtube.com/watch?v=6zArghvgUok)
+[![](https://markdown-videos.vercel.app/youtube/9_1lUNcrU1w)](https://youtu.be/9_1lUNcrU1w)
 
-<!-- [![Watch the trailer on Youtube](https://img.youtube.com/vi/6zArghvgUok/maxresdefault.jpg)](https://youtu.be/6zArghvgUok) -->
+## Preview
 
-## Screenshots
-
-<img src="https://user-images.githubusercontent.com/17619496/188235237-45212f56-8f36-4526-8033-20969eb92cf8.png">
-<img src="https://user-images.githubusercontent.com/17619496/188235253-56448f25-7d5a-4bc1-a375-adf26e9ab96b.png">
+<div style="display: flex;gap: 10px;">
+    <img style="width: 49%;" src="https://github.com/vassbo/freeshow/assets/17619496/e74ed3c3-75ee-44a0-a3ee-1f8155c83220">
+    <img style="width: 49%;" src="https://github.com/vassbo/freeshow/assets/17619496/5b23c324-e21b-4a39-ad19-83bd91bb7b40">
+</div>
+<div style="display: flex;gap: 10px;margin-top: 10px;">
+    <img style="width: 49%;" src="https://github.com/vassbo/freeshow/assets/17619496/f6281d2a-fec9-41ae-baa3-cbdcced051ec">
+    <img style="width: 49%;" src="https://github.com/vassbo/freeshow/assets/17619496/9c315a85-6abb-4511-af94-3b276fff1f96">
+</div>
 
 ## Short description
 
-FreeShow is a presentation program to easily show text on a big screen, with support for stage display, remote control, media, and many more advanced features. It is open sourced meaning anyone can contribute.
+FreeShow is a free and open-source presentation program that makes it easy to show text on a big screen. It supports stage display, remote control, media, and many other advanced features. It is open-sourced meaning anyone can contribute.
 
-I created this program because of all the programs I have tried, they was either way too expensive or unnecessarily hard to use. This can be used for free everywhere, from a small church to a big concert.
-
-> Please note that the program is still in active development
+I created FreeShow because other simular programs I tried was expensive or complex to use. I wanted to create a program that was easy to use and affordable for everyone, from small churches to large venues. FreeShow is now used by people all over the world.
 
 ## Donate?
 
-Creating such a program takes a lot of my time, so if you would like to help me continue developing this, a donation would be awesome.
+I've put a lot of time and effort into developing FreeShow, and I'm passionate about continuing to develop it. If you would like to help me make FreeShow even better, a donation would be greatly appreciated.
 
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=Y9PJC9TN4528A)
 

@@ -47,6 +47,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (key === "overlays") lockedOverlays.set(outData)
 
             // WIP update bg (muted, loop, time)
+            // WIP preview don't get set to 0, just output window
             if (key === "background" && data) {
                 let msg: any = { id, data: { muted: data.muted || false, loop: data.loop || false } }
                 if (data.startAt !== undefined) msg.time = data.startAt || 0

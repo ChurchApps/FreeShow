@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { Event } from "../../../types/Calendar"
 import { OUTPUT, STAGE } from "../../../types/Channels"
-import { activeTimers, currentWindow, dictionary, events, shows } from "../../stores"
+import { activeTimers, currentWindow, dictionary, events, nextShowEventPaused, nextShowEventStart, shows } from "../../stores"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { setOutput } from "./output"
@@ -46,18 +46,27 @@ export function startEventTimer() {
         let eventTime: Date = new Date(a.from)
         return a.type === "show" && currentTime.getTime() - INTERVAL < eventTime.getTime()
     })
-    if (!showEvents.length || showTimeout) return
+    if (!showEvents.length || showTimeout) {
+        nextShowEventStart.set({})
+        return
+    }
+
+    showEvents = showEvents.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
 
     showTimeout = setTimeout(() => {
-        showEvents.forEach((event) => {
+        showEvents.forEach((event, i) => {
             let eventTime: Date = new Date(event.from)
             let toast = get(dictionary).toast || {}
             let showId = event.show || ""
             let show = get(shows)[showId]
-            if (!show) return
+            if (!show || get(nextShowEventPaused)) return
+
+            let timeLeft: number = eventTime.getTime() - currentTime.getTime()
+            if (i === 0) {
+                nextShowEventStart.set({ showId, name: show.name, timeLeft })
+            }
 
             // less than 1 minute
-            let timeLeft: number = eventTime.getTime() - currentTime.getTime()
             if (timeLeft <= ONE_MINUTE && timeLeft > ONE_MINUTE - INTERVAL) {
                 newToast(`${toast.starting_show} "${show.name}" ${toast.less_than_minute}`)
             }

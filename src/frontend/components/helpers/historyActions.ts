@@ -79,7 +79,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return updateElement(a)
             })
 
-            if (!deleting && updater.select) updater.select(id, data)
+            if (!deleting && updater.select) updater.select(id, data, initializing)
 
             if (!initializing) return
 
@@ -402,6 +402,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // sort in descending order so indexes are correct while adding/removing
             slides = slides.sort((a, b) => (a.index < b.index ? 1 : -1))
+            if (data.layout?.backgrounds?.[1]) data.layout.backgrounds.reverse()
 
             slides.forEach((slide, i) => {
                 let id = slide.id
@@ -733,6 +734,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             }
 
                             if (item.auto !== undefined) slide.items[itemIndex].auto = item.auto
+                            if (item.specialStyle !== undefined) slide.items[itemIndex].specialStyle = item.specialStyle
                             if (item.scrolling !== undefined) slide.items[itemIndex].scrolling = item.scrolling
                             if (item.bindings?.length) slide.items[itemIndex].bindings = item.bindings
                             slide.items[itemIndex].style = item.style || ""

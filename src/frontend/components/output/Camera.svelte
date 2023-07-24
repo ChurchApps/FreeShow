@@ -15,7 +15,7 @@
         },
     }
 
-    $: console.log("CAMERA", id)
+    // $: console.log("CAMERA", constraints)
 
     onMount(() => {
         navigator.mediaDevices.getUserMedia(constraints).then((stream) => {

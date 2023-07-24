@@ -119,5 +119,6 @@
 
     .text :global(p) {
         margin: 4px;
+        text-align: center;
     }
 </style>

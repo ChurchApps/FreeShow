@@ -7,6 +7,7 @@ export interface ContextMenuItem {
     icon?: string
     shortcuts?: string[]
     enabled?: boolean
+    disabled?: boolean
 }
 
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
@@ -67,6 +68,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // newGroup: { label: "context.createNew", icon: "add" },
     // SLIDE VIEWS
     view_grid: { label: "show.grid", icon: "grid" },
+    view_simple: { label: "show.simple", icon: "simple" },
     view_list: { label: "show.list", icon: "list" },
     view_lyrics: { label: "show.lyrics", icon: "lyrics" },
     view_text: { label: "show.text", icon: "text" },
@@ -76,16 +78,17 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
     actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
-    remove_media: { label: "actions.remove_media", icon: "media", items: ["LOAD_remove_media"] },
+    remove_layers: { label: "actions.remove_layers", icon: "media", items: ["LOAD_remove_layers"] },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
     bind_to: { label: "actions.bind_to", icon: "bind", items: ["stage", "LOAD_outputs"] },
-    format: { label: "actions.format", icon: "format", items: ["find_replace", "uppercase", "lowercase", "capitalize", "trim"] },
+    format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
     find_replace: { label: "actions.find_replace", icon: "find_replace" },
+    cut_in_half: { label: "actions.cut_in_half", icon: "simple" },
     uppercase: { label: "actions.uppercase", icon: "increase_text" },
     lowercase: { label: "actions.lowercase", icon: "decrease_text" },
     capitalize: { label: "actions.capitalize", icon: "capitalize" },
@@ -101,6 +104,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
+    // SETTINGS
+    reset_theme: { label: "settings.reset_theme", icon: "reset" },
+    reset: { label: "actions.reset", icon: "reset" },
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -136,43 +142,44 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_templates_button: ["rename", "changeIcon", "delete"],
     category_media_button: ["rename", "delete"],
     category_audio_button: ["rename", "delete"],
-    category_scripture_button: ["delete", "createCollection"],
+    category_scripture_button: ["createCollection", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow"],
+    drawer_show: ["newShowPopup", "newShow", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete", "selectAll"],
+    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete"],
     drawer_new_show: ["newShowPopup", "newShow"],
     // media / audio
     // "play", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
     // , "delete_all"
-    show_media: ["play", "play_no_filters", "preview", "SEPERATOR", "edit"],
+    show_media: ["preview", "play", "play_no_filters", "SEPERATOR", "edit"],
+    show_audio: ["preview"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media_card: ["preview", "play_no_filters", "favourite", "SEPERATOR", "edit", "addToProject"],
+    media_card: ["addToProject", "SEPERATOR", "preview", "play_no_filters", "SEPERATOR", "edit", "favourite"],
     // "addToFirstSlide",
     overlay_card: ["edit", "lock_to_output", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     effect_card: ["edit"],
-    player_button: ["preview", "addToProject", "SEPERATOR", "rename", "delete"],
-    audio_button: ["preview", "favourite", "addToProject"],
+    player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
+    audio_button: ["addToProject", "SEPERATOR", "preview", "favourite"],
     // "addToFirstSlide"
     live_card: ["recording"],
 
     // PROJECT
     projects: ["newProject", "newFolder"],
-    projectTab: ["export", "close"],
+    projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "newPrivateShow", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "delete", "duplicate", "export"], // "open",
-    folder: ["rename", "delete", "duplicate"],
+    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export"], // "open",
+    folder: ["rename", "duplicate", "delete"],
     project_media: ["play", "play_no_filters", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
-    project_show: ["rename", "remove", "private", "duplicate"],
+    project_show: ["rename", "private", "duplicate", "remove"],
     project_section: ["remove"],
     shows: ["newSlide", "selectAll"],
     // TIMER
@@ -181,13 +188,13 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["slideGroups", "actions", "remove_media", "format", "disable", "slide_transition", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
-    slideChild: ["slideGroups", "actions", "remove_media", "format", "disable", "slide_transition", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
+    slide: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
+    slideChild: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
     group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
     global_group: ["edit"],
     // global_group: ["rename"],
-    layout: ["rename", "remove", "duplicate"],
-    slideViews: ["view_grid", "view_list", "view_lyrics", "view_text"],
+    layout: ["rename", "duplicate", "remove"],
+    slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics", "view_text"],
     // TODO: change chords (m, dim, sus, left, guitar, custom value, ...)
     // chord notations
     // https://jazz-library.com/articles/chord-symbols/
@@ -205,4 +212,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],
+
+    // SETTINGS
+    theme: ["rename", "duplicate", "delete", "SEPERATOR", "reset_theme"],
+    style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
+    output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
 }

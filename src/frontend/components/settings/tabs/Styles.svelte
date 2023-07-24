@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeStyle, dictionary, imageExtensions, labelsDisabled, outputs, styles, templates } from "../../../stores"
+    import { activeStyle, dictionary, imageExtensions, outputs, selected, styles, templates } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -11,19 +11,23 @@
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
 
     function updateStyle(e: any, key: string) {
         let value = e?.detail ?? e?.target?.value ?? e
 
-        currentStyle[key] = value
+        if (key === "name" && $selected.id === "style") styleId = $selected.data[0].id
+
         if (!styleId) styleId = $styles.default ? uid() : "default"
 
         // TODO: history
         styles.update((a) => {
-            a[styleId] = currentStyle
+            if (!a[styleId]) a[styleId] = clone(currentStyle)
+            a[styleId][key] = value
 
             return a
         })
@@ -67,16 +71,13 @@
         return list.sort((a, b) => a.name.localeCompare(b.name))
     }
 
+    // set id after deletion
+    $: if (Object.keys($styles)?.length && !$styles[styleId]) styleId = $styles.default ? "default" : Object.keys($styles)[0]
+
     let styleId = $activeStyle || Object.keys($styles)[0] || ""
     $: currentStyle = $styles[styleId] || clone(defaultStyle)
 
     $: activeStyle.set(styleId || "")
-
-    function resetStyle() {
-        let name = currentStyle.name
-        currentStyle = { name }
-        updateStyle(name, "name")
-    }
 
     // resolutions
     // https://www.wearethefirehouse.com/aspect-ratio-cheat-sheet
@@ -127,46 +128,16 @@
             updateStyle(currentStyle.metadataDivider, "metadataDivider")
         }
     }
+
+    let edit: any
 </script>
 
 <div class="info">
     <p><T id="settings.styles_hint" /></p>
 </div>
 
-<CombinedInput>
-    <Dropdown style="width: 100%;" value={currentStyle.name} options={stylesList} on:click={(e) => (styleId = e.detail?.id)} />
-</CombinedInput>
+<br />
 
-<CombinedInput>
-    <TextInput disabled={!styleId} value={currentStyle.name} on:change={(e) => updateStyle(e, "name")} />
-    <Button
-        disabled={!styleId}
-        on:click={() => {
-            history({ id: "UPDATE", newData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
-            styleId = ""
-            currentStyle = clone(defaultStyle)
-        }}
-    >
-        <Icon id="delete" right />
-        {#if !$labelsDisabled}
-            <T id="actions.delete" />
-        {/if}
-    </Button>
-    <Button
-        on:click={() => {
-            styleId = uid()
-            history({ id: "UPDATE", newData: { data: clone(currentStyle), replace: { name: currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
-        }}
-    >
-        <Icon id="duplicate" right />
-        {#if !$labelsDisabled}
-            <T id="actions.duplicate" />
-        {/if}
-    </Button>
-</CombinedInput>
-
-<!-- slide -->
-<h3><T id="preview.slide" /></h3>
 <!-- TODO: use stage (dropdown) -->
 <CombinedInput>
     <p><T id="edit.background_color" /></p>
@@ -252,6 +223,7 @@
     </span>
 </CombinedInput>
 
+<h3><T id="preview.slide" /></h3>
 <CombinedInput>
     <p><T id="settings.lines" /></p>
     <NumberInput
@@ -343,14 +315,40 @@
 
 <!-- TODO: override transition ? -->
 
-<br />
+<div class="filler" style={stylesList.length > 1 ? "height: 76px;" : ""} />
+<div class="bottom">
+    {#if stylesList.length > 1}
+        <div style="display: flex;overflow-x: auto;">
+            {#each stylesList as currentStyle}
+                {@const active = styleId === currentStyle.id}
 
-<Button style="width: 100%;" on:click={resetStyle} center>
-    <Icon id="reset" right />
-    <T id="actions.reset" />
-</Button>
+                <SelectElem id="style" data={{ id: currentStyle.id }} fill>
+                    <Button border={active} class="context #style" {active} style="width: 100%;" on:click={() => (styleId = currentStyle.id)} bold={false} center>
+                        <HiddenInput value={currentStyle.name} id={"style_" + currentStyle.id} on:edit={(e) => updateStyle(e.detail.value, "name")} bind:edit />
+                    </Button>
+                </SelectElem>
+            {/each}
+        </div>
+    {/if}
 
-<br />
+    <div style="display: flex;">
+        <Button
+            style="width: 100%;"
+            on:click={() => {
+                if (!stylesList.length) {
+                    history({ id: "UPDATE", newData: { data: clone(currentStyle) }, oldData: { id: "default" }, location: { page: "settings", id: "settings_style" } })
+                }
+
+                styleId = uid()
+                history({ id: "UPDATE", newData: { data: clone(defaultStyle), replace: { name: currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
+            }}
+            center
+        >
+            <Icon id="add" right />
+            <T id="settings.add" />
+        </Button>
+    </div>
+</div>
 
 <style>
     .info {
@@ -394,4 +392,18 @@
         padding: 0 10px;
         border: none;
     } */
+
+    .filler {
+        height: 48px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
+    }
 </style>

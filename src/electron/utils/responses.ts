@@ -128,8 +128,9 @@ export function receiveMain(e: any, msg: Message) {
 async function searchLyrics({ artist, title }: any) {
     const Genius = require("genius-lyrics")
     const Client = new Genius.Client()
+
     const songs = await Client.songs.search(title + artist)
-    const lyrics = await songs[0].lyrics()
+    const lyrics = songs[0] ? await songs[0].lyrics() : ""
 
     toApp("MAIN", { channel: "SEARCH_LYRICS", data: { lyrics } })
 }

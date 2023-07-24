@@ -88,8 +88,6 @@
     }
     $: if (activeShow) activeShowID = activeShow.id
 
-    $: console.trace(outShow)
-
     // password
     // https://stackoverflow.com/questions/18279141/javascript-string-encryption-and-decryption
     // if (CryptoJS.AES.decrypt(data, id) === password) { // TODO: encryption
@@ -467,10 +465,10 @@
                     <Center faded>{dictionary.remote.no_output}</Center>
                 {/if}
             {:else if activeTab === "lyrics"}
-                {#if outShow}
+                {#if outShow && layout}
                     <h2>{outShow.name}</h2>
                     <div on:click={click} bind:this={lyricsScroll} class="lyrics">
-                        {#each GetLayout(outShow, outLayout) as layoutSlide, i}
+                        {#each layout as layoutSlide, i}
                             {#if !layoutSlide.disabled}
                                 <span style="padding: 5px;{outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);color: #FFFFFF;' : ''}">
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">

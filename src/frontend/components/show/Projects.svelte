@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
-    import { activeProject, activeShow, dictionary, folders, labelsDisabled, projects, projectView } from "../../stores"
+    import { activeProject, activeShow, dictionary, drawer, folders, labelsDisabled, projects, projectView } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
@@ -41,7 +41,8 @@
     // autoscroll
     let scrollElem: any
     let offset: number = -1
-    $: offset = autoscroll(scrollElem, ($activeShow?.index || 1) - 1)
+    $: itemsBefore = $drawer.height < 400 ? 5 : 1
+    $: offset = autoscroll(scrollElem, Math.max(0, ($activeShow?.index || 0) - itemsBefore))
 
     // close if not existing
     $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null)
@@ -104,7 +105,7 @@
         <!-- TODO: set different project system folders.... -->
         <!-- TODO: right click change... -->
         <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
-            <Icon id="folder" right />
+            <Icon id="folder" size={1.2} right />
             <!-- ={!$labelsDisabled} -->
             <!-- {#if !$labelsDisabled}
                 <T id="remote.projects" />
@@ -116,12 +117,13 @@
             on:click={() => projectView.set(false)}
             class="context #projectTab _close"
             active={!$projectView}
+            bold={false}
             dark
             center
             disabled={$activeProject === null}
             title={$activeProject ? $dictionary.remote?.project + ": " + $projects[$activeProject]?.name : ""}
         >
-            <Icon id="project" style="padding-right: 10px;" />
+            <Icon id="project" right />
             <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject]?.name : ""}</p>
         </Button>
         <!-- <button onClick={() => setProject(true)} style={{width: '50%', backgroundColor: (project ? 'transparent' : ''), color: (project ? 'var(--secondary)' : '')}}>Projects</button>
@@ -191,8 +193,6 @@
     {/if}
 </div>
 {#if $activeProject && !$projectView}
-    <!-- <ProjectTools /> -->
-    <!-- TODO: add section button -->
     <div class="tabs">
         <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
             <Icon id="section" right={!$labelsDisabled} />

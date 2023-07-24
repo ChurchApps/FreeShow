@@ -2,9 +2,6 @@
     import { OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
     import type { DrawerTabIds, TopViews } from "../types/Tabs"
-    import Calendar from "./components/calendar/Calendar.svelte"
-    import CreateCalendarShow from "./components/calendar/CreateCalendarShow.svelte"
-    import Day from "./components/calendar/Day.svelte"
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
     import DrawTools from "./components/draw/DrawTools.svelte"
@@ -18,7 +15,7 @@
     import Pdf from "./components/export/Pdf.svelte"
     import { copy, cut, deleteAction, paste, selectAll } from "./components/helpers/clipboard"
     import { redo, undo } from "./components/helpers/history"
-    import { displayOutputs, getResolution, isOutCleared } from "./components/helpers/output"
+    import { displayOutputs, getResolution } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -37,7 +34,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, loaded, os, outputDisplay, outputs, playingAudio, selected, styles } from "./stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, focusedArea, loaded, os, outputDisplay, outputs, selected, styles, volume } from "./stores"
     import { newToast } from "./utils/messages"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
@@ -51,8 +48,8 @@
     let resolution: Resolution = getResolution()
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    const menus: TopViews[] = ["show", "edit", "calendar", "draw", "stage", "settings"]
-    const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "player", "live", "templates"]
+    const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
+    const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "calendar", "templates"]
     const ctrlKeys: any = {
         a: () => selectAll(),
         c: () => copy(),
@@ -61,16 +58,18 @@
         e: () => activePopup.set("export"),
         i: () => activePopup.set("import"),
         n: () => activePopup.set("show"),
+        m: () => volume.set($volume ? 0 : 1),
         o: () => displayOutputs(),
         s: () => save(),
         y: () => redo(),
         z: () => undo(),
         Z: () => redo(),
+        "?": () => activePopup.set("shortcuts"),
         // F2: () => menuClick("rename"),
     }
     const keys: any = {
         Escape: () => {
-            if (!isOutCleared() || Object.keys($playingAudio).length) return
+            // if (!isOutCleared() || Object.keys($playingAudio).length) return
 
             // close popup
             if ($activePopup !== null) activePopup.set(null)
@@ -81,7 +80,7 @@
             //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
             //   else drawer.set({ height: 40, stored: $drawer.height })
         },
-        Delete: () => deleteAction($selected),
+        Delete: () => deleteAction($selected, "remove"),
         Backspace: () => keys.Delete(),
         // Enter: (e: any) => {
         //   if (!e.target.closest(".edit")) {
@@ -105,7 +104,7 @@
 
             // use default input shortcuts on supported devices (this includes working undo/redo)
             const exeption = ["e", "i", "n", "o", "s", "a"]
-            if (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && $os.platform !== "darwin") {
+            if ((e.key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && $os.platform !== "darwin")) {
                 return
             }
 
@@ -123,6 +122,11 @@
             e.preventDefault()
             keys[e.key](e)
         }
+    }
+
+    function focusArea(e: any) {
+        if (e.target.closest(".menus") || e.target.closest(".contextMenu")) return
+        focusedArea.set(e.target.closest(".selectElem")?.id || e.target.querySelector(".selectElem")?.id || "")
     }
 
     // countdown timer tick
@@ -170,9 +174,10 @@
         if (e.ctrlKey || e.metaKey || e.target.closest(".dragger")) enableOutputMove = true
         else enableOutputMove = false
     }
+    $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:mousedown={focusArea} />
 
 {#if $currentWindow === "pdf"}
     <Pdf />
@@ -218,8 +223,6 @@
                                 <Shows />
                             {:else if page === "draw"}
                                 <DrawTools />
-                            {:else if page === "calendar"}
-                                <Day />
                             {:else if page === "settings"}
                                 <SettingsTabs />
                             {/if}
@@ -237,13 +240,11 @@
                             <Settings />
                         {:else if page === "stage"}
                             <StageShow />
-                        {:else if page === "calendar"}
-                            <Calendar />
                         {/if}
                     </div>
 
                     <Resizeable id="mainRight" let:width side="right">
-                        <div class="right" class:row={width > 600}>
+                        <div class="right" class:row={width > 300 * 1.5}>
                             <Preview />
                             {#if page === "show"}
                                 {#if $activeShow && ($activeShow.type === "show" || $activeShow.type === undefined)}
@@ -261,8 +262,6 @@
                                 <DrawSettings />
                             {:else if page === "stage" && $activeStage.id}
                                 <StageTools />
-                            {:else if page === "calendar"}
-                                <CreateCalendarShow />
                             {/if}
                         </div>
                     </Resizeable>

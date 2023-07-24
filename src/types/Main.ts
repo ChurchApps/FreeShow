@@ -44,12 +44,17 @@ export type SelectIds =
     | "overlay"
     | "template"
     | "effect"
+    | "screen"
     | "camera"
+    | "microphone"
     | "player"
     | "timer"
     | "global_timer"
     | "chord"
     | "midi"
+    | "theme"
+    | "style"
+    | "output"
 
 export interface Selected {
     id: null | SelectIds
@@ -58,7 +63,7 @@ export interface Selected {
 
 export interface SlidesOptions {
     columns: number
-    mode: "grid" | "list" | "lyrics" | "text"
+    mode: "grid" | "simple" | "list" | "lyrics" | "text"
 }
 export interface MediaOptions {
     columns: number
@@ -93,6 +98,7 @@ export type Popups =
     | "delete_show"
     | "select_show"
     | "icon"
+    | "manage_icons"
     | "player"
     | "rename"
     | "color"

@@ -1,8 +1,10 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import Icon from "../../helpers/Icon.svelte"
-    import Button from "../../inputs/Button.svelte"
     import { MAIN } from "../../../../types/Channels"
+    import { activeShow, outLocked, playingAudio } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
+    import { clearAudioStreams, startMicrophone } from "../../helpers/audio"
+    import Button from "../../inputs/Button.svelte"
 
     export let mic: any
 
@@ -71,6 +73,8 @@
         audio.play()
         audio.volume = 0
         console.log(audio)
+
+        // TODO: add this to audioChannels / audioAnalyzer
     }
 
     navigator.mediaDevices
@@ -90,38 +94,51 @@
     onDestroy(() => {
         audioStream?.getAudioTracks().forEach((track: any) => track.stop())
     })
+
+    $: muted = !$playingAudio[mic.id]
 </script>
 
-{#if context}
-    <div class="main context #live_card">
-        <span>
-            {mic.name}
+<div class="main">
+    <Button
+        style="width: 100%;"
+        bold={false}
+        disabled={!context}
+        on:click={() => {
+            if ($outLocked || !context) return
+
+            if (muted) {
+                startMicrophone(mic)
+                return
+            }
+
+            playingAudio.update((a) => {
+                delete a[mic.id]
+                return a
+            })
+            clearAudioStreams(mic.id)
+        }}
+        on:dblclick={(e) => {
+            if (e.ctrlKey || e.metaKey) return
+            activeShow.set({ id: mic.id, name: mic.name, type: "audio", data: { isMic: true } })
+        }}
+    >
+        <span style="display: flex;gap: 5px;flex: 3;align-items: center;">
+            <Icon id={muted ? "muted" : "volume"} white={muted} right />
+            <p>{mic.name}</p>
         </span>
 
-        <span style="display: flex;align-items: center;width: 50%;">
+        {#if context}
             <span class="meter">
                 <!-- <p>L</p> -->
                 <div style="width: {100 - soundLevel}%" />
             </span>
-            <Button
-                style="margin-left: 5px;"
-                on:click={() => {
-                    if (audio?.volume === 0) audio.volume = 1
-                    else audio.volume = 0
-                }}
-            >
-                <Icon id={audio?.volume === 0 ? "muted" : "volume"} white={audio?.volume === 0} />
-            </Button>
-        </span>
-    </div>
-{/if}
+        {/if}
+    </Button>
+</div>
 
 <style>
     .main {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 5px 10px;
     }
     .main:nth-child(even) {
         background-color: var(--primary-darkest);
@@ -132,6 +149,8 @@
         /* filter: hue-rotate(250deg); */
         height: 5px;
         flex: 1;
+
+        transform: rotate(180deg);
     }
 
     .meter div {

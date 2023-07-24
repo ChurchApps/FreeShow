@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeTimers, timers } from "../../../stores"
+    import { activeDrawerTab, activeTimers, drawer, drawerTabsData, timers } from "../../../stores"
     import { getCurrentTimerValue } from "../../drawer/timers/timers"
     import { getStyles } from "../../helpers/style"
     // import { blur } from "svelte/transition"
-    import { secondsToTime } from "../../helpers/time"
+    import { joinTimeBig } from "../../helpers/time"
 
     export let item: null | Item = null
     // export let timer: any = item?.timer
@@ -12,6 +12,7 @@
     export let id: string
     export let today: Date
     export let style: string = ""
+    export let edit: boolean = false
 
     $: ref = { id }
     $: timer = $timers[id] || {}
@@ -23,19 +24,10 @@
     let timeValue: string = "00:00"
     let currentTime: number
     // $: currentTime = getCurrentTime()
-    $: numberToText(typeof currentTime === "number" ? currentTime : 0)
+    $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
 
     $: if (timer) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
     $: console.log(currentTime, $activeTimers, $timers, id, timer)
-
-    function numberToText(time: number) {
-        let allTimes: any = secondsToTime(time)
-
-        timeValue = (allTimes.d === 0 ? "" : allTimes.d + ", ") + [allTimes.h === "00" ? "" : allTimes.h, allTimes.m, allTimes.s].join(":")
-        while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
-
-        timeValue = timeValue.replace(" :", " ")
-    }
 
     $: min = Math.min(timer.start || 0, timer.end || 0)
     $: max = Math.max(timer.start || 0, timer.end || 0)
@@ -58,14 +50,27 @@
         if (time < end) return true
         return false
     }
+
+    function openInDrawer() {
+        if (!edit) return
+
+        drawerTabsData.update((a) => {
+            a.calendar.activeSubTab = "timer"
+            return a
+        })
+        activeDrawerTab.set("calendar")
+
+        // open drawer if closed
+        if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+    }
 </script>
 
 {#if item?.timer?.viewType === "line"}
-    <div class="line" style="width: {percentage}%;background-color: {itemColor};" />
+    <div class="line" style="width: {percentage}%;background-color: {itemColor};" on:dblclick={openInDrawer} />
 {:else if item?.timer?.viewType === "circle"}
-    <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" />
+    <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" on:dblclick={openInDrawer} />
 {:else}
-    <div class="align" style="{style}{item?.align || ''}">
+    <div class="align" style="{style}{item?.align || ''}" on:dblclick={openInDrawer}>
         <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
             {#if overflow && negative}
                 <span>-</span>

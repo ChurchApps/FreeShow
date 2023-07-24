@@ -48,8 +48,8 @@
         }
 
         // background opacity
-        if (input.id === "background-opacity" || input.key === "background-color") {
-            let backgroundColor = input.key === "background-color" ? input.value : data["background-color"] || "rgb(0 0 0);"
+        if (input.id === "background-opacity" || (input.value && input.key === "background-color")) {
+            let backgroundColor = input.key === "background-color" ? input.value || "" : data["background-color"] || "rgb(0 0 0);"
             let rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
             let opacity = input.id === "background-opacity" ? input.value : getOldOpacity()
             let newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"

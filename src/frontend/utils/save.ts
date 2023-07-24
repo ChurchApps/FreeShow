@@ -9,6 +9,7 @@ import {
     autosave,
     calendarAddShow,
     categories,
+    customizedIcons,
     defaultProjectName,
     deletedShows,
     drawSettings,
@@ -142,10 +143,12 @@ export function save() {
         timers: get(timers),
         midiIn: get(midiIn),
         videoMarkers: get(videoMarkers),
+        customizedIcons: get(customizedIcons),
     }
 
     let allSavedData: any = {
         path: get(showsPath),
+        scripturePath: get(scripturePath),
         // SETTINGS
         SETTINGS: settings,
         SYNCED_SETTINGS: syncedSettings,
@@ -162,7 +165,7 @@ export function save() {
         DRIVE_API_KEY: get(driveKeys),
         // CACHES SAVED TO MULTIPLE FILES
         showsCache: clone(get(showsCache)),
-        scripturesCache: get(scripturesCache),
+        scripturesCache: clone(get(scripturesCache)),
         deletedShows: clone(get(deletedShows)),
         renamedShows: clone(get(renamedShows)),
     }

@@ -1,17 +1,16 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import type { Timer } from "../../../../types/Show"
 import { activeProject, activeTimers, events, projects, timers } from "../../../stores"
-import { loadShows } from "../../helpers/setShow"
+import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
-import { uid } from "uid"
-import { clone } from "../../helpers/array"
 
 export async function getShowTimers(showRef: any) {
     let list: string[] = []
 
     if (showRef.type !== undefined && showRef.type !== "show") return []
-    if (!get(showsCache)[showRef.id]) await loadShows([showRef.id])
+    if (!get(showsCache)[showRef.id]) return [] // await loadShows([showRef.id])
 
     let timers = (_show(showRef.id).slides().items().get() || [[]]).flat().filter((a: any) => a.type === "timer")
 

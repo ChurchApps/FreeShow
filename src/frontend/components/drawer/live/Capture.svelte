@@ -1,6 +1,7 @@
 <script lang="ts">
     import { outputs } from "../../../stores"
     import { findMatchingOut } from "../../helpers/output"
+    import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
 
     interface Screen {
@@ -9,6 +10,7 @@
     }
     export let screen: Screen
     export let streams: any[]
+    export let background: boolean = false
 
     let loaded = false
     // $: currentOutput = $outputs[getActiveOutputs()[0]]
@@ -18,13 +20,13 @@
     let videoElem: any
 
     function ready() {
-        if (!loaded && videoElem) {
-            console.log(screen.name)
-            canvas.width = videoElem.offsetWidth
-            canvas.height = videoElem.offsetHeight
-            canvas.getContext("2d").drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
-            loaded = true
-        }
+        if (loaded || !videoElem || background) return
+
+        console.log(screen.name)
+        canvas.width = videoElem.offsetWidth
+        canvas.height = videoElem.offsetHeight
+        canvas.getContext("2d").drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
+        loaded = true
     }
 
     let constraints: any = {
@@ -61,24 +63,32 @@
     // }, timeout)
 </script>
 
-<Card
-    mediaData={JSON.stringify(constraints)}
-    class="context #live_card"
-    {loaded}
-    outlineColor={findMatchingOut(screen.id, $outputs)}
-    active={findMatchingOut(screen.id, $outputs) !== null}
-    on:click
-    label={screen.name}
-    icon={screen.id.includes("screen") ? "screen" : "window"}
-    white={!screen.id.includes("screen")}
->
-    <canvas bind:this={canvas} />
-    {#if !loaded}
-        <video bind:this={videoElem}>
-            <track kind="captions" />
-        </video>
-    {/if}
-</Card>
+{#if background}
+    <video style="width: 100%;height: 100%;pointer-events: none;position: absolute;" bind:this={videoElem}>
+        <track kind="captions" />
+    </video>
+{:else}
+    <Card
+        mediaData={JSON.stringify(constraints)}
+        class="context #live_card"
+        {loaded}
+        outlineColor={findMatchingOut(screen.id, $outputs)}
+        active={findMatchingOut(screen.id, $outputs) !== null}
+        on:click
+        label={screen.name}
+        icon={screen.id.includes("screen") ? "screen" : "window"}
+        white={!screen.id.includes("screen")}
+    >
+        <SelectElem style="display: flex;" id="screen" data={{ id: screen.id, type: "screen", name: screen.name }} draggable>
+            <canvas bind:this={canvas} />
+            {#if !loaded}
+                <video style="pointer-events: none;position: absolute;" bind:this={videoElem}>
+                    <track kind="captions" />
+                </video>
+            {/if}
+        </SelectElem>
+    </Card>
+{/if}
 
 <style>
     video {

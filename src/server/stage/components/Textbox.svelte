@@ -38,6 +38,9 @@
     // $: autoSize = item.lines ? height / (lineCount + 3) : 0
 
     let textElem: any = null
+
+    $: lineGap = item?.specialStyle?.lineGap
+    $: lineBg = item?.specialStyle?.lineBg
 </script>
 
 <!-- bind:offsetHeight={height} -->
@@ -47,9 +50,9 @@
             {#if chords}
                 <Chords {item} {textElem} />
             {/if}
-            <div class="lines" bind:this={textElem}>
+            <div class="lines" style={style && lineGap ? `gap: ${lineGap}px;` : ""} bind:this={textElem}>
                 {#each item.lines as line}
-                    <div class="break" style={style ? line.align : null}>
+                    <div class="break" style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                         {#each line.text || [] as text}
                             <span style={style ? text.style + (autoSize ? "font-size: " + autoSize + "px;" : "") : "font-size: " + autoSize + "px;"}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
@@ -69,6 +72,7 @@
                 <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
             {/if}
         {/if} -->
+        <!-- {:else if item?.type === "camera"} -->
         <!-- {:else if item?.type === "timer"}
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" /> -->
     {:else if item?.type === "clock"}
@@ -78,7 +82,13 @@
         <!-- {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={slideIndex} /> -->
     {:else if item?.type === "icon"}
-        <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {#if item.customSvg}
+            <div class="customIcon">
+                {@html item.customSvg}
+            </div>
+        {:else}
+            <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {/if}
     {/if}
 </div>
 
@@ -94,6 +104,11 @@
         /* overflow-wrap: break-word;
     font-size: 0; */
         width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
     }
 
     .break {
@@ -115,5 +130,11 @@
 
     .break :global(span) {
         font-size: 100px;
+    }
+
+    .customIcon,
+    .customIcon :global(svg) {
+        width: 100%;
+        height: 100%;
     }
 </style>

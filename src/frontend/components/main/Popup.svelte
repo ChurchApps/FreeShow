@@ -35,6 +35,8 @@
     import Connect from "./popups/Connect.svelte"
     import FindReplace from "./popups/FindReplace.svelte"
     import NextTimer from "./popups/NextTimer.svelte"
+    import ManageIcons from "./popups/ManageIcons.svelte"
+    import ChooseCamera from "./popups/ChooseCamera.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -48,6 +50,8 @@
         delete_show: DeleteShow,
         select_show: SelectShow,
         icon: ChangeIcon,
+        manage_icons: ManageIcons,
+        choose_camera: ChooseCamera,
         player: CreatePlayer,
         rename: Rename,
         color: Color,
@@ -95,10 +99,10 @@
                 <div style="position: relative;">
                     {#if popupCache !== "alert"}
                         {#key popupCache}
-                            <h2 style="text-align: center;margin: 10px 50px;"><T id="popup.{popupCache}" /></h2>
+                            <h2 style="text-align: center;padding: 10px 50px;"><T id="popup.{popupCache}" /></h2>
                         {/key}
                     {/if}
-                    <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 30px;" on:click={() => activePopup.set(null)}>
+                    <Button style="position: absolute;right: 0;top: 0;height: 100%;" on:click={() => activePopup.set(null)}>
                         <Icon id="close" size={2} />
                     </Button>
                 </div>

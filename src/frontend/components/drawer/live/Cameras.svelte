@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { outputs } from "../../../stores"
+    import { createEventDispatcher } from "svelte"
     import T from "../../helpers/T.svelte"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Center from "../../system/Center.svelte"
     import Cam from "./Cam.svelte"
 
@@ -11,19 +10,15 @@
         cams = devices.filter((a) => a.kind === "videoinput").map((a) => ({ name: a.label, id: a.deviceId, group: a.groupId }))
     })
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    let dispatch = createEventDispatcher()
+    function click(event, cam) {
+        dispatch("click", { event, cam })
+    }
 </script>
 
 {#if cams.length}
     {#each cams as cam}
-        <Cam
-            {cam}
-            on:click={(e) => {
-                if (e.ctrlKey || e.metaKey) return
-                if (currentOutput.out?.background?.id === cam.id) setOutput("background", null)
-                else setOutput("background", { name: cam.name, id: cam.id, type: "camera" })
-            }}
-        />
+        <Cam {cam} on:click={(e) => click(e, cam)} />
     {/each}
 {:else}
     <Center faded>

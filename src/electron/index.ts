@@ -239,10 +239,8 @@ app.on("web-contents-created", (_e, contents) => {
 // ----- STORE DATA -----
 
 ipcMain.on(STORE, (e, msg) => {
-    if (msg.channel === "SAVE") {
-        save(msg.data)
-        e.reply(STORE, { channel: "SAVE" })
-    } else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
+    if (msg.channel === "SAVE") save(msg.data)
+    else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
 })
 
 function save(data: any) {
@@ -258,7 +256,7 @@ function save(data: any) {
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: any) {
         if (!value) return
-        let p: string = path.resolve(getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
+        let p: string = path.resolve(data.scripturePath || getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
         writeFile(p, JSON.stringify([id, value]), id)
     }
 
@@ -286,6 +284,9 @@ function save(data: any) {
             let p: string = path.resolve(data.path, (name || id) + ".show")
             deleteFile(p)
         }
+
+        // SAVED
+        toApp(STORE, { channel: "SAVE" })
     }, 1000)
 }
 

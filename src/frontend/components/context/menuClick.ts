@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OUTPUT, STAGE } from "../../../types/Channels"
 import type { Slide } from "../../../types/Show"
-import { changeSlideGroups } from "../../show/slides"
+import { changeSlideGroups, splitItemInTwo } from "../../show/slides"
 import {
     $,
     activeDrawerTab,
@@ -38,9 +38,13 @@ import {
     stageShows,
     styles,
     templates,
+    themes,
 } from "../../stores"
+import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
+import { updateThemeValues } from "../../utils/updateSettings"
+import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
@@ -49,14 +53,13 @@ import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers
 import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
-import { getActiveOutputs, setOutput } from "../helpers/output"
+import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
-import { newToast } from "../../utils/messages"
-import { stopMediaRecorder } from "../drawer/live/recorder"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
@@ -101,6 +104,9 @@ const actions: any = {
         else if (id === "folder") activeRename.set("folder_" + data.id)
         else if (id === "layout") activeRename.set("layout_" + data)
         else if (id === "stage") activeRename.set("stage_" + data.id)
+        else if (id === "theme") activeRename.set("theme_" + data.id)
+        else if (id === "style") activeRename.set("style_" + data.id)
+        else if (id === "output") activeRename.set("output_" + data.id)
         else if (obj.contextElem.classList.contains("#video_marker")) activeRename.set("marker_" + obj.contextElem.id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
@@ -110,11 +116,15 @@ const actions: any = {
 
         console.error("COULD NOT REMOVE", obj)
     },
-    recolor: (obj: any) => {
-        if (obj.sel.id === "slide" || obj.sel.id === "group" || obj.sel.id === "overlay" || obj.sel.id === "template") activePopup.set("color")
+    recolor: () => {
+        // "slide" || "group" || "overlay" || "template" || "output"
+        activePopup.set("color")
     },
     remove_group: (obj: any) => removeGroup(obj.sel.data),
-    remove_slide: (obj: any) => removeSlide(obj.sel.data, "remove"),
+    remove_slide: (obj: any) => {
+        removeSlide(obj.sel.data, "remove")
+        if (get(activePage) === "edit") refreshEditSlide.set(true)
+    },
     delete_slide: (obj: any) => {
         let ref: any[] = _show().layouts("active").ref()[0]
         let slideId: string = ref[obj.sel.data[0].index].id
@@ -150,7 +160,7 @@ const actions: any = {
                 if (event.group === group) eventIds.push(id)
             })
 
-            history({ id: "UPDATE", newData: { id: "keys" }, oldData: { keys: eventIds }, location: { page: "calendar", id: "event" } })
+            history({ id: "UPDATE", newData: { id: "keys" }, oldData: { keys: eventIds }, location: { page: "drawer", id: "event" } })
         }
     },
     duplicate: (obj: any) => {
@@ -165,6 +175,7 @@ const actions: any = {
     enabled_drawer_tabs: (obj: any) => {
         let m = { hide: false, enabled: !obj.enabled }
         drawerTabsData.update((a) => {
+            if (!a[obj.menu.id!]) a[obj.menu.id] = { enabled: false, activeSubTab: null }
             a[obj.menu.id!].enabled = !obj.enabled
             return a
         })
@@ -224,7 +235,7 @@ const actions: any = {
             return
         }
 
-        if (obj.contextElem.classList.contains("#category_media_button__category_media")) {
+        if (obj.contextElem.classList.contains("#category_media")) {
             window.api.send(OPEN_FOLDER, { channel: "MEDIA", title: get(dictionary).new?.folder })
             return
         }
@@ -300,6 +311,7 @@ const actions: any = {
         // shows
         if (!obj.contextElem.closest(".center")) return
         activeShow.set(null)
+        activeEdit.set({ items: [] })
     },
     private: (obj: any) => {
         showsCache.update((a: any) => {
@@ -325,6 +337,9 @@ const actions: any = {
     // slide views
     view_grid: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "grid" })
+    },
+    view_simple: () => {
+        slidesOptions.set({ ...get(slidesOptions), mode: "simple" })
     },
     view_list: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "list" })
@@ -394,6 +409,7 @@ const actions: any = {
         } else if (["overlay", "template", "effect"].includes(obj.sel.id)) {
             activeEdit.set({ type: obj.sel.id, id: obj.sel.data[0], items: [] })
             activePage.set("edit")
+            refreshEditSlide.set(true)
         } else if (obj.sel.id === "global_group") {
             settingsTab.set("groups")
             activePage.set("settings")
@@ -433,8 +449,8 @@ const actions: any = {
     slide_groups: (obj: any) => changeSlideGroups(obj),
 
     actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
-    remove_media: (obj: any) => {
-        let type: "image" | "overlays" | "music" = obj.menu.icon
+    remove_layers: (obj: any) => {
+        let type: "image" | "overlays" | "music" | "microphone" = obj.menu.icon
         let slide: number = obj.sel.data[0].index
         let newData: any = null
 
@@ -451,6 +467,11 @@ const actions: any = {
             // remove clicked
             audio.splice(audio.indexOf(obj.menu.id), 1)
             newData = { key: "audio", data: audio, dataIsArray: true, indexes: [slide] }
+        } else if (type === "microphone") {
+            let mics = layoutSlide.mics
+            // remove clicked
+            mics.splice(mics.indexOf(obj.menu.id), 1)
+            newData = { key: "mics", data: mics, dataIsArray: true, indexes: [slide] }
         }
 
         if (newData) history({ id: "SHOW_LAYOUT", newData })
@@ -629,10 +650,93 @@ const actions: any = {
         activePopup.set("find_replace")
         // format("find_replace", obj)
     },
+    cut_in_half: (obj: any) => {
+        if (obj.sel.id === "slide") {
+            let oldLayoutRef = _show().layouts("active").ref()[0]
+            let previousSpiltIds: string[] = []
+
+            obj.sel.data.forEach(({ index }) => {
+                let slideRef = oldLayoutRef[index]
+                if (!slideRef || previousSpiltIds.includes(slideRef.id)) return
+                previousSpiltIds.push(slideRef.id)
+
+                let slideItems = _show().slides([slideRef.id]).get("items")[0]
+
+                let firstTextItemIndex = slideItems.findIndex((a) => a.lines) ?? -1
+                if (firstTextItemIndex < 0) return
+
+                splitItemInTwo(slideRef, firstTextItemIndex)
+            })
+        } else if (!obj.sel.id) {
+            let editSlideIndex: number = get(activeEdit).slide ?? -1
+            if (editSlideIndex < 0) return
+
+            let textItemIndex: number = get(activeEdit).items[0] ?? -1
+            if (textItemIndex < 0) return
+
+            let slideRef = _show().layouts("active").ref()[0][editSlideIndex]
+            if (!slideRef) return
+            splitItemInTwo(slideRef, textItemIndex)
+        }
+    },
     uppercase: (obj: any) => format("uppercase", obj),
     lowercase: (obj: any) => format("lowercase", obj),
     capitalize: (obj: any) => format("capitalize", obj),
     trim: (obj: any) => format("trim", obj),
+
+    // settings
+    reset_theme: (obj: any) => {
+        obj.sel.data.forEach(({ id }) => {
+            let oldTheme = get(themes)[id]
+            let defaultTheme = defaultThemes[id] || defaultThemes.default
+            let data = { ...defaultTheme, default: oldTheme.default || false, name: oldTheme.name }
+
+            history({ id: "UPDATE", newData: { data }, oldData: { id }, location: { page: "settings", id: "settings_theme" } })
+            updateThemeValues(get(themes)[id])
+        })
+    },
+    reset: (obj: any) => {
+        if (obj.sel.id === "style") {
+            const defaultStyle = { name: get(dictionary).example?.default || "Default" }
+
+            obj.sel.data.forEach(({ id }) => {
+                let styleId = id || (get(styles).default ? uid() : "default")
+                let style = get(styles)[styleId] || clone(defaultStyle)
+
+                let name = style?.name || ""
+                style = { name }
+
+                styles.update((a) => {
+                    a[styleId] = style
+
+                    return a
+                })
+            })
+
+            return
+        }
+
+        if (obj.sel.id === "output") {
+            obj.sel.data.forEach(({ id }) => {
+                let currentOutput = clone(get(outputs)[id] || defaultOutput)
+
+                // TODO: history
+                outputs.update((a) => {
+                    a[id] = clone(defaultOutput)
+
+                    // don't reset these values
+                    a[id].name = currentOutput.name
+                    a[id].active = currentOutput.active
+                    a[id].out = currentOutput.out
+
+                    currentOutputSettings.set(id)
+                    return a
+                })
+            })
+
+            return
+        }
+    },
 }
 
 function changeSlideAction(obj: any, id: string) {
@@ -817,6 +921,8 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
         if (!ref[index]) return
 
         if (type === "remove") {
+            if (ref[index].type === "child" && parents.find((a) => a.id === ref[index].parent?.id)) return
+
             index = ref[index].parent?.layoutIndex ?? index
             parents.push({ index: ref[index].index, id: ref[index].id })
             return

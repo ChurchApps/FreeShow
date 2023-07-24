@@ -133,6 +133,13 @@
     </span>
 </CombinedInput>
 
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => activePopup.set("manage_icons")}>
+        <Icon id="noIcon" style="border: 0;" right />
+        <p style="padding: 0;"><T id="popup.manage_icons" /></p>
+    </Button>
+</CombinedInput>
+
 {#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={refreshShows}>
@@ -156,8 +163,6 @@
     </CombinedInput>
 {/if}
 
-<!-- <br /> -->
-
 <CombinedInput>
     <Button style="width: 100%;" on:click={deleteCache}>
         <Icon id="delete" style="border: 0;" right />
@@ -168,12 +173,11 @@
     </Button>
 </CombinedInput>
 
-<!-- <hr /> -->
-<br />
-
-<Button style="width: 100%;" on:click={() => activePopup.set("reset_all")} center red>
-    <Icon id="reset" right /><T id="settings.reset_all" />
-</Button>
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => activePopup.set("reset_all")} center red>
+        <Icon id="reset" right /><T id="settings.reset_all" />
+    </Button>
+</CombinedInput>
 
 <style>
     .path {

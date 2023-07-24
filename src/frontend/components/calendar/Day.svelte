@@ -2,8 +2,9 @@
     import { activeDays, activePopup, dictionary, eventEdit, events } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
     import Center from "../system/Center.svelte"
+
+    export let type: string = "event"
 
     // onMount(updateEvents)
 
@@ -19,6 +20,7 @@
         updateEvents()
     })
     events.subscribe(updateEvents)
+    $: if (type) updateEvents()
 
     function updateEvents() {
         current = new Date($activeDays[0])
@@ -34,6 +36,7 @@
 
         // sort
         // TODO: sort
+        temp = temp.filter((a) => a.type === type)
         currentEvents = temp.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
         console.log(currentEvents)
     }
@@ -99,17 +102,6 @@
             {/if}
         </div>
     </div>
-    <Button
-        on:click={() => {
-            eventEdit.set(null)
-            activePopup.set("edit_event")
-        }}
-        dark
-        center
-    >
-        <Icon id="add" right />
-        <T id="new.event" />
-    </Button>
 {/if}
 
 <style>

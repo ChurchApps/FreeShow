@@ -20,6 +20,9 @@
     export let mirror: boolean = false
     export let preview: boolean = false
 
+    export let outline: boolean = false
+    export let disabled: boolean = false
+
     // $: if (currentOutput.isKeyOutput) mirror = true
     // $: console.log("MIRROR", mirror, currentOutput.isKeyOutput)
 
@@ -32,9 +35,11 @@
     export let center: boolean = false
     export let ratio: number = 0
 
+    export let specificOutput: string = ""
+
     // out data
     const defaultLayers: string[] = ["background", "slide", "overlays"]
-    $: outputId = getActiveOutputs($outputs, true, mirror)[0]
+    $: outputId = specificOutput || getActiveOutputs($outputs, true, mirror)[0]
     $: currentOutput = $outputs[outputId] || {}
 
     let currentStyle: Styles = { name: "" }
@@ -263,6 +268,7 @@
 
         if (oldPath === background.path) {
             pathTimeout = setTimeout(() => {
+                if (!background?.path) return
                 mediaPath = background.path
             }, mediaTransition.duration + 100)
             return
@@ -330,8 +336,9 @@
     $: slideFilter = ""
     $: if (!slideData?.filterEnabled || slideData?.filterEnabled?.includes("background")) getSlideFilter()
     function getSlideFilter() {
-        if (!slideData) return
         slideFilter = ""
+        if (!slideData) return
+
         if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
         if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
     }
@@ -345,12 +352,15 @@
 </script>
 
 <Zoomed
+    id={outputId}
     background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"}
     backgroundDuration={mediaTransition?.duration || 800}
     {center}
     {style}
     {resolution}
     {mirror}
+    outline={outline ? currentOutput.color : ""}
+    {disabled}
     cropping={currentStyle.cropping}
     bind:ratio
 >
@@ -415,11 +425,11 @@
         {#if $showsCache[slide?.id]?.message?.text}
             {#if overlayTransition.type === "none"}
                 <div class="meta" style={messageStyle} class:key={currentOutput.isKeyOutput}>
-                    {$showsCache[slide?.id]?.message?.text}
+                    {@html $showsCache[slide?.id]?.message?.text.replaceAll("\n", "<br>")}
                 </div>
             {:else}
                 <div class="meta" transition:custom={overlayTransition} style={messageStyle} class:key={currentOutput.isKeyOutput}>
-                    {$showsCache[slide?.id]?.message?.text}
+                    {@html $showsCache[slide?.id]?.message?.text.replaceAll("\n", "<br>")}
                 </div>
             {/if}
         {/if}

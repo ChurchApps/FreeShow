@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { checkName } from "../components/helpers/show"
+import { checkName, formatToFileName } from "../components/helpers/show"
 import type { Bible } from "./../../types/Bible"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, scriptures, scripturesCache } from "./../stores"
@@ -131,6 +131,7 @@ export function convertOpenSongBible(data: any[]) {
     data.forEach((bible) => {
         let obj: Bible = XMLtoBible(bible.content)
         obj.name = bible.name || ""
+        obj.name = formatToFileName(obj.name)
 
         let id = uid()
         // create folder & file

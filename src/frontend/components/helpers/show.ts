@@ -6,15 +6,21 @@ import { GetLayout } from "./get"
 
 // check if name exists and add number
 export function checkName(name: string = "") {
-    // remove illegal file name characters
-    name = name.trim().replace(/[/\\?%*:|"<>]/g, "")
-    // max 255 length
-    if (name.length > 255) name = name.slice(0, 255)
+    name = formatToFileName(name)
 
     let number = 1
     while (Object.values(get(shows)).find((a: any) => a.name === (number > 1 ? name + " " + number : name))) number++
 
     return number > 1 ? name + " " + number : name
+}
+
+export function formatToFileName(name: string = "") {
+    // remove illegal file name characters
+    name = name.trim().replace(/[/\\?%*:|"<>]/g, "")
+    // max 255 length
+    if (name.length > 255) name = name.slice(0, 255)
+
+    return name
 }
 
 // convert any text to a label id format
@@ -24,7 +30,7 @@ export function getLabelId(label: string) {
         .toLowerCase()
         .replace(/x[0-9]/g, "")
         .replace(/[[\]]/g, "")
-        .replace(/[0-9'"]/g, "")
+        .replace(/[0-9'":]/g, "")
         .trim()
         .replaceAll(" ", "_")
         .replaceAll("-", "_")

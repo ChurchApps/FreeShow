@@ -1,4 +1,4 @@
-import { templateCategories } from "./../stores"
+import { stageShows, templateCategories } from "./../stores"
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
 import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, showsPath, templates } from "../stores"
@@ -44,6 +44,27 @@ export function createData(paths: any) {
             media: {},
         })
     }
+
+    stageShows.set({
+        default: {
+            name: get(dictionary).example?.default || "Stage",
+            disabled: false,
+            password: "",
+            settings: {},
+            items: {
+                "slide#current_slide_text": {
+                    enabled: true,
+                    style: "width:1870px;height:680px;left:25px;top:25px;font-weight:bold;",
+                    align: "",
+                },
+                "slide#next_slide_text": {
+                    enabled: true,
+                    style: "width:1870px;height:330px;left:25px;top:725px;color:#aaaaaa;font-weight:bold;",
+                    align: "",
+                },
+            },
+        },
+    })
 
     setExampleOverlays()
 
@@ -323,6 +344,22 @@ export function setExampleTemplates() {
                         { align: "", text: [{ value: "1", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
                         { align: "", text: [{ value: "2", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
                         { align: "", text: [{ value: "3", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                    ],
+                },
+            ],
+        }
+        a.trendy = {
+            name: "Trendy",
+            color: null,
+            category: "song",
+            items: [
+                {
+                    style: "top:310px;left:100px;height:460px;width:1720px;",
+                    align: "",
+                    specialStyle: { lineGap: 20, lineBg: "#000000" },
+                    lines: [
+                        { align: "", text: [{ value: "1", style: "font-size: 60px;line-height:1.5em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "2", style: "font-size: 60px;line-height:1.5em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
                     ],
                 },
             ],

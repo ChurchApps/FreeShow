@@ -44,8 +44,9 @@
   </span> -->
     {#if timer.timer}
         <span class="group">
+            <!-- padding: 0.3em; -->
             <Button
-                style="flex: 0"
+                style="flex: 0;"
                 center
                 title={timer.paused ? $dictionary.media?.play : $dictionary.media?.pause}
                 on:click={() => {

@@ -26,16 +26,21 @@
         if (value) value = Number(value)
 
         history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: value, indexes }, location: { page: "show", override: "change_slide_action_timer" } })
-        history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !!value, indexes: [indexes[indexes.length - 1]] }, location: { page: "show", override: "change_slide_action_loop" } })
 
-        if (allSlides) activePopup.set(null)
+        if (allSlides) {
+            history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !!value, indexes: [indexes[indexes.length - 1]] }, location: { page: "show", override: "change_slide_action_loop" } })
+            activePopup.set(null)
+        }
     }
 
     // total time
     let totalTime: string = "0s"
     function getTotalTime() {
-        layoutRef = _show().layouts("active").ref()[0]
-        let total = layoutRef.reduce((value, ref) => (value += Number(ref.data?.nextTimer || 0)), 0)
+        layoutRef = _show()
+            .layouts("active")
+            .ref()[0]
+            .filter((a) => !a.data.disabled)
+        let total = layoutRef.reduce((value, ref) => (value += Number(ref.data.nextTimer || 0)), 0)
 
         totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
     }

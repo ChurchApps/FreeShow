@@ -1,11 +1,13 @@
-import { scriptures, scripturesCache } from "./../stores"
-import type { Bible } from "../../types/Bible"
 import { uid } from "uid"
+import type { Bible } from "../../types/Bible"
+import { formatToFileName } from "../components/helpers/show"
+import { scriptures, scripturesCache } from "./../stores"
 
 export function convertZefaniaBible(data: any[]) {
     data.forEach((bible) => {
         let obj: Bible = XMLtoObject(bible.content)
         if (!obj.name) obj.name = bible.name
+        obj.name = formatToFileName(obj.name)
 
         let id = uid()
         // create folder & file

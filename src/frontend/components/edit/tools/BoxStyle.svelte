@@ -37,9 +37,29 @@
         if (e.key.includes("Arrow") || e.key.toUpperCase() === "A") getTextSelection(e)
     }
 
+    const formatting = {
+        b: () => ({ id: "style", key: "font-weight", value: "bold" }),
+        i: () => ({ id: "style", key: "font-style", value: "italic" }),
+        u: () => ({ id: "style", key: "text-decoration", value: "underline" }),
+    }
+    function keydown(e: any) {
+        if (selection && (e.ctrlKey || e.metaKey) && formatting[e.key]) {
+            e.preventDefault()
+            let value = formatting[e.key]()
+            // WIP line-through is removed
+            if (styles[value.key]?.includes(value.value)) value.value = ""
+            updateValue({ detail: value })
+
+            // WIP reset selection (caret is at start, but it remembers the selection)
+            return
+        }
+    }
+
     // TODO: clean here!!!
 
     // -----
+
+    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera"]
 
     $: box = boxes[id]
 
@@ -53,7 +73,15 @@
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : {}
     $: alignStyle = item?.align ? getStyles(item.align) : {}
 
-    $: if (id === "text" && box?.edit?.special) box.edit.special[0].value = item?.scrolling?.type || "none"
+    // WIP shouldn't have fixed values
+    $: if (id === "text" && box?.edit?.style) {
+        box.edit.style[1].value = item?.specialStyle?.lineGap || 0
+        box.edit.style[5].value = item?.specialStyle?.lineBg || ""
+    }
+    $: if (id === "text" && box?.edit?.special) {
+        box.edit.special[0].value = item?.scrolling?.type || "none"
+    }
+
     $: if (id === "mirror" && box) getMirrorValues()
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
@@ -212,10 +240,10 @@
         // get all selected slides
         if (slides[0] && $selected.id === "slide") {
             let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
-            slides.push(...selectedSlides.map(({ index }) => ref[index].id))
+            slides.push(...selectedSlides.map(({ index }) => ref[index]?.id))
 
             slides.forEach((id, i) => {
-                if (i === 0) return
+                if (!id || i === 0) return
                 if (!showSlides[id]) {
                     slideItems.push([])
                     return
@@ -302,10 +330,12 @@
             })
 
             // no text
-            let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
-            if (!textLength) {
-                newToast("$empty.text")
-                return
+            if (currentItems[0].lines) {
+                let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
+                if (!textLength) {
+                    newToast("$empty.text")
+                    return
+                }
             }
 
             let override = $activeEdit.id + "#" + allItems.join(",")
@@ -319,7 +349,6 @@
             return
         }
 
-        const setItemStyle = ["list", "timer", "clock", "icon", "events"]
         if (setItemStyle.includes(id)) {
             slides.forEach((slide, i) => {
                 if (!slideItems[i].length) return
@@ -354,7 +383,7 @@
     }
 </script>
 
-<svelte:window on:keyup={keyup} on:mouseup={getTextSelection} />
+<svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
 {#key id}
     <EditValues edits={box?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} />

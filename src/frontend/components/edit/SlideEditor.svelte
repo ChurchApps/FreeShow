@@ -114,8 +114,10 @@
         altKeyPressed = false
     }
 
+    // ZOOM
     let zoom = 1
 
+    // shortcut
     let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
@@ -129,6 +131,15 @@
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
+    }
+
+    // menu
+    let zoomOpened: boolean = false
+    function mousedown(e: any) {
+        keyup()
+        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
+
+        zoomOpened = false
     }
 
     // CHORDS
@@ -147,29 +158,21 @@
 
     // remove overflow if scrollbars are flickering over 25 times per second
     let hideOverflow: boolean = false
-    let changedTimes: number = 0
-    $: if (ratio) changedTimes++
-    $: if (!ratioTimeout && changedTimes > 2) startTimeout()
-    $: if (ratio && hideOverflow && !ratioTimeout && changedTimes > 1) hideOverflow = false
+    // let changedTimes: number = 0
+    // $: if (ratio) changedTimes++
+    // $: if (!ratioTimeout && changedTimes > 2) startTimeout()
+    // $: if (ratio && hideOverflow && !ratioTimeout && changedTimes > 1) hideOverflow = false
 
-    let ratioTimeout: any = null
-    function startTimeout() {
-        ratioTimeout = setTimeout(() => {
-            if (changedTimes > 5) hideOverflow = true
-            changedTimes = 0
-            setTimeout(() => {
-                ratioTimeout = null
-            }, 10)
-        }, 200)
-    }
-
-    let zoomOpened: boolean = false
-    function mousedown(e: any) {
-        keyup()
-        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
-
-        zoomOpened = false
-    }
+    // let ratioTimeout: any = null
+    // function startTimeout() {
+    //     ratioTimeout = setTimeout(() => {
+    //         if (changedTimes > 5) hideOverflow = true
+    //         changedTimes = 0
+    //         setTimeout(() => {
+    //             ratioTimeout = null
+    //         }, 10)
+    //     }, 200)
+    // }
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={mousedown} on:wheel={wheel} />
@@ -234,26 +237,37 @@
         {/if}
     </div>
     <div class="actions">
-        <Button on:click={toggleChords} title={$dictionary.edit?.chords}>
-            <Icon id="chords" white={!chordsMode} />
-        </Button>
-
-        <div class="seperator" />
-
-        <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
-            <Icon size={1.3} id="zoomIn" white />
-        </Button>
-        {#if zoomOpened}
-            <div class="zoom_container" transition:slide>
-                <p class="text" on:click={() => (zoom = 1)}>{(100 / zoom).toFixed()}%</p>
-                <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
-                    <Icon size={1.3} id="add" white />
-                </Button>
-                <Button disabled={zoom >= 2} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
-                    <Icon size={1.3} id="remove" white />
-                </Button>
+        {#if Slide?.notes}
+            <div class="notes">
+                <Icon id="notes" right white />
+                {@html Slide.notes.replaceAll("\n", "&nbsp;")}
             </div>
         {/if}
+
+        <div class="actions" style="height: 100%;justify-content: right;">
+            <Button on:click={toggleChords} title={$dictionary.edit?.chords}>
+                <Icon id="chords" white={!chordsMode} />
+            </Button>
+
+            <div class="seperator" />
+
+            <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+                <Icon size={1.3} id="zoomIn" white />
+            </Button>
+            {#if zoomOpened}
+                <div class="zoom_container" transition:slide>
+                    <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
+                        <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
+                    </Button>
+                    <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
+                        <Icon size={1.3} id="add" white />
+                    </Button>
+                    <Button disabled={zoom >= 2} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
+                        <Icon size={1.3} id="remove" white />
+                    </Button>
+                </div>
+            {/if}
+        </div>
     </div>
 </div>
 
@@ -296,22 +310,28 @@
         position: relative;
         display: flex;
         align-items: center;
-        justify-content: right;
+        justify-content: space-between;
         width: 100%;
-        background-color: var(--primary);
-        border-top: 3px solid var(--primary-lighter);
+        background-color: var(--primary-darkest);
+        /* border-top: 3px solid var(--primary-lighter); */
+    }
+
+    .notes {
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
     }
 
     /* fixed height for consistent heights */
     .actions :global(button) {
-        min-height: 35px;
-        padding: 0.2em 0.8em !important;
+        min-height: 28px;
+        padding: 0 0.8em !important;
     }
 
     .seperator {
-        width: 3px;
+        width: 2px;
         height: 100%;
-        background-color: var(--primary-lighter);
+        background-color: var(--primary);
         /* margin: 0 10px; */
     }
 
@@ -324,15 +344,15 @@
     .zoom_container {
         position: absolute;
         right: 0;
-        top: -3px;
+        top: 0;
         transform: translateY(-100%);
         overflow: hidden;
         z-index: 30;
 
         flex-direction: column;
         width: auto;
-        border-left: 3px solid var(--primary-lighter);
-        border-top: 3px solid var(--primary-lighter);
+        /* border-left: 3px solid var(--primary-lighter);
+        border-top: 3px solid var(--primary-lighter); */
         background-color: inherit;
     }
 </style>

@@ -64,6 +64,8 @@
         videoData.paused = !videoData.paused
         sendToOutput()
     }
+
+    let changeValue: number = 0
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -80,12 +82,39 @@
     {/if}
     {#if (video && getMediaType(getExtension(outName)) === "video") || background?.type === "player"}
         <span class="group">
-            <Button style="flex: 0" center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
+            <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
             </Button>
-            <VideoSlider disabled={$outLocked} {outputId} bind:videoData bind:videoTime toOutput />
+            <VideoSlider disabled={$outLocked} {outputId} bind:videoData bind:videoTime bind:changeValue toOutput />
             <Button
-                style="flex: 0"
+                center
+                title={$dictionary.media?.back10}
+                on:click={() => {
+                    changeValue = Math.max(videoTime - 10, 0.01)
+                }}
+            >
+                <Icon id="back_10" white size={1.2} />
+            </Button>
+            <Button
+                center
+                title={$dictionary.media?.forward10}
+                on:click={() => {
+                    changeValue = Math.min(videoTime + 10, videoData.duration - 0.1)
+                }}
+            >
+                <Icon id="forward_10" white size={1.2} />
+            </Button>
+            <Button
+                center
+                title={$dictionary.media?._loop}
+                on:click={() => {
+                    videoData.loop = !videoData.loop
+                    sendToOutput()
+                }}
+            >
+                <Icon id="loop" white={!videoData.loop} size={1.2} />
+            </Button>
+            <Button
                 center
                 title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
                 disabled={$outLocked}
@@ -95,17 +124,6 @@
                 }}
             >
                 <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
-            </Button>
-            <Button
-                style="flex: 0"
-                center
-                title={$dictionary.media?._loop}
-                on:click={() => {
-                    videoData.loop = !videoData.loop
-                    sendToOutput()
-                }}
-            >
-                <Icon id="loop" white={!videoData.loop} size={1.2} />
             </Button>
         </span>
     {/if}
@@ -118,14 +136,13 @@
         align-items: center;
     }
     .group :global(button) {
-        flex-grow: 1;
-        /* height: 40px; */
+        padding: 0.3em !important;
     }
 
     .name {
         display: flex;
         justify-content: center;
-        padding: 10px;
+        padding: 5px 10px;
         opacity: 0.8;
 
         cursor: pointer;

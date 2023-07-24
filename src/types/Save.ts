@@ -1,6 +1,6 @@
 export type SaveList = SaveListSettings | SaveListSyncedSettings | "themes" | "events" | "templates" | "driveKeys"
 
-export type SaveListSyncedSettings = "categories" | "drawSettings" | "overlayCategories" | "templateCategories" | "timers" | "scriptures" | "scriptureSettings" | "groups" | "midiIn" | "videoMarkers"
+export type SaveListSyncedSettings = "categories" | "drawSettings" | "overlayCategories" | "templateCategories" | "timers" | "scriptures" | "scriptureSettings" | "groups" | "midiIn" | "videoMarkers" | "customizedIcons"
 
 export type SaveListSettings =
     | "initialized"

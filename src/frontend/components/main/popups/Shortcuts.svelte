@@ -22,28 +22,43 @@
         // "tabs.scripture": ctrl + " + 6",
         // "tabs.player": ctrl + " + 7",
         // "tabs.live": ctrl + " + 8",
+
         "actions.change_tab": "num",
         "actions.change_drawer_tab": ctrl + " + num",
-        // "Toggle drawer": "esc",
+
         ctrl: "SEPERATOR",
+
         "actions.selectAll": ctrl + " + a",
+        "edit._title_bold": ctrl + " + b",
         "actions.copy": ctrl + " + c",
         "actions.duplicate": ctrl + " + d",
         "actions.export": ctrl + " + e",
-        "actions.fullscreen_preview": ctrl + " + f",
+        "main.search": ctrl + " + f",
+        // "": ctrl + " + g",
+        // "": ctrl + " + h",
         "actions.import": ctrl + " + i",
+        "edit._title_italic": ctrl + " + i",
+        // "": ctrl + " + j",
+        // "": ctrl + " + k",
         "preview._lock": ctrl + " + l",
         "actions.mute": ctrl + " + m",
         "new.show": ctrl + " + n",
         "actions.toggle_output": ctrl + " + o",
         // "new.project": ctrl + " + p",
+        // "": ctrl + " + q",
         "preview._update": ctrl + " + r",
         "actions.save": ctrl + " + s",
+        // "": ctrl + " + t",
+        "edit._title_underline": ctrl + " + u",
         "actions.paste": ctrl + " + v",
+        // "": ctrl + " + w",
         "actions.cut": ctrl + " + x",
         "actions.redo": ctrl + " + y",
         "actions.undo": ctrl + " + z",
+        "popup.shortcuts": ctrl + " + ?",
+
         f: "SEPERATOR",
+
         "clear.all": "esc",
         // "clear.all": ".",
         "clear.background": "f1",
@@ -54,6 +69,7 @@
         // "from start": "f5",
         // MAC: cmd + shift + f
         "actions.fullscreen": "f11",
+
         // presenterKeys: "SEPERATOR",
     }
 </script>

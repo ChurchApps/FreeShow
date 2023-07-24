@@ -162,11 +162,19 @@
         justify-content: space-between;
         padding: 0.15em 0.8em;
     }
+    .main :global(button p) {
+        margin: 3px 5px;
+    }
 
     .layout {
         opacity: 0.6;
         font-style: italic;
         font-size: 0.9em;
         padding-left: 5px;
+
+        /* overflow: hidden;
+        text-overflow: ellipsis; */
+        white-space: nowrap;
+        max-width: 40%;
     }
 </style>

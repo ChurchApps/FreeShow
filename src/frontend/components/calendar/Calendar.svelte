@@ -1,8 +1,15 @@
 <script lang="ts">
     import { activeDays, activePopup, dictionary, eventEdit, events, popupData } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import { isSameDay } from "./calendar"
+
+    export let active: string | null
+    export let searchValue: string = ""
+
+    // WIP search for events
+    $: console.log(searchValue)
 
     let today = new Date()
     $: current = new Date(today.getFullYear(), today.getMonth())
@@ -116,12 +123,13 @@
         }, 500)
     }
 
-    function getEvents(day: Date, currentEvents: any[]) {
+    function getEvents(day: Date, currentEvents: any[], type: string) {
         let events: any[] = []
         currentEvents.forEach((a) => {
             if (a.to ? isBetween(new Date(a.from), new Date(a.to), copy(day)) : isSameDay(new Date(a.from), day)) events.push(a)
         })
         events.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
+        events = events.filter((a) => a.type === type)
         return events
     }
 
@@ -189,7 +197,7 @@
     }
 </script>
 
-<div class="calendar" on:wheel={wheel} bind:this={calendarElem}>
+<div class="calendar">
     <div class="week" style="flex: 1;">
         <div class="weekday" style="min-width: 25px;flex: 1;padding: 0;">
             <Button
@@ -199,7 +207,7 @@
                 }}
                 active={!!$activeDays.length && isSameDay(new Date($activeDays[0]), today) && current.getMonth() === new Date($activeDays[0]).getMonth() && current.getFullYear() === new Date($activeDays[0]).getFullYear()}
                 title={$dictionary.calendar?.today}
-                style="width: 100%;height: 100%;"
+                style="width: 100%;height: 100%;padding: 0;"
                 center
             >
                 <Icon id="calendar" />
@@ -212,13 +220,14 @@
             </div>
         {/each}
     </div>
-    <div class="grid">
+    <div class="grid" on:wheel={wheel} bind:this={calendarElem}>
         {#each days as week}
             <div class="week">
                 <span class="weeknumber">
                     {getWeekNumber(week[0])}
                 </span>
                 {#each week as day}
+                    {@const dayEvents = getEvents(day, currentEvents, active || "event")}
                     <div
                         class="day"
                         class:today={isSameDay(day, today)}
@@ -228,13 +237,13 @@
                         on:mousemove={(e) => move(e, day)}
                     >
                         <!-- // isSameDay(day, new Date($activeDays[0]))} -->
-                        <span style="font-size: 2em;font-weight: bold;">{day.getDate()}</span>
+                        <span style="font-size: 1.5em;font-weight: bold;">{day.getDate()}</span>
                         <span class="events">
-                            {#each getEvents(day, currentEvents) as event, i}
-                                {#if i >= 3}
-                                    <span class="dot" style="background-color: {event.color || 'unset'}" title={event.name} />
+                            {#each dayEvents as event, i}
+                                {#if dayEvents.length > 3 && i > 1}
+                                    <span class="dot" style="background-color: {event.color || 'white'}" title={event.name} />
                                 {:else}
-                                    <div class="event" style="color: {event.color || 'unset'}" title={event.name}>
+                                    <div class="event" style="color: {event.color || 'white'}" title={event.name}>
                                         <Icon id={event.type === "event" ? "calendar" : event.type} right white />
                                         <p>{event.name}</p>
                                     </div>
@@ -247,15 +256,32 @@
         {/each}
     </div>
     <div class="bottom">
-        <Button style="width: 200px;" on:click={() => (current = new Date(year, month, 0))} center>
-            <Icon id="previous" />
-        </Button>
-        <span style="text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
+        <span style="opacity: 0.8;min-width: 150px;text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
             {$dictionary.month?.[current.getMonth() + 1]}
             {current.getFullYear()}
         </span>
-        <Button style="width: 200px;" on:click={() => (current = new Date(year, month, 33))} center>
-            <Icon id="next" />
+
+        <div class="seperator" />
+
+        <Button
+            style="flex: 1;"
+            on:click={() => {
+                eventEdit.set(null)
+                activePopup.set("edit_event")
+            }}
+            center
+        >
+            <Icon id="add" right />
+            <T id="new.event" />
+        </Button>
+
+        <div class="seperator" />
+
+        <Button style="width: 75px;" on:click={() => (current = new Date(year, month, 0))} center>
+            <Icon id="previous" size={1.1} />
+        </Button>
+        <Button style="width: 75px;" on:click={() => (current = new Date(year, month, 33))} center>
+            <Icon id="next" size={1.1} />
         </Button>
     </div>
 </div>
@@ -273,6 +299,8 @@
         flex: 10;
         display: flex;
         flex-direction: column;
+
+        overflow: auto;
     }
 
     .week {
@@ -283,8 +311,8 @@
 
     .day,
     .weekday {
-        padding: 10px;
-        flex: 3;
+        padding: 5px;
+        flex: 4;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -298,6 +326,7 @@
 
     .weeknumber {
         min-width: 25px;
+        font-size: 0.8em;
         flex: 1;
         color: var(--secondary);
         background-color: var(--primary-darkest);
@@ -326,7 +355,7 @@
     }
 
     .events {
-        flex: 3;
+        /* flex: 3; */
         width: 100%;
         display: flex;
         flex-wrap: wrap;
@@ -334,7 +363,7 @@
     }
 
     .event {
-        padding: 5px 10px;
+        padding: 2px 5px;
         text-align: center;
         width: 100%;
         display: flex;
@@ -352,5 +381,11 @@
         display: flex;
         justify-content: space-between;
         background-color: var(--primary-darkest);
+    }
+
+    .seperator {
+        width: 2px;
+        height: 100%;
+        background-color: var(--primary);
     }
 </style>

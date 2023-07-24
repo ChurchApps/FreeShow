@@ -80,8 +80,8 @@ function createOutputWindow(options: any, id: string) {
         window?.setMenu(null)
     })
 
-    window.on("move", () => {
-        if (updatingBounds) return
+    window.on("move", (e: any) => {
+        if (!moveEnabled || updatingBounds) return e.preventDefault()
         let bounds = window?.getBounds()
         toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
     })
@@ -176,6 +176,7 @@ function hideWindow(window: BrowserWindow) {
     window.hide()
 }
 
+let moveEnabled: boolean = false
 let updatingBounds: boolean = false
 let boundsTimeout: any = null
 function disableWindowMoveListener() {
@@ -201,6 +202,7 @@ export function updateBounds(data: any) {
 
 export function setValue({ id, key, value }: any) {
     let window: BrowserWindow = outputWindows[id]
+    if (!window) return
 
     if (key === "alwaysOnTop") {
         window.setAlwaysOnTop(value)
@@ -235,6 +237,7 @@ export function sendToOutputWindow(msg: any) {
 // RESPONSES
 
 const outputResponses: any = {
+    MOVE: (data: any) => (moveEnabled = data.enabled),
     CREATE: (data: any) => createOutput(data),
     DISPLAY: (data: any) => displayOutput(data),
     UPDATE: (data: any) => updateOutput(data),

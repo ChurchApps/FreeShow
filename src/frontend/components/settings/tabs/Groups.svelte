@@ -1,19 +1,19 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { dictionary, fullColors, groupNumbers, groups } from "../../../stores"
-    import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
+    import { history } from "../../helpers/history"
     import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { newToast } from "../../../utils/messages"
 
     $: g = Object.entries($groups)
-        .map(([id, a]: any) => ({ id, ...a, name: a.default ? $dictionary.groups?.[a.name] : a.name }))
+        .map(([id, a]: any) => ({ id, ...a, name: a.default ? $dictionary.groups?.[a.name] || a.name : a.name }))
         .sort((a: any, b: any) => a.name.localeCompare(b.name))
 
     function changeGroup(e: any, id: string, key: string = "name") {
@@ -35,9 +35,6 @@
         colors: (e: any) => fullColors.set(e.target.checked),
         groupNumber: (e: any) => groupNumbers.set(e.target.checked),
     }
-
-    const changeValue = (e: any, key: string) => (value[key] = e.target.value)
-    let value: any = { group: "", groupColor: "#ffffff" }
 
     const defaultGroups: any = {
         break: { name: "break", default: true, color: "#f5255e" },
@@ -61,13 +58,14 @@
 
     $: console.log(shortcuts)
     function addGroup() {
-        if (!value.group.length) {
-            newToast("$toast.no_name")
-            return
-        }
+        // if (!value.group.length) {
+        //     newToast("$toast.no_name")
+        //     return
+        // }
 
+        let value: any = { group: "", groupColor: "#ffffff" }
         history({ id: "UPDATE", newData: { data: { name: value.group, color: value.groupColor } }, location: { page: "settings", id: "global_group" } })
-        value.group = ""
+        // value.group = ""
     }
 </script>
 
@@ -84,19 +82,7 @@
     </div>
 </CombinedInput>
 
-<br />
-
-<!-- <h3><T id="settings.add_group" /></h3> -->
-<CombinedInput>
-    <TextInput style="flex: 3;" value={value.group} on:input={(e) => changeValue(e, "group")} />
-    <Color value={value.groupColor} on:input={(e) => (value.groupColor = e.detail)} />
-    <Button style="white-space: nowrap;" center on:click={addGroup}>
-        <Icon id="add" right />
-        <T id="settings.add" />
-    </Button>
-</CombinedInput>
-
-<br />
+<h3><T id="groups.global" /></h3>
 
 {#each g as group}
     <CombinedInput>
@@ -114,25 +100,54 @@
                 history({ id: "UPDATE", newData: { id: group.id }, location: { page: "settings", id: "global_group" } })
             }}
         >
-            <Icon id="delete" right />
-            <T id="settings.remove" />
+            <Icon id="delete" />
+            <!-- <T id="actions.delete" /> -->
         </Button>
     </CombinedInput>
 {/each}
 
-<br />
+<div class="filler" />
+<div class="bottom">
+    <div style="display: flex;">
+        <Button style="width: 100%;" on:click={addGroup} center>
+            <Icon id="add" right />
+            <T id="settings.add" />
+        </Button>
+        <Button
+            style="width: 100%;"
+            center
+            on:click={() => {
+                fullColors.set(false)
+                groupNumbers.set(true)
+                groups.set(clone(defaultGroups))
+            }}
+        >
+            <Icon id="reset" right />
+            <T id="actions.reset" />
+        </Button>
+    </div>
+</div>
 
-<Button
-    style="width: 100%;"
-    center
-    on:click={() => {
-        fullColors.set(false)
-        groupNumbers.set(true)
-        groups.set(defaultGroups)
-    }}
->
-    <Icon id="reset" right />
-    <T id="actions.reset" />
-</Button>
+<style>
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
+    }
 
-<br />
+    .filler {
+        height: 48px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
+    }
+</style>

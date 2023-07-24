@@ -20,8 +20,12 @@
 
         outputs.update((a) => {
             if (e.ctrlKey || e.metaKey) {
+                let newState = false
+                let getAllActive = Object.values(a).filter((a) => a.active)
+                if (getAllActive.length === 1 && a[id].active) newState = true
+
                 Object.keys(a).forEach((id) => {
-                    a[id].active = false
+                    a[id].active = newState
                 })
                 a[id].active = true
             } else {

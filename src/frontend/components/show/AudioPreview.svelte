@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary, playingAudio } from "../../stores"
+    import { activeShow, dictionary, outLocked, playingAudio } from "../../stores"
     import { clearAudio, getAudioDuration, playAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -8,6 +8,7 @@
 
     $: path = $activeShow?.id || ""
     $: name = $activeShow?.name || ""
+    $: isMic = $activeShow?.data?.isMic
     $: playing = $playingAudio[path] || {}
     $: paused = playing.paused !== false
 
@@ -15,6 +16,7 @@
     let duration: any = 0
     $: if (path) getDuration()
     async function getDuration() {
+        duration = 0
         duration = await getAudioDuration(path)
         currentTime = playing.audio?.currentTime || 0
     }
@@ -47,6 +49,9 @@
     }
 
     function keydown(e: any) {
+        // if (e.target.closest("input") || e.target.closest(".edit")) return
+        if ($outLocked || isMic || document.activeElement !== document.body) return
+
         if (e.key === " ") playAudio({ path, name }, true, currentTime)
     }
 
@@ -103,6 +108,11 @@
                 let r = barHeight * 1.5 + 5 // * (i / bufferLengthLeft)
                 let g = 5 // 250 * (i / bufferLengthLeft)
                 let b = 150
+                // if (barHeight > 125) b = 120
+                // green - yellow - red
+                // let r = barHeight * 5 + 5
+                // let g = barHeight > 120 ? 10 : 10 * barHeight
+                // let b = 20
 
                 ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")"
                 ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight)
@@ -119,42 +129,84 @@
 
 <canvas bind:this={canvas} />
 
-<div class="buttons">
-    <Button style="flex: 0" center title={paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => playAudio({ path, name }, true, currentTime)}>
-        <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />
-    </Button>
-    {#if sliderValue !== null}
-        <span>
-            {joinTime(secondsToTime(sliderValue))}
+<div class="main media context #media_preview">
+    <div class="buttons">
+        <Button
+            style="flex: 0"
+            disabled={$outLocked || isMic}
+            center
+            title={paused ? $dictionary.media?.play : $dictionary.media?.pause}
+            on:click={() => {
+                if ($outLocked) return
+                playAudio({ path, name }, true, currentTime)
+            }}
+        >
+            <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />
+        </Button>
+        {#if sliderValue !== null}
+            <span>
+                {joinTime(secondsToTime(sliderValue))}
+            </span>
+        {:else}
+            <span style="color: var(--secondary)">
+                {joinTime(secondsToTime(currentTime))}
+            </span>
+        {/if}
+        <Slider disabled={isMic} value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
+        <span style={isMic ? "opacity: 0.5;" : ""}>
+            {joinTime(secondsToTime(duration))}
         </span>
-    {:else}
-        <span style="color: var(--secondary)">
-            {joinTime(secondsToTime(currentTime))}
-        </span>
-    {/if}
-    <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
-    <span>
-        {joinTime(secondsToTime(duration))}
-    </span>
-    <Button
-        disabled={!playing.audio}
-        style="flex: 0"
-        center
-        title={$dictionary.media?.stop}
-        on:click={() => {
-            clearAudio(path)
-            currentTime = 0
-        }}
-    >
-        <Icon id={"stop"} white size={1.2} />
-    </Button>
 
-    <!-- TODO: individual volume -->
+        <div style="display: flex;">
+            <Button
+                disabled={!playing.audio}
+                style="flex: 0"
+                center
+                title={$dictionary.media?.stop}
+                on:click={() => {
+                    clearAudio(path)
+                    currentTime = 0
+                }}
+            >
+                <Icon id={"stop"} white size={1.2} />
+            </Button>
+            {#if !isMic}
+                <Button
+                    center
+                    title={$dictionary.media?._loop}
+                    disabled={!$playingAudio[path]}
+                    on:click={() => {
+                        if (!$playingAudio[path]) return
+
+                        playingAudio.update((a) => {
+                            a[path].loop = !playing.loop
+
+                            return a
+                        })
+                    }}
+                >
+                    <Icon id="loop" white={!playing.loop} size={1.2} />
+                </Button>
+            {/if}
+        </div>
+
+        <!-- TODO: individual volume -->
+    </div>
 </div>
 
 <style>
+    .main {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+    }
+
     .buttons {
         display: flex;
+        width: 100%;
+        height: fit-content;
         gap: 10px;
         align-items: center;
 
@@ -171,6 +223,7 @@
     }
 
     canvas {
+        pointer-events: none;
         position: absolute;
         bottom: 0;
         left: 0;

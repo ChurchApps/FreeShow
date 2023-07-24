@@ -12,6 +12,7 @@
         group: string
     }
     export let cam: Cam
+    export let item: boolean = false
 
     let loaded: boolean = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
@@ -60,19 +61,27 @@
     })
 </script>
 
-<Card class="context #live_card" {loaded} outlineColor={findMatchingOut(cam.id, $outputs)} active={findMatchingOut(cam.id, $outputs) !== null} on:click label={cam.name} icon="camera" white={!cam.id.includes("cam")}>
-    <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name, cameraGroup: cam.group }} draggable>
-        {#if error}
-            <div class="error">
-                {@html error}
-            </div>
-        {:else}
-            <video bind:this={videoElem}>
-                <track kind="captions" />
-            </video>
-        {/if}
-    </SelectElem>
-</Card>
+{#if item}
+    {#if !error}
+        <video style="width: 100%;height: 100%;" bind:this={videoElem}>
+            <track kind="captions" />
+        </video>
+    {/if}
+{:else}
+    <Card class="context #live_card" {loaded} outlineColor={findMatchingOut(cam.id, $outputs)} active={findMatchingOut(cam.id, $outputs) !== null} on:click label={cam.name} icon="camera" white={!cam.id.includes("cam")}>
+        <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name, cameraGroup: cam.group }} draggable>
+            {#if error}
+                <div class="error">
+                    {@html error}
+                </div>
+            {:else}
+                <video bind:this={videoElem}>
+                    <track kind="captions" />
+                </video>
+            {/if}
+        </SelectElem>
+    </Card>
+{/if}
 
 <style>
     /* video {

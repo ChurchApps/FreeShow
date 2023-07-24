@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePage, events } from "../../../stores"
+    import { activeDrawerTab, drawer, drawerTabsData, events } from "../../../stores"
     import { getTime } from "../../calendar/calendar"
     import { keysToID } from "../../helpers/array"
     import { combineDateAndTime } from "../../helpers/time"
@@ -69,16 +69,22 @@
 
         return html
     }
+
+    function openInDrawer() {
+        if (!edit) return
+
+        drawerTabsData.update((a) => {
+            a.calendar.activeSubTab = "event"
+            return a
+        })
+        activeDrawerTab.set("calendar")
+
+        // open drawer if closed
+        if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
+    }
 </script>
 
-<div
-    class="events"
-    on:dblclick={() => {
-        if (edit) {
-            activePage.set("calendar")
-        }
-    }}
->
+<div class="events" on:dblclick={openInDrawer}>
     {#each filteredEvents as event}
         {#if event.name}
             {@html getEventElement(event, textSize)}

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { READ_FOLDER } from "../../../../types/Channels"
-    import { activeShow, audioFolders, dictionary, media, playingAudio } from "../../../stores"
+    import { activeShow, audioFolders, dictionary, media, outLocked, playingAudio } from "../../../stores"
     import { getAudioDuration, playAudio } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
     import Icon from "../../helpers/Icon.svelte"
@@ -10,6 +10,7 @@
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
 
     export let active: string | null
@@ -18,9 +19,9 @@
     let files: any[] = []
     let scrollElem: any
 
-    $: rootPath = active === "all" || active === "favourites" ? "" : active !== null ? $audioFolders[active].path! : ""
-    $: path = active === "all" || active === "favourites" ? "" : rootPath
-    $: name = rootPath === path ? (active !== "all" && active !== "favourites" && active !== null ? $audioFolders[active].name : "category.all") : splitPath(path).name
+    $: rootPath = active === "all" || active === "favourites" || active === "microphones" ? "" : active !== null ? $audioFolders[active].path! : ""
+    $: path = active === "all" || active === "favourites" || active === "microphones" ? "" : rootPath
+    $: name = rootPath === path ? (active !== "all" && active !== "favourites" && active !== "microphones" && active !== null ? $audioFolders[active].name : "category.all") : splitPath(path).name
 
     // get list of files & folders
     let prevActive: null | string = null
@@ -49,6 +50,9 @@
                 files = []
                 window.api.send(READ_FOLDER, { path, listFilesInFolders: true })
             }
+        } else {
+            // microphones
+            prevActive = active
         }
     }
 
@@ -164,7 +168,9 @@
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
     <div class="grid" style="height: 100%;">
-        {#if fullFilteredFiles.length}
+        {#if active === "microphones"}
+            <Microphones />
+        {:else if fullFilteredFiles.length}
             {#key rootPath}
                 {#key path}
                     {#each fullFilteredFiles as file}
@@ -181,10 +187,11 @@
                                     title={file.path}
                                     bold={false}
                                     on:click={(e) => {
-                                        if (e.ctrlKey || e.metaKey) return
+                                        if ($outLocked || e.ctrlKey || e.metaKey) return
                                         playAudio({ path: file.path, name: file.name })
                                     }}
-                                    on:dblclick={() => {
+                                    on:dblclick={(e) => {
+                                        if (e.ctrlKey || e.metaKey) return
                                         activeShow.set({ id: file.path, name: file.name, type: "audio" })
                                     }}
                                 >
@@ -217,23 +224,25 @@
     </div>
 </div>
 
-<div class="tabs" style="display: flex;align-items: center;">
-    <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
-        <Icon size={1.3} id="back" />
-    </Button>
-    <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
-        <Icon size={1.3} id="home" />
-    </Button>
-    <span style="flex: 1;text-align: center;">
-        {#key name}
-            {#if name.includes(".")}
-                <T id={name} />
-            {:else}
-                {name}
-            {/if}
-        {/key}
-    </span>
-</div>
+{#if active !== "microphones"}
+    <div class="tabs" style="display: flex;align-items: center;">
+        <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
+            <Icon size={1.3} id="back" />
+        </Button>
+        <!-- <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
+            <Icon size={1.3} id="home" />
+        </Button> -->
+        <span style="flex: 1;text-align: center;">
+            {#key name}
+                {#if name.includes(".")}
+                    <T id={name} />
+                {:else}
+                    {name}
+                {/if}
+            {/key}
+        </span>
+    </div>
+{/if}
 
 <style>
     .tabs {
@@ -254,12 +263,16 @@
 
     .grid :global(button) {
         /* font-size: 1em; */
-        padding: 8px 15px;
+        padding: 6px 15px;
 
         justify-content: space-between;
     }
+    .grid :global(.selectElem:not(.isSelected):nth-child(even)) {
+        background-color: var(--primary-darkest);
+    }
     .grid span {
         display: flex;
+        align-items: center;
         gap: 5px;
     }
 </style>

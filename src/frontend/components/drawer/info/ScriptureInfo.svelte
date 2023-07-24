@@ -177,7 +177,7 @@
             let id = uid()
             // TODO: group as verse numbers
             let firstTextItem = items.find((a) => a.lines)
-            slides2[id] = { group: firstTextItem.lines[0].text[0]?.value?.split(" ")?.slice(0, 4)?.join(" ") || "", color: null, settings: {}, notes: "", items }
+            slides2[id] = { group: firstTextItem.lines[0].text[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
             layouts.push(l)
         })
@@ -200,7 +200,11 @@
         show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
 
         let versions = bibles.map((a) => a.version).join(" + ")
-        show.reference = { type: "scripture", data: { collection: $drawerTabsData.scripture?.activeSubTab || "", version: versions } }
+        console.log(bibles)
+        show.reference = {
+            type: "scripture",
+            data: { collection: $drawerTabsData.scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId || bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses },
+        }
 
         return { show }
     }
@@ -304,11 +308,11 @@
     <div class="settings">
         <CombinedInput textWidth={70}>
             <p><T id="info.template" /></p>
-            <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 50%;" />
+            <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 30%;" />
         </CombinedInput>
         <CombinedInput textWidth={70}>
             <p><T id="scripture.max_verses" /></p>
-            <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={25} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
+            <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
         </CombinedInput>
         <CombinedInput textWidth={70}>
             <p><T id="scripture.verse_numbers" /></p>
@@ -334,9 +338,11 @@
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
         </CombinedInput>
-        <CombinedInput>
-            <Notes disabled={!$scriptureSettings.showVersion && !$scriptureSettings.showVerse} lines={2} value={customText} on:edit={(e) => update("customText", e.detail)} />
-        </CombinedInput>
+        {#if $scriptureSettings.showVersion || ($scriptureSettings.showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
+            <CombinedInput>
+                <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
+            </CombinedInput>
+        {/if}
         <!-- <span>
       <p><T id="scripture.red_jesus" /> (WIP)</p>
       <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />

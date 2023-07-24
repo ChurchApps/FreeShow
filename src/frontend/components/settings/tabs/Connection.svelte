@@ -68,7 +68,7 @@
     </p>
 </div> -->
 
-<br />
+<!-- <br /> -->
 
 <CombinedInput title={$dictionary.popup?.connect}>
     <Button
@@ -80,7 +80,7 @@
         center
     >
         <div style="margin: 0;">
-            <Icon id="connection" right />
+            <Icon id="connection" size={1.1} right />
             <p>
                 RemoteShow
                 <span class="connections">{Object.keys($connections.REMOTE || {})?.length || ""}</span>
@@ -96,7 +96,7 @@
         center
     >
         <div style="margin: 0;">
-            <Icon id="connection" right />
+            <Icon id="stage" size={1.3} right />
             <p>
                 StageShow
                 <span class="connections">{Object.keys($connections.STAGE || {})?.length || ""}</span>
@@ -112,12 +112,19 @@
         center
     >
         <div style="margin: 0;">
-            <Icon id="connection" right />
+            <Icon id="connection" size={1.1} right />
             <p>
                 ControlShow
                 <span class="connections">{Object.keys($connections.CONTROLLER || {})?.length || ""}</span>
             </p>
         </div>
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections })} center>
+        <Icon id="refresh" right />
+        <T id="settings.restart" />
     </Button>
 </CombinedInput>
 
@@ -146,28 +153,21 @@
     <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
 </CombinedInput>
 
-<CombinedInput>
-    <Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections })} center>
-        <Icon id="refresh" right />
-        <T id="settings.restart" />
-    </Button>
-</CombinedInput>
-
-<br />
-
-<Button style="width: 100%;" on:click={reset} center>
-    <Icon id="reset" right />
-    <T id="actions.reset" />
-</Button>
-
-<br />
-
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>
   <span>(all, only phones, (laptops), ...)</span>
 </div> -->
+
+<div class="filler" />
+<div class="bottom">
+    <Button style="width: 100%;" on:click={reset} center>
+        <Icon id="reset" right />
+        <T id="actions.reset" />
+    </Button>
+</div>
+
 <style>
-    div:not(.scroll) {
+    div:not(.scroll):not(.bottom):not(.filler) {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -181,5 +181,19 @@
         padding-left: 10px;
         opacity: 0.5;
         font-weight: normal;
+    }
+
+    .filler {
+        height: 48px;
+    }
+    .bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-darkest);
+
+        display: flex;
+        flex-direction: column;
     }
 </style>

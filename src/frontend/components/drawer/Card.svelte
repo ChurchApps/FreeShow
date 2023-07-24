@@ -46,7 +46,7 @@
 <style>
     .main {
         display: flex;
-        padding: 5px;
+        padding: 2px;
         position: relative;
     }
 

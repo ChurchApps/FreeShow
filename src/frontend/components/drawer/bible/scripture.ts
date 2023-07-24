@@ -1,10 +1,7 @@
 import { get } from "svelte/store"
 import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
-import { scripturePath, scriptures, scripturesCache } from "../../../stores"
-
-// API.Bible key. Will propably change in the future (Please don't abuse)
-let key: string = "320b5b593fa790ced135a98861de51a9"
+import { bibleApiKey, scripturePath, scriptures, scripturesCache } from "../../../stores"
 
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
     const api = "https://api.scripture.api.bible/v1/bibles/"
@@ -23,9 +20,10 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
     }
 
     return new Promise((resolve, reject) => {
+        if (!get(bibleApiKey)) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
-        fetch(urls[load], { headers: { "api-key": key } })
+        fetch(urls[load], { headers: { "api-key": get(bibleApiKey) } })
             .then((response) => response.json())
             .then((data) => {
                 resolve(data.data)

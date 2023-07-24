@@ -4,7 +4,7 @@
     import Loader from "../../main/Loader.svelte"
     // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
-    import { dictionary, notFound, outLocked, outputs, playScripture, scriptures, scripturesCache } from "../../../stores"
+    import { bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -12,6 +12,7 @@
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import { fetchBible, joinRange, loadBible } from "./scripture"
+    import BibleApiKey from "./BibleApiKey.svelte"
 
     export let active: any
     export let bibles: Bible[]
@@ -29,6 +30,27 @@
 
     let firstBibleId = ""
     // $: bibleId = $scriptures[active].collection?.versions[0] || active
+
+    // select book & chapter when opening bible show reference
+    $: if ($openScripture) setTimeout(openReference, 100)
+    function openReference() {
+        if (!$openScripture.book) {
+            openScripture.set(null)
+            return
+        }
+
+        bookId = $openScripture.book
+
+        setTimeout(() => {
+            chapterId = Number($openScripture.chapter)
+            if ($openScripture.api) {
+                chapterId = bookId + "." + chapterId
+            } else chapterId--
+            // verses
+
+            openScripture.set(null)
+        }, 10)
+    }
 
     onMount(async () => {
         await createBiblesList()
@@ -191,6 +213,8 @@
             let id: string = getBibleId(i, bible)
             if (!books[id]) return
 
+            bibles[i].bookId = bookId
+
             if (bible.api) {
                 books[id].forEach((b) => {
                     if (b.id === bookId) bibles[i].book = b.name
@@ -326,12 +350,16 @@
 
     $: if (searchValue) updateSearch()
 
-    // TODO: what if it's spaces: 1 Peter, Songs of Solomon
+    let tempDisableInputs: boolean = false
+    let storedSearch = ""
+    $: if (tempDisableInputs && searchValue) updateSearchValue(storedSearch)
 
     function updateSearch() {
+        if (tempDisableInputs) return
         // if (!autoComplete) return
         if (searchValue.length < 2) {
             autoComplete = true
+            searchValues = { bookName: "", book: "", chapter: "", verses: [] }
             return
         }
 
@@ -398,6 +426,11 @@
             if (matchingArray.length) findMatches = matchingArray
         })
 
+        // remove books with number if no number in start of search
+        if (findMatches.length && !hasNumber(lowerSearch.slice(0, 3))) {
+            findMatches = findMatches.filter((a) => !hasNumber(a.name))
+        }
+
         let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName)
         if (!exactMatch && findMatches.length !== 1) return ""
 
@@ -411,9 +444,19 @@
         // auto complete
         // let rest = searchValue.slice(match.length)
         updateSearchValue(matchingBook.name + " ") // + rest.trim()
+
+        storedSearch = matchingBook.name + " "
+        tempDisableInputs = true
+        setTimeout(() => {
+            tempDisableInputs = false
+        }, 500)
+
         autoComplete = false
 
         return matchingBook.id
+    }
+    function hasNumber(str) {
+        return /\d/.test(str)
     }
 
     function findChapter({ splittedEnd }) {
@@ -429,8 +472,10 @@
         })
 
         if (formattedChapter === null) {
+            // if (isNaN(Number(chapter))) return ""
+            if (chapter.length > 2) return ""
             let msg = $dictionary.toast?.chapter_undefined
-            msg.replace("{}", chapter)
+            msg = msg.replace("{}", chapter)
             newToast(msg)
             return ""
         }
@@ -468,8 +513,8 @@
         } else if (currentVerses.length === 1 && verses[firstBibleId]) {
             if (currentVerses[0] > Object.keys(verses[firstBibleId]).length) {
                 let msg = $dictionary.toast?.verse_undefined
-                msg.replace("{}", verse)
-                newToast(msg)
+                msg = msg.replace("{}", verse)
+                if (verse.length < 3) newToast(msg)
             }
         }
 
@@ -507,6 +552,7 @@
             bibles[0].activeVerses = activeVerses
         }
 
+        if (!outputIsScripture) return
         setTimeout(() => {
             playScripture.set(true)
         }, 10)
@@ -540,6 +586,8 @@
             <Center faded>
                 <T id="error.bible" />
             </Center>
+        {:else if bibles[0].api && !$bibleApiKey}
+            <BibleApiKey />
         {:else if error}
             <Center faded>
                 <T id="error.bible_api" />
@@ -614,8 +662,8 @@
     <Button disabled={activeVerses.includes("1")} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
         <Icon size={1.3} id="previous" />
     </Button>
-    <Button disabled={$outLocked} title={$dictionary.menu?.[outputIsScripture ? "_title_display_stop" : "_title_display"]} on:click={() => playOrClearScripture()}>
-        <Icon size={1.3} id={outputIsScripture ? "clear" : "play"} />
+    <Button disabled={$outLocked} title={$dictionary.menu?.[outputIsScripture ? "_title_display_stop" : "_title_display"]} on:click={() => playOrClearScripture(true)}>
+        <Icon size={outputIsScripture ? 1.1 : 1.3} id={outputIsScripture ? "refresh" : "play"} white={!outputIsScripture} />
     </Button>
     <Button disabled={Object.keys(verses[firstBibleId] || {}).length && activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString())} title={$dictionary.preview?._next_slide} on:click={() => moveSelection(false)}>
         <Icon size={1.3} id="next" />
@@ -628,9 +676,9 @@
         background-color: var(--primary-darkest);
     }
     .seperator {
-        width: 3px;
+        width: 2px;
         height: 100%;
-        background-color: var(--primary-lighter);
+        background-color: var(--primary);
     }
 
     .main {

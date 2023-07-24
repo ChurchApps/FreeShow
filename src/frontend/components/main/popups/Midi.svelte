@@ -20,6 +20,9 @@
     function setMidi() {
         if ($popupData.type === "in") midi = $midiIn[id] || midi
         else midi = _show().get("midi")?.[id] || midi
+
+        // is specific show slide
+        if ($popupData.type !== "in" || $popupData.index !== undefined) midi.values.channel = 0
     }
 
     let types = [{ name: "noteon" }, { name: "noteoff" }]
@@ -95,6 +98,8 @@
             _show().set({ key: "midi", value: showMidi })
         }
     }
+
+    // TODO: delete unused midi in actions, that are created when adding a new one
 
     $: midiInOptions = Object.entries($midiIn)
         .filter(([_id, value]) => !value.action)
