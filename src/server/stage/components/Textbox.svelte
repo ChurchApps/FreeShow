@@ -38,6 +38,9 @@
     // $: autoSize = item.lines ? height / (lineCount + 3) : 0
 
     let textElem: any = null
+
+    $: lineGap = item?.specialStyle?.lineGap
+    $: lineBg = item?.specialStyle?.lineBg
 </script>
 
 <!-- bind:offsetHeight={height} -->
@@ -47,9 +50,9 @@
             {#if chords}
                 <Chords {item} {textElem} />
             {/if}
-            <div class="lines" bind:this={textElem}>
+            <div class="lines" style={style && lineGap ? `gap: ${lineGap}px;` : ""} bind:this={textElem}>
                 {#each item.lines as line}
-                    <div class="break" style={style ? line.align : null}>
+                    <div class="break" style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                         {#each line.text || [] as text}
                             <span style={style ? text.style + (autoSize ? "font-size: " + autoSize + "px;" : "") : "font-size: " + autoSize + "px;"}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
@@ -101,6 +104,11 @@
         /* overflow-wrap: break-word;
     font-size: 0; */
         width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
     }
 
     .break {

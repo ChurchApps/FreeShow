@@ -293,9 +293,13 @@
     function getTextStyle(lineText) {
         let textActive = document.activeElement?.closest(".edit")
         let auto: string = item.auto && !textActive ? autoSize + "" : ""
-        let style = lineText.style ? lineText.style + auto : ""
+        let lineBg = item.specialStyle?.lineBg || ""
+
+        let style = (lineText.style || "") + auto + lineBg
         return style
     }
+
+    $: lineGap = item?.specialStyle?.lineGap
 
     function getStyle() {
         if (!plain && $activeEdit.slide === null) return
@@ -308,7 +312,8 @@
         currentStyle = ""
         item?.lines?.forEach((line, i) => {
             currentStyle += line.align
-            let style = line.align ? 'style="' + line.align + '"' : ""
+            let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
+            let style = line.align || lineBg ? 'style="' + lineBg + line.align + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line
@@ -610,7 +615,7 @@ bind:offsetWidth={width} -->
                 contenteditable
                 on:keydown={textElemKeydown}
                 bind:innerHTML={html}
-                style={plain ? null : item.align ? item.align.replace("align-items", "justify-content") : null}
+                style="{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />

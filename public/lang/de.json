@@ -576,6 +576,7 @@
         "chords": "Akkorde",
         "auto_size": "Automatische Größe",
         "line_spacing": "Zeilenabstand",
+        "line_height": "Line height",
         "letter_spacing": "Zeichenabstand",
         "word_spacing": "Wortabstand",
         "transform": "Transform",

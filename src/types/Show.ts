@@ -74,6 +74,7 @@ export interface Item {
     auto?: boolean
     style: string
     align?: string
+    specialStyle?: any // line gap && line background
     media?: any
     timer?: Timer // pre 0.8.3 // also local backup?
     timerId?: string

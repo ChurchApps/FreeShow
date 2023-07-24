@@ -576,6 +576,7 @@
         "chords": "Akkordok",
         "auto_size": "Automatikus méret",
         "line_spacing": "Sorok közti térköz",
+        "line_height": "Line height",
         "letter_spacing": "Betűk közti térköz",
         "word_spacing": "Szavak közti térköz",
         "transform": "Átalakítás",

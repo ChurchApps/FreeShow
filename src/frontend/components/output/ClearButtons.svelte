@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, outLocked, outputCache, outputs, playingAudio, presenterControllerKeys } from "../../stores"
+    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, presenterControllerKeys } from "../../stores"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { isOutCleared, setOutput } from "../helpers/output"
@@ -37,13 +37,13 @@
     <span>
         {#if allCleared && $outputCache}
             <Button class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput} dark center>
-                <Icon id="reset" size={1.2} />
-                <span style="padding-left: 10px;"><T id={"preview.restore_output"} /></span>
+                <Icon id="reset" size={1.2} right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id={"preview.restore_output"} />{/if}
             </Button>
         {:else}
             <Button class="clearAll" disabled={$outLocked || allCleared} on:click={clearAll} title="{$dictionary.clear?.all} [esc]" red dark center>
-                <Icon id="clear" size={1.2} />
-                <span style="padding-left: 10px;"><T id={"clear.all"} /></span>
+                <Icon id="clear" size={1.2} right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id={"clear.all"} />{/if}
             </Button>
         {/if}
     </span>

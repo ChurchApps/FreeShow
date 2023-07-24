@@ -576,6 +576,7 @@
         "chords": "Acordes",
         "auto_size": "Tamanho automático",
         "line_spacing": "Espaçamento entre linhas",
+        "line_height": "Line height",
         "letter_spacing": "Espaçamento entre letras",
         "word_spacing": "Espaçamento entre palavras",
         "transform": "Transform",

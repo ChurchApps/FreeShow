@@ -576,6 +576,7 @@
         "chords": "Akkorder",
         "auto_size": "Auto-størrelse",
         "line_spacing": "Linjeavstand",
+        "line_height": "Linjehøyde",
         "letter_spacing": "Bokstavasvsand",
         "word_spacing": "Ordavstand",
         "transform": "Transformer",

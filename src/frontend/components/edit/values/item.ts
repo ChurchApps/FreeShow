@@ -17,13 +17,15 @@ export const itemEdits: { [key: string]: EditInput[] } = {
         { name: "y", id: "style", key: "top", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px" },
         { name: "width", id: "style", key: "width", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px" },
         { name: "height", id: "style", key: "height", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px" },
+    ],
+    transform: [
         { name: "rotation", id: "transform", key: "rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
+        { name: "media.flip", id: "transform", key: "scaleX", input: "number", value: 1, values: { min: -1, max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
         { name: "tilt", id: "transform", key: "rotateX", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
         { name: "perspective", id: "transform", key: "perspective", input: "number", value: 0, values: { max: 5000 }, extension: "px" },
-        { name: "media.flip", id: "transform", key: "scaleX", input: "number", value: 1, values: { min: -1, max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
     ],
     style: [
-        { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)" },
+        { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
         { name: "background_opacity", id: "background-opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
         { name: "opacity", id: "style", key: "opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
         { name: "corner_radius", id: "style", key: "border-radius", input: "number", value: 0, values: { step: 0.5, decimals: 1, max: 50, inputMultiplier: 2 }, extension: "%" },

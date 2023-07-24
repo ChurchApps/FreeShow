@@ -123,7 +123,7 @@
             disabled={$activeProject === null}
             title={$activeProject ? $dictionary.remote?.project + ": " + $projects[$activeProject]?.name : ""}
         >
-            <Icon id="project" style="padding-right: 10px;" />
+            <Icon id="project" right />
             <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject]?.name : ""}</p>
         </Button>
         <!-- <button onClick={() => setProject(true)} style={{width: '50%', backgroundColor: (project ? 'transparent' : ''), color: (project ? 'var(--secondary)' : '')}}>Projects</button>

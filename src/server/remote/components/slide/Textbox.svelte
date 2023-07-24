@@ -2,14 +2,17 @@
     import type { Item } from "../../../../types/Show"
 
     export let item: Item
+
+    $: lineGap = item?.specialStyle?.lineGap
+    $: lineBg = item?.specialStyle?.lineBg
 </script>
 
 <div class="item" style={item.style}>
     {#if item.lines}
         <div class="align" style={item.align}>
-            <div class="lines">
+            <div class="lines" style={lineGap ? `gap: ${lineGap}px;` : ""}>
                 {#each item.lines as line}
-                    <div class="break" style={line.align}>
+                    <div class="break" style="{lineBg ? `background-color: ${lineBg};` : ''}{line.align}">
                         {#each line.text || [] as text}
                             <span style={text.style}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
@@ -32,6 +35,11 @@
         /* overflow-wrap: break-word;
   font-size: 0; */
         width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
     }
 
     .break {

@@ -94,6 +94,9 @@
         if (colorValue.includes("/")) return parseFloat(colorValue.substring(colorValue.indexOf("/") + 1))
         return 1
     }
+
+    $: lineGap = item?.specialStyle?.lineGap
+    $: lineBg = item?.specialStyle?.lineBg
 </script>
 
 <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
@@ -116,11 +119,15 @@
             {#if chords}
                 <Chords {item} {textElem} />
             {/if}
-            <div class="lines" style={smallFontSize || customFontSize !== null ? "--font-size: " + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + "px;" : null} bind:this={textElem}>
+            <div
+                class="lines"
+                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}"
+                bind:this={textElem}
+            >
                 {#each lines as line, i}
                     {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
                         <!-- class:height={!line.text[0]?.value.length} -->
-                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style={style ? line.align : null}>
+                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
                                 <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                             {/each}
@@ -184,10 +191,16 @@
         align-items: center;
     }
 
+    /* should match .edit in Editbox.svelte */
     .lines {
         /* overflow-wrap: break-word;
   font-size: 0; */
         width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
     }
 
     .break {

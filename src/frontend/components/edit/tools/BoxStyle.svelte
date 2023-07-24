@@ -73,7 +73,15 @@
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : {}
     $: alignStyle = item?.align ? getStyles(item.align) : {}
 
-    $: if (id === "text" && box?.edit?.special) box.edit.special[0].value = item?.scrolling?.type || "none"
+    // WIP shouldn't have fixed values
+    $: if (id === "text" && box?.edit?.style) {
+        box.edit.style[1].value = item?.specialStyle?.lineGap || 0
+        box.edit.style[5].value = item?.specialStyle?.lineBg || ""
+    }
+    $: if (id === "text" && box?.edit?.special) {
+        box.edit.special[0].value = item?.scrolling?.type || "none"
+    }
+
     $: if (id === "mirror" && box) getMirrorValues()
     $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []

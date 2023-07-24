@@ -348,6 +348,22 @@ export function setExampleTemplates() {
                 },
             ],
         }
+        a.trendy = {
+            name: "Trendy",
+            color: null,
+            category: "song",
+            items: [
+                {
+                    style: "top:310px;left:100px;height:460px;width:1720px;",
+                    align: "",
+                    specialStyle: { lineGap: 20, lineBg: "#000000" },
+                    lines: [
+                        { align: "", text: [{ value: "1", style: "font-size: 60px;line-height:1.5em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                        { align: "", text: [{ value: "2", style: "font-size: 60px;line-height:1.5em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
+                    ],
+                },
+            ],
+        }
 
         // scripture
         a.scripture = {
