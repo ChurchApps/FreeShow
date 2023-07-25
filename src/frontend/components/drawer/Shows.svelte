@@ -173,7 +173,7 @@
                 <VirtualList items={filteredShows} let:item={show}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} draggable>
                         {#if searchValue.length <= 1 || show.match}
-                            <ShowButton id={show.id} {show} data={dateToString(show.timestamps.created, true, $dictionary)} class="#drawer_show_button__drawer_show" match={show.match || null} />
+                            <ShowButton id={show.id} {show} data={dateToString(show.timestamps?.created || "", true, $dictionary)} class="#drawer_show_button__drawer_show" match={show.match || null} />
                         {/if}
                     </SelectElem>
                 </VirtualList>

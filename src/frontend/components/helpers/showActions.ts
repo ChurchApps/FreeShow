@@ -32,7 +32,7 @@ export function checkInput(e: any) {
 
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
     if (get(activeProject) === null) return
-    e.preventDefault()
+    e.preventDefault()(document.activeElement as any)?.blur()
 
     let selectItem: "next" | "previous" = e.key === "ArrowDown" ? "next" : "previous"
     selectProjectShow(selectItem)

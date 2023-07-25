@@ -114,7 +114,7 @@ export async function loadShows(s: string[]) {
 }
 
 export function saveTextCache(id: string, show: Show) {
-    if (!show) return
+    if (!show?.slides) return
 
     // get text
     let txt = ""
