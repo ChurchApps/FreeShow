@@ -190,7 +190,7 @@ const receiveMAIN: any = {
 }
 
 export const receiveSTORE: any = {
-    SAVE: () => saveComplete(),
+    SAVE: (a: any) => saveComplete(a),
     SETTINGS: (a: any) => updateSettings(a),
     SYNCED_SETTINGS: (a: any) => updateSyncedSettings(a),
     SHOWS: (a: any) => shows.set(a),

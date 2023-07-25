@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { STORE } from "../../types/Channels"
+import { MAIN, STORE } from "../../types/Channels"
 import { clone } from "../components/helpers/array"
 import {
     activeProject,
@@ -22,6 +22,7 @@ import {
     folders,
     formatNewShow,
     fullColors,
+    gain,
     groupNumbers,
     groups,
     imageExtensions,
@@ -79,7 +80,7 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { syncDrive } from "./drive"
 import { newToast } from "./messages"
 
-export function save() {
+export function save(closeWhenFinished: boolean = false) {
     console.log("SAVING...")
 
     let settings: { [key in SaveListSettings]: any } = {
@@ -127,6 +128,7 @@ export function save() {
         videoExtensions: get(videoExtensions),
         webFavorites: get(webFavorites),
         volume: get(volume),
+        gain: get(gain),
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
     }
@@ -180,14 +182,24 @@ export function save() {
         HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
     }
 
+    allSavedData.closeWhenFinished = closeWhenFinished
     window.api.send(STORE, { channel: "SAVE", data: allSavedData })
 }
 
-export function saveComplete() {
+export function saveComplete({ closeWhenFinished }) {
     saved.set(true)
     newToast("$toast.saved")
 
     let mainFolderId = get(driveData)?.mainFolderId
-    if (!mainFolderId) return
-    syncDrive()
+    if (!mainFolderId) {
+        if (closeWhenFinished) closeApp()
+
+        return
+    }
+
+    syncDrive(false, closeWhenFinished)
+}
+
+export function closeApp() {
+    window.api.send(MAIN, { channel: "CLOSE" })
 }

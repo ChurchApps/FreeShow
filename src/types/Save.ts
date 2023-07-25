@@ -44,5 +44,6 @@ export type SaveListSettings =
     | "videoExtensions"
     | "webFavorites"
     | "volume"
+    | "gain"
     | "driveData"
     | "calendarAddShow"

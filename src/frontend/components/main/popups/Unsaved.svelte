@@ -1,20 +1,14 @@
 <script lang="ts">
-    import { MAIN } from "../../../../types/Channels"
     import { activePopup } from "../../../stores"
-    import { save } from "../../../utils/save"
+    import { closeApp, save } from "../../../utils/save"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
 
-    const closeApp = () => window.api.send(MAIN, { channel: "CLOSE" })
-
     const actions = {
         n: () => activePopup.set(null),
         q: () => closeApp(),
-        y: () => {
-            save()
-            setTimeout(closeApp, 500)
-        },
+        y: () => save(true),
     }
 
     function keydown(e: any) {
@@ -49,10 +43,7 @@
 <CombinedInput>
     <Button
         style="width: 100%;color: var(--secondary);"
-        on:click={() => {
-            save()
-            setTimeout(closeApp, 500)
-        }}
+        on:click={() => save(true)}
         dark
         center
     >

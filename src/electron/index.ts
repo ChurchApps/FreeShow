@@ -286,7 +286,7 @@ function save(data: any) {
         }
 
         // SAVED
-        toApp(STORE, { channel: "SAVE" })
+        toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished } })
     }, 1000)
 }
 
