@@ -72,7 +72,11 @@
                     "type": "link",
                     "path": "/Applications"
                 }
-            ]
+            ],
+            "window": {
+                    "x": 540,
+                    "y": 380
+                }
         },
         "linux": {
             "target": [
