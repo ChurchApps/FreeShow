@@ -139,7 +139,7 @@ export const overlays: Writable<Overlays> = writable({}) // {default}
 
 // AUDIO
 export const audioFolders: Writable<Categories> = writable({}) // {default}
-export const volume: Writable<number> = writable(100) // 100
+export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1
 
 // PLAYER

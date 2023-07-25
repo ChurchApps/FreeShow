@@ -60,6 +60,7 @@ import { syncDrive, validateKeys } from "./drive"
 import { send } from "./request"
 import { client } from "./sendData"
 import { stageListen } from "./stageTalk"
+import { closeApp } from "./save"
 
 export function listen() {
     // FROM CLIENT (EXPRESS SERVERS)
@@ -163,7 +164,12 @@ const cloudHelpers = {
 
         syncDrive()
     },
-    SYNC_DATA: ({ changes }) => {
+    SYNC_DATA: ({ changes, closeWhenFinished }) => {
+        if (closeWhenFinished) {
+            closeApp()
+            return
+        }
+
         if (changes.error) {
             newToast(changes.error)
             return
@@ -245,6 +251,7 @@ const saveList: { [key in SaveList]: any } = {
     videoExtensions: videoExtensions,
     webFavorites: webFavorites,
     volume: null,
+    gain: null,
     midiIn: midiIn,
     videoMarkers: videoMarkers,
     customizedIcons: customizedIcons,

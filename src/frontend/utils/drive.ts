@@ -3,7 +3,7 @@ import { CLOUD } from "../../types/Channels"
 import { activePopup, driveData, driveKeys, popupData, showsPath } from "../stores"
 import { newToast } from "./messages"
 import { send } from "./request"
-import { save } from "./save"
+import { closeApp, save } from "./save"
 
 export function validateKeys(file: string) {
     let keys = JSON.parse(file)
@@ -34,12 +34,15 @@ export function driveConnect(keys: any) {
     }, 100)
 }
 
-export function syncDrive(force: boolean = false) {
-    if (!force && get(driveData).disabled === true) return
+export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false) {
+    if (!force && get(driveData).disabled === true) {
+        if (closeWhenFinished) closeApp()
+        return
+    }
 
     let method = get(driveData).initializeMethod
     if (get(driveData).disableUpload) method = "download"
-    send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath), method })
+    send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath), method, closeWhenFinished })
     popupData.set({})
     activePopup.set("cloud_update")
 }
