@@ -17,6 +17,8 @@
     export let fit: MediaFit = "contain"
     export let speed: string = "1"
 
+    export let animationStyle: string = ""
+
     let dispatch: any = createEventDispatcher()
     let width: number = 0
     let height: number = 0
@@ -45,7 +47,7 @@
     $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
 </script>
 
-<div style="display: flex;width: 100%;height: 100%;place-content: center;" bind:clientWidth={width} bind:clientHeight={height}>
+<div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}" bind:clientWidth={width} bind:clientHeight={height}>
     <video
         class="media"
         style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, fit)};filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}"

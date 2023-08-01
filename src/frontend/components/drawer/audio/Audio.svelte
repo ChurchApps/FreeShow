@@ -21,7 +21,7 @@
 
     $: rootPath = active === "all" || active === "favourites" || active === "microphones" ? "" : active !== null ? $audioFolders[active].path! : ""
     $: path = active === "all" || active === "favourites" || active === "microphones" ? "" : rootPath
-    $: name = rootPath === path ? (active !== "all" && active !== "favourites" && active !== "microphones" && active !== null ? $audioFolders[active].name : "category.all") : splitPath(path).name
+    $: name = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : rootPath === path ? (active !== "microphones" && active !== null ? $audioFolders[active].name : "") : splitPath(path).name
 
     // get list of files & folders
     let prevActive: null | string = null

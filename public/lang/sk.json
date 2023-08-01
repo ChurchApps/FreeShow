@@ -322,6 +322,8 @@
         "choose_screen": "Vyberte obrazovku",
         "change_output_values": "Change output values",
         "choose_style": "Choose style",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Časovač ďalšieho snímku",
         "import": "Import",
         "export": "Export",
@@ -452,6 +454,8 @@
         "add_time_marker": "Add time marker",
         "bind_to": "Bind to",
         "remove_binding": "Remove binding",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Choose custom",
         "format": "Formát",
         "find_replace": "Find and replace text",
@@ -488,6 +492,16 @@
         "index_select_slide": "Select slide by index",
         "start_recording": "Start recording",
         "stop_recording": "Stop recording"
+    },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
     },
     "cloud": {
         "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
@@ -900,6 +914,10 @@
     },
     "easings": {
         "linear": "Lineárne",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastické",
         "bounce": "Odraz",
         "back": "Skok",

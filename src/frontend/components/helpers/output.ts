@@ -137,10 +137,23 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
     return cleared
 }
 
-export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null): Resolution {
+// WIP style should override any slide resolution & color ? (it does not)
+
+export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, getSlideRes: boolean = false): Resolution {
     let currentOutput = get(outputs)[getActiveOutputs()[0]]
     let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
-    return initial || style || { width: 1920, height: 1080 }
+    let slideRes: any = null
+
+    if (!initial && !style && getSlideRes) {
+        let outSlide: any = currentOutput?.out?.slide || {}
+        let slideRef = _show(outSlide.id || "")
+            .layouts([outSlide.layout])
+            .ref()[0]?.[outSlide.index]
+        let slideOutput = _show(outSlide.id || "").get("slides")?.[slideRef?.id] || null
+        slideRes = slideOutput?.settings?.resolution
+    }
+
+    return initial || style || slideRes || { width: 1920, height: 1080 }
 }
 
 // settings

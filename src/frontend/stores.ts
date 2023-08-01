@@ -44,6 +44,7 @@ export const globalGroupViewEnabled: Writable<boolean> = writable(false)
 export const activeRecording: Writable<any> = writable(null)
 export const currentRecordingStream: Writable<any> = writable(null)
 export const focusedArea: Writable<string> = writable("")
+export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -169,6 +170,8 @@ export const stageShows: Writable<StageShows> = writable({}) // {default}
 // SCRIPTURE
 interface BibleCategories extends Category {
     api?: boolean
+    books?: any[]
+    cacheUpdate?: Date
     collection?: {
         versions: string[]
     }

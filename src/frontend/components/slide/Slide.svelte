@@ -312,6 +312,12 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     {/if}
                 </Zoomed>
                 {#if viewMode === "simple"}
+                    {#if output?.maxLines}
+                        <div class="lineProgress">
+                            <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {output.color};" />
+                        </div>
+                    {/if}
+
                     <div title={name || ""} style="height: 2px;" />
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->

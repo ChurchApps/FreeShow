@@ -14,6 +14,7 @@
 
     export let background: any = {}
     export let currentStyle: any = {}
+    export let animationStyle: string = ""
     export let outputId: string
     export let transition: Transition
     export let path: string = ""
@@ -153,7 +154,7 @@
 <!-- svelte transition bug: the double copies are to remove media when changing from "draw" view -->
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
-    <Media {path} {currentStyle} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
+    <Media {path} {currentStyle} {animationStyle} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
 {:else if type === "screen"}
     {#key id}
         {#if transition.type === "none"}

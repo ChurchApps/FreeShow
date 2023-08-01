@@ -32,7 +32,8 @@ export function checkInput(e: any) {
 
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
     if (get(activeProject) === null) return
-    e.preventDefault()(document.activeElement as any)?.blur()
+    e.preventDefault()
+    ;(document.activeElement as any)?.blur()
 
     let selectItem: "next" | "previous" = e.key === "ArrowDown" ? "next" : "previous"
     selectProjectShow(selectItem)
@@ -214,8 +215,7 @@ export function previousSlide() {
             .slides([layout[index].id])
             .get()[0]
         let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-        // line = slideLines ? (amountOfLinesToShow >= slideLines ? 0 : slideLines - (amountOfLinesToShow % slideLines) - 1) : 0
-        line = slideLines ? slideLines - 1 : 0
+        line = slideLines ? slideLines / 2 - 1 : 0
     } else {
         index = slide!.index!
         line--

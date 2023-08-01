@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { uid } from "uid"
     import { OUTPUT, READ_EXIF } from "../../../types/Channels"
+    import type { Animation } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
     import type { Transition } from "../../../types/Show"
-    import { outputs, overlays, showsCache, styles, templates, transitionData, volume } from "../../stores"
+    import { activeAnimate, outputs, overlays, showsCache, styles, templates, transitionData, volume } from "../../stores"
     import { receive, send } from "../../utils/request"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
@@ -55,8 +57,10 @@
     $: if (out.refresh || outputId || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) slide = JSON.parse(JSON.stringify(out.slide || null))
     $: if (out.refresh || outputId || JSON.stringify(background) !== JSON.stringify(out.background || null)) background = JSON.parse(JSON.stringify(out.background || null))
 
+    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()[0] : null
+
     // transition
-    $: slideData = $showsCache && slide && slide.id !== "temp" ? _show(slide.id).layouts("active").ref()[0]?.[slide.index!]?.data : null
+    $: slideData = slideRef?.[slide.index!]?.data || null
     $: slideTextTransition = slideData ? slideData.transition : null
     $: slideMediaTransition = slideData ? slideData.mediaTransition : null
     $: transition = disableTransitions ? { type: "none" } : slideTextTransition ? slideTextTransition : $transitionData.text
@@ -349,6 +353,113 @@
     function cloneOverlays() {
         clonedOverlays = clone($overlays)
     }
+
+    // ANIMATE
+    let animation: Animation = { actions: [] }
+    let animationId = ""
+    let animationStyle: any = {}
+    let animationStyles: any = {}
+    let animationTransitions: any = {}
+    $: if (slide || slideData) {
+        animationId = uid()
+        animation = slideData?.actions?.animate || { actions: [] }
+
+        let duration = 50
+        if (transition.type !== "none" && transition.duration) duration = Math.max(duration, transition.duration / 2)
+
+        setTimeout(resetAnimation, duration)
+    }
+    function resetAnimation() {
+        animationStyle = {}
+        animationStyles = {}
+        animationTransitions = {}
+
+        if (animation?.actions?.length) setTimeout(startAnimation)
+    }
+
+    function startAnimation() {
+        let currentAnimationId = animationId
+        animate(0)
+
+        async function animate(currentIndex: number) {
+            let currentAnimation = animation.actions[currentIndex]
+            if (!currentAnimation || currentAnimationId !== animationId) {
+                activeAnimate.set({ slide: -1, index: -1 })
+                return
+            }
+            activeAnimate.set({ slide: slide.index, index: currentIndex })
+
+            await animations[currentAnimation.type](currentAnimation as any)
+
+            let newIndex = currentIndex + 1
+            if (!animation.actions[newIndex] && animation.repeat) {
+                // prevent infinite loops
+                await animations.wait({ duration: 0.5 })
+                newIndex = 0
+            }
+            animate(newIndex)
+        }
+    }
+
+    const animations = {
+        wait: async ({ duration }) => {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve("ended")
+                }, Number(duration) * 1000)
+            })
+        },
+        set: ({ key, value, extension }) => {
+            // text
+            animations.change({ id: "text", key, value, extension, duration: 0 })
+        },
+        change: ({ id, key, value, extension, duration }) => {
+            value = value || 0
+            if (extension) value += extension
+
+            let initialValue = ""
+            if (id === "background") {
+                if (key === "filter") {
+                    // filter
+                } else {
+                    key = "transform"
+                    initialValue = "transform: scale(1.3);"
+                    let randomNumber = Math.max(1, Math.random() * 1.3 + 0.6)
+                    let randomTranslate1 = randomNumBetween(0, 50)
+                    let randomTranslate2 = randomNumBetween(0, 50)
+                    value = `scale(${randomNumber}) translate(${randomTranslate1}px, ${randomTranslate2}px);`
+                }
+            }
+
+            if (!id) id = "text"
+
+            let variable = ""
+            if (key === "font-size") variable = "--"
+
+            // previous transitions
+            animationTransitions[id] = animationTransitions[id]?.filter((a) => !a.includes(key)) || []
+            animationTransitions[id].push(`${key} ${duration}s`)
+
+            let style = `${variable}${key}: ${value};`
+            animationStyles[id] = animationStyles[id]?.filter((a) => !a.includes(key)) || []
+
+            let easing = ""
+            if (animation.easing) easing = `transition-timing-function: ${animation.easing};`
+
+            // set transitions first so it can animate
+            animationStyle[id] = animationStyles[id].join("") + `${initialValue}${id === "text" ? "--" : ""}transition: ${animationTransitions[id].join(", ")};${easing}`
+            setTimeout(() => {
+                if (!animationStyles[id]) return
+                animationStyles[id].push(style)
+                animationStyle[id] = animationStyles[id].join("") + `${id === "text" ? "--" : ""}transition: ${animationTransitions[id].join(", ")};${easing}`
+            }, 40)
+
+            console.log(animationStyle)
+        },
+    }
+    function randomNumBetween(min = 0, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min)
+    }
 </script>
 
 <Zoomed
@@ -366,7 +477,20 @@
 >
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} background={tempVideoBG} path={mediaPath} {outputId} {currentStyle} transition={mediaTransition} bind:video bind:videoData bind:videoTime bind:title mirror={currentOutput.isKeyOutput || mirror} />
+            <MediaOutput
+                {...tempVideoBG}
+                background={tempVideoBG}
+                path={mediaPath}
+                {outputId}
+                {currentStyle}
+                animationStyle={animationStyle.background || ""}
+                transition={mediaTransition}
+                bind:video
+                bind:videoData
+                bind:videoTime
+                bind:title
+                mirror={currentOutput.isKeyOutput || mirror}
+            />
         </div>
     {/if}
 
@@ -384,6 +508,7 @@
                                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                                     key={currentOutput.isKeyOutput}
                                     disableListTransition={disableTransitions}
+                                    animationStyle={animationStyle.text || ""}
                                     {preview}
                                     {item}
                                     {ratio}
@@ -405,6 +530,7 @@
                                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                                     key={currentOutput.isKeyOutput}
                                     disableListTransition={disableTransitions}
+                                    animationStyle={animationStyle.text || ""}
                                     {preview}
                                     {item}
                                     {ratio}

@@ -322,6 +322,8 @@
         "choose_screen": "Velg skjerm",
         "change_output_values": "Endre verdier for utgangsskjerm",
         "choose_style": "Velg stil",
+        "set_time": "Sett tid",
+        "animate": "Animer",
         "next_timer": "Tid til neste lysbilde",
         "import": "Importer",
         "export": "Eksporter",
@@ -452,6 +454,8 @@
         "add_time_marker": "Legg til tidsmarkør",
         "bind_to": "Bind til",
         "remove_binding": "Fjern binding",
+        "show_timer": "Tid til visning",
+        "hide_timer": "Tid til skjuling",
         "choose_custom": "Velg egen",
         "format": "Formater",
         "find_replace": "Finn og erstatt tekst",
@@ -488,6 +492,16 @@
         "index_select_slide": "Velg lysbilde fra indeks",
         "start_recording": "Start opptak",
         "stop_recording": "Stopp opptak"
+    },
+    "animate": {
+        "change": "Endre",
+        "set": "Sett",
+        "wait": "Vent",
+        "background": "bakgrunn",
+        "text": "tekst",
+        "to": "til",
+        "for": "i",
+        "seconds": "sekunder"
     },
     "cloud": {
         "info": "Synkroniser filer med Google Disk for sikkerhetskopier, eller dersom du jobber på flere datamaskiner.",
@@ -900,6 +914,10 @@
     },
     "easings": {
         "linear": "Lineær",
+        "ease": "Letthet",
+        "ease-in": "Lett inn",
+        "ease-out": "Lett ut",
+        "ease-in-out": "Lett inn og ut",
         "elastic": "Elastisk",
         "bounce": "Sprett",
         "back": "Hopp",

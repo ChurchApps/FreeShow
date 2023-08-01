@@ -78,7 +78,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
     actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
-    remove_layers: { label: "actions.remove_layers", icon: "media", items: ["LOAD_remove_layers"] },
+    item_actions: { label: "actions.actions", icon: "actions", items: ["LOAD_item_actions"] },
+    remove_layers: { label: "actions.remove_layers", icon: "remove_layers", items: ["LOAD_remove_layers"] },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
@@ -88,7 +89,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     stage: { label: "menu.stage", id: "stage" },
     // formatting
     find_replace: { label: "actions.find_replace", icon: "find_replace" },
-    cut_in_half: { label: "actions.cut_in_half", icon: "simple" },
+    cut_in_half: { label: "actions.cut_in_half", icon: "cut_in_half" },
     uppercase: { label: "actions.uppercase", icon: "increase_text" },
     lowercase: { label: "actions.lowercase", icon: "decrease_text" },
     capitalize: { label: "actions.capitalize", icon: "capitalize" },
@@ -208,7 +209,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
     // EDIT
-    edit_box: ["bind_to", "format", "delete", "SEPERATOR", "duplicate", "copy", "paste"], // TODO: "make stage exlusive"
+    edit_box: ["bind_to", "item_actions", "format", "delete", "SEPERATOR", "duplicate", "copy", "paste"],
 
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],

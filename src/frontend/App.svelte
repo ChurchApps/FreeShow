@@ -15,7 +15,7 @@
     import Pdf from "./components/export/Pdf.svelte"
     import { copy, cut, deleteAction, paste, selectAll } from "./components/helpers/clipboard"
     import { redo, undo } from "./components/helpers/history"
-    import { displayOutputs, getResolution } from "./components/helpers/output"
+    import { displayOutputs, getResolution, isOutCleared } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -34,7 +34,28 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, focusedArea, loaded, os, outputDisplay, outputs, selected, styles, volume } from "./stores"
+    import {
+        activeDrawerTab,
+        activeEdit,
+        activePage,
+        activePopup,
+        activeShow,
+        activeStage,
+        activeTimers,
+        autosave,
+        currentWindow,
+        drawer,
+        events,
+        focusedArea,
+        loaded,
+        os,
+        outputDisplay,
+        outputs,
+        playingAudio,
+        selected,
+        styles,
+        volume,
+    } from "./stores"
     import { newToast } from "./utils/messages"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
@@ -46,7 +67,7 @@
     let width: number = 0
     let height: number = 0
     let resolution: Resolution = getResolution()
-    $: resolution = getResolution(null, { $outputs, $styles })
+    $: resolution = getResolution(null, { $outputs, $styles }, true)
 
     const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
     const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "calendar", "templates"]
@@ -69,16 +90,15 @@
     }
     const keys: any = {
         Escape: () => {
-            // if (!isOutCleared() || Object.keys($playingAudio).length) return
-
-            // close popup
-            if ($activePopup !== null) activePopup.set(null)
             // blur focused elements
-            else if (document.activeElement !== document.body) (document.activeElement as HTMLElement).blur()
-            // else {
-            //   // hide / show drawer
-            //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
-            //   else drawer.set({ height: 40, stored: $drawer.height })
+            if (document.activeElement !== document.body) {
+                ;(document.activeElement as HTMLElement).blur()
+                return
+            }
+
+            let outCleared = isOutCleared() && !Object.keys($playingAudio).length
+            // close popup
+            if ($activePopup !== null && outCleared) activePopup.set(null)
         },
         Delete: () => deleteAction($selected, "remove"),
         Backspace: () => keys.Delete(),
@@ -350,6 +370,7 @@
         /* cursor: none; */
         height: 100%;
         width: 100%;
+        overflow: hidden;
 
         display: flex;
         background-color: black;

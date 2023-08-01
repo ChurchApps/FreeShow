@@ -322,6 +322,8 @@
         "choose_screen": "Scegli lo schermo",
         "change_output_values": "Modifica i valori di output",
         "choose_style": "Scegli stile",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Timer diapositiva successiva",
         "import": "Importa",
         "export": "Esporta",
@@ -452,6 +454,8 @@
         "add_time_marker": "Aggiungere indicatore di tempo",
         "bind_to": "Collega a",
         "remove_binding": "Rimuovi il collegamento",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Scelta personalizzata",
         "format": "Formato",
         "find_replace": "Trova e sostituisci il testo",
@@ -488,6 +492,16 @@
         "index_select_slide": "Seleziona la diapositiva per indice",
         "start_recording": "Inizia a registrare",
         "stop_recording": "Ferma registrazione"
+    },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
     },
     "cloud": {
         "info": "Sincronizza i file con Google Drive per i backup o se lavori su più computer.",
@@ -900,6 +914,10 @@
     },
     "easings": {
         "linear": "Lineare",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastica",
         "bounce": "Bounce",
         "back": "Salto",

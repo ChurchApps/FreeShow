@@ -449,6 +449,11 @@ const actions: any = {
     slide_groups: (obj: any) => changeSlideGroups(obj),
 
     actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
+    item_actions: (obj: any) => {
+        let action = obj.menu.id
+        popupData.set({ action })
+        activePopup.set("set_time")
+    },
     remove_layers: (obj: any) => {
         let type: "image" | "overlays" | "music" | "microphone" = obj.menu.icon
         let slide: number = obj.sel.data[0].index
@@ -810,6 +815,22 @@ function changeSlideAction(obj: any, id: string) {
 
         popupData.set(data)
         activePopup.set("choose_style")
+
+        return
+    }
+
+    if (id === "animate") {
+        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
+
+        if (!actions[id]) {
+            actions[id] = { actions: [{ type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }] }
+            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "animate_slide" } })
+        }
+
+        let data: any = { data: actions[id], indexes }
+
+        popupData.set(data)
+        activePopup.set("animate")
 
         return
     }

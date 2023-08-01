@@ -110,6 +110,8 @@ export type Popups =
     | "choose_screen"
     | "change_output_values"
     | "choose_style"
+    | "set_time"
+    | "animate"
     | "next_timer"
     | "advanced_settings"
     | "about"

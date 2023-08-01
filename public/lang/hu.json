@@ -322,6 +322,8 @@
         "choose_screen": "Képernyő kiválasztása",
         "change_output_values": "Kimeneti értékek megváltoztatása",
         "choose_style": "Stílus kiválasztása",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Következő dia időzítője",
         "import": "Importálás",
         "export": "Exportálás",
@@ -452,6 +454,8 @@
         "add_time_marker": "Időjelölő hozzáadása",
         "bind_to": "Hozzárendelés",
         "remove_binding": "Hozzárendelés eltávolítása",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Egyéni választása",
         "format": "Formázás",
         "find_replace": "Szöveg keresése és cseréje",
@@ -488,6 +492,16 @@
         "index_select_slide": "Dia kiválasztása index alapján",
         "start_recording": "Felvétel indítása",
         "stop_recording": "Felvétel leállítása"
+    },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
     },
     "cloud": {
         "info": "Fájlok szinkronizálása a Google Drive-val biztonsági mentésként, vagy ha több számítógépen dolgozol.",
@@ -900,6 +914,10 @@
     },
     "easings": {
         "linear": "Lineáris",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastikus",
         "bounce": "Pattogás",
         "back": "Ugrás",

@@ -322,6 +322,8 @@
         "choose_screen": "Izaberi ekran",
         "change_output_values": "Promeni izlaznu vrednost",
         "choose_style": "Izaberi stil",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Tajmer do sledećeg slajda",
         "import": "Uvoz",
         "export": "Izvoz",
@@ -452,6 +454,8 @@
         "add_time_marker": "Dodaj vremenski marker",
         "bind_to": "Veži za",
         "remove_binding": "Ukloni vezu",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Izaberi prilagođeno",
         "format": "Format",
         "find_replace": "Nađi i zameni tekst",
@@ -488,6 +492,16 @@
         "index_select_slide": "Izaberi slajjd po indeksu",
         "start_recording": "Počni snimanje",
         "stop_recording": "Zaustavi snimanje"
+    },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
     },
     "cloud": {
         "info": "Sinhronizuj fajlove sa Google Drajcom za bekap, ili ako radiš na više kompjutera.",
@@ -900,6 +914,10 @@
     },
     "easings": {
         "linear": "Linearan",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastičan",
         "bounce": "Odskakivanje",
         "back": "Skočko",

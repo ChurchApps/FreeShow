@@ -84,10 +84,25 @@
         // fix chapterId beeing 0 instead of "GEN.1" for Bible.API
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
-        try {
-            data = await fetchBible(load, bibleId, { versesList: versesList[bibleId] || [], bookId, chapterId })
-        } catch (err) {
-            error = err
+        let objectId = Object.entries($scriptures).find(([_id, a]: any) => a.id === bibleId)?.[0] || ""
+        if (load === "books" && $scriptures[objectId]?.books) {
+            // load books cache
+            data = $scriptures[objectId].books
+        } else {
+            try {
+                data = await fetchBible(load, bibleId, { versesList: versesList[bibleId] || [], bookId, chapterId })
+
+                // set books cache
+                if (load === "books" && data?.length) {
+                    scriptures.update((a) => {
+                        a[objectId].books = data
+                        a[objectId].cacheUpdate = new Date()
+                        return a
+                    })
+                }
+            } catch (err) {
+                error = err
+            }
         }
 
         if (!data) return
@@ -117,6 +132,7 @@
             case "versesText":
                 verses[bibleId] = divide(data, index)
                 bibles[index].verses = verses[bibleId]
+                // WIP verses[id] =
                 break
         }
     }
@@ -247,25 +263,33 @@
                 verses[id] = content
             }
 
-            if (verses[id]) {
-                activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[id][a]) : ["1"]
-                bibles[i].activeVerses = activeVerses
-            }
+            selectFirstVerse(id, i)
         })
     }
 
     function getVerses() {
-        bibles.forEach((bible, i) => {
+        bibles.forEach(async (bible, i) => {
             let id: string = getBibleId(i, bible)
             if (!verses[id]) return
 
             if (bible.api) {
                 verses[id] = []
-                loadAPIBible(id, "versesText", i)
+                await loadAPIBible(id, "versesText", i)
             } else {
                 bibles[i].verses = verses[id]
             }
+
+            selectFirstVerse(id, i)
         })
+    }
+
+    function selectFirstVerse(bibleId: string, index: number) {
+        console.log("SELECT")
+        if (!verses[bibleId]) return
+        console.log("1")
+
+        activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId][a]) : ["1"]
+        bibles[index].activeVerses = activeVerses
     }
 
     function selectVerse(e: any, id: string) {

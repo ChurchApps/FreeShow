@@ -247,7 +247,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!name) return
 
                     let number = 1
-                    while (showsList.find((a: any, index: number) => a.show.name === (number > 1 ? name + " " + number : name) && index !== i)) number++
+                    while (showsList.find((a: any, index: number) => a.show?.name === (number > 1 ? name + " " + number : name) && index !== i)) number++
                     name = number > 1 ? name + " " + number : name
 
                     showsList[i].show.name = name
@@ -259,7 +259,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let rename: any = {}
 
             // load shows cache
-            if (deleting) {
+            if (deleting && showsList.length < 20) {
                 await loadShows(showsList.map((a) => a.id))
             }
 
@@ -270,6 +270,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             a[id] = show
                             return
                         }
+
+                        if (!a[id]) return
 
                         oldShows[id] = clone(a[id])
                         delete a[id]
@@ -302,6 +304,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (deleting && !replace) {
                         // store show
                         if (!obj.oldData?.data[i]?.show) obj.oldData.data[i] = { id, show: oldShows[id] }
+
+                        if (!a[id]) return
 
                         // add to deleted so the file can be deleted on save
                         deletedShows.set([...get(deletedShows), { id, name: a[id].name }])

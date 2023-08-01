@@ -198,7 +198,7 @@
                     </div> -->
                     <!-- background -->
                     {#if !altKeyPressed && background}
-                        <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter}">
+                        <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">
                             <MediaLoader path={background.path || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} {speed} />
                         </div>
                     {/if}

@@ -45,7 +45,7 @@
             // if ($activePage !== "show") return
             if ($presenterControllerKeys) {
                 // clearVideo()
-                clearAll()
+                setTimeout(clearAll)
             } else if (fullscreen) fullscreen = false
         },
         F1: () => {

@@ -37,6 +37,8 @@
     import NextTimer from "./popups/NextTimer.svelte"
     import ManageIcons from "./popups/ManageIcons.svelte"
     import ChooseCamera from "./popups/ChooseCamera.svelte"
+    import Animate from "./popups/Animate.svelte"
+    import SetTime from "./popups/SetTime.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -64,6 +66,8 @@
         choose_screen: ChooseScreen,
         change_output_values: ChangeOutputValues,
         choose_style: ChooseStyle,
+        set_time: SetTime,
+        animate: Animate,
         next_timer: NextTimer,
         advanced_settings: AdvancedScreen,
         about: About,

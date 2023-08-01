@@ -460,6 +460,44 @@
         menuClick("bind_item")
     }
 
+    // actions
+    function removeAction(action) {
+        // TODO: this is a duplicate of SetTime and other places
+        let layoutRef: any[] = _show().layouts("active").ref()[0] || []
+        let slideRef: any = layoutRef[$activeEdit.slide!] || {}
+        let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
+
+        if ($activeEdit.id) getItems()
+        function getItems() {
+            if ($activeEdit.type !== "overlay") return
+
+            let slide = $overlays
+            slideItems = slide[$activeEdit.id!]?.items
+        }
+
+        if (!slideItems) return
+
+        let actions = clone(slideItems[index].actions)
+        delete actions[action]
+
+        if ($activeEdit.type === "overlay") {
+            history({
+                id: "UPDATE",
+                oldData: { id: $activeEdit.id },
+                newData: { key: "items", subkey: "actions", data: [actions], indexes: [index] },
+                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitemaction_" + index },
+            })
+
+            return
+        }
+
+        history({
+            id: "setItems",
+            newData: { style: { key: "actions", values: [actions] } },
+            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemaction_" + slideRef.id + "_items_" + index },
+        })
+    }
+
     // timer
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
@@ -518,6 +556,11 @@
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
     $: autoSize = getAutoSize(item)
+
+    const actions = {
+        showTimer: { label: "show_timer", icon: "time_in" },
+        hideTimer: { label: "hide_timer", icon: "time_out" },
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
@@ -535,14 +578,27 @@ bind:offsetWidth={width} -->
     {#if !plain}
         <Movebox {ratio} active={$activeEdit.items.includes(index)} />
 
-        <!-- bindings -->
-        {#if item.bindings?.length}
-            <div title={$dictionary.actions?.remove_binding} class="chordsButton" style="zoom: {1 / ratio};left: 0;right: unset;">
-                <Button on:click={removeBindings} redHover>
-                    <Icon id="bind" white />
-                </Button>
-            </div>
-        {/if}
+        <div class="actions">
+            <!-- bindings -->
+            {#if item.bindings?.length}
+                <div title={$dictionary.actions?.remove_binding} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+                    <Button on:click={removeBindings} redHover>
+                        <Icon id="bind" white />
+                    </Button>
+                </div>
+            {/if}
+            <!-- actions -->
+            {#if item.actions}
+                {#each Object.keys(item.actions) as action}
+                    <div title={$dictionary.actions?.[actions[action].label]} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+                        <Button on:click={() => removeAction(action)} redHover>
+                            <Icon id={actions[action].icon} white />
+                        </Button>
+                        <span class="actionValue">{item.actions[action]}s</span>
+                    </div>
+                {/each}
+            {/if}
+        </div>
     {/if}
     {#if item?.lines}
         <!-- chords -->
@@ -683,14 +739,34 @@ bind:offsetWidth={width} -->
         backdrop-filter: blur(20px);
     }
 
+    .actions {
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        display: flex;
+        flex-direction: column;
+    }
+    .actionValue {
+        font-size: initial;
+        opacity: 0.5;
+        font-weight: bold;
+        padding: 0 5px;
+    }
+    .actionButton,
+    .chordsButton {
+        display: flex;
+        align-items: center;
+        background-color: var(--focus);
+    }
     .chordsButton {
         position: absolute;
         top: 0;
         right: 0;
-        background-color: var(--focus);
     }
+    .actionButton :global(button),
     .chordsButton :global(button) {
-        padding: 10px !important;
+        padding: 5px !important;
         z-index: 3;
     }
     .chords {

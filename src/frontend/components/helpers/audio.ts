@@ -250,7 +250,7 @@ export async function getAnalyser(elem: any, stream: any = null) {
     return { left: leftAnalyser, right: rightAnalyser, gainNode }
 }
 
-export async function getAudioDuration(path: string) {
+export async function getAudioDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
         let audio: any = new Audio(path)
         audio.addEventListener("canplaythrough", (_: any) => {

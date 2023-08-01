@@ -20,12 +20,28 @@
     onMount(fetchBibles)
 
     async function fetchBibles() {
+        // read cache
+        let cache = JSON.parse(localStorage.getItem("scriptureApiCache") || "{}")
+        if (cache.date) {
+            let cacheDate = new Date(cache.date).getTime()
+            let today = new Date().getTime()
+            const ONE_MONTH = 2678400000
+            // only use cache if it's newer than a month
+            if (today - cacheDate < ONE_MONTH) {
+                bibles = cache.bibles
+                if (bibles) return
+            }
+        }
+
         const api = "https://api.scripture.api.bible/v1/bibles"
         fetch(api, { headers: { "api-key": key } })
             .then((response) => response.json())
             .then((data) => {
-                console.log({ ...data.data })
                 bibles = data.data
+
+                // cache bibles
+                let cache = { date: new Date(), bibles }
+                localStorage?.setItem("scriptureApiCache", JSON.stringify(cache))
             })
             .catch((e) => {
                 console.log(e)

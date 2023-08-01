@@ -89,6 +89,7 @@ export interface Item {
     filter?: string
     flipped?: boolean
     bindings?: string[] // bind item to stage or an output
+    actions?: any // showTime | hideTime
     chords?: boolean // stage
     scrolling?: Scrolling
     visualizer?: any

@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { drawerTabsData, groups, outputs, overlays, selected } from "../../stores"
+import { activeEdit, drawerTabsData, groups, outputs, overlays, selected } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { keys } from "../edit/values/chords"
@@ -34,10 +34,11 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
         case "actions":
             let slideRef: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]
             let currentActions: any = slideRef?.data?.actions
-            console.log(slideRef)
+
             let actions: any = [
                 { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
                 { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
+                { id: "animate", label: "popup.animate", icon: "stars", enabled: currentActions?.animate || false },
                 { id: "startShow", label: "preview._start", icon: "showIcon", enabled: currentActions?.startShow || false },
                 { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
                 { id: "startTimer", label: "actions.start_timer", icon: "timer", enabled: currentActions?.startTimer || false },
@@ -52,6 +53,25 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
                 { id: "clearAudio", label: "clear.audio", icon: "audio", enabled: currentActions?.clearAudio || false },
             ]
             items = [...items, ...actions.map((a) => [id, a]), ["SEPERATOR"], ...clearActions.map((a) => [id, a])]
+            break
+        case "item_actions":
+            let editSlideRef: any = _show().layouts("active").ref()[0]?.[get(activeEdit).slide || ""] || {}
+            let slide = _show().get("slides")?.[editSlideRef.id]
+
+            if (get(activeEdit).id && get(activeEdit).type === "overlay") {
+                slide = get(overlays)[get(activeEdit).id!]
+            }
+            if (!slide) return []
+
+            let selectedItems: number[] = get(activeEdit).items
+            let currentItemActions: any = slide.items[selectedItems[0]].actions || {}
+
+            let itemActions: any = [
+                { id: "showTimer", label: "actions.show_timer", icon: "time_in", enabled: Number(currentItemActions.showTimer || 0) || false },
+                { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", enabled: Number(currentItemActions.hideTimer || 0) || false },
+            ]
+
+            items = itemActions.map((a) => [id, a])
             break
         case "remove_layers":
             let data: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]?.data

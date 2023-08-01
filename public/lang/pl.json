@@ -322,6 +322,8 @@
         "choose_screen": "Wybierz ekran",
         "change_output_values": "Zmień właściwości wyjścia",
         "choose_style": "Wybierz styl",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Następny timer slajdu",
         "import": "Zaimportuj",
         "export": "Wyeksportuj",
@@ -452,6 +454,8 @@
         "add_time_marker": "Dodaj znacznik czasu",
         "bind_to": "Powiąż z",
         "remove_binding": "Usuń powiązanie",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Wybierz własny",
         "format": "Formatuj",
         "find_replace": "Znajdź i zastąp tekst",
@@ -488,6 +492,16 @@
         "index_select_slide": "Zaznacz slajd po indeksie",
         "start_recording": "Rozpocznij nagrywanie",
         "stop_recording": "Zatrzymaj nagrywanie"
+    },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
     },
     "cloud": {
         "info": "Synchronizuj pliki z Google Drive dla kopii zapasowych, albo jeśli chcesz pracować na kilku komputerach.",
@@ -900,6 +914,10 @@
     },
     "easings": {
         "linear": "Liniowe",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastyczne",
         "bounce": "Odbicie",
         "back": "Wsteczne",

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { slidesOptions, volume } from "../../stores"
+    import { currentWindow, slidesOptions, volume } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
@@ -27,6 +27,7 @@
     export let disableListTransition: boolean = false
     export let smallFontSize: boolean = false
     export let addDefaultItemStyle: boolean = false
+    export let animationStyle: string = ""
     export let customFontSize: number | null = null
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
@@ -97,6 +98,30 @@
 
     $: lineGap = item?.specialStyle?.lineGap
     $: lineBg = item?.specialStyle?.lineBg
+
+    // actions
+    $: if ((preview || $currentWindow === "output") && item?.actions) runActions()
+    function runActions() {
+        Object.keys(item?.actions).forEach((action) => {
+            if (actions[action]) actions[action](item?.actions[action])
+        })
+    }
+
+    // TODO: overlay gets reset when a new slide is activated
+    let hidden: boolean = false
+    const actions = {
+        showTimer: (duration: number) => {
+            hidden = true
+            setTimeout(() => {
+                hidden = false
+            }, duration * 1000)
+        },
+        hideTimer: (duration: number) => {
+            setTimeout(() => {
+                hidden = true
+            }, duration * 1000)
+        },
+    }
 </script>
 
 <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
@@ -106,6 +131,7 @@
     class:white={key && !lines?.length}
     class:key
     class:addDefaultItemStyle
+    class:hidden
 >
     {#if lines}
         <div
@@ -121,13 +147,13 @@
             {/if}
             <div
                 class="lines"
-                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}"
+                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{animationStyle}"
                 bind:this={textElem}
             >
                 {#each lines as line, i}
                     {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
                         <!-- class:height={!line.text[0]?.value.length} -->
-                        <div class="break" class:smallFontSize={smallFontSize || customFontSize} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
+                        <div class="break" class:smallFontSize={smallFontSize || customFontSize || animationStyle.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
                                 <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                             {/each}
@@ -184,6 +210,10 @@
         overflow: hidden;
     }
 
+    .hidden {
+        opacity: 0;
+    }
+
     .align {
         height: 100%;
         display: flex;
@@ -237,10 +267,12 @@
         font-size: 100px;
         min-height: 50px;
         /* display: inline-block; */
+
+        transition: var(--transition);
     }
     .break.smallFontSize :global(span) {
         /* font-size: 30px; */
-        font-size: var(--font-size);
+        font-size: var(--font-size) !important;
     }
 
     /* .height {
