@@ -8,7 +8,7 @@ import { outputOptions } from "./windowOptions"
 
 const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
-let outputWindows: { [key: string]: BrowserWindow } = {}
+export let outputWindows: { [key: string]: BrowserWindow } = {}
 export function createOutput(output: Output) {
     let id: string = output.id || ""
 
@@ -117,6 +117,7 @@ export function displayOutput(data: any) {
         window = outputWindows[data.output.id]
     }
 
+    window.setTitle(data.output?.name || "FreeShow")
     let bounds = data.output.bounds
     disableWindowMoveListener()
 

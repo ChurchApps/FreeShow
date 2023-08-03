@@ -840,7 +840,7 @@
         "output_screen": "Schermata di output",
         "device_name": "Nome dispositivo",
         "password": "password",
-        "port": "porta",
+        "port": "Porta",
         "connections": "Connessioni",
         "max_connections": "Connessioni massime",
         "allowed_connections": "Connessioni consentite",

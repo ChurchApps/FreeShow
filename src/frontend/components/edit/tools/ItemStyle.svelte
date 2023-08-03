@@ -134,4 +134,6 @@
     }
 </script>
 
-<EditValues edits={itemEdits} styles={data} {item} on:change={updateStyle} />
+{#key item}
+    <EditValues edits={itemEdits} styles={data} {item} on:change={updateStyle} />
+{/key}

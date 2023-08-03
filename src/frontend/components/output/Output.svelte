@@ -348,11 +348,15 @@
     }
 
     // OVERLAYS
+    // prevent updated when editing or when output changes
     let clonedOverlays = {}
-    $: if (out.overlays) cloneOverlays()
-    function cloneOverlays() {
+    let outOverlays: any[] = []
+    $: if (JSON.stringify(out.overlays) !== JSON.stringify(outOverlays)) updateOverlays()
+    function updateOverlays() {
         clonedOverlays = clone($overlays)
+        outOverlays = out.overlays
     }
+    $: console.log(out.refresh, out.overlays, outOverlays, clonedOverlays)
 
     // ANIMATE
     let animation: Animation = { actions: [] }
@@ -583,9 +587,9 @@
             {/if}
         {/if}
         <!-- overlays -->
-        {#if out.overlays?.length}
+        {#if outOverlays?.length}
             {#key out.refresh}
-                {#each out.overlays as id}
+                {#each outOverlays as id}
                     {#if clonedOverlays[id]}
                         {#if overlayTransition.type === "none"}
                             <div class:key={currentOutput.isKeyOutput}>

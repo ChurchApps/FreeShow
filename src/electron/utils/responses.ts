@@ -14,6 +14,7 @@ import { createPDFWindow, exportProject, exportTXT } from "./export"
 import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
+import { outputWindows } from "./output"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -93,6 +94,7 @@ const mainResponses: any = {
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),
     MINIMIZE: (): void => mainWindow?.minimize(),
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
+    START_STREAM: (data: any): void => startStream(data.id),
     SEARCH_LYRICS: (data: any): void => {
         searchLyrics(data)
     },
@@ -225,4 +227,13 @@ export function saveRecording(_: any, msg: any) {
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
+}
+
+// STREAM
+
+function startStream(outputId: string) {
+    let outputWindow = outputWindows[outputId]
+    if (!outputWindow) return
+
+    toApp(MAIN, { channel: "START_STREAM", data: { sourceId: outputWindow.getMediaSourceId() } })
 }

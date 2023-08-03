@@ -3,8 +3,8 @@ import { contextBridge, ipcRenderer } from "electron"
 
 // Expose protected methods that allow the renderer process to use the ipcRenderer without exposing the entire object
 const maxInterval: number = 1000
-const channels: ValidChannels[] = ["STAGE", "REMOTE", "CONTROLLER"]
-const filters: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA"]
+const channels: ValidChannels[] = ["STAGE", "REMOTE", "CONTROLLER", "OUTPUT_STREAM"]
+const filters: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM"]
 // let timeout: any = null
 let ready: boolean = true
 let debug: boolean = true

@@ -13,6 +13,7 @@ import {
     categories,
     customizedIcons,
     defaultProjectName,
+    disabledServers,
     drawSettings,
     drawer,
     drawerTabsData,
@@ -44,6 +45,7 @@ import {
     remotePassword,
     resized,
     scripturePath,
+    serverData,
     showsPath,
     slidesOptions,
     styles,
@@ -92,7 +94,10 @@ export function updateSettings(data: any) {
     // if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
 
     // remote
-    send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
+    let disabled = get(disabledServers) || {}
+    if (disabled.remote === undefined) disabled.remote = false
+    if (disabled.stage === undefined) disabled.stage = false
+    send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled })
 
     // theme
     let currentTheme = get(themes)[data.theme]
@@ -197,6 +202,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     maxConnections: (v: any) => maxConnections.set(v),
     ports: (v: any) => ports.set(v),
+    disabledServers: (v: any) => disabledServers.set(v),
+    serverData: (v: any) => serverData.set(v),
     autosave: (v: any) => autosave.set(v),
     timeFormat: (v: any) => timeFormat.set(v),
     outputs: (v: any) => {

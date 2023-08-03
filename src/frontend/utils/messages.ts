@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
@@ -11,6 +11,7 @@ import {
     categories,
     customizedIcons,
     defaultProjectName,
+    disabledServers,
     drawSettings,
     driveData,
     driveKeys,
@@ -39,6 +40,7 @@ import {
     remotePassword,
     saved,
     scripturePath,
+    serverData,
     showsCache,
     showsPath,
     slidesOptions,
@@ -68,6 +70,7 @@ export function listen() {
     window.api.receive(REMOTE, (msg: ClientMessage) => client(REMOTE, msg))
     window.api.receive(STAGE, (msg: ClientMessage) => client(STAGE, msg))
     window.api.receive(CONTROLLER, (msg: ClientMessage) => client(CONTROLLER, msg))
+    window.api.receive(OUTPUT_STREAM, (msg: ClientMessage) => client(OUTPUT_STREAM, msg))
 
     window.api.receive(OPEN_FILE, (msg: ClientMessage) => {
         if (fileSelected[msg.channel]) fileSelected[msg.channel](msg.data)
@@ -211,6 +214,8 @@ const saveList: { [key in SaveList]: any } = {
     timeFormat: timeFormat,
     maxConnections: maxConnections,
     ports: ports,
+    disabledServers: disabledServers,
+    serverData: serverData,
     defaultProjectName: defaultProjectName,
     events: events,
     showsPath: showsPath,

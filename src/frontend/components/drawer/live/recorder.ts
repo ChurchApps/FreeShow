@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
-import { RECORDER } from "../../../../types/Channels"
-import { activeRecording, currentRecordingStream, recordingPath } from "../../../stores"
+import { OUTPUT_STREAM, RECORDER } from "../../../../types/Channels"
+import { activeRecording, currentRecordingStream, outputDisplay, recordingPath } from "../../../stores"
 import { newToast } from "../../../utils/messages"
 
 let mediaRecorder
@@ -46,6 +46,7 @@ async function handleStop() {
     currentRecordingStream.set(null)
     activeRecording.set(null)
     recordedChunks = []
+    mediaRecorder = null
 }
 
 function formatTime() {
@@ -58,4 +59,56 @@ function formatTime() {
     var yyyy = today.getFullYear()
 
     return mm + "-" + dd + "-" + yyyy + "_" + h + "-" + m + "-" + s
+}
+
+// OUTPUT STREAM
+
+export function startOutputStream(sourceId: string) {
+    // WIP same as Capture.svelte
+    let options: any = {
+        audio: false,
+        video: {
+            // https://github.com/electron/electron/issues/7584
+            // cursor: "never",
+            mandatory: {
+                chromeMediaSource: "desktop",
+                chromeMediaSourceId: sourceId,
+                maxWidth: 1920,
+                maxHeight: 1080,
+                // maxAspectRatio: 16/9,
+                maxFrameRate: 60,
+            },
+        },
+    }
+
+    navigator.mediaDevices
+        .getUserMedia(options)
+        .then((stream) => {
+            if (!stream) return console.error("Error getting media stream!")
+
+            let video = document.createElement("video")
+            video.srcObject = stream
+            video.onloadedmetadata = function () {
+                video.play()
+            }
+
+            let canvas = document.createElement("canvas")
+            canvas.height = 1920
+            canvas.width = 1080
+            let ctx = canvas.getContext("2d")
+
+            updater()
+            function updater() {
+                if (get(outputDisplay)) {
+                    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+                    var jpegUrl = canvas.toDataURL("image/jpeg")
+                    window.api.send(OUTPUT_STREAM, { channel: "STREAM", data: { base64: jpegUrl } })
+                }
+
+                setTimeout(updater, 100)
+            }
+        })
+        .catch(function (err) {
+            console.log(err.name + ": " + err.message)
+        })
 }

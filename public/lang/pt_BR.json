@@ -840,7 +840,7 @@
         "output_screen": "Tela de saída",
         "device_name": "Nome do dispositivo",
         "password": "senha",
-        "port": "porta",
+        "port": "Porta",
         "connections": "Conexões",
         "max_connections": "Máx. de conexões",
         "allowed_connections": "Conexões permitidas",

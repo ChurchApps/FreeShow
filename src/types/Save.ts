@@ -35,6 +35,8 @@ export type SaveListSettings =
     | "presenterControllerKeys"
     | "playerVideos"
     | "ports"
+    | "disabledServers"
+    | "serverData"
     | "remotePassword"
     | "resized"
     | "slidesOptions"

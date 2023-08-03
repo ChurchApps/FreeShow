@@ -840,7 +840,7 @@
         "output_screen": "Ekran finalnog prikaza",
         "device_name": "Ime uređaja",
         "password": "šifra",
-        "port": "port",
+        "port": "Port",
         "connections": "Konekcije",
         "max_connections": "Maksimalno konekcija",
         "allowed_connections": "Dozvoljene konekcije",

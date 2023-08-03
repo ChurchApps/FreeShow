@@ -78,6 +78,7 @@ import { saveComplete } from "./save"
 import { updateSettings, updateSyncedSettings } from "./updateSettings"
 import { clone } from "../components/helpers/array"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
+import { startOutputStream } from "../components/drawer/live/recorder"
 
 export function startup() {
     loaded.set(false)
@@ -188,6 +189,7 @@ const receiveMAIN: any = {
         alertMessage.set("<h3>Updated shows</h3><br>● Old shows: " + oldCount + "<br>● New shows: " + newCount)
         activePopup.set("alert")
     },
+    START_STREAM: ({ sourceId }) => startOutputStream(sourceId),
 }
 
 export const receiveSTORE: any = {

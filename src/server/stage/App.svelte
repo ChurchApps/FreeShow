@@ -148,12 +148,18 @@
         }
     }
 
+    let isFullscreen: boolean = false
     function toggleFullscreen() {
         var doc = window.document
         var docElem = doc.documentElement
 
-        if (!doc.fullscreenElement) docElem.requestFullscreen.call(docElem)
-        else doc.exitFullscreen.call(doc)
+        if (!doc.fullscreenElement) {
+            docElem.requestFullscreen.call(docElem)
+            isFullscreen = true
+        } else {
+            doc.exitFullscreen.call(doc)
+            isFullscreen = false
+        }
     }
 </script>
 
@@ -246,7 +252,7 @@
                     <Icon id="home" />
                 </Button>
                 <Button on:click={toggleFullscreen} center>
-                    <Icon id="fullscreen" />
+                    <Icon id={isFullscreen ? "exitFullscreen" : "fullscreen"} />
                 </Button>
             </div>
         </div>

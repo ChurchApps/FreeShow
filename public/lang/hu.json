@@ -840,7 +840,7 @@
         "output_screen": "Kimeneti képernyő",
         "device_name": "Eszköz neve",
         "password": "jelszó",
-        "port": "port",
+        "port": "Port",
         "connections": "Kapcsolatok",
         "max_connections": "Maximális kapcsolatok",
         "allowed_connections": "Engedélyezett kapcsolatok",

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, connections, dictionary, maxConnections, popupData, ports, remotePassword } from "../../../stores"
+    import { activePopup, connections, dictionary, disabledServers, maxConnections, outputs, popupData, ports, remotePassword, serverData } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -9,6 +9,10 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
+    import { clone, keysToID } from "../../helpers/array"
+    import { getActiveOutputs } from "../../helpers/output"
 
     const setRemotePassword = (e: any) => remotePassword.set(e.target.value)
 
@@ -36,6 +40,7 @@
         remotePassword.set(randomNumber(1000, 9999).toString())
         ports.set({ remote: 5510, stage: 5511 })
         maxConnections.set(10)
+        disabledServers.set({})
     }
 
     const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
@@ -48,6 +53,34 @@
             return a
         })
     }
+
+    function toggleServer(e: any, id: string) {
+        disabledServers.update((a) => {
+            a[id] = !e.target.checked
+
+            return a
+        })
+    }
+
+    // output
+    $: outputsList = getList(clone($outputs))
+    function getList(outputs) {
+        let list = keysToID(outputs).filter((a) => !a.isKeyOutput && a.enabled === true)
+        return list.sort((a, b) => a.name.localeCompare(b.name))
+    }
+
+    function setOutputId(e: any) {
+        let outputId = e.detail.id
+
+        serverData.update((a) => {
+            if (!a.output_stream) a.output_stream = {}
+            a.output_stream.outputId = outputId
+
+            return a
+        })
+    }
+
+    let enableOutputSelector = $serverData?.output_stream?.outputId || getActiveOutputs($outputs, false, true).length > 1
 
     $: console.log($connections)
 </script>
@@ -77,6 +110,7 @@
             popupData.set({ ip, id: "remote" })
             activePopup.set("connect")
         }}
+        disabled={$disabledServers.remote === true}
         center
     >
         <div style="margin: 0;">
@@ -90,9 +124,27 @@
     <Button
         style="flex: 1;"
         on:click={() => {
+            popupData.set({ ip, id: "controller" })
+            activePopup.set("connect")
+        }}
+        disabled={$disabledServers.controller !== false}
+        center
+    >
+        <div style="margin: 0;">
+            <Icon id="connection" size={1.1} right />
+            <p>
+                ControlShow
+                <span class="connections">{Object.keys($connections.CONTROLLER || {})?.length || ""}</span>
+            </p>
+        </div>
+    </Button>
+    <Button
+        style="flex: 1;"
+        on:click={() => {
             popupData.set({ ip, id: "stage" })
             activePopup.set("connect")
         }}
+        disabled={$disabledServers.stage === true}
         center
     >
         <div style="margin: 0;">
@@ -106,23 +158,26 @@
     <Button
         style="flex: 1;"
         on:click={() => {
-            popupData.set({ ip, id: "controller" })
+            popupData.set({ ip, id: "output_stream" })
             activePopup.set("connect")
         }}
+        disabled={$disabledServers.output_stream !== false}
         center
     >
         <div style="margin: 0;">
-            <Icon id="connection" size={1.1} right />
+            <Icon id="stage" size={1.3} right />
             <p>
-                ControlShow
-                <span class="connections">{Object.keys($connections.CONTROLLER || {})?.length || ""}</span>
+                OutputShow
+                <span class="connections">{Object.keys($connections.OUTPUT_STREAM || {})?.length || ""}</span>
             </p>
         </div>
     </Button>
+    <!-- Camera -->
+    <!-- Answer / Guess / Poll -->
 </CombinedInput>
 
 <CombinedInput>
-    <Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections })} center>
+    <Button style="width: 100%;" on:click={() => send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers })} center>
         <Icon id="refresh" right />
         <T id="settings.restart" />
     </Button>
@@ -133,25 +188,63 @@
   <TextInput style="max-width: 50%;" value={$os.name} light />
 </div> -->
 <CombinedInput>
-    <p>RemoteShow <T id="settings.password" /></p>
-    <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
+    <p>
+        <span style="display: flex;align-items: center;border: 0;">RemoteShow</span>
+        <span class="alignRight" style="padding: 0;border: 0;">
+            <Checkbox checked={$disabledServers.remote !== true} on:change={(e) => toggleServer(e, "remote")} />
+        </span>
+    </p>
+    <p style="min-width: unset;"><T id="settings.port" />:</p>
+    <NumberInput value={$ports.remote || 5510} on:change={(e) => updatePort(e, "remote")} min={1025} max={65535} buttons={false} />
 </CombinedInput>
 <CombinedInput>
-    <p>RemoteShow <T id="settings.port" /></p>
-    <NumberInput value={$ports.remote || 5510} on:change={(e) => updatePort(e, "remote")} min={1000} max={10000} buttons={false} />
+    <p>
+        <span style="display: flex;align-items: center;border: 0;">StageShow</span>
+        <span class="alignRight" style="padding: 0;border: 0;">
+            <Checkbox checked={$disabledServers.stage !== true} on:change={(e) => toggleServer(e, "stage")} />
+        </span>
+    </p>
+    <p style="min-width: unset;"><T id="settings.port" />:</p>
+    <NumberInput value={$ports.stage || 5511} on:change={(e) => updatePort(e, "stage")} min={1025} max={65535} buttons={false} />
 </CombinedInput>
 <CombinedInput>
-    <p>StageShow <T id="settings.port" /></p>
-    <NumberInput value={$ports.stage || 5511} on:change={(e) => updatePort(e, "stage")} min={1000} max={10000} buttons={false} />
+    <p>
+        <span style="display: flex;align-items: center;border: 0;">ControlShow</span>
+        <span class="alignRight" style="padding: 0;border: 0;">
+            <Checkbox checked={$disabledServers.controller === false} on:change={(e) => toggleServer(e, "controller")} />
+        </span>
+    </p>
+    <p style="min-width: unset;"><T id="settings.port" />:</p>
+    <NumberInput value={$ports.controller || 5512} on:change={(e) => updatePort(e, "controller")} min={1025} max={65535} buttons={false} />
 </CombinedInput>
 <CombinedInput>
-    <p>ControlShow <T id="settings.port" /></p>
-    <NumberInput value={$ports.controller || 5512} on:change={(e) => updatePort(e, "controller")} min={1000} max={10000} buttons={false} />
+    <p>
+        <span style="display: flex;align-items: center;border: 0;">OutputShow</span>
+        <span class="alignRight" style="padding: 0;border: 0;">
+            <Checkbox checked={$disabledServers.output_stream === false} on:change={(e) => toggleServer(e, "output_stream")} />
+        </span>
+    </p>
+    <p style="min-width: unset;"><T id="settings.port" />:</p>
+    <NumberInput value={$ports.output_stream || 5513} on:change={(e) => updatePort(e, "output")} min={1025} max={65535} buttons={false} />
 </CombinedInput>
+
+<br />
+
 <CombinedInput>
     <p><T id="settings.max_connections" /></p>
     <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
 </CombinedInput>
+<CombinedInput>
+    <p>RemoteShow <T id="settings.password" /></p>
+    <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
+</CombinedInput>
+{#if enableOutputSelector}
+    <CombinedInput>
+        <p>OutputShow <T id="midi.output" /></p>
+        <Dropdown value={outputsList.find((a) => a.id === $serverData?.output_stream?.outputId)?.name || "—"} options={outputsList} on:click={setOutputId} />
+    </CombinedInput>
+{/if}
+<!-- TODO: OutputShow set output... -->
 
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>

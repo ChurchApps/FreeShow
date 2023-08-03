@@ -39,6 +39,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     presenterControllerKeys: true,
     remotePassword: "",
     ports: { remote: 5510, stage: 5511 },
+    disabledServers: {},
+    serverData: {},
     maxConnections: 10,
     mediaFolders: {},
     audioFolders: {},

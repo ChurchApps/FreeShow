@@ -840,7 +840,7 @@
         "output_screen": "Skjermutgang",
         "device_name": "Enhetsnavn",
         "password": "passord",
-        "port": "port",
+        "port": "Port",
         "connections": "Tilkoblinger",
         "max_connections": "Maks tilkoblinger",
         "allowed_connections": "Tillatte tilkoblinger",

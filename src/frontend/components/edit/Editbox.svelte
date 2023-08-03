@@ -739,6 +739,7 @@ bind:offsetWidth={width} -->
         pointer-events: none;
         position: absolute;
         width: 100%;
+        overflow: hidden;
     }
     .item:hover {
         /* .item:hover > .edit { */

@@ -7,7 +7,7 @@ export interface Message {
     path?: string
 }
 
-export type Clients = "REMOTE" | "STAGE" | "CONTROLLER"
+export type Clients = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 export interface ClientMessage {
     channel: ClientChannels
     id?: DeviceID

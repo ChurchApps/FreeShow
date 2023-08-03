@@ -11,7 +11,7 @@ import { closeServers } from "./servers"
 import { checkShowsFolder, deleteFile, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
-import { closeAllOutputs, displayAdded, displayRemoved, receiveOutput } from "./utils/output"
+import { closeAllOutputs, displayAdded, displayRemoved, outputWindows, receiveOutput } from "./utils/output"
 import { loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
@@ -45,7 +45,6 @@ function startApp() {
 
     // express
     require("./servers")
-    // WIP: require("./webcam")
 
     // set app title to app name on windows
     if (process.platform === "win32") app.setAppUserModelId(app.name)
@@ -337,6 +336,15 @@ export function getScreens(type: "window" | "screen" = "screen") {
         // console.log(sources)
         sources.map((source) => screens.push({ name: source.name, id: source.id }))
         // , display_id: source.display_id
+
+        // add FreeShow windows
+        if (type === "window") {
+            Object.values({ main: mainWindow, ...outputWindows }).forEach((window: any) => {
+                let mediaId = window?.getMediaSourceId()
+                if (!sources.find((a) => a.id === mediaId)) screens.push({ name: window?.getTitle(), id: mediaId })
+            })
+        }
+
         toApp(MAIN, { channel: type === "window" ? "GET_WINDOWS" : "GET_SCREENS", data: screens })
     })
 }

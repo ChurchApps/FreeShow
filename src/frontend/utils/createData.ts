@@ -133,6 +133,32 @@ export function setExampleOverlays() {
             category: "visuals",
             items: [{ style: "top:0px;left:1450px;height:170px;width:470px;", type: "clock", clock: { type: "digital", seconds: false } }],
         }
+        a.name = {
+            name: get(dictionary).inputs?.name || "Name",
+            color: "#5825F5",
+            category: "visuals",
+            items: [
+                { style: "top:875px;left:80px;height:135px;width:750px;background-color: #b10dc9;box-shadow: 2px 2px 10px 0px rgb(0 0 0 / 0.8);" },
+                { style: "top:875px;left:80px;height:135px;width:50px;background-color: #7fdbff;" },
+                {
+                    style: "top:935px;left:130px;height:75px;width:700px;background-color: #b10dc9;padding: 0 10px;",
+                    actions: {
+                        showTimer: 1,
+                        transition: { type: "slide", duration: 500, easing: "cubic" },
+                    },
+                    type: "text",
+                    lines: [{ align: "text-align: left", text: [{ value: "Name Surname", style: "font-family: Arial;font-size: 70px;text-shadow: 0 0 #000000;" }] }],
+                },
+                {
+                    style: "top:875px;left:130px;height:60px;width:700px;background-color: #0074d9;padding: 0 10px;",
+                    actions: {
+                        transition: { type: "slide", duration: 500, easing: "cubic" },
+                    },
+                    type: "text",
+                    lines: [{ align: "text-align: left", text: [{ value: "Title", style: "font-family: Arial;font-size: 40px;font-weight: bold;text-transform:uppercase;text-shadow: 0 0 #000000;" }] }],
+                },
+            ],
+        }
         a.rounded = {
             name: get(dictionary).example?.rounded || "Rounded",
             color: null,

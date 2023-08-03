@@ -5,10 +5,12 @@ import { join } from "path"
 import { Server } from "socket.io"
 import { toApp } from "./index"
 
-let servers: any = {
+type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
+let servers: { [key in ServerName]: any } = {
     REMOTE: { port: 5510 },
     STAGE: { port: 5511 },
     CONTROLLER: { port: 5512 },
+    OUTPUT_STREAM: { port: 5513 },
     // CAM: { port: 5513 },
 }
 
@@ -16,11 +18,14 @@ let servers: any = {
 
 createServers()
 function createServers() {
-    Object.keys(servers).forEach((id) => {
+    let serverList = Object.keys(servers) as ServerName[]
+    serverList.forEach((id: ServerName) => {
         let app = express()
         let server = http.createServer(app)
+
         app.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
         app.use(express.static(join(__dirname, id.toLowerCase())))
+
         servers[id] = {
             ...servers[id],
             server,
@@ -28,18 +33,23 @@ function createServers() {
             max: 10,
             connections: {},
         }
+
         createBridge({ id, ...servers[id] })
     })
 }
 
 var started: boolean = false
-export function startServers({ ports, max }: any) {
+export function startServers({ ports, max, disabled }: any) {
     if (started) closeServers()
     started = true
 
-    Object.keys(servers).forEach((id) => {
+    let serverList = Object.keys(servers) as ServerName[]
+    serverList.forEach((id: ServerName) => {
+        if (disabled[id.toLowerCase()] !== false) return
+
         servers[id].max = max
         if (ports[id.toLowerCase()]) servers[id].port = ports[id.toLowerCase()]
+
         servers[id].server.listen(servers[id].port, () => console.log(id + " on: " + servers[id].port))
         servers[id].server.once("error", (err: any) => {
             if (err.code === "EADDRINUSE") servers[id].server.close()
@@ -49,7 +59,8 @@ export function startServers({ ports, max }: any) {
 
 export function closeServers() {
     started = false
-    Object.keys(servers).forEach((id) => {
+    let serverList = Object.keys(servers) as ServerName[]
+    serverList.forEach((id: ServerName) => {
         servers[id].server.close()
     })
 }
@@ -87,7 +98,7 @@ function createBridge(server: any) {
 
 // FUNCTIONS
 
-function initialize(id: "REMOTE" | "STAGE" | "CONTROLLER", socket: any) {
+function initialize(id: ServerName, socket: any) {
     // INITIALIZE
     let name: string = getOS(socket.handshake.headers["user-agent"] || "")
     toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })

@@ -19,6 +19,7 @@
         remote: 5510,
         stage: 5511,
         controller: 5512,
+        output_stream: 5513,
     }
 
     $: url = ip + ":" + ($ports[id] || defaultPorts[id])

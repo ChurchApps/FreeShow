@@ -287,6 +287,10 @@ function decodeBase64(text: string) {
 
     // WIP convert ‘ & ’ to '
     r = r.replaceAll("\\u8217 ?", "'")
+    r = r.replaceAll("\\'92", "'")
+    r = r.replaceAll("\\'e6", "æ")
+    r = r.replaceAll("\\'f8", "ø")
+    r = r.replaceAll("\\'e5", "å")
 
     return r
 }
@@ -306,19 +310,6 @@ function RTFToText(input: string) {
     let splitted = input.split("__BREAK__").filter((a) => a)
     return splitted.join("\n").trim()
 }
-
-// {\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf610
-// {\fonttbl\f0\fnil\fcharset0 Avenir-Book;}
-// {\colortbl;\red255\green255\blue255;\red255\green255\blue255;}
-// {\*\expandedcolortbl;;\csgray\c100000;}
-// \deftab720
-// \pard\pardeftab720\slleading200\qc\partightenfactor0
-
-// \f0\fs120 \cf2 \kerning1\expnd12\expndtw60
-// Her er jeg Gud\
-// Med mine byrder\
-// Jeg kommer n\'e5\
-// Med mine s\'e5r}
 
 function decodeHex(input: string) {
     let textStart = input.indexOf("\\cf2\\ltrch")

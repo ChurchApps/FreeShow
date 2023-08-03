@@ -840,7 +840,7 @@
         "output_screen": "Výstupná obrazovka",
         "device_name": "Názov zariadenia",
         "password": "heslo",
-        "port": "port",
+        "port": "Port",
         "connections": "Spojenia",
         "max_connections": "Max spojení",
         "allowed_connections": "Povolené spojenia",

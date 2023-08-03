@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { OUTPUT } from "../types/Channels"
+    import { MAIN, OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
     import type { DrawerTabIds, TopViews } from "../types/Tabs"
     import ContextMenu from "./components/context/ContextMenu.svelte"
@@ -15,7 +15,7 @@
     import Pdf from "./components/export/Pdf.svelte"
     import { copy, cut, deleteAction, paste, selectAll } from "./components/helpers/clipboard"
     import { redo, undo } from "./components/helpers/history"
-    import { displayOutputs, getResolution, isOutCleared } from "./components/helpers/output"
+    import { displayOutputs, getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -44,6 +44,7 @@
         activeTimers,
         autosave,
         currentWindow,
+        disabledServers,
         drawer,
         events,
         focusedArea,
@@ -53,6 +54,7 @@
         outputs,
         playingAudio,
         selected,
+        serverData,
         styles,
         volume,
     } from "./stores"
@@ -195,6 +197,16 @@
         else enableOutputMove = false
     }
     $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
+
+    // stream to OutputShow
+    let streamStarted = false
+    $: if ($disabledServers.output_stream === false && !$currentWindow && $outputDisplay && !streamStarted) {
+        let captureOutputId = $serverData?.output_stream?.outputId || getActiveOutputs($outputs, true, true)[0]
+        if (captureOutputId) {
+            streamStarted = true
+            window.api.send(MAIN, { channel: "START_STREAM", data: { id: captureOutputId } })
+        }
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} />
