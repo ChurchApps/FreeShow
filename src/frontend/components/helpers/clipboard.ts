@@ -36,6 +36,7 @@ import {
     templateCategories,
     templates,
     themes,
+    variables,
     videoMarkers,
 } from "../../stores"
 import { newToast } from "../../utils/messages"
@@ -605,6 +606,15 @@ const deleteActions = {
         })
     },
     global_timer: (data: any) => deleteActions.timer(data),
+    variable: (data: any) => {
+        variables.update((a) => {
+            data.forEach(({ id }) => {
+                delete a[id]
+            })
+
+            return a
+        })
+    },
     folder: (data: any) => historyDelete("UPDATE", data, { updater: "project_folder" }),
     project: (data: any) => historyDelete("UPDATE", data, { updater: "project" }),
     stage: (data: any) => historyDelete("UPDATE", data, { updater: "stage" }),

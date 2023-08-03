@@ -102,8 +102,9 @@ function createSlides(labeled: any, existingSlides: any = {}) {
 
     function convertLabeledSlides(a: any): void {
         let id: any
+        let formatText: boolean = get(formatNewShow)
 
-        let text: string = fixText(a.text)
+        let text: string = fixText(a.text, formatText)
         if (stored[a.type]) id = stored[a.type].find((b: any) => b.text === text)?.id
 
         let hasTextGroup: boolean = (a.text.trim()[0] === "[" && a.text.includes("]")) || a.text.trim()[a.text.length - 1] === ":"
@@ -124,13 +125,14 @@ function createSlides(labeled: any, existingSlides: any = {}) {
         stored[a.type].push({ id, text })
 
         let group: string = activeGroup && !hasTextGroup ? null : a.type
+        if (!formatText && group) group = "verse"
         let color: any = null
 
         let allLines: string[] = [text]
         let lines: string[] = removeEmpty(text.split("\n"))
 
         // split lines into a set amount of lines
-        if (Number(get(splitLines)) && lines.length > get(splitLines)) {
+        if (formatText && Number(get(splitLines)) && lines.length > get(splitLines)) {
             allLines = []
             while (lines.length) allLines.push(lines.splice(0, get(splitLines)).join("\n"))
         }
@@ -202,22 +204,23 @@ function checkRepeats(labeled: any[]) {
     return newLabels
 }
 
-function fixText(text: string): string {
-    let formatText: boolean = get(formatNewShow)
-    if (formatText) text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
-    // remove group from text
-    if (text[0] === "[" && text.includes("]")) text = text.slice(text.indexOf("]") + 1)
-    if (text.indexOf(":") === text.split("\n")[0].length - 1) text = text.slice(text.indexOf(":") + 1)
+function fixText(text: string, formatText: boolean): string {
+    if (formatText) {
+        text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
+        // remove group from text
+        if (text[0] === "[" && text.includes("]")) text = text.slice(text.indexOf("]") + 1)
+        if (text.indexOf(":") === text.split("\n")[0].length - 1) text = text.slice(text.indexOf(":") + 1)
 
-    // repeat text
-    let firstRepeater = text.indexOf(":/:")
-    let secondRepeater = text.indexOf(":/:", firstRepeater + 1)
-    while (firstRepeater >= 0 && secondRepeater >= 0) {
-        let repeated = text.slice(firstRepeater + 3, secondRepeater)
-        text = text.slice(0, firstRepeater) + repeated + repeated + text.slice(secondRepeater + 3)
+        // repeat text
+        let firstRepeater = text.indexOf(":/:")
+        let secondRepeater = text.indexOf(":/:", firstRepeater + 1)
+        while (firstRepeater >= 0 && secondRepeater >= 0) {
+            let repeated = text.slice(firstRepeater + 3, secondRepeater)
+            text = text.slice(0, firstRepeater) + repeated + repeated + text.slice(secondRepeater + 3)
 
-        firstRepeater = text.indexOf(":/:")
-        secondRepeater = text.indexOf(":/:", firstRepeater + 1)
+            firstRepeater = text.indexOf(":/:")
+            secondRepeater = text.indexOf(":/:", firstRepeater + 1)
+        }
     }
 
     let newText: string = ""
@@ -253,12 +256,12 @@ function fixText(text: string): string {
 
             return line.trim()
         })
+
+        let label: string = getLabelId(lines[0])
+
+        // remove first line if it's a label
+        if (findGroupMatch(label)) lines = lines.slice(1, lines.length)
     }
-
-    let label: string = getLabelId(lines[0])
-
-    // remove first line if it's a label
-    if (findGroupMatch(label)) lines = lines.slice(1, lines.length)
 
     text = lines.filter((a) => a).join("\n")
 

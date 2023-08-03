@@ -36,7 +36,7 @@ export interface Animation {
 
 export interface AnimationAction {
     type: "change" | "set" | "wait"
-    id?: "background" | "text"
+    id?: "background" | "text" | "item"
     key?: string
     extension?: string
     value?: number

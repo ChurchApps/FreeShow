@@ -39,6 +39,7 @@
     import ChooseCamera from "./popups/ChooseCamera.svelte"
     import Animate from "./popups/Animate.svelte"
     import SetTime from "./popups/SetTime.svelte"
+    import Variable from "./popups/Variable.svelte"
 
     function mousedown(e: any) {
         if (e.target.classList.contains("popup")) activePopup.set(null)
@@ -60,6 +61,7 @@
         find_replace: FindReplace,
         edit_list: EditList,
         timer: Timer,
+        variable: Variable,
         transition: Transition,
         import_scripture: ImportScripture,
         edit_event: EditEvent,
@@ -153,4 +155,11 @@
         width: 100%;
         height: 100%;
     }
+
+    /* WIP dropdown */
+    /* .popup :global(.dropdown) {
+        position: fixed !important;
+        width: fit-content;
+        max-height: 150px;
+    } */
 </style>

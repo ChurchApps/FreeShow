@@ -51,6 +51,7 @@ import {
     timeFormat,
     timers,
     toastMessages,
+    variables,
     videoExtensions,
     videoMarkers,
     webFavorites,
@@ -102,6 +103,7 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["TEMPLATES"], get(templates))
     send(OUTPUT, ["OVERLAYS"], get(overlays))
     send(OUTPUT, ["TIMERS"], get(timers))
+    send(OUTPUT, ["VARIABLES"], get(variables))
     send(OUTPUT, ["EVENTS"], get(events))
 }
 
@@ -245,6 +247,7 @@ const saveList: { [key in SaveList]: any } = {
     templateCategories: templateCategories,
     templates: templates,
     timers: timers,
+    variables: variables,
     theme: theme,
     themes: themes,
     transitionData: transitionData,

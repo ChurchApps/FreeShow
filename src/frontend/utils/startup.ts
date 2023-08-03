@@ -61,6 +61,7 @@ import {
     themes,
     timers,
     transitionData,
+    variables,
     version,
     visualizerData,
 } from "../stores"
@@ -229,7 +230,7 @@ const receiveOUTPUT: any = {
     SHOWS: (a: any) => showsCache.set(a),
 
     TEMPLATES: (a: any) => templates.set(a),
-    OVERLAYS: (a: any) => overlays.set(a),
+    OVERLAYS: (a: any) => clone(overlays.set(a)),
     EVENTS: (a: any) => events.set(a),
 
     DRAW: (a: any) => draw.set(a),
@@ -237,7 +238,8 @@ const receiveOUTPUT: any = {
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => mediaFolders.set(a),
-    TIMERS: (a: any) => timers.set(a),
+    TIMERS: (a: any) => clone(timers.set(a)),
+    VARIABLES: (a: any) => clone(variables.set(a)),
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     // POSITION: (a: any) => outputPosition.set(a),

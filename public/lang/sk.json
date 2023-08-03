@@ -275,6 +275,7 @@
         "player": "Prehrávač",
         "live": "Naživo",
         "timers": "Časovače",
+        "variables": "Variables",
         "templates": "Šablóny",
         "web": "Web"
     },
@@ -315,6 +316,7 @@
         "find_replace": "Find and replace",
         "edit_list": "Edit list",
         "timer": "Časovač",
+        "variable": "Variable",
         "transition": "Prechod",
         "delete_show": "Odstrániť prezentáciu",
         "delete_show_confirmation": "Naozaj ju chcete odstrániť?",
@@ -385,6 +387,7 @@
         "project": "Nový projekt",
         "section": "Nová sekcia",
         "timer": "Nový časovač",
+        "variable": "New variable",
         "category": "Nová kategória",
         "private": "Nová súkromná prezentácia",
         "folder": "Nový priečinok",
@@ -415,6 +418,9 @@
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "change_output_style": "Change output style",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Súkromné",
         "view_private": "Show private",
         "import": "Import",
@@ -499,6 +505,7 @@
         "wait": "Wait",
         "background": "background",
         "text": "text",
+        "item": "item",
         "to": "to",
         "for": "for",
         "seconds": "seconds"
@@ -660,6 +667,7 @@
         "live": "Naživo",
         "audio": "Audio",
         "timer": "Časovač",
+        "variable": "Variable",
         "visualizer": "Visualizer",
         "icon": "Ikona"
     },
@@ -924,6 +932,12 @@
         "circ": "Kruhové",
         "cubic": "Štvorcové",
         "sine": "Vlnenie"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Január",

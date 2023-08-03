@@ -259,6 +259,7 @@
         background-color: rgb(0 0 0 / 0.1);
     }
 
+    /* WIP this is global regardless of timers */
     :global(.dropdown) {
         position: absolute !important;
         width: 100%;

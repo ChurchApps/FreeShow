@@ -275,6 +275,7 @@
         "player": "Plejer",
         "live": "Uživo",
         "timers": "Tajmeri",
+        "variables": "Variables",
         "templates": "Šabloni",
         "web": "Web"
     },
@@ -315,6 +316,7 @@
         "find_replace": "Nađi i zameni",
         "edit_list": "Uredi liste",
         "timer": "Tajmer",
+        "variable": "Variable",
         "transition": "Tranzicija",
         "delete_show": "Ukloni prezentaciju",
         "delete_show_confirmation": "Da li ste sigurni da želite da obrišete?",
@@ -385,6 +387,7 @@
         "project": "Novi projekat",
         "section": "Nova sekcija",
         "timer": "Novi tajmer",
+        "variable": "New variable",
         "category": "Nova kategorija",
         "private": "Nova privatna prezentacija",
         "folder": "Novi folder",
@@ -415,6 +418,9 @@
         "choose_group": "Odaberi grupu",
         "goto_group": "Idi na grupu",
         "change_output_style": "Promeni stil finalnog prikaza",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Privatno",
         "view_private": "Prikaži privatno",
         "import": "Uvezi",
@@ -499,6 +505,7 @@
         "wait": "Wait",
         "background": "background",
         "text": "text",
+        "item": "item",
         "to": "to",
         "for": "for",
         "seconds": "seconds"
@@ -660,6 +667,7 @@
         "live": "Uživo",
         "audio": "Audio",
         "timer": "Tajmer",
+        "variable": "Variable",
         "visualizer": "Vizualizator",
         "icon": "Ikonica"
     },
@@ -924,6 +932,12 @@
         "circ": "Kružno",
         "cubic": "Kockasto",
         "sine": "Tok"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Januar",

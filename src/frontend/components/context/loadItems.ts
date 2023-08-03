@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, drawerTabsData, groups, outputs, overlays, selected } from "../../stores"
+import { activeEdit, drawerTabsData, groups, outputs, overlays, selected, templates } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { keys } from "../edit/values/chords"
@@ -55,11 +55,12 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
             items = [...items, ...actions.map((a) => [id, a]), ["SEPERATOR"], ...clearActions.map((a) => [id, a])]
             break
         case "item_actions":
-            let editSlideRef: any = _show().layouts("active").ref()[0]?.[get(activeEdit).slide || ""] || {}
+            let editSlideRef: any = _show().layouts("active").ref()[0]?.[get(activeEdit).slide ?? ""] || {}
             let slide = _show().get("slides")?.[editSlideRef.id]
 
-            if (get(activeEdit).id && get(activeEdit).type === "overlay") {
-                slide = get(overlays)[get(activeEdit).id!]
+            if (get(activeEdit).id) {
+                if (get(activeEdit).type === "overlay") slide = get(overlays)[get(activeEdit).id!]
+                else if (get(activeEdit).type === "template") slide = get(templates)[get(activeEdit).id!]
             }
             if (!slide) return []
 
@@ -67,6 +68,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
             let currentItemActions: any = slide.items[selectedItems[0]].actions || {}
 
             let itemActions: any = [
+                { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
                 { id: "showTimer", label: "actions.show_timer", icon: "time_in", enabled: Number(currentItemActions.showTimer || 0) || false },
                 { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", enabled: Number(currentItemActions.hideTimer || 0) || false },
             ]

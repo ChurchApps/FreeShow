@@ -275,6 +275,7 @@
         "player": "Player",
         "live": "Live",
         "timers": "Timer",
+        "variables": "Variables",
         "templates": "Vorlagen",
         "web": "Web"
     },
@@ -315,6 +316,7 @@
         "find_replace": "Find and replace",
         "edit_list": "Edit list",
         "timer": "Timer",
+        "variable": "Variable",
         "transition": "Übergang",
         "delete_show": "Show löschen",
         "delete_show_confirmation": "Bist du sicher, dass du löschen möchtest?",
@@ -385,6 +387,7 @@
         "project": "Neues Projekt",
         "section": "New section",
         "timer": "Neuer Timer",
+        "variable": "New variable",
         "category": "Neue Kategorie",
         "private": "Neue private Show",
         "folder": "Neuer Ordner",
@@ -415,6 +418,9 @@
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "change_output_style": "Change output style",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Privat",
         "view_private": "Show private",
         "import": "Importieren",
@@ -499,6 +505,7 @@
         "wait": "Wait",
         "background": "background",
         "text": "text",
+        "item": "item",
         "to": "to",
         "for": "for",
         "seconds": "seconds"
@@ -660,6 +667,7 @@
         "live": "Live",
         "audio": "Audio",
         "timer": "Timer",
+        "variable": "Variable",
         "visualizer": "Visualizer",
         "icon": "Symbol"
     },
@@ -924,6 +932,12 @@
         "circ": "Kreisförmig",
         "cubic": "Kubisch",
         "sine": "Sinusförmig"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Januar",

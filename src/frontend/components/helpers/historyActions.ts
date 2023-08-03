@@ -738,6 +738,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             }
 
                             if (item.auto !== undefined) slide.items[itemIndex].auto = item.auto
+                            if (item.actions !== undefined) slide.items[itemIndex].actions = item.actions
                             if (item.specialStyle !== undefined) slide.items[itemIndex].specialStyle = item.specialStyle
                             if (item.scrolling !== undefined) slide.items[itemIndex].scrolling = item.scrolling
                             if (item.bindings?.length) slide.items[itemIndex].bindings = item.bindings

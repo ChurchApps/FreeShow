@@ -275,6 +275,7 @@
         "player": "Odtwarzacz",
         "live": "Na żywo",
         "timers": "Timery",
+        "variables": "Variables",
         "templates": "Szablony",
         "web": "Internet"
     },
@@ -315,6 +316,7 @@
         "find_replace": "Znajdź i zastąp",
         "edit_list": "Edytuj listę",
         "timer": "Timer",
+        "variable": "Variable",
         "transition": "Przejście",
         "delete_show": "Usuń pokaz",
         "delete_show_confirmation": "Czy jesteś pewien, że chcesz usunąć pokaz?",
@@ -385,6 +387,7 @@
         "project": "Nowy projekt",
         "section": "Nowa sekcja",
         "timer": "Nowy timer",
+        "variable": "New variable",
         "category": "Nowa kategoria",
         "private": "Nowy prywatny pokaz",
         "folder": "Nowy folder",
@@ -415,6 +418,9 @@
         "choose_group": "Wybierz grupę",
         "goto_group": "Idź do grupy",
         "change_output_style": "Zmień styl wyjściowy",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Prywatne",
         "view_private": "Pokaż prywatne",
         "import": "Importuj",
@@ -499,6 +505,7 @@
         "wait": "Wait",
         "background": "background",
         "text": "text",
+        "item": "item",
         "to": "to",
         "for": "for",
         "seconds": "seconds"
@@ -660,6 +667,7 @@
         "live": "Na żywo",
         "audio": "Audio",
         "timer": "Timer",
+        "variable": "Variable",
         "visualizer": "Wizualizacja",
         "icon": "Ikona"
     },
@@ -924,6 +932,12 @@
         "circ": "Kołowe",
         "cubic": "Sześcienne",
         "sine": "Sinusoidalne"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Styczeń",

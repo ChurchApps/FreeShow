@@ -275,6 +275,7 @@
         "player": "Player",
         "live": "Live",
         "timers": "Timer",
+        "variables": "Variables",
         "templates": "Modelli",
         "web": "Web"
     },
@@ -315,6 +316,7 @@
         "find_replace": "Trova e sostituisci",
         "edit_list": "Modifica elenco",
         "timer": "Timer",
+        "variable": "Variable",
         "transition": "Transizione",
         "delete_show": "Elimina scena",
         "delete_show_confirmation": "Sei sicuro di voler eliminare",
@@ -385,6 +387,7 @@
         "project": "Nuovo progetto",
         "section": "Nuova sezione",
         "timer": "Nuovo timer",
+        "variable": "New variable",
         "category": "Nuova categoria",
         "private": "Nuova scena privata",
         "folder": "Nuova cartella",
@@ -415,6 +418,9 @@
         "choose_group": "Scegli gruppo",
         "goto_group": "Vai al gruppo",
         "change_output_style": "Cambia stile di output",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Privato",
         "view_private": "Scena privata",
         "import": "Importa",
@@ -499,6 +505,7 @@
         "wait": "Wait",
         "background": "background",
         "text": "text",
+        "item": "item",
         "to": "to",
         "for": "for",
         "seconds": "seconds"
@@ -660,6 +667,7 @@
         "live": "Live",
         "audio": "Audio",
         "timer": "Timer",
+        "variable": "Variable",
         "visualizer": "Visualizzatore",
         "icon": "Icona"
     },
@@ -924,6 +932,12 @@
         "circ": "Circolare",
         "cubic": "Cubica",
         "sine": "Fluida"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Gennaio",

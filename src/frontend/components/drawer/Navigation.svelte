@@ -45,6 +45,8 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
                 { id: "SEPERATOR", name: "" },
+                { id: "variables", name: "tabs.variables", default: true, icon: "variable" },
+                { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
             ]
         } else if (id === "templates") {

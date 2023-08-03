@@ -8,7 +8,7 @@ import { setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { clone } from "./array"
-import { updateOut } from "./showActions"
+import { checkNextAfterMedia, updateOut } from "./showActions"
 
 const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
@@ -32,6 +32,8 @@ export function startTimer() {
 }
 
 function increment(timer: any) {
+    if (timer.currentTime === timer.end && Object.keys(get(activeTimers)).length === 1) checkNextAfterMedia()
+
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
     if (timer.start < timer.end) timer.currentTime++
     else timer.currentTime--

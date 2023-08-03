@@ -5,7 +5,7 @@
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
-    import { clearAll, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
+    import { checkNextAfterMedia, clearAll, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
@@ -272,18 +272,9 @@
             clearing = false
         }, 1000)
 
-        // check nextAfterMedia
-        let slideOut = currentOutput.out?.slide
-        if (slideOut) {
-            let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
-            let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
-            if (nextAfterMedia) {
-                // videoTime = 0
-                setTimeout(() => {
-                    nextSlide(null, false, false, true, true, outputId)
-                }, 100)
-                return
-            }
+        if (checkNextAfterMedia()) {
+            // videoTime = 0
+            return
         }
 
         if (videoData.loop) return

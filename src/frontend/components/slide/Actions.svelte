@@ -10,6 +10,9 @@
 
     function changeSlideAction(id: string, save: boolean = true) {
         let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
+
+        if (id === "outputStyle" && !data[id]) delete data.styleOutputs
+
         history({ id: "SHOW_LAYOUT", save, newData: { key: "actions", data, indexes: [index] } })
     }
 

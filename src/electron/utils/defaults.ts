@@ -100,6 +100,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         scripture: { name: "category.scripture", icon: "scripture", default: true },
     },
     timers: {},
+    variables: {},
     scriptures: {
         kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
         asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },

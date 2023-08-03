@@ -275,6 +275,7 @@
         "player": "Spiller",
         "live": "Direkte",
         "timers": "Tidtakere",
+        "variables": "Variabler",
         "templates": "Maler",
         "web": "Nett"
     },
@@ -315,6 +316,7 @@
         "find_replace": "Finn og erstatt",
         "edit_list": "Rediger liste",
         "timer": "Nedtelling",
+        "variable": "Variabel",
         "transition": "Overgang",
         "delete_show": "Slett show",
         "delete_show_confirmation": "Er du sikker på at du vil slette",
@@ -385,6 +387,7 @@
         "project": "Nytt prosjekt",
         "section": "Ny seksjon",
         "timer": "Ny nedtelling",
+        "variable": "Ny variabel",
         "category": "Ny kategori",
         "private": "Nytt privat show",
         "folder": "Ny mappe",
@@ -415,6 +418,9 @@
         "choose_group": "Velg gruppe",
         "goto_group": "Gå til gruppe",
         "change_output_style": "Endre stil for utgangsskjerm",
+        "active_outputs": "Aktive utgangsskjermer",
+        "all_outputs": "Alle utgangsskjermer",
+        "specific_outputs": "Spesifikke utgangsskjermer",
         "toggle_private": "Privat",
         "view_private": "Vis private",
         "import": "Importer",
@@ -499,6 +505,7 @@
         "wait": "Vent",
         "background": "bakgrunn",
         "text": "tekst",
+        "item": "element",
         "to": "til",
         "for": "i",
         "seconds": "sekunder"
@@ -660,6 +667,7 @@
         "live": "Direkte",
         "audio": "Lyd",
         "timer": "Nedtelling",
+        "variable": "Variabel",
         "visualizer": "Visualisering",
         "icon": "Ikon"
     },
@@ -924,6 +932,12 @@
         "circ": "Sirkulær",
         "cubic": "Kubikk",
         "sine": "Flyt"
+    },
+    "variables": {
+        "number": "Tall",
+        "text": "Tekst",
+        "step": "Steg",
+        "value": "Verdi"
     },
     "month": {
         "1": "januar",

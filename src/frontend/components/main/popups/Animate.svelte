@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { Animation, AnimationAction } from "../../../../types/Output"
     import { activeAnimate, dictionary, popupData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
@@ -23,29 +24,55 @@
 
     const types = [
         { id: "change", name: "$:animate.change:$" },
-        { id: "set", name: "$:animate.set:$" },
+        // { id: "set", name: "$:animate.set:$" },
         { id: "wait", name: "$:animate.wait:$" },
     ]
     const ids = [
         { id: "text", name: "$:animate.text:$" },
+        { id: "item", name: "$:animate.item:$" },
         { id: "background", name: "$:animate.background:$" },
     ]
+    // const setIds = [
+    //     { id: "text", name: "$:animate.text:$" },
+    //     { id: "item", name: "$:animate.item:$" },
+    // ]
     const backgroundKeys = [
         { id: "zoom", name: "$:actions.zoom:$" },
         // { id: "filter", name: "$:edit.filters:$" },
     ]
     const textKeys = [
+        // TEXT
         { id: "font-size", data: { extension: "px" }, name: "$:edit.size:$" },
-        { id: "letter-spacing", data: { extension: "px" }, name: "$:edit.letter_spacing:$" },
+
+        { id: "line-height", values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, data: { extension: "em" }, name: "$:edit.line_height:$" },
+        { id: "letter-spacing", values: { max: 100, min: -1000 }, data: { extension: "px" }, name: "$:edit.letter_spacing:$" },
+        { id: "word-spacing", values: { min: -100 }, data: { extension: "px" }, name: "$:edit.word_spacing:$" },
+    ]
+    const itemKeys = [
+        { id: "left", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.x:$" },
+        { id: "top", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.y:$" },
+        { id: "width", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.width:$" },
+        { id: "height", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.height:$" },
+
+        { id: "rotate", values: { max: 360 }, data: { extension: "deg" }, name: "$:edit.rotation:$" },
+        { id: "opacity", values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 }, name: "$:edit.opacity:$" },
+        { id: "border-radius", values: { step: 10, max: 500, inputMultiplier: 0.1 }, data: { extension: "px" }, name: "$:edit.corner_radius:$" },
     ]
 
     const DEFAULT_ANIMATION: AnimationAction = { type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }
 
     let animation: Animation = $popupData.data || { actions: [] }
 
+    let loaded = false
+    onMount(() => {
+        loaded = true
+    })
+
     $: if (animation) updateAnimation()
 
     function updateAnimation() {
+        if (!loaded) return
+
         let ref = _show().layouts("active").ref()[0]
         let actions = clone(ref[$popupData.indexes[0]]?.data?.actions) || {}
 
@@ -81,6 +108,10 @@
         animation.actions = addToPos(newItems, currentItem, newIndex)
     }
 
+    function getOption(id: string | undefined, options: any[]) {
+        if (!id) return {}
+        return options.find((a) => a.id === id) || {}
+    }
     function getOptionName(id: string | undefined, options: any[]) {
         if (!id) return ""
         return options.find((a) => a.id === id)?.name || ""
@@ -115,13 +146,17 @@
                 <span><T id="animate.for" /></span>
                 <NumberInput style="max-width: 80px;" value={animate.duration || 3} on:change={(e) => (animation.actions[i].duration = e.detail)} fixed={Number(animate.duration).toString().includes(".") ? 1 : 0} decimals={1} buttons={false} />
                 <span style="flex: 20;"><T id="animate.seconds" /></span>
-            {:else if animate.type === "set"}
-                <span><T id="animate.text" /></span>
-                <Dropdown options={textKeys} value={getOptionName(animate.key, textKeys) || Object.values(textKeys)[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
+                <!-- {:else if animate.type === "set"}
+                <Dropdown options={setIds} value={getOptionName(animate.id, setIds) || Object.values(setIds)[0].name} on:click={(e) => (animation.actions[i].id = e.detail.id)} />
+
+                {#if !animate.id || animate.id === "text"}
+                    <Dropdown options={textKeys} value={getOptionName(animate.key, textKeys) || Object.values(textKeys)[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
+                {:else if animate.id === "item"}
+                    <Dropdown options={itemKeys} value={getOptionName(animate.key, itemKeys) || Object.values(itemKeys)[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
+                {/if}
 
                 <span><T id="animate.to" /></span>
-                <!-- <TextInput style="flex: 20;" value={animate.value || "0"} on:change={(e) => updateValue(e, i)} /> -->
-                <NumberInput style="flex: 20;" value={animate.value || 0} on:change={(e) => (animation.actions[i].value = e.detail)} buttons={false} />
+                <NumberInput style="flex: 20;" value={animate.value || 0} on:change={(e) => (animation.actions[i].value = e.detail)} buttons={false} /> -->
             {:else if animate.type === "change"}
                 <Dropdown options={ids} value={getOptionName(animate.id, ids) || Object.values(ids)[0].name} on:click={(e) => (animation.actions[i].id = e.detail.id)} />
 
@@ -135,14 +170,30 @@
                             animation.actions[i].extension = e.detail.data?.extension || ""
                         }}
                     />
+                {:else if animate.id === "item"}
+                    <Dropdown
+                        options={itemKeys}
+                        value={getOptionName(animate.key, itemKeys) || Object.values(itemKeys)[0].name}
+                        on:click={(e) => {
+                            animation.actions[i].key = e.detail.id
+                            animation.actions[i].extension = e.detail.data?.extension || ""
+                        }}
+                    />
                 {:else if animate.id === "background"}
                     <Dropdown options={backgroundKeys} value={getOptionName(animate.key, backgroundKeys) || Object.values(backgroundKeys)[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
                 {/if}
 
-                {#if animate.id !== "background"}
+                {#if !animate.id || animate.id === "text"}
                     <span><T id="animate.to" /></span>
                     <!-- <TextInput value={animate.value || "0"} on:change={(e) => updateValue(e, i)} /> -->
-                    <NumberInput style="max-width: 80px;" value={animate.value || 0} on:change={(e) => (animation.actions[i].value = e.detail)} buttons={false} />
+                    {#key animate.key}
+                        <NumberInput style="max-width: 80px;" value={animate.value || 0} {...getOption(animate.key, textKeys).values || {}} on:change={(e) => (animation.actions[i].value = e.detail || 0)} buttons={false} />
+                    {/key}
+                {:else if animate.id === "item"}
+                    <span><T id="animate.to" /></span>
+                    {#key animate.key}
+                        <NumberInput style="max-width: 80px;" value={animate.value || 0} {...getOption(animate.key, itemKeys).values || {}} on:change={(e) => (animation.actions[i].value = e.detail || 0)} buttons={false} />
+                    {/key}
                 {/if}
 
                 <span><T id="animate.for" /></span>

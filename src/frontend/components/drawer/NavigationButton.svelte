@@ -54,8 +54,8 @@
     <span style="display: flex;align-items: center;width: calc(100% - 20px);">
         <Icon
             id={category.icon || "noIcon"}
-            custom={(id === "shows" || id === "overlays" || id === "templates") && category.icon !== undefined && category.icon !== "noIcon" && category.icon !== "all"}
-            select={(id === "shows" || id === "overlays" || id === "templates") && category.id !== "all" && category.id !== "unlabeled" && category.id !== "favourites"}
+            custom={["shows", "overlays", "templates"].includes(id) && ![undefined, "noIcon", "all", "variable"].includes(category.icon)}
+            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "variables"].includes(category.id)}
             selectData={{ id: "category_" + id, data: [category.id] }}
             right
         />

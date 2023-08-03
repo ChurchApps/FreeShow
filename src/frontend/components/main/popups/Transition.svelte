@@ -2,7 +2,7 @@
     import { get } from "svelte/store"
     import { OUTPUT } from "../../../../types/Channels"
     import type { TransitionType } from "../../../../types/Show"
-    import { activeShow, selected, showsCache, transitionData } from "../../../stores"
+    import { activeEdit, activeShow, overlays, popupData, selected, showsCache, templates, transitionData } from "../../../stores"
     import { easings } from "../../../utils/transitions"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -26,7 +26,39 @@
     function changeTransition(id: "text" | "media", key: "type" | "duration" | "easing", value: any) {
         if (key === "duration") value = Number(value)
 
-        if (isSlide) {
+        if (isItem) {
+            // WIP duplicate of SetTime.svelte ++
+            let indexes = $activeEdit.items
+
+            slideItemTransition[key] = value
+            value = { ...(slideItemTransition || {}), [key]: value }
+
+            slideItems.forEach((_: any, i: number) => {
+                if (!indexes.includes(i)) return
+
+                if (!slideItems[i].actions) slideItems[i].actions = {}
+                slideItems[i].actions.transition = value
+            })
+
+            let actions = indexes.map((i) => slideItems[i].actions)
+
+            if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {
+                history({
+                    id: "UPDATE",
+                    oldData: { id: $activeEdit.id },
+                    newData: { key: "items", subkey: "actions", data: actions, indexes },
+                    location: { page: "edit", id: $activeEdit.type + "_items", override: "itemaction_" + indexes.join(",") },
+                })
+
+                return
+            }
+
+            history({
+                id: "setItems",
+                newData: { style: { key: "actions", values: actions } },
+                location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: indexes, override: "itemaction_" + slideRef.id + "_items_" + indexes.join(",") },
+            })
+        } else if (isSlide) {
             if (id === "text") {
                 slideTextTransition[key] = value
                 value = { ...(slideTextTransition || {}), [key]: value }
@@ -54,53 +86,71 @@
         }
     }
 
+    let isItem: boolean = $popupData.action === "transition"
     let isSlide: boolean = $selected.id === "slide"
-    let ref = isSlide ? _show().layouts("active").ref()[0] : []
-    let firstSlide = ref[$selected.data?.[0]?.index]?.data || {}
+    let ref = isSlide || isItem ? _show().layouts("active").ref()[0] : []
 
+    let slideIndex = isItem ? $activeEdit.slide : $selected.data?.[0]?.index
+    let slideRef = ref?.[slideIndex] || {}
+
+    let slideItems: any[] = []
+    if (isItem) {
+        if ($activeEdit.type === "overlay") slideItems = $overlays[$activeEdit.id || ""]?.items || []
+        else if ($activeEdit.type === "template") slideItems = $templates[$activeEdit.id || ""]?.items || []
+        else slideItems = _show().get("slides")[slideRef.id]?.items || []
+    }
+    let firstItem = slideItems[$activeEdit.items[0]] || {}
+    $: slideItemTransition = isItem ? clone(firstItem.actions?.transition || $transitionData.text || { type: "fade", duration: 500, easing: "sine" }) : {}
+
+    let firstSlide = slideRef.data || {}
     $: slideTextTransition = isSlide ? clone(firstSlide.transition || $transitionData.text || { type: "fade", duration: 500, easing: "sine" }) : {}
     $: slideMediaTransition = isSlide ? clone(firstSlide.mediaTransition || $transitionData.media || { type: "fade", duration: 800, easing: "sine" }) : {}
 
+    $: currentTextTransition = clone(isItem ? slideItemTransition : isSlide ? slideTextTransition : $transitionData.text)
+    $: currentMediaTransition = clone(isSlide ? slideMediaTransition : $transitionData.media)
+
     let selectedType: "text" | "media" = "text"
-    $: textIsDisabled = (isSlide ? slideTextTransition.type : $transitionData.text.type) === "none"
-    $: mediaIsDisabled = (isSlide ? slideMediaTransition.type : $transitionData.media.type) === "none"
-    $: textDurationValue = isSlide ? slideTextTransition.duration : $transitionData.text.duration
-    $: mediaDurationValue = isSlide ? slideMediaTransition.duration : $transitionData.media.duration
-    $: textEasingValue = easings.find((a) => a.id === (isSlide ? slideTextTransition.easing : $transitionData.text.easing))?.name || "$:easings.sine:$"
-    $: mediaEasingValue = easings.find((a) => a.id === (isSlide ? slideMediaTransition.easing : $transitionData.media.easing))?.name || "$:easings.sine:$"
-    $: textTypeValue = types.find((a) => a.id === (isSlide ? slideTextTransition.type : $transitionData.text.type))?.name || "$:transition.fade:$"
-    $: mediaTypeValue = types.find((a) => a.id === (isSlide ? slideMediaTransition.type : $transitionData.media.type))?.name || "$:transition.fade:$"
+    $: textIsDisabled = currentTextTransition.type === "none"
+    $: mediaIsDisabled = currentMediaTransition.type === "none"
+    $: textDurationValue = currentTextTransition.duration
+    $: mediaDurationValue = currentMediaTransition.duration
+    $: textEasingValue = easings.find((a) => a.id === currentTextTransition.easing)?.name || "$:easings.sine:$"
+    $: mediaEasingValue = easings.find((a) => a.id === currentMediaTransition.easing)?.name || "$:easings.sine:$"
+    $: textTypeValue = types.find((a) => a.id === currentTextTransition.type)?.name || "$:transition.fade:$"
+    $: mediaTypeValue = types.find((a) => a.id === currentMediaTransition.type)?.name || "$:transition.fade:$"
 
     function reset() {
         let defaultDuration = selectedType === "text" ? 500 : 800
-        changeTransition(selectedType, "duration", isSlide ? $transitionData[selectedType].duration || defaultDuration : defaultDuration)
-        changeTransition(selectedType, "type", isSlide ? $transitionData[selectedType].type || "fade" : "fade")
-        changeTransition(selectedType, "easing", isSlide ? $transitionData[selectedType].easing || "sine" : "sine")
+        changeTransition(selectedType, "duration", isSlide || isItem ? $transitionData[selectedType].duration || defaultDuration : defaultDuration)
+        changeTransition(selectedType, "type", isSlide || isItem ? $transitionData[selectedType].type || "fade" : "fade")
+        changeTransition(selectedType, "easing", isSlide || isItem ? $transitionData[selectedType].easing || "sine" : "sine")
     }
 </script>
 
-<div style="display: flex;">
-    <Button
-        on:click={() => (selectedType = "text")}
-        style={selectedType === "text" ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;white-space: nowrap;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);white-space: nowrap;"}
-        bold={false}
-        center
-        dark
-    >
-        <Icon id="text" right />
-        <T id="transition.text" />{#if isSlide}&nbsp;<T id="transition.current_slide" />{/if}
-    </Button>
-    <Button
-        on:click={() => (selectedType = "media")}
-        style={selectedType === "media" ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;white-space: nowrap;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);white-space: nowrap;"}
-        bold={false}
-        center
-        dark
-    >
-        <Icon id="image" right />
-        <T id="transition.media" />{#if isSlide}&nbsp;<T id="transition.current_slide" />{/if}
-    </Button>
-</div>
+{#if !isItem}
+    <div style="display: flex;">
+        <Button
+            on:click={() => (selectedType = "text")}
+            style={selectedType === "text" ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;white-space: nowrap;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);white-space: nowrap;"}
+            bold={false}
+            center
+            dark
+        >
+            <Icon id="text" right />
+            <T id="transition.text" />{#if isSlide}&nbsp;<T id="transition.current_slide" />{/if}
+        </Button>
+        <Button
+            on:click={() => (selectedType = "media")}
+            style={selectedType === "media" ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;white-space: nowrap;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);white-space: nowrap;"}
+            bold={false}
+            center
+            dark
+        >
+            <Icon id="image" right />
+            <T id="transition.media" />{#if isSlide}&nbsp;<T id="transition.current_slide" />{/if}
+        </Button>
+    </div>
+{/if}
 
 <CombinedInput style="margin-top: 10px;">
     <p><T id="transition.duration" /></p>

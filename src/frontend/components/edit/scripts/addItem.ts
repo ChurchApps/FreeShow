@@ -23,6 +23,7 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     else if (type === "clock") newData.clock = { type: "digital", seconds: false }
     else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""
+    else if (type === "variable") newData.variable = { id: "" }
     else if (type === "icon" && options.color) {
         // make square and center
         let size: number = 300

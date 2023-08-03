@@ -22,7 +22,10 @@
     const decrement = (customStep: number = step) => dispatch("change", Math.max(Number(value) - customStep, min).toFixed(decimals))
     // TODO: reset if not number....
     const input = (e: any) => {
-        let newVaule = Math.max(Math.min(e.target.value, max * inputMultiplier), min * inputMultiplier) / inputMultiplier
+        let inputValue = e.target.value || 0
+        inputValue = new Function(`return ${inputValue}`)() // calculate without eval()
+
+        let newVaule = Math.max(Math.min(inputValue, max * inputMultiplier), min * inputMultiplier) / inputMultiplier
         dispatch("change", newVaule !== null ? newVaule.toFixed(decimals) : value)
     }
 

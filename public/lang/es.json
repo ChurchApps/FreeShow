@@ -275,6 +275,7 @@
         "player": "Reproductor",
         "live": "En vivo",
         "timers": "Temporizadores",
+        "variables": "Variables",
         "templates": "Plantillas",
         "web": "Navegador"
     },
@@ -315,6 +316,7 @@
         "find_replace": "Find and replace",
         "edit_list": "Edit list",
         "timer": "Timer",
+        "variable": "Variable",
         "transition": "Transición",
         "delete_show": "Eliminar programa",
         "delete_show_confirmation": "Estás seguro de eliminar este programa?",
@@ -385,6 +387,7 @@
         "project": "Nuevo proyecto",
         "section": "New section",
         "timer": "Nuevo temporizador",
+        "variable": "New variable",
         "category": "Nueva categoría",
         "private": "Nuevo programa privado",
         "folder": "Nueva carpeta",
@@ -415,6 +418,9 @@
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "change_output_style": "Change output style",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Privado",
         "view_private": "Show private",
         "import": "Importar",
@@ -499,6 +505,7 @@
         "wait": "Wait",
         "background": "background",
         "text": "text",
+        "item": "item",
         "to": "to",
         "for": "for",
         "seconds": "seconds"
@@ -660,6 +667,7 @@
         "live": "En vivo",
         "audio": "Audio",
         "timer": "Temporizador",
+        "variable": "Variable",
         "visualizer": "Visualizer",
         "icon": "Icono"
     },
@@ -924,6 +932,12 @@
         "circ": "Circulo",
         "cubic": "Cúbico",
         "sine": "Flujo"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Enero",

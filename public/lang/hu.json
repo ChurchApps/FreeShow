@@ -275,6 +275,7 @@
         "player": "Lejátszó",
         "live": "Élő",
         "timers": "Időzítők",
+        "variables": "Variables",
         "templates": "Sablonok",
         "web": "Web"
     },
@@ -315,6 +316,7 @@
         "find_replace": "Keresés és csere",
         "edit_list": "Lista szerkesztése",
         "timer": "Időzítő",
+        "variable": "Variable",
         "transition": "Átmenet",
         "delete_show": "Műsor törlése",
         "delete_show_confirmation": "Biztos benne, hogy törölni szeretné",
@@ -385,6 +387,7 @@
         "project": "Új projekt",
         "section": "Új szakasz",
         "timer": "Új időzítő",
+        "variable": "New variable",
         "category": "Új kategória",
         "private": "Új privát műsor",
         "folder": "Új mappa",
@@ -415,6 +418,9 @@
         "choose_group": "Csoport kiválasztása",
         "goto_group": "Ugrás a csoporthoz",
         "change_output_style": "Kimeneti stílus megváltoztatása",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Privát",
         "view_private": "Privát megjelenítése",
         "import": "Importálás",
@@ -499,6 +505,7 @@
         "wait": "Wait",
         "background": "background",
         "text": "text",
+        "item": "item",
         "to": "to",
         "for": "for",
         "seconds": "seconds"
@@ -660,6 +667,7 @@
         "live": "Élő",
         "audio": "Audió",
         "timer": "Időzítő",
+        "variable": "Variable",
         "visualizer": "Vizualizáció",
         "icon": "Ikon"
     },
@@ -924,6 +932,12 @@
         "circ": "Körkörös",
         "cubic": "Kubikus",
         "sine": "Folyamatos"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "január",

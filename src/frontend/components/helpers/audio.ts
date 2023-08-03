@@ -3,6 +3,7 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import { audioChannels, gain, playingAudio, playingVideos, volume } from "../../stores"
 import { send } from "../../utils/request"
 import { audioAnalyser } from "../output/audioAnalyser"
+import { checkNextAfterMedia } from "./showActions"
 
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0) {
     let existing: any = get(playingAudio)[path]
@@ -108,10 +109,11 @@ export function analyseAudio() {
                         } else {
                             playingAudio.update((a: any) => {
                                 // a[audio.id].paused = true
-                                // TODO: check audio nextAfterMedia
                                 delete a[audio.id]
                                 return a
                             })
+
+                            if (!Object.keys(get(playingAudio)).length) checkNextAfterMedia()
                             return false
                         }
                     }

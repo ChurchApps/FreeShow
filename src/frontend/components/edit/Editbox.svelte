@@ -26,6 +26,7 @@
     import DynamicEvents from "../slide/views/DynamicEvents.svelte"
     import { getStyles } from "../helpers/style"
     import Cam from "../drawer/live/Cam.svelte"
+    import Variable from "../slide/views/Variable.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -469,9 +470,10 @@
 
         if ($activeEdit.id) getItems()
         function getItems() {
-            if ($activeEdit.type !== "overlay") return
+            let slide = {}
+            if ($activeEdit.type === "overlay") slide = $overlays
+            else if ($activeEdit.type === "template") slide = $templates
 
-            let slide = $overlays
             slideItems = slide[$activeEdit.id!]?.items
         }
 
@@ -480,7 +482,7 @@
         let actions = clone(slideItems[index].actions)
         delete actions[action]
 
-        if ($activeEdit.type === "overlay") {
+        if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {
             history({
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
@@ -558,8 +560,9 @@
     $: autoSize = getAutoSize(item)
 
     const actions = {
-        showTimer: { label: "show_timer", icon: "time_in" },
-        hideTimer: { label: "hide_timer", icon: "time_out" },
+        transition: { label: "popup.transition", icon: "transition" },
+        showTimer: { label: "actions.show_timer", icon: "time_in" },
+        hideTimer: { label: "actions.hide_timer", icon: "time_out" },
     }
 </script>
 
@@ -590,11 +593,13 @@ bind:offsetWidth={width} -->
             <!-- actions -->
             {#if item.actions}
                 {#each Object.keys(item.actions) as action}
-                    <div title={$dictionary.actions?.[actions[action].label]} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+                    <div title={actions[action] ? $dictionary[actions[action].label.split(".")[0]]?.[actions[action].label.split(".")[1]] : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
                         <Button on:click={() => removeAction(action)} redHover>
-                            <Icon id={actions[action].icon} white />
+                            <Icon id={actions[action]?.icon} white />
                         </Button>
-                        <span class="actionValue">{item.actions[action]}s</span>
+                        {#if typeof item.actions[action] === "number"}
+                            <span class="actionValue">{item.actions[action]}s</span>
+                        {/if}
                     </div>
                 {/each}
             {/if}
@@ -702,6 +707,8 @@ bind:offsetWidth={width} -->
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "events"}
         <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
+    {:else if item?.type === "variable"}
+        <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} edit />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
     {:else if item?.type === "visualizer"}

@@ -361,15 +361,17 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     // actions
     if (data.actions) {
-        // startShow is at the top
-        if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
-        // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
-        if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle)
-        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id })
+        // clear first
         if (data.actions.stopTimers) activeTimers.set([])
         if (data.actions.clearBackground) setOutput("background", null, false, outputId)
         if (data.actions.clearOverlays) clearOverlays()
         if (data.actions.clearAudio) clearAudio()
+
+        // startShow is at the top
+        if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
+        // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
+        if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle, data.actions.styleOutputs)
+        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id })
     }
 }
 
@@ -388,11 +390,17 @@ export async function startShow(showId: string) {
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
 }
 
-export function changeOutputStyle(styleId: string) {
-    let activeOutputs = getActiveOutputs(get(outputs))
-    activeOutputs.forEach(changeStyle)
+export function changeOutputStyle(styleId: string, styleOutputs: any = {}) {
+    let type = styleOutputs.type || "active"
+    let outputsList = styleOutputs.outputs
+
+    let chosenOutputs = getActiveOutputs(get(outputs), type === "active")
+    chosenOutputs.forEach(changeStyle)
 
     function changeStyle(outputId: string) {
+        if (type === "specific") styleId = outputsList[outputId]
+        if (!styleId) return
+
         outputs.update((a) => {
             a[outputId].style = styleId
 
@@ -431,6 +439,26 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
         // defocus search input
         ;(document.activeElement as any)?.blur()
     }, 10)
+
+    return true
+}
+
+// go to next slide if current output slide has nextAfterMedia action
+export function checkNextAfterMedia() {
+    let outputId = getActiveOutputs(get(outputs), true, true)[0]
+    if (!outputId) return false
+    let currentOutput: any = get(outputs)[outputId]
+    if (!currentOutput) return false
+    let slideOut = currentOutput.out?.slide
+    if (!slideOut) return false
+
+    let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
+    let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
+    if (!nextAfterMedia) return false
+
+    setTimeout(() => {
+        nextSlide(null, false, false, true, true, outputId)
+    }, 100)
 
     return true
 }

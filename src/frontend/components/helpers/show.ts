@@ -9,7 +9,7 @@ export function checkName(name: string = "") {
     name = formatToFileName(name)
 
     let number = 1
-    while (Object.values(get(shows)).find((a: any) => a.name === (number > 1 ? name + " " + number : name))) number++
+    while (Object.values(get(shows)).find((a: any) => a.name.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
     return number > 1 ? name + " " + number : name
 }

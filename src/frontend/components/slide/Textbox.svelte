@@ -15,6 +15,8 @@
     import Visualizer from "./views/Visualizer.svelte"
     import DynamicEvents from "./views/DynamicEvents.svelte"
     import Cam from "../drawer/live/Cam.svelte"
+    import Variable from "./views/Variable.svelte"
+    import { custom } from "../../utils/transitions"
 
     export let item: Item
     export let slideIndex: number = 0
@@ -27,7 +29,8 @@
     export let disableListTransition: boolean = false
     export let smallFontSize: boolean = false
     export let addDefaultItemStyle: boolean = false
-    export let animationStyle: string = ""
+    export let transitionEnabled: boolean = false
+    export let animationStyle: any = {}
     export let customFontSize: number | null = null
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
@@ -122,87 +125,178 @@
             }, duration * 1000)
         },
     }
+
+    $: textAnimation = animationStyle.text || ""
+
+    $: transition = transitionEnabled && item.actions?.transition
 </script>
 
-<!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
-<div
-    class="item"
-    style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}"
-    class:white={key && !lines?.length}
-    class:key
-    class:addDefaultItemStyle
-    class:hidden
->
-    {#if lines}
-        <div
-            class="align"
-            class:topBottomScrolling={item?.scrolling?.type === "top_bottom"}
-            class:bottomTopScrolling={item?.scrolling?.type === "bottom_top"}
-            class:leftRightScrolling={item?.scrolling?.type === "left_right"}
-            class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
-            style={style ? item.align : null}
-        >
-            {#if chords}
-                <Chords {item} {textElem} />
-            {/if}
+<!-- svelte transition bug!!! -->
+{#if transition && !hidden}
+    <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
+    <div
+        class="item"
+        style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
+        class:white={key && !lines?.length}
+        class:key
+        class:addDefaultItemStyle
+        transition:custom={item.actions.transition}
+    >
+        {#if lines}
             <div
-                class="lines"
-                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{animationStyle}"
-                bind:this={textElem}
+                class="align"
+                class:topBottomScrolling={item?.scrolling?.type === "top_bottom"}
+                class:bottomTopScrolling={item?.scrolling?.type === "bottom_top"}
+                class:leftRightScrolling={item?.scrolling?.type === "left_right"}
+                class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
+                style={style ? item.align : null}
             >
-                {#each lines as line, i}
-                    {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
-                        <!-- class:height={!line.text[0]?.value.length} -->
-                        <div class="break" class:smallFontSize={smallFontSize || customFontSize || animationStyle.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
-                            {#each line.text || [] as text}
-                                <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
-                            {/each}
-                        </div>
-                    {/if}
-                {/each}
+                {#if chords}
+                    <Chords {item} {textElem} />
+                {/if}
+                <div
+                    class="lines"
+                    style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
+                    bind:this={textElem}
+                >
+                    {#each lines as line, i}
+                        {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
+                            <!-- class:height={!line.text[0]?.value.length} -->
+                            <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
+                                {#each line.text || [] as text}
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                                {/each}
+                            </div>
+                        {/if}
+                    {/each}
+                </div>
             </div>
-        </div>
-    {:else if item?.type === "list"}
-        <ListView list={item.list} disableTransition={disableListTransition} />
-    {:else if item?.type === "media"}
-        {#if item.src}
-            {#if getMediaType(getExtension(item.src)) === "video"}
-                <!-- video -->
-                <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={mirror} volume={Math.max(1, $volume)} autoplay loop>
-                    <track kind="captions" />
-                </video>
+        {:else if item?.type === "list"}
+            <ListView list={item.list} disableTransition={disableListTransition} />
+        {:else if item?.type === "media"}
+            {#if item.src}
+                {#if getMediaType(getExtension(item.src)) === "video"}
+                    <!-- video -->
+                    <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={mirror} volume={Math.max(1, $volume)} autoplay loop>
+                        <track kind="captions" />
+                    </video>
+                {:else}
+                    <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+                    <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
+                    <!-- <MediaLoader path={item.src} /> -->
+                {/if}
+            {/if}
+        {:else if item?.type === "camera"}
+            {#if item.device}
+                <Cam cam={item.device} item />
+            {/if}
+        {:else if item?.type === "timer"}
+            <!-- {#key item.timer} -->
+            <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
+            <!-- {/key} -->
+        {:else if item?.type === "clock"}
+            <Clock {autoSize} style={false} {...item.clock} />
+        {:else if item?.type === "events"}
+            <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
+        {:else if item?.type === "variable"}
+            <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} />
+        {:else if item?.type === "mirror"}
+            <Mirror {item} {ref} {ratio} index={slideIndex} />
+        {:else if item?.type === "visualizer"}
+            <Visualizer {item} {preview} />
+        {:else if item?.type === "icon"}
+            {#if item.customSvg}
+                <div class="customIcon">
+                    {@html item.customSvg}
+                </div>
             {:else}
-                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
-                <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
-                <!-- <MediaLoader path={item.src} /> -->
+                <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
             {/if}
         {/if}
-    {:else if item?.type === "camera"}
-        {#if item.device}
-            <Cam cam={item.device} item />
-        {/if}
-    {:else if item?.type === "timer"}
-        <!-- {#key item.timer} -->
-        <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
-        <!-- {/key} -->
-    {:else if item?.type === "clock"}
-        <Clock {autoSize} style={false} {...item.clock} />
-    {:else if item?.type === "events"}
-        <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
-    {:else if item?.type === "mirror"}
-        <Mirror {item} {ref} {ratio} index={slideIndex} />
-    {:else if item?.type === "visualizer"}
-        <Visualizer {item} {preview} />
-    {:else if item?.type === "icon"}
-        {#if item.customSvg}
-            <div class="customIcon">
-                {@html item.customSvg}
+    </div>
+{:else}
+    <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
+    <div
+        class="item"
+        style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
+        class:white={key && !lines?.length}
+        class:key
+        class:addDefaultItemStyle
+        class:hidden
+    >
+        {#if lines}
+            <div
+                class="align"
+                class:topBottomScrolling={item?.scrolling?.type === "top_bottom"}
+                class:bottomTopScrolling={item?.scrolling?.type === "bottom_top"}
+                class:leftRightScrolling={item?.scrolling?.type === "left_right"}
+                class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
+                style={style ? item.align : null}
+            >
+                {#if chords}
+                    <Chords {item} {textElem} />
+                {/if}
+                <div
+                    class="lines"
+                    style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
+                    bind:this={textElem}
+                >
+                    {#each lines as line, i}
+                        {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
+                            <!-- class:height={!line.text[0]?.value.length} -->
+                            <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
+                                {#each line.text || [] as text}
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                                {/each}
+                            </div>
+                        {/if}
+                    {/each}
+                </div>
             </div>
-        {:else}
-            <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        {:else if item?.type === "list"}
+            <ListView list={item.list} disableTransition={disableListTransition} />
+        {:else if item?.type === "media"}
+            {#if item.src}
+                {#if getMediaType(getExtension(item.src)) === "video"}
+                    <!-- video -->
+                    <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={mirror} volume={Math.max(1, $volume)} autoplay loop>
+                        <track kind="captions" />
+                    </video>
+                {:else}
+                    <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+                    <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
+                    <!-- <MediaLoader path={item.src} /> -->
+                {/if}
+            {/if}
+        {:else if item?.type === "camera"}
+            {#if item.device}
+                <Cam cam={item.device} item />
+            {/if}
+        {:else if item?.type === "timer"}
+            <!-- {#key item.timer} -->
+            <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" />
+            <!-- {/key} -->
+        {:else if item?.type === "clock"}
+            <Clock {autoSize} style={false} {...item.clock} />
+        {:else if item?.type === "events"}
+            <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
+        {:else if item?.type === "variable"}
+            <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} />
+        {:else if item?.type === "mirror"}
+            <Mirror {item} {ref} {ratio} index={slideIndex} />
+        {:else if item?.type === "visualizer"}
+            <Visualizer {item} {preview} />
+        {:else if item?.type === "icon"}
+            {#if item.customSvg}
+                <div class="customIcon">
+                    {@html item.customSvg}
+                </div>
+            {:else}
+                <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+            {/if}
         {/if}
-    {/if}
-</div>
+    </div>
+{/if}
 
 <style>
     .item {
@@ -231,6 +325,8 @@
         flex-direction: column;
         text-align: center;
         justify-content: center;
+
+        transition: var(--transition);
     }
 
     .break {

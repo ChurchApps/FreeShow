@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeEdit, activeShow, overlays, popupData } from "../../../stores"
+    import { activeEdit, activeShow, overlays, popupData, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -16,9 +16,10 @@
 
     if ($activeEdit.id) getItems()
     function getItems() {
-        if (type !== "overlay") return
+        let slide = {}
+        if (type === "overlay") slide = $overlays
+        else if (type === "template") slide = $templates
 
-        let slide = $overlays
         slideItems = slide[$activeEdit.id!]?.items
     }
 
@@ -43,7 +44,7 @@
 
         let actions = indexes.map((i) => slideItems[i].actions)
 
-        if (type === "overlay") {
+        if (type === "overlay" || type === "template") {
             history({
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },

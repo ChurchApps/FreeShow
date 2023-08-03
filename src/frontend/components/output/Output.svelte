@@ -379,11 +379,15 @@
 
     function startAnimation() {
         let currentAnimationId = animationId
+        console.log(animation.actions)
         animate(0)
 
         async function animate(currentIndex: number) {
+            // give time for initial element & prevent infinite loops
+            if (currentIndex === 0) await animations.wait({ duration: 0.1 })
+
             let currentAnimation = animation.actions[currentIndex]
-            if (!currentAnimation || currentAnimationId !== animationId) {
+            if (!currentAnimation || currentAnimationId !== animationId || !slide) {
                 activeAnimate.set({ slide: -1, index: -1 })
                 return
             }
@@ -392,11 +396,7 @@
             await animations[currentAnimation.type](currentAnimation as any)
 
             let newIndex = currentIndex + 1
-            if (!animation.actions[newIndex] && animation.repeat) {
-                // prevent infinite loops
-                await animations.wait({ duration: 0.5 })
-                newIndex = 0
-            }
+            if (!animation.actions[newIndex] && animation.repeat) newIndex = 0
             animate(newIndex)
         }
     }
@@ -409,9 +409,8 @@
                 }, Number(duration) * 1000)
             })
         },
-        set: ({ key, value, extension }) => {
-            // text
-            animations.change({ id: "text", key, value, extension, duration: 0 })
+        set: ({ id, key, value, extension }) => {
+            animations.change({ id, key, value, extension, duration: 0 })
         },
         change: ({ id, key, value, extension, duration }) => {
             value = value || 0
@@ -435,6 +434,11 @@
 
             let variable = ""
             if (key === "font-size") variable = "--"
+
+            if (key === "rotate") {
+                key = "transform"
+                value = `rotate(${value});`
+            }
 
             // previous transitions
             animationTransitions[id] = animationTransitions[id]?.filter((a) => !a.includes(key)) || []
@@ -508,7 +512,7 @@
                                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                                     key={currentOutput.isKeyOutput}
                                     disableListTransition={disableTransitions}
-                                    animationStyle={animationStyle.text || ""}
+                                    {animationStyle}
                                     {preview}
                                     {item}
                                     {ratio}
@@ -525,19 +529,22 @@
                     {#if slideClone?.items}
                         {#each slideClone?.items as item}
                             {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                <!-- <span class="itemTransition" style="pointer-events: none;position: absolute;{item.style}" transition:custom={item.actions?.transition || {}}> -->
                                 <Textbox
                                     filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
                                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                                     key={currentOutput.isKeyOutput}
                                     disableListTransition={disableTransitions}
-                                    animationStyle={animationStyle.text || ""}
+                                    {animationStyle}
                                     {preview}
                                     {item}
                                     {ratio}
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
                                     {linesStart}
                                     {linesEnd}
+                                    transitionEnabled
                                 />
+                                <!-- </span> -->
                             {/if}
                         {/each}
                     {/if}
@@ -595,7 +602,7 @@
                                 <div>
                                     {#each clonedOverlays[id].items as item}
                                         {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} />
+                                            <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} transitionEnabled />
                                         {/if}
                                     {/each}
                                 </div>

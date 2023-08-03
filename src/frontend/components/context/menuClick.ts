@@ -418,6 +418,8 @@ const actions: any = {
         } else if (obj.sel.id === "global_timer") {
             select("timer", { id: obj.sel.data[0].id })
             activePopup.set("timer")
+        } else if (obj.sel.id === "variable") {
+            activePopup.set("variable")
         } else if (obj.sel.id === "midi") {
             popupData.set(obj.sel.data[0])
             activePopup.set("midi")
@@ -452,7 +454,12 @@ const actions: any = {
     item_actions: (obj: any) => {
         let action = obj.menu.id
         popupData.set({ action })
-        activePopup.set("set_time")
+
+        if (action === "transition") {
+            activePopup.set("transition")
+        } else if (action.includes("Timer")) {
+            activePopup.set("set_time")
+        }
     },
     remove_layers: (obj: any) => {
         let type: "image" | "overlays" | "music" | "microphone" = obj.menu.icon
@@ -811,7 +818,7 @@ function changeSlideAction(obj: any, id: string) {
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "change_style_slide" } })
 
-        let data: any = { id: styleId, indexes }
+        let data: any = { id: styleId, outputs: actions.styleOutputs, indexes }
 
         popupData.set(data)
         activePopup.set("choose_style")
