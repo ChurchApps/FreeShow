@@ -10,8 +10,8 @@
     import Output from "./Output.svelte"
 
     export let video: any = null
-    export let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
-    export let videoTime: number = 0
+    export let videoData: any = {} // { duration: 0, paused: true, muted: false, loop: false }
+    export let videoTime: any = {}
     export let title: string = ""
     export let mirror: boolean = false
     export let preview: boolean = false
@@ -80,6 +80,8 @@
             bind:videoTime
             bind:title
         />
+        <!-- bind:videoData={videoData[outputId]}
+            bind:videoTime={videoTime[outputId]} -->
     {/each}
 </div>
 

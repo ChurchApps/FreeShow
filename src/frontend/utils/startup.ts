@@ -59,6 +59,7 @@ import {
     styles,
     templates,
     textCache,
+    theme,
     themes,
     timers,
     transitionData,
@@ -76,7 +77,7 @@ import { listen, newToast } from "./messages"
 import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
-import { updateSettings, updateSyncedSettings } from "./updateSettings"
+import { updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clone } from "../components/helpers/array"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { startOutputStream } from "../components/drawer/live/recorder"
@@ -220,7 +221,12 @@ export const receiveSTORE: any = {
     EVENTS: (a: any) => events.set(a),
     DRIVE_API_KEY: (a: any) => driveKeys.set(a),
     MEDIA: (a: any) => media.set(a),
-    THEMES: (a: any) => themes.set(Object.keys(a).length ? a : clone(defaultThemes)),
+    THEMES: (a: any) => {
+        themes.set(Object.keys(a).length ? a : clone(defaultThemes))
+
+        // update if themes are loaded after settings
+        if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
+    },
     CACHE: (a: any) => {
         mediaCache.set(a.media || {})
         textCache.set(a.text || {})

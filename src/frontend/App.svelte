@@ -3,6 +3,7 @@
     import type { Resolution } from "../types/Settings"
     import type { DrawerTabIds, TopViews } from "../types/Tabs"
     import ContextMenu from "./components/context/ContextMenu.svelte"
+    import { menuClick } from "./components/context/menuClick"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
     import DrawTools from "./components/draw/DrawTools.svelte"
     import Slide from "./components/draw/Slide.svelte"
@@ -13,7 +14,7 @@
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
     import Pdf from "./components/export/Pdf.svelte"
-    import { copy, cut, deleteAction, paste, selectAll } from "./components/helpers/clipboard"
+    import { copy, cut, deleteAction, duplicate, paste, selectAll } from "./components/helpers/clipboard"
     import { redo, undo } from "./components/helpers/history"
     import { displayOutputs, getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
@@ -77,10 +78,13 @@
         a: () => selectAll(),
         c: () => copy(),
         v: () => paste(),
+        // give time for drawer to not toggle
+        d: () => setTimeout(() => duplicate($selected)),
         x: () => cut(),
         e: () => activePopup.set("export"),
         i: () => activePopup.set("import"),
         n: () => activePopup.set("show"),
+        h: () => activePopup.set("history"),
         m: () => volume.set($volume ? 0 : 1),
         o: () => displayOutputs(),
         s: () => save(),
@@ -88,7 +92,6 @@
         z: () => undo(),
         Z: () => redo(),
         "?": () => activePopup.set("shortcuts"),
-        // F2: () => menuClick("rename"),
     }
     const keys: any = {
         Escape: () => {
@@ -111,6 +114,7 @@
         //     else drawer.set({ height: 40, stored: $drawer.height })
         //   }
         // },
+        F2: () => menuClick("rename", true, null, null, null, $selected),
     }
 
     function keydown(e: any) {

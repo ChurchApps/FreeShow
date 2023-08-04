@@ -8,7 +8,8 @@
         "drop": "Slipp her",
         "search": "Søk",
         "none": "Ingen",
-        "finished": "Fullført"
+        "finished": "Fullført",
+        "system_open": "Vis i systemet"
     },
     "about": {
         "check_updates": "Se etter oppdateringer",
@@ -479,6 +480,7 @@
         "toggle_output": "Veksle utgangsskjerm",
         "change_tab": "Endre fane",
         "change_drawer_tab": "Endre fane i skuffen",
+        "toggle_drawer": "Åpne/lukke skuffen",
         "actions": "Handlinger",
         "clear_history": "Fjern historie",
         "set_key": "Sett toneart",
@@ -563,6 +565,7 @@
         "toggle_output": "Veksle utgangsskjerm",
         "move_to_front": "Flytt fremst",
         "lock_to_output": "Lås til utgang",
+        "place_under_slide": "Plasser under lysbilde",
         "toggle_clock": "Veksle klokke",
         "move_connections": "Flytt alle tilkoblinger til denne"
     },

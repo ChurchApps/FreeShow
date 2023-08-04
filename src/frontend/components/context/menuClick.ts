@@ -12,6 +12,7 @@ import {
     activeRecording,
     activeRename,
     activeShow,
+    audioFolders,
     currentOutputSettings,
     dictionary,
     drawerTabsData,
@@ -19,6 +20,7 @@ import {
     events,
     forceClock,
     media,
+    mediaFolders,
     outLocked,
     outputs,
     overlays,
@@ -95,6 +97,7 @@ const actions: any = {
     // main
     rename: (obj: any) => {
         let id = obj.sel.id
+        if (!id) return
         let data = obj.sel.data[0]
 
         if (id === "slide" || id === "group" || id === "overlay" || id === "template" || id === "player") activePopup.set("rename")
@@ -107,7 +110,7 @@ const actions: any = {
         else if (id === "theme") activeRename.set("theme_" + data.id)
         else if (id === "style") activeRename.set("style_" + data.id)
         else if (id === "output") activeRename.set("output_" + data.id)
-        else if (obj.contextElem.classList.contains("#video_marker")) activeRename.set("marker_" + obj.contextElem.id)
+        else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + obj.contextElem.id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
     },
@@ -125,13 +128,7 @@ const actions: any = {
         removeSlide(obj.sel.data, "remove")
         if (get(activePage) === "edit") refreshEditSlide.set(true)
     },
-    delete_slide: (obj: any) => {
-        let ref: any[] = _show().layouts("active").ref()[0]
-        let slideId: string = ref[obj.sel.data[0].index].id
-        obj.sel = { id: "group", data: [{ id: slideId }] }
-
-        actions.delete(obj)
-    },
+    delete_slide: (obj: any) => actions.delete(obj),
     delete: (obj: any) => {
         if (deleteAction(obj.sel)) return
 
@@ -563,6 +560,16 @@ const actions: any = {
             })
         })
     },
+    system_open: (obj: any) => {
+        let data = obj.sel.data[0]
+        if (obj.sel.id === "category_media") data = get(mediaFolders)[data]
+        else if (obj.sel.id === "category_audio") data = get(audioFolders)[data]
+
+        let path = data?.path
+        if (!path) return
+
+        send(MAIN, ["SYSTEM_OPEN"], path)
+    },
 
     // live
     recording: (obj: any) => {
@@ -587,6 +594,17 @@ const actions: any = {
         overlays.update((a) => {
             obj.sel.data.forEach((id: string) => {
                 a[id].locked = setLocked
+            })
+            return a
+        })
+    },
+    place_under_slide: (obj: any) => {
+        if (obj.sel.id !== "overlay") return
+        let setUnder: boolean = !get(overlays)[obj.sel.data[0]]?.placeUnderSlide
+
+        overlays.update((a) => {
+            obj.sel.data.forEach((id: string) => {
+                a[id].placeUnderSlide = setUnder
             })
             return a
         })

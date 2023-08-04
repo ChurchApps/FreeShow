@@ -8,7 +8,8 @@
         "drop": "Hier fallenlassen",
         "search": "Suche",
         "none": "Nichts",
-        "finished": "Finished"
+        "finished": "Finished",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Auf Updates prüfen",
@@ -479,6 +480,7 @@
         "toggle_output": "Ausgabebildschirm umschalten",
         "change_tab": "Tab wechseln",
         "change_drawer_tab": "Zeichen-Tab wechseln",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Aktionen",
         "clear_history": "Clear history",
         "set_key": "Set key",
@@ -563,6 +565,7 @@
         "toggle_output": "Ausgabe umschalten",
         "move_to_front": "In den Vordergrund",
         "lock_to_output": "Auf Ausgabe sperren",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Uhr umschalten",
         "move_connections": "Move all connected to this"
     },

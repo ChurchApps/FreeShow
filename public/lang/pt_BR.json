@@ -8,7 +8,8 @@
         "drop": "Soltar aqui",
         "search": "Buscar",
         "none": "Nenhum",
-        "finished": "Finished"
+        "finished": "Finished",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Verificar por atualizações",
@@ -479,6 +480,7 @@
         "toggle_output": "Alternar tela de saída",
         "change_tab": "Alterar guia",
         "change_drawer_tab": "Alterar guia de desenho",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Ações",
         "clear_history": "Clear history",
         "set_key": "Set key",
@@ -563,6 +565,7 @@
         "toggle_output": "Alterar saídas",
         "move_to_front": "Mover para frente",
         "lock_to_output": "Travar na saída",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Alternar relógio",
         "move_connections": "Move all connected to this"
     },

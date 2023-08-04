@@ -8,7 +8,8 @@
         "drop": "Rilascia qui",
         "search": "Cerca",
         "none": "Nessuno",
-        "finished": "Finito"
+        "finished": "Finito",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Cerca aggiornamenti",
@@ -479,6 +480,7 @@
         "toggle_output": "Attiva/disattiva la schermata di output",
         "change_tab": "Cambia scheda",
         "change_drawer_tab": "Cambia scheda cassetto",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Azioni",
         "clear_history": "Pulisci cronologia",
         "set_key": "Imposta chiave",
@@ -563,6 +565,7 @@
         "toggle_output": "Attiva/disattiva output",
         "move_to_front": "Muovi in avanti",
         "lock_to_output": "Blocca sull'output",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Attiva/disattiva l'orologio",
         "move_connections": "Sposta tutte le connessioni in questo"
     },

@@ -32,6 +32,7 @@
         "edit._title_bold": ctrl + " + b",
         "actions.copy": ctrl + " + c",
         "actions.duplicate": ctrl + " + d",
+        "actions.toggle_drawer": ctrl + " + d",
         "actions.export": ctrl + " + e",
         "main.search": ctrl + " + f",
         // "": ctrl + " + g",

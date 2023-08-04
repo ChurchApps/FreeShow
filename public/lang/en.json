@@ -8,7 +8,8 @@
         "drop": "Drop here",
         "search": "Search",
         "none": "None",
-        "finished": "Finished"
+        "finished": "Finished",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Look for updates",
@@ -479,6 +480,7 @@
         "toggle_output": "Toggle output screen",
         "change_tab": "Change tab",
         "change_drawer_tab": "Change drawer tab",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Actions",
         "clear_history": "Clear history",
         "set_key": "Set key",
@@ -563,6 +565,7 @@
         "toggle_output": "Toggle output",
         "move_to_front": "Move to front",
         "lock_to_output": "Lock to output",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Toggle clock",
         "move_connections": "Move all connections to this"
     },

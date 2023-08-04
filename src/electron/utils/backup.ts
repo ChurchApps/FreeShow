@@ -1,9 +1,8 @@
 import path from "path"
-import { getDocumentsFolder, readFile, selectFilesDialog, writeFile } from "./files"
-import { stores } from "./store"
 import { toApp } from ".."
 import { MAIN, STORE } from "../../types/Channels"
-import { shell } from "electron"
+import { getDocumentsFolder, openSystemFolder, readFile, selectFilesDialog, writeFile } from "./files"
+import { stores } from "./store"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
 const storesToSave = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA", "DRIVE_API_KEY"]
@@ -27,8 +26,7 @@ export async function startBackup({ showsPath, scripturePath }: any) {
     await syncAllShows()
 
     toApp(MAIN, { channel: "BACKUP", data: { finished: true, path: backupPath } })
-    // open folder in system
-    shell.openPath(backupPath)
+    openSystemFolder(backupPath)
 
     return
 

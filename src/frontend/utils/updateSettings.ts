@@ -64,6 +64,7 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
+import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -94,7 +95,7 @@ export function updateSettings(data: any) {
     // if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
 
     // remote
-    let disabled = get(disabledServers) || {}
+    let disabled = data.disabledServers || {}
     if (disabled.remote === undefined) disabled.remote = false
     if (disabled.stage === undefined) disabled.stage = false
     send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled })
@@ -104,20 +105,10 @@ export function updateSettings(data: any) {
     if (currentTheme) {
         // update colors (upgrading from < v0.9.2)
         if (data.theme === "default" && currentTheme.colors.secondary?.toLowerCase() === "#e6349c") {
-            let newTheme = clone(currentTheme)
-            newTheme.colors["primary"] = "#292c36"
-            newTheme.colors["primary-lighter"] = "#363945"
-            newTheme.colors["primary-darker"] = "#191923"
-            newTheme.colors["primary-darkest"] = "#12121c"
-            newTheme.colors.secondary = "#F0008C"
-            newTheme.colors["secondary-opacity"] = "rgba(240, 0, 140, 0.5)"
-
             themes.update((a) => {
-                a[data.theme] = newTheme
+                a.default = clone(defaultThemes.default)
                 return a
             })
-
-            currentTheme = newTheme
         }
 
         updateThemeValues(currentTheme)

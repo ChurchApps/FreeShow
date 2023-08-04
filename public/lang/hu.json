@@ -8,7 +8,8 @@
         "drop": "Tegye le itt",
         "search": "Keresés",
         "none": "Nics",
-        "finished": "Befejezett"
+        "finished": "Befejezett",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Frissítések ellenőrzése",
@@ -479,6 +480,7 @@
         "toggle_output": "Kimeneti képernyő váltása",
         "change_tab": "Fül váltása",
         "change_drawer_tab": "Fiókszekrény fül váltása",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Műveletek",
         "clear_history": "Előzmények törlése",
         "set_key": "Billentyű beállítása",
@@ -563,6 +565,7 @@
         "toggle_output": "Kimenet váltása",
         "move_to_front": "Előre mozgatás",
         "lock_to_output": "Rögzítés a kimenethez",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Óra váltása",
         "move_connections": "Összes kapcsolat áthelyezése ide"
     },

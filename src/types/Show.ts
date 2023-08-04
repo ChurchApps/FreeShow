@@ -249,6 +249,7 @@ export interface Overlay {
     category: null | string
     items: Item[]
     locked?: boolean
+    placeUnderSlide?: boolean
 }
 
 export interface Templates {

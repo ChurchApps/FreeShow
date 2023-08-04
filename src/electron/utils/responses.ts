@@ -11,7 +11,7 @@ import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
+import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
@@ -36,6 +36,8 @@ export function startExport(_e: any, msg: Message) {
         if (!path) return
         toApp(MAIN, { channel: "EXPORT_PATH", data: path })
     }
+
+    // WIP open in system when completed...
 
     if (msg.data.type === "pdf") createPDFWindow(msg.data)
     else if (msg.data.type === "txt") exportTXT(msg.data)
@@ -120,6 +122,7 @@ const mainResponses: any = {
         systemPreferences.askForMediaAccess("microphone")
     },
     RESTORE: (a: any) => restoreFiles(a),
+    SYSTEM_OPEN: (a: any) => openSystemFolder(a),
 }
 
 export function receiveMain(e: any, msg: Message) {

@@ -8,7 +8,8 @@
         "drop": "Pusti sem",
         "search": "Hľadať",
         "none": "Nič",
-        "finished": "Finished"
+        "finished": "Finished",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Skontrolovať aktualizácie",
@@ -479,6 +480,7 @@
         "toggle_output": "Prepnúť výstupnú obrazovku",
         "change_tab": "Zmeniť tab",
         "change_drawer_tab": "Zmeniť tab zásuviek",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Akcie",
         "clear_history": "Vyčistiť históriu",
         "set_key": "Nastaviť kľúč",
@@ -563,6 +565,7 @@
         "toggle_output": "Prepnúť výstup",
         "move_to_front": "Presunúť dopredu",
         "lock_to_output": "Zamknúť na výstup",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Prepnúť hodiny",
         "move_connections": "Presunúť všetky pripojené sem"
     },

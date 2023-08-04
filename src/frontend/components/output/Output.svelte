@@ -52,10 +52,10 @@
     let slide: any = out.slide || null
     let background: any = out.background || null
 
-    $: if (JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) layers = JSON.parse(JSON.stringify(currentStyle.layers || defaultLayers))
-    $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = JSON.parse(JSON.stringify(currentOutput?.out || {}))
-    $: if (out.refresh || outputId || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) slide = JSON.parse(JSON.stringify(out.slide || null))
-    $: if (out.refresh || outputId || JSON.stringify(background) !== JSON.stringify(out.background || null)) background = JSON.parse(JSON.stringify(out.background || null))
+    $: if (JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) layers = clone(currentStyle.layers || defaultLayers)
+    $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = clone(currentOutput?.out || {})
+    $: if (out.refresh || outputId || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) slide = clone(out.slide || null)
+    $: if (out.refresh || outputId || JSON.stringify(background) !== JSON.stringify(out.background || null)) background = clone(out.background || null)
 
     $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()[0] : null
 
@@ -162,7 +162,7 @@
     }
 
     $: currentLayout = slide ? _show(slide.id).layouts([slide.layout]).ref()[0] : []
-    $: currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? JSON.parse(JSON.stringify(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {})) : null) : null
+    $: currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? clone(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {}) : null) : null
 
     $: if (currentSlide && currentOutput?.style && currentStyle) setTemplateStyle()
     function setTemplateStyle() {
@@ -184,7 +184,7 @@
             })
         } else {
             // reset style
-            currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? JSON.parse(JSON.stringify(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {})) : null) : null
+            currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? clone(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {}) : null) : null
         }
     }
 
@@ -351,12 +351,20 @@
     // prevent updated when editing or when output changes
     let clonedOverlays = {}
     let outOverlays: any[] = []
-    $: if (JSON.stringify(out.overlays) !== JSON.stringify(outOverlays)) updateOverlays()
+    let outUnderlays: any[] = []
+    $: if (JSON.stringify(out.overlays?.filter((a) => !a.placeUnderSlide)) !== JSON.stringify(outOverlays)) updateOverlays()
+    $: if (JSON.stringify(out.overlays?.filter((a) => a.placeUnderSlide)) !== JSON.stringify(outUnderlays)) updateOverlays()
     function updateOverlays() {
         clonedOverlays = clone($overlays)
-        outOverlays = out.overlays
+        if (!out.overlays) return
+
+        outUnderlays = []
+        outOverlays = []
+        out.overlays.forEach((id) => {
+            if (clonedOverlays[id].placeUnderSlide) outUnderlays.push(id)
+            else outOverlays.push(id)
+        })
     }
-    $: console.log(out.refresh, out.overlays, outOverlays, clonedOverlays)
 
     // ANIMATE
     let animation: Animation = { actions: [] }
@@ -502,6 +510,37 @@
         </div>
     {/if}
 
+    <!-- "underlays" -->
+    {#if outUnderlays?.length}
+        {#key out.refresh}
+            {#each outUnderlays as id}
+                {#if clonedOverlays[id]}
+                    {#if overlayTransition.type === "none"}
+                        <div class:key={currentOutput.isKeyOutput}>
+                            <div>
+                                {#each clonedOverlays[id].items as item}
+                                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                        <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} />
+                                    {/if}
+                                {/each}
+                            </div>
+                        </div>
+                    {:else}
+                        <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
+                            <div>
+                                {#each clonedOverlays[id].items as item}
+                                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                                        <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} transitionEnabled />
+                                    {/if}
+                                {/each}
+                            </div>
+                        </div>
+                    {/if}
+                {/if}
+            {/each}
+        {/key}
+    {/if}
+
     {#if slide && layers.includes("slide")}
         {#key slideClone}
             <!-- WIP svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
@@ -587,6 +626,7 @@
                 </div>
             {/if}
         {/if}
+
         <!-- overlays -->
         {#if outOverlays?.length}
             {#key out.refresh}
@@ -618,6 +658,7 @@
             {/key}
         {/if}
     {/if}
+
     {#if mirror || currentOutput.active}
         <Draw />
     {/if}

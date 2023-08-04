@@ -103,6 +103,9 @@
                 <T id="inputs.change_folder" />
             {/if}
         </FolderPicker>
+        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $showsPath)}>
+            <Icon id="launch" white />
+        </Button>
     </span>
 </CombinedInput>
 
@@ -117,6 +120,9 @@
                 <T id="inputs.change_folder" />
             {/if}
         </FolderPicker>
+        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $exportPath)}>
+            <Icon id="launch" white />
+        </Button>
     </span>
 </CombinedInput>
 
@@ -131,6 +137,9 @@
                 <T id="inputs.change_folder" />
             {/if}
         </FolderPicker>
+        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $scripturePath)}>
+            <Icon id="launch" white />
+        </Button>
     </span>
 </CombinedInput>
 
@@ -145,6 +154,9 @@
                 <T id="inputs.change_folder" />
             {/if}
         </FolderPicker>
+        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $recordingPath)}>
+            <Icon id="launch" white />
+        </Button>
     </span>
 </CombinedInput>
 

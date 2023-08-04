@@ -28,7 +28,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         let outs = getActiveOutputs()
         if (outputId) outs = [outputId]
 
-        outs.forEach((id: string) => {
+        outs.forEach((id: string, i: number) => {
             let output: any = a[id]
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
@@ -49,7 +49,11 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             // WIP update bg (muted, loop, time)
             // WIP preview don't get set to 0, just output window
             if (key === "background" && data) {
-                let msg: any = { id, data: { muted: data.muted || false, loop: data.loop || false } }
+                // mute videos in the other output windows if more than one
+                let muted = data.muted || false
+                if (outs.length > 1 && i !== 0) muted = true
+
+                let msg: any = { id, data: { muted, loop: data.loop || false } }
                 if (data.startAt !== undefined) msg.time = data.startAt || 0
 
                 send(OUTPUT, ["UPDATE_VIDEO"], msg)

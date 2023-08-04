@@ -21,7 +21,8 @@
     import Overlay from "./tools/Overlay.svelte"
     import Show from "./tools/Show.svelte"
 
-    $: outputId = getActiveOutputs($outputs, true, true)[0]
+    $: allActiveOutputs = getActiveOutputs($outputs, true, true)
+    $: outputId = allActiveOutputs[0]
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
     // TODO: outputIds for multiple outputs (update multiple videos at the same time)
@@ -172,13 +173,24 @@
 
     // TODO: video gets ((removed)) if video is starting while another is fading out
     let video: any = null
-    let videoData: any = {
-        duration: 0,
-        paused: true,
-        muted: false,
-        loop: false,
-    }
+    let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
     let videoTime: number = 0
+
+    // TODO: video in multiple outputs
+    // let fullVideoData: any = {}
+    // let fullVideoTimes: any = {}
+    // $: videoData = fullVideoData[outputId] || {}
+    // $: videoTime = fullVideoTimes[outputId] || 0
+
+    // $: if ((videoData || videoTime) && allActiveOutputs.length > 1) updateAllActiveOutputs()
+    // function updateAllActiveOutputs() {
+    //     allActiveOutputs.forEach((id) => {
+    //         if (id === outputId) return
+
+    //         fullVideoData[id] = videoData
+    //         fullVideoTimes[id] = videoTime
+    //     })
+    // }
 
     // duration is for some reason NaN sometimes
     $: if (video && videoData && !videoData?.duration) videoData.duration = video.duration
@@ -311,6 +323,7 @@
             <Icon id="hide" white />
         </Button>
         <MultiOutputs {resolution} mirror preview bind:video bind:videoData bind:videoTime bind:title />
+        <!-- <MultiOutputs {resolution} mirror preview bind:video bind:videoData={fullVideoData} bind:videoTime={fullVideoTimes} bind:title /> -->
         <AudioMeter />
     </div>
 

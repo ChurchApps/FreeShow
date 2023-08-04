@@ -8,7 +8,8 @@
         "drop": "Prevuci ovde",
         "search": "Pretraži",
         "none": "Ništa",
-        "finished": "Završeno"
+        "finished": "Završeno",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Proveri da li postoji nova verzija",
@@ -479,6 +480,7 @@
         "toggle_output": "Uključi/isključi ekran sa finalnim prikazom",
         "change_tab": "Promeni tab",
         "change_drawer_tab": "Promeni fioka tab",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Akcije",
         "clear_history": "Očisti istoriju",
         "set_key": "Postavi ključ",
@@ -563,6 +565,7 @@
         "toggle_output": "Uključi/isključi finalne prikaze",
         "move_to_front": "Premesi na vrh",
         "lock_to_output": "Zaključaj na finalni prikaz",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Uključi/isključi sat",
         "move_connections": "Prebaci sve konekcije na ovo"
     },

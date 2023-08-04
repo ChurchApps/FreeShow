@@ -8,7 +8,8 @@
         "drop": "Upuść tutaj",
         "search": "Szukaj",
         "none": "Brak",
-        "finished": "Zakończono"
+        "finished": "Zakończono",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Sprawdź aktualizacje",
@@ -479,6 +480,7 @@
         "toggle_output": "Włącz ekran wyjściowy",
         "change_tab": "Zmień zakładkę",
         "change_drawer_tab": "Zmień zakładkę rysownika",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Akcje",
         "clear_history": "Wyczyść historię",
         "set_key": "Ustaw klucz",
@@ -563,6 +565,7 @@
         "toggle_output": "Przełącz wyjście",
         "move_to_front": "Przenieś na przód",
         "lock_to_output": "Zablokuj na wyjściu",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Przełącz zegar",
         "move_connections": "Przenieś wszystkie połączenia tutaj"
     },

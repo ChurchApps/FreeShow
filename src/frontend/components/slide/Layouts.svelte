@@ -24,7 +24,8 @@
         .sort((a, b) => a.name?.localeCompare(b.name))
 
     let totalTime: string = "0s"
-    $: if (layouts?.[activeLayout]?.slides?.length) getTotalTime()
+    $: layoutSlides = layouts?.[activeLayout]?.slides || []
+    $: if (layoutSlides.length) getTotalTime()
     function getTotalTime() {
         let ref = _show()
             .layouts("active")
@@ -154,7 +155,7 @@
     <span style="display: flex; align-items: center;position: relative;{multipleLayouts || reference || !layouts ? '' : 'width: 100%;'}">
         <!-- TODO: right click to create empty layout... -->
         {#if layouts && !reference}
-            <Button on:click={addLayout} style="white-space: nowrap;{multipleLayouts ? '' : 'width: 100%;'}" center>
+            <Button disabled={!layoutSlides.length && !multipleLayouts} on:click={addLayout} style="white-space: nowrap;{multipleLayouts ? '' : 'width: 100%;'}" center>
                 <Icon size={1.3} id="add" right={!$labelsDisabled && !multipleLayouts} />
                 {#if !$labelsDisabled && !multipleLayouts}<T id="show.new_layout" />{/if}
             </Button>
@@ -162,7 +163,7 @@
 
         <div class="seperator" />
 
-        <Button on:click={() => activePopup.set("next_timer")} title="{$dictionary.popup?.next_timer}{totalTime !== '0s' ? ': ' + totalTime : ''}">
+        <Button disabled={!layoutSlides.length} on:click={() => activePopup.set("next_timer")} title="{$dictionary.popup?.next_timer}{totalTime !== '0s' ? ': ' + totalTime : ''}">
             <Icon size={1.1} id="clock" white={totalTime === "0s"} />
         </Button>
 

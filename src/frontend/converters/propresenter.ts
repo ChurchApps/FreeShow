@@ -130,6 +130,8 @@ function convertToSlides(song: any, extension: string) {
     if (!Array.isArray(groups)) groups = [groups]
     let arrangements = song.arrangements || song.array?.[1]?.RVSongArrangement || []
 
+    // console.log(song)
+
     let slides: any = {}
     let layouts: any[] = [{ id: null, name: "", slides: [] }]
     let media: any = {}
@@ -222,12 +224,16 @@ function getSlideItems(slide: any): any[] {
     let itemStrings = elements.RVTextElement.NSString
     if (!itemStrings) itemStrings = [elements.RVTextElement["@RTFData"]]
     else if (itemStrings["#text"]) itemStrings = [itemStrings]
+
     itemStrings.forEach((content: any) => {
+        // console.log(content)
         let text = decodeBase64(content["#text"] || content)
+        // console.log(text)
 
         if (content["@rvXMLIvarName"] && content["@rvXMLIvarName"] !== "RTFData") return
         // text = convertFromRTFToPlain(text)
         text = decodeHex(text)
+        // console.log(text)
 
         if (text === "Double-click to edit") text = ""
         items.push({ style: itemStyle, lines: splitTextToLines(text) })
@@ -269,7 +275,6 @@ function splitTextToLines(text: string) {
     let lines: any[] = []
     let data = text.split("\n\n")
     lines = data.map((text: any) => ({ align: "", text: [{ style: "", value: text }] }))
-    console.log(lines)
 
     return lines
 }
@@ -313,7 +318,7 @@ function RTFToText(input: string) {
 }
 
 function decodeHex(input: string) {
-    let textStart = input.indexOf("\\cf2\\ltrch")
+    let textStart = input.indexOf("\\ltrch")
     // remove RTF before text
     if (textStart > -1) {
         input = input.slice(input.indexOf(" ", textStart), input.length)
@@ -382,13 +387,13 @@ function convertProToSlides(song: any) {
     let media: any = {}
     let layouts: any = []
 
-    console.log(song)
+    // console.log(song)
 
     let tempLayouts: any = {}
     const tempArrangements: any[] = getArrangements(song.arrangements)
     const tempGroups: any[] = getGroups(song.cueGroups)
     const tempSlides: any[] = getSlides(song.cues)
-    console.log(tempArrangements, tempGroups, tempSlides)
+    // console.log(tempArrangements, tempGroups, tempSlides)
 
     if (!tempArrangements?.length) {
         tempArrangements.push({ groups: Object.keys(tempGroups), name: "" })
@@ -547,9 +552,9 @@ function getItem(item: any) {
 
 function decodeRTF(text: string) {
     text = decodeBase64(text)
-    console.log(text)
+    // console.log(text)
     text = RTFToText(text)
-    console.log(text)
+    // console.log(text)
     return text
 }
 

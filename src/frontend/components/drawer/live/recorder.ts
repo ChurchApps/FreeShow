@@ -65,6 +65,11 @@ function formatTime() {
 
 export function startOutputStream(sourceId: string) {
     // WIP same as Capture.svelte
+
+    // HD
+    const STREAM_WIDTH = 1280
+    const STREAM_HEIGHT = 720
+
     let options: any = {
         audio: false,
         video: {
@@ -73,8 +78,8 @@ export function startOutputStream(sourceId: string) {
             mandatory: {
                 chromeMediaSource: "desktop",
                 chromeMediaSourceId: sourceId,
-                maxWidth: 1920,
-                maxHeight: 1080,
+                maxWidth: STREAM_WIDTH,
+                maxHeight: STREAM_HEIGHT,
                 // maxAspectRatio: 16/9,
                 maxFrameRate: 60,
             },
@@ -93,8 +98,8 @@ export function startOutputStream(sourceId: string) {
             }
 
             let canvas = document.createElement("canvas")
-            canvas.height = 1920
-            canvas.width = 1080
+            canvas.height = STREAM_WIDTH
+            canvas.width = STREAM_HEIGHT
             let ctx = canvas.getContext("2d")
 
             updater()
@@ -105,7 +110,7 @@ export function startOutputStream(sourceId: string) {
                     window.api.send(OUTPUT_STREAM, { channel: "STREAM", data: { base64: jpegUrl } })
                 }
 
-                setTimeout(updater, 100)
+                setTimeout(updater, 80)
             }
         })
         .catch(function (err) {

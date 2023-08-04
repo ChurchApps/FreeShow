@@ -10,17 +10,20 @@ export interface ContextMenuItem {
     disabled?: boolean
 }
 
+// WIP get Cmd when on MacOS
+const ctrl = "Ctrl" // get(os).platform === "darwin" ? "Cmd" :
+
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // MENU
-    save: { label: "actions.save", icon: "save", shortcuts: ["Ctrl+S"] },
-    import: { label: "actions.import", icon: "import" },
-    export_more: { label: "actions.export", icon: "export" },
-    undo: { label: "actions.undo", icon: "undo", shortcuts: ["Ctrl+Z"] },
-    redo: { label: "actions.redo", icon: "redo", shortcuts: ["Ctrl+Y"] },
-    history: { label: "popup.history", icon: "history" },
-    cut: { label: "actions.cut", icon: "cut", shortcuts: ["Ctrl+X"] },
-    copy: { label: "actions.copy", icon: "copy", shortcuts: ["Ctrl+C"] },
-    paste: { label: "actions.paste", icon: "paste", shortcuts: ["Ctrl+V"] },
+    save: { label: "actions.save", icon: "save", shortcuts: [ctrl + "+S"] },
+    import: { label: "actions.import", icon: "import", shortcuts: [ctrl + "+I"] },
+    export_more: { label: "actions.export", icon: "export", shortcuts: [ctrl + "+E"] },
+    undo: { label: "actions.undo", icon: "undo", shortcuts: [ctrl + "+Z"] },
+    redo: { label: "actions.redo", icon: "redo", shortcuts: [ctrl + "+Y"] },
+    history: { label: "popup.history", icon: "history", shortcuts: [ctrl + "+H"] },
+    cut: { label: "actions.cut", icon: "cut", shortcuts: [ctrl + "+X"] },
+    copy: { label: "actions.copy", icon: "copy", shortcuts: [ctrl + "+C"] },
+    paste: { label: "actions.paste", icon: "paste", shortcuts: [ctrl + "+V"] },
     docs: { label: "main.docs", icon: "document" },
     fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
     resetZoom: { label: "actions.resetZoom", icon: "reset" },
@@ -28,11 +31,11 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     zoomOut: { label: "actions.zoomOut", icon: "zoomOut" },
     // MAIN
     quit: { label: "main.quit", icon: "close" },
-    settings: { label: "menu.settings", icon: "settings" },
+    settings: { label: "menu.settings", icon: "settings", shortcuts: ["5"] },
     about: { label: "main.about", icon: "info" },
-    shortcuts: { label: "popup.shortcuts", icon: "shortcut" },
-    rename: { label: "actions.rename", icon: "rename" },
-    delete: { label: "actions.delete", icon: "delete" },
+    shortcuts: { label: "popup.shortcuts", icon: "shortcut", shortcuts: [ctrl + "+?"] },
+    rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
+    delete: { label: "actions.delete", icon: "delete", shortcuts: ["Del"] },
     delete_all: { label: "actions.delete_all", icon: "delete" },
     export: { label: "actions.export", icon: "export" },
     // DRAWER
@@ -54,16 +57,16 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newShow: { label: "new.empty_show", icon: "add" },
     newPrivateShow: { label: "new.private", icon: "private" },
     private: { label: "actions.toggle_private", icon: "private" },
-    duplicate: { label: "actions.duplicate", icon: "duplicate" },
+    duplicate: { label: "actions.duplicate", icon: "duplicate", shortcuts: [ctrl + "+D"] },
     section: { label: "new.section", icon: "section" },
     // SHOWS
     addToProject: { label: "context.addToProject", icon: "project" },
     remove: { label: "actions.remove", icon: "remove" },
     remove_group: { label: "actions.remove", icon: "remove" },
-    remove_slide: { label: "actions.remove_group", icon: "remove" },
+    remove_slide: { label: "actions.remove_group", icon: "remove", shortcuts: ["Del"] },
     delete_slide: { label: "actions.delete", icon: "delete" },
     slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove_group", "SEPERATOR", "LOAD_slide_groups"] },
-    selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
+    selectAll: { label: "context.selectAll", icon: "select", shortcuts: [ctrl + "+A"] },
     newSlide: { label: "new.slide", icon: "add" },
     // newGroup: { label: "context.createNew", icon: "add" },
     // SLIDE VIEWS
@@ -99,10 +102,12 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     play: { label: "media.play", icon: "play" },
     play_no_filters: { label: "media.play_no_filters", icon: "play" },
     favourite: { label: "media.favourite", icon: "star" },
+    system_open: { label: "main.system_open", icon: "launch" },
     // LIVE
     recording: { label: "actions.start_recording", icon: "record" },
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
+    place_under_slide: { label: "context.place_under_slide", icon: "under" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
     // SETTINGS
@@ -141,9 +146,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_shows_button: ["rename", "changeIcon", "delete"],
     category_overlays_button: ["rename", "changeIcon", "delete"],
     category_templates_button: ["rename", "changeIcon", "delete"],
-    category_media_button: ["rename", "delete"],
-    category_audio_button: ["rename", "delete"],
-    category_scripture_button: ["createCollection", "delete"],
+    category_media_button: ["rename", "delete", "SEPERATOR", "system_open"],
+    category_audio_button: ["rename", "delete", "SEPERATOR", "system_open"],
+    category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     // CONTENT
     drawer_show: ["newShowPopup", "newShow", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
@@ -155,19 +160,19 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "play", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
     // , "delete_all"
-    show_media: ["preview", "play", "play_no_filters", "SEPERATOR", "edit"],
-    show_audio: ["preview"],
+    show_media: ["preview", "play", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"],
+    show_audio: ["preview", "SEPERATOR", "system_open"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media_card: ["addToProject", "SEPERATOR", "preview", "play_no_filters", "SEPERATOR", "edit", "favourite"],
+    media_card: ["addToProject", "SEPERATOR", "preview", "play_no_filters", "SEPERATOR", "edit", "favourite", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
-    overlay_card: ["edit", "lock_to_output", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    overlay_card: ["edit", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
-    audio_button: ["addToProject", "SEPERATOR", "preview", "favourite"],
+    audio_button: ["addToProject", "SEPERATOR", "preview", "favourite", "SEPERATOR", "system_open"],
     // "addToFirstSlide"
     live_card: ["recording"],
 
@@ -191,8 +196,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"], // delete_slide
-    slideChild: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete", "remove_slide"],
+    slide: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
+    slideChild: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
     group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
     global_group: ["edit"],
     // global_group: ["rename"],

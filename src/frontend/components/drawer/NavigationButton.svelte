@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, notFound, overlayCategories, templateCategories } from "../../stores"
+    import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, notFound, overlayCategories, scriptures, templateCategories } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -22,8 +22,13 @@
         audio: (c: any) => audioFolders.update((a) => setName(a, c)),
         overlays: (c: any) => overlayCategories.update((a) => setName(a, c)),
         templates: (c: any) => templateCategories.update((a) => setName(a, c)),
+        scripture: (c: any) => scriptures.update((a) => setName(a, c)),
     }
     const setName = (a: any, { name, id }: any) => {
+        // api scriptures
+        if (!a[id]) id = Object.entries(a).find(([_, a]: any) => a.id === id)?.[0]
+        if (!a[id]) return a
+
         if (a[id].default) delete a[id].default
         a[id].name = name
         return a
@@ -60,9 +65,7 @@
             right
         />
         <span id={category.id} style="width: calc(100% - 15px);text-align: left;">
-            {#if id === "scripture"}
-                <p style="margin: 5px;">{category.name}</p>
-            {:else if category.id === "all" || category.id === "unlabeled" || category.id === "favourites"}
+            {#if category.id === "all" || category.id === "unlabeled" || category.id === "favourites"}
                 <p style="margin: 5px;"><T id={category.name} /></p>
             {:else}
                 <HiddenInput

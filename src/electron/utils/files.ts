@@ -2,7 +2,7 @@ import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 // ----- FreeShow -----
 // Functions to interact with local files
 
-import { app, dialog } from "electron"
+import { app, dialog, shell } from "electron"
 import fs from "fs"
 import { Stats } from "original-fs"
 import path from "path"
@@ -100,6 +100,11 @@ export function selectFolderDialog(title: string = "", defaultPath: string = "")
 }
 
 // DATA FOLDERS
+
+export function openSystemFolder(path: string) {
+    // this will show an error alert when path don't exist (trycatch don't work on this)
+    shell.openPath(path)
+}
 
 export function getDocumentsFolder(p: any = null, folderName: string = "Shows"): string {
     if (!p) p = path.resolve(app.getPath("documents"), "FreeShow", folderName)
