@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, dictionary, os, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, dictionary, os, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -361,6 +361,9 @@
             }
 
             history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: ref.showId + ref.id + index } })
+
+            // refresh list view boxes
+            if (plain) refreshListBoxes.set(editIndex)
         }
 
         function setNewLines(a: any) {
@@ -369,7 +372,6 @@
         }
     }
 
-    let previousLinesCount = 100
     function getNewLines() {
         let newLines: Line[] = []
         let pos: number = -1
@@ -399,13 +401,15 @@
                 if (child.nodeName !== "SPAN") return
 
                 let style = plain ? item.lines![i]?.text[j]?.style || "" : child.getAttribute("style") || ""
+                // TODO: pressing enter / backspace will remove any following style in list view
+                // if (plain && !style && i > 0) style = item.lines![i - 1]?.text[j]?.style
+
                 newLines[pos].text.push({ style, value: child.innerText })
                 currentStyle += style
             })
         })
 
-        let linesLength = new Array(...textElem.children).filter((a) => a.innerText).length
-        if (updateHTML || (plain && linesLength < previousLinesCount)) {
+        if (updateHTML) {
             // get caret pos
             let sel = getSelectionRange()
             let lineIndex = sel.findIndex((a) => a?.start !== undefined)
@@ -421,7 +425,6 @@
                 }, 10)
             }
         }
-        previousLinesCount = linesLength
 
         // fix removing all text in a line
         let caret: any = null
@@ -740,6 +743,7 @@ bind:offsetWidth={width} -->
         position: absolute;
         width: 100%;
         overflow: hidden;
+        padding-top: 0;
     }
     .item:hover {
         /* .item:hover > .edit { */
@@ -823,6 +827,7 @@ bind:offsetWidth={width} -->
     }
     .align.plain {
         text-align: left;
+        position: relative;
     }
 
     .edit :global(.break span) {

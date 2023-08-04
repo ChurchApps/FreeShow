@@ -780,7 +780,7 @@
         "theme": "Tema",
         "groups": "Grupos",
         "styles": "Styles",
-        "outputs": "Outputs",
+        "display_settings": "Outputs",
         "actions": "Acciones",
         "display": "Visualización",
         "connection": "Conexión",
@@ -850,7 +850,12 @@
         "reset_all": "Resetear todo",
         "reset_theme": "Resetear tema",
         "reset_themes": "Resetear temas",
-        "export_all": "Exportar todo"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Tipo",

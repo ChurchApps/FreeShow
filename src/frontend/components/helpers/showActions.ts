@@ -313,6 +313,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 fit: get(media)[bg.path]?.fit || "contain",
                 speed: get(media)[bg.path]?.speed || "1",
             }
+
             // outBackground.set(bgData)
             setOutput("background", bgData, false, outputId)
         }

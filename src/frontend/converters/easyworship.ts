@@ -96,12 +96,14 @@ export function convertEasyWorship(data: any) {
         //   console.log("ERROR " + i + ", " + song?.title, songsWords, words, slides)
         // }
 
+        let showId = song?.song_uid || uid()
+
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song?.description || "", slides: layout } }
-        show.name = checkName(song?.title || (Object.values(slides) as any)[0].items[0].lines?.[0].text?.[0].value)
+        show.name = checkName(song?.title || (Object.values(slides) as any)[0].items[0].lines?.[0].text?.[0].value, showId)
         show.settings.template = "default"
 
-        tempShows.push({ id: song?.song_uid || uid(), show })
+        tempShows.push({ id: showId, show })
 
         if (i + 1 < songsWords.length) {
             // wait 5 seconds every 100 seconds to catch up ??

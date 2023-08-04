@@ -21,9 +21,26 @@
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: slideId = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!]?.id || null : null
     $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
-    $: items = slide && !style ? slide.items.filter((item) => !item.type || item.type === "text") : slide?.items || []
 
     $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize
+
+    $: reversedItems = JSON.parse(JSON.stringify(slide?.items || [])).reverse()
+    $: items = style ? reversedItems : combineSlideItems()
+
+    function combineSlideItems() {
+        let oneItem: any = null
+        if (!slide?.items) return []
+        reversedItems
+            .filter((item) => !item.type || item.type === "text")
+            .forEach((item: any) => {
+                if (item.lines) {
+                    if (!oneItem) oneItem = item
+                    else oneItem.lines.push(...item.lines)
+                }
+            })
+
+        return oneItem ? [oneItem] : []
+    }
 </script>
 
 {#if slide}

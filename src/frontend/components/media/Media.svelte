@@ -27,10 +27,10 @@
     export let startAt: number = 0
     export let mirror: boolean = false
 
+    // TODO: this will override preview, if play without filters is active and editing media:
     // get styling
-    $: mediaId = $activeEdit.id || $activeShow?.id
+    $: mediaId = $activeEdit.id && $activeEdit.type === "media" ? $activeEdit.id : $activeShow?.id && ($activeShow.type === "image" || $activeShow.type === "video") ? $activeShow.id : ""
     $: if (mediaId && ($media[mediaId] || currentStyle)) {
-        // TODO: get local show styles?!
         filter = $media[mediaId]?.filter || ""
         flipped = $media[mediaId]?.flipped || false
         fit = currentStyle?.fit || $media[mediaId]?.fit || "contain"

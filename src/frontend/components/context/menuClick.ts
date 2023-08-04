@@ -428,7 +428,7 @@ const actions: any = {
             activePopup.set("edit_event")
         } else if (obj.contextElem?.classList.value.includes("output_button")) {
             currentOutputSettings.set(obj.contextElem.id)
-            settingsTab.set("outputs")
+            settingsTab.set("display_settings")
             activePage.set("settings")
         }
     },

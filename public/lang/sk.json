@@ -780,7 +780,7 @@
         "theme": "Téma",
         "groups": "Skupiny",
         "styles": "Styles",
-        "outputs": "Výstupy",
+        "display_settings": "Výstupy",
         "actions": "Akcie",
         "display": "Obrazovka",
         "connection": "Pripojenia",
@@ -850,7 +850,12 @@
         "reset_all": "Reset všetkého",
         "reset_theme": "Reset témy",
         "reset_themes": "Reset tém",
-        "export_all": "Exportovať všetko"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Typ",

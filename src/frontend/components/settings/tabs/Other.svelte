@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, exportPath, mediaCache, recordingPath, scripturePath, shows, showsPath } from "../../../stores"
+    import { activePopup, alertMessage, dictionary, exportPath, mediaCache, recordingPath, scripturePath, shows, showsCache, showsPath } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -10,6 +10,7 @@
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
+    import { save } from "../../../utils/save"
 
     onMount(() => {
         getCacheSize()
@@ -72,6 +73,20 @@
         newToast("$toast.deleted_cache")
         mediaCache.set({})
         cacheSize = "0 Bytes"
+    }
+
+    // backup
+    function backup() {
+        alertMessage.set($dictionary.settings?.backup_started)
+        activePopup.set("alert")
+        save(false, true)
+    }
+
+    function restore() {
+        showsCache.set({})
+        alertMessage.set($dictionary.settings?.restore_started)
+        activePopup.set("alert")
+        send(MAIN, ["RESTORE"], { showsPath: $showsPath })
     }
 </script>
 
@@ -170,6 +185,18 @@
             <T id="actions.delete_thumbnail_cache" />
             <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({cacheSize})</span>
         </p>
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={backup}>
+        <Icon id="download" right /><T id="settings.backup_all" />
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={restore}>
+        <Icon id="upload" right /><T id="settings.restore" />
     </Button>
 </CombinedInput>
 

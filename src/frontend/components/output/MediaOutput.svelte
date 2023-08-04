@@ -122,6 +122,7 @@
     let speed: string = "1"
 
     $: if (background !== null || currentStyle) updateFilter()
+    $: console.log("FILTER", background, filter)
     function updateFilter() {
         let temp: any = { ...background }
         filter = temp.filter || ""

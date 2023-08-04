@@ -36,7 +36,8 @@ export function convertProPresenter(data: any) {
 
             let layoutID = uid()
             let show = new ShowObj(false, "propresenter", layoutID)
-            show.name = checkName(song.name === "Untitled" ? name : song.name || name)
+            let showId = song["@uuid"] || song.uuid?.string || uid()
+            show.name = checkName(song.name === "Untitled" ? name : song.name || name, showId)
 
             let converted: any = {}
 
@@ -71,7 +72,7 @@ export function convertProPresenter(data: any) {
                 }
             })
 
-            tempShows.push({ id: song["@uuid"] || song.uuid?.string || uid(), show })
+            tempShows.push({ id: showId, show })
         })
 
         setTempShows(tempShows)

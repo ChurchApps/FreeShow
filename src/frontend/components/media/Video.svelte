@@ -45,6 +45,8 @@
     $: if (speed && video) video.playbackRate = Number(speed)
 
     $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
+
+    $: console.log(filter)
 </script>
 
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}" bind:clientWidth={width} bind:clientHeight={height}>

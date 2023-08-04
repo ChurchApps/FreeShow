@@ -529,6 +529,7 @@
                     {/if}
                 </span>
             {:else}
+                <!-- WIP crossfade: in:cReceive={{ key: "slide" }} out:cSend={{ key: "slide" }} -->
                 <span transition:custom={transition} style="pointer-events: none;display: block;">
                     {#if slideClone?.items}
                         {#each slideClone?.items as item}

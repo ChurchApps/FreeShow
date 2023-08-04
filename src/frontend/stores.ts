@@ -80,6 +80,7 @@ export const quickTextCache: Writable<string> = writable("")
 // EDIT
 export const editHistory: Writable<any[]> = writable([])
 export const refreshEditSlide: Writable<boolean> = writable(false)
+export const refreshListBoxes: Writable<number> = writable(-1)
 export const triggerAutoSplit: Writable<boolean> = writable(false)
 
 // OTHER

@@ -780,7 +780,7 @@
         "theme": "Téma",
         "groups": "Csoportok",
         "styles": "Stílusok",
-        "outputs": "Kimenetek",
+        "display_settings": "Kimenetek",
         "actions": "Műveletek",
         "display": "Kijelző",
         "connection": "Kapcsolat",
@@ -850,7 +850,12 @@
         "reset_all": "Minden visszaállítása",
         "reset_theme": "Téma visszaállítása",
         "reset_themes": "Témák visszaállítása",
-        "export_all": "Minden exportálása"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Típus",

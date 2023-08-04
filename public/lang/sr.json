@@ -780,7 +780,7 @@
         "theme": "Tema",
         "groups": "Grupe",
         "styles": "Stilovi",
-        "outputs": "Finalni prikaz",
+        "display_settings": "Finalni prikaz",
         "actions": "Akcije",
         "display": "Displej",
         "connection": "Povezivanje",
@@ -850,7 +850,12 @@
         "reset_all": "Resetuj sve",
         "reset_theme": "Resetuj temu",
         "reset_themes": "Resetuj teme",
-        "export_all": "Izvezi sve"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Tip",

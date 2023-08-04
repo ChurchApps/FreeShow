@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { MediaFit } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-    import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, media, outputs, overlays, showsCache, slidesOptions, styles } from "../../stores"
+    import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, media, outputs, overlays, refreshListBoxes, showsCache, slidesOptions, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
@@ -221,6 +221,12 @@
         if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
         if (layoutSlide["backdrop-filter"]) slideFilter += "backdrop-filter: " + layoutSlide["backdrop-filter"] + ";"
     }
+
+    $: if ($refreshListBoxes >= 0) {
+        setTimeout(() => {
+            refreshListBoxes.set(-1)
+        }, 100)
+    }
 </script>
 
 <!-- TODO: faster loading ? lazy load images? -->
@@ -348,15 +354,15 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
       {@html html}
     </div> -->
         <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
-            <!-- {#key slide.items} -->
-            {#if slide.items}
-                {#each slide.items as item, itemIndex}
-                    {#if item.lines}
-                        <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
-                    {/if}
-                {/each}
-            {/if}
-            <!-- {/key} -->
+            {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
+                {#if slide.items}
+                    {#each slide.items as item, itemIndex}
+                        {#if item.lines}
+                            <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
+                        {/if}
+                    {/each}
+                {/if}
+            {/key}
         </div>
     {/if}
 </div>

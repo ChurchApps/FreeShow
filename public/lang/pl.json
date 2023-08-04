@@ -780,7 +780,7 @@
         "theme": "Motyw",
         "groups": "Grupy",
         "styles": "Style",
-        "outputs": "Wyjścia",
+        "display_settings": "Wyjścia",
         "actions": "Akcje",
         "display": "Ekran",
         "connection": "Połączenie",
@@ -850,7 +850,12 @@
         "reset_all": "Resetuj wszystko",
         "reset_theme": "Resetuj motyw",
         "reset_themes": "Resetuj wszystkie motywy",
-        "export_all": "Eksportuj wszystko"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Typ",

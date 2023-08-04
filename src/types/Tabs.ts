@@ -29,5 +29,5 @@ export interface DrawerTabs {
 }
 
 export type DrawerTabIds = "shows" | "media" | "overlays" | "audio" | "scripture" | "calendar" | "timers" | "templates" | "web"
-export type SettingsTabs = "general" | "theme" | "groups" | "styles" | "outputs" | "actions" | "connection" | "cloud" | "calendar" | "other"
+export type SettingsTabs = "general" | "theme" | "groups" | "styles" | "display_settings" | "actions" | "connection" | "cloud" | "calendar" | "other"
 export type TopViews = "show" | "edit" | "reflow" | "draw" | "stage" | "calendar" | "settings"

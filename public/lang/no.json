@@ -193,7 +193,7 @@
         "end": "Slutt",
         "no_output": "Ingen utgang",
         "remember": "Husk meg",
-        "loading": "Laster...",
+        "loading": "Laster inn...",
         "submit": "Send",
         "password": "Passord",
         "wrong_password": "Feil passord"
@@ -780,7 +780,7 @@
         "theme": "Tema",
         "groups": "Grupper",
         "styles": "Stiler",
-        "outputs": "Utganger",
+        "display_settings": "Utganger",
         "actions": "Handlinger",
         "display": "Skjerm",
         "connection": "Tilkobling",
@@ -850,7 +850,12 @@
         "reset_all": "Tilbakestill alt",
         "reset_theme": "Tilbakestill tema",
         "reset_themes": "Tilbakestill temaer",
-        "export_all": "Eksporter alt"
+        "backup_all": "Sikkerhetskopier alt",
+        "restore": "Gjenopprett",
+        "backup_started": "Sikkerhetskopierer...",
+        "restore_started": "Gjenoppretter...",
+        "backup_finished": "Sikkerhetskopiering fullført!",
+        "restore_finished": "Gjenoppretting fullført!"
     },
     "calendar": {
         "type": "Type",

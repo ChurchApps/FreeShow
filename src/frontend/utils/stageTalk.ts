@@ -8,6 +8,7 @@ import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
 
+// WIP this should not send to all stage, just connected ids
 export function stageListen() {
     stageShows.subscribe((data: any) => {
         data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
@@ -88,6 +89,7 @@ export const receiveSTAGE: any = {
         // initial
         window.api.send(STAGE, { id: msg.id, channel: "TIMERS", data: get(timers) })
         window.api.send(STAGE, { id: msg.id, channel: "EVENTS", data: get(events) })
+        send(STAGE, ["DATA"], { timeFormat: get(timeFormat) })
         return msg
     },
     SLIDES: (msg: ClientMessage) => {

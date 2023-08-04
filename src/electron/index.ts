@@ -15,6 +15,7 @@ import { closeAllOutputs, displayAdded, displayRemoved, outputWindows, receiveOu
 import { loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { startBackup } from "./utils/backup"
 // import checkForUpdates from "./utils/updater"
 
 // ----- STARTUP -----
@@ -249,6 +250,8 @@ function save(data: any) {
         if (!data[key] || JSON.stringify(store.store) === JSON.stringify(data[key])) return
         store.clear()
         store.set(data[key])
+
+        if (data.reset) toApp(STORE, { channel: key, data: data[key] })
     }
 
     // scriptures
@@ -285,7 +288,9 @@ function save(data: any) {
         }
 
         // SAVED
-        toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished } })
+        if (!data.reset) toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished, backup: data.backup } })
+
+        if (data.backup) startBackup({ showsPath: data.path, scripturePath: data.scripturePath })
     }, 1000)
 }
 

@@ -30,6 +30,7 @@ import {
     audioFolders,
     autoOutput,
     currentWindow,
+    dictionary,
     draw,
     drawSettings,
     drawTool,
@@ -190,6 +191,18 @@ const receiveMAIN: any = {
         activePopup.set("alert")
     },
     START_STREAM: ({ sourceId }) => startOutputStream(sourceId),
+    BACKUP: ({ finished, path }) => {
+        if (!finished) return activePopup.set(null)
+
+        alertMessage.set(get(dictionary).settings?.backup_finished + "<br><br>" + path)
+        activePopup.set("alert")
+    },
+    RESTORE: ({ finished }) => {
+        if (!finished) return activePopup.set(null)
+
+        alertMessage.set("settings.restore_finished")
+        activePopup.set("alert")
+    },
 }
 
 export const receiveSTORE: any = {
@@ -329,9 +342,19 @@ const receiveIMPORT: any = {
 function importShow(files: any[]) {
     let tempShows: any[] = []
 
-    files.forEach(({ content }: any) => {
-        let [id, show] = JSON.parse(content)
-        tempShows.push({ id, show: { ...show, name: checkName(show.name) } })
+    files.forEach(({ content, name }: any) => {
+        let id, show
+
+        try {
+            ;[id, show] = JSON.parse(content)
+        } catch (e: any) {
+            console.error(name, e)
+            let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+            console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+            return
+        }
+
+        tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
     })
 
     setTempShows(tempShows)

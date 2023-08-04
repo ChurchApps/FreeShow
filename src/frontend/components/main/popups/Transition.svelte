@@ -17,6 +17,7 @@
     const types: { id: TransitionType; name: string }[] = [
         { id: "none", name: "$:transition.none:$" },
         { id: "fade", name: "$:transition.fade:$" },
+        // { id: "crossfade", name: "$:transition.crossfade:$" },
         { id: "blur", name: "$:transition.blur:$" },
         { id: "scale", name: "$:transition.scale:$" },
         { id: "spin", name: "$:transition.spin:$" },

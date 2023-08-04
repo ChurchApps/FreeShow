@@ -100,7 +100,7 @@
 
             let outCleared = isOutCleared() && !Object.keys($playingAudio).length
             // close popup
-            if ($activePopup !== null && outCleared) activePopup.set(null)
+            if ($activePopup !== null && outCleared && $activePopup !== "initialize") activePopup.set(null)
         },
         Delete: () => deleteAction($selected, "remove"),
         Backspace: () => keys.Delete(),

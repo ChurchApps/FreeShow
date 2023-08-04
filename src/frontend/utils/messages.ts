@@ -155,7 +155,9 @@ const cloudHelpers = {
             return a
         })
 
-        if (!get(driveData).initializeMethod) {
+        let method = get(driveData).initializeMethod
+        if (get(driveData).disableUpload) method = "download"
+        if (!method) {
             if (existingData) {
                 activePopup.set("cloud_method")
                 return

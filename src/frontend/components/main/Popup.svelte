@@ -42,6 +42,8 @@
     import Variable from "./popups/Variable.svelte"
 
     function mousedown(e: any) {
+        if (popupCache === "initialize") return
+
         if (e.target.classList.contains("popup")) activePopup.set(null)
     }
 
@@ -108,9 +110,12 @@
                             <h2 style="text-align: center;padding: 10px 50px;"><T id="popup.{popupCache}" /></h2>
                         {/key}
                     {/if}
-                    <Button style="position: absolute;right: 0;top: 0;height: 100%;" on:click={() => activePopup.set(null)}>
-                        <Icon id="close" size={2} />
-                    </Button>
+
+                    {#if popupCache !== "alert" && popupCache !== "initialize"}
+                        <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 40px;" on:click={() => activePopup.set(null)}>
+                            <Icon id="close" size={2} />
+                        </Button>
+                    {/if}
                 </div>
                 <div style="display: flex;flex-direction: column;margin: 20px;min-width: 38vw;">
                     <svelte:component this={popups[popupCache]} />

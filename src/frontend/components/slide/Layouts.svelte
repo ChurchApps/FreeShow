@@ -252,5 +252,7 @@
         flex-direction: column;
         width: auto;
         /* border-left: 3px solid var(--primary-lighter); */
+
+        z-index: 2;
     }
 </style>

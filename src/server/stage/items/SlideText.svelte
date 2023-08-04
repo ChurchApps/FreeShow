@@ -12,20 +12,21 @@
     export let style: boolean = false
 
     $: stageAutoSize = autoSize ? (slide ? getAutoSize(slide.items[0], parent) : 1) : fontSize
-    $: console.log(slide, slide?.items[0], parent)
-    $: console.log("SIZE", autoSize, fontSize, stageAutoSize)
 
-    $: items = style ? slide.items : combineSlideItems()
+    $: reversedItems = JSON.parse(JSON.stringify(slide.items)).reverse()
+    $: items = style ? reversedItems : combineSlideItems()
 
     function combineSlideItems() {
         let oneItem: any = null
         if (!slide?.items) return []
-        JSON.parse(JSON.stringify(slide.items)).forEach((item: any) => {
-            if (item.lines) {
-                if (!oneItem) oneItem = item
-                else oneItem.lines.push(...item.lines)
-            }
-        })
+        reversedItems
+            .filter((item: any) => !item.type || item.type === "text")
+            .forEach((item: any) => {
+                if (item.lines) {
+                    if (!oneItem) oneItem = item
+                    else oneItem.lines.push(...item.lines)
+                }
+            })
 
         return oneItem ? [oneItem] : []
     }

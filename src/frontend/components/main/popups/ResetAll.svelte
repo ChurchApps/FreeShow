@@ -1,6 +1,7 @@
 <script lang="ts">
     import { STORE } from "../../../../types/Channels"
-    import { activePopup } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, deletedShows, renamedShows, scripturesCache, showsCache, showsPath } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
 
@@ -8,19 +9,37 @@
         window.api.send(STORE, {
             channel: "SAVE",
             data: {
-                settings: null,
-                shows: {},
-                showsCache: {},
-                stageShows: {},
-                projects: { projects: {}, folders: {} },
-                overlays: {},
-                templates: {},
-                events: {},
-                themes: {},
+                reset: true,
+                // SETTINGS
+                SETTINGS: {},
+                SYNCED_SETTINGS: {},
+                // SHOWS
+                SHOWS: {},
+                STAGE_SHOWS: {},
+                // STORES
+                PROJECTS: { projects: {}, folders: {} },
+                OVERLAYS: {},
+                TEMPLATES: {},
+                EVENTS: {},
+                MEDIA: {},
+                THEMES: {},
+                DRIVE_API_KEY: {},
+                CACHE: { media: {}, text: {} },
+                HISTORY: { undo: [], redo: [] },
             },
         })
 
-        activePopup.set(null)
+        showsPath.set(null)
+        // scripturePath.set("")
+        showsCache.set({})
+        scripturesCache.set({})
+        deletedShows.set([])
+        renamedShows.set([])
+
+        activeShow.set(null)
+        activeEdit.set({ items: [] })
+
+        activePopup.set("initialize")
     }
 </script>
 
@@ -29,6 +48,7 @@
 
 <br />
 
-<Button on:click={reset} center dark>
+<Button on:click={reset} center dark red>
+    <Icon id="close" right />
     <T id="popup.continue" />
 </Button>

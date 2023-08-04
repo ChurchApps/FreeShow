@@ -780,7 +780,7 @@
         "theme": "Design",
         "groups": "Gruppen",
         "styles": "Styles",
-        "outputs": "Ausgaben",
+        "display_settings": "Ausgaben",
         "actions": "Aktionen",
         "display": "Anzeige",
         "connection": "Verbindung",
@@ -850,7 +850,12 @@
         "reset_all": "Alles zurücksetzen",
         "reset_theme": "Design zurücksetzen",
         "reset_themes": "Alle Designs zurücksetzen",
-        "export_all": "Alles exportieren"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Typ",

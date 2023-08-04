@@ -50,7 +50,7 @@
 </script>
 
 <CombinedInput>
-    <p><T id="settings.outputs" /></p>
+    <p><T id="settings.display_settings" /></p>
     <Dropdown value={outputsOptions.find((a) => a.id === styleOutputs.type)?.name || ""} options={outputsOptions} on:click={(e) => updateStyle("styleOutputs", { type: e.detail.id, outputs: styleOutputs.outputs || {} })} />
 </CombinedInput>
 

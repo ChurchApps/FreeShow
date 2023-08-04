@@ -5,7 +5,7 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const tabs: SettingsTabs[] = ["general", "outputs", "styles", "groups", "actions", "connection", "cloud", "theme", "other"]
+    const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "groups", "actions", "connection", "cloud", "theme", "other"]
 </script>
 
 <div class="main">

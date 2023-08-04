@@ -15,6 +15,7 @@ import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPat
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
+import { restoreFiles } from "./backup"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -118,6 +119,7 @@ const mainResponses: any = {
         if (process.platform !== "darwin") return
         systemPreferences.askForMediaAccess("microphone")
     },
+    RESTORE: (a: any) => restoreFiles(a),
 }
 
 export function receiveMain(e: any, msg: Message) {
