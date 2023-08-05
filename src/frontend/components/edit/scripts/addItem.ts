@@ -8,7 +8,7 @@ import { getStyles, removeText } from "../../helpers/style"
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
-    let template = activeTemplate ? get(templates)[activeTemplate].items : null
+    let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
     let newData: Item = {
         style: template?.[0]?.style || "top:121px;left:50.5px;height:840px;width:1820px;",

@@ -54,6 +54,7 @@ export interface ShowList extends Show {
 }
 
 export interface Slide {
+    id?: string // used for reference, but might not be removed
     group: null | string
     color: null | string
     globalGroup?: string
