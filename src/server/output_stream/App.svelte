@@ -5,7 +5,7 @@
 
     let socket = io()
     let imgElem: any
-    
+
     socket.on("OUTPUT_STREAM", (msg) => {
         switch (msg.channel) {
             case "STREAM":
@@ -60,7 +60,8 @@
 <svelte:window on:click={click} />
 
 <div class="center" bind:offsetWidth={screenWidth}>
-    <img class:imgHeight bind:this={imgElem} onerror="this.style.display='none'" />
+    <img class:imgHeight bind:this={imgElem} />
+    <!-- on:error={() => (imgElem.style.display = "none")} -->
 </div>
 
 {#if clicked}
@@ -149,7 +150,7 @@
         bottom: 20px;
         width: 60px;
         height: 60px;
-        
+
         display: flex;
         justify-content: center;
         align-items: center;
@@ -159,7 +160,8 @@
         border-radius: 50%;
         border: 2px solid black;
     }
-    button:hover, button:active {
+    button:hover,
+    button:active {
         background-color: rgb(255 255 255 / 0.8);
     }
 </style>
