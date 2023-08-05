@@ -204,6 +204,20 @@ const receiveMAIN: any = {
         alertMessage.set("settings.restore_finished")
         activePopup.set("alert")
     },
+    LOCATE_MEDIA_FILE: ({ path, ref }) => {
+        newToast("$toast.media_replaced")
+        showsCache.update((a) => {
+            let media = a[ref.showId].media[ref.mediaId]
+            if (ref.cloud) {
+                if (!media.cloud) a[ref.showId].media[ref.mediaId].cloud = {}
+                a[ref.showId].media[ref.mediaId].cloud![ref.cloudId] = path
+            } else {
+                a[ref.showId].media[ref.mediaId].path = path
+            }
+
+            return a
+        })
+    },
 }
 
 export const receiveSTORE: any = {

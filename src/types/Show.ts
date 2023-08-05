@@ -214,6 +214,7 @@ export interface Media {
     muted?: boolean
     loop?: boolean
     filters?: string
+    cloud?: { [key: string]: string }
 }
 
 export interface Midi {

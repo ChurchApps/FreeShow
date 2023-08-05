@@ -3,7 +3,28 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputCache, outputs, overlays, playingAudio, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
+import {
+    activeEdit,
+    activePage,
+    activePopup,
+    activeProject,
+    activeShow,
+    activeTimers,
+    driveData,
+    lockedOverlays,
+    media,
+    outLocked,
+    outputCache,
+    outputs,
+    overlays,
+    playingAudio,
+    projects,
+    selected,
+    showsCache,
+    slideTimers,
+    styles,
+    timers,
+} from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getMediaType } from "./media"
@@ -298,20 +319,22 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     if (background) {
         let bg = _show(showId).get("media")[background!]
         let outputBg = get(outputs)[outputIds[0]]?.out?.background
+        let cloudId = get(driveData).mediaId
+        let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
 
-        if (bg && bg.path !== outputBg?.path) {
+        if (bg && bgPath !== outputBg?.path) {
             let bgData: any = {
                 name: bg.name,
-                type: bg.type || getMediaType(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)),
-                path: bg.path,
+                type: bg.type || getMediaType(bgPath.slice(bgPath.lastIndexOf(".") + 1, bgPath.length)),
+                path: bgPath,
                 cameraGroup: bg.cameraGroup || "",
-                id: bg.id || bg.path, // path = cameras
+                id: bg.id || bgPath, // path = cameras
                 muted: bg.muted !== false,
                 loop: bg.loop !== false,
-                filter: getMediaFilter(bg.path),
-                flipped: get(media)[bg.path]?.flipped || false,
-                fit: get(media)[bg.path]?.fit || "contain",
-                speed: get(media)[bg.path]?.speed || "1",
+                filter: getMediaFilter(bgPath),
+                flipped: get(media)[bgPath]?.flipped || false,
+                fit: get(media)[bgPath]?.fit || "contain",
+                speed: get(media)[bgPath]?.speed || "1",
             }
 
             // outBackground.set(bgData)
@@ -332,7 +355,10 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     // audio
     if (data.audio) {
         data.audio.forEach((audio: string) => {
-            let a = _show(showId).get("media")[audio]
+            let a = clone(_show(showId).get("media")[audio])
+            let cloudId = get(driveData).mediaId
+            if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
+
             if (a) playAudio(a, false)
         })
     }
@@ -492,7 +518,7 @@ export function clearOverlays() {
 
 // TODO: output/clearButtons
 export function clearAll() {
-    if (get(outLocked)) return
+    if (get(outLocked) || get(activePopup) || get(selected).id || get(activeEdit).items.length) return
 
     let allCleared = isOutCleared(null) && !Object.keys(get(playingAudio)).length
     if (allCleared) return

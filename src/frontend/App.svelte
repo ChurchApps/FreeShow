@@ -16,7 +16,7 @@
     import Pdf from "./components/export/Pdf.svelte"
     import { copy, cut, deleteAction, duplicate, paste, selectAll } from "./components/helpers/clipboard"
     import { redo, undo } from "./components/helpers/history"
-    import { displayOutputs, getActiveOutputs, getResolution, isOutCleared } from "./components/helpers/output"
+    import { displayOutputs, getActiveOutputs, getResolution } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -53,7 +53,6 @@
         os,
         outputDisplay,
         outputs,
-        playingAudio,
         selected,
         serverData,
         styles,
@@ -98,23 +97,23 @@
             // blur focused elements
             if (document.activeElement !== document.body) {
                 ;(document.activeElement as HTMLElement).blur()
+
+                if (!$activePopup && $selected.id) setTimeout(() => selected.set({ id: null, data: [] }))
                 return
             }
 
-            let outCleared = isOutCleared() && !Object.keys($playingAudio).length
-            // close popup
-            if ($activePopup !== null && outCleared && $activePopup !== "initialize") activePopup.set(null)
+            if ($activePopup === "initialize") return
+
+            // give time so output don't clear also
+            setTimeout(() => {
+                if ($activePopup) activePopup.set(null)
+                else if ($selected.id) selected.set({ id: null, data: [] })
+            })
         },
         Delete: () => deleteAction($selected, "remove"),
         Backspace: () => keys.Delete(),
-        // Enter: (e: any) => {
-        //   if (!e.target.closest(".edit")) {
-        //     // hide / show drawer
-        //     if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
-        //     else drawer.set({ height: 40, stored: $drawer.height })
-        //   }
-        // },
-        F2: () => menuClick("rename", true, null, null, null, $selected),
+        // give time so it don't clear slide
+        F2: () => setTimeout(menuClick("rename", true, null, null, null, $selected)),
     }
 
     function keydown(e: any) {

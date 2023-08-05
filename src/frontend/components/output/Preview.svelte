@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
+    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, selected, showsCache, slideTimers, styles } from "../../stores"
     import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
@@ -53,7 +53,7 @@
             if (!$outLocked) setOutput("background", null)
         },
         F2: () => {
-            if ($outLocked) return false
+            if ($outLocked || $selected.id) return false
 
             setOutput("slide", null)
             return true

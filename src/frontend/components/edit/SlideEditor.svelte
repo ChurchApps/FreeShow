@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import type { MediaFit } from "../../../types/Main"
-    import { activeEdit, activeShow, dictionary, media, outputs, showsCache, styles } from "../../stores"
+    import { activeEdit, activeShow, dictionary, driveData, media, outputs, showsCache, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -52,6 +52,8 @@
     }
 
     $: background = bgId && currentShow ? $showsCache[currentShow].media[bgId] : null
+    $: cloudId = $driveData.mediaId
+    $: bgPath = cloudId && cloudId !== "default" && background ? background.cloud?.[cloudId] || background.path || "" : background?.path || ""
     // $: slideOverlays = layoutSlide.overlays || []
 
     let filter: string = ""
@@ -59,12 +61,12 @@
     let fit: MediaFit = "contain"
     let speed: string = "1"
 
-    $: if (background?.path) {
+    $: if (bgPath) {
         // TODO: use show filter if existing
-        filter = getMediaFilter(background.path)
-        flipped = $media[background.path]?.flipped || false
-        fit = $media[background.path]?.fit || "contain"
-        speed = $media[background.path]?.speed || "1"
+        filter = getMediaFilter(bgPath)
+        flipped = $media[bgPath]?.flipped || false
+        fit = $media[bgPath]?.fit || "contain"
+        speed = $media[bgPath]?.speed || "1"
     }
 
     $: {
@@ -199,7 +201,7 @@
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">
-                            <MediaLoader path={background.path || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} {speed} />
+                            <MediaLoader path={bgPath || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} {speed} />
                         </div>
                     {/if}
                     <!-- edit -->

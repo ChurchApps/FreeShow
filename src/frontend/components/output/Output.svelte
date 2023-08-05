@@ -266,19 +266,19 @@
     let mediaPath: string = ""
     let oldPath: string = ""
     let pathTimeout: any = null
-    $: if (background?.path) getPath()
+    $: if (background?.path || currentStyle?.backgroundImage) getPath()
     function getPath() {
         clearTimeout(pathTimeout)
 
-        if (oldPath === background.path) {
+        if (oldPath === (background?.path || currentStyle?.backgroundImage)) {
             pathTimeout = setTimeout(() => {
-                if (!background?.path) return
-                mediaPath = background.path
+                if (!background?.path && !currentStyle?.backgroundImage) return
+                mediaPath = background?.path || currentStyle?.backgroundImage
             }, mediaTransition.duration + 100)
             return
         }
 
-        mediaPath = background.path
+        mediaPath = background?.path || currentStyle?.backgroundImage
         oldPath = mediaPath
 
         pathTimeout = setTimeout(() => {

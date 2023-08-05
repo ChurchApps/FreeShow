@@ -31,7 +31,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     zoomOut: { label: "actions.zoomOut", icon: "zoomOut" },
     // MAIN
     quit: { label: "main.quit", icon: "close" },
-    settings: { label: "menu.settings", icon: "settings", shortcuts: ["5"] },
+    settings: { label: "menu.settings", icon: "settings" },
     about: { label: "main.about", icon: "info" },
     shortcuts: { label: "popup.shortcuts", icon: "shortcut", shortcuts: [ctrl + "+?"] },
     rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },

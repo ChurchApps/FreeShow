@@ -2,12 +2,14 @@
     import { onMount } from "svelte"
     import type { MediaFit } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-    import { activeShow, activeTimers, dictionary, fullColors, groupNumbers, groups, media, outputs, overlays, refreshListBoxes, showsCache, slidesOptions, styles } from "../../stores"
+    import { activeShow, activeTimers, checkedFiles, dictionary, driveData, fullColors, groupNumbers, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, showsCache, slidesOptions, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
+    import { clone } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { GetLayoutRef } from "../helpers/get"
+    import { checkMedia, getFileName } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import { getMediaFilter } from "../helpers/showActions"
     import SelectElem from "../system/SelectElem.svelte"
@@ -15,6 +17,8 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { MAIN } from "../../../types/Channels"
+    import { send } from "../../utils/request"
 
     export let slide: Slide
     export let layoutSlide: SlideData
@@ -61,6 +65,43 @@
         })
     }
 
+    $: bg = clone(background || ghostBackground)
+    $: cloudId = $driveData.mediaId
+    $: if (bg) locateBackground()
+    async function locateBackground() {
+        let showId = $activeShow!.id
+        let mediaId = layoutSlide.background!
+
+        let checkCloud = cloudId && cloudId !== "default"
+        if (checkCloud) {
+            let cloudBg = bg.cloud?.[cloudId]
+            if (cloudBg) bg.path = cloudBg
+        }
+
+        if (!background || $checkedFiles.includes(bg.path)) return
+
+        checkedFiles.set([...$checkedFiles, bg.path])
+        let exists = (await checkMedia(bg.path)) === "true"
+
+        // check for other potentially mathing mediaFolders
+        if (!exists) {
+            let fileName = getFileName(bg.path)
+            send(MAIN, ["LOCATE_MEDIA_FILE"], { fileName, folders: Object.values($mediaFolders).map((a) => a.path), ref: { showId, mediaId, cloudId: checkCloud ? cloudId : "" } })
+            return
+        }
+
+        if (!checkCloud) return
+
+        // set cloud path to bg.path
+        showsCache.update((a) => {
+            let media = a[showId].media[mediaId]
+            if (!media.cloud) a[showId].media[mediaId].cloud = {}
+            a[showId].media[mediaId].cloud![cloudId] = bg.path
+
+            return a
+        })
+    }
+
     let duration: number = 0
     // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
     // $: name = full_name.slice(0, full_name.lastIndexOf("."))
@@ -69,9 +110,9 @@
     let flipped: boolean = false
     let fit: MediaFit = "contain"
 
-    $: if (background?.path || ghostBackground?.path) {
+    $: if (bg?.path) {
         // TODO: use show filter if existing
-        let path: string = background?.path || ghostBackground?.path!
+        let path: string = bg?.path
         filter = getMediaFilter(path)
         flipped = $media[path]?.flipped || false
         fit = $media[path]?.fit || "contain"
@@ -269,14 +310,14 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     disableStyle={viewMode === "lyrics" && !noQuickEdit}
                     relative={viewMode === "lyrics" && !noQuickEdit}
                 >
-                    {#if !altKeyPressed && (background || ghostBackground) && (viewMode !== "lyrics" || noQuickEdit)}
+                    {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
                             <MediaLoader
                                 name={$dictionary.error?.load}
-                                path={background?.path || background?.id || ghostBackground?.path || ghostBackground?.id || ""}
-                                cameraGroup={background?.cameraGroup || ghostBackground?.cameraGroup || ""}
-                                type={background && background?.type !== "player" ? background?.type : ghostBackground?.type !== "player" ? ghostBackground?.type : null}
-                                loadFullImage={!!(background?.path || background?.id)}
+                                path={bg.path || bg.id || ""}
+                                cameraGroup={bg.cameraGroup || ""}
+                                type={bg.type !== "player" ? bg.type : null}
+                                loadFullImage={!!(bg.path || bg.id)}
                                 {filter}
                                 {flipped}
                                 {fit}

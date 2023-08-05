@@ -4,6 +4,7 @@ import { activePopup, driveData, driveKeys, popupData, showsPath } from "../stor
 import { newToast } from "./messages"
 import { send } from "./request"
 import { closeApp, save } from "./save"
+import { uid } from "uid"
 
 export function validateKeys(file: string) {
     let keys = JSON.parse(file)
@@ -19,6 +20,12 @@ export function validateKeys(file: string) {
         newToast(error)
         return
     }
+
+    // set media id
+    driveData.update((a) => {
+        if (!a.mediaId || a.mediaId === "default") a.mediaId = uid(8)
+        return a
+    })
 
     driveKeys.set(keys)
     save()

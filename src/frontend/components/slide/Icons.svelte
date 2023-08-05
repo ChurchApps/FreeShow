@@ -39,6 +39,12 @@
         })
         send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
     }
+
+    $: audio = layoutSlide.audio?.length ? _show("active").get().media[layoutSlide.audio[0]] || {} : {}
+    $: audioPath = audio.path
+    // no need for cloud when audio can be stacked
+    // $: cloudId = $driveData.mediaId
+    // $: audioPath = cloudId && cloudId !== "default" ? audio.cloud?.[cloudId] || audio.path : audio.path
 </script>
 
 <!-- TODO: check if exists -->
@@ -136,7 +142,7 @@
             </div>
             <span>
                 {#if layoutSlide.audio.length === 1}
-                    {#await getAudioDuration(_show("active").get().media[layoutSlide.audio[0]]?.path)}
+                    {#await getAudioDuration(audioPath || "")}
                         <p>00:00</p>
                     {:then duration}
                         <p>{joinTime(secondsToTime(duration))}</p>

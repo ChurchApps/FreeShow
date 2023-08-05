@@ -11,7 +11,7 @@ import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
+import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, locateMediaFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
@@ -123,6 +123,7 @@ const mainResponses: any = {
     },
     RESTORE: (a: any) => restoreFiles(a),
     SYSTEM_OPEN: (a: any) => openSystemFolder(a),
+    LOCATE_MEDIA_FILE: (a: any) => locateMediaFile(a),
 }
 
 export function receiveMain(e: any, msg: Message) {

@@ -213,9 +213,12 @@
             ;(document.activeElement as HTMLElement).blur()
             window.getSelection()?.removeAllRanges()
             if ($activeEdit.items.length) {
-                activeEdit.update((a) => {
-                    a.items = []
-                    return a
+                // give time so output don't clear
+                setTimeout(() => {
+                    activeEdit.update((a) => {
+                        a.items = []
+                        return a
+                    })
                 })
             }
         }

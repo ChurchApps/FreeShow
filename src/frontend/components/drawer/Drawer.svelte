@@ -34,7 +34,6 @@
     function mousemove(e: any) {
         if (!mouse) return
 
-        autoDrawer = false
         drawer.set({ height: getHeight(window.innerHeight - e.clientY - mouse.offsetY), stored: null })
 
         selected.set({ id: null, data: [] })
@@ -98,7 +97,6 @@
     function search() {
         if (storeHeight === null) return
 
-        autoDrawer = true
         click(null)
         // if ($activeDrawerTab === "shows") {
         // }
@@ -108,7 +106,6 @@
 
     let firstMatch: null | any = null
     let searchElem: any
-    let autoDrawer: boolean = false
     function keydown(e: any) {
         if (e.ctrlKey && e.key === "f") {
             searchActive = false
@@ -127,14 +124,6 @@
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: -1, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
             searchValue = ""
-            setTimeout(() => {
-                searchElem.blur()
-            }, 10)
-
-            if (!autoDrawer || storeHeight !== null) {
-                click(null)
-                autoDrawer = false
-            }
         }
     }
 

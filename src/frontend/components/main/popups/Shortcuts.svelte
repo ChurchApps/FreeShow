@@ -36,9 +36,9 @@
         "actions.export": ctrl + " + e",
         "main.search": ctrl + " + f",
         // "": ctrl + " + g",
-        // "": ctrl + " + h",
-        "actions.import": ctrl + " + i",
+        "popup.history": ctrl + " + h",
         "edit._title_italic": ctrl + " + i",
+        "actions.import": ctrl + " + i",
         // "": ctrl + " + j",
         // "": ctrl + " + k",
         "preview._lock": ctrl + " + l",
@@ -60,12 +60,17 @@
 
         f: "SEPERATOR",
 
+        "actions.remove_selection": "esc",
         "clear.all": "esc",
         // "clear.all": ".",
         "clear.background": "f1",
+        "actions.rename": "f2",
         "clear.slide": "f2",
         "clear.overlays": "f3",
         "clear.audio": "f4",
+        // "preview._next_slide": "f5",
+        // "preview._next_slide": "Arrow Right",
+
         // "clear.nextTimer": "f5",
         // "from start": "f5",
         // MAC: cmd + shift + f

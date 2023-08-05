@@ -240,3 +240,55 @@ export function readExifData(e: any, data: any) {
         console.log("Error: " + error.message)
     }
 }
+
+// SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
+export function locateMediaFile({ fileName, folders, ref }: any) {
+    console.log(1, fileName)
+    let matches: string[] = []
+    findMatches()
+
+    console.log(3, matches)
+
+    if (matches.length !== 1) return
+    toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
+
+    /////
+
+    function findMatches() {
+        for (const folderPath of folders) {
+            if (matches.length > 1) return
+            let files = readFolder(folderPath)
+            console.log("FILES", files)
+
+            for (const name of files) {
+                if (matches.length > 1) return
+
+                console.log(2, name)
+                if (name === fileName) {
+                    let p: string = path.join(folderPath, name)
+                    matches.push(p)
+                }
+            }
+
+            if (matches.length) return
+
+            for (const name of files) {
+                if (matches.length) return
+
+                let p: string = path.join(folderPath, name)
+                let fileStat = getFileStats(p)
+                if (fileStat?.folder) {
+                    let files = readFolder(p)
+                    for (const name of files) {
+                        if (matches.length > 1) return
+
+                        if (name === fileName) {
+                            let p: string = path.join(folderPath, name)
+                            matches.push(p)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
