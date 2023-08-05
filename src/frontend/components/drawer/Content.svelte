@@ -4,6 +4,7 @@
     import Overlays from "./Overlays.svelte"
     import Shows from "./Shows.svelte"
     import Templates from "./Templates.svelte"
+    import Variables from "./Variables.svelte"
     import Audio from "./audio/Audio.svelte"
     import Scripture from "./bible/Scripture.svelte"
     import Effects from "./effects/Effects.svelte"
@@ -53,7 +54,11 @@
     {:else if id === "media"}
         <Media {active} {searchValue} bind:streams />
     {:else if id === "overlays"}
-        <Overlays {active} {searchValue} />
+        {#if active === "variables"}
+            <Variables {searchValue} />
+        {:else}
+            <Overlays {active} {searchValue} />
+        {/if}
     {:else if id === "audio"}
         <Audio {active} {searchValue} />
     {:else if id === "effects"}
@@ -62,7 +67,7 @@
         <Scripture {active} bind:searchValue bind:bibles />
     {:else if id === "calendar"}
         {#if active === "timer"}
-            <Timers {active} {searchValue} />
+            <Timers {searchValue} />
         {:else}
             <Calendar {active} {searchValue} />
         {/if}

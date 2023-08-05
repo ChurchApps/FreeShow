@@ -8,7 +8,8 @@
         "drop": "Hier fallenlassen",
         "search": "Suche",
         "none": "Nichts",
-        "finished": "Finished"
+        "finished": "Finished",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Auf Updates prüfen",
@@ -275,6 +276,7 @@
         "player": "Player",
         "live": "Live",
         "timers": "Timer",
+        "variables": "Variables",
         "templates": "Vorlagen",
         "web": "Web"
     },
@@ -315,6 +317,7 @@
         "find_replace": "Find and replace",
         "edit_list": "Edit list",
         "timer": "Timer",
+        "variable": "Variable",
         "transition": "Übergang",
         "delete_show": "Show löschen",
         "delete_show_confirmation": "Bist du sicher, dass du löschen möchtest?",
@@ -322,6 +325,8 @@
         "choose_screen": "Wähle Bildschirm",
         "change_output_values": "Change output values",
         "choose_style": "Choose style",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Timer zur nächsten Folie",
         "import": "Importieren",
         "export": "Exportieren",
@@ -364,6 +369,7 @@
         "now": "now!",
         "no_video_id": "No video ID",
         "no_name": "No name",
+        "media_replaced": "Missing media file replaced with match.",
         "lyrics_undefined": "Could not find any lyrics!",
         "lyrics_copied": "Lyrics copied from Genius!",
         "no_pdf_linux": "Can't export as PDF on Linux.",
@@ -383,6 +389,7 @@
         "project": "Neues Projekt",
         "section": "New section",
         "timer": "Neuer Timer",
+        "variable": "New variable",
         "category": "Neue Kategorie",
         "private": "Neue private Show",
         "folder": "Neuer Ordner",
@@ -413,6 +420,9 @@
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "change_output_style": "Change output style",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Privat",
         "view_private": "Show private",
         "import": "Importieren",
@@ -432,6 +442,7 @@
         "paste": "Einfügen",
         "pasteAndMatchStyle": "Einfügen und Stil anpassen",
         "selectAll": "Alle Auswählen",
+        "remove_selection": "Remove selection",
         "speech": "Sprechen",
         "startSpeaking": "Sprechen beginnen",
         "stopSpeaking": "Sprechen beenden",
@@ -452,6 +463,8 @@
         "add_time_marker": "Add time marker",
         "bind_to": "Bind to",
         "remove_binding": "Remove binding",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Choose custom",
         "format": "Format",
         "find_replace": "Find and replace text",
@@ -469,6 +482,7 @@
         "toggle_output": "Ausgabebildschirm umschalten",
         "change_tab": "Tab wechseln",
         "change_drawer_tab": "Zeichen-Tab wechseln",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Aktionen",
         "clear_history": "Clear history",
         "set_key": "Set key",
@@ -489,6 +503,17 @@
         "start_recording": "Start recording",
         "stop_recording": "Stop recording"
     },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "item": "item",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
+    },
     "cloud": {
         "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
         "tip_api": "You have to provide your own free Google API key so the program can automatically upload files to your Google Drive.",
@@ -496,6 +521,7 @@
         "tip_guide": "Click here for a guide.",
         "enable": "Automatic sync on startup and save",
         "disable_upload": "Disable uploading data",
+        "media_id": "Media path ID",
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",
         "update_key": "Update keys file",
@@ -542,6 +568,7 @@
         "toggle_output": "Ausgabe umschalten",
         "move_to_front": "In den Vordergrund",
         "lock_to_output": "Auf Ausgabe sperren",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Uhr umschalten",
         "move_connections": "Move all connected to this"
     },
@@ -646,6 +673,7 @@
         "live": "Live",
         "audio": "Audio",
         "timer": "Timer",
+        "variable": "Variable",
         "visualizer": "Visualizer",
         "icon": "Symbol"
     },
@@ -758,7 +786,7 @@
         "theme": "Design",
         "groups": "Gruppen",
         "styles": "Styles",
-        "outputs": "Ausgaben",
+        "display_settings": "Ausgaben",
         "actions": "Aktionen",
         "display": "Anzeige",
         "connection": "Verbindung",
@@ -828,7 +856,12 @@
         "reset_all": "Alles zurücksetzen",
         "reset_theme": "Design zurücksetzen",
         "reset_themes": "Alle Designs zurücksetzen",
-        "export_all": "Alles exportieren"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Typ",
@@ -900,12 +933,22 @@
     },
     "easings": {
         "linear": "Linear",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastisch",
         "bounce": "Abprallen",
         "back": "Springen",
         "circ": "Kreisförmig",
         "cubic": "Kubisch",
         "sine": "Sinusförmig"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Januar",

@@ -14,7 +14,25 @@
     $: sortedStageSlides = Object.entries($stageShows)
         .map(([id, show]) => ({ id, ...show }))
         .sort((a, b) => a.name.localeCompare(b.name))
+
+    function keydown(e: any) {
+        if (e.ctrlKey || e.metaKey) return
+
+        let nextTab = -1
+        let currentTabIndex = sortedStageSlides.findIndex((a) => a.id === $activeStage.id)
+
+        if (e.key === "ArrowDown") {
+            nextTab = Math.min(sortedStageSlides.length - 1, currentTabIndex + 1)
+        } else if (e.key === "ArrowUp") {
+            nextTab = Math.max(0, currentTabIndex - 1)
+        }
+
+        if (nextTab < 0 || !sortedStageSlides[nextTab]) return
+        activeStage.set({ id: sortedStageSlides[nextTab].id, items: [] })
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div class="main">
     {#if sortedStageSlides.length}

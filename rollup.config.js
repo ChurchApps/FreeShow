@@ -91,6 +91,7 @@ export default [
     webServer("remote", { typescript: true }),
     webServer("stage"),
     webServer("controller"),
+    webServer("output_stream"),
     // webServer("cam"),
 ]
 

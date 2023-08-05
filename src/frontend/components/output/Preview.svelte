@@ -1,11 +1,11 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, showsCache, slideTimers, styles } from "../../stores"
+    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, selected, showsCache, slideTimers, styles } from "../../stores"
     import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
-    import { clearAll, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
+    import { checkNextAfterMedia, clearAll, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
@@ -21,7 +21,8 @@
     import Overlay from "./tools/Overlay.svelte"
     import Show from "./tools/Show.svelte"
 
-    $: outputId = getActiveOutputs($outputs, true, true)[0]
+    $: allActiveOutputs = getActiveOutputs($outputs, true, true)
+    $: outputId = allActiveOutputs[0]
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
     // TODO: outputIds for multiple outputs (update multiple videos at the same time)
@@ -45,14 +46,14 @@
             // if ($activePage !== "show") return
             if ($presenterControllerKeys) {
                 // clearVideo()
-                clearAll()
+                setTimeout(clearAll)
             } else if (fullscreen) fullscreen = false
         },
         F1: () => {
             if (!$outLocked) setOutput("background", null)
         },
         F2: () => {
-            if ($outLocked) return false
+            if ($outLocked || $selected.id) return false
 
             setOutput("slide", null)
             return true
@@ -172,13 +173,24 @@
 
     // TODO: video gets ((removed)) if video is starting while another is fading out
     let video: any = null
-    let videoData: any = {
-        duration: 0,
-        paused: true,
-        muted: false,
-        loop: false,
-    }
+    let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
     let videoTime: number = 0
+
+    // TODO: video in multiple outputs
+    // let fullVideoData: any = {}
+    // let fullVideoTimes: any = {}
+    // $: videoData = fullVideoData[outputId] || {}
+    // $: videoTime = fullVideoTimes[outputId] || 0
+
+    // $: if ((videoData || videoTime) && allActiveOutputs.length > 1) updateAllActiveOutputs()
+    // function updateAllActiveOutputs() {
+    //     allActiveOutputs.forEach((id) => {
+    //         if (id === outputId) return
+
+    //         fullVideoData[id] = videoData
+    //         fullVideoTimes[id] = videoTime
+    //     })
+    // }
 
     // duration is for some reason NaN sometimes
     $: if (video && videoData && !videoData?.duration) videoData.duration = video.duration
@@ -272,18 +284,9 @@
             clearing = false
         }, 1000)
 
-        // check nextAfterMedia
-        let slideOut = currentOutput.out?.slide
-        if (slideOut) {
-            let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
-            let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
-            if (nextAfterMedia) {
-                // videoTime = 0
-                setTimeout(() => {
-                    nextSlide(null, false, false, true, true, outputId)
-                }, 100)
-                return
-            }
+        if (checkNextAfterMedia()) {
+            // videoTime = 0
+            return
         }
 
         if (videoData.loop) return
@@ -320,6 +323,7 @@
             <Icon id="hide" white />
         </Button>
         <MultiOutputs {resolution} mirror preview bind:video bind:videoData bind:videoTime bind:title />
+        <!-- <MultiOutputs {resolution} mirror preview bind:video bind:videoData={fullVideoData} bind:videoTime={fullVideoTimes} bind:title /> -->
         <AudioMeter />
     </div>
 

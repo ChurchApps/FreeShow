@@ -10,6 +10,9 @@
 
     function changeSlideAction(id: string, save: boolean = true) {
         let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
+
+        if (id === "outputStyle" && !data[id]) delete data.styleOutputs
+
         history({ id: "SHOW_LAYOUT", save, newData: { key: "actions", data, indexes: [index] } })
     }
 
@@ -19,6 +22,7 @@
     // }
 
     const actionsList = [
+        { id: "animate", title: $dictionary.popup?.animate, icon: "stars", white: true },
         { id: "startShow", name: ({ id }) => $shows[id]?.name || "", title: $dictionary.preview?._start, icon: "showIcon", white: true },
         { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward", white: true },
         { id: "startTimer", title: $dictionary.actions?.start_timer, icon: "timer", white: true },

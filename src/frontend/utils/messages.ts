@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
 import {
@@ -11,6 +11,7 @@ import {
     categories,
     customizedIcons,
     defaultProjectName,
+    disabledServers,
     drawSettings,
     driveData,
     driveKeys,
@@ -39,6 +40,7 @@ import {
     remotePassword,
     saved,
     scripturePath,
+    serverData,
     showsCache,
     showsPath,
     slidesOptions,
@@ -51,6 +53,7 @@ import {
     timeFormat,
     timers,
     toastMessages,
+    variables,
     videoExtensions,
     videoMarkers,
     webFavorites,
@@ -67,6 +70,7 @@ export function listen() {
     window.api.receive(REMOTE, (msg: ClientMessage) => client(REMOTE, msg))
     window.api.receive(STAGE, (msg: ClientMessage) => client(STAGE, msg))
     window.api.receive(CONTROLLER, (msg: ClientMessage) => client(CONTROLLER, msg))
+    window.api.receive(OUTPUT_STREAM, (msg: ClientMessage) => client(OUTPUT_STREAM, msg))
 
     window.api.receive(OPEN_FILE, (msg: ClientMessage) => {
         if (fileSelected[msg.channel]) fileSelected[msg.channel](msg.data)
@@ -102,6 +106,7 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["TEMPLATES"], get(templates))
     send(OUTPUT, ["OVERLAYS"], get(overlays))
     send(OUTPUT, ["TIMERS"], get(timers))
+    send(OUTPUT, ["VARIABLES"], get(variables))
     send(OUTPUT, ["EVENTS"], get(events))
 }
 
@@ -150,7 +155,9 @@ const cloudHelpers = {
             return a
         })
 
-        if (!get(driveData).initializeMethod) {
+        let method = get(driveData).initializeMethod
+        if (get(driveData).disableUpload) method = "download"
+        if (!method) {
             if (existingData) {
                 activePopup.set("cloud_method")
                 return
@@ -209,6 +216,8 @@ const saveList: { [key in SaveList]: any } = {
     timeFormat: timeFormat,
     maxConnections: maxConnections,
     ports: ports,
+    disabledServers: disabledServers,
+    serverData: serverData,
     defaultProjectName: defaultProjectName,
     events: events,
     showsPath: showsPath,
@@ -245,6 +254,7 @@ const saveList: { [key in SaveList]: any } = {
     templateCategories: templateCategories,
     templates: templates,
     timers: timers,
+    variables: variables,
     theme: theme,
     themes: themes,
     transitionData: transitionData,

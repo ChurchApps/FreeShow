@@ -8,7 +8,7 @@ import { getStyles, removeText } from "../../helpers/style"
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
-    let template = activeTemplate ? get(templates)[activeTemplate].items : null
+    let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
     let newData: Item = {
         style: template?.[0]?.style || "top:121px;left:50.5px;height:840px;width:1820px;",
@@ -23,6 +23,7 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     else if (type === "clock") newData.clock = { type: "digital", seconds: false }
     else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""
+    else if (type === "variable") newData.variable = { id: "" }
     else if (type === "icon" && options.color) {
         // make square and center
         let size: number = 300

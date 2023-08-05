@@ -39,6 +39,8 @@ export function joinTimeBig(time: number) {
 }
 
 export function dateToString(date: any, full: boolean = false, d: any = {}): string {
+    if (!date) return ""
+
     date = new Date(date)
     let year: any = date.getFullYear()
     let month: any = date.getMonth() + 1

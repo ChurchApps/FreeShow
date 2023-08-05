@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
-    import { activeDrawerTab, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -34,7 +34,6 @@
     function mousemove(e: any) {
         if (!mouse) return
 
-        autoDrawer = false
         drawer.set({ height: getHeight(window.innerHeight - e.clientY - mouse.offsetY), stored: null })
 
         selected.set({ id: null, data: [] })
@@ -98,7 +97,6 @@
     function search() {
         if (storeHeight === null) return
 
-        autoDrawer = true
         click(null)
         // if ($activeDrawerTab === "shows") {
         // }
@@ -108,14 +106,15 @@
 
     let firstMatch: null | any = null
     let searchElem: any
-    let autoDrawer: boolean = false
     function keydown(e: any) {
-        if (e.ctrlKey && e.key.toLowerCase() === "f") {
+        if (e.ctrlKey && e.key === "f") {
             searchActive = false
             searchActive = true
 
             // change to "Show" when searching when drawer is closed
             if ($drawer.height <= minHeight) activeDrawerTab.set("shows")
+        } else if (e.ctrlKey && e.key === "d") {
+            if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
             // TODO: first match
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject) return
@@ -125,14 +124,6 @@
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: -1, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
             searchValue = ""
-            setTimeout(() => {
-                searchElem.blur()
-            }, 10)
-
-            if (!autoDrawer || storeHeight !== null) {
-                click(null)
-                autoDrawer = false
-            }
         }
     }
 

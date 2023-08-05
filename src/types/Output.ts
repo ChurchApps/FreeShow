@@ -27,3 +27,18 @@ export interface Output {
         transition?: null | OutTransition
     }
 }
+
+export interface Animation {
+    actions: AnimationAction[]
+    repeat?: boolean
+    easing?: string
+}
+
+export interface AnimationAction {
+    type: "change" | "set" | "wait"
+    id?: "background" | "text" | "item"
+    key?: string
+    extension?: string
+    value?: number
+    duration: number
+}

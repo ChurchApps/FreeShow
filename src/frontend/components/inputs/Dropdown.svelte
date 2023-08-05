@@ -52,7 +52,7 @@
     }
 
     function formatId(value: string) {
-        return "id_" + value.replace(/[\W_]+/g, "")
+        return "id_" + value?.replace(/[\W_]+/g, "")
     }
 </script>
 

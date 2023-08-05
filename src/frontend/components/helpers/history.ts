@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activePage, historyCacheCount, selected, undoHistory } from "../../stores"
+import { activePage, driveData, historyCacheCount, selected, undoHistory } from "../../stores"
 import type { ShowRef } from "./../../../types/Projects"
 import { redoHistory } from "./../../stores"
 import { clone } from "./array"
@@ -143,9 +143,15 @@ export function history(obj: History, undo: null | boolean = null) {
                         .slides([[obj.location!.layoutSlide!]])
                         .remove("background")
                 } else {
+                    let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
+
+                    let cloudId = get(driveData).mediaId
+                    if (ref.data.background && cloudId && cloudId !== "default") {
+                        bgid = ref.data.background
+                        _show(showID).media().add(obj.newData, bgid!)
+                    }
                     if (!bgid) bgid = _show(showID).media().add(obj.newData)
 
-                    let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
                     // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
                     if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
                     else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "background", value: bgid })
@@ -179,6 +185,13 @@ export function history(obj: History, undo: null | boolean = null) {
                             .set({ key: "audio", value: audio })
                     }
                 } else {
+                    // WIP add audio at index
+                    // let cloudId = get(driveData).mediaId
+                    // if (audio[0] && cloudId && cloudId !== "default") {
+                    //     _show(showID).media().add(obj.newData)
+                    //     audioId = audio[0]
+                    //     _show(showID).media().add(obj.newData)
+                    // }
                     if (!audioId) audioId = _show(showID).media().add(obj.newData)
 
                     if (!audio.includes(audioId)) {

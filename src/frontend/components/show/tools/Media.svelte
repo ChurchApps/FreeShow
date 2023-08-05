@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, media, midiIn, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
+    import { activeShow, dictionary, driveData, media, midiIn, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
     import { playMidiIn } from "../../../utils/midi"
     import { send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
@@ -55,13 +55,15 @@
         bgs = []
         layoutBackgrounds.forEach((a: any) => {
             if (!show.media[a]) return
-            let id = show.media[a].path || show.media[a].id!
+            let path = show.media[a].path || show.media[a].id!
+            let cloudId = $driveData.mediaId
+            if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
-            const extension = getExtension(id)
+            const extension = getExtension(path)
             let type = getMediaType(extension)
 
-            if (backgrounds[id]) backgrounds[id].count++
-            else backgrounds[id] = { id: a, ...show.media[a], path: id, type, count: 1 }
+            if (backgrounds[path]) backgrounds[path].count++
+            else backgrounds[path] = { id: a, ...show.media[a], path, type, count: 1 }
         })
         Object.values(backgrounds).forEach((a) => bgs.push(a))
     } else bgs = []
@@ -70,11 +72,15 @@
     $: if (layoutAudio.length) {
         audio = {}
         layoutAudio.forEach((a: any) => {
-            let id = show.media[a].path!
+            let path = show.media[a].path!
+            // no need for cloud when audio can be stacked
+            // let cloudId = $driveData.mediaId
+            // if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
+
             let type = "audio"
 
-            if (audio[id]) audio[id].count++
-            else audio[id] = { id: a, ...show.media[a], type, count: 1 }
+            if (audio[path]) audio[path].count++
+            else audio[path] = { id: a, ...show.media[a], path, type, count: 1 }
         })
 
         audio = Object.values(audio)

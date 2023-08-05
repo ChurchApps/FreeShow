@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { OUTPUT } from "../types/Channels"
+    import { MAIN, OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
     import type { DrawerTabIds, TopViews } from "../types/Tabs"
     import ContextMenu from "./components/context/ContextMenu.svelte"
+    import { menuClick } from "./components/context/menuClick"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
     import DrawTools from "./components/draw/DrawTools.svelte"
     import Slide from "./components/draw/Slide.svelte"
@@ -13,9 +14,9 @@
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
     import Pdf from "./components/export/Pdf.svelte"
-    import { copy, cut, deleteAction, paste, selectAll } from "./components/helpers/clipboard"
+    import { copy, cut, deleteAction, duplicate, paste, selectAll } from "./components/helpers/clipboard"
     import { redo, undo } from "./components/helpers/history"
-    import { displayOutputs, getResolution } from "./components/helpers/output"
+    import { displayOutputs, getActiveOutputs, getResolution } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -34,7 +35,29 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeShow, activeStage, activeTimers, autosave, currentWindow, drawer, events, focusedArea, loaded, os, outputDisplay, outputs, selected, styles, volume } from "./stores"
+    import {
+        activeDrawerTab,
+        activeEdit,
+        activePage,
+        activePopup,
+        activeShow,
+        activeStage,
+        activeTimers,
+        autosave,
+        currentWindow,
+        disabledServers,
+        drawer,
+        events,
+        focusedArea,
+        loaded,
+        os,
+        outputDisplay,
+        outputs,
+        selected,
+        serverData,
+        styles,
+        volume,
+    } from "./stores"
     import { newToast } from "./utils/messages"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
@@ -46,7 +69,7 @@
     let width: number = 0
     let height: number = 0
     let resolution: Resolution = getResolution()
-    $: resolution = getResolution(null, { $outputs, $styles })
+    $: resolution = getResolution(null, { $outputs, $styles }, true)
 
     const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
     const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "calendar", "templates"]
@@ -54,10 +77,13 @@
         a: () => selectAll(),
         c: () => copy(),
         v: () => paste(),
+        // give time for drawer to not toggle
+        d: () => setTimeout(() => duplicate($selected)),
         x: () => cut(),
         e: () => activePopup.set("export"),
         i: () => activePopup.set("import"),
         n: () => activePopup.set("show"),
+        h: () => activePopup.set("history"),
         m: () => volume.set($volume ? 0 : 1),
         o: () => displayOutputs(),
         s: () => save(),
@@ -65,30 +91,29 @@
         z: () => undo(),
         Z: () => redo(),
         "?": () => activePopup.set("shortcuts"),
-        // F2: () => menuClick("rename"),
     }
     const keys: any = {
         Escape: () => {
-            // if (!isOutCleared() || Object.keys($playingAudio).length) return
-
-            // close popup
-            if ($activePopup !== null) activePopup.set(null)
             // blur focused elements
-            else if (document.activeElement !== document.body) (document.activeElement as HTMLElement).blur()
-            // else {
-            //   // hide / show drawer
-            //   if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
-            //   else drawer.set({ height: 40, stored: $drawer.height })
+            if (document.activeElement !== document.body) {
+                ;(document.activeElement as HTMLElement).blur()
+
+                if (!$activePopup && $selected.id) setTimeout(() => selected.set({ id: null, data: [] }))
+                return
+            }
+
+            if ($activePopup === "initialize") return
+
+            // give time so output don't clear also
+            setTimeout(() => {
+                if ($activePopup) activePopup.set(null)
+                else if ($selected.id) selected.set({ id: null, data: [] })
+            })
         },
         Delete: () => deleteAction($selected, "remove"),
         Backspace: () => keys.Delete(),
-        // Enter: (e: any) => {
-        //   if (!e.target.closest(".edit")) {
-        //     // hide / show drawer
-        //     if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
-        //     else drawer.set({ height: 40, stored: $drawer.height })
-        //   }
-        // },
+        // give time so it don't clear slide
+        F2: () => setTimeout(menuClick("rename", true, null, null, null, $selected)),
     }
 
     function keydown(e: any) {
@@ -175,6 +200,16 @@
         else enableOutputMove = false
     }
     $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
+
+    // stream to OutputShow
+    let streamStarted = false
+    $: if ($disabledServers.output_stream === false && !$currentWindow && $outputDisplay && !streamStarted) {
+        let captureOutputId = $serverData?.output_stream?.outputId || getActiveOutputs($outputs, true, true)[0]
+        if (captureOutputId) {
+            streamStarted = true
+            window.api.send(MAIN, { channel: "START_STREAM", data: { id: captureOutputId } })
+        }
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} />
@@ -350,6 +385,7 @@
         /* cursor: none; */
         height: 100%;
         width: 100%;
+        overflow: hidden;
 
         display: flex;
         background-color: black;

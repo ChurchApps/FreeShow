@@ -8,7 +8,8 @@
         "drop": "Prevuci ovde",
         "search": "Pretraži",
         "none": "Ništa",
-        "finished": "Završeno"
+        "finished": "Završeno",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Proveri da li postoji nova verzija",
@@ -275,6 +276,7 @@
         "player": "Plejer",
         "live": "Uživo",
         "timers": "Tajmeri",
+        "variables": "Variables",
         "templates": "Šabloni",
         "web": "Web"
     },
@@ -315,6 +317,7 @@
         "find_replace": "Nađi i zameni",
         "edit_list": "Uredi liste",
         "timer": "Tajmer",
+        "variable": "Variable",
         "transition": "Tranzicija",
         "delete_show": "Ukloni prezentaciju",
         "delete_show_confirmation": "Da li ste sigurni da želite da obrišete?",
@@ -322,6 +325,8 @@
         "choose_screen": "Izaberi ekran",
         "change_output_values": "Promeni izlaznu vrednost",
         "choose_style": "Izaberi stil",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Tajmer do sledećeg slajda",
         "import": "Uvoz",
         "export": "Izvoz",
@@ -364,6 +369,7 @@
         "now": "now!",
         "no_video_id": "No video ID",
         "no_name": "No name",
+        "media_replaced": "Missing media file replaced with match.",
         "lyrics_undefined": "Could not find any lyrics!",
         "lyrics_copied": "Lyrics copied from Genius!",
         "no_pdf_linux": "Can't export as PDF on Linux.",
@@ -383,6 +389,7 @@
         "project": "Novi projekat",
         "section": "Nova sekcija",
         "timer": "Novi tajmer",
+        "variable": "New variable",
         "category": "Nova kategorija",
         "private": "Nova privatna prezentacija",
         "folder": "Novi folder",
@@ -413,6 +420,9 @@
         "choose_group": "Odaberi grupu",
         "goto_group": "Idi na grupu",
         "change_output_style": "Promeni stil finalnog prikaza",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Privatno",
         "view_private": "Prikaži privatno",
         "import": "Uvezi",
@@ -432,6 +442,7 @@
         "paste": "Nalepi",
         "pasteAndMatchStyle": "Nalepi i zadrži format",
         "selectAll": "Izaberi sve",
+        "remove_selection": "Remove selection",
         "speech": "Govor",
         "startSpeaking": "Počni govoriti",
         "stopSpeaking": "Prekini govoriti",
@@ -452,6 +463,8 @@
         "add_time_marker": "Dodaj vremenski marker",
         "bind_to": "Veži za",
         "remove_binding": "Ukloni vezu",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Izaberi prilagođeno",
         "format": "Format",
         "find_replace": "Nađi i zameni tekst",
@@ -469,6 +482,7 @@
         "toggle_output": "Uključi/isključi ekran sa finalnim prikazom",
         "change_tab": "Promeni tab",
         "change_drawer_tab": "Promeni fioka tab",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Akcije",
         "clear_history": "Očisti istoriju",
         "set_key": "Postavi ključ",
@@ -489,6 +503,17 @@
         "start_recording": "Počni snimanje",
         "stop_recording": "Zaustavi snimanje"
     },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "item": "item",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
+    },
     "cloud": {
         "info": "Sinhronizuj fajlove sa Google Drajcom za bekap, ili ako radiš na više kompjutera.",
         "tip_api": "Moraš da uneseš svoj liči besplatni Google API ključ kako bi program mogao da pristupi drajvu.",
@@ -496,6 +521,7 @@
         "tip_guide": "Klikni ovde za uputstvo.",
         "enable": "Automatski sinhronizuj pri pogretanju i izlaženju iz programa",
         "disable_upload": "Isključi aploudovanje podataka",
+        "media_id": "Media path ID",
         "google_drive_api": "Ključ za nalog Google API servisa",
         "select_key": "Uvezi fajl ključa",
         "update_key": "Ažžuriraj fajl ključa",
@@ -542,6 +568,7 @@
         "toggle_output": "Uključi/isključi finalne prikaze",
         "move_to_front": "Premesi na vrh",
         "lock_to_output": "Zaključaj na finalni prikaz",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Uključi/isključi sat",
         "move_connections": "Prebaci sve konekcije na ovo"
     },
@@ -646,6 +673,7 @@
         "live": "Uživo",
         "audio": "Audio",
         "timer": "Tajmer",
+        "variable": "Variable",
         "visualizer": "Vizualizator",
         "icon": "Ikonica"
     },
@@ -758,7 +786,7 @@
         "theme": "Tema",
         "groups": "Grupe",
         "styles": "Stilovi",
-        "outputs": "Finalni prikaz",
+        "display_settings": "Finalni prikaz",
         "actions": "Akcije",
         "display": "Displej",
         "connection": "Povezivanje",
@@ -818,7 +846,7 @@
         "output_screen": "Ekran finalnog prikaza",
         "device_name": "Ime uređaja",
         "password": "šifra",
-        "port": "port",
+        "port": "Port",
         "connections": "Konekcije",
         "max_connections": "Maksimalno konekcija",
         "allowed_connections": "Dozvoljene konekcije",
@@ -828,7 +856,12 @@
         "reset_all": "Resetuj sve",
         "reset_theme": "Resetuj temu",
         "reset_themes": "Resetuj teme",
-        "export_all": "Izvezi sve"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Tip",
@@ -900,12 +933,22 @@
     },
     "easings": {
         "linear": "Linearan",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastičan",
         "bounce": "Odskakivanje",
         "back": "Skočko",
         "circ": "Kružno",
         "cubic": "Kockasto",
         "sine": "Tok"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Januar",

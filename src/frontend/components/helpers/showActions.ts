@@ -3,7 +3,28 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { activeEdit, activePage, activeProject, activeShow, activeTimers, lockedOverlays, media, outLocked, outputCache, outputs, overlays, playingAudio, projects, showsCache, slideTimers, styles, timers } from "./../../stores"
+import {
+    activeEdit,
+    activePage,
+    activePopup,
+    activeProject,
+    activeShow,
+    activeTimers,
+    driveData,
+    lockedOverlays,
+    media,
+    outLocked,
+    outputCache,
+    outputs,
+    overlays,
+    playingAudio,
+    projects,
+    selected,
+    showsCache,
+    slideTimers,
+    styles,
+    timers,
+} from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getMediaType } from "./media"
@@ -33,6 +54,7 @@ export function checkInput(e: any) {
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
     if (get(activeProject) === null) return
     e.preventDefault()
+    ;(document.activeElement as any)?.blur()
 
     let selectItem: "next" | "previous" = e.key === "ArrowDown" ? "next" : "previous"
     selectProjectShow(selectItem)
@@ -214,8 +236,7 @@ export function previousSlide() {
             .slides([layout[index].id])
             .get()[0]
         let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-        // line = slideLines ? (amountOfLinesToShow >= slideLines ? 0 : slideLines - (amountOfLinesToShow % slideLines) - 1) : 0
-        line = slideLines ? slideLines - 1 : 0
+        line = slideLines ? slideLines / 2 - 1 : 0
     } else {
         index = slide!.index!
         line--
@@ -298,21 +319,24 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     if (background) {
         let bg = _show(showId).get("media")[background!]
         let outputBg = get(outputs)[outputIds[0]]?.out?.background
+        let cloudId = get(driveData).mediaId
+        let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
 
-        if (bg && bg.path !== outputBg?.path) {
+        if (bg && bgPath !== outputBg?.path) {
             let bgData: any = {
                 name: bg.name,
-                type: bg.type || getMediaType(bg.path.slice(bg.path.lastIndexOf(".") + 1, bg.path.length)),
-                path: bg.path,
+                type: bg.type || getMediaType(bgPath.slice(bgPath.lastIndexOf(".") + 1, bgPath.length)),
+                path: bgPath,
                 cameraGroup: bg.cameraGroup || "",
-                id: bg.id || bg.path, // path = cameras
+                id: bg.id || bgPath, // path = cameras
                 muted: bg.muted !== false,
                 loop: bg.loop !== false,
-                filter: getMediaFilter(bg.path),
-                flipped: get(media)[bg.path]?.flipped || false,
-                fit: get(media)[bg.path]?.fit || "contain",
-                speed: get(media)[bg.path]?.speed || "1",
+                filter: getMediaFilter(bgPath),
+                flipped: get(media)[bgPath]?.flipped || false,
+                fit: get(media)[bgPath]?.fit || "contain",
+                speed: get(media)[bgPath]?.speed || "1",
             }
+
             // outBackground.set(bgData)
             setOutput("background", bgData, false, outputId)
         }
@@ -331,7 +355,10 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     // audio
     if (data.audio) {
         data.audio.forEach((audio: string) => {
-            let a = _show(showId).get("media")[audio]
+            let a = clone(_show(showId).get("media")[audio])
+            let cloudId = get(driveData).mediaId
+            if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
+
             if (a) playAudio(a, false)
         })
     }
@@ -361,15 +388,17 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     // actions
     if (data.actions) {
-        // startShow is at the top
-        if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
-        // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
-        if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle)
-        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id })
+        // clear first
         if (data.actions.stopTimers) activeTimers.set([])
         if (data.actions.clearBackground) setOutput("background", null, false, outputId)
         if (data.actions.clearOverlays) clearOverlays()
         if (data.actions.clearAudio) clearAudio()
+
+        // startShow is at the top
+        if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
+        // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
+        if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle, data.actions.styleOutputs)
+        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id })
     }
 }
 
@@ -388,11 +417,17 @@ export async function startShow(showId: string) {
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
 }
 
-export function changeOutputStyle(styleId: string) {
-    let activeOutputs = getActiveOutputs(get(outputs))
-    activeOutputs.forEach(changeStyle)
+export function changeOutputStyle(styleId: string, styleOutputs: any = {}) {
+    let type = styleOutputs.type || "active"
+    let outputsList = styleOutputs.outputs
+
+    let chosenOutputs = getActiveOutputs(get(outputs), type === "active")
+    chosenOutputs.forEach(changeStyle)
 
     function changeStyle(outputId: string) {
+        if (type === "specific") styleId = outputsList[outputId]
+        if (!styleId) return
+
         outputs.update((a) => {
             a[outputId].style = styleId
 
@@ -435,6 +470,26 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
     return true
 }
 
+// go to next slide if current output slide has nextAfterMedia action
+export function checkNextAfterMedia() {
+    let outputId = getActiveOutputs(get(outputs), true, true)[0]
+    if (!outputId) return false
+    let currentOutput: any = get(outputs)[outputId]
+    if (!currentOutput) return false
+    let slideOut = currentOutput.out?.slide
+    if (!slideOut) return false
+
+    let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
+    let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
+    if (!nextAfterMedia) return false
+
+    setTimeout(() => {
+        nextSlide(null, false, false, true, true, outputId)
+    }, 100)
+
+    return true
+}
+
 function playSlideTimers({ showId, slideId }) {
     if (showId === "active") showId = get(activeShow)?.id
     let showSlides: any[] = _show(showId).slides().get()
@@ -463,7 +518,7 @@ export function clearOverlays() {
 
 // TODO: output/clearButtons
 export function clearAll() {
-    if (get(outLocked)) return
+    if (get(outLocked) || get(activePopup) || get(selected).id || get(activeEdit).items.length) return
 
     let allCleared = isOutCleared(null) && !Object.keys(get(playingAudio)).length
     if (allCleared) return

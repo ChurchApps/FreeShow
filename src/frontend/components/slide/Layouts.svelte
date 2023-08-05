@@ -24,7 +24,8 @@
         .sort((a, b) => a.name?.localeCompare(b.name))
 
     let totalTime: string = "0s"
-    $: if (layouts?.[activeLayout]?.slides?.length) getTotalTime()
+    $: layoutSlides = layouts?.[activeLayout]?.slides || []
+    $: if (layoutSlides.length) getTotalTime()
     function getTotalTime() {
         let ref = _show()
             .layouts("active")
@@ -92,26 +93,28 @@
 
 <svelte:window on:mousedown={mousedown} />
 
-<!-- one at a time, in prioritized order -->
-{#if layouts?.[activeLayout]?.notes}
-    <div class="notes" title={$dictionary.tools?.notes}>
-        <Icon id="notes" right white />
-        <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
-    </div>
-{:else if currentShow.message?.text}
-    <div class="notes" title={$dictionary.meta?.message}>
-        <Icon id="message" right white />
-        <p>{@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}</p>
-    </div>
-{:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
-    <div class="notes" title={$dictionary.tools?.metadata}>
-        <Icon id="info" right white />
-        <p>
-            {@html Object.values(currentShow.meta)
-                .filter((a) => a.length)
-                .join("; ")}
-        </p>
-    </div>
+{#if $slidesOptions.mode === "grid"}
+    <!-- one at a time, in prioritized order -->
+    {#if layouts?.[activeLayout]?.notes}
+        <div class="notes" title={$dictionary.tools?.notes}>
+            <Icon id="notes" right white />
+            <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
+        </div>
+    {:else if currentShow.message?.text}
+        <div class="notes" title={$dictionary.meta?.message}>
+            <Icon id="message" right white />
+            <p>{@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}</p>
+        </div>
+    {:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
+        <div class="notes" title={$dictionary.tools?.metadata}>
+            <Icon id="info" right white />
+            <p>
+                {@html Object.values(currentShow.meta)
+                    .filter((a) => a.length)
+                    .join("; ")}
+            </p>
+        </div>
+    {/if}
 {/if}
 
 <div>
@@ -152,7 +155,7 @@
     <span style="display: flex; align-items: center;position: relative;{multipleLayouts || reference || !layouts ? '' : 'width: 100%;'}">
         <!-- TODO: right click to create empty layout... -->
         {#if layouts && !reference}
-            <Button on:click={addLayout} style="white-space: nowrap;{multipleLayouts ? '' : 'width: 100%;'}" center>
+            <Button disabled={!layoutSlides.length && !multipleLayouts} on:click={addLayout} style="white-space: nowrap;{multipleLayouts ? '' : 'width: 100%;'}" center>
                 <Icon size={1.3} id="add" right={!$labelsDisabled && !multipleLayouts} />
                 {#if !$labelsDisabled && !multipleLayouts}<T id="show.new_layout" />{/if}
             </Button>
@@ -160,7 +163,7 @@
 
         <div class="seperator" />
 
-        <Button on:click={() => activePopup.set("next_timer")} title="{$dictionary.popup?.next_timer}{totalTime !== '0s' ? ': ' + totalTime : ''}">
+        <Button disabled={!layoutSlides.length} on:click={() => activePopup.set("next_timer")} title="{$dictionary.popup?.next_timer}{totalTime !== '0s' ? ': ' + totalTime : ''}">
             <Icon size={1.1} id="clock" white={totalTime === "0s"} />
         </Button>
 
@@ -250,5 +253,7 @@
         flex-direction: column;
         width: auto;
         /* border-left: 3px solid var(--primary-lighter); */
+
+        z-index: 2;
     }
 </style>

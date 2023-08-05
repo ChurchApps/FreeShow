@@ -44,6 +44,7 @@ export const globalGroupViewEnabled: Writable<boolean> = writable(false)
 export const activeRecording: Writable<any> = writable(null)
 export const currentRecordingStream: Writable<any> = writable(null)
 export const focusedArea: Writable<string> = writable("")
+export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -79,6 +80,7 @@ export const quickTextCache: Writable<string> = writable("")
 // EDIT
 export const editHistory: Writable<any[]> = writable([])
 export const refreshEditSlide: Writable<boolean> = writable(false)
+export const refreshListBoxes: Writable<number> = writable(-1)
 export const triggerAutoSplit: Writable<boolean> = writable(false)
 
 // OTHER
@@ -127,11 +129,15 @@ export const folders: Writable<Folders> = writable({}) // {default}
 // TIMERS
 export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 
+// VARIABLES
+export const variables: Writable<{ [key: string]: any }> = writable({}) // {}
+
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
 export const videoMarkers: Writable<{ [key: string]: { name: string; time: number }[] }> = writable({}) // {}
 export const mediaCache: Writable<any> = writable({}) // {}
+export const checkedFiles: Writable<any[]> = writable([])
 
 // OVERLAYS
 export const overlayCategories: Writable<Categories> = writable({}) // {default}
@@ -169,6 +175,8 @@ export const stageShows: Writable<StageShows> = writable({}) // {default}
 // SCRIPTURE
 interface BibleCategories extends Category {
     api?: boolean
+    books?: any[]
+    cacheUpdate?: Date
     collection?: {
         versions: string[]
     }
@@ -219,7 +227,9 @@ export const outLocked: Writable<boolean> = writable(false) // false
 export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({})
 
 // CONNECTIONS
-export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512 }) // {default}
+export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}
+export const disabledServers: Writable<any> = writable({ remote: false, stage: false, controller: true, output_stream: true }) // {}
+export const serverData: Writable<any> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
 

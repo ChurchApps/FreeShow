@@ -11,9 +11,11 @@ import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
+import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, locateMediaFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
+import { outputWindows } from "./output"
+import { restoreFiles } from "./backup"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -34,6 +36,8 @@ export function startExport(_e: any, msg: Message) {
         if (!path) return
         toApp(MAIN, { channel: "EXPORT_PATH", data: path })
     }
+
+    // WIP open in system when completed...
 
     if (msg.data.type === "pdf") createPDFWindow(msg.data)
     else if (msg.data.type === "txt") exportTXT(msg.data)
@@ -93,6 +97,7 @@ const mainResponses: any = {
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),
     MINIMIZE: (): void => mainWindow?.minimize(),
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
+    START_STREAM: (data: any): void => startStream(data.id),
     SEARCH_LYRICS: (data: any): void => {
         searchLyrics(data)
     },
@@ -116,6 +121,9 @@ const mainResponses: any = {
         if (process.platform !== "darwin") return
         systemPreferences.askForMediaAccess("microphone")
     },
+    RESTORE: (a: any) => restoreFiles(a),
+    SYSTEM_OPEN: (a: any) => openSystemFolder(a),
+    LOCATE_MEDIA_FILE: (a: any) => locateMediaFile(a),
 }
 
 export function receiveMain(e: any, msg: Message) {
@@ -225,4 +233,13 @@ export function saveRecording(_: any, msg: any) {
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
+}
+
+// STREAM
+
+function startStream(outputId: string) {
+    let outputWindow = outputWindows[outputId]
+    if (!outputWindow) return
+
+    toApp(MAIN, { channel: "START_STREAM", data: { sourceId: outputWindow.getMediaSourceId() } })
 }

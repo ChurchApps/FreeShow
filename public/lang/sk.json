@@ -8,7 +8,8 @@
         "drop": "Pusti sem",
         "search": "Hľadať",
         "none": "Nič",
-        "finished": "Finished"
+        "finished": "Finished",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Skontrolovať aktualizácie",
@@ -275,6 +276,7 @@
         "player": "Prehrávač",
         "live": "Naživo",
         "timers": "Časovače",
+        "variables": "Variables",
         "templates": "Šablóny",
         "web": "Web"
     },
@@ -315,6 +317,7 @@
         "find_replace": "Find and replace",
         "edit_list": "Edit list",
         "timer": "Časovač",
+        "variable": "Variable",
         "transition": "Prechod",
         "delete_show": "Odstrániť prezentáciu",
         "delete_show_confirmation": "Naozaj ju chcete odstrániť?",
@@ -322,6 +325,8 @@
         "choose_screen": "Vyberte obrazovku",
         "change_output_values": "Change output values",
         "choose_style": "Choose style",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Časovač ďalšieho snímku",
         "import": "Import",
         "export": "Export",
@@ -364,6 +369,7 @@
         "now": "now!",
         "no_video_id": "No video ID",
         "no_name": "No name",
+        "media_replaced": "Missing media file replaced with match.",
         "lyrics_undefined": "Could not find any lyrics!",
         "lyrics_copied": "Lyrics copied from Genius!",
         "no_pdf_linux": "Can't export as PDF on Linux.",
@@ -383,6 +389,7 @@
         "project": "Nový projekt",
         "section": "Nová sekcia",
         "timer": "Nový časovač",
+        "variable": "New variable",
         "category": "Nová kategória",
         "private": "Nová súkromná prezentácia",
         "folder": "Nový priečinok",
@@ -413,6 +420,9 @@
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "change_output_style": "Change output style",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Súkromné",
         "view_private": "Show private",
         "import": "Import",
@@ -432,6 +442,7 @@
         "paste": "Vložiť",
         "pasteAndMatchStyle": "Vložiť v rovnakom štýle",
         "selectAll": "Vybrať všetko",
+        "remove_selection": "Remove selection",
         "speech": "Reč",
         "startSpeaking": "Začať hovorenie",
         "stopSpeaking": "Zastaviť hovorenie",
@@ -452,6 +463,8 @@
         "add_time_marker": "Add time marker",
         "bind_to": "Bind to",
         "remove_binding": "Remove binding",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Choose custom",
         "format": "Formát",
         "find_replace": "Find and replace text",
@@ -469,6 +482,7 @@
         "toggle_output": "Prepnúť výstupnú obrazovku",
         "change_tab": "Zmeniť tab",
         "change_drawer_tab": "Zmeniť tab zásuviek",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Akcie",
         "clear_history": "Vyčistiť históriu",
         "set_key": "Nastaviť kľúč",
@@ -489,6 +503,17 @@
         "start_recording": "Start recording",
         "stop_recording": "Stop recording"
     },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "item": "item",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
+    },
     "cloud": {
         "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
         "tip_api": "You have to provide your own free Google API key so the program can automatically upload files to your Google Drive.",
@@ -496,6 +521,7 @@
         "tip_guide": "Click here for a guide.",
         "enable": "Automatic sync on startup and save",
         "disable_upload": "Disable uploading data",
+        "media_id": "Media path ID",
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",
         "update_key": "Update keys file",
@@ -542,6 +568,7 @@
         "toggle_output": "Prepnúť výstup",
         "move_to_front": "Presunúť dopredu",
         "lock_to_output": "Zamknúť na výstup",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Prepnúť hodiny",
         "move_connections": "Presunúť všetky pripojené sem"
     },
@@ -646,6 +673,7 @@
         "live": "Naživo",
         "audio": "Audio",
         "timer": "Časovač",
+        "variable": "Variable",
         "visualizer": "Visualizer",
         "icon": "Ikona"
     },
@@ -758,7 +786,7 @@
         "theme": "Téma",
         "groups": "Skupiny",
         "styles": "Styles",
-        "outputs": "Výstupy",
+        "display_settings": "Výstupy",
         "actions": "Akcie",
         "display": "Obrazovka",
         "connection": "Pripojenia",
@@ -818,7 +846,7 @@
         "output_screen": "Výstupná obrazovka",
         "device_name": "Názov zariadenia",
         "password": "heslo",
-        "port": "port",
+        "port": "Port",
         "connections": "Spojenia",
         "max_connections": "Max spojení",
         "allowed_connections": "Povolené spojenia",
@@ -828,7 +856,12 @@
         "reset_all": "Reset všetkého",
         "reset_theme": "Reset témy",
         "reset_themes": "Reset tém",
-        "export_all": "Exportovať všetko"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Typ",
@@ -900,12 +933,22 @@
     },
     "easings": {
         "linear": "Lineárne",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastické",
         "bounce": "Odraz",
         "back": "Skok",
         "circ": "Kruhové",
         "cubic": "Štvorcové",
         "sine": "Vlnenie"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "Január",

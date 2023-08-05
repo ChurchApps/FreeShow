@@ -124,7 +124,8 @@ export function convertVideopsalm(data: any) {
 
             let layoutID = uid()
             let show = new ShowObj(false, "videopsalm", layoutID)
-            show.name = checkName(song.Text || get(dictionary).main?.unnamed || "Unnamed") || ""
+            let showId = song.Guid || uid()
+            show.name = checkName(song.Text || get(dictionary).main?.unnamed || "Unnamed", showId) || ""
             show.meta = {
                 title: show.name,
                 artist: album || "",
@@ -138,7 +139,7 @@ export function convertVideopsalm(data: any) {
             show.slides = slides
             show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: notes || "", slides: layout } }
 
-            tempShows.push({ id: song.Guid || uid(), show })
+            tempShows.push({ id: showId, show })
 
             if (i < content.Songs.length - 1) {
                 i++

@@ -8,7 +8,8 @@
         "drop": "Slipp her",
         "search": "Søk",
         "none": "Ingen",
-        "finished": "Fullført"
+        "finished": "Fullført",
+        "system_open": "Vis i systemet"
     },
     "about": {
         "check_updates": "Se etter oppdateringer",
@@ -193,7 +194,7 @@
         "end": "Slutt",
         "no_output": "Ingen utgang",
         "remember": "Husk meg",
-        "loading": "Laster...",
+        "loading": "Laster inn...",
         "submit": "Send",
         "password": "Passord",
         "wrong_password": "Feil passord"
@@ -275,6 +276,7 @@
         "player": "Spiller",
         "live": "Direkte",
         "timers": "Tidtakere",
+        "variables": "Variabler",
         "templates": "Maler",
         "web": "Nett"
     },
@@ -315,6 +317,7 @@
         "find_replace": "Finn og erstatt",
         "edit_list": "Rediger liste",
         "timer": "Nedtelling",
+        "variable": "Variabel",
         "transition": "Overgang",
         "delete_show": "Slett show",
         "delete_show_confirmation": "Er du sikker på at du vil slette",
@@ -322,6 +325,8 @@
         "choose_screen": "Velg skjerm",
         "change_output_values": "Endre verdier for utgangsskjerm",
         "choose_style": "Velg stil",
+        "set_time": "Sett tid",
+        "animate": "Animer",
         "next_timer": "Tid til neste lysbilde",
         "import": "Importer",
         "export": "Eksporter",
@@ -364,6 +369,7 @@
         "now": "nå!",
         "no_video_id": "Ingen video-ID",
         "no_name": "Ingen navn",
+        "media_replaced": "Manglende mediefil erstattet med match.",
         "lyrics_undefined": "Kunne ikke finne noen sangtekster!",
         "lyrics_copied": "Sangtekst kopiert fra Genius!",
         "no_pdf_linux": "Kan ikke eksportere som PDF på Linux.",
@@ -383,6 +389,7 @@
         "project": "Nytt prosjekt",
         "section": "Ny seksjon",
         "timer": "Ny nedtelling",
+        "variable": "Ny variabel",
         "category": "Ny kategori",
         "private": "Nytt privat show",
         "folder": "Ny mappe",
@@ -413,6 +420,9 @@
         "choose_group": "Velg gruppe",
         "goto_group": "Gå til gruppe",
         "change_output_style": "Endre stil for utgangsskjerm",
+        "active_outputs": "Aktive utgangsskjermer",
+        "all_outputs": "Alle utgangsskjermer",
+        "specific_outputs": "Spesifikke utgangsskjermer",
         "toggle_private": "Privat",
         "view_private": "Vis private",
         "import": "Importer",
@@ -432,6 +442,7 @@
         "paste": "Lim inn",
         "pasteAndMatchStyle": "Lim inn uten formatering",
         "selectAll": "Merk alt",
+        "remove_selection": "Fjern markering",
         "speech": "Tale",
         "startSpeaking": "Start tale",
         "stopSpeaking": "Stopp tale",
@@ -452,6 +463,8 @@
         "add_time_marker": "Legg til tidsmarkør",
         "bind_to": "Bind til",
         "remove_binding": "Fjern binding",
+        "show_timer": "Tid til visning",
+        "hide_timer": "Tid til skjuling",
         "choose_custom": "Velg egen",
         "format": "Formater",
         "find_replace": "Finn og erstatt tekst",
@@ -469,6 +482,7 @@
         "toggle_output": "Veksle utgangsskjerm",
         "change_tab": "Endre fane",
         "change_drawer_tab": "Endre fane i skuffen",
+        "toggle_drawer": "Åpne/lukke skuffen",
         "actions": "Handlinger",
         "clear_history": "Fjern historie",
         "set_key": "Sett toneart",
@@ -489,6 +503,17 @@
         "start_recording": "Start opptak",
         "stop_recording": "Stopp opptak"
     },
+    "animate": {
+        "change": "Endre",
+        "set": "Sett",
+        "wait": "Vent",
+        "background": "bakgrunn",
+        "text": "tekst",
+        "item": "element",
+        "to": "til",
+        "for": "i",
+        "seconds": "sekunder"
+    },
     "cloud": {
         "info": "Synkroniser filer med Google Disk for sikkerhetskopier, eller dersom du jobber på flere datamaskiner.",
         "tip_api": "Du må bruke din egen gratis Google API nøkkel, slik at programmet kan laste opp filer automatisk til din Google Disk.",
@@ -496,6 +521,7 @@
         "tip_guide": "Trykk her for en bruksanvisning.",
         "enable": "Synkroniser automatisk ved oppstart og lagring",
         "disable_upload": "Deaktiver opplasting av data",
+        "media_id": "Mediemappe ID",
         "google_drive_api": "Google API tjenestekonto-nøkkel",
         "select_key": "Importer nøkkelfil",
         "update_key": "Oppdater nøkkelfil",
@@ -542,6 +568,7 @@
         "toggle_output": "Veksle utgangsskjerm",
         "move_to_front": "Flytt fremst",
         "lock_to_output": "Lås til utgang",
+        "place_under_slide": "Plasser under lysbilde",
         "toggle_clock": "Veksle klokke",
         "move_connections": "Flytt alle tilkoblinger til denne"
     },
@@ -646,6 +673,7 @@
         "live": "Direkte",
         "audio": "Lyd",
         "timer": "Nedtelling",
+        "variable": "Variabel",
         "visualizer": "Visualisering",
         "icon": "Ikon"
     },
@@ -758,7 +786,7 @@
         "theme": "Tema",
         "groups": "Grupper",
         "styles": "Stiler",
-        "outputs": "Utganger",
+        "display_settings": "Utganger",
         "actions": "Handlinger",
         "display": "Skjerm",
         "connection": "Tilkobling",
@@ -818,7 +846,7 @@
         "output_screen": "Skjermutgang",
         "device_name": "Enhetsnavn",
         "password": "passord",
-        "port": "port",
+        "port": "Port",
         "connections": "Tilkoblinger",
         "max_connections": "Maks tilkoblinger",
         "allowed_connections": "Tillatte tilkoblinger",
@@ -828,7 +856,12 @@
         "reset_all": "Tilbakestill alt",
         "reset_theme": "Tilbakestill tema",
         "reset_themes": "Tilbakestill temaer",
-        "export_all": "Eksporter alt"
+        "backup_all": "Sikkerhetskopier alt",
+        "restore": "Gjenopprett",
+        "backup_started": "Sikkerhetskopierer...",
+        "restore_started": "Gjenoppretter...",
+        "backup_finished": "Sikkerhetskopiering fullført!",
+        "restore_finished": "Gjenoppretting fullført!"
     },
     "calendar": {
         "type": "Type",
@@ -900,12 +933,22 @@
     },
     "easings": {
         "linear": "Lineær",
+        "ease": "Letthet",
+        "ease-in": "Lett inn",
+        "ease-out": "Lett ut",
+        "ease-in-out": "Lett inn og ut",
         "elastic": "Elastisk",
         "bounce": "Sprett",
         "back": "Hopp",
         "circ": "Sirkulær",
         "cubic": "Kubikk",
         "sine": "Flyt"
+    },
+    "variables": {
+        "number": "Tall",
+        "text": "Tekst",
+        "step": "Steg",
+        "value": "Verdi"
     },
     "month": {
         "1": "januar",

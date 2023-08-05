@@ -46,6 +46,8 @@
         if (e.key === "ArrowDown") {
             // Arrow Down
             e.preventDefault()
+            ;(document.activeElement as any)?.blur()
+
             if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
                 activeEdit.set({ slide: 0, items: [] })
             } else if ($activeEdit.slide < layoutSlides.length - 1) {
@@ -54,6 +56,8 @@
         } else if (e.key === "ArrowUp") {
             // Arrow Up
             e.preventDefault()
+            ;(document.activeElement as any)?.blur()
+
             if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
                 activeEdit.set({ slide: layoutSlides.length - 1, items: [] })
             } else if ($activeEdit.slide > 0) {
@@ -145,7 +149,6 @@
                                 {layoutSlides}
                                 index={i}
                                 color={slide.color}
-                                outColor={findMatchingOut(slide.id)}
                                 active={findMatchingOut(slide.id) !== null}
                                 focused={$activeEdit.slide === i}
                                 noQuickEdit

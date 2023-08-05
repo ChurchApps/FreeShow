@@ -129,10 +129,6 @@
   </span>
 </div> -->
 
-<!-- <Button style="width: 100%;" center><T id="settings.export_settings" /></Button> -->
-<!-- <Button style="width: 100%;" center><T id="settings.import_all" /></Button>
-<Button style="width: 100%;" center><T id="settings.export_all" /></Button> -->
-
 <!-- project store location... -->
 
 <div class="filler" />

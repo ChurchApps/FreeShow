@@ -9,7 +9,6 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import { getCurrentTimerValue, loadProjectTimers, playPauseGlobal, resetTimer } from "./timers"
 
-    export let active
     export let searchValue
 
     $: globalList = Object.entries($timers).map(([id, a]) => ({ ...a, id }))
@@ -52,63 +51,61 @@
 <!-- TODO: sort by type (category) -->
 
 {#if filteredTimers.length}
-    <div style="flex: 1;overflow: auto;padding: 10px 0;">
-        {#if active === "timer"}
-            {#each filteredTimers as timer}
-                <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
-                <SelectElem id="global_timer" data={timer}>
-                    <div class:outline={$activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class="context #global_timer" style="display: flex;justify-content: space-between;padding: 3px;">
-                        <div style="display: flex;width: 50%;">
-                            <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
-                                <Icon id={timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? "pause" : "play"} />
-                            </Button>
-                            <p style="align-self: center;padding: 0 5px;" title={timer.name}>
-                                {#if timer.name}
-                                    {timer.name}
-                                {:else}
-                                    <span style="opacity: 0.5;">
-                                        <T id="main.unnamed" />
-                                    </span>
-                                {/if}
-                            </p>
-                        </div>
-
-                        <Slider
-                            style="background: var(--primary);align-self: center;margin: 0 10px;"
-                            on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)}
-                            value={getCurrentValue(timer, { id: timer.id }, $activeTimers)}
-                            min={Math.min(timer.start || 0, timer.end || 0)}
-                            max={Math.max(timer.start || 0, timer.end || 0)}
-                            invert={(timer.end || 0) < (timer.start || 0)}
-                        />
-
-                        <div style="display: flex;">
-                            <span style="display: flex;align-self: center;padding: 0 5px;">
-                                <Timer id={timer.id} {today} />
-                                <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->
-                            </span>
-                            <!-- <Button
-            on:click={() => {
-                select("timer", { id })
-                activePopup.set("timer")
-            }}
-            title={$dictionary.menu?.edit}
-            >
-            <Icon id="edit" />
-            </Button> -->
-                            {#if timer.type === "counter"}
-                                <Button on:click={() => resetTimer(timer.id)} title={$dictionary.actions?.reset}>
-                                    <Icon id="reset" />
-                                </Button>
+    <div class="timers">
+        {#each filteredTimers as timer}
+            <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
+            <SelectElem id="global_timer" data={timer}>
+                <div class:outline={$activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class="context #global_timer" style="display: flex;justify-content: space-between;padding: 3px;">
+                    <div style="display: flex;width: 50%;">
+                        <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
+                            <Icon id={timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? "pause" : "play"} />
+                        </Button>
+                        <p style="align-self: center;padding: 0 5px;" title={timer.name}>
+                            {#if timer.name}
+                                {timer.name}
+                            {:else}
+                                <span style="opacity: 0.5;">
+                                    <T id="main.unnamed" />
+                                </span>
                             {/if}
-                            <!-- <Button on:click={() => deleteTimer(id)}>
-            <Icon id="delete" title={$dictionary.actions?.delete} />
-            </Button> -->
-                        </div>
+                        </p>
                     </div>
-                </SelectElem>
-            {/each}
-        {/if}
+
+                    <Slider
+                        style="background: var(--primary);align-self: center;margin: 0 10px;"
+                        on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)}
+                        value={getCurrentValue(timer, { id: timer.id }, $activeTimers)}
+                        min={Math.min(timer.start || 0, timer.end || 0)}
+                        max={Math.max(timer.start || 0, timer.end || 0)}
+                        invert={(timer.end || 0) < (timer.start || 0)}
+                    />
+
+                    <div style="display: flex;">
+                        <span style="display: flex;align-self: center;padding: 0 5px;">
+                            <Timer id={timer.id} {today} />
+                            <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->
+                        </span>
+                        <!-- <Button
+        on:click={() => {
+            select("timer", { id })
+            activePopup.set("timer")
+        }}
+        title={$dictionary.menu?.edit}
+        >
+        <Icon id="edit" />
+        </Button> -->
+                        {#if timer.type === "counter"}
+                            <Button on:click={() => resetTimer(timer.id)} title={$dictionary.actions?.reset}>
+                                <Icon id="reset" />
+                            </Button>
+                        {/if}
+                        <!-- <Button on:click={() => deleteTimer(id)}>
+        <Icon id="delete" title={$dictionary.actions?.delete} />
+        </Button> -->
+                    </div>
+                </div>
+            </SelectElem>
+        {/each}
     </div>
 {:else}
     <Center faded>
@@ -117,22 +114,28 @@
 {/if}
 
 <div style="display: flex;background-color: var(--primary-darkest);">
-    {#if active === "timer"}
-        <!-- TODO: enable!! -->
-        <Button style="flex: 1;" on:click={() => activePopup.set("timer")} center title={$dictionary.new?.timer}>
-            <Icon id="add" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="new.timer" />{/if}
-        </Button>
-    {/if}
+    <!-- TODO: enable!! -->
+    <Button style="flex: 1;" on:click={() => activePopup.set("timer")} center title={$dictionary.new?.timer}>
+        <Icon id="add" right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<T id="new.timer" />{/if}
+    </Button>
 </div>
 
 <style>
-    div.outline {
+    .timers {
+        flex: 1;
+        overflow: auto;
+    }
+    .timers :global(.selectElem:not(.isSelected):nth-child(even)) {
+        background-color: rgb(0 0 20 / 0.08);
+    }
+
+    .timers div.outline {
         outline-offset: -2px;
         outline: 2px solid var(--secondary) !important;
     }
 
-    div.project {
+    .timers div.project {
         background-color: var(--primary-darkest);
     }
 </style>

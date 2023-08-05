@@ -50,3 +50,23 @@ export async function toDataURL(url: string) {
         xhr.send()
     })
 }
+
+// check if media file exists in plain js
+export function checkMedia(src: string) {
+    let extension = getExtension(src)
+    let isVideo = get(videoExtensions).includes(extension)
+
+    return new Promise((resolve) => {
+        let elem
+        if (isVideo) {
+            elem = document.createElement("video")
+            elem.onloadeddata = () => resolve("true")
+        } else {
+            elem = new Image()
+            elem.onload = () => resolve("true")
+        }
+
+        elem.onerror = () => resolve("false")
+        elem.src = src
+    })
+}

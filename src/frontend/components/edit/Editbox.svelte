@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, dictionary, os, overlays, redoHistory, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, dictionary, os, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -26,6 +26,7 @@
     import DynamicEvents from "../slide/views/DynamicEvents.svelte"
     import { getStyles } from "../helpers/style"
     import Cam from "../drawer/live/Cam.svelte"
+    import Variable from "../slide/views/Variable.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -212,9 +213,12 @@
             ;(document.activeElement as HTMLElement).blur()
             window.getSelection()?.removeAllRanges()
             if ($activeEdit.items.length) {
-                activeEdit.update((a) => {
-                    a.items = []
-                    return a
+                // give time so output don't clear
+                setTimeout(() => {
+                    activeEdit.update((a) => {
+                        a.items = []
+                        return a
+                    })
                 })
             }
         }
@@ -360,6 +364,9 @@
             }
 
             history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: ref.showId + ref.id + index } })
+
+            // refresh list view boxes
+            if (plain) refreshListBoxes.set(editIndex)
         }
 
         function setNewLines(a: any) {
@@ -368,7 +375,6 @@
         }
     }
 
-    let previousLinesCount = 100
     function getNewLines() {
         let newLines: Line[] = []
         let pos: number = -1
@@ -398,13 +404,15 @@
                 if (child.nodeName !== "SPAN") return
 
                 let style = plain ? item.lines![i]?.text[j]?.style || "" : child.getAttribute("style") || ""
+                // TODO: pressing enter / backspace will remove any following style in list view
+                // if (plain && !style && i > 0) style = item.lines![i - 1]?.text[j]?.style
+
                 newLines[pos].text.push({ style, value: child.innerText })
                 currentStyle += style
             })
         })
 
-        let linesLength = new Array(...textElem.children).filter((a) => a.innerText).length
-        if (updateHTML || (plain && linesLength < previousLinesCount)) {
+        if (updateHTML) {
             // get caret pos
             let sel = getSelectionRange()
             let lineIndex = sel.findIndex((a) => a?.start !== undefined)
@@ -420,7 +428,6 @@
                 }, 10)
             }
         }
-        previousLinesCount = linesLength
 
         // fix removing all text in a line
         let caret: any = null
@@ -458,6 +465,45 @@
     // bindings
     function removeBindings() {
         menuClick("bind_item")
+    }
+
+    // actions
+    function removeAction(action) {
+        // TODO: this is a duplicate of SetTime and other places
+        let layoutRef: any[] = _show().layouts("active").ref()[0] || []
+        let slideRef: any = layoutRef[$activeEdit.slide!] || {}
+        let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
+
+        if ($activeEdit.id) getItems()
+        function getItems() {
+            let slide = {}
+            if ($activeEdit.type === "overlay") slide = $overlays
+            else if ($activeEdit.type === "template") slide = $templates
+
+            slideItems = slide[$activeEdit.id!]?.items
+        }
+
+        if (!slideItems) return
+
+        let actions = clone(slideItems[index].actions)
+        delete actions[action]
+
+        if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {
+            history({
+                id: "UPDATE",
+                oldData: { id: $activeEdit.id },
+                newData: { key: "items", subkey: "actions", data: [actions], indexes: [index] },
+                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitemaction_" + index },
+            })
+
+            return
+        }
+
+        history({
+            id: "setItems",
+            newData: { style: { key: "actions", values: [actions] } },
+            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemaction_" + slideRef.id + "_items_" + index },
+        })
     }
 
     // timer
@@ -518,6 +564,12 @@
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
     $: autoSize = getAutoSize(item)
+
+    const actions = {
+        transition: { label: "popup.transition", icon: "transition" },
+        showTimer: { label: "actions.show_timer", icon: "time_in" },
+        hideTimer: { label: "actions.hide_timer", icon: "time_out" },
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
@@ -535,14 +587,29 @@ bind:offsetWidth={width} -->
     {#if !plain}
         <Movebox {ratio} active={$activeEdit.items.includes(index)} />
 
-        <!-- bindings -->
-        {#if item.bindings?.length}
-            <div title={$dictionary.actions?.remove_binding} class="chordsButton" style="zoom: {1 / ratio};left: 0;right: unset;">
-                <Button on:click={removeBindings} redHover>
-                    <Icon id="bind" white />
-                </Button>
-            </div>
-        {/if}
+        <div class="actions">
+            <!-- bindings -->
+            {#if item.bindings?.length}
+                <div title={$dictionary.actions?.remove_binding} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+                    <Button on:click={removeBindings} redHover>
+                        <Icon id="bind" white />
+                    </Button>
+                </div>
+            {/if}
+            <!-- actions -->
+            {#if item.actions}
+                {#each Object.keys(item.actions) as action}
+                    <div title={actions[action] ? $dictionary[actions[action].label.split(".")[0]]?.[actions[action].label.split(".")[1]] : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+                        <Button on:click={() => removeAction(action)} redHover>
+                            <Icon id={actions[action]?.icon} white />
+                        </Button>
+                        {#if typeof item.actions[action] === "number"}
+                            <span class="actionValue">{item.actions[action]}s</span>
+                        {/if}
+                    </div>
+                {/each}
+            {/if}
+        </div>
     {/if}
     {#if item?.lines}
         <!-- chords -->
@@ -646,6 +713,8 @@ bind:offsetWidth={width} -->
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "events"}
         <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
+    {:else if item?.type === "variable"}
+        <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} edit />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
     {:else if item?.type === "visualizer"}
@@ -676,6 +745,8 @@ bind:offsetWidth={width} -->
         pointer-events: none;
         position: absolute;
         width: 100%;
+        overflow: hidden;
+        padding-top: 0;
     }
     .item:hover {
         /* .item:hover > .edit { */
@@ -683,14 +754,34 @@ bind:offsetWidth={width} -->
         backdrop-filter: blur(20px);
     }
 
+    .actions {
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        display: flex;
+        flex-direction: column;
+    }
+    .actionValue {
+        font-size: initial;
+        opacity: 0.5;
+        font-weight: bold;
+        padding: 0 5px;
+    }
+    .actionButton,
+    .chordsButton {
+        display: flex;
+        align-items: center;
+        background-color: var(--focus);
+    }
     .chordsButton {
         position: absolute;
         top: 0;
         right: 0;
-        background-color: var(--focus);
     }
+    .actionButton :global(button),
     .chordsButton :global(button) {
-        padding: 10px !important;
+        padding: 5px !important;
         z-index: 3;
     }
     .chords {
@@ -739,6 +830,7 @@ bind:offsetWidth={width} -->
     }
     .align.plain {
         text-align: left;
+        position: relative;
     }
 
     .edit :global(.break span) {

@@ -39,6 +39,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     presenterControllerKeys: true,
     remotePassword: "",
     ports: { remote: 5510, stage: 5511 },
+    disabledServers: {},
+    serverData: {},
     maxConnections: 10,
     mediaFolders: {},
     audioFolders: {},
@@ -100,6 +102,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         scripture: { name: "category.scripture", icon: "scripture", default: true },
     },
     timers: {},
+    variables: {},
     scriptures: {
         kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
         asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { outputs, slideTimers } from "../../stores"
-import { nextSlide } from "./showActions"
 import { clone } from "./array"
+import { nextSlide } from "./showActions"
 
 // let timers: any = {}
 // let activeTimers: string[] = []
@@ -143,6 +143,7 @@ function sliderTime(id: any) {
     options.sliderTimer = setTimeout(() => {
         options = clone(get(slideTimers)[id])
         if (!options || !options.sliderTimer || !options.timer || options.paused) return
+
         slideTimers.update((a) => {
             let remaining = options.remaining - (Date.now() - options.start)
             a[id].time = options.max - remaining / 1000

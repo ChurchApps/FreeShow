@@ -5,8 +5,26 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const tabs: SettingsTabs[] = ["general", "outputs", "styles", "groups", "actions", "connection", "cloud", "theme", "other"]
+    const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "groups", "actions", "connection", "cloud", "theme", "other"]
+
+    function keydown(e: any) {
+        if (e.ctrlKey || e.metaKey) return
+
+        let nextTab = -1
+        let currentTabIndex = tabs.findIndex((tab) => tab === $settingsTab)
+
+        if (e.key === "ArrowDown") {
+            nextTab = Math.min(tabs.length - 1, currentTabIndex + 1)
+        } else if (e.key === "ArrowUp") {
+            nextTab = Math.max(0, currentTabIndex - 1)
+        }
+
+        if (nextTab < 0) return
+        settingsTab.set(tabs[nextTab])
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div class="main">
     {#each tabs as tab}

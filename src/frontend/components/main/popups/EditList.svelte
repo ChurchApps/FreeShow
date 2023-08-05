@@ -87,14 +87,14 @@
                     <span>{@html item.text}</span>
                 </span>
                 <span style="right: 0;position: absolute;display: flex;">
+                    <Button on:click={() => moveItem(i)} disabled={i === 0 || currentlyEditing !== null}>
+                        <Icon id="up" />
+                    </Button>
                     <Button title={$dictionary.timer?.edit} on:click={() => editItem(i)}>
                         <Icon id="edit" />
                     </Button>
                     <Button title={$dictionary.settings?.remove} on:click={() => removeItem(i)} disabled={currentlyEditing !== null}>
                         <Icon id="delete" />
-                    </Button>
-                    <Button on:click={() => moveItem(i)} disabled={i === 0 || currentlyEditing !== null}>
-                        <Icon id="up" />
                     </Button>
                 </span>
             </div>

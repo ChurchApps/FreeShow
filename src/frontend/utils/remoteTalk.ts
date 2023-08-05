@@ -6,7 +6,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { REMOTE } from "./../../types/Channels"
 import { GetLayout } from "./../components/helpers/get"
-import { activeProject, connections, dictionary, folders, mediaCache, openedFolders, outputs, projects, remotePassword, shows, showsCache } from "./../stores"
+import { activeProject, connections, dictionary, driveData, folders, mediaCache, openedFolders, outputs, projects, remotePassword, shows, showsCache } from "./../stores"
 import { sendData } from "./sendData"
 
 // REMOTE
@@ -276,10 +276,14 @@ export function convertBackgrounds(show) {
     console.log("SHOW", show)
     // let media = {}
     Object.keys(show.media).map((id) => {
-        let cachedImage: any = get(mediaCache)[show.media[id].path]
+        let path = show.media[id].path
+        let cloudId = get(driveData).mediaId
+        if (cloudId && cloudId !== "default") path = show.media[id].cloud?.[cloudId] || path
+
+        let cachedImage: any = get(mediaCache)[path]
         console.log(cachedImage)
         if (cachedImage) show.media[id].path = cachedImage.data // "data:image/png;base64," +
-        // let path = await toBase64(show.media[id].path)
+        // let path = await toBase64(path)
     })
 
     console.log("SHOW2", show)

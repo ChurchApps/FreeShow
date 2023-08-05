@@ -26,6 +26,7 @@ import {
     templates,
     timers,
     transitionData,
+    variables,
     volume,
 } from "../stores"
 import { driveConnect } from "./drive"
@@ -123,10 +124,14 @@ export function listenForUpdates() {
     timers.subscribe((data) => {
         send(OUTPUT, ["TIMERS"], data)
     })
+    variables.subscribe((data) => {
+        send(OUTPUT, ["VARIABLES"], data)
+    })
 
     volume.subscribe((data) => {
         send(OUTPUT, ["VOLUME"], data)
     })
+    // WIP send gain!!
 
     projects.subscribe(() => {
         sendData(REMOTE, { channel: "PROJECTS" }, true)

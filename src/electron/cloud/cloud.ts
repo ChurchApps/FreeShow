@@ -7,7 +7,10 @@ export async function cloudConnect(e: any, { channel, data }: any) {
     if (!cloudHelpers[channel]) return
 
     let reply = await cloudHelpers[channel](data)
-    if (reply || data.closeWhenFinished) e.reply(CLOUD, { channel, data: { ...reply, closeWhenFinished: data.closeWhenFinished } })
+    if (reply || data?.closeWhenFinished) {
+        if (data?.closeWhenFinished) reply.closeWhenFinished = data.closeWhenFinished
+        e.reply(CLOUD, { channel, data: reply })
+    }
 }
 
 const cloudHelpers: any = {

@@ -27,7 +27,7 @@
             <Groups />
         {:else if $settingsTab === "styles"}
             <Styles />
-        {:else if $settingsTab === "outputs"}
+        {:else if $settingsTab === "display_settings"}
             <Outputs />
         {:else if $settingsTab === "actions"}
             <Actions />

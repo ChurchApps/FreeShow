@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, activeShow, dictionary, overlays, refreshEditSlide, selected, showsCache, templates, timers } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, dictionary, overlays, refreshEditSlide, selected, showsCache, templates, timers, variables } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -24,6 +24,7 @@
         { id: "timer" },
         { id: "clock" },
         { id: "events", icon: "calendar" },
+        { id: "variable" },
         { id: "mirror" },
         { id: "visualizer" },
     ]
@@ -50,6 +51,10 @@
         mirror: (item: any) => {
             let showName = $showsCache[item.mirror.show]?.name || ""
             return showName
+        },
+        variable: (item: any) => {
+            let name = $variables[item.variable?.id]?.name || ""
+            return name
         },
     }
 

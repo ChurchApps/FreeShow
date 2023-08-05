@@ -8,7 +8,8 @@
         "drop": "Tegye le itt",
         "search": "Keresés",
         "none": "Nics",
-        "finished": "Befejezett"
+        "finished": "Befejezett",
+        "system_open": "Open in system"
     },
     "about": {
         "check_updates": "Frissítések ellenőrzése",
@@ -275,6 +276,7 @@
         "player": "Lejátszó",
         "live": "Élő",
         "timers": "Időzítők",
+        "variables": "Variables",
         "templates": "Sablonok",
         "web": "Web"
     },
@@ -315,6 +317,7 @@
         "find_replace": "Keresés és csere",
         "edit_list": "Lista szerkesztése",
         "timer": "Időzítő",
+        "variable": "Variable",
         "transition": "Átmenet",
         "delete_show": "Műsor törlése",
         "delete_show_confirmation": "Biztos benne, hogy törölni szeretné",
@@ -322,6 +325,8 @@
         "choose_screen": "Képernyő kiválasztása",
         "change_output_values": "Kimeneti értékek megváltoztatása",
         "choose_style": "Stílus kiválasztása",
+        "set_time": "Set time",
+        "animate": "Animate",
         "next_timer": "Következő dia időzítője",
         "import": "Importálás",
         "export": "Exportálás",
@@ -364,6 +369,7 @@
         "now": "most!",
         "no_video_id": "Nincs videó azonosító",
         "no_name": "Nincs név",
+        "media_replaced": "Missing media file replaced with match.",
         "lyrics_undefined": "Nem találtunk dalszöveget!",
         "lyrics_copied": "Dalszöveg másolva a Genius-ról!",
         "no_pdf_linux": "Nem lehet PDF-ként exportálni Linuxon.",
@@ -383,6 +389,7 @@
         "project": "Új projekt",
         "section": "Új szakasz",
         "timer": "Új időzítő",
+        "variable": "New variable",
         "category": "Új kategória",
         "private": "Új privát műsor",
         "folder": "Új mappa",
@@ -413,6 +420,9 @@
         "choose_group": "Csoport kiválasztása",
         "goto_group": "Ugrás a csoporthoz",
         "change_output_style": "Kimeneti stílus megváltoztatása",
+        "active_outputs": "Active outputs",
+        "all_outputs": "All outputs",
+        "specific_outputs": "Specific outputs",
         "toggle_private": "Privát",
         "view_private": "Privát megjelenítése",
         "import": "Importálás",
@@ -432,6 +442,7 @@
         "paste": "Beillesztés",
         "pasteAndMatchStyle": "Beillesztés és stílus egyeztetése",
         "selectAll": "Összes kijelölése",
+        "remove_selection": "Remove selection",
         "speech": "Beszéd",
         "startSpeaking": "Beszéd indítása",
         "stopSpeaking": "Beszéd leállítása",
@@ -452,6 +463,8 @@
         "add_time_marker": "Időjelölő hozzáadása",
         "bind_to": "Hozzárendelés",
         "remove_binding": "Hozzárendelés eltávolítása",
+        "show_timer": "Time until show",
+        "hide_timer": "Time until hide",
         "choose_custom": "Egyéni választása",
         "format": "Formázás",
         "find_replace": "Szöveg keresése és cseréje",
@@ -469,6 +482,7 @@
         "toggle_output": "Kimeneti képernyő váltása",
         "change_tab": "Fül váltása",
         "change_drawer_tab": "Fiókszekrény fül váltása",
+        "toggle_drawer": "Toggle drawer",
         "actions": "Műveletek",
         "clear_history": "Előzmények törlése",
         "set_key": "Billentyű beállítása",
@@ -489,6 +503,17 @@
         "start_recording": "Felvétel indítása",
         "stop_recording": "Felvétel leállítása"
     },
+    "animate": {
+        "change": "Change",
+        "set": "Set",
+        "wait": "Wait",
+        "background": "background",
+        "text": "text",
+        "item": "item",
+        "to": "to",
+        "for": "for",
+        "seconds": "seconds"
+    },
     "cloud": {
         "info": "Fájlok szinkronizálása a Google Drive-val biztonsági mentésként, vagy ha több számítógépen dolgozol.",
         "tip_api": "Saját ingyenes Google API-kulcsot kell megadnod, hogy a program automatikusan feltölthesse a fájlokat a Google Drive-ba.",
@@ -496,6 +521,7 @@
         "tip_guide": "Kattints ide az útmutatóért.",
         "enable": "Automatikus szinkronizálás indításkor és mentéskor",
         "disable_upload": "Feltöltés letiltása",
+        "media_id": "Media path ID",
         "google_drive_api": "Google API szolgáltatási fiók kulcsa",
         "select_key": "Kulcsfájl importálása",
         "update_key": "Kulcsfájl frissítése",
@@ -542,6 +568,7 @@
         "toggle_output": "Kimenet váltása",
         "move_to_front": "Előre mozgatás",
         "lock_to_output": "Rögzítés a kimenethez",
+        "place_under_slide": "Place under slide",
         "toggle_clock": "Óra váltása",
         "move_connections": "Összes kapcsolat áthelyezése ide"
     },
@@ -646,6 +673,7 @@
         "live": "Élő",
         "audio": "Audió",
         "timer": "Időzítő",
+        "variable": "Variable",
         "visualizer": "Vizualizáció",
         "icon": "Ikon"
     },
@@ -758,7 +786,7 @@
         "theme": "Téma",
         "groups": "Csoportok",
         "styles": "Stílusok",
-        "outputs": "Kimenetek",
+        "display_settings": "Kimenetek",
         "actions": "Műveletek",
         "display": "Kijelző",
         "connection": "Kapcsolat",
@@ -818,7 +846,7 @@
         "output_screen": "Kimeneti képernyő",
         "device_name": "Eszköz neve",
         "password": "jelszó",
-        "port": "port",
+        "port": "Port",
         "connections": "Kapcsolatok",
         "max_connections": "Maximális kapcsolatok",
         "allowed_connections": "Engedélyezett kapcsolatok",
@@ -828,7 +856,12 @@
         "reset_all": "Minden visszaállítása",
         "reset_theme": "Téma visszaállítása",
         "reset_themes": "Témák visszaállítása",
-        "export_all": "Minden exportálása"
+        "backup_all": "Backup everything",
+        "restore": "Restore",
+        "backup_started": "Backing up...",
+        "restore_started": "Restoring...",
+        "backup_finished": "Backup complete!",
+        "restore_finished": "Restore complete!"
     },
     "calendar": {
         "type": "Típus",
@@ -900,12 +933,22 @@
     },
     "easings": {
         "linear": "Lineáris",
+        "ease": "Ease",
+        "ease-in": "Ease in",
+        "ease-out": "Ease out",
+        "ease-in-out": "Ease in & out",
         "elastic": "Elastikus",
         "bounce": "Pattogás",
         "back": "Ugrás",
         "circ": "Körkörös",
         "cubic": "Kubikus",
         "sine": "Folyamatos"
+    },
+    "variables": {
+        "number": "Number",
+        "text": "Text",
+        "step": "Step",
+        "value": "Value"
     },
     "month": {
         "1": "január",

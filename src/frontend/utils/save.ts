@@ -12,6 +12,7 @@ import {
     customizedIcons,
     defaultProjectName,
     deletedShows,
+    disabledServers,
     drawSettings,
     drawer,
     drawerTabsData,
@@ -55,6 +56,7 @@ import {
     scriptureSettings,
     scriptures,
     scripturesCache,
+    serverData,
     shows,
     showsCache,
     showsPath,
@@ -71,6 +73,7 @@ import {
     timers,
     transitionData,
     undoHistory,
+    variables,
     videoExtensions,
     videoMarkers,
     volume,
@@ -80,7 +83,7 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { syncDrive } from "./drive"
 import { newToast } from "./messages"
 
-export function save(closeWhenFinished: boolean = false) {
+export function save(closeWhenFinished: boolean = false, backup: boolean = false) {
     console.log("SAVING...")
 
     let settings: { [key in SaveListSettings]: any } = {
@@ -91,6 +94,8 @@ export function save(closeWhenFinished: boolean = false) {
         autoOutput: get(autoOutput),
         maxConnections: get(maxConnections),
         ports: get(ports),
+        disabledServers: get(disabledServers),
+        serverData: get(serverData),
         autosave: get(autosave),
         timeFormat: get(timeFormat),
         defaultProjectName: get(defaultProjectName),
@@ -143,6 +148,7 @@ export function save(closeWhenFinished: boolean = false) {
         scriptureSettings: get(scriptureSettings),
         templateCategories: get(templateCategories),
         timers: get(timers),
+        variables: get(variables),
         midiIn: get(midiIn),
         videoMarkers: get(videoMarkers),
         customizedIcons: get(customizedIcons),
@@ -183,12 +189,15 @@ export function save(closeWhenFinished: boolean = false) {
     }
 
     allSavedData.closeWhenFinished = closeWhenFinished
+    allSavedData.backup = backup
     window.api.send(STORE, { channel: "SAVE", data: allSavedData })
 }
 
-export function saveComplete({ closeWhenFinished }) {
+export function saveComplete({ closeWhenFinished, backup }) {
     saved.set(true)
     newToast("$toast.saved")
+
+    if (backup) return
 
     let mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId) {

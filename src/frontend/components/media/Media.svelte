@@ -12,6 +12,7 @@
 
     export let path: string
     export let currentStyle: any = {}
+    export let animationStyle: string = ""
     export let controls: boolean = false
     export let transition: Transition = { type: "none", duration: 0, easing: "linear" }
 
@@ -26,10 +27,10 @@
     export let startAt: number = 0
     export let mirror: boolean = false
 
+    // TODO: this will override preview, if play without filters is active and editing media:
     // get styling
-    $: mediaId = $activeEdit.id || $activeShow?.id
+    $: mediaId = $activeEdit.id && $activeEdit.type === "media" ? $activeEdit.id : $activeShow?.id && ($activeShow.type === "image" || $activeShow.type === "video") ? $activeShow.id : ""
     $: if (mediaId && ($media[mediaId] || currentStyle)) {
-        // TODO: get local show styles?!
         filter = $media[mediaId]?.filter || ""
         flipped = $media[mediaId]?.flipped || false
         fit = currentStyle?.fit || $media[mediaId]?.fit || "contain"
@@ -175,6 +176,37 @@
     }
 
     $: noTransitions = transition.type === "none" && mirror
+
+    // change images
+    let img1 = { active: true, path: "" }
+    let img2 = { active: false, path: "" }
+    let removeTimeout: any = null
+    $: if (path && type !== "video") changeImage()
+    else {
+        img1 = { active: true, path: "" }
+        img2 = { active: false, path: "" }
+    }
+
+    function changeImage() {
+        if (removeTimeout) clearTimeout(removeTimeout)
+
+        if (img1.active) {
+            img1 = { active: false, path: "" }
+            img2 = { active: true, path }
+        } else {
+            img2 = { active: false, path: "" }
+            img1 = { active: true, path }
+        }
+
+        removeTimeout = setTimeout(
+            () => {
+                removeTimeout = null
+            },
+            transition.type === "none" ? 0 : transition.duration
+        )
+    }
+
+    $: console.log(img1, img2)
 </script>
 
 {#if type === "video"}
@@ -183,7 +215,7 @@
         {#if noTransitions}
             {#if path}
                 <div class="video">
-                    <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing on:loaded on:ended={() => resetVideos()} on:error={reload} />
+                    <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} {animationStyle} on:playing on:loaded on:ended={() => resetVideos()} on:error={reload} />
                 </div>
             {/if}
         {:else}
@@ -200,6 +232,7 @@
                         {flipped}
                         {fit}
                         {speed}
+                        {animationStyle}
                         on:playing
                         on:loaded
                         on:ended={() => resetVideos()}
@@ -220,6 +253,7 @@
                         {flipped}
                         {fit}
                         {speed}
+                        {animationStyle}
                         on:playing
                         on:loaded
                         on:ended={() => resetVideos()}
@@ -233,17 +267,30 @@
     {#if controls}
         <MediaControls bind:videoData bind:videoTime />
     {/if}
-{:else if path}
-    {#key path || retryCount}
+{:else}
+    {#key retryCount}
         <!-- svelte transition bug, this is to remove media when changing from "draw" view -->
-        {#if transition.type === "none"}
-            <div style="height: 100%;">
-                <Image {path} {filter} {flipped} {fit} on:error={reload} />
-            </div>
+        {#if noTransitions}
+            {#if path}
+                <div style="height: 100%;{animationStyle}">
+                    <Image {path} {filter} {flipped} {fit} on:error={reload} />
+                </div>
+            {/if}
         {:else}
-            <div style="height: 100%;" transition:custom={transition}>
-                <Image {path} {filter} {flipped} {fit} on:error={reload} />
-            </div>
+            {#if img1.path}
+                <div class="change">
+                    <div style="height: 100%;{animationStyle}" transition:custom={transition}>
+                        <Image path={img1.path} {filter} {flipped} {fit} on:error={reload} />
+                    </div>
+                </div>
+            {/if}
+            {#if img2.path}
+                <div class="change">
+                    <div style="height: 100%;{animationStyle}" transition:custom={transition}>
+                        <Image path={img2.path} {filter} {flipped} {fit} on:error={reload} />
+                    </div>
+                </div>
+            {/if}
         {/if}
     {/key}
 {/if}
@@ -261,4 +308,8 @@
         height: 100%;
         transform: translate(-50%, -50%);
     }
+
+    /* .hide {
+        opacity: 0;
+    } */
 </style>

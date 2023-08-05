@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { activeShow, shows as allShows, showsCache } from "../../stores"
+import { activeShow, shows as allShows, driveData, showsCache } from "../../stores"
 import { addToPos } from "./mover"
 import { clone } from "./array"
 // import { loadShows } from "./setShow"
@@ -602,9 +602,16 @@ export function _show(id: any = "active") {
                 // return prev
             },
             /** Add new media */
-            add: (object: any) => {
-                let bgid: string = uid()
+            add: (object: any, bgid: string = "") => {
+                if (!bgid) bgid = uid()
                 showsCache.update((a: any) => {
+                    let cloudId = get(driveData).mediaId
+                    if (cloudId && cloudId !== "default") {
+                        object.cloud = a[id].media[bgid]?.cloud || {}
+                        if (!object.cloud[cloudId]) object.cloud[cloudId] = {}
+                        object.cloud[cloudId] = object.path
+                    }
+
                     a[id].media[bgid] = object
 
                     a[id].timestamps.modified = new Date().getTime()

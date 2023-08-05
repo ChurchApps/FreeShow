@@ -136,6 +136,7 @@
     <CombinedInput textWidth={30}>
         <p><T id="create_show.split_lines" /></p>
         <NumberInput
+            disabled={!$formatNewShow}
             value={$splitLines}
             max={100}
             on:change={(e) => {

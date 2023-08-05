@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeShow, labelsDisabled, showsCache } from "../../stores"
+    import { activeShow, labelsDisabled, midiIn, showsCache } from "../../stores"
     import { _show } from "../helpers/shows"
     import Tabs from "../main/Tabs.svelte"
     import Layout from "./tools/Layout.svelte"
@@ -13,7 +13,7 @@
         groups: { name: "tools.groups", icon: "groups" },
         // WIP layout is no longer needed
         // layout: { name: "tools.layout", icon: "layout" },
-        media: { name: "tools.media", icon: "media" },
+        media: { name: "tools.media", icon: "media", disabled: true },
         // audio: { name: "tools.audio", icon: "audio" },
         metadata: { name: "tools.metadata", icon: "info" },
         notes: { name: "tools.notes", icon: "notes" },
@@ -21,15 +21,16 @@
     let active: string = Object.keys(tabs)[0]
 
     $: showId = $activeShow?.id
+    $: show = $showsCache[showId || ""]
     let currentLayout: any = null
     let note: string = ""
-    $: if (showId && $showsCache[showId]?.settings?.activeLayout !== currentLayout) updateNote()
+    $: if (showId && show?.settings?.activeLayout !== currentLayout) updateNote()
 
     // let previousShow = showId
     function updateNote() {
         if (!showId) return
         note = showId ? _show().layouts("active").get("notes")[0] || "" : ""
-        currentLayout = $showsCache[showId]?.settings?.activeLayout
+        currentLayout = show?.settings?.activeLayout
 
         // if (note.length && previousShow !== showId && active === "groups") active = "notes"
         // else if (!note.length && previousShow !== showId && active === "notes") active = "groups"
@@ -37,8 +38,23 @@
     }
 
     function edit(e: any) {
-        if (!showId || $showsCache[showId].layouts[$showsCache[showId].settings.activeLayout].notes === e.detail) return
+        if (!showId || show.layouts[show.settings.activeLayout].notes === e.detail) return
         _show().layouts("active").set({ key: "notes", value: e.detail })
+    }
+
+    // media
+    $: if (show || $midiIn) checkMedia()
+    function checkMedia() {
+        let refs = _show("active").layouts().ref()
+
+        if (refs.find((ref) => ref.find((slide) => slide.data.background))) return (tabs.media.disabled = false)
+        if (refs.find((ref) => ref.find((slide) => slide.data.audio))) return (tabs.media.disabled = false)
+        if (refs.find((ref) => ref.find((slide) => slide.data.mics))) return (tabs.media.disabled = false)
+
+        if (Object.keys(show?.midi || {}).length) return (tabs.media.disabled = false)
+        if (Object.values($midiIn).find((value: any) => value.shows.find((a) => a.id === $activeShow!.id))) return (tabs.media.disabled = false)
+
+        return (tabs.media.disabled = true)
     }
 </script>
 
@@ -47,7 +63,7 @@
 <div class="main border" class:labels={!$labelsDisabled}>
     <Tabs {tabs} bind:active />
 
-    {#if showId && $showsCache[showId]}
+    {#if show}
         {#if active === "groups"}
             <SlideGroups />
         {:else if active === "layout"}

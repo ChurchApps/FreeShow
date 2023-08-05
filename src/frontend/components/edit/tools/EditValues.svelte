@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { activePopup, dictionary, imageExtensions, popupData, videoExtensions } from "../../../stores"
+    import { activePopup, dictionary, imageExtensions, popupData, variables, videoExtensions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { getFilters } from "../../helpers/style"
     import T from "../../helpers/T.svelte"
@@ -19,6 +19,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import DateInput from "../../inputs/DateInput.svelte"
     import TimeInput from "../../inputs/TimeInput.svelte"
+    import { keysToID } from "../../helpers/array"
 
     export let edits: any
     export let item: any = null
@@ -41,7 +42,7 @@
         let value = e.detail || e.target?.value || null
 
         if (input.input === "checkbox") value = e.target.checked
-        else if (input.input === "dropdown") value = value.id
+        else if (input.input === "dropdown" || input.input === "selectVariable") value = value?.id || ""
         else if (input.input === "number") value = Number(value)
         else if (input.input === "multiselect") {
             if (input.value.includes(value)) value = input.value.filter((a) => a !== value)
@@ -161,6 +162,11 @@
         {#each edits[section] as input}
             {#if input.input === "editTimer"}
                 <EditTimer {item} on:change={(e) => valueChange(e, input)} />
+            {:else if input.input === "selectVariable"}
+                <CombinedInput>
+                    <p title={$dictionary.items?.variable}><T id="items.variable" /></p>
+                    <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
+                </CombinedInput>
             {:else if input.input === "popup"}
                 <CombinedInput>
                     <Button
@@ -209,6 +215,7 @@
                 <CombinedInput>
                     {#each lineInputs[input.input] as lineInput}
                         {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
+                        <span style="font-size: 0;position: absolute;">{console.log(currentStyle, lineAlignStyle)}</span>
                         <IconButton
                             on:click={() => (lineInput.toggle ? toggle(lineInput) : dispatch("change", lineInput))}
                             title={$dictionary.edit?.["_title_" + lineInput.title || lineInput.icon]}

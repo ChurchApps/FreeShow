@@ -16,6 +16,8 @@
     import ItemStyle from "./tools/ItemStyle.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
     import SlideFilters from "./tools/SlideFilters.svelte"
+    import { itemEdits } from "./values/item"
+    import { getStyles } from "../helpers/style"
 
     let tabs: TabsObj = {
         text: { name: "items.text", icon: "text" },
@@ -80,12 +82,30 @@
 
     function applyStyleToAllSlides() {
         if (!isShow) return
+        let type = item?.type || "text"
 
-        // TODO: apply to different active elements
+        // just replace item style or anything else if not textbox
+        let itemKeys: string[] = []
+        if (type !== "text" && (active === "text" || active === "item")) {
+            Object.values(itemEdits).forEach((values) => {
+                itemKeys.push(...values.map((a) => a.key || ""))
+            })
+        }
+
         if (active === "text") {
             // get current text style
-            let style = item?.lines?.[0].text?.[0].style
+            let style = item?.lines?.[0].text?.[0].style || item?.style
             let isAuto = item?.auto
+            // WIP apply other keys...
+
+            let newStyle: string = ""
+            // remove all "item" style from new style
+            if (type !== "text") {
+                let newStyles: any = getStyles(style)
+                Object.entries(newStyles).forEach(([key, value]: any) => {
+                    if (!itemKeys.includes(key)) newStyle += `${key}: ${value};`
+                })
+            }
 
             _show("active")
                 .slides()
@@ -93,10 +113,27 @@
                 .forEach((slide) => {
                     let items: any[] = []
                     let values: any[] = []
+
                     slide.items.forEach((item: any, i: number) => {
-                        if (!item.lines) return
+                        let itemType = item.type || "text"
+                        if (itemType !== type) return
 
                         items.push(i)
+
+                        if (type !== "text") {
+                            let itemStyles = getStyles(item.style)
+                            let newItemStyle = ""
+
+                            // get only current "item" style
+                            Object.entries(itemStyles).forEach(([key, value]: any) => {
+                                if (itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
+                            })
+
+                            values.push(newItemStyle + newStyle)
+                            return
+                        }
+
+                        if (type !== "text" || !item.lines) return
                         let text = item.lines.map((a: any) => {
                             if (!a.text) return
 
@@ -108,11 +145,24 @@
                         values.push(text)
                     })
 
+                    if (!items.length || !values.length) return
+
+                    if (type !== "text") {
+                        history({
+                            id: "setStyle",
+                            newData: { style: { key: "style", values } },
+                            location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+                        })
+
+                        return
+                    }
+
                     history({
                         id: "textStyle",
                         newData: { style: { key: "text", values } },
                         location: { page: "edit", show: $activeShow!, slide: slide.id, items },
                     })
+
                     history({
                         id: "setItems",
                         newData: { style: { key: "auto", values: [isAuto] } },
@@ -125,17 +175,46 @@
         if (active === "item") {
             // get current item style
             let style = item?.style
+            if (!style) return
 
-            // TODO: dont add to icons (etc.)
+            let newStyle: string = ""
+            // get only "item" style from new style
+            if (type !== "text") {
+                let newStyles: any = getStyles(style)
+                Object.entries(newStyles).forEach(([key, value]: any) => {
+                    if (itemKeys.includes(key)) newStyle += `${key}: ${value};`
+                })
+            }
 
             _show("active")
                 .slides()
                 .get()
                 .forEach((slide) => {
+                    let values: string[] = []
+                    if (type === "text") values = [style!]
+
+                    let items: number[] = []
+                    slide.items.forEach((item, i) => {
+                        if ((item.type || "text") !== type) return
+
+                        items.push(i)
+
+                        // get only current style
+                        let itemStyles = getStyles(item.style)
+                        let newItemStyle = ""
+
+                        // get only current "item" style
+                        Object.entries(itemStyles).forEach(([key, value]: any) => {
+                            if (!itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
+                        })
+
+                        values.push(newStyle + newItemStyle)
+                    })
+
                     history({
                         id: "setStyle",
-                        newData: { style: { key: "style", values: [style] } },
-                        location: { page: "edit", show: $activeShow!, slide: slide.id, items: [] },
+                        newData: { style: { key: "style", values } },
+                        location: { page: "edit", show: $activeShow!, slide: slide.id, items },
                     })
                 })
             return

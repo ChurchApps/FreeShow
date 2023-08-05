@@ -66,7 +66,9 @@
             }
         },
         createCollection: () => {
-            if ($scriptures[$selected.data[0]]?.collection) disabled = true
+            console.log($selected.data)
+            let selectedBibles = $selected.data.map((id) => $scriptures[id]).filter((a) => !a?.collection)
+            if (selectedBibles.length < 2) disabled = true
         },
         favourite: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id
@@ -75,6 +77,10 @@
         lock_to_output: () => {
             let id = $selected.data[0]
             if ($overlays[id]?.locked) enabled = true
+        },
+        place_under_slide: () => {
+            let id = $selected.data[0]
+            if ($overlays[id]?.placeUnderSlide) enabled = true
         },
         toggle_clock: () => {
             if ($forceClock) enabled = true

@@ -27,7 +27,7 @@ export const mainOptions: any = {
     icon: "public/icon.png",
     backgroundColor: "#292c36",
     titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
-    trafficLightPosition: { x: 10, y: 17 },
+    trafficLightPosition: { x: 10, y: 12 },
     show: false,
     webPreferences: {
         preload: join(__dirname, "..", "preload"), // use a preload script

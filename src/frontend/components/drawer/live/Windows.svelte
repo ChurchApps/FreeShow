@@ -21,6 +21,8 @@
             //   d = [...d, ...thisWindow]
             // }
             windows = d
+
+            console.log(windows)
         },
     })
 

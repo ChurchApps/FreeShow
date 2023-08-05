@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
     import { activePopup, showsPath } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
@@ -7,17 +8,21 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import LocaleSwitcher from "../../settings/LocaleSwitcher.svelte"
+    import { send } from "../../../utils/request"
 
     // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
+
+    onMount(() => {
+        if (!$showsPath) send(MAIN, ["SHOWS_PATH"])
+    })
 
     function create(e: any) {
         if (e.target.closest(".main") && !e.target.closest(".start")) return
         window.api.send(MAIN, { channel: "GET_PATHS" })
+
         activePopup.set(null)
     }
 </script>
-
-<svelte:window on:click={create} />
 
 <div class="main">
     <p><T id="setup.good_luck" /></p>
@@ -34,7 +39,7 @@
         <p style="overflow: visible;"><T id="settings.show_location" /></p>
         <span class="showElem">
             <!-- <p>{$showsPath || ""}</p> -->
-            <FolderPicker title={$showsPath || ""} id="SHOWS">
+            <FolderPicker style="width: 100%;" title={$showsPath || ""} id="SHOWS" center={false}>
                 <Icon id="folder" size={1.2} right />
                 {#if $showsPath}
                     {$showsPath}

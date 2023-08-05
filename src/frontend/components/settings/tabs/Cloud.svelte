@@ -18,13 +18,14 @@
 
     $: validKeys = typeof $driveKeys === "object" && Object.keys($driveKeys).length
 
-    function updateMainFolder(e: any) {
+    function updateValue(e: any, key: string) {
         let value = e.target.value
+        if (key === "mediaId" && !value) value = "default"
         if (!value) return
 
-        // It seems the character length is 33 for drive folders and 44 for files.
+        // mainFolderId: It seems the character length is 33 for drive folders and 44 for files.
         driveData.update((a) => {
-            a.mainFolderId = value
+            a[key] = value
             return a
         })
     }
@@ -63,6 +64,13 @@
 </CombinedInput>
 
 <CombinedInput>
+    <p>
+        <T id="cloud.media_id" />
+    </p>
+    <TextInput style="z-index: 1;" value={$driveData?.mediaId || "default"} on:change={(e) => updateValue(e, "mediaId")} />
+</CombinedInput>
+
+<CombinedInput>
     <p><T id="cloud.google_drive_api" /></p>
     <Button on:click={getKeysFile} center>
         <Icon id="key" right />
@@ -80,7 +88,7 @@
             <T id="cloud.main_folder" />
             <span style="font-size: 0.7em;opacity: 0.7;display: flex;align-items: center;justify-content: end;overflow: hidden;">drive.google.com/drive/folders/</span>
         </p>
-        <TextInput style="z-index: 1;" value={$driveData?.mainFolderId || ""} on:change={updateMainFolder} />
+        <TextInput style="z-index: 1;" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e, "mainFolderId")} />
     </CombinedInput>
     <!-- TODO: media folder -->
     <!-- <div>

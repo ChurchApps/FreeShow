@@ -28,7 +28,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         let outs = getActiveOutputs()
         if (outputId) outs = [outputId]
 
-        outs.forEach((id: string) => {
+        outs.forEach((id: string, i: number) => {
             let output: any = a[id]
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
@@ -49,7 +49,11 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             // WIP update bg (muted, loop, time)
             // WIP preview don't get set to 0, just output window
             if (key === "background" && data) {
-                let msg: any = { id, data: { muted: data.muted || false, loop: data.loop || false } }
+                // mute videos in the other output windows if more than one
+                let muted = data.muted || false
+                if (outs.length > 1 && i !== 0) muted = true
+
+                let msg: any = { id, data: { muted, loop: data.loop || false } }
                 if (data.startAt !== undefined) msg.time = data.startAt || 0
 
                 send(OUTPUT, ["UPDATE_VIDEO"], msg)
@@ -137,10 +141,23 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
     return cleared
 }
 
-export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null): Resolution {
+// WIP style should override any slide resolution & color ? (it does not)
+
+export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, getSlideRes: boolean = false): Resolution {
     let currentOutput = get(outputs)[getActiveOutputs()[0]]
     let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
-    return initial || style || { width: 1920, height: 1080 }
+    let slideRes: any = null
+
+    if (!initial && !style && getSlideRes) {
+        let outSlide: any = currentOutput?.out?.slide || {}
+        let slideRef = _show(outSlide.id || "")
+            .layouts([outSlide.layout])
+            .ref()[0]?.[outSlide.index]
+        let slideOutput = _show(outSlide.id || "").get("slides")?.[slideRef?.id] || null
+        slideRes = slideOutput?.settings?.resolution
+    }
+
+    return initial || style || slideRes || { width: 1920, height: 1080 }
 }
 
 // settings

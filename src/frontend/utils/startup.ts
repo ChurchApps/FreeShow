@@ -30,6 +30,7 @@ import {
     audioFolders,
     autoOutput,
     currentWindow,
+    dictionary,
     draw,
     drawSettings,
     drawTool,
@@ -58,9 +59,11 @@ import {
     styles,
     templates,
     textCache,
+    theme,
     themes,
     timers,
     transitionData,
+    variables,
     version,
     visualizerData,
 } from "../stores"
@@ -74,9 +77,10 @@ import { listen, newToast } from "./messages"
 import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
-import { updateSettings, updateSyncedSettings } from "./updateSettings"
+import { updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clone } from "../components/helpers/array"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
+import { startOutputStream } from "../components/drawer/live/recorder"
 
 export function startup() {
     loaded.set(false)
@@ -187,6 +191,33 @@ const receiveMAIN: any = {
         alertMessage.set("<h3>Updated shows</h3><br>● Old shows: " + oldCount + "<br>● New shows: " + newCount)
         activePopup.set("alert")
     },
+    START_STREAM: ({ sourceId }) => startOutputStream(sourceId),
+    BACKUP: ({ finished, path }) => {
+        if (!finished) return activePopup.set(null)
+
+        alertMessage.set(get(dictionary).settings?.backup_finished + "<br><br>" + path)
+        activePopup.set("alert")
+    },
+    RESTORE: ({ finished }) => {
+        if (!finished) return activePopup.set(null)
+
+        alertMessage.set("settings.restore_finished")
+        activePopup.set("alert")
+    },
+    LOCATE_MEDIA_FILE: ({ path, ref }) => {
+        newToast("$toast.media_replaced")
+        showsCache.update((a) => {
+            let media = a[ref.showId].media[ref.mediaId]
+            if (ref.cloud) {
+                if (!media.cloud) a[ref.showId].media[ref.mediaId].cloud = {}
+                a[ref.showId].media[ref.mediaId].cloud![ref.cloudId] = path
+            } else {
+                a[ref.showId].media[ref.mediaId].path = path
+            }
+
+            return a
+        })
+    },
 }
 
 export const receiveSTORE: any = {
@@ -204,7 +235,12 @@ export const receiveSTORE: any = {
     EVENTS: (a: any) => events.set(a),
     DRIVE_API_KEY: (a: any) => driveKeys.set(a),
     MEDIA: (a: any) => media.set(a),
-    THEMES: (a: any) => themes.set(Object.keys(a).length ? a : clone(defaultThemes)),
+    THEMES: (a: any) => {
+        themes.set(Object.keys(a).length ? a : clone(defaultThemes))
+
+        // update if themes are loaded after settings
+        if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
+    },
     CACHE: (a: any) => {
         mediaCache.set(a.media || {})
         textCache.set(a.text || {})
@@ -229,7 +265,7 @@ const receiveOUTPUT: any = {
     SHOWS: (a: any) => showsCache.set(a),
 
     TEMPLATES: (a: any) => templates.set(a),
-    OVERLAYS: (a: any) => overlays.set(a),
+    OVERLAYS: (a: any) => clone(overlays.set(a)),
     EVENTS: (a: any) => events.set(a),
 
     DRAW: (a: any) => draw.set(a),
@@ -237,7 +273,8 @@ const receiveOUTPUT: any = {
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => mediaFolders.set(a),
-    TIMERS: (a: any) => timers.set(a),
+    TIMERS: (a: any) => clone(timers.set(a)),
+    VARIABLES: (a: any) => clone(variables.set(a)),
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     // POSITION: (a: any) => outputPosition.set(a),
@@ -325,9 +362,19 @@ const receiveIMPORT: any = {
 function importShow(files: any[]) {
     let tempShows: any[] = []
 
-    files.forEach(({ content }: any) => {
-        let [id, show] = JSON.parse(content)
-        tempShows.push({ id, show: { ...show, name: checkName(show.name) } })
+    files.forEach(({ content, name }: any) => {
+        let id, show
+
+        try {
+            ;[id, show] = JSON.parse(content)
+        } catch (e: any) {
+            console.error(name, e)
+            let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+            console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+            return
+        }
+
+        tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
     })
 
     setTempShows(tempShows)

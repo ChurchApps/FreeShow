@@ -37,8 +37,13 @@
     import NextTimer from "./popups/NextTimer.svelte"
     import ManageIcons from "./popups/ManageIcons.svelte"
     import ChooseCamera from "./popups/ChooseCamera.svelte"
+    import Animate from "./popups/Animate.svelte"
+    import SetTime from "./popups/SetTime.svelte"
+    import Variable from "./popups/Variable.svelte"
 
     function mousedown(e: any) {
+        if (popupCache === "initialize") return
+
         if (e.target.classList.contains("popup")) activePopup.set(null)
     }
 
@@ -58,12 +63,15 @@
         find_replace: FindReplace,
         edit_list: EditList,
         timer: Timer,
+        variable: Variable,
         transition: Transition,
         import_scripture: ImportScripture,
         edit_event: EditEvent,
         choose_screen: ChooseScreen,
         change_output_values: ChangeOutputValues,
         choose_style: ChooseStyle,
+        set_time: SetTime,
+        animate: Animate,
         next_timer: NextTimer,
         advanced_settings: AdvancedScreen,
         about: About,
@@ -102,9 +110,12 @@
                             <h2 style="text-align: center;padding: 10px 50px;"><T id="popup.{popupCache}" /></h2>
                         {/key}
                     {/if}
-                    <Button style="position: absolute;right: 0;top: 0;height: 100%;" on:click={() => activePopup.set(null)}>
-                        <Icon id="close" size={2} />
-                    </Button>
+
+                    {#if popupCache !== "alert" && popupCache !== "initialize"}
+                        <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 40px;" on:click={() => activePopup.set(null)}>
+                            <Icon id="close" size={2} />
+                        </Button>
+                    {/if}
                 </div>
                 <div style="display: flex;flex-direction: column;margin: 20px;min-width: 38vw;">
                     <svelte:component this={popups[popupCache]} />
@@ -149,4 +160,11 @@
         width: 100%;
         height: 100%;
     }
+
+    /* WIP dropdown */
+    /* .popup :global(.dropdown) {
+        position: fixed !important;
+        width: fit-content;
+        max-height: 150px;
+    } */
 </style>

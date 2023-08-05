@@ -13,6 +13,7 @@ import {
     categories,
     customizedIcons,
     defaultProjectName,
+    disabledServers,
     drawSettings,
     drawer,
     drawerTabsData,
@@ -44,6 +45,7 @@ import {
     remotePassword,
     resized,
     scripturePath,
+    serverData,
     showsPath,
     slidesOptions,
     styles,
@@ -52,6 +54,7 @@ import {
     themes,
     timeFormat,
     timers,
+    variables,
     videoExtensions,
     videoMarkers,
     webFavorites,
@@ -61,6 +64,7 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
+import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -91,27 +95,20 @@ export function updateSettings(data: any) {
     // if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
 
     // remote
-    send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections })
+    let disabled = data.disabledServers || {}
+    if (disabled.remote === undefined) disabled.remote = false
+    if (disabled.stage === undefined) disabled.stage = false
+    send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled })
 
     // theme
     let currentTheme = get(themes)[data.theme]
     if (currentTheme) {
         // update colors (upgrading from < v0.9.2)
         if (data.theme === "default" && currentTheme.colors.secondary?.toLowerCase() === "#e6349c") {
-            let newTheme = clone(currentTheme)
-            newTheme.colors["primary"] = "#292c36"
-            newTheme.colors["primary-lighter"] = "#363945"
-            newTheme.colors["primary-darker"] = "#191923"
-            newTheme.colors["primary-darkest"] = "#12121c"
-            newTheme.colors.secondary = "#F0008C"
-            newTheme.colors["secondary-opacity"] = "rgba(240, 0, 140, 0.5)"
-
             themes.update((a) => {
-                a[data.theme] = newTheme
+                a.default = clone(defaultThemes.default)
                 return a
             })
-
-            currentTheme = newTheme
         }
 
         updateThemeValues(currentTheme)
@@ -196,6 +193,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     maxConnections: (v: any) => maxConnections.set(v),
     ports: (v: any) => ports.set(v),
+    disabledServers: (v: any) => disabledServers.set(v),
+    serverData: (v: any) => serverData.set(v),
     autosave: (v: any) => autosave.set(v),
     timeFormat: (v: any) => timeFormat.set(v),
     outputs: (v: any) => {
@@ -232,6 +231,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     templateCategories: (v: any) => templateCategories.set(v),
     // templates: (v: any) => templates.set(v),
     timers: (v: any) => timers.set(v),
+    variables: (v: any) => variables.set(v),
     theme: (v: any) => theme.set(v),
     transitionData: (v: any) => transitionData.set(v),
     // themes: (v: any) => themes.set(v),

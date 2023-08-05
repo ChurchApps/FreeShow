@@ -5,11 +5,11 @@ import { clone, keysToID, removeValues, sortObject } from "./array"
 import { GetLayout } from "./get"
 
 // check if name exists and add number
-export function checkName(name: string = "") {
+export function checkName(name: string = "", showId: string = "") {
     name = formatToFileName(name)
 
     let number = 1
-    while (Object.values(get(shows)).find((a: any) => a.name === (number > 1 ? name + " " + number : name))) number++
+    while (Object.entries(get(shows)).find(([id, a]: any) => (!showId || showId !== id) && a.name.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
     return number > 1 ? name + " " + number : name
 }
