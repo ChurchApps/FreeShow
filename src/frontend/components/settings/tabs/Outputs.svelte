@@ -39,7 +39,7 @@
                 }
             }
 
-            if (["alwaysOnTop", "kioskMode"].includes(key)) {
+            if (["alwaysOnTop", "kioskMode", "ndi"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: $currentOutputSettings, key, value })
 
                 // update key output
@@ -150,6 +150,12 @@
     <p><T id="settings.always_on_top" /></p>
     <div class="alignRight">
         <Checkbox checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p>NDI®</p>
+    <div class="alignRight">
+        <Checkbox checked={currentOutput.ndi === true} on:change={(e) => updateOutput("ndi", isChecked(e))} />
     </div>
 </CombinedInput>
 

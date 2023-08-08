@@ -4,7 +4,7 @@
 import { app, BrowserWindow, desktopCapturer, ipcMain, Menu, Rectangle, screen, shell } from "electron"
 import { getFonts } from "font-list"
 import path from "path"
-import { CLOUD, EXPORT, FILE_INFO, MAIN, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STORE } from "../types/Channels"
+import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
 import { closeServers } from "./servers"
@@ -16,6 +16,8 @@ import { loadScripture, loadShow, receiveMain, renameShows, saveRecording, start
 import { config, stores } from "./utils/store"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { startBackup } from "./utils/backup"
+import { receiveNDI } from "./ndi/talk"
+import { stopAllCaptures } from "./ndi/capture"
 // import checkForUpdates from "./utils/updater"
 
 // ----- STARTUP -----
@@ -30,7 +32,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 22000)
+    else setTimeout(startApp, 28000)
 })
 
 function startApp() {
@@ -151,15 +153,18 @@ function createMain() {
         dialogClose = false
         closeAllOutputs()
         closeServers()
+        stopAllCaptures()
 
         // midi
         // closeVirtualMidi()
         closeMidiInPorts()
 
-        app.quit()
+        setTimeout(() => {
+            app.quit()
 
-        // shouldn't need to use exit!
-        app.exit()
+            // shouldn't need to use exit!
+            app.exit()
+        }, 500)
     })
 
     setGlobalMenu()
@@ -309,6 +314,7 @@ ipcMain.on(FILE_INFO, getFileInfo)
 ipcMain.on(READ_EXIF, readExifData)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(RECORDER, saveRecording)
+ipcMain.on(NDI, receiveNDI)
 
 // ----- HELPERS -----
 

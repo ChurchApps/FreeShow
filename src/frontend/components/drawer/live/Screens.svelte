@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { MAIN } from "../../../../types/Channels"
+    import { MAIN, NDI } from "../../../../types/Channels"
     import { outLocked, outputs } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -11,6 +11,17 @@
     receive(MAIN, { GET_SCREENS: (d: any) => (screens = d) })
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
+
+    // NDI
+
+    const receiveNDI: any = {
+        DEVICES: (msg) => {
+            console.log(msg)
+        },
+    }
+
+    send(NDI, ["DEVICES"])
+    receive(NDI, receiveNDI)
 </script>
 
 {#each screens as screen}

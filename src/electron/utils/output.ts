@@ -5,6 +5,8 @@ import { MAIN, OUTPUT } from "../../types/Channels"
 import { Message } from "../../types/Socket"
 import { Output } from "./../../types/Output"
 import { outputOptions } from "./windowOptions"
+import { createSenderNDI, stopSenderNDI } from "../ndi/ndi"
+import { startCapture, stopCapture } from "../ndi/capture"
 
 const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
@@ -44,6 +46,9 @@ export function removeOutput(id: string) {
 
     delete outputWindows[id]
     // send to app ?
+
+    stopSenderNDI(id)
+    stopCapture(id)
 }
 
 function createOutputWindow(options: any, id: string) {
@@ -96,7 +101,7 @@ function createOutputWindow(options: any, id: string) {
     return window
 }
 
-export function displayOutput(data: any) {
+export async function displayOutput(data: any) {
     let window: BrowserWindow = outputWindows[data.output?.id]
 
     if (data.enabled === "toggle") data.enabled = !window?.isVisible()
@@ -147,6 +152,13 @@ export function displayOutput(data: any) {
             setTimeout(() => {
                 window?.setBounds(bounds)
             }, 10)
+        }
+
+        ///// NDI
+
+        if (data.output?.ndi) {
+            await createSenderNDI(data.output.id, window.getTitle())
+            startCapture(data.output.id)
         }
     } else {
         hideWindow(window)
@@ -201,9 +213,23 @@ export function updateBounds(data: any) {
     }, 10)
 }
 
-export function setValue({ id, key, value }: any) {
+export async function setValue({ id, key, value }: any) {
     let window: BrowserWindow = outputWindows[id]
     if (!window) return
+
+    if (key === "ndi") {
+        if (!window.isVisible()) return
+
+        if (value) {
+            await createSenderNDI(id, window.getTitle())
+            startCapture(id)
+        } else {
+            stopSenderNDI(id)
+            stopCapture(id)
+        }
+
+        return
+    }
 
     if (key === "alwaysOnTop") {
         window.setAlwaysOnTop(value)

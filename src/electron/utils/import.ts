@@ -111,6 +111,7 @@ const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.
 // https://www.npmjs.com/package/protobufjs
 
 async function decodeProto(filePath: string) {
+    // WIP use raw?: https://raw.githubusercontent.com/greyshirtguy/ProPresenter7-Proto/master/proto/presentation.proto
     const dir = join(__dirname, "..", "..", "..", "public", "proto", "presentation.proto")
     const root = await protobufjs.load(dir)
 
