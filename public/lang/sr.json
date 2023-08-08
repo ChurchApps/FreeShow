@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Naziv",
+        "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Zatvori reklamu na finalnom prikazu",
         "change_folder": "Izaberi drugu lokaciju"
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Tajmer",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Vizualizator",
         "icon": "Ikonica"
     },

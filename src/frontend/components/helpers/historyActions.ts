@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { ItemType, Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, renamedShows, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { clone, keysToID } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
@@ -687,6 +687,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 let template = clone(get(templates)[templateId])
                 updateSlidesWithTemplate(template)
+
+                if (get(activePage) === "edit") refreshEditSlide.set(true)
             }
 
             // update cached show
@@ -704,12 +706,15 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (!template?.items?.length) return
 
                 console.log("TEMPLATE", template)
-
                 console.log(slides)
 
                 showsCache.update((a) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
                         if ((slideId && slideId !== id) || !slide) return
+
+                        // roll items around
+                        if (createItems) slide.items = [...slide.items.slice(1), slide.items[0]]
+                        // let addedItems = 0
 
                         let itemTypeIndex: any = {}
                         template.items.forEach((item: any) => {
@@ -733,20 +738,24 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 // remove text from template & add to slide
                                 if (item.lines) item.lines = item.lines.map((line) => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: "" }] }))
                                 slide.items.push(item)
+                                // slide.items = [item, ...slide.items]
+                                // addedItems++
 
                                 return
                             }
+
+                            // itemIndex += addedItems
 
                             if (type !== "text") {
                                 slide.items[itemIndex] = item
                                 return
                             }
 
-                            if (item.auto !== undefined) slide.items[itemIndex].auto = item.auto
-                            if (item.actions !== undefined) slide.items[itemIndex].actions = item.actions
-                            if (item.specialStyle !== undefined) slide.items[itemIndex].specialStyle = item.specialStyle
-                            if (item.scrolling !== undefined) slide.items[itemIndex].scrolling = item.scrolling
-                            if (item.bindings?.length) slide.items[itemIndex].bindings = item.bindings
+                            slide.items[itemIndex].auto = item.auto || false
+                            slide.items[itemIndex].actions = item.actions || {}
+                            slide.items[itemIndex].specialStyle = item.specialStyle || {}
+                            slide.items[itemIndex].scrolling = item.scrolling || {}
+                            slide.items[itemIndex].bindings = item.bindings || []
                             slide.items[itemIndex].style = item.style || ""
                             slide.items[itemIndex].align = item.align || ""
                             slide.items[itemIndex].lines?.forEach((line: any, j: number) => {

@@ -24,6 +24,7 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""
     else if (type === "variable") newData.variable = { id: "" }
+    else if (type === "web") newData.web = { url: "" }
     else if (type === "icon" && options.color) {
         // make square and center
         let size: number = 300

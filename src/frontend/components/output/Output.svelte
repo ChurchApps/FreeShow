@@ -562,6 +562,7 @@
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
                                     {linesStart}
                                     {linesEnd}
+                                    transitionEnabled={!mirror}
                                 />
                             {/if}
                         {/each}

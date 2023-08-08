@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Navn",
+        "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Lukk annonse på utgangsskjermen",
         "change_folder": "Velg en annen plassering"
@@ -674,6 +675,7 @@
         "audio": "Lyd",
         "timer": "Nedtelling",
         "variable": "Variabel",
+        "web": "Nettside",
         "visualizer": "Visualisering",
         "icon": "Ikon"
     },

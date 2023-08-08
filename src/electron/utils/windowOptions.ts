@@ -36,6 +36,7 @@ export const mainOptions: any = {
         nodeIntegration: !isProd,
         contextIsolation: true,
         allowRunningInsecureContent: false,
+        webviewTag: true,
     },
 }
 
@@ -65,6 +66,7 @@ export const outputOptions: any = {
         nodeIntegration: !isProd,
         contextIsolation: true,
         allowRunningInsecureContent: false,
+        webviewTag: true,
     },
 }
 

@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Név",
+        "url": "URL",
         "video_id": "Videó azonosító/URL",
         "close_ad": "Hirdetés bezárása a kimeneti képernyőn",
         "change_folder": "Válasszon másik helyet"
@@ -674,6 +675,7 @@
         "audio": "Audió",
         "timer": "Időzítő",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Vizualizáció",
         "icon": "Ikon"
     },

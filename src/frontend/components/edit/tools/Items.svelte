@@ -25,6 +25,7 @@
         { id: "clock" },
         { id: "events", icon: "calendar" },
         { id: "variable" },
+        { id: "web" },
         { id: "mirror" },
         { id: "visualizer" },
     ]

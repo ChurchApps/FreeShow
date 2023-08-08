@@ -253,7 +253,7 @@ export function _show(id: any = "active") {
                                     if (!lines?.length) lines = Object.keys(a[id].slides[slideId].items[index].lines)
                                     lines.forEach((line, lineIndex) => {
                                         if (key) {
-                                            if (a[id].slides[slideId].items[index].lines[line]) {
+                                            if (a[id].slides[slideId].items[index].lines?.[line]) {
                                                 // console.log(a[id].slides[slideId].items[index].lines[line], key, values, i)
                                                 // console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
                                                 // console.log(a[id].slides[slideId].items[index].lines[line].text?.[0]?.style)

@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Názov",
+        "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Zavrieť reklamu na výstupnej obrazovke",
         "change_folder": "Zvoliť iné umiestnenie"
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Časovač",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Visualizer",
         "icon": "Ikona"
     },

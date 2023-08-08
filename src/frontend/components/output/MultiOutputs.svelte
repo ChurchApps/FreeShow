@@ -68,8 +68,8 @@
     {#each updatedList as outputId, i}
         <Output
             specificOutput={fullscreen && i === 0 ? fullscreen : outputId}
-            outline={!fullscreen && updatedList.length > 1}
-            disabled={!fullscreen && !$outputs[outputId]?.active}
+            outline={outputList.length > 1 && !fullscreen && updatedList.length > 1}
+            disabled={outputList.length > 1 && !fullscreen && !$outputs[outputId]?.active}
             {disableTransitions}
             center={fullscreen}
             style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""}

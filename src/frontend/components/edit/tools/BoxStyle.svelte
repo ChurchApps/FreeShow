@@ -87,6 +87,7 @@
     $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
     $: if (id === "timer" && box) box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
     $: if (id === "variable" && box) box.edit.default[0].value = item?.variable?.id
+    $: if (id === "web" && box) box.edit.default[0].value = item?.web?.src || ""
     $: if (id === "events" && box) {
         box.edit.default[4].hidden = !item?.events?.enableStartDate
         box.edit.default[5].hidden = !item?.events?.enableStartDate

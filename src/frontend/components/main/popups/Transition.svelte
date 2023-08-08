@@ -13,6 +13,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import { clone } from "../../helpers/array"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import { onMount } from "svelte"
 
     const types: { id: TransitionType; name: string }[] = [
         { id: "none", name: "$:transition.none:$" },
@@ -90,6 +91,10 @@
     let isItem: boolean = $popupData.action === "transition"
     let isSlide: boolean = $selected.id === "slide"
     let ref = isSlide || isItem ? _show().layouts("active").ref()[0] : []
+
+    onMount(() => {
+        popupData.set({})
+    })
 
     let slideIndex = isItem ? $activeEdit.slide : $selected.data?.[0]?.index
     let slideRef = ref?.[slideIndex] || {}

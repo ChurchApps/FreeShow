@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Nazwa",
+        "url": "URL",
         "video_id": "ID/URL filmu",
         "close_ad": "Zamknij reklamę na ekranie wyjściowym",
         "change_folder": "Wybierz inną lokalizację"
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Timer",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Wizualizacja",
         "icon": "Ikona"
     },

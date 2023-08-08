@@ -20,6 +20,7 @@
     import DateInput from "../../inputs/DateInput.svelte"
     import TimeInput from "../../inputs/TimeInput.svelte"
     import { keysToID } from "../../helpers/array"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     export let edits: any
     export let item: any = null
@@ -31,6 +32,7 @@
         fontDropdown: FontDropdown,
         color: Color,
         number: NumberInput,
+        text: TextInput,
         dropdown: Dropdown,
         checkbox: Checkbox,
         date: DateInput,

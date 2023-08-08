@@ -17,6 +17,8 @@
     import Cam from "../drawer/live/Cam.svelte"
     import Variable from "./views/Variable.svelte"
     import { custom } from "../../utils/transitions"
+    import { clone } from "../helpers/array"
+    import Website from "./views/Website.svelte"
 
     export let item: Item
     export let slideIndex: number = 0
@@ -129,18 +131,19 @@
     $: textAnimation = animationStyle.text || ""
 
     $: transition = transitionEnabled && item.actions?.transition
+    $: itemTransition = transition ? clone(item.actions.transition) : {}
+    $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
 </script>
 
 <!-- svelte transition bug!!! -->
 {#if transition && !hidden}
-    <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
     <div
         class="item"
         style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
         class:white={key && !lines?.length}
         class:key
         class:addDefaultItemStyle
-        transition:custom={item.actions.transition}
+        transition:custom={itemTransition}
     >
         {#if lines}
             <div
@@ -282,6 +285,8 @@
             <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
         {:else if item?.type === "variable"}
             <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} />
+        {:else if item?.type === "web"}
+            <Website src={item?.web?.src || ""} clickable={$currentWindow === "output"} />
         {:else if item?.type === "mirror"}
             <Mirror {item} {ref} {ratio} index={slideIndex} />
         {:else if item?.type === "visualizer"}

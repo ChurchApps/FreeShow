@@ -358,6 +358,30 @@ export function setExampleTemplates() {
                 },
             ],
         }
+        a.faded = {
+            name: "Faded",
+            color: null,
+            category: "song",
+            items: [
+                {
+                    style: "top:0px;left:0px;height:1080px;width:1920px;background-color: rgb(0 0 0 / 0.5);backdrop-filter: blur(10px);",
+                    align: "",
+                    actions: { transition: { type: "none", duration: 0, easing: "linear" } },
+                    lines: [],
+                },
+                {
+                    style: "top:310px;left:0px;height:460px;width:1920px;",
+                    align: "",
+                    actions: { transition: { type: "fade", duration: 500, easing: "sine" } },
+                    lines: [
+                        { align: "", text: [{ value: "1", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] },
+                        { align: "", text: [{ value: "2", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] },
+                        { align: "", text: [{ value: "3", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] },
+                        { align: "", text: [{ value: "4", style: "font-size: 90px;line-height:1.2em;letter-spacing:2px;" }] },
+                    ],
+                },
+            ],
+        }
         a.box = {
             name: "Box",
             color: null,

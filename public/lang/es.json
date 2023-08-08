@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Nombre",
+        "url": "URL",
         "video_id": "Video ID/dirección URL",
         "close_ad": "Cerrar anuncio de pantalla de salida",
         "change_folder": "Elegir otra ubicación"
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Temporizador",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Visualizer",
         "icon": "Icono"
     },

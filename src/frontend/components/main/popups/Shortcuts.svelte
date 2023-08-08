@@ -5,29 +5,6 @@
     const ctrl = $os.platform === "darwin" ? "cmd" : "ctrl"
 
     const shortcuts = {
-        // arrow keys!
-        // space
-        // tabs
-        // "menu.show": "1",
-        // "menu.edit": "2",
-        // "menu.stage": "3",
-        // "menu.draw": "4",
-        // "menu.calendar": "5",
-        // "menu.settings": "6",
-        // "tabs.shows": ctrl + " + 1",
-        // "tabs.media": ctrl + " + 2",
-        // "tabs.overlays": ctrl + " + 3",
-        // "tabs.templates": ctrl + " + 4",
-        // "tabs.audio": ctrl + " + 5",
-        // "tabs.scripture": ctrl + " + 6",
-        // "tabs.player": ctrl + " + 7",
-        // "tabs.live": ctrl + " + 8",
-
-        "actions.change_tab": "num",
-        "actions.change_drawer_tab": ctrl + " + num",
-
-        ctrl: "SEPERATOR",
-
         "actions.selectAll": ctrl + " + a",
         "edit._title_bold": ctrl + " + b",
         "actions.copy": ctrl + " + c",
@@ -58,7 +35,7 @@
         "actions.undo": ctrl + " + z",
         "popup.shortcuts": ctrl + " + ?",
 
-        f: "SEPERATOR",
+        clear: "SEPERATOR",
 
         "actions.remove_selection": "esc",
         "clear.all": "esc",
@@ -77,6 +54,12 @@
         "actions.fullscreen": "f11",
 
         // presenterKeys: "SEPERATOR",
+
+        num: "SEPERATOR",
+
+        // arrow keys, space, tabs, enter, ...
+        "actions.change_tab": "num",
+        "actions.change_drawer_tab": ctrl + " + num",
     }
 </script>
 

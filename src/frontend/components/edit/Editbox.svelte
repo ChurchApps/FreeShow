@@ -27,6 +27,7 @@
     import { getStyles } from "../helpers/style"
     import Cam from "../drawer/live/Cam.svelte"
     import Variable from "../slide/views/Variable.svelte"
+    import Website from "../slide/views/Website.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -715,6 +716,8 @@ bind:offsetWidth={width} -->
         <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "variable"}
         <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} edit />
+    {:else if item?.type === "web"}
+        <Website src={item?.web?.src || ""} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
     {:else if item?.type === "visualizer"}

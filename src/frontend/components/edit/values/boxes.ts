@@ -366,6 +366,12 @@ export const boxes: Box = {
             ],
         },
     },
+    web: {
+        icon: "web",
+        edit: {
+            default: [{ name: "inputs.url", id: "web.src", input: "text", value: "" }],
+        },
+    },
     // mirror other shows content on the same slide index
     mirror: {
         icon: "mirror",

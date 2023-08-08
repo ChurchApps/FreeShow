@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Name",
+        "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Close ad on output screen",
         "change_folder": "Choose another location"
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Timer",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Visualizer",
         "icon": "Icon"
     },
