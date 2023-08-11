@@ -830,6 +830,8 @@
         "default_project_name": "Domyślna nazwa projektu",
         "resolution": "Rozdzielczość",
         "cropping": "Kadrowanie",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Rozszerzenia wideo",
         "image_extensions": "Rozszerzenia obrazków",
         "add": "Dodaj",

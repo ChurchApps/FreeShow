@@ -1,23 +1,22 @@
 // ----- FreeShow -----
 // This is the electron entry point
 
-import { app, BrowserWindow, desktopCapturer, ipcMain, Menu, Rectangle, screen, shell } from "electron"
-import { getFonts } from "font-list"
+import { app, BrowserWindow, ipcMain, Menu, Rectangle, screen } from "electron"
 import path from "path"
-import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STORE } from "../types/Channels"
+import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
+import { stopAllCaptures } from "./ndi/capture"
+import { receiveNDI } from "./ndi/talk"
 import { closeServers } from "./servers"
+import { startBackup } from "./utils/backup"
 import { checkShowsFolder, deleteFile, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
-import { closeAllOutputs, displayAdded, displayRemoved, outputWindows, receiveOutput } from "./utils/output"
+import { closeAllOutputs, receiveOutput } from "./utils/output"
 import { loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { startBackup } from "./utils/backup"
-import { receiveNDI } from "./ndi/talk"
-import { stopAllCaptures } from "./ndi/capture"
 // import checkForUpdates from "./utils/updater"
 
 // ----- STARTUP -----
@@ -32,16 +31,12 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 28000)
+    else setTimeout(startApp, 32 * 1000)
 })
 
 function startApp() {
     createLoading()
     createMain()
-
-    // listeners
-    screen.on("display-added", displayAdded)
-    screen.on("display-removed", displayRemoved)
 
     // midi
     // createVirtualMidi()
@@ -64,6 +59,7 @@ ipcMain.once("LOADED", () => {
 })
 
 // ----- CUSTOM EXTENSION -----
+// rquires administator access on install
 
 // Custom .show file
 
@@ -141,30 +137,33 @@ function createMain() {
     mainWindow.on("resize", () => config.set("bounds", mainWindow!.getBounds()))
     mainWindow.on("move", () => config.set("bounds", mainWindow!.getBounds()))
 
+    mainWindow.webContents.on("did-finish-load", () => {
+        mainWindow!.webContents.send(STARTUP, { channel: "TYPE", data: null })
+    })
+
     mainWindow.on("close", (e) => {
-        if (!dialogClose) {
-            e.preventDefault()
-            toApp(MAIN, { channel: "CLOSE" })
-        }
+        if (dialogClose) return
+
+        e.preventDefault()
+        toApp(MAIN, { channel: "CLOSE" })
     })
 
     mainWindow.on("closed", () => {
         mainWindow = null
         dialogClose = false
+
+        stopAllCaptures()
         closeAllOutputs()
         closeServers()
-        stopAllCaptures()
 
         // midi
         // closeVirtualMidi()
         closeMidiInPorts()
 
-        setTimeout(() => {
-            app.quit()
+        app.quit()
 
-            // shouldn't need to use exit!
-            app.exit()
-        }, 500)
+        // shouldn't need to use exit!
+        app.exit()
     })
 
     setGlobalMenu()
@@ -198,7 +197,6 @@ export function maximizeMain() {
 // quit app when all windows have been closed
 // I think this is never called, because of the "will-quit" listener
 app.on("window-all-closed", () => {
-    // closeServers()
     app.quit()
 })
 
@@ -207,37 +205,20 @@ app.on("will-quit", () => {
     if (process.platform === "darwin") app.exit()
 })
 
-// mac activate app after quit
-// app.on("activate", () => {
-//   // startServers()
-//   mainWindow?.show()
-// })
-
 app.on("web-contents-created", (_e, contents) => {
-    // console.info(e)
-    // Security of webviews
     contents.on("will-attach-webview", (_event, webPreferences, _params) => {
-        // console.info(event, params)
-        // Strip away preload scripts if unused or verify their location is legitimate
+        // remove preload scripts if unused or verify their location is legitimate
         delete webPreferences.preload
-
-        // Verify URL being loaded
-        // if (!params.src.startsWith(`file://${join(__dirname)}`)) {
-        //   event.preventDefault(); // We do not open anything now
-        // }
     })
 
     // disallow in app web redirects
     contents.on("will-navigate", (e, navigationUrl) => {
+        // allow Hot Module Replacement in dev mode
         const parsedURL = new URL(navigationUrl)
-        // In dev mode allow Hot Module Replacement
-        if (parsedURL.host !== "localhost:3000" && !isProd) {
-            console.warn("Stopped attempt to open: " + navigationUrl)
-            e.preventDefault()
-        } else if (isProd) {
-            console.warn("Stopped attempt to open: " + navigationUrl)
-            e.preventDefault()
-        }
+        if (!isProd && parsedURL.host === "localhost:3000") return
+
+        e.preventDefault()
+        console.warn("Stopped attempt to open: " + navigationUrl)
     })
 })
 
@@ -321,41 +302,8 @@ ipcMain.on(NDI, receiveNDI)
 // send messages to main frontend
 export const toApp = (channel: string, ...args: any[]): void => mainWindow?.webContents.send(channel, ...args)
 
-// open url in default web browser
-export const openURL = (url: string) => {
-    shell.openExternal(url)
-    return
-}
-
 // set/update global application menu
 export function setGlobalMenu(strings: any = {}) {
     const menu: Menu = Menu.buildFromTemplate(template(strings))
     Menu.setApplicationMenu(menu)
-}
-
-// get system fonts
-export function loadFonts() {
-    getFonts({ disableQuoting: true })
-        .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: fonts }))
-        .catch((err: any) => console.log(err))
-}
-
-// get screens/windows
-export function getScreens(type: "window" | "screen" = "screen") {
-    desktopCapturer.getSources({ types: [type] }).then(async (sources) => {
-        const screens: any[] = []
-        // console.log(sources)
-        sources.map((source) => screens.push({ name: source.name, id: source.id }))
-        // , display_id: source.display_id
-
-        // add FreeShow windows
-        if (type === "window") {
-            Object.values({ main: mainWindow, ...outputWindows }).forEach((window: any) => {
-                let mediaId = window?.getMediaSourceId()
-                if (!sources.find((a) => a.id === mediaId)) screens.push({ name: window?.getTitle(), id: mediaId })
-            })
-        }
-
-        toApp(MAIN, { channel: type === "window" ? "GET_WINDOWS" : "GET_SCREENS", data: screens })
-    })
 }

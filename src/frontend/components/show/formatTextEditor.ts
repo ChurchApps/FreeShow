@@ -152,7 +152,7 @@ export function formatText(e: any) {
     show.slides = newSlides
     if (!show.settings.template) show.settings.template = "default"
 
-    history({ id: "UPDATE", newData: { data: show }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_data" } })
+    history({ id: "UPDATE", newData: { data: show }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_key" } })
 }
 
 function getSlide(slideText): Slide {

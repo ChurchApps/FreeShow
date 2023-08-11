@@ -1,5 +1,6 @@
 // ----- FreeShow -----
 // Get all user configs
+// https://www.npmjs.com/package/electron-store
 
 import Store from "electron-store"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"

@@ -830,6 +830,8 @@
         "default_project_name": "Standard prosjektnavn",
         "resolution": "Oppløsning",
         "cropping": "Beskjæring",
+        "frame_rate": "Bildefrekvens",
+        "transparent": "Gjennomsiktig",
         "video_extensions": "Videoutvidelse",
         "image_extensions": "Bildeutvidelse",
         "add": "Legg til",

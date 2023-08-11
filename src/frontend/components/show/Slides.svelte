@@ -148,16 +148,18 @@
     // reset loading when changing view modes
     $: if (showId || activeLayout) loaded = false
 
-    // WIP this will refresh each time if slides are activated before loading is finished
-
-    $: if (!loaded && layoutSlides?.length) {
+    $: if (!loaded && !lazyLoading && layoutSlides?.length) {
+        lazyLoading = true
         lazyLoader = 1
         startLazyLoader()
     }
 
+    let lazyLoading: boolean = false
     function startLazyLoader() {
-        if (lazyLoader >= layoutSlides.length || lazyLoader > 200) {
+        if (!layoutSlides) return
+        if (lazyLoader >= layoutSlides.length) {
             loaded = true
+            lazyLoading = false
             return
         }
         if (timeout) clearTimeout(timeout)

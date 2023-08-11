@@ -1,21 +1,22 @@
 // ----- FreeShow -----
 // Respond to messages from the frontend
 
-import { app, Display, screen, systemPreferences } from "electron"
+import { app, desktopCapturer, Display, screen, shell, systemPreferences } from "electron"
+import { getFonts } from "font-list"
 import fs from "fs"
 import os from "os"
 import path from "path"
-import { closeMain, getScreens, loadFonts, mainWindow, maximizeMain, openURL, setGlobalMenu, toApp } from ".."
+import { closeMain, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
+import { restoreFiles } from "./backup"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
 import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, locateMediaFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
-import { restoreFiles } from "./backup"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -97,7 +98,6 @@ const mainResponses: any = {
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),
     MINIMIZE: (): void => mainWindow?.minimize(),
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
-    START_STREAM: (data: any): void => startStream(data.id),
     SEARCH_LYRICS: (data: any): void => {
         searchLyrics(data)
     },
@@ -133,16 +133,9 @@ export function receiveMain(e: any, msg: Message) {
     if (data !== undefined) e.reply(MAIN, { channel: msg.channel, data })
 }
 
-async function searchLyrics({ artist, title }: any) {
-    const Genius = require("genius-lyrics")
-    const Client = new Genius.Client()
+///// HELPERS /////
 
-    const songs = await Client.songs.search(title + artist)
-    const lyrics = songs[0] ? await songs[0].lyrics() : ""
-
-    toApp("MAIN", { channel: "SEARCH_LYRICS", data: { lyrics } })
-}
-
+// SHOWS
 function deleteShowsNotIndexed(data: any) {
     // get all names
     let names: string[] = Object.entries(data.shows).map(([id, { name }]: any) => (name || id) + ".show")
@@ -222,8 +215,51 @@ function trimShow(showCache: Show) {
     return show
 }
 
-// RECORDER
+// URL: open url in default web browser
+export const openURL = (url: string) => {
+    shell.openExternal(url)
+    return
+}
 
+// GET_SYSTEM_FONTS
+function loadFonts() {
+    getFonts({ disableQuoting: true })
+        .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: fonts }))
+        .catch((err: any) => console.log(err))
+}
+
+// SEARCH_LYRICS
+async function searchLyrics({ artist, title }: any) {
+    const Genius = require("genius-lyrics")
+    const Client = new Genius.Client()
+
+    const songs = await Client.songs.search(title + artist)
+    const lyrics = songs[0] ? await songs[0].lyrics() : ""
+
+    toApp("MAIN", { channel: "SEARCH_LYRICS", data: { lyrics } })
+}
+
+// GET_SCREENS | GET_WINDOWS
+function getScreens(type: "window" | "screen" = "screen") {
+    desktopCapturer.getSources({ types: [type] }).then(async (sources) => {
+        const screens: any[] = []
+        // console.log(sources)
+        sources.map((source) => screens.push({ name: source.name, id: source.id }))
+        // , display_id: source.display_id
+
+        // add FreeShow windows
+        if (type === "window") {
+            Object.values({ main: mainWindow, ...outputWindows }).forEach((window: any) => {
+                let mediaId = window?.getMediaSourceId()
+                if (!sources.find((a) => a.id === mediaId)) screens.push({ name: window?.getTitle(), id: mediaId })
+            })
+        }
+
+        toApp(MAIN, { channel: type === "window" ? "GET_WINDOWS" : "GET_SCREENS", data: screens })
+    })
+}
+
+// RECORDER
 export function saveRecording(_: any, msg: any) {
     let folder: string = msg.path || ""
     if (!folder) folder = getDocumentsFolder(null, "Recordings")
@@ -233,13 +269,4 @@ export function saveRecording(_: any, msg: any) {
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
-}
-
-// STREAM
-
-function startStream(outputId: string) {
-    let outputWindow = outputWindows[outputId]
-    if (!outputWindow) return
-
-    toApp(MAIN, { channel: "START_STREAM", data: { sourceId: outputWindow.getMediaSourceId() } })
 }

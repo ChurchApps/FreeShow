@@ -830,6 +830,8 @@
         "default_project_name": "Nombre predeterminado del proyecto",
         "resolution": "Solución",
         "cropping": "Cropping",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Extensiones de video",
         "image_extensions": "Extensiones de imagen",
         "add": "Añadir",

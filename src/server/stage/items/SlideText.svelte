@@ -22,7 +22,7 @@
         reversedItems
             .filter((item: any) => !item.type || item.type === "text")
             .forEach((item: any) => {
-                if (item.lines) {
+                if (item.lines && item.lines[0]?.text?.[0]?.value?.length) {
                     if (!oneItem) oneItem = item
                     else oneItem.lines.push(...item.lines)
                 }

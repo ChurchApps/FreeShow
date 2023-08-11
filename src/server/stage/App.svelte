@@ -95,7 +95,10 @@
                 console.log(msg.data)
 
                 if (msg.data === null) showRef = null
-                else if (msg.data.disabled === true) {
+                else if (!showRef) {
+                    // show = null
+                    // localStorage.show = null
+                } else if (msg.data.disabled === true) {
                     if (showRef.id === msg.data.id) showRef = null
                     shows = shows.filter((s: any) => s.id === msg.data.id)
                 } else {
@@ -135,7 +138,7 @@
 
     let clicked: boolean = false
     const click = (e: any) => {
-        if (showRef !== null && show && !e.target.closest(".clicked")) clicked = !clicked
+        if (!e.target.closest(".clicked")) clicked = !clicked
     }
     let timeout: any = null
     $: {
@@ -163,7 +166,7 @@
     }
 </script>
 
-<svelte:window on:click={click} />
+<svelte:window on:mousedown={click} />
 
 {#if errors.length}
     <div class="error">
@@ -241,6 +244,8 @@
             <div style="display: flex;gap: 10px;">
                 <Button
                     on:click={() => {
+                        if (shows?.length < 2) return
+
                         delete localStorage.password
                         delete localStorage.show
                         input = null

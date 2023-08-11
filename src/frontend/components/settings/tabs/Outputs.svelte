@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { OUTPUT } from "../../../../types/Channels"
-    import { activePopup, currentOutputSettings, os, outputDisplay, outputs, styles } from "../../../stores"
+    import { NDI, OUTPUT } from "../../../../types/Channels"
+    import { activePopup, currentOutputSettings, ndiData, os, outputDisplay, outputs, styles } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -24,31 +24,57 @@
     let currentOutput: any = {}
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
 
-    function updateOutput(key: string, value: any) {
+    function updateOutput(key: string, value: any, outputId: string = "") {
+        if (!outputId) outputId = currentOutput.id
+
         outputs.update((a: any) => {
             if (key.includes(".")) {
                 let split = key.split(".")
-                a[currentOutput.id][split[0]][split[1]] = value
-                if (split[1] === "lines" && !Number(value)) delete a[currentOutput.id][split[0]][split[1]]
+                a[outputId][split[0]][split[1]] = value
+                if (split[1] === "lines" && !Number(value)) delete a[outputId][split[0]][split[1]]
             } else {
-                a[currentOutput.id][key] = value
+                a[outputId][key] = value
 
                 // update key output style
-                if (["style", "enabled", "alwaysOnTop", "kioskMode"].includes(key) && a[currentOutput.id].keyOutput) {
-                    a[a[currentOutput.id].keyOutput][key] = value
+                if (["style", "enabled", "alwaysOnTop", "kioskMode"].includes(key) && a[outputId].keyOutput) {
+                    a[a[outputId].keyOutput][key] = value
                 }
             }
 
-            if (["alwaysOnTop", "kioskMode", "ndi"].includes(key)) {
-                send(OUTPUT, ["SET_VALUE"], { id: $currentOutputSettings, key, value })
+            if (key === "ndi") {
+                if (value) {
+                    delete a[outputId].keyOutput
+                } else {
+                    ndiData.update((a) => {
+                        delete a[outputId]
+                        return a
+                    })
+
+                    delete a[outputId].ndiData
+                    delete a[outputId].transparent
+                }
+            }
+
+            if (key === "enabled") {
+                if (value) send(OUTPUT, ["CREATE"], currentOutput)
+                else send(OUTPUT, ["REMOVE"], { id: outputId })
+
+                // WIP if only one left, all outputs should be "active"
+            }
+
+            if (!a[outputId].enabled) return a
+
+            // UPDATE OUTPUT WINDOW
+
+            if (["alwaysOnTop", "kioskMode", "transparent", "ndi"].includes(key)) {
+                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
 
                 // update key output
-                if (a[currentOutput.id].keyOutput) {
-                    send(OUTPUT, ["SET_VALUE"], { id: a[currentOutput.id].keyOutput, key, value })
+                if (a[outputId].keyOutput) {
+                    send(OUTPUT, ["SET_VALUE"], { id: a[outputId].keyOutput, key, value })
                 }
             }
 
-            currentOutputSettings.set(currentOutput.id)
             return a
         })
     }
@@ -66,6 +92,31 @@
 
         return [{ id: null, name: "—" }, ...sortedList]
     }
+
+    // ndi
+    function updateNdiData(e: any, key: string) {
+        let id = currentOutput.id
+        if (!id) return
+
+        let newData = $outputs[id]?.ndiData
+        if (!newData) newData = {}
+        newData[key] = e.detail.id
+
+        updateOutput("ndiData", newData)
+
+        send(NDI, ["NDI_DATA"], { id, ...newData })
+    }
+
+    const framerates: any = [
+        { id: 10, name: "10 fps" },
+        { id: 12, name: "12 fps" },
+        { id: 24, name: "24 fps" },
+        { id: 25, name: "25 fps" },
+        { id: 30, name: "30 fps" },
+        { id: 48, name: "48 fps" },
+        { id: 50, name: "50 fps" },
+        { id: 60, name: "60 fps" },
+    ]
 
     let edit: any
 </script>
@@ -103,15 +154,11 @@
 {/if}
 
 <CombinedInput>
-    <p><T id="settings.active_style" /></p>
-    <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
-</CombinedInput>
-
-<CombinedInput>
     <p><T id="settings.enable_key_output" /></p>
     <div class="alignRight">
         <Checkbox
             checked={!!currentOutput.keyOutput}
+            disabled={currentOutput.ndi}
             on:change={(e) => {
                 let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput.keyOutput
                 let keyValue = isChecked(e) ? outputId : null
@@ -120,6 +167,11 @@
             }}
         />
     </div>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.active_style" /></p>
+    <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
 </CombinedInput>
 
 <!-- WIP toggle fullscreen (Mac) ?? Only working one time for some reason -->
@@ -138,26 +190,27 @@
     </Button>
     <!-- <Screens /> -->
 </CombinedInput>
-<CombinedInput>
+<!-- <CombinedInput>
     <p><T id="settings.position" /></p>
     <Button on:click={() => activePopup.set("change_output_values")}>
         <Icon id="window" right />
         <p><T id="popup.change_output_values" /></p>
     </Button>
-</CombinedInput>
+</CombinedInput> -->
 
 <CombinedInput>
     <p><T id="settings.always_on_top" /></p>
     <div class="alignRight">
-        <Checkbox checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
+        <Checkbox disabled={currentOutput.invisible} checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
     </div>
 </CombinedInput>
-<CombinedInput>
-    <p>NDI®</p>
+
+<!-- <CombinedInput>
+    <p><T id="settings.invisible" /></p>
     <div class="alignRight">
-        <Checkbox checked={currentOutput.ndi === true} on:change={(e) => updateOutput("ndi", isChecked(e))} />
+        <Checkbox disabled={$outputDisplay} checked={currentOutput.invisible} on:change={(e) => updateOutput("invisible", isChecked(e))} />
     </div>
-</CombinedInput>
+</CombinedInput> -->
 
 <!-- disable on linux -->
 <!-- {#if $os.platform !== "linux"}
@@ -179,24 +232,50 @@
     </CombinedInput>
 {/if}
 
+<!-- NDI -->
+<h3>NDI®</h3>
+
+<CombinedInput>
+    <p>
+        <T id="actions.enable" /> NDI®
+        <span class="connections">{$ndiData[currentOutput.id || ""]?.connections || ""}</span>
+    </p>
+    <div class="alignRight">
+        <Checkbox checked={currentOutput.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
+    </div>
+</CombinedInput>
+
+{#if currentOutput.ndi}
+    <CombinedInput>
+        <p><T id="settings.transparent" /></p>
+        <div class="alignRight">
+            <Checkbox checked={currentOutput.transparent} on:change={(e) => updateOutput("transparent", isChecked(e))} />
+        </div>
+    </CombinedInput>
+
+    <CombinedInput>
+        <p><T id="preview.audio" /> (Not implemented yet)</p>
+        <div class="alignRight">
+            <Checkbox disabled checked={currentOutput.audio} on:change={(e) => updateOutput("audio", isChecked(e))} />
+        </div>
+    </CombinedInput>
+
+    <CombinedInput>
+        <p><T id="settings.frame_rate" /></p>
+        <Dropdown value={framerates.find((a) => a.id === currentOutput.ndiData?.framerate)?.name || "30 fps"} options={framerates} on:click={(e) => updateNdiData(e, "framerate")} />
+    </CombinedInput>
+{/if}
+
 <div class="filler" style={outputsList.length > 1 ? "height: 76px;" : ""} />
 <div class="bottom">
     {#if outputsList.length > 1}
         <div style="display: flex;overflow-x: auto;">
-            {#each outputsList as currentOutput}
-                {@const active = $currentOutputSettings === currentOutput.id}
+            {#each outputsList as output}
+                {@const active = $currentOutputSettings === output.id}
 
-                <SelectElem id="output" data={{ id: currentOutput.id }} fill>
-                    <Button
-                        border={active}
-                        class="context #output_screen"
-                        {active}
-                        style="width: 100%;outline-offset: -4px;border-bottom: 2px solid {currentOutput.color};"
-                        on:click={() => currentOutputSettings.set(currentOutput.id)}
-                        bold={false}
-                        center
-                    >
-                        <HiddenInput value={currentOutput.name} id={"output_" + currentOutput.id} on:edit={(e) => updateOutput("name", e.detail.value)} bind:edit />
+                <SelectElem id="output" data={{ id: output.id }} fill>
+                    <Button border={active} class="context #output_screen" {active} style="width: 100%;outline-offset: -4px;border-bottom: 2px solid {output.color};" on:click={() => currentOutputSettings.set(output.id)} bold={false} center>
+                        <HiddenInput value={output.name} id={"output_" + output.id} on:edit={(e) => updateOutput("name", e.detail.value, output.id)} bind:edit />
                     </Button>
                 </SelectElem>
             {/each}
@@ -226,6 +305,14 @@
 
     .info p {
         white-space: initial;
+    }
+
+    .connections {
+        display: flex;
+        align-items: center;
+        padding-left: 10px;
+        opacity: 0.5;
+        font-weight: normal;
     }
 
     h3 {

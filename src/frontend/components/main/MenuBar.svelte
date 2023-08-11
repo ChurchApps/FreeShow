@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { MAIN } from "../../../types/Channels"
     import { activePopup, saved } from "../../stores"
     import ContextChild from "../context/ContextChild.svelte"
@@ -17,7 +18,12 @@
     let x: number = 0
     let y: number = 30
 
-    window.api.send(MAIN, { channel: "MAXIMIZED" })
+    onMount(() => {
+        // give time to properly load before requesting window state
+        setTimeout(() => {
+            window.api.send(MAIN, { channel: "MAXIMIZED" })
+        })
+    })
     window.api.receive(MAIN, (msg: any) => {
         if (msg.channel === "MAXIMIZED") maximized = msg.data
     })

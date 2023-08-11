@@ -40,6 +40,8 @@
 
     let timeout: any
     function mousedown(e: any) {
+        console.log(e.target, nameElem, inputElem)
+
         if (e.target === nameElem && allowEdit) {
             timeout = setTimeout(() => {
                 click(e)

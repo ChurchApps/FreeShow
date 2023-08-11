@@ -1,9 +1,10 @@
-import os from "os"
 import grandiose from "grandiose"
+import os from "os"
 // import type { VideoFrame } from "grandiose"
-import util from "./vingester-util"
 import { toApp } from ".."
-import { captures } from "./capture"
+import { updateFramerate } from "./capture"
+// import pcmconvert from "pcm-converter"
+import util from "./vingester-util"
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -20,7 +21,6 @@ export async function findStreamsNDI(): Promise<any> {
         grandiose
             .find({ showLocalSources: true })
             .then((a) => {
-                console.log(1, a)
                 resolve(a)
             })
             .catch((err) => reject(err))
@@ -61,7 +61,7 @@ export function stopReceiversNDI() {
 }
 
 export function stopSenderNDI(id: string) {
-    if (!NDI[id].timer) return
+    if (!NDI[id]?.timer) return
 
     console.log("NDI - stopping sender: " + NDI[id].name)
     clearInterval(NDI[id].timer)
@@ -70,7 +70,7 @@ export function stopSenderNDI(id: string) {
     delete NDI[id]
 }
 
-let NDI: any = {}
+export let NDI: any = {}
 export async function createSenderNDI(id: string, title: string = "") {
     if (NDI[id]) return
     NDI[id] = {}
@@ -90,32 +90,25 @@ export async function createSenderNDI(id: string, title: string = "") {
     }
 
     NDI[id].timer = setInterval(() => {
-        /*  poll NDI for connections and tally status  */
-        const conns = NDI[id].sender?.connections() || {}
-        const tally = NDI[id].sender?.tally() || {}
+        /*  poll NDI for connections  */
+        const conns = NDI[id].sender?.connections() || 0
 
-        /*  determine our Vingester "tally status"  */
         NDI[id].status = "unconnected"
-        if (tally.on_program) NDI[id].status = "program"
-        else if (tally.on_preview) NDI[id].status = "preview"
-        else if (conns > 0) NDI[id].status = "connected"
+        if (conns > 0) NDI[id].status = "connected"
 
-        // console.log(NDI[id].status)
-        if (NDI[id].status !== NDI[id].previousStatus) toApp("NDI", { channel: "SEND_DATA", data: { status: NDI[id].status, connections: conns } })
-        NDI[id].previousStatus = NDI[id].status
+        let newStatus = NDI[id].status + conns
+        if (newStatus !== NDI[id].previousStatus) {
+            toApp("NDI", { channel: "SEND_DATA", data: { id, status: NDI[id].status, connections: conns } })
+            updateFramerate(id)
 
-        if (captures[id]) captures[id].frameRate = framerates[NDI[id].status]
-    }, 500)
+            NDI[id].previousStatus = newStatus
+        }
+    }, 1000)
 }
 
-const framerates: any = {
-    unconnected: 1,
-    program: 30,
-    preview: 5,
-    connected: 60,
-}
+export async function sendVideoBufferNDI(id: string, buffer: any, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
+    if (!NDI[id].sender) return
 
-export async function sendBufferNDI(id: string, buffer: any, { size = { width: 1280, height: 720 }, ratio = 16 / 9, frameRate = 1 }) {
     /*  convert from ARGB (Electron/Chromium on big endian CPU)
         to BGRA (supported input of NDI SDK). On little endian
         CPU the input is already BGRA.  */
@@ -142,7 +135,7 @@ export async function sendBufferNDI(id: string, buffer: any, { size = { width: 1
         /*  type-specific information  */
         xres: size.width,
         yres: size.height,
-        frameRateN: frameRate * 1000,
+        frameRateN: framerate * 1000,
         frameRateD: 1000,
         pictureAspectRatio: ratio,
         frameFormatType: (grandiose as any).FORMAT_TYPE_PROGRESSIVE,
@@ -153,11 +146,52 @@ export async function sendBufferNDI(id: string, buffer: any, { size = { width: 1
         data: buffer,
     }
 
-    if (!NDI[id].sender) return
-
     try {
         await NDI[id].sender.video(frame)
     } catch (error) {
         console.log(error)
     }
+}
+
+// TODO: audio ??
+export async function sendAudioBufferNDI(id: string, buffer: Buffer, { sampleRate, noChannels, bytesForFloat32 }: any) {
+    if (!NDI[id].sender) return
+
+    /*  convert from PCM/signed-16-bit/little-endian data
+        to NDI's "PCM/planar/signed-float32/little-endian  */
+    const pcmconvert: any = {} // TODO:
+    const buffer2 = pcmconvert(
+        buffer,
+        {
+            channels: noChannels,
+            dtype: "int16",
+            endianness: "le",
+            interleaved: true,
+        },
+        {
+            dtype: "float32",
+            endianness: "le",
+            interleaved: false,
+        }
+    )
+
+    /*  create frame  */
+    const now = timeStart + process.hrtime.bigint()
+    const timecode = now / BigInt(100)
+    const frame = {
+        /*  base information  */
+        timecode,
+
+        /*  type-specific information  */
+        sampleRate,
+        noChannels,
+        noSamples: Math.trunc(buffer2.byteLength / noChannels / bytesForFloat32),
+        channelStrideBytes: Math.trunc(buffer2.byteLength / noChannels),
+
+        /*  the data itself  */
+        fourCC: (grandiose as any).FOURCC_FLTp,
+        data: buffer2,
+    }
+
+    await NDI[id].sender.audio(frame)
 }

@@ -360,7 +360,6 @@ export const _updaters = {
             })
         },
     },
-    show_data: { store: showsCache },
 
     show_layout: {
         store: showsCache,

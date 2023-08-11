@@ -4,19 +4,63 @@
     import { io } from "socket.io-client"
 
     let socket = io()
-    let imgElem: any
+    // let imgElem: any
 
     socket.on("OUTPUT_STREAM", (msg) => {
         switch (msg.channel) {
             case "STREAM":
-                if (!imgElem) return
+                // if (!imgElem) return
 
-                const base64 = msg.data?.base64
-                imgElem.src = base64
+                capture = msg.data
+
+                // const base64 = msg.data?.base64
+                // imgElem.src = base64
 
                 break
         }
     })
+
+    let capture: any = {}
+
+    let canvas: any
+    let ctx = canvas?.getContext("2d")
+    let width: number = 0
+    let height: number = 0
+
+    onMount(() => {
+        if (!canvas) return
+
+        ctx = canvas.getContext("2d")
+        canvas.width = width
+        canvas.height = height
+
+        checkSize()
+
+        // TODO: request frame on load
+    })
+
+    $: if (capture) updateCanvas()
+    async function updateCanvas() {
+        if (!canvas) return
+
+        const arr = new Uint8ClampedArray(capture.buffer)
+        const pixels = new ImageData(arr, capture.size.width, capture.size.height)
+        const bitmap = await createImageBitmap(pixels)
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    }
+
+    // screen stretch
+    let imgHeight = false
+
+    $: if (width) checkSize()
+    function checkSize() {
+        if (width < canvas?.width) imgHeight = true
+        else imgHeight = false
+    }
+
+    // FULLSCREEN
 
     let isFullscreen: boolean = false
     function toggleFullscreen() {
@@ -32,18 +76,7 @@
         }
     }
 
-    // screen stretch
-    let screenWidth: number = 0
-    let imgHeight = false
-
-    onMount(checkSize)
-    $: if (screenWidth) checkSize()
-    function checkSize() {
-        if (screenWidth < imgElem?.width) imgHeight = true
-        else imgHeight = false
-    }
-
-    // show button
+    // button
     let clicked: boolean = false
     let timeout: any = null
     function click() {
@@ -59,8 +92,9 @@
 
 <svelte:window on:click={click} />
 
-<div class="center" bind:offsetWidth={screenWidth}>
-    <img class:imgHeight bind:this={imgElem} />
+<div class="center" bind:offsetWidth={width} bind:offsetHeight={height}>
+    <canvas class:imgHeight style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class="previewCanvas" bind:this={canvas} />
+    <!-- <img class:imgHeight bind:this={imgElem} /> -->
     <!-- on:error={() => (imgElem.style.display = "none")} -->
 </div>
 
@@ -130,7 +164,7 @@
         height: 100%;
     }
 
-    img {
+    canvas {
         background-color: #000000;
         aspect-ratio: 16/9;
         /* width: 100%; */

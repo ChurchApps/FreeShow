@@ -1,14 +1,14 @@
-import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 // ----- FreeShow -----
 // Functions to interact with local files
 
 import { app, dialog, shell } from "electron"
+import { ExifImage } from "exif"
 import fs from "fs"
 import { Stats } from "original-fs"
 import path from "path"
 import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW } from "../../types/Channels"
+import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
-import { ExifImage } from "exif"
 
 // GENERAL
 
@@ -243,11 +243,8 @@ export function readExifData(e: any, data: any) {
 
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 export function locateMediaFile({ fileName, folders, ref }: any) {
-    console.log(1, fileName)
     let matches: string[] = []
     findMatches()
-
-    console.log(3, matches)
 
     if (matches.length !== 1) return
     toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
@@ -257,37 +254,31 @@ export function locateMediaFile({ fileName, folders, ref }: any) {
     function findMatches() {
         for (const folderPath of folders) {
             if (matches.length > 1) return
-            let files = readFolder(folderPath)
-            console.log("FILES", files)
 
-            for (const name of files) {
-                if (matches.length > 1) return
-
-                console.log(2, name)
-                if (name === fileName) {
-                    let p: string = path.join(folderPath, name)
-                    matches.push(p)
-                }
-            }
+            checkFolderForMatches(folderPath)
 
             if (matches.length) return
 
+            let files = readFolder(folderPath)
             for (const name of files) {
                 if (matches.length) return
 
                 let p: string = path.join(folderPath, name)
                 let fileStat = getFileStats(p)
-                if (fileStat?.folder) {
-                    let files = readFolder(p)
-                    for (const name of files) {
-                        if (matches.length > 1) return
+                if (fileStat?.folder) checkFolderForMatches(p)
+            }
+        }
+    }
 
-                        if (name === fileName) {
-                            let p: string = path.join(folderPath, name)
-                            matches.push(p)
-                        }
-                    }
-                }
+    function checkFolderForMatches(folderPath: string) {
+        let files = readFolder(folderPath)
+
+        for (const name of files) {
+            if (matches.length > 1) return
+
+            if (name === fileName) {
+                let p: string = path.join(folderPath, name)
+                matches.push(p)
             }
         }
     }

@@ -830,6 +830,8 @@
         "default_project_name": "Alapértelmezett projekt név",
         "resolution": "Felbontás",
         "cropping": "Vágás",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Videó kiterjesztések",
         "image_extensions": "Kép kiterjesztések",
         "add": "Hozzáadás",

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { MAIN, OUTPUT } from "../types/Channels"
+    import { OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
     import type { DrawerTabIds, TopViews } from "../types/Tabs"
     import ContextMenu from "./components/context/ContextMenu.svelte"
@@ -59,6 +59,7 @@
         volume,
     } from "./stores"
     import { newToast } from "./utils/messages"
+    import { send } from "./utils/request"
     import { save } from "./utils/save"
     import { startup } from "./utils/startup"
     import { convertAutosave } from "./values/autosave"
@@ -202,13 +203,16 @@
     $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
 
     // stream to OutputShow
-    let streamStarted = false
-    $: if ($disabledServers.output_stream === false && !$currentWindow && $outputDisplay && !streamStarted) {
-        let captureOutputId = $serverData?.output_stream?.outputId || getActiveOutputs($outputs, true, true)[0]
-        if (captureOutputId) {
-            streamStarted = true
-            window.api.send(MAIN, { channel: "START_STREAM", data: { id: captureOutputId } })
-        }
+    $: if (!$currentWindow && ($disabledServers.output_stream !== "" || !$outputDisplay)) toggleRemoteStream()
+    function toggleRemoteStream() {
+        let value = { key: "server", value: false }
+        let captureOutputId = $serverData?.output_stream?.outputId
+        if (!captureOutputId || !$outputs[captureOutputId]) captureOutputId = getActiveOutputs($outputs, true, true)[0]
+        if ($disabledServers.output_stream === false) value.value = true
+
+        setTimeout(() => {
+            send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value })
+        }, 1800)
     }
 </script>
 
@@ -220,7 +224,7 @@
     {#if isWindows}
         <MenuBar />
     {/if}
-    <main style={isWindows ? "height: calc(100% - 30px);" : ""} class:closeAd>
+    <main style={isWindows ? "height: calc(100% - 30px);" : ""} class:closeAd class:background={$currentWindow === "output"}>
         {#if $currentWindow === "output"}
             <!-- TODO: mac center  -->
             <div
@@ -313,6 +317,8 @@
 <style>
     main {
         height: 100%;
+    }
+    main:not(.background) {
         background-color: var(--primary);
     }
 
@@ -388,7 +394,7 @@
         overflow: hidden;
 
         display: flex;
-        background-color: black;
+        /* background-color: black; */
         /* enable this to see the actual output window cropped size */
         /* background: var(--primary-darkest); */
     }

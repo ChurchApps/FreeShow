@@ -3,12 +3,11 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution } from "../../../types/Settings"
-import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, styles, theme, themes, transitionData } from "../../stores"
-import { sendInitialOutputData } from "../../utils/messages"
-import { send } from "../../utils/request"
 import type { Transition } from "../../../types/Show"
-import { _show } from "./shows"
+import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, styles, theme, themes, transitionData } from "../../stores"
+import { send } from "../../utils/request"
 import { clone } from "./array"
+import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
@@ -56,7 +55,9 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 let msg: any = { id, data: { muted, loop: data.loop || false } }
                 if (data.startAt !== undefined) msg.time = data.startAt || 0
 
-                send(OUTPUT, ["UPDATE_VIDEO"], msg)
+                setTimeout(() => {
+                    send(OUTPUT, ["UPDATE_VIDEO"], msg)
+                }, 100)
             }
         })
 
@@ -190,10 +191,6 @@ export function keyOutput(keyId: string, delOutput: boolean = false) {
         send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput })
         if (get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id: keyId, ...currentOutput } })
 
-        setTimeout(() => {
-            sendInitialOutputData()
-        }, 3000)
-
         return a
     })
 }
@@ -215,9 +212,6 @@ export function addOutput(onlyFirst: boolean = false) {
         // show
         if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
         if (!onlyFirst && get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
-        setTimeout(() => {
-            sendInitialOutputData()
-        }, 3000)
 
         currentOutputSettings.set(id)
         return output
@@ -228,13 +222,17 @@ export function deleteOutput(outputId: string) {
     if (Object.keys(get(outputs)).length <= 1) return
 
     outputs.update((a) => {
+        let keyOutput = a[outputId].isKeyOutput
+
+        send(OUTPUT, ["REMOVE"], { id: outputId })
         delete a[outputId]
-        currentOutputSettings.set(Object.keys(a)[0])
+
+        if (!keyOutput) currentOutputSettings.set(Object.keys(a)[0])
         return a
     })
 }
 
-export async function clearPlayingVideo(clearOutput: boolean = true) {
+export async function clearPlayingVideo(clearOutput: any = null) {
     // videoData.paused = true
     if (clearOutput) setOutput("background", null)
 
@@ -258,17 +256,15 @@ export async function clearPlayingVideo(clearOutput: boolean = true) {
             })
 
             //   let video = null
-            let videoTime = 0
             let videoData = {
                 time: 0,
                 duration: 0,
-                paused: clearOutput,
+                paused: !!clearOutput,
                 muted: false,
                 loop: false,
             }
 
-            window.api.send(OUTPUT, { channel: "UPDATE_VIDEO", data: videoData })
-            window.api.send(OUTPUT, { channel: "UPDATE_VIDEO_TIME", data: videoTime })
+            send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
 
             resolve(videoData)
         }, duration)

@@ -57,7 +57,8 @@ export function listenForUpdates() {
             })
         )
         // TODO: this, timedout +++
-        sendData(REMOTE, { channel: "OUT" }, true)
+        // this is just for updating output slide pos I guess
+        sendData(REMOTE, { channel: "OUT" })
 
         // cache shows data for faster show loading (if it's less than 100)
         if (Object.keys(data).length < 100) updateCachedShows(data)

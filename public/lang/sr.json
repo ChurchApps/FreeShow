@@ -830,6 +830,8 @@
         "default_project_name": "Podrazumevano ime projekta",
         "resolution": "Rezolucija",
         "cropping": "Isecanje",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Video ekstenzije",
         "image_extensions": "Image ekstenzije",
         "add": "dodaj",

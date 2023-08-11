@@ -14,6 +14,7 @@
 
     // NDI
 
+    // TODO: inputs
     const receiveNDI: any = {
         DEVICES: (msg) => {
             console.log(msg)

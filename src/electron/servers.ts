@@ -13,8 +13,7 @@ let servers: { [key in ServerName]: any } = {
     OUTPUT_STREAM: { port: 5513 },
     // CAM: { port: 5513 },
 }
-
-// const app = express()
+let ioServers: any = {}
 
 createServers()
 function createServers() {
@@ -65,18 +64,6 @@ export function closeServers() {
     })
 }
 
-// DO SOMETHING WITH THE DATA BEFORE SENDING
-// const actions: any = {
-//     MEDIA: (data: any) => {
-//         let media: any = data.media
-//         let newMedia: any = {}
-//         Object.keys(media).forEach((id: string) => {
-//             newMedia[id] = readFile(media[id].path)
-//         })
-//         return newMedia
-//     },
-// }
-
 function createBridge(server: any) {
     // RECEIVE CONNECTION FROM CLIENT
     server.io.on("connection", (socket: any) => {
@@ -89,11 +76,15 @@ function createBridge(server: any) {
     })
 
     // SEND DATA FROM APP TO CLIENT
+    ioServers[server.id] = server.io
     ipcMain.on(server.id, (_e, msg) => {
-        // if (actions[msg.channel]) msg.data = actions[msg.channel](msg.data)
         if (msg.id) server.io.to(msg.id).emit(server.id, msg)
         else server.io.emit(server.id, msg)
     })
+}
+
+export function toServer(id: string, msg: any) {
+    ioServers[id].emit(id, msg)
 }
 
 // FUNCTIONS
@@ -114,24 +105,22 @@ function initialize(id: ServerName, socket: any) {
     })
 }
 
+// https://stackoverflow.com/a/59706252
+const device: { [key: string]: RegExp } = {
+    "Generic Linux": /Linux/i,
+    Android: /Android/i,
+    BlackBerry: /BlackBerry/i,
+    Bluebird: /EF500/i,
+    "Chrome OS": /CrOS/i,
+    Datalogic: /DL-AXIS/i,
+    Honeywell: /CT50/i,
+    iPad: /iPad/i,
+    iPhone: /iPhone/i,
+    iPod: /iPod/i,
+    macOS: /Macintosh/i,
+    Windows: /IEMobile|Windows/i,
+    Zebra: /TC70|TC55/i,
+}
 export function getOS(ua: string) {
-    // https://stackoverflow.com/a/59706252
-    let os: string = "Unknown"
-    const device: { [key: string]: RegExp } = {
-        "Generic Linux": /Linux/i,
-        Android: /Android/i,
-        BlackBerry: /BlackBerry/i,
-        Bluebird: /EF500/i,
-        "Chrome OS": /CrOS/i,
-        Datalogic: /DL-AXIS/i,
-        Honeywell: /CT50/i,
-        iPad: /iPad/i,
-        iPhone: /iPhone/i,
-        iPod: /iPod/i,
-        macOS: /Macintosh/i,
-        Windows: /IEMobile|Windows/i,
-        Zebra: /TC70|TC55/i,
-    }
-    Object.keys(device).map((v) => ua.match(device[v]) && (os = v))
-    return os
+    return Object.keys(device).find((v) => ua.match(device[v])) || "Unknown"
 }

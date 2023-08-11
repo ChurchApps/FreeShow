@@ -1,5 +1,6 @@
 import { MAIN } from "../../types/Channels"
-import { isProd, openURL, toApp } from ".."
+import { isProd, toApp } from ".."
+import { openURL } from "./responses"
 import { app } from "electron"
 
 const isMac: boolean = process.platform === "darwin"

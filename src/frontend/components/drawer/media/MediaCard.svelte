@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../../types/Channels"
     import type { MediaFit } from "../../../../types/Main"
     import { activeShow, media, mediaOptions, outLocked, outputs } from "../../../stores"
     import { findMatchingOut, setOutput } from "../../helpers/output"
@@ -54,10 +53,10 @@
             return
         }
 
-        setOutput("background", { path, type, loop: true, muted: false, filter, flipped, fit, speed })
+        setOutput("background", { path, type, loop: true, muted: false, filter, flipped, fit, speed, startAt: 0 })
         // TODO: get actual data
         // TODO: output/preview control does not always match
-        window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
+        // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
     }
 
     function dblclick(e: any) {

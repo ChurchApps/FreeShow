@@ -1,7 +1,8 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
-import { clone, convertObject } from "../components/helpers/array"
+import { clone, keysToID } from "../components/helpers/array"
 import { displayOutputs, setOutput } from "../components/helpers/output"
+import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import {
     activePopup,
     activeProject,
@@ -64,7 +65,6 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
-import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -87,9 +87,11 @@ export function updateSettings(data: any) {
 
     // output
     if (data.outputs) {
-        convertObject(data.outputs).forEach((output: any) => {
-            if (output.enabled) send(OUTPUT, ["CREATE"], output)
-        })
+        keysToID(data.outputs)
+            .filter((a) => a.enabled)
+            .forEach((output: any) => {
+                send(OUTPUT, ["CREATE"], output)
+            })
     }
     // if (data.outputPosition) send(OUTPUT, ["POSITION"], data.outputPosition)
     // if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
@@ -119,9 +121,9 @@ export function updateSettings(data: any) {
 
     loaded.set(true)
 
-    setTimeout(() => {
-        window.api.send("LOADED")
-    }, 100)
+    // setTimeout(() => {
+    window.api.send("LOADED")
+    // }, 800)
 }
 
 export function updateThemeValues(themes: any) {
