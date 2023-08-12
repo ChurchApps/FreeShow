@@ -125,7 +125,7 @@ function createSlides(labeled: any, existingSlides: any = {}) {
         stored[a.type].push({ id, text })
 
         let group: string = activeGroup && !hasTextGroup ? null : a.type
-        if (!formatText && group) group = "verse"
+        if (!formatText && !hasTextGroup && group) group = "verse"
         let color: any = null
 
         let allLines: string[] = [text]
@@ -207,10 +207,13 @@ function checkRepeats(labeled: any[]) {
 function fixText(text: string, formatText: boolean): string {
     if (formatText) {
         text = text.replaceAll(".", "").replace(/ *\([^)]*\) */g, "")
-        // remove group from text
-        if (text[0] === "[" && text.includes("]")) text = text.slice(text.indexOf("]") + 1)
-        if (text.indexOf(":") === text.split("\n")[0].length - 1) text = text.slice(text.indexOf(":") + 1)
+    }
 
+    // remove group from text
+    if (text[0] === "[" && text.includes("]")) text = text.slice(text.indexOf("]") + 1)
+    if (text.indexOf(":") === text.split("\n")[0].length - 1) text = text.slice(text.indexOf(":") + 1)
+
+    if (formatText) {
         // repeat text
         let firstRepeater = text.indexOf(":/:")
         let secondRepeater = text.indexOf(":/:", firstRepeater + 1)
@@ -256,12 +259,12 @@ function fixText(text: string, formatText: boolean): string {
 
             return line.trim()
         })
-
-        let label: string = getLabelId(lines[0])
-
-        // remove first line if it's a label
-        if (findGroupMatch(label)) lines = lines.slice(1, lines.length)
     }
+
+    let label: string = getLabelId(lines[0])
+
+    // remove first line if it's a label
+    if (findGroupMatch(label)) lines = lines.slice(1, lines.length)
 
     text = lines.filter((a) => a).join("\n")
 

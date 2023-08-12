@@ -86,7 +86,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
-    bind_to: { label: "actions.bind_to", icon: "bind", items: ["stage", "LOAD_outputs"] },
+    bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_output_list"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },

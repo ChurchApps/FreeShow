@@ -26,6 +26,7 @@ import {
     activePopup,
     activeTimers,
     alertMessage,
+    allOutputs,
     audioChannels,
     audioFolders,
     currentWindow,
@@ -341,10 +342,10 @@ const receiveOUTPUTasOUTPUT: any = {
             outputs.set(a)
             return
         }
-        
+
         let active: boolean = a[id].active
         delete a[id].active
-        
+
         // only update if there are any changes in this output
         let newOutputs = JSON.stringify(a)
         if (previousOutputs === newOutputs) return
@@ -352,6 +353,10 @@ const receiveOUTPUTasOUTPUT: any = {
         a[id].active = active
         outputs.set(a)
         previousOutputs = newOutputs
+    },
+    ALL_OUTPUTS: (a: any) => {
+        // used for stage mirror data (hacky fix)
+        allOutputs.set(a)
     },
     STYLES: (a: any) => styles.set(a),
     // BACKGROUND: (a: any) => outBackground.set(a),

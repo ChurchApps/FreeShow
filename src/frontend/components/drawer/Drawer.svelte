@@ -64,7 +64,7 @@
     }
 
     function mouseup(e: any) {
-        if (!e.target.closest("input")) searchActive = false
+        if (!e.target.closest("input") && !searchValue.length) searchActive = false
 
         mouse = null
         if (!e.target.closest(".top")) move = false
@@ -107,13 +107,13 @@
     let firstMatch: null | any = null
     let searchElem: any
     function keydown(e: any) {
-        if (e.ctrlKey && e.key === "f") {
+        if ((e.ctrlKey || e.metaKey) && e.key === "f") {
             searchActive = false
             searchActive = true
 
             // change to "Show" when searching when drawer is closed
             if ($drawer.height <= minHeight) activeDrawerTab.set("shows")
-        } else if (e.ctrlKey && e.key === "d") {
+        } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
             // TODO: first match

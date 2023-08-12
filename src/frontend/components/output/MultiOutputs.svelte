@@ -22,7 +22,7 @@
         }
 
         fullscreen = true
-        fullscreenId = e.target.closest(".previewCanvas").id
+        fullscreenId = e.target.closest(".previewCanvas")?.id
     }
 
     let updatedList: any[] = []

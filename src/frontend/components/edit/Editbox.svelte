@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, dictionary, os, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, dictionary, os, outputs, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -595,6 +595,17 @@ bind:offsetWidth={width} -->
                     <Button on:click={removeBindings} redHover>
                         <Icon id="bind" white />
                     </Button>
+                    {#if item.bindings.length > 1}
+                        <span class="actionValue">{item.bindings.length}</span>
+                        {:else}
+                        <span class="actionValue">
+                            {#if item.bindings[0] === "stage"}
+                                <T id="menu.stage" />
+                            {:else}
+                                {$outputs[item.bindings[0]]?.name}
+                            {/if}
+                        </span>
+                    {/if}
                 </div>
             {/if}
             <!-- actions -->
@@ -766,7 +777,7 @@ bind:offsetWidth={width} -->
         flex-direction: column;
     }
     .actionValue {
-        font-size: initial;
+        font-size: small;
         opacity: 0.5;
         font-weight: bold;
         padding: 0 5px;

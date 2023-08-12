@@ -89,6 +89,8 @@ export function listenForUpdates() {
 
     outputs.subscribe((data) => {
         send(OUTPUT, ["OUTPUTS"], data)
+        // used for stage mirror data
+        send(OUTPUT, ["ALL_OUTPUTS"], data)
         sendData(REMOTE, { channel: "OUT" })
     })
     styles.subscribe((data) => {

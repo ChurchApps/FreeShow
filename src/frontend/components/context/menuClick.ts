@@ -624,7 +624,6 @@ const actions: any = {
     selectAll: (obj: any) => selectAll(obj.sel),
 
     // bind item
-    stage: (obj: any) => actions.bind_item(obj),
     bind_item: (obj: any) => {
         let id = obj.menu?.id
         let items = get(activeEdit).items

@@ -16,7 +16,7 @@ export function xml2json(xmlString: string) {
                 // element node ..
                 if (xml.attributes.length)
                     // element with attributes  ..
-                    for (let i = 0; i < xml.attributes.length; i++) o["@" + xml.attributes[i].nodeName] = (xml.attributes[i].nodeValue || "").toString()
+                    for (let i = 0; i < xml.attributes.length; i++) o["@" + xml.attributes[i].nodeName] = X.escape((xml.attributes[i].nodeValue || "").toString())
 
                 if (xml.firstChild) {
                     // element has child nodes ..
@@ -156,8 +156,22 @@ export function xml2json(xmlString: string) {
     if (xml.nodeType == 9) xml = xml.documentElement
 
     let json = X.toJson(X.toObj(X.removeWhite(xml)), xml.nodeName, "\t")
+    json = "{" + json.replace(/\t|\n/g, "") + "}"
 
-    return JSON.parse("{" + json.replace(/\t|\n/g, "") + "}")
+    // in some cases propresenter will have this in the song metadata, making the json "bad escaped"
+    json = json.replaceAll("N\\A", "")
+
+    let parsedJson: any = {}
+
+    try {
+        parsedJson = JSON.parse(json)
+    } catch (e: any) {
+        console.error(e)
+        let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+        console.log(pos, json.slice(pos - 5, pos + 5), json.slice(pos - 100, pos + 100))
+    }
+
+    return parsedJson
 }
 
 // unused

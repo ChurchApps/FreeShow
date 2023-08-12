@@ -54,12 +54,12 @@ export function createData(paths: any) {
             items: {
                 "slide#current_slide_text": {
                     enabled: true,
-                    style: "width:1870px;height:680px;left:25px;top:25px;font-weight:bold;",
+                    style: "width:1870px;height:680px;left:25px;top:25px;font-family: Arial;font-weight:bold;",
                     align: "",
                 },
                 "slide#next_slide_text": {
                     enabled: true,
-                    style: "width:1870px;height:330px;left:25px;top:725px;color:#aaaaaa;font-weight:bold;",
+                    style: "width:1870px;height:330px;left:25px;top:725px;font-family: Arial;font-weight:bold;color:#aaaaaa;",
                     align: "",
                 },
             },

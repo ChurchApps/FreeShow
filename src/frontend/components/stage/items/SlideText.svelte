@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { outputs, showsCache } from "../../../stores"
+    import { showsCache } from "../../../stores"
     import { getAutoSize } from "../../edit/scripts/autoSize"
-    import { getActiveOutputs } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Textbox from "../../slide/Textbox.svelte"
 
+    export let currentSlide: any
     export let next: boolean = false
     export let chords: boolean = false
     export let style: boolean = false
@@ -17,7 +17,6 @@
         id: string
     }
 
-    $: currentSlide = $outputs[getActiveOutputs()[0]].out?.slide
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: slideId = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!]?.id || null : null
     $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null

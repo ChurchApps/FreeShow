@@ -54,10 +54,10 @@ export const _updaters = {
     stage: {
         store: stageShows,
         empty: EMPTY_STAGE,
-        select: (id: string, _data: any, initializing: boolean) => {
+        select: (id: string, data: any, initializing: boolean) => {
             activeStage.set({ id, items: [] })
 
-            if (!initializing) return
+            if (!initializing || data.key) return
             activeRename.set("stage_" + id)
         },
         deselect: (id: string) => {

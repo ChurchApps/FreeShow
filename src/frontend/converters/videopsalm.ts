@@ -95,7 +95,7 @@ export function convertVideopsalm(data: any) {
             content = content.replaceAll("\t", "").replaceAll("\v", "").replaceAll("\r", "").replaceAll(',<br>"', ',"').replaceAll("﻿", "") // remove this invisible character
 
             try {
-                content = JSON.parse(content || {}) as VideoPsalm
+                content = JSON.parse(content || "{}") as VideoPsalm
             } catch (e: any) {
                 console.error(e)
                 let pos = Number(e.toString().replace(/\D+/g, "") || 100)

@@ -26,24 +26,16 @@ export function stageListen() {
         sendData(STAGE, { channel: "SLIDES" })
     })
 
-    outputs.subscribe((a) => {
+    outputs.subscribe(() => {
         sendData(STAGE, { channel: "SLIDES" }, true)
         // send(STAGE, ["OUTPUTS"], data)
 
-        sendBackgroundToStage(a)
+        // sendBackgroundToStage(a)
     })
     mediaCache.subscribe(() => {
-        sendBackgroundToStage(get(outputs))
+        sendData(STAGE, { channel: "SLIDES" }, true)
+        // sendBackgroundToStage(get(outputs))
     })
-    function sendBackgroundToStage(outputs) {
-        let activeOutput: string = getActiveOutputs(outputs)[0]
-        let path = outputs[activeOutput].out?.background?.path || ""
-
-        let background = null
-        if (path) background = get(mediaCache)[path]?.data || null
-
-        send(STAGE, ["BACKGROUND"], { path: background })
-    }
 
     timers.subscribe((a) => {
         send(STAGE, ["TIMERS"], a)
@@ -55,6 +47,15 @@ export function stageListen() {
     timeFormat.subscribe((a) => {
         send(STAGE, ["DATA"], { timeFormat: a })
     })
+}
+
+function sendBackgroundToStage(outputId) {
+    let path = get(outputs)[outputId].out?.background?.path || ""
+
+    let background = null
+    if (path) background = get(mediaCache)[path]?.data || null
+
+    send(STAGE, ["BACKGROUND"], { path: background })
 }
 
 export const receiveSTAGE: any = {
@@ -93,8 +94,15 @@ export const receiveSTAGE: any = {
         return msg
     },
     SLIDES: (msg: ClientMessage) => {
-        let show = get(stageShows)[msg.data?.id] || {}
-        let currentOutput: any = get(outputs)[show.settings?.output || getActiveOutputs()[0]]
+        console.log(get(connections))
+        console.log(msg)
+        // TODO: rework how stage talk works!! (I should send to to each individual connected stage with it's id!)
+        let stageId = msg.data?.id
+        if (!stageId && Object.keys(get(connections).STAGE || {}).length === 1) stageId = (Object.values(get(connections).STAGE)[0] as any).active
+        let show = get(stageShows)[stageId] || {}
+        console.log(show)
+        let outputId = show.settings?.output || getActiveOutputs()[0]
+        let currentOutput: any = get(outputs)[outputId]
         let out: any = currentOutput?.out?.slide || null
         msg.data = []
         console.log(out)
@@ -113,6 +121,8 @@ export const receiveSTAGE: any = {
         console.log(ref[nextIndex])
         if (nextIndex < ref.length && !ref[nextIndex].data.disabled) msg.data.push(slides[ref[nextIndex].id])
         else msg.data.push(null)
+
+        sendBackgroundToStage(outputId)
 
         console.log(msg.data)
         return msg

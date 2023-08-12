@@ -3,9 +3,9 @@ import { activeEdit, drawerTabsData, groups, outputs, overlays, selected, templa
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { keys } from "../edit/values/chords"
+import { keysToID } from "../helpers/array"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
-import { keysToID } from "../helpers/array"
 
 export function loadItems(id: string): [string, ContextMenuItem][] {
     let items: [string, ContextMenuItem][] = []
@@ -138,12 +138,28 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
         case "keys":
             items = keys.map((key) => [id, { id: key, label: key, translate: false }])
             break
-        case "outputs":
+        case "output_list":
             let outputList: any[] = keysToID(get(outputs))
                 .filter((a) => !a.isKeyOutput)
                 .sort((a, b) => a.name.localeCompare(b.name))
 
             outputList = outputList.map((a) => ["bind_item", { id: a.id, label: a.name, translate: false }])
+            outputList = [["bind_item", { id: "stage", label: "menu.stage" }], ...outputList]
+
+            // get current item bindings
+            // TODO: global function to get item from all different slide types
+            let editSlideRef2: any = _show().layouts("active").ref()[0]?.[get(activeEdit).slide ?? ""] || {}
+            let slide2 = _show().get("slides")?.[editSlideRef2.id]
+            if (get(activeEdit).id) {
+                if (get(activeEdit).type === "overlay") slide2 = get(overlays)[get(activeEdit).id!]
+                else if (get(activeEdit).type === "template") slide2 = get(templates)[get(activeEdit).id!]
+            }
+            let selectedItem: number = get(activeEdit).items[0]
+            let currentItemBindings: any = slide2 ? slide2.items[selectedItem].bindings || [] : []
+            outputList = outputList.map((a) => {
+                if (currentItemBindings.includes(a[1].id)) a[1].enabled = true
+                return a
+            })
 
             items.push(...outputList)
             break
