@@ -27,7 +27,7 @@
             id: "videopsalm",
             tutorial: "1. Find the .vpc or .json file(s)<br>2. If it's .vpc, add .zip to the end & extract<br>3. Import the .json file",
         },
-        { name: "OpenLP/OpenLyrics", extensions: ["xml"], id: "openlp" },
+        { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chord", "pro", "txt"], id: "chordpro" },
     ]

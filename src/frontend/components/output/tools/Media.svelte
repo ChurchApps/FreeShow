@@ -68,9 +68,9 @@
             }
         },
         MAIN_VIDEO_ENDED: async (msg) => {
-            if (msg.id !== outputId) return
-
-            if (checkNextAfterMedia() || videoData.loop) return
+            if (msg.id !== outputId || type !== "video") return
+            // check and execute next after media regardless of loop
+            if (checkNextAfterMedia(path) || videoData.loop) return
 
             if (videoInterval) clearInterval(videoInterval)
 

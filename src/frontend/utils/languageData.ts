@@ -1,6 +1,7 @@
 export const languages: any = {
     // language identifier: language name in original language
     en: "English",
+    en_GB: "English (British)",
     no: "Norsk",
     sk: "Slovenčina",
     es: "Español",
@@ -9,7 +10,7 @@ export const languages: any = {
     it: "Italiano",
     pl: "Polski",
     hu: "Magyar",
-    sr: "Srpski"
+    sr: "Srpski",
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -17,7 +18,8 @@ export const languages: any = {
 // Region: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 export const replace: any = {
     // language identifier: browser language/region code
-    en: ["en-US", "en-GB", "en-AU"],
+    en: ["en-US", "en-AU"],
+    en_GB: ["en-GB", "en-ZM"],
     no: ["nb", "nn"],
     sk: ["sk"],
     es: ["es"],
@@ -26,5 +28,5 @@ export const replace: any = {
     it: ["it"],
     pl: ["pl"],
     hu: ["hu"],
-    sr: ["sr"]
+    sr: ["sr"],
 }

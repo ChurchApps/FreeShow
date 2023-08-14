@@ -2,6 +2,7 @@ import { uid } from "uid"
 import type { Bible } from "../../types/Bible"
 import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "./../stores"
+import { xml2json } from "./xml"
 
 export function convertZefaniaBible(data: any[]) {
     data.forEach((bible) => {
@@ -24,33 +25,33 @@ export function convertZefaniaBible(data: any[]) {
 }
 
 function XMLtoObject(xml: string): Bible {
-    let parser = new DOMParser()
-    // remove first line to ensure correct xml
-    xml = xml.split("\n").slice(1, xml.split("\n").length).join("\n")
-    let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
-
-    let info = xmlDoc.querySelector("INFORMATION")
-    console.log(info)
-    let booksObj = getChildren(xmlDoc, "BIBLEBOOK")
+    let bible = xml2json(xml, true)?.XMLBIBLE || {}
     let books: any[] = []
 
-    ;[...booksObj].forEach((book: any) => {
-        let name = book.getAttribute("bname")
-        let number = book.getAttribute("bnumber")
+    bible.BIBLEBOOK.forEach((book: any) => {
+        let name = book["@bname"]
+        let number = book["@bnumber"]
         let chapters: any[] = []
-        ;[...getChildren(book, "CHAPTER")].forEach((chapter: any) => {
-            let number = chapter.getAttribute("cnumber")
+
+        if (!Array.isArray(book.CHAPTER)) book.CHAPTER = [book.CHAPTER]
+        book.CHAPTER.forEach((chapter: any) => {
+            let number = chapter["@cnumber"]
             let verses: any[] = []
-            ;[...getChildren(chapter, "VERS")].forEach((verse: any) => {
-                let value = verse.innerHTML.toString()
-                verses.push({ number: verse.getAttribute("vnumber"), value })
+
+            if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
+            chapter.VERS.forEach((verse: any) => {
+                let value = verse["#text"]
+                verses.push({ number: verse["@vnumber"], value })
             })
+
             chapters.push({ number, verses })
         })
+
         books.push({ name, number, chapters })
     })
 
-    return { name: info?.querySelector("title")?.innerHTML || xmlDoc.getAttribute("biblename") || "", copyright: info?.querySelector("publisher")?.innerHTML || "", books }
-}
+    // INFORMATION: contributors, coverage, creator, date, description, format, identifier, language, publisher, rights, source, subject, title, type
+    let info = bible.INFORMATION || {}
 
-const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)
+    return { name: info.title || bible["@biblename"] || "", copyright: info.publisher || "", books }
+}

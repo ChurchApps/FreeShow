@@ -37,24 +37,24 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
 export function loadBible(active: string, index: number = 0, bible: any) {
     Object.entries(get(scriptures)).forEach(([id, scripture]: any) => {
         if (scripture.id !== active && id !== active) return
-        let name = scripture.name
+        let customName = get(scriptures)[id]?.customName || scripture.name || get(scriptures)[id]?.name
         let isAPI = scripture.api
 
         if (isAPI) {
             bible.api = true
-            bible.version = name
+            bible.version = customName
             return
         }
         delete bible.api
 
         if (get(scripturesCache)[id]) {
-            bible.version = name
+            bible.version = customName
             bible.copyright = get(scripturesCache)[id].copyright
             bible.id = id
             return
         }
 
-        window.api.send(BIBLE, { name, id: scripture.id || id, data: { index }, path: get(scripturePath) })
+        window.api.send(BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(scripturePath) })
     })
 
     return bible

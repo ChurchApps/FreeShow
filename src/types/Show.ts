@@ -73,6 +73,7 @@ export interface Item {
     lines?: Line[]
     list?: List
     auto?: boolean
+    autoFontSize?: number
     style: string
     align?: string
     specialStyle?: any // line gap && line background

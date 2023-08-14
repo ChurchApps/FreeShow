@@ -6,7 +6,7 @@ import { keys } from "../values/chords"
 export function addChords(item, showRef, itemIndex) {
     let newLines: any = [...item.lines!]
     if (!newLines[0].chords) newLines[0].chords = []
-    let id = uid()
+    let id = uid(5)
     newLines[0].chords.push({ id, pos: 0, key: keys[0] })
 
     _show(showRef.showId)

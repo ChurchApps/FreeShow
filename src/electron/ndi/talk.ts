@@ -4,7 +4,7 @@ import { customFramerates, updateFramerate } from "./capture"
 import { findStreamsNDI, receiveStreamNDI, stopReceiversNDI } from "./ndi"
 
 export async function receiveNDI(e: any, msg: Message) {
-    let data: any = msg
+    let data: any = {}
     if (ndiResponses[msg.channel]) data = await ndiResponses[msg.channel](msg.data, e)
 
     if (data !== undefined) e.reply(NDI, { channel: msg.channel, data: JSON.stringify(data) })

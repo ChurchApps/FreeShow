@@ -49,7 +49,7 @@ const specialImports: any = {
 
         return data
     },
-    easyworship: async (files: string[]) => {
+    sqlite: async (files: string[]) => {
         let data: any[] = []
 
         await Promise.all(files.map(sqlToFile))
@@ -79,8 +79,13 @@ const specialImports: any = {
 export async function importShow(id: any, files: string[] | null) {
     if (!files?.length) return
 
+    let importId = id
+    let sqliteFile = id === "openlp" && files.find((a) => a.includes(".sqlite"))
+    if (sqliteFile) files = files.filter((a) => a.includes(".sqlite"))
+    if (id === "easyworship" || sqliteFile) importId = "sqlite"
+
     let data: any[] = []
-    if (specialImports[id]) data = await specialImports[id](files)
+    if (specialImports[importId]) data = await specialImports[importId](files)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
         data = await Promise.all(files.map(readFile))

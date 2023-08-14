@@ -5,8 +5,8 @@
 	Author:  Stefan Goessner/2006
 	Web:     http://goessner.net/ 
 */
-export function xml2json(xmlString: string) {
-    let xml: any = xmlParser(xmlString)
+export function xml2json(xmlString: string, removeBreaks: boolean = false) {
+    let xml: any = xmlParser(xmlString, removeBreaks)
 
     let X = {
         toObj: (xml) => {
@@ -174,11 +174,22 @@ export function xml2json(xmlString: string) {
     return parsedJson
 }
 
-// unused
-export function xmlParser(xml: string) {
+function xmlParser(xml: string, removeBreaks: boolean = false) {
     let parser = new DOMParser()
+
+    // // fix for xml files without any line breaks
+    // let versionText = xml.indexOf("?>")
+    // if (versionText > 0 && versionText < 80) xml = xml.slice(versionText, xml.length)
+
     // remove first unknown char to ensure correct xml
     if (xml[0] !== "<") xml = xml.slice(xml.indexOf("<"), xml.length)
+    console.log(xml)
+
+    // remove special html chars
+    xml = xml.replaceAll("&nbsp;", "").replaceAll("&bull;", "")
+
+    // remove line breaks
+    if (removeBreaks) xml = xml.replaceAll("<br>", "").replaceAll("<br/>", "").replaceAll("<br />", "")
 
     return parser.parseFromString(xml, "text/xml").children[0]
 }

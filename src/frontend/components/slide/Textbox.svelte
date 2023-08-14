@@ -133,6 +133,8 @@
     $: transition = transitionEnabled && item.actions?.transition
     $: itemTransition = transition ? clone(item.actions.transition) : {}
     $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
+
+    // WIP set autoFontSize if not set and item.auto
 </script>
 
 <!-- svelte transition bug!!! -->
@@ -167,7 +169,7 @@
                             <!-- class:height={!line.text[0]?.value.length} -->
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
-                                    <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + (item.autoFontSize || autoSize) + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                                 {/each}
                             </div>
                         {/if}
@@ -249,7 +251,7 @@
                             <!-- class:height={!line.text[0]?.value.length} -->
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
-                                    <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + (item.autoFontSize || autoSize) + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                                 {/each}
                             </div>
                         {/if}

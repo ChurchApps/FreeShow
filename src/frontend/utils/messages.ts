@@ -121,6 +121,8 @@ const cloudHelpers = {
         }
         if (status !== "connected") return
 
+        // WIP set connected status, and see in settings
+
         if (get(driveData)?.mainFolderId) {
             driveData.update((a) => {
                 a.initializeMethod = "done"

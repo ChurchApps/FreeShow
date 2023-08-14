@@ -3,6 +3,8 @@
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
     import { activeEdit, activeShow, dictionary, os, outputs, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
+    import { menuClick } from "../context/menuClick"
+    import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -12,22 +14,20 @@
     import { getExtension, getMediaType } from "../helpers/media"
     import { addToPos } from "../helpers/mover"
     import { _show } from "../helpers/shows"
+    import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
+    import DynamicEvents from "../slide/views/DynamicEvents.svelte"
     import ListView from "../slide/views/ListView.svelte"
     import Mirror from "../slide/views/Mirror.svelte"
     import Timer from "../slide/views/Timer.svelte"
+    import Variable from "../slide/views/Variable.svelte"
+    import Visualizer from "../slide/views/Visualizer.svelte"
+    import Website from "../slide/views/Website.svelte"
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
-    import { getAutoSize } from "./scripts/autoSize"
     import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
-    import { menuClick } from "../context/menuClick"
-    import Visualizer from "../slide/views/Visualizer.svelte"
-    import DynamicEvents from "../slide/views/DynamicEvents.svelte"
-    import { getStyles } from "../helpers/style"
-    import Cam from "../drawer/live/Cam.svelte"
-    import Variable from "../slide/views/Variable.svelte"
-    import Website from "../slide/views/Website.svelte"
+    import { getAutoSize, getMaxBoxTextSize } from "./scripts/autoSize"
 
     export let item: Item
     export let filter: string = ""
@@ -250,7 +250,15 @@
     let currentStyle: string = ""
     let firstTextStyleArchive: string = ""
 
-    onMount(getStyle)
+    onMount(() => {
+        getStyle()
+
+        setTimeout(() => {
+            loaded = true
+            autoSize = item?.autoFontSize || 0
+            if (!autoSize) getCustomAutoSize()
+        }, 50)
+    })
 
     // update rearrange items
     // TODO: (minor issue) text seemingly swapping places when rearranging items
@@ -296,11 +304,9 @@
         if (currentStyle !== s) getStyle()
     }
     function getTextStyle(lineText) {
-        let textActive = document.activeElement?.closest(".edit")
-        let auto: string = item.auto && !textActive ? autoSize + "" : ""
         let lineBg = item.specialStyle?.lineBg || ""
 
-        let style = (lineText.style || "") + auto + lineBg
+        let style = (lineText.style || "") + lineBg
         return style
     }
 
@@ -328,8 +334,7 @@
             line.text?.forEach((a) => {
                 currentStyle += getTextStyle(a)
 
-                let auto: string = item.auto ? "font-size: " + autoSize + "px;" : ""
-                let style = a.style ? 'style="' + a.style + auto + '"' : ""
+                let style = a.style ? 'style="' + a.style + '"' : ""
 
                 html += `<span ${plain ? "" : style}>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
             })
@@ -376,7 +381,79 @@
         }
     }
 
+    // AUTO SIZE
+
+    // text change
+    let textChanged = false
+    let previousText: string = ""
+    $: if (html && textElem?.innerText !== previousText) checkText()
+    $: console.log(textElem?.innerText)
+    function checkText() {
+        textChanged = true
+        previousText = textElem?.innerText
+        setTimeout(() => (textChanged = false))
+    }
+
+    // typing
+    let isTyping: boolean = false
+    $: if (isAuto && textChanged) checkTyping()
+    let typingTimeout: any = null
+    function checkTyping() {
+        if (!loaded) return
+        isTyping = true
+
+        if (typingTimeout) clearTimeout(typingTimeout)
+        typingTimeout = setTimeout(() => {
+            isTyping = false
+            if (isTextbox && isAuto) getCustomAutoSize()
+        }, 1000)
+    }
+
+    // update auto size
+    let loaded = false
+    $: isTextbox = !!item?.lines
+    $: isAuto = item?.auto
+    $: if (isTextbox && (isAuto || textChanged)) getCustomAutoSize()
+    $: if (!isTextbox && item) autoSize = getAutoSize(item)
+
+    let autoSize: number = 0
+    let alignElem: any
+    let loopStop = false
+    function getCustomAutoSize() {
+        if (isTyping || loopStop || !loaded || !textElem || !alignElem || !item.auto) return
+        loopStop = true
+
+        autoSize = getMaxBoxTextSize(textElem, alignElem)
+
+        // update item with new style
+        console.log(ref)
+        if (ref.type === "overlay") {
+            overlays.update((a) => {
+                a[ref.id].items[index].autoFontSize = autoSize
+                return a
+            })
+        } else if (ref.type === "template") {
+            templates.update((a) => {
+                a[ref.id].items[index].autoFontSize = autoSize
+                return a
+            })
+        } else if (ref.showId) {
+            showsCache.update((a) => {
+                a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
+                return a
+            })
+        }
+
+        setTimeout(() => {
+            loopStop = false
+        }, 500)
+    }
+
+    // UPDATE STYLE FROM LINES
+
     function getNewLines() {
+        if (!textElem) return []
+
         let newLines: Line[] = []
         let pos: number = -1
         currentStyle = ""
@@ -564,7 +641,7 @@
     // $: autoSize = item.lines ? height / (item.lines.length + 3) : height / 2
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
-    $: autoSize = getAutoSize(item)
+    // $: autoSize = getAutoSize(item)
 
     const actions = {
         transition: { label: "popup.transition", icon: "transition" },
@@ -597,7 +674,7 @@ bind:offsetWidth={width} -->
                     </Button>
                     {#if item.bindings.length > 1}
                         <span class="actionValue">{item.bindings.length}</span>
-                        {:else}
+                    {:else}
                         <span class="actionValue">
                             {#if item.bindings[0] === "stage"}
                                 <T id="menu.stage" />
@@ -661,7 +738,7 @@ bind:offsetWidth={width} -->
     </div> -->
 
         <!-- TODO: remove align..... -->
-        <div class="align" class:plain style={plain ? null : item.align || null}>
+        <div bind:this={alignElem} class="align" class:plain style={plain ? null : item.align || null}>
             {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
                 <span class="placeholder">
                     <T id="empty.text" />
@@ -691,15 +768,33 @@ bind:offsetWidth={width} -->
                     if (newLines) item.lines = newLines
                 }}
                 class="edit"
+                class:autoSize={item.auto && autoSize}
                 contenteditable
                 on:keydown={textElemKeydown}
                 bind:innerHTML={html}
-                style="{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />
             <!-- on:paste did not work on mac -->
             <!-- on:paste|preventDefault={paste} -->
+
+            <!-- auto size -->
+            <!-- <div
+                bind:this={textElem}
+                on:mousemove={(e) => {
+                    let newLines = chordMove(e, { textElem, item })
+                    if (newLines) item.lines = newLines
+                }}
+                class="edit"
+                class:autoSize={item.auto}
+                contenteditable
+                on:keydown={textElemKeydown}
+                bind:innerHTML={html}
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
+                class:tallLines={chordsMode}
+            /> -->
         </div>
     {:else if item?.type === "list"}
         <ListView list={item.list} disableTransition />
@@ -768,6 +863,16 @@ bind:offsetWidth={width} -->
         backdrop-filter: blur(20px);
     }
 
+    .edit:global(.invisible) {
+        pointer-events: none;
+        position: absolute;
+        opacity: 0;
+        overflow: hidden;
+    }
+    .edit:not(.invisible).autoSize :global(span) {
+        font-size: var(--auto-size) !important;
+    }
+
     .actions {
         position: absolute;
         top: 0;
@@ -781,12 +886,14 @@ bind:offsetWidth={width} -->
         opacity: 0.5;
         font-weight: bold;
         padding: 0 5px;
+        text-shadow: none;
     }
     .actionButton,
     .chordsButton {
         display: flex;
         align-items: center;
         background-color: var(--focus);
+        color: var(--text);
     }
     .chordsButton {
         position: absolute;

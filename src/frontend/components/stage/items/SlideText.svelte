@@ -30,7 +30,7 @@
         let oneItem: any = null
         if (!slide?.items) return []
         reversedItems
-            .filter((item) => !item.type || item.type === "text")
+            .filter((item) => (!item.type || item.type === "text") && (!item.bindings?.length || item.bindings.includes("stage")))
             .forEach((item: any) => {
                 if (item.lines && item.lines[0]?.text?.[0]?.value?.length) {
                     if (!oneItem) oneItem = item

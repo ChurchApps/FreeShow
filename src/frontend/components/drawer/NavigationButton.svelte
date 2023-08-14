@@ -22,15 +22,16 @@
         audio: (c: any) => audioFolders.update((a) => setName(a, c)),
         overlays: (c: any) => overlayCategories.update((a) => setName(a, c)),
         templates: (c: any) => templateCategories.update((a) => setName(a, c)),
-        scripture: (c: any) => scriptures.update((a) => setName(a, c)),
+        scripture: (c: any) => scriptures.update((a) => setName(a, c, "customName")),
     }
-    const setName = (a: any, { name, id }: any) => {
+    const setName = (a: any, { name, id }: any, nameKey: string = "name") => {
         // api scriptures
         if (!a[id]) id = Object.entries(a).find(([_, a]: any) => a.id === id)?.[0]
         if (!a[id]) return a
 
         if (a[id].default) delete a[id].default
-        a[id].name = name
+        a[id][nameKey] = name
+
         return a
     }
 
@@ -69,7 +70,7 @@
                 <p style="margin: 5px;"><T id={category.name} /></p>
             {:else}
                 <HiddenInput
-                    value={category.default ? $dictionary[category.name.split(".")[0]]?.[category.name.split(".")[1]] : category.name}
+                    value={category.default ? $dictionary[category.name.split(".")[0]]?.[category.name.split(".")[1]] : category.customName || category.name}
                     id={"category_" + id + "_" + category.id}
                     on:edit={(e) => changeName(e, category.id)}
                     bind:edit={editActive}

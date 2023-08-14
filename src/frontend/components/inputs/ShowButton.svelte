@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeProject, activeShow, categories, notFound, outLocked, outputs, playerVideos, playingAudio, projects, shows, showsCache } from "../../stores"
+    import { activeEdit, activePage, activeProject, activeShow, categories, notFound, outLocked, outputs, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache } from "../../stores"
     import { playAudio } from "../helpers/audio"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -89,6 +89,8 @@
         activeShow.set(newShow)
         if (type === "image" || type === "video") activeEdit.set({ id, type: "media", items: [] })
         else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [] })
+
+        if ($activePage === "edit") refreshEditSlide.set(true)
     }
 
     function doubleClick(e: any) {

@@ -10,7 +10,7 @@ import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
-import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
+import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { History } from "./components/helpers/history"
@@ -176,14 +176,6 @@ export const drawSettings: Writable<DrawSettings> = writable({}) // {}
 export const stageShows: Writable<StageShows> = writable({}) // {default}
 
 // SCRIPTURE
-interface BibleCategories extends Category {
-    api?: boolean
-    books?: any[]
-    cacheUpdate?: Date
-    collection?: {
-        versions: string[]
-    }
-}
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
 export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true }) // {default}

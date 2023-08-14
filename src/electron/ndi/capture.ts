@@ -108,7 +108,7 @@ function sendFrames(id: string, image: NativeImage, rates: any) {
 
     if (rates.previewFrame) sendBufferToPreview(id, image, { size })
 
-    if (rates.serverFrame && captures[id].options.server) sendBufferToServer(id, image, { size })
+    if (rates.serverFrame && captures[id].options.server) sendBufferToServer(id, image)
 
     if (rates.ndiFrame && captures[id].options.ndi) {
         const buffer = image.getBitmap()
@@ -185,9 +185,10 @@ function resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
 
 // SERVER
 
-const outputServerSize: Size = { width: 1280, height: 720 }
-function sendBufferToServer(id: string, image: NativeImage, options: any) {
-    image = resizeImage(image, options.size, outputServerSize)
+// const outputServerSize: Size = { width: 1280, height: 720 }
+function sendBufferToServer(id: string, image: NativeImage) {
+    // send output image size
+    // image = resizeImage(image, options.size, outputServerSize)
 
     const buffer = image.getBitmap()
     const size = image.getSize()

@@ -32,7 +32,7 @@ export function startTimer() {
 }
 
 function increment(timer: any) {
-    if (timer.currentTime === timer.end && Object.keys(get(activeTimers)).length === 1) checkNextAfterMedia()
+    if (timer.start < timer.end ? timer.currentTime >= timer.end : timer.currentTime <= timer.end) checkNextAfterMedia(timer.id, "timer")
 
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
     if (timer.start < timer.end) timer.currentTime++

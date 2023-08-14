@@ -124,11 +124,11 @@
         else if (input.key === "text-align") value = `text-align: ${value};`
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
-        if (input.id === "auto") {
-            setTimeout(() => {
-                refreshEditSlide.set(true)
-            }, 100)
-        }
+        // if (input.id === "auto") {
+        //     setTimeout(() => {
+        //         refreshEditSlide.set(true)
+        //     }, 100)
+        // }
 
         // set nested value
         if (input.id.includes(".")) {

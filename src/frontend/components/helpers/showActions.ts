@@ -469,7 +469,7 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 }
 
 // go to next slide if current output slide has nextAfterMedia action
-export function checkNextAfterMedia() {
+export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media") {
     let outputId = getActiveOutputs(get(outputs), true, true)[0]
     if (!outputId) return false
     let currentOutput: any = get(outputs)[outputId]
@@ -478,6 +478,19 @@ export function checkNextAfterMedia() {
     if (!slideOut) return false
 
     let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
+    if (!layoutSlide) return false
+
+    // check that current slide has the ended media!
+    if (type === "media" || type === "audio") {
+        let showMedia = _show(slideOut.id).media().get()
+        let currentMediaId = showMedia.find((a) => a.path === endedId)?.key
+        if (layoutSlide.background !== currentMediaId) return false
+    } else if (type === "timer") {
+        let slide = _show(slideOut.id).get("slides")[layoutSlide.id]
+        let slideTimer = slide.items.find((a) => a.type === "timer" && a.timerId === endedId)
+        if (!slideTimer) return false
+    }
+
     let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
     if (!nextAfterMedia) return false
 

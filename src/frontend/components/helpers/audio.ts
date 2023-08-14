@@ -101,19 +101,20 @@ export function analyseAudio() {
             allAudio = Object.entries(get(playingAudio))
                 .map(([id, a]: any) => ({ id, ...a }))
                 .filter((audio) => {
+                    let audioPath = audio.id
                     // check if finished
                     if (!audio.paused && audio.audio.currentTime >= audio.audio.duration) {
-                        if (get(playingAudio)[audio.id].loop) {
-                            get(playingAudio)[audio.id].audio.currentTime = 0
-                            get(playingAudio)[audio.id].audio.play()
+                        if (get(playingAudio)[audioPath].loop) {
+                            get(playingAudio)[audioPath].audio.currentTime = 0
+                            get(playingAudio)[audioPath].audio.play()
                         } else {
                             playingAudio.update((a: any) => {
-                                // a[audio.id].paused = true
-                                delete a[audio.id]
+                                // a[audioPath].paused = true
+                                delete a[audioPath]
                                 return a
                             })
 
-                            if (!Object.keys(get(playingAudio)).length) checkNextAfterMedia()
+                            if (!Object.keys(get(playingAudio)).length) checkNextAfterMedia(audioPath, "audio")
                             return false
                         }
                     }

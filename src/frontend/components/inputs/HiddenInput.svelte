@@ -36,7 +36,7 @@
         edit = id
         setTimeout(() => inputElem?.focus(), 10)
         // prevVal = value
-    }
+    } else if ($activeRename === null) edit = false
 
     let timeout: any
     function mousedown(e: any) {
