@@ -48,7 +48,7 @@ export function startCapture(id: string, toggle: any = {}) {
             framerates: {
                 preview: framerates.preview,
                 server: framerates.server,
-                ndi: framerates.unconnected,
+                ndi: framerates.connected,
             },
             framesToSkip: {},
         }
@@ -86,7 +86,7 @@ export function startCapture(id: string, toggle: any = {}) {
                 // update if last skipped frame is not a sent frame
                 sendFrames(id, storedFrames[id], { previewFrame: true, serverFrame: true, ndiFrame: true })
                 currentImage = 0
-            }, 100)
+            }, 80)
 
             return
         }
@@ -132,11 +132,13 @@ export function updateFramerate(id: string) {
     // highest framerate
     let allRates = [captures[id].framerates.preview]
     if (captures[id].options.ndi) allRates.push(captures[id].framerates.ndi)
+    if (captures[id].options.server) allRates.push(captures[id].framerates.server)
     let highestFramerate = Math.max(...allRates)
 
     captures[id].framesToSkip = {
         max: getFramesToSkip(captures[id].displayFrequency, highestFramerate),
         preview: getFramesToSkip(captures[id].displayFrequency, captures[id].framerates.preview),
+        server: getFramesToSkip(captures[id].displayFrequency, captures[id].framerates.server),
         ndi: getFramesToSkip(captures[id].displayFrequency, captures[id].framerates.ndi),
     }
 }

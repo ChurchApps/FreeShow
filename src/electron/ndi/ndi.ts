@@ -23,7 +23,7 @@ export async function findStreamsNDI(): Promise<any> {
             .then((a) => {
                 resolve(a)
             })
-            .catch((err) => reject(err))
+            .catch((err: any) => reject(err))
     })
 }
 
