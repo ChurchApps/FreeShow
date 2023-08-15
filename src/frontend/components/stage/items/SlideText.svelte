@@ -1,6 +1,5 @@
 <script lang="ts">
     import { showsCache } from "../../../stores"
-    import { getAutoSize } from "../../edit/scripts/autoSize"
     import { _show } from "../../helpers/shows"
     import Textbox from "../../slide/Textbox.svelte"
 
@@ -10,7 +9,7 @@
     export let style: boolean = false
     export let autoSize: boolean = false
     export let fontSize: number = 0
-    export let parent: any = {}
+    export let stageItem: any
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -21,7 +20,7 @@
     $: slideId = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!]?.id || null : null
     $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
 
-    $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize
+    // $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize
 
     $: reversedItems = JSON.parse(JSON.stringify(slide?.items || [])).reverse()
     $: items = style ? reversedItems : combineSlideItems()
@@ -44,6 +43,7 @@
 
 {#if slide}
     {#each items as item}
-        <Textbox {item} {style} {chords} {ref} autoSize={stageAutoSize} addDefaultItemStyle={style} />
+        <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} />
+        <!-- <Textbox {item} {style} {chords} {ref} autoSize={stageAutoSize} addDefaultItemStyle={style} /> -->
     {/each}
 {/if}

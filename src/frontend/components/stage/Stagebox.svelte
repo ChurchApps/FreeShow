@@ -90,7 +90,8 @@
 
     let height: number = 0
     let width: number = 0
-    $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100
+    $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
+    $: console.log(fontSize, item)
 
     $: size = getAutoSize(item, { width, height })
     // $: size = Math.min(height, width) / 2
@@ -146,10 +147,10 @@
                 {:else if id.includes("notes")}
                     <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
-                    <SlideText {currentSlide} {next} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} />
+                    <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} />
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
-                        <SlideText {currentSlide} {next} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />
+                        <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />
                     </span>
                 {:else if id.includes("clock")}
                     <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -168,6 +169,10 @@
 </div>
 
 <style>
+    .stage_item {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
     .stage_item.outline {
         outline: 5px solid rgb(255 255 255 / 0.2);
     }

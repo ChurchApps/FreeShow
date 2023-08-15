@@ -19,12 +19,7 @@
 
         // TODO: move multiple!
 
-        let moveCondition: boolean =
-            mouse.e.target.closest(".line") ||
-            ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) && !mouse.e.target.closest(".square")) ||
-            mouse.e.ctrlKey ||
-            mouse.e.metaKey ||
-            mouse.e.buttons === 4
+        let moveCondition: boolean = mouse.e.target.closest(".line") || ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) && !mouse.e.target.closest(".square")) || mouse.e.ctrlKey || mouse.e.metaKey || mouse.e.buttons === 4
 
         let square = e.shiftKey
         if (mouse.item.type === "icon") square = true
@@ -44,9 +39,7 @@
         newStyles = styles
     }
 
-    function mouseup(e: any) {
-        if (e.target.closest(".chords")) return
-
+    function mouseup() {
         mouse = null
         lines = []
         newStyles = {}

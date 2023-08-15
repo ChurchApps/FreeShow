@@ -23,6 +23,8 @@ export interface StageShows {
         items: {
             [key: string]: {
                 enabled: boolean
+                chords?: boolean
+                chordsData?: any
                 auto?: boolean
                 style: string
                 align: string

@@ -738,6 +738,21 @@ const deleteActions = {
 
         currentOutputSettings.set(Object.keys(get(outputs))[0])
     },
+    chord: (data: any) => {
+        console.log(data)
+        data = data[0]
+
+        let item: any = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
+
+        let newLines: any = clone(item.lines)
+        let currentChordIndex = newLines[data.index].chords.findIndex((a) => a.id === data.chord.id)
+        newLines[data.index].chords.splice(currentChordIndex, 1)
+
+        _show()
+            .slides([data.slideId])
+            .items([data.itemIndex])
+            .set({ key: "lines", values: [newLines] })
+    },
 }
 
 const duplicateActions = {

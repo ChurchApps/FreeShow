@@ -25,9 +25,9 @@
     import Website from "../slide/views/Website.svelte"
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
-    import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
-    import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
     import { getAutoSize, getMaxBoxTextSize } from "./scripts/autoSize"
+    import { addChords, changeKey, chordMove } from "./scripts/chords"
+    import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
 
     export let item: Item
     export let filter: string = ""
@@ -426,7 +426,6 @@
         autoSize = getMaxBoxTextSize(textElem, alignElem)
 
         // update item with new style
-        console.log(ref)
         if (ref.type === "overlay") {
             overlays.update((a) => {
                 a[ref.id].items[index].autoFontSize = autoSize
@@ -648,9 +647,91 @@
         showTimer: { label: "actions.show_timer", icon: "time_in" },
         hideTimer: { label: "actions.hide_timer", icon: "time_out" },
     }
+
+    // CHORDS
+
+    let chordButtons: any[] = []
+    function chordClick(e: any) {
+        let add = e.target.closest(".add")
+        if (add) {
+            let pos = add.id.split("_")
+            addChords(item, ref, index, Number(pos[0]), Number(pos[1]))
+            return
+        }
+
+        let btn = e.target.closest(".button")
+        if (!btn) return
+
+        let data = chordButtons[btn.id]
+        if (!data) return
+
+        // right click
+        if (e.button === 2) selected.set({ id: "chord", data: [{ chord: { id: data.chord.id }, index: data.lineIndex, slideId: ref.id, itemIndex: index }] })
+
+        if (e.button !== 0) return
+        // left click
+        changeKey(data)
+    }
+
+    let chordLines: string[] = []
+    $: if (chordsMode && item.lines) createChordLines()
+    function createChordLines() {
+        chordLines = []
+        chordButtons = []
+
+        item.lines!.forEach((line, i) => {
+            if (!line.text) return
+
+            // {#each line.text || [] as text}
+            //     <span style="{text.style}font-size: {autoSize}px;">
+            //         {@html text.value.replaceAll("\n", "<br>") || "<br>"}
+            //     </span>
+            // {/each}
+
+            let html = ""
+            let index = 0
+            line.text.forEach((text) => {
+                if (!text.value) {
+                    html += "<br>"
+                    return
+                }
+
+                let value = text.value.trim().replaceAll("\n", "") || "."
+                let chords = JSON.parse(JSON.stringify(line.chords || []))
+
+                let letters = value.split("")
+                letters.forEach((letter, li) => {
+                    let chordIndex = chords.findIndex((a: any) => a.pos === index)
+                    if (chordIndex >= 0) {
+                        let chord = chords[chordIndex]
+                        chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
+                        let buttonIndex = chordButtons.length - 1
+                        html += `<span id="${buttonIndex}" class="context #chord chord button">${chord.key}</span>`
+                        chords.splice(chordIndex, 1)
+                    }
+
+                    index++
+
+                    let style = text.style
+                    if (item.auto && autoSize) style += `font-size: ${autoSize}px;`
+                    html += `<span id="${i}_${li}" class="invisible add" style="${style}">${letter}</span>`
+                })
+
+                chords.forEach((chord: any, ci: number) => {
+                    chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
+                    let buttonIndex = chordButtons.length - 1
+                    html += `<span id="${buttonIndex}" class="context #chord chord button" style="transform: translate(${60 * (ci + 1)}px, -80%);">${chord.key}</span>`
+                })
+            })
+
+            if (!html) return
+            chordLines[i] = html
+        })
+    }
 </script>
 
-<svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
+<!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
+<svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <!-- bind:offsetHeight={height}
 bind:offsetWidth={width} -->
@@ -701,8 +782,8 @@ bind:offsetWidth={width} -->
         </div>
     {/if}
     {#if item?.lines}
-        <!-- chords -->
-        <div
+        <!-- chords (top right button) -->
+        <!-- <div
             class="chordsButton"
             style="zoom: {1 / ratio};"
             on:mousedown={() => {
@@ -717,7 +798,7 @@ bind:offsetWidth={width} -->
                     <Icon id="add" white />
                 </Button>
             {/if}
-        </div>
+        </div> -->
 
         <!-- <div
       class="chordsText align"
@@ -745,8 +826,8 @@ bind:offsetWidth={width} -->
                 </span>
             {/if}
             {#if chordsMode && textElem}
-                <div class="chords">
-                    {#each item.lines as line, i}
+                <div class="edit chords" on:mousedown={chordClick}>
+                    <!-- {#each item.lines as line, i}
                         {#if line.chords}
                             {#each line.chords as chord}
                                 {#await getChordPosition(chord, { textElem, item, line: i }) then pos}
@@ -758,6 +839,19 @@ bind:offsetWidth={width} -->
                                 {/await}
                             {/each}
                         {/if}
+                    {/each} -->
+
+                    {#each item.lines as line, i}
+                        <div class="break chordsBreak" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
+                            {@html chordLines[i]}
+                        </div>
+                        <!-- <div class="break" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
+                            {#each line.text || [] as text}
+                                <span style="{text.style}font-size: {autoSize}px;">
+                                    {@html text.value.replaceAll("\n", "<br>") || "<br>"}
+                                </span>
+                            {/each}
+                        </div> -->
                     {/each}
                 </div>
             {/if}
@@ -888,27 +982,15 @@ bind:offsetWidth={width} -->
         padding: 0 5px;
         text-shadow: none;
     }
-    .actionButton,
-    .chordsButton {
+    .actionButton {
         display: flex;
         align-items: center;
         background-color: var(--focus);
         color: var(--text);
     }
-    .chordsButton {
-        position: absolute;
-        top: 0;
-        right: 0;
-    }
-    .actionButton :global(button),
-    .chordsButton :global(button) {
+    .actionButton :global(button) {
         padding: 5px !important;
         z-index: 3;
-    }
-    .chords {
-        position: absolute;
-        top: 0;
-        left: 0;
     }
     .chords :global(.chord) {
         position: absolute;
@@ -917,19 +999,22 @@ bind:offsetWidth={width} -->
         /* color: var(--text); */
         font-size: 0.8em;
         border: 10px solid var(--secondary);
+        text-shadow: none;
         z-index: 3;
+
+        pointer-events: all;
     }
-    .chords .chord:hover {
+    .chords :global(.chord):hover {
         filter: brightness(1.2);
     }
-    .chords .chord::after {
+    .chords :global(.chord)::after {
         content: "";
         position: absolute;
         bottom: -5px;
         left: 50%;
         transform: translate(-50%, 100%);
         width: 10px;
-        height: 100px;
+        height: 80px;
         background-color: var(--secondary);
         /* background-color: var(--secondary-opacity); */
     }
@@ -1009,6 +1094,38 @@ bind:offsetWidth={width} -->
     min-width: 100px;
     display: inline-table; */
     }
+
+    /* chords */
+    .edit.chords :global(.invisible) {
+        opacity: 0;
+        font-size: var(--font-size);
+        line-height: 0;
+    }
+    .edit.chords :global(.invisible):hover {
+        opacity: 0.6;
+        background-color: var(--secondary);
+    }
+    .edit.chords :global(.chord) {
+        /* color: var(--chord-color);
+        font-size: var(--chord-size) !important; */
+        bottom: 0;
+        transform: translate(-50%, -80%);
+        z-index: 2;
+        font-size: 70px !important;
+        /* color: #FF851B; */
+    }
+    .edit.chords {
+        /* line-height: 0.5em; */
+        font-size: inherit;
+        position: absolute;
+        /* pointer-events: none; */
+    }
+
+    .chordsBreak {
+        position: relative;
+    }
+
+    /* custom svg icon */
 
     .customIcon,
     .customIcon :global(svg) {

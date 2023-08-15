@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { activeEdit, drawerTabsData, groups, outputs, overlays, selected, templates } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
-import { keys } from "../edit/values/chords"
+import { chordAdders, keys } from "../edit/values/chords"
 import { keysToID } from "../helpers/array"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
@@ -138,6 +138,13 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
         case "keys":
             items = keys.map((key) => [id, { id: key, label: key, translate: false }])
             break
+        case "chord_list":
+            keys.forEach((key) => {
+                chordAdders.forEach((adder) => {
+                    items.push([id, { id: key + adder, label: key + adder, translate: false }])
+                })
+            })
+            break
         case "output_list":
             let outputList: any[] = keysToID(get(outputs))
                 .filter((a) => !a.isKeyOutput)
@@ -155,7 +162,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
                 else if (get(activeEdit).type === "template") slide2 = get(templates)[get(activeEdit).id!]
             }
             let selectedItem: number = get(activeEdit).items[0]
-            let currentItemBindings: any = slide2 ? slide2.items[selectedItem].bindings || [] : []
+            let currentItemBindings: any = slide2 ? slide2.items?.[selectedItem]?.bindings || [] : []
             outputList = outputList.map((a) => {
                 if (currentItemBindings.includes(a[1].id)) a[1].enabled = true
                 return a

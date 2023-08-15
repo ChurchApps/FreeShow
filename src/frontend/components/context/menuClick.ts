@@ -431,6 +431,27 @@ const actions: any = {
     },
 
     // chords
+    chord_list: (obj: any) => actions.keys(obj),
+    keys: (obj: any) => {
+        if (get(selected).id !== "chord") return
+        let data = get(selected).data[0]
+
+        let item: any = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
+
+        let newLines: any = clone(item.lines)
+        if (data.chord) {
+            let currentChordIndex = newLines[data.index].chords.findIndex((a) => a.id === data.chord.id)
+            newLines[data.index].chords[currentChordIndex].key = obj.menu.id
+        } else {
+            if (!newLines[0].chords) newLines[0].chords = []
+            newLines[0].chords.push({ id: uid(5), pos: 0, key: obj.menu.id })
+        }
+
+        _show()
+            .slides([data.slideId])
+            .items([data.itemIndex])
+            .set({ key: "lines", values: [newLines] })
+    },
     custom_key: (obj: any) => {
         let data = obj.sel.data[0]
         selected.set(obj.sel)
@@ -484,26 +505,6 @@ const actions: any = {
         }
 
         if (newData) history({ id: "SHOW_LAYOUT", newData })
-    },
-    keys: (obj: any) => {
-        if (get(selected).id !== "chord") return
-        let data = get(selected).data[0]
-
-        let item: any = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
-
-        let newLines: any = [...item.lines!]
-        if (data.chord) {
-            let currentChordIndex = newLines[data.index].chords.findIndex((a) => a.id === data.chord.id)
-            newLines[data.index].chords[currentChordIndex].key = obj.menu.id
-        } else {
-            if (!newLines[0].chords) newLines[0].chords = []
-            newLines[0].chords.push({ id: uid(), pos: 0, key: obj.menu.id })
-        }
-
-        _show()
-            .slides([data.slideId])
-            .items([data.itemIndex])
-            .set({ key: "lines", values: [newLines] })
     },
 
     // media

@@ -84,6 +84,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     item_actions: { label: "actions.actions", icon: "actions", items: ["LOAD_item_actions"] },
     remove_layers: { label: "actions.remove_layers", icon: "remove_layers", items: ["LOAD_remove_layers"] },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
+    chord_list: { label: "edit.chords", icon: "chords", items: ["LOAD_chord_list"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
     bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_output_list"] },
@@ -207,7 +208,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // chord notations
     // https://jazz-library.com/articles/chord-symbols/
     // https://www.musicnotes.com/now/tips/a-complete-guide-to-chord-symbols-in-music/
-    chord: ["set_key", "custom_key"],
+    chord: ["set_key", "chord_list", "custom_key", "SEPERATOR", "delete"],
 
     // MEDIA
     video_marker: ["rename", "delete"],
