@@ -327,7 +327,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     {/if}
                     <!-- TODO: check if showid exists in shows -->
                     {#if slide.items}
-                        {#each slide.items as item}
+                        {#each slide.items as item, i}
                             <!-- TODO: lyrics zoom on text -->
                             {#if viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type)}
                                 <Textbox
@@ -335,6 +335,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                                     backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
                                     disableListTransition
                                     {item}
+                                    itemIndex={i}
                                     {ratio}
                                     slideIndex={index}
                                     ref={{

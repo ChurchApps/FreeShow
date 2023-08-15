@@ -1,52 +1,40 @@
 <script lang="ts">
-    import type { Resolution } from "../../../types/Settings"
-    import { dictionary, outputs } from "../../stores"
+    import { dictionary, outputs, previewBuffers } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
     import { getActiveOutputs } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
-    import { getStyleResolution } from "../slide/getStyleResolution"
-    import Output from "./Output.svelte"
+    import PreviewCanvas from "./PreviewCanvas.svelte"
 
-    export let video: any = null
-    export let videoData: any = {} // { duration: 0, paused: true, muted: false, loop: false }
-    export let videoTime: any = {}
-    export let title: string = ""
-    export let mirror: boolean = false
-    export let preview: boolean = false
-
-    // export let fullscreen: boolean = false
-    export let resolution: Resolution
+    // export let resolution: Resolution
 
     $: outputList = getActiveOutputs($outputs, false, true)
 
-    let disableTransitions: boolean = false
     let fullscreen: boolean = false
+    let fullscreenId = ""
     function toggleFullscreen(e: any) {
-        if (!e.target.closest(".zoomed")) return
+        if (!e.target.closest(".multipleOutputs")) return
 
         if (fullscreen) {
             fullscreen = false
             return
         }
 
-        fullscreen = e.target.closest(".zoomed").id || true
+        fullscreen = true
+        fullscreenId = e.target.closest(".previewCanvas")?.id
     }
 
     let updatedList: any[] = []
+    let timeout: any = null
     $: if (outputList) updateList()
     function updateList() {
-        if (JSON.stringify(updatedList) === JSON.stringify(outputList)) {
-            updatedList = clone(outputList)
-            return
-        }
+        if (JSON.stringify(updatedList) === JSON.stringify(outputList)) return
+        if (timeout) clearTimeout(timeout)
 
-        disableTransitions = true
-
-        setTimeout(() => {
+        timeout = setTimeout(() => {
             updatedList = clone(outputList)
-            disableTransitions = false
+            timeout = null
         }, 500)
     }
 </script>
@@ -59,31 +47,37 @@
         </Button>
 
         <span class="resolution">
-            <!-- TODO: get actual resultion ... -->
-            <p><b><T id="screen.width" />:</b> {resolution.width} <T id="screen.pixels" /></p>
-            <p><b><T id="screen.height" />:</b> {resolution.height} <T id="screen.pixels" /></p>
+            <p><b><T id="screen.width" />:</b> {$previewBuffers[fullscreenId]?.originalSize?.width || 0} <T id="screen.pixels" /></p>
+            <p><b><T id="screen.height" />:</b> {$previewBuffers[fullscreenId]?.originalSize?.height || 0} <T id="screen.pixels" /></p>
         </span>
     {/if}
 
-    {#each updatedList as outputId, i}
-        <Output
-            specificOutput={fullscreen && i === 0 ? fullscreen : outputId}
-            outline={!fullscreen && updatedList.length > 1}
-            disabled={!fullscreen && !$outputs[outputId]?.active}
-            {disableTransitions}
-            center={fullscreen}
-            style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""}
-            {mirror}
-            {preview}
-            bind:video
-            bind:videoData
-            bind:videoTime
-            bind:title
-        />
-        <!-- bind:videoData={videoData[outputId]}
-            bind:videoTime={videoTime[outputId]} -->
+    <!-- TODO: fullscreen height getStyleResolution() -->
+
+    {#each updatedList as outputId}
+        {#if !fullscreen || fullscreenId === outputId}
+            <PreviewCanvas
+                style={outputList.length > 1 && !fullscreen ? `border: 2px solid ${$outputs[outputId]?.color};width: 50%;` : ""}
+                disabled={outputList.length > 1 && !fullscreen && !$outputs[outputId]?.active}
+                capture={$previewBuffers[outputId]}
+                id={outputId}
+                {fullscreen}
+            />
+        {/if}
     {/each}
 </div>
+
+<!-- <Output
+    specificOutput={fullscreen && i === 0 ? fullscreen : outputId}
+    outline={outputList.length > 1 && !fullscreen && updatedList.length > 1}
+    disabled={outputList.length > 1 && !fullscreen && !$outputs[outputId]?.active}
+    {disableTransitions}
+    center={fullscreen}
+    style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""}
+    {mirror}
+    {preview}
+    bind:title
+/> -->
 
 <style>
     .multipleOutputs {

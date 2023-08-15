@@ -1,5 +1,5 @@
 import { app } from "electron"
-import { readdir, readFileSync } from "fs"
+import { readFileSync } from "fs"
 import path, { join } from "path"
 import PPTX2Json from "pptx2json"
 import protobufjs from "protobufjs"
@@ -7,81 +7,93 @@ import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
 import { toApp } from ".."
 import { IMPORT } from "./../../types/Channels"
-import { getDocumentsFolder } from "./files"
+import { getDocumentsFolder, readFolder } from "./files"
 
-export async function importShow(id: any, files: string[] | null) {
-    if (!files?.length) return
+const specialImports: any = {
+    powerpoint: async (files: string[]) => {
+        let data: any[] = []
 
-    let data: any[] = []
-    if (id === "powerpoint") {
         for await (const filePath of files) {
             const pptx2json = new PPTX2Json()
             const json = await pptx2json.toJson(filePath)
+
             data.push({ name: getFileName(filePath), content: json })
         }
-    } else if (id === "pdf") {
-        let opts: any = {
-            format: "png",
-            scale: 1920,
-            out_prefix: "img",
-            page: null,
-        }
+
+        return data
+    },
+    pdf: async (files: string[]) => {
+        let data: any[] = []
 
         // TODO: linux don't support pdf-poppler!
         const pdf = require("pdf-poppler")
 
-        await Promise.all(
-            files.map((filePath: string) => {
-                let name = getFileName(filePath)
-                let output = getDocumentsFolder(path.resolve(app.getPath("documents"), "FreeShow", "Imports", name))
-                opts.out_dir = output
-                return new Promise((resolve, error) => {
-                    pdf.convert(filePath, opts)
-                        .then(() => {
-                            readdir(output, (err: any, files: any) => {
-                                if (err) return console.error("Could not read directory:", err)
-                                data.push({ name, path: output, pages: files.length })
-                                resolve(true)
-                            })
-                        })
-                        .catch((err: any) => {
-                            console.error(err)
-                            error(err)
-                        })
+        let opts: any = { format: "png", scale: 1920, out_prefix: "img", page: null }
+
+        await Promise.all(files.map(pdfToImages))
+
+        async function pdfToImages(filePath: string) {
+            let name = getFileName(filePath)
+            let output = getDocumentsFolder(path.resolve(app.getPath("documents"), "FreeShow", "Imports", name))
+            opts.out_dir = output
+
+            try {
+                await pdf.convert(filePath, opts)
+
+                let files = readFolder(output)
+                if (files.length) data.push({ name, path: output, pages: files.length })
+            } catch (err) {
+                console.error(err)
+            }
+        }
+
+        return data
+    },
+    sqlite: async (files: string[]) => {
+        let data: any[] = []
+
+        await Promise.all(files.map(sqlToFile))
+
+        function sqlToFile(filePath: string) {
+            const exporter = new SqliteToJson({
+                client: new sqlite3.Database(filePath),
+            })
+
+            return new Promise((resolve, error) => {
+                exporter.all((err: any, all: any) => {
+                    if (err) {
+                        error(err)
+                        return
+                    }
+
+                    data.push({ content: all })
+                    resolve(true)
                 })
             })
-        )
-    } else if (id === "easyworship") {
-        await Promise.all(
-            files.map((filePath: string) => {
-                const exporter = new SqliteToJson({
-                    client: new sqlite3.Database(filePath),
-                })
+        }
 
-                return new Promise((resolve, error) => {
-                    exporter.all((err: any, all: any) => {
-                        if (err) {
-                            error(err)
-                            return
-                        }
+        return data
+    },
+}
 
-                        data.push({ content: all })
-                        resolve(true)
-                    })
-                })
-            })
-        )
-    } else {
+export async function importShow(id: any, files: string[] | null) {
+    if (!files?.length) return
+
+    let importId = id
+    let sqliteFile = id === "openlp" && files.find((a) => a.includes(".sqlite"))
+    if (sqliteFile) files = files.filter((a) => a.includes(".sqlite"))
+    if (id === "easyworship" || sqliteFile) importId = "sqlite"
+
+    let data: any[] = []
+    if (specialImports[importId]) data = await specialImports[importId](files)
+    else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
-        await Promise.all(
-            files.map(async (filePath: string) => {
-                let file = await readFile(filePath)
-                data.push(file)
-            })
-        )
+        data = await Promise.all(files.map(readFile))
     }
 
-    if (data.length) toApp(IMPORT, { channel: id, data })
+    if (!data.length) return
+
+    toApp(IMPORT, { channel: id, data })
 }
 
 async function readFile(filePath: string) {
@@ -91,11 +103,8 @@ async function readFile(filePath: string) {
     let extension: string = path.extname(filePath).substring(1).toLowerCase()
 
     try {
-        if (extension === "pro") {
-            content = await decodeProto(filePath)
-        } else {
-            content = readFileSync(filePath, "utf8").toString()
-        }
+        if (extension === "pro") content = await decodeProto(filePath)
+        else content = readFileSync(filePath, "utf8").toString()
     } catch (err) {
         console.error("Error reading file:", err.stack)
     }

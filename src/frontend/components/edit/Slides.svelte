@@ -114,14 +114,18 @@
     // reset loading when changing view modes
     $: if ($activeShow?.id) loaded = false
 
-    $: if (!loaded && layoutSlides?.length) {
+    $: if (!loaded && !lazyLoading && layoutSlides?.length) {
+        lazyLoading = true
         lazyLoader = 1
         startLazyLoader()
     }
 
+    let lazyLoading: boolean = false
     function startLazyLoader() {
-        if (lazyLoader >= layoutSlides.length || lazyLoader > 200) {
+        if (!layoutSlides) return
+        if (lazyLoader >= layoutSlides.length) {
             loaded = true
+            lazyLoading = false
             return
         }
         if (timeout) clearTimeout(timeout)

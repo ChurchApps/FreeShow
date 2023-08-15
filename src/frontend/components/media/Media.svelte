@@ -53,7 +53,7 @@
             active: false,
             video: null,
             path: "",
-            data: { loop: false },
+            data: {},
         }
         video2 = clone(video1)
         video1.active = true
@@ -112,9 +112,11 @@
     $: if (video1.data || video2.data) updateData("data")
     function updateData(key) {
         if (video1.active) {
+            if (!Object.keys(video1.data).length) return
             if (key === "data") videoData = video1.data
             // if (key === "time") videoTime = videoTime1
         } else {
+            if (!Object.keys(video2.data).length) return
             if (key === "data") videoData = video2.data
             // if (key === "time") videoTime = videoTime2
         }

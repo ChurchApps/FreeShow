@@ -24,7 +24,7 @@
         "changes": "What's new"
     },
     "tooltip": {
-        "project": "Create a new project where you can add and arange shows.",
+        "project": "Create a new project where you can add and arrange shows.",
         "show": "Create a new show where you can add song lyrics, presentations and media. Hold Ctrl/Cmd to create empty.",
         "groups": "All the groups in the current show and all the global groups. Click or drag them to add them to the current layout.",
         "layout": "Add transitions and next timers to slides in current layout.",
@@ -128,7 +128,7 @@
         "_loop": "Loop",
         "play": "Play",
         "play_no_filters": "Play without filters",
-        "favourite": "Favourite",
+        "favourite": "Favorite",
         "pause": "Pause",
         "stop": "Stop",
         "back10": "Go back 10 seconds",
@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Name",
+        "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Close ad on output screen",
         "change_folder": "Choose another location"
@@ -283,7 +284,7 @@
     "category": {
         "all": "All",
         "unlabeled": "Unlabeled",
-        "favourites": "Favourites",
+        "favourites": "Favorites",
         "song": "Songs",
         "presentation": "Presentations",
         "info": "Info",
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Timer",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Visualizer",
         "icon": "Icon"
     },
@@ -739,7 +741,7 @@
         "use_default_values": "Use default values",
         "auto_values": "Update values when receiving a MIDI input",
         "tip_velocity": "Set velocity to -1 to disable.",
-        "tip_action": "To activate spesific slides, right click any slide and choose the midi in action.",
+        "tip_action": "To activate specific slides, right click any slide and choose the midi in action.",
         "tip_index_by_velocity": "Index is determined by the received velocity, starting at 0."
     },
     "draw": {
@@ -828,6 +830,8 @@
         "default_project_name": "Default project name",
         "resolution": "Resolution",
         "cropping": "Cropping",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Video extensions",
         "image_extensions": "Image extensions",
         "add": "Add",

@@ -206,18 +206,20 @@
                     {/if}
                     <!-- edit -->
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
-                    {#each Slide.items as item, index}
-                        <Editbox
-                            filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
-                            backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
-                            {item}
-                            {chordsMode}
-                            ref={{ showId: currentShow, id: Slide.id }}
-                            {index}
-                            {ratio}
-                            bind:mouse
-                        />
-                    {/each}
+                    {#key $activeEdit.slide || $activeEdit.id}
+                        {#each Slide.items as item, index}
+                            <Editbox
+                                filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
+                                backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
+                                {item}
+                                {chordsMode}
+                                ref={{ showId: currentShow, id: Slide.id }}
+                                {index}
+                                {ratio}
+                                bind:mouse
+                            />
+                        {/each}
+                    {/key}
                     <!-- overlays -->
                     <!-- {#if !altKeyPressed && slideOverlays?.length}
             <div style="opacity: 0.5;pointer-events: none;">

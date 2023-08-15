@@ -12,6 +12,16 @@ export interface Category {
     description?: string
 }
 
+export interface BibleCategories extends Category {
+    customName?: string
+    api?: boolean
+    books?: any[]
+    cacheUpdate?: Date
+    collection?: {
+        versions: string[]
+    }
+}
+
 export interface TabsObj {
     [key: string]: {
         name: string

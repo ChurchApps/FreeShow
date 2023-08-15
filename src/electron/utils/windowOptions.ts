@@ -1,10 +1,9 @@
 // ----- FreeShow -----
 // Options for electron windows
+// https://www.electronjs.org/docs/latest/api/browser-window
 
 import { join } from "path"
 import { isProd } from ".."
-
-// https://www.electronjs.org/docs/latest/api/browser-window
 
 export const loadingOptions: any = {
     width: 500,
@@ -22,42 +21,40 @@ export const loadingOptions: any = {
 }
 
 export const mainOptions: any = {
-    // https://github.com/electron-userland/electron-builder/issues/2577
-    // icon: join(__dirname, "build", "public", "icon.png"), // linux ?
     icon: "public/icon.png",
     backgroundColor: "#292c36",
-    titleBarStyle: process.platform === "darwin" ? "hidden" : "default", // hiddenInset
-    trafficLightPosition: { x: 10, y: 12 },
+    titleBarStyle: process.platform === "darwin" ? "hidden" : "default",
+    trafficLightPosition: { x: 10, y: 12 }, // mac buttons
     show: false,
     webPreferences: {
-        preload: join(__dirname, "..", "preload"), // use a preload script
-        devTools: !isProd, // enable dev tools
-        webSecurity: isProd, // get local files in dev
+        preload: join(__dirname, "..", "preload"), // browser - node communication
+        devTools: !isProd, // enable dev tools in dev
+        webSecurity: isProd, // access local files in dev
         nodeIntegration: !isProd,
         contextIsolation: true,
         allowRunningInsecureContent: false,
+        webviewTag: true, // website item
     },
 }
 
 export const outputOptions: any = {
     icon: "public/icon.png",
     backgroundColor: "#000000",
+    transparent: true,
+    show: false,
     alwaysOnTop: true, // keep window on top of other windows
     resizable: false, // disable resizing on mac and windows
     frame: false, // hide title/buttons
+    skipTaskbar: true, // hide from taskbar
+    offscreen: true, // offscreen rendering
+    hasShadow: false,
+    enableLargerThanScreen: true, //
+
     // fullscreen: true,
-    skipTaskbar: true, // hide taskbar
-
-    // parent: mainWindow!,
-    // modal: true,
-
     // type: "toolbar", // hide from taskbar
-    // transparent: isProd, // disable interaction (resize)
-    // focusable: false, // makes non focusable
     // titleBarStyle: "hidden", // hide titlebar
     // kiosk: true, // fixed window over menu bar
     // roundedCorners: false, // disable rounded corners on mac
-    show: false,
     webPreferences: {
         preload: join(__dirname, "..", "preload"),
         devTools: !isProd,
@@ -65,6 +62,9 @@ export const outputOptions: any = {
         nodeIntegration: !isProd,
         contextIsolation: true,
         allowRunningInsecureContent: false,
+        webviewTag: true,
+        backgroundThrottling: false,
+        autoplayPolicy: "no-user-gesture-required",
     },
 }
 
@@ -77,5 +77,7 @@ export const exportOptions: any = {
         nodeIntegration: true,
         // contextIsolation: true,
         // enableRemoteModule: false,
+        backgroundThrottling: false,
+        autoplayPolicy: "no-user-gesture-required",
     },
 }

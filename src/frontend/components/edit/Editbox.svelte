@@ -2,7 +2,9 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, dictionary, os, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, dictionary, os, outputs, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
+    import { menuClick } from "../context/menuClick"
+    import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -12,21 +14,20 @@
     import { getExtension, getMediaType } from "../helpers/media"
     import { addToPos } from "../helpers/mover"
     import { _show } from "../helpers/shows"
+    import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
+    import DynamicEvents from "../slide/views/DynamicEvents.svelte"
     import ListView from "../slide/views/ListView.svelte"
     import Mirror from "../slide/views/Mirror.svelte"
     import Timer from "../slide/views/Timer.svelte"
+    import Variable from "../slide/views/Variable.svelte"
+    import Visualizer from "../slide/views/Visualizer.svelte"
+    import Website from "../slide/views/Website.svelte"
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
-    import { getAutoSize } from "./scripts/autoSize"
-    import { addChords, changeKey, chordDown, chordMove, chordUp, getChordPosition } from "./scripts/chords"
+    import { getAutoSize, getMaxBoxTextSize } from "./scripts/autoSize"
+    import { addChords, changeKey, chordMove } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
-    import { menuClick } from "../context/menuClick"
-    import Visualizer from "../slide/views/Visualizer.svelte"
-    import DynamicEvents from "../slide/views/DynamicEvents.svelte"
-    import { getStyles } from "../helpers/style"
-    import Cam from "../drawer/live/Cam.svelte"
-    import Variable from "../slide/views/Variable.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -249,7 +250,15 @@
     let currentStyle: string = ""
     let firstTextStyleArchive: string = ""
 
-    onMount(getStyle)
+    onMount(() => {
+        getStyle()
+
+        setTimeout(() => {
+            loaded = true
+            autoSize = item?.autoFontSize || 0
+            if (!autoSize) getCustomAutoSize()
+        }, 50)
+    })
 
     // update rearrange items
     // TODO: (minor issue) text seemingly swapping places when rearranging items
@@ -295,11 +304,9 @@
         if (currentStyle !== s) getStyle()
     }
     function getTextStyle(lineText) {
-        let textActive = document.activeElement?.closest(".edit")
-        let auto: string = item.auto && !textActive ? autoSize + "" : ""
         let lineBg = item.specialStyle?.lineBg || ""
 
-        let style = (lineText.style || "") + auto + lineBg
+        let style = (lineText.style || "") + lineBg
         return style
     }
 
@@ -327,8 +334,7 @@
             line.text?.forEach((a) => {
                 currentStyle += getTextStyle(a)
 
-                let auto: string = item.auto ? "font-size: " + autoSize + "px;" : ""
-                let style = a.style ? 'style="' + a.style + auto + '"' : ""
+                let style = a.style ? 'style="' + a.style + '"' : ""
 
                 html += `<span ${plain ? "" : style}>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
             })
@@ -375,7 +381,78 @@
         }
     }
 
+    // AUTO SIZE
+
+    // text change
+    let textChanged = false
+    let previousText: string = ""
+    $: if (html && textElem?.innerText !== previousText) checkText()
+    $: console.log(textElem?.innerText)
+    function checkText() {
+        textChanged = true
+        previousText = textElem?.innerText
+        setTimeout(() => (textChanged = false))
+    }
+
+    // typing
+    let isTyping: boolean = false
+    $: if (isAuto && textChanged) checkTyping()
+    let typingTimeout: any = null
+    function checkTyping() {
+        if (!loaded) return
+        isTyping = true
+
+        if (typingTimeout) clearTimeout(typingTimeout)
+        typingTimeout = setTimeout(() => {
+            isTyping = false
+            if (isTextbox && isAuto) getCustomAutoSize()
+        }, 1000)
+    }
+
+    // update auto size
+    let loaded = false
+    $: isTextbox = !!item?.lines
+    $: isAuto = item?.auto
+    $: if (isTextbox && (isAuto || textChanged)) getCustomAutoSize()
+    $: if (!isTextbox && item) autoSize = getAutoSize(item)
+
+    let autoSize: number = 0
+    let alignElem: any
+    let loopStop = false
+    function getCustomAutoSize() {
+        if (isTyping || loopStop || !loaded || !textElem || !alignElem || !item.auto) return
+        loopStop = true
+
+        autoSize = getMaxBoxTextSize(textElem, alignElem)
+
+        // update item with new style
+        if (ref.type === "overlay") {
+            overlays.update((a) => {
+                a[ref.id].items[index].autoFontSize = autoSize
+                return a
+            })
+        } else if (ref.type === "template") {
+            templates.update((a) => {
+                a[ref.id].items[index].autoFontSize = autoSize
+                return a
+            })
+        } else if (ref.showId) {
+            showsCache.update((a) => {
+                a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
+                return a
+            })
+        }
+
+        setTimeout(() => {
+            loopStop = false
+        }, 500)
+    }
+
+    // UPDATE STYLE FROM LINES
+
     function getNewLines() {
+        if (!textElem) return []
+
         let newLines: Line[] = []
         let pos: number = -1
         currentStyle = ""
@@ -563,16 +640,98 @@
     // $: autoSize = item.lines ? height / (item.lines.length + 3) : height / 2
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
-    $: autoSize = getAutoSize(item)
+    // $: autoSize = getAutoSize(item)
 
     const actions = {
         transition: { label: "popup.transition", icon: "transition" },
         showTimer: { label: "actions.show_timer", icon: "time_in" },
         hideTimer: { label: "actions.hide_timer", icon: "time_out" },
     }
+
+    // CHORDS
+
+    let chordButtons: any[] = []
+    function chordClick(e: any) {
+        let add = e.target.closest(".add")
+        if (add) {
+            let pos = add.id.split("_")
+            addChords(item, ref, index, Number(pos[0]), Number(pos[1]))
+            return
+        }
+
+        let btn = e.target.closest(".button")
+        if (!btn) return
+
+        let data = chordButtons[btn.id]
+        if (!data) return
+
+        // right click
+        if (e.button === 2) selected.set({ id: "chord", data: [{ chord: { id: data.chord.id }, index: data.lineIndex, slideId: ref.id, itemIndex: index }] })
+
+        if (e.button !== 0) return
+        // left click
+        changeKey(data)
+    }
+
+    let chordLines: string[] = []
+    $: if (chordsMode && item.lines) createChordLines()
+    function createChordLines() {
+        chordLines = []
+        chordButtons = []
+
+        item.lines!.forEach((line, i) => {
+            if (!line.text) return
+
+            // {#each line.text || [] as text}
+            //     <span style="{text.style}font-size: {autoSize}px;">
+            //         {@html text.value.replaceAll("\n", "<br>") || "<br>"}
+            //     </span>
+            // {/each}
+
+            let html = ""
+            let index = 0
+            line.text.forEach((text) => {
+                if (!text.value) {
+                    html += "<br>"
+                    return
+                }
+
+                let value = text.value.trim().replaceAll("\n", "") || "."
+                let chords = JSON.parse(JSON.stringify(line.chords || []))
+
+                let letters = value.split("")
+                letters.forEach((letter, li) => {
+                    let chordIndex = chords.findIndex((a: any) => a.pos === index)
+                    if (chordIndex >= 0) {
+                        let chord = chords[chordIndex]
+                        chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
+                        let buttonIndex = chordButtons.length - 1
+                        html += `<span id="${buttonIndex}" class="context #chord chord button">${chord.key}</span>`
+                        chords.splice(chordIndex, 1)
+                    }
+
+                    index++
+
+                    let style = text.style
+                    if (item.auto && autoSize) style += `font-size: ${autoSize}px;`
+                    html += `<span id="${i}_${li}" class="invisible add" style="${style}">${letter}</span>`
+                })
+
+                chords.forEach((chord: any, ci: number) => {
+                    chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
+                    let buttonIndex = chordButtons.length - 1
+                    html += `<span id="${buttonIndex}" class="context #chord chord button" style="transform: translate(${60 * (ci + 1)}px, -80%);">${chord.key}</span>`
+                })
+            })
+
+            if (!html) return
+            chordLines[i] = html
+        })
+    }
 </script>
 
-<svelte:window on:keydown={keydown} on:mousedown={deselect} on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} />
+<!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
+<svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <!-- bind:offsetHeight={height}
 bind:offsetWidth={width} -->
@@ -594,6 +753,17 @@ bind:offsetWidth={width} -->
                     <Button on:click={removeBindings} redHover>
                         <Icon id="bind" white />
                     </Button>
+                    {#if item.bindings.length > 1}
+                        <span class="actionValue">{item.bindings.length}</span>
+                    {:else}
+                        <span class="actionValue">
+                            {#if item.bindings[0] === "stage"}
+                                <T id="menu.stage" />
+                            {:else}
+                                {$outputs[item.bindings[0]]?.name}
+                            {/if}
+                        </span>
+                    {/if}
                 </div>
             {/if}
             <!-- actions -->
@@ -612,8 +782,8 @@ bind:offsetWidth={width} -->
         </div>
     {/if}
     {#if item?.lines}
-        <!-- chords -->
-        <div
+        <!-- chords (top right button) -->
+        <!-- <div
             class="chordsButton"
             style="zoom: {1 / ratio};"
             on:mousedown={() => {
@@ -628,7 +798,7 @@ bind:offsetWidth={width} -->
                     <Icon id="add" white />
                 </Button>
             {/if}
-        </div>
+        </div> -->
 
         <!-- <div
       class="chordsText align"
@@ -649,15 +819,15 @@ bind:offsetWidth={width} -->
     </div> -->
 
         <!-- TODO: remove align..... -->
-        <div class="align" class:plain style={plain ? null : item.align || null}>
+        <div bind:this={alignElem} class="align" class:plain style={plain ? null : item.align || null}>
             {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
                 <span class="placeholder">
                     <T id="empty.text" />
                 </span>
             {/if}
             {#if chordsMode && textElem}
-                <div class="chords">
-                    {#each item.lines as line, i}
+                <div class="edit chords" on:mousedown={chordClick}>
+                    <!-- {#each item.lines as line, i}
                         {#if line.chords}
                             {#each line.chords as chord}
                                 {#await getChordPosition(chord, { textElem, item, line: i }) then pos}
@@ -669,6 +839,19 @@ bind:offsetWidth={width} -->
                                 {/await}
                             {/each}
                         {/if}
+                    {/each} -->
+
+                    {#each item.lines as line, i}
+                        <div class="break chordsBreak" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
+                            {@html chordLines[i]}
+                        </div>
+                        <!-- <div class="break" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
+                            {#each line.text || [] as text}
+                                <span style="{text.style}font-size: {autoSize}px;">
+                                    {@html text.value.replaceAll("\n", "<br>") || "<br>"}
+                                </span>
+                            {/each}
+                        </div> -->
                     {/each}
                 </div>
             {/if}
@@ -679,15 +862,33 @@ bind:offsetWidth={width} -->
                     if (newLines) item.lines = newLines
                 }}
                 class="edit"
+                class:autoSize={item.auto && autoSize}
                 contenteditable
                 on:keydown={textElemKeydown}
                 bind:innerHTML={html}
-                style="{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />
             <!-- on:paste did not work on mac -->
             <!-- on:paste|preventDefault={paste} -->
+
+            <!-- auto size -->
+            <!-- <div
+                bind:this={textElem}
+                on:mousemove={(e) => {
+                    let newLines = chordMove(e, { textElem, item })
+                    if (newLines) item.lines = newLines
+                }}
+                class="edit"
+                class:autoSize={item.auto}
+                contenteditable
+                on:keydown={textElemKeydown}
+                bind:innerHTML={html}
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
+                class:tallLines={chordsMode}
+            /> -->
         </div>
     {:else if item?.type === "list"}
         <ListView list={item.list} disableTransition />
@@ -715,6 +916,8 @@ bind:offsetWidth={width} -->
         <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "variable"}
         <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} edit />
+    {:else if item?.type === "web"}
+        <Website src={item?.web?.src || ""} />
     {:else if item?.type === "mirror"}
         <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
     {:else if item?.type === "visualizer"}
@@ -754,6 +957,16 @@ bind:offsetWidth={width} -->
         backdrop-filter: blur(20px);
     }
 
+    .edit:global(.invisible) {
+        pointer-events: none;
+        position: absolute;
+        opacity: 0;
+        overflow: hidden;
+    }
+    .edit:not(.invisible).autoSize :global(span) {
+        font-size: var(--auto-size) !important;
+    }
+
     .actions {
         position: absolute;
         top: 0;
@@ -763,31 +976,21 @@ bind:offsetWidth={width} -->
         flex-direction: column;
     }
     .actionValue {
-        font-size: initial;
+        font-size: small;
         opacity: 0.5;
         font-weight: bold;
         padding: 0 5px;
+        text-shadow: none;
     }
-    .actionButton,
-    .chordsButton {
+    .actionButton {
         display: flex;
         align-items: center;
         background-color: var(--focus);
+        color: var(--text);
     }
-    .chordsButton {
-        position: absolute;
-        top: 0;
-        right: 0;
-    }
-    .actionButton :global(button),
-    .chordsButton :global(button) {
+    .actionButton :global(button) {
         padding: 5px !important;
         z-index: 3;
-    }
-    .chords {
-        position: absolute;
-        top: 0;
-        left: 0;
     }
     .chords :global(.chord) {
         position: absolute;
@@ -796,19 +999,22 @@ bind:offsetWidth={width} -->
         /* color: var(--text); */
         font-size: 0.8em;
         border: 10px solid var(--secondary);
+        text-shadow: none;
         z-index: 3;
+
+        pointer-events: all;
     }
-    .chords .chord:hover {
+    .chords :global(.chord):hover {
         filter: brightness(1.2);
     }
-    .chords .chord::after {
+    .chords :global(.chord)::after {
         content: "";
         position: absolute;
         bottom: -5px;
         left: 50%;
         transform: translate(-50%, 100%);
         width: 10px;
-        height: 100px;
+        height: 80px;
         background-color: var(--secondary);
         /* background-color: var(--secondary-opacity); */
     }
@@ -888,6 +1094,38 @@ bind:offsetWidth={width} -->
     min-width: 100px;
     display: inline-table; */
     }
+
+    /* chords */
+    .edit.chords :global(.invisible) {
+        opacity: 0;
+        font-size: var(--font-size);
+        line-height: 0;
+    }
+    .edit.chords :global(.invisible):hover {
+        opacity: 0.6;
+        background-color: var(--secondary);
+    }
+    .edit.chords :global(.chord) {
+        /* color: var(--chord-color);
+        font-size: var(--chord-size) !important; */
+        bottom: 0;
+        transform: translate(-50%, -80%);
+        z-index: 2;
+        font-size: 70px !important;
+        /* color: #FF851B; */
+    }
+    .edit.chords {
+        /* line-height: 0.5em; */
+        font-size: inherit;
+        position: absolute;
+        /* pointer-events: none; */
+    }
+
+    .chordsBreak {
+        position: relative;
+    }
+
+    /* custom svg icon */
 
     .customIcon,
     .customIcon :global(svg) {

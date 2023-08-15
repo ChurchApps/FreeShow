@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Nazwa",
+        "url": "URL",
         "video_id": "ID/URL filmu",
         "close_ad": "Zamknij reklamę na ekranie wyjściowym",
         "change_folder": "Wybierz inną lokalizację"
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Timer",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Wizualizacja",
         "icon": "Ikona"
     },
@@ -828,6 +830,8 @@
         "default_project_name": "Domyślna nazwa projektu",
         "resolution": "Rozdzielczość",
         "cropping": "Kadrowanie",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Rozszerzenia wideo",
         "image_extensions": "Rozszerzenia obrazków",
         "add": "Dodaj",

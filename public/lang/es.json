@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Nombre",
+        "url": "URL",
         "video_id": "Video ID/dirección URL",
         "close_ad": "Cerrar anuncio de pantalla de salida",
         "change_folder": "Elegir otra ubicación"
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Temporizador",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Visualizer",
         "icon": "Icono"
     },
@@ -828,6 +830,8 @@
         "default_project_name": "Nombre predeterminado del proyecto",
         "resolution": "Solución",
         "cropping": "Cropping",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Extensiones de video",
         "image_extensions": "Extensiones de imagen",
         "add": "Añadir",

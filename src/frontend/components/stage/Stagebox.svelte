@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeStage, outputs, showsCache, stageShows, styles, timers } from "../../stores"
+    import { activeStage, allOutputs, outputs, showsCache, stageShows, styles, timers } from "../../stores"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import { _show } from "../helpers/shows"
@@ -90,7 +90,8 @@
 
     let height: number = 0
     let width: number = 0
-    $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100
+    $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
+    $: console.log(fontSize, item)
 
     $: size = getAutoSize(item, { width, height })
     // $: size = Math.min(height, width) / 2
@@ -98,7 +99,8 @@
 
     // SLIDE
     let slide
-    $: currentSlide = $outputs[getActiveOutputs()[0]].out?.slide
+    let stageOutputId = show?.settings?.output || getActiveOutputs()[0]
+    $: currentSlide = $outputs[stageOutputId]?.out?.slide || $allOutputs[stageOutputId]?.out?.slide
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: layoutSlide = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!] || {} : {}
     $: slideId = layoutSlide.id
@@ -133,7 +135,7 @@
     {#if id.includes("current_output")}
         {#if slide}
             <span style="pointer-events: none;">
-                <Output bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror />
+                <Output specificOutput={stageOutputId} bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror />
             </span>
         {/if}
     {:else}
@@ -143,12 +145,12 @@
                 {#if id.split("#")[0] === "countdowns"}
                     <!--  -->
                 {:else if id.includes("notes")}
-                    <SlideNotes {next} autoSize={item.auto !== false ? autoSize : fontSize} />
+                    <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
-                    <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} parent={{ width, height }} />
+                    <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} />
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
-                        <SlideText {next} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />
+                        <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />
                     </span>
                 {:else if id.includes("clock")}
                     <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -167,6 +169,10 @@
 </div>
 
 <style>
+    .stage_item {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
     .stage_item.outline {
         outline: 5px solid rgb(255 255 255 / 0.2);
     }

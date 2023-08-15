@@ -9,7 +9,7 @@
         "search": "Cerca",
         "none": "Nessuno",
         "finished": "Finito",
-        "system_open": "Open in system"
+        "system_open": "Apri nel sistema"
     },
     "about": {
         "check_updates": "Cerca aggiornamenti",
@@ -82,7 +82,7 @@
         "more_options": "Altre opzioni",
         "format_new_show": "Formato del testo",
         "split_lines": "Nummero di linee",
-        "quick_lyrics_example_text": "Line"
+        "quick_lyrics_example_text": "Linea"
     },
     "preview": {
         "_previous_show": "Scena precedente",
@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Nome",
+        "url": "URL",
         "video_id": "ID/URL video",
         "close_ad": "Chiudi annuncio sulla schermata di output",
         "change_folder": "Scegli un'altra posizione"
@@ -276,7 +277,7 @@
         "player": "Player",
         "live": "Live",
         "timers": "Timer",
-        "variables": "Variables",
+        "variables": "Variabili",
         "templates": "Modelli",
         "web": "Web"
     },
@@ -325,7 +326,7 @@
         "choose_screen": "Scegli lo schermo",
         "change_output_values": "Modifica i valori di output",
         "choose_style": "Scegli stile",
-        "set_time": "Set time",
+        "set_time": "Imposta orario",
         "animate": "Animate",
         "next_timer": "Timer diapositiva successiva",
         "import": "Importa",
@@ -406,7 +407,7 @@
         "quick_lyrics": "Testi veloci",
         "new_layout": "Nuovo layout",
         "grid": "Vista griglia",
-        "simple": "Simple view",
+        "simple": "Vista semplice",
         "list": "Vista elenco",
         "lyrics": "Vista testi brani",
         "text": "Modifica testo",
@@ -420,9 +421,9 @@
         "choose_group": "Scegli gruppo",
         "goto_group": "Vai al gruppo",
         "change_output_style": "Cambia stile di output",
-        "active_outputs": "Active outputs",
-        "all_outputs": "All outputs",
-        "specific_outputs": "Specific outputs",
+        "active_outputs": "Output attivi",
+        "all_outputs": "Tutti gli output",
+        "specific_outputs": "Output specifici",
         "toggle_private": "Privato",
         "view_private": "Scena privata",
         "import": "Importa",
@@ -463,8 +464,8 @@
         "add_time_marker": "Aggiungere indicatore di tempo",
         "bind_to": "Collega a",
         "remove_binding": "Rimuovi il collegamento",
-        "show_timer": "Time until show",
-        "hide_timer": "Time until hide",
+        "show_timer": "Tempo fino allo spettacolo",
+        "hide_timer": "Tempo fino a nascondersi",
         "choose_custom": "Scelta personalizzata",
         "format": "Formato",
         "find_replace": "Trova e sostituisci il testo",
@@ -504,15 +505,15 @@
         "stop_recording": "Ferma registrazione"
     },
     "animate": {
-        "change": "Change",
-        "set": "Set",
-        "wait": "Wait",
-        "background": "background",
-        "text": "text",
-        "item": "item",
-        "to": "to",
-        "for": "for",
-        "seconds": "seconds"
+        "change": "cambia",
+        "set": "imposta",
+        "wait": "attendi",
+        "background": "sfondo",
+        "text": "testo",
+        "item": "elemento",
+        "to": "a",
+        "for": "per",
+        "seconds": "secondi"
     },
     "cloud": {
         "info": "Sincronizza i file con Google Drive per i backup o se lavori su più computer.",
@@ -521,7 +522,7 @@
         "tip_guide": "Clicca qui per una guida.",
         "enable": "Sincronizzazione automatica all'avvio e salvataggio",
         "disable_upload": "Disabilita l'upload",
-        "media_id": "Media path ID",
+        "media_id": "ID percorso multimediale",
         "google_drive_api": "Chiave dell'account di servizio dell'API di Google",
         "select_key": "Importa il file delle chiavi",
         "update_key": "Aggiorna il file delle chiavi",
@@ -639,7 +640,7 @@
         "add_icons": "Aggiungi icone",
         "arrange_items": "Disponi gli elementi",
         "filters": "Filtri",
-        "backdrop_filters": "Backdrop filters",
+        "backdrop_filters": "Filtri sullo sfondo",
         "interval": "Intervallo",
         "video": "Video",
         "choose_media": "Scegli i media",
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Timer",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Visualizzatore",
         "icon": "Icona"
     },
@@ -828,6 +830,8 @@
         "default_project_name": "Nome progetto predefinito",
         "resolution": "Risoluzione",
         "cropping": "Ritagliare",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Estensioni video",
         "image_extensions": "Estensioni immagine",
         "add": "Aggiungi",
@@ -856,12 +860,12 @@
         "reset_all": "Ripristina tutto",
         "reset_theme": "Ripristina tema",
         "reset_themes": "Ripristina temi",
-        "backup_all": "Backup everything",
-        "restore": "Restore",
-        "backup_started": "Backing up...",
-        "restore_started": "Restoring...",
-        "backup_finished": "Backup complete!",
-        "restore_finished": "Restore complete!"
+        "backup_all": "Fai il backup di tutto",
+        "restore": "Ripristina",
+        "backup_started": "Backup in corso...",
+        "restore_started": "Ripristino in corso...",
+        "backup_finished": "Backup completo!",
+        "restore_finished": "Ripristino completato!"
     },
     "calendar": {
         "type": "Tipo",
@@ -933,7 +937,7 @@
     },
     "easings": {
         "linear": "Lineare",
-        "ease": "Ease",
+        "ease": "Facile",
         "ease-in": "Ease in",
         "ease-out": "Ease out",
         "ease-in-out": "Ease in & out",
@@ -945,10 +949,10 @@
         "sine": "Fluida"
     },
     "variables": {
-        "number": "Number",
-        "text": "Text",
-        "step": "Step",
-        "value": "Value"
+        "number": "Numero",
+        "text": "Testo",
+        "step": "Passo",
+        "value": "Valore"
     },
     "month": {
         "1": "Gennaio",

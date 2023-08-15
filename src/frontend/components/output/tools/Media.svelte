@@ -1,46 +1,108 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, outLocked, outputs, playerVideos, videoExtensions } from "../../../stores"
-    import { send } from "../../../utils/request"
-    import { splitPath } from "../../helpers/get"
+    import { activeShow, dictionary, outLocked, outputDisplay, playerVideos } from "../../../stores"
+    import { receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
+    import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
-    import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
+    import { checkNextAfterMedia } from "../../helpers/showActions"
+    import { clearPlayingVideo } from "../../helpers/output"
+    import { clone } from "../../helpers/array"
 
     export let currentOutput: any
     export let outputId: string
-    export let video: any
-    export let videoData: any
-    export let videoTime: any
     export let title: any
 
+    let videoTime: number = 0
+    let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
+
+    let videoInterval: any = null
+    $: if (outputId && type === "video") send(OUTPUT, ["REQUEST_VIDEO_DATA"], { id: outputId })
+    else resetVideo()
+
+    // restore output video data when recreating window
+    $: if (!$outputDisplay) sendDataToOutput()
+    function sendDataToOutput() {
+        if (!currentOutput || !videoTime || !videoInterval) return
+        let data = clone(videoData)
+
+        setTimeout(() => {
+            send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime, data })
+        }, 2200)
+    }
+
+    function resetVideo() {
+        clearInterval(videoInterval)
+
+        videoTime = 0
+        videoData = { duration: 0, paused: true, muted: false, loop: false }
+    }
+    function startVideoTimer() {
+        if (videoInterval) clearInterval(videoInterval)
+
+        videoInterval = setInterval(() => {
+            if (videoData.paused) return
+
+            videoTime++
+
+            if (videoTime >= videoData.duration) {
+                clearInterval(videoInterval)
+                send(OUTPUT, ["REQUEST_VIDEO_DATA"], { id: outputId })
+            }
+        }, 1000)
+    }
+
+    const receiveOutput = {
+        MAIN_VIDEO: (msg) => {
+            if (msg.id !== outputId) return
+            console.log(msg)
+
+            if (msg.data) videoData = msg.data
+
+            if (msg.time !== undefined) {
+                videoTime = msg.time || 0
+                startVideoTimer()
+            }
+        },
+        MAIN_VIDEO_ENDED: async (msg) => {
+            if (msg.id !== outputId || type !== "video") return
+            // check and execute next after media regardless of loop
+            if (checkNextAfterMedia(path) || videoData.loop) return
+
+            if (videoInterval) clearInterval(videoInterval)
+
+            videoData = await clearPlayingVideo(outputId)
+            videoTime = 0
+        },
+    }
+
+    onMount(() => {
+        receive(OUTPUT, receiveOutput)
+    })
+
+    /////
+
     $: background = currentOutput?.out?.background
-    // $: if (!background) {
-    //   let outs = getActiveOutputs().map((id) => $outputs[id])
-    //   background = outs.find((output) => output.out?.background)?.out?.background
-    // }
+    $: path = background?.path || background?.id
+    $: type = background?.type || "image"
+    if (path && !type) type = getMediaType(getExtension(path))
 
     let mediaName: string = ""
-    $: outName = background?.path ? splitPath(background.path).name : ""
+    $: outName = path ? splitPath(path).name : ""
     $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
     const sendToOutput = () => {
-        // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_DATA", data: { ...videoData, time: videoTime } })
-        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData, updatePreview: true })
-        if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, data: videoData, updatePreview: true })
-        // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_DATA", data: videoData })
-        // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_TIME", data: videoTime })
+        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
+        if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, data: videoData })
     }
 
     function openPreview() {
         if (!background) return
-        console.log(background)
-        let id = background.path || background.id
-        let type = background.type
-        if (!type) type = $videoExtensions.includes(getExtension(id)) ? "video" : "image"
-        activeShow.set({ id, type })
+
+        activeShow.set({ id: path, type })
     }
 
     function keydown(e: any) {
@@ -50,10 +112,7 @@
         let show = $activeShow
         if (show && (show.type === "show" || show.type === undefined)) return
 
-        let currentOutput = $outputs[getActiveOutputs()[0]]
-        let outputPath = currentOutput.out?.background?.path
-
-        if (!outputPath || show?.id !== outputPath) return
+        if (show?.id !== path) return
 
         // play / pause video
         e.preventDefault()
@@ -80,7 +139,8 @@
             <p>{mediaName}</p>
         </span>
     {/if}
-    {#if (video && getMediaType(getExtension(outName)) === "video") || background?.type === "player"}
+
+    {#if type === "video" || background?.type === "player"}
         <span class="group">
             <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
@@ -116,14 +176,15 @@
             </Button>
             <Button
                 center
-                title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
+                title={videoData.muted === false ? $dictionary.actions?.mute : $dictionary.actions?.unmute}
                 disabled={$outLocked}
                 on:click={() => {
+                    if (videoData.muted === undefined) videoData.muted = true
                     videoData.muted = !videoData.muted
                     sendToOutput()
                 }}
             >
-                <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
+                <Icon id={videoData.muted === false ? "volume" : "muted"} white={videoData.muted !== false} size={1.2} />
             </Button>
         </span>
     {/if}

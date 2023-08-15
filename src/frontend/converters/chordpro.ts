@@ -96,10 +96,11 @@ export function convertChordPro(data: any) {
             let text: string = ""
             let chords: any[] = []
             let isChord: boolean = false
-            line.split("").forEach((char, i) => {
+            let letterIndex: number = 0
+            line.split("").forEach((char) => {
                 if (char === "[" || char === "]") {
                     isChord = char === "["
-                    if (isChord) chords.push({ id: uid(5), pos: i, key: "" })
+                    if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
                     return
                 }
 
@@ -109,12 +110,13 @@ export function convertChordPro(data: any) {
                 }
 
                 text += char
+                letterIndex++
             })
 
             text = text.replaceAll("\r", "")
 
             let slideItems = slides[slides.length - 1].items
-            if (!slideItems.length) slideItems.push({ lines: [], style: "" })
+            if (!slideItems.length) slideItems.push({ lines: [], style: "left:50px;top:120px;width:1820px;height:840px;" })
             slideItems[slideItems.length - 1].lines!.push({ align: "", text: [{ value: text, style: "" }], chords })
         }
 

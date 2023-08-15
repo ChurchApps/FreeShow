@@ -1,146 +1,143 @@
 <script>
-  import Player from "@vimeo/player"
-  import { currentWindow, theme, themes } from "../../../stores"
+    import Player from "@vimeo/player"
+    import { currentWindow, theme, themes } from "../../../stores"
+    import { OUTPUT } from "../../../../types/Channels"
 
-  export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
-  export let videoTime = 0
-  export let id
-  export let preview
+    export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
+    export let videoTime = 0
+    export let id
+    export let outputId
+    export let preview
 
-  export let title
-  export let startAt = 0
+    export let title
+    export let startAt = 0
 
-  // $: id = id.includes("=") ? id.slice(id.lastIndexOf("=") + 1, id.length) : id
-  // $: id = id.length === 11 ? id : ""
-  // $: console.log(id)
+    const options = {
+        autoplay: true,
+        autopause: false,
+        loop: videoData.loop,
+        muted: videoData.muted,
+        color: $themes[$theme]?.colors?.secondary,
+        controls: false,
+        // title: false,
+        // byline: false,
+    }
 
-  const options = {
-    autoplay: true,
-    autopause: false,
-    loop: videoData.loop,
-    muted: videoData.muted,
-    color: $themes[$theme]?.colors?.secondary,
-    controls: false,
-    // title: false,
-    // byline: false,
-  }
+    let iframe = null
+    let player = null
+    let loaded = false
+    let paused = true
+    let time = 0
+    function iframeLoaded() {
+        player = new Player(iframe, options)
+        player.setColor(options.color)
 
-  $: console.log(options)
-  $: console.log(videoData)
+        if (videoData.muted || (!preview && $currentWindow !== "output")) player.setMuted(true)
 
-  let iframe = null
-  let player = null
-  let loaded = false
-  let paused = true
-  let time = 0
-  function iframeLoaded() {
-    player = new Player(iframe, options)
-    player.setColor(options.color)
+        videoTime = startAt
+        // WIP captions...
 
-    // console.log(player)
+        setTimeout(() => {
+            player.getVideoTitle().then((t) => {
+                title = t
+            })
+        }, 1000)
 
-    if (videoData.muted || (!preview && $currentWindow !== "output")) player.setMuted(true)
-    // videoData.paused = false
-    videoTime = startAt
-    // player.hideVideoInfo()
-    // player.setOption("captions", "fontSize", -1)
-    setTimeout(() => {
-      // TODO: output update startAt
-      videoData.paused = true
-      player.setCurrentTime(videoTime)
-      player.getVideoTitle().then((t) => {
-        title = t
-      })
-      // console.log(player.getVideoData(), title)
-      // console.log(player.playerInfo.videoData) // title | author
-      setTimeout(() => {
-        videoData.paused = false
         loaded = true
-        // if (!$outputWindow) window.api.send(OUTPUT, { channel: "VIDEO_TIME", data: videoTime })
-      }, 100)
-    }, 500)
 
-    player.on("play", () => (paused = false))
-    player.on("pause", () => (paused = true))
-    player.on("durationchange", ({ duration }) => (videoData.duration = duration))
-    player.on("timeupdate", ({ seconds }) => {
-      time = seconds
-      videoTime = seconds
-    })
-    player.on("seeked", () => change)
-  }
+        videoData.paused = false
+        seekTo(videoTime)
 
-  // setInterval(() => {
-  //   if (!$currentWindow && loaded && !paused) {
-  //     player.getCurrentTime((time) => (videoTime = time))
-  //   }
-  //   // else player.seekTo(videoTime)
-  // }, 500)
-  // $: console.log(player?.getCurrentTime(), videoTime)
-  $: if (player && paused && time !== videoTime) player.setCurrentTime(videoTime)
-
-  $: {
-    if (player && loaded) {
-      if (videoData.paused) player.pause()
-      else player.play()
-      if (videoData.muted) player.setMuted(true)
-      else if ($currentWindow === "output" || preview) player.setMuted(false)
-      // player.setLoop(videoData.loop)
+        player.on("play", () => (paused = false))
+        player.on("pause", () => (paused = true))
+        player.on("durationchange", ({ duration }) => (videoData.duration = duration))
+        player.on("timeupdate", ({ seconds }) => {
+            time = seconds
+            videoTime = seconds
+        })
+        player.on("seeked", () => change)
     }
-  }
 
-  $: if (!id && player) player.unload()
+    $: if (player && loaded && !seeking) {
+        if (videoData.paused) player.pause()
+        else player.play()
 
-  // $: if ($outputWindow && player && videoData.paused) player.seekTo(videoTime)
+        if (videoData.muted) player.setMuted(true)
+        else if ($currentWindow === "output" || preview) player.setMuted(false)
 
-  function change() {
-    if ($currentWindow) return
-
-    if (loaded) {
-      videoData.paused = paused
-      player.getCurrentTime((time) => (videoTime = time.duration))
+        // player.setLoop(videoData.loop)
     }
-  }
 
-  // $: if (videoTime) player.seekTo()
+    $: if (!id && player) player.unload()
+
+    $: if (!seeking && videoTime !== undefined) seekPlayer()
+    function seekPlayer() {
+        if (!player || (preview && !paused) || time === videoTime) return
+
+        seekTo(videoTime)
+    }
+
+    let seeking = false
+    function seekTo(time) {
+        let isPlaying = !videoData.paused
+        videoData.paused = true
+        seeking = true
+        setTimeout(() => {
+            player.setCurrentTime(videoTime)
+
+            setTimeout(() => {
+                if (isPlaying) videoData.paused = false
+                seeking = false
+
+                if (outputId) window.api.send(OUTPUT, { channel: "MAIN_VIDEO", data: { id: outputId, time: videoTime } })
+            }, 800)
+        }, 100)
+    }
+
+    function change() {
+        if (!loaded && !seeking) return
+
+        videoData.paused = paused
+        if (preview) player.getCurrentTime((time) => (videoTime = time.duration))
+    }
 </script>
 
 <div class="main" class:hide={!id}>
-  <!-- https://www.youtube.com/watch?v=rfxnmIPCzIc -->
-  {#if id}
-    <!-- <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} /> -->
-    <!-- TODO: looping vimeo video will reload the video -->
-    <iframe
-      bind:this={iframe}
-      on:load={iframeLoaded}
-      data-vimeo-title="0"
-      data-vimeo-autopause="0"
-      data-vimeo-dnt="0"
-      allow="autopause;"
-      {id}
-      title="video"
-      src="https://player.vimeo.com/video/{id}?autopause=0&controls=0&loop={videoData.loop}"
-      width="640"
-      height="360"
-      frameborder="0"
-    />
-    <!-- <p><a href="https://vimeo.com/426363743">Jesus, Only Jesus</a> from <a href="https://vimeo.com/ridgecrestbaptist">Ridgecrest Baptist Church</a> on <a href="https://vimeo.com">Vimeo</a>.</p> -->
-    <!-- {:else}
+    <!-- https://www.youtube.com/watch?v=rfxnmIPCzIc -->
+    {#if id}
+        <!-- <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} /> -->
+        <!-- TODO: looping vimeo video will reload the video -->
+        <iframe
+            bind:this={iframe}
+            on:load={iframeLoaded}
+            data-vimeo-title="0"
+            data-vimeo-autopause="0"
+            data-vimeo-dnt="0"
+            allow="autopause;"
+            {id}
+            title="video"
+            src="https://player.vimeo.com/video/{id}?autopause=0&controls=0&loop={videoData.loop}"
+            width="640"
+            height="360"
+            frameborder="0"
+        />
+        <!-- <p><a href="https://vimeo.com/426363743">Jesus, Only Jesus</a> from <a href="https://vimeo.com/ridgecrestbaptist">Ridgecrest Baptist Church</a> on <a href="https://vimeo.com">Vimeo</a>.</p> -->
+        <!-- {:else}
     [[[Type video url/id into search area!]]] -->
-    <!-- {:else}
+        <!-- {:else}
     <YouTube class="yt" videoId={id} {options} on:ready={onReady} /> -->
-  {/if}
+    {/if}
 </div>
 
 <style>
-  .main,
-  .main :global(.yt),
-  .main :global(iframe) {
-    height: 100%;
-    width: 100%;
-  }
+    .main,
+    .main :global(.yt),
+    .main :global(iframe) {
+        height: 100%;
+        width: 100%;
+    }
 
-  .hide :global(.yt) {
-    display: none;
-  }
+    .hide :global(.yt) {
+        display: none;
+    }
 </style>

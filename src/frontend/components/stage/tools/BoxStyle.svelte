@@ -18,6 +18,12 @@
 
     // $: if (textEdits) updateAuto(item?.auto || true)
     $: if (item) updateAuto(item?.auto ?? true)
+    $: {
+        textEdits.chords[1].hidden = !item?.chords
+        textEdits.chords[2].hidden = !item?.chords
+    }
+    $: if (item?.chordsData?.color) textEdits.chords[1].value = item.chordsData.color
+    $: if (item?.chordsData?.size) textEdits.chords[2].value = item.chordsData.size
 
     function updateAuto(value) {
         let autoIndex = textEdits?.font?.findIndex((a) => a.id === "auto")
@@ -31,6 +37,16 @@
         // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
         if (input.id === "auto") updateAuto(value)
+
+        if (input.id.includes(".")) {
+            let splitted = input.id.split(".")
+            console.log(splitted)
+            input.id = splitted[0]
+            let newValue = item?.[input.id] || {}
+            newValue[splitted[1]] = value
+            value = newValue
+            console.log(value)
+        }
 
         history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
     }

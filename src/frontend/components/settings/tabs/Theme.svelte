@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, selected, theme, themes } from "../../../stores"
+    import { dictionary, outputs, selected, theme, themes } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
     import { clone } from "../../helpers/array"
@@ -74,6 +74,17 @@
                 updateThemeValues($themes[themeId])
             }, 20)
         }
+
+        // update output outline color if just one output
+        if (key !== "colors" || id !== "secondary") return
+
+        let colorKeys = Object.keys($outputs)
+        if (colorKeys.length !== 1) return
+
+        outputs.update((a) => {
+            a[colorKeys[0]].color = value
+            return a
+        })
     }
 
     let themeValue: any

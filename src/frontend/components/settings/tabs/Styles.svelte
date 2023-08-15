@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeStyle, dictionary, imageExtensions, outputs, selected, styles, templates } from "../../../stores"
+    import { activeStyle, dictionary, imageExtensions, outputs, styles, templates } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -17,10 +17,8 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
-    function updateStyle(e: any, key: string) {
+    function updateStyle(e: any, key: string, styleId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
-
-        if (key === "name" && $selected.id === "style") styleId = $selected.data[0].id
 
         if (!styleId) styleId = $styles.default ? uid() : "default"
 
@@ -324,7 +322,7 @@
 
                 <SelectElem id="style" data={{ id: currentStyle.id }} fill>
                     <Button border={active} class="context #style" {active} style="width: 100%;" on:click={() => (styleId = currentStyle.id)} bold={false} center>
-                        <HiddenInput value={currentStyle.name} id={"style_" + currentStyle.id} on:edit={(e) => updateStyle(e.detail.value, "name")} bind:edit />
+                        <HiddenInput value={currentStyle.name} id={"style_" + currentStyle.id} on:edit={(e) => updateStyle(e.detail.value, "name", currentStyle.id)} bind:edit />
                     </Button>
                 </SelectElem>
             {/each}

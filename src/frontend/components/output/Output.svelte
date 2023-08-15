@@ -1,11 +1,12 @@
+<!-- Used in output window, and currently in draw! -->
+
 <script lang="ts">
     import { uid } from "uid"
-    import { OUTPUT, READ_EXIF } from "../../../types/Channels"
+    import { READ_EXIF } from "../../../types/Channels"
     import type { Animation } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
     import type { Transition } from "../../../types/Show"
-    import { activeAnimate, outputs, overlays, showsCache, styles, templates, transitionData, volume } from "../../stores"
-    import { receive, send } from "../../utils/request"
+    import { activeAnimate, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
@@ -15,9 +16,6 @@
     import Zoomed from "../slide/Zoomed.svelte"
     import MediaOutput from "./MediaOutput.svelte"
 
-    export let video: any = null
-    export let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
-    export let videoTime: number = 0
     export let title: string = ""
     export let mirror: boolean = false
     export let preview: boolean = false
@@ -25,11 +23,7 @@
     export let outline: boolean = false
     export let disabled: boolean = false
 
-    // $: if (currentOutput.isKeyOutput) mirror = true
-    // $: console.log("MIRROR", mirror, currentOutput.isKeyOutput)
-
-    // TODO: showing slide upon clear fade out will show black output (Transition bug!)
-    // TODO: dont show transition upon no change!s
+    // TODO: dont show transition upon no changes
     export let transition: Transition = $transitionData.text
     export let mediaTransition: Transition = $transitionData.media
     export let disableTransitions: boolean = false
@@ -66,100 +60,6 @@
     $: transition = disableTransitions ? { type: "none" } : slideTextTransition ? slideTextTransition : $transitionData.text
     $: mediaTransition = disableTransitions ? { type: "none" } : slideMediaTransition ? slideMediaTransition : $transitionData.media
     $: overlayTransition = disableTransitions ? { type: "none" } : $transitionData.text
-
-    const receiveOUTPUT = {
-        // MAIN_VIDEO_DATA: (a: any) => {
-        //   if (!mirror) return
-        //   videoData = a
-        //   // if (a.paused && a.time) videoTime = a.time
-        // },
-        // MAIN_VIDEO_TIME: (a: number) => {
-        //   if (!mirror) return
-        //   setTime(a)
-        // },
-        MAIN_VIDEO: (a: any) => {
-            if (a.id !== outputId) return
-            if (a.data) videoData = a.data
-            if (mirror && a.updatePreview !== true) return
-            if (a.time !== undefined) setTime(a.time)
-        },
-
-        REQUEST_VIDEO_DATA: (a: string) => {
-            if (mirror || a !== outputId) return
-            // send(OUTPUT, ["MAIN_VIDEO_DATA"], )
-            send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime })
-            // let video load
-            setTimeout(() => {
-                send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime })
-                setTimeout(() => {
-                    send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime })
-                }, 2000)
-            }, 1500)
-        },
-        UPDATE_VIDEO: (a: any) => {
-            if (mirror) return
-            let returnData: any = { id: outputId }
-
-            console.log("UPDATE", a)
-
-            if (a.data) {
-                videoData = a.data
-                returnData.data = videoData
-                setTimeout(() => {
-                    send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData })
-                    // send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime })
-                }, 300)
-            }
-
-            if (a.time !== undefined) {
-                setTime(a.time)
-                returnData.time = videoTime
-                // returnData.updatePreview = true
-            } else if (videoData.paused) {
-                returnData.time = videoTime
-                setTimeout(() => {
-                    if (videoData.paused) send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime, updatePreview: a.updatePreview })
-                }, 500)
-            }
-
-            send(OUTPUT, ["MAIN_VIDEO"], returnData)
-        },
-        BACKGROUND: (a: any) => {
-            if (a?.loop) videoData.loop = a.loop
-            if (mirror) return
-            if (a?.muted) videoData.muted = a.muted
-        },
-        VOLUME: (a: any) => {
-            if (mirror) return
-            volume.set(a)
-        },
-    }
-
-    // if ($currentWindow === "output" || mirror) receive(OUTPUT, receiveOUTPUT)
-    receive(OUTPUT, receiveOUTPUT)
-
-    function setTime(time: number) {
-        let autoPaused: boolean = false
-        if (!videoData.paused) {
-            autoPaused = videoData.paused = true
-        }
-
-        // TODO: youtube seekTo
-        setTimeout(() => {
-            videoTime = time
-
-            setTimeout(() => {
-                if (autoPaused) videoData.paused = false
-            }, 80)
-        }, 10)
-
-        if (background?.startAt !== undefined && mirror) {
-            outputs.update((a) => {
-                delete a[outputId].out?.background?.startAt
-                return a
-            })
-        }
-    }
 
     $: currentLayout = slide ? _show(slide.id).layouts([slide.layout]).ref()[0] : []
     $: currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? clone(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {}) : null) : null
@@ -300,12 +200,6 @@
         }
 
         tempVideoBG = background
-
-        // WIP sync with preview
-        // setTimeout(() => {
-        //     if (!videoTime) return
-        //     send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime, updatePreview: true })
-        // }, 1000)
     }
 
     let clearing: boolean = false
@@ -320,9 +214,6 @@
             if (background || currentStyle?.backgroundImage) getTempBG()
         }, mediaTransition.duration + 100)
     }
-
-    // fix videoTime resetting to 0 in Preview.svelte
-    $: if (tempVideoBG?.type === "player") video = "player"
 
     // prevent too fast slide text updates (svelte transition bug)
     let slideClone: any = {}
@@ -480,7 +371,7 @@
 
 <Zoomed
     id={outputId}
-    background={currentOutput.isKeyOutput ? "black" : currentSlide?.settings?.color || currentStyle.background || "black"}
+    background={currentOutput.isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"}
     backgroundDuration={mediaTransition?.duration || 800}
     {center}
     {style}
@@ -493,20 +384,7 @@
 >
     {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
         <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {mediaTransition.duration || 800}ms, backdrop-filter {mediaTransition.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput
-                {...tempVideoBG}
-                background={tempVideoBG}
-                path={mediaPath}
-                {outputId}
-                {currentStyle}
-                animationStyle={animationStyle.background || ""}
-                transition={mediaTransition}
-                bind:video
-                bind:videoData
-                bind:videoTime
-                bind:title
-                mirror={currentOutput.isKeyOutput || mirror}
-            />
+            <MediaOutput {...tempVideoBG} background={tempVideoBG} path={mediaPath} {outputId} {currentStyle} animationStyle={animationStyle.background || ""} transition={mediaTransition} bind:title mirror={currentOutput.isKeyOutput || mirror} />
         </div>
     {/if}
 
@@ -562,6 +440,7 @@
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
                                     {linesStart}
                                     {linesEnd}
+                                    transitionEnabled={!mirror}
                                 />
                             {/if}
                         {/each}

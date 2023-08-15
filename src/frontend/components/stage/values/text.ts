@@ -1,11 +1,15 @@
 import type { EditInput } from "../../edit/values/boxes"
 
 export const textEdits: { [key: string]: EditInput[] } = {
-    options: [{ name: "chords", id: "chords", input: "checkbox", value: false }],
+    chords: [
+        { name: "chords", id: "chords", input: "checkbox", value: false },
+        { name: "color", id: "chordsData.color", input: "color", value: "#FF851B", hidden: true },
+        { name: "size", id: "chordsData.size", input: "number", value: 30, hidden: true },
+    ],
     font: [
-        { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
+        { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "Arial" },
         { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-        { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px" },
+        { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
         { name: "auto_size", id: "auto", input: "checkbox", value: true },
     ],
     style: [

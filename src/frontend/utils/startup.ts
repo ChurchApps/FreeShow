@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
-import { MAIN, OPEN_FOLDER, OUTPUT, STORE } from "../../types/Channels"
+import { MAIN, NDI, OPEN_FOLDER, OUTPUT, STARTUP, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
+import { clone, keysToID } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
-import { loadShows } from "../components/helpers/setShow"
 import { checkName } from "../components/helpers/show"
+import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
@@ -23,12 +24,11 @@ import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
 import {
     activePopup,
-    activeShow,
     activeTimers,
     alertMessage,
+    allOutputs,
     audioChannels,
     audioFolders,
-    autoOutput,
     currentWindow,
     dictionary,
     draw,
@@ -42,12 +42,14 @@ import {
     media,
     mediaCache,
     mediaFolders,
+    ndiData,
     os,
     outputDisplay,
     outputs,
     overlays,
     playerVideos,
     playingVideos,
+    previewBuffers,
     projects,
     recordingPath,
     saved,
@@ -66,6 +68,7 @@ import {
     variables,
     version,
     visualizerData,
+    volume,
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
 import { redoHistory, undoHistory } from "./../stores"
@@ -78,34 +81,39 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { clone } from "../components/helpers/array"
-import { defaultThemes } from "../components/settings/tabs/defaultThemes"
-import { startOutputStream } from "../components/drawer/live/recorder"
 
 export function startup() {
-    loaded.set(false)
-    send(MAIN, ["OUTPUT", "DISPLAY", "VERSION"])
-    setTimeout(() => send(STORE, ["SETTINGS"]), 500)
+    window.api.receive(STARTUP, (msg) => {
+        if (msg.channel !== "TYPE") return
 
-    // DEBUG
-    // window.api.send("LOADED")
+        let type = msg.data
+        currentWindow.set(type)
 
-    receive(MAIN, receiveMAIN)
-    receive(STORE, receiveSTORE)
-    receive(OUTPUT, receiveOUTPUT)
-    receive(IMPORT, receiveIMPORT)
-    receive(OPEN_FOLDER, receiveFOLDER)
+        if (!type) return startupMain()
+        if (type === "pdf") return
+
+        // type === "output"
+        receive(OUTPUT, receiveOUTPUTasOUTPUT)
+        send(OUTPUT, ["REQUEST_DATA_MAIN"])
+        // TODO: video data!
+    })
 }
 
 function startupMain() {
-    // load files
-    send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
+    loaded.set(false)
     setLanguage()
 
-    // load new show on show change
-    activeShow.subscribe((a) => {
-        if (a && (a.type === undefined || a.type === "show")) loadShows([a.id])
-    })
+    // load files
+    send(MAIN, ["DISPLAY", "VERSION"])
+    send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
+    setTimeout(() => send(STORE, ["SETTINGS"]), 500)
+
+    receive(MAIN, receiveMAIN)
+    receive(OUTPUT, receiveOUTPUTasMAIN)
+    receive(STORE, receiveSTORE)
+    receive(IMPORT, receiveIMPORT)
+    receive(OPEN_FOLDER, receiveFOLDER)
+    receive(NDI, receiveNDI)
 
     setTimeout(() => {
         listenForUpdates()
@@ -113,7 +121,7 @@ function startupMain() {
     }, 5000)
 }
 
-// receivers
+// RECEIVERS
 
 const receiveMAIN: any = {
     GET_OS: (a: any) => os.set(a),
@@ -167,11 +175,6 @@ const receiveMAIN: any = {
         if (get(saved)) window.api.send(MAIN, { channel: "CLOSE" })
         else activePopup.set("unsaved")
     },
-    OUTPUT: (a: any) => {
-        if (a === "true") currentWindow.set("output")
-        else if (a === "pdf") currentWindow.set("pdf")
-        else startupMain()
-    },
     RECEIVE_MIDI: (msg) => playMidiIn(msg),
     DELETE_SHOWS: (a) => {
         if (!a.deleted.length) {
@@ -191,7 +194,6 @@ const receiveMAIN: any = {
         alertMessage.set("<h3>Updated shows</h3><br>● Old shows: " + oldCount + "<br>● New shows: " + newCount)
         activePopup.set("alert")
     },
-    START_STREAM: ({ sourceId }) => startOutputStream(sourceId),
     BACKUP: ({ finished, path }) => {
         if (!finished) return activePopup.set(null)
 
@@ -251,71 +253,17 @@ export const receiveSTORE: any = {
     },
 }
 
-const receiveOUTPUT: any = {
-    OUTPUTS: (a: any) => outputs.set(a),
-    STYLES: (a: any) => styles.set(a),
-    // BACKGROUND: (a: any) => outBackground.set(a),
-    TRANSITION: (a: any) => transitionData.set(a),
-    // SLIDE: (a: any) => outSlide.set(a),
-    // OVERLAYS: (a: any) => outOverlays.set(a),
-    // OVERLAY: (a: any) => overlays.set(a),
-    // META: (a: any) => displayMetadata.set(a),
-    // COLOR: (a: any) => backgroundColor.set(a),
-    // SCREEN: (a: any) => screen.set(a),
-    SHOWS: (a: any) => showsCache.set(a),
+const receiveNDI: any = {
+    SEND_DATA: (msg) => {
+        if (!msg?.id) return
 
-    TEMPLATES: (a: any) => templates.set(a),
-    OVERLAYS: (a: any) => clone(overlays.set(a)),
-    EVENTS: (a: any) => events.set(a),
+        ndiData.update((a) => {
+            a[msg.id] = msg
 
-    DRAW: (a: any) => draw.set(a),
-    DRAW_TOOL: (a: any) => drawTool.set(a),
-    DRAW_SETTINGS: (a: any) => drawSettings.set(a),
-    VIZUALISER_DATA: (a: any) => visualizerData.set(a),
-    MEDIA: (a: any) => mediaFolders.set(a),
-    TIMERS: (a: any) => clone(timers.set(a)),
-    VARIABLES: (a: any) => clone(variables.set(a)),
-    ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
-    DISPLAY: (a: any) => outputDisplay.set(a.enabled),
-    // POSITION: (a: any) => outputPosition.set(a),
-    PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
-    STAGE_SHOWS: (a: any) => stageShows.set(a),
-    AUDIO_MAIN: async (data: any) => {
-        audioChannels.set(data.channels)
-        if (!data.id) return
-
-        // let analyser: any = await getAnalyser(video)
-        // TODO: remove when finished
-        playingVideos.update((a) => {
-            let existing = a.findIndex((a) => a.id === data.id && a.location === "output")
-            if (existing > -1) a[existing].channels = data.channels
-            else {
-                a.push({ location: "output", ...data })
-                analyseAudio()
-            }
-            return a
-        })
-    },
-    SCREEN_ADDED: () => {
-        if (get(autoOutput) && !get(outputDisplay)) {
-            // TODO: outputs...
-            // send(OUTPUT, ["DISPLAY"], { enabled: true, screen: a })
-            // outputScreen.set(a)
-        }
-    },
-    MOVE: (data) => {
-        outputs.update((a) => {
-            if (!a[data.id]) return a
-
-            a[data.id].bounds = data.bounds
             return a
         })
     },
 }
-
-// const receiveOUTPUTasOutput: any = {
-//   DISPLAY: receiveOUTPUT.DISPLAY,
-// }
 
 const receiveFOLDER: any = {
     MEDIA: (a: any, id: "media" | "audio" = "media") => {
@@ -339,6 +287,135 @@ const receiveFOLDER: any = {
     SCRIPTURE: (a: any) => scripturePath.set(a.path),
     RECORDING: (a: any) => recordingPath.set(a.path),
 }
+
+// OUTPUT
+
+const receiveOUTPUTasMAIN: any = {
+    PREVIEW: ({ id, buffer, size, originalSize }) => {
+        previewBuffers.update((a) => {
+            a[id] = { buffer, size, originalSize }
+            return a
+        })
+    },
+    OUTPUTS: (a: any) => outputs.set(a),
+    RESTART: () => {
+        keysToID(get(outputs))
+            .filter((a) => a.enabled)
+            .forEach((output) => {
+                send(OUTPUT, ["CREATE"], output)
+            })
+    },
+    DISPLAY: (a: any) => outputDisplay.set(a.enabled),
+    AUDIO_MAIN: async (data: any) => {
+        audioChannels.set(data.channels)
+        if (!data.id) return
+
+        // let analyser: any = await getAnalyser(video)
+        // TODO: remove when finished
+        playingVideos.update((a) => {
+            let existing = a.findIndex((a) => a.id === data.id && a.location === "output")
+            if (existing > -1) a[existing].channels = data.channels
+            else {
+                a.push({ location: "output", ...data })
+                analyseAudio()
+            }
+            return a
+        })
+    },
+    MOVE: (data) => {
+        outputs.update((a) => {
+            if (!a[data.id]) return a
+
+            a[data.id].bounds = data.bounds
+            return a
+        })
+    },
+    REQUEST_DATA_MAIN: () => sendInitialOutputData(),
+}
+
+let previousOutputs: string = ""
+const receiveOUTPUTasOUTPUT: any = {
+    OUTPUTS: (a: any) => {
+        // output.ts - only current output data is sent
+        let id = Object.keys(a)[0]
+        if (!id) {
+            outputs.set(a)
+            return
+        }
+
+        let active: boolean = a[id].active
+        delete a[id].active
+
+        // only update if there are any changes in this output
+        let newOutputs = JSON.stringify(a)
+        if (previousOutputs === newOutputs) return
+
+        a[id].active = active
+        outputs.set(a)
+        previousOutputs = newOutputs
+    },
+    ALL_OUTPUTS: (a: any) => {
+        // used for stage mirror data (hacky fix)
+        allOutputs.set(a)
+    },
+    STYLES: (a: any) => styles.set(a),
+    // BACKGROUND: (a: any) => outBackground.set(a),
+    TRANSITION: (a: any) => transitionData.set(a),
+    // SLIDE: (a: any) => outSlide.set(a),
+    // OVERLAYS: (a: any) => outOverlays.set(a),
+    // OVERLAY: (a: any) => overlays.set(a),
+    // META: (a: any) => displayMetadata.set(a),
+    // COLOR: (a: any) => backgroundColor.set(a),
+    // SCREEN: (a: any) => screen.set(a),
+    SHOWS: (a: any) => showsCache.set(a),
+
+    TEMPLATES: (a: any) => templates.set(a),
+    OVERLAYS: (a: any) => clone(overlays.set(a)),
+    EVENTS: (a: any) => events.set(a),
+
+    DRAW: (a: any) => draw.set(a),
+    DRAW_TOOL: (a: any) => drawTool.set(a),
+    DRAW_SETTINGS: (a: any) => drawSettings.set(a),
+    VIZUALISER_DATA: (a: any) => visualizerData.set(a),
+    MEDIA: (a: any) => mediaFolders.set(a),
+    TIMERS: (a: any) => clone(timers.set(a)),
+    VARIABLES: (a: any) => clone(variables.set(a)),
+    ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
+    // POSITION: (a: any) => outputPosition.set(a),
+    PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
+    STAGE_SHOWS: (a: any) => stageShows.set(a),
+}
+
+export function sendInitialOutputData() {
+    send(OUTPUT, ["STYLES"], get(styles))
+    send(OUTPUT, ["TRANSITION"], get(transitionData))
+    send(OUTPUT, ["SHOWS"], get(showsCache))
+
+    send(OUTPUT, ["TEMPLATES"], get(templates))
+    send(OUTPUT, ["OVERLAYS"], get(overlays))
+    send(OUTPUT, ["EVENTS"], get(events))
+
+    send(OUTPUT, ["DRAW"], get(draw))
+    send(OUTPUT, ["DRAW_TOOL"], get(drawTool))
+    send(OUTPUT, ["DRAW_SETTINGS"], get(drawSettings))
+
+    send(OUTPUT, ["VIZUALISER_DATA"], get(visualizerData))
+    send(OUTPUT, ["MEDIA"], get(mediaFolders))
+    send(OUTPUT, ["TIMERS"], get(timers))
+    send(OUTPUT, ["VARIABLES"], get(variables))
+
+    send(OUTPUT, ["PLAYER_VIDEOS"], get(playerVideos))
+    send(OUTPUT, ["STAGE_SHOWS"], get(stageShows))
+
+    // received by Output
+    send(OUTPUT, ["VOLUME"], get(volume))
+
+    setTimeout(() => {
+        send(OUTPUT, ["OUTPUTS"], get(outputs))
+    }, 100)
+}
+
+// IMPORT
 
 const receiveIMPORT: any = {
     txt: (a: any) => convertTexts(a),

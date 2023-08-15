@@ -1,27 +1,30 @@
+// ----- FreeShow -----
+// Expose protected methods that allow the renderer process to use the ipcRenderer without exposing the entire object
+
 import type { ValidChannels } from "../types/Channels"
 import { contextBridge, ipcRenderer } from "electron"
 
-// Expose protected methods that allow the renderer process to use the ipcRenderer without exposing the entire object
-const maxInterval: number = 1000
-const channels: ValidChannels[] = ["STAGE", "REMOTE", "CONTROLLER", "OUTPUT_STREAM"]
-const filters: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM"]
-// let timeout: any = null
-let ready: boolean = true
-let debug: boolean = true
+// const maxInterval: number = 500
+// const useTimeout: ValidChannels[] = ["STAGE", "REMOTE", "CONTROLLER", "OUTPUT_STREAM"]
+// let lastChannel: string = ""
+
+const debug: boolean = true
+const filteredChannels: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "PREVIEW"]
+
 contextBridge.exposeInMainWorld("api", {
     send: (channel: ValidChannels, data: any) => {
-        if (!filters.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
-        if (!channels.includes(channel) || data.id || ready || debug) {
-            ipcRenderer.send(channel, data)
-            ready = false
-            setTimeout(() => {
-                ready = true
-            }, maxInterval)
-        }
+        if (debug && !filteredChannels.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
+        // if (useTimeout.includes(channel) && data.channel === lastChannel && data.id) return
+
+        ipcRenderer.send(channel, data)
+
+        // lastChannel = data.channel
+        // setTimeout(() => (lastChannel = ""), maxInterval)
     },
     receive: (channel: ValidChannels, func: any) => {
         ipcRenderer.on(channel, (_e, ...args) => {
-            if (!filters.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
+            if (debug && !filteredChannels.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
+
             func(...args)
         })
     },

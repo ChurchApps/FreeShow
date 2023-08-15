@@ -188,7 +188,7 @@
 
             let id = msg.content[0] || msg.id
 
-            bibles[msg.data.index || 0].version = msg.content[1].name
+            bibles[msg.data.index || 0].version = $scriptures[id]?.customName || msg.content[1].name || $scriptures[id]?.name
             bibles[msg.data.index || 0].copyright = msg.content[1].copyright
             bibles[msg.data.index || 0].id = msg.content[0]
             books[id] = msg.content[1].books as any

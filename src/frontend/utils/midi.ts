@@ -50,7 +50,7 @@ export const midiActions = {
         nextSlide({ key: " " }, true)
     },
     previous_slide: () => {
-        previousSlide()
+        previousSlide({ key: " " })
     },
     next_project_show: () => {
         selectProjectShow("next")

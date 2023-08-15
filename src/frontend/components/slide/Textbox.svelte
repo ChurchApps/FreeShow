@@ -1,24 +1,26 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, slidesOptions, volume } from "../../stores"
+    import { currentWindow, overlays, showsCache, slidesOptions, templates, volume } from "../../stores"
+    import { custom } from "../../utils/transitions"
+    import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
+    import { clone } from "../helpers/array"
     import { getExtension, getMediaType } from "../helpers/media"
     import { getStyles } from "../helpers/style"
     import Clock from "../system/Clock.svelte"
-    import Chords from "./Chords.svelte"
+    import DynamicEvents from "./views/DynamicEvents.svelte"
     import ListView from "./views/ListView.svelte"
     import Mirror from "./views/Mirror.svelte"
     import Timer from "./views/Timer.svelte"
-    import Visualizer from "./views/Visualizer.svelte"
-    import DynamicEvents from "./views/DynamicEvents.svelte"
-    import Cam from "../drawer/live/Cam.svelte"
     import Variable from "./views/Variable.svelte"
-    import { custom } from "../../utils/transitions"
+    import Visualizer from "./views/Visualizer.svelte"
+    import Website from "./views/Website.svelte"
 
     export let item: Item
+    export let itemIndex: number = -1
     export let slideIndex: number = 0
     export let preview: boolean = false
     export let mirror: boolean = true
@@ -39,31 +41,36 @@
         id: string
     }
     export let style: boolean = true
+    export let stageItem: any = {}
     export let chords: boolean = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
-    export let autoSize: number = 0
+    export let stageAutoSize: boolean = false
+    export let fontSize: number = 0
 
     // let height: number = 0
     // let width: number = 0
     // $: autoSize = item.lines ? Math.min(height, width) / (item.lines.length + 3) : Math.min(height, width) / 2
     // TODO: get template auto size
     // $: autoTextSize = autoSize ? autoSize * 0.8 : getAutoSize(item)
-    $: autoSize = autoSize || getAutoSize(item)
+    // $: autoSize = autoSize || getAutoSize(item)
+
+    $: autoSize = item.autoFontSize || getAutoSize(item)
 
     $: lines = item?.lines
     $: if (linesStart !== null && linesEnd !== null && lines?.length) lines = lines.filter((a) => a.text.filter((a) => a.value.length)?.length)
 
     // timer updater
     let today = new Date()
+    let loaded = false
     onMount(() => {
+        setTimeout(() => (loaded = true), 100)
+
         if (item.type !== "timer") return
         setInterval(() => (today = new Date()), 500)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
-
-    let textElem: any = null
 
     function getAlphaStyle(style: string) {
         if (!key) return style
@@ -129,18 +136,113 @@
     $: textAnimation = animationStyle.text || ""
 
     $: transition = transitionEnabled && item.actions?.transition
+    $: itemTransition = transition ? clone(item.actions.transition) : {}
+    $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
+
+    // AUTO SIZE
+
+    let alignElem: any
+    let loopStop = false
+    const MAX_FONT_SIZE = 500
+    const MIN_FONT_SIZE = 10
+
+    $: if (alignElem && (loaded || stageAutoSize || item || chordLines)) setTimeout(getCustomAutoSize, 500)
+    function getCustomAutoSize() {
+        if (loopStop || !loaded || !alignElem || (!stageAutoSize && (!item?.auto || item?.autoFontSize))) return
+        loopStop = true
+
+        fontSize = MAX_FONT_SIZE
+        addStyleToElemText(fontSize)
+
+        while (fontSize > MIN_FONT_SIZE && (alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth)) {
+            fontSize--
+            addStyleToElemText(fontSize)
+        }
+
+        function addStyleToElemText(fontSize: number) {
+            for (let linesElem of alignElem.children) {
+                for (let breakElem of linesElem.children) {
+                    for (let txt of breakElem.children) {
+                        txt.style.fontSize = fontSize + "px"
+                    }
+                }
+            }
+        }
+
+        setTimeout(() => {
+            loopStop = false
+        }, 500)
+
+        if (stageAutoSize || itemIndex < 0) return
+
+        // UPDATE item
+
+        if (ref.type === "overlay") {
+            overlays.update((a) => {
+                a[ref.id].items[itemIndex].autoFontSize = fontSize
+                return a
+            })
+        } else if (ref.type === "template") {
+            templates.update((a) => {
+                a[ref.id].items[itemIndex].autoFontSize = fontSize
+                return a
+            })
+        } else if (ref.showId) {
+            showsCache.update((a) => {
+                a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
+                return a
+            })
+        }
+    }
+
+    // CHORDS
+
+    let chordLines: string[] = []
+    $: if (chords && item.lines) createChordLines()
+    function createChordLines() {
+        chordLines = []
+
+        item.lines!.forEach((line, i) => {
+            if (!line.chords?.length || !line.text) return
+
+            let html = ""
+            let index = 0
+            line.text.forEach((text) => {
+                let value = text.value.trim().replaceAll("\n", "") || "."
+                let chords = JSON.parse(JSON.stringify(line.chords || []))
+
+                let letters = value.split("")
+                letters.forEach((letter) => {
+                    let chordIndex = chords.findIndex((a: any) => a.pos === index)
+                    if (chordIndex >= 0) {
+                        html += `<span class="chord">${chords[chordIndex].key}</span>`
+                        chords.splice(chordIndex, 1)
+                    }
+
+                    index++
+                    html += `<span class="invisible">${letter}</span>`
+                })
+
+                chords.forEach((chord: any, i: number) => {
+                    html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
+                })
+            })
+
+            if (!html) return
+            chordLines[i] = html
+        })
+    }
 </script>
 
 <!-- svelte transition bug!!! -->
 {#if transition && !hidden}
-    <!-- bind:offsetHeight={height} bind:offsetWidth={width} -->
     <div
         class="item"
         style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
         class:white={key && !lines?.length}
         class:key
         class:addDefaultItemStyle
-        transition:custom={item.actions.transition}
+        transition:custom={itemTransition}
     >
         {#if lines}
             <div
@@ -150,21 +252,28 @@
                 class:leftRightScrolling={item?.scrolling?.type === "left_right"}
                 class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
                 style={style ? item.align : null}
+                bind:this={alignElem}
             >
-                {#if chords}
+                <!-- {#if chords}
                     <Chords {item} {textElem} />
-                {/if}
+                {/if} -->
                 <div
                     class="lines"
                     style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
-                    bind:this={textElem}
                 >
                     {#each lines as line, i}
                         {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
+                            {#if chords && chordLines[i]}
+                                <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || '#FF851B'};--font-size: {fontSize || autoSize}px;">
+                                    {@html chordLines[i]}
+                                </div>
+                            {/if}
                             <!-- class:height={!line.text[0]?.value.length} -->
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
-                                    <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{stageAutoSize || item.auto ? 'font-size: ' + (fontSize || autoSize) + 'px;' : fontSize ? 'font-size: ' + fontSize + 'px;' : ''}">
+                                        {@html text.value.replaceAll("\n", "<br>") || "<br>"}
+                                    </span>
                                 {/each}
                             </div>
                         {/if}
@@ -232,21 +341,28 @@
                 class:leftRightScrolling={item?.scrolling?.type === "left_right"}
                 class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
                 style={style ? item.align : null}
+                bind:this={alignElem}
             >
-                {#if chords}
+                <!-- {#if chords}
                     <Chords {item} {textElem} />
-                {/if}
+                {/if} -->
                 <div
                     class="lines"
                     style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
-                    bind:this={textElem}
                 >
                     {#each lines as line, i}
                         {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
+                            {#if chords && chordLines[i]}
+                                <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || '#FF851B'};--font-size: {fontSize || autoSize}px;">
+                                    {@html chordLines[i]}
+                                </div>
+                            {/if}
                             <!-- class:height={!line.text[0]?.value.length} -->
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
-                                    <span style="{style ? getAlphaStyle(text.style) : ''}{ref.type === 'stage' || item.auto ? 'font-size: ' + autoSize + 'px;' : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{stageAutoSize || item.auto ? 'font-size: ' + (fontSize || autoSize) + 'px;' : fontSize ? 'font-size: ' + fontSize + 'px;' : ''}"
+                                        >{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span
+                                    >
                                 {/each}
                             </div>
                         {/if}
@@ -282,6 +398,8 @@
             <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
         {:else if item?.type === "variable"}
             <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} />
+        {:else if item?.type === "web"}
+            <Website src={item?.web?.src || ""} clickable={$currentWindow === "output"} />
         {:else if item?.type === "mirror"}
             <Mirror {item} {ref} {ratio} index={slideIndex} />
         {:else if item?.type === "visualizer"}
@@ -359,7 +477,7 @@
     color: white;
   } */
 
-    .break :global(span) {
+    .break:not(.chords) :global(span) {
         font-size: 100px;
         min-height: 50px;
         /* display: inline-block; */
@@ -440,6 +558,31 @@
             transform: translateX(-100%);
         }
     }
+
+    /* chords */
+    .break.chords :global(.invisible) {
+        opacity: 0;
+        font-size: var(--font-size);
+        line-height: 0;
+    }
+    .break.chords :global(.chord) {
+        position: absolute;
+        color: var(--chord-color);
+        font-size: var(--chord-size) !important;
+        bottom: -5px;
+        transform: translateX(-25%);
+        z-index: 2;
+    }
+    .break.chords {
+        line-height: 0.5em;
+        position: relative;
+        pointer-events: none;
+    }
+    .break.chords.first {
+        line-height: var(--chord-size) !important;
+    }
+
+    /* custom svg icon */
 
     .customIcon,
     .customIcon :global(svg) {

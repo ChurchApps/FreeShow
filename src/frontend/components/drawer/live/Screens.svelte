@@ -11,6 +11,18 @@
     receive(MAIN, { GET_SCREENS: (d: any) => (screens = d) })
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
+
+    // NDI
+
+    // TODO: NDI inputs
+    // const receiveNDI: any = {
+    //     RECEIVE_LIST: (msg) => {
+    //         console.log(msg) // {"embedded":{}}
+    //     },
+    // }
+
+    // send(NDI, ["RECEIVE_LIST"])
+    // receive(NDI, receiveNDI)
 </script>
 
 {#each screens as screen}

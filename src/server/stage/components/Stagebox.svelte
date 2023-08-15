@@ -23,11 +23,19 @@
     let height: number = 0
     let width: number = 0
     let itemStyles: any = getStyles(item.style, true)
-    $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100
+    $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
     // dynamic resolution
     let resolution = { width: window.innerWidth, height: window.innerHeight }
-    let style = item.style
+
+    $: style = item.auto ? removeFontSize(item.style) : item.style
+    function removeFontSize(style: string) {
+        let fontSizeIndex = style.indexOf("font-size")
+        if (fontSizeIndex < 0) return style
+
+        return style.slice(0, fontSizeIndex) + style.slice(style.indexOf(";", fontSizeIndex) + 1)
+    }
+
     // custom dynamic size
     let newSizes = `;
     top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
@@ -66,13 +74,15 @@
                 {:else if id.includes("notes")}
                     <SlideNotes notes={slide?.notes || ""} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
-                    {#key item}
-                        <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} />
+                    {#key item || slide}
+                        <!-- <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} /> -->
+                        <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} />
                     {/key}
                 {:else if id.includes("slide")}
                     <!-- TODO: show slide data (backgrounds, overlays) -->
                     <span style="pointer-events: none;">
-                        <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} style />
+                        <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} style />
+                        <!-- <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} style /> -->
                     </span>
                 {:else if id.includes("clock")}
                     <Clock autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -91,6 +101,10 @@
 </div>
 
 <style>
+    .item {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
     .align {
         height: 100%;
         display: flex;

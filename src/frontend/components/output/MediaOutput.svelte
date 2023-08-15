@@ -2,8 +2,8 @@
     import { OUTPUT } from "../../../types/Channels"
     import type { MediaFit } from "../../../types/Main"
     import type { Transition } from "../../../types/Show"
-    import { audioChannels, mediaFolders, playingVideos } from "../../stores"
-    import { send } from "../../utils/request"
+    import { audioChannels, outputs, playingVideos, volume } from "../../stores"
+    import { receive, send } from "../../utils/request"
     import { custom } from "../../utils/transitions"
     import { analyseAudio, getAnalyser } from "../helpers/audio"
     import Media from "../media/Media.svelte"
@@ -20,49 +20,28 @@
     export let path: string = ""
     export let id: string = ""
     export let cameraGroup: string = ""
-    export let name: string = ""
+    // export let name: string = ""
     export let type: string = "media"
     export let startAt: number = 0
 
-    export let video: any
-    export let videoData: any
-    export let videoTime: any
     export let title: string
     export let mirror: boolean = false
 
     $: if (type === "video" || type === "image" || type === undefined) type = "media"
-    $: if (type === "media" && !path?.length && $mediaFolders[id]?.path && name) {
-        // TODO: what's this for?
-        let seperator = "/"
-        if ($mediaFolders[id].path?.includes("\\")) seperator = "\\"
-        path = $mediaFolders[id].path + seperator + name || ""
-    }
-
-    // // $: extension = path?.match(/\.[0-9a-z]+$/i)?.[0]! || ""
-    // // $: isVideo = extension ? $videoExtensions.includes(extension.substring(1)) : false
-    // $: extension = getExtension(path)
-    // $: isVideo = extension ? $videoExtensions.includes(extension) : false
-
-    // // $: if ($outputWindow && !videoData.muted) videoData.muted = $outputWindow
-    // let alt = "Could not find image!"
-
-    // $: outputId = getActiveOutputs($outputs)[0]
-    // $: currentOutput = $outputs[outputId]
-    // $: background = currentOutput.out?.background || {}
-
-    // let background = {}
-    // let prevBackground = {}
-    // $: if (JSON.stringify(background) !== JSON.stringify(currentOutput.out?.background || {})) {
-    //   background = currentOutput.out?.background || {}
+    // $: if (type === "media" && !path?.length && $mediaFolders[id]?.path && name) {
+    //     // TODO: what's this for?
+    //     let seperator = "/"
+    //     if ($mediaFolders[id].path?.includes("\\")) seperator = "\\"
+    //     path = $mediaFolders[id].path + seperator + name || ""
     // }
 
-    $: if (!mirror && !hasLoaded && background?.startAt !== undefined) changeTime()
-    function changeTime() {
-        setTimeout(() => {
-            send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: background.startAt, updatePreview: true })
-            delete background.startAt
-        }, 100)
-    }
+    // $: if (!mirror && !hasLoaded && background?.startAt !== undefined) changeTime()
+    // function changeTime() {
+    //     setTimeout(() => {
+    //         send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: background.startAt })
+    //         delete background.startAt
+    //     }, 100)
+    // }
 
     let width: number = 0
     let height: number = 0
@@ -70,7 +49,6 @@
     let hasLoaded: boolean = false
     let autoMute: boolean = false
     function loaded() {
-        // if ($currentWindow) return
         hasLoaded = true
 
         if (background.loop !== undefined) videoData.loop = background.loop
@@ -78,43 +56,34 @@
 
         if (mirror) {
             // request data
-            send(OUTPUT, ["REQUEST_VIDEO_DATA"], outputId)
+            send(OUTPUT, ["REQUEST_VIDEO_DATA"], { id: outputId })
         } else {
             if (background.muted !== undefined) videoData.muted = background.muted
-            // videoData.muted = false
 
             if (!videoData.muted) autoMute = videoData.muted = true
         }
     }
 
+    let currentId: string = ""
     function playing() {
-        // if (!hasLoaded || $currentWindow) return
         if (!hasLoaded || mirror) return
+
         hasLoaded = false
+        currentId = path
         console.log("PLAYING")
 
         setTimeout(() => {
-            send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime })
-            setTimeout(() => send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime }), 100)
+            if (currentId !== path || !autoMute) return
 
-            // TODO: draw get time
-            // sendCurrentTime()
+            // send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime })
+            // setTimeout(() => send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime }), 100)
 
-            if (autoMute) {
-                autoMute = false
-                videoData.muted = false
-            }
+            autoMute = false
+            videoData.muted = false
         }, 100)
     }
 
-    // let timeout: any = null
-    // function sendCurrentTime() {
-    //   if (timeout) clearTimeout()
-    //   timeout = setTimeout(() => {
-    //     if (!videoData.paused) send(OUTPUT, ["MAIN_VIDEO_TIME"], videoTime)
-    //     sendCurrentTime()
-    //   }, 1000)
-    // }
+    $: console.trace(videoData.muted)
 
     let filter: string = ""
     let flipped: boolean = false
@@ -146,9 +115,120 @@
         analyseAudio()
     }
 
+    /////////
+
+    let video: any = null
+    let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
+    let videoTime: number = 0
+
+    $: console.log(videoData)
+
+    // $: if (!mirror && videoTime === 1) send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime })
+    $: if (!mirror && videoData?.duration) send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData })
     $: if (!mirror && $audioChannels) send(OUTPUT, ["AUDIO_MAIN"], { id: path, channels: $audioChannels })
     $: if (!mirror && (video === null || videoData.paused === true)) playingVideos.set([])
     $: if (!mirror && video !== null && videoData.paused === false) setTimeout(analyseVideo, 100)
+
+    ///// DATA
+
+    const receiveOUTPUT = {
+        REQUEST_VIDEO_DATA: (a: any) => {
+            if (mirror || a.id !== outputId) return
+
+            send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime })
+        },
+        UPDATE_VIDEO: (a: any) => {
+            if (a.data) videoData = { ...a.data, duration: videoData.duration || 0 }
+            if (a.time !== undefined) setTime(a.time)
+
+            if (mirror || !a.data) return
+
+            setTimeout(() => {
+                send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData, time: videoTime })
+            }, 100)
+        },
+
+        BACKGROUND: (a: any) => {
+            if (a?.loop) videoData.loop = a.loop
+            if (mirror) return
+            if (a?.muted) videoData.muted = a.muted
+        },
+        VOLUME: (a: any) => {
+            if (mirror) return
+            volume.set(a)
+        },
+    }
+
+    receive(OUTPUT, receiveOUTPUT)
+
+    function setTime(time: number) {
+        let autoPaused: boolean = false
+        if (!videoData.paused) {
+            autoPaused = videoData.paused = true
+        }
+
+        // TODO: youtube seekTo
+        setTimeout(() => {
+            videoTime = time
+
+            setTimeout(() => {
+                if (autoPaused) videoData.paused = false
+            }, 80)
+        }, 10)
+
+        if (background?.startAt !== undefined && mirror) {
+            outputs.update((a) => {
+                delete a[outputId].out?.background?.startAt
+                return a
+            })
+        }
+    }
+
+    // ENDED
+
+    // auto clear video on finish
+    $: if (videoTime && videoData.duration && !videoData.paused && videoTime + 0.5 >= videoData.duration) {
+        // this will start changing 0.2s before video ends (video is paused when changing)
+        setTimeout(clearVideo, 300)
+    }
+
+    let clearing: boolean = false
+    function clearVideo() {
+        if (clearing) return
+
+        clearing = true
+        setTimeout(() => {
+            clearing = false
+        }, 1000)
+
+        send(OUTPUT, ["MAIN_VIDEO_ENDED"], { id: outputId })
+
+        // // TODO: do this in main
+
+        // if (checkNextAfterMedia()) {
+        //     // videoTime = 0
+        //     return
+        // }
+
+        // if (videoData.loop) return
+
+        // setOutput("background", null)
+        // videoTime = 0
+
+        // send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
+
+        // let currentOutput = $outputs[outputId]
+        // if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })
+
+        // dont think this is nessesary
+        // setTimeout(() => {
+        //     if (!currentOutput.out?.background) video = null
+        // }, 500)
+    }
+
+    // $: if (currentOutput.out?.background === null) {
+    //     clearVideo()
+    // }
 </script>
 
 <!-- svelte transition bug: the double copies are to remove media when changing from "draw" view -->
@@ -184,14 +264,14 @@
         {#if transition.type === "none"}
             <div>
                 <div class="overlay" />
-                <Player {id} bind:videoData bind:videoTime bind:title {startAt} />
+                <Player {outputId} {id} bind:videoData bind:videoTime bind:title {startAt} />
             </div>
         {:else}
             <div transition:custom={transition}>
                 <!-- WIP remove when finished -->
                 <!-- TODO: this has to be disabled to get rid of ads! -->
                 <div class="overlay" />
-                <Player {id} bind:videoData bind:videoTime bind:title {startAt} />
+                <Player {outputId} {id} bind:videoData bind:videoTime bind:title {startAt} />
             </div>
         {/if}
     {/key}

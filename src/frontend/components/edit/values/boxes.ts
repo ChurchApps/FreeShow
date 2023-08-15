@@ -41,7 +41,7 @@ export const boxes: Box = {
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
                 { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-                { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px" }, // , disabled: "item.autoSize"
+                { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
                 { name: "auto_size", id: "auto", input: "checkbox", value: false },
                 { input: "font-style" },
             ],
@@ -364,6 +364,12 @@ export const boxes: Box = {
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
             ],
+        },
+    },
+    web: {
+        icon: "web",
+        edit: {
+            default: [{ name: "inputs.url", id: "web.src", input: "text", value: "" }],
         },
     },
     // mirror other shows content on the same slide index

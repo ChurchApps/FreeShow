@@ -62,7 +62,7 @@
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
         bind:volume={audioVolume}
-        muted={mirror ? true : videoData.muted}
+        muted={mirror ? true : videoData.muted ?? true}
         src={path}
         autoplay
         loop={videoData.loop || false}

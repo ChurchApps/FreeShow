@@ -2,19 +2,28 @@ import { uid } from "uid"
 import { selected } from "../../../stores"
 import { _show } from "../../helpers/shows"
 import { keys } from "../values/chords"
+import { clone } from "../../helpers/array"
 
-export function addChords(item, showRef, itemIndex) {
-    let newLines: any = [...item.lines!]
-    if (!newLines[0].chords) newLines[0].chords = []
-    let id = uid()
-    newLines[0].chords.push({ id, pos: 0, key: keys[0] })
+export function addChords(item, showRef, itemIndex, line = 0, pos = 0) {
+    let newLines: any = clone(item.lines)
+    if (!newLines[line].chords) newLines[line].chords = []
+    let id = uid(5)
+
+    // get first empty
+    newLines[line].chords
+        .sort((a, b) => a.pos - b.pos)
+        .forEach((chord) => {
+            if (chord.pos === pos) pos++
+        })
+
+    newLines[line].chords.push({ id, pos, key: keys[0] })
 
     _show(showRef.showId)
         .slides([showRef.id])
         .items([itemIndex])
         .set({ key: "lines", values: [newLines] })
 
-    selected.set({ id: "chord", data: [{ chord: { id }, index: 0, slideId: showRef.id, itemIndex }] })
+    selected.set({ id: "chord", data: [{ chord: { id }, index: line, slideId: showRef.id, itemIndex }] })
 }
 
 export function changeKey({ item, showRef, itemIndex, chord, lineIndex }) {
@@ -34,6 +43,7 @@ export function changeKey({ item, showRef, itemIndex, chord, lineIndex }) {
     // setTimeout(() => (chordDrag = null), 100);
 }
 
+// WIP unused:
 let chordDrag: any = null
 export function chordDown(chordData, { showRef, itemIndex }) {
     selected.set({

@@ -10,7 +10,7 @@ import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageShows } from "../types/Stage"
-import type { Categories, Category, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
+import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { History } from "./components/helpers/history"
@@ -45,6 +45,7 @@ export const activeRecording: Writable<any> = writable(null)
 export const currentRecordingStream: Writable<any> = writable(null)
 export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
+export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -68,6 +69,8 @@ export const outputDisplay: Writable<boolean> = writable(false)
 export const currentOutputSettings: Writable<string | null> = writable(null)
 export const slideTimers: Writable<{ [key: string]: any }> = writable({})
 export const outputCache: Writable<any> = writable(null)
+export const previewBuffers: Writable<any> = writable({})
+export const ndiData: Writable<any> = writable({})
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
@@ -173,14 +176,6 @@ export const drawSettings: Writable<DrawSettings> = writable({}) // {}
 export const stageShows: Writable<StageShows> = writable({}) // {default}
 
 // SCRIPTURE
-interface BibleCategories extends Category {
-    api?: boolean
-    books?: any[]
-    cacheUpdate?: Date
-    collection?: {
-        versions: string[]
-    }
-}
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
 export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true }) // {default}

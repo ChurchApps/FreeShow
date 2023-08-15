@@ -261,6 +261,7 @@
     },
     "inputs": {
         "name": "Naziv",
+        "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Zatvori reklamu na finalnom prikazu",
         "change_folder": "Izaberi drugu lokaciju"
@@ -674,6 +675,7 @@
         "audio": "Audio",
         "timer": "Tajmer",
         "variable": "Variable",
+        "web": "Website",
         "visualizer": "Vizualizator",
         "icon": "Ikonica"
     },
@@ -828,6 +830,8 @@
         "default_project_name": "Podrazumevano ime projekta",
         "resolution": "Rezolucija",
         "cropping": "Isecanje",
+        "frame_rate": "Frame rate",
+        "transparent": "Transparent",
         "video_extensions": "Video ekstenzije",
         "image_extensions": "Image ekstenzije",
         "add": "dodaj",

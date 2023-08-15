@@ -92,3 +92,31 @@ export function getAutoSize(item: any, styles: any = null, oneLine: boolean = fa
 
     return size
 }
+
+const MAX_FONT_SIZE = 500
+const MIN_FONT_SIZE = 10
+export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement) {
+    let invisibleBox = elem.cloneNode(true)
+    invisibleBox.classList.add("invisible")
+    parentElem.append(invisibleBox)
+
+    let fontSize = MAX_FONT_SIZE
+    addStyleToElemText(fontSize)
+
+    while (fontSize > MIN_FONT_SIZE && (invisibleBox.scrollHeight > invisibleBox.offsetHeight || invisibleBox.scrollWidth > invisibleBox.offsetWidth)) {
+        fontSize--
+        addStyleToElemText(fontSize)
+    }
+
+    function addStyleToElemText(fontSize) {
+        for (let breakElem of invisibleBox.children) {
+            for (let txt of breakElem.children) {
+                txt.style.fontSize = fontSize + "px"
+            }
+        }
+    }
+
+    invisibleBox.remove()
+
+    return fontSize
+}

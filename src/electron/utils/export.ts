@@ -6,7 +6,7 @@ import { isProd, toApp } from "../index"
 import { join } from "path"
 import { BrowserWindow, ipcMain } from "electron"
 import fs from "fs"
-import { MAIN, EXPORT } from "../../types/Channels"
+import { MAIN, EXPORT, STARTUP } from "../../types/Channels"
 import { exportOptions } from "./windowOptions"
 import { doesPathExist } from "./files"
 
@@ -46,8 +46,8 @@ export function createPDFWindow(data: any) {
     if (isProd) exportWindow.loadFile("public/index.html")
     else exportWindow.loadURL("http://localhost:3000")
 
-    exportWindow.webContents.on("did-finish-load", () => {
-        exportWindow.webContents.send(MAIN, { channel: "OUTPUT", data: "pdf" })
+    exportWindow.webContents.once("did-finish-load", () => {
+        exportWindow.webContents.send(STARTUP, { channel: "TYPE", data: "pdf" })
         exportWindow.webContents.send(EXPORT, { channel: "PDF", data })
     })
 }

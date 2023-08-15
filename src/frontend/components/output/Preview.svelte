@@ -4,8 +4,8 @@
     import { send } from "../../utils/request"
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
-    import { clearPlayingVideo, getActiveOutputs, getResolution, isOutCleared, refreshOut, setOutput } from "../helpers/output"
-    import { checkNextAfterMedia, clearAll, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
+    import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "../helpers/output"
+    import { clearAll, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
@@ -25,29 +25,23 @@
     $: outputId = allActiveOutputs[0]
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
-    // TODO: outputIds for multiple outputs (update multiple videos at the same time)
 
     const ctrlShortcuts: any = {
-        // c: () => (callClear = true),
-        // f: () => (fullscreen = !fullscreen),
         l: () => outLocked.set(!$outLocked),
         r: () => {
-            if (!$outLocked) {
-                // outSlide.set($outSlide)
-                // outBackground.set($outBackground)
-                refreshOut()
-            }
+            if (!$outLocked) refreshOut()
         },
     }
 
     const shortcuts: any = {
         // presenter controller keys
         Escape: () => {
-            // if ($activePage !== "show") return
-            if ($presenterControllerKeys) {
-                // clearVideo()
-                setTimeout(clearAll)
-            } else if (fullscreen) fullscreen = false
+            // WIP if (allCleared) fullscreen = false
+
+            setTimeout(clearAll)
+        },
+        ".": () => {
+            if ($presenterControllerKeys) clearAll()
         },
         F1: () => {
             if (!$outLocked) setOutput("background", null)
@@ -64,13 +58,6 @@
         F4: () => {
             if (!$outLocked) clearAudio()
         },
-        ".": () => {
-            if ($activePage !== "show") return
-            // if ($presenterControllerKeys)
-
-            // clearVideo()
-            clearAll()
-        },
         F5: () => {
             if ($presenterControllerKeys) nextSlide(null)
             else setOutput("transition", null)
@@ -79,9 +66,9 @@
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
             if ($presenterControllerKeys) nextSlide(e)
         },
-        PageUp: () => {
+        PageUp: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($presenterControllerKeys) previousSlide()
+            if ($presenterControllerKeys) previousSlide(e)
         },
 
         ArrowRight: (e: any) => {
@@ -92,7 +79,7 @@
         ArrowLeft: (e: any) => {
             // if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
             if ($outLocked || e.ctrlKey || e.metaKey) return
-            previousSlide()
+            previousSlide(e)
         },
         " ": (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
@@ -100,7 +87,7 @@
             e.preventDefault()
             if (currentOutput.out?.slide?.id !== $activeShow?.id || ($activeShow && currentOutput.out?.slide?.layout !== $showsCache[$activeShow.id].settings.activeLayout)) nextSlide(e, true)
             else {
-                if (e.shiftKey) previousSlide()
+                if (e.shiftKey) previousSlide(e)
                 else nextSlide(e)
             }
         },
@@ -128,24 +115,10 @@
             return
         }
 
-        // ($activeShow?.type === "show" || $activeShow?.type === undefined) &&
         if (shortcuts[e.key]) {
             if (shortcuts[e.key](e)) e.preventDefault()
             return
         }
-
-        // if (["media", "video", "player"].includes(currentOutput.out?.background?.type || "")) {
-        //     e.preventDefault()
-        //     if (e.key === " ") {
-        //         videoData.paused = !videoData.paused
-        //         // send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
-        //         // // send(OUTPUT, ["UPDATE_VIDEO_TIME"], videoTime)
-
-        //         // Media.svelte sentToOutput()
-        //         send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData, updatePreview: true })
-        //         if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, data: videoData, updatePreview: true })
-        //     }
-        // }
     }
 
     function checkGroupShortcuts(e: any) {
@@ -168,55 +141,20 @@
         return playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
     }
 
-    let fullscreen: boolean = false
-    $: resolution = getResolution(currentStyle.resolution)
-
-    // TODO: video gets ((removed)) if video is starting while another is fading out
-    let video: any = null
-    let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
-    let videoTime: number = 0
-
-    // TODO: video in multiple outputs
-    // let fullVideoData: any = {}
-    // let fullVideoTimes: any = {}
-    // $: videoData = fullVideoData[outputId] || {}
-    // $: videoTime = fullVideoTimes[outputId] || 0
-
-    // $: if ((videoData || videoTime) && allActiveOutputs.length > 1) updateAllActiveOutputs()
-    // function updateAllActiveOutputs() {
-    //     allActiveOutputs.forEach((id) => {
-    //         if (id === outputId) return
-
-    //         fullVideoData[id] = videoData
-    //         fullVideoTimes[id] = videoTime
-    //     })
-    // }
-
-    // duration is for some reason NaN sometimes
-    $: if (video && videoData && !videoData?.duration) videoData.duration = video.duration
-    $: if (!video && videoTime) videoTime = 0
-
     let title: string = ""
 
     // active menu
-    // TODO: remember previous and go back on clear!
     let activeClear: any = null
     let autoChange: boolean = true
-    $: {
-        if (autoChange && $outputs) {
-            // let active = getActiveClear(currentOutput.out?.transition, $playingAudio, currentOutput.out?.overlays, currentOutput.out?.slide, currentOutput.out?.background)
-            let active = getActiveClear(!isOutCleared("transition"), $playingAudio, !isOutCleared("overlays"), !isOutCleared("slide"), !isOutCleared("background"))
-            if (active !== activeClear) activeClear = active
-        }
-    }
-
     $: if (outputId) autoChange = true
+    $: if (autoChange && $outputs) {
+        let active = getActiveClear(!isOutCleared("transition"), $playingAudio, !isOutCleared("overlays"), !isOutCleared("slide"), !isOutCleared("background"))
+        if (active !== activeClear) activeClear = active
+    }
 
     function getActiveClear(slideTimer: any, audio: any, overlays: any, slide: any, background: any) {
         if (slideTimer) return "nextTimer"
         if (Object.keys(audio).length) return "audio"
-        //   if (overlays?.length) return "overlays"
-        //   if (slide?.id) return "slide"
         if (overlays) return "overlays"
         if (slide) return "slide"
         if (background) return "background"
@@ -226,17 +164,16 @@
     // slide timer
     let timer: any = {}
     $: timer = outputId && $slideTimers[outputId] ? $slideTimers[outputId] : {}
-    $: {
-        Object.entries($outputs).forEach(([id, output]: any) => {
-            if (output.enabled && output.out?.transition && !$slideTimers[id]) {
-                newSlideTimer(id, output.out.transition.duration)
-            }
-        })
-    }
+    $: Object.entries($outputs).forEach(([id, output]: any) => {
+        if (!output.enabled || !output.out?.transition || $slideTimers[id]) return
+
+        newSlideTimer(id, output.out.transition.duration)
+    })
 
     $: currentStyle = $styles[currentOutput?.style] || {}
 
-    // lines
+    // LINES
+
     $: outSlide = currentOutput.out?.slide
     $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]) : []
     let linesIndex: null | number = null
@@ -247,64 +184,16 @@
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
     $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : Math.round(slideLines / amountOfLinesToShow)) : null
 
-    // TODO: only show preview in "show" ? (toggle in settings)
+    // HIDE PREVIEW
+
+    let enablePreview = true
+
+    // hide preview in draw page
     // $: enablePreview = ["show", "edit", "settings"].includes($activePage)
-    $: enablePreview = true
+    // $: if ($activePage === "draw") enablePreview = false
 
-    // clear video
-    let callVideoClear: boolean = false
-    $: if (callVideoClear) clearVideo()
-    async function clearVideo() {
-        // outputCache.set(clone($outputs))
-
-        // videoData.paused = true // ?
-        videoData = await clearPlayingVideo()
-
-        // RESET
-        video = null
-        videoTime = 0
-
-        callVideoClear = false
-    }
-
-    // MEDIA
-
-    // auto clear video on finish
-    $: if (videoTime && videoData.duration && !videoData.paused && videoTime + 0.5 >= videoData.duration) {
-        // this will start changing 0.2s before video ends (video is paused when changing)
-        setTimeout(clearVideo2, 300)
-    }
-
-    let clearing: boolean = false
-    function clearVideo2() {
-        if (clearing) return
-
-        clearing = true
-        setTimeout(() => {
-            clearing = false
-        }, 1000)
-
-        if (checkNextAfterMedia()) {
-            // videoTime = 0
-            return
-        }
-
-        if (videoData.loop) return
-
-        setOutput("background", null)
-        videoTime = 0
-        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
-        if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })
-
-        // dont think this is nessesary
-        setTimeout(() => {
-            if (!currentOutput.out?.background) video = null
-        }, 500)
-    }
-
-    // $: if (currentOutput.out?.background === null) {
-    //     clearVideo()
-    // }
+    // reduce preview resolution if hidden
+    $: if (enablePreview === false) send(OUTPUT, ["PREVIEW_RESOLUTION"], { size: { width: 0, height: 0 } })
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -312,34 +201,32 @@
 <div class="main">
     {#if enablePreview}
         <PreviewOutputs bind:currentOutputId={outputId} />
+
+        <div class="top">
+            <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>
+                <Icon id="hide" white />
+            </Button>
+            <MultiOutputs />
+            <AudioMeter />
+        </div>
     {:else}
         <Button on:click={() => (enablePreview = true)} style="width: 100%;" center dark>
             <Icon id="eye" right />
             <T id="preview.show_preview" />
         </Button>
     {/if}
-    <div class="top" class:hide={!enablePreview}>
-        <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>
-            <Icon id="hide" white />
-        </Button>
-        <MultiOutputs {resolution} mirror preview bind:video bind:videoData bind:videoTime bind:title />
-        <!-- <MultiOutputs {resolution} mirror preview bind:video bind:videoData={fullVideoData} bind:videoTime={fullVideoTimes} bind:title /> -->
-        <AudioMeter />
-    </div>
 
     <!-- TODO: show stage output -->
-
-    <!-- TODO: title keyboard shortcuts -->
 
     {#if enablePreview}
         <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />
     {/if}
 
     {#if $activePage === "show"}
-        <ClearButtons bind:autoChange bind:activeClear bind:callVideoClear />
+        <ClearButtons {outputId} bind:autoChange bind:activeClear />
 
         {#if activeClear === "background"}
-            <Media {currentOutput} {outputId} {video} bind:videoData bind:videoTime bind:title />
+            <Media {currentOutput} {outputId} bind:title />
         {:else if activeClear === "slide"}
             <Show {currentOutput} {ref} {linesIndex} {maxLines} />
         {:else if activeClear === "overlays"}
@@ -362,9 +249,6 @@
     .top {
         display: flex;
         position: relative;
-    }
-    .top.hide {
-        display: none;
     }
     /* button {
     background-color: inherit;

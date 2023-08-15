@@ -80,6 +80,12 @@
                 <Link url={"https://expressjs.com/"}>https://expressjs.com/</Link>
             </span>
         </div>
+        <div style="display: flex;justify-content: space-between;gap: 10px;">
+            <span>● NDI® SDK (IP-streaming)</span>
+            <span>
+                <Link url={"https://ndi.video/"}>https://ndi.video/</Link>
+            </span>
+        </div>
     </div>
 </div>
 

@@ -57,23 +57,19 @@
         if (changeVideoTimeout || (!movePause && !videoData.paused) || !latestValue) return
 
         videoTime = Number(latestValue)
-        if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime, updatePreview: true })
+        if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime })
 
         changeVideoTimeout = setTimeout(() => {
             changeVideoTimeout = null
             if (!movePause || !videoData.paused) return
             videoTime = Number(latestValue)
-            if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime, updatePreview: true })
+            if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime })
         }, 80)
     }
 
-    // let timeout: any = null
     const sendToOutput = (e: any = null) => {
         if (!movePause || !videoData.paused) return
         console.log("CHANGE", e)
-
-        // if (timeout) return
-        // let time = videoTime
 
         let value = e?.target?.value
         console.log(Number(value))
@@ -84,17 +80,9 @@
         }
 
         if (movePause) pauseAtMove(false)
-
-        // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_TIME", data: videoTime })
-        // window.api.send(OUTPUT, { channel: "MAIN_VIDEO_DATA", data: videoData })
-
-        // timeout = setTimeout(() => {
-        //   timeout = null
-        //   if (videoTime !== time) window.api.send(OUTPUT, { channel: "MAIN_VIDEO_TIME", data: videoTime })
-        // }, 100)
     }
 
-    $: if (videoTime && !movePause && !videoData.paused) sliderValue = videoTime
+    $: if (videoTime !== undefined && !movePause) sliderValue = videoTime
 
     let movePause: boolean = false
     function pauseAtMove(boolean: boolean = true) {

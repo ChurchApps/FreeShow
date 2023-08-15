@@ -20,6 +20,7 @@
     import DateInput from "../../inputs/DateInput.svelte"
     import TimeInput from "../../inputs/TimeInput.svelte"
     import { keysToID } from "../../helpers/array"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     export let edits: any
     export let item: any = null
@@ -31,6 +32,7 @@
         fontDropdown: FontDropdown,
         color: Color,
         number: NumberInput,
+        text: TextInput,
         dropdown: Dropdown,
         checkbox: Checkbox,
         date: DateInput,
@@ -252,7 +254,7 @@
                             this={inputs[input.input]}
                             {...input.values || {}}
                             {value}
-                            disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value}
+                            disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
                             enableNoColor={input.enableNoColor}
                             on:click={(e) => valueChange(e, input)}
                             on:input={(e) => valueChange(e, input)}

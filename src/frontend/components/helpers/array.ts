@@ -55,9 +55,9 @@ export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = 
     })
 }
 
-// move keys to IDs in object
-export function keysToID(object: { [key: string]: {} }): any {
-    let newObjects: {}[] = []
+// move keys to IDs in object and return array
+export function keysToID(object: { [key: string]: any }): any[] {
+    let newObjects: any[] = []
     Object.entries(object).forEach((obj) => newObjects.push({ id: obj[0], ...obj[1] }))
     return newObjects
 }
@@ -74,11 +74,6 @@ export function changeValues(object: any, values: { [key: string]: any }) {
         if (value === undefined) delete object[key]
     })
     return object
-}
-
-// convert object to array and set keys as id
-export function convertObject(object: { [key: string]: any }) {
-    return Object.entries(object).map(([id, a]: any) => ({ id, ...a }))
 }
 
 // clone objects

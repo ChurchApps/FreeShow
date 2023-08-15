@@ -73,7 +73,6 @@ export const receiveREMOTE: any = {
         let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
         let out: any = currentOutput?.out?.slide || null
         let id: string = ""
-        console.log(clone(msg))
 
         if (msg.data === "clear") {
             setOutput("slide", null)

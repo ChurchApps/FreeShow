@@ -16,6 +16,10 @@ export interface Output {
     screen: string | null
     kioskMode?: boolean
     alwaysOnTop?: boolean
+    transparent?: boolean
+    ndi?: boolean
+    ndiData?: any
+    invisible?: boolean
     taskbar?: boolean
     style?: string
     show?: any

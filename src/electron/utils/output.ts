@@ -1,53 +1,44 @@
-import { BrowserWindow, screen } from "electron"
+import { BrowserWindow } from "electron"
 import { join } from "path"
-import { mainWindow, toApp } from ".."
-import { MAIN, OUTPUT } from "../../types/Channels"
+import { isProd, mainWindow, toApp } from ".."
+import { MAIN, OUTPUT, STARTUP } from "../../types/Channels"
 import { Message } from "../../types/Socket"
+import { startCapture, stopCapture, updatePreviewResolution } from "../ndi/capture"
+import { createSenderNDI, stopSenderNDI } from "../ndi/ndi"
 import { Output } from "./../../types/Output"
 import { outputOptions } from "./windowOptions"
-
-const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
+import { setDataNDI } from "../ndi/talk"
 
 export let outputWindows: { [key: string]: BrowserWindow } = {}
-export function createOutput(output: Output) {
+
+// CREATE
+
+async function createOutput(output: Output) {
     let id: string = output.id || ""
 
-    if (outputWindows[id]) outputWindows[id].close()
+    if (outputWindows[id]) {
+        // WIP has to restart because capture don't work when window is hidden...
+        stopCapture(id)
+        removeOutput(id, output)
 
-    outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true }, id)
-    // outputWindows[id].on("closed", () => removeOutput(id))
-}
-
-export function closeAllOutputs() {
-    Object.keys(outputWindows).forEach(removeOutput)
-}
-
-export function updateOutput(data: any) {
-    let window = outputWindows[data.id]
-    let bounds = window.getBounds()
-    disableWindowMoveListener()
-    if (data.window?.position) bounds = { ...bounds, x: data.window.position.x, y: data.window.position.y }
-    if (data.window?.size) bounds = { ...bounds, width: data.window.size.width, height: data.window.size.height }
-    window.setBounds(data.window.position)
-
-    // send() to output window
-}
-
-export function removeOutput(id: string) {
-    if (!outputWindows[id]) return
-    // close window
-    try {
-        outputWindows[id].close()
-    } catch (error) {
-        console.log(error)
+        return
     }
 
-    delete outputWindows[id]
-    // send to app ?
+    outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
+    updateBounds(output)
+
+    setTimeout(() => {
+        startCapture(id, { ndi: output.ndi || false })
+    }, 1200)
+
+    // NDI
+    if (output.ndi) await createSenderNDI(id, output.name)
+    if (output.ndiData) setDataNDI({ id, ...output.ndiData })
 }
 
-function createOutputWindow(options: any, id: string) {
+function createOutputWindow(options: any, id: string, name: string) {
     options = { ...outputOptions, ...options }
+
     if (options.alwaysOnTop === false) {
         options.skipTaskbar = false
         options.resizable = true
@@ -71,32 +62,57 @@ function createOutputWindow(options: any, id: string) {
         console.error(JSON.stringify(err))
     })
 
-    // toOutput("MAIN", { channel: "OUTPUT", data: "true" })
-    // window.webContents.send("MAIN", { channel: "OUTPUT" })
-    // if (!isProd) window.webContents.openDevTools()
-
     window.on("ready-to-show", () => {
         mainWindow?.focus()
-        window?.setMenu(null)
+        window!.setMenu(null)
+        window!.setTitle(name || "Output")
+    })
+
+    window.webContents.on("did-finish-load", () => {
+        window!.webContents.send(STARTUP, { channel: "TYPE", data: "output" })
     })
 
     window.on("move", (e: any) => {
         if (!moveEnabled || updatingBounds) return e.preventDefault()
+
         let bounds = window?.getBounds()
         toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
     })
 
-    window.on("close", () => {
-        toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
-    })
-    window.on("closed", () => {
-        delete outputWindows[id]
-    })
+    // open devtools
+    // if (!isProd) window.webContents.openDevTools()
 
     return window
 }
 
-export function displayOutput(data: any) {
+// REMOVE
+
+export function closeAllOutputs() {
+    Object.keys(outputWindows).forEach(removeOutput)
+}
+
+function removeOutput(id: string, reopen: any = null) {
+    if (!outputWindows[id]) return
+
+    stopCapture(id)
+    stopSenderNDI(id)
+
+    try {
+        outputWindows[id].close()
+    } catch (error) {
+        console.log(error)
+    }
+
+    outputWindows[id].on("closed", () => {
+        delete outputWindows[id]
+
+        if (reopen) createOutput(reopen)
+    })
+}
+
+// SHOW/HIDE
+
+function displayOutput(data: any) {
     let window: BrowserWindow = outputWindows[data.output?.id]
 
     if (data.enabled === "toggle") data.enabled = !window?.isVisible()
@@ -106,50 +122,36 @@ export function displayOutput(data: any) {
         if (!windows[0]) {
             windows = Object.values(outputWindows)
         }
+
         windows.forEach((window) => hideWindow(window))
         if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data })
         return
     }
 
-    if (!window) {
+    if (!window || window.isDestroyed()) {
         if (!data.output) return
+
         createOutput(data.output)
         window = outputWindows[data.output.id]
+        if (!window) return
     }
 
-    window.setTitle(data.output?.name || "FreeShow")
+    /////
+
     let bounds = data.output.bounds
-    disableWindowMoveListener()
-
-    // /////////////////////
-
-    // TODO: set output screen + pos, if nothing set on startup
-
-    // console.log("Display: ", bounds?.x, bounds?.y, bounds?.width, bounds?.height)
-
-    // && JSON.stringify(bounds) !== JSON.stringify(outputWindow?.getBounds())
     let xDif = bounds?.x - mainWindow!.getBounds().x
     let yDif = bounds?.y - mainWindow!.getBounds().y
 
-    let windowNotCoveringMain: boolean = xDif > 50 || yDif < -50 || (xDif < -50 && yDif > 50)
+    const margin = 50
+    let windowNotCoveringMain: boolean = xDif > margin || yDif < -margin || (xDif < -margin && yDif > margin)
 
-    // WIP Enabling output window over internal screen never working on mac!
-    // if (!windowNotCoveringMain && process.platform === "darwin")
-
-    // console.log(bounds, xDif, yDif, windowNotCoveringMain)
     if (bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
-        // , !data.force
         showWindow(window)
 
-        if (bounds) {
-            window?.setBounds(bounds)
-            // has to be set twice to work first time
-            setTimeout(() => {
-                window?.setBounds(bounds)
-            }, 10)
-        }
+        if (bounds) updateBounds(data.output)
     } else {
         hideWindow(window)
+
         data.enabled = false
         if (!data.auto) toApp(MAIN, { channel: "ALERT", data: "error.display" })
     }
@@ -164,24 +166,29 @@ export function displayOutput(data: any) {
 // https://github.com/electron/electron/issues/1054
 
 function showWindow(window: BrowserWindow) {
-    if (!window) return
+    if (!window || window.isDestroyed()) return
     window.showInactive()
 
     window.moveTop()
 }
 
 function hideWindow(window: BrowserWindow) {
-    if (!window) return
+    if (!window || window.isDestroyed()) return
 
     window.setKiosk(false)
     window.hide()
+
+    toApp(OUTPUT, { channel: "RESTART" })
 }
+
+// BOUNDS
 
 let moveEnabled: boolean = false
 let updatingBounds: boolean = false
 let boundsTimeout: any = null
 function disableWindowMoveListener() {
     updatingBounds = true
+
     if (boundsTimeout) clearTimeout(boundsTimeout)
     boundsTimeout = setTimeout(() => {
         updatingBounds = false
@@ -189,95 +196,97 @@ function disableWindowMoveListener() {
     }, 1000)
 }
 
-export function updateBounds(data: any) {
+function updateBounds(data: any) {
     let window: BrowserWindow = outputWindows[data.id]
-    if (!window) return
+    if (!window || window.isDestroyed()) return
 
     disableWindowMoveListener()
 
-    window.setBounds({ ...data.bounds, height: data.bounds.height - 1 })
+    window.setBounds(data.bounds)
+    // has to be set twice to work first time
     setTimeout(() => {
+        if (!window || window.isDestroyed()) return
+
         window.setBounds(data.bounds)
     }, 10)
 }
 
-export function setValue({ id, key, value }: any) {
-    let window: BrowserWindow = outputWindows[id]
-    if (!window) return
+// UPDATE
 
-    if (key === "alwaysOnTop") {
+const setValues: any = {
+    ndi: async (value: boolean, window: BrowserWindow, id: string) => {
+        if (value) await createSenderNDI(id, window.getTitle())
+        else stopSenderNDI(id)
+
+        setValues.capture({ key: "ndi", value }, window, id)
+    },
+    capture: async (data: any, _window: BrowserWindow, id: string) => {
+        startCapture(id, { [data.key]: data.value })
+        // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
+    },
+    transparent: (value: boolean, window: BrowserWindow) => {
+        window.setBackgroundColor(value ? "#00000000" : "#000000")
+    },
+    alwaysOnTop: (value: boolean, window: BrowserWindow) => {
         window.setAlwaysOnTop(value)
         window.setResizable(!value)
         window.setSkipTaskbar(value)
-    } else if (key === "kioskMode") window.setKiosk(value)
+    },
+    kioskMode: (value: boolean, window: BrowserWindow) => {
+        window.setKiosk(value)
+    },
 }
 
-export function moveToFront(id: string) {
+async function updateValue({ id, key, value }: any) {
     let window: BrowserWindow = outputWindows[id]
-    if (!window) return
+    if (!window || window.isDestroyed()) return
+
+    if (!setValues[key]) return
+    setValues[key](value, window, id)
+}
+
+function moveToFront(id: string) {
+    let window: BrowserWindow = outputWindows[id]
+    if (!window || window.isDestroyed()) return
 
     window.moveTop()
-}
-
-export function sendToOutputWindow(msg: any) {
-    Object.entries(outputWindows).forEach(([id, window]: any) => {
-        let tempMsg: any = JSON.parse(JSON.stringify(msg))
-
-        // only send output with matching id
-        if (msg.channel === "OUTPUTS") {
-            // if (!msg.data[id]) createOutput(msg.data[id])
-            if (msg.data?.[id]) tempMsg.data = { [id]: msg.data[id] }
-        }
-
-        if (msg.data?.id && msg.data?.id !== id) return
-
-        window.webContents.send(OUTPUT, tempMsg)
-    })
 }
 
 // RESPONSES
 
 const outputResponses: any = {
-    MOVE: (data: any) => (moveEnabled = data.enabled),
     CREATE: (data: any) => createOutput(data),
+    REMOVE: (data: any) => removeOutput(data.id),
     DISPLAY: (data: any) => displayOutput(data),
-    UPDATE: (data: any) => updateOutput(data),
+
+    MOVE: (data: any) => (moveEnabled = data.enabled),
+
     UPDATE_BOUNDS: (data: any) => updateBounds(data),
-    SET_VALUE: (data: any) => setValue(data),
+    SET_VALUE: (data: any) => updateValue(data),
     TO_FRONT: (data: any) => moveToFront(data),
+
+    PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
 }
 
 export function receiveOutput(_e: any, msg: Message) {
     if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)
     if (outputResponses[msg.channel]) return outputResponses[msg.channel](msg.data)
+
     sendToOutputWindow(msg)
 }
 
-// LISTENERS
+function sendToOutputWindow(msg: any) {
+    Object.entries(outputWindows).forEach(([id, window]: any) => {
+        let tempMsg: any = JSON.parse(JSON.stringify(msg))
 
-export function displayAdded(_e: any) {
-    // , display
-    // TODO: !outputWindow?.isEnabled()
-    // if (true) toApp(OUTPUT, { channel: "SCREEN_ADDED", data: display.id.toString() })
+        // only send output with matching id
+        if (msg.channel === "OUTPUTS") {
+            if (!msg.data?.[id]) return
+            tempMsg.data = { [id]: msg.data[id] }
+        }
 
-    toApp(OUTPUT, { channel: "GET_DISPLAYS", data: screen.getAllDisplays() })
-}
+        if (msg.data?.id && msg.data.id !== id) return
 
-export function displayRemoved(_e: any) {
-    // TODO: ...
-    // let outputMonitor = screen.getDisplayNearestPoint({ x: outputWindow!.getBounds().x, y: outputWindow!.getBounds().y })
-    // let mainMonitor = screen.getDisplayNearestPoint({ x: mainWindow!.getBounds().x, y: mainWindow!.getBounds().y })
-    // if (outputMonitor.id === mainMonitor.id) {
-    //   // if (outputScreenId === display.id.toString()) {
-    //   outputWindow?.hide()
-    //   if (process.platform === "darwin") {
-    //     outputWindow?.setFullScreen(false)
-    //     setTimeout(() => {
-    //       outputWindow?.minimize()
-    //     }, 100)
-    //   }
-    //   toApp(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
-    // }
-
-    toApp(OUTPUT, { channel: "GET_DISPLAYS", data: screen.getAllDisplays() })
+        window.webContents.send(OUTPUT, tempMsg)
+    })
 }
