@@ -1,23 +1,23 @@
 export const languages: any = {
-    // language identifier: language name in original language
-    en: "English",
-    en_GB: "English (British)",
-    no: "Norsk",
-    sk: "Slovenčina",
-    es: "Español",
-    pt_BR: "Português do Brasil",
-    de: "Deutsch",
-    it: "Italiano",
-    pl: "Polski",
-    hu: "Magyar",
-    sr: "Srpski",
+    // language_identifier: "Language name in original language", // Language name in English
+    en: "English", // English
+    en_GB: "English (British)", // English (British)
+    no: "Norsk", // Norwegian
+    sk: "Slovenčina", // Slovak
+    es: "Español", // Spanish
+    pt_BR: "Português do Brasil", // Brazilian Portuguese
+    de: "Deutsch", // German
+    it: "Italiano", // Italian
+    pl: "Polski", // Polish
+    hu: "Magyar", // Hungarian
+    sr: "Srpski", // Serbian
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
 // Language identifier: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
 // Region: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 export const replace: any = {
-    // language identifier: browser language/region code
+    // language_identifier: ["browser language/region code"],
     en: ["en-US", "en-AU"],
     en_GB: ["en-GB", "en-ZM"],
     no: ["nb", "nn"],
