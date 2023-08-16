@@ -1,4 +1,4 @@
-import grandiose from "grandiose"
+// import grandiose from "grandiose"
 import os from "os"
 // import type { VideoFrame } from "grandiose"
 import { toApp } from ".."
@@ -17,10 +17,14 @@ import util from "./vingester-util"
 let timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
 
 export async function findStreamsNDI(): Promise<any> {
+    // not linux
+    if (os.platform() === "linux") return
+    const grandiose = require("grandiose")
+
     return new Promise((resolve, reject) => {
         grandiose
             .find({ showLocalSources: true })
-            .then((a) => {
+            .then((a: any) => {
                 resolve(a)
             })
             .catch((err: any) => reject(err))
@@ -30,6 +34,10 @@ export async function findStreamsNDI(): Promise<any> {
 // let source = { name: "<source_name>", urlAddress: "<IP-address>:<port>" };
 export async function receiveStreamNDI({ source }: any) {
     if (receivers[source.urlAddress]) return
+
+    // not linux
+    if (os.platform() === "linux") return
+    const grandiose = require("grandiose")
 
     let receiver = await grandiose.receive({ source })
 
@@ -75,6 +83,10 @@ export async function createSenderNDI(id: string, title: string = "") {
     if (NDI[id]) return
     NDI[id] = {}
 
+    // not linux
+    if (os.platform() === "linux") return
+    const grandiose = require("grandiose")
+
     NDI[id].name = "FreeShow NDI"
     if (title) NDI[id].name = NDI[id].name + " - " + title
     console.log("NDI - creating sender: " + NDI[id].name)
@@ -108,6 +120,10 @@ export async function createSenderNDI(id: string, title: string = "") {
 
 export async function sendVideoBufferNDI(id: string, buffer: any, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
     if (!NDI[id].sender) return
+
+    // not linux
+    if (os.platform() === "linux") return
+    const grandiose = require("grandiose")
 
     /*  convert from ARGB (Electron/Chromium on big endian CPU)
         to BGRA (supported input of NDI SDK). On little endian
@@ -156,6 +172,10 @@ export async function sendVideoBufferNDI(id: string, buffer: any, { size = { wid
 // TODO: audio ??
 export async function sendAudioBufferNDI(id: string, buffer: Buffer, { sampleRate, noChannels, bytesForFloat32 }: any) {
     if (!NDI[id].sender) return
+
+    // not linux
+    if (os.platform() === "linux") return
+    const grandiose = require("grandiose")
 
     /*  convert from PCM/signed-16-bit/little-endian data
         to NDI's "PCM/planar/signed-float32/little-endian  */

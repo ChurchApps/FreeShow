@@ -129,7 +129,7 @@
         "express": "^4.17.2",
         "font-list": "^1.4.5",
         "genius-lyrics": "^4.4.3",
-        "grandiose": "rse/grandiose#cf09bb84",
+        "grandiose": "vassbo/grandiose#b7ddf3a",
         "jzz": "^1.5.9",
         "node-pre-gyp": "^0.17.0",
         "npm-run-all": "^4.1.5",
