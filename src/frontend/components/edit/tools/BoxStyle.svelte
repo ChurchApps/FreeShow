@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, refreshEditSlide, selected, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -23,8 +24,12 @@
         if (!a.items.length) selection = null
     })
 
-    function getTextSelection(e: any) {
-        if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
+    onMount(getTextSelection)
+
+    function getTextSelection(e: any = null) {
+        if (e) {
+            if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
+        }
 
         let sel: any = window.getSelection()
 
@@ -59,19 +64,28 @@
 
     // -----
 
-    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable"]
+    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable", "web"]
 
-    $: box = boxes[id]
+    let box: any = setBox()
+    $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box = setBox()
+    function setBox() {
+        return clone(boxes[id])
+    }
 
     // get item values
     $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : item?.style || ""
     let styles: any = {}
-    $: if (style) styles = getStyles(style, true)
+    $: if (style !== undefined) styles = getStyles(style, true)
 
     $: if (box?.edit?.CSS && style) box.edit.CSS[0].value = style
 
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : getStyles(item?.align)
     $: alignStyle = item?.align ? getStyles(item.align) : {}
+
+    // remove chord options
+    $: if ($activeEdit.type === "overlay" && box?.edit?.chords) {
+        delete box.edit.chords
+    }
 
     // WIP shouldn't have fixed values
     $: if (id === "text" && box?.edit?.style) {
@@ -80,6 +94,14 @@
     }
     $: if (id === "text" && box?.edit?.special) {
         box.edit.special[0].value = item?.scrolling?.type || "none"
+    }
+    $: if (id === "text" && box?.edit?.chords) {
+        box.edit.chords[0].value = item?.chords?.enabled || false
+        box.edit.chords[1].value = item?.chords?.color || "#FF851B"
+        box.edit.chords[2].value = item?.chords?.size || 30
+
+        box.edit.chords[1].hidden = !item?.chords?.enabled
+        box.edit.chords[2].hidden = !item?.chords?.enabled
     }
 
     $: if (id === "mirror" && box) getMirrorValues()
@@ -147,11 +169,9 @@
                 item = slide.items[allItems[0]]
             }
 
-            if (item[splitted[0]] !== undefined) {
-                input.id = splitted[0]
-                value = item[splitted[0]]
-                value[splitted[1]] = input.value
-            }
+            input.id = splitted[0]
+            value = item[splitted[0]] || {}
+            value[splitted[1]] = input.value
         }
         console.log(value)
 
@@ -396,6 +416,6 @@
 
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
-{#key id}
+{#key box}
     <EditValues edits={box?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} />
 {/key}

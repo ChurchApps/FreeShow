@@ -8,49 +8,53 @@ import { exportPath } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { _show } from "../helpers/shows"
+import { loadShows } from "../helpers/setShow"
 
 export async function exportProject(project: Project) {
-  let shows: any = {}
-  let missingMedia: string[] = []
-  // let media: any = {}
-  // let overlays: any = {}
+    let shows: any = {}
+    let missingMedia: string[] = []
+    // let media: any = {}
+    // let overlays: any = {}
 
-  project = clone(project)
+    project = clone(project)
 
-  // place on root
-  project.parent = "/"
+    // place on root
+    project.parent = "/"
 
-  await Promise.all(project.shows.map(getShow))
+    let showIds = project.shows.filter((a) => !a.type || a.type === "show").map((a) => a.id)
+    await loadShows(showIds)
 
-  // export to file
-  send(EXPORT, ["GENERATE"], { type: "project", path: get(exportPath), name: project.name, file: { project, shows } })
+    await Promise.all(project.shows.map(getShow))
 
-  async function getShow(showRef: ProjectShowRef) {
-    let type = showRef.type || "show"
-    // await loadShows(ids) ...
-    if (type === "show") {
-      shows[showRef.id] = _show(showRef.id).get()
-      // TODO: get media in shows
-      // TODO: get overlays in shows
-      // TODO: get audio in shows
-      // TODO: timers??
-      return
+    // export to file
+    send(EXPORT, ["GENERATE"], { type: "project", path: get(exportPath), name: project.name, file: { project, shows } })
+
+    async function getShow(showRef: ProjectShowRef) {
+        let type = showRef.type || "show"
+        // await loadShows(ids) ...
+        if (type === "show") {
+            shows[showRef.id] = _show(showRef.id).get()
+            // TODO: get media in shows
+            // TODO: get overlays in shows
+            // TODO: get audio in shows
+            // TODO: timers??
+            return
+        }
+
+        if (type === "player") return
+
+        // TODO: media files
+        // zip them ?
+
+        missingMedia.push(showRef.id)
+
+        // if (type === "image") {
+        //   let base64: any = await toDataURL(showRef.id)
+        //   console.log(base64)
+        //   media[showRef.id] = base64
+        //   return
+        // }
+
+        // video / audio
     }
-
-    if (type === "player") return
-
-    // TODO: media files
-    // zip them ?
-
-    missingMedia.push(showRef.id)
-
-    // if (type === "image") {
-    //   let base64: any = await toDataURL(showRef.id)
-    //   console.log(base64)
-    //   media[showRef.id] = base64
-    //   return
-    // }
-
-    // video / audio
-  }
 }

@@ -94,7 +94,7 @@ export interface Item {
     web?: any
     bindings?: string[] // bind item to stage or an output
     actions?: any // showTime | hideTime
-    chords?: boolean // stage
+    chords?: any
     scrolling?: Scrolling
     visualizer?: any
     // media: fit, startAt, endAt

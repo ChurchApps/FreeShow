@@ -74,22 +74,29 @@ export function stopSenderNDI(id: string) {
     console.log("NDI - stopping sender: " + NDI[id].name)
     clearInterval(NDI[id].timer)
 
-    NDI[id].sender.destroy()
+    try {
+        NDI[id].sender.destroy()
+    } catch (error) {
+        console.log("ERROR", error)
+    }
+
     delete NDI[id]
 }
 
 export let NDI: any = {}
 export async function createSenderNDI(id: string, title: string = "") {
-    if (NDI[id]) return
-    NDI[id] = {}
-
     // not linux
     if (os.platform() === "linux") return
     const grandiose = require("grandiose")
 
+    if (NDI[id]) return
+    NDI[id] = {}
+
     NDI[id].name = "FreeShow NDI"
     if (title) NDI[id].name = NDI[id].name + " - " + title
     console.log("NDI - creating sender: " + NDI[id].name)
+
+    let error = false
 
     try {
         NDI[id].sender = await grandiose.send({
@@ -97,8 +104,14 @@ export async function createSenderNDI(id: string, title: string = "") {
             clockVideo: false,
             clockAudio: false,
         })
-    } catch (error) {
-        console.log("ERROR", error)
+    } catch (err) {
+        console.log("Could not create NDI sender:", err)
+        error = true
+    }
+
+    if (error) {
+        delete NDI[id]
+        return
     }
 
     NDI[id].timer = setInterval(() => {
@@ -119,7 +132,7 @@ export async function createSenderNDI(id: string, title: string = "") {
 }
 
 export async function sendVideoBufferNDI(id: string, buffer: any, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
-    if (!NDI[id].sender) return
+    if (!NDI[id]?.sender) return
 
     // not linux
     if (os.platform() === "linux") return

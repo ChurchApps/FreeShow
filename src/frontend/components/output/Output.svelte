@@ -433,6 +433,7 @@
                                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                                     key={currentOutput.isKeyOutput}
                                     disableListTransition={disableTransitions}
+                                    chords={item.chords?.enabled}
                                     {animationStyle}
                                     {preview}
                                     {item}
@@ -458,6 +459,7 @@
                                     backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
                                     key={currentOutput.isKeyOutput}
                                     disableListTransition={disableTransitions}
+                                    chords={item.chords?.enabled}
                                     {animationStyle}
                                     {preview}
                                     {item}

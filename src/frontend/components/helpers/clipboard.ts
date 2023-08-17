@@ -733,6 +733,9 @@ const deleteActions = {
     },
     output: (data: any) => {
         data.forEach(({ id }) => {
+            // delete key output
+            if (get(outputs)[id]?.keyOutput) history({ id: "UPDATE", newData: { id: get(outputs)[id].keyOutput }, location: { page: "settings", id: "settings_output" } })
+
             history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_output" } })
         })
 

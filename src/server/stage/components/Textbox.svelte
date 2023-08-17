@@ -99,11 +99,12 @@
         item.lines!.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
+            let chords = JSON.parse(JSON.stringify(line.chords || []))
+
             let html = ""
             let index = 0
             line.text.forEach((text) => {
                 let value = text.value.trim().replaceAll("\n", "") || "."
-                let chords = JSON.parse(JSON.stringify(line.chords || []))
 
                 let letters = value.split("")
                 letters.forEach((letter) => {
@@ -113,13 +114,14 @@
                         chords.splice(chordIndex, 1)
                     }
 
-                    index++
                     html += `<span class="invisible">${letter}</span>`
-                })
 
-                chords.forEach((chord: any, i: number) => {
-                    html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
+                    index++
                 })
+            })
+
+            chords.forEach((chord: any, i: number) => {
+                html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
             })
 
             if (!html) return
@@ -132,9 +134,6 @@
 <div class="item" style={style ? itemStyle : null}>
     {#if item.lines}
         <div class="align" style={style ? item.align : null} bind:this={alignElem}>
-            <!-- {#if chords}
-                <Chords {item} {textElem} />
-            {/if} -->
             <div class="lines" style={style && lineGap ? `gap: ${lineGap}px;` : ""}>
                 {#each item.lines as line, i}
                     {#if chordLines[i]}

@@ -205,11 +205,12 @@
         item.lines!.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
+            let chords = JSON.parse(JSON.stringify(line.chords || []))
+
             let html = ""
             let index = 0
             line.text.forEach((text) => {
-                let value = text.value.trim().replaceAll("\n", "") || "."
-                let chords = JSON.parse(JSON.stringify(line.chords || []))
+                let value = text.value.trim().replaceAll("\n", "") || ""
 
                 let letters = value.split("")
                 letters.forEach((letter) => {
@@ -219,19 +220,23 @@
                         chords.splice(chordIndex, 1)
                     }
 
-                    index++
-                    html += `<span class="invisible">${letter}</span>`
-                })
+                    html += `<span class="invisible" style="${style ? getAlphaStyle(text.style) : ""}${fontSizeValue ? `font-size: ${fontSizeValue};` : ""}">${letter}</span>`
 
-                chords.forEach((chord: any, i: number) => {
-                    html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
+                    index++
                 })
+            })
+
+            chords.forEach((chord: any, i: number) => {
+                html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
             })
 
             if (!html) return
             chordLines[i] = html
         })
     }
+
+    $: if (chords && !stageItem && item?.auto && fontSize) fontSize *= 0.7
+    $: fontSizeValue = stageAutoSize || item.auto ? (fontSize || autoSize) + "px" : fontSize ? fontSize + "px" : ""
 </script>
 
 <!-- svelte transition bug!!! -->
@@ -254,9 +259,6 @@
                 style={style ? item.align : null}
                 bind:this={alignElem}
             >
-                <!-- {#if chords}
-                    <Chords {item} {textElem} />
-                {/if} -->
                 <div
                     class="lines"
                     style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
@@ -264,14 +266,14 @@
                     {#each lines as line, i}
                         {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
                             {#if chords && chordLines[i]}
-                                <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || '#FF851B'};--font-size: {fontSize || autoSize}px;">
+                                <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || item.chords?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || item.chords?.color || '#FF851B'};">
                                     {@html chordLines[i]}
                                 </div>
                             {/if}
                             <!-- class:height={!line.text[0]?.value.length} -->
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
-                                    <span style="{style ? getAlphaStyle(text.style) : ''}{stageAutoSize || item.auto ? 'font-size: ' + (fontSize || autoSize) + 'px;' : fontSize ? 'font-size: ' + fontSize + 'px;' : ''}">
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}">
                                         {@html text.value.replaceAll("\n", "<br>") || "<br>"}
                                     </span>
                                 {/each}
@@ -343,9 +345,6 @@
                 style={style ? item.align : null}
                 bind:this={alignElem}
             >
-                <!-- {#if chords}
-                    <Chords {item} {textElem} />
-                {/if} -->
                 <div
                     class="lines"
                     style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
@@ -353,16 +352,21 @@
                     {#each lines as line, i}
                         {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
                             {#if chords && chordLines[i]}
-                                <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || '#FF851B'};--font-size: {fontSize || autoSize}px;">
+                                <div
+                                    class:first={i === 0}
+                                    class="break chords"
+                                    class:stageChords={!!stageItem}
+                                    style="--chord-size: {stageItem?.chordsData?.size || item.chords?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || item.chords?.color || '#FF851B'};"
+                                >
                                     {@html chordLines[i]}
                                 </div>
                             {/if}
                             <!-- class:height={!line.text[0]?.value.length} -->
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
-                                    <span style="{style ? getAlphaStyle(text.style) : ''}{stageAutoSize || item.auto ? 'font-size: ' + (fontSize || autoSize) + 'px;' : fontSize ? 'font-size: ' + fontSize + 'px;' : ''}"
-                                        >{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span
-                                    >
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}">
+                                        {@html text.value.replaceAll("\n", "<br>") || "<br>"}
+                                    </span>
                                 {/each}
                             </div>
                         {/if}
@@ -477,7 +481,7 @@
     color: white;
   } */
 
-    .break:not(.chords) :global(span) {
+    .break:not(.stageChords) :global(span) {
         font-size: 100px;
         min-height: 50px;
         /* display: inline-block; */
@@ -562,8 +566,8 @@
     /* chords */
     .break.chords :global(.invisible) {
         opacity: 0;
-        font-size: var(--font-size);
         line-height: 0;
+        font-size: 100px;
     }
     .break.chords :global(.chord) {
         position: absolute;
@@ -575,11 +579,13 @@
     }
     .break.chords {
         line-height: 0.5em;
+        max-height: 15px;
         position: relative;
         pointer-events: none;
     }
     .break.chords.first {
         line-height: var(--chord-size) !important;
+        /* max-height: unset; */
     }
 
     /* custom svg icon */

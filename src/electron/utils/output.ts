@@ -80,7 +80,7 @@ function createOutputWindow(options: any, id: string, name: string) {
     })
 
     // open devtools
-    // if (!isProd) window.webContents.openDevTools()
+    if (!isProd) window.webContents.openDevTools()
 
     return window
 }
@@ -92,10 +92,15 @@ export function closeAllOutputs() {
 }
 
 function removeOutput(id: string, reopen: any = null) {
-    if (!outputWindows[id]) return
-
     stopCapture(id)
     stopSenderNDI(id)
+
+    if (!outputWindows[id]) return
+    if (outputWindows[id].isDestroyed()) {
+        delete outputWindows[id]
+        if (reopen) createOutput(reopen)
+        return
+    }
 
     try {
         outputWindows[id].close()
@@ -105,7 +110,6 @@ function removeOutput(id: string, reopen: any = null) {
 
     outputWindows[id].on("closed", () => {
         delete outputWindows[id]
-
         if (reopen) createOutput(reopen)
     })
 }

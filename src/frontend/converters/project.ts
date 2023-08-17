@@ -5,8 +5,13 @@ export function importProject(files: any) {
     files.forEach(({ content }: any) => {
         let { project, shows } = JSON.parse(content)
 
-        let data = Object.entries(shows).map(([id, show]: any) => ({ id, show: { ...show, name: checkName(show.name) } }))
-        history({ id: "SHOWS", newData: { data } })
+        let newShows: any[] = []
+        Object.entries(shows).forEach(([id, show]: any) => {
+            if (!show) return
+            newShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
+        })
+
+        history({ id: "SHOWS", newData: { data: newShows } })
 
         history({ id: "UPDATE", newData: { data: project }, location: { page: "show", id: "project" } })
     })
