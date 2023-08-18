@@ -30,6 +30,7 @@ export type SaveListSettings =
     | "openedFolders"
     | "os"
     | "outputs"
+    | "sorted"
     | "styles"
     | "outLocked"
     | "presenterControllerKeys"

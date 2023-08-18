@@ -80,7 +80,7 @@ function createOutputWindow(options: any, id: string, name: string) {
     })
 
     // open devtools
-    if (!isProd) window.webContents.openDevTools()
+    // if (!isProd) window.webContents.openDevTools()
 
     return window
 }

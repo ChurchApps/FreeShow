@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
-import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sortedShowsList, stageShows } from "../../stores"
+import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
 import { clone, keysToID, removeValues, sortObject } from "./array"
 import { GetLayout } from "./get"
 
@@ -80,10 +80,19 @@ export function newSlide(data: any): Slide {
 }
 
 // update list for drawer
-export function updateShowsList(shows: { [key: string]: Shows }) {
+export function updateShowsList(shows: Shows) {
     // sort shows in alphabeticly order & remove private shows
-    let sortedShows: ShowList[] = removeValues(sortObject(keysToID(shows), "name"), "private", true)
-    sortedShowsList.set(sortedShows)
+    let showsList = keysToID(shows)
+
+    let sortType = get(sorted).shows?.type || "name"
+    // sort by name regardless if many shows have the same date
+    let sortedShows: any[] = sortObject(showsList, "name")
+    if (sortType === "date") {
+        sortedShows = showsList.sort((a, b) => (b.timestamps?.created || b.timestamps?.modified) - (a.timestamps?.created || a.timestamps?.modified))
+    }
+
+    let filteredShows: ShowList[] = removeValues(sortedShows, "private", true)
+    sortedShowsList.set(filteredShows)
 }
 
 // update cached shows

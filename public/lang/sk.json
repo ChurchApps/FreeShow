@@ -867,6 +867,14 @@
         "backup_finished": "Backup complete!",
         "restore_finished": "Restore complete!"
     },
+    "sort": {
+        "sort_by": "Sort by",
+        "name": "Názov",
+        "date": "Date",
+        "size": "Veľkosť",
+        "type": "Typ",
+        "custom": "Custom"
+    },
     "calendar": {
         "type": "Typ",
         "event": "Nová udalosť",

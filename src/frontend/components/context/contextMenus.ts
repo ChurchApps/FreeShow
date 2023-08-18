@@ -59,6 +59,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     private: { label: "actions.toggle_private", icon: "private" },
     duplicate: { label: "actions.duplicate", icon: "duplicate", shortcuts: [ctrl + "+D"] },
     section: { label: "new.section", icon: "section" },
+    // SORT
+    sort_shows_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_shows"] },
+    sort_projects_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_projects"] },
     // SHOWS
     addToProject: { label: "context.addToProject", icon: "project" },
     remove: { label: "actions.remove", icon: "remove" },
@@ -151,7 +154,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_audio_button: ["rename", "delete", "SEPERATOR", "system_open"],
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow", "selectAll"],
+    drawer_show: ["newShowPopup", "newShow", "sort_shows_by", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
@@ -178,7 +181,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     live_card: ["recording"],
 
     // PROJECT
-    projects: ["newProject", "newFolder"],
+    projects: ["newProject", "newFolder", "sort_projects_by"],
     projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "newPrivateShow", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export"], // "open",

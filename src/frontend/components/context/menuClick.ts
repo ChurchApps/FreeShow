@@ -36,6 +36,7 @@ import {
     shows,
     showsCache,
     slidesOptions,
+    sorted,
     sortedShowsList,
     stageShows,
     styles,
@@ -57,6 +58,7 @@ import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
 import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
+import { updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
@@ -94,6 +96,7 @@ const actions: any = {
     docs: () => window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" }),
     shortcuts: () => activePopup.set("shortcuts"),
     about: () => activePopup.set("about"),
+
     // main
     rename: (obj: any) => {
         let id = obj.sel.id
@@ -114,6 +117,8 @@ const actions: any = {
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
     },
+    sort_shows: (obj: any) => sort(obj, "shows"),
+    sort_projects: (obj: any) => sort(obj, "projects"),
     remove: (obj: any) => {
         if (deleteAction(obj.sel)) return
 
@@ -168,6 +173,7 @@ const actions: any = {
             return
         }
     },
+
     // drawer
     enabled_drawer_tabs: (obj: any) => {
         let m = { hide: false, enabled: !obj.enabled }
@@ -1071,4 +1077,18 @@ const formatting: any = {
             .trim()
             .replace(/[.,!]*$/g, "")
             .trim(),
+}
+
+// SORT
+
+function sort(obj: any, id: string) {
+    let type = obj.menu.id
+
+    sorted.update((a) => {
+        if (!a[id]) a[id] = {}
+        a[id].type = type
+        return a
+    })
+
+    if (id === "shows") updateShowsList(get(shows))
 }

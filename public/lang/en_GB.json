@@ -867,6 +867,14 @@
         "backup_finished": "Backup complete!",
         "restore_finished": "Restore complete!"
     },
+    "sort": {
+        "sort_by": "Sort by",
+        "name": "Name",
+        "date": "Date",
+        "size": "Size",
+        "type": "Type",
+        "custom": "Custom"
+    },
     "calendar": {
         "type": "Type",
         "event": "Event",

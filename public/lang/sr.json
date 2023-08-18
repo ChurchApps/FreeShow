@@ -867,6 +867,14 @@
         "backup_finished": "Backup complete!",
         "restore_finished": "Restore complete!"
     },
+    "sort": {
+        "sort_by": "Sort by",
+        "name": "Ime",
+        "date": "Date",
+        "size": "Veličina",
+        "type": "Tip",
+        "custom": "Custom"
+    },
     "calendar": {
         "type": "Tip",
         "event": "Događaj",

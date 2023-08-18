@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
+import { loadShows } from "../components/helpers/setShow"
 import {
     activePopup,
     activeShow,
@@ -64,7 +65,6 @@ import { send } from "./request"
 import { closeApp } from "./save"
 import { client } from "./sendData"
 import { stageListen } from "./stageTalk"
-import { loadShows } from "../components/helpers/setShow"
 
 export function listen() {
     // FROM CLIENT (EXPRESS SERVERS)
@@ -233,6 +233,7 @@ const saveList: { [key in SaveList]: any } = {
     os: os,
     outLocked: null,
     outputs: null,
+    sorted: null,
     styles: styles,
     overlayCategories: overlayCategories,
     presenterControllerKeys: presenterControllerKeys,

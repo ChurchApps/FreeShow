@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { outputs } from "../../../stores"
+    import { os, outputs } from "../../../stores"
     import { findMatchingOut, getResolution } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
@@ -38,6 +38,8 @@
     onMount(capture)
 
     function capture() {
+        error = ""
+
         navigator.mediaDevices
             .getUserMedia(constraints)
             .then((mediaStream) => {
@@ -55,7 +57,7 @@
                 loaded = true
 
                 // retry
-                setTimeout(capture, 5000)
+                if ($os.platform === "darwin") setTimeout(capture, 5000)
             })
     }
 

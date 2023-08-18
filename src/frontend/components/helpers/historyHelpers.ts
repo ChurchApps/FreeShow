@@ -104,6 +104,9 @@ export const _updaters = {
     project_folder: {
         store: folders,
         empty: EMPTY_PROJECT_FOLDER,
+        initialize: (data) => {
+            return replaceEmptyValues(data, { created: Date.now() })
+        },
         select: (id: string, { data, changed }: any, initializing: boolean) => {
             // add folder to opened folders
             openedFolders.update((a) => {

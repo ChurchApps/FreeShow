@@ -49,6 +49,7 @@ import {
     serverData,
     showsPath,
     slidesOptions,
+    sorted,
     styles,
     templateCategories,
     theme,
@@ -224,6 +225,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         })
         outputs.set(v)
     },
+    sorted: (v: any) => sorted.set(v),
     styles: (v: any) => styles.set(v),
     remotePassword: (v: any) => remotePassword.set(v),
     audioFolders: (v: any) => audioFolders.set(v),

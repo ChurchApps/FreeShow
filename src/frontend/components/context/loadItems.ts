@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, drawerTabsData, groups, outputs, overlays, selected, templates } from "../../stores"
+import { activeEdit, drawerTabsData, groups, outputs, overlays, selected, sorted, templates } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { chordAdders, keys } from "../edit/values/chords"
@@ -14,6 +14,16 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
             Object.entries(drawerTabs).forEach(([aID, a]: any, i) => {
                 if (i >= 2) items.push([id, { id: aID, label: a.name, icon: a.icon, enabled: get(drawerTabsData)[aID]?.enabled !== false }])
             })
+            break
+        case "sort_shows":
+        case "sort_projects":
+            let sortedId = id.split("_")[1]
+            let type = get(sorted)[sortedId]?.type || "name"
+
+            items = [
+                [id, { id: "name", label: "sort.name", icon: "text", enabled: type === "name" }],
+                [id, { id: "date", label: "sort.date", icon: "calendar", enabled: type === "date" }],
+            ]
             break
         case "slide_groups":
             let selectedIndex = get(selected).data[0]?.index
