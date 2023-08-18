@@ -121,6 +121,10 @@ const mainResponses: any = {
         if (process.platform !== "darwin") return
         systemPreferences.askForMediaAccess("microphone")
     },
+    ACCESS_SCREEN_PERMISSION: () => {
+        if (process.platform !== "darwin") return
+        systemPreferences.getMediaAccessStatus("screen")
+    },
     RESTORE: (a: any) => restoreFiles(a),
     SYSTEM_OPEN: (a: any) => openSystemFolder(a),
     LOCATE_MEDIA_FILE: (a: any) => locateMediaFile(a),

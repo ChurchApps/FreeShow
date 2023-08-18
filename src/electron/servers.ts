@@ -60,6 +60,7 @@ export function closeServers() {
     started = false
     let serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
+        if (!servers[id]?.server) return
         servers[id].server.close()
     })
 }

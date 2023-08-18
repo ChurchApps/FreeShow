@@ -78,6 +78,11 @@ export const boxes: Box = {
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
             ],
+            chords: [
+                { name: "chords", id: "chords.enabled", input: "checkbox", value: false },
+                { name: "color", id: "chords.color", input: "color", value: "#FF851B", hidden: true },
+                { name: "size", id: "chords.size", input: "number", value: 30, hidden: true },
+            ],
             special: [
                 {
                     name: "scrolling",

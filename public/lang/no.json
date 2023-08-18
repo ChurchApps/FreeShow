@@ -867,6 +867,14 @@
         "backup_finished": "Sikkerhetskopiering fullført!",
         "restore_finished": "Gjenoppretting fullført!"
     },
+    "sort": {
+        "sort_by": "Sorter etter",
+        "name": "Navn",
+        "date": "Dato",
+        "size": "Størrelse",
+        "type": "Type",
+        "custom": "Egendefinert"
+    },
     "calendar": {
         "type": "Type",
         "event": "Arrangement",

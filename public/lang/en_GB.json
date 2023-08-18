@@ -283,7 +283,7 @@
     },
     "category": {
         "all": "All",
-        "unlabeled": "Unlabeled",
+        "unlabeled": "Unlabelled",
         "favourites": "Favourites",
         "song": "Songs",
         "presentation": "Presentations",
@@ -303,7 +303,7 @@
         "toggle_global_group": "Toggle global groups",
         "intro": "Intro",
         "verse": "Verse",
-        "pre_chorus": "Pre Chorus",
+        "pre_chorus": "Pre-Chorus",
         "chorus": "Chorus",
         "break": "Break",
         "tag": "Tag",
@@ -475,7 +475,7 @@
         "case_sensitive": "Case sensitive",
         "uppercase": "Make uppercase",
         "lowercase": "Make lowercase",
-        "capitalize": "Capitalize",
+        "capitalize": "Capitalise",
         "trim": "Trim",
         "click_disable": "Click any to disable",
         "svg_clipboard": "Import SVG from clipboard",
@@ -676,7 +676,7 @@
         "timer": "Timer",
         "variable": "Variable",
         "web": "Website",
-        "visualizer": "Visualizer",
+        "visualizer": "Visualiser",
         "icon": "Icon"
     },
     "borders": {
@@ -805,7 +805,7 @@
         "hide_menubar_hint": "To hide the menu bar, enable kiosk mode, or enable \"Automatically hide or show the menu bar\" in the general MacOS settings.",
         "show_output_hint": "Hold ctrl/cmd while clicking the display button to force it to show over this monitor.",
         "move_output_hint": "Don't find your display? Change the position until the window shows up on the second screen.",
-        "select_display": "Click on the screen where you wan't to display the output window.",
+        "select_display": "Click on the screen where you want to display the output window.",
         "manual_input_hint": "Can't find the display? Click here to manually change the position.",
         "manual_drag_hint": "You can also hold ctrl/cmd over an active output window to manually drag it around.",
         "new_output": "New output",
@@ -866,6 +866,14 @@
         "restore_started": "Restoring...",
         "backup_finished": "Backup complete!",
         "restore_finished": "Restore complete!"
+    },
+    "sort": {
+        "sort_by": "Sort by",
+        "name": "Name",
+        "date": "Date",
+        "size": "Size",
+        "type": "Type",
+        "custom": "Custom"
     },
     "calendar": {
         "type": "Type",

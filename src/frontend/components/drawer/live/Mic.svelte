@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
     import { activeShow, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
@@ -77,19 +77,26 @@
         // TODO: add this to audioChannels / audioAnalyzer
     }
 
-    navigator.mediaDevices
-        .getUserMedia({
-            audio: {
-                deviceId: { exact: mic.id },
-            },
-        })
-        .then(handleSuccess)
-        .catch((err) => {
-            console.log(err)
-            if (err.name === "NotReadableError") {
-                window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
-            }
-        })
+    onMount(capture)
+
+    function capture() {
+        navigator.mediaDevices
+            .getUserMedia({
+                audio: {
+                    deviceId: { exact: mic.id },
+                },
+            })
+            .then(handleSuccess)
+            .catch((err) => {
+                console.log(err)
+                if (err.name === "NotReadableError") {
+                    window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
+                }
+
+                // retry
+                setTimeout(capture, 5000)
+            })
+    }
 
     onDestroy(() => {
         audioStream?.getAudioTracks().forEach((track: any) => track.stop())

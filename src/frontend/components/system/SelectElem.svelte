@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SelectIds } from "../../../types/Main"
-    import { os, selected } from "../../stores"
+    import { activeRename, os, selected } from "../../stores"
     import { arrayHasData } from "../helpers/array"
 
     export let id: SelectIds
@@ -29,6 +29,8 @@
     }
 
     function mousedown(e: any, dragged: boolean = false) {
+        if (dragged && $activeRename !== null) return e.preventDefault()
+
         // this affects the cursor
         // https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/dropEffect
         let type: "copy" | "move" | "link" = "move"
@@ -125,6 +127,8 @@
 <svelte:window
     on:mousedown={deselect}
     on:dragstart={() => {
+        if ($activeRename !== null) return
+
         dragActive = true
     }}
     on:dragend={endDrag}

@@ -27,7 +27,7 @@ export const EMPTY_PLAYER_VIDEO = { name: "", type: "" } // "youtube" | "vimeo"
 export const EMPTY_SLIDE: Overlay | Template = { name: "", color: null, category: null, items: [] }
 
 export const EMPTY_PROJECT: Project = { name: "", created: 0, parent: "/", shows: [] }
-export const EMPTY_PROJECT_FOLDER = { name: "", parent: "/" }
+export const EMPTY_PROJECT_FOLDER = { name: "", created: 0, parent: "/" }
 
 export const EMPTY_SECTION: ProjectShowRef = { id: "", type: "section", name: "", notes: "" }
 

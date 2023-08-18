@@ -17,18 +17,20 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
-    function updateStyle(e: any, key: string, styleId: string = "") {
+    function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
 
-        if (!styleId) styleId = $styles.default ? uid() : "default"
+        if (!currentId) currentId = styleId || "default"
 
         // TODO: history
         styles.update((a) => {
-            if (!a[styleId]) a[styleId] = clone(currentStyle)
-            a[styleId][key] = value
+            if (!a[currentId]) a[currentId] = clone(currentStyle)
+            a[currentId][key] = value
 
             return a
         })
+
+        styleId = currentId
     }
 
     function updateCropping(newValue: number, key: string) {

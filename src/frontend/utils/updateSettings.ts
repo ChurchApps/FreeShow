@@ -49,6 +49,7 @@ import {
     serverData,
     showsPath,
     slidesOptions,
+    sorted,
     styles,
     templateCategories,
     theme,
@@ -65,6 +66,7 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
+import type { Output } from "../../types/Output"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -87,7 +89,25 @@ export function updateSettings(data: any) {
 
     // output
     if (data.outputs) {
-        keysToID(data.outputs)
+        let outputsList: Output[] = keysToID(data.outputs)
+
+        // get active "ghost" key outputs
+        let activeKeyOutputs: string[] = []
+        outputsList.forEach((output) => {
+            if (output.keyOutput && !output.isKeyOutput) activeKeyOutputs.push(output.id!)
+        })
+
+        // remove "ghost" key outputs (they were not removed in versions pre 0.9.6)
+        outputs.update((a) => {
+            outputsList.forEach((output) => {
+                if (!output.isKeyOutput || activeKeyOutputs.includes(output.id!)) return
+                delete a[output.id!]
+            })
+
+            return a
+        })
+
+        keysToID(get(outputs))
             .filter((a) => a.enabled)
             .forEach((output: any) => {
                 send(OUTPUT, ["CREATE"], output)
@@ -205,6 +225,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         })
         outputs.set(v)
     },
+    sorted: (v: any) => sorted.set(v),
     styles: (v: any) => styles.set(v),
     remotePassword: (v: any) => remotePassword.set(v),
     audioFolders: (v: any) => audioFolders.set(v),

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { ItemType, Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, notFound, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { clone, keysToID } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
@@ -252,6 +252,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     showsList[i].show.name = name
                 })
+
+                // reset this on redo
+                notFound.set({ show: [], bible: [] })
             }
 
             let duplicates: string[] = []
@@ -278,6 +281,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     } else {
                         if (!show) return
 
+                        // return if old show is modified after old show
+                        if (initializing && get(shows)[id]?.timestamps?.modified && show.timestamps?.modified && get(shows)[id].timestamps.modified! > show.timestamps.modified) return
+
                         if (replace) {
                             if (initializing) obj.oldData.data[i].show = clone(a[id])
                             a[id] = { ...a[id], ...show }
@@ -290,7 +296,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             return
                         }
 
-                        if (a[id]) duplicates.push(show.name)
                         a[id] = show
                         // skip text cache for faster import
                         // saveTextCache(id, show)
@@ -319,6 +324,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // remove from deleted when restored
                     deletedShows.set(get(deletedShows).filter((a) => a.id !== id))
 
+                    // return if old show is modified after old show
+                    if (initializing && a[id]?.timestamps?.modified && show.timestamps?.modified && a[id].timestamps.modified > show.timestamps.modified) return
+
+                    let oldShow = a[id] ? clone(a[id]) : null
+                    if (oldShow?.timestamps) delete oldShow.timestamps.used
+
                     a[id] = {
                         name: show.name || a[id]?.name || "",
                         category: show.category === undefined ? a[id].category : show.category,
@@ -327,6 +338,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     if (show.private) a[id].private = true
                     else if (a[id].private) delete a[id].private
+
+                    let newShow = clone(a[id])
+                    if (newShow?.timestamps) delete newShow.timestamps.used
+
+                    if (initializing && oldShow && JSON.stringify(oldShow) !== JSON.stringify(newShow)) duplicates.push(show.name)
                 })
                 return a
             })
@@ -345,8 +361,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 renamedShows.set([...newRenamed, ...newRenamedList])
             }
 
-            // TODO: choose to overwrite or just skip
-            if (duplicates.length) {
+            // TODO: choose which version to overwrite or just skip
+            if (initializing && duplicates.length) {
+                // && replace ??
                 let text = "Overwritten " + duplicates.length + " show"
                 if (duplicates.length > 1) text += "s"
                 setTimeout(() => {
@@ -713,7 +730,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if ((slideId && slideId !== id) || !slide) return
 
                         // roll items around
-                        if (createItems) slide.items = [...slide.items.slice(1), slide.items[0]]
+                        if (createItems) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
                         // let addedItems = 0
 
                         let itemTypeIndex: any = {}
@@ -725,6 +742,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                             let tempCount = -1
                             let itemIndex = slide.items.findIndex((a) => {
+                                if (!a) return false
+
                                 let itemType = a.type || "text"
                                 if (itemType === type) tempCount++
                                 if (tempCount === itemTypeIndex[type]) return true
@@ -753,6 +772,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                             slide.items[itemIndex].auto = item.auto || false
                             slide.items[itemIndex].actions = item.actions || {}
+                            slide.items[itemIndex].chords = item.chords || {}
                             slide.items[itemIndex].specialStyle = item.specialStyle || {}
                             slide.items[itemIndex].scrolling = item.scrolling || {}
                             slide.items[itemIndex].bindings = item.bindings || []

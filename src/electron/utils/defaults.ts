@@ -29,6 +29,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
             show: {},
         },
     },
+    sorted: {},
     styles: {},
     openedFolders: [],
     activeProject: null,

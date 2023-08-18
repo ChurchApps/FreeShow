@@ -331,6 +331,7 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
+    MAIN_LOG: (msg: any) => console.log(msg),
 }
 
 let previousOutputs: string = ""

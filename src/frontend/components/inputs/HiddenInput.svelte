@@ -44,10 +44,14 @@
             timeout = setTimeout(() => {
                 click(e)
             }, 500)
-        } else if (e.target !== inputElem) {
-            edit = false
-            activeRename.set(null)
+
+            return
         }
+
+        if (e.target.closest("input") || e.target.closest(".edit")) return
+
+        edit = false
+        activeRename.set(null)
     }
 
     const dispatch = createEventDispatcher()

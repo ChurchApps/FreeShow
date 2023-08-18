@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
-    import { activeProject, activeShow, dictionary, drawer, folders, labelsDisabled, projects, projectView } from "../../stores"
+    import { activeProject, activeShow, dictionary, drawer, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
@@ -20,7 +20,16 @@
     $: f = Object.entries($folders).map(([id, folder]) => ({ ...folder, id, type: "folder" as "folder" }))
     $: p = Object.entries($projects).map(([id, project]) => ({ ...project, id, shows: [] as any }))
     $: {
-        tree = [...f.sort((a, b) => a.name?.localeCompare(b.name)), ...p.sort((a, b) => a.name?.localeCompare(b.name))]
+        let sortType = $sorted.projects?.type || "name"
+        // sort by name regardless because project folders <= 0.9.5 doesn't have created date
+        let sortedFolders = f.sort((a, b) => a.name?.localeCompare(b.name))
+        let sortedProjects = p.sort((a, b) => a.name?.localeCompare(b.name))
+        if (sortType === "date") {
+            sortedFolders = sortedFolders.sort((a, b) => (b.created || 0) - (a.created || 0))
+            sortedProjects = sortedProjects.sort((a, b) => (b.created || 0) - (a.created || 0))
+        }
+
+        tree = [...sortedFolders, ...sortedProjects]
 
         folderSorted = []
         sortFolders()

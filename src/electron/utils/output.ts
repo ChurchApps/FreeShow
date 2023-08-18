@@ -85,17 +85,20 @@ function createOutputWindow(options: any, id: string, name: string) {
     return window
 }
 
-// REMOVE
-
 export function closeAllOutputs() {
     Object.keys(outputWindows).forEach(removeOutput)
 }
 
 function removeOutput(id: string, reopen: any = null) {
-    if (!outputWindows[id]) return
-
     stopCapture(id)
     stopSenderNDI(id)
+
+    if (!outputWindows[id]) return
+    if (outputWindows[id].isDestroyed()) {
+        delete outputWindows[id]
+        if (reopen) createOutput(reopen)
+        return
+    }
 
     try {
         outputWindows[id].close()
@@ -105,7 +108,6 @@ function removeOutput(id: string, reopen: any = null) {
 
     outputWindows[id].on("closed", () => {
         delete outputWindows[id]
-
         if (reopen) createOutput(reopen)
     })
 }

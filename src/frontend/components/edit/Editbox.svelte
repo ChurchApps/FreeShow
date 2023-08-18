@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, dictionary, os, outputs, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activePopup, activeShow, dictionary, os, outputs, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
     import { menuClick } from "../context/menuClick"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
@@ -387,7 +387,6 @@
     let textChanged = false
     let previousText: string = ""
     $: if (html && textElem?.innerText !== previousText) checkText()
-    $: console.log(textElem?.innerText)
     function checkText() {
         textChanged = true
         previousText = textElem?.innerText
@@ -665,12 +664,12 @@
         let data = chordButtons[btn.id]
         if (!data) return
 
-        // right click
-        if (e.button === 2) selected.set({ id: "chord", data: [{ chord: { id: data.chord.id }, index: data.lineIndex, slideId: ref.id, itemIndex: index }] })
+        // for right click or rename click
+        selected.set({ id: "chord", data: [{ chord: data.chord, index: data.lineIndex, slideId: ref.id, itemIndex: index }] })
 
         if (e.button !== 0) return
         // left click
-        changeKey(data)
+        activePopup.set("rename")
     }
 
     let chordLines: string[] = []
@@ -682,26 +681,21 @@
         item.lines!.forEach((line, i) => {
             if (!line.text) return
 
-            // {#each line.text || [] as text}
-            //     <span style="{text.style}font-size: {autoSize}px;">
-            //         {@html text.value.replaceAll("\n", "<br>") || "<br>"}
-            //     </span>
-            // {/each}
+            let chords = JSON.parse(JSON.stringify(line.chords || []))
 
             let html = ""
-            let index = 0
+            let currentIndex = 0
             line.text.forEach((text) => {
                 if (!text.value) {
                     html += "<br>"
                     return
                 }
 
-                let value = text.value.trim().replaceAll("\n", "") || "."
-                let chords = JSON.parse(JSON.stringify(line.chords || []))
+                let value = text.value.trim().replaceAll("\n", "") || ""
 
                 let letters = value.split("")
-                letters.forEach((letter, li) => {
-                    let chordIndex = chords.findIndex((a: any) => a.pos === index)
+                letters.forEach((letter) => {
+                    let chordIndex = chords.findIndex((a: any) => a.pos === currentIndex)
                     if (chordIndex >= 0) {
                         let chord = chords[chordIndex]
                         chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
@@ -710,18 +704,18 @@
                         chords.splice(chordIndex, 1)
                     }
 
-                    index++
-
                     let style = text.style
                     if (item.auto && autoSize) style += `font-size: ${autoSize}px;`
-                    html += `<span id="${i}_${li}" class="invisible add" style="${style}">${letter}</span>`
-                })
+                    html += `<span id="${i}_${currentIndex}" class="invisible add" style="${style}">${letter}</span>`
 
-                chords.forEach((chord: any, ci: number) => {
-                    chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
-                    let buttonIndex = chordButtons.length - 1
-                    html += `<span id="${buttonIndex}" class="context #chord chord button" style="transform: translate(${60 * (ci + 1)}px, -80%);">${chord.key}</span>`
+                    currentIndex++
                 })
+            })
+
+            chords.forEach((chord: any, ci: number) => {
+                chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
+                let buttonIndex = chordButtons.length - 1
+                html += `<span id="${buttonIndex}" class="context #chord chord button" style="transform: translate(${60 * (ci + 1)}px, -80%);">${chord.key}</span>`
             })
 
             if (!html) return
@@ -998,7 +992,7 @@ bind:offsetWidth={width} -->
         background-color: var(--primary-darker);
         /* color: var(--text); */
         font-size: 0.8em;
-        border: 10px solid var(--secondary);
+        border: 5px solid var(--secondary);
         text-shadow: none;
         z-index: 3;
 
@@ -1013,8 +1007,8 @@ bind:offsetWidth={width} -->
         bottom: -5px;
         left: 50%;
         transform: translate(-50%, 100%);
-        width: 10px;
-        height: 80px;
+        width: 5px;
+        height: 50px;
         background-color: var(--secondary);
         /* background-color: var(--secondary-opacity); */
     }
@@ -1097,9 +1091,10 @@ bind:offsetWidth={width} -->
 
     /* chords */
     .edit.chords :global(.invisible) {
-        opacity: 0;
+        opacity: 1;
         font-size: var(--font-size);
-        line-height: 0;
+        line-height: 1.1em;
+        background-color: rgb(255 255 255 / 0.1);
     }
     .edit.chords :global(.invisible):hover {
         opacity: 0.6;
@@ -1109,20 +1104,24 @@ bind:offsetWidth={width} -->
         /* color: var(--chord-color);
         font-size: var(--chord-size) !important; */
         bottom: 0;
-        transform: translate(-50%, -80%);
+        transform: translate(-50%, -60%);
         z-index: 2;
-        font-size: 70px !important;
+        font-size: 60px !important;
         /* color: #FF851B; */
+
+        line-height: initial;
+        opacity: 0.9;
     }
     .edit.chords {
         /* line-height: 0.5em; */
-        font-size: inherit;
+        /* font-size: inherit; */
         position: absolute;
         /* pointer-events: none; */
     }
 
     .chordsBreak {
         position: relative;
+        line-height: 0;
     }
 
     /* custom svg icon */

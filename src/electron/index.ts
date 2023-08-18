@@ -6,7 +6,6 @@ import path from "path"
 import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
-import { stopAllCaptures } from "./ndi/capture"
 import { receiveNDI } from "./ndi/talk"
 import { closeServers } from "./servers"
 import { startBackup } from "./utils/backup"
@@ -31,7 +30,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 32 * 1000)
+    else setTimeout(startApp, 32 * 1000) // Linux dev: 80 * 1000
 })
 
 function startApp() {
@@ -152,7 +151,6 @@ function createMain() {
         mainWindow = null
         dialogClose = false
 
-        stopAllCaptures()
         closeAllOutputs()
         closeServers()
 

@@ -37,6 +37,7 @@ export interface Folders {
 export interface Folder {
     id?: string
     name: string
+    created?: number
     parent: string
     type?: "folder"
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import type { MediaFit } from "../../../types/Main"
-    import { activeEdit, activeShow, dictionary, driveData, media, outputs, showsCache, styles } from "../../stores"
+    import { activeEdit, activeShow, dictionary, driveData, labelsDisabled, media, outputs, showsCache, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -250,7 +250,8 @@
 
         <div class="actions" style="height: 100%;justify-content: right;">
             <Button on:click={toggleChords} title={$dictionary.edit?.chords}>
-                <Icon id="chords" white={!chordsMode} />
+                <Icon id="chords" white={!chordsMode} right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="edit.chords" />{/if}
             </Button>
 
             <div class="seperator" />

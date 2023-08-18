@@ -27,6 +27,8 @@
             list = [...new Set(list)]
         } else if ($selected.id === "player") {
             list = [...new Set($selected.data.map((id) => $playerVideos[id].name))]
+        } else if ($selected.id === "chord") {
+            groupName = $selected.data?.[0]?.chord?.key || ""
         }
     }
 

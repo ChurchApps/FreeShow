@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { checkName } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
-import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
+import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 
 interface VideoPsalm {
@@ -116,12 +116,6 @@ export function convertVideopsalm(data: any) {
             activePopup.set("alert")
             alertMessage.set(importingText + " " + i + "/" + content.Songs.length + " (" + percentage + "%)" + "<br>" + (song.Text || ""))
 
-            if (get(shows)[song.Guid] && i < content.Songs.length - 1) {
-                i++
-                requestAnimationFrame(asyncLoop)
-                return
-            }
-
             let layoutID = uid()
             let show = new ShowObj(false, "videopsalm", layoutID)
             let showId = song.Guid || uid()
@@ -210,8 +204,9 @@ function createSlides({ Verses, Sequence }: Song) {
                     newText += text
 
                     let chord = t.slice(chordStart + 1)
+                    if (!chord) return
                     // only: [Gm], not: [info] [x4]
-                    if (!chord || chord.length > 3 || chord.includes("x")) newText += `[${chord}]`
+                    if (chord.length > 5 || chord.includes("x")) newText += `[${chord}]`
                     else {
                         let id = uid(5)
                         chords.push({ id, pos: newText.length, key: chord })

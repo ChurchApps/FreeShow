@@ -40,7 +40,9 @@
     }
 
     let dispatch = createEventDispatcher()
-    function valueChange(e: any, input: any) {
+    function valueChange(e: any, input: any, inputUpdate: boolean = false) {
+        if (inputUpdate && input.input === "text") return
+
         let value = e.detail || e.target?.value || null
 
         if (input.input === "checkbox") value = e.target.checked
@@ -217,7 +219,6 @@
                 <CombinedInput>
                     {#each lineInputs[input.input] as lineInput}
                         {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
-                        <span style="font-size: 0;position: absolute;">{console.log(currentStyle, lineAlignStyle)}</span>
                         <IconButton
                             on:click={() => (lineInput.toggle ? toggle(lineInput) : dispatch("change", lineInput))}
                             title={$dictionary.edit?.["_title_" + lineInput.title || lineInput.icon]}
@@ -257,7 +258,7 @@
                             disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
                             enableNoColor={input.enableNoColor}
                             on:click={(e) => valueChange(e, input)}
-                            on:input={(e) => valueChange(e, input)}
+                            on:input={(e) => valueChange(e, input, true)}
                             on:change={(e) => valueChange(e, input)}
                         />
                     </CombinedInput>
