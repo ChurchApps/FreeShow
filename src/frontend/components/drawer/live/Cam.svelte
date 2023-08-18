@@ -35,7 +35,9 @@
 
     let error: null | string = null
 
-    onMount(() => {
+    onMount(capture)
+
+    function capture() {
         navigator.mediaDevices
             .getUserMedia(constraints)
             .then((mediaStream) => {
@@ -51,8 +53,11 @@
                 }
                 error = err.name + ":<br />" + msg
                 loaded = true
+
+                // retry
+                setTimeout(capture, 5000)
             })
-    })
+    }
 
     onDestroy(() => {
         if (!videoElem) return

@@ -229,7 +229,7 @@
         slide.items?.forEach(checkItem)
     }
     function checkItem(item: any) {
-        if (item.type !== "timer") return
+        if (item?.type !== "timer") return
         console.log($activeTimers, item)
 
         $activeTimers.forEach((a, i) => {
@@ -329,7 +329,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     {#if slide.items}
                         {#each slide.items as item, i}
                             <!-- TODO: lyrics zoom on text -->
-                            {#if viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type)}
+                            {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
                                 <Textbox
                                     filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
                                     backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}

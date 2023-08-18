@@ -85,8 +85,6 @@ function createOutputWindow(options: any, id: string, name: string) {
     return window
 }
 
-// REMOVE
-
 export function closeAllOutputs() {
     Object.keys(outputWindows).forEach(removeOutput)
 }

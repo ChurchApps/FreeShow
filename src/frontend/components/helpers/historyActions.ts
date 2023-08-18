@@ -730,7 +730,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if ((slideId && slideId !== id) || !slide) return
 
                         // roll items around
-                        if (createItems) slide.items = [...slide.items.slice(1), slide.items[0]]
+                        if (createItems) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
                         // let addedItems = 0
 
                         let itemTypeIndex: any = {}
@@ -742,6 +742,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                             let tempCount = -1
                             let itemIndex = slide.items.findIndex((a) => {
+                                if (!a) return false
+
                                 let itemType = a.type || "text"
                                 if (itemType === type) tempCount++
                                 if (tempCount === itemTypeIndex[type]) return true

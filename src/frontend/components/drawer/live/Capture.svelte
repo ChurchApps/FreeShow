@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { onMount } from "svelte"
+    import { MAIN } from "../../../../types/Channels"
     import { outputs } from "../../../stores"
     import { findMatchingOut } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -42,25 +44,30 @@
         },
     }
 
-    // let timeout: number = 0
-    // if (screen.name === "FreeShow") timeout = 1000
-    // setTimeout(() => {
-    //   console.log(screen.name)
+    onMount(capture)
+    function capture() {
+        navigator.mediaDevices
+            .getUserMedia(constraints)
+            .then((stream) => {
+                streams.push(stream)
+                videoElem.srcObject = stream
+                videoElem.onloadedmetadata = () => {
+                    videoElem?.play()
+                    setTimeout(ready, 1000)
+                }
+            })
+            .catch(function (err) {
+                let msg: string = err.message
+                console.log(err.name + ": " + msg)
 
-    navigator.mediaDevices
-        .getUserMedia(constraints)
-        .then((stream) => {
-            streams.push(stream)
-            videoElem.srcObject = stream
-            videoElem.onloadedmetadata = () => {
-                videoElem?.play()
-                setTimeout(ready, 1000)
-            }
-        })
-        .catch(function (err) {
-            console.log(err.name + ": " + err.message)
-        })
-    // }, timeout)
+                // if (err.name === "NotReadableError") {
+                window.api.send(MAIN, { channel: "ACCESS_SCREEN_PERMISSION" })
+                // }
+
+                // retry
+                setTimeout(capture, 5000)
+            })
+    }
 </script>
 
 {#if background}
