@@ -371,8 +371,12 @@ function decodeHex(input: string) {
         }
     })
 
+    // fix line formatting
+    str = str.replaceAll("} {", "<br>").replaceAll("}  {", "<br>").replaceAll("{ }", "")
     // remove any {{ at the start
     if (str.indexOf("{{") > -1 && str.indexOf("{{") < 3) str = str.slice(str.indexOf("{{") + 2, str.length)
+    // remove whitespace at start and end
+    str = str.trim()
     // remove any } and special chars at the end
     if (str.length - str.indexOf("}") < 3) str = str.slice(0, str.indexOf("}"))
     // remove whitespace at start and end
