@@ -868,12 +868,12 @@
         "restore_finished": "Ripristino completato!"
     },
     "sort": {
-        "sort_by": "Sort by",
+        "sort_by": "Ordina per",
         "name": "Nome",
         "date": "Date",
         "size": "Dimensione",
         "type": "Tipo",
-        "custom": "Custom"
+        "custom": "Personalizzato"
     },
     "calendar": {
         "type": "Tipo",
@@ -950,7 +950,7 @@
         "ease-out": "Ease out",
         "ease-in-out": "Ease in & out",
         "elastic": "Elastica",
-        "bounce": "Bounce",
+        "bounce": "Rimbalzata",
         "back": "Salto",
         "circ": "Circolare",
         "cubic": "Cubica",
