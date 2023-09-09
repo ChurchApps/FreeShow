@@ -50,3 +50,4 @@ export type SaveListSettings =
     | "gain"
     | "driveData"
     | "calendarAddShow"
+    | "special"

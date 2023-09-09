@@ -193,6 +193,7 @@ export const exportPath: Writable<null | string> = writable(null) // null
 export const scripturePath: Writable<string> = writable("") // ""
 export const recordingPath: Writable<string> = writable("") // ""
 export const lockedOverlays: Writable<string[]> = writable([]) // []
+export const special: Writable<any> = writable({}) // {}
 
 // SETTINGS
 export const language: Writable<string> = writable("en") // get locale

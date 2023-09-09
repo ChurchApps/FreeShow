@@ -4,7 +4,7 @@ import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution } from "../../../types/Settings"
 import type { Transition } from "../../../types/Show"
-import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, styles, theme, themes, transitionData } from "../../stores"
+import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "./array"
 import { _show } from "./shows"
@@ -188,7 +188,7 @@ export function keyOutput(keyId: string, delOutput: boolean = false) {
         a[keyId] = currentOutput
 
         // show
-        send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput })
+        send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput, rate: get(special).previewRate || "auto" })
         if (get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id: keyId, ...currentOutput } })
 
         return a
@@ -210,7 +210,7 @@ export function addOutput(onlyFirst: boolean = false) {
         if (onlyFirst) output[id].name = "Primary"
 
         // show
-        if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
+        if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id], rate: get(special).previewRate || "auto" })
         if (!onlyFirst && get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
 
         currentOutputSettings.set(id)

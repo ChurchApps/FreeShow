@@ -36,17 +36,12 @@
 </CombinedInput>
 <CombinedInput>
     <Button style="width: 100%;" on:click={closeApp} dark center>
-        <T id="popup.quit" />
+        <div style="display: inline;opacity: 0.7;display: flex;align-items: center;"><T id="popup.quit" /></div>
         <span>Q</span>
     </Button>
 </CombinedInput>
 <CombinedInput>
-    <Button
-        style="width: 100%;color: var(--secondary);"
-        on:click={() => save(true)}
-        dark
-        center
-    >
+    <Button style="width: 100%;background-color: var(--secondary-opacity);" on:click={() => save(true)} dark center>
         <T id="popup.save_quit" />
         <span>Y</span>
     </Button>
@@ -62,6 +57,6 @@
         right: 10px;
 
         color: var(--text);
-        opacity: 0.7;
+        opacity: 0.6;
     }
 </style>

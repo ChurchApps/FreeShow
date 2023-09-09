@@ -865,7 +865,11 @@
         "backup_started": "Sikkerhetskopierer...",
         "restore_started": "Gjenoppretter...",
         "backup_finished": "Sikkerhetskopiering fullført!",
-        "restore_finished": "Gjenoppretting fullført!"
+        "restore_finished": "Gjenoppretting fullført!",
+        "preview_frame_rate": "Bildefrekvens for forhåndsvisning",
+        "auto": "Auto",
+        "optimized": "Optimalisert",
+        "full": "Full"
     },
     "sort": {
         "sort_by": "Sorter etter",

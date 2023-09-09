@@ -183,7 +183,6 @@ function xmlParser(xml: string, removeBreaks: boolean = false) {
 
     // remove first unknown char to ensure correct xml
     if (xml[0] !== "<") xml = xml.slice(xml.indexOf("<"), xml.length)
-    console.log(xml)
 
     // remove special html chars
     xml = xml.replaceAll("&nbsp;", "").replaceAll("&bull;", "")

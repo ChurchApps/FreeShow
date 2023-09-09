@@ -193,10 +193,10 @@
         if (removeTimeout) clearTimeout(removeTimeout)
 
         if (img1.active) {
-            img1 = { active: false, path: "" }
+            img1.active = false
             img2 = { active: true, path }
         } else {
-            img2 = { active: false, path: "" }
+            img2.active = false
             img1 = { active: true, path }
         }
 
@@ -208,7 +208,10 @@
         )
     }
 
-    $: console.log(img1, img2)
+    function imageLoaded() {
+        if (img1.active) img2.path = ""
+        else img1.path = ""
+    }
 </script>
 
 {#if type === "video"}
@@ -282,14 +285,14 @@
             {#if img1.path}
                 <div class="change">
                     <div style="height: 100%;{animationStyle}" transition:custom={transition}>
-                        <Image path={img1.path} {filter} {flipped} {fit} on:error={reload} />
+                        <Image path={img1.path} {filter} {flipped} {fit} on:error={reload} on:load={imageLoaded} />
                     </div>
                 </div>
             {/if}
             {#if img2.path}
                 <div class="change">
                     <div style="height: 100%;{animationStyle}" transition:custom={transition}>
-                        <Image path={img2.path} {filter} {flipped} {fit} on:error={reload} />
+                        <Image path={img2.path} {filter} {flipped} {fit} on:error={reload} on:load={imageLoaded} />
                     </div>
                 </div>
             {/if}

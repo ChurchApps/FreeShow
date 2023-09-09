@@ -235,7 +235,7 @@ function save(data: any) {
         store.clear()
         store.set(data[key])
 
-        if (data.reset) toApp(STORE, { channel: key, data: data[key] })
+        if (data.reset === true) toApp(STORE, { channel: key, data: data[key] })
     }
 
     // scriptures
@@ -272,10 +272,14 @@ function save(data: any) {
         }
 
         // SAVED
-        if (!data.reset) toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished, backup: data.backup } })
+        if (!data.reset) {
+            setTimeout(() => {
+                toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished, backup: data.backup } })
+            }, 300)
+        }
 
         if (data.backup) startBackup({ showsPath: data.path, scripturePath: data.scripturePath })
-    }, 1000)
+    }, 700)
 }
 
 // ----- LISTENERS -----

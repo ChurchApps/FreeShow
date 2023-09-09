@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, NDI, OPEN_FOLDER, OUTPUT, STARTUP, STORE } from "../../types/Channels"
 import { menuClick } from "../components/context/menuClick"
-import { clone, keysToID } from "../components/helpers/array"
+import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
@@ -80,7 +80,7 @@ import { listen, newToast } from "./messages"
 import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
-import { updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -298,13 +298,7 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     OUTPUTS: (a: any) => outputs.set(a),
-    RESTART: () => {
-        keysToID(get(outputs))
-            .filter((a) => a.enabled)
-            .forEach((output) => {
-                send(OUTPUT, ["CREATE"], output)
-            })
-    },
+    RESTART: () => restartOutputs(),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     AUDIO_MAIN: async (data: any) => {
         audioChannels.set(data.channels)

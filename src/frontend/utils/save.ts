@@ -62,6 +62,7 @@ import {
     showsPath,
     slidesOptions,
     sorted,
+    special,
     splitLines,
     stageShows,
     styles,
@@ -138,6 +139,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         gain: get(gain),
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
+        special: get(special),
     }
 
     // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)

@@ -301,13 +301,29 @@ function decodeBase64(text: string) {
         if (l >= 8) r += String.fromCharCode((b >>> (l -= 8)) & 0xff)
     })
 
-    // WIP convert ‘ & ’ to '
+    // https://www.oreilly.com/library/view/rtf-pocket-guide/9781449302047/ch04.html
     r = r.replaceAll("\\u8217 ?", "'")
     r = r.replaceAll("\\'92", "'")
+    r = r.replaceAll("\\'96", "–")
+    // convert ‘ & ’ to '
+    r = r.replaceAll("‘", "'").replaceAll("’", "'")
+
     r = r.replaceAll("\\'e6", "æ")
     r = r.replaceAll("\\'f8", "ø")
     r = r.replaceAll("\\'e5", "å")
-    r = r.replaceAll("\\'96", "–")
+    r = r.replaceAll("\\'c6", "Æ")
+    r = r.replaceAll("\\'d8", "Ø")
+    r = r.replaceAll("\\'c5", "Å")
+
+    r = r.replaceAll("\\'f6", "ö")
+    r = r.replaceAll("\\'e4", "ä")
+    r = r.replaceAll("\\'d6", "Ö")
+    r = r.replaceAll("\\'c4", "Ä")
+
+    r = r.replaceAll("\\'89", "ä") // ‰
+    r = r.replaceAll("\\'88", "ö") // ∘
+    r = r.replaceAll("\\'c2", "å") // Â
+    r = r.replaceAll("\\'a5", "ra") // ¥
 
     return r
 }
@@ -371,10 +387,14 @@ function decodeHex(input: string) {
         }
     })
 
+    // fix line formatting
+    str = str.replaceAll("}{", "<br>").replaceAll("} {", "<br>").replaceAll("}  {", "<br>").replaceAll("{ }", "")
     // remove any {{ at the start
     if (str.indexOf("{{") > -1 && str.indexOf("{{") < 3) str = str.slice(str.indexOf("{{") + 2, str.length)
+    // remove whitespace at start and end
+    str = str.trim()
     // remove any } and special chars at the end
-    if (str.length - str.indexOf("}") < 3) str = str.slice(0, str.indexOf("}"))
+    if (str.length - str.lastIndexOf("}") < 3) str = str.slice(0, str.lastIndexOf("}"))
     // remove whitespace at start and end
     str = str.trim()
     // remove breaks at start

@@ -3,10 +3,10 @@ import electron from "electron"
 import os from "os"
 import { toApp } from ".."
 import { OUTPUT, OUTPUT_STREAM } from "../../types/Channels"
+import { toServer } from "../servers"
 import { outputWindows } from "../utils/output"
 import { NDI, sendVideoBufferNDI } from "./ndi"
 import util from "./vingester-util"
-import { toServer } from "../servers"
 
 type CaptureOptions = {
     window: BrowserWindow
@@ -30,7 +30,8 @@ export let customFramerates: any = {}
 // START
 
 let storedFrames: any = {}
-export function startCapture(id: string, toggle: any = {}) {
+let cpuInterval: any = null
+export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     let window = outputWindows[id]
     if (!window || window.isDestroyed()) {
         delete captures[id]
@@ -65,6 +66,30 @@ export function startCapture(id: string, toggle: any = {}) {
     console.log("Capture - starting: " + id)
     captures[id].window.webContents.beginFrameSubscription(false, processFrame)
     captures[id].subscribed = true
+
+    // optimize cpu on low end devices
+    if (cpuInterval) clearInterval(cpuInterval)
+    let captureCount = 20
+    if (rate !== "full") cpuInterval = setInterval(cpuCapture, 3000)
+    async function cpuCapture() {
+        if (!captures[id] || captures[id].window.isDestroyed() || captures[id].window.webContents.isBeingCaptured()) return
+
+        let usage = process.getCPUUsage()
+
+        if (rate === "optimized" || usage.percentCPUUsage > 9.5 || captureCount < 10) {
+            if (captureCount === 20) captureCount = 0
+            // limit frames
+            captures[id].window.webContents.endFrameSubscription()
+            let image = await captures[id].window.webContents.capturePage()
+            processFrame(image)
+
+            // capture for 60 seconds then get cpu again
+            captureCount++
+        } else {
+            captureCount = 20
+            captures[id].window.webContents.beginFrameSubscription(false, processFrame)
+        }
+    }
 
     let currentFrames: any = JSON.parse(JSON.stringify(captures[id].framesToSkip))
     let currentImage: number = 0

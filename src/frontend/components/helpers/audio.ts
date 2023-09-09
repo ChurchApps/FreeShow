@@ -168,22 +168,51 @@ function getHighestNumber(numbers: number[]): number {
     return Math.max(...numbers)
 }
 
+let clearing = false
 export function clearAudio(path: string = "") {
+    // TODO: sometimes removing audio without clearing sound (often when playing while clearing)
+
+    // let clearTime = get(transitionData).audio.duration
+    const clearTime = 2
+
+    if (clearing) return // setTimeout(() => clearAudio(path), clearTime * 1000 + 200)
+    clearing = true
+
+    let newPlaying: any = {}
     playingAudio.update((a) => {
-        if (path) {
-            a[path].audio.pause()
-            delete a[path]
-        } else {
-            Object.keys(get(playingAudio)).forEach((currentPath: any) => {
-                a[currentPath].audio.pause()
-                delete a[currentPath]
-            })
-        }
+        if (path) clearAudio(path)
+        else Object.keys(get(playingAudio)).forEach(clearAudio)
 
         return a
+
+        function clearAudio(path) {
+            // fade out
+            fadeAudio(a[path].audio, clearTime)
+
+            setTimeout(() => {
+                a[path].audio.pause()
+                delete a[path]
+                newPlaying = a
+            }, clearTime * 1000 + 100)
+        }
     })
 
-    clearAudioStreams()
+    setTimeout(() => {
+        playingAudio.set(newPlaying)
+        clearAudioStreams()
+        clearing = false
+    }, clearTime * 1000 + 150)
+}
+
+function fadeAudio(audio, duration = 1) {
+    let speed = 0.01
+    let time = (duration * 1000) / (audio.volume / speed)
+
+    let fadeAudio = setInterval(() => {
+        audio.volume = Math.max(0, Number((audio.volume - speed).toFixed(3)))
+
+        if (audio.volume === 0) clearInterval(fadeAudio)
+    }, time)
 }
 
 // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness

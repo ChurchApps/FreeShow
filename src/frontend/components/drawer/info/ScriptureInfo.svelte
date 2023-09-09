@@ -23,7 +23,7 @@
     import { joinRange } from "../bible/scripture"
 
     export let bibles: Bible[]
-    $: sorted = bibles[0]?.activeVerses.sort((a, b) => Number(a) - Number(b)) || []
+    $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
 
     let verseRange = ""
     $: {
@@ -45,7 +45,7 @@
 
     $: if ($drawerTabsData) setTimeout(checkTemplate, 100)
     function checkTemplate() {
-        if (!$scriptureSettings.template.includes("scripture")) return
+        if (!$scriptureSettings.template?.includes("scripture")) return
 
         let templateId = "scripture_" + bibles.length
         scriptureSettings.update((a) => {
@@ -68,10 +68,10 @@
         bibles.forEach((bible, bibleIndex) => {
             let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
             let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-            let alignStyle = currentTemplate?.lines?.[0].align || "text-align: left;"
-            let textStyle = currentTemplate?.lines?.[0].text?.[0].style || "font-size: 80px;"
+            let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
+            let textStyle = currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
-            let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle }
+            let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} }
 
             let slideIndex: number = 0
             slides[slideIndex].push(clone(emptyItem))
@@ -139,10 +139,12 @@
     }
 
     function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
+        if (!bibles[0]) return
+
         let lines: any[] = []
 
         let metaTemplate = template[itemIndex] || template[0]
-        let verseStyle = metaTemplate?.lines?.[0].text?.[0].style || "font-size: 50px;"
+        let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         let versions = bibles.map((a) => a.version).join(" + ")
         let books = [...new Set(bibles.map((a) => a.book))].join(" / ")
 
@@ -156,28 +158,45 @@
         })
 
         if (lines.length) {
-            slides[slideIndex].push({
-                lines,
-                style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
-            })
+            // add reference to the main text if just one item
+            if (template.length <= 1 && slides[slideIndex][0]?.lines) {
+                let secondLineStyle: string = metaTemplate?.lines?.[1]?.text?.[0]?.style || "font-size: 50px;"
+                let verseLines = slides[slideIndex][0].lines || []
+                console.log(verseLines)
+                verseLines.forEach((line, i) =>
+                    line.text?.forEach((_text, j) => {
+                        verseLines[i].text[j].style = secondLineStyle
+                    })
+                )
+
+                slides[slideIndex][0].lines = [...lines, ...verseLines]
+            } else {
+                slides[slideIndex].push({
+                    lines,
+                    style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                })
+            }
         }
     }
 
     function createShow() {
         if (verseRange) {
             let { show } = createSlides()
+            if (!show) return
             history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
         }
     }
 
     function createSlides() {
+        if (!bibles[0]) return { show: null }
+
         let slides2: any = {}
         let layouts: any[] = []
         slides.forEach((items: any) => {
             let id = uid()
             // TODO: group as verse numbers
             let firstTextItem = items.find((a) => a.lines)
-            slides2[id] = { group: firstTextItem.lines[0].text[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
+            slides2[id] = { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
             layouts.push(l)
         })
@@ -200,7 +219,6 @@
         show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
 
         let versions = bibles.map((a) => a.version).join(" + ")
-        console.log(bibles)
         show.reference = {
             type: "scripture",
             data: { collection: $drawerTabsData.scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId || bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses },

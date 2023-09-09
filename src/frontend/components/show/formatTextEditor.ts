@@ -27,6 +27,7 @@ export function formatText(e: any) {
 
     let groupedOldSlides = groupSlides(oldSlides)
     let groupedNewSlides = groupSlides(slides)
+    console.log(groupedOldSlides, groupedNewSlides)
 
     let newSlides: { [key: string]: Slide } = clone(show.slides)
     let newLayoutSlides: SlideData[] = []
@@ -43,7 +44,25 @@ export function formatText(e: any) {
 
             matchFound = true
 
-            newLayoutSlides.push({ id: old.slides[0].id })
+            let id = old.slides[0].id
+            newLayoutSlides.push({ id })
+
+            // set changed children
+            if (old.slides.length !== slides.length) {
+                newSlides[id] = slides.shift()
+
+                if (slides.length) {
+                    // children
+                    let children: string[] = []
+                    slides.forEach((slide) => {
+                        let childId = uid()
+                        children.push(childId)
+                        newSlides[childId] = slide
+                    })
+
+                    newSlides[id].children = children
+                }
+            }
         })
 
         if (matchFound) return
