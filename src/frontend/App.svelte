@@ -55,6 +55,7 @@
         outputs,
         selected,
         serverData,
+        special,
         styles,
         volume,
     } from "./stores"
@@ -211,7 +212,7 @@
         if ($disabledServers.output_stream === false) value.value = true
 
         setTimeout(() => {
-            send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value })
+            send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value, rate: ($special.previewRate || "auto") })
         }, 1800)
     }
 </script>

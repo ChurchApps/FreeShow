@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, alertMessage, dictionary, exportPath, mediaCache, recordingPath, scripturePath, shows, showsCache, showsPath } from "../../../stores"
+    import { activePopup, alertMessage, dictionary, exportPath, mediaCache, recordingPath, scripturePath, shows, showsCache, showsPath, special } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -11,6 +11,8 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import { save } from "../../../utils/save"
+    import Dropdown from "../../inputs/Dropdown.svelte"
+    import { restartOutputs } from "../../../utils/updateSettings"
 
     onMount(() => {
         getCacheSize()
@@ -27,6 +29,21 @@
         let str = JSON.stringify($mediaCache)
         let byteLengthUtf8 = new Blob([str]).size
         cacheSize = formatBytes(byteLengthUtf8)
+    }
+
+    const previewRates = [
+        { id: "auto", name: "$:settings.auto:$" },
+        { id: "optimized", name: "$:settings.optimized:$" },
+        { id: "full", name: "$:settings.full:$" },
+    ]
+
+    function updateSpecial(value, key) {
+        special.update((a) => {
+            a[key] = value
+            return a
+        })
+
+        if (key === "previewRate") restartOutputs()
     }
 
     // shows in folder
@@ -158,6 +175,11 @@
             <Icon id="launch" white />
         </Button>
     </span>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.preview_frame_rate" /></p>
+    <Dropdown options={previewRates} value={previewRates.find((a) => a.id === ($special.previewRate || "auto"))?.name} on:click={(e) => updateSpecial(e.detail.id, "previewRate")} />
 </CombinedInput>
 
 <CombinedInput>

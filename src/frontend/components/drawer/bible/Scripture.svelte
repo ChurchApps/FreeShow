@@ -32,9 +32,9 @@
     // $: bibleId = $scriptures[active].collection?.versions[0] || active
 
     // select book & chapter when opening bible show reference
-    $: if ($openScripture) setTimeout(openReference, 100)
+    $: if ($openScripture) setTimeout(openReference, 200)
     function openReference() {
-        if (!$openScripture.book) {
+        if (!$openScripture?.book) {
             openScripture.set(null)
             return
         }
@@ -49,27 +49,21 @@
             // verses
 
             openScripture.set(null)
-        }, 10)
+        }, 100)
     }
 
-    onMount(async () => {
-        await createBiblesList()
-        getBible()
-    })
+    onMount(getBible)
 
-    async function createBiblesList() {
-        return new Promise((resolve) => {
-            let selectedScriptureData = $scriptures[active] || Object.values($scriptures).find((a) => a.id === active)
-            if (!selectedScriptureData) return
+    function createBiblesList() {
+        let selectedScriptureData = $scriptures[active] || Object.values($scriptures).find((a) => a.id === active)
+        if (!selectedScriptureData) return
 
-            let versions: string[] = [active]
-            if (selectedScriptureData.collection) versions = selectedScriptureData.collection.versions
-            firstBibleId = versions[0] || active
+        let versions: string[] = [active]
+        if (selectedScriptureData.collection?.versions) versions = selectedScriptureData.collection.versions
+        firstBibleId = versions[0] || active
 
-            bibles = versions.map((id) => {
-                return { id, version: null, book: null, chapter: null, verses: [], activeVerses: [] }
-            })
-            resolve("done")
+        bibles = versions.map((id) => {
+            return { id, version: null, book: null, chapter: null, verses: [], activeVerses: [] }
         })
     }
 
@@ -164,7 +158,7 @@
                 if (newVerses[verse]) newVerses[verse] = newVerses[verse].replaceAll("¶ ", "")
             })
 
-        bibles[index].copyright = data.copyright
+        if (bibles[index]) bibles[index].copyright = data.copyright
 
         return newVerses
     }
@@ -177,20 +171,21 @@
                 a.bible.push({ id: msg.id })
                 return a
             })
-        } else {
+        } else if (msg.content) {
             scripturesCache.update((a) => {
                 a[msg.content[0]] = msg.content[1]
                 return a
             })
 
             if (!bibles) return console.error("could not find bibles")
-            if (!bibles[msg.data.index || 0]) return console.error("could not find bible at index")
+            let currentIndex = msg.data?.index || 0
+            if (!bibles[currentIndex]) return console.error("could not find bible at index")
 
             let id = msg.content[0] || msg.id
 
-            bibles[msg.data.index || 0].version = $scriptures[id]?.customName || msg.content[1].name || $scriptures[id]?.name
-            bibles[msg.data.index || 0].copyright = msg.content[1].copyright
-            bibles[msg.data.index || 0].id = msg.content[0]
+            bibles[currentIndex].version = $scriptures[id]?.customName || msg.content[1].name || $scriptures[id]?.name || ""
+            bibles[currentIndex].copyright = msg.content[1].copyright || ""
+            bibles[currentIndex].id = msg.content[0]
             books[id] = msg.content[1].books as any
 
             if (typeof bookId === "string") bookId = 0
@@ -204,21 +199,23 @@
     $: if (versesList[firstBibleId]?.length) getVerses()
     $: if (!bibles[0]?.api && bibles[0]?.activeVerses) getVerses()
 
-    async function getBible() {
+    function getBible() {
         notLoaded = false
         error = null
 
-        await createBiblesList()
+        createBiblesList()
+        if (!bibles) return
 
         bibles.forEach((bible, i) => {
             let id: string = getBibleId(i, bible)
             bibles[i] = loadBible(id, i, bible)
-
             verses[id] = []
-            if (!bibles[i].version) return
+
+            if (!bibles[i]?.version) return
+
             if (bibles[i].api) loadAPIBible(id, "books")
             else if ($scripturesCache[id]) {
-                books[id] = $scripturesCache[id].books as any
+                books[id] = ($scripturesCache[id].books as any) || []
                 bookId = 0
             }
         })
@@ -237,7 +234,7 @@
                 })
                 loadAPIBible(id, "chapters")
             } else if (books[id][bookId]) {
-                bibles[i].book = books[id][bookId].name
+                bibles[i].book = books[id][bookId].name || ""
                 chapters[id] = (books[id][bookId] as any).chapters
                 chapterId = 0
             }
@@ -256,8 +253,8 @@
                 loadAPIBible(id, "verses")
             } else if (chapters[id][chapterId]) {
                 let content: any = {}
-                bibles[i].chapter = (chapters[id][chapterId] as any).number
-                ;(chapters[id][chapterId] as any).verses.forEach((a: any) => {
+                bibles[i].chapter = (chapters[id][chapterId] as any).number || 0
+                ;(chapters[id][chapterId] as any).verses?.forEach((a: any) => {
                     content[a.number] = a.value
                 })
                 verses[id] = content
@@ -284,11 +281,9 @@
     }
 
     function selectFirstVerse(bibleId: string, index: number) {
-        console.log("SELECT")
-        if (!verses[bibleId]) return
-        console.log("1")
+        if (!verses[bibleId] || !bibles[index]) return
 
-        activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId][a]) : ["1"]
+        activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId]?.[a]) : ["1"]
         bibles[index].activeVerses = activeVerses
     }
 
@@ -322,42 +317,6 @@
 
         bibles[0].activeVerses = activeVerses
     }
-
-    // $: template = $templates[$scriptureSettings.template]?.items || []
-    // $: itemStyle = template[0]?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-    // function showVerse(id: string) {
-    //     if ($outLocked) return
-
-    //     let value = verses[firstBibleId]?.[id] || ""
-    //     value = value.replace(/(<([^>]+)>)/gi, "")
-    //     let text: any[] = []
-
-    //     if ($scriptureSettings.verseNumbers) {
-    //         text.push({ value: id + " ", style: "font-size: 100px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + template[0]?.lines?.[0].text?.[0].style || "" })
-    //     }
-
-    //     text.push({ style: template[0]?.lines?.[0].text?.[0].style || "font-size: 80px;", value })
-
-    //     let tempItems: any[] = []
-    //     tempItems.push({
-    //         style: itemStyle,
-    //         align: "",
-    //         lines: [{ align: template[0]?.lines?.[0].align || "text-align: justify;", text }],
-    //     })
-
-    //     // add data
-    //     let lines: any[] = []
-    //     let verseStyle = template[1]?.lines?.[0].text?.[0].style || "font-size: 50px;"
-    //     if ($scriptureSettings.showVersion && bibles[0].version) lines.push({ text: [{ value: bibles[0].version, style: verseStyle }], align: "" })
-    //     if ($scriptureSettings.showVerse) lines.push({ text: [{ value: bibles[0].book + " " + bibles[0].chapter + ":" + id, style: verseStyle }], align: "" })
-    //     if (($scriptureSettings.showVersion && bibles[0].version) || $scriptureSettings.showVerse)
-    //         tempItems.push({
-    //             lines,
-    //             style: template[1]?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
-    //         })
-
-    //     setOutput("slide", { id: "temp", tempItems })
-    // }
 
     // search
     const updateSearchValue = (v: string) => (searchValue = v)

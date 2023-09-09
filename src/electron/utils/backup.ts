@@ -69,7 +69,7 @@ export async function startBackup({ showsPath, scripturePath }: any) {
 
 export function restoreFiles({ showsPath }: any) {
     let files: any = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
-    if (!files?.length) return toApp(MAIN, { channel: "RESTORE" })
+    if (!files?.length) return toApp(MAIN, { channel: "RESTORE", data: { finished: false } })
 
     files.forEach((path: string) => {
         if (path.includes("SHOWS_CONTENT")) {

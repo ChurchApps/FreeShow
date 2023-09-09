@@ -36,7 +36,8 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
 
 export function loadBible(active: string, index: number = 0, bible: any) {
     Object.entries(get(scriptures)).forEach(([id, scripture]: any) => {
-        if (scripture.id !== active && id !== active) return
+        if (!scripture || (scripture.id !== active && id !== active)) return
+
         let customName = get(scriptures)[id]?.customName || scripture.name || get(scriptures)[id]?.name
         let isAPI = scripture.api
 

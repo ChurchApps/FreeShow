@@ -28,7 +28,7 @@ async function createOutput(output: Output) {
     updateBounds(output)
 
     setTimeout(() => {
-        startCapture(id, { ndi: output.ndi || false })
+        startCapture(id, { ndi: output.ndi || false }, (output as any).rate)
     }, 1200)
 
     // NDI
@@ -223,7 +223,7 @@ const setValues: any = {
         setValues.capture({ key: "ndi", value }, window, id)
     },
     capture: async (data: any, _window: BrowserWindow, id: string) => {
-        startCapture(id, { [data.key]: data.value })
+        startCapture(id, { [data.key]: data.value }, data.rate)
         // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
     },
     transparent: (value: boolean, window: BrowserWindow) => {

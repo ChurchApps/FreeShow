@@ -2,12 +2,12 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
+import { getItemText } from "../components/edit/scripts/textStyle"
 import { clone, removeEmpty } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { activeProject, dictionary, formatNewShow, groups, splitLines } from "../stores"
-import { getItemText } from "../components/edit/scripts/textStyle"
 
 export function getQuickExample() {
     let line = get(dictionary).create_show?.quick_lyrics_example_text || "Line"
@@ -20,11 +20,11 @@ export function getQuickExample() {
 
 // convert .txt files to shows
 export function convertTexts(files: any[]) {
-    files.forEach(({ name, content }) => convertText({ name, text: content }))
+    files.forEach(({ name, content }) => convertText({ name, text: content, noFormatting: true }))
 }
 
 // convert a plain text input into a show
-export function convertText({ name = "", category = null, text }: any, onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }) {
+export function convertText({ name = "", category = null, text, noFormatting = false }: any, onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }) {
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
     let sections: string[] = removeEmpty(text.split("\n\n"))
 
@@ -52,7 +52,7 @@ export function convertText({ name = "", category = null, text }: any, onlySlide
 
     let layoutID: string = uid()
     let show: Show = new ShowObj(false, category, layoutID)
-    let { slides, layouts } = createSlides(labeled, existingSlides)
+    let { slides, layouts } = createSlides(labeled, existingSlides, noFormatting)
 
     if (onlySlides) return { slides, layouts }
 
@@ -79,7 +79,7 @@ export function convertText({ name = "", category = null, text }: any, onlySlide
 }
 
 // TODO: this sometimes splits all slides up with no children (when adding [group])
-function createSlides(labeled: any, existingSlides: any = {}) {
+function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
     let slides: any = existingSlides
     let layouts: any[] = []
     let stored: any = initializeStoredSlides()
@@ -102,7 +102,7 @@ function createSlides(labeled: any, existingSlides: any = {}) {
 
     function convertLabeledSlides(a: any): void {
         let id: any
-        let formatText: boolean = get(formatNewShow)
+        let formatText: boolean = noFormatting ? false : get(formatNewShow)
 
         let text: string = fixText(a.text, formatText)
         if (stored[a.type]) id = stored[a.type].find((b: any) => b.text === text)?.id

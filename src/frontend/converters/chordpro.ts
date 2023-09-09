@@ -3,14 +3,14 @@
 
 import { uid } from "uid"
 import type { Show, Slide } from "../../types/Show"
-import { clone } from "../components/helpers/array"
 import { ShowObj } from "../classes/Show"
+import { clone } from "../components/helpers/array"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
-import { history } from "../components/helpers/history"
+import { activePopup, alertMessage, dictionary, drawerTabsData, groups } from "../stores"
+import { setTempShows } from "./importHelpers"
 import { get } from "svelte/store"
-import { activeProject } from "../stores"
 
-const metaKeys = ["title", "artist", "composer", "lyricist", "copyright", "year"]
+const metaKeys = ["title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli"]
 const chorus = ["start_of_chorus", "soc"]
 // const verse = ["start_of_verse", "sov"]
 // const end = ["end_of_chorus", "eoc", "end_of_verse", "eov"]
@@ -18,115 +18,139 @@ const chorus = ["start_of_chorus", "soc"]
 const defaultSlide = { group: "", color: "", globalGroup: "verse", settings: {}, notes: "", items: [] }
 
 export function convertChordPro(data: any) {
-    data.forEach((file) => {
-        let name: string = file.name
-        let content = file.content
+    alertMessage.set("popup.importing")
+    activePopup.set("alert")
 
-        let slides: Slide[] = [clone(defaultSlide)]
-        let metadata: any = {}
-        let notes: string = ""
+    let tempShows: any[] = []
 
-        let newSection: boolean = false
-        content.split("\n").forEach(checkLine)
-        function checkLine(line: string) {
-            if (newSection) {
-                newSection = false
+    setTimeout(() => {
+        data.forEach((file) => {
+            let name: string = file.name
+            let content = file.content
 
-                console.log(newSection, line)
-                let trimmed = line.trim()
-                if (trimmed[trimmed.length - 1] === ":") {
-                    // WIP "Bridge (x2):"
-                    let group = trimmed.slice(0, -1).replace(/\d+/g, "").trim()
-                    console.log(group)
-                    group = group.replace("(x)", "").trim()
-                    let globalGroup = getGlobalGroup(group)
+            let slides: Slide[] = [clone(defaultSlide)]
+            let metadata: any = {}
+            let notes: string = ""
 
-                    if (globalGroup) slides[slides.length - 1].globalGroup = globalGroup
-                    else delete slides[slides.length - 1].globalGroup
+            let newSection: boolean = false
+            content.split("\n").forEach(checkLine)
+            function checkLine(line: string) {
+                if (newSection) {
+                    newSection = false
 
-                    slides[slides.length - 1].group = globalGroup || group
-                    console.log(slides)
+                    let trimmed = line.trim()
+                    if (trimmed[trimmed.length - 1] === ":") {
+                        // WIP "Bridge (x2):"
+                        let group = trimmed.slice(0, -1).replace(/\d+/g, "").trim()
+                        group = group.replace("(x)", "").trim()
+                        let globalGroup = getGlobalGroup(group)
+
+                        if (globalGroup) slides[slides.length - 1].globalGroup = globalGroup
+                        else delete slides[slides.length - 1].globalGroup
+
+                        if (!get(groups)[globalGroup]) globalGroup = ""
+                        slides[slides.length - 1].group = globalGroup || group
+                        return
+                    }
+                }
+
+                // comment
+                if (line[0] === "#") {
+                    notes += line.slice(2) + "\n"
                     return
                 }
-            }
 
-            // comment
-            if (line[0] === "#") {
-                notes += line.slice(2) + "\n"
-                return
-            }
-
-            // directives
-            if (line[0] === "{" && line.includes("}")) {
+                // directives
                 // Meta-data
                 // {title: Amazing Grace}
-                let metaKey = metaKeys.find((a) => line.includes(a + ":"))
-                if (metaKey) {
-                    if (metaKey === "lyricist") metaKey = "author"
-                    metadata[metaKey] = line.slice(line.indexOf(":") + 1, line.indexOf("}")).trim()
-                    if (metaKey === "title") name = metadata[metaKey]
+                // Title: 10,000 Reasons (Bless the Lord)
+                if (line.includes(":")) {
+                    let metaKey = metaKeys.find((a) => line.toLowerCase().includes(a + ":"))
+                    if (metaKey) {
+                        if (metaKey === "lyricist") metaKey = "author"
+                        if (metaKey === "ccli") metaKey = "CCLI"
+                        metadata[metaKey] = line.slice(line.indexOf(":") + 1).trim()
+                        metadata[metaKey] = metadata[metaKey].replaceAll("}", "")
+
+                        if (metaKey === "notes") {
+                            notes = metadata[metaKey]
+                            delete metadata[metaKey]
+                        }
+                        if (metaKey === "title") name = metadata[metaKey]
+                        return
+                    }
+
+                    // Formatting
+                    // {comment: Chorus}
+
+                    // Environment
+                    let group = ""
+                    let isChorus = chorus.find((a) => line.includes(a))
+                    if (isChorus) group = "chorus"
+                    // else slides[slides.length - 1].globalGroup = "verse"
+
+                    let groupId = group || Object.keys(get(dictionary).groups).find((a) => line.toLowerCase().includes(a.replaceAll("_", "-")))
+
+                    if (groupId) {
+                        slides[slides.length - 1].globalGroup = groupId
+                        return
+                    }
+
+                    // Fonts, sizes and colours
+                    // textfont, textsize, textcolour, chordfont, chordsize, chordcolour
+                }
+
+                // section spacing
+                if (!line.trim()) {
+                    if (slides[slides.length - 1].items.length) {
+                        slides.push(clone(defaultSlide))
+                        newSection = true
+                    }
+
                     return
                 }
 
-                // Formatting
-                // {comment: Chorus}
+                // lines
+                let text: string = ""
+                let chords: any[] = []
+                let isChord: boolean = false
+                let letterIndex: number = 0
+                line.split("").forEach((char) => {
+                    if ((char === "[" || char === "]") && !line.slice(0, -2).includes(":")) {
+                        isChord = char === "["
+                        if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
+                        return
+                    }
 
-                // Environment
-                let isChorus = chorus.find((a) => line.includes(a))
-                if (isChorus) slides[slides.length - 1].globalGroup = "chorus"
-                // else slides[slides.length - 1].globalGroup = "verse"
+                    if (isChord) {
+                        chords[chords.length - 1].key += char
+                        return
+                    }
 
-                // Fonts, sizes and colours
-                // textfont, textsize, textcolour, chordfont, chordsize, chordcolour
+                    text += char
+                    letterIndex++
+                })
 
-                return
+                text = text.replaceAll("\r", "")
+
+                let slideItems = slides[slides.length - 1].items
+                if (!slideItems.length) slideItems.push({ lines: [], style: "left:50px;top:120px;width:1820px;height:840px;" })
+                slideItems[slideItems.length - 1].lines!.push({ align: "", text: [{ value: text, style: "" }], chords })
             }
 
-            // section spacing
-            if (!line.trim()) {
-                if (slides[slides.length - 1].items.length) {
-                    slides.push(clone(defaultSlide))
-                    newSection = true
-                }
+            let show = createShow({ slides, metadata, name, notes })
+            tempShows.push({ id: uid(), show })
+        })
 
-                return
-            }
-
-            // lines
-            let text: string = ""
-            let chords: any[] = []
-            let isChord: boolean = false
-            let letterIndex: number = 0
-            line.split("").forEach((char) => {
-                if (char === "[" || char === "]") {
-                    isChord = char === "["
-                    if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
-                    return
-                }
-
-                if (isChord) {
-                    chords[chords.length - 1].key += char
-                    return
-                }
-
-                text += char
-                letterIndex++
-            })
-
-            text = text.replaceAll("\r", "")
-
-            let slideItems = slides[slides.length - 1].items
-            if (!slideItems.length) slideItems.push({ lines: [], style: "left:50px;top:120px;width:1820px;height:840px;" })
-            slideItems[slideItems.length - 1].lines!.push({ align: "", text: [{ value: text, style: "" }], chords })
-        }
-
-        createShow({ slides, metadata, name, notes })
-    })
+        setTempShows(tempShows)
+    }, 10)
 }
 
 function createShow({ slides, metadata, name, notes }) {
     let layoutID: string = uid()
-    let show: Show = new ShowObj(false, null, layoutID)
+    let category = get(drawerTabsData).shows?.activeSubTab
+    if (category === "all" || category === "unlabeled") category = null
+    let show: Show = new ShowObj(false, category, layoutID)
 
     // remove empty slides
     slides = slides.filter((a) => a.items.length)
@@ -143,7 +167,8 @@ function createShow({ slides, metadata, name, notes }) {
     if (notes.trim()) show.layouts[layoutID].notes = notes
     show.meta = metadata
 
-    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+    // history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+    return show
 }
 
 function getLayout(slides: Slide[]) {

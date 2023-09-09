@@ -865,7 +865,11 @@
         "backup_started": "Zapisywanie kopii...",
         "restore_started": "Odtwarzanie kopii...",
         "backup_finished": "Zapisano kopię zapasową!",
-        "restore_finished": "Odtworzono kopię zapasową!"
+        "restore_finished": "Odtworzono kopię zapasową!",
+        "preview_frame_rate": "Preview frame rate",
+        "auto": "Auto",
+        "optimized": "Optimized",
+        "full": "Full"
     },
     "sort": {
         "sort_by": "Sortuj według",

@@ -50,6 +50,7 @@ import {
     showsPath,
     slidesOptions,
     sorted,
+    special,
     styles,
     templateCategories,
     theme,
@@ -107,11 +108,7 @@ export function updateSettings(data: any) {
             return a
         })
 
-        keysToID(get(outputs))
-            .filter((a) => a.enabled)
-            .forEach((output: any) => {
-                send(OUTPUT, ["CREATE"], output)
-            })
+        restartOutputs()
     }
     // if (data.outputPosition) send(OUTPUT, ["POSITION"], data.outputPosition)
     // if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
@@ -144,6 +141,14 @@ export function updateSettings(data: any) {
     // setTimeout(() => {
     window.api.send("LOADED")
     // }, 800)
+}
+
+export function restartOutputs() {
+    keysToID(get(outputs))
+        .filter((a) => a.enabled)
+        .forEach((output: any) => {
+            send(OUTPUT, ["CREATE"], { ...output, rate: get(special).previewRate || "auto" })
+        })
 }
 
 export function updateThemeValues(themes: any) {
@@ -272,4 +277,5 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
+    special: (v: any) => special.set(v),
 }

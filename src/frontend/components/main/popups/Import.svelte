@@ -29,7 +29,7 @@
         },
         { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
-        { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chord", "pro", "txt"], id: "chordpro" },
+        { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
     ]
 
     const formats = [
@@ -60,7 +60,7 @@
                     navigator.clipboard
                         .readText()
                         .then((text) => {
-                            convertText({ text })
+                            convertText({ text, noFormatting: true })
                         })
                         .catch((err) => {
                             console.error("Failed to read clipboard contents: ", err)

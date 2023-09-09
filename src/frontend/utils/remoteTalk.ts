@@ -271,8 +271,9 @@ export function initializeRemote(id: string) {
 // }
 
 export function convertBackgrounds(show) {
+    if (!show) return
+
     show = clone(show)
-    console.log("SHOW", show)
     // let media = {}
     Object.keys(show.media).map((id) => {
         let path = show.media[id].path
@@ -280,12 +281,10 @@ export function convertBackgrounds(show) {
         if (cloudId && cloudId !== "default") path = show.media[id].cloud?.[cloudId] || path
 
         let cachedImage: any = get(mediaCache)[path]
-        console.log(cachedImage)
         if (cachedImage) show.media[id].path = cachedImage.data // "data:image/png;base64," +
         // let path = await toBase64(path)
     })
 
-    console.log("SHOW2", show)
     return show
 }
 

@@ -8,6 +8,9 @@
     function checkURL() {
         let valid = false
 
+        // format url
+        src = src.replaceAll("&amp;", "&").replaceAll("{", "%7B").replaceAll("}", "%7D")
+
         try {
             new URL(src)
             valid = true

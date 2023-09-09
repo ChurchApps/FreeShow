@@ -865,7 +865,11 @@
         "backup_started": "Backing up...",
         "restore_started": "Restoring...",
         "backup_finished": "Backup complete!",
-        "restore_finished": "Restore complete!"
+        "restore_finished": "Restore complete!",
+        "preview_frame_rate": "Preview frame rate",
+        "auto": "Auto",
+        "optimized": "Optimized",
+        "full": "Full"
     },
     "sort": {
         "sort_by": "Sort by",
