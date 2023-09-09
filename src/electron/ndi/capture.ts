@@ -72,7 +72,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     let captureCount = 20
     if (rate !== "full") cpuInterval = setInterval(cpuCapture, 3000)
     async function cpuCapture() {
-        if (captures[id].window.webContents.isBeingCaptured()) return
+        if (!captures[id] || captures[id].window.isDestroyed() || captures[id].window.webContents.isBeingCaptured()) return
 
         let usage = process.getCPUUsage()
 

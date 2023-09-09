@@ -1,10 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { uid } from "uid"
-    import { getContrast } from "../helpers/color"
-    import T from "../helpers/T.svelte"
     import { dictionary } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
+    import { getContrast } from "../helpers/color"
 
     export let value: any = "#FFF"
     export let visible: boolean = false
@@ -34,11 +34,12 @@
     ]
 
     let dispatch = createEventDispatcher()
-    function change(e) {
+    function change(e, update = false) {
         let value = e.target?.value || e
         if (value === undefined) return
 
-        dispatch("input", value)
+        // if (!update && mousePressed) update = true
+        if (update) dispatch("input", value)
     }
 
     let pickerId: string = "picker_" + uid()
@@ -48,8 +49,14 @@
 
         pickerOpen = !pickerOpen
     }
+    // let mousePressed: boolean = false
     function mousedown(e: any) {
+        // mousePressed = true
         if (e.target.closest("#" + pickerId) || (e.target.closest(".colorpicker") && !e.target.closest(".pickColor"))) return
+        if (e.target.closest(".color")) return
+
+        // WIP only updating every other time when clicking another place than inside the "Textbox" style area
+        if (pickerOpen) change(value, true)
 
         pickerOpen = false
     }
@@ -64,19 +71,20 @@
     }
 </script>
 
+<!-- on:mouseup={() => (mousePressed = false)} -->
 <svelte:window on:mousedown={mousedown} />
 
 {#if visible}
     <div class="picker" class:visible class:clipRight>
         <div class="colors">
             {#each colors as color}
-                <div class="pickColor" class:active={value === color.value} title={color.name} style="background-color: {color.value};" on:click={() => change(color.value)} />
+                <div class="pickColor" class:active={value === color.value} title={color.name} style="background-color: {color.value};" on:click={() => change(color.value, true)} />
             {/each}
         </div>
 
         <div class="color" style="margin-top: 10px;background-color: {value};">
             <p style="color: {getContrast(value)};"><T id="actions.choose_custom" /></p>
-            <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} />
+            <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} on:change={(e) => change(e, true)} />
         </div>
     </div>
 {:else}
@@ -90,7 +98,7 @@
                             class:active={!value}
                             title={$dictionary.settings?.remove}
                             on:click={() => {
-                                change("")
+                                change("", true)
                                 setTimeout(() => {
                                     pickerOpen = false
                                 }, 10)
@@ -106,7 +114,7 @@
                             title={color.name}
                             style="background-color: {color.value};"
                             on:click={() => {
-                                change(color.value)
+                                change(color.value, true)
                                 setTimeout(() => {
                                     pickerOpen = false
                                 }, 10)
@@ -117,7 +125,7 @@
 
                 <div class="color" style="margin-top: 10px;padding: 5px;background-color: {value};">
                     <p style="color: {getContrast(value)};"><T id="actions.choose_custom" /></p>
-                    <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} />
+                    <input class="colorpicker" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "")} type="color" bind:value on:input={change} on:change={(e) => change(e, true)} />
                 </div>
             </div>
         {/if}

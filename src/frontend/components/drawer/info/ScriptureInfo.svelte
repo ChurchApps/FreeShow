@@ -71,7 +71,7 @@
             let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
             let textStyle = currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
-            let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle }
+            let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} }
 
             let slideIndex: number = 0
             slides[slideIndex].push(clone(emptyItem))
@@ -158,10 +158,24 @@
         })
 
         if (lines.length) {
-            slides[slideIndex].push({
-                lines,
-                style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
-            })
+            // add reference to the main text if just one item
+            if (template.length <= 1 && slides[slideIndex][0]?.lines) {
+                let secondLineStyle: string = metaTemplate?.lines?.[1]?.text?.[0]?.style || "font-size: 50px;"
+                let verseLines = slides[slideIndex][0].lines || []
+                console.log(verseLines)
+                verseLines.forEach((line, i) =>
+                    line.text?.forEach((_text, j) => {
+                        verseLines[i].text[j].style = secondLineStyle
+                    })
+                )
+
+                slides[slideIndex][0].lines = [...lines, ...verseLines]
+            } else {
+                slides[slideIndex].push({
+                    lines,
+                    style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                })
+            }
         }
     }
 
