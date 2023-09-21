@@ -69,7 +69,7 @@
             let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
             let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
             let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
-            let textStyle = currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
+            let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
             let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} }
 
@@ -81,8 +81,8 @@
 
                 if ($scriptureSettings.verseNumbers) {
                     let size = 50
-                    if (i === 0) size *= 2
-                    let verseNumberStyle = "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + templateTextItems[bibleIndex]?.lines?.[0].text?.[0].style || ""
+                    if (i === 0) size *= 1.5
+                    let verseNumberStyle = textStyle + "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191")
 
                     slideArr.lines![0].text.push({
                         value: s + " ",
@@ -159,17 +159,18 @@
 
         if (lines.length) {
             // add reference to the main text if just one item
-            if (template.length <= 1 && slides[slideIndex][0]?.lines) {
-                let secondLineStyle: string = metaTemplate?.lines?.[1]?.text?.[0]?.style || "font-size: 50px;"
-                let verseLines = slides[slideIndex][0].lines || []
-                console.log(verseLines)
-                verseLines.forEach((line, i) =>
-                    line.text?.forEach((_text, j) => {
-                        verseLines[i].text[j].style = secondLineStyle
-                    })
-                )
+            if (template.length <= 1) {
+                // let firstLineStyle: string = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
 
-                slides[slideIndex][0].lines = [...lines, ...verseLines]
+                // let verseLines = slides[slideIndex][0].lines || []
+                // console.log(verseLines)
+                // verseLines.forEach((line, i) =>
+                //     line.text?.forEach((_text, j) => {
+                //         verseLines[i].text[j].style = firstLineStyle
+                //     })
+                // )
+
+                slides[slideIndex][0].lines = [...lines, ...(slides[slideIndex][0].lines || [])]
             } else {
                 slides[slideIndex].push({
                     lines,

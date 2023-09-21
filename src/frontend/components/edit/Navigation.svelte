@@ -27,8 +27,8 @@
     const names = {
         show: (id: string) => _show(id).get("name"),
         media: (id: string) => getFileName(id),
-        overlay: (id: string) => $overlays[id].name,
-        template: (id: string) => $templates[id].name,
+        overlay: (id: string) => $overlays[id]?.name || "",
+        template: (id: string) => $templates[id]?.name || "",
     }
 
     $: if ($activeEdit) updateEditHistory()

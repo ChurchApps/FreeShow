@@ -43,13 +43,19 @@
 
     let layers: any = currentStyle.layers || defaultLayers
     let out: any = currentOutput?.out || {}
-    let slide: any = out.slide || null
-    let background: any = out.background || null
+    let slide: any = null
+    let background: any = null
+
+    $: if (outputId) updateOutData()
+    function updateOutData(id: string = "") {
+        if (!id || id === "slide") slide = clone(out.slide || null)
+        if (!id || id === "background") background = clone(out.background || null)
+    }
 
     $: if (JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) layers = clone(currentStyle.layers || defaultLayers)
     $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = clone(currentOutput?.out || {})
-    $: if (out.refresh || outputId || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) slide = clone(out.slide || null)
-    $: if (out.refresh || outputId || JSON.stringify(background) !== JSON.stringify(out.background || null)) background = clone(out.background || null)
+    $: if (out.refresh || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
+    $: if (out.refresh || JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
 
     $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()[0] : null
 
@@ -217,13 +223,15 @@
 
     // prevent too fast slide text updates (svelte transition bug)
     let slideClone: any = {}
+    let previousIndex: number = -1
     let slideTimeout: any = null
     $: startSlideTimer(currentSlide)
     function startSlideTimer(_updater) {
-        if (slideTimeout !== null) return
+        if (slideTimeout !== null || (JSON.stringify(slideClone) === JSON.stringify(_updater) && previousIndex === slide?.index)) return
 
         slideTimeout = setTimeout(() => {
             slideClone = clone(currentSlide)
+            previousIndex = slide?.index ?? -1
             slideTimeout = null
         }, 50)
     }
@@ -243,8 +251,8 @@
     let clonedOverlays = {}
     let outOverlays: any[] = []
     let outUnderlays: any[] = []
-    $: if (JSON.stringify(out.overlays?.filter((a) => !a.placeUnderSlide)) !== JSON.stringify(outOverlays)) updateOverlays()
-    $: if (JSON.stringify(out.overlays?.filter((a) => a.placeUnderSlide)) !== JSON.stringify(outUnderlays)) updateOverlays()
+    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => !a.placeUnderSlide)) !== JSON.stringify(outOverlays)) updateOverlays()
+    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => a.placeUnderSlide)) !== JSON.stringify(outUnderlays)) updateOverlays()
     function updateOverlays() {
         clonedOverlays = clone($overlays)
         if (!out.overlays) return

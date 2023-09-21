@@ -13,6 +13,7 @@ import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
 import { convertEasyWorship } from "../converters/easyworship"
 import { setTempShows } from "../converters/importHelpers"
+import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
 import { convertPDF } from "../converters/pdf"
@@ -81,6 +82,7 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { checkNextAfterMedia } from "../components/helpers/showActions"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -326,6 +328,15 @@ const receiveOUTPUTasMAIN: any = {
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),
+    MAIN_VIDEO_ENDED: async (msg) => {
+        console.log("ENDED", msg)
+        let videoPath = get(outputs)[msg.id].out?.background?.path
+        if (!videoPath) return
+
+        // check and execute next after media regardless of loop
+        setTimeout(() => checkNextAfterMedia(videoPath!), 100)
+        // if (checkNextAfterMedia(videoPath)) return
+    },
 }
 
 let previousOutputs: string = ""
@@ -429,6 +440,7 @@ const receiveIMPORT: any = {
     beblia_bible: (a: any) => convertBebliaBible(a),
     zefania_bible: (a: any) => convertZefaniaBible(a),
     opensong_bible: (a: any) => convertOpenSongBible(a),
+    lessons: (a: any) => convertLessonsPresentation(a),
 }
 
 function importShow(files: any[]) {

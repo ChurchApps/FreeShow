@@ -140,6 +140,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         .ref()[0]
     let isLastSlide: boolean = slide && layout ? slide.index === layout.length - 1 && !layout[slide.index].end : false
     let index: null | number = null
+    console.log(layout)
 
     // lines
     let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
@@ -151,6 +152,15 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     if (isLastSlide && !hasLinesEnded) isLastSlide = false
 
     // TODO: active show slide index on delete......
+
+    // go to first slide in next project show ("Next after media" feature)
+    console.log(loop, bypassLock)
+    if (loop && bypassLock && slide && isLastSlide) {
+        // check if it is last slide (& that slide does not loop to start)
+        console.log(layout)
+        goToNextShowInProject(slide, customOutputId)
+        return
+    }
 
     // go to beginning if live mode & ctrl | no output | last slide active
     if (get(activeShow) && (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))) {
@@ -190,6 +200,35 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     if (index !== null) {
         setOutput("slide", newSlideOut, false, customOutputId)
         updateOut(slide ? slide.id : "active", index, layout, !e?.altKey, customOutputId)
+    }
+}
+
+async function goToNextShowInProject(slide, customOutputId) {
+    if (!get(activeProject)) return
+
+    // get current project show
+    let currentProject = get(projects)[get(activeProject)!]
+    // this will get the first show in the project with this id, so it won't work properly with multiple of the same shows in a project
+    let projectIndex = currentProject.shows.findIndex((a) => a.id === slide!.id)
+    if (projectIndex < 0) return
+
+    let currentOutputProjectShowIndex = currentProject.shows[projectIndex]
+    if (currentOutputProjectShowIndex.id !== slide.id) return
+
+    let nextShowInProjectIndex = currentProject.shows.findIndex((a, i) => i > projectIndex && (a.type || "show") === "show")
+    if (nextShowInProjectIndex < 0) return
+
+    let nextShow = currentProject.shows[nextShowInProjectIndex]
+    await loadShows([nextShow.id])
+    let activeLayout = nextShow.layout || _show(nextShow.id).get("settings.activeLayout")
+    let layout: any[] = _show(nextShow.id).layouts([activeLayout]).ref()[0]
+
+    setOutput("slide", { id: nextShow.id, layout: activeLayout, index: 0 }, false, customOutputId)
+    updateOut(nextShow.id, 0, layout, true, customOutputId)
+
+    // open next item in project (if current is open)
+    if (get(activeShow)?.index === projectIndex) {
+        activeShow.set({ ...nextShow, index: nextShowInProjectIndex })
     }
 }
 
@@ -469,11 +508,17 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 }
 
 // go to next slide if current output slide has nextAfterMedia action
+let nextActive = false
 export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media") {
+    if (nextActive) return
+    nextActive = true
+
     let outputId = getActiveOutputs(get(outputs), true, true)[0]
     if (!outputId) return false
+
     let currentOutput: any = get(outputs)[outputId]
     if (!currentOutput) return false
+
     let slideOut = currentOutput.out?.slide
     if (!slideOut) return false
 
@@ -484,7 +529,9 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     if (type === "media" || type === "audio") {
         let showMedia = _show(slideOut.id).media().get()
         let currentMediaId = showMedia.find((a) => a.path === endedId)?.key
-        if (layoutSlide.background !== currentMediaId) return false
+
+        // don't go to next if current slide don't has outputted media
+        if (layoutSlide.data?.background !== currentMediaId) return false
     } else if (type === "timer") {
         let slide = _show(slideOut.id).get("slides")[layoutSlide.id]
         let slideTimer = slide.items.find((a) => a.type === "timer" && a.timerId === endedId)
@@ -496,6 +543,10 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
 
     setTimeout(() => {
         nextSlide(null, false, false, true, true, outputId)
+
+        setTimeout(() => {
+            nextActive = false
+        }, 200)
     }, 100)
 
     return true

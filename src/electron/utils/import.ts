@@ -87,7 +87,7 @@ export async function importShow(id: any, files: string[] | null) {
     let data: any[] = []
     if (specialImports[importId]) data = await specialImports[importId](files)
     else {
-        // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible
+        // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
         data = await Promise.all(files.map(readFile))
     }
 

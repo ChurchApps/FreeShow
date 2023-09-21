@@ -83,8 +83,6 @@
         }, 100)
     }
 
-    $: console.trace(videoData.muted)
-
     let filter: string = ""
     let flipped: boolean = false
     let fit: MediaFit = "contain"

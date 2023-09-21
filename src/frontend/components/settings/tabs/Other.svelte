@@ -189,6 +189,16 @@
     </Button>
 </CombinedInput>
 
+<!-- WIP custom metadata order -->
+<!-- "Song: {title} - {author}, License: {ccli}" -->
+<!-- or just allow to enter in a template... -->
+<!-- <CombinedInput>
+    <Button style="width: 100%;" on:click={() => activePopup.set("custom_metadata_order")}>
+        <Icon id="meta" style="border: 0;" right />
+        <p style="padding: 0;"><T id="popup.custom_metadata_order" /></p>
+    </Button>
+</CombinedInput> -->
+
 {#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={refreshShows}>

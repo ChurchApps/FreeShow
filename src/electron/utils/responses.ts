@@ -17,6 +17,7 @@ import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPat
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
+import { downloadMedia } from "./downloadMedia"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -128,6 +129,7 @@ const mainResponses: any = {
     RESTORE: (a: any) => restoreFiles(a),
     SYSTEM_OPEN: (a: any) => openSystemFolder(a),
     LOCATE_MEDIA_FILE: (a: any) => locateMediaFile(a),
+    DOWNLOAD_MEDIA: (a: any) => downloadMedia(a),
 }
 
 export function receiveMain(e: any, msg: Message) {

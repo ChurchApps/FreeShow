@@ -65,15 +65,21 @@
     function resetVideos() {
         // WIP console.log("PREVIEW RESET")
         if (videoData.loop) return
+        let currentBackgroundId = path
 
         resetData()
 
         setTimeout(() => {
+            // TODO: this is clearing when going from video to video sometimes
+            console.log("PATH", currentBackgroundId, path)
+            if (type === "video" && path && currentBackgroundId !== path) return
             playingVideos.set([])
 
             videoTime = 0
             videoTime1 = 0
             videoTime2 = 0
+
+            if (path) return
 
             // preview tools Media.svelte
             setOutput("background", null)
@@ -188,6 +194,7 @@
         img1 = { active: true, path: "" }
         img2 = { active: false, path: "" }
     }
+    $: console.log(path, img1, img2, type, video1)
 
     function changeImage() {
         if (removeTimeout) clearTimeout(removeTimeout)

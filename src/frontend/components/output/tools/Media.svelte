@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, outLocked, outputDisplay, playerVideos } from "../../../stores"
+    import { activeShow, dictionary, outLocked, outputDisplay, outputs, playerVideos } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
@@ -67,15 +67,24 @@
                 startVideoTimer()
             }
         },
-        MAIN_VIDEO_ENDED: async (msg) => {
+        MAIN_VIDEO_ENDED: (msg) => {
+            // WIP only activated when preview media tab is open
+            console.log("ENDED!")
+
             if (msg.id !== outputId || type !== "video") return
             // check and execute next after media regardless of loop
+            // next after function is likely skipped as it is first executed by the startup receiver
             if (checkNextAfterMedia(path) || videoData.loop) return
 
             if (videoInterval) clearInterval(videoInterval)
 
-            videoData = await clearPlayingVideo(outputId)
-            videoTime = 0
+            setTimeout(async () => {
+                // return if background is set to something else
+                if ($outputs[outputId].out?.background !== path) return
+
+                videoData = await clearPlayingVideo(outputId)
+                videoTime = 0
+            }, 250)
         },
     }
 

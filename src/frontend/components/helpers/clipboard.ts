@@ -406,10 +406,10 @@ const copyActions: any = {
     },
     group: (data: any) => copyActions.slide(data, true),
     overlay: (data: any) => {
-        return data.map((id: string) => get(overlays)[id])
+        return data.map((id: string) => clone(get(overlays)[id]))
     },
     template: (data: any) => {
-        return data.map((id: string) => get(templates)[id])
+        return data.map((id: string) => clone(get(templates)[id]))
     },
 }
 
