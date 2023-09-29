@@ -37,6 +37,12 @@
         "preversion": "npm-run-all -s",
         "snap": "electron-builder --linux snap"
     },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4,
+        "semi": false,
+        "singleQuote": false
+    },
     "build": {
         "appId": "com.github.vassbo.freeshow",
         "productName": "FreeShow",
