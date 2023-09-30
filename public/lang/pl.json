@@ -137,7 +137,7 @@
         "gain": "Gain",
         "speed": "Prędkość",
         "show": "Pokaż",
-        "flip": "Obróć",
+        "flip": "Obróć poziomo",
         "all": "Foldery, obrazy i filmy",
         "folder": "Tylko foldery",
         "image": "Tylko obrazy",
@@ -627,7 +627,7 @@
         "blur": "Rozmycie",
         "item": "Element",
         "height": "Wysokość",
-        "rotation": "Obrót",
+        "rotation": "Obróć pionowo",
         "tilt": "Nachylenie",
         "perspective": "Perspektywa",
         "opacity": "Przezroczystość",
@@ -866,10 +866,10 @@
         "restore_started": "Odtwarzanie kopii...",
         "backup_finished": "Zapisano kopię zapasową!",
         "restore_finished": "Odtworzono kopię zapasową!",
-        "preview_frame_rate": "Preview frame rate",
-        "auto": "Auto",
-        "optimized": "Optimized",
-        "full": "Full"
+        "preview_frame_rate": "Klatkaż podglądu",
+        "auto": "Automatyczny",
+        "optimized": "Zoptymalizowany",
+        "full": "Pełny"
     },
     "sort": {
         "sort_by": "Sortuj według",
