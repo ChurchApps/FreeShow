@@ -9,6 +9,7 @@
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
     import { getExtension, getMediaType } from "../helpers/media"
+    import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import Clock from "../system/Clock.svelte"
     import DynamicEvents from "./views/DynamicEvents.svelte"
@@ -34,6 +35,7 @@
     export let transitionEnabled: boolean = false
     export let animationStyle: any = {}
     export let customFontSize: number | null = null
+    export let outputStyle: any = {}
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -147,8 +149,27 @@
     const MIN_FONT_SIZE = 10
 
     $: if (alignElem && (loaded || stageAutoSize || item || chordLines)) setTimeout(getCustomAutoSize, 500)
-    function getCustomAutoSize() {
-        if (loopStop || !loaded || !alignElem || (!stageAutoSize && (!item?.auto || item?.autoFontSize))) return
+    // recalculate auto size if output template is different than show template
+    $: currentShowTemplateId = _show(ref.showId).get("settings.template")
+    let outputTemplateAutoSize = false
+    $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId) getCustomAutoSize(true)
+    else outputTemplateAutoSize = false
+
+    function getCustomAutoSize(force: boolean = false) {
+        if (!item) return
+
+        if (force === true) {
+            let template = $templates[outputStyle.template || ""]
+            let firstTextItem = template.items?.find((a) => a.lines)
+            let textStyle = firstTextItem?.lines?.[0]?.text?.[0]?.style || ""
+            let styleObj = getStyles(textStyle, true)
+
+            item.autoFontSize = firstTextItem?.auto || item?.auto ? 0 : Number(styleObj["font-size"]) || 80
+            autoSize = item.autoFontSize
+            outputTemplateAutoSize = true
+        }
+
+        if (loopStop || !loaded || !alignElem || (!stageAutoSize && ((!item.auto && !outputTemplateAutoSize) || item.autoFontSize))) return
         loopStop = true
 
         fontSize = MAX_FONT_SIZE
@@ -236,7 +257,7 @@
     }
 
     $: if (chords && !stageItem && item?.auto && fontSize) fontSize *= 0.7
-    $: fontSizeValue = stageAutoSize || item.auto ? (fontSize || autoSize) + "px" : fontSize ? fontSize + "px" : ""
+    $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? (fontSize || autoSize) + "px" : fontSize ? fontSize + "px" : ""
 </script>
 
 <!-- svelte transition bug!!! -->

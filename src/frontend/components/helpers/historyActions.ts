@@ -770,6 +770,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 return
                             }
 
+                            // recalculate auto size when a new template is applied
+                            delete slide.items[itemIndex].autoFontSize
                             slide.items[itemIndex].auto = item.auto || false
                             slide.items[itemIndex].actions = item.actions || {}
                             slide.items[itemIndex].chords = item.chords || {}

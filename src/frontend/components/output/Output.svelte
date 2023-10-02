@@ -102,8 +102,8 @@
     $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
     $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
     $: currentLineId = slide?.id
-    $: if (linesIndex !== null && currentLineId) linesStart[currentLineId] = amountOfLinesToShow! * linesIndex
-    $: if (linesStart[currentLineId] !== undefined) linesEnd[currentLineId] = linesStart[currentLineId] + amountOfLinesToShow!
+    $: linesStart[currentLineId] = linesIndex !== null && currentLineId ? amountOfLinesToShow! * linesIndex : null
+    $: linesEnd[currentLineId] = linesStart[currentLineId] !== undefined ? linesStart[currentLineId] + amountOfLinesToShow! : null
 
     // metadata
     $: autoMediaMeta = $showsCache[slide?.id]?.metadata?.autoMedia
@@ -448,9 +448,10 @@
                                     {item}
                                     {ratio}
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
-                                    linesStart={linesStart[currentLineId] ?? null}
-                                    linesEnd={linesEnd[currentLineId] ?? null}
+                                    linesStart={linesStart[currentLineId]}
+                                    linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled={!mirror}
+                                    outputStyle={currentStyle}
                                 />
                             {/if}
                         {/each}
@@ -474,9 +475,10 @@
                                     {item}
                                     {ratio}
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
-                                    linesStart={linesStart[currentLineId] ?? null}
-                                    linesEnd={linesEnd[currentLineId] ?? null}
+                                    linesStart={linesStart[currentLineId]}
+                                    linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled
+                                    outputStyle={currentStyle}
                                 />
                                 <!-- </span> -->
                             {/if}

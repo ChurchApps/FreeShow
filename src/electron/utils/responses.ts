@@ -73,6 +73,7 @@ export function loadShow(e: any, msg: Message) {
 
 // MAIN
 const mainResponses: any = {
+    LOG: (data: string): void => console.log(data),
     GET_OS: (): any => ({ platform: os.platform(), name: os.hostname() }),
     GET_SYSTEM_FONTS: (): void => loadFonts(),
     VERSION: (): string => app.getVersion(),
@@ -126,10 +127,10 @@ const mainResponses: any = {
         if (process.platform !== "darwin") return
         systemPreferences.getMediaAccessStatus("screen")
     },
-    RESTORE: (a: any) => restoreFiles(a),
-    SYSTEM_OPEN: (a: any) => openSystemFolder(a),
-    LOCATE_MEDIA_FILE: (a: any) => locateMediaFile(a),
-    DOWNLOAD_MEDIA: (a: any) => downloadMedia(a),
+    RESTORE: (data: any) => restoreFiles(data),
+    SYSTEM_OPEN: (data: any) => openSystemFolder(data),
+    LOCATE_MEDIA_FILE: (data: any) => locateMediaFile(data),
+    DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
 }
 
 export function receiveMain(e: any, msg: Message) {
