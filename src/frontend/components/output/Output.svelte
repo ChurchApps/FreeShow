@@ -97,12 +97,13 @@
     $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
 
     // lines
-    let linesStart: null | number = null
-    let linesEnd: null | number = null
+    let linesStart: any = {}
+    let linesEnd: any = {}
     $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
     $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
-    $: linesStart = linesIndex !== null ? amountOfLinesToShow! * linesIndex : null
-    $: linesEnd = linesStart !== null ? linesStart + amountOfLinesToShow! : null
+    $: currentLineId = slide?.id
+    $: if (linesIndex !== null && currentLineId) linesStart[currentLineId] = amountOfLinesToShow! * linesIndex
+    $: if (linesStart[currentLineId] !== undefined) linesEnd[currentLineId] = linesStart[currentLineId] + amountOfLinesToShow!
 
     // metadata
     $: autoMediaMeta = $showsCache[slide?.id]?.metadata?.autoMedia
@@ -428,7 +429,7 @@
     {/if}
 
     {#if slide && layers.includes("slide")}
-        {#key slideClone}
+        {#key slideClone || linesIndex}
             <!-- WIP svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
             <!-- svelte transition bug when changing between pages -->
             {#if transition.type === "none"}
@@ -447,8 +448,8 @@
                                     {item}
                                     {ratio}
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
-                                    {linesStart}
-                                    {linesEnd}
+                                    linesStart={linesStart[currentLineId] ?? null}
+                                    linesEnd={linesEnd[currentLineId] ?? null}
                                     transitionEnabled={!mirror}
                                 />
                             {/if}
@@ -473,8 +474,8 @@
                                     {item}
                                     {ratio}
                                     ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
-                                    {linesStart}
-                                    {linesEnd}
+                                    linesStart={linesStart[currentLineId] ?? null}
+                                    linesEnd={linesEnd[currentLineId] ?? null}
                                     transitionEnabled
                                 />
                                 <!-- </span> -->

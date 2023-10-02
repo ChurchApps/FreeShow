@@ -39,6 +39,7 @@
     },
     "prettier": {
         "trailingComma": "es5",
+        "printWidth": 250,
         "tabWidth": 4,
         "semi": false,
         "singleQuote": false

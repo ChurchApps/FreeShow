@@ -102,6 +102,8 @@ export function analyseAudio() {
                 .map(([id, a]: any) => ({ id, ...a }))
                 .filter((audio) => {
                     let audioPath = audio.id
+                    if (!audio.audio) return false
+
                     // check if finished
                     if (!audio.paused && audio.audio.currentTime >= audio.audio.duration) {
                         if (get(playingAudio)[audioPath].loop) {
@@ -170,15 +172,15 @@ function getHighestNumber(numbers: number[]): number {
 
 let clearing = false
 export function clearAudio(path: string = "") {
-    // TODO: sometimes removing audio without clearing sound (often when playing while clearing)
-
     // let clearTime = get(transitionData).audio.duration
+    // TODO: starting audio before previous clear is finished will not start/clear audio
     const clearTime = 2
 
     if (clearing) return // setTimeout(() => clearAudio(path), clearTime * 1000 + 200)
+    if (!Object.keys(get(playingAudio)).length) return
     clearing = true
 
-    let newPlaying: any = {}
+    let newPlaying: any = get(playingAudio)
     playingAudio.update((a) => {
         if (path) clearAudio(path)
         else Object.keys(get(playingAudio)).forEach(clearAudio)
@@ -186,6 +188,12 @@ export function clearAudio(path: string = "") {
         return a
 
         function clearAudio(path) {
+            if (!a[path].audio) {
+                delete a[path]
+                newPlaying = a
+                return
+            }
+
             // fade out
             fadeAudio(a[path].audio, clearTime)
 
@@ -193,7 +201,7 @@ export function clearAudio(path: string = "") {
                 a[path].audio.pause()
                 delete a[path]
                 newPlaying = a
-            }, clearTime * 1000 + 100)
+            }, clearTime * 1000 * 1.3)
         }
     })
 
@@ -201,7 +209,7 @@ export function clearAudio(path: string = "") {
         playingAudio.set(newPlaying)
         clearAudioStreams()
         clearing = false
-    }, clearTime * 1000 + 150)
+    }, clearTime * 1000 * 1.5)
 }
 
 function fadeAudio(audio, duration = 1) {

@@ -183,7 +183,7 @@
     $: console.log(ref, outSlide)
     $: showSlide = outSlide?.index !== undefined && ref ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-    $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : Math.round(slideLines / amountOfLinesToShow)) : null
+    $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : Math.ceil(slideLines / amountOfLinesToShow)) : null
 
     // HIDE PREVIEW
 

@@ -124,15 +124,12 @@ function getOutputWithLines() {
 }
 
 export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null) {
-    console.trace(1)
-
     if (get(outLocked) && !bypassLock) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     let outputId = customOutputId || getActiveOutputs()[0]
     let currentOutput: any = get(outputs)[outputId]
     let slide: null | OutSlide = currentOutput.out?.slide || null
-    console.log(slide)
 
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
     let layout: any[] = _show(slide ? slide.id : "active")
@@ -140,7 +137,6 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         .ref()[0]
     let isLastSlide: boolean = slide && layout ? slide.index === layout.length - 1 && !layout[slide.index].end : false
     let index: null | number = null
-    console.log(layout)
 
     // lines
     let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
@@ -154,10 +150,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // TODO: active show slide index on delete......
 
     // go to first slide in next project show ("Next after media" feature)
-    console.log(loop, bypassLock)
     if (loop && bypassLock && slide && isLastSlide) {
         // check if it is last slide (& that slide does not loop to start)
-        console.log(layout)
         goToNextShowInProject(slide, customOutputId)
         return
     }
@@ -270,7 +264,7 @@ export function previousSlide(e: any) {
             .slides([layout[index].id])
             .get()[0]
         let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-        line = slideLines ? slideLines / 2 - 1 : 0
+        line = slideLines ? Math.ceil(slideLines / amountOfLinesToShow) - 1 : 0
     } else {
         index = slide!.index!
         line--
@@ -333,9 +327,10 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     // get output slide
     let outputIds = outputId ? [outputId] : getActiveOutputs()
-    let l = outputIds.find((id: string) => get(outputs)[id].show?.lines)
-    // don't trigger actions if same slide, but different outputted line
-    if (l && get(outputs)[l]?.out?.slide?.line && get(outputs)[l].out!.slide!.line! > 0) return
+    // find any selected output with no lines
+    let anyNotInLines = outputIds.find((id: string) => !get(outputs)[id].out?.slide?.line)
+    // actions will only trigger on index 0 if multiple lines
+    if (!anyNotInLines) return
 
     outputIds.map(activateActions)
 
@@ -391,13 +386,16 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
         // audio
         if (data.audio) {
-            data.audio.forEach((audio: string) => {
-                let a = clone(_show(showId).get("media")[audio])
-                let cloudId = get(driveData).mediaId
-                if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
+            // let clear action trigger first
+            setTimeout(() => {
+                data.audio.forEach((audio: string) => {
+                    let a = clone(_show(showId).get("media")[audio])
+                    let cloudId = get(driveData).mediaId
+                    if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
 
-                if (a) playAudio(a, false)
-            })
+                    if (a) playAudio(a, false)
+                })
+            }, 100)
         }
 
         // overlays
@@ -440,7 +438,6 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 }
 
 export async function startShow(showId: string) {
-    console.log("start show", showId)
     if (!showId) return
 
     let show = await loadShows([showId])
