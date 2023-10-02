@@ -148,11 +148,15 @@
     const MAX_FONT_SIZE = 500
     const MIN_FONT_SIZE = 10
 
-    $: if (alignElem && (loaded || stageAutoSize || item || chordLines)) setTimeout(getCustomAutoSize, 500)
+    $: if (alignElem && (loaded || stageAutoSize || item || chordLines)) {
+        // set smaller text for easier reading while calculating new size
+        if (item.auto || outputTemplateAutoSize || stageAutoSize) setTimeout(() => (fontSize = 70), 100)
+        setTimeout(getCustomAutoSize, 500)
+    }
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = _show(ref.showId).get("settings.template")
     let outputTemplateAutoSize = false
-    $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId) getCustomAutoSize(true)
+    $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) getCustomAutoSize(true)
     else outputTemplateAutoSize = false
 
     function getCustomAutoSize(force: boolean = false) {

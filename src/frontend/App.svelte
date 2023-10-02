@@ -242,7 +242,11 @@
                     </div>
                 {/if}
                 <!-- Mac: width: 100%; -->
-                <Output style={getStyleResolution(resolution, width, height, "fit")} center />
+                {#if Object.values($outputs)[0].stageOutput}
+                    <StageShow stageId={Object.values($outputs)[0].stageOutput} edit={false} />
+                {:else}
+                    <Output style={getStyleResolution(resolution, width, height, "fit")} center />
+                {/if}
             </div>
         {:else}
             <ContextMenu />

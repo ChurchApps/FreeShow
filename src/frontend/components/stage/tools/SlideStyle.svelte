@@ -1,8 +1,13 @@
 <script lang="ts">
-    import { activeStage, outputs, stageShows } from "../../../stores"
+    import { uid } from "uid"
+    import { OUTPUT } from "../../../../types/Channels"
+    import { activeStage, outputs, special, stageShows } from "../../../stores"
+    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { keysToID } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
@@ -22,6 +27,39 @@
     function toggleValue(e: any, key: string) {
         let value = e.target.checked
         updateStageSettings(value, key)
+
+        if (!$activeStage.id) return
+
+        // add / remove physical stage output
+        if (key === "outputScreen") {
+            let outputIds = getActiveOutputs()
+            let bounds = $outputs[outputIds[0]]?.bounds || { x: 0, y: 0, width: 0, height: 0 }
+
+            outputs.update((a) => {
+                if (value) {
+                    let id = uid()
+                    a[id] = {
+                        enabled: true,
+                        active: true,
+                        stageOutput: $activeStage.id!,
+                        name: currentStage.name,
+                        color: "#555555",
+                        bounds,
+                        screen: null,
+                    }
+
+                    send(OUTPUT, ["CREATE"], { ...a[id], id, rate: $special.previewRate || "auto" })
+                } else {
+                    // WIP: remove alpha key outputs...
+                    let outputWithStageId = keysToID(a).find((output) => output.stageOutput === $activeStage.id)?.id
+                    if (outputWithStageId) delete a[outputWithStageId]
+
+                    send(OUTPUT, ["REMOVE"], { id: outputWithStageId })
+                }
+
+                return a
+            })
+        }
     }
 
     // VALUES
@@ -62,6 +100,12 @@
             value={$outputs[settings.output || ""] ? $outputs[settings.output || ""].name : defaultSettings.output}
             on:click={(e) => updateStageSettings(e.detail.id, "output")}
         />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="settings.output_screen" /></p>
+        <div class="alignRight">
+            <Checkbox checked={settings.outputScreen} on:change={(e) => toggleValue(e, "outputScreen")} />
+        </div>
     </CombinedInput>
 
     <h6><T id="edit.style" /></h6>

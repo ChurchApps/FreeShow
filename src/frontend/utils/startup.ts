@@ -418,6 +418,8 @@ export function sendInitialOutputData() {
 
     setTimeout(() => {
         send(OUTPUT, ["OUTPUTS"], get(outputs))
+        // used for stage mirror data
+        send(OUTPUT, ["ALL_OUTPUTS"], get(outputs))
     }, 100)
 }
 
