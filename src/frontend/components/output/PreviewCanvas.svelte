@@ -29,7 +29,7 @@
         if (!canvas) return
 
         canvas.width = fullscreen ? width * 1.2 : width * 2.8
-        canvas.height = fullscreen ? width * 1.2 : height * 2.8
+        canvas.height = fullscreen ? height * 1.2 : height * 2.8
         send(OUTPUT, ["PREVIEW_RESOLUTION"], { id, size: { width: canvas.width, height: canvas.height } })
 
         if (capture) updateCanvas()

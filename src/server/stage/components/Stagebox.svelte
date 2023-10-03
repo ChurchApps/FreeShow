@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { getStyleResolution } from "../../remote/helpers/getStyleResolution"
     import { getAutoSize } from "../helpers/autoSize"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
@@ -7,14 +6,15 @@
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
     import { timers } from "../store"
-    import Output from "./Output.svelte"
+    import PreviewCanvas from "./PreviewCanvas.svelte"
     import Timer from "./Timer.svelte"
 
     export let show: any
     export let id: string
     export let item: any
     export let slides: any
-    export let background: any
+    export let socket: any
+    export let stream: any
 
     // timer
     let today = new Date()
@@ -50,7 +50,7 @@
     $: next = id.includes("next")
     $: slide = slides[next ? 1 : 0]
 
-    let outputResolution: any = show && show.settings.resolution ? show.settings.resolution : { width: 1920, height: 1080 }
+    // let outputResolution: any = show && show.settings.resolution ? show.settings.resolution : { width: 1920, height: 1080 }
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
@@ -64,7 +64,8 @@
 
     {#if id.includes("current_output")}
         <span style="pointer-events: none;">
-            <Output {show} {slide} style={getStyleResolution(outputResolution, width, height)} {background} />
+            <!-- <Output {show} {slide} style={getStyleResolution(outputResolution, width, height)} {background} /> -->
+            <PreviewCanvas alpha={id.includes("_alpha")} id={show?.settings?.output} {socket} capture={stream[id.includes("_alpha") ? "alpha" : "default"]} />
         </span>
     {:else}
         <div class="align" style={item.align}>

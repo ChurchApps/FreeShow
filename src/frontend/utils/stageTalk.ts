@@ -3,7 +3,7 @@ import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
-import { events, mediaCache, outputs, showsCache, stageShows, timeFormat, timers } from "../stores"
+import { events, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
@@ -125,6 +125,17 @@ export const receiveSTAGE: any = {
         sendBackgroundToStage(outputId)
 
         console.log(msg.data)
+        return msg
+    },
+    REQUEST_STREAM: (msg: ClientMessage) => {
+        let id = msg.data.outputId
+        if (!id) id = getActiveOutputs(get(outputs), true, true)[0]
+        if (msg.data.alpha && get(outputs)[id].keyOutput) id = get(outputs)[id].keyOutput
+
+        if (!id) return
+
+        msg.data.stream = get(previewBuffers)[id]
+
         return msg
     },
     // TODO: send data!

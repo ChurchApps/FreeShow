@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { activeStage, stageShows, timers } from "../../../stores"
+    import { activeStage, outputs, stageShows, timers } from "../../../stores"
     import { keysToID } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
-    import { getResolution } from "../../helpers/output"
+    import { getActiveOutputs, getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Panel from "../../system/Panel.svelte"
@@ -18,8 +18,11 @@
         // other: ["chords", "message"],
     }
 
+    $: stageShow = $stageShows[$activeStage.id || ""] || {}
+    $: stageOutputId = stageShow?.settings?.output || getActiveOutputs($outputs, true, true)[0]
+
     let enabledItems: any
-    $: enabledItems = $activeStage.id ? $stageShows[$activeStage.id].items : []
+    $: enabledItems = stageShow.items || []
     function click(item: string) {
         if (!$activeStage.id) return
 
@@ -73,6 +76,14 @@
                         <Icon id={item === "current_output" ? "screen" : item.split("_")[item.split("_").length - 1]} right />
                         <span class="overflow"><T id="stage.{item}" /></span>
                     </Button>
+
+                    <!-- alpha key output -->
+                    {#if item === "current_output" && $outputs[stageOutputId]?.keyOutput}
+                        <Button on:click={() => click(title + "#current_output_alpha")} active={enabledItems[title + "#current_output_alpha"]?.enabled} style="width: 100%;" bold={false}>
+                            <Icon id={"screen"} right />
+                            <span class="overflow"><T id="settings.enable_key_output" /></span>
+                        </Button>
+                    {/if}
                 {/each}
             {/if}
         {/each}

@@ -600,6 +600,7 @@
         font-size: var(--chord-size) !important;
         bottom: -5px;
         transform: translateX(-25%);
+        /* WIP chords goes over other (stage) items */
         z-index: 2;
     }
     .break.chords {
