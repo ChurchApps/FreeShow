@@ -121,7 +121,7 @@ export function history(obj: History, undo: null | boolean = null) {
             case "slide":
                 old = {
                     slides: _show(showID).set({ key: "slides", value: obj.newData.slides }),
-                    layout: _show(showID).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout })[0].value,
+                    layout: _show(showID).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout })[0]?.value,
                 }
                 break
 
@@ -143,18 +143,19 @@ export function history(obj: History, undo: null | boolean = null) {
                         .slides([[obj.location!.layoutSlide!]])
                         .remove("background")
                 } else {
-                    let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
+                    let ref = _show(showID).layouts([obj.location!.layout!]).ref()?.[0]?.[obj.location!.layoutSlide!]
+                    if (ref) {
+                        let cloudId = get(driveData).mediaId
+                        if (ref.data.background && cloudId && cloudId !== "default") {
+                            bgid = ref.data.background
+                            _show(showID).media().add(obj.newData, bgid!)
+                        }
+                        if (!bgid) bgid = _show(showID).media().add(obj.newData)
 
-                    let cloudId = get(driveData).mediaId
-                    if (ref.data.background && cloudId && cloudId !== "default") {
-                        bgid = ref.data.background
-                        _show(showID).media().add(obj.newData, bgid!)
+                        // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
+                        if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
+                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "background", value: bgid })
                     }
-                    if (!bgid) bgid = _show(showID).media().add(obj.newData)
-
-                    // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
-                    if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
-                    else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "background", value: bgid })
                 }
                 break
             case "showAudio":

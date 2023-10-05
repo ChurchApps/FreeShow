@@ -7,6 +7,7 @@ import {
     activeRename,
     activeShow,
     activeStage,
+    currentOutputSettings,
     defaultProjectName,
     dictionary,
     drawerTabsData,
@@ -433,12 +434,17 @@ export const _updaters = {
     },
     settings_style: {
         store: styles,
-        select: (id: string, _data, initializing: boolean) => {
-            if (!initializing) return
+        select: (id: string, data, initializing: boolean) => {
+            if (!initializing || data.key) return
             activeRename.set("style_" + id)
         },
     },
-    settings_output: { store: outputs },
+    settings_output: {
+        store: outputs,
+        select: (id: string) => {
+            currentOutputSettings.set(id)
+        },
+    },
 }
 
 function updateTransparentColors(id: string) {

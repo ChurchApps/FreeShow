@@ -17,18 +17,21 @@
         .sort((a: any, b: any) => a.name.localeCompare(b.name))
 
     function changeGroup(e: any, id: string, key: string = "name") {
-        // TODO: history
-        groups.update((a) => {
-            if (key === "name" && a[id].default) delete a[id].default
+        // remove default tag if name is changed (used for translation)
+        // WIP undo won't work here...
+        if (key === "name" && $groups[id].default) {
+            groups.update((a) => {
+                delete a[id].default
 
-            let value = e.target?.value || e
-            if (key === "shortcut") value = e.detail.name
-            if (value === "—") value = ""
+                return a
+            })
+        }
 
-            a[id][key] = value
+        let value = e.target?.value || e
+        if (key === "shortcut") value = e.detail.name
+        if (value === "—") value = ""
 
-            return a
-        })
+        history({ id: "UPDATE", newData: { key, data: value }, oldData: { id: id }, location: { page: "settings", id: "global_group", override: "group_" + key } })
     }
 
     const inputs: any = {

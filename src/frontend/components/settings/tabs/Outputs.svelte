@@ -27,6 +27,7 @@
     function updateOutput(key: string, value: any, outputId: string = "") {
         if (!outputId) outputId = currentOutput.id
 
+        // TODO: history
         outputs.update((a: any) => {
             if (key.includes(".")) {
                 let split = key.split(".")

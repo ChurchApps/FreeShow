@@ -374,7 +374,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (!deleting && Object.keys(get(showsCache)).length >= 100) {
                 // store all to files
-                save()
+                if (initializing) save()
                 // then delete showsCache
                 setTimeout(() => {
                     showsCache.set({})
@@ -835,6 +835,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             function updateLayoutSlides() {
                 showsCache.update((a: any) => {
+                    if (!a[data.remember.showId]) return
                     let layoutSlides = a[data.remember.showId].layouts[data.remember.layout].slides
 
                     let currentIndex = -1

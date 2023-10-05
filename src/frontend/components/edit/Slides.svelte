@@ -145,7 +145,7 @@
             {#if layoutSlides.length}
                 <div class="grid" on:wheel={wheel}>
                     {#each layoutSlides as slide, i}
-                        {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id]}
+                        {#if (loaded || i < lazyLoader) && currentShow?.slides?.[slide.id]}
                             <Slide
                                 slide={currentShow.slides[slide.id]}
                                 show={currentShow}
