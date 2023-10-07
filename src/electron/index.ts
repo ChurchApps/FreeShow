@@ -30,7 +30,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 32 * 1000) // Linux dev: 80 * 1000
+    else setTimeout(startApp, 32 * 1000) // Increase on low CPU.
 })
 
 function startApp() {
