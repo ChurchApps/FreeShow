@@ -4,7 +4,7 @@
     import Loader from "../../main/Loader.svelte"
     // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
-    import { bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache } from "../../../stores"
+    import { bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -313,9 +313,12 @@
             })
             activeVerses = activeVerses
             // } else if (activeVerses.length === 1 && activeVerses[0] === id) activeVerses = []
-        } else activeVerses = [id]
+        } else if (!activeVerses.includes(id)) activeVerses = [id]
 
         bibles[0].activeVerses = activeVerses
+
+        let sorted = activeVerses.sort((a, b) => Number(a) - Number(b)) || []
+        selected.set({ id: "scripture", data: [{ bibles, sorted }] })
     }
 
     // search
@@ -615,7 +618,8 @@
             <div class="verses" class:center={!Object.keys(verses[firstBibleId] || {}).length}>
                 {#if Object.keys(verses[firstBibleId] || {}).length}
                     {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
-                        <p on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => playOrClearScripture(true)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
+                        <!-- custom drag -->
+                        <p draggable="true" on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => playOrClearScripture(true)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
                             <span class="v">{id}</span>{@html content}
                         </p>
                     {/each}
@@ -645,7 +649,7 @@
     <Button disabled={activeVerses.includes("1")} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
         <Icon size={1.3} id="previous" />
     </Button>
-    <Button disabled={$outLocked} title={$dictionary.menu?.[outputIsScripture ? "_title_display_stop" : "_title_display"]} on:click={() => playOrClearScripture(true)}>
+    <Button disabled={$outLocked} title={outputIsScripture ? $dictionary.preview?._update : $dictionary.menu?._title_display} on:click={() => playOrClearScripture(true)}>
         <Icon size={outputIsScripture ? 1.1 : 1.3} id={outputIsScripture ? "refresh" : "play"} white={!outputIsScripture} />
     </Button>
     <Button disabled={Object.keys(verses[firstBibleId] || {}).length && activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString())} title={$dictionary.preview?._next_slide} on:click={() => moveSelection(false)}>

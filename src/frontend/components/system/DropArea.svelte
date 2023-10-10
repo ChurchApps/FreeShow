@@ -79,7 +79,6 @@
         if (files.length) selected.set({ id: "files", data: files })
         fileOver = false
         hover = false
-        console.log(files)
         console.log($selected.id, "=>", id)
 
         if (validateDrop(id, $selected.id, true) || files.length) ondrop(e, id)
