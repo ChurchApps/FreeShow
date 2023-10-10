@@ -115,7 +115,7 @@
         let path: string = bg?.path
         filter = getMediaFilter(path)
         flipped = $media[path]?.flipped || false
-        fit = $media[path]?.fit || "contain"
+        fit = currentStyle?.fit || $media[path]?.fit || "contain"
     }
 
     $: group = slide.group
@@ -318,6 +318,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                                 cameraGroup={bg.cameraGroup || ""}
                                 type={bg.type !== "player" ? bg.type : null}
                                 loadFullImage={!!(bg.path || bg.id)}
+                                ghost={!background}
                                 {filter}
                                 {flipped}
                                 {fit}

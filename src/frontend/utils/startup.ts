@@ -96,7 +96,10 @@ export function startup() {
 
         // type === "output"
         receive(OUTPUT, receiveOUTPUTasOUTPUT)
-        send(OUTPUT, ["REQUEST_DATA_MAIN"])
+        // wait a bit on slow computers
+        setTimeout(() => {
+            send(OUTPUT, ["REQUEST_DATA_MAIN"])
+        }, 100)
         // TODO: video data!
     })
 }
@@ -105,17 +108,20 @@ function startupMain() {
     loaded.set(false)
     setLanguage()
 
-    // load files
-    send(MAIN, ["DISPLAY", "VERSION"])
-    send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
-    setTimeout(() => send(STORE, ["SETTINGS"]), 500)
-
     receive(MAIN, receiveMAIN)
     receive(OUTPUT, receiveOUTPUTasMAIN)
     receive(STORE, receiveSTORE)
     receive(IMPORT, receiveIMPORT)
     receive(OPEN_FOLDER, receiveFOLDER)
     receive(NDI, receiveNDI)
+
+    // load files
+    send(MAIN, ["DISPLAY", "VERSION"])
+    // wait a bit in case data is not yet loaded
+    setTimeout(() => {
+        send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
+        setTimeout(() => send(STORE, ["SETTINGS"]), 500)
+    }, 100)
 
     setTimeout(() => {
         listenForUpdates()

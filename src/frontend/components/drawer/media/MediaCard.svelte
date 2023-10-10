@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { MediaFit } from "../../../../types/Main"
-    import { activeShow, media, mediaOptions, outLocked, outputs } from "../../../stores"
-    import { findMatchingOut, setOutput } from "../../helpers/output"
+    import { activeShow, media, mediaOptions, outLocked, outputs, styles } from "../../../stores"
+    import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import { getMediaFilter } from "../../helpers/showActions"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
@@ -75,10 +75,13 @@
     let fit: MediaFit = "contain"
     let speed: string = "1"
 
+    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentStyle = $styles[currentOutput?.style || ""] || {}
+
     $: if (path) {
         filter = getMediaFilter(path)
         flipped = $media[path]?.flipped || false
-        fit = $media[path]?.fit || "contain"
+        fit = currentStyle?.fit || $media[path]?.fit || "contain"
         speed = $media[path]?.speed || "1"
     }
 

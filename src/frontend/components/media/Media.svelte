@@ -194,7 +194,6 @@
         img1 = { active: true, path: "" }
         img2 = { active: false, path: "" }
     }
-    $: console.log(path, img1, img2, type, video1)
 
     function changeImage() {
         if (removeTimeout) clearTimeout(removeTimeout)
