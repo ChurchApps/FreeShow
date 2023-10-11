@@ -4,18 +4,19 @@
     import { activePopup, alertMessage, dictionary, exportPath, mediaCache, recordingPath, scripturePath, shows, showsCache, showsPath, special } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
+    import { save } from "../../../utils/save"
+    import { restartOutputs } from "../../../utils/updateSettings"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { formatBytes } from "../../helpers/bytes"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import { save } from "../../../utils/save"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import { restartOutputs } from "../../../utils/updateSettings"
+    import FolderPicker from "../../inputs/FolderPicker.svelte"
 
     onMount(() => {
         getCacheSize()
+        // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
     })
 
@@ -37,9 +38,22 @@
         { id: "full", name: "$:settings.full:$" },
     ]
 
+    // let audioOutputs: any = []
+    // async function getAudioOutputs() {
+    //     const devices = await navigator.mediaDevices.enumerateDevices()
+    //     let outputs = devices.filter((device) => device.kind === "audiooutput")
+
+    //     let defaultGroupId = outputs.find((a) => a.deviceId === "default")?.groupId
+    //     if (defaultGroupId) outputs = outputs.filter((a) => a.groupId !== defaultGroupId || a.deviceId === "default")
+
+    //     audioOutputs = [{ id: "", name: "—" }, ...outputs.map((device) => ({ id: device.deviceId, name: device.label }))]
+    // }
+
     function updateSpecial(value, key) {
         special.update((a) => {
-            a[key] = value
+            if (!value) delete a[key]
+            else a[key] = value
+
             return a
         })
 
@@ -181,6 +195,11 @@
     <p><T id="settings.preview_frame_rate" /></p>
     <Dropdown options={previewRates} value={previewRates.find((a) => a.id === ($special.previewRate || "auto"))?.name} on:click={(e) => updateSpecial(e.detail.id, "previewRate")} />
 </CombinedInput>
+
+<!-- <CombinedInput>
+    <p><T id="settings.custom_audio_output" /></p>
+    <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
+</CombinedInput> -->
 
 <CombinedInput>
     <Button style="width: 100%;" on:click={() => activePopup.set("manage_icons")}>

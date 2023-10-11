@@ -22,11 +22,13 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
             } else a[path].audio.pause()
             return a
         })
+
         return
     }
 
     audio = audio || new Audio(path)
     let analyser: any = await getAnalyser(audio, stream)
+
     playingAudio.update((a) => {
         if (!analyser) return a
         a[path] = {
@@ -285,7 +287,22 @@ export async function getAnalyser(elem: any, stream: any = null) {
     source.connect(gainNode)
     gainNode.connect(ac.destination)
 
-    console.log("ANALYZING VIDEO", elem)
+    console.log("ANALYZING AUDIO", elem)
+
+    // custom audio output
+    // let audioDest = ac.createMediaStreamDestination()
+    // source.connect(audioDest)
+    // let newAudio: any = new Audio()
+    // newAudio.srcObject = audioDest.stream
+    // WIP this works in Chrome 110: (Electron needs to be updated!)
+    // https://developer.chrome.com/blog/audiocontext-setsinkid/
+    // if (get(special).audioOutput) {
+    //     try {
+    //         await (ac as any).setSinkId(get(special).audioOutput)
+    //     } catch (err) {
+    //         console.error(err)
+    //     }
+    // }
 
     return { left: leftAnalyser, right: rightAnalyser, gainNode }
 }

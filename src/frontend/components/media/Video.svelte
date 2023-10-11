@@ -19,10 +19,6 @@
     export let animationStyle: string = ""
 
     let dispatch: any = createEventDispatcher()
-    // let width: number = 0
-    // let height: number = 0
-    // let videoWidth: number = 0
-    // let videoHeight: number = 0
 
     let hasLoaded: boolean = false
     function loaded() {
@@ -30,8 +26,14 @@
         dispatch("loaded", true)
 
         // if (!video) return
-        // videoWidth = video.videoWidth || 0
-        // videoHeight = video.videoHeight || 0
+
+        // this don't work because video audio goes through audio context
+        // if (!$special.audioOutput) return
+        // try {
+        //     video.setSinkId($special.audioOutput)
+        // } catch (err) {
+        //     console.error(err)
+        // }
     }
 
     function playing() {
@@ -54,7 +56,6 @@
     $: console.log(filter)
 </script>
 
-<!-- bind:clientWidth={width} bind:clientHeight={height} -->
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     <video
         class="media"
