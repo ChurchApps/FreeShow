@@ -492,6 +492,7 @@
         "send_midi": "Invia MIDI in uscita",
         "delete_shows_not_indexed": "Elimina le scene nella cartella 'Shows' che non sono indicizzate",
         "delete_thumbnail_cache": "Elimina la cache delle miniature",
+        "open_log_file": "Open log file",
         "refresh_all_shows": "Ottieni tutte le scene nella cartella 'Shows'.",
         "start_timer": "Avviare il timer",
         "stop_timers": "Arresta i timer attivi",

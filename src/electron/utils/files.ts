@@ -102,7 +102,11 @@ export function selectFolderDialog(title: string = "", defaultPath: string = "")
 // DATA FOLDERS
 
 export function openSystemFolder(path: string) {
-    // this will show an error alert when path don't exist (trycatch don't work on this)
+    if (!doesPathExist(path)) {
+        toApp(MAIN, { channel: "ALERT", data: "This does not exist!" })
+        return
+    }
+
     shell.openPath(path)
 }
 

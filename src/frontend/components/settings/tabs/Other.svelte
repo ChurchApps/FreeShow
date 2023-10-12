@@ -106,6 +106,11 @@
         cacheSize = "0 Bytes"
     }
 
+    // open log
+    function openLog() {
+        send(MAIN, ["OPEN_LOG"])
+    }
+
     // backup
     function backup() {
         alertMessage.set($dictionary.settings?.backup_started)
@@ -248,6 +253,12 @@
             <T id="actions.delete_thumbnail_cache" />
             <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({cacheSize})</span>
         </p>
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={openLog}>
+        <Icon id="document" right /><T id="actions.open_log_file" />
     </Button>
 </CombinedInput>
 

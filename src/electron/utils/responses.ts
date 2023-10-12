@@ -18,6 +18,7 @@ import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
 import { downloadMedia } from "./downloadMedia"
+import { error_log } from "./store"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -131,6 +132,8 @@ const mainResponses: any = {
     SYSTEM_OPEN: (data: any) => openSystemFolder(data),
     LOCATE_MEDIA_FILE: (data: any) => locateMediaFile(data),
     DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
+    LOG_ERROR: (data: any) => logError(data),
+    OPEN_LOG: () => openSystemFolder(error_log.path),
 }
 
 export function receiveMain(e: any, msg: Message) {
@@ -276,4 +279,20 @@ export function saveRecording(_: any, msg: any) {
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
+}
+
+// ERROR LOGGER
+const maxLogLength = 250
+function logError(log: string) {
+    let storedLog: any = error_log.store
+    console.log(storedLog)
+    let previousLog: any[] = storedLog.renderer || []
+
+    console.log(error_log.store, previousLog)
+    previousLog.push(log)
+
+    if (previousLog.length > maxLogLength) previousLog = previousLog.slice(previousLog.length - maxLogLength)
+
+    error_log.clear()
+    error_log.set({ renderer: previousLog })
 }

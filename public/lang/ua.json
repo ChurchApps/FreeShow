@@ -492,6 +492,7 @@
         "send_midi": "Надіслати MIDI",
         "delete_shows_not_indexed": "Видалити шоу в папці \"Шоу\", які не проіндексовані",
         "delete_thumbnail_cache": "Видалити кеш мініатюр",
+        "open_log_file": "Open log file",
         "refresh_all_shows": "Отримати всі шоу в папці \"Шоу\"",
         "start_timer": "Запустити таймер",
         "stop_timers": "Зупинити активні таймери",

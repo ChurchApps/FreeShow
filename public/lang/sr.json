@@ -492,6 +492,7 @@
         "send_midi": "Pošalji MIDI napolje",
         "delete_shows_not_indexed": "Ukloni prezentacije u 'Prezentacije' folderu koje nisu indeksovane",
         "delete_thumbnail_cache": "Ukloni keš sličica",
+        "open_log_file": "Open log file",
         "refresh_all_shows": "Nabavi sve prezentacije u 'Prezentacije' folderu",
         "start_timer": "Pokreni tajmer",
         "stop_timers": "Zaustavi aktivne tajmere",

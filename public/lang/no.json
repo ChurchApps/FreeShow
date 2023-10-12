@@ -492,6 +492,7 @@
         "send_midi": "Send MIDI ut",
         "delete_shows_not_indexed": "Slett show i 'Shows'-mappen som ikke er indeksert",
         "delete_thumbnail_cache": "Slett hurtigbuffer med miniatyrbilder",
+        "open_log_file": "Åpne logg-fil",
         "refresh_all_shows": "Finn alle show i 'Shows'-mappen",
         "start_timer": "Start tidtaker",
         "stop_timers": "Stopp pågående tidtakere",

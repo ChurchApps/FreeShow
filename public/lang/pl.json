@@ -492,6 +492,7 @@
         "send_midi": "Wyślij wyjście MIDI",
         "delete_shows_not_indexed": "Usuń z folderu pokazy, które nie są zaindeksowane",
         "delete_thumbnail_cache": "Usuń pamięć podręczną miniaturek",
+        "open_log_file": "Open log file",
         "refresh_all_shows": "Załaduj ponownie pliki \".show\"",
         "start_timer": "Rozpocznij odliczanie",
         "stop_timers": "Zatrzymaj aktywny timer",

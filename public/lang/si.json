@@ -492,6 +492,7 @@
         "send_midi": "Pošlji MIDI",
         "delete_shows_not_indexed": "Izbriši v mapi 'Razporedi' razporede, ki niso ukazaljeni",
         "delete_thumbnail_cache": "Izbriši predpomnilnik sličic",
+        "open_log_file": "Open log file",
         "refresh_all_shows": "Vsi razporedi v mapi 'Razporedi'",
         "start_timer": "Začetni časovnik",
         "stop_timers": "Zaustavi dejavne časovnike",

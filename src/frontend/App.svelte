@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { OUTPUT } from "../types/Channels"
+    import { MAIN, OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
     import type { DrawerTabIds, TopViews } from "../types/Tabs"
     import ContextMenu from "./components/context/ContextMenu.svelte"
@@ -8,8 +8,8 @@
     import DrawTools from "./components/draw/DrawTools.svelte"
     import Slide from "./components/draw/Slide.svelte"
     import Drawer from "./components/drawer/Drawer.svelte"
-    import Editor from "./components/edit/Editor.svelte"
     import EditTools from "./components/edit/EditTools.svelte"
+    import Editor from "./components/edit/Editor.svelte"
     import EffectTools from "./components/edit/EffectTools.svelte"
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
@@ -185,6 +185,23 @@
         }, convertAutosave[$autosave])
     }
 
+    // error logger
+    const ERROR_FILTER = ["Failed to execute 'drawImage' on 'CanvasRenderingContext2D'"]
+    function logerror(err) {
+        if (ERROR_FILTER.find((a) => err.message.includes(a))) return
+
+        let log = {
+            time: new Date(),
+            os: $os.platform || "Unknown",
+            active: { window: $currentWindow || "main", page, show: $activeShow, edit: $activeEdit },
+            source: `${err.filename} - ${err.lineno}:${err.colno}`,
+            message: err.message,
+            stack: err.error?.stack,
+        }
+
+        send(MAIN, ["LOG_ERROR"], JSON.stringify(log))
+    }
+
     // close youtube ad
     let closeAd: boolean = false
     window.api.receive(OUTPUT, (a: any) => {
@@ -217,7 +234,7 @@
     }
 </script>
 
-<svelte:window on:keydown={keydown} on:mousedown={focusArea} />
+<svelte:window on:keydown={keydown} on:mousedown={focusArea} on:error={logerror} />
 
 {#if $currentWindow === "pdf"}
     <Pdf />
