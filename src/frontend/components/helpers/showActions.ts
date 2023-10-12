@@ -544,7 +544,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
         setTimeout(() => {
             nextActive = false
         }, 200)
-    }, 100)
+    }, 500) // has to be higher on low end devices
 
     return true
 }

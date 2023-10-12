@@ -32,6 +32,7 @@ export async function convertLessonsPresentation(data: any) {
 
     let lessons: any[] = []
     let tempShows: any[] = []
+    let tempProjects: any[] = []
     let replacer: any = {}
 
     data?.forEach(({ content }: any) => {
@@ -50,13 +51,13 @@ export async function convertLessonsPresentation(data: any) {
             { id: uid(5), type: "section", name: lesson.lessonTitle, notes: lesson.lessonDescription },
         ]
 
-        let currentLessonFiles: any[] = []
+        let currentLessonFiles: any[] = [{ name: "Lesson Image", type: "project", url: lesson.lessonImage }]
 
         lesson.messages.forEach((message) => {
             let layoutID = uid()
             let show = new ShowObj(false, "lessons", layoutID)
             let showId = uid()
-            show.name = checkName(message.name, showId)
+            show.name = checkName(`${lesson!.lessonTitle} - ${message.name}`, showId)
 
             currentLessonFiles.push(...message.files)
 
@@ -71,8 +72,7 @@ export async function convertLessonsPresentation(data: any) {
         })
 
         // create project
-        console.log({ name: lesson.lessonName, shows: projectShows })
-        history({ id: "UPDATE", newData: { data: { parent: "/", created: Date.now(), name: lesson.lessonName, shows: projectShows } }, location: { id: "project", page: "show" } })
+        tempProjects.push({ parent: "/", created: Date.now(), name: lesson.lessonName, shows: projectShows })
 
         // WIP change lesson image in project to local
         // currentLessonFiles.push({url: lesson.lessonImage, name: lesson.lessonTitle})
@@ -84,7 +84,12 @@ export async function convertLessonsPresentation(data: any) {
 
     let replace: any = await receiveMessage()
     replace.forEach((r) => {
-        replacer[r.from] = r.to
+        if (r.type === "project") {
+            let projectIndex = tempProjects.findIndex((a) => a.shows[0].id === r.from)
+            if (projectIndex >= 0) tempProjects[projectIndex].shows[0].id = r.to
+        } else {
+            replacer[r.from] = r.to
+        }
     })
 
     // change from remote urls to local paths
@@ -97,6 +102,10 @@ export async function convertLessonsPresentation(data: any) {
     })
 
     setTempShows(tempShows)
+
+    tempProjects.forEach((project) => {
+        history({ id: "UPDATE", newData: { data: project }, location: { id: "project", page: "show" } })
+    })
 }
 
 async function receiveMessage() {

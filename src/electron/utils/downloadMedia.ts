@@ -16,27 +16,37 @@ export function downloadMedia(lessons: any[]) {
 
 function checkLesson(lesson: any) {
     // check url
-    return lesson.files.map((file: any) => downloadFile(lesson.name, file))
+
+    const lessonsFolder = getDocumentsFolder(null, "Lessons")
+    const lessonFolder = path.join(lessonsFolder, lesson.name)
+    fs.mkdirSync(lessonFolder, { recursive: true })
+
+    return lesson.files
+        .map((file: any) => {
+            let extension = ""
+            if (file.url.includes(".mp4")) extension = "mp4"
+            if (file.url.includes(".jpg")) extension = "jpg"
+            if (file.url.includes(".png")) extension = "png"
+            if (!extension) return
+
+            let fileName = file.name
+            if (!fileName.includes("." + extension)) fileName += "." + extension
+
+            let filePath = path.join(lessonFolder, fileName)
+
+            return downloadFile(filePath, file)
+        })
+        .filter((a: any) => a)
 }
 
-function downloadFile(lessonName: string, file: any) {
-    let extension = "mp4"
-    // if (file.url.includes(".mp4")) extension = "mp4"
-    if (file.url.includes(".jpg")) extension = "jpg"
-    if (file.url.includes(".png")) extension = "png"
-
-    let fileName = file.name
-    if (!fileName.includes("." + extension)) fileName += "." + extension
-    const rootPath = getDocumentsFolder(null, "Lessons")
-    const localPath = path.join(rootPath, lessonName, fileName)
-
-    if (doesPathExist(localPath)) {
-        console.log(localPath + " exists!")
-        return { from: file.url, to: localPath }
+function downloadFile(filePath: string, file: any) {
+    if (doesPathExist(filePath)) {
+        console.log(filePath + " exists!")
+        return { from: file.url, to: filePath, type: file.type }
     }
 
     // download the media
-    const fileStream = fs.createWriteStream(localPath)
+    const fileStream = fs.createWriteStream(filePath)
     https.get(file.url, (res) => {
         res.pipe(fileStream)
 
@@ -54,5 +64,5 @@ function downloadFile(lessonName: string, file: any) {
         })
     })
 
-    return { from: file.url, to: localPath }
+    return { from: file.url, to: filePath, type: file.type }
 }
