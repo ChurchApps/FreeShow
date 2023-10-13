@@ -28,6 +28,7 @@ import {
     projects,
     refreshEditSlide,
     scriptures,
+    selectAllMedia,
     selected,
     shows,
     showsCache,
@@ -322,6 +323,7 @@ const selectActions: any = {
 
         selected.set({ id: "template", data: newSelection })
     },
+    media: () => selectAllMedia.set(true)
 }
 
 const copyActions: any = {
