@@ -148,11 +148,16 @@
     const MAX_FONT_SIZE = 500
     const MIN_FONT_SIZE = 10
 
-    $: if (alignElem && (loaded || stageAutoSize || item || chordLines)) {
+    let previousItem = "{}"
+    $: newItem = JSON.stringify(item)
+    $: itemAutoSize = item.auto
+    $: itemAutoFontSize = item.autoFontSize
+    $: if (alignElem && (loaded || stageAutoSize || newItem !== previousItem || chordLines)) {
         // set smaller text for easier reading while calculating new size
-        if (item.auto || outputTemplateAutoSize || stageAutoSize) setTimeout(() => (fontSize = 70), 100)
+        if ((itemAutoSize && !itemAutoFontSize) || outputTemplateAutoSize || stageAutoSize) setTimeout(() => (fontSize = 70), 100)
         setTimeout(getCustomAutoSize, 500)
     }
+
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = _show(ref.showId).get("settings.template")
     let outputTemplateAutoSize = false
@@ -161,6 +166,7 @@
 
     function getCustomAutoSize(force: boolean = false) {
         if (!item) return
+        previousItem = JSON.stringify(item)
 
         if (force === true) {
             let template = $templates[outputStyle.template || ""]
@@ -168,12 +174,17 @@
             let textStyle = firstTextItem?.lines?.[0]?.text?.[0]?.style || ""
             let styleObj = getStyles(textStyle, true)
 
-            item.autoFontSize = firstTextItem?.auto || item?.auto ? 0 : Number(styleObj["font-size"]) || 80
+            if (!firstTextItem?.auto && !item?.auto) return
+
+            item.autoFontSize = firstTextItem?.auto || item.auto ? 0 : Number(styleObj["font-size"]) || 80
             autoSize = item.autoFontSize
             outputTemplateAutoSize = true
         }
 
-        if (loopStop || !loaded || !alignElem || (!stageAutoSize && ((!item.auto && !outputTemplateAutoSize) || item.autoFontSize))) return
+        if (loopStop || !loaded || !alignElem || (!stageAutoSize && !outputTemplateAutoSize && (!item.auto || item.autoFontSize))) {
+            if (item.autoFontSize) fontSize = item.autoFontSize
+            return
+        }
         loopStop = true
 
         fontSize = MAX_FONT_SIZE
