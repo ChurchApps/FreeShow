@@ -264,7 +264,7 @@ export function previousSlide(e: any) {
             .slides([layout[index].id])
             .get()[0]
         let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-        line = slideLines ? Math.ceil(slideLines / amountOfLinesToShow) - 1 : 0
+        if (amountOfLinesToShow) line = slideLines ? Math.ceil(slideLines / amountOfLinesToShow) - 1 : 0
     } else {
         index = slide!.index!
         line--
