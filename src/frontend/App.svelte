@@ -1,9 +1,7 @@
 <script lang="ts">
-    import { MAIN, OUTPUT } from "../types/Channels"
+    import { OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
-    import type { DrawerTabIds, TopViews } from "../types/Tabs"
     import ContextMenu from "./components/context/ContextMenu.svelte"
-    import { menuClick } from "./components/context/menuClick"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
     import DrawTools from "./components/draw/DrawTools.svelte"
     import Slide from "./components/draw/Slide.svelte"
@@ -14,9 +12,7 @@
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
     import Pdf from "./components/export/Pdf.svelte"
-    import { copy, cut, deleteAction, duplicate, paste, selectAll } from "./components/helpers/clipboard"
-    import { redo, undo } from "./components/helpers/history"
-    import { displayOutputs, getActiveOutputs, getResolution } from "./components/helpers/output"
+    import { getResolution } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -35,126 +31,20 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import {
-        activeDrawerTab,
-        activeEdit,
-        activePage,
-        activePopup,
-        activeShow,
-        activeStage,
-        activeTimers,
-        autosave,
-        currentWindow,
-        disabledServers,
-        drawer,
-        events,
-        focusedArea,
-        loaded,
-        os,
-        outputDisplay,
-        outputs,
-        selected,
-        serverData,
-        special,
-        styles,
-        volume,
-    } from "./stores"
-    import { newToast } from "./utils/messages"
-    import { send } from "./utils/request"
-    import { save } from "./utils/save"
+    import { activeEdit, activePage, activeShow, activeStage, activeTimers, autosave, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs, styles } from "./stores"
+    import { focusArea, hideDisplay, logerror, startAutosave, toggleRemoteStream } from "./utils/common"
+    import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
-    import { convertAutosave } from "./values/autosave"
 
     startup()
     $: page = $activePage
+    $: isWindows = !$currentWindow && $os.platform === "win32"
 
+    // get output resolution
     let width: number = 0
     let height: number = 0
     let resolution: Resolution = getResolution()
-    $: resolution = getResolution(null, { $outputs, $styles }, true)
-
-    const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
-    const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "calendar", "templates"]
-    const ctrlKeys: any = {
-        a: () => selectAll(),
-        c: () => copy(),
-        v: () => paste(),
-        // give time for drawer to not toggle
-        d: () => setTimeout(() => duplicate($selected)),
-        x: () => cut(),
-        e: () => activePopup.set("export"),
-        i: () => activePopup.set("import"),
-        n: () => activePopup.set("show"),
-        h: () => activePopup.set("history"),
-        m: () => volume.set($volume ? 0 : 1),
-        o: () => displayOutputs(),
-        s: () => save(),
-        y: () => redo(),
-        z: () => undo(),
-        Z: () => redo(),
-        "?": () => activePopup.set("shortcuts"),
-    }
-    const keys: any = {
-        Escape: () => {
-            // blur focused elements
-            if (document.activeElement !== document.body) {
-                ;(document.activeElement as HTMLElement).blur()
-
-                if (!$activePopup && $selected.id) setTimeout(() => selected.set({ id: null, data: [] }))
-                return
-            }
-
-            if ($activePopup === "initialize") return
-
-            // give time so output don't clear also
-            setTimeout(() => {
-                if ($activePopup) activePopup.set(null)
-                else if ($selected.id) selected.set({ id: null, data: [] })
-            })
-        },
-        Delete: () => deleteAction($selected, "remove"),
-        Backspace: () => keys.Delete(),
-        // give time so it don't clear slide
-        F2: () => setTimeout(menuClick("rename", true, null, null, null, $selected)),
-    }
-
-    function keydown(e: any) {
-        if ($currentWindow === "output") return
-
-        if (e.ctrlKey || e.metaKey) {
-            if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
-                activeDrawerTab.set(drawerMenus[e.key - 1])
-                // open drawer
-                if ($drawer.height < 300) drawer.set({ height: $drawer.stored || 300, stored: null })
-                return
-            }
-
-            // use default input shortcuts on supported devices (this includes working undo/redo)
-            const exeption = ["e", "i", "n", "o", "s", "a"]
-            if ((e.key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && $os.platform !== "darwin")) {
-                return
-            }
-
-            if (ctrlKeys[e.key]) {
-                ctrlKeys[e.key](e)
-            }
-            return
-        }
-
-        if (e.altKey) return
-        if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
-        if (document.activeElement === document.body && Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
-
-        if (keys[e.key]) {
-            e.preventDefault()
-            keys[e.key](e)
-        }
-    }
-
-    function focusArea(e: any) {
-        if (e.target.closest(".menus") || e.target.closest(".contextMenu")) return
-        focusedArea.set(e.target.closest(".selectElem")?.id || e.target.querySelector(".selectElem")?.id || "")
-    }
+    $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
 
     // countdown timer tick
     $: if ($activeTimers.length) startTimer()
@@ -162,79 +52,31 @@
     // check for show event
     $: if (Object.keys($events).length) startEventTimer()
 
-    function hideDisplay(ctrlKey: boolean = true) {
-        if (!ctrlKey) return
-        outputDisplay.set(false)
-        window.api.send(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
-    }
-
     // autosave
-    let autosaveTimeout: any = null
     $: if ($autosave) startAutosave()
-    function startAutosave() {
-        if (autosaveTimeout) clearTimeout(autosaveTimeout)
-        if (!convertAutosave[$autosave]) {
-            autosaveTimeout = null
-            return
-        }
 
-        autosaveTimeout = setTimeout(() => {
-            newToast("$toast.saving")
-            save()
-            startAutosave()
-        }, convertAutosave[$autosave])
-    }
-
-    // error logger
-    const ERROR_FILTER = ["Failed to execute 'drawImage' on 'CanvasRenderingContext2D'"]
-    function logerror(err) {
-        if (ERROR_FILTER.find((a) => err.message.includes(a))) return
-
-        let log = {
-            time: new Date(),
-            os: $os.platform || "Unknown",
-            active: { window: $currentWindow || "main", page, show: $activeShow, edit: $activeEdit },
-            source: `${err.filename} - ${err.lineno}:${err.colno}`,
-            message: err.message,
-            stack: err.error?.stack,
-        }
-
-        send(MAIN, ["LOG_ERROR"], JSON.stringify(log))
-    }
+    // stream to OutputShow
+    $: if (!$currentWindow && ($disabledServers.output_stream !== "" || !$outputDisplay)) toggleRemoteStream()
 
     // close youtube ad
     let closeAd: boolean = false
     window.api.receive(OUTPUT, (a: any) => {
-        if (a.channel === "CLOSE_AD") {
-            closeAd = true
-            setTimeout(() => (closeAd = false), 10)
-        }
+        if ($currentWindow !== "output" || a.channel !== "CLOSE_AD") return
+
+        closeAd = true
+        setTimeout(() => (closeAd = false), 10)
     })
 
-    $: isWindows = !$currentWindow && $os.platform === "win32"
-
+    // enable output window dragging
     let enableOutputMove: boolean = false
     function mousemoveOutput(e: any) {
         if (e.ctrlKey || e.metaKey || e.target.closest(".dragger")) enableOutputMove = true
         else enableOutputMove = false
     }
     $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
-
-    // stream to OutputShow
-    $: if (!$currentWindow && ($disabledServers.output_stream !== "" || !$outputDisplay)) toggleRemoteStream()
-    function toggleRemoteStream() {
-        let value = { key: "server", value: false }
-        let captureOutputId = $serverData?.output_stream?.outputId
-        if (!captureOutputId || !$outputs[captureOutputId]) captureOutputId = getActiveOutputs($outputs, true, true)[0]
-        if ($disabledServers.output_stream === false) value.value = true
-
-        setTimeout(() => {
-            send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value, rate: $special.previewRate || "auto" })
-        }, 1800)
-    }
 </script>
 
-<svelte:window on:keydown={keydown} on:mousedown={focusArea} on:error={logerror} />
+<svelte:window on:keydown={keydown} on:mousedown={focusArea} on:error={logerror} on:unhandledrejection={logerror} />
 
 {#if $currentWindow === "pdf"}
     <Pdf />
@@ -244,7 +86,6 @@
     {/if}
     <main style={isWindows ? "height: calc(100% - 30px);" : ""} class:closeAd class:background={$currentWindow === "output"}>
         {#if $currentWindow === "output"}
-            <!-- TODO: mac center  -->
             <div
                 class="fill"
                 style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') ? 'row' : 'column'}"
@@ -258,7 +99,6 @@
                         <p>Drag window</p>
                     </div>
                 {/if}
-                <!-- Mac: width: 100%; -->
                 {#if Object.values($outputs)[0].stageOutput}
                     <StageShow stageId={Object.values($outputs)[0].stageOutput} edit={false} />
                 {:else}
