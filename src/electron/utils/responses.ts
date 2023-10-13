@@ -17,6 +17,8 @@ import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPat
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
+import { downloadMedia } from "./downloadMedia"
+import { error_log } from "./store"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -72,6 +74,7 @@ export function loadShow(e: any, msg: Message) {
 
 // MAIN
 const mainResponses: any = {
+    LOG: (data: string): void => console.log(data),
     GET_OS: (): any => ({ platform: os.platform(), name: os.hostname() }),
     GET_SYSTEM_FONTS: (): void => loadFonts(),
     VERSION: (): string => app.getVersion(),
@@ -125,9 +128,12 @@ const mainResponses: any = {
         if (process.platform !== "darwin") return
         systemPreferences.getMediaAccessStatus("screen")
     },
-    RESTORE: (a: any) => restoreFiles(a),
-    SYSTEM_OPEN: (a: any) => openSystemFolder(a),
-    LOCATE_MEDIA_FILE: (a: any) => locateMediaFile(a),
+    RESTORE: (data: any) => restoreFiles(data),
+    SYSTEM_OPEN: (data: any) => openSystemFolder(data),
+    LOCATE_MEDIA_FILE: (data: any) => locateMediaFile(data),
+    DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
+    LOG_ERROR: (data: any) => logError(data),
+    OPEN_LOG: () => openSystemFolder(error_log.path),
 }
 
 export function receiveMain(e: any, msg: Message) {
@@ -273,4 +279,20 @@ export function saveRecording(_: any, msg: any) {
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
+}
+
+// ERROR LOGGER
+const maxLogLength = 250
+function logError(log: string) {
+    let storedLog: any = error_log.store
+    console.log(storedLog)
+    let previousLog: any[] = storedLog.renderer || []
+
+    console.log(error_log.store, previousLog)
+    previousLog.push(log)
+
+    if (previousLog.length > maxLogLength) previousLog = previousLog.slice(previousLog.length - maxLogLength)
+
+    error_log.clear()
+    error_log.set({ renderer: previousLog })
 }

@@ -83,8 +83,6 @@
         }, 100)
     }
 
-    $: console.trace(videoData.muted)
-
     let filter: string = ""
     let flipped: boolean = false
     let fit: MediaFit = "contain"
@@ -120,8 +118,6 @@
     let video: any = null
     let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
     let videoTime: number = 0
-
-    $: console.log(videoData)
 
     // $: if (!mirror && videoTime === 1) send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: videoTime })
     $: if (!mirror && videoData?.duration) send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, data: videoData })

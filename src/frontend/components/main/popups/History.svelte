@@ -57,6 +57,7 @@
         UPDATE_global_group: "Updated global group",
         UPDATE_settings_theme: "Updated settings: theme",
         UPDATE_settings_style: "Updated settings: style",
+        UPDATE_settings_output: "Updated settings: output",
         // UPDATE_ ... (historyHelpers)
 
         // edit

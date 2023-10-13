@@ -69,24 +69,28 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
     // optimize cpu on low end devices
     if (cpuInterval) clearInterval(cpuInterval)
-    let captureCount = 20
-    if (rate !== "full") cpuInterval = setInterval(cpuCapture, 3000)
+    const timeUntilAutoUpdate = 60 // seconds
+    const frameUpdateRate = rate === "optimized" ? 5 : 2 // seconds
+    const captureRate = timeUntilAutoUpdate / frameUpdateRate
+    const autoOptimizePercentageCPU = 95 / 10 // % / 10
+    let captureCount = captureRate
+    if (rate !== "full") cpuInterval = setInterval(cpuCapture, frameUpdateRate * 1000)
     async function cpuCapture() {
         if (!captures[id] || captures[id].window.isDestroyed() || captures[id].window.webContents.isBeingCaptured()) return
 
         let usage = process.getCPUUsage()
 
-        if (rate === "optimized" || usage.percentCPUUsage > 9.5 || captureCount < 10) {
-            if (captureCount === 20) captureCount = 0
+        if (rate === "optimized" || usage.percentCPUUsage > autoOptimizePercentageCPU || captureCount < captureRate) {
+            if (captureCount === captureRate) captureCount = 0
             // limit frames
             captures[id].window.webContents.endFrameSubscription()
             let image = await captures[id].window.webContents.capturePage()
-            processFrame(image)
+            sendFrames(id, image, { previewFrame: true, serverFrame: true, ndiFrame: true })
 
             // capture for 60 seconds then get cpu again
             captureCount++
         } else {
-            captureCount = 20
+            captureCount = captureRate
             captures[id].window.webContents.beginFrameSubscription(false, processFrame)
         }
     }

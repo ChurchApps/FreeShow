@@ -61,11 +61,14 @@
     let fit: MediaFit = "contain"
     let speed: string = "1"
 
+    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentStyle = $styles[currentOutput?.style || ""] || {}
+
     $: if (bgPath) {
         // TODO: use show filter if existing
         filter = getMediaFilter(bgPath)
         flipped = $media[bgPath]?.flipped || false
-        fit = $media[bgPath]?.fit || "contain"
+        fit = currentStyle?.fit || $media[bgPath]?.fit || "contain"
         speed = $media[bgPath]?.speed || "1"
     }
 
@@ -185,14 +188,7 @@
     <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
             <DropArea id="edit">
-                <Zoomed
-                    background={Slide?.settings?.color || $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background || "black"}
-                    {resolution}
-                    style={getStyleResolution(resolution, width, height, "fit", { zoom })}
-                    bind:ratio
-                    {hideOverflow}
-                    center={zoom >= 1}
-                >
+                <Zoomed background={Slide?.settings?.color || currentStyle.background || "black"} {resolution} style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio {hideOverflow} center={zoom >= 1}>
                     <!-- <div class="chordsButton" style="zoom: {1 / ratio};">
                         <Button on:click={toggleChords}>
                             <Icon id="chords" white={!chordsMode} />

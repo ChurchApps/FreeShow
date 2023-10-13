@@ -492,6 +492,7 @@
         "send_midi": "MIDI kimenet küldése",
         "delete_shows_not_indexed": "A 'Shows' mappában lévő nem indexelt előadások törlése",
         "delete_thumbnail_cache": "Bélyegkép gyorsítótár törlése",
+        "open_log_file": "Open log file",
         "refresh_all_shows": "Az 'Előadások' mappa frissítése",
         "start_timer": "Időzítő indítása",
         "stop_timers": "Aktív időzítők leállítása",

@@ -22,11 +22,13 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
             } else a[path].audio.pause()
             return a
         })
+
         return
     }
 
     audio = audio || new Audio(path)
     let analyser: any = await getAnalyser(audio, stream)
+
     playingAudio.update((a) => {
         if (!analyser) return a
         a[path] = {
@@ -102,6 +104,8 @@ export function analyseAudio() {
                 .map(([id, a]: any) => ({ id, ...a }))
                 .filter((audio) => {
                     let audioPath = audio.id
+                    if (!audio.audio) return false
+
                     // check if finished
                     if (!audio.paused && audio.audio.currentTime >= audio.audio.duration) {
                         if (get(playingAudio)[audioPath].loop) {
@@ -170,15 +174,15 @@ function getHighestNumber(numbers: number[]): number {
 
 let clearing = false
 export function clearAudio(path: string = "") {
-    // TODO: sometimes removing audio without clearing sound (often when playing while clearing)
-
     // let clearTime = get(transitionData).audio.duration
+    // TODO: starting audio before previous clear is finished will not start/clear audio
     const clearTime = 2
 
     if (clearing) return // setTimeout(() => clearAudio(path), clearTime * 1000 + 200)
+    if (!Object.keys(get(playingAudio)).length) return
     clearing = true
 
-    let newPlaying: any = {}
+    let newPlaying: any = get(playingAudio)
     playingAudio.update((a) => {
         if (path) clearAudio(path)
         else Object.keys(get(playingAudio)).forEach(clearAudio)
@@ -186,6 +190,12 @@ export function clearAudio(path: string = "") {
         return a
 
         function clearAudio(path) {
+            if (!a[path].audio) {
+                delete a[path]
+                newPlaying = a
+                return
+            }
+
             // fade out
             fadeAudio(a[path].audio, clearTime)
 
@@ -193,7 +203,7 @@ export function clearAudio(path: string = "") {
                 a[path].audio.pause()
                 delete a[path]
                 newPlaying = a
-            }, clearTime * 1000 + 100)
+            }, clearTime * 1000 * 1.3)
         }
     })
 
@@ -201,7 +211,7 @@ export function clearAudio(path: string = "") {
         playingAudio.set(newPlaying)
         clearAudioStreams()
         clearing = false
-    }, clearTime * 1000 + 150)
+    }, clearTime * 1000 * 1.5)
 }
 
 function fadeAudio(audio, duration = 1) {
@@ -277,7 +287,22 @@ export async function getAnalyser(elem: any, stream: any = null) {
     source.connect(gainNode)
     gainNode.connect(ac.destination)
 
-    console.log("ANALYZING VIDEO", elem)
+    console.log("ANALYZING AUDIO", elem)
+
+    // custom audio output
+    // let audioDest = ac.createMediaStreamDestination()
+    // source.connect(audioDest)
+    // let newAudio: any = new Audio()
+    // newAudio.srcObject = audioDest.stream
+    // WIP this works in Chrome 110: (Electron needs to be updated!)
+    // https://developer.chrome.com/blog/audiocontext-setsinkid/
+    // if (get(special).audioOutput) {
+    //     try {
+    //         await (ac as any).setSinkId(get(special).audioOutput)
+    //     } catch (err) {
+    //         console.error(err)
+    //     }
+    // }
 
     return { left: leftAnalyser, right: rightAnalyser, gainNode }
 }

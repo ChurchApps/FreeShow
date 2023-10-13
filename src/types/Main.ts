@@ -48,6 +48,7 @@ export type SelectIds =
     | "camera"
     | "microphone"
     | "player"
+    | "scripture"
     | "timer"
     | "global_timer"
     | "variable"

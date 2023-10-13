@@ -3,7 +3,7 @@
     import { Grid } from "svelte-virtual"
     import { slide } from "svelte/transition"
     import { READ_FOLDER } from "../../../../types/Channels"
-    import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData } from "../../../stores"
+    import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { splitPath } from "../../helpers/get"
@@ -246,6 +246,19 @@
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
+
+    // select all
+    $: if ($selectAllMedia) selectAll()
+    function selectAll() {
+        let data = fullFilteredFiles.map((file) => {
+            let type = getMediaType(file.extension)
+            let name = file.name.slice(0, file.name.lastIndexOf("."))
+            return { name, path: file.path, type }
+        })
+
+        selected.set({ id: "media", data })
+        selectAllMedia.set(false)
+    }
 </script>
 
 <!-- TODO: download pixabay images!!! -->

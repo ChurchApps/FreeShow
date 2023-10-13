@@ -1,6 +1,6 @@
 {
     "main": {
-        "welcome": "Benvenuto",
+        "welcome": "Benvenuti",
         "quit": "Esci",
         "docs": "Documenti",
         "about": "Informazioni",
@@ -443,7 +443,7 @@
         "paste": "Incolla",
         "pasteAndMatchStyle": "Incolla e abbina lo stile",
         "selectAll": "Seleziona tutto",
-        "remove_selection": "Remove selection",
+        "remove_selection": "Rimuovi selezione",
         "speech": "Parlata",
         "startSpeaking": "Avvia parlato",
         "stopSpeaking": "Ferma parlato",
@@ -483,7 +483,7 @@
         "toggle_output": "Attiva/disattiva la schermata di output",
         "change_tab": "Cambia scheda",
         "change_drawer_tab": "Cambia scheda cassetto",
-        "toggle_drawer": "Toggle drawer",
+        "toggle_drawer": "Attiva cassetto",
         "actions": "Azioni",
         "clear_history": "Pulisci cronologia",
         "set_key": "Imposta chiave",
@@ -492,6 +492,7 @@
         "send_midi": "Invia MIDI in uscita",
         "delete_shows_not_indexed": "Elimina le scene nella cartella 'Shows' che non sono indicizzate",
         "delete_thumbnail_cache": "Elimina la cache delle miniature",
+        "open_log_file": "Open log file",
         "refresh_all_shows": "Ottieni tutte le scene nella cartella 'Shows'.",
         "start_timer": "Avviare il timer",
         "stop_timers": "Arresta i timer attivi",
@@ -675,7 +676,7 @@
         "audio": "Audio",
         "timer": "Timer",
         "variable": "Variable",
-        "web": "Website",
+        "web": "Sito web",
         "visualizer": "Visualizzatore",
         "icon": "Icona"
     },
@@ -811,7 +812,7 @@
         "new_output": "Nuovo output",
         "enable_key_output": "Abilita l'output della chiave alfa",
         "always_on_top": "Sempre sopra",
-        "kiosk_mode": "Modalità Kiosk",
+        "kiosk_mode": "Modalità Kiosco",
         "change_key_output_position": "Cambia la posizione dell'uscita della chiave",
         "position": "Posizione",
         "enabled": "Abilitato",
@@ -866,10 +867,10 @@
         "restore_started": "Ripristino in corso...",
         "backup_finished": "Backup completo!",
         "restore_finished": "Ripristino completato!",
-        "preview_frame_rate": "Preview frame rate",
+        "preview_frame_rate": "Anteprima frequenza fotogrammi",
         "auto": "Auto",
-        "optimized": "Optimized",
-        "full": "Full"
+        "optimized": "Ottimizzato",
+        "full": "Pieno"
     },
     "sort": {
         "sort_by": "Ordina per",

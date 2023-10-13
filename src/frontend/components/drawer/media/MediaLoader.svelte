@@ -24,6 +24,7 @@
     export let resolution: Resolution | null = null
     export let duration: number = 0
     export let videoElem: any = null
+    export let ghost: boolean = false
 
     // TODO: fit
 
@@ -144,6 +145,8 @@
             return
         }
 
+        if (ghost) return
+
         if (!time) {
             duration = videoElem.duration
             // it's sometimes Infinity for some reason
@@ -181,7 +184,7 @@
     let retryCount = 0
     $: if (path) retryCount = 0
     function reload() {
-        if (retryCount > 5) return
+        if (ghost || retryCount > 5) return
 
         setTimeout(() => {
             loaded = false
@@ -200,17 +203,11 @@
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
         {:else if type === "video"}
-            <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}">
-                <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, "cover")} bind:this={canvas} />
+            <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''};overflow: hidden;">
+                <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, fit)} bind:this={canvas} />
                 {#if !loaded || hover || loadFullImage}
                     {#key retryCount}
-                        <video
-                            style="pointer-events: none;position: absolute;{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, 'cover')}"
-                            bind:this={videoElem}
-                            on:error={reload}
-                            src={path}
-                            on:canplaythrough={ready}
-                        >
+                        <video style="pointer-events: none;position: absolute;width: 100%;height: 100%;object-fit: {fit};" bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={ready}>
                             <track kind="captions" />
                         </video>
                     {/key}
@@ -218,7 +215,7 @@
             </div>
         {:else}
             {#if !loadFullImage || !loaded}
-                <canvas style="width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" bind:this={canvas} />
+                <canvas style="{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, fit)}filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" bind:this={canvas} />
             {/if}
             {#if loadFullImage}
                 {#key retryCount}

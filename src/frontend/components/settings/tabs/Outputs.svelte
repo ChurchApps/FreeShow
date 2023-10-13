@@ -27,6 +27,7 @@
     function updateOutput(key: string, value: any, outputId: string = "") {
         if (!outputId) outputId = currentOutput.id
 
+        // TODO: history
         outputs.update((a: any) => {
             if (key.includes(".")) {
                 let split = key.split(".")
@@ -133,7 +134,7 @@
 
 <br />
 
-{#if outputsList.length > 1}
+{#if outputsList.length > 1 && !currentOutput.stageOutput}
     <CombinedInput>
         <p><T id="settings.enabled" /></p>
         <div class="alignRight">
@@ -275,7 +276,16 @@
                 {@const active = $currentOutputSettings === output.id}
 
                 <SelectElem id="output" data={{ id: output.id }} fill>
-                    <Button border={active} class="context #output_screen" {active} style="width: 100%;outline-offset: -4px;border-bottom: 2px solid {output.color};" on:click={() => currentOutputSettings.set(output.id)} bold={false} center>
+                    <Button
+                        border={active}
+                        class="context #output_screen{output.stageOutput ? '_stage' : ''}"
+                        {active}
+                        style="width: 100%;outline-offset: -4px;border-bottom: 2px solid {output.color};"
+                        on:click={() => currentOutputSettings.set(output.id)}
+                        bold={false}
+                        center
+                    >
+                        {#if output.stageOutput}<Icon id="stage" right />{/if}
                         <HiddenInput value={output.name} id={"output_" + output.id} on:edit={(e) => updateOutput("name", e.detail.value, output.id)} bind:edit />
                     </Button>
                 </SelectElem>

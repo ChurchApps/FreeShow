@@ -9,7 +9,7 @@ import { contextBridge, ipcRenderer } from "electron"
 // let lastChannel: string = ""
 
 const debug: boolean = true
-const filteredChannels: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "PREVIEW"]
+const filteredChannels: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "PREVIEW", "REQUEST_STREAM"]
 
 contextBridge.exposeInMainWorld("api", {
     send: (channel: ValidChannels, data: any) => {

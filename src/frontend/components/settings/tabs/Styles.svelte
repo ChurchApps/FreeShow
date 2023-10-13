@@ -22,13 +22,14 @@
 
         if (!currentId) currentId = styleId || "default"
 
-        // TODO: history
+        // create a style if nothing exists
         styles.update((a) => {
             if (!a[currentId]) a[currentId] = clone(currentStyle)
-            a[currentId][key] = value
 
             return a
         })
+
+        history({ id: "UPDATE", newData: { key, data: value }, oldData: { id: currentId }, location: { page: "settings", id: "settings_style", override: "style_" + key } })
 
         styleId = currentId
     }

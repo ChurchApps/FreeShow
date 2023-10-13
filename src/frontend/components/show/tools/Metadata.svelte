@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeShow, outputs, showsCache, styles, templates } from "../../../stores"
+    import { activeShow, dictionary, outputs, showsCache, styles, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -82,13 +82,6 @@
 </script>
 
 <Panel>
-    <div class="styling">
-        <div>
-            <p><T id="meta.auto_media" /> (JPEG)</p>
-            <Checkbox checked={metadata.autoMedia || false} on:change={toggleAutoMedia} />
-        </div>
-    </div>
-
     {#if metadata.autoMedia !== true}
         <div class="gap" style="padding: 10px;">
             <span class="titles">
@@ -103,6 +96,13 @@
             </span>
         </div>
     {/if}
+
+    <div class="styling">
+        <div>
+            <p title="{$dictionary.meta?.auto_media} (.JPEG images)"><T id="meta.auto_media" /></p>
+            <Checkbox checked={metadata.autoMedia || false} on:change={toggleAutoMedia} />
+        </div>
+    </div>
 
     <!-- message -->
     <h5><T id="meta.message" /></h5>

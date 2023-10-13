@@ -1,7 +1,7 @@
 // ----- FreeShow -----
 // This is the electron entry point
 
-import { app, BrowserWindow, ipcMain, Menu, Rectangle, screen } from "electron"
+import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
 import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
@@ -30,7 +30,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // start when ready
 app.on("ready", () => {
     if (isProd) startApp()
-    else setTimeout(startApp, 32 * 1000) // Linux dev: 80 * 1000
+    else setTimeout(startApp, 32 * 1000) // Increase on low CPU.
 })
 
 function startApp() {
@@ -147,27 +147,29 @@ function createMain() {
         toApp(MAIN, { channel: "CLOSE" })
     })
 
-    mainWindow.on("closed", () => {
-        mainWindow = null
-        dialogClose = false
-
-        closeAllOutputs()
-        closeServers()
-
-        // midi
-        // closeVirtualMidi()
-        closeMidiInPorts()
-
-        app.quit()
-
-        // shouldn't need to use exit!
-        app.exit()
-    })
+    mainWindow.on("closed", exitApp)
 
     setGlobalMenu()
 
     // open devtools
     if (!isProd) mainWindow.webContents.openDevTools()
+}
+
+export function exitApp() {
+    mainWindow = null
+    dialogClose = false
+
+    closeAllOutputs()
+    closeServers()
+
+    // midi
+    // closeVirtualMidi()
+    closeMidiInPorts()
+
+    app.quit()
+
+    // shouldn't need to use exit!
+    app.exit()
 }
 
 export function closeMain() {

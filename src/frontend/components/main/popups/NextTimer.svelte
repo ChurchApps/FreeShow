@@ -50,7 +50,7 @@
 
 {#if allSlides}
     <CombinedInput>
-        <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} max={3600} fixed={value.toString().includes(".") ? 1 : 0} decimals={1} />
+        <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} max={3600} fixed={value?.toString()?.includes(".") ? 1 : 0} decimals={1} />
     </CombinedInput>
     <CombinedInput>
         <p style="width: 100%;justify-content: center;opacity: 0.8;">

@@ -756,18 +756,14 @@ const actions: any = {
             obj.sel.data.forEach(({ id }) => {
                 let currentOutput = clone(get(outputs)[id] || defaultOutput)
 
-                // TODO: history
-                outputs.update((a) => {
-                    a[id] = clone(defaultOutput)
+                let newOutput = clone(defaultOutput)
 
-                    // don't reset these values
-                    a[id].name = currentOutput.name
-                    a[id].active = currentOutput.active
-                    a[id].out = currentOutput.out
+                // don't reset these values
+                newOutput.name = currentOutput.name
+                newOutput.out = currentOutput.out
+                if (!currentOutput.enabled) newOutput.active = true
 
-                    currentOutputSettings.set(id)
-                    return a
-                })
+                history({ id: "UPDATE", newData: { data: newOutput }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
             })
 
             return

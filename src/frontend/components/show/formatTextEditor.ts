@@ -37,6 +37,7 @@ export function formatText(e: any) {
         let matchFound: boolean = false
 
         // check matching from existing slides (both old and new)
+        console.log(groupedOldSlides, doneGroupedSlides)
         ;[...groupedOldSlides, ...doneGroupedSlides].forEach((old: any) => {
             if (matchFound) return
             let similar = similarity(old.text, text)
@@ -219,7 +220,8 @@ function groupSlides(slides: Slide[]) {
         let fullOldSlideText = getItemText(firstTextItem)
         if (!fullOldSlideText) return
 
-        slideGroups[currentIndex].text += fullOldSlideText
+        // adding length so line breaks with no text changes works
+        slideGroups[currentIndex].text += fullOldSlideText + firstTextItem.lines?.length
     })
 
     return slideGroups

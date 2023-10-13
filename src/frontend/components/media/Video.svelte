@@ -2,7 +2,6 @@
     import { createEventDispatcher } from "svelte"
     import type { MediaFit } from "../../../types/Main"
     import { volume } from "../../stores"
-    import { getStyleResolution } from "../slide/getStyleResolution"
 
     export let path: any
     export let video: any
@@ -20,13 +19,21 @@
     export let animationStyle: string = ""
 
     let dispatch: any = createEventDispatcher()
-    let width: number = 0
-    let height: number = 0
 
     let hasLoaded: boolean = false
     function loaded() {
         hasLoaded = true
         dispatch("loaded", true)
+
+        // if (!video) return
+
+        // this don't work because video audio goes through audio context
+        // if (!$special.audioOutput) return
+        // try {
+        //     video.setSinkId($special.audioOutput)
+        // } catch (err) {
+        //     console.error(err)
+        // }
     }
 
     function playing() {
@@ -49,10 +56,10 @@
     $: console.log(filter)
 </script>
 
-<div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}" bind:clientWidth={width} bind:clientHeight={height}>
+<div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     <video
         class="media"
-        style="{getStyleResolution({ width: video?.videoWidth || 0, height: video?.videoHeight || 0 }, width, height, fit)};filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}"
+        style="width: 100%;height: 100%;object-fit: {fit};filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}"
         bind:this={video}
         on:loadedmetadata={loaded}
         on:playing={playing}

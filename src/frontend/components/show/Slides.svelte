@@ -127,7 +127,7 @@
                     let ref = a?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
                     let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
                     let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-                    maxLines = slideLines && lineIndex !== null ? (amountOfLinesToShow >= slideLines ? 0 : Math.round(slideLines / amountOfLinesToShow)) : 0
+                    maxLines = slideLines && lineIndex !== null ? (amountOfLinesToShow >= slideLines ? 0 : Math.ceil(slideLines / amountOfLinesToShow)) : 0
                 }
 
                 activeSlides[outSlide.index] = {

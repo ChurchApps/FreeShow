@@ -9,6 +9,8 @@ import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./default
 
 // MAIN WINDOW
 export const config = new Store<any>({ defaults: defaultConfig })
+// ERROR LOG
+export const error_log = new Store({ name: "error_log", defaults: {} })
 
 // SETTINGS
 const settings = new Store({ name: "settings", defaults: defaultSettings })

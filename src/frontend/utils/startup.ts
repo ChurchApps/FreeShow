@@ -13,6 +13,7 @@ import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
 import { convertEasyWorship } from "../converters/easyworship"
 import { setTempShows } from "../converters/importHelpers"
+import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
 import { convertPDF } from "../converters/pdf"
@@ -81,6 +82,7 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { checkNextAfterMedia } from "../components/helpers/showActions"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -94,7 +96,10 @@ export function startup() {
 
         // type === "output"
         receive(OUTPUT, receiveOUTPUTasOUTPUT)
-        send(OUTPUT, ["REQUEST_DATA_MAIN"])
+        // wait a bit on slow computers
+        setTimeout(() => {
+            send(OUTPUT, ["REQUEST_DATA_MAIN"])
+        }, 100)
         // TODO: video data!
     })
 }
@@ -103,17 +108,20 @@ function startupMain() {
     loaded.set(false)
     setLanguage()
 
-    // load files
-    send(MAIN, ["DISPLAY", "VERSION"])
-    send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
-    setTimeout(() => send(STORE, ["SETTINGS"]), 500)
-
     receive(MAIN, receiveMAIN)
     receive(OUTPUT, receiveOUTPUTasMAIN)
     receive(STORE, receiveSTORE)
     receive(IMPORT, receiveIMPORT)
     receive(OPEN_FOLDER, receiveFOLDER)
     receive(NDI, receiveNDI)
+
+    // load files
+    send(MAIN, ["DISPLAY", "VERSION"])
+    // wait a bit in case data is not yet loaded
+    setTimeout(() => {
+        send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
+        setTimeout(() => send(STORE, ["SETTINGS"]), 500)
+    }, 100)
 
     setTimeout(() => {
         listenForUpdates()
@@ -326,6 +334,15 @@ const receiveOUTPUTasMAIN: any = {
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),
+    MAIN_VIDEO_ENDED: async (msg) => {
+        console.log("ENDED", msg)
+        let videoPath = get(outputs)[msg.id].out?.background?.path
+        if (!videoPath) return
+
+        // check and execute next after media regardless of loop
+        setTimeout(() => checkNextAfterMedia(videoPath!), 100)
+        // if (checkNextAfterMedia(videoPath)) return
+    },
 }
 
 let previousOutputs: string = ""
@@ -407,6 +424,8 @@ export function sendInitialOutputData() {
 
     setTimeout(() => {
         send(OUTPUT, ["OUTPUTS"], get(outputs))
+        // used for stage mirror data
+        send(OUTPUT, ["ALL_OUTPUTS"], get(outputs))
     }, 100)
 }
 
@@ -429,6 +448,7 @@ const receiveIMPORT: any = {
     beblia_bible: (a: any) => convertBebliaBible(a),
     zefania_bible: (a: any) => convertZefaniaBible(a),
     opensong_bible: (a: any) => convertOpenSongBible(a),
+    lessons: (a: any) => convertLessonsPresentation(a),
 }
 
 function importShow(files: any[]) {

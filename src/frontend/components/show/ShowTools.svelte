@@ -52,7 +52,7 @@
         if (refs.find((ref) => ref.find((slide) => slide.data.mics))) return (tabs.media.disabled = false)
 
         if (Object.keys(show?.midi || {}).length) return (tabs.media.disabled = false)
-        if (Object.values($midiIn).find((value: any) => value.shows.find((a) => a.id === $activeShow!.id))) return (tabs.media.disabled = false)
+        if (Object.values($midiIn).find((value: any) => value.shows.find((a) => a.id === $activeShow?.id))) return (tabs.media.disabled = false)
 
         return (tabs.media.disabled = true)
     }

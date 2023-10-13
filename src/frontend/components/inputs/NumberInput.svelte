@@ -16,6 +16,7 @@
     export let outline: boolean = false
     export let buttons: boolean = true
     export let disabled: boolean = false
+    export let disableHold: boolean = false
 
     const dispatch = createEventDispatcher()
     const increment = (customStep: number = step) => dispatch("change", Math.min(Number(value) + customStep, max).toFixed(decimals))
@@ -32,17 +33,28 @@
     let timeout: any = null
     let interval: any = null
     function mousedown(e: any) {
-        if (e.target.closest("button")) {
-            timeout = setTimeout(() => {
-                let increase = true
-                if (e.target.closest("button").id === "decrement") increase = false
-                interval = setInterval(() => {
-                    if (increase) increment()
-                    else decrement()
-                }, 50)
-                // timeout = null
-            }, 500)
-        }
+        if (disableHold || !e.target.closest("button")) return
+
+        // auto change when holding value
+        // slow updates in edit caused this to create infinite loops (value didn't update)
+        timeout = setTimeout(() => {
+            if (!timeout) return
+
+            let increase = true
+            if (e.target.closest("button").id === "decrement") increase = false
+
+            let loopPrevention = 0
+            interval = setInterval(() => {
+                // stop after 50 updates
+                if (loopPrevention > 50) return
+                loopPrevention++
+
+                if (increase) increment()
+                else decrement()
+            }, 100)
+
+            timeout = null
+        }, 500)
     }
 
     let nextScrollTimeout: any = null

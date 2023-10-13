@@ -42,6 +42,8 @@
         }
     }
 
+    // TODO: history!
+
     $: if (settings.clear) clear()
     function clear() {
         ctx.clearRect(0, 0, resolution.width, resolution.height)

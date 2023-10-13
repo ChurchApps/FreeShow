@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { activeStage, allOutputs, outputs, showsCache, stageShows, styles, timers } from "../../stores"
+    import { activeStage, allOutputs, outputs, previewBuffers, showsCache, stageShows, styles, timers } from "../../stores"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
-    import Output from "../output/Output.svelte"
-    import { getStyleResolution } from "../slide/getStyleResolution"
+    import PreviewCanvas from "../output/PreviewCanvas.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
@@ -99,7 +98,7 @@
 
     // SLIDE
     let slide
-    let stageOutputId = show?.settings?.output || getActiveOutputs()[0]
+    let stageOutputId = show?.settings?.output || getActiveOutputs($outputs, true, true)[0]
     $: currentSlide = $outputs[stageOutputId]?.out?.slide || $allOutputs[stageOutputId]?.out?.slide
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: layoutSlide = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!] || {} : {}
@@ -135,7 +134,12 @@
     {#if id.includes("current_output")}
         {#if slide}
             <span style="pointer-events: none;">
-                <Output specificOutput={stageOutputId} bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror />
+                <!-- <Output specificOutput={stageOutputId} bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror /> -->
+                {#if id.includes("_alpha") && $outputs[stageOutputId].keyOutput}
+                    <PreviewCanvas capture={$previewBuffers[$outputs[stageOutputId].keyOutput || ""]} id={$outputs[stageOutputId].keyOutput} fullscreen />
+                {:else}
+                    <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+                {/if}
             </span>
         {/if}
     {:else}

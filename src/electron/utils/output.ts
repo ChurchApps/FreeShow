@@ -287,7 +287,7 @@ function sendToOutputWindow(msg: any) {
             tempMsg.data = { [id]: msg.data[id] }
         }
 
-        if (msg.data?.id && msg.data.id !== id) return
+        if ((msg.data?.id && msg.data.id !== id) || window.isDestroyed()) return
 
         window.webContents.send(OUTPUT, tempMsg)
     })

@@ -492,6 +492,7 @@
         "send_midi": "Poslať MIDI",
         "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
         "delete_thumbnail_cache": "Delete thumbnail cache",
+        "open_log_file": "Open log file",
         "refresh_all_shows": "Get all shows in 'Shows' folder",
         "start_timer": "Spustiť časovať",
         "stop_timers": "Zastaviť aktívne časovače",

@@ -4,18 +4,19 @@
     import { activePopup, alertMessage, dictionary, exportPath, mediaCache, recordingPath, scripturePath, shows, showsCache, showsPath, special } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
+    import { save } from "../../../utils/save"
+    import { restartOutputs } from "../../../utils/updateSettings"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { formatBytes } from "../../helpers/bytes"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import { save } from "../../../utils/save"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import { restartOutputs } from "../../../utils/updateSettings"
+    import FolderPicker from "../../inputs/FolderPicker.svelte"
 
     onMount(() => {
         getCacheSize()
+        // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
     })
 
@@ -37,9 +38,22 @@
         { id: "full", name: "$:settings.full:$" },
     ]
 
+    // let audioOutputs: any = []
+    // async function getAudioOutputs() {
+    //     const devices = await navigator.mediaDevices.enumerateDevices()
+    //     let outputs = devices.filter((device) => device.kind === "audiooutput")
+
+    //     let defaultGroupId = outputs.find((a) => a.deviceId === "default")?.groupId
+    //     if (defaultGroupId) outputs = outputs.filter((a) => a.groupId !== defaultGroupId || a.deviceId === "default")
+
+    //     audioOutputs = [{ id: "", name: "—" }, ...outputs.map((device) => ({ id: device.deviceId, name: device.label }))]
+    // }
+
     function updateSpecial(value, key) {
         special.update((a) => {
-            a[key] = value
+            if (!value) delete a[key]
+            else a[key] = value
+
             return a
         })
 
@@ -90,6 +104,11 @@
         newToast("$toast.deleted_cache")
         mediaCache.set({})
         cacheSize = "0 Bytes"
+    }
+
+    // open log
+    function openLog() {
+        send(MAIN, ["OPEN_LOG"])
     }
 
     // backup
@@ -182,12 +201,27 @@
     <Dropdown options={previewRates} value={previewRates.find((a) => a.id === ($special.previewRate || "auto"))?.name} on:click={(e) => updateSpecial(e.detail.id, "previewRate")} />
 </CombinedInput>
 
+<!-- <CombinedInput>
+    <p><T id="settings.custom_audio_output" /></p>
+    <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
+</CombinedInput> -->
+
 <CombinedInput>
     <Button style="width: 100%;" on:click={() => activePopup.set("manage_icons")}>
         <Icon id="noIcon" style="border: 0;" right />
         <p style="padding: 0;"><T id="popup.manage_icons" /></p>
     </Button>
 </CombinedInput>
+
+<!-- WIP custom metadata order -->
+<!-- "Song: {title} - {author}, License: {ccli}" -->
+<!-- or just allow to enter in a template... -->
+<!-- <CombinedInput>
+    <Button style="width: 100%;" on:click={() => activePopup.set("custom_metadata_order")}>
+        <Icon id="meta" style="border: 0;" right />
+        <p style="padding: 0;"><T id="popup.custom_metadata_order" /></p>
+    </Button>
+</CombinedInput> -->
 
 {#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
@@ -219,6 +253,12 @@
             <T id="actions.delete_thumbnail_cache" />
             <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({cacheSize})</span>
         </p>
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={openLog}>
+        <Icon id="document" right /><T id="actions.open_log_file" />
     </Button>
 </CombinedInput>
 

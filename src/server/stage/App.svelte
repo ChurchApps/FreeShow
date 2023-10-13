@@ -58,6 +58,8 @@
         }
     }
 
+    let stream: any = {}
+
     socket.on("STAGE", (msg) => {
         console.log(msg)
         switch (msg.channel) {
@@ -125,6 +127,12 @@
                 break
             case "ACTIVE_TIMERS":
                 activeTimers.set(msg.data)
+                break
+            case "REQUEST_STREAM":
+                stream[msg.data.alpha ? "alpha" : "default"] = msg.data.stream
+                setTimeout(() => {
+                    socket.emit("STAGE", { id, channel: "REQUEST_STREAM", data: { outputId: msg.data.outputId, alpha: msg.data.alpha } })
+                }, 300)
                 break
 
             default:
@@ -237,7 +245,7 @@
     {show.name}
     home
   </div> -->
-    <Slide {show} {slides} {background} />
+    <Slide {show} {slides} {socket} {stream} />
     {#if clicked}
         <div class="clicked">
             <h5 style="text-align: center;">{show.name}</h5>

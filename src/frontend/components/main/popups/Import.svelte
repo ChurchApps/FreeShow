@@ -36,6 +36,7 @@
         { name: "Project", extensions: ["project", "shows"], id: "freeshow_project", icon: "freeshow" },
         { name: "Calendar", extensions: ["ics"], id: "calendar" },
         { name: "Scripture", id: "scripture" },
+        { name: "Lessons.church", extensions: ["json"], id: "lessons" },
     ]
 </script>
 

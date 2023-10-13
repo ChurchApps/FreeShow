@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "0.9.7",
+    "version": "0.9.8",
     "private": true,
     "main": "build/electron/index.js",
     "description": "An application for showing song lyrics and more for free!",
@@ -36,6 +36,13 @@
         "prepublishOnly": "npm-run-all -s test lint",
         "preversion": "npm-run-all -s",
         "snap": "electron-builder --linux snap"
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "printWidth": 250,
+        "tabWidth": 4,
+        "semi": false,
+        "singleQuote": false
     },
     "build": {
         "appId": "com.github.vassbo.freeshow",
@@ -96,6 +103,7 @@
         "@tsconfig/svelte": "^2.0.0",
         "@types/exif": "^0.6.3",
         "@types/express": "^4.17.13",
+        "@types/follow-redirects": "^1.14.2",
         "@types/jest": "^29.0.0",
         "@types/sqlite3": "^3.1.8",
         "@types/vimeo__player": "^2.16.2",
@@ -127,6 +135,7 @@
         "electron-updater": "^4.6.1",
         "exif": "^0.6.0",
         "express": "^4.17.2",
+        "follow-redirects": "^1.15.2",
         "font-list": "^1.4.5",
         "genius-lyrics": "^4.4.3",
         "grandiose": "vassbo/grandiose#b7ddf3a",

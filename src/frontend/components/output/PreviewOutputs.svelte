@@ -1,6 +1,7 @@
 <script lang="ts">
     import { outputs } from "../../stores"
     import { newToast } from "../../utils/messages"
+    import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
 
@@ -25,11 +26,12 @@
                 if (getAllActive.length === 1 && a[id].active) newState = true
 
                 Object.keys(a).forEach((id) => {
-                    a[id].active = newState
+                    a[id].active = a[id].stageOutput ? true : newState
                 })
                 a[id].active = true
             } else {
-                a[id].active = !a[id].active
+                a[id].active = a[id].stageOutput ? true : !a[id].active
+
                 let activeList = Object.values(a).filter((a) => a.active === true)
                 if (!activeList.length) {
                     a[id].active = true
@@ -57,6 +59,7 @@
                 center
                 dark
             >
+                {#if output.stageOutput}<Icon id="stage" right />{/if}
                 {output.name}
             </Button>
         {/each}

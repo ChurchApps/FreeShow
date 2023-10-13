@@ -11,6 +11,9 @@
     import { updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
 
+    export let edit: boolean = true
+    export let stageId: string = ""
+
     let lines: [string, number][] = []
     let mouse: any = null
     let newStyles: any = {}
@@ -54,25 +57,28 @@
 
     let timeout: any = null
 
-    $: show = $stageShows[$activeStage.id || ""] || {}
+    $: stageShowId = stageId || $activeStage.id
+    $: show = $stageShows[stageShowId || ""] || {}
 </script>
 
-<Main slide={$activeStage.id ? show : null} let:width let:height let:resolution>
+<Main slide={stageShowId ? show : null} let:width let:height let:resolution>
     <div class="parent">
-        {#if $activeStage.id}
+        {#if stageShowId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={show.settings.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
+            <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
                 <!-- TODO: snapping to top left... -->
-                <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                {#if edit}
+                    <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                {/if}
                 <!-- {#key Slide} -->
                 {#each Object.entries(show.items) as [id, item]}
                     {#if item.enabled}
-                        <Stagebox edit {id} {item} {ratio} bind:mouse />
+                        <Stagebox {edit} show={edit ? null : show} {id} {item} {ratio} bind:mouse />
                     {/if}
                 {/each}
                 <!-- {/key} -->
             </Zoomed>
-        {:else}
+        {:else if edit}
             <Center size={2} faded>
                 <T id="empty.stage_show" />
             </Center>

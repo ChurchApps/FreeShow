@@ -338,9 +338,18 @@ function RTFToText(input: string) {
 
     // https://stackoverflow.com/a/188877
     const regex = /\{\*?\\[^{}]+}|[{}]|\\\n?[A-Za-z]+\n?(?:-?\d+)?[ ]?/gm
-    input = input.replace(regex, "").replaceAll("\\*", "")
+    let newInput = input.replace(regex, "").replaceAll("\\*", "")
 
-    let splitted = input.split("__BREAK__").filter((a) => a)
+    // some files have {} wapped around the text, so it gets removed
+    if (!newInput.replaceAll("__BREAK__", "").trim().length) {
+        input = input.replaceAll("}", "").replaceAll("{", "")
+        newInput = input.replace(regex, "").replaceAll("\\*", "")
+
+        let formatting = newInput.lastIndexOf(";;;;")
+        if (formatting >= 0) newInput = newInput.slice(formatting + 4)
+    }
+
+    let splitted = newInput.split("__BREAK__").filter((a) => a)
     return splitted.join("\n").trim()
 }
 

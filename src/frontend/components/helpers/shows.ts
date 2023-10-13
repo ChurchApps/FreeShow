@@ -140,12 +140,14 @@ export function _show(id: any = "active") {
                 /** Get slides items */
                 get: (key: string | null = null, addId: boolean = true) => {
                     let a: any[] = []
-                    if (!slideIds.length) slideIds = Object.keys(shows[id]?.slides || {})
+                    if (!shows[id]) return []
+                    if (!slideIds.length) slideIds = Object.keys(shows[id].slides || {})
                     slideIds.forEach((slideId, i) => {
                         a.push([])
                         // if (!indexes.length) a[i].push(...shows[id].slides[slideId].items)
                         if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
                         indexes.forEach((index) => {
+                            if (!shows[id].slides[slideId]?.items) return
                             if (key) a[i].push(shows[id].slides[slideId].items[index][key])
                             else {
                                 a[i].push({ ...shows[id].slides[slideId].items[index] })
@@ -207,6 +209,7 @@ export function _show(id: any = "active") {
                 remove: () => {
                     let prev: any = []
                     showsCache.update((a: any) => {
+                        if (!a[id]) return a
                         if (!slideIds.length) slideIds = Object.keys(a[id].slides)
                         slideIds.forEach((slideId) => {
                             indexes.forEach((index) => {
@@ -401,6 +404,7 @@ export function _show(id: any = "active") {
             set: ({ key, value }: any) => {
                 let prev: any[] = []
                 showsCache.update((a: any) => {
+                    if (!a[id]) return a
                     if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
                     else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
                     layoutIds.forEach((layoutId: any) => {
@@ -521,6 +525,7 @@ export function _show(id: any = "active") {
                     // let prev: any = { indexes: [], layouts: [] }
                     let prev: any = {}
                     showsCache.update((a: any) => {
+                        if (!a[id]) return a
                         if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
                         else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
                         layoutIds.forEach((layoutId: any, i: number) => {

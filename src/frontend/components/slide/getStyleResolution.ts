@@ -8,10 +8,14 @@ export function getStyleResolution(resolution: Resolution, width: any, height: a
     let style: any = { width: null, height: null }
 
     if (fit === "fill") style = { width: "100%", height: "100%" }
-    else if (fit === "cover" || fit === "contain") {
-        if (resolution.width < resolution.height) style.height = "100%"
+    else if (fit === "contain") {
+        if (!resolution.width) style.height = "100%"
+        else if (width / height > resolution.width / resolution.height) style.height = "100%"
         else style.width = "100%"
-        if (resolution.width && resolution.width === resolution.height && height < width) style = { width: null, height: "100%" }
+    } else if (fit === "cover") {
+        if (!resolution.width) style.height = "100%"
+        else if (width / height > resolution.width / resolution.height) style.width = "100%"
+        else style.height = "100%"
     } else {
         if (width / height > resolution.width / resolution.height) {
             if (fit === "fit") style = { width: null, height: "100%" }

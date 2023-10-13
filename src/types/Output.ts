@@ -8,6 +8,7 @@ export interface Output {
     id?: string
     keyOutput?: string
     isKeyOutput?: boolean
+    stageOutput?: string
     enabled: boolean
     active: boolean
     name: string

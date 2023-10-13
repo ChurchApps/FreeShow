@@ -374,7 +374,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (!deleting && Object.keys(get(showsCache)).length >= 100) {
                 // store all to files
-                save()
+                if (initializing) save()
                 // then delete showsCache
                 setTimeout(() => {
                     showsCache.set({})
@@ -770,6 +770,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 return
                             }
 
+                            // recalculate auto size when a new template is applied
+                            if (obj.save !== false) delete slide.items[itemIndex].autoFontSize
                             slide.items[itemIndex].auto = item.auto || false
                             slide.items[itemIndex].actions = item.actions || {}
                             slide.items[itemIndex].chords = item.chords || {}
@@ -833,6 +835,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             function updateLayoutSlides() {
                 showsCache.update((a: any) => {
+                    if (!a[data.remember.showId]) return
                     let layoutSlides = a[data.remember.showId].layouts[data.remember.layout].slides
 
                     let currentIndex = -1

@@ -229,4 +229,5 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     theme: ["rename", "duplicate", "delete", "SEPERATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
+    output_screen_stage: ["rename", "recolor", "SEPERATOR", "reset"],
 }

@@ -4,10 +4,8 @@
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
     import { activeProject, categories, drawerTabsData, outLocked, playScripture, scriptureSettings, templates } from "../../../stores"
-    import { getAutoSize } from "../../edit/scripts/autoSize"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
@@ -20,7 +18,7 @@
     import Notes from "../../show/tools/Notes.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
-    import { joinRange } from "../bible/scripture"
+    import { getSlides, joinRange, textKeys } from "../bible/scripture"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -54,129 +52,10 @@
         })
     }
 
-    $: template = $templates[$scriptureSettings.template]?.items || []
+    // $: template = $templates[$scriptureSettings.template]?.items || []
     $: {
-        if (sorted.length || $scriptureSettings) getSlides()
+        if (sorted.length || $scriptureSettings) slides = getSlides({ bibles, sorted })
         else slides = [[]]
-    }
-    function getSlides() {
-        slides = [[]]
-
-        let templateTextItems = template.filter((a) => a.lines)
-        let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
-
-        bibles.forEach((bible, bibleIndex) => {
-            let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
-            let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-            let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
-            let textStyle = currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
-
-            let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} }
-
-            let slideIndex: number = 0
-            slides[slideIndex].push(clone(emptyItem))
-
-            sorted.forEach((s: any, i: number) => {
-                let slideArr = slides[slideIndex][bibleIndex]
-
-                if ($scriptureSettings.verseNumbers) {
-                    let size = 50
-                    if (i === 0) size *= 2
-                    let verseNumberStyle = "font-size: " + size + "px;color: " + ($scriptureSettings.numberColor || "#919191") + ";" + templateTextItems[bibleIndex]?.lines?.[0].text?.[0].style || ""
-
-                    slideArr.lines![0].text.push({
-                        value: s + " ",
-                        style: verseNumberStyle,
-                    })
-                }
-
-                let text: string = bible.verses[s] || ""
-                // TODO: formatting (already function in Scripture.svelte)
-                // if (redJesus) {
-                //   text = text
-                // } else
-                text = text.replace(/(<([^>]+)>)/gi, "")
-                if (text.charAt(text.length - 1) !== " ") text += " "
-
-                slideArr.lines![0].text.push({ value: text, style: textStyle })
-
-                // if (bibleIndex + 1 < bibles.length) return
-                if ((i + 1) % $scriptureSettings.versesPerSlide > 0) return
-
-                if (bibleIndex + 1 >= bibles.length) {
-                    let range: any[] = sorted.slice(i - $scriptureSettings.versesPerSlide + 1, i + 1)
-                    addMeta($scriptureSettings, joinRange(range), { slideIndex, itemIndex: bibles.length })
-                }
-
-                if (i + 1 >= sorted.length) return
-
-                slideIndex++
-                if (!slides[slideIndex]) slides.push([clone(emptyItem)])
-                else slides[slideIndex].push(clone(emptyItem))
-            })
-
-            // auto size
-            slides.forEach((slide, i) => {
-                slide.forEach((item, j) => {
-                    if (!template[j]?.auto) return
-                    let autoSize: number = getAutoSize(item)
-                    slides[i][j].lines![0].text.forEach((_, k) => {
-                        slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
-                    })
-                })
-            })
-
-            if (bibleIndex + 1 < bibles.length) return
-            let remainder = sorted.length % $scriptureSettings.versesPerSlide
-            let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
-            if (remainder) addMeta($scriptureSettings, joinRange(range), { slideIndex, itemIndex: bibles.length })
-        })
-
-        // add other items
-        slides.forEach((items, i) => {
-            slides[i] = [...templateOtherItems, ...items]
-        })
-    }
-
-    function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
-        if (!bibles[0]) return
-
-        let lines: any[] = []
-
-        let metaTemplate = template[itemIndex] || template[0]
-        let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
-        let versions = bibles.map((a) => a.version).join(" + ")
-        let books = [...new Set(bibles.map((a) => a.book))].join(" / ")
-
-        let text = customText
-        if (!showVersion && !showVerse) return
-        if (showVersion) text = text.replaceAll(textKeys.showVersion, versions)
-        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + ":" + range)
-
-        text.split("\n").forEach((line) => {
-            lines.push({ text: [{ value: line, style: verseStyle }], align: "" })
-        })
-
-        if (lines.length) {
-            // add reference to the main text if just one item
-            if (template.length <= 1 && slides[slideIndex][0]?.lines) {
-                let secondLineStyle: string = metaTemplate?.lines?.[1]?.text?.[0]?.style || "font-size: 50px;"
-                let verseLines = slides[slideIndex][0].lines || []
-                console.log(verseLines)
-                verseLines.forEach((line, i) =>
-                    line.text?.forEach((_text, j) => {
-                        verseLines[i].text[j].style = secondLineStyle
-                    })
-                )
-
-                slides[slideIndex][0].lines = [...lines, ...verseLines]
-            } else {
-                slides[slideIndex].push({
-                    lines,
-                    style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
-                })
-            }
-        }
     }
 
     function createShow() {
@@ -282,10 +161,6 @@
         update("customText", text)
 
         return text
-    }
-    const textKeys = {
-        showVersion: "[version]",
-        showVerse: "[reference]",
     }
     function updateCustomText(id: string, value: boolean) {
         let key = textKeys[id]

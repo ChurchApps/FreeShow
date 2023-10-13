@@ -12,6 +12,7 @@ export interface StageShows {
         password: string
         settings: {
             output?: string
+            outputScreen?: boolean
             background?: boolean
             color?: string
             autoStretch?: string

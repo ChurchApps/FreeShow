@@ -557,7 +557,7 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     if (!secondLines.length) secondLines = defaultLine
 
     // create new slide
-    let newSlide = { ..._show().slides([slideRef.id]).get()[0] }
+    let newSlide = clone(_show().slides([slideRef.id]).get()[0])
     newSlide.items[itemIndex].lines = secondLines
     delete newSlide.id
     delete newSlide.globalGroup
@@ -565,23 +565,21 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     newSlide.color = null
 
     // add new slide
-    // TODO: history
-    let id = uid()
-    _show()
-        .slides([id])
-        .add([clone(newSlide)])
-    // newSlide.id = id
-    // history({ id: "SLIDES", newData: { data: clone(newSlide) } })
+    let slideId = uid()
+    let slides = clone(_show().get("slides"))
 
-    // update slide
-    history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([firstLines]), slides: [slideRef.id], items: [itemIndex] }, location: { page: "none", override: slideRef.id + itemIndex } })
+    slides[slideId] = newSlide
+    slides[slideRef.id].items[itemIndex].lines = firstLines
 
     // set child
     let parentId = slideRef.type === "child" ? slideRef.parent.id : slideRef.id
     let children = _show().slides([parentId]).get("children")[0] || []
     let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
-    children = addToPos(children, [id], slideIndex)
-    _show().slides([parentId]).set({ key: "children", value: children })
+    children = addToPos(children, [slideId], slideIndex)
+    slides[parentId].children = children
+
+    let showId = get(activeShow)?.id
+    history({ id: "UPDATE", newData: { key: "slides", data: clone(slides) }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "show_slides_" + showId } })
 
     refreshEditSlide.set(true)
 }

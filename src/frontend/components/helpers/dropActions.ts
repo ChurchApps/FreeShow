@@ -8,6 +8,7 @@ import { history, historyAwait } from "./history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { _show } from "./shows"
+import { getSlides } from "../drawer/bible/scripture"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -394,6 +395,46 @@ const slideDrop: any = {
         let data: any[] = [...new Set([...(ref?.data?.overlays || []), ...drag.data])]
 
         history.newData = { key: "overlays", data, dataIsArray: true, indexes: [drop.index] }
+        return history
+    },
+    scripture: ({ drag, drop }: any, history: any) => {
+        if (!drag.data[0]?.bibles) return
+
+        let newSlides: any[] = getSlides(drag.data[0])
+        newSlides = newSlides.map((items: any) => {
+            let firstTextItem = items.find((a) => a.lines)
+            return { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
+        })
+
+        // set to correct order
+        newSlides = newSlides.reverse()
+
+        // WIP duplicate of global_group
+        let ref: any[] = _show().layouts("active").ref()[0]
+
+        history.id = "slide"
+
+        let layoutId: string = _show().get("settings.activeLayout")
+
+        let slides: any = clone(get(showsCache)[get(activeShow)!.id].slides)
+        let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
+
+        if (drop.index === undefined) drop.index = layout.length
+        let newIndex: number = drop.index
+
+        newSlides.forEach((slide: any) => {
+            let id = uid()
+            delete slide.id
+            slides[id] = slide
+
+            let parent = ref[newIndex - 1]
+            if (parent.type === "child") parent = parent.parent
+
+            layout = addToPos(layout, [{ id }], parent.index + 1)
+        })
+
+        history.newData = { slides, layout }
+        history.location.layout = layoutId
         return history
     },
     midi: ({ drag, drop }: any, history: any) => {
