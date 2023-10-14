@@ -37,7 +37,10 @@ export function startAutosave() {
 }
 
 // error logger
-const ERROR_FILTER = ["Failed to execute 'drawImage' on 'CanvasRenderingContext2D'"]
+const ERROR_FILTER = [
+    "Failed to execute 'drawImage' on 'CanvasRenderingContext2D'", // canvas media cache
+    "Failed to load because no supported source was found.", // media file doesn't exists
+]
 export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
     if (ERROR_FILTER.find((a) => msg.includes(a))) return

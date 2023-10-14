@@ -238,22 +238,25 @@ export function stopAllCaptures() {
 }
 
 export function stopCapture(id: string) {
-    if (!captures[id]) return
+    return new Promise((resolve) => {
+        if (!captures[id]) return resolve(true)
 
-    if (!captures[id].window || captures[id].window.isDestroyed()) {
+        if (!captures[id].window || captures[id].window.isDestroyed()) {
+            delete captures[id]
+            return resolve(true)
+        }
+
+        console.log("Capture - stopping: " + id)
+
+        if (captures[id].subscribed) {
+            captures[id].window.webContents.endFrameSubscription()
+            captures[id].subscribed = false
+        }
+
+        captures[id].window.removeAllListeners()
+        captures[id].window.webContents.removeAllListeners()
+
         delete captures[id]
-        return
-    }
-
-    console.log("Capture - stopping: " + id)
-
-    if (captures[id].subscribed) {
-        captures[id].window.webContents.endFrameSubscription()
-        captures[id].subscribed = false
-    }
-
-    captures[id].window.removeAllListeners()
-    captures[id].window.webContents.removeAllListeners()
-
-    delete captures[id]
+        resolve(true)
+    })
 }
