@@ -100,7 +100,7 @@
     let linesStart: any = {}
     let linesEnd: any = {}
     $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
-    $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
+    $: linesIndex = amountOfLinesToShow && slide && slide.id !== "temp" ? slide.line || 0 : null
     $: currentLineId = slide?.id
     $: linesStart[currentLineId] = linesIndex !== null && currentLineId ? amountOfLinesToShow! * linesIndex : null
     $: linesEnd[currentLineId] = linesStart[currentLineId] !== undefined ? linesStart[currentLineId] + amountOfLinesToShow! : null

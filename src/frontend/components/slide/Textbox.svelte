@@ -182,7 +182,7 @@
         }
 
         if (loopStop || !loaded || !alignElem || (!stageAutoSize && !outputTemplateAutoSize && (!item.auto || item.autoFontSize))) {
-            if (item.autoFontSize) fontSize = item.autoFontSize
+            if (item.auto && item.autoFontSize) fontSize = item.autoFontSize
             return
         }
         loopStop = true

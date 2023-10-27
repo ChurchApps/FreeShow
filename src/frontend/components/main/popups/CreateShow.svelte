@@ -52,6 +52,13 @@
 
     function keydown(e: any) {
         if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return
+
+        if (document.activeElement?.closest("#name")) {
+            e.preventDefault()
+            searchLyrics()
+            return
+        }
+
         ;(document.activeElement as any)?.blur()
         textToShow()
     }
@@ -90,9 +97,18 @@
         loading = true
     }
 
+    // encode using btoa()
+    const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
     receive(MAIN, {
         SEARCH_LYRICS: (data) => {
             loading = false
+
+            // filter out songs with bad words
+            blockedWords.forEach((eWord) => {
+                let word = atob(eWord)
+                if (data.lyrics.includes(word)) data.lyrics = ""
+            })
+
             if (!data.lyrics) {
                 newToast("$toast.lyrics_undefined")
                 return
@@ -109,7 +125,7 @@
 
 <CombinedInput textWidth={30}>
     <p><T id="show.name" /></p>
-    <TextInput autofocus value={values.name} on:change={(e) => changeValue(e, "name")} style="height: 30px;" />
+    <TextInput id="name" autofocus value={values.name} on:input={(e) => changeValue(e, "name")} style="height: 30px;" />
     <div class="search" class:loading>
         {#if loading}
             <Loader />

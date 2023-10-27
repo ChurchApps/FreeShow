@@ -85,7 +85,7 @@
 
 <span class="numberInput" {style} on:mousedown={mousedown} on:wheel={wheel} class:disabled class:outline>
     {#if buttons}
-        <Button id="decrement" on:click={() => decrement()} center style={"flex: 1;"} disabled={disabled || Number(value) - step < min}>
+        <Button id="decrement" on:click={(e) => decrement(e.ctrlKey || e.metaKey ? step * 10 : step)} center style={"flex: 1;"} disabled={disabled || Number(value) - step < min}>
             <Icon id="remove" size={1.2} white />
         </Button>
     {/if}
@@ -93,7 +93,7 @@
         <TextInput {disabled} value={(value * inputMultiplier).toFixed(fixed)} on:change={input} center />
     </span>
     {#if buttons}
-        <Button id="increment" on:click={() => increment()} center style={"flex: 1;"} disabled={disabled || Number(value) + step > max}>
+        <Button id="increment" on:click={(e) => increment(e.ctrlKey || e.metaKey ? step * 10 : step)} center style={"flex: 1;"} disabled={disabled || Number(value) + step > max}>
             <Icon id="add" size={1.2} white />
         </Button>
     {/if}

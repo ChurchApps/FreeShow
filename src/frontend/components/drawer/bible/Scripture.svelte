@@ -512,6 +512,13 @@
 
     function keydown(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
+
+        if (e.key === "r") {
+            e.preventDefault()
+            playOrClearScripture(true)
+            return
+        }
+
         if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
 
         // go to next/previous verse

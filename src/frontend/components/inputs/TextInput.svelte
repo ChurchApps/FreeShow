@@ -1,18 +1,18 @@
+<script lang="ts">
+    export let id: string = ""
+    export let type: string = "text"
+    export let value: string
+    export let placeholder: string = ""
+    export let style: string = ""
+
+    export let center: boolean = false
+    export let light: boolean = false
+    export let disabled: boolean = false
+    export let autofocus: boolean = false
+</script>
+
 <!-- svelte-ignore a11y-autofocus -->
-<input
-    type={$$props.type || "text"}
-    class="edit"
-    value={$$props.value}
-    placeholder={$$props.placeholder}
-    style={$$props.style}
-    class:center={$$props.center}
-    class:light={$$props.light}
-    disabled={$$props.disabled}
-    autofocus={$$props.autofocus}
-    on:input
-    on:change
-    on:keydown
-/>
+<input {id} {type} class="edit" {value} {placeholder} {style} class:center class:light {disabled} {autofocus} on:input on:change on:keydown />
 
 <style>
     input {
