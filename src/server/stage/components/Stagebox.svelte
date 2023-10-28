@@ -6,6 +6,7 @@
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
     import { timers } from "../store"
+    import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Timer from "./Timer.svelte"
 
@@ -15,6 +16,7 @@
     export let slides: any
     export let socket: any
     export let stream: any
+    export let background: any
 
     // timer
     let today = new Date()
@@ -82,6 +84,10 @@
                 {:else if id.includes("slide")}
                     <!-- TODO: show slide data (backgrounds, overlays) -->
                     <span style="pointer-events: none;">
+                        {#if background?.path}
+                            <MediaOutput {background} />
+                        {/if}
+
                         <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} style />
                         <!-- <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} style /> -->
                     </span>

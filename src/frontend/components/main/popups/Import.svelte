@@ -29,7 +29,7 @@
         },
         { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
-        { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
+        { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
     ]
 
     const formats = [

@@ -93,7 +93,7 @@ export function getAutoSize(item: any, styles: any = null, oneLine: boolean = fa
     return size
 }
 
-const MAX_FONT_SIZE = 500
+const MAX_FONT_SIZE = 800
 const MIN_FONT_SIZE = 10
 export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement) {
     let invisibleBox = elem.cloneNode(true)
@@ -103,10 +103,24 @@ export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement) {
     let fontSize = MAX_FONT_SIZE
     addStyleToElemText(fontSize)
 
-    while (fontSize > MIN_FONT_SIZE && (invisibleBox.scrollHeight > invisibleBox.offsetHeight || invisibleBox.scrollWidth > invisibleBox.offsetWidth)) {
-        fontSize--
+    // quick search (double divide)
+    let lowestValue = MIN_FONT_SIZE
+    let highestValue = MAX_FONT_SIZE
+    let biggerThanSize = true
+    while (highestValue - lowestValue > 3) {
+        let difference = (highestValue - lowestValue) / 2
+        if (biggerThanSize) {
+            highestValue = fontSize
+            fontSize -= difference
+        } else {
+            lowestValue = fontSize
+            fontSize += difference
+        }
+
         addStyleToElemText(fontSize)
+        biggerThanSize = invisibleBox.scrollHeight > invisibleBox.offsetHeight || invisibleBox.scrollWidth > invisibleBox.offsetWidth
     }
+    fontSize = lowestValue // prefer lowest value
 
     function addStyleToElemText(fontSize) {
         for (let breakElem of invisibleBox.children) {

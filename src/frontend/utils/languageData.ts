@@ -13,6 +13,7 @@ export const languages: any = {
     sr: "Srpski", // Serbian
     si: "Slovenščina", // Slovenian
     ua: "Українська", // Ukrainian
+    tr: "Türkçe", // Turkish
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -33,4 +34,5 @@ export const replace: any = {
     sr: ["sr"],
     si: ["si", "sl"],
     ua: ["ua", "uk"],
+    tr: ["tr"],
 }

@@ -170,10 +170,12 @@
     </div>
 </CombinedInput>
 
-<CombinedInput>
-    <p><T id="settings.active_style" /></p>
-    <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
-</CombinedInput>
+{#if !currentOutput.stageOutput}
+    <CombinedInput>
+        <p><T id="settings.active_style" /></p>
+        <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
+    </CombinedInput>
+{/if}
 
 <!-- WIP toggle fullscreen (Mac) ?? Only working one time for some reason -->
 <!-- WIP toggle visibleOnAllWorkspaces (Mac) -->

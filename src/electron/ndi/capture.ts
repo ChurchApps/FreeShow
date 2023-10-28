@@ -131,7 +131,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 }
 
 function sendFrames(id: string, image: NativeImage, rates: any) {
-    if (!captures[id]) return
+    if (!captures[id] || !image) return
 
     const size = image.getSize()
 
@@ -189,6 +189,8 @@ function getWindowScreen(window: BrowserWindow) {
 
 let previewSize: Size = { width: 320, height: 180 }
 function sendBufferToPreview(id: string, image: NativeImage, options: any) {
+    if (!image) return
+
     image = resizeImage(image, options.size, previewSize)
 
     const buffer = image.getBitmap()
@@ -218,6 +220,8 @@ function resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
 
 // const outputServerSize: Size = { width: 1280, height: 720 }
 function sendBufferToServer(id: string, image: NativeImage) {
+    if (!image) return
+
     // send output image size
     // image = resizeImage(image, options.size, outputServerSize)
 

@@ -81,6 +81,9 @@
     img {
         height: 100%;
         width: 100%;
+
+        /* STAGE */
+        object-fit: contain;
     }
 
     /* .overlay {

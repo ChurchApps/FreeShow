@@ -106,6 +106,9 @@
                 {/if}
             </div>
         {:else}
+            <!-- WIP black window before output is loaded (don't show app screen when creating output windows) -->
+            <!-- {#if !$loaded}<div class="black" />{/if} -->
+
             <ContextMenu />
             <Popup />
             <Toast />
@@ -260,4 +263,14 @@
         /* enable this to see the actual output window cropped size */
         /* background: var(--primary-darkest); */
     }
+
+    /* .black {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        z-index: 500;
+    } */
 </style>

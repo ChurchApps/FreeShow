@@ -49,13 +49,17 @@ export function stageListen() {
     })
 }
 
-function sendBackgroundToStage(outputId) {
-    let path = get(outputs)[outputId].out?.background?.path || ""
+export function sendBackgroundToStage(outputId, returnPath = false) {
+    let path = get(outputs)[outputId]?.out?.background?.path || ""
+    if (!path) return
 
-    let background = null
-    if (path) background = get(mediaCache)[path]?.data || null
+    let background = get(mediaCache)[path]?.data || null
+    if (!background) return
+
+    if (returnPath) return background
 
     send(STAGE, ["BACKGROUND"], { path: background })
+    return
 }
 
 export const receiveSTAGE: any = {
