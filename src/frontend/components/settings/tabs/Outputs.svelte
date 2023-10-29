@@ -120,6 +120,8 @@
     ]
 
     let edit: any
+
+    $: activeOutputs = Object.values($outputs).filter((a) => !a.stageOutput && a.enabled && a.active === true)
 </script>
 
 <div class="info">
@@ -140,6 +142,7 @@
         <div class="alignRight">
             <Checkbox
                 checked={currentOutput.enabled}
+                disabled={currentOutput.enabled && activeOutputs.length < 2}
                 on:change={(e) => {
                     updateOutput("enabled", isChecked(e))
                     if ($outputDisplay) {

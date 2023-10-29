@@ -22,8 +22,8 @@
         outputs.update((a) => {
             if (e.ctrlKey || e.metaKey) {
                 let newState = false
-                let getAllActive = Object.values(a).filter((a) => a.active)
-                if (getAllActive.length === 1 && a[id].active) newState = true
+                let getAllActive = Object.values(a).filter((a) => !a.stageOutput && a.active)
+                if ((getAllActive.length === 1 && a[id].active) || a[id].stageOutput) newState = true
 
                 Object.keys(a).forEach((id) => {
                     a[id].active = a[id].stageOutput ? true : newState
@@ -32,7 +32,7 @@
             } else {
                 a[id].active = a[id].stageOutput ? true : !a[id].active
 
-                let activeList = Object.values(a).filter((a) => a.active === true)
+                let activeList = Object.values(a).filter((a) => !a.stageOutput && a.enabled && a.active === true)
                 if (!activeList.length) {
                     a[id].active = true
                     newToast("$toast.one_output")

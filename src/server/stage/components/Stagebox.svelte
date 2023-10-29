@@ -84,11 +84,12 @@
                 {:else if id.includes("slide")}
                     <!-- TODO: show slide data (backgrounds, overlays) -->
                     <span style="pointer-events: none;">
-                        {#if background?.path}
-                            <MediaOutput {background} />
+                        {#if next ? background?.nextPath : background?.path}
+                            <MediaOutput path={next ? background.nextPath : background.path} />
                         {/if}
 
-                        <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} style />
+                        <!-- TODO: size this properly!!! -->
+                        <SlideText {slide} stageItem={item} {show} {resolution} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} style />
                         <!-- <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} style /> -->
                     </span>
                 {:else if id.includes("clock")}

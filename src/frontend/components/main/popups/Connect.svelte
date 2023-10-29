@@ -49,8 +49,14 @@
 
     <br />
 
-    <p style="margin-bottom: 5px;"><T id="settings.connect_qr" />:</p>
-    {@html qrImg}
+    {#if ip === "IP"}
+        Could not get your device IP, type "ipconfig" into the command line to find your local IPv4 adress.
+        <br />
+        Should look something like this: 192.168.1.100
+    {:else}
+        <p style="margin-bottom: 5px;"><T id="settings.connect_qr" />:</p>
+        {@html qrImg}
+    {/if}
 </div>
 
 <style>

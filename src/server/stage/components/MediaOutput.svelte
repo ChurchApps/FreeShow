@@ -1,6 +1,5 @@
 <script lang="ts">
-    export let background: any
-    $: path = background.path
+    export let path: string
 
     // let filter: string = ""
     // let flipped: boolean = false

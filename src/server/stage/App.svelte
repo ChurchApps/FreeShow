@@ -115,7 +115,7 @@
                 slides = msg.data
                 break
             case "BACKGROUND":
-                background.path = msg.data.path
+                background = msg.data
                 break
 
             // data

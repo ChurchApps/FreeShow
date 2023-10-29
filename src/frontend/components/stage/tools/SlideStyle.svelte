@@ -44,7 +44,7 @@
                         stageOutput: $activeStage.id!,
                         name: currentStage.name,
                         color: "#555555",
-                        bounds: { ...bounds, height: bounds.height - 1 }, // this don't show anything if it's the same height as the screen...
+                        bounds,
                         screen: null,
                     }
 

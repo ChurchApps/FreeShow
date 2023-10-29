@@ -88,7 +88,7 @@
         {#if $currentWindow === "output"}
             <div
                 class="fill"
-                style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') ? 'row' : 'column'}"
+                style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0].stageOutput ? 'row' : 'column'}"
                 on:mousemove={mousemoveOutput}
                 bind:offsetWidth={width}
                 bind:offsetHeight={height}

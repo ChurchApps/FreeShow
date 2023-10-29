@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { activeStage, allOutputs, outputs, previewBuffers, showsCache, stageShows, styles, timers } from "../../stores"
+    import { activeStage, allOutputs, outputs, previewBuffers, showsCache, stageShows, timers } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import T from "../helpers/T.svelte"
-    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { getActiveOutputs } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import Image from "../media/Image.svelte"
@@ -102,14 +102,13 @@
     let stageOutputId = show?.settings?.output || getActiveOutputs($outputs, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
-    $: currentBackground = sendBackgroundToStage(stageOutputId, true)
-    $: console.log("BACKGROUND", currentBackground)
+    $: currentBackground = sendBackgroundToStage(stageOutputId, $outputs, true)
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: layoutSlide = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!] || {} : {}
     $: slideId = layoutSlide.id
     $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
 
-    $: resolution = getResolution(resolution, { $outputs, $styles })
+    // $: resolution = getResolution(resolution, { $outputs, $styles })
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -159,7 +158,9 @@
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
                         {#if currentBackground}
-                            <Image path={currentBackground} />
+                            <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
+                                <Image path={currentBackground[next ? "nextPath" : "path"]} />
+                            </div>
                         {/if}
 
                         <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />

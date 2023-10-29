@@ -21,8 +21,6 @@
     }
 
     let active: string = $activeStage.items.length ? "item" : "items"
-    $: console.log($activeStage.items)
-    $: console.log(active)
 
     activeStage.subscribe((as) => {
         if (as.items.length && active !== "item" && active !== "text") {

@@ -24,7 +24,8 @@
 <style>
     .slide {
         position: relative;
-        background-color: black;
+        /* background-color: black; */
+
         /* TODO: not edit */
         /* z-index: -1; */
     }

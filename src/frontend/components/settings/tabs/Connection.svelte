@@ -26,14 +26,16 @@
         for (const name of Object.keys(nets)) {
             for (const net of nets[name]) {
                 // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-                if (net.family === "IPv4" && !net.internal) {
+                // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
+                const familyV4Value = typeof net.family === "string" ? "IPv4" : 4
+                if (net.family === familyV4Value && !net.internal) {
                     if (!results[name]) results[name] = []
                     results[name].push(net.address)
                 }
             }
         }
 
-        ip = results["en0"]?.[0] || results["Wi-Fi"]?.[0] || "IP"
+        ip = results["en0"]?.[0] || results["eth0"]?.[0] || results["Wi-Fi"]?.[0] || Object.values(results)[0]?.[0] || "IP"
     }
 
     function reset() {
