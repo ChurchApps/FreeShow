@@ -44,6 +44,6 @@ Send a mail to [dev@freeshow.app](mailto:dev@freeshow.app).
 
 ## Help translate
 
-Check out [howToAddLanguage.md](/public/lang/howToAddLanguage.md)
+Head over to [FreeShow on Transifex](https://app.transifex.com/nettbiter/freeshow/) to request a language.
 
 _Made in Norway by Kristoffer Vassbø_
