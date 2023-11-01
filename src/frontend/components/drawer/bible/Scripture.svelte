@@ -627,7 +627,7 @@
                     {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
                         <!-- custom drag -->
                         <p draggable="true" on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => playOrClearScripture(true)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
-                            <span class="v">{id}</span>{@html content}
+                            <span class="v">{id}</span>{@html content.replaceAll("/ ", " ")}
                         </p>
                     {/each}
                     {#if bibles[0].copyright}

@@ -103,9 +103,7 @@
 </script>
 
 <div class="main" class:hide={!id}>
-    <!-- https://www.youtube.com/watch?v=rfxnmIPCzIc -->
     {#if id}
-        <!-- <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} /> -->
         <!-- TODO: looping vimeo video will reload the video -->
         <iframe
             bind:this={iframe}
@@ -121,11 +119,6 @@
             height="360"
             frameborder="0"
         />
-        <!-- <p><a href="https://vimeo.com/426363743">Jesus, Only Jesus</a> from <a href="https://vimeo.com/ridgecrestbaptist">Ridgecrest Baptist Church</a> on <a href="https://vimeo.com">Vimeo</a>.</p> -->
-        <!-- {:else}
-    [[[Type video url/id into search area!]]] -->
-        <!-- {:else}
-    <YouTube class="yt" videoId={id} {options} on:ready={onReady} /> -->
     {/if}
 </div>
 

@@ -13,7 +13,7 @@ import { checkShowsFolder, deleteFile, getDocumentsFolder, getFileInfo, getFolde
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, receiveOutput } from "./utils/output"
-import { loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
+import { loadScripture, loadShow, logError, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 // import checkForUpdates from "./utils/updater"
@@ -48,6 +48,20 @@ function startApp() {
 
     // TODO: check for updates
     // if (isProd) checkForUpdates()
+
+    // catch errors
+    process.on("uncaughtException", function (err) {
+        let log = {
+            time: new Date(),
+            os: process.platform || "Unknown",
+            source: "See stack",
+            type: "Uncaught Exception",
+            message: err.message,
+            stack: err.stack,
+        }
+
+        logError(log, true)
+    })
 }
 
 // get LOADED message from frontend

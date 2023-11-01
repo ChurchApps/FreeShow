@@ -325,6 +325,20 @@ function decodeBase64(text: string) {
     r = r.replaceAll("\\'c2", "å") // Â
     r = r.replaceAll("\\'a5", "ra") // ¥
 
+    // decode encoded unicode dec letters
+    // https://unicodelookup.com/
+    let decCode = r.indexOf("\\u")
+    while (decCode > -1) {
+        let endOfCode = r.indexOf(" ?", decCode) + 2
+
+        if (endOfCode > 1 && endOfCode - decCode < 10) {
+            let decodedLetter = String.fromCharCode(Number(r.slice(decCode, endOfCode).replace(/\D/g, "")))
+            if (!decodedLetter.includes("\\x")) r = r.slice(0, decCode) + decodedLetter + r.slice(endOfCode)
+        }
+
+        decCode = r.indexOf("\\u", decCode + 1)
+    }
+
     return r
 }
 
@@ -347,6 +361,8 @@ function RTFToText(input: string) {
 
         let formatting = newInput.lastIndexOf(";;;;")
         if (formatting >= 0) newInput = newInput.slice(formatting + 4)
+
+        newInput = newInput.replaceAll(";;", "")
     }
 
     let splitted = newInput.split("__BREAK__").filter((a) => a)

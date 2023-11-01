@@ -118,14 +118,65 @@ export function getSlides({ bibles, sorted }) {
             }
 
             let text: string = bible.verses[s] || ""
-            // TODO: formatting (already function in Scripture.svelte)
-            // if (redJesus) {
-            //   text = text
-            // } else
-            text = text.replace(/(<([^>]+)>)/gi, "")
-            if (text.charAt(text.length - 1) !== " ") text += " "
 
-            slideArr.lines![0].text.push({ value: text, style: textStyle })
+            text = text.replaceAll("/ ", " ")
+
+            // highlight Jesus text
+            let textArray: any[] = []
+            if (get(scriptureSettings).redJesus) {
+                let jesusWords: any[] = []
+                let jesusStart = text.indexOf('<span class="wj"')
+
+                while (jesusStart > -1) {
+                    let jesusEnd = 0
+                    let indent = 1
+                    let previousChar = ""
+
+                    text.split("").forEach((letter, i) => {
+                        if (i < jesusStart + 1 || jesusEnd) return
+
+                        if (letter === "<") indent++
+                        else if (letter === "/" && previousChar === "<") indent -= 2
+
+                        if (indent === 0) jesusEnd = i - 1
+
+                        previousChar = letter
+                    })
+
+                    if (jesusEnd) {
+                        jesusWords.push([jesusStart, jesusEnd])
+                        jesusStart = text.indexOf('<span class="wj"', jesusEnd)
+                    } else {
+                        jesusWords.push([jesusStart, text.length])
+                        jesusStart = -1
+                    }
+                }
+
+                if (!jesusWords[0]) {
+                    textArray.push({ value: removeTags(text), style: textStyle })
+                } else if (jesusWords[0]?.[0] > 0) {
+                    textArray.push({ value: removeTags(text.slice(0, jesusWords[0][0])), style: textStyle })
+                }
+
+                let redText = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
+                jesusWords.forEach(([start, end], i) => {
+                    textArray.push({ value: removeTags(text.slice(start, end)), style: textStyle + redText })
+
+                    if (i === jesusWords.length - 1) {
+                        let remainingText = removeTags(text.slice(end))
+                        if (remainingText.length) textArray.push({ value: remainingText, style: textStyle })
+                    }
+                })
+            } else {
+                // TODO: formatting (already function in Scripture.svelte)
+                text = removeTags(text)
+
+                if (text.charAt(text.length - 1) !== " ") text += " "
+
+                textArray.push({ value: text, style: textStyle })
+            }
+
+            slideArr.lines![0].text.push(...textArray)
 
             // if (bibleIndex + 1 < bibles.length) return
             if ((i + 1) % get(scriptureSettings).versesPerSlide > 0) return
@@ -167,6 +218,10 @@ export function getSlides({ bibles, sorted }) {
     })
 
     return slides
+
+    function removeTags(text) {
+        return text.replace(/(<([^>]+)>)/gi, "")
+    }
 
     function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
         if (!bibles[0]) return
