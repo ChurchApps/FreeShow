@@ -278,8 +278,12 @@
         "live": "Live",
         "timers": "Timers",
         "variables": "Variables",
+        "triggers": "Triggers",
         "templates": "Templates",
         "web": "Web"
+    },
+    "tips": {
+        "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras."
     },
     "category": {
         "all": "All",
@@ -319,6 +323,7 @@
         "edit_list": "Edit list",
         "timer": "Timer",
         "variable": "Variable",
+        "trigger": "Trigger",
         "transition": "Transition",
         "delete_show": "Delete show",
         "delete_show_confirmation": "Are you sure you want to delete",
@@ -391,6 +396,7 @@
         "section": "New section",
         "timer": "New timer",
         "variable": "New variable",
+        "trigger": "New trigger",
         "category": "New category",
         "private": "New private show",
         "folder": "New folder",

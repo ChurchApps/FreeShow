@@ -136,6 +136,9 @@ export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 // VARIABLES
 export const variables: Writable<{ [key: string]: any }> = writable({}) // {}
 
+// TRIGGERS
+export const triggers: Writable<{ [key: string]: any }> = writable({}) // {}
+
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}

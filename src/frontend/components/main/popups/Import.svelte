@@ -13,6 +13,7 @@
         { name: "Text file", extensions: ["txt"], id: "txt" },
         { name: "PDF", extensions: ["pdf"], id: "pdf", tutorial: "This might take a while.<br>Currently not supported on linux!<br>Use an online PDF to Image converter if you are having issues." },
         { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint", tutorial: "This will convert all the text to a show. If you want to import all images and styling, please export/convert to PDF and import as PDF." },
+        { name: "Word", extensions: ["doc", "docx"], id: "word" },
         { name: "FreeShow", extensions: ["show"], id: "freeshow" },
         { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "pro", "json"], id: "propresenter" },
         {

@@ -5,7 +5,7 @@ import { history } from "./history"
 
 const areas: any = {
     all_slides: ["template"],
-    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "show", "midi"], // group
+    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "show", "midi"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
     project: ["show_drawer", "media", "audio", "player"],

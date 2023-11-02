@@ -176,7 +176,7 @@ let clearing = false
 export function clearAudio(path: string = "") {
     // let clearTime = get(transitionData).audio.duration
     // TODO: starting audio before previous clear is finished will not start/clear audio
-    const clearTime = 2
+    const clearTime = 2.5
 
     if (clearing) return // setTimeout(() => clearAudio(path), clearTime * 1000 + 200)
     if (!Object.keys(get(playingAudio)).length) return
@@ -217,6 +217,8 @@ export function clearAudio(path: string = "") {
 function fadeAudio(audio, duration = 1) {
     let speed = 0.01
     let time = (duration * 1000) / (audio.volume / speed)
+
+    // WIP not linear easing
 
     let fadeAudio = setInterval(() => {
         audio.volume = Math.max(0, Number((audio.volume - speed).toFixed(3)))

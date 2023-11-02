@@ -42,6 +42,7 @@ import {
     styles,
     templates,
     themes,
+    triggers,
 } from "../../stores"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
@@ -423,6 +424,8 @@ const actions: any = {
             activePopup.set("timer")
         } else if (obj.sel.id === "variable") {
             activePopup.set("variable")
+        } else if (obj.sel.id === "trigger") {
+            activePopup.set("trigger")
         } else if (obj.sel.id === "midi") {
             popupData.set(obj.sel.data[0])
             activePopup.set("midi")
@@ -858,6 +861,23 @@ function changeSlideAction(obj: any, id: string) {
 
         popupData.set(data)
         activePopup.set("animate")
+
+        return
+    }
+
+    if (id === "trigger") {
+        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
+        popupData.set({ dropdown: true, index: layoutSlide })
+
+        if (!actions[id]) {
+            activePopup.set("trigger")
+            return
+        }
+
+        let data = get(triggers)[actions[id]]
+
+        selected.set({ id: "trigger", data: [{ ...data, id: actions[id] }] })
+        activePopup.set("trigger")
 
         return
     }

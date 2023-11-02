@@ -437,6 +437,16 @@ const slideDrop: any = {
         history.location.layout = layoutId
         return history
     },
+    trigger: ({ drag, drop }: any, history: any) => {
+        history.id = "SHOW_LAYOUT"
+
+        let ref: any = _show().layouts("active").ref()[0][drop.index!]
+        let data: any = ref.data.actions || {}
+        data.trigger = drag.data[0].id
+
+        history.newData = { key: "actions", data, indexes: [drop.index] }
+        return history
+    },
     midi: ({ drag, drop }: any, history: any) => {
         history.id = "SHOW_LAYOUT"
 

@@ -40,6 +40,7 @@
     import Animate from "./popups/Animate.svelte"
     import SetTime from "./popups/SetTime.svelte"
     import Variable from "./popups/Variable.svelte"
+    import Trigger from "./popups/Trigger.svelte"
 
     function mousedown(e: any) {
         if (popupCache === "initialize") return
@@ -64,6 +65,7 @@
         edit_list: EditList,
         timer: Timer,
         variable: Variable,
+        trigger: Trigger,
         transition: Transition,
         import_scripture: ImportScripture,
         edit_event: EditEvent,

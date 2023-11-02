@@ -45,7 +45,9 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
                 { id: "SEPERATOR", name: "" },
+                // WIP move to "Special" ?
                 { id: "variables", name: "tabs.variables", default: true, icon: "variable" },
+                { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" },
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
             ]

@@ -5,6 +5,7 @@ import PPTX2Json from "pptx2json"
 import protobufjs from "protobufjs"
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
+import WordExtractor from "word-extractor"
 import { toApp } from ".."
 import { IMPORT } from "./../../types/Channels"
 import { getDocumentsFolder, readFolder } from "./files"
@@ -13,11 +14,23 @@ const specialImports: any = {
     powerpoint: async (files: string[]) => {
         let data: any[] = []
 
+        // https://www.npmjs.com/package/pptx2json
+        const pptx2json = new PPTX2Json()
         for await (const filePath of files) {
-            const pptx2json = new PPTX2Json()
             const json = await pptx2json.toJson(filePath)
-
             data.push({ name: getFileName(filePath), content: json })
+        }
+
+        return data
+    },
+    word: async (files: string[]) => {
+        let data: any[] = []
+
+        // https://www.npmjs.com/package/word-extractor
+        const extractor = new WordExtractor()
+        for await (const filePath of files) {
+            const extracted = await extractor.extract(filePath)
+            data.push({ name: getFileName(filePath), content: extracted.getBody() })
         }
 
         return data
