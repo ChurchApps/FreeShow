@@ -1,7 +1,8 @@
 <script>
     import YouTube from "svelte-youtube"
-    import { OUTPUT } from "../../../../types/Channels"
+    import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { currentWindow, playerVideos } from "../../../stores"
+    import { send } from "../../../utils/request"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
@@ -36,7 +37,12 @@
 
         if (videoData.muted || (!preview && $currentWindow !== "output")) player.mute()
 
-        videoData.duration = player.getDuration()
+        // get duration
+        let getDuration = setInterval(() => {
+            videoData.duration = player.getDuration()
+            if (videoData.duration) clearInterval(getDuration)
+        }, 200)
+
         videoTime = startAt
 
         // WIP captions ?
@@ -77,27 +83,31 @@
 
     $: if (!seeking && videoTime !== undefined) seekPlayer()
     function seekPlayer() {
-        if (!player || (preview && player.getPlayerState() !== 2) || player.getCurrentTime() === videoTime) return
+        if (!player || !loaded || (preview && !videoData.paused) || player.getCurrentTime() === videoTime) return
 
         seekTo(videoTime)
     }
 
     let seeking = false
     function seekTo(time) {
-        let isPlaying = !videoData.paused
-        videoData.paused = true
         seeking = true
+
+        player.pauseVideo()
         player.seekTo(videoTime)
 
         setTimeout(() => {
-            if (isPlaying) videoData.paused = false
+            if (!videoData.paused) player.playVideo()
             seeking = false
 
             if (outputId) window.api.send(OUTPUT, { channel: "MAIN_VIDEO", data: { id: outputId, time: videoTime } })
         }, 500)
     }
 
-    $: if (player && loaded && !seeking) {
+    let updating = false
+    $: if (player && loaded && !seeking && videoData) updateVideo()
+    function updateVideo() {
+        updating = true
+
         if (videoData.paused) player.pauseVideo()
         else player.playVideo()
 
@@ -105,6 +115,10 @@
         else if ($currentWindow === "output" || preview) player.unMute()
 
         // player.setLoop(videoData.loop)
+
+        setTimeout(() => {
+            updating = false
+        }, 500)
     }
 
     $: if (!id && player) player.stopVideo()
@@ -113,17 +127,14 @@
 
     let loopStop = false
     function change(e) {
-        // ended (0), playing (1), paused (2), video cued (5) or unstarted (-1).
-        if (loopStop) return
+        if (loopStop || !loaded || updating || seeking) return
+
         loopStop = true
         setTimeout(() => (loopStop = false), 50)
 
-        if (loaded && !seeking) {
-            videoData.paused = player.getPlayerState() === 1 ? false : true
-            if (preview) videoTime = player.getCurrentTime()
-        }
-
-        videoData.duration = player.getDuration()
+        // ended (0), playing (1), paused (2), video cued (5) or unstarted (-1).
+        videoData.paused = player.getPlayerState() === 1 ? false : true
+        if (preview) videoTime = player.getCurrentTime()
     }
 </script>
 

@@ -123,7 +123,7 @@
     }
 
     function rename(e: any) {
-        historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name: checkName(e.detail.value) } }], replace: true }, location: { page: "drawer" } })
+        historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name: checkName(e.detail.value, id) } }], replace: true }, location: { page: "drawer" } })
     }
 
     let activeOutput: any = null

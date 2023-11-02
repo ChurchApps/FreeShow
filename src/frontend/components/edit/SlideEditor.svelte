@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import type { MediaFit } from "../../../types/Main"
-    import { activeEdit, activeShow, dictionary, driveData, labelsDisabled, media, outputs, showsCache, styles } from "../../stores"
+    import { activeEdit, activeShow, dictionary, driveData, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -77,6 +77,7 @@
         else newStyles = {}
     }
 
+    let updateTimeout: any = null
     function updateStyles() {
         if (!Object.keys(newStyles).length) return
 
@@ -95,11 +96,28 @@
             }
         })
 
+        let slideId = ref[$activeEdit.slide!].id
+        let activeItems = [...active]
+
         history({
             id: "setStyle",
             newData: { style: { key: "style", values } },
-            location: { page: "edit", show: $activeShow!, slide: ref[$activeEdit.slide!].id, items: active },
+            location: { page: "edit", show: $activeShow!, slide: slideId, items: activeItems },
         })
+
+        if (!items[0]?.auto) return
+        // recalculate auto size
+        if (updateTimeout) clearTimeout(updateTimeout)
+        updateTimeout = setTimeout(resetAutoSize, 3000)
+
+        function resetAutoSize() {
+            showsCache.update((a) => {
+                delete a[$activeShow!.id].slides[slideId].items[activeItems[0] || 0].autoFontSize
+                return a
+            })
+
+            refreshEditSlide.set(true)
+        }
     }
 
     // $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {

@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "0.9.8",
+    "version": "0.9.9",
     "private": true,
     "main": "build/electron/index.js",
     "description": "An application for showing song lyrics and more for free!",
@@ -153,6 +153,7 @@
         "sqlite3": "^5.0.5",
         "svelte-youtube": "0.0.2",
         "uid": "^2.0.0",
+        "word-extractor": "^1.0.4",
         "youtube-iframe": "^1.0.3"
     }
 }

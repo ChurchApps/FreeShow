@@ -115,7 +115,7 @@
                 slides = msg.data
                 break
             case "BACKGROUND":
-                background.path = msg.data.path
+                background = msg.data
                 break
 
             // data
@@ -245,7 +245,7 @@
     {show.name}
     home
   </div> -->
-    <Slide {show} {slides} {socket} {stream} />
+    <Slide {show} {slides} {socket} {stream} {background} />
     {#if clicked}
         <div class="clicked">
             <h5 style="text-align: center;">{show.name}</h5>

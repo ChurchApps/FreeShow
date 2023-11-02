@@ -49,13 +49,35 @@ export function stageListen() {
     })
 }
 
-function sendBackgroundToStage(outputId) {
-    let path = get(outputs)[outputId].out?.background?.path || ""
+export function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
+    let path = updater[outputId]?.out?.background?.path || ""
+    if (!path) return
 
-    let background = null
-    if (path) background = get(mediaCache)[path]?.data || null
+    let background = get(mediaCache)[path]?.data || null
+    if (!background) return
 
-    send(STAGE, ["BACKGROUND"], { path: background })
+    let bg = { path: background, nextPath: getNextBackground(outputId) }
+
+    if (returnPath) return bg
+
+    // TODO: send next background as well....
+    send(STAGE, ["BACKGROUND"], bg)
+    return
+}
+
+function getNextBackground(outputId: string) {
+    let currentOutputSlide = get(outputs)[outputId]?.out?.slide
+    if (!currentOutputSlide?.id) return ""
+
+    let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
+    let nextLayout = layout[(currentOutputSlide.index || 0) + 1]
+    if (!nextLayout) return ""
+
+    let bgId = nextLayout.data.background || ""
+    let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
+    let background = get(mediaCache)[path]?.data || ""
+
+    return background
 }
 
 export const receiveSTAGE: any = {

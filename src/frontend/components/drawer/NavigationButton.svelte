@@ -60,8 +60,8 @@
     <span style="display: flex;align-items: center;width: calc(100% - 20px);">
         <Icon
             id={category.icon || "noIcon"}
-            custom={["shows", "overlays", "templates"].includes(id) && ![undefined, "noIcon", "all", "variable"].includes(category.icon)}
-            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "variables"].includes(category.id)}
+            custom={["shows", "overlays", "templates"].includes(id) && ![undefined, "noIcon", "all", "variable", "trigger"].includes(category.icon)}
+            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "variables", "triggers"].includes(category.id)}
             selectData={{ id: "category_" + id, data: [category.id] }}
             right
         />

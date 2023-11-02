@@ -105,15 +105,16 @@
         altKeyPressed = false
     }
 
-    $: activeOutputs = getActiveOutputs($outputs, false)
+    $: activeOutputs = getActiveOutputs($outputs, false, true)
 
     let activeSlides: any[] = []
     $: {
         activeSlides = []
         activeOutputs.forEach((a) => {
             let currentOutput: any = $outputs[a]
+            if (!currentOutput || currentOutput.stageOutput) return
+
             let currentStyle = $styles[currentOutput?.style || ""] || {}
-            if (!currentOutput) return
 
             let outSlide: any = currentOutput.out?.slide || {}
 

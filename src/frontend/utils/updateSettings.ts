@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
+import type { Output } from "../../types/Output"
 import { clone, keysToID } from "../components/helpers/array"
 import { displayOutputs, setOutput } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -57,6 +58,7 @@ import {
     themes,
     timeFormat,
     timers,
+    triggers,
     variables,
     videoExtensions,
     videoMarkers,
@@ -67,7 +69,6 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
-import type { Output } from "../../types/Output"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -260,6 +261,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     // templates: (v: any) => templates.set(v),
     timers: (v: any) => timers.set(v),
     variables: (v: any) => variables.set(v),
+    triggers: (v: any) => triggers.set(v),
     theme: (v: any) => theme.set(v),
     transitionData: (v: any) => transitionData.set(v),
     // themes: (v: any) => themes.set(v),

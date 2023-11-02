@@ -1,9 +1,17 @@
 <script lang="ts">
+    import Main from "../components/Main.svelte"
     import Textbox from "../components/Textbox.svelte"
+    import Zoomed from "../components/Zoomed.svelte"
+    import { getStyleResolution } from "../helpers/getStyleResolution"
     // import { getAutoSize } from "../helpers/autoSize"
 
     export let slide: any
     export let stageItem: any
+
+    // current slide zooming
+    export let show: any = {}
+    export let resolution: any = {}
+
     // export let parent: any
     export let chords: boolean = false
     export let autoSize: boolean = false
@@ -16,7 +24,7 @@
     // $: stageAutoSize = autoSize ? (getCustomAutoSize()) : fontSize
 
     $: reversedItems = JSON.parse(JSON.stringify(slide?.items || [])).reverse()
-    $: items = style ? reversedItems : combineSlideItems()
+    $: items = style ? slide?.items || [] : combineSlideItems()
 
     function combineSlideItems() {
         let oneItem: any = null
@@ -35,8 +43,17 @@
 </script>
 
 {#if slide}
-    {#each items as item}
-        <Textbox {item} {style} {chords} {stageItem} {autoSize} {fontSize} {autoStage} />
-        <!-- <Textbox {item} {style} {chords} autoSize={stageAutoSize} {fontSize} {autoStage} /> -->
-    {/each}
+    {#if style}
+        <Main let:width let:height>
+            <Zoomed {show} style={getStyleResolution(resolution, width, height, "fit")} center>
+                {#each items as item}
+                    <Textbox {item} {style} {chords} {stageItem} autoSize={item.auto && autoSize} {fontSize} {autoStage} />
+                {/each}
+            </Zoomed>
+        </Main>
+    {:else}
+        {#each items as item}
+            <Textbox {item} {style} {chords} {stageItem} {autoSize} {fontSize} {autoStage} />
+        {/each}
+    {/if}
 {/if}

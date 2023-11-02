@@ -140,7 +140,13 @@
 
     // show on enter
     function keydown(e: any) {
-        if (e.key !== "Enter" || (!e.ctrlKey && !e.metaKey)) return
+        if (e.key !== "Enter") return
+        if (e.target.closest(".search")) {
+            showVerse()
+            return
+        }
+
+        if (!e.ctrlKey && !e.metaKey) return
         if (e.target.closest("input") || e.target.closest(".edit")) return
 
         showVerse()
@@ -203,10 +209,25 @@
             <p><T id="info.template" /></p>
             <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 30%;" />
         </CombinedInput>
+
         <CombinedInput textWidth={70}>
             <p><T id="scripture.max_verses" /></p>
             <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
         </CombinedInput>
+
+        <CombinedInput textWidth={70}>
+            <p><T id="scripture.red_jesus" /></p>
+            <div class="alignRight">
+                <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
+            </div>
+        </CombinedInput>
+        {#if $scriptureSettings.redJesus}
+            <CombinedInput textWidth={70}>
+                <p><T id="edit.color" /></p>
+                <Color height={20} width={50} value={$scriptureSettings.jesusColor || "#FF4136"} on:input={(e) => update("jesusColor", e.detail)} />
+            </CombinedInput>
+        {/if}
+
         <CombinedInput textWidth={70}>
             <p><T id="scripture.verse_numbers" /></p>
             <div class="alignRight">
@@ -219,6 +240,7 @@
                 <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={(e) => update("numberColor", e.detail)} />
             </CombinedInput>
         {/if}
+
         <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
             <div class="alignRight">
@@ -231,15 +253,12 @@
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
         </CombinedInput>
+
         {#if $scriptureSettings.showVersion || ($scriptureSettings.showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
             <CombinedInput>
                 <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
             </CombinedInput>
         {/if}
-        <!-- <span>
-      <p><T id="scripture.red_jesus" /> (WIP)</p>
-      <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
-    </span> -->
     </div>
 </div>
 

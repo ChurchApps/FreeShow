@@ -145,17 +145,17 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = 500
+    const MAX_FONT_SIZE = 800
     const MIN_FONT_SIZE = 10
 
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
     $: itemAutoSize = item.auto
     $: itemAutoFontSize = item.autoFontSize
-    $: if (alignElem && (loaded || stageAutoSize || newItem !== previousItem || chordLines)) {
+    $: if (alignElem && loaded && (stageAutoSize || newItem !== previousItem || chordLines)) {
         // set smaller text for easier reading while calculating new size
-        if ((itemAutoSize && !itemAutoFontSize) || outputTemplateAutoSize || stageAutoSize) setTimeout(() => (fontSize = 70), 100)
-        setTimeout(getCustomAutoSize, 500)
+        if ((itemAutoSize && !itemAutoFontSize) || outputTemplateAutoSize || stageAutoSize) fontSize = 70
+        setTimeout(getCustomAutoSize, 150)
     }
 
     // recalculate auto size if output template is different than show template
@@ -166,7 +166,6 @@
 
     function getCustomAutoSize(force: boolean = false) {
         if (!item) return
-        previousItem = JSON.stringify(item)
 
         if (force === true) {
             let template = $templates[outputStyle.template || ""]
@@ -181,8 +180,10 @@
             outputTemplateAutoSize = true
         }
 
+        previousItem = JSON.stringify(item)
+
         if (loopStop || !loaded || !alignElem || (!stageAutoSize && !outputTemplateAutoSize && (!item.auto || item.autoFontSize))) {
-            if (item.autoFontSize) fontSize = item.autoFontSize
+            if (item.auto && item.autoFontSize) fontSize = item.autoFontSize
             return
         }
         loopStop = true
@@ -190,10 +191,40 @@
         fontSize = MAX_FONT_SIZE
         addStyleToElemText(fontSize)
 
-        while (fontSize > MIN_FONT_SIZE && (alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth)) {
-            fontSize--
+        // syncronus don't work
+        // await calculateFontSize()
+        // function calculateFontSize() {
+        //     return new Promise((resolve) => {
+        //         checkFontSize()
+        //         function checkFontSize() {
+        //             fontSize--
+        //             addStyleToElemText(fontSize)
+
+        //             if (fontSize > MIN_FONT_SIZE && (alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth)) setTimeout(checkFontSize)
+        //             else resolve(true)
+        //         }
+        //     })
+        // }
+
+        // quick search (double divide)
+        // WIP duplicate of autoSize.ts
+        let lowestValue = MIN_FONT_SIZE
+        let highestValue = MAX_FONT_SIZE
+        let biggerThanSize = true
+        while (highestValue - lowestValue > 3) {
+            let difference = (highestValue - lowestValue) / 2
+            if (biggerThanSize) {
+                highestValue = fontSize
+                fontSize -= difference
+            } else {
+                lowestValue = fontSize
+                fontSize += difference
+            }
+
             addStyleToElemText(fontSize)
+            biggerThanSize = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
         }
+        fontSize = lowestValue // prefer lowest value
 
         function addStyleToElemText(fontSize: number) {
             for (let linesElem of alignElem.children) {
@@ -207,7 +238,7 @@
 
         setTimeout(() => {
             loopStop = false
-        }, 500)
+        }, 100)
 
         if (stageAutoSize || itemIndex < 0) return
 

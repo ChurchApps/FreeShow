@@ -3,6 +3,7 @@
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getStyles } from "../../helpers/style"
     import Center from "../../system/Center.svelte"
@@ -13,22 +14,30 @@
     $: stageItems = $stageShows[$activeStage.id!].items
     $: item = items ? stageItems[items[0]] : null
 
+    let edits: any = {}
+    $: if (item) {
+        edits = clone(textEdits)
+        if (items[0].includes("slide") && !items[0].includes("text") && !items[0].includes("notes")) edits = { chords: edits.chords }
+        else if (items[0].includes("output")) edits = {}
+    }
+
     let data: { [key: string]: any } = {}
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
 
-    // $: if (textEdits) updateAuto(item?.auto || true)
+    // $: if (edits) updateAuto(item?.auto || true)
     $: if (item) updateAuto(item?.auto ?? true)
-    $: {
-        textEdits.chords[1].hidden = !item?.chords
-        textEdits.chords[2].hidden = !item?.chords
+    $: if (edits.chords) {
+        edits.chords[1].hidden = !item?.chords
+        edits.chords[2].hidden = !item?.chords
+
+        if (item?.chordsData?.color) edits.chords[1].value = item.chordsData.color
+        if (item?.chordsData?.size) edits.chords[2].value = item.chordsData.size
     }
-    $: if (item?.chordsData?.color) textEdits.chords[1].value = item.chordsData.color
-    $: if (item?.chordsData?.size) textEdits.chords[2].value = item.chordsData.size
 
     function updateAuto(value) {
-        let autoIndex = textEdits?.font?.findIndex((a) => a.id === "auto")
+        let autoIndex = edits?.font?.findIndex((a) => a.id === "auto")
         if (!autoIndex) return
-        textEdits.font[autoIndex].value = value
+        edits.font[autoIndex].value = value
     }
 
     function setValue(input: any) {
@@ -82,8 +91,8 @@
     let timeout: any = null
 </script>
 
-{#if item && !items[0].includes("output")}
-    <EditValues edits={textEdits} styles={data} {item} on:change={updateStyle} />
+{#if item}
+    <EditValues {edits} styles={data} {item} on:change={updateStyle} />
 {:else}
     <Center faded>
         <T id="empty.items" />

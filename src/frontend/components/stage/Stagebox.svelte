@@ -1,10 +1,12 @@
 <script lang="ts">
-    import { activeStage, allOutputs, outputs, previewBuffers, showsCache, stageShows, styles, timers } from "../../stores"
+    import { activeStage, allOutputs, outputs, previewBuffers, showsCache, stageShows, timers } from "../../stores"
+    import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
-    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import T from "../helpers/T.svelte"
+    import { getActiveOutputs } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
-    import T from "../helpers/T.svelte"
+    import Image from "../media/Image.svelte"
     import PreviewCanvas from "../output/PreviewCanvas.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Clock from "../system/Clock.svelte"
@@ -90,7 +92,6 @@
     let height: number = 0
     let width: number = 0
     $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
-    $: console.log(fontSize, item)
 
     $: size = getAutoSize(item, { width, height })
     // $: size = Math.min(height, width) / 2
@@ -99,13 +100,15 @@
     // SLIDE
     let slide
     let stageOutputId = show?.settings?.output || getActiveOutputs($outputs, true, true)[0]
-    $: currentSlide = $outputs[stageOutputId]?.out?.slide || $allOutputs[stageOutputId]?.out?.slide
+    $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
+    $: currentSlide = currentOutput.out?.slide
+    $: currentBackground = sendBackgroundToStage(stageOutputId, $outputs, true)
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: layoutSlide = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!] || {} : {}
     $: slideId = layoutSlide.id
     $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
 
-    $: resolution = getResolution(resolution, { $outputs, $styles })
+    // $: resolution = getResolution(resolution, { $outputs, $styles })
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -135,8 +138,8 @@
         {#if slide}
             <span style="pointer-events: none;">
                 <!-- <Output specificOutput={stageOutputId} bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror /> -->
-                {#if id.includes("_alpha") && $outputs[stageOutputId].keyOutput}
-                    <PreviewCanvas capture={$previewBuffers[$outputs[stageOutputId].keyOutput || ""]} id={$outputs[stageOutputId].keyOutput} fullscreen />
+                {#if id.includes("_alpha") && currentOutput.keyOutput}
+                    <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
                 {:else}
                     <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
                 {/if}
@@ -154,6 +157,12 @@
                     <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} />
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
+                        {#if currentBackground}
+                            <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
+                                <Image path={currentBackground[next ? "nextPath" : "path"]} />
+                            </div>
+                        {/if}
+
                         <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />
                     </span>
                 {:else if id.includes("clock")}

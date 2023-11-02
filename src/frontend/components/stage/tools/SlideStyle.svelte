@@ -33,7 +33,7 @@
         // add / remove physical stage output
         if (key === "outputScreen") {
             let outputIds = getActiveOutputs()
-            let bounds = $outputs[outputIds[0]]?.bounds || { x: 0, y: 0, width: 0, height: 0 }
+            let bounds = $outputs[outputIds[0]]?.bounds || { x: 0, y: 0, width: 100, height: 100 }
 
             outputs.update((a) => {
                 if (value) {
@@ -83,7 +83,7 @@
     let outputList: any[] = []
     $: outputList = Object.entries($outputs)
         .map(([id, a]) => ({ id, ...a }))
-        .filter((a) => !a.isKeyOutput)
+        .filter((a) => !a.isKeyOutput && !a.stageOutput)
         .sort((a, b) => a.name.localeCompare(b.name))
 
     function reset() {

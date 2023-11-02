@@ -611,7 +611,7 @@
         "transform": "Transform",
         "uppercase": "Uppercase",
         "lowercase": "Lowercase",
-        "capitalize": "Capitalize",
+        "capitalize": "Capitalise",
         "align": "Align",
         "_title_left": "Align left",
         "_title_center": "Align centre",
@@ -869,7 +869,7 @@
         "restore_finished": "Restore complete!",
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
-        "optimized": "Optimized",
+        "optimized": "Optimised",
         "full": "Full"
     },
     "sort": {

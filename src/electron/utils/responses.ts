@@ -283,16 +283,15 @@ export function saveRecording(_: any, msg: any) {
 
 // ERROR LOGGER
 const maxLogLength = 250
-function logError(log: string) {
+export function logError(log: any, electron: boolean = false) {
     let storedLog: any = error_log.store
-    console.log(storedLog)
-    let previousLog: any[] = storedLog.renderer || []
+    let key = electron ? "main" : "renderer"
 
-    console.log(error_log.store, previousLog)
+    let previousLog: any[] = storedLog[key] || []
     previousLog.push(log)
 
     if (previousLog.length > maxLogLength) previousLog = previousLog.slice(previousLog.length - maxLogLength)
 
-    error_log.clear()
-    error_log.set({ renderer: previousLog })
+    // error_log.clear()
+    error_log.set({ [key]: previousLog })
 }

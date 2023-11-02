@@ -14,6 +14,7 @@
     export let slides: any
     export let socket: any
     export let stream: any
+    export let background: any
 
     let width: number = 0
     let height: number = 0
@@ -29,7 +30,7 @@
                 {#each Object.entries(show.items) as [id, item]}
                     {#if item.enabled}
                         {#key show}
-                            <Stagebox {show} {id} {item} {slides} {socket} {stream} />
+                            <Stagebox {show} {id} {item} {slides} {socket} {stream} {background} />
                         {/key}
                     {/if}
                 {/each}

@@ -120,6 +120,8 @@
     ]
 
     let edit: any
+
+    $: activeOutputs = Object.values($outputs).filter((a) => !a.stageOutput && a.enabled && a.active === true)
 </script>
 
 <div class="info">
@@ -140,6 +142,7 @@
         <div class="alignRight">
             <Checkbox
                 checked={currentOutput.enabled}
+                disabled={currentOutput.enabled && activeOutputs.length < 2}
                 on:change={(e) => {
                     updateOutput("enabled", isChecked(e))
                     if ($outputDisplay) {
@@ -170,10 +173,12 @@
     </div>
 </CombinedInput>
 
-<CombinedInput>
-    <p><T id="settings.active_style" /></p>
-    <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
-</CombinedInput>
+{#if !currentOutput.stageOutput}
+    <CombinedInput>
+        <p><T id="settings.active_style" /></p>
+        <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
+    </CombinedInput>
+{/if}
 
 <!-- WIP toggle fullscreen (Mac) ?? Only working one time for some reason -->
 <!-- WIP toggle visibleOnAllWorkspaces (Mac) -->

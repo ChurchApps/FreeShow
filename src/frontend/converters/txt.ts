@@ -21,6 +21,8 @@ export function getQuickExample() {
 // convert .txt files to shows
 export function convertTexts(files: any[]) {
     files.forEach(({ name, content }) => convertText({ name, text: content, noFormatting: true }))
+
+    // WIP setTempShows(tempShows)
 }
 
 // convert a plain text input into a show
@@ -38,11 +40,9 @@ export function convertText({ name = "", category = null, text, noFormatting = f
 
     // find chorus phrase
     let patterns = findPatterns(sections)
-    console.log(patterns)
     sections = patterns.sections
     labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] }))
     labeled = checkRepeats(labeled)
-    console.log(labeled)
 
     if (!name) {
         let firstSlideText = labeled[0].text.split("\n")
@@ -93,7 +93,6 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
     labeled.forEach(convertLabeledSlides)
 
     // add children
-    console.log(addedChildren)
     Object.entries(addedChildren).forEach(([parentId, children]: any) => {
         slides[parentId].children = [...(slides[parentId].children || []), ...(children || [])]
     })
@@ -285,7 +284,6 @@ function findPatterns(sections: string[]) {
     let matches: number = 0
     let stored: any[] = []
     let indexes = similarCount.map(getIndexes)
-    console.log(indexes)
 
     return { sections, indexes }
 
@@ -341,7 +339,6 @@ function findPatterns(sections: string[]) {
         // if (length < 10 && !sections[i].includes("\n")) return sections[i].trim()
         if (length < 30 || linesSimilarity(sections[i])) return "tag"
         if (splitted[0].length < 8 && splitted[1].length > 20) {
-            // console.log(sections[i], splitted.slice(1, splitted.length))
             sections[i] = splitted.slice(1, splitted.length).join("\n")
             let group = splitted[0].replace(/\d+/g, "").trim()
             return get(groups)[group.toLowerCase()] ? group.toLowerCase() : splitted[0]

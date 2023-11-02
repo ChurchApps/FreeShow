@@ -436,6 +436,7 @@ const receiveIMPORT: any = {
     pdf: (a: any) => convertPDF(a),
     calendar: (a: any) => convertCalendar(a),
     powerpoint: (a: any) => convertPowerpoint(a),
+    word: (a: any) => convertTexts(a),
     freeshow: (a: any) => importShow(a),
     freeshow_project: (a: any) => importProject(a),
     easyworship: (a: any) => convertEasyWorship(a),

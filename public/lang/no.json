@@ -278,8 +278,12 @@
         "live": "Direkte",
         "timers": "Tidtakere",
         "variables": "Variabler",
+        "triggers": "Utløsere",
         "templates": "Maler",
         "web": "Nett"
+    },
+    "tips": {
+        "trigger": "Utløsere brukes ofte til å sende en HTTP-forespørsel for å endre posisjonen til kameraer."
     },
     "category": {
         "all": "Alt",
@@ -319,6 +323,7 @@
         "edit_list": "Rediger liste",
         "timer": "Nedtelling",
         "variable": "Variabel",
+        "trigger": "Utløser",
         "transition": "Overgang",
         "delete_show": "Slett show",
         "delete_show_confirmation": "Er du sikker på at du vil slette",
@@ -391,6 +396,7 @@
         "section": "Ny seksjon",
         "timer": "Ny nedtelling",
         "variable": "Ny variabel",
+        "trigger": "Ny utløser",
         "category": "Ny kategori",
         "private": "Nytt privat show",
         "folder": "Ny mappe",
@@ -666,8 +672,8 @@
         "text": "Tekstboks",
         "list": "Liste",
         "media": "Media",
-        "camera": "Kamera",
         "image": "Bilde",
+        "camera": "Kamera",
         "video": "Video",
         "mirror": "Speil",
         "clock": "Klokke",
@@ -764,11 +770,11 @@
     },
     "stage": {
         "slide": "Lysbilde",
-        "current_slide": "Gjeldende lysbilde",
         "current_slide_text": "Gjeldende lysbilde tekst",
+        "current_slide": "Gjeldende lysbilde",
         "current_slide_notes": "Gjeldende lysbilde notater",
-        "next_slide": "Neste lysbilde",
         "next_slide_text": "Neste lysbilde tekst",
+        "next_slide": "Neste lysbilde",
         "next_slide_notes": "Neste lysbilde notater",
         "output": "Utgang",
         "current_output": "Gjeldende utgang",

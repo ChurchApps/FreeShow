@@ -47,7 +47,7 @@ export function midiInListen() {
 
 export const midiActions = {
     next_slide: () => {
-        nextSlide({ key: " " }, true)
+        nextSlide({ key: " " })
     },
     previous_slide: () => {
         previousSlide({ key: " " })

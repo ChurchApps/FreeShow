@@ -197,6 +197,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     global_timer: ["play", "edit", "SEPERATOR", "delete"], // , "reset"
     // VARIABLE
     variable: ["edit", "SEPERATOR", "delete"],
+    // TRIGGER
+    trigger: ["edit", "SEPERATOR", "delete"],
 
     // SHOWS
     // , "copy", "paste"

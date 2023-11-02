@@ -2,6 +2,9 @@
     import { showsCache } from "../../../stores"
     import { _show } from "../../helpers/shows"
     import Textbox from "../../slide/Textbox.svelte"
+    import Zoomed from "../../slide/Zoomed.svelte"
+    import { getStyleResolution } from "../../slide/getStyleResolution"
+    import Main from "../../system/Main.svelte"
 
     export let currentSlide: any
     export let next: boolean = false
@@ -23,7 +26,7 @@
     // $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize
 
     $: reversedItems = JSON.parse(JSON.stringify(slide?.items || [])).reverse()
-    $: items = style ? reversedItems : combineSlideItems()
+    $: items = style ? slide?.items || [] : combineSlideItems()
 
     function combineSlideItems() {
         let oneItem: any = null
@@ -42,8 +45,17 @@
 </script>
 
 {#if slide}
-    {#each items as item}
-        <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} />
-        <!-- <Textbox {item} {style} {chords} {ref} autoSize={stageAutoSize} addDefaultItemStyle={style} /> -->
-    {/each}
+    {#if style}
+        <Main let:resolution let:width let:height>
+            <Zoomed background="transparent" style={getStyleResolution(resolution, width, height, "fit")} center>
+                {#each items as item}
+                    <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={item.auto && autoSize} {fontSize} addDefaultItemStyle={style} />
+                {/each}
+            </Zoomed>
+        </Main>
+    {:else}
+        {#each items as item}
+            <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} />
+        {/each}
+    {/if}
 {/if}

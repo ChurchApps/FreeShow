@@ -100,7 +100,7 @@
     let linesStart: any = {}
     let linesEnd: any = {}
     $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
-    $: linesIndex = amountOfLinesToShow && slide ? slide.line || 0 : null
+    $: linesIndex = amountOfLinesToShow && slide && slide.id !== "temp" ? slide.line || 0 : null
     $: currentLineId = slide?.id
     $: linesStart[currentLineId] = linesIndex !== null && currentLineId ? amountOfLinesToShow! * linesIndex : null
     $: linesEnd[currentLineId] = linesStart[currentLineId] !== undefined ? linesStart[currentLineId] + amountOfLinesToShow! : null
@@ -405,7 +405,7 @@
                     {#if overlayTransition.type === "none"}
                         <div class:key={currentOutput.isKeyOutput}>
                             <div>
-                                {#each clonedOverlays[id].items as item}
+                                {#each clonedOverlays[id].items || [] as item}
                                     {#if !item.bindings?.length || item.bindings.includes(outputId)}
                                         <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} />
                                     {/if}
@@ -415,7 +415,7 @@
                     {:else}
                         <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
                             <div>
-                                {#each clonedOverlays[id].items as item}
+                                {#each clonedOverlays[id].items || [] as item}
                                     {#if !item.bindings?.length || item.bindings.includes(outputId)}
                                         <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} transitionEnabled />
                                     {/if}
@@ -435,7 +435,7 @@
             {#if transition.type === "none"}
                 <span style="pointer-events: none;display: block;">
                     {#if slideClone?.items}
-                        {#each slideClone?.items as item}
+                        {#each slideClone.items as item}
                             {#if !item.bindings?.length || item.bindings.includes(outputId)}
                                 <Textbox
                                     filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
@@ -461,7 +461,7 @@
                 <!-- WIP crossfade: in:cReceive={{ key: "slide" }} out:cSend={{ key: "slide" }} -->
                 <span transition:custom={transition} style="pointer-events: none;display: block;">
                     {#if slideClone?.items}
-                        {#each slideClone?.items as item}
+                        {#each slideClone.items as item}
                             {#if !item.bindings?.length || item.bindings.includes(outputId)}
                                 <!-- <span class="itemTransition" style="pointer-events: none;position: absolute;{item.style}" transition:custom={item.actions?.transition || {}}> -->
                                 <Textbox
@@ -527,7 +527,7 @@
                         {#if overlayTransition.type === "none"}
                             <div class:key={currentOutput.isKeyOutput}>
                                 <div>
-                                    {#each clonedOverlays[id].items as item}
+                                    {#each clonedOverlays[id].items || [] as item}
                                         {#if !item.bindings?.length || item.bindings.includes(outputId)}
                                             <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} />
                                         {/if}
@@ -537,7 +537,7 @@
                         {:else}
                             <div transition:custom={overlayTransition} class:key={currentOutput.isKeyOutput}>
                                 <div>
-                                    {#each clonedOverlays[id].items as item}
+                                    {#each clonedOverlays[id].items || [] as item}
                                         {#if !item.bindings?.length || item.bindings.includes(outputId)}
                                             <Textbox {item} ref={{ type: "overlay", id }} {preview} {mirror} transitionEnabled />
                                         {/if}

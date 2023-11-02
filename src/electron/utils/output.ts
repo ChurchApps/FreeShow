@@ -18,7 +18,6 @@ async function createOutput(output: Output) {
 
     if (outputWindows[id]) {
         // WIP has to restart because capture don't work when window is hidden...
-        stopCapture(id)
         removeOutput(id, output)
 
         return
@@ -89,8 +88,8 @@ export function closeAllOutputs() {
     Object.keys(outputWindows).forEach(removeOutput)
 }
 
-function removeOutput(id: string, reopen: any = null) {
-    stopCapture(id)
+async function removeOutput(id: string, reopen: any = null) {
+    await stopCapture(id)
     stopSenderNDI(id)
 
     if (!outputWindows[id]) return
@@ -100,16 +99,16 @@ function removeOutput(id: string, reopen: any = null) {
         return
     }
 
+    outputWindows[id].on("closed", () => {
+        delete outputWindows[id]
+        if (reopen) createOutput(reopen)
+    })
+
     try {
         outputWindows[id].close()
     } catch (error) {
         console.log(error)
     }
-
-    outputWindows[id].on("closed", () => {
-        delete outputWindows[id]
-        if (reopen) createOutput(reopen)
-    })
 }
 
 // SHOW/HIDE
@@ -125,7 +124,7 @@ function displayOutput(data: any) {
             windows = Object.values(outputWindows)
         }
 
-        windows.forEach((window) => hideWindow(window))
+        windows.forEach(hideWindow)
         if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data })
         return
     }
@@ -135,7 +134,7 @@ function displayOutput(data: any) {
 
         createOutput(data.output)
         window = outputWindows[data.output.id]
-        if (!window) return
+        if (!window || window.isDestroyed()) return
     }
 
     /////
@@ -279,6 +278,8 @@ export function receiveOutput(_e: any, msg: Message) {
 
 function sendToOutputWindow(msg: any) {
     Object.entries(outputWindows).forEach(([id, window]: any) => {
+        if ((msg.data?.id && msg.data.id !== id) || window.isDestroyed()) return
+
         let tempMsg: any = JSON.parse(JSON.stringify(msg))
 
         // only send output with matching id
@@ -286,8 +287,6 @@ function sendToOutputWindow(msg: any) {
             if (!msg.data?.[id]) return
             tempMsg.data = { [id]: msg.data[id] }
         }
-
-        if ((msg.data?.id && msg.data.id !== id) || window.isDestroyed()) return
 
         window.webContents.send(OUTPUT, tempMsg)
     })

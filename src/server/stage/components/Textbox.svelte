@@ -53,7 +53,7 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = 500
+    const MAX_FONT_SIZE = 800
     const MIN_FONT_SIZE = 10
 
     $: if (autoSize && loaded) getCustomAutoSize()
@@ -67,12 +67,24 @@
 
         console.log(fontSize)
 
-        while (fontSize > MIN_FONT_SIZE && (alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth)) {
-            fontSize--
-            addStyleToElemText(fontSize)
-        }
+        // quick search (double divide)
+        let lowestValue = MIN_FONT_SIZE
+        let highestValue = MAX_FONT_SIZE
+        let biggerThanSize = true
+        while (highestValue - lowestValue > 3) {
+            let difference = (highestValue - lowestValue) / 2
+            if (biggerThanSize) {
+                highestValue = fontSize
+                fontSize -= difference
+            } else {
+                lowestValue = fontSize
+                fontSize += difference
+            }
 
-        console.log(fontSize)
+            addStyleToElemText(fontSize)
+            biggerThanSize = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
+        }
+        fontSize = lowestValue // prefer lowest value
 
         function addStyleToElemText(fontSize: number) {
             for (let linesElem of alignElem.children) {

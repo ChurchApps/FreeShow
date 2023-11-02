@@ -37,6 +37,7 @@ import {
     templateCategories,
     templates,
     themes,
+    triggers,
     variables,
     videoMarkers,
 } from "../../stores"
@@ -323,7 +324,7 @@ const selectActions: any = {
 
         selected.set({ id: "template", data: newSelection })
     },
-    media: () => selectAllMedia.set(true)
+    media: () => selectAllMedia.set(true),
 }
 
 const copyActions: any = {
@@ -608,8 +609,18 @@ const deleteActions = {
         })
     },
     global_timer: (data: any) => deleteActions.timer(data),
+    // TODO: history
     variable: (data: any) => {
         variables.update((a) => {
+            data.forEach(({ id }) => {
+                delete a[id]
+            })
+
+            return a
+        })
+    },
+    trigger: (data: any) => {
+        triggers.update((a) => {
             data.forEach(({ id }) => {
                 delete a[id]
             })

@@ -24,6 +24,7 @@ import {
     slideTimers,
     styles,
     timers,
+    triggers,
 } from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
@@ -420,20 +421,25 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             setOutput("transition", null, false, outputId)
         }
 
-        // actions
+        // actions per output
         if (data.actions) {
-            // clear first
-            if (data.actions.stopTimers) activeTimers.set([])
             if (data.actions.clearBackground) setOutput("background", null, false, outputId)
-            if (data.actions.clearOverlays) clearOverlays()
-            if (data.actions.clearAudio) clearAudio()
-
-            // startShow is at the top
-            if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
-            // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
-            if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle, data.actions.styleOutputs)
-            if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id })
+            if (data.actions.clearOverlays) clearOverlays(outputId)
         }
+    }
+
+    // actions
+    if (data.actions) {
+        // clear first
+        if (data.actions.stopTimers) activeTimers.set([])
+        if (data.actions.clearAudio) clearAudio()
+
+        // startShow is at the top
+        if (data.actions.trigger) activateTrigger(get(triggers)[data.actions.trigger])
+        if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
+        // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
+        if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle, data.actions.styleOutputs)
+        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id })
     }
 }
 
@@ -567,9 +573,9 @@ export function sendMidi(data: any) {
     send(MAIN, ["SEND_MIDI"], data)
 }
 
-export function clearOverlays() {
-    let outs = getActiveOutputs()
-    let outOverlays: string[] = get(outputs)[outs[0]]?.out?.overlays || []
+export function clearOverlays(outputId: string = "") {
+    outputId = outputId || getActiveOutputs()[0]
+    let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
     outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
     setOutput("overlays", outOverlays)
     lockedOverlays.set([])
@@ -592,4 +598,24 @@ export function clearAll() {
     clearAudio()
     // clearTimers()
     setOutput("transition", null)
+}
+
+export function activateTrigger(trigger) {
+    if (!customTriggers[trigger?.type]) {
+        console.log("Missing trigger:", trigger.type)
+        return
+    }
+
+    customTriggers[trigger.type](trigger.value)
+}
+
+const customTriggers = {
+    http: (value: string) => {
+        fetch(value, { method: "POST" })
+            // .then((response) => response.json())
+            // .then((json) => console.log(json))
+            .catch((err) => {
+                console.error("Could not send POST request:", err)
+            })
+    },
 }

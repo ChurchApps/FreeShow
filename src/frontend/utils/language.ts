@@ -2,9 +2,6 @@ import { derived, get } from "svelte/store"
 import { MAIN, REMOTE } from "../../types/Channels"
 import { dictionary, language } from "../stores"
 import { replace } from "./languageData"
-// import { dictionary, locale, _} from 'svelte-i18n';
-// const LANGUAGE_FILE_URL = './lang/{locale}.json';
-// let cachedLocale;
 
 // https://lokalise.com/blog/svelte-i18n/
 
@@ -12,27 +9,41 @@ import { replace } from "./languageData"
 const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
 
 function setLanguage(locale: null | string = null) {
-  if (!locale) {
-    // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
-    // locale = window.navigator.userLanguage || window.navigator.language || 'en';
-    locale = window.navigator.language
-    Object.keys(replace).forEach((key) => {
-      if (replace[key].includes(locale)) locale = key
-    })
-  }
-  if (!replace[locale]) locale = "en"
+    if (!locale) {
+        // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
+        // locale = window.navigator.userLanguage || window.navigator.language || 'en';
+        locale = window.navigator.language
+        Object.keys(replace).forEach((key) => {
+            if (replace[key].includes(locale)) locale = key
+        })
+    }
+    if (!replace[locale]) locale = "en"
 
-  // const messsagesFileUrl = LANGUAGE_FILE_URL.replace('{locale}', locale);
-  const url = "./lang/" + locale + ".json"
+    // const messsagesFileUrl = LANGUAGE_FILE_URL.replace('{locale}', locale);
+    const url = "./lang/" + locale + ".json"
 
-  return fetch(url)
-    .then((response) => response.json())
-    .then((messages) => {
-      dictionary.set(messages)
-      window.api.send(MAIN, { channel: "LANGUAGE", data: { lang: locale, strings: messages } })
-      window.api.send(REMOTE, { channel: "LANGUAGE", data: { lang: locale, strings: messages } })
-      language.set(locale!)
-    })
+    return fetch(url)
+        .then((response) => response.json())
+        .then(async (messages) => {
+            // replace any missing keys in dictionary with fallback english string
+            if (locale !== "en") {
+                let defaultStrings = await (await fetch("./lang/en.json")).json()
+
+                Object.keys(defaultStrings).forEach((key) => {
+                    if (!messages[key]) messages[key] = defaultStrings[key]
+                    else {
+                        Object.keys(defaultStrings[key]).forEach((stringId) => {
+                            if (!messages[key][stringId]) messages[key][stringId] = defaultStrings[key][stringId]
+                        })
+                    }
+                })
+            }
+
+            dictionary.set(messages)
+            window.api.send(MAIN, { channel: "LANGUAGE", data: { lang: locale, strings: messages } })
+            window.api.send(REMOTE, { channel: "LANGUAGE", data: { lang: locale, strings: messages } })
+            language.set(locale!)
+        })
 }
 
 // let d: Dictionary = {}
@@ -48,29 +59,29 @@ function setLanguage(locale: null | string = null) {
 // WIP Not updating dictionary...
 // svelte reactive functions...
 const translate = (id: string, { data = {}, parts = false } = {}) => {
-  console.log(data)
-  let d = get(dictionary)
+    console.log(data)
+    let d = get(dictionary)
 
-  let string
-  if (parts) {
-    let pre = "",
-      suf = ""
-    if (id.includes("$:")) {
-      // TODO: use regex for this
-      pre = id.slice(0, id.indexOf("$:"))
-      suf = id.slice(id.indexOf(":$") + 2, id.length)
-      id = id.slice(id.indexOf("$:") + 2, id.indexOf(":$"))
-      let category: string = id.slice(0, id.indexOf("."))
-      let key = id.slice(id.indexOf(".") + 1, id.length)
-      id = d[category]?.[key] || `[${id}]`
-      string = `${pre}${id}${suf}`
-    } else string = id
-  } else {
-    let key = id.split(".")
-    string = d[key[0]]?.[key[1]]
-  }
+    let string
+    if (parts) {
+        let pre = "",
+            suf = ""
+        if (id.includes("$:")) {
+            // TODO: use regex for this
+            pre = id.slice(0, id.indexOf("$:"))
+            suf = id.slice(id.indexOf(":$") + 2, id.length)
+            id = id.slice(id.indexOf("$:") + 2, id.indexOf(":$"))
+            let category: string = id.slice(0, id.indexOf("."))
+            let key = id.slice(id.indexOf(".") + 1, id.length)
+            id = d[category]?.[key] || `[${id}]`
+            string = `${pre}${id}${suf}`
+        } else string = id
+    } else {
+        let key = id.split(".")
+        string = d[key[0]]?.[key[1]]
+    }
 
-  return string
+    return string
 }
 
 export { setLanguage, dir, translate }

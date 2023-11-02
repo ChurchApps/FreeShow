@@ -4,6 +4,7 @@
     import Overlays from "./Overlays.svelte"
     import Shows from "./Shows.svelte"
     import Templates from "./Templates.svelte"
+    import Triggers from "./Triggers.svelte"
     import Variables from "./Variables.svelte"
     import Audio from "./audio/Audio.svelte"
     import Scripture from "./bible/Scripture.svelte"
@@ -56,6 +57,8 @@
     {:else if id === "overlays"}
         {#if active === "variables"}
             <Variables {searchValue} />
+        {:else if active === "triggers"}
+            <Triggers {searchValue} />
         {:else}
             <Overlays {active} {searchValue} />
         {/if}

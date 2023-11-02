@@ -1,6 +1,5 @@
 <script lang="ts">
-    export let background: any
-    $: path = background.path
+    export let path: string
 
     // let filter: string = ""
     // let flipped: boolean = false
@@ -81,6 +80,9 @@
     img {
         height: 100%;
         width: 100%;
+
+        /* STAGE */
+        object-fit: contain;
     }
 
     /* .overlay {

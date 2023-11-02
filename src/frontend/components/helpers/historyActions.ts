@@ -342,7 +342,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     let newShow = clone(a[id])
                     if (newShow?.timestamps) delete newShow.timestamps.used
 
-                    if (initializing && oldShow && JSON.stringify(oldShow) !== JSON.stringify(newShow)) duplicates.push(show.name)
+                    if (initializing && !replace && oldShow && JSON.stringify(oldShow) !== JSON.stringify(newShow)) duplicates.push(show.name)
                 })
                 return a
             })

@@ -11,6 +11,10 @@
 
 {#if type === "variables"}
     <!-- VARIABLE -->
+{:else if type === "triggers"}
+    <div class="scroll" style="padding: 10px;">
+        <T id="tips.trigger" />
+    </div>
 {:else}
     <div class="scroll" />
 
