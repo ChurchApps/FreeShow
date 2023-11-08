@@ -124,7 +124,7 @@ function getOutputWithLines() {
     return currentLines
 }
 
-export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null) {
+export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null, nextAfterMedia: boolean = false) {
     if (get(outLocked) && !bypassLock) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
@@ -151,7 +151,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // TODO: active show slide index on delete......
 
     // go to first slide in next project show ("Next after media" feature)
-    if (loop && bypassLock && slide && isLastSlide) {
+    let isNotLooping = loop && slide?.index !== undefined && !layout[slide.index]?.data?.end
+    if ((isNotLooping || nextAfterMedia) && bypassLock && slide && isLastSlide) {
         // check if it is last slide (& that slide does not loop to start)
         goToNextShowInProject(slide, customOutputId)
         return
@@ -217,6 +218,9 @@ async function goToNextShowInProject(slide, customOutputId) {
     await loadShows([nextShow.id])
     let activeLayout = nextShow.layout || _show(nextShow.id).get("settings.activeLayout")
     let layout: any[] = _show(nextShow.id).layouts([activeLayout]).ref()[0]
+
+    // let hasNextAfterMediaAction = layout[slide.index].data.actions?.nextAfterMedia
+    // if (!hasNextAfterMediaAction) return
 
     setOutput("slide", { id: nextShow.id, layout: activeLayout, index: 0 }, false, customOutputId)
     updateOut(nextShow.id, 0, layout, true, customOutputId)
@@ -545,7 +549,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     if (!nextAfterMedia) return false
 
     setTimeout(() => {
-        nextSlide(null, false, false, true, true, outputId)
+        nextSlide(null, false, false, false, true, outputId, true)
 
         setTimeout(() => {
             nextActive = false

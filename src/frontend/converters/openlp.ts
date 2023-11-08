@@ -55,8 +55,8 @@ export function convertOpenLP(data: any) {
 
         show.meta = {
             title: song.meta_title || show.name,
-            author: song.authors?.find((a) => a.type.includes("words"))?.name || "",
-            artist: song.authors?.find((a) => a.type.includes("music"))?.name || "",
+            author: song.authors?.find((a) => a.type?.includes("words"))?.name || "",
+            artist: song.authors?.find((a) => a.type?.includes("music"))?.name || "",
             CCLI: song.ccli || "",
             copyright: song.copyright || "",
         }
@@ -181,9 +181,9 @@ function XMLtoObject(xml: string) {
     let lyrics = getChild(xmlDoc, "lyrics")
 
     let object: Song = {
-        title: getChild(getChild(properties, "titles"), "title").textContent!,
-        modified: xmlDoc.getAttribute("modifiedDate")!,
-        verseOrder: getChild(properties, "verseOrder").textContent!,
+        title: getChild(getChild(properties, "titles"), "title").textContent || "",
+        modified: xmlDoc.getAttribute("modifiedDate") || "",
+        verseOrder: getChild(properties, "verseOrder").textContent || "",
         authors: [...getChild(properties, "authors").children].map((a: any) => ({ type: a.getAttribute("type"), name: a.textContent })),
         lyrics: [...lyrics.getElementsByTagName("verse")].map((verse) => ({
             name: verse.getAttribute("name")!,
@@ -200,4 +200,4 @@ function XMLtoObject(xml: string) {
     return object
 }
 
-const getChild = (parent: any, name: string) => parent.getElementsByTagName(name)[0]
+const getChild = (parent: any, name: string) => parent.getElementsByTagName(name)[0] || {}

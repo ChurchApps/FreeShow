@@ -4,7 +4,7 @@
     import Loader from "../../main/Loader.svelte"
     // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
-    import { bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache, selected } from "../../../stores"
+    import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -17,14 +17,31 @@
     export let active: any
     export let bibles: Bible[]
     export let searchValue: string
+
     let books: { [key: string]: Book[] } = {}
     let chapters: { [key: string]: Chapter[] } = {}
     let versesList: { [key: string]: Verse[] } = {}
-    let bookId: any = "GEN"
-    let chapterId: any = "GEN.1"
-    let verses: { [key: string]: any[] } = {}
 
-    let activeVerses: string[] = []
+    let bookId: any = $activeScripture[active]?.bookId || "GEN"
+    let chapterId: any = $activeScripture[active]?.chapterId || "GEN.1"
+    let verses: { [key: string]: any[] } = $activeScripture[active]?.verses || {}
+
+    let activeVerses: string[] = $activeScripture[active]?.activeVerses || ["1"]
+
+    $: if (bookId || chapterId || verses || activeVerses) updateActive()
+    function updateActive() {
+        if (!loaded) return
+        activeScripture.set({ ...$activeScripture, [active]: { bookId, chapterId, verses, activeVerses } })
+    }
+
+    let loaded: boolean = false
+    onMount(() => {
+        getBible()
+
+        setTimeout(() => {
+            loaded = true
+        }, 2000)
+    })
 
     let error: null | string = null
 
@@ -51,8 +68,6 @@
             openScripture.set(null)
         }, 100)
     }
-
-    onMount(getBible)
 
     function createBiblesList() {
         let selectedScriptureData = $scriptures[active] || Object.values($scriptures).find((a) => a.id === active)
@@ -216,7 +231,7 @@
             if (bibles[i].api) loadAPIBible(id, "books")
             else if ($scripturesCache[id]) {
                 books[id] = ($scripturesCache[id].books as any) || []
-                bookId = 0
+                bookId = $activeScripture[active]?.bookId || 0
             }
         })
     }
@@ -236,7 +251,7 @@
             } else if (books[id][bookId]) {
                 bibles[i].book = books[id][bookId].name || ""
                 chapters[id] = (books[id][bookId] as any).chapters
-                chapterId = 0
+                chapterId = $activeScripture[active]?.chapterId || 0
             }
         })
     }
@@ -283,7 +298,7 @@
     function selectFirstVerse(bibleId: string, index: number) {
         if (!verses[bibleId] || !bibles[index]) return
 
-        activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId]?.[a]) : ["1"]
+        if (loaded) activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId]?.[a]) : ["1"]
         bibles[index].activeVerses = activeVerses
     }
 

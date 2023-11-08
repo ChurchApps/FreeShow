@@ -80,6 +80,13 @@ const keys = [
     "IsDisplayed",
     "KeyLine",
     "Note",
+
+    "Description",
+    "Publisher",
+    "TimeSignature",
+    "Culture",
+    "Tonality",
+    "Language",
 ]
 export function convertVideopsalm(data: any) {
     createCategory("VideoPsalm")
@@ -99,7 +106,7 @@ export function convertVideopsalm(data: any) {
             } catch (e: any) {
                 console.error(e)
                 let pos = Number(e.toString().replace(/\D+/g, "") || 100)
-                console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+                console.log(pos, content.slice(pos - 10, pos) + "[HERE>]" + content.slice(pos, pos + 10), content.slice(pos - 100, pos + 100))
             }
         }
 

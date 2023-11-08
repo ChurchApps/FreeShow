@@ -46,6 +46,7 @@ export const currentRecordingStream: Writable<any> = writable(null)
 export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
+export const activeScripture: Writable<any> = writable({})
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])

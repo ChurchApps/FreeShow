@@ -278,8 +278,12 @@
         "live": "Live",
         "timers": "Timer",
         "variables": "Variabili",
+        "triggers": "Trigger",
         "templates": "Modelli",
         "web": "Web"
+    },
+    "tips": {
+        "trigger": "I trigger vengono comunemente utilizzati per inviare una richiesta HTTP per modificare la preimpostazione delle telecamere."
     },
     "category": {
         "all": "Tutto",
@@ -319,6 +323,7 @@
         "edit_list": "Modifica elenco",
         "timer": "Timer",
         "variable": "Variable",
+        "trigger": "Trigger",
         "transition": "Transizione",
         "delete_show": "Elimina scena",
         "delete_show_confirmation": "Sei sicuro di voler eliminare",
@@ -391,6 +396,7 @@
         "section": "Nuova sezione",
         "timer": "Nuovo timer",
         "variable": "New variable",
+        "trigger": "Nuovo trigger",
         "category": "Nuova categoria",
         "private": "Nuova scena privata",
         "folder": "Nuova cartella",

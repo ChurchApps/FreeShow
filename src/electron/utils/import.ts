@@ -72,10 +72,10 @@ const specialImports: any = {
                 client: new sqlite3.Database(filePath),
             })
 
-            return new Promise((resolve, error) => {
+            return new Promise((resolve) => {
                 exporter.all((err: any, all: any) => {
                     if (err) {
-                        error(err)
+                        console.log(err)
                         return
                     }
 
