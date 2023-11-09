@@ -8,7 +8,7 @@ import { redo, undo } from "../components/helpers/history"
 import { menuClick } from "../components/context/menuClick"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
-const drawerMenus: DrawerTabIds[] = ["shows", "media", "overlays", "audio", "scripture", "calendar", "templates"]
+const drawerMenus: DrawerTabIds[] = ["shows", "media", "audio", "overlays", "templates", "scripture", "calendar"]
 
 const ctrlKeys: any = {
     a: () => selectAll(),

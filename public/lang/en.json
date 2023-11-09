@@ -921,7 +921,8 @@
         "verse_numbers": "Verse numbers",
         "version": "Show version",
         "reference": "Show reference",
-        "red_jesus": "Jesus words in red"
+        "red_jesus": "Jesus words in red",
+        "search": "Search in the Bible"
     },
     "filter": {
         "blur": "Blur",

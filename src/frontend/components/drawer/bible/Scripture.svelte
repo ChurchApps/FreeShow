@@ -11,8 +11,9 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
-    import { fetchBible, joinRange, loadBible } from "./scripture"
+    import { fetchBible, joinRange, loadBible, searchBibleAPI } from "./scripture"
     import BibleApiKey from "./BibleApiKey.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     export let active: any
     export let bibles: Bible[]
@@ -369,6 +370,9 @@
             searchValues.bookName = ""
             return
         }
+
+        resetContentSearch()
+
         if (bookId !== searchValues.book) {
             bookId = searchValues.book
             getBook()
@@ -394,6 +398,63 @@
             activeVerses = activeVerses.map((a) => a.toString())
             bibles[0].activeVerses = activeVerses
         }
+    }
+
+    let searchBibleActive: boolean = false
+    let contentSearch: string = ""
+    let contentSearchActive: boolean = false
+    let contentSearchMatches: any[] = []
+    let tempCache: any = {}
+
+    $: if (active) resetContentSearch()
+    function resetContentSearch() {
+        contentSearch = ""
+        contentSearchActive = false
+        searchBibleActive = false
+    }
+
+    function mouseup(e: any) {
+        if (e.target.closest(".drawer") || contentSearch.length) return
+        resetContentSearch()
+    }
+
+    async function searchInBible(e: any) {
+        contentSearch = e.target?.value || ""
+        contentSearchActive = false
+
+        if (contentSearch.length < 3) {
+            searchBibleActive = false
+            return
+        }
+
+        if (tempCache[firstBibleId]?.[contentSearch]) {
+            contentSearchMatches = tempCache[firstBibleId][contentSearch]
+            contentSearchActive = true
+        }
+
+        let bible = bibles[0]
+        if (!bible) return
+
+        let matches: any[] = []
+        if (bible.api) {
+            let searchResult: any = await searchBibleAPI(active, contentSearch)
+            matches = searchResult?.verses?.map((a) => ({ reference: a.reference, text: a.text }))
+        } else {
+            let allBooks: any[] = books[firstBibleId]
+            allBooks.forEach((book) => {
+                book.chapters.forEach((chapter) => {
+                    chapter.verses.forEach((verse) => {
+                        if (verse.value?.toLowerCase().includes(contentSearch.toLowerCase())) matches.push({ reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.value })
+                    })
+                })
+            })
+        }
+
+        contentSearchMatches = matches
+        contentSearchActive = true
+
+        if (!tempCache[firstBibleId]) tempCache[firstBibleId] = {}
+        tempCache[firstBibleId][contentSearch] = matches
     }
 
     function findBook() {
@@ -586,7 +647,7 @@
     $: verseRange = sortedVerses.length ? joinRange(sortedVerses) : ""
 </script>
 
-<svelte:window on:keydown={keydown} />
+<svelte:window on:keydown={keydown} on:mouseup={mouseup} />
 
 <div class="scroll" style="flex: 1;overflow-y: auto;">
     <div class="main">
@@ -600,6 +661,21 @@
             <Center faded>
                 <T id="error.bible_api" />
             </Center>
+        {:else if contentSearchActive}
+            {#if contentSearchMatches.length}
+                <div class="verses">
+                    {#each contentSearchMatches as match}
+                        <!-- on:dblclick={() => playOrClearScripture(true, match)} -->
+                        <p title={match.text.replaceAll("/ ", " ")}>
+                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{match.reference}</span>{@html match.text.replaceAll("/ ", " ")}
+                        </p>
+                    {/each}
+                </div>
+            {:else}
+                <Center faded>
+                    <T id="empty.search" />
+                </Center>
+            {/if}
         {:else}
             <div class:center={!books[firstBibleId]?.length}>
                 {#if books[firstBibleId]?.length}
@@ -667,16 +743,27 @@
     </span>
     <!-- <div class="seperator" /> -->
     <!-- TODO: change view (grid easy select) ? -->
+
     <div class="seperator" />
-    <Button disabled={activeVerses.includes("1")} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
-        <Icon size={1.3} id="previous" />
-    </Button>
-    <Button disabled={$outLocked} title={outputIsScripture ? $dictionary.preview?._update : $dictionary.menu?._title_display} on:click={() => playOrClearScripture(true)}>
-        <Icon size={outputIsScripture ? 1.1 : 1.3} id={outputIsScripture ? "refresh" : "play"} white={!outputIsScripture} />
-    </Button>
-    <Button disabled={Object.keys(verses[firstBibleId] || {}).length && activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString())} title={$dictionary.preview?._next_slide} on:click={() => moveSelection(false)}>
-        <Icon size={1.3} id="next" />
-    </Button>
+
+    {#if searchBibleActive}
+        <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:change={searchInBible} style="width: 300px;" />
+    {:else}
+        <Button disabled={activeVerses.includes("1")} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
+            <Icon size={1.3} id="previous" />
+        </Button>
+        <Button disabled={$outLocked} title={outputIsScripture ? $dictionary.preview?._update : $dictionary.menu?._title_display} on:click={() => playOrClearScripture(true)}>
+            <Icon size={outputIsScripture ? 1.1 : 1.3} id={outputIsScripture ? "refresh" : "play"} white={!outputIsScripture} />
+        </Button>
+        <Button disabled={Object.keys(verses[firstBibleId] || {}).length && activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString())} title={$dictionary.preview?._next_slide} on:click={() => moveSelection(false)}>
+            <Icon size={1.3} id="next" />
+        </Button>
+
+        <div class="seperator" />
+        <Button title={$dictionary.scripture?.search} on:click={() => (searchBibleActive = true)}>
+            <Icon size={1.1} id="search" white />
+        </Button>
+    {/if}
 </div>
 
 <style>

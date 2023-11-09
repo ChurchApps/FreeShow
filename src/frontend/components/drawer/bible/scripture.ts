@@ -5,8 +5,8 @@ import { bibleApiKey, scripturePath, scriptureSettings, scriptures, scripturesCa
 import { clone } from "../../helpers/array"
 import { getAutoSize } from "../../edit/scripts/autoSize"
 
+const api = "https://api.scripture.api.bible/v1/bibles/"
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
-    const api = "https://api.scripture.api.bible/v1/bibles/"
     let versesId: any = null
     if (ref.versesList.length) {
         versesId = ref.versesList[0].id + "-" + ref.versesList[ref.versesList.length - 1].id
@@ -26,6 +26,23 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
         fetch(urls[load], { headers: { "api-key": get(bibleApiKey) } })
+            .then((response) => response.json())
+            .then((data) => {
+                resolve(data.data)
+            })
+            .catch((e) => {
+                reject(e)
+            })
+    })
+}
+
+export function searchBibleAPI(active: string, searchQuery: string) {
+    let url = `${api}${active}/search?query=${searchQuery}`
+
+    return new Promise((resolve, reject) => {
+        if (!get(bibleApiKey)) return reject("No API key!")
+
+        fetch(url, { headers: { "api-key": get(bibleApiKey) } })
             .then((response) => response.json())
             .then((data) => {
                 resolve(data.data)
