@@ -15,8 +15,8 @@ import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, receiveOutput } from "./utils/output"
 import { loadScripture, loadShow, logError, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores } from "./utils/store"
+import checkForUpdates from "./utils/updater"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-// import checkForUpdates from "./utils/updater"
 
 // ----- STARTUP -----
 
@@ -46,8 +46,7 @@ function startApp() {
     // set app title to app name on windows
     if (process.platform === "win32") app.setAppUserModelId(app.name)
 
-    // TODO: check for updates
-    // if (isProd) checkForUpdates()
+    if (isProd) checkForUpdates()
 
     // catch errors
     process.on("uncaughtException", function (err) {
