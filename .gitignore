@@ -3,4 +3,6 @@
 /build/
 /dist/
 
+*.env
+
 .DS_Store

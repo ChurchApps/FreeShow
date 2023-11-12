@@ -14,58 +14,59 @@ jobs:
                 os: [windows-latest, ubuntu-latest]
 
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/setup-node@master
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+
+            - name: Install Node.js and NPM
+              uses: actions/setup-node@master
               with:
                   node-version: 18
-            - name: install dependencies
+
+            - name: Install dependencies
               run: npm ci
-            - name: build distributables
+
+            # - name: Install dmg-license
+            #   if: startsWith(matrix.os, 'macos')
+            #   run: npm i dmg-license
+
+            - name: Build app
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  CSC_LINK: ${{ secrets.CSC_LINK }}
+                  CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
               run: npm run release
 
+            # https://abskmj.github.io/notes/posts/github/actions/setup-snapcraft/
+            # - name: Install Snapcraft
+            #   uses: samuelmeuli/action-snapcraft@v1
+            #   if: startsWith(matrix.os, 'ubuntu')
+            #   with:
+            #       snapcraft_token: ${{ secrets.SNAPCRAFT_TOKEN }}
+
+    # Mac building fails for some reason when in the same matrix as the other builds or without the other builds,
+    # So that's why it is here:
     publish_mac:
         name: "Publish MacOS"
         runs-on: macos-latest
 
-        strategy:
-            matrix:
-                os: [macos-latest]
-
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/setup-node@master
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+
+            - name: Install Node.js and NPM
+              uses: actions/setup-node@master
               with:
                   node-version: 18
-            - name: install dependencies
+
+            - name: Install dependencies
               run: npm ci
-            - name: install dmg-license
+
+            - name: Install dmg-license
               run: npm i dmg-license
-            - name: build distributables
+
+            - name: Build app
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  CSC_LINK: ${{ secrets.CSC_LINK }}
+                  CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
               run: npm run release
-
-    # release:
-    #   name: "Release"
-    #   needs: publish
-    #   runs-on: ubuntu-latest
-    #   steps:
-    #     - uses: actions/download-artifact@v2
-    #     - name: List fetched artifacts
-    #       run: ls -R
-    #     - name: Emit a Github Release
-    #       uses: "marvinpinto/action-automatic-releases@latest"
-    #       with:
-    #         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-    #         automatic_release_tag: "latest"
-    #         prerelease: true
-    #         draft: true
-    #         files: |
-    #           *.exe
-    #           *.zip
-    #           *.dmg
-    #           *.deb
-    #           *.AppImage
-    #           LICENSE

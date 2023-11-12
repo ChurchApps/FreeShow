@@ -180,6 +180,42 @@
             loading = false
         }, 8000)
     }
+
+    // store media files
+    // MAX 512MB & overflows the ram quickly
+    // $: if (currentShow) storeMedia()
+    // let previousFiles = ""
+    // function storeMedia() {
+    //     if (!$special.storeShowMedia) return
+
+    //     let files: any = []
+    //     Object.keys(currentShow.media).forEach((mediaId) => {
+    //         let media = currentShow.media[mediaId]
+    //         if (media.type && !["image", "video", "audio"].includes(media.type)) return
+
+    //         files.push({ id: mediaId, path: media.path })
+    //     })
+
+    //     let newFiles = JSON.stringify(files)
+    //     if (previousFiles === newFiles) return
+
+    //     previousFiles = newFiles
+    //     send(MAIN, ["MEDIA_BASE64"], files)
+    // }
+
+    // receive(MAIN, {
+    //     MEDIA_BASE64: (data: any[]) => {
+    //         // TODO: history
+    //         showsCache.update((a) => {
+    //             data.forEach(({ id, content }) => {
+    //                 if (!a[showId].media[id]) return
+    //                 a[showId].media[id].base64 = content
+    //             })
+
+    //             return a
+    //         })
+    //     },
+    // })
 </script>
 
 <!-- TODO: tab enter not woring -->

@@ -1,11 +1,11 @@
 {
     "name": "freeshow",
-    "version": "0.9.9",
+    "version": "1.0.0",
     "private": true,
     "main": "build/electron/index.js",
-    "description": "An application for showing song lyrics and more for free!",
-    "repository": "git@github.com:vassbo/freeshow.git",
-    "author": "Kristoffer Vassbø <kristoffer@vassbo.net>",
+    "description": "Show song lyrics and more for free!",
+    "repository": "git@github.com:ChurchApps/FreeShow.git",
+    "author": "ChurchApps <support@livecs.org>",
     "license": "GPL-3.0",
     "scripts": {
         "prestart": "cross-env NODE_ENV=development node scripts/preBuild.js",
@@ -28,7 +28,7 @@
         "prepack": "npm run build",
         "pack": "electron-builder --dir",
         "prerelease": "npm run build",
-        "release": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
+        "release": "cross-env electron-builder",
         "postdist": "node scripts/cleanBuilds.js",
         "lint:electron": "eslint -c eslint.electron.json --ext .js,.ts src/electron",
         "lint:svelte": "eslint -c eslint.svelte.json --ext .js,.ts src/frontend",
@@ -45,6 +45,7 @@
         "singleQuote": false
     },
     "build": {
+        "forceCodeSigning": true,
         "appId": "com.github.vassbo.freeshow",
         "productName": "FreeShow",
         "files": [

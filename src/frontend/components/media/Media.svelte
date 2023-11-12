@@ -11,6 +11,7 @@
     import Video from "./Video.svelte"
 
     export let path: string
+    export let background: any = {}
     export let currentStyle: any = {}
     export let animationStyle: string = ""
     export let controls: boolean = false
@@ -38,7 +39,7 @@
     }
 
     $: extension = getExtension(path)
-    $: type = getMediaType(extension)
+    $: type = background.type || getMediaType(extension)
 
     let video1: any = {}
     let video2: any = {}

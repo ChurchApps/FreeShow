@@ -230,7 +230,7 @@
 <!-- svelte transition bug: the double copies are to remove media when changing from "draw" view -->
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
-    <Media {path} {currentStyle} {animationStyle} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
+    <Media {path} {background} {currentStyle} {animationStyle} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
 {:else if type === "screen"}
     {#key id}
         {#if transition.type === "none"}

@@ -134,6 +134,7 @@ const mainResponses: any = {
     DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
     LOG_ERROR: (data: any) => logError(data),
     OPEN_LOG: () => openSystemFolder(error_log.path),
+    MEDIA_BASE64: (data: any) => storeMedia(data),
 }
 
 export function receiveMain(e: any, msg: Message) {
@@ -294,4 +295,15 @@ export function logError(log: any, electron: boolean = false) {
 
     // error_log.clear()
     error_log.set({ [key]: previousLog })
+}
+
+// STORE MEDIA AS BASE64
+function storeMedia(files: any[]) {
+    let encodedFiles: any[] = []
+    files.forEach(({ id, path }) => {
+        let content = readFile(path, "base64")
+        encodedFiles.push({ id, content })
+    })
+
+    toApp(MAIN, { channel: "MEDIA_BASE64", data: encodedFiles })
 }

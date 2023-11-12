@@ -217,6 +217,7 @@ export interface Media {
     muted?: boolean
     loop?: boolean
     filters?: string
+    base64?: string // saving media data
     cloud?: { [key: string]: string }
 }
 

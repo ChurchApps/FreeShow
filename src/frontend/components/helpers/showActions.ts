@@ -28,7 +28,7 @@ import {
 } from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
-import { getMediaType } from "./media"
+import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, isOutCleared, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
@@ -358,11 +358,19 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
             let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
+            let name = bg.name || removeExtension(getFileName(bgPath))
+            let extension = getExtension(bgPath)
+            let type = bg.type || getMediaType(extension)
+
+            // get stored media files
+            // if (get(special).storeShowMedia && bg.base64) {
+            //     bgPath = `data:${type}/${extension};base64,${bg.base64}`
+            // }
 
             if (bg && bgPath !== outputBg?.path) {
                 let bgData: any = {
-                    name: bg.name,
-                    type: bg.type || getMediaType(bgPath.slice(bgPath.lastIndexOf(".") + 1, bgPath.length)),
+                    name,
+                    type,
                     path: bgPath,
                     cameraGroup: bg.cameraGroup || "",
                     id: bg.id || bgPath, // path = cameras
