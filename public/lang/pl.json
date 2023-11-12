@@ -126,8 +126,8 @@
     },
     "media": {
         "_loop": "Pętla",
-        "play": "Odwtórz",
-        "play_no_filters": "Odwtórz bez filtrów",
+        "play": "Odtwórz",
+        "play_no_filters": "Odtwórz bez filtrów",
         "favourite": "Ulubione",
         "pause": "Pauza",
         "stop": "Stop",
@@ -492,7 +492,7 @@
         "send_midi": "Wyślij wyjście MIDI",
         "delete_shows_not_indexed": "Usuń z folderu pokazy, które nie są zaindeksowane",
         "delete_thumbnail_cache": "Usuń pamięć podręczną miniaturek",
-        "open_log_file": "Open log file",
+        "open_log_file": "Otwórz plik z logami",
         "refresh_all_shows": "Załaduj ponownie pliki \".show\"",
         "start_timer": "Rozpocznij odliczanie",
         "stop_timers": "Zatrzymaj aktywny timer",
@@ -514,7 +514,7 @@
         "item": "przedmiot",
         "to": "do",
         "for": "dla",
-        "seconds": "sekudny"
+        "seconds": "sekundy"
     },
     "cloud": {
         "info": "Synchronizuj pliki z Google Drive dla kopii zapasowych, albo jeśli chcesz pracować na kilku komputerach.",
@@ -528,7 +528,7 @@
         "select_key": "Importuj plik klucza",
         "update_key": "Zaktualizuj plik klucza",
         "main_folder": "Ustaw główny folder ręcznie",
-        "media_folder": "Folder w chmurze dla multimediów",
+        "media_folder": "Folder dla multimediów",
         "reconnect": "Połącz ponownie",
         "sync": "Synchronizuj",
         "choose_method_tip": "W chmurze znajdują się już dane. Wybierz miejsce, w którym chcesz przechowywać dane i wybierz inną lokalizację.",
@@ -555,7 +555,7 @@
         "original_text_size": "Oryginalny wielkość tekstu",
         "text": "Zwykły tekst",
         "slides": "Slajdy",
-        "rows": "Rzędy",
+        "rows": "Wiersze",
         "columns": "Kolumny"
     },
     "context": {
@@ -875,7 +875,7 @@
     "sort": {
         "sort_by": "Sortuj według",
         "name": "Nazwa",
-        "date": "Date",
+        "date": "Data",
         "size": "Rozmiar",
         "type": "Typ",
         "custom": "Własne"
