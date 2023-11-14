@@ -16,11 +16,12 @@
         "made": "Made in Norway by",
         "report": "Want to report an issue? Create an issue on GitHub",
         "help": "Want to help translate or request a feature? Send a mail to",
+        "support": "Support the project?",
         "assets": "Assets used",
         "libraries": "Libraries used",
         "thanks": "Thanks to",
         "new_update": "New update available",
-        "download": "Go to freeshow.app to download",
+        "download": "Restart the application to update, or go to freeshow.app to download manually",
         "changes": "What's new"
     },
     "tooltip": {

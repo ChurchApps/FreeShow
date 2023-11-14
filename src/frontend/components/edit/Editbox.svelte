@@ -26,7 +26,7 @@
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
     import { getAutoSize, getMaxBoxTextSize } from "./scripts/autoSize"
-    import { addChords, changeKey, chordMove } from "./scripts/chords"
+    import { addChords, chordMove } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
 
     export let item: Item
@@ -331,12 +331,20 @@
             if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
             if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
 
-            line.text?.forEach((a) => {
+            let currentChords = line.chords || []
+            let textIndex = 0
+
+            line.text?.forEach((a, tIndex) => {
                 currentStyle += getTextStyle(a)
+
+                // SAVE CHORDS (WIP does not work well with more "text" per line)
+                let textEnd = textIndex + a.value.length
+                let textChords = currentChords.filter((a) => a.pos >= textIndex && (a.pos <= textEnd || line.text.length - 1 >= tIndex))
+                textIndex = textEnd
 
                 let style = a.style ? 'style="' + a.style + '"' : ""
 
-                html += `<span ${plain ? "" : style}>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
+                html += `<span ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
             })
             html += "</div>"
         })
@@ -463,8 +471,8 @@
             currentStyle += align
 
             let newLine: any = { align, text: [] }
-            let chords = item.lines?.[i]?.chords
-            if (chords) newLine.chords = chords
+            let lineChords: any[] = []
+
             newLines.push(newLine)
 
             new Array(...line.childNodes).forEach((child: any, j: number) => {
@@ -485,7 +493,27 @@
 
                 newLines[pos].text.push({ style, value: child.innerText })
                 currentStyle += style
+
+                // GET CHORDS
+                let storedChords = child.getAttribute("data-chords")
+                if (storedChords) {
+                    storedChords = JSON.parse(storedChords)
+                    lineChords.push(...storedChords)
+                }
             })
+
+            // ADD BACK CHORDS
+            if (lineChords?.length) {
+                newLines[pos].chords = lineChords
+
+                // UPDATE/FIX CHORDS ON LINE BREAK
+                if (pos > 0 && JSON.stringify(newLines[pos].chords) === JSON.stringify(newLines[pos - 1].chords)) {
+                    let breakPoint = newLines[pos - 1].text.reduce((textLength, text) => (textLength += text.value.length), 0)
+
+                    newLines[pos - 1].chords = newLines[pos - 1].chords!.filter((a) => a.pos < breakPoint)
+                    newLines[pos].chords = newLines[pos].chords!.filter((a) => a.pos >= breakPoint).map((a) => ({ ...a, pos: a.pos - breakPoint }))
+                }
+            }
         })
 
         if (updateHTML) {
@@ -711,6 +739,8 @@
                     currentIndex++
                 })
             })
+
+            if (!html) html += `<span class="invisible add"><br></span>`
 
             chords.forEach((chord: any, ci: number) => {
                 chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
