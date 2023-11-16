@@ -598,6 +598,7 @@
         "font": "Font",
         "family": "Family",
         "style": "Style",
+        "lines": "Lines",
         "options": "Options",
         "_title_bold": "Bold",
         "_title_italic": "Italic",

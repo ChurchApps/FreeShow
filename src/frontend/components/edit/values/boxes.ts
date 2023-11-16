@@ -46,8 +46,6 @@ export const boxes: Box = {
                 { input: "font-style" },
             ],
             style: [
-                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
-                { name: "line_spacing", id: "specialStyle.lineGap", input: "number", value: 0, values: { max: 500 } },
                 { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
                 { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
                 {
@@ -65,7 +63,12 @@ export const boxes: Box = {
                         ],
                     },
                 },
+            ],
+            lines: [
+                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                { name: "line_spacing", id: "specialStyle.lineGap", input: "number", value: 0, values: { max: 500 } },
                 { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", enableNoColor: true },
+                { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
             ],
             align: [{ input: "align-x" }, { input: "align-y" }],
             outline: [

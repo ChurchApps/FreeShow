@@ -11,6 +11,7 @@
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
+    import { hexToRgb, splitRgb } from "../../helpers/color"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []
@@ -89,8 +90,12 @@
 
     // WIP shouldn't have fixed values
     $: if (id === "text" && box?.edit?.style) {
-        box.edit.style[1].value = item?.specialStyle?.lineGap || 0
-        box.edit.style[5].value = item?.specialStyle?.lineBg || ""
+        box.edit.lines[1].value = item?.specialStyle?.lineGap || 0
+
+        let lineBg = item?.specialStyle?.lineBg || ""
+        let backgroundValue = splitRgb(lineBg)
+        box.edit.lines[2].value = lineBg
+        box.edit.lines[3].value = backgroundValue.a
     }
     $: if (id === "text" && box?.edit?.special) {
         box.edit.special[0].value = item?.scrolling?.type || "none"
@@ -140,6 +145,25 @@
         if (index !== undefined) box.edit.default[3].value = index
     }
 
+    // background opacity
+    // WIP duplicate of ItemStyle.svelte
+    function getBackgroundOpacity() {
+        let backgroundValue = item?.specialStyle?.lineBg || ""
+        if (!backgroundValue.includes("rgb") || !box?.edit?.lines) return
+
+        let rgb = splitRgb(backgroundValue)
+        let boIndex = box.edit.lines.findIndex((a) => a.id === "specialStyle.opacity")
+        if (boIndex < 0) return
+        box.edit.lines[boIndex].value = rgb.a
+    }
+    function getOldOpacity() {
+        let backgroundValue = item?.specialStyle?.lineBg || ""
+        if (!backgroundValue.includes("rgb")) return 1
+
+        let rgb = splitRgb(backgroundValue)
+        return rgb.a
+    }
+
     function setValue(input: any, allItems: any[]) {
         let value: any = input.value
         if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
@@ -151,6 +175,22 @@
         //         refreshEditSlide.set(true)
         //     }, 100)
         // }
+
+        // background opacity
+        // WIP duplicate of ItemStyle.svelte
+        if (input.id === "specialStyle.opacity" || (input.value && input.id === "specialStyle.lineBg")) {
+            console.log(input, item?.specialStyle?.lineBg)
+            let backgroundColor = input.id === "specialStyle.lineBg" ? input.value || "" : item?.specialStyle?.lineBg || "rgb(0 0 0);"
+            let rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
+            let opacity = input.id === "specialStyle.opacity" ? input.value : getOldOpacity()
+            let newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"
+            console.log(backgroundColor, rgb, opacity, newColor)
+
+            input.id = "specialStyle.lineBg"
+            input.value = newColor
+
+            setTimeout(getBackgroundOpacity, 100)
+        }
 
         // set nested value
         if (input.id.includes(".")) {

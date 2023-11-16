@@ -76,17 +76,20 @@
         let template = $templates[currentStyle.template || ""]
         if (template?.items?.length) {
             template.items.forEach((item: any, i: number) => {
-                if (currentSlide.items[i]) {
-                    currentSlide.items[i].style = item.style || ""
-                    currentSlide.items[i].align = item.align || ""
-                    currentSlide.items[i].lines?.forEach((line: any, j: number) => {
-                        let templateLine = item.lines?.[j] || item.lines?.[0]
-                        line.align = templateLine?.align || ""
-                        line.text?.forEach((text: any, k: number) => {
-                            text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
-                        })
+                if (!currentSlide.items[i]) return
+
+                currentSlide.items[i].style = item.style || ""
+                currentSlide.items[i].align = item.align || ""
+                currentSlide.items[i].lines?.forEach((line: any, j: number) => {
+                    let templateLine = item.lines?.[j] || item.lines?.[0]
+                    line.align = templateLine?.align || ""
+                    line.text?.forEach((text: any, k: number) => {
+                        text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
                     })
-                }
+                })
+
+                // scrolling, bindings
+                currentSlide.items[i].specialStyle = item.specialStyle || {}
             })
         } else {
             // reset style

@@ -113,8 +113,9 @@
     }
 
     let templateList: any[] = []
-    // TODO: sort by name
-    $: templateList = Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name }))
+    $: templateList = Object.entries($templates)
+        .map(([id, template]: any) => ({ id, name: template.name }))
+        .sort((a, b) => a.name.localeCompare(b.name))
 
     function update(id: string, value: any) {
         scriptureSettings.update((a) => {
