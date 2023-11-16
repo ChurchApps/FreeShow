@@ -275,6 +275,7 @@ function save(data: any) {
         function saveShow([id, value]: any) {
             if (!value) return
             let p: string = path.resolve(data.path, (value.name || id) + ".show")
+            // WIP will overwrite a file with JSON data from another show 0,007% of the time (7 shows get broken when saving 1000 at the same time)
             writeFile(p, JSON.stringify([id, value]), id)
         }
 

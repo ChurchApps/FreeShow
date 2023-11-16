@@ -594,8 +594,9 @@ export function clearOverlays(outputId: string = "") {
 }
 
 // TODO: output/clearButtons
-export function clearAll() {
-    if (get(outLocked) || get(activePopup) || get(selected).id || get(activeEdit).items.length) return
+export function clearAll(button: boolean = false) {
+    if (get(outLocked)) return
+    if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
 
     let allCleared = isOutCleared(null) && !Object.keys(get(playingAudio)).length
     if (allCleared) return

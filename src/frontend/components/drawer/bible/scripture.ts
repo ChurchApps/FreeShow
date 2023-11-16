@@ -245,6 +245,7 @@ export function getSlides({ bibles, sorted }) {
 
         let lines: any[] = []
 
+        if (get(scriptureSettings).combineWithText) itemIndex = 0
         let metaTemplate = template[itemIndex] || template[0]
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         let versions = bibles.map((a) => a.version).join(" + ")
@@ -260,9 +261,10 @@ export function getSlides({ bibles, sorted }) {
         })
 
         if (lines.length) {
-            // add reference to the main text if just one item
-            if (template.length <= 1) {
-                slides[slideIndex][0].lines = [...lines, ...(slides[slideIndex][0].lines || [])]
+            // add reference to the main text if just one item or it's enabled!
+            if (template.length <= 1 || get(scriptureSettings).combineWithText) {
+                if (get(scriptureSettings).referenceAtBottom) slides[slideIndex][0].lines.push(...lines)
+                else slides[slideIndex][0].lines = [...lines, ...(slides[slideIndex][0].lines || [])]
             } else {
                 slides[slideIndex].push({
                     lines,

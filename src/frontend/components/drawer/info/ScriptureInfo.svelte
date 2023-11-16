@@ -217,19 +217,6 @@
         </CombinedInput>
 
         <CombinedInput textWidth={70}>
-            <p><T id="scripture.red_jesus" /></p>
-            <div class="alignRight">
-                <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
-            </div>
-        </CombinedInput>
-        {#if $scriptureSettings.redJesus}
-            <CombinedInput textWidth={70}>
-                <p><T id="edit.color" /></p>
-                <Color height={20} width={50} value={$scriptureSettings.jesusColor || "#FF4136"} on:input={(e) => update("jesusColor", e.detail)} />
-            </CombinedInput>
-        {/if}
-
-        <CombinedInput textWidth={70}>
             <p><T id="scripture.verse_numbers" /></p>
             <div class="alignRight">
                 <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
@@ -243,15 +230,30 @@
         {/if}
 
         <CombinedInput textWidth={70}>
-            <p><T id="scripture.version" /></p>
+            <p><T id="scripture.red_jesus" /></p>
             <div class="alignRight">
-                <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
+                <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
             </div>
         </CombinedInput>
+        {#if $scriptureSettings.redJesus}
+            <CombinedInput textWidth={70}>
+                <p><T id="edit.color" /></p>
+                <Color height={20} width={50} value={$scriptureSettings.jesusColor || "#FF4136"} on:input={(e) => update("jesusColor", e.detail)} />
+            </CombinedInput>
+        {/if}
+
+        <br />
+
         <CombinedInput textWidth={70}>
             <p><T id="scripture.reference" /></p>
             <div class="alignRight">
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
+            </div>
+        </CombinedInput>
+        <CombinedInput textWidth={70}>
+            <p><T id="scripture.version" /></p>
+            <div class="alignRight">
+                <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
             </div>
         </CombinedInput>
 
@@ -259,6 +261,23 @@
             <CombinedInput>
                 <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
             </CombinedInput>
+        {/if}
+
+        {#if $scriptureSettings.showVersion || $scriptureSettings.showVerse}
+            <CombinedInput textWidth={70}>
+                <p><T id="scripture.combine_with_text" /></p>
+                <div class="alignRight">
+                    <Checkbox id="combineWithText" checked={$scriptureSettings.combineWithText} on:change={checked} />
+                </div>
+            </CombinedInput>
+            {#if $scriptureSettings.combineWithText}
+                <CombinedInput textWidth={70}>
+                    <p><T id="scripture.reference_at_bottom" /></p>
+                    <div class="alignRight">
+                        <Checkbox id="referenceAtBottom" checked={$scriptureSettings.referenceAtBottom} on:change={checked} />
+                    </div>
+                </CombinedInput>
+            {/if}
         {/if}
     </div>
 </div>

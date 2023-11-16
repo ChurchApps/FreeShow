@@ -923,6 +923,8 @@
         "verse_numbers": "Verse numbers",
         "version": "Show version",
         "reference": "Show reference",
+        "combine_with_text": "Combine with text",
+        "reference_at_bottom": "Move to bottom",
         "red_jesus": "Jesus words in red",
         "search": "Search in the Bible"
     },

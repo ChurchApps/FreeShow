@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { getSlidesText } from "../components/edit/scripts/textStyle"
 import { history } from "../components/helpers/history"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { newToast } from "../utils/messages"
@@ -100,10 +101,11 @@ export function convertEasyWorship(data: any) {
 
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song?.description || "", slides: layout } }
-        show.name = checkName(song?.title || (Object.values(slides) as any)[0].items[0].lines?.[0].text?.[0].value, showId)
+        let allText = getSlidesText(slides).slice(0, 20)
+        show.name = checkName(song?.title || allText || showId, showId)
         show.settings.template = "default"
 
-        tempShows.push({ id: showId, show })
+        if (allText.length) tempShows.push({ id: showId, show })
 
         if (i + 1 < songsWords.length) {
             // wait 5 seconds every 100 seconds to catch up ??
