@@ -16,11 +16,12 @@
         "made": "Laget i Norge av",
         "report": "Vil du rapportere en feil? Opprett en \"issue\" på GitHub",
         "help": "Vil du hjelpe med å oversette eller foreslå en funksjon? Send en e-post til",
+        "support": "Støtt prosjektet?",
         "assets": "Ressurser brukt",
         "libraries": "Biblioteker brukt",
         "thanks": "Takk til",
         "new_update": "Ny oppdatering tilgjengelig",
-        "download": "Gå til freeshow.app for å laste ned",
+        "download": "Start programmet på nytt for å oppdatere, eller gå til freeshow.app for å laste ned manuellt",
         "changes": "Hva er nytt"
     },
     "tooltip": {
@@ -597,6 +598,7 @@
         "font": "Skrift",
         "family": "Type",
         "style": "Stil",
+        "lines": "Linjer",
         "options": "Alternativer",
         "_title_bold": "Fet",
         "_title_italic": "Kursiv",
@@ -921,7 +923,10 @@
         "verse_numbers": "Versnummer",
         "version": "Vis versjon",
         "reference": "Vis referanse",
-        "red_jesus": "Jesus ord i rødt"
+        "combine_with_text": "Kombiner med tekst",
+        "reference_at_bottom": "Flytt til bunn",
+        "red_jesus": "Jesus ord i rødt",
+        "search": "Søk i Bibelen"
     },
     "filter": {
         "blur": "Uklarhet",
