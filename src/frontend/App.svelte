@@ -35,6 +35,7 @@
     import { focusArea, hideDisplay, logerror, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
+    import { trackAppLaunch } from "./utils/analytics"
 
     startup()
     $: page = $activePage
@@ -74,6 +75,8 @@
         else enableOutputMove = false
     }
     $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
+
+    trackAppLaunch()
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} on:error={logerror} on:unhandledrejection={logerror} />

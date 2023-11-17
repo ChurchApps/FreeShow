@@ -34,6 +34,7 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   CSC_LINK: ${{ secrets.CSC_LINK }}
                   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+                  GA_SECRET: ${{ secrets.GA_SECRET }}
               run: npm run release
 
             # https://abskmj.github.io/notes/posts/github/actions/setup-snapcraft/

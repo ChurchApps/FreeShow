@@ -65,10 +65,12 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
+import { trackPageView } from "../../utils/analytics"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
     console.log("MENU CLICK: " + id, obj)
+    trackPageView(id);
     if (actions[id]) return actions[id](obj)
     console.log("MISSING CONTEXT: ", id)
 }
