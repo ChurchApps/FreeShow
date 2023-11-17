@@ -1,0 +1,6 @@
+#!/bin/bash
+
+npm install
+patch -p1 < update-to-core22.patch
+npm run build
+npm run snap

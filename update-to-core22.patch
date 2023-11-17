@@ -1,0 +1,36 @@
+From 03df44e17febc6bbcc21e2109afe0cc1f7ad9da0 Mon Sep 17 00:00:00 2001
+Message-Id: <03df44e17febc6bbcc21e2109afe0cc1f7ad9da0.1700180335.git.erich@ericheickmeyer.com>
+From: Erich Eickmeyer <erich@ericheickmeyer.com>
+Date: Thu, 16 Nov 2023 16:18:45 -0800
+Subject: [PATCH] Update to core22
+
+---
+ node_modules/app-builder-lib/templates/snap/snapcraft.yaml | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/node_modules/app-builder-lib/templates/snap/snapcraft.yaml b/node_modules/app-builder-lib/templates/snap/snapcraft.yaml
+index 08ed9604..803c644c 100644
+--- a/node_modules/app-builder-lib/templates/snap/snapcraft.yaml
++++ b/node_modules/app-builder-lib/templates/snap/snapcraft.yaml
+@@ -1,4 +1,4 @@
+-base: core18
++base: core22
+ grade: stable
+ confinement: strict
+ parts:
+@@ -130,10 +130,10 @@ parts:
+       - "-usr/lib/*/libXrandr*"
+       - "-usr/lib/*/libXrender*"
+ plugs:
+-  gnome-3-28-1804:
++  gnome-42-2204:
+     interface: content
+     target: $SNAP/gnome-platform
+-    default-provider: gnome-3-28-1804
++    default-provider: gnome-42-2204
+   gtk-3-themes:
+     interface: content
+     target: $SNAP/data-dir/themes
+-- 
+2.40.1
+
