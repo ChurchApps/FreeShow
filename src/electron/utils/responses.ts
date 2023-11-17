@@ -19,6 +19,7 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { outputWindows } from "./output"
 import { downloadMedia } from "./downloadMedia"
 import { error_log } from "./store"
+import { machineIdSync } from "node-machine-id";
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -78,6 +79,8 @@ const mainResponses: any = {
     GET_OS: (): any => ({ platform: os.platform(), name: os.hostname() }),
     GET_SYSTEM_FONTS: (): void => loadFonts(),
     VERSION: (): string => app.getVersion(),
+    DEVICE_ID: (): string => machineIdSync(),
+    ANALYTICS_SECRET: (): string => process.env.GA_SECRET || "",
     URL: (data: string): void => openURL(data),
     START: (data: any): void => startServers(data),
     STOP: (): void => closeServers(),

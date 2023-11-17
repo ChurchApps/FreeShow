@@ -14,7 +14,6 @@ import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } 
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { History } from "./components/helpers/history"
-//import { machineIdSync } from "node-machine-id";
 
 // ----- TEMPORARY VARIABLES -----
 
@@ -108,8 +107,6 @@ export const selectAllMedia: Writable<boolean> = writable(false)
 
 // GENERAL
 export const os: Writable<any> = writable({ platform: "", name: "Computer" }) // get os
-//export const deviceId: Writable<string> = writable(machineIdSync());
-//export const analyticsSecret: Writable<string> = writable(process.env.GA_SECRET);
 export const deviceId: Writable<string> = writable("client1");
 export const analyticsSecret: Writable<string> = writable("");
 

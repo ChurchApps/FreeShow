@@ -13,6 +13,9 @@ export async function trackEvent(eventName: string, params?:any) {
     events: [ { name: eventName, params: params || {}, } ],
   };
 
+  console.log("secret", secret)
+  console.log("device", clientId);
+
   fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -22,11 +25,13 @@ export async function trackEvent(eventName: string, params?:any) {
 }
 
 export function trackPageView(title:string) {
+  console.log("TRACK PAGE VIEW")
   trackEvent("page_view", { page_location: "https://freeshow.app/_app/" + title, page_title: title, engagement_time_msec: 1 });
 }
 
 export function trackAppLaunch()
 {
+  console.log("APP START")
   //trackEvent("application_start");
   
   trackEvent("application_start", { app_version: get(version), platform: get(os).platform });

@@ -28,9 +28,11 @@ import {
     activeTimers,
     alertMessage,
     allOutputs,
+    analyticsSecret,
     audioChannels,
     audioFolders,
     currentWindow,
+    deviceId,
     dictionary,
     draw,
     drawSettings,
@@ -137,6 +139,8 @@ const receiveMAIN: any = {
         version.set(a)
         checkForUpdates(a)
     },
+    ANALYTICS_SECRET: (a: any) => { analyticsSecret.set(a) },
+    DEVICE_ID: (a: any) => { deviceId.set(a) },
     DISPLAY: (a: any) => outputDisplay.set(a),
     GET_PATHS: (a: any) => {
         // only on first startup
