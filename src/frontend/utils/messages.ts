@@ -12,6 +12,7 @@ import {
     categories,
     customizedIcons,
     defaultProjectName,
+    deviceId,
     disabledServers,
     drawSettings,
     driveData,
@@ -264,4 +265,5 @@ const saveList: { [key in SaveList]: any } = {
     driveData: driveData,
     calendarAddShow: calendarAddShow,
     special: null,
+    deviceId: deviceId,
 }
