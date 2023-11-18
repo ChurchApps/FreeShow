@@ -3,7 +3,7 @@ import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
-import { events, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers } from "../stores"
+import { events, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
@@ -39,6 +39,9 @@ export function stageListen() {
 
     timers.subscribe((a) => {
         send(STAGE, ["TIMERS"], a)
+    })
+    variables.subscribe((a) => {
+        send(STAGE, ["VARIABLES"], a)
     })
     events.subscribe((a) => {
         send(STAGE, ["EVENTS"], a)

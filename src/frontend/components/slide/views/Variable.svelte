@@ -2,12 +2,13 @@
     import type { Item } from "../../../../types/Show"
     import { activeDrawerTab, drawer, drawerTabsData, variables } from "../../../stores"
 
+    export let id: string = ""
     export let item: null | Item = null
     export let style: string = ""
     export let edit: boolean = false
     $: console.log(item)
 
-    $: variable = $variables[item?.variable?.id] || {}
+    $: variable = $variables[id || item?.variable?.id] || {}
 
     function openInDrawer() {
         if (!edit) return

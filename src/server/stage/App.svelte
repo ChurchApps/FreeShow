@@ -4,7 +4,7 @@
     import Button from "./components/Button.svelte"
     import Icon from "./components/Icon.svelte"
     import Slide from "./components/Slide.svelte"
-    import { activeTimers, events, timeFormat, timers } from "./store"
+    import { activeTimers, events, timeFormat, timers, variables } from "./store"
 
     // TODO: translate
     const lang: any = {
@@ -124,6 +124,9 @@
                 break
             case "TIMERS":
                 timers.set(msg.data)
+                break
+            case "VARIABLES":
+                variables.set(msg.data)
                 break
             case "ACTIVE_TIMERS":
                 activeTimers.set(msg.data)
