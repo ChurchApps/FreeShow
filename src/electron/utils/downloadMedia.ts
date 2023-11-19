@@ -1,9 +1,9 @@
 import { https } from "follow-redirects"
 import fs from "fs"
 import path from "path"
-import { doesPathExist, getDocumentsFolder } from "./files"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
+import { dataFolderNames, doesPathExist, getDataFolder } from "./files"
 
 export function downloadMedia(lessons: any[]) {
     let replace = lessons.map(checkLesson)
@@ -17,7 +17,7 @@ export function downloadMedia(lessons: any[]) {
 function checkLesson(lesson: any) {
     // check url
 
-    const lessonsFolder = getDocumentsFolder(null, "Lessons")
+    const lessonsFolder = getDataFolder(lesson.path, dataFolderNames.lessons)
     const lessonFolder = path.join(lessonsFolder, lesson.name)
     fs.mkdirSync(lessonFolder, { recursive: true })
 

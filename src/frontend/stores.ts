@@ -195,9 +195,7 @@ export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode:
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 300, rightPanel: 300, leftPanelDrawer: 300, rightPanelDrawer: 300 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
-export const exportPath: Writable<null | string> = writable(null) // null
-export const scripturePath: Writable<string> = writable("") // ""
-export const recordingPath: Writable<string> = writable("") // ""
+export const dataPath: Writable<string> = writable("") // ""
 export const lockedOverlays: Writable<string[]> = writable([]) // []
 export const special: Writable<any> = writable({}) // {}
 
@@ -323,7 +321,7 @@ export const $ = {
     drawer,
     mediaOptions,
     resized,
-    exportPath,
+    dataPath,
     language,
     timeFormat,
     alertUpdates,

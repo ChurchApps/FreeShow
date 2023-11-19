@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
 import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
-import { bibleApiKey, scripturePath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
-import { clone } from "../../helpers/array"
+import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getAutoSize } from "../../edit/scripts/autoSize"
+import { clone } from "../../helpers/array"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
@@ -74,7 +74,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
             return
         }
 
-        window.api.send(BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(scripturePath) })
+        window.api.send(BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(dataPath) })
     })
 
     return bible

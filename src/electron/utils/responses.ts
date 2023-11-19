@@ -3,7 +3,6 @@
 
 import { app, desktopCapturer, Display, screen, shell, systemPreferences } from "electron"
 import { getFonts } from "font-list"
-import fs from "fs"
 import os from "os"
 import path from "path"
 import { closeMain, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
@@ -12,34 +11,37 @@ import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { restoreFiles } from "./backup"
+import { downloadMedia } from "./downloadMedia"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, locateMediaFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getDocumentsFolder, getPaths, loadFile, locateMediaFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
-import { downloadMedia } from "./downloadMedia"
 import { error_log } from "./store"
 import { machineIdSync } from "node-machine-id";
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
-    let files: string[] = selectFilesDialog("", msg.data)
+    let files: string[] = selectFilesDialog("", msg.data.format)
 
-    if ((os.platform() === "linux" && msg.channel === "pdf") || (msg.data.extensions && !files.length)) return
-    importShow(msg.channel, files || null)
+    if ((os.platform() === "linux" && msg.channel === "pdf") || (msg.data.format.extensions && !files.length)) return
+    importShow(msg.channel, files || null, msg.data.path)
 }
 
 // EXPORT
 export function startExport(_e: any, msg: Message) {
     if (msg.channel !== "GENERATE") return
 
-    let path: string = msg.data.path
+    let dataPath: string = msg.data.path
 
-    if (!path) {
-        path = selectFolderDialog()
-        if (!path) return
-        toApp(MAIN, { channel: "EXPORT_PATH", data: path })
+    if (!dataPath) {
+        dataPath = selectFolderDialog()
+        if (!dataPath) return
+
+        toApp(MAIN, { channel: "DATA_PATH", data: dataPath })
     }
+
+    msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
 
     // WIP open in system when completed...
 
@@ -50,8 +52,7 @@ export function startExport(_e: any, msg: Message) {
 
 // BIBLE
 export function loadScripture(e: any, msg: Message) {
-    let bibleFolder: string = msg.path || ""
-    if (!bibleFolder) bibleFolder = getDocumentsFolder(null, "Bibles")
+    let bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
     let p: string = path.resolve(bibleFolder, msg.name + ".fsb")
 
     let bible: any = loadFile(p, msg.id)
@@ -87,10 +88,7 @@ const mainResponses: any = {
     IP: (): any => os.networkInterfaces(),
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     SHOWS_PATH: (): string => getDocumentsFolder(),
-    EXPORT_PATH: (): string => getDocumentsFolder(null, "Exports"),
-    SCRIPTURE_PATH: (): string => getDocumentsFolder(null, "Bibles"),
-    RECORDING_PATH: (): string => getDocumentsFolder(null, "Recordings"),
-    // READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
+    DATA_PATH: (): string => getDocumentsFolder(null, ""),
     DISPLAY: (): boolean => false,
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
     GET_MIDI_INPUTS: (): string[] => getMidiInputs(),
@@ -275,10 +273,7 @@ function getScreens(type: "window" | "screen" = "screen") {
 
 // RECORDER
 export function saveRecording(_: any, msg: any) {
-    let folder: string = msg.path || ""
-    if (!folder) folder = getDocumentsFolder(null, "Recordings")
-    else if (!doesPathExist(folder)) folder = fs.mkdirSync(folder, { recursive: true }) || folder
-
+    let folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
     let p: string = path.resolve(folder, msg.name)
 
     const buffer = Buffer.from(msg.blob)

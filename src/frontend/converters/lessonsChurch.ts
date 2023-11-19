@@ -1,3 +1,4 @@
+import { dataPath } from "./../stores"
 import { uid } from "uid"
 import { MAIN } from "../../types/Channels"
 import { ShowObj } from "../classes/Show"
@@ -76,7 +77,7 @@ export async function convertLessonsPresentation(data: any) {
 
         // WIP change lesson image in project to local
         // currentLessonFiles.push({url: lesson.lessonImage, name: lesson.lessonTitle})
-        lessons.push({ name: lesson.lessonName, files: currentLessonFiles })
+        lessons.push({ path: get(dataPath), name: lesson.lessonName, files: currentLessonFiles })
     })
 
     // download videos/images

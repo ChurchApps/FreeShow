@@ -16,6 +16,7 @@
         "made": "Stworzone w Norwegii przez",
         "report": "Chcesz zgłosić błąd? Stwórz \"issue\" na GitHub",
         "help": "Chcesz pomóc w tłumaczeniu albo zaproponować nową funkcjonalność? Wyślij maila na",
+        "support": "Wspierasz ten projekt?",
         "assets": "Wykorzystane assety",
         "libraries": "Wykorzystane biblioteki",
         "thanks": "Podziękowania dla",
@@ -65,7 +66,7 @@
     "titlebar": {
         "file": "Plik",
         "edit": "Edytuj",
-        "view": "Pokaż",
+        "view": "Widok",
         "help": "Pomoc"
     },
     "screen": {
@@ -150,8 +151,8 @@
     },
     "menu": {
         "show": "Pokaz",
-        "_title_show": "Pokazywanie",
-        "edit": "Edycja",
+        "_title_show": "Prezentowanie",
+        "edit": "Edytor",
         "_title_edit": "Edytowanie",
         "stage": "Scena",
         "_title_stage": "Widok sceny",
@@ -278,8 +279,12 @@
         "live": "Na żywo",
         "timers": "Timery",
         "variables": "Zmienne",
+        "triggers": "Wyzwalacze",
         "templates": "Szablony",
         "web": "Internet"
+    },
+    "tips": {
+        "trigger": "Wyzwalacze są często używane do przesyłu zapytań HTTP aby zmienić presety kamer"
     },
     "category": {
         "all": "Wszystkie",
@@ -319,6 +324,7 @@
         "edit_list": "Edytuj listę",
         "timer": "Timer",
         "variable": "Zmienna",
+        "trigger": "Wyzwalacz",
         "transition": "Przejście",
         "delete_show": "Usuń pokaz",
         "delete_show_confirmation": "Czy jesteś pewien, że chcesz usunąć pokaz?",
@@ -391,6 +397,7 @@
         "section": "Nowa sekcja",
         "timer": "Nowy timer",
         "variable": "Nowa zmienna",
+        "trigger": "Nowy wyzwalacz",
         "category": "Nowa kategoria",
         "private": "Nowy prywatny pokaz",
         "folder": "Nowy folder",
@@ -591,6 +598,7 @@
         "font": "Font",
         "family": "Rodzina",
         "style": "Styl",
+        "lines": "Wiersze",
         "options": "Opcje",
         "_title_bold": "Pogrubienie",
         "_title_italic": "Kursywa",
@@ -666,8 +674,8 @@
         "text": "Tekst",
         "list": "Lista",
         "media": "Multimedia",
-        "camera": "Kamera",
         "image": "Obraz",
+        "camera": "Kamera",
         "video": "Wideo",
         "mirror": "Lustro",
         "clock": "Zegar",
@@ -861,7 +869,7 @@
         "reset_all": "Resetuj wszystko",
         "reset_theme": "Resetuj motyw",
         "reset_themes": "Resetuj wszystkie motywy",
-        "backup_all": "Stwórz kopię zapasową wszystkiego",
+        "backup_all": "Stwórz kopię zapasową",
         "restore": "Odtwórz kopię zapasową",
         "backup_started": "Zapisywanie kopii...",
         "restore_started": "Odtwarzanie kopii...",
@@ -915,7 +923,10 @@
         "verse_numbers": "Numeracja wersetów",
         "version": "Pokaż wersję",
         "reference": "Pokaż odniesienie",
-        "red_jesus": "Słowa Jezusa na czerwono"
+        "combine_with_text": "Połącz tekstem",
+        "reference_at_bottom": "Przenieś w dół",
+        "red_jesus": "Słowa Jezusa na czerwono",
+        "search": "Wyszukaj w Piśmie"
     },
     "filter": {
         "blur": "Rozmycie",

@@ -110,22 +110,49 @@ export function openSystemFolder(path: string) {
     shell.openPath(path)
 }
 
+const appName = "FreeShow"
 export function getDocumentsFolder(p: any = null, folderName: string = "Shows"): string {
-    if (!p) p = path.resolve(app.getPath("documents"), "FreeShow", folderName)
+    let folderPath = [app.getPath("documents"), appName]
+    if (folderName) folderPath.push(folderName)
+    if (!p) p = path.resolve(...folderPath)
     if (!doesPathExist(p)) p = fs.mkdirSync(p, { recursive: true })
+
     return p
 }
 
 export function checkShowsFolder(path: string): string {
-    if (path && doesPathExist(path)) return path
+    if (!path) {
+        path = getDocumentsFolder()
+        toApp(MAIN, { channel: "SHOWS_PATH", data: path })
+        return path
+    }
 
-    path = getDocumentsFolder()
-    toApp(MAIN, { channel: "SHOWS_PATH", data: path })
+    if (doesPathExist(path)) return path
 
-    return path
+    return fs.mkdirSync(path, { recursive: true }) || path
+}
+
+export const dataFolderNames = {
+    backups: "Backups",
+    scriptures: "Bibles",
+    exports: "Exports",
+    imports: "Imports",
+    lessons: "Lessons",
+    recordings: "Recordings",
+}
+
+// DATA PATH
+export function getDataFolder(dataPath: string, name: string) {
+    if (!dataPath) return getDocumentsFolder(null, name)
+    return createFolder(path.join(dataPath, name))
 }
 
 // HELPERS
+
+function createFolder(path: string) {
+    if (doesPathExist(path)) return path
+    return fs.mkdirSync(path, { recursive: true }) || path
+}
 
 export function fileContentMatches(content: string | NodeJS.ArrayBufferView, path: string): boolean {
     if (doesPathExist(path) && content === readFile(path)) return true
@@ -153,14 +180,14 @@ export function loadFile(p: string, contentId: string = ""): any {
 
 export function getPaths(): any {
     let paths: any = {
-        documents: app.getPath("documents"),
+        // documents: app.getPath("documents"),
         pictures: app.getPath("pictures"),
         videos: app.getPath("videos"),
         music: app.getPath("music"),
     }
 
     // this will create "documents/Shows" folder if it doesen't exist
-    paths.shows = getDocumentsFolder()
+    // paths.shows = getDocumentsFolder()
 
     return paths
 }
@@ -209,6 +236,13 @@ export function getFolderContent(_e: any, data: any) {
 // OPEN_FOLDER
 export function selectFolder(e: any, msg: { channel: string; title: string | undefined; path: string | undefined }) {
     let folder: any = selectFolderDialog(msg.title, msg.path)
+
+    // only when initializing
+    if (folder && msg.channel === "DATA_SHOWS") {
+        e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder, showsPath: path.join(folder, "Shows") } })
+        return
+    }
+
     if (folder) e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
 }
 
