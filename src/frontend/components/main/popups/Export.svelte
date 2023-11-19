@@ -1,7 +1,7 @@
 <script lang="ts">
     import { EXPORT } from "../../../../types/Channels"
     import type { Project } from "../../../../types/Projects"
-    import { activePopup, activeProject, activeShow, exportPath, os, projects, selected, showsCache, shows as showsList } from "../../../stores"
+    import { activePopup, activeProject, activeShow, dataPath, os, projects, selected, showsCache, shows as showsList } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { send } from "../../../utils/request"
     import Pdf from "../../export/Pdf.svelte"
@@ -119,7 +119,7 @@
             }
             exportProject(project)
         } else {
-            send(EXPORT, ["GENERATE"], { type: format.id, path: $exportPath, shows, options: format.id === "pdf" ? pdfOptions : {} })
+            send(EXPORT, ["GENERATE"], { type: format.id, path: $dataPath, shows, options: format.id === "pdf" ? pdfOptions : {} })
         }
         activePopup.set(null)
     }
@@ -251,10 +251,10 @@
     </Center>
 {/if}
 
-<FolderPicker id="EXPORT">
+<FolderPicker id="DATA">
     <Icon id="folder" right />
-    {#if $exportPath}
-        {$exportPath}
+    {#if $dataPath}
+        {$dataPath} - Exports
     {:else}
         <T id="inputs.change_folder" />
     {/if}

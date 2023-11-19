@@ -2,7 +2,7 @@ import { auth, drive } from "@googleapis/drive"
 import path from "path"
 import { toApp } from ".."
 import { STORE } from "../../types/Channels"
-import { checkShowsFolder, getDocumentsFolder, getFileStats, readFile, writeFile } from "../utils/files"
+import { checkShowsFolder, dataFolderNames, getDataFolder, getFileStats, readFile, writeFile } from "../utils/files"
 import { stores } from "../utils/store"
 
 let driveClient: any = null
@@ -186,7 +186,7 @@ export async function syncDataDrive(data: any) {
 
     // SCRIPTURE
     if (bibles === null) bibles = stores.SYNCED_SETTINGS.store?.scriptures
-    if (bibles) await syncBibles()
+    if (bibles) await syncBibles(data.dataPath)
 
     // SHOWS
     await syncAllShows()
@@ -246,7 +246,7 @@ export async function syncDataDrive(data: any) {
         // responses.push(response)
     }
 
-    async function syncBibles() {
+    async function syncBibles(dataPath: string) {
         let localBibles: string[] = Object.values(bibles)
             .filter((a: any) => !a.api && !a.collection)
             .map((a: any) => a.name + ".fsb")
@@ -266,7 +266,7 @@ export async function syncDataDrive(data: any) {
         // this sets a limit to 100 bibles downloaded from cloud
         let driveBibles = await listFiles(100, "'" + driveBiblesFolderId + "' in parents")
 
-        let localBiblesFolder: string = getDocumentsFolder(null, "Bibles")
+        let localBiblesFolder: string = getDataFolder(dataPath, dataFolderNames.scriptures)
 
         await Promise.all(localBibles.map(syncBible))
 

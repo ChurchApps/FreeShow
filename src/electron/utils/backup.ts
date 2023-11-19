@@ -1,19 +1,19 @@
 import path from "path"
 import { toApp } from ".."
 import { MAIN, STORE } from "../../types/Channels"
-import { getDocumentsFolder, openSystemFolder, readFile, selectFilesDialog, writeFile } from "./files"
+import { dataFolderNames, getDataFolder, openSystemFolder, readFile, selectFilesDialog, writeFile } from "./files"
 import { stores } from "./store"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
 const storesToSave = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA", "DRIVE_API_KEY"]
 // don't upload: config.json, cache.json, history.json
 
-export async function startBackup({ showsPath, scripturePath }: any) {
+export async function startBackup({ showsPath, dataPath, scripturePath }: any) {
     let shows: any = null
     // let bibles: any = null
     console.log(scripturePath)
 
-    let backupPath: string = getDocumentsFolder(null, "Backups")
+    let backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
 
     // CONFIGS
     await Promise.all(storesToSave.map(syncStores))

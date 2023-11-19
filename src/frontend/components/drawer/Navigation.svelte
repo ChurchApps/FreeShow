@@ -225,7 +225,7 @@
         </div>
     {:else if id === "calendar"}
         <div class="tabs">
-            <Button on:click={() => send(IMPORT, ["calendar"], { name: "Calendar", extensions: ["ics"] })} center title={$dictionary.actions?.import}>
+            <Button on:click={() => send(IMPORT, ["calendar"], { format: { name: "Calendar", extensions: ["ics"] } })} center title={$dictionary.actions?.import}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="actions.import" />{/if}
             </Button>

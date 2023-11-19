@@ -6,6 +6,7 @@ import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
+import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
@@ -31,13 +32,13 @@ import {
     audioChannels,
     audioFolders,
     currentWindow,
+    dataPath,
     dictionary,
     draw,
     drawSettings,
     drawTool,
     driveKeys,
     events,
-    exportPath,
     folders,
     loaded,
     media,
@@ -52,9 +53,7 @@ import {
     playingVideos,
     previewBuffers,
     projects,
-    recordingPath,
     saved,
-    scripturePath,
     shows,
     showsCache,
     showsPath,
@@ -82,7 +81,6 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { checkNextAfterMedia } from "../components/helpers/showActions"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -144,31 +142,7 @@ const receiveMAIN: any = {
     },
     MENU: (a: any) => menuClick(a),
     SHOWS_PATH: (a: any) => showsPath.set(a),
-    EXPORT_PATH: (a: any) => exportPath.set(a),
-    SCRIPTURE_PATH: (a: any) => scripturePath.set(a),
-    RECORDING_PATH: (a: any) => recordingPath.set(a),
-    // READ_SAVED_CACHE: (a: any) => {
-    //     if (!a) return
-    //     Object.entries(JSON.parse(a)).forEach(([key, data]: any) => {
-    //         // TODO: undoing save is not working properly (seems like all saved are the same??)
-
-    //         if (key === "showsCache") console.log("SHOWS CACHE ---", clone(get(showsCache)), data)
-
-    //         // don't revert undo/redo history
-    //         if (key === "HISTORY") return
-    //         if (receiveSTORE[key]) receiveSTORE[key](data)
-    //         // if undo = { ...data, ...get(showsCache) } else { ...get(showsCache), ...data }
-    //         else if (key === "showsCache") showsCache.set({ ...data, ...get(showsCache) })
-    //         else if (key === "scripturesCache") scripturesCache.set(data)
-    //         else if (key === "path") showsPath.set(data)
-    //         else console.log("MISSING HISTORY RESTORE KEY:", key)
-    //     })
-
-    //     // save to files?
-    //     // window.api.send(STORE, { channel: "SAVE", data: allSavedData })
-
-    //     saved.set(true)
-    // },
+    DATA_PATH: (a: any) => dataPath.set(a),
     ALERT: (a: any) => {
         alertMessage.set(a)
 
@@ -291,9 +265,11 @@ const receiveFOLDER: any = {
     },
     AUDIO: (a: any) => receiveFOLDER.MEDIA(a, "audio"),
     SHOWS: (a: any) => showsPath.set(a.path),
-    EXPORT: (a: any) => exportPath.set(a.path),
-    SCRIPTURE: (a: any) => scripturePath.set(a.path),
-    RECORDING: (a: any) => recordingPath.set(a.path),
+    DATA: (a: any) => dataPath.set(a.path),
+    DATA_SHOWS: (a: any) => {
+        dataPath.set(a.path)
+        if (a.showsPath) showsPath.set(a.showsPath)
+    },
 }
 
 // OUTPUT

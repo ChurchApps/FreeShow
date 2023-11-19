@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, alertMessage, dictionary, exportPath, mediaCache, recordingPath, scripturePath, shows, showsCache, showsPath, special } from "../../../stores"
+    import { activePopup, alertMessage, dataPath, dictionary, mediaCache, shows, showsCache, showsPath, special } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
@@ -127,6 +127,23 @@
 </script>
 
 <CombinedInput textWidth={30}>
+    <p><T id="settings.data_location" /></p>
+    <span class="path" title={$dataPath || ""}>
+        <FolderPicker style="width: 100%;" id="DATA" center={false} path={$dataPath}>
+            <Icon id="folder" right />
+            {#if $dataPath}
+                {$dataPath}
+            {:else}
+                <T id="inputs.change_folder" />
+            {/if}
+        </FolderPicker>
+        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $dataPath)}>
+            <Icon id="launch" white />
+        </Button>
+    </span>
+</CombinedInput>
+
+<CombinedInput textWidth={30}>
     <p><T id="settings.show_location" /></p>
     <span class="path" title={$showsPath || ""}>
         <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
@@ -140,57 +157,6 @@
             {/if}
         </FolderPicker>
         <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $showsPath)}>
-            <Icon id="launch" white />
-        </Button>
-    </span>
-</CombinedInput>
-
-<CombinedInput textWidth={30}>
-    <p><T id="settings.export_location" /></p>
-    <span class="path" title={$exportPath || ""}>
-        <FolderPicker style="width: 100%;" id="EXPORT" center={false} path={$exportPath}>
-            <Icon id="folder" right />
-            {#if $exportPath}
-                {$exportPath}
-            {:else}
-                <T id="inputs.change_folder" />
-            {/if}
-        </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $exportPath)}>
-            <Icon id="launch" white />
-        </Button>
-    </span>
-</CombinedInput>
-
-<CombinedInput textWidth={30}>
-    <p><T id="settings.scripture_location" /></p>
-    <span class="path" title={$scripturePath || ""}>
-        <FolderPicker style="width: 100%;" id="SCRIPTURE" center={false} path={$scripturePath}>
-            <Icon id="folder" right />
-            {#if $scripturePath}
-                {$scripturePath}
-            {:else}
-                <T id="inputs.change_folder" />
-            {/if}
-        </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $scripturePath)}>
-            <Icon id="launch" white />
-        </Button>
-    </span>
-</CombinedInput>
-
-<CombinedInput textWidth={30}>
-    <p><T id="settings.recording_location" /></p>
-    <span class="path" title={$recordingPath || ""}>
-        <FolderPicker style="width: 100%;" id="RECORDING" center={false} path={$recordingPath}>
-            <Icon id="folder" right />
-            {#if $recordingPath}
-                {$recordingPath}
-            {:else}
-                <T id="inputs.change_folder" />
-            {/if}
-        </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $recordingPath)}>
             <Icon id="launch" white />
         </Button>
     </span>

@@ -9,7 +9,7 @@ import { cloudConnect } from "./cloud/cloud"
 import { receiveNDI } from "./ndi/talk"
 import { closeServers } from "./servers"
 import { startBackup } from "./utils/backup"
-import { checkShowsFolder, deleteFile, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, receiveOutput } from "./utils/output"
@@ -255,9 +255,10 @@ function save(data: any) {
 
     // scriptures
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
+    let scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
     function saveScripture([id, value]: any) {
         if (!value) return
-        let p: string = path.resolve(data.scripturePath || getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
+        let p: string = path.join(scripturePath, value.name + ".fsb")
         writeFile(p, JSON.stringify([id, value]), id)
     }
 
@@ -294,7 +295,7 @@ function save(data: any) {
             }, 300)
         }
 
-        if (data.backup) startBackup({ showsPath: data.path, scripturePath: data.scripturePath })
+        if (data.backup) startBackup({ showsPath: data.path, dataPath: data.dataPath, scripturePath })
     }, 700)
 }
 

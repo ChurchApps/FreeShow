@@ -24,17 +24,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
     }
 
     const actions = {
-        // SAVE: () => {
-        //     // don't do anything if creating
-        //     if (initializing) return
-
-        //     // if (!get(saved))
-
-        //     // restore
-        //     data = undo ? obj.oldData : obj.newData
-        //     let id: string = data.id
-        //     send(MAIN, ["READ_SAVED_CACHE"], { id })
-        // },
         UPDATE: () => {
             // create / delete / duplicate a full store (or a full key, or set indexes)
             if (!obj.location?.id) return error("no updater id")

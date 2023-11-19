@@ -14,13 +14,13 @@ import {
     calendarAddShow,
     categories,
     customizedIcons,
+    dataPath,
     defaultProjectName,
     disabledServers,
     drawSettings,
     drawer,
     drawerTabsData,
     driveData,
-    exportPath,
     formatNewShow,
     fullColors,
     gain,
@@ -43,10 +43,8 @@ import {
     ports,
     presenterControllerKeys,
     projectView,
-    recordingPath,
     remotePassword,
     resized,
-    scripturePath,
     serverData,
     showsPath,
     slidesOptions,
@@ -178,17 +176,9 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (!v) send(MAIN, ["SHOWS_PATH"])
         else showsPath.set(v)
     },
-    exportPath: (v: any) => {
-        if (!v) send(MAIN, ["EXPORT_PATH"])
-        else exportPath.set(v)
-    },
-    scripturePath: (v: any) => {
-        if (!v) send(MAIN, ["SCRIPTURE_PATH"])
-        else scripturePath.set(v)
-    },
-    recordingPath: (v: any) => {
-        if (!v) send(MAIN, ["RECORDING_PATH"])
-        else recordingPath.set(v)
+    dataPath: (v: any) => {
+        if (!v) send(MAIN, ["DATA_PATH"])
+        else dataPath.set(v)
     },
     lockedOverlays: (v: any) => {
         // only get locked overlays
