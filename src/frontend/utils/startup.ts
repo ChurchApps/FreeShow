@@ -32,6 +32,7 @@ import {
     audioChannels,
     audioFolders,
     currentWindow,
+    deviceId,
     dataPath,
     dictionary,
     draw,
@@ -81,6 +82,8 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { checkNextAfterMedia } from "../components/helpers/showActions"
+import { trackAppLaunch } from "./analytics"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -114,7 +117,7 @@ function startupMain() {
     receive(NDI, receiveNDI)
 
     // load files
-    send(MAIN, ["DISPLAY", "VERSION"])
+    send(MAIN, ["DISPLAY", "VERSION", "DEVICE_ID"])
     // wait a bit in case data is not yet loaded
     setTimeout(() => {
         send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
@@ -124,6 +127,7 @@ function startupMain() {
     setTimeout(() => {
         listenForUpdates()
         listen()
+        trackAppLaunch();
     }, 5000)
 }
 
@@ -135,6 +139,7 @@ const receiveMAIN: any = {
         version.set(a)
         checkForUpdates(a)
     },
+    DEVICE_ID: (a: any) => { deviceId.set(a) },
     DISPLAY: (a: any) => outputDisplay.set(a),
     GET_PATHS: (a: any) => {
         // only on first startup

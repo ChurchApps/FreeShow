@@ -259,5 +259,5 @@ const saveList: { [key in SaveList]: any } = {
     driveKeys: driveKeys,
     driveData: driveData,
     calendarAddShow: calendarAddShow,
-    special: null,
+    special: null
 }
