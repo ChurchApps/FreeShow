@@ -6,9 +6,11 @@ import { ExifImage } from "exif"
 import fs from "fs"
 import { Stats } from "original-fs"
 import path from "path"
-import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW } from "../../types/Channels"
+import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
 import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
+import { stores } from "./store"
+import { trimShow } from "./responses"
 
 // GENERAL
 
@@ -170,9 +172,17 @@ export function loadFile(p: string, contentId: string = ""): any {
     try {
         content = JSON.parse(content)
     } catch (error) {
-        console.log(error)
-        return { error: "not_found", id: contentId }
+        // try to fix broken show files
+        content = content.slice(0, content.indexOf("}}]") + 3)
+
+        try {
+            content = JSON.parse(content)
+        } catch (error) {
+            console.log(error)
+            return { error: "not_found", id: contentId }
+        }
     }
+
     if (contentId && content[0] !== contentId) return { error: "not_found", id: contentId, file_id: content[0] }
 
     return { id: contentId, content }
@@ -237,13 +247,20 @@ export function getFolderContent(_e: any, data: any) {
 export function selectFolder(e: any, msg: { channel: string; title: string | undefined; path: string | undefined }) {
     let folder: any = selectFolderDialog(msg.title, msg.path)
 
+    if (!folder) return
+
     // only when initializing
-    if (folder && msg.channel === "DATA_SHOWS") {
+    if (msg.channel === "DATA_SHOWS") {
         e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder, showsPath: path.join(folder, "Shows") } })
         return
     }
 
-    if (folder) e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
+    if (msg.channel === "SHOWS") {
+        loadShows({ showsPath: folder })
+        toApp(MAIN, { channel: "FULL_SHOWS_LIST", data: readFolder(folder) })
+    }
+
+    e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
 }
 
 // OPEN_FILE
@@ -327,4 +344,49 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
             }
         }
     }
+}
+
+// LOAD SHOWS
+
+export function loadShows({ showsPath }: any) {
+    // list all shows in folder
+    let filesInFolder: string[] = readFolder(showsPath)
+    if (!filesInFolder.length) return
+
+    let cachedShows = stores.SHOWS.store
+    let newCachedShows: any = {}
+
+    for (const name of filesInFolder) checkShow(name)
+    function checkShow(name: string) {
+        if (!name.includes(".show")) return
+
+        let matchingShowId = Object.entries(cachedShows).find(([_id, a]: any) => a.name === name)?.[0]
+        if (matchingShowId) {
+            newCachedShows[matchingShowId] = cachedShows[matchingShowId]
+            return
+        }
+
+        let p: string = path.join(showsPath, name)
+        let jsonData = readFile(p) || "{}"
+        let show = null
+
+        try {
+            show = JSON.parse(jsonData)
+        } catch (error) {
+            // try to fix broken files
+            jsonData = jsonData.slice(0, jsonData.indexOf("}}]") + 3)
+
+            try {
+                show = JSON.parse(jsonData)
+            } catch (error) {
+                console.error("Error parsing show " + name)
+            }
+        }
+
+        if (!show || !show[1]) return
+
+        newCachedShows[show[0]] = trimShow({ ...show[1], name: name.replace(".show", "") })
+    }
+
+    toApp(STORE, { channel: "SHOWS", data: newCachedShows })
 }

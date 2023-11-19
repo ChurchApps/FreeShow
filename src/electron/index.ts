@@ -9,7 +9,7 @@ import { cloudConnect } from "./cloud/cloud"
 import { receiveNDI } from "./ndi/talk"
 import { closeServers } from "./servers"
 import { startBackup } from "./utils/backup"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, loadShows, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, receiveOutput } from "./utils/output"
@@ -239,6 +239,7 @@ app.on("web-contents-created", (_e, contents) => {
 
 ipcMain.on(STORE, (e, msg) => {
     if (msg.channel === "SAVE") save(msg.data)
+    else if (msg.channel === "SHOWS") loadShows(msg.data)
     else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
 })
 

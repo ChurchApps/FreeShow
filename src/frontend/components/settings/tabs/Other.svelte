@@ -189,6 +189,7 @@
     </Button>
 </CombinedInput> -->
 
+<!-- USED TO REFRESH SHOWS WITHOUT RESTARTING -->
 {#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={refreshShows}>
@@ -200,6 +201,7 @@
         </Button>
     </CombinedInput>
 {/if}
+<!-- USED TO DELETE "BROKEN" SHOWS -->
 {#if hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={deleteShows}>

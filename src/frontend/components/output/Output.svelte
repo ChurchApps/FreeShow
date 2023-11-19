@@ -255,8 +255,8 @@
     let clonedOverlays = {}
     let outOverlays: any[] = []
     let outUnderlays: any[] = []
-    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => !a.placeUnderSlide)) !== JSON.stringify(outOverlays)) updateOverlays()
-    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => a.placeUnderSlide)) !== JSON.stringify(outUnderlays)) updateOverlays()
+    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => !a?.placeUnderSlide)) !== JSON.stringify(outOverlays)) updateOverlays()
+    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => a?.placeUnderSlide)) !== JSON.stringify(outUnderlays)) updateOverlays()
     function updateOverlays() {
         clonedOverlays = clone($overlays)
         if (!out.overlays) return
@@ -264,7 +264,7 @@
         outUnderlays = []
         outOverlays = []
         out.overlays.forEach((id) => {
-            if (clonedOverlays[id].placeUnderSlide) outUnderlays.push(id)
+            if (clonedOverlays[id]?.placeUnderSlide) outUnderlays.push(id)
             else outOverlays.push(id)
         })
     }

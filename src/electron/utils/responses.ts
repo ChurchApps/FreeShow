@@ -172,7 +172,7 @@ function deleteShowsNotIndexed(data: any) {
 }
 
 function getAllShows(data: any) {
-    let filesInFolder: string[] = readFolder(data.path)
+    let filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show"))
     return filesInFolder
 }
 
@@ -189,11 +189,13 @@ function refreshAllShows(data: any) {
 
         let p: string = path.join(data.path, name)
         let show = null
+
         try {
             show = JSON.parse(readFile(p) || "{}")
         } catch (error) {
             console.error("Error parsing show " + name) //  + ":", error
         }
+
         if (!show || !show[1]) return
 
         newShows[show[0]] = trimShow({ ...show[1], name: name.replace(".show", "") })
@@ -214,7 +216,7 @@ export function renameShows(shows: any, path: string) {
 }
 
 // WIP duplicate of setShow.ts
-function trimShow(showCache: Show) {
+export function trimShow(showCache: Show) {
     let show: any = {}
     if (!showCache) return show
 

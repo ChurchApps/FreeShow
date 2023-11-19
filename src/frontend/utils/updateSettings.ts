@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../types/Channels"
+import { MAIN, STORE } from "../../types/Channels"
 import type { Output } from "../../types/Output"
 import { clone, keysToID } from "../components/helpers/array"
 import { displayOutputs, setOutput } from "../components/helpers/output"
@@ -175,6 +175,9 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     showsPath: (v: any) => {
         if (!v) send(MAIN, ["SHOWS_PATH"])
         else showsPath.set(v)
+
+        // LOAD SHOWS FROM FOLDER
+        send(STORE, ["SHOWS"], { showsPath: v })
     },
     dataPath: (v: any) => {
         if (!v) send(MAIN, ["DATA_PATH"])

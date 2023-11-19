@@ -120,7 +120,7 @@ function startupMain() {
     send(MAIN, ["VERSION", "IS_DEV", "GET_OS", "DEVICE_ID", "DISPLAY"])
     // wait a bit in case data is not yet loaded
     setTimeout(() => {
-        send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
+        send(STORE, ["SYNCED_SETTINGS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
         setTimeout(() => send(STORE, ["SETTINGS"]), 500)
     }, 100)
 
