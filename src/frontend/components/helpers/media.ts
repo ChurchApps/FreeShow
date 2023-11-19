@@ -36,6 +36,13 @@ export function getFileName(path: string): string {
     return path
 }
 
+export function splitPath(path: string): string[] {
+    if (!path) return []
+    if (path.indexOf("\\") > -1) return path.split("\\")
+    if (path.indexOf("/") > -1) return path.split("/")
+    return []
+}
+
 // convert to base64
 export async function toDataURL(url: string) {
     return new Promise((resolve: any) => {

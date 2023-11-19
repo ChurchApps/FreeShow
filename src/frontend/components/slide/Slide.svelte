@@ -1,15 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import { MAIN } from "../../../types/Channels"
     import type { MediaFit } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
     import { activeShow, activeTimers, checkedFiles, dictionary, driveData, fullColors, groupNumbers, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, showsCache, slidesOptions, styles } from "../../stores"
+    import { send } from "../../utils/request"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { GetLayoutRef } from "../helpers/get"
-    import { checkMedia, getFileName } from "../helpers/media"
+    import { checkMedia, getFileName, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import { getMediaFilter } from "../helpers/showActions"
     import SelectElem from "../system/SelectElem.svelte"
@@ -17,8 +19,6 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { MAIN } from "../../../types/Channels"
-    import { send } from "../../utils/request"
 
     export let slide: Slide
     export let layoutSlide: SlideData
@@ -86,7 +86,7 @@
         // check for other potentially mathing mediaFolders
         if (!exists) {
             let fileName = getFileName(bg.path)
-            send(MAIN, ["LOCATE_MEDIA_FILE"], { fileName, folders: Object.values($mediaFolders).map((a) => a.path), ref: { showId, mediaId, cloudId: checkCloud ? cloudId : "" } })
+            send(MAIN, ["LOCATE_MEDIA_FILE"], { fileName, splittedPath: splitPath(bg.path), folders: Object.values($mediaFolders).map((a) => a.path), ref: { showId, mediaId, cloudId: checkCloud ? cloudId : "" } })
             return
         }
 

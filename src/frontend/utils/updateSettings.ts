@@ -189,10 +189,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         // start overlays
         setOutput("overlays", v, false, null, true)
     },
-    os: (v: any) => {
-        if (!v.platform) send(MAIN, ["GET_OS"])
-        os.set(v)
-    },
+    os: (v: any) => os.set(v),
     // TODO: get device lang
     language: (v: any) => {
         language.set(v)

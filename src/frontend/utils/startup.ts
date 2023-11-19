@@ -32,8 +32,8 @@ import {
     audioChannels,
     audioFolders,
     currentWindow,
-    deviceId,
     dataPath,
+    deviceId,
     dictionary,
     draw,
     drawSettings,
@@ -41,6 +41,7 @@ import {
     driveKeys,
     events,
     folders,
+    isDev,
     loaded,
     media,
     mediaCache,
@@ -73,6 +74,7 @@ import {
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
 import { redoHistory, undoHistory } from "./../stores"
+import { trackAppLaunch } from "./analytics"
 import { checkForUpdates } from "./checkForUpdates"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
@@ -82,8 +84,6 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { checkNextAfterMedia } from "../components/helpers/showActions"
-import { trackAppLaunch } from "./analytics"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -117,7 +117,7 @@ function startupMain() {
     receive(NDI, receiveNDI)
 
     // load files
-    send(MAIN, ["DISPLAY", "VERSION", "DEVICE_ID"])
+    send(MAIN, ["VERSION", "IS_DEV", "GET_OS", "DEVICE_ID", "DISPLAY"])
     // wait a bit in case data is not yet loaded
     setTimeout(() => {
         send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
@@ -127,19 +127,20 @@ function startupMain() {
     setTimeout(() => {
         listenForUpdates()
         listen()
-        trackAppLaunch();
+        trackAppLaunch()
     }, 5000)
 }
 
 // RECEIVERS
 
 const receiveMAIN: any = {
-    GET_OS: (a: any) => os.set(a),
     VERSION: (a: any) => {
         version.set(a)
         checkForUpdates(a)
     },
-    DEVICE_ID: (a: any) => { deviceId.set(a) },
+    IS_DEV: (a: any) => isDev.set(a),
+    GET_OS: (a: any) => os.set(a),
+    DEVICE_ID: (a: any) => deviceId.set(a),
     DISPLAY: (a: any) => outputDisplay.set(a),
     GET_PATHS: (a: any) => {
         // only on first startup

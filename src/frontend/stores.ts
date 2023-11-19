@@ -23,6 +23,7 @@ export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)
 export const loaded: Writable<boolean> = writable(true)
+export const isDev: Writable<boolean> = writable(false)
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
@@ -107,7 +108,7 @@ export const selectAllMedia: Writable<boolean> = writable(false)
 
 // GENERAL
 export const os: Writable<any> = writable({ platform: "", name: "Computer" }) // get os
-export const deviceId: Writable<string> = writable("");
+export const deviceId: Writable<string> = writable("")
 
 // HISTORY
 export const undoHistory: Writable<History[]> = writable([])

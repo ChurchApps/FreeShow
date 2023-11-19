@@ -280,20 +280,22 @@ export function readExifData(e: any, data: any) {
 }
 
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
-export function locateMediaFile({ fileName, folders, ref }: any) {
+export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
     let matches: string[] = []
-    findMatches()
 
+    findMatches(true)
+    if (matches.length !== 1) findMatches()
     if (matches.length !== 1) return
+
     toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
 
     /////
 
-    function findMatches() {
+    function findMatches(searchWithFolder: boolean = false) {
         for (const folderPath of folders) {
             if (matches.length > 1) return
 
-            checkFolderForMatches(folderPath)
+            checkFolderForMatches(folderPath, searchWithFolder)
 
             if (matches.length) return
 
@@ -303,18 +305,23 @@ export function locateMediaFile({ fileName, folders, ref }: any) {
 
                 let p: string = path.join(folderPath, name)
                 let fileStat = getFileStats(p)
-                if (fileStat?.folder) checkFolderForMatches(p)
+                if (fileStat?.folder) checkFolderForMatches(p, searchWithFolder)
             }
         }
     }
 
-    function checkFolderForMatches(folderPath: string) {
+    function checkFolderForMatches(folderPath: string, searchWithFolder: boolean = false) {
         let files = readFolder(folderPath)
 
-        for (const name of files) {
+        let folderName = path.basename(folderPath)
+        let searchName = fileName
+        if (searchWithFolder && splittedPath?.length > 1) searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
+
+        for (let name of files) {
             if (matches.length > 1) return
 
-            if (name === fileName) {
+            let pathName = searchWithFolder ? path.join(folderName, name) : name
+            if (pathName === searchName) {
                 let p: string = path.join(folderPath, name)
                 matches.push(p)
             }

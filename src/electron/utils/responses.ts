@@ -5,7 +5,7 @@ import { app, desktopCapturer, Display, screen, shell, systemPreferences } from 
 import { getFonts } from "font-list"
 import os from "os"
 import path from "path"
-import { closeMain, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
+import { closeMain, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
@@ -18,7 +18,7 @@ import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
 import { error_log } from "./store"
-import { machineIdSync } from "node-machine-id";
+import { machineIdSync } from "node-machine-id"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -77,11 +77,12 @@ export function loadShow(e: any, msg: Message) {
 // MAIN
 const mainResponses: any = {
     LOG: (data: string): void => console.log(data),
-    GET_OS: (): any => ({ platform: os.platform(), name: os.hostname() }),
-    GET_SYSTEM_FONTS: (): void => loadFonts(),
     VERSION: (): string => app.getVersion(),
+    IS_DEV: (): boolean => !isProd,
+    GET_OS: (): any => ({ platform: os.platform(), name: os.hostname() }),
     DEVICE_ID: (): string => machineIdSync(),
     ANALYTICS_SECRET: (): string => process.env.GA_SECRET || "",
+    GET_SYSTEM_FONTS: (): void => loadFonts(),
     URL: (data: string): void => openURL(data),
     START: (data: any): void => startServers(data),
     STOP: (): void => closeServers(),
