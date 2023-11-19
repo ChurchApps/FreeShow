@@ -203,9 +203,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (!v.platform) send(MAIN, ["GET_OS"])
         os.set(v)
     },
-    deviceId: (v: any) => {
-      send(MAIN, ["DEVICE_ID"], v);
-    },
     // TODO: get device lang
     language: (v: any) => {
         language.set(v)

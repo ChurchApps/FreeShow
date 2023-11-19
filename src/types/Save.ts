@@ -51,4 +51,3 @@ export type SaveListSettings =
     | "driveData"
     | "calendarAddShow"
     | "special"
-    | "deviceId"

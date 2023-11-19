@@ -12,7 +12,6 @@ import {
     customizedIcons,
     defaultProjectName,
     deletedShows,
-    deviceId,
     disabledServers,
     drawSettings,
     drawer,
@@ -142,7 +141,6 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
         special: get(special),
-        deviceId: get(deviceId),
     }
 
     // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)

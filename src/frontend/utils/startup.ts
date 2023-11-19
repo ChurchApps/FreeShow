@@ -28,7 +28,6 @@ import {
     activeTimers,
     alertMessage,
     allOutputs,
-    analyticsSecret,
     audioChannels,
     audioFolders,
     currentWindow,
@@ -118,7 +117,7 @@ function startupMain() {
     receive(NDI, receiveNDI)
 
     // load files
-    send(MAIN, ["DISPLAY", "VERSION"])
+    send(MAIN, ["DISPLAY", "VERSION", "DEVICE_ID"])
     // wait a bit in case data is not yet loaded
     setTimeout(() => {
         send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
@@ -139,7 +138,6 @@ const receiveMAIN: any = {
         version.set(a)
         checkForUpdates(a)
     },
-    ANALYTICS_SECRET: (a: any) => { analyticsSecret.set(a) },
     DEVICE_ID: (a: any) => { deviceId.set(a) },
     DISPLAY: (a: any) => outputDisplay.set(a),
     GET_PATHS: (a: any) => {

@@ -107,8 +107,7 @@ export const selectAllMedia: Writable<boolean> = writable(false)
 
 // GENERAL
 export const os: Writable<any> = writable({ platform: "", name: "Computer" }) // get os
-export const deviceId: Writable<string> = writable("client1");
-export const analyticsSecret: Writable<string> = writable("");
+export const deviceId: Writable<string> = writable("");
 
 // HISTORY
 export const undoHistory: Writable<History[]> = writable([])
