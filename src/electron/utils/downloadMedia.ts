@@ -25,7 +25,7 @@ function checkLesson(lesson: any) {
         .map((file: any) => {
             let extension = ""
             if (file.url.includes(".mp4")) extension = "mp4"
-            if (file.url.includes(".jpg")) extension = "jpg"
+            if (file.url.includes(".jpg") || file.url.includes(".jpeg")) extension = "jpg"
             if (file.url.includes(".png")) extension = "png"
             if (!extension) return
 
@@ -61,6 +61,7 @@ function downloadFile(filePath: string, file: any) {
         fileStream.on("finish", () => {
             fileStream.close()
             console.log("Media: '" + file.name + "', downloaded!")
+            //console.log("FROM:" + file.url)
         })
     })
 

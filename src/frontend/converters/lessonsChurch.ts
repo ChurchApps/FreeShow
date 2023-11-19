@@ -52,7 +52,7 @@ export async function convertLessonsPresentation(data: any) {
   activePopup.set("alert")
   createCategory("Lessons", "book")
 
-  console.log("*******************DATA", data)
+  //console.log("*******************DATA", data)
   if (data?.length>0)
   {
     let lesson:any = null
@@ -202,33 +202,32 @@ async function receiveMessage() {
 }
 
 function convertToSlides(files) {
-    console.log(files)
 
     let slides: any = {}
     let layout: any[] = []
     let media: any = {}
 
     files.forEach((file) => {
-        let mediaId = uid()
-        media[mediaId] = { name: file.name, path: file.url, muted: false, loop: !!file.loopVideo }
-        let nextAfterMedia = !media[mediaId].loop && get(videoExtensions).find((ext) => file.url.includes(ext))
+        if (file.url) {
+            let mediaId = uid()
+            media[mediaId] = { name: file.name, path: file.url, muted: false, loop: !!file.loopVideo }
+            let nextAfterMedia = !media[mediaId].loop && get(videoExtensions).find((ext) => file.url.includes(ext))
 
-        let slideId = uid()
-        slides[slideId] = {
-            group: file.name,
-            color: "",
-            settings: {},
-            notes: "",
-            items: [],
+            let slideId = uid()
+            slides[slideId] = {
+                group: file.name,
+                color: "",
+                settings: {},
+                notes: "",
+                items: [],
+            }
+
+            let currentLayout: any = { id: slideId, background: mediaId }
+            if (nextAfterMedia) currentLayout.actions = { nextAfterMedia: true }
+
+            layout.push(currentLayout)
         }
-
-        let currentLayout: any = { id: slideId, background: mediaId }
-        if (nextAfterMedia) currentLayout.actions = { nextAfterMedia: true }
-
-        layout.push(currentLayout)
     })
-
-    console.log("MEDIA", media)
 
     return { slides, layout, media }
 }
