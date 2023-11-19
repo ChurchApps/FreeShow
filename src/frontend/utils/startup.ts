@@ -84,6 +84,7 @@ import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
+import { trackAppLaunch } from "./analytics"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -127,6 +128,7 @@ function startupMain() {
     setTimeout(() => {
         listenForUpdates()
         listen()
+        trackAppLaunch();
     }, 5000)
 }
 

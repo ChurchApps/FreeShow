@@ -20,6 +20,7 @@ export async function trackEvent(eventName: string, params?:any) {
 }
 
 export function trackPageView(title:string) {
+  //console.log("PAGE VIEW", title);
   trackEvent("page_view", { page_location: "https://freeshow.app/_app/" + title, page_title: title, engagement_time_msec: 1 });
 }
 
