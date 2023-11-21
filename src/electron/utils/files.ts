@@ -141,6 +141,7 @@ export const dataFolderNames = {
     imports: "Imports",
     lessons: "Lessons",
     recordings: "Recordings",
+    userData: "Config",
 }
 
 // DATA PATH
@@ -351,7 +352,6 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
 export function loadShows({ showsPath }: any) {
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
-    if (!filesInFolder.length) return
 
     let cachedShows = stores.SHOWS.store
     let newCachedShows: any = {}

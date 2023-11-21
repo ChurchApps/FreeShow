@@ -14,7 +14,7 @@ import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, receiveOutput } from "./utils/output"
 import { loadScripture, loadShow, logError, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
-import { config, stores } from "./utils/store"
+import { config, stores, updateDataPath, userDataPath } from "./utils/store"
 import checkForUpdates from "./utils/updater"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
@@ -238,7 +238,10 @@ app.on("web-contents-created", (_e, contents) => {
 // ----- STORE DATA -----
 
 ipcMain.on(STORE, (e, msg) => {
-    if (msg.channel === "SAVE") save(msg.data)
+    if (userDataPath === null) updateDataPath()
+
+    if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
+    else if (msg.channel === "SAVE") save(msg.data)
     else if (msg.channel === "SHOWS") loadShows(msg.data)
     else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
 })

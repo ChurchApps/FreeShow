@@ -848,6 +848,7 @@
         "change_name": "Change name",
         "show_location": "Show location",
         "data_location": "Data location",
+        "user_data_location": "Save user data at data location",
         "font": "Font",
         "font_family": "Font family",
         "font_size": "Font size",

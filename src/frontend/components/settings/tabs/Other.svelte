@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { MAIN, STORE } from "../../../../types/Channels"
     import { activePopup, alertMessage, dataPath, dictionary, mediaCache, shows, showsCache, showsPath, special } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { receive, send } from "../../../utils/request"
@@ -10,6 +10,7 @@
     import T from "../../helpers/T.svelte"
     import { formatBytes } from "../../helpers/bytes"
     import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
@@ -58,6 +59,13 @@
         })
 
         if (key === "previewRate") restartOutputs()
+    }
+
+    function toggle(e: any, key: string) {
+        let checked = e.target.checked
+        updateSpecial(checked, key)
+
+        if (key === "customUserDataLocation") send(STORE, ["UPDATE_PATH"], { reset: !checked, dataPath: $dataPath })
     }
 
     // shows in folder
@@ -160,6 +168,13 @@
             <Icon id="launch" white />
         </Button>
     </span>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.user_data_location" /></p>
+    <div class="alignRight">
+        <Checkbox disabled={!$dataPath} checked={$special.customUserDataLocation || false} on:change={(e) => toggle(e, "customUserDataLocation")} />
+    </div>
 </CombinedInput>
 
 <CombinedInput>

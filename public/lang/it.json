@@ -16,11 +16,12 @@
         "made": "Creato in Norvegia da",
         "report": "Vuoi segnalare un problema? Crea un problema su GitHub",
         "help": "Vuoi aiutare a tradurre o richiedere una funzionalità? Invia una mail a",
+        "support": "Supportare il progetto?",
         "assets": "Assets usati",
         "libraries": "Librerie usate",
         "thanks": "Grazie a",
         "new_update": "Nuovo aggiornamento disponibile",
-        "download": "Vai su freeshow.app per scaricare",
+        "download": "Riavvia l'applicazione per aggiornare o vai su freeshow.app per scaricarla manualmente",
         "changes": "Cosa c'è di nuovo"
     },
     "tooltip": {
@@ -597,6 +598,7 @@
         "font": "Font",
         "family": "Famiglia",
         "style": "Stile",
+        "lines": "Linee",
         "options": "Opzioni",
         "_title_bold": "Grassetto",
         "_title_italic": "Corsivo",
@@ -921,7 +923,10 @@
         "verse_numbers": "Numeri di versi",
         "version": "Mostra versione",
         "reference": "Mostra referenze",
-        "red_jesus": "Parole di Gesù in rosso"
+        "combine_with_text": "Combina con testo",
+        "reference_at_bottom": "Sposta in basso",
+        "red_jesus": "Parole di Gesù in rosso",
+        "search": "Cerca nella Bibbia"
     },
     "filter": {
         "blur": "Sfocatura",
