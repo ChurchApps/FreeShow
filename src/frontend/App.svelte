@@ -35,15 +35,10 @@
     import { focusArea, hideDisplay, logerror, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
-    import { trackPageView } from "./utils/analytics"
 
     startup()
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
-
-    $: if (page) {
-        trackPageView(page)
-    }
 
     // get output resolution
     let width: number = 0

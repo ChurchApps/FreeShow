@@ -74,7 +74,6 @@ import {
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
 import { redoHistory, undoHistory } from "./../stores"
-import { trackAppLaunch } from "./analytics"
 import { checkForUpdates } from "./checkForUpdates"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
@@ -84,6 +83,7 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { startTracking } from "./analytics"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -127,7 +127,7 @@ function startupMain() {
     setTimeout(() => {
         listenForUpdates()
         listen()
-        trackAppLaunch()
+        startTracking()
     }, 5000)
 }
 

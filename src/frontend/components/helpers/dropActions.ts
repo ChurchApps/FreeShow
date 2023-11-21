@@ -37,14 +37,16 @@ export const dropActions: any = {
         console.log("Missing slide drop action:", drag.id)
         return history
     },
-    projects: ({ drag, drop }: any, history: any) => {
+    projects: ({ drag, drop }: any, historyRef: any) => {
         if (drag.id !== "folder" && drag.id !== "project") return
         if (drop.data.type && drop.data.type !== "folder") return
 
-        history.location.page = "show"
-        // TODO: move multiple
+        historyRef.location.page = "show"
+
         let parents = drop.data.path?.split("/") || [""]
+        let ids: string[] = []
         drag.data.forEach(checkData)
+
         function checkData(data: any) {
             if (data.type === drop.data.type) {
                 // itself
@@ -52,23 +54,27 @@ export const dropActions: any = {
                 // child of itself
                 if (parents[0] && data.path !== drop.data.path && parents.includes(data.id)) return
             }
-            // if ((data.id !== drop.data.id && (parents[0] === "" || data.path === drop.data.path || !parents.includes(data.id))) || data.type !== drop.data.type) {
 
-            history.oldData = { id: data.id }
+            ids.push(data.id)
+            historyRef.oldData = { id: data.id }
 
             if (data.type === "folder") {
-                history.id = "UPDATE"
-                history.location.id = "project_folder_key"
+                historyRef.id = "UPDATE"
+                historyRef.location.id = "project_folder_key"
                 return
             }
 
-            history.id = "UPDATE"
-            history.location.id = "project_key"
+            historyRef.id = "UPDATE"
+            historyRef.location.id = "project_key"
         }
 
-        history.newData = { key: "parent", data: drop.data.id || "/" }
+        historyRef.newData = { key: "parent", data: drop.data.id || "/" }
 
-        return history
+        // move multiple
+        ids.forEach((id) => {
+            historyRef.oldData = { id }
+            history(historyRef)
+        })
     },
     project: ({ drag, drop }: any, history: any) => {
         history.id = "UPDATE"

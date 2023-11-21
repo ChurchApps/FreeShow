@@ -1,4 +1,4 @@
-import { os, version, deviceId, isDev } from "../stores"
+import { os, version, deviceId, isDev, activePage, activeDrawerTab } from "../stores"
 import { get } from "svelte/store"
 
 export async function trackEvent(eventName: string, params?: any) {
@@ -21,11 +21,22 @@ export async function trackEvent(eventName: string, params?: any) {
     })
 }
 
-export function trackPageView(title: string) {
-    //console.log("PAGE VIEW", title);
+export function startTracking() {
+    trackAppLaunch()
+
+    // listeners
+    activePage.subscribe(trackPageView)
+    activeDrawerTab.subscribe(trackDrawerView)
+}
+
+function trackAppLaunch() {
+    trackEvent("application_start", { app_version: get(version), platform: get(os).platform })
+}
+
+function trackPageView(title: string) {
     trackEvent("page_view", { page_location: "https://freeshow.app/_app/" + title, page_title: title, engagement_time_msec: 1 })
 }
 
-export function trackAppLaunch() {
-    trackEvent("application_start", { app_version: get(version), platform: get(os).platform })
+function trackDrawerView(title: string) {
+    trackEvent("drawer_view", { drawer_location: "https://freeshow.app/_app/" + title, drawer_title: title, engagement_time_msec: 1 })
 }
