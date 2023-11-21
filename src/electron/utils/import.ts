@@ -1,5 +1,6 @@
 import fs, { readFileSync } from "fs"
 import path, { join } from "path"
+// import { pdf } from "pdf-to-img"
 import PPTX2Json from "pptx2json"
 import protobufjs from "protobufjs"
 import SqliteToJson from "sqlite-to-json"
@@ -50,6 +51,20 @@ const specialImports: any = {
             let outputPath = path.join(importPath, name)
             fs.mkdirSync(outputPath, { recursive: true })
             opts.out_dir = outputPath
+
+            // WIP use pdf-to-img when upgrading node (because of canvas)
+            // const doc = await pdf(filePath)
+
+            // let index = 0
+            // for await (const page of doc) {
+            //     index++
+            //     console.log(index, `img-${index}.png`)
+            //     fs.writeFile(path.join(outputPath, `img-${index}.png`), page, (err) => {
+            //         console.error(err)
+            //     })
+            // }
+
+            // data.push({ name, path: outputPath, pages: doc.length })
 
             try {
                 await pdf.convert(filePath, opts)

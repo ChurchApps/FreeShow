@@ -2,6 +2,7 @@
     import { EXPORT } from "../../../types/Channels"
     import { currentWindow } from "../../stores"
     import { send } from "../../utils/request"
+    import Media from "../media/Media.svelte"
     import Textbox from "../slide/Textbox.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
 
@@ -33,13 +34,17 @@
             show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide: any) => {
                 let slide = show.slides[layoutSlide.id]
                 if (!slide) return
+                slide.data = layoutSlide
                 a.push(slide)
                 if (slide.children) {
                     slide.children.forEach((childId: string) => {
-                        a.push(show.slides[childId])
+                        let slide = show.slides[childId]
+                        slide.data = layoutSlide
+                        a.push(slide)
                     })
                 }
             })
+
             layoutSlides[show.id] = a
             show.meta = Object.values(show.meta || {})
                 .filter((a: any) => a.length)
@@ -55,7 +60,7 @@
     function exportPDF() {
         setTimeout(() => {
             send(EXPORT, ["EXPORT"], { type: "pdf", path, name: shows[index].name })
-        }, 20 * (pages + 1) + 50)
+        }, 20 * (pages + 1) + 400)
     }
 
     $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id].length / options.grid[1] / (options.text && options.slides ? 1 : options.slides ? options.grid[0] : 1.5)) : 0
@@ -99,7 +104,14 @@
                 {/if}
                 {#if options.slides}
                     <div class="slides" class:invert={options.invert}>
-                        <Zoomed style="display: flex;justify-content: center;width: 100%;">
+                        <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
+                            {#if shows[index].media?.[slide.data?.background]?.path}
+                                <div class="media" style="height: 100%;zoom: {1 / ratio};">
+                                    <!-- {filter} {flipped} {fit} -->
+                                    <Media path={shows[index].media[slide.data.background].path} mirror />
+                                </div>
+                            {/if}
+
                             {#if slide.items}
                                 {#each slide.items as item}
                                     <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} />
