@@ -100,6 +100,7 @@ export function startup() {
         // wait a bit on slow computers
         setTimeout(() => {
             send(OUTPUT, ["REQUEST_DATA_MAIN"])
+            setLanguage() // this is only needed for the context menu
         }, 100)
         // TODO: video data!
     })

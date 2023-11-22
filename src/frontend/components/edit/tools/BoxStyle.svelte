@@ -109,19 +109,22 @@
         box.edit.chords[2].hidden = !item?.chords?.enabled
     }
 
-    $: if (id === "mirror" && box) getMirrorValues()
-    $: if (id === "media" && box) box.edit.default[0].value = item?.src || ""
-    $: if (id === "list" && box) box.edit.default[0].value = item?.list?.items || []
-    $: if (id === "timer" && box) box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
-    $: if (id === "variable" && box) box.edit.default[0].value = item?.variable?.id
-    $: if (id === "web" && box) box.edit.default[0].value = item?.web?.src || ""
-    $: if (id === "events" && box) {
-        box.edit.default[4].hidden = !item?.events?.enableStartDate
-        box.edit.default[5].hidden = !item?.events?.enableStartDate
+    $: if (box?.edit?.default) {
+        if (id === "mirror") getMirrorValues()
+        else if (id === "media") box.edit.default[0].value = item?.src || ""
+        else if (id === "list") box.edit.default[0].value = item?.list?.items || []
+        else if (id === "timer") box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
+        else if (id === "variable") box.edit.default[0].value = item?.variable?.id
+        else if (id === "web") box.edit.default[0].value = item?.web?.src || ""
+        else if (id === "events") {
+            box.edit.default[4].hidden = !item?.events?.enableStartDate
+            box.edit.default[5].hidden = !item?.events?.enableStartDate
+        }
     }
 
     function getMirrorValues() {
         if (!item?.mirror || !box) return
+
         let enableStage = item.mirror.enableStage || false
         let useSlideIndex = item.mirror.useSlideIndex
         let index = item.mirror.index

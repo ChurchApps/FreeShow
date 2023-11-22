@@ -15,8 +15,6 @@
     export let bibles: any
 </script>
 
-<!-- TODO: info tabs: clock, quick settings (master volume), local info -->
-
 <div class="main context #drawer_info">
     {#if !$forceClock && id === "shows" && $activeShow !== null && ($activeShow.type === undefined || $activeShow.type === "show")}
         <ShowInfo />

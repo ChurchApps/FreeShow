@@ -85,8 +85,6 @@
         }, 10)
     }
 
-    // TODO: serach for each drawer menu
-    // TODO: better search! (not seperated by comma...)
     let searchValue = ""
     $: searchValue = searchValue.endsWith(" ") ? removeWhitespace(searchValue) + " " : removeWhitespace(searchValue)
     $: if ($activeDrawerTab) searchValue = ""
@@ -122,10 +120,8 @@
         } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
-            // TODO: first match
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject) return
 
-            console.log(firstMatch)
             searchElem.select()
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: -1, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })

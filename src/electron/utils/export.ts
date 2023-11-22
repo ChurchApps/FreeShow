@@ -72,7 +72,6 @@ export function exportTXT(data: any) {
     toApp(MAIN, { channel: "ALERT", data: msg })
 }
 
-// TODO: clean this
 function getSlidesText(show: any) {
     let text: string = ""
 
@@ -80,16 +79,19 @@ function getSlidesText(show: any) {
     show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide: any) => {
         let slide = show.slides[layoutSlide.id]
         if (!slide) return
+
         slides.push(slide)
-        if (slide.children) {
-            slide.children.forEach((childId: string) => {
-                slides.push(show.slides[childId])
-            })
-        }
+        if (!slide.children) return
+
+        slide.children.forEach((childId: string) => {
+            let slide = show.slides[childId]
+            slides.push(slide)
+        })
     })
 
     slides.forEach((slide) => {
         if (slide.group) text += "[" + slide.group + "]\n"
+
         slide.items.forEach((item: any) => {
             if (!item.lines) return
 

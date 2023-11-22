@@ -129,9 +129,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     default: ["settings", "history", "about", "SEPERATOR", "quit"],
     rename: ["rename"],
     close: ["close"],
+    output_window: ["close"],
 
     // TOP
-    // TODO: output
     output: ["force_output"],
 
     // OUTPUTS

@@ -11,7 +11,7 @@
     import IconButton from "../../inputs/IconButton.svelte"
     import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
-    import { addItem } from "../scripts/addItem"
+    import { addItem } from "../scripts/itemHelpers"
     import { getItemText } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
 

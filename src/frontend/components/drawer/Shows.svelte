@@ -17,18 +17,11 @@
     export let active: string | null
     export let searchValue: string
 
-    // TODO: better search
     $: sva = searchValue
         .toLowerCase()
-        // .replace(/[^\w\s,]/g, "")
         .replace(/[.\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
         .split(" ")
-    // $: sva = searchValue
-    //   .toLowerCase()
-    //   .replace(/[.\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    //   .split(",")
 
-    // .replace(/[^\w\s]/g, "")
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
     const searchIncludes = (s: string, sv: string): boolean => filter(s).includes(sv)
     const searchEquals = (s: string, sv: string): boolean => filter(s) === sv
@@ -41,10 +34,7 @@
         sva.forEach((sv, i) => {
             if (sv.length > 1) {
                 match[i] = 0
-                // if (searchEquals(obj.name, sv)) match[i] = 100
-                // else
                 if (searchIncludes(obj.name, sv)) match[i] += 25
-                // if (obj.category !== null && searchIncludes($categories[obj.category].name, sv)) match[i] += 10
 
                 let cache = $textCache[obj.id]
                 if (cache) {
@@ -55,22 +45,6 @@
                         }
                     })
                 }
-
-                // if ($showsCache[obj.id]) {
-                //   let lines: any[] = _show(obj.id).slides().items().lines().get()[0]
-                //   lines?.forEach((line) => {
-                //     let text = line.text?.map((t: any) => t.value)[0]
-                //     if (text?.length) {
-                //       if (searchEquals(text, sv)) match[i] += 20
-                //       else if (searchIncludes(text, sv)) {
-                //         // TODO: more specific match
-                //         // console.log(sv, filter(text))
-                //         // match[i] += (10 * (sv.length / filter(text).length)).toFixed()
-                //         match[i] += 10
-                //       }
-                //     }
-                //   })
-                // }
             }
         })
 
@@ -157,7 +131,7 @@
                     if (currentIndex > 0) id = filteredShows[currentIndex - 1].id
                 }
             }
-            // TODO: index...
+
             if (id) activeShow.set({ id, type: "show" })
         }
     }
@@ -179,7 +153,6 @@
                 </VirtualList>
             {/key}
 
-            <!-- TODO: not updating values on activeSubTab change -->
             {#if searchValue.length > 1 && totalMatch === 0}
                 <Center size={1.2} faded><T id="empty.search" /></Center>
             {/if}

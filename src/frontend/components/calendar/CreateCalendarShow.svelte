@@ -79,9 +79,6 @@
     </Button>
 </div>
 
-<!-- TODO: settings -->
-
-<!-- add transition, replace near dates with weekday, display position & notes -->
 <style>
     .main {
         display: flex;

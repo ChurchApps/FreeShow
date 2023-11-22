@@ -34,15 +34,16 @@
             show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide: any) => {
                 let slide = show.slides[layoutSlide.id]
                 if (!slide) return
+
                 slide.data = layoutSlide
                 a.push(slide)
-                if (slide.children) {
-                    slide.children.forEach((childId: string) => {
-                        let slide = show.slides[childId]
-                        slide.data = layoutSlide
-                        a.push(slide)
-                    })
-                }
+                if (!slide.children) return
+
+                slide.children.forEach((childId: string) => {
+                    let slide = show.slides[childId]
+                    slide.data = layoutSlide
+                    a.push(slide)
+                })
             })
 
             layoutSlides[show.id] = a
@@ -51,9 +52,7 @@
                 .join("; ")
         })
 
-        if ($currentWindow === "pdf") {
-            exportPDF()
-        }
+        if ($currentWindow === "pdf") exportPDF()
     }
 
     let index: number = 0

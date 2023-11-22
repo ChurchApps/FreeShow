@@ -85,9 +85,11 @@
         <MenuBar />
     {/if}
     <main style={isWindows ? "height: calc(100% - 30px);" : ""} class:closeAd class:background={$currentWindow === "output"}>
+        <ContextMenu />
+
         {#if $currentWindow === "output"}
             <div
-                class="fill"
+                class="fill context #output_window"
                 style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0].stageOutput ? 'row' : 'column'}"
                 on:mousemove={mousemoveOutput}
                 bind:offsetWidth={width}
@@ -109,7 +111,6 @@
             <!-- WIP black window before output is loaded (don't show app screen when creating output windows) -->
             <!-- {#if !$loaded}<div class="black" />{/if} -->
 
-            <ContextMenu />
             <Popup />
             <Toast />
             <Recorder />
@@ -245,12 +246,6 @@
         min-width: 50%;
     }
 
-    /* @media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	} */
-
     .fill {
         /* TODO: setting for hiding cursor... */
         /* cursor: none; */
@@ -259,7 +254,6 @@
         overflow: hidden;
 
         display: flex;
-        /* background-color: black; */
         /* enable this to see the actual output window cropped size */
         /* background: var(--primary-darkest); */
     }

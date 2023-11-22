@@ -20,6 +20,7 @@
     onMount(() => {
         navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
             console.log(stream)
+            if (!videoElem) return
 
             videoElem.srcObject = stream
             videoElem.play()

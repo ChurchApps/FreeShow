@@ -71,12 +71,9 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
         // only one event or all events have the same color
         let color: any = day.events.length === 1 || [...new Set(day.events.map((a: any) => a.color))].length === 1 ? day.events[0].color : null
 
-        // TODO: event over multiple days!!
-
         // let duration = 6 + Math.floor(day.events.length * 0.75)
         let totalLength: number = 0
 
-        // TODO: align clocks (another font?)
         let values: any[][] = [[{ value: textDay, style: "font-weight: bold;line-height:1.5em;" }]] // , [{ value: "", style: "font-size:30px;" }]
         day.events
             .sort((a: any, b: any) => a.from - b.from)
@@ -185,16 +182,15 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
     show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
     show.media = showMedia
 
-    if (!showId) {
-        // TODO: week?
-        let { sortedDays, from, to } = sortDays(get(activeDays))
-        show.name = getDateString(from)
-        if (sortedDays[0] - sortedDays[1] < 0) show.name += " - " + getDateString(to)
-        show.name = checkName(show.name)
+    if (showId) return { show }
 
-        show.reference = { type: "calendar", data: { days: get(activeDays) } }
-        if (get(calendarAddShow)) show.reference.data.show = get(calendarAddShow)
-    }
+    let { sortedDays, from, to } = sortDays(get(activeDays))
+    show.name = getDateString(from)
+    if (sortedDays[0] - sortedDays[1] < 0) show.name += " - " + getDateString(to)
+    show.name = checkName(show.name)
+
+    show.reference = { type: "calendar", data: { days: get(activeDays) } }
+    if (get(calendarAddShow)) show.reference.data.show = get(calendarAddShow)
 
     return { show }
 }

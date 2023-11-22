@@ -15,8 +15,6 @@
     export let background: boolean = false
 
     let loaded = false
-    // $: currentOutput = $outputs[getActiveOutputs()[0]]
-    // $: active = currentOutput.out?.background?.type === "screen" && currentOutput.out?.background?.id === screen.id
 
     let canvas: any
     let videoElem: any
@@ -24,7 +22,6 @@
     function ready() {
         if (loaded || !videoElem || background) return
 
-        console.log(screen.name)
         canvas.width = videoElem.offsetWidth
         canvas.height = videoElem.offsetHeight
         canvas.getContext("2d").drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
@@ -99,13 +96,17 @@
 
 <style>
     video {
-        /* TODO: fix positioning */
         position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
     }
 
     canvas {
         width: 100%;
         height: 100%;
         aspect-ratio: 1920/1080;
+
+        object-fit: contain;
     }
 </style>

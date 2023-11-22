@@ -185,7 +185,6 @@ export function getSlides({ bibles, sorted }) {
                     }
                 })
             } else {
-                // TODO: formatting (already function in Scripture.svelte)
                 text = removeTags(text)
 
                 if (text.charAt(text.length - 1) !== " ") text += " "

@@ -26,7 +26,6 @@
     let files: any[] = []
 
     let notFolders = ["all", "favourites", "online", "screens", "cameras"]
-    $: console.log(active)
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path! || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
@@ -68,8 +67,6 @@
                 .sort((a: any, b: any) => a.name.localeCompare(b.name))
 
             filterFiles()
-            slowLoader = 50
-            increaseLoading()
         } else if (active === "all") {
             if (active !== prevActive) {
                 prevActive = active
@@ -94,15 +91,12 @@
     window.api.receive(READ_FOLDER, (msg: any) => {
         filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
 
-        if (active === "all" || msg.path === path) {
-            files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
-            files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        if (active !== "all" && msg.path !== path) return
 
-            filterFiles()
+        files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
+        files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-            slowLoader = 50
-            increaseLoading()
-        }
+        filterFiles()
     })
 
     let scrollElem: any
@@ -220,21 +214,6 @@
     const slidesViews: any = { grid: "list", list: "grid" }
     const nextActiveView: any = { all: "folder", folder: "image", image: "video", video: "all" }
 
-    // TODO: temporary loading preformance test
-    let slowLoader: number = 50 // 10
-    let timeout: any = null
-    function increaseLoading() {
-        if (timeout) clearTimeout(timeout)
-        if (slowLoader < filteredFiles.length) {
-            setTimeout(() => {
-                // slowLoader += 1
-                slowLoader += 50
-                console.log(slowLoader + "/" + filteredFiles.length)
-                increaseLoading()
-            }, 200)
-        }
-    }
-
     let gridHeight
     let gridWidth
 
@@ -266,11 +245,8 @@
 
 <svelte:window on:keydown={keydown} on:mousedown={mousedown} />
 
-<!-- TODO: fix: big images & many files -->
 <!-- TODO: autoscroll -->
-<!-- TODO: ctrl+arrow keys change drawer item... -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
-    <!-- {active === 'screens' || active === 'cameras' || (active === 'online' && (onlineTab === 'youtube' || onlineTab === 'vimeo')) ? 'padding: 5px;' : ''} -->
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;" bind:clientHeight={gridHeight} bind:clientWidth={gridWidth}>
         {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <PlayerVideos active={onlineTab} {searchValue} />

@@ -14,6 +14,7 @@ import {
     activeShow,
     audioFolders,
     currentOutputSettings,
+    currentWindow,
     dictionary,
     drawerTabsData,
     eventEdit,
@@ -65,6 +66,7 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
+import { hideDisplay } from "../../utils/common"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     let obj = { sel, actionItem, enabled, contextElem, menu }
@@ -297,6 +299,11 @@ const actions: any = {
         exportProject(get(projects)[projectId])
     },
     close: (obj: any) => {
+        if (get(currentWindow) === "output") {
+            hideDisplay()
+            return
+        }
+
         if (obj.contextElem.classList.contains("media")) {
             if (get(previousShow)) {
                 activeShow.set(JSON.parse(get(previousShow)))
@@ -914,8 +921,6 @@ function changeSlideAction(obj: any, id: string) {
 }
 
 export function removeGroup(data: any) {
-    // TODO: add new slide, and only remove the selected one
-
     let ref = _show().layouts("active").ref()[0]
     let firstSlideId = ref[0].id
 

@@ -6,19 +6,14 @@
 
     export let type: string = "event"
 
-    // onMount(updateEvents)
-
     const copy = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
     const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
     const isBetween = (from: Date, to: Date, date: Date) => date >= copy(from) && date <= copy(to)
 
     let current = new Date($activeDays[0])
-
     let currentEvents: any[] = []
 
-    activeDays.subscribe(() => {
-        updateEvents()
-    })
+    activeDays.subscribe(updateEvents)
     events.subscribe(updateEvents)
     $: if (type) updateEvents()
 
@@ -26,19 +21,13 @@
         current = new Date($activeDays[0])
         let temp: any[] = []
 
-        // current = new Date(current.toLocaleString("en-US", { timeZone: "Europe/London" }))
-
-        // if ($activeDays[0]) {
         Object.entries($events).forEach(([id, a]) => {
             if (isBetween(new Date(a.from), new Date(a.to), copy(current))) temp.push({ id, ...a })
         })
-        // }
 
         // sort
-        // TODO: sort
         temp = temp.filter((a) => a.type === type)
         currentEvents = temp.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
-        console.log(currentEvents)
     }
 
     function getTime(date: Date) {

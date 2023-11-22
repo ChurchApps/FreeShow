@@ -29,17 +29,7 @@
         else verseRange = ""
     }
 
-    // settings
-    // let verseNumbers: boolean = false
-    // let versesPerSlide: number = 3
-    // let showVersion: boolean = false
-    // let showVerse: boolean = true
-    // let redJesus: boolean = false // red jesus words
-
     let slides: Item[][] = [[]]
-    // let slides: any = {}
-    // let values: any[][] = []
-    // let itemStyle = "top: 150px;left: 50px;width: " + (resolution.width - 100) + "px;height: " + (resolution.height - 300) + "px;"
 
     $: if ($drawerTabsData) setTimeout(checkTemplate, 100)
     function checkTemplate() {
@@ -52,7 +42,6 @@
         })
     }
 
-    // $: template = $templates[$scriptureSettings.template]?.items || []
     $: {
         if (sorted.length || $scriptureSettings) slides = getSlides({ bibles, sorted })
         else slides = [[]]
@@ -73,7 +62,6 @@
         let layouts: any[] = []
         slides.forEach((items: any) => {
             let id = uid()
-            // TODO: group as verse numbers
             let firstTextItem = items.find((a) => a.lines)
             slides2[id] = { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
@@ -81,7 +69,7 @@
         })
 
         let layoutID = uid()
-        // TODO: private!!!?
+        // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
         let show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), $scriptureSettings.template || false)
         // add scripture category
         if (!$categories.scripture) {
@@ -91,8 +79,6 @@
             })
         }
 
-        // TODO: if name exists create new layout!!
-        // TODO: keep same chapter on same show (just add new layouts...?)
         show.name = checkName(bibles[0].book + " " + bibles[0].chapter + "," + verseRange)
         show.slides = slides2
         show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
@@ -137,7 +123,6 @@
         showVerse()
         playScripture.set(false)
     }
-    // $: if (verseRange && $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp") showVerse()
 
     // show on enter
     function keydown(e: any) {
@@ -193,17 +178,12 @@
 <div class="scroll">
     <Zoomed style="width: 100%;">
         {#if bibles[0]?.activeVerses}
-            <!-- {#each slides as items} -->
             {#each slides[0] as item}
                 <Textbox {item} ref={{ id: "scripture" }} />
             {/each}
-            <!-- {/each} -->
         {/if}
     </Zoomed>
 
-    <!-- TODO: drag&drop slide(s) -->
-
-    <!-- settings: red jw, verse numbers, verse break, max verses per slide, show version, show book&chapter&verse, text formatting -->
     <!-- settings -->
     <div class="settings">
         <CombinedInput textWidth={70}>

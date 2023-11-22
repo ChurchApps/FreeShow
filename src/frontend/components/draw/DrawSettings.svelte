@@ -27,6 +27,12 @@
             hollow: true,
             hold: false,
         },
+        zoom: {
+            opacity: 1,
+            size: 300,
+            radius: 50,
+            hold: false,
+        },
         particles: {
             color: "#1e1eb4",
             opacity: 0.8,
@@ -44,10 +50,10 @@
         paint: {
             color: "#ffffff",
             size: 10,
-            // TODO: not saved:
+            // not saved:
             threed: false,
             dots: false,
-            hold: true,
+            hold: true, // always true
         },
     }
 
