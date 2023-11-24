@@ -31,7 +31,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeEdit, activePage, activeShow, activeStage, activeTimers, autosave, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs, styles } from "./stores"
+    import { activeEdit, activePage, activeShow, activeStage, activeTimers, autosave, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs, special, styles } from "./stores"
     import { focusArea, hideDisplay, logerror, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -91,6 +91,7 @@
             <div
                 class="fill context #output_window"
                 style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0].stageOutput ? 'row' : 'column'}"
+                class:hideCursor={$special.hideCursor}
                 on:mousemove={mousemoveOutput}
                 bind:offsetWidth={width}
                 bind:offsetHeight={height}
@@ -247,8 +248,6 @@
     }
 
     .fill {
-        /* TODO: setting for hiding cursor... */
-        /* cursor: none; */
         height: 100%;
         width: 100%;
         overflow: hidden;
@@ -256,6 +255,10 @@
         display: flex;
         /* enable this to see the actual output window cropped size */
         /* background: var(--primary-darkest); */
+    }
+
+    .fill.hideCursor {
+        cursor: none;
     }
 
     /* .black {

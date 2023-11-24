@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { alertUpdates, autoOutput, autosave, labelsDisabled, timeFormat } from "../../../stores"
+    import { alertUpdates, autoOutput, autosave, labelsDisabled, special, timeFormat } from "../../../stores"
     import { setLanguage } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -14,6 +14,7 @@
         updates: (e: any) => alertUpdates.set(e.target.checked),
         labels: (e: any) => labelsDisabled.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
+        hideCursor: (e: any) => updateSpecial(e.target.checked, "hideCursor"),
     }
 
     const autosaveList: any = [
@@ -25,6 +26,15 @@
         { id: "30min", name: "30 $:settings.minutes:$" },
     ]
 
+    function updateSpecial(value, key) {
+        special.update((a) => {
+            if (!value) delete a[key]
+            else a[key] = value
+
+            return a
+        })
+    }
+
     // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
 
     function reset() {
@@ -33,6 +43,11 @@
         alertUpdates.set(true)
         autoOutput.set(false)
         labelsDisabled.set(false)
+
+        special.update((a) => {
+            delete a.hideCursor
+            return a
+        })
     }
 
     // WIP set calendar starting day
@@ -69,6 +84,12 @@
     <p><T id="settings.auto_output" /></p>
     <div class="alignRight">
         <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.hide_cursor_in_output" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.hideCursor} on:change={inputs.hideCursor} />
     </div>
 </CombinedInput>
 

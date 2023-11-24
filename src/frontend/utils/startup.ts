@@ -59,6 +59,7 @@ import {
     shows,
     showsCache,
     showsPath,
+    special,
     stageShows,
     styles,
     templates,
@@ -375,6 +376,7 @@ const receiveOUTPUTasOUTPUT: any = {
     MEDIA: (a: any) => mediaFolders.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
+    SPECIAL: (a: any) => clone(special.set(a)),
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
@@ -398,6 +400,8 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["MEDIA"], get(mediaFolders))
     send(OUTPUT, ["TIMERS"], get(timers))
     send(OUTPUT, ["VARIABLES"], get(variables))
+
+    send(OUTPUT, ["SPECIAL"], get(special))
 
     send(OUTPUT, ["PLAYER_VIDEOS"], get(playerVideos))
     send(OUTPUT, ["STAGE_SHOWS"], get(stageShows))
@@ -444,10 +448,17 @@ function importShow(files: any[]) {
         try {
             ;[id, show] = JSON.parse(content)
         } catch (e: any) {
-            console.error(name, e)
-            let pos = Number(e.toString().replace(/\D+/g, "") || 100)
-            console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
-            return
+            // try to fix broken show files
+            content = content.slice(0, content.indexOf("}}]") + 3)
+
+            try {
+                ;[id, show] = JSON.parse(content)
+            } catch (e: any) {
+                console.error(name, e)
+                let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+                console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+                return
+            }
         }
 
         tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })

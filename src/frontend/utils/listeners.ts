@@ -21,6 +21,7 @@ import {
     projects,
     shows,
     showsCache,
+    special,
     stageShows,
     styles,
     templates,
@@ -129,6 +130,10 @@ export function listenForUpdates() {
     })
     variables.subscribe((data) => {
         send(OUTPUT, ["VARIABLES"], data)
+    })
+
+    special.subscribe((data) => {
+        send(OUTPUT, ["SPECIAL"], data)
     })
 
     volume.subscribe((data) => {

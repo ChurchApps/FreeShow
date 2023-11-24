@@ -6,6 +6,7 @@ import { activeDrawerTab, activePage, activePopup, currentWindow, drawer, os, se
 import { save } from "./save"
 import { redo, undo } from "../components/helpers/history"
 import { menuClick } from "../components/context/menuClick"
+import { hideDisplay } from "./common"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 const drawerMenus: DrawerTabIds[] = ["shows", "media", "audio", "overlays", "templates", "scripture", "calendar"]
@@ -55,7 +56,10 @@ const keys: any = {
 }
 
 export function keydown(e: any) {
-    if (get(currentWindow) === "output") return
+    if (get(currentWindow) === "output") {
+        if (e.key === "Escape") hideDisplay()
+        return
+    }
 
     if (e.ctrlKey || e.metaKey) {
         if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {

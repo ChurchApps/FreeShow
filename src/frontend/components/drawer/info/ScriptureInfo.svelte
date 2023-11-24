@@ -203,9 +203,13 @@
             </div>
         </CombinedInput>
         {#if $scriptureSettings.verseNumbers}
-            <CombinedInput textWidth={70}>
+            <CombinedInput>
                 <p><T id="edit.color" /></p>
                 <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={(e) => update("numberColor", e.detail)} />
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="edit.size" /></p>
+                <NumberInput value={$scriptureSettings.numberSize || 50} on:change={(e) => update("numberSize", e.detail)} />
             </CombinedInput>
         {/if}
 
@@ -216,7 +220,7 @@
             </div>
         </CombinedInput>
         {#if $scriptureSettings.redJesus}
-            <CombinedInput textWidth={70}>
+            <CombinedInput>
                 <p><T id="edit.color" /></p>
                 <Color height={20} width={50} value={$scriptureSettings.jesusColor || "#FF4136"} on:input={(e) => update("jesusColor", e.detail)} />
             </CombinedInput>

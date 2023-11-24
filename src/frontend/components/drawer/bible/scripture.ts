@@ -124,8 +124,8 @@ export function getSlides({ bibles, sorted }) {
             let slideArr: any = slides[slideIndex][bibleIndex]
 
             if (get(scriptureSettings).verseNumbers) {
-                let size = 50
-                if (i === 0) size *= 1.5
+                let size = get(scriptureSettings).numberSize || 50
+                if (i === 0) size *= 1.2
                 let verseNumberStyle = textStyle + "font-size: " + size + "px;color: " + (get(scriptureSettings).numberColor || "#919191")
 
                 slideArr.lines![0].text.push({

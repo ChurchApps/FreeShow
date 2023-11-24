@@ -836,6 +836,7 @@
         "group_numbers": "Gruppenummer",
         "full_colors": "Full farge på lysbildegruppe",
         "auto_output": "Aktiver utgangsskjerm ved oppstart",
+        "hide_cursor_in_output": "Skjul peker i utgangsskjerm",
         "default_project_name": "Standard prosjektnavn",
         "resolution": "Oppløsning",
         "cropping": "Beskjæring",
