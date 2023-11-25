@@ -109,6 +109,8 @@
         box.edit.chords[2].hidden = !item?.chords?.enabled
     }
 
+    $: if (id === "timer" && box?.edit?.font) box.edit.font[3].value = item?.auto ?? true
+
     $: if (box?.edit?.default) {
         if (id === "mirror") getMirrorValues()
         else if (id === "media") box.edit.default[0].value = item?.src || ""

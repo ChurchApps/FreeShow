@@ -69,7 +69,10 @@ export function exportTXT(data: any) {
             if (err) msg = err
         })
     })
-    toApp(MAIN, { channel: "ALERT", data: msg })
+
+    setTimeout(() => {
+        toApp(MAIN, { channel: "ALERT", data: msg })
+    }, 500)
 }
 
 function getSlidesText(show: any) {
@@ -122,8 +125,8 @@ export function exportProject(data: any) {
     let msg: string = "export.exported"
     writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => {
         if (err) msg = err
+        toApp(MAIN, { channel: "ALERT", data: msg })
     })
-    toApp(MAIN, { channel: "ALERT", data: msg })
 }
 
 // ----- HELPERS -----

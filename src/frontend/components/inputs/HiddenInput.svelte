@@ -23,7 +23,7 @@
     const click = (e: any) => {
         if (e.target === nameElem) {
             //  || e.target.closest(".contextMenu")
-            edit = id
+            activeRename.set(id)
             prevVal = value
             setTimeout(() => inputElem?.focus(), 10)
         } else if (e.target !== inputElem) {

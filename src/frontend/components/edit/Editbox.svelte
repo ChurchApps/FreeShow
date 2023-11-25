@@ -933,7 +933,7 @@ bind:offsetWidth={width} -->
             <Cam cam={item.device} item />
         {/if}
     {:else if item?.type === "timer"}
-        <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" edit />
+        <Timer {item} id={item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${autoSize}px;`} edit />
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "events"}

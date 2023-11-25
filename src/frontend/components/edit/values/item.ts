@@ -28,6 +28,7 @@ export const itemEdits: { [key: string]: EditInput[] } = {
         { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
         { name: "background_opacity", id: "background-opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
         { name: "opacity", id: "style", key: "opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
+        { name: "padding", id: "style", key: "padding", input: "number", value: 0, extension: "px" },
         { name: "corner_radius", id: "style", key: "border-radius", input: "number", value: 0, values: { step: 10, max: 500, inputMultiplier: 0.1 }, extension: "px" },
     ],
     border: [

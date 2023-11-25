@@ -23,8 +23,13 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
 
             items = [
                 [id, { id: "name", label: "sort.name", icon: "text", enabled: type === "name" }],
-                [id, { id: "date", label: "sort.date", icon: "calendar", enabled: type === "date" }],
+                [id, { id: "created", label: "info.created", icon: "calendar", enabled: type === "created" }],
             ]
+            if (id === "sort_shows") {
+                items.push([id, { id: "modified", label: "info.modified", icon: "calendar", enabled: type === "modified" }])
+                items.push([id, { id: "used", label: "info.used", icon: "calendar", enabled: type === "used" }])
+            }
+
             break
         case "slide_groups":
             let selectedIndex = get(selected).data[0]?.index

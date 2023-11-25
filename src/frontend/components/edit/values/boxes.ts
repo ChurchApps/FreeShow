@@ -239,11 +239,30 @@ export const boxes: Box = {
                 },
                 { name: "timer.mask", id: "timer.circleMask", input: "checkbox", value: false },
             ],
+            // font: [
+            //     { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
+            //     { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
+            // ],
+            // style: [
+            //     { input: "font-style" }
+            //     { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" }
+            // ],
+
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
                 { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
+                { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
+                { name: "auto_size", id: "auto", input: "checkbox", value: true },
+                { input: "font-style" },
             ],
-            style: [{ input: "font-style" }, { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" }],
+            style: [
+                { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
+                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                // { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", enableNoColor: true },
+                // { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
+            ],
+            align: [{ input: "align-x" }], // , { input: "align-y" }
+
             outline: [
                 { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
                 { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
@@ -254,6 +273,7 @@ export const boxes: Box = {
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
             ],
+            CSS: [{ id: "text", input: "CSS" }],
         },
     },
     clock: {
@@ -290,6 +310,7 @@ export const boxes: Box = {
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
             ],
+            CSS: [{ id: "text", input: "CSS" }],
         },
     },
     events: {
@@ -372,6 +393,7 @@ export const boxes: Box = {
                 { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
                 { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
             ],
+            CSS: [{ id: "text", input: "CSS" }],
         },
     },
     web: {

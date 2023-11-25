@@ -9,6 +9,7 @@ import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
+import { formatToFileName } from "../helpers/show"
 
 export async function exportProject(project: Project) {
     let shows: any = {}
@@ -27,7 +28,7 @@ export async function exportProject(project: Project) {
     await Promise.all(project.shows.map(getShow))
 
     // export to file
-    send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: project.name, file: { project, shows } })
+    send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: { project, shows } })
 
     async function getShow(showRef: ProjectShowRef) {
         let type = showRef.type || "show"
