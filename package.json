@@ -139,7 +139,7 @@
         "follow-redirects": "^1.15.2",
         "font-list": "^1.4.5",
         "genius-lyrics": "^4.4.3",
-        "grandiose": "vassbo/grandiose#b7ddf3a",
+        "grandiose": "vassbo/grandiose#c0be908",
         "jzz": "^1.5.9",
         "node-machine-id": "^1.1.12",
         "node-pre-gyp": "^0.17.0",

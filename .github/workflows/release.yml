@@ -23,7 +23,8 @@ jobs:
                   node-version: 18
 
             - name: Install dependencies
-              run: npm ci
+              # npm ci is better, but requires package-lock.json file
+              run: npm install
 
             # - name: Install dmg-license
             #   if: startsWith(matrix.os, 'macos')
@@ -60,7 +61,7 @@ jobs:
                   node-version: 18
 
             - name: Install dependencies
-              run: npm ci
+              run: npm install
 
             - name: Install dmg-license
               run: npm i dmg-license
