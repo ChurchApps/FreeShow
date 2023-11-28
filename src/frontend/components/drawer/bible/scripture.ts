@@ -1,12 +1,12 @@
 import { get } from "svelte/store"
 import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
-import { bibleApiKey, scripturePath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
-import { clone } from "../../helpers/array"
+import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getAutoSize } from "../../edit/scripts/autoSize"
+import { clone } from "../../helpers/array"
 
+const api = "https://api.scripture.api.bible/v1/bibles/"
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
-    const api = "https://api.scripture.api.bible/v1/bibles/"
     let versesId: any = null
     if (ref.versesList.length) {
         versesId = ref.versesList[0].id + "-" + ref.versesList[ref.versesList.length - 1].id
@@ -26,6 +26,23 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
         fetch(urls[load], { headers: { "api-key": get(bibleApiKey) } })
+            .then((response) => response.json())
+            .then((data) => {
+                resolve(data.data)
+            })
+            .catch((e) => {
+                reject(e)
+            })
+    })
+}
+
+export function searchBibleAPI(active: string, searchQuery: string) {
+    let url = `${api}${active}/search?query=${searchQuery}`
+
+    return new Promise((resolve, reject) => {
+        if (!get(bibleApiKey)) return reject("No API key!")
+
+        fetch(url, { headers: { "api-key": get(bibleApiKey) } })
             .then((response) => response.json())
             .then((data) => {
                 resolve(data.data)
@@ -57,7 +74,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
             return
         }
 
-        window.api.send(BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(scripturePath) })
+        window.api.send(BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(dataPath) })
     })
 
     return bible
@@ -98,7 +115,7 @@ export function getSlides({ bibles, sorted }) {
         let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
-        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} }
+        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} } // scrolling, bindings
 
         let slideIndex: number = 0
         slides[slideIndex].push(clone(emptyItem))
@@ -107,8 +124,8 @@ export function getSlides({ bibles, sorted }) {
             let slideArr: any = slides[slideIndex][bibleIndex]
 
             if (get(scriptureSettings).verseNumbers) {
-                let size = 50
-                if (i === 0) size *= 1.5
+                let size = get(scriptureSettings).numberSize || 50
+                if (i === 0) size *= 1.2
                 let verseNumberStyle = textStyle + "font-size: " + size + "px;color: " + (get(scriptureSettings).numberColor || "#919191")
 
                 slideArr.lines![0].text.push({
@@ -168,7 +185,6 @@ export function getSlides({ bibles, sorted }) {
                     }
                 })
             } else {
-                // TODO: formatting (already function in Scripture.svelte)
                 text = removeTags(text)
 
                 if (text.charAt(text.length - 1) !== " ") text += " "
@@ -228,6 +244,7 @@ export function getSlides({ bibles, sorted }) {
 
         let lines: any[] = []
 
+        if (get(scriptureSettings).combineWithText) itemIndex = 0
         let metaTemplate = template[itemIndex] || template[0]
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         let versions = bibles.map((a) => a.version).join(" + ")
@@ -243,23 +260,15 @@ export function getSlides({ bibles, sorted }) {
         })
 
         if (lines.length) {
-            // add reference to the main text if just one item
-            if (template.length <= 1) {
-                // let firstLineStyle: string = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
-
-                // let verseLines = slides[slideIndex][0].lines || []
-                // console.log(verseLines)
-                // verseLines.forEach((line, i) =>
-                //     line.text?.forEach((_text, j) => {
-                //         verseLines[i].text[j].style = firstLineStyle
-                //     })
-                // )
-
-                slides[slideIndex][0].lines = [...lines, ...(slides[slideIndex][0].lines || [])]
+            // add reference to the main text if just one item or it's enabled!
+            if (template.length <= 1 || get(scriptureSettings).combineWithText) {
+                if (get(scriptureSettings).referenceAtBottom) slides[slideIndex][0].lines.push(...lines)
+                else slides[slideIndex][0].lines = [...lines, ...(slides[slideIndex][0].lines || [])]
             } else {
                 slides[slideIndex].push({
                     lines,
                     style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    specialStyle: metaTemplate?.specialStyle || {},
                 })
             }
         }

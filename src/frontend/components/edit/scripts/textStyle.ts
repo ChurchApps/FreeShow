@@ -208,6 +208,11 @@ export function getLastLineAlign(item: Item, selection: any): string {
     return last
 }
 
+// get text of slides
+export function getSlidesText(slides: { [key: string]: Slide }) {
+    return Object.values(slides).reduce((value, slide) => (value += getSlideText(slide)), "")
+}
+
 // get text of slide
 export function getSlideText(slide: Slide) {
     return slide.items.reduce((value, item) => (value += getItemText(item)), "")

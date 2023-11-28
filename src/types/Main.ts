@@ -83,14 +83,17 @@ export interface ActiveEdit {
 
 export type MediaFit = "contain" | "cover" | "fill"
 export interface Media {
-    [key: string]: {
-        filter: any
-        flipped?: boolean
-        fit?: MediaFit
-        speed?: string
-        favourite?: boolean
-        audio?: boolean
-    }
+    [key: string]: MediaStyle
+}
+export interface MediaStyle {
+    filter?: string
+    flipped?: boolean
+    fit?: MediaFit
+    speed?: string
+    fromTime?: number
+    toTime?: number
+    favourite?: boolean
+    audio?: boolean
 }
 
 export type Popups =

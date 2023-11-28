@@ -45,7 +45,6 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             // save locked overlays
             if (key === "overlays") lockedOverlays.set(outData)
 
-            // WIP update bg (muted, loop, time)
             // WIP preview don't get set to 0, just output window
             if (key === "background" && data) {
                 // mute videos in the other output windows if more than one
@@ -237,9 +236,6 @@ export async function clearPlayingVideo(clearOutput: any = null) {
     if (clearOutput) setOutput("background", null)
 
     let mediaTransition: Transition = getCurrentMediaTransition()
-    console.log(mediaTransition)
-
-    // TODO: fade out audio
 
     let duration = mediaTransition?.duration || 0
     if (!clearOutput) duration /= 2.4 // a little less than half the time

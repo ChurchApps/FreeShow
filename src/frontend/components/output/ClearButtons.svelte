@@ -74,7 +74,7 @@
                 {#if !$labelsDisabled}<T id={"preview.restore_output"} />{/if}
             </Button>
         {:else}
-            <Button class="clearAll" disabled={$outLocked || allCleared} on:click={clearAll} title="{$dictionary.clear?.all} [esc]" red dark center>
+            <Button class="clearAll" disabled={$outLocked || allCleared} on:click={() => clearAll(true)} title="{$dictionary.clear?.all} [esc]" red dark center>
                 <Icon id="clear" size={1.2} right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id={"clear.all"} />{/if}
             </Button>

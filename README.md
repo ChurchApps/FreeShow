@@ -26,13 +26,11 @@
 
 FreeShow is a free and open-source presentation program that makes it easy to show text on a big screen. It supports stage display, remote control, media, and many other advanced features. It is open-sourced meaning anyone can contribute.
 
-I created FreeShow because other simular programs I tried was expensive or complex to use. I wanted to create a program that was easy to use and affordable for everyone, from small churches to large venues. FreeShow is now used by people all over the world.
+FreeShow exists because the creator found that other simular programs was either expensive or complex to use. He wanted to create a program that was easy to use and affordable for everyone, from small churches to large venues. FreeShow is now used by people all over the world.
 
-## Donate?
+## Support us
 
-I've put a lot of time and effort into developing FreeShow, and I'm passionate about continuing to develop it. If you would like to help me make FreeShow even better, a donation would be greatly appreciated.
-
-[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=Y9PJC9TN4528A)
+The only reason this program is free is because of the generous support from users. If you want to support us to keep this free, please head over to [Live Church Solutions](https://livecs.org/partner). Thank you so much!
 
 ## Report an issue or request a feature
 

@@ -3,42 +3,45 @@
 
 import { app, desktopCapturer, Display, screen, shell, systemPreferences } from "electron"
 import { getFonts } from "font-list"
-import fs from "fs"
 import os from "os"
 import path from "path"
-import { closeMain, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
+import { closeMain, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { restoreFiles } from "./backup"
+import { downloadMedia } from "./downloadMedia"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, deleteFile, doesPathExist, getDocumentsFolder, getPaths, loadFile, locateMediaFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getDocumentsFolder, getPaths, loadFile, locateMediaFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
-import { downloadMedia } from "./downloadMedia"
 import { error_log } from "./store"
+import { machineIdSync } from "node-machine-id"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
-    let files: string[] = selectFilesDialog("", msg.data)
+    let files: string[] = selectFilesDialog("", msg.data.format)
 
-    if ((os.platform() === "linux" && msg.channel === "pdf") || (msg.data.extensions && !files.length)) return
-    importShow(msg.channel, files || null)
+    if ((os.platform() === "linux" && msg.channel === "pdf") || (msg.data.format.extensions && !files.length)) return
+    importShow(msg.channel, files || null, msg.data.path)
 }
 
 // EXPORT
 export function startExport(_e: any, msg: Message) {
     if (msg.channel !== "GENERATE") return
 
-    let path: string = msg.data.path
+    let dataPath: string = msg.data.path
 
-    if (!path) {
-        path = selectFolderDialog()
-        if (!path) return
-        toApp(MAIN, { channel: "EXPORT_PATH", data: path })
+    if (!dataPath) {
+        dataPath = selectFolderDialog()
+        if (!dataPath) return
+
+        toApp(MAIN, { channel: "DATA_PATH", data: dataPath })
     }
+
+    msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
 
     // WIP open in system when completed...
 
@@ -49,8 +52,7 @@ export function startExport(_e: any, msg: Message) {
 
 // BIBLE
 export function loadScripture(e: any, msg: Message) {
-    let bibleFolder: string = msg.path || ""
-    if (!bibleFolder) bibleFolder = getDocumentsFolder(null, "Bibles")
+    let bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
     let p: string = path.resolve(bibleFolder, msg.name + ".fsb")
 
     let bible: any = loadFile(p, msg.id)
@@ -75,19 +77,19 @@ export function loadShow(e: any, msg: Message) {
 // MAIN
 const mainResponses: any = {
     LOG: (data: string): void => console.log(data),
-    GET_OS: (): any => ({ platform: os.platform(), name: os.hostname() }),
-    GET_SYSTEM_FONTS: (): void => loadFonts(),
     VERSION: (): string => app.getVersion(),
+    IS_DEV: (): boolean => !isProd,
+    GET_OS: (): any => ({ platform: os.platform(), name: os.hostname() }),
+    DEVICE_ID: (): string => machineIdSync(),
+    ANALYTICS_SECRET: (): string => process.env.GA_SECRET || "",
+    GET_SYSTEM_FONTS: (): void => loadFonts(),
     URL: (data: string): void => openURL(data),
     START: (data: any): void => startServers(data),
     STOP: (): void => closeServers(),
     IP: (): any => os.networkInterfaces(),
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     SHOWS_PATH: (): string => getDocumentsFolder(),
-    EXPORT_PATH: (): string => getDocumentsFolder(null, "Exports"),
-    SCRIPTURE_PATH: (): string => getDocumentsFolder(null, "Bibles"),
-    RECORDING_PATH: (): string => getDocumentsFolder(null, "Recordings"),
-    // READ_SAVED_CACHE: (data: any): string => readFile(path.resolve(getDocumentsFolder(null, "Saves"), data.id + ".json")),
+    DATA_PATH: (): string => getDocumentsFolder(null, ""),
     DISPLAY: (): boolean => false,
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
     GET_MIDI_INPUTS: (): string[] => getMidiInputs(),
@@ -134,6 +136,7 @@ const mainResponses: any = {
     DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
     LOG_ERROR: (data: any) => logError(data),
     OPEN_LOG: () => openSystemFolder(error_log.path),
+    MEDIA_BASE64: (data: any) => storeMedia(data),
 }
 
 export function receiveMain(e: any, msg: Message) {
@@ -169,7 +172,7 @@ function deleteShowsNotIndexed(data: any) {
 }
 
 function getAllShows(data: any) {
-    let filesInFolder: string[] = readFolder(data.path)
+    let filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show"))
     return filesInFolder
 }
 
@@ -186,11 +189,13 @@ function refreshAllShows(data: any) {
 
         let p: string = path.join(data.path, name)
         let show = null
+
         try {
             show = JSON.parse(readFile(p) || "{}")
         } catch (error) {
             console.error("Error parsing show " + name) //  + ":", error
         }
+
         if (!show || !show[1]) return
 
         newShows[show[0]] = trimShow({ ...show[1], name: name.replace(".show", "") })
@@ -211,7 +216,7 @@ export function renameShows(shows: any, path: string) {
 }
 
 // WIP duplicate of setShow.ts
-function trimShow(showCache: Show) {
+export function trimShow(showCache: Show) {
     let show: any = {}
     if (!showCache) return show
 
@@ -271,10 +276,7 @@ function getScreens(type: "window" | "screen" = "screen") {
 
 // RECORDER
 export function saveRecording(_: any, msg: any) {
-    let folder: string = msg.path || ""
-    if (!folder) folder = getDocumentsFolder(null, "Recordings")
-    else if (!doesPathExist(folder)) folder = fs.mkdirSync(folder, { recursive: true }) || folder
-
+    let folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
     let p: string = path.resolve(folder, msg.name)
 
     const buffer = Buffer.from(msg.blob)
@@ -294,4 +296,15 @@ export function logError(log: any, electron: boolean = false) {
 
     // error_log.clear()
     error_log.set({ [key]: previousLog })
+}
+
+// STORE MEDIA AS BASE64
+function storeMedia(files: any[]) {
+    let encodedFiles: any[] = []
+    files.forEach(({ id, path }) => {
+        let content = readFile(path, "base64")
+        encodedFiles.push({ id, content })
+    })
+
+    toApp(MAIN, { channel: "MEDIA_BASE64", data: encodedFiles })
 }

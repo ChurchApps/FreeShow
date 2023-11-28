@@ -39,6 +39,10 @@
 </Button>
 
 <style>
+    p {
+        white-space: initial;
+    }
+
     p :global(a) {
         color: var(--text);
         opacity: 0.7;

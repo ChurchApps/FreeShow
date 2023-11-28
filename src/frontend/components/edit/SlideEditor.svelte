@@ -1,18 +1,18 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
-    import type { MediaFit } from "../../../types/Main"
+    import type { MediaStyle } from "../../../types/Main"
     import { activeEdit, activeShow, dictionary, driveData, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../stores"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
-    import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
+    import { history } from "../helpers/history"
+    import { getMediaStyle } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
-    import { getMediaFilter } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
-    import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
-    import { getStyleResolution } from "../slide/getStyleResolution"
     import Zoomed from "../slide/Zoomed.svelte"
+    import { getStyleResolution } from "../slide/getStyleResolution"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import Snaplines from "../system/Snaplines.svelte"
@@ -31,7 +31,6 @@
     let width: number = 0
     let height: number = 0
     $: resolution = getResolution(Slide?.settings?.resolution, { $outputs, $styles })
-    // TODO: zoom more in...
 
     let ratio: number = 1
 
@@ -56,21 +55,11 @@
     $: bgPath = cloudId && cloudId !== "default" && background ? background.cloud?.[cloudId] || background.path || "" : background?.path || ""
     // $: slideOverlays = layoutSlide.overlays || []
 
-    let filter: string = ""
-    let flipped: boolean = false
-    let fit: MediaFit = "contain"
-    let speed: string = "1"
-
     $: currentOutput = $outputs[getActiveOutputs()[0]]
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
-    $: if (bgPath) {
-        // TODO: use show filter if existing
-        filter = getMediaFilter(bgPath)
-        flipped = $media[bgPath]?.flipped || false
-        fit = currentStyle?.fit || $media[bgPath]?.fit || "contain"
-        speed = $media[bgPath]?.speed || "1"
-    }
+    let mediaStyle: MediaStyle = {}
+    $: if (bgPath) mediaStyle = getMediaStyle($media[bgPath], currentStyle)
 
     $: {
         if (active.length) updateStyles()
@@ -147,7 +136,7 @@
         if (nextScrollTimeout) return
         if (!e.target.closest(".editArea")) return
 
-        zoom = Number(Math.max(0.5, Math.min(2, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
+        zoom = Number(Math.max(0.2, Math.min(4, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
 
         // don't start timeout if scrolling with mouse
         if (e.deltaY > 100 || e.deltaY < -100) return
@@ -173,6 +162,7 @@
 
     $: slideFilter = ""
     $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
+    else slideFilter = ""
     function getSlideFilter() {
         slideFilter = ""
         if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
@@ -215,7 +205,7 @@
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">
-                            <MediaLoader path={bgPath || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {filter} {flipped} {fit} {speed} />
+                            <MediaLoader path={bgPath || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
                         </div>
                     {/if}
                     <!-- edit -->
@@ -278,10 +268,10 @@
                     <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
                         <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
                     </Button>
-                    <Button disabled={zoom <= 0.5} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
+                    <Button disabled={zoom <= 0.2} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
                         <Icon size={1.3} id="add" white />
                     </Button>
-                    <Button disabled={zoom >= 2} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
+                    <Button disabled={zoom >= 4} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
                         <Icon size={1.3} id="remove" white />
                     </Button>
                 </div>

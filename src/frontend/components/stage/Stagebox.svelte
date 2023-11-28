@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeStage, allOutputs, outputs, previewBuffers, showsCache, stageShows, timers } from "../../stores"
+    import { activeStage, allOutputs, outputs, previewBuffers, showsCache, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import T from "../helpers/T.svelte"
@@ -9,6 +9,7 @@
     import Image from "../media/Image.svelte"
     import PreviewCanvas from "../output/PreviewCanvas.svelte"
     import Timer from "../slide/views/Timer.svelte"
+    import Variable from "../slide/views/Variable.svelte"
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
     import SlideNotes from "./items/SlideNotes.svelte"
@@ -172,6 +173,10 @@
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
                         <Timer id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                    {/if}
+                {:else if id.includes("variables")}
+                    {#if $variables[id.split("#")[1]]}
+                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {/if}
                 {:else}
                     {id}

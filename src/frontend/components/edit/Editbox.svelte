@@ -26,7 +26,7 @@
     import Clock from "../system/Clock.svelte"
     import Movebox from "../system/Movebox.svelte"
     import { getAutoSize, getMaxBoxTextSize } from "./scripts/autoSize"
-    import { addChords, changeKey, chordMove } from "./scripts/chords"
+    import { addChords, chordMove } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
 
     export let item: Item
@@ -260,36 +260,13 @@
         }, 50)
     })
 
-    // update rearrange items
-    // TODO: (minor issue) text seemingly swapping places when rearranging items
-    // let updateItem: boolean = false
-    // $: if (item) checkItemUpdate()
-    // function checkItemUpdate() {
-    //     if (updateItem) {
-    //         updateItem = false
-    //         return
-    //     }
-
-    //     // update item
-    //     getStyle()
-    // }
-
     let currentSlide: number = -1
     $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide) {
         currentSlide = $activeEdit.slide
         setTimeout(getStyle, 10)
     }
 
-    // // update text if slide added/removed (for quick edit)
-    // let slideLength = 0
-    // $: if (_show().get().slides.length > slideLength) {
-    //   slideLength = _show().get().slides.length
-    //   setTimeout(getStyle, 10)
-    // }
-
     $: {
-        // console.log("ITEM", clone(item))
-
         // style hash
         let s = ""
         item?.lines?.forEach((line) => {
@@ -331,12 +308,20 @@
             if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
             if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
 
-            line.text?.forEach((a) => {
+            let currentChords = line.chords || []
+            let textIndex = 0
+
+            line.text?.forEach((a, tIndex) => {
                 currentStyle += getTextStyle(a)
+
+                // SAVE CHORDS (WIP does not work well with more "text" per line)
+                let textEnd = textIndex + a.value.length
+                let textChords = currentChords.filter((a) => a.pos >= textIndex && (a.pos <= textEnd || line.text.length - 1 >= tIndex))
+                textIndex = textEnd
 
                 let style = a.style ? 'style="' + a.style + '"' : ""
 
-                html += `<span ${plain ? "" : style}>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
+                html += `<span ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
             })
             html += "</div>"
         })
@@ -463,8 +448,8 @@
             currentStyle += align
 
             let newLine: any = { align, text: [] }
-            let chords = item.lines?.[i]?.chords
-            if (chords) newLine.chords = chords
+            let lineChords: any[] = []
+
             newLines.push(newLine)
 
             new Array(...line.childNodes).forEach((child: any, j: number) => {
@@ -485,7 +470,27 @@
 
                 newLines[pos].text.push({ style, value: child.innerText })
                 currentStyle += style
+
+                // GET CHORDS
+                let storedChords = child.getAttribute("data-chords")
+                if (storedChords) {
+                    storedChords = JSON.parse(storedChords)
+                    lineChords.push(...storedChords)
+                }
             })
+
+            // ADD BACK CHORDS
+            if (lineChords?.length) {
+                newLines[pos].chords = lineChords
+
+                // UPDATE/FIX CHORDS ON LINE BREAK
+                if (pos > 0 && JSON.stringify(newLines[pos].chords) === JSON.stringify(newLines[pos - 1].chords)) {
+                    let breakPoint = newLines[pos - 1].text.reduce((textLength, text) => (textLength += text.value.length), 0)
+
+                    newLines[pos - 1].chords = newLines[pos - 1].chords!.filter((a) => a.pos < breakPoint)
+                    newLines[pos].chords = newLines[pos].chords!.filter((a) => a.pos >= breakPoint).map((a) => ({ ...a, pos: a.pos - breakPoint }))
+                }
+            }
         })
 
         if (updateHTML) {
@@ -712,6 +717,8 @@
                 })
             })
 
+            if (!html) html += `<span class="invisible add"><br></span>`
+
             chords.forEach((chord: any, ci: number) => {
                 chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
                 let buttonIndex = chordButtons.length - 1
@@ -776,42 +783,6 @@ bind:offsetWidth={width} -->
         </div>
     {/if}
     {#if item?.lines}
-        <!-- chords (top right button) -->
-        <!-- <div
-            class="chordsButton"
-            style="zoom: {1 / ratio};"
-            on:mousedown={() => {
-                selected.set({
-                    id: "chord",
-                    data: [{ slideId: ref.id, itemIndex: index }],
-                })
-            }}
-        >
-            {#if chordsMode}
-                <Button class="context #chord" on:click={() => addChords(item, ref, index)}>
-                    <Icon id="add" white />
-                </Button>
-            {/if}
-        </div> -->
-
-        <!-- <div
-      class="chordsText align"
-      class:plain
-      style={plain ? null : item.align || null}
-    >
-      <div
-        style={plain
-          ? null
-          : item.align
-          ? item.align.replace("align-items", "justify-content")
-          : null}
-        class:height={item.lines?.length < 2 &&
-          !item.lines?.[0]?.text[0]?.value.length}
-      >
-        {@html html}
-      </div>
-    </div> -->
-
         <!-- TODO: remove align..... -->
         <div bind:this={alignElem} class="align" class:plain style={plain ? null : item.align || null}>
             {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
@@ -821,31 +792,10 @@ bind:offsetWidth={width} -->
             {/if}
             {#if chordsMode && textElem}
                 <div class="edit chords" on:mousedown={chordClick}>
-                    <!-- {#each item.lines as line, i}
-                        {#if line.chords}
-                            {#each line.chords as chord}
-                                {#await getChordPosition(chord, { textElem, item, line: i }) then pos}
-                                    <div class="context #chord chord" style={pos} on:mousedown={() => chordDown({ chord, index: i }, { showRef: ref, itemIndex: index })}>
-                                        <Button style="padding: 0 15px;" on:click={() => changeKey({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })}>
-                                            {chord.key}
-                                        </Button>
-                                    </div>
-                                {/await}
-                            {/each}
-                        {/if}
-                    {/each} -->
-
                     {#each item.lines as line, i}
                         <div class="break chordsBreak" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
                             {@html chordLines[i]}
                         </div>
-                        <!-- <div class="break" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
-                            {#each line.text || [] as text}
-                                <span style="{text.style}font-size: {autoSize}px;">
-                                    {@html text.value.replaceAll("\n", "<br>") || "<br>"}
-                                </span>
-                            {/each}
-                        </div> -->
                     {/each}
                 </div>
             {/if}
@@ -864,25 +814,8 @@ bind:offsetWidth={width} -->
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />
-            <!-- on:paste did not work on mac -->
+            <!-- this did not work on mac: -->
             <!-- on:paste|preventDefault={paste} -->
-
-            <!-- auto size -->
-            <!-- <div
-                bind:this={textElem}
-                on:mousemove={(e) => {
-                    let newLines = chordMove(e, { textElem, item })
-                    if (newLines) item.lines = newLines
-                }}
-                class="edit"
-                class:autoSize={item.auto}
-                contenteditable
-                on:keydown={textElemKeydown}
-                bind:innerHTML={html}
-                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
-                class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
-                class:tallLines={chordsMode}
-            /> -->
         </div>
     {:else if item?.type === "list"}
         <ListView list={item.list} disableTransition />
@@ -903,7 +836,7 @@ bind:offsetWidth={width} -->
             <Cam cam={item.device} item />
         {/if}
     {:else if item?.type === "timer"}
-        <Timer {item} id={item.timerId || ""} {today} style="font-size: {autoSize}px;" edit />
+        <Timer {item} id={item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${autoSize}px;`} edit />
     {:else if item?.type === "clock"}
         <Clock {autoSize} style={false} {...item.clock} />
     {:else if item?.type === "events"}

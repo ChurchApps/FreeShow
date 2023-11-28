@@ -137,7 +137,6 @@
         day = copy(day)
 
         if (e.ctrlKey || e.metaKey) {
-            // TODO: clicking after creation will add duplicate
             activeDays.update((a) => {
                 if (a.includes(day.getTime())) {
                     if (a.length > 1) a.splice(a.indexOf(day.getTime()), 1)

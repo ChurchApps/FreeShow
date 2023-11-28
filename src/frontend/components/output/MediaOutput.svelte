@@ -1,11 +1,12 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import type { MediaFit } from "../../../types/Main"
+    import type { MediaStyle } from "../../../types/Main"
     import type { Transition } from "../../../types/Show"
     import { audioChannels, outputs, playingVideos, volume } from "../../stores"
     import { receive, send } from "../../utils/request"
     import { custom } from "../../utils/transitions"
     import { analyseAudio, getAnalyser } from "../helpers/audio"
+    import { getMediaStyle } from "../helpers/media"
     import Media from "../media/Media.svelte"
     import { getStyleResolution } from "../slide/getStyleResolution"
     import Player from "../system/Player.svelte"
@@ -20,7 +21,6 @@
     export let path: string = ""
     export let id: string = ""
     export let cameraGroup: string = ""
-    // export let name: string = ""
     export let type: string = "media"
     export let startAt: number = 0
 
@@ -28,20 +28,6 @@
     export let mirror: boolean = false
 
     $: if (type === "video" || type === "image" || type === undefined) type = "media"
-    // $: if (type === "media" && !path?.length && $mediaFolders[id]?.path && name) {
-    //     // TODO: what's this for?
-    //     let seperator = "/"
-    //     if ($mediaFolders[id].path?.includes("\\")) seperator = "\\"
-    //     path = $mediaFolders[id].path + seperator + name || ""
-    // }
-
-    // $: if (!mirror && !hasLoaded && background?.startAt !== undefined) changeTime()
-    // function changeTime() {
-    //     setTimeout(() => {
-    //         send(OUTPUT, ["MAIN_VIDEO"], { id: outputId, time: background.startAt })
-    //         delete background.startAt
-    //     }, 100)
-    // }
 
     let width: number = 0
     let height: number = 0
@@ -83,19 +69,8 @@
         }, 100)
     }
 
-    let filter: string = ""
-    let flipped: boolean = false
-    let fit: MediaFit = "contain"
-    let speed: string = "1"
-
-    $: if (background !== null || currentStyle) updateFilter()
-    function updateFilter() {
-        let temp: any = { ...background }
-        filter = temp.filter || ""
-        flipped = temp.flipped || false
-        fit = currentStyle?.fit || temp.fit || "contain"
-        speed = temp.speed || "1"
-    }
+    let mediaStyle: MediaStyle = {}
+    $: if (background !== null) mediaStyle = getMediaStyle(background, currentStyle)
 
     // only output window
     let currentAnalysedElem: any = null
@@ -198,39 +173,13 @@
         }, 1000)
 
         send(OUTPUT, ["MAIN_VIDEO_ENDED"], { id: outputId })
-
-        // // TODO: do this in main
-
-        // if (checkNextAfterMedia()) {
-        //     // videoTime = 0
-        //     return
-        // }
-
-        // if (videoData.loop) return
-
-        // setOutput("background", null)
-        // videoTime = 0
-
-        // send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
-
-        // let currentOutput = $outputs[outputId]
-        // if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })
-
-        // dont think this is nessesary
-        // setTimeout(() => {
-        //     if (!currentOutput.out?.background) video = null
-        // }, 500)
     }
-
-    // $: if (currentOutput.out?.background === null) {
-    //     clearVideo()
-    // }
 </script>
 
 <!-- svelte transition bug: the double copies are to remove media when changing from "draw" view -->
 <!-- TODO: display image stretch / scale -->
 {#if type === "media"}
-    <Media {path} {currentStyle} {animationStyle} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} on:playing={playing} on:loaded={loaded} />
+    <Media {path} {background} {currentStyle} {animationStyle} {transition} bind:video bind:videoData bind:videoTime {startAt} {mirror} {mediaStyle} on:playing={playing} on:loaded={loaded} />
 {:else if type === "screen"}
     {#key id}
         {#if transition.type === "none"}

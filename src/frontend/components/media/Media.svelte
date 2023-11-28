@@ -1,25 +1,23 @@
 <script lang="ts">
-    import type { MediaFit } from "../../../types/Main"
+    import type { MediaStyle } from "../../../types/Main"
     import type { Transition } from "../../../types/Show"
     import { activeEdit, activeShow, media, playingVideos } from "../../stores"
     import { custom } from "../../utils/transitions"
     import { clone } from "../helpers/array"
-    import { getExtension, getMediaType } from "../helpers/media"
+    import { getExtension, getMediaStyle, getMediaType } from "../helpers/media"
     import { setOutput } from "../helpers/output"
     import Image from "./Image.svelte"
     import MediaControls from "./MediaControls.svelte"
     import Video from "./Video.svelte"
 
     export let path: string
+    export let background: any = {}
     export let currentStyle: any = {}
     export let animationStyle: string = ""
     export let controls: boolean = false
     export let transition: Transition = { type: "none", duration: 0, easing: "linear" }
 
-    export let filter: string = ""
-    export let flipped: boolean = false
-    export let fit: MediaFit = "contain"
-    export let speed: string = "1"
+    export let mediaStyle: MediaStyle = {}
 
     export let video: any = null
     export let videoData: any = { paused: false, muted: true, duration: 0, loop: false }
@@ -27,18 +25,12 @@
     export let startAt: number = 0
     export let mirror: boolean = false
 
-    // TODO: this will override preview, if play without filters is active and editing media:
     // get styling
     $: mediaId = $activeEdit.id && $activeEdit.type === "media" ? $activeEdit.id : $activeShow?.id && ($activeShow.type === "image" || $activeShow.type === "video") ? $activeShow.id : ""
-    $: if (mediaId && ($media[mediaId] || currentStyle)) {
-        filter = $media[mediaId]?.filter || ""
-        flipped = $media[mediaId]?.flipped || false
-        fit = currentStyle?.fit || $media[mediaId]?.fit || "contain"
-        speed = $media[mediaId]?.speed || "1"
-    }
+    $: if (mediaId) mediaStyle = getMediaStyle($media[mediaId], currentStyle)
 
     $: extension = getExtension(path)
-    $: type = getMediaType(extension)
+    $: type = background.type || getMediaType(extension)
 
     let video1: any = {}
     let video2: any = {}
@@ -63,8 +55,13 @@
     else resetData()
 
     function resetVideos() {
-        // WIP console.log("PREVIEW RESET")
-        if (videoData.loop) return
+        if (videoData.loop) {
+            if (mediaStyle.toTime) {
+                videoTime = Math.max(startAt, mediaStyle.fromTime || 0) || 0
+                updateVideo("time")
+            }
+            return
+        }
         let currentBackgroundId = path
 
         resetData()
@@ -226,50 +223,18 @@
         {#if noTransitions}
             {#if path}
                 <div class="video">
-                    <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {filter} {flipped} {fit} {speed} {animationStyle} on:playing on:loaded on:ended={() => resetVideos()} on:error={reload} />
+                    <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={resetVideos} on:error={reload} />
                 </div>
             {/if}
         {:else}
             {#if video1.active && video1.path}
                 <div class="video" class:change transition:custom={transition}>
-                    <Video
-                        path={video1.path}
-                        bind:video={video1.video}
-                        bind:videoData={video1.data}
-                        bind:videoTime={videoTime1}
-                        {startAt}
-                        {mirror}
-                        {filter}
-                        {flipped}
-                        {fit}
-                        {speed}
-                        {animationStyle}
-                        on:playing
-                        on:loaded
-                        on:ended={() => resetVideos()}
-                        on:error={reload}
-                    />
+                    <Video path={video1.path} bind:video={video1.video} bind:videoData={video1.data} bind:videoTime={videoTime1} {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={resetVideos} on:error={reload} />
                 </div>
             {/if}
             {#if video2.active && video2.path}
                 <div class="video" class:change transition:custom={transition}>
-                    <Video
-                        path={video2.path}
-                        bind:video={video2.video}
-                        bind:videoData={video2.data}
-                        bind:videoTime={videoTime2}
-                        {startAt}
-                        {mirror}
-                        {filter}
-                        {flipped}
-                        {fit}
-                        {speed}
-                        {animationStyle}
-                        on:playing
-                        on:loaded
-                        on:ended={() => resetVideos()}
-                        on:error={reload}
-                    />
+                    <Video path={video2.path} bind:video={video2.video} bind:videoData={video2.data} bind:videoTime={videoTime2} {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={resetVideos} on:error={reload} />
                 </div>
             {/if}
         {/if}
@@ -284,21 +249,21 @@
         {#if noTransitions}
             {#if path}
                 <div style="height: 100%;{animationStyle}">
-                    <Image {path} {filter} {flipped} {fit} on:error={reload} />
+                    <Image {path} {mediaStyle} on:error={reload} />
                 </div>
             {/if}
         {:else}
             {#if img1.path}
                 <div class="change">
                     <div style="height: 100%;{animationStyle}" transition:custom={transition}>
-                        <Image path={img1.path} {filter} {flipped} {fit} on:error={reload} on:load={imageLoaded} />
+                        <Image path={img1.path} {mediaStyle} on:error={reload} on:load={imageLoaded} />
                     </div>
                 </div>
             {/if}
             {#if img2.path}
                 <div class="change">
                     <div style="height: 100%;{animationStyle}" transition:custom={transition}>
-                        <Image path={img2.path} {filter} {flipped} {fit} on:error={reload} on:load={imageLoaded} />
+                        <Image path={img2.path} {mediaStyle} on:error={reload} on:load={imageLoaded} />
                     </div>
                 </div>
             {/if}

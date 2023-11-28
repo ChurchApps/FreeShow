@@ -23,6 +23,7 @@ export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)
 export const loaded: Writable<boolean> = writable(true)
+export const isDev: Writable<boolean> = writable(false)
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
@@ -46,6 +47,7 @@ export const currentRecordingStream: Writable<any> = writable(null)
 export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
+export const activeScripture: Writable<any> = writable({})
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -106,6 +108,7 @@ export const selectAllMedia: Writable<boolean> = writable(false)
 
 // GENERAL
 export const os: Writable<any> = writable({ platform: "", name: "Computer" }) // get os
+export const deviceId: Writable<string> = writable("")
 
 // HISTORY
 export const undoHistory: Writable<History[]> = writable([])
@@ -193,9 +196,7 @@ export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode:
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 300, rightPanel: 300, leftPanelDrawer: 300, rightPanelDrawer: 300 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
-export const exportPath: Writable<null | string> = writable(null) // null
-export const scripturePath: Writable<string> = writable("") // ""
-export const recordingPath: Writable<string> = writable("") // ""
+export const dataPath: Writable<string> = writable("") // ""
 export const lockedOverlays: Writable<string[]> = writable([]) // []
 export const special: Writable<any> = writable({}) // {}
 
@@ -321,7 +322,7 @@ export const $ = {
     drawer,
     mediaOptions,
     resized,
-    exportPath,
+    dataPath,
     language,
     timeFormat,
     alertUpdates,

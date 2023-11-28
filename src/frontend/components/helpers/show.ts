@@ -87,8 +87,12 @@ export function updateShowsList(shows: Shows) {
     let sortType = get(sorted).shows?.type || "name"
     // sort by name regardless if many shows have the same date
     let sortedShows: any[] = sortObject(showsList, "name")
-    if (sortType === "date") {
-        sortedShows = showsList.sort((a, b) => (b.timestamps?.created || b.timestamps?.modified) - (a.timestamps?.created || a.timestamps?.modified))
+    if (sortType === "created") {
+        sortedShows = showsList.sort((a, b) => b.timestamps?.created - a.timestamps?.created)
+    } else if (sortType === "modified") {
+        sortedShows = showsList.sort((a, b) => (b.timestamps?.modified || b.timestamps?.created) - (a.timestamps?.modified || a.timestamps?.created))
+    } else if (sortType === "used") {
+        sortedShows = showsList.sort((a, b) => (b.timestamps?.used || b.timestamps?.created) - (a.timestamps?.used || a.timestamps?.created))
     }
 
     let filteredShows: ShowList[] = removeValues(sortedShows, "private", true)

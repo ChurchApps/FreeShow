@@ -9,14 +9,14 @@ import { cloudConnect } from "./cloud/cloud"
 import { receiveNDI } from "./ndi/talk"
 import { closeServers } from "./servers"
 import { startBackup } from "./utils/backup"
-import { checkShowsFolder, deleteFile, getDocumentsFolder, getFileInfo, getFolderContent, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, loadShows, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, receiveOutput } from "./utils/output"
 import { loadScripture, loadShow, logError, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
-import { config, stores } from "./utils/store"
+import { config, stores, updateDataPath, userDataPath } from "./utils/store"
+import checkForUpdates from "./utils/updater"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-// import checkForUpdates from "./utils/updater"
 
 // ----- STARTUP -----
 
@@ -46,8 +46,7 @@ function startApp() {
     // set app title to app name on windows
     if (process.platform === "win32") app.setAppUserModelId(app.name)
 
-    // TODO: check for updates
-    // if (isProd) checkForUpdates()
+    if (isProd) checkForUpdates()
 
     // catch errors
     process.on("uncaughtException", function (err) {
@@ -239,7 +238,11 @@ app.on("web-contents-created", (_e, contents) => {
 // ----- STORE DATA -----
 
 ipcMain.on(STORE, (e, msg) => {
-    if (msg.channel === "SAVE") save(msg.data)
+    if (userDataPath === null) updateDataPath()
+
+    if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
+    else if (msg.channel === "SAVE") save(msg.data)
+    else if (msg.channel === "SHOWS") loadShows(msg.data)
     else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
 })
 
@@ -256,9 +259,10 @@ function save(data: any) {
 
     // scriptures
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
+    let scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
     function saveScripture([id, value]: any) {
         if (!value) return
-        let p: string = path.resolve(data.scripturePath || getDocumentsFolder(null, "Bibles"), value.name + ".fsb")
+        let p: string = path.join(scripturePath, value.name + ".fsb")
         writeFile(p, JSON.stringify([id, value]), id)
     }
 
@@ -276,6 +280,7 @@ function save(data: any) {
         function saveShow([id, value]: any) {
             if (!value) return
             let p: string = path.resolve(data.path, (value.name || id) + ".show")
+            // WIP will overwrite a file with JSON data from another show 0,007% of the time (7 shows get broken when saving 1000 at the same time)
             writeFile(p, JSON.stringify([id, value]), id)
         }
 
@@ -294,7 +299,7 @@ function save(data: any) {
             }, 300)
         }
 
-        if (data.backup) startBackup({ showsPath: data.path, scripturePath: data.scripturePath })
+        if (data.backup) startBackup({ showsPath: data.path, dataPath: data.dataPath, scripturePath })
     }, 700)
 }
 

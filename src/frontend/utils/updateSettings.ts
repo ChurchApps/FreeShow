@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../types/Channels"
+import { MAIN, STORE } from "../../types/Channels"
 import type { Output } from "../../types/Output"
 import { clone, keysToID } from "../components/helpers/array"
 import { displayOutputs, setOutput } from "../components/helpers/output"
@@ -14,13 +14,13 @@ import {
     calendarAddShow,
     categories,
     customizedIcons,
+    dataPath,
     defaultProjectName,
     disabledServers,
     drawSettings,
     drawer,
     drawerTabsData,
     driveData,
-    exportPath,
     formatNewShow,
     fullColors,
     gain,
@@ -43,10 +43,8 @@ import {
     ports,
     presenterControllerKeys,
     projectView,
-    recordingPath,
     remotePassword,
     resized,
-    scripturePath,
     serverData,
     showsPath,
     slidesOptions,
@@ -177,18 +175,13 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     showsPath: (v: any) => {
         if (!v) send(MAIN, ["SHOWS_PATH"])
         else showsPath.set(v)
+
+        // LOAD SHOWS FROM FOLDER
+        send(STORE, ["SHOWS"], { showsPath: v })
     },
-    exportPath: (v: any) => {
-        if (!v) send(MAIN, ["EXPORT_PATH"])
-        else exportPath.set(v)
-    },
-    scripturePath: (v: any) => {
-        if (!v) send(MAIN, ["SCRIPTURE_PATH"])
-        else scripturePath.set(v)
-    },
-    recordingPath: (v: any) => {
-        if (!v) send(MAIN, ["RECORDING_PATH"])
-        else recordingPath.set(v)
+    dataPath: (v: any) => {
+        if (!v) send(MAIN, ["DATA_PATH"])
+        else dataPath.set(v)
     },
     lockedOverlays: (v: any) => {
         // only get locked overlays
@@ -199,10 +192,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         // start overlays
         setOutput("overlays", v, false, null, true)
     },
-    os: (v: any) => {
-        if (!v.platform) send(MAIN, ["GET_OS"])
-        os.set(v)
-    },
+    os: (v: any) => os.set(v),
     // TODO: get device lang
     language: (v: any) => {
         language.set(v)

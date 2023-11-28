@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import type { MediaFit } from "../../../types/Main"
+    import type { MediaStyle } from "../../../types/Main"
     import { volume } from "../../stores"
 
     export let path: any
@@ -11,10 +11,7 @@
     export let startAt: number = 0
     export let mirror: boolean = false
 
-    export let filter: string = ""
-    export let flipped: boolean = false
-    export let fit: MediaFit = "contain"
-    export let speed: string = "1"
+    export let mediaStyle: MediaStyle = {}
 
     export let animationStyle: string = ""
 
@@ -36,6 +33,18 @@
         // }
     }
 
+    $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0
+    $: if (endTime) setInterval(checkIfEnded, 1000)
+    function checkIfEnded() {
+        if (!video) return
+        console.log(video.currentTime, video.currentTime >= endTime!)
+        if (video.currentTime >= endTime!) dispatch("ended")
+    }
+    // $: if (endTime && videoTime >= endTime) endVideo()
+    // function endVideo() {
+    //     dispatch("ended")
+    // }
+
     function playing() {
         if (!hasLoaded || mirror) return
         hasLoaded = false
@@ -43,23 +52,21 @@
 
         videoData.paused = true
         setTimeout(() => {
-            videoTime = startAt || 0
+            videoTime = Math.max(startAt, mediaStyle.fromTime || 0) || 0
             videoData.paused = false
             startAt = 0
         }, 50)
     }
 
-    $: if (speed && video) video.playbackRate = Number(speed)
+    $: if (mediaStyle.speed && video) video.playbackRate = Number(mediaStyle.speed)
 
     $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
-
-    $: console.log(filter)
 </script>
 
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     <video
         class="media"
-        style="width: 100%;height: 100%;object-fit: {fit};filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}"
+        style="width: 100%;height: 100%;object-fit: {mediaStyle.fit};filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''}"
         bind:this={video}
         on:loadedmetadata={loaded}
         on:playing={playing}

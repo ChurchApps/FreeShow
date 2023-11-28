@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { MediaStyle } from "../../../types/Main"
     import { activeProject, activeRename, dictionary, outLocked, outputs, playingVideos, projects, videoMarkers, volume } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -13,10 +14,7 @@
 
     export let show
 
-    export let filter
-    export let flipped
-    export let fit
-    export let speed
+    export let mediaStyle: MediaStyle = {}
 
     let videoTime: number = 0
     let videoData = {
@@ -100,7 +98,7 @@
         if (e.key === " " && show && (!outputPath || outputPath !== show.id)) {
             e.preventDefault()
             if ((show!.type === "video" && outputPath !== show.id) || (show!.type === "player" && output.out?.background?.id !== show.id)) playVideo()
-            else if (show!.type === "image" && !$outLocked) setOutput("background", { path: show?.id, filter })
+            else if (show!.type === "image" && !$outLocked) setOutput("background", { path: show?.id, ...mediaStyle })
             // TODO: this will play first slide
             // else if (show.type === "section") goToNextProjectItem()
         }
@@ -109,7 +107,7 @@
     function playVideo(startAt: number = 0) {
         if ($outLocked) return
 
-        let bg: any = { type: show!.type, startAt, loop: false, filter, flipped, fit, speed }
+        let bg: any = { type: show!.type, startAt, loop: false, ...mediaStyle }
 
         if (show!.type === "player") bg.id = show!.id
         else {
@@ -126,7 +124,7 @@
         setOutput("background", bg)
     }
 
-    $: if (video && speed) video.playbackRate = speed
+    $: if (video && mediaStyle.speed) video.playbackRate = mediaStyle.speed
 
     // MARKER
 
@@ -186,7 +184,7 @@
             {:else}
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
                 <video
-                    style="width: 100%;height: 100%;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}"
+                    style="width: 100%;height: 100%;filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''}"
                     src={show.id}
                     on:loadedmetadata={onLoad}
                     on:playing={onPlay}

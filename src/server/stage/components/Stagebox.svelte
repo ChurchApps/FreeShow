@@ -5,10 +5,11 @@
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
-    import { timers } from "../store"
+    import { timers, variables } from "../store"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Timer from "./Timer.svelte"
+    import Variable from "./Variable.svelte"
 
     export let show: any
     export let id: string
@@ -99,6 +100,10 @@
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
                         <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                    {/if}
+                {:else if id.includes("variables")}
+                    {#if $variables[id.split("#")[1]]}
+                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {/if}
                 {:else}
                     {id}

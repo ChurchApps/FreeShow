@@ -1,7 +1,9 @@
 <script lang="ts">
+    import type { MediaStyle } from "../../../types/Main"
     import { activeShow, dictionary, media, outLocked } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
+    import { getMediaStyle } from "../helpers/media"
     import { setOutput } from "../helpers/output"
     import HoverButton from "../inputs/HoverButton.svelte"
     import Splash from "../main/Splash.svelte"
@@ -13,17 +15,8 @@
 
     $: show = $activeShow
 
-    let filter = ""
-    let flipped = false
-    let fit = "contain"
-    let speed = "1"
-
-    $: if (show) {
-        filter = $media[show.id]?.filter || ""
-        flipped = $media[show.id]?.flipped || false
-        fit = $media[show.id]?.fit || "contain"
-        speed = $media[show.id]?.speed || "1"
-    }
+    let mediaStyle: MediaStyle = {}
+    $: if (show) mediaStyle = getMediaStyle($media[show.id], { name: "" })
 
     // check for timer & create global
     $: if (show?.id) createGlobalTimerFromLocalTimer(show?.id)
@@ -34,18 +27,18 @@
         {#if show.type === "video" || show.type === "image" || show.type === "player"}
             <div style="display: flex;flex-direction: column;height: 100%;">
                 {#if show.type === "video" || show.type === "player"}
-                    <VideoShow {show} {filter} {flipped} {fit} {speed} />
+                    <VideoShow {show} {mediaStyle} />
                 {:else}
                     <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
                         <HoverButton
                             icon="play"
                             size={10}
                             on:click={() => {
-                                if (!$outLocked) setOutput("background", { path: show?.id, filter, flipped, fit, speed })
+                                if (!$outLocked) setOutput("background", { path: show?.id, ...mediaStyle })
                             }}
                             title={$dictionary.media?.show}
                         >
-                            <Image style="width: 100%;height: 100%;object-fit: contain;filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''};object-fit: {fit}" src={show.id} alt={show.name || ""} />
+                            <Image style="width: 100%;height: 100%;object-fit: contain;filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''};object-fit: {mediaStyle.fit}" src={show.id} alt={show.name || ""} />
                         </HoverButton>
                     </div>
                 {/if}

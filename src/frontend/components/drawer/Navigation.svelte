@@ -75,9 +75,7 @@
             buttons = [
                 { id: "event", name: "calendar.event", default: true, icon: "calendar" },
                 { id: "show", name: "calendar.show", default: true, icon: "showIcon" },
-                // TODO: split event timers to it's own space & create popup ???????
                 { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
-                // TODO: all active in output, not project!!
             ]
         } else if (id === "web") {
             buttons = [...(sortObject(keysToID($webFavorites), "name") as Button[])]
@@ -89,7 +87,6 @@
         }
     }
 
-    // TODO: scroll down to selected
     $: if (buttons.length && !$drawerTabsData[id]?.activeSubTab) setSubTab(buttons[0].id)
 
     function setSubTab(tabId: string) {
@@ -225,7 +222,7 @@
         </div>
     {:else if id === "calendar"}
         <div class="tabs">
-            <Button on:click={() => send(IMPORT, ["calendar"], { name: "Calendar", extensions: ["ics"] })} center title={$dictionary.actions?.import}>
+            <Button on:click={() => send(IMPORT, ["calendar"], { format: { name: "Calendar", extensions: ["ics"] } })} center title={$dictionary.actions?.import}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="actions.import" />{/if}
             </Button>

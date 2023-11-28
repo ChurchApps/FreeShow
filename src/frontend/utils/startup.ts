@@ -6,6 +6,7 @@ import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
+import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
@@ -31,14 +32,16 @@ import {
     audioChannels,
     audioFolders,
     currentWindow,
+    dataPath,
+    deviceId,
     dictionary,
     draw,
     drawSettings,
     drawTool,
     driveKeys,
     events,
-    exportPath,
     folders,
+    isDev,
     loaded,
     media,
     mediaCache,
@@ -50,14 +53,14 @@ import {
     overlays,
     playerVideos,
     playingVideos,
+    popupData,
     previewBuffers,
     projects,
-    recordingPath,
     saved,
-    scripturePath,
     shows,
     showsCache,
     showsPath,
+    special,
     stageShows,
     styles,
     templates,
@@ -82,7 +85,7 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { checkNextAfterMedia } from "../components/helpers/showActions"
+import { startTracking } from "./analytics"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -99,7 +102,8 @@ export function startup() {
         // wait a bit on slow computers
         setTimeout(() => {
             send(OUTPUT, ["REQUEST_DATA_MAIN"])
-        }, 100)
+            setLanguage() // this is only needed for the context menu
+        }, 200)
         // TODO: video data!
     })
 }
@@ -116,27 +120,30 @@ function startupMain() {
     receive(NDI, receiveNDI)
 
     // load files
-    send(MAIN, ["DISPLAY", "VERSION"])
+    send(MAIN, ["VERSION", "IS_DEV", "GET_OS", "DEVICE_ID", "DISPLAY"])
     // wait a bit in case data is not yet loaded
     setTimeout(() => {
-        send(STORE, ["SYNCED_SETTINGS", "SHOWS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
+        send(STORE, ["SYNCED_SETTINGS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
         setTimeout(() => send(STORE, ["SETTINGS"]), 500)
     }, 100)
 
     setTimeout(() => {
         listenForUpdates()
         listen()
+        startTracking()
     }, 5000)
 }
 
 // RECEIVERS
 
 const receiveMAIN: any = {
-    GET_OS: (a: any) => os.set(a),
     VERSION: (a: any) => {
         version.set(a)
         checkForUpdates(a)
     },
+    IS_DEV: (a: any) => isDev.set(a),
+    GET_OS: (a: any) => os.set(a),
+    DEVICE_ID: (a: any) => deviceId.set(a),
     DISPLAY: (a: any) => outputDisplay.set(a),
     GET_PATHS: (a: any) => {
         // only on first startup
@@ -144,35 +151,12 @@ const receiveMAIN: any = {
     },
     MENU: (a: any) => menuClick(a),
     SHOWS_PATH: (a: any) => showsPath.set(a),
-    EXPORT_PATH: (a: any) => exportPath.set(a),
-    SCRIPTURE_PATH: (a: any) => scripturePath.set(a),
-    RECORDING_PATH: (a: any) => recordingPath.set(a),
-    // READ_SAVED_CACHE: (a: any) => {
-    //     if (!a) return
-    //     Object.entries(JSON.parse(a)).forEach(([key, data]: any) => {
-    //         // TODO: undoing save is not working properly (seems like all saved are the same??)
-
-    //         if (key === "showsCache") console.log("SHOWS CACHE ---", clone(get(showsCache)), data)
-
-    //         // don't revert undo/redo history
-    //         if (key === "HISTORY") return
-    //         if (receiveSTORE[key]) receiveSTORE[key](data)
-    //         // if undo = { ...data, ...get(showsCache) } else { ...get(showsCache), ...data }
-    //         else if (key === "showsCache") showsCache.set({ ...data, ...get(showsCache) })
-    //         else if (key === "scripturesCache") scripturesCache.set(data)
-    //         else if (key === "path") showsPath.set(data)
-    //         else console.log("MISSING HISTORY RESTORE KEY:", key)
-    //     })
-
-    //     // save to files?
-    //     // window.api.send(STORE, { channel: "SAVE", data: allSavedData })
-
-    //     saved.set(true)
-    // },
+    DATA_PATH: (a: any) => dataPath.set(a),
     ALERT: (a: any) => {
         alertMessage.set(a)
 
         if (a === "error.display") {
+            popupData.set({ activateOutput: true })
             activePopup.set("choose_screen")
             return
         }
@@ -291,9 +275,11 @@ const receiveFOLDER: any = {
     },
     AUDIO: (a: any) => receiveFOLDER.MEDIA(a, "audio"),
     SHOWS: (a: any) => showsPath.set(a.path),
-    EXPORT: (a: any) => exportPath.set(a.path),
-    SCRIPTURE: (a: any) => scripturePath.set(a.path),
-    RECORDING: (a: any) => recordingPath.set(a.path),
+    DATA: (a: any) => dataPath.set(a.path),
+    DATA_SHOWS: (a: any) => {
+        dataPath.set(a.path)
+        if (a.showsPath) showsPath.set(a.showsPath)
+    },
 }
 
 // OUTPUT
@@ -389,9 +375,10 @@ const receiveOUTPUTasOUTPUT: any = {
     DRAW_TOOL: (a: any) => drawTool.set(a),
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
-    MEDIA: (a: any) => mediaFolders.set(a),
+    MEDIA: (a: any) => media.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
+    SPECIAL: (a: any) => clone(special.set(a)),
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
@@ -412,9 +399,11 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["DRAW_SETTINGS"], get(drawSettings))
 
     send(OUTPUT, ["VIZUALISER_DATA"], get(visualizerData))
-    send(OUTPUT, ["MEDIA"], get(mediaFolders))
+    send(OUTPUT, ["MEDIA"], get(media))
     send(OUTPUT, ["TIMERS"], get(timers))
     send(OUTPUT, ["VARIABLES"], get(variables))
+
+    send(OUTPUT, ["SPECIAL"], get(special))
 
     send(OUTPUT, ["PLAYER_VIDEOS"], get(playerVideos))
     send(OUTPUT, ["STAGE_SHOWS"], get(stageShows))
@@ -461,10 +450,17 @@ function importShow(files: any[]) {
         try {
             ;[id, show] = JSON.parse(content)
         } catch (e: any) {
-            console.error(name, e)
-            let pos = Number(e.toString().replace(/\D+/g, "") || 100)
-            console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
-            return
+            // try to fix broken show files
+            content = content.slice(0, content.indexOf("}}]") + 3)
+
+            try {
+                ;[id, show] = JSON.parse(content)
+            } catch (e: any) {
+                console.error(name, e)
+                let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+                console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+                return
+            }
         }
 
         tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })

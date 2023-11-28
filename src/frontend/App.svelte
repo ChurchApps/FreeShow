@@ -31,7 +31,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeEdit, activePage, activeShow, activeStage, activeTimers, autosave, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs, styles } from "./stores"
+    import { activeEdit, activePage, activeShow, activeStage, activeTimers, autosave, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs, special, styles } from "./stores"
     import { focusArea, hideDisplay, logerror, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -85,10 +85,13 @@
         <MenuBar />
     {/if}
     <main style={isWindows ? "height: calc(100% - 30px);" : ""} class:closeAd class:background={$currentWindow === "output"}>
+        <ContextMenu />
+
         {#if $currentWindow === "output"}
             <div
-                class="fill"
+                class="fill context #output_window"
                 style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0].stageOutput ? 'row' : 'column'}"
+                class:hideCursor={$special.hideCursor}
                 on:mousemove={mousemoveOutput}
                 bind:offsetWidth={width}
                 bind:offsetHeight={height}
@@ -109,7 +112,6 @@
             <!-- WIP black window before output is loaded (don't show app screen when creating output windows) -->
             <!-- {#if !$loaded}<div class="black" />{/if} -->
 
-            <ContextMenu />
             <Popup />
             <Toast />
             <Recorder />
@@ -245,23 +247,18 @@
         min-width: 50%;
     }
 
-    /* @media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	} */
-
     .fill {
-        /* TODO: setting for hiding cursor... */
-        /* cursor: none; */
         height: 100%;
         width: 100%;
         overflow: hidden;
 
         display: flex;
-        /* background-color: black; */
         /* enable this to see the actual output window cropped size */
         /* background: var(--primary-darkest); */
+    }
+
+    .fill.hideCursor {
+        cursor: none;
     }
 
     /* .black {

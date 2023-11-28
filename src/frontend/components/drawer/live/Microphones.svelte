@@ -16,26 +16,20 @@
 
         devices.forEach((d) => {
             if (d.kind !== "audioinput") return
-            console.log("DEVICE", d)
 
             if (!mics[d.groupId]) mics[d.groupId] = {}
             mics[d.groupId][d.deviceId] = d.label
-            // mics.push({ name: d.label, id: d.deviceId, group: d.groupId })
         })
     })
-
-    $: console.log(Object.values(mics))
 </script>
 
-<!-- TODO: sort by name -->
 {#if Object.values(mics).length}
     <div class="row" style="gap: 10px;">
         {#each Object.values(mics) as mic}
             <div class="row">
-                {#each Object.entries(mic) as m}
-                    <span style="font-size: 0;position: absolute;">{console.log(m)}</span>
-                    <SelectElem id="microphone" data={{ id: m[0], type: "microphone", name: m[1] }} draggable>
-                        <Mic mic={{ id: m[0], name: m[1] }} />
+                {#each Object.entries(mic) as [id, name]}
+                    <SelectElem id="microphone" data={{ id, type: "microphone", name }} draggable>
+                        <Mic mic={{ id, name }} />
                     </SelectElem>
                 {/each}
             </div>

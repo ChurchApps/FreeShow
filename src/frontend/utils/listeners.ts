@@ -12,7 +12,7 @@ import {
     events,
     folders,
     groups,
-    mediaFolders,
+    media,
     midiIn,
     openedFolders,
     outputs,
@@ -21,6 +21,7 @@ import {
     projects,
     shows,
     showsCache,
+    special,
     stageShows,
     styles,
     templates,
@@ -120,7 +121,8 @@ export function listenForUpdates() {
     // activeTimers.subscribe((data) => {
     //     send(OUTPUT, ["ACTIVE_TIMERS"], data)
     // })
-    mediaFolders.subscribe((data) => {
+    // WIP not used?!
+    media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
     })
 
@@ -129,6 +131,10 @@ export function listenForUpdates() {
     })
     variables.subscribe((data) => {
         send(OUTPUT, ["VARIABLES"], data)
+    })
+
+    special.subscribe((data) => {
+        send(OUTPUT, ["SPECIAL"], data)
     })
 
     volume.subscribe((data) => {

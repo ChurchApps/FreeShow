@@ -45,6 +45,20 @@ export const videoEdit = [
             ],
         },
     },
+    {
+        name: "timer.from",
+        id: "fromTime",
+        input: "number",
+        value: 0,
+        values: { max: 100000 },
+    },
+    {
+        name: "timer.to",
+        id: "toTime",
+        input: "number",
+        value: 0,
+        values: { max: 100000 },
+    },
 ]
 
 export const mediaFilters: Box = {

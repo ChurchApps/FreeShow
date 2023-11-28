@@ -30,7 +30,7 @@
         })
 
         showsPath.set(null)
-        // scripturePath.set("")
+        // dataPath.set("")
         showsCache.set({})
         scripturesCache.set({})
         deletedShows.set([])

@@ -24,7 +24,7 @@
         // sort by name regardless because project folders <= 0.9.5 doesn't have created date
         let sortedFolders = f.sort((a, b) => a.name?.localeCompare(b.name))
         let sortedProjects = p.sort((a, b) => a.name?.localeCompare(b.name))
-        if (sortType === "date") {
+        if (sortType === "created") {
             sortedFolders = sortedFolders.sort((a, b) => (b.created || 0) - (a.created || 0))
             sortedProjects = sortedProjects.sort((a, b) => (b.created || 0) - (a.created || 0))
         }

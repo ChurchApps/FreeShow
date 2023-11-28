@@ -21,6 +21,8 @@
 {/if}
 
 <!-- TODO: change quality / resolution -->
+<!-- TODO: toggle captions -->
+
 <style>
     .scroll {
         display: flex;

@@ -2,6 +2,7 @@ export const languages: any = {
     // language_identifier: "Language name in original language", // Language name in English
     en: "English", // English
     en_GB: "English (British)", // English (British)
+    en_ZM: "English (Zambia)", // English (Zambia)
     no: "Norsk", // Norwegian
     sk: "Slovenčina", // Slovak
     es: "Español", // Spanish
@@ -22,7 +23,8 @@ export const languages: any = {
 export const replace: any = {
     // language_identifier: ["browser language/region code"],
     en: ["en-US", "en-AU"],
-    en_GB: ["en-GB", "en-ZM"],
+    en_GB: ["en-GB"],
+    en_ZM: ["en-ZM"],
     no: ["nb", "nn"],
     sk: ["sk"],
     es: ["es"],

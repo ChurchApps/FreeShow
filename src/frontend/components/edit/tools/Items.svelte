@@ -11,7 +11,7 @@
     import IconButton from "../../inputs/IconButton.svelte"
     import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
-    import { addItem } from "../scripts/addItem"
+    import { addItem } from "../scripts/itemHelpers"
     import { getItemText } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
 
@@ -161,8 +161,8 @@
                         {#if getIdentifier[type]}<p style="margin-left: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
                     </span>
                     <!-- {#if i < allSlideItems.length - 1}
-          <Icon id="down" />
-        {/if} -->
+                        <Icon id="down" />
+                    {/if} -->
                     {#if i > 0}
                         <Button class="up" on:click={() => move(index)}>
                             <Icon id="up" />
@@ -178,12 +178,6 @@
     </div>
 </Panel>
 
-<!-- <section>Items order layers / add new items (text/shapes/image?/video/music...)</section> -->
-
-<!-- new from template.. ? -->
-<!-- grid view add new items... -->
-
-<!-- TODO: select item / bring to center / delete ...  -->
 <style>
     .grid {
         display: flex;

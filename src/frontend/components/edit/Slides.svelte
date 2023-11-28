@@ -7,32 +7,8 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
 
-    // $: editIndex = $output.slide?.index || 0
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId]
-
-    // TODO: change on show change...
-    // if ($activeEdit.slide === null || $activeEdit.slide === undefined || $activeEdit.slide >= GetLayout().length) {
-    //   let slide = null
-    //   if ($activeShow && GetLayout().length) {
-    //     if (typeof $activeShow.index === "number") {
-    //       slide = $activeShow.index
-    //       if (slide >= GetLayout().length) slide = 0
-    //     } else slide = 0
-    //   }
-    //   activeEdit.set({ slide, items: [] })
-    // }
-
-    // activeShow.subscribe(() => {
-    //   activeEdit.set({ slide: $activeShow?.index || 0, item: null })
-    // })
-    $: console.log($activeEdit)
-
-    // let layoutSlides: SlideData[] = []
-    // $: layoutSlides = GetLayout(showId)
-    // $: activeLayout = $showsCache[showId]?.settings.activeLayout
-    // TODO: not getting parent color at first
-    // $: layoutSlides = [$showsCache[showId]?.layouts[activeLayout].slides, GetLayout(showId)][1]
     $: layoutSlides = $cachedShowsData[showId]?.layout || []
 
     function keydown(e: any) {
@@ -78,10 +54,6 @@
     }
 
     let columns: number = 1
-    // function mousemove() {
-    //   if (scrollElem?.closest(".panel").offsetWidth > 300) columns = 2
-    //   else columns = 1
-    // }
 
     let nextScrollTimeout: any = null
     function wheel(e: any) {
@@ -90,8 +62,6 @@
 
         e.preventDefault()
         columns = Math.max(1, Math.min(4, columns + (e.deltaY < 0 ? -1 : 1)))
-        // if (e.ctrlKey || e.metaKey) columns = Math.max(1, Math.min(10, columns + e.deltaY / 100))
-        // if (e.ctrlKey || e.metaKey) slidesOptions.set({ ...$slidesOptions, columns: Math.max(1, Math.min(10, $slidesOptions.columns + e.deltaY / 100)) })
 
         // don't start timeout if scrolling with mouse
         if (e.deltaY > 100 || e.deltaY < -100) return

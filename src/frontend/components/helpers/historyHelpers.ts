@@ -84,13 +84,18 @@ export const _updaters = {
                     return as
                 })
             }
-            // open parent folder if closed
-            if (!get(openedFolders).includes(data.parent)) {
-                openedFolders.update((f) => {
-                    f.push(data.parent)
-                    return f
-                })
-            }
+
+            // open parent folders if closed
+            openedFolders.update((a) => {
+                let parentFolder = data.parent
+                while (parentFolder !== "/" && get(folders)[parentFolder]) {
+                    if (!a.includes(parentFolder)) a.push(parentFolder)
+                    parentFolder = get(folders)[parentFolder].parent
+                }
+
+                a.push(id)
+                return a
+            })
 
             if (!initializing) return
             activeRename.set("project_" + id)
@@ -109,12 +114,11 @@ export const _updaters = {
             return replaceEmptyValues(data, { created: Date.now() })
         },
         select: (id: string, { data, changed }: any, initializing: boolean) => {
-            // add folder to opened folders
+            // open parent folders if closed
             openedFolders.update((a) => {
-                // open parent folders
                 let parentFolder = data.parent
-                while (parentFolder !== "/" && !a.includes(parentFolder) && get(folders)[parentFolder]) {
-                    a.push(parentFolder)
+                while (parentFolder !== "/" && get(folders)[parentFolder]) {
+                    if (!a.includes(parentFolder)) a.push(parentFolder)
                     parentFolder = get(folders)[parentFolder].parent
                 }
 

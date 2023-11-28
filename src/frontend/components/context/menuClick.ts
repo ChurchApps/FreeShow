@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OUTPUT, STAGE } from "../../../types/Channels"
+import type { MediaStyle } from "../../../types/Main"
 import type { Slide } from "../../../types/Show"
 import { changeSlideGroups, splitItemInTwo } from "../../show/slides"
 import {
@@ -14,6 +15,7 @@ import {
     activeShow,
     audioFolders,
     currentOutputSettings,
+    currentWindow,
     dictionary,
     drawerTabsData,
     eventEdit,
@@ -44,6 +46,7 @@ import {
     themes,
     triggers,
 } from "../../stores"
+import { hideDisplay } from "../../utils/common"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
@@ -56,7 +59,7 @@ import { clone } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
-import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
+import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { updateShowsList } from "../helpers/show"
@@ -215,6 +218,10 @@ const actions: any = {
             send(OUTPUT, ["DISPLAY"], { enabled: true, output, force: true })
         })
     },
+    choose_screen: () => {
+        popupData.set({ activateOutput: true })
+        activePopup.set("choose_screen")
+    },
     toggle_output: (obj: any) => {
         let id: string = obj.contextElem.id
         send(OUTPUT, ["DISPLAY"], { enabled: "toggle", one: true, output: { id, ...get(outputs)[id] } })
@@ -297,6 +304,11 @@ const actions: any = {
         exportProject(get(projects)[projectId])
     },
     close: (obj: any) => {
+        if (get(currentWindow) === "output") {
+            hideDisplay()
+            return
+        }
+
         if (obj.contextElem.classList.contains("media")) {
             if (get(previousShow)) {
                 activeShow.set(JSON.parse(get(previousShow)))
@@ -549,9 +561,9 @@ const actions: any = {
         // video
         let path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
-        let filter: string = ""
-        Object.entries(get(media)[path]?.filter || {}).forEach(([id, a]: any) => (filter += ` ${id}(${a})`))
-        if (!get(outLocked)) setOutput("background", { path, filter })
+
+        let mediaStyle: MediaStyle = getMediaStyle(get(media)[path], { name: "" })
+        if (!get(outLocked)) setOutput("background", { path, ...mediaStyle })
     },
     play_no_filters: (obj: any) => {
         let path = obj.sel.data[0].path || obj.sel.data[0].id
@@ -914,8 +926,6 @@ function changeSlideAction(obj: any, id: string) {
 }
 
 export function removeGroup(data: any) {
-    // TODO: add new slide, and only remove the selected one
-
     let ref = _show().layouts("active").ref()[0]
     let firstSlideId = ref[0].id
 

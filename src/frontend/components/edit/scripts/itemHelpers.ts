@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Item, ItemType } from "../../../../types/Show"
-import { activeEdit, activeShow, showsCache, templates, timers } from "../../../stores"
+import { activeEdit, activeShow, overlays, showsCache, templates, timers } from "../../../stores"
 import { createNewTimer } from "../../drawer/timers/timers"
 import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
@@ -51,4 +51,34 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
         // overlay, template
         history({ id: "UPDATE", newData: { data: newData, key: "items", index: -1 }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type } })
     }
+}
+
+export function getEditSlide() {
+    let active = get(activeEdit)
+    let slide: any = {}
+
+    if (active.id) {
+        if (active.type === "overlay") slide = get(overlays)[active.id]
+        else if (active.type === "template") slide = get(templates)[active.id]
+
+        return slide
+    }
+
+    let editSlideRef: any = _show().layouts("active").ref()[0]?.[active.slide ?? ""] || {}
+    slide = _show().get("slides")?.[editSlideRef.id]
+
+    return slide
+}
+
+export function getEditItems(onlyActive: boolean = false) {
+    let active = get(activeEdit)
+    let selectedItems: number[] = active.items
+
+    let editSlide = getEditSlide()
+    if (!editSlide?.items) return []
+
+    let editItems = editSlide.items
+    if (onlyActive) editItems = editItems.filter((_, i) => selectedItems.includes(i))
+
+    return editItems
 }

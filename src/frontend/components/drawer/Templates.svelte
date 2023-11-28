@@ -20,7 +20,6 @@
 
     $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings.template : null
 
-    // TODO: update templates
     let fullFilteredTemplates: any[] = []
     $: if ($templates || active) updateTemplates()
     templates.subscribe(updateTemplates)

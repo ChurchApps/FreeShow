@@ -28,7 +28,7 @@ import {
 } from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
-import { getMediaType } from "./media"
+import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, isOutCleared, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
@@ -124,7 +124,7 @@ function getOutputWithLines() {
     return currentLines
 }
 
-export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null) {
+export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null, nextAfterMedia: boolean = false) {
     if (get(outLocked) && !bypassLock) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
@@ -151,7 +151,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // TODO: active show slide index on delete......
 
     // go to first slide in next project show ("Next after media" feature)
-    if (loop && bypassLock && slide && isLastSlide) {
+    let isNotLooping = loop && slide?.index !== undefined && !layout[slide.index]?.data?.end
+    if ((isNotLooping || nextAfterMedia) && bypassLock && slide && isLastSlide) {
         // check if it is last slide (& that slide does not loop to start)
         goToNextShowInProject(slide, customOutputId)
         return
@@ -217,6 +218,9 @@ async function goToNextShowInProject(slide, customOutputId) {
     await loadShows([nextShow.id])
     let activeLayout = nextShow.layout || _show(nextShow.id).get("settings.activeLayout")
     let layout: any[] = _show(nextShow.id).layouts([activeLayout]).ref()[0]
+
+    // let hasNextAfterMediaAction = layout[slide.index].data.actions?.nextAfterMedia
+    // if (!hasNextAfterMediaAction) return
 
     setOutput("slide", { id: nextShow.id, layout: activeLayout, index: 0 }, false, customOutputId)
     updateOut(nextShow.id, 0, layout, true, customOutputId)
@@ -302,14 +306,6 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
     return index
 }
 
-export function getMediaFilter(bakgroundPath: string) {
-    // let filter = ""
-    // let mediaFilter = get(media)[bakgroundPath]?.filter
-    // if (mediaFilter) Object.entries(mediaFilter).forEach(([id, a]: any) => (filter += ` ${id}(${a})`))
-    // return filter
-    return get(media)[bakgroundPath]?.filter || ""
-}
-
 export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
@@ -354,20 +350,26 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
             let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
+            let name = bg.name || removeExtension(getFileName(bgPath))
+            let extension = getExtension(bgPath)
+            let type = bg.type || getMediaType(extension)
+
+            // get stored media files
+            // if (get(special).storeShowMedia && bg.base64) {
+            //     bgPath = `data:${type}/${extension};base64,${bg.base64}`
+            // }
 
             if (bg && bgPath !== outputBg?.path) {
+                let mediaStyle = getMediaStyle(get(media)[bgPath], { name: "" })
                 let bgData: any = {
-                    name: bg.name,
-                    type: bg.type || getMediaType(bgPath.slice(bgPath.lastIndexOf(".") + 1, bgPath.length)),
+                    name,
+                    type,
                     path: bgPath,
                     cameraGroup: bg.cameraGroup || "",
                     id: bg.id || bgPath, // path = cameras
                     muted: bg.muted !== false,
                     loop: bg.loop !== false,
-                    filter: getMediaFilter(bgPath),
-                    flipped: get(media)[bgPath]?.flipped || false,
-                    fit: get(media)[bgPath]?.fit || "contain",
-                    speed: get(media)[bgPath]?.speed || "1",
+                    ...mediaStyle,
                 }
 
                 // outBackground.set(bgData)
@@ -545,7 +547,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     if (!nextAfterMedia) return false
 
     setTimeout(() => {
-        nextSlide(null, false, false, true, true, outputId)
+        nextSlide(null, false, false, false, true, outputId, true)
 
         setTimeout(() => {
             nextActive = false
@@ -582,8 +584,9 @@ export function clearOverlays(outputId: string = "") {
 }
 
 // TODO: output/clearButtons
-export function clearAll() {
-    if (get(outLocked) || get(activePopup) || get(selected).id || get(activeEdit).items.length) return
+export function clearAll(button: boolean = false) {
+    if (get(outLocked)) return
+    if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
 
     let allCleared = isOutCleared(null) && !Object.keys(get(playingAudio)).length
     if (allCleared) return

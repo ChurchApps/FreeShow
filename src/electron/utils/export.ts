@@ -69,10 +69,12 @@ export function exportTXT(data: any) {
             if (err) msg = err
         })
     })
-    toApp(MAIN, { channel: "ALERT", data: msg })
+
+    setTimeout(() => {
+        toApp(MAIN, { channel: "ALERT", data: msg })
+    }, 500)
 }
 
-// TODO: clean this
 function getSlidesText(show: any) {
     let text: string = ""
 
@@ -80,16 +82,19 @@ function getSlidesText(show: any) {
     show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide: any) => {
         let slide = show.slides[layoutSlide.id]
         if (!slide) return
+
         slides.push(slide)
-        if (slide.children) {
-            slide.children.forEach((childId: string) => {
-                slides.push(show.slides[childId])
-            })
-        }
+        if (!slide.children) return
+
+        slide.children.forEach((childId: string) => {
+            let slide = show.slides[childId]
+            slides.push(slide)
+        })
     })
 
     slides.forEach((slide) => {
         if (slide.group) text += "[" + slide.group + "]\n"
+
         slide.items.forEach((item: any) => {
             if (!item.lines) return
 
@@ -120,8 +125,8 @@ export function exportProject(data: any) {
     let msg: string = "export.exported"
     writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => {
         if (err) msg = err
+        toApp(MAIN, { channel: "ALERT", data: msg })
     })
-    toApp(MAIN, { channel: "ALERT", data: msg })
 }
 
 // ----- HELPERS -----

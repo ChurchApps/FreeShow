@@ -83,7 +83,7 @@
         },
         " ": (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            // TODO: ...
+
             e.preventDefault()
             if (currentOutput.out?.slide?.id !== $activeShow?.id || ($activeShow && currentOutput.out?.slide?.layout !== $showsCache[$activeShow.id].settings.activeLayout)) nextSlide(e, true)
             else {
@@ -216,8 +216,6 @@
             <T id="preview.show_preview" />
         </Button>
     {/if}
-
-    <!-- TODO: show stage output -->
 
     {#if enablePreview}
         <ShowActions {currentOutput} {ref} {linesIndex} {maxLines} />

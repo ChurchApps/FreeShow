@@ -16,11 +16,12 @@
         "made": "Creato in Norvegia da",
         "report": "Vuoi segnalare un problema? Crea un problema su GitHub",
         "help": "Vuoi aiutare a tradurre o richiedere una funzionalità? Invia una mail a",
+        "support": "Supportare il progetto?",
         "assets": "Assets usati",
         "libraries": "Librerie usate",
         "thanks": "Grazie a",
         "new_update": "Nuovo aggiornamento disponibile",
-        "download": "Vai su freeshow.app per scaricare",
+        "download": "Riavvia l'applicazione per aggiornare o vai su freeshow.app per scaricarla manualmente",
         "changes": "Cosa c'è di nuovo"
     },
     "tooltip": {
@@ -278,8 +279,12 @@
         "live": "Live",
         "timers": "Timer",
         "variables": "Variabili",
+        "triggers": "Trigger",
         "templates": "Modelli",
         "web": "Web"
+    },
+    "tips": {
+        "trigger": "I trigger vengono comunemente utilizzati per inviare una richiesta HTTP per modificare la preimpostazione delle telecamere."
     },
     "category": {
         "all": "Tutto",
@@ -319,6 +324,7 @@
         "edit_list": "Modifica elenco",
         "timer": "Timer",
         "variable": "Variable",
+        "trigger": "Trigger",
         "transition": "Transizione",
         "delete_show": "Elimina scena",
         "delete_show_confirmation": "Sei sicuro di voler eliminare",
@@ -391,6 +397,7 @@
         "section": "Nuova sezione",
         "timer": "Nuovo timer",
         "variable": "New variable",
+        "trigger": "Nuovo trigger",
         "category": "Nuova categoria",
         "private": "Nuova scena privata",
         "folder": "Nuova cartella",
@@ -591,6 +598,7 @@
         "font": "Font",
         "family": "Famiglia",
         "style": "Stile",
+        "lines": "Linee",
         "options": "Opzioni",
         "_title_bold": "Grassetto",
         "_title_italic": "Corsivo",
@@ -828,6 +836,7 @@
         "group_numbers": "Numeri di gruppo",
         "full_colors": "Colori completi del gruppo di diapositive",
         "auto_output": "Attiva la schermata di output all'avvio",
+        "hide_cursor_in_output": "Nascondi il cursore nell'output",
         "default_project_name": "Nome progetto predefinito",
         "resolution": "Risoluzione",
         "cropping": "Ritagliare",
@@ -839,9 +848,8 @@
         "remove": "Rimuovi",
         "change_name": "Cambia nome",
         "show_location": "Mostra posizione",
-        "export_location": "Esporta posizione",
-        "scripture_location": "Posizione delle scritture",
-        "recording_location": "Posizione delle registrazioni",
+        "data_location": "Posizione dei dati",
+        "user_data_location": "Salva i dati utente nella posizione dei dati",
         "font": "Font",
         "font_family": "Famiglia font",
         "font_size": "Dimensione font",
@@ -915,7 +923,10 @@
         "verse_numbers": "Numeri di versi",
         "version": "Mostra versione",
         "reference": "Mostra referenze",
-        "red_jesus": "Parole di Gesù in rosso"
+        "combine_with_text": "Combina con testo",
+        "reference_at_bottom": "Sposta in basso",
+        "red_jesus": "Parole di Gesù in rosso",
+        "search": "Cerca nella Bibbia"
     },
     "filter": {
         "blur": "Sfocatura",

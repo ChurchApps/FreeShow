@@ -76,17 +76,20 @@
         let template = $templates[currentStyle.template || ""]
         if (template?.items?.length) {
             template.items.forEach((item: any, i: number) => {
-                if (currentSlide.items[i]) {
-                    currentSlide.items[i].style = item.style || ""
-                    currentSlide.items[i].align = item.align || ""
-                    currentSlide.items[i].lines?.forEach((line: any, j: number) => {
-                        let templateLine = item.lines?.[j] || item.lines?.[0]
-                        line.align = templateLine?.align || ""
-                        line.text?.forEach((text: any, k: number) => {
-                            text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
-                        })
+                if (!currentSlide.items[i]) return
+
+                currentSlide.items[i].style = item.style || ""
+                currentSlide.items[i].align = item.align || ""
+                currentSlide.items[i].lines?.forEach((line: any, j: number) => {
+                    let templateLine = item.lines?.[j] || item.lines?.[0]
+                    line.align = templateLine?.align || ""
+                    line.text?.forEach((text: any, k: number) => {
+                        text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
                     })
-                }
+                })
+
+                // scrolling, bindings
+                currentSlide.items[i].specialStyle = item.specialStyle || {}
             })
         } else {
             // reset style
@@ -239,6 +242,7 @@
 
     $: slideFilter = ""
     $: if (!slideData?.filterEnabled || slideData?.filterEnabled?.includes("background")) getSlideFilter()
+    else slideFilter = ""
     function getSlideFilter() {
         slideFilter = ""
         if (!slideData) return
@@ -252,8 +256,8 @@
     let clonedOverlays = {}
     let outOverlays: any[] = []
     let outUnderlays: any[] = []
-    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => !a.placeUnderSlide)) !== JSON.stringify(outOverlays)) updateOverlays()
-    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => a.placeUnderSlide)) !== JSON.stringify(outUnderlays)) updateOverlays()
+    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => !a?.placeUnderSlide)) !== JSON.stringify(outOverlays)) updateOverlays()
+    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => a?.placeUnderSlide)) !== JSON.stringify(outUnderlays)) updateOverlays()
     function updateOverlays() {
         clonedOverlays = clone($overlays)
         if (!out.overlays) return
@@ -261,7 +265,7 @@
         outUnderlays = []
         outOverlays = []
         out.overlays.forEach((id) => {
-            if (clonedOverlays[id].placeUnderSlide) outUnderlays.push(id)
+            if (clonedOverlays[id]?.placeUnderSlide) outUnderlays.push(id)
             else outOverlays.push(id)
         })
     }
@@ -316,9 +320,12 @@
     const animations = {
         wait: async ({ duration }) => {
             return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve("ended")
-                }, Number(duration) * 1000)
+                setTimeout(
+                    () => {
+                        resolve("ended")
+                    },
+                    Number(duration) * 1000
+                )
             })
         },
         set: ({ id, key, value, extension }) => {

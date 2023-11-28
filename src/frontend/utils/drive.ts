@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { CLOUD } from "../../types/Channels"
-import { activePopup, driveData, driveKeys, popupData, showsPath } from "../stores"
+import { activePopup, dataPath, driveData, driveKeys, popupData, showsPath } from "../stores"
 import { newToast } from "./messages"
 import { send } from "./request"
 import { closeApp, save } from "./save"
@@ -49,7 +49,7 @@ export function syncDrive(force: boolean = false, closeWhenFinished: boolean = f
 
     let method = get(driveData).initializeMethod
     if (get(driveData).disableUpload) method = "download"
-    send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath), method, closeWhenFinished })
+    send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath), dataPath: get(dataPath), method, closeWhenFinished })
     popupData.set({})
     activePopup.set("cloud_update")
 }

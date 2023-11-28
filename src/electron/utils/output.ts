@@ -105,7 +105,7 @@ async function removeOutput(id: string, reopen: any = null) {
     })
 
     try {
-        outputWindows[id].close()
+        outputWindows[id].destroy()
     } catch (error) {
         console.log(error)
     }

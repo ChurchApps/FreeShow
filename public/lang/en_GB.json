@@ -16,11 +16,12 @@
         "made": "Made in Norway by",
         "report": "Want to report an issue? Create an issue on GitHub",
         "help": "Want to help translate or request a feature? Send a mail to",
+        "support": "Support the project?",
         "assets": "Assets used",
         "libraries": "Libraries used",
         "thanks": "Thanks to",
         "new_update": "New update available",
-        "download": "Go to freeshow.app to download",
+        "download": "Restart the application to update, or go to freeshow.app to download manually",
         "changes": "What's new"
     },
     "tooltip": {
@@ -278,8 +279,12 @@
         "live": "Live",
         "timers": "Timers",
         "variables": "Variables",
+        "triggers": "Triggers",
         "templates": "Templates",
         "web": "Web"
+    },
+    "tips": {
+        "trigger": "Triggers are commonly used to send an HTTP request to change the preset of cameras."
     },
     "category": {
         "all": "All",
@@ -319,6 +324,7 @@
         "edit_list": "Edit list",
         "timer": "Timer",
         "variable": "Variable",
+        "trigger": "Trigger",
         "transition": "Transition",
         "delete_show": "Delete show",
         "delete_show_confirmation": "Are you sure you want to delete",
@@ -391,6 +397,7 @@
         "section": "New section",
         "timer": "New timer",
         "variable": "New variable",
+        "trigger": "New trigger",
         "category": "New category",
         "private": "New private show",
         "folder": "New folder",
@@ -591,6 +598,7 @@
         "font": "Font",
         "family": "Family",
         "style": "Style",
+        "lines": "Lines",
         "options": "Options",
         "_title_bold": "Bold",
         "_title_italic": "Italic",
@@ -727,7 +735,7 @@
     "clock": {
         "type": "Type",
         "digital": "Digital",
-        "analog": "Analog",
+        "analog": "Analogue",
         "seconds": "Seconds"
     },
     "midi": {
@@ -828,6 +836,7 @@
         "group_numbers": "Group numbers",
         "full_colors": "Full slide group colours",
         "auto_output": "Activate output screen on startup",
+        "hide_cursor_in_output": "Hide cursor in output",
         "default_project_name": "Default project name",
         "resolution": "Resolution",
         "cropping": "Cropping",
@@ -839,9 +848,8 @@
         "remove": "Remove",
         "change_name": "Change name",
         "show_location": "Show location",
-        "export_location": "Export location",
-        "scripture_location": "Scripture location",
-        "recording_location": "Recordings location",
+        "data_location": "Data location",
+        "user_data_location": "Save user data at data location",
         "font": "Font",
         "font_family": "Font family",
         "font_size": "Font size",
@@ -915,7 +923,10 @@
         "verse_numbers": "Verse numbers",
         "version": "Show version",
         "reference": "Show reference",
-        "red_jesus": "Jesus words in red"
+        "combine_with_text": "Combine with text",
+        "reference_at_bottom": "Move to bottom",
+        "red_jesus": "Jesus words in red",
+        "search": "Search in the Bible"
     },
     "filter": {
         "blur": "Blur",

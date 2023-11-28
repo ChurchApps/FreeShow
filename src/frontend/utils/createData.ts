@@ -1,7 +1,7 @@
-import { stageShows, templateCategories } from "./../stores"
 import { get } from "svelte/store"
 import { setShow } from "../components/helpers/setShow"
-import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, showsPath, templates } from "../stores"
+import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, templates } from "../stores"
+import { stageShows, templateCategories } from "./../stores"
 import { save } from "./save"
 
 export function createData(paths: any) {
@@ -93,7 +93,6 @@ export function createData(paths: any) {
         a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
         return a
     })
-    showsPath.set(paths.shows)
 
     remotePassword.set(randomNumber(1000, 9999).toString())
 

@@ -1,12 +1,10 @@
 <script>
     import { IMPORT } from "../../../../types/Channels"
     import { convertText } from "../../../converters/txt"
-    import { activePopup, alertMessage } from "../../../stores"
+    import { activePopup, alertMessage, dataPath } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-
-    // TODO: program icons
 
     const show_formats = [
         { name: "Clipboard", id: "clipboard" },
@@ -41,8 +39,6 @@
     ]
 </script>
 
-<!-- TODO: drop area: -->
-
 <h3>Show</h3>
 <div>
     {#each show_formats as format}
@@ -50,7 +46,7 @@
             style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
                 if (format.extensions) {
-                    send(IMPORT, [format.id], format)
+                    send(IMPORT, [format.id], { path: $dataPath, format })
                     if (format.tutorial) {
                         alertMessage.set(format.tutorial)
                         activePopup.set("alert")
@@ -86,7 +82,7 @@
             style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
                 if (format.extensions) {
-                    send(IMPORT, [format.id], format)
+                    send(IMPORT, [format.id], { format })
                     if (format.tutorial) {
                         alertMessage.set(format.tutorial)
                         activePopup.set("alert")

@@ -244,11 +244,10 @@
 <CombinedInput>
     <p>
         <T id="actions.enable" /> NDI®
-        {#if $os.platform === "linux"}(Currently not supported on Linux){/if}
         <span class="connections">{$ndiData[currentOutput.id || ""]?.connections || ""}</span>
     </p>
     <div class="alignRight">
-        <Checkbox disabled={$os.platform === "linux"} checked={currentOutput.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
+        <Checkbox checked={currentOutput.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
     </div>
 </CombinedInput>
 

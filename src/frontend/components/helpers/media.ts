@@ -3,7 +3,9 @@ import type { ShowType } from "../../../types/Show"
 // ----- FreeShow -----
 // This is for media/file functions
 
+import type { Styles } from "../../../types/Settings"
 import { audioExtensions, imageExtensions, videoExtensions } from "../../stores"
+import type { MediaStyle } from "../../../types/Main"
 
 export function getExtension(path: string): string {
     if (!path) return ""
@@ -34,6 +36,13 @@ export function getFileName(path: string): string {
     if (path.indexOf("\\") > -1) return path.substring(path.lastIndexOf("\\") + 1)
     if (path.indexOf("/") > -1) return path.substring(path.lastIndexOf("/") + 1)
     return path
+}
+
+export function splitPath(path: string): string[] {
+    if (!path) return []
+    if (path.indexOf("\\") > -1) return path.split("\\")
+    if (path.indexOf("/") > -1) return path.split("/")
+    return []
 }
 
 // convert to base64
@@ -69,4 +78,26 @@ export function checkMedia(src: string) {
         elem.onerror = () => resolve("false")
         elem.src = src
     })
+}
+
+export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
+    if (!mediaObj) return {}
+
+    let mediaStyle: MediaStyle = {
+        filter: "",
+        flipped: false,
+        fit: "contain",
+        speed: "1",
+        fromTime: 0,
+        toTime: 0,
+    }
+
+    Object.keys(mediaStyle).forEach((key) => {
+        if (!mediaObj[key]) return
+        mediaStyle[key] = mediaObj[key]
+    })
+
+    if (currentStyle?.fit) mediaStyle.fit = currentStyle.fit
+
+    return mediaStyle
 }

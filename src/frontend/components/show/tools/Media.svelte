@@ -6,9 +6,9 @@
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { getExtension, getMediaType } from "../../helpers/media"
+    import { getExtension, getMediaStyle, getMediaType } from "../../helpers/media"
     import { findMatchingOut, setOutput } from "../../helpers/output"
-    import { getMediaFilter, sendMidi } from "../../helpers/showActions"
+    import { sendMidi } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -134,10 +134,7 @@
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
                 <!-- TODO: cameras -->
-                {@const filter = getMediaFilter(background.path)}
-                {@const flipped = $media[background.path]?.flipped || false}
-                {@const fit = $media[background.path]?.fit || "contain"}
-                {@const speed = $media[background.path]?.speed || "1"}
+                {@const mediaStyle = getMediaStyle($media[background.path], { name: "" })}
                 <SelectElem id="media" data={{ ...background }} draggable>
                     <div class="media_item item context #show_media" class:active={findMatchingOut(background.path, $outputs)}>
                         <HoverButton
@@ -146,14 +143,14 @@
                             size={3}
                             on:click={() => {
                                 if (!$outLocked) {
-                                    setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, filter, flipped, fit, speed })
+                                    setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, ...mediaStyle })
                                     if (background.type === "video") send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
                                 }
                             }}
                             title={$dictionary.media?.play}
                         >
                             <!-- <div style="flex: 2;height: 50px;"> -->
-                            <MediaLoader name={background.name} path={background.path} type={background.type} {filter} {flipped} {fit} {speed} />
+                            <MediaLoader name={background.name} path={background.path} type={background.type} {mediaStyle} />
                             <!-- </div> -->
                         </HoverButton>
                         <!-- on:click={() => activeShow.set({ id: background.path, name: background.name, type: background.type })} -->

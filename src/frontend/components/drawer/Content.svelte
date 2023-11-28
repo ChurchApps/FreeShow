@@ -19,26 +19,9 @@
     $: active = $drawerTabsData[id]?.activeSubTab || null
 
     let streams: any = []
-    $: {
-        if (id !== "media" || active) stopStreams()
-    }
+    $: if (id !== "media" || active) stopStreams()
+
     function stopStreams() {
-        //     // TODO: check if in output!!
-        // navigator.mediaDevices
-        //   .getUserMedia({
-        //     audio: true,
-        //     video: true,
-        //   })
-        //   .then((stream: any) => {
-        //     console.log(stream)
-        //     stream.getTracks().forEach((track: any) => {
-        //       console.log(track)
-        //       track.stop()
-        //     })
-        //   })
-
-        // console.log("STOP")
-
         streams.forEach((stream: any) => {
             stream.getTracks().forEach((track: any) => {
                 console.log(track)

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { alertUpdates, autoOutput, autosave, labelsDisabled, timeFormat } from "../../../stores"
+    import { alertUpdates, autoOutput, autosave, labelsDisabled, special, timeFormat } from "../../../stores"
     import { setLanguage } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -14,6 +14,7 @@
         updates: (e: any) => alertUpdates.set(e.target.checked),
         labels: (e: any) => labelsDisabled.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
+        hideCursor: (e: any) => updateSpecial(e.target.checked, "hideCursor"),
     }
 
     const autosaveList: any = [
@@ -25,6 +26,15 @@
         { id: "30min", name: "30 $:settings.minutes:$" },
     ]
 
+    function updateSpecial(value, key) {
+        special.update((a) => {
+            if (!value) delete a[key]
+            else a[key] = value
+
+            return a
+        })
+    }
+
     // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
 
     function reset() {
@@ -33,6 +43,11 @@
         alertUpdates.set(true)
         autoOutput.set(false)
         labelsDisabled.set(false)
+
+        special.update((a) => {
+            delete a.hideCursor
+            return a
+        })
     }
 
     // WIP set calendar starting day
@@ -71,6 +86,12 @@
         <Checkbox checked={$autoOutput} on:change={inputs.autoOutput} />
     </div>
 </CombinedInput>
+<CombinedInput>
+    <p><T id="settings.hide_cursor_in_output" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.hideCursor} on:change={inputs.hideCursor} />
+    </div>
+</CombinedInput>
 
 <!-- <hr /> -->
 <!-- <div>
@@ -84,52 +105,6 @@
     }}
   />
 </div> -->
-
-<!-- TODO: video / image extensions -->
-<!-- <div>
-  <p><T id="settings.video_extensions" /></p>
-  <span class="flex">
-    <span style="text-transform: uppercase;margin-right: 10px;">
-      {#each $videoExtensions as extension, i}
-        {#if i > 0},&nbsp;{/if}<span class="hoverDelete" on:click={() => videoExtensions.set($videoExtensions.filter((a) => a !== extension))}>{extension}</span>
-      {/each}
-    </span>
-    <TextInput value={value.video} on:input={(e) => changeValue(e, "video")} light />
-    <Button
-      on:click={() => {
-        if (!$videoExtensions.includes(value.video.toLowerCase())) {
-          videoExtensions.set([...$videoExtensions, value.video.toLowerCase()])
-          value.video = ""
-        }
-      }}
-    >
-      <p><T id="settings.add" /></p>
-    </Button>
-  </span>
-</div>
-<div>
-  <p><T id="settings.image_extensions" /></p>
-  <span class="flex">
-    <span style="text-transform: uppercase;margin-right: 10px;">
-      {#each $imageExtensions as extension, i}
-        {#if i > 0},&nbsp;{/if}<span class="hoverDelete" on:click={() => imageExtensions.set($imageExtensions.filter((a) => a !== extension))}>{extension}</span>
-      {/each}
-    </span>
-    <TextInput value={value.image} on:input={(e) => changeValue(e, "image")} light />
-    <Button
-      on:click={() => {
-        if (!$imageExtensions.includes(value.image.toLowerCase())) {
-          imageExtensions.set([...$imageExtensions, value.image.toLowerCase()])
-          value.image = ""
-        }
-      }}
-    >
-      <p><T id="settings.add" /></p>
-    </Button>
-  </span>
-</div> -->
-
-<!-- project store location... -->
 
 <div class="filler" />
 <div class="bottom">

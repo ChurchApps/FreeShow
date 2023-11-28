@@ -11,8 +11,6 @@
     import Editbox from "./Editbox.svelte"
     import { autoSize } from "./scripts/autoSize"
 
-    // TODO: template editor
-
     $: currentId = $activeEdit.id!
     $: Slide = $templates[currentId]
     templates.subscribe((a) => (Slide = a[currentId]))

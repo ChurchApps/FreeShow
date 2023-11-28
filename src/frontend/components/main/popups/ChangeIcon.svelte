@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activePopup, categories, customizedIcons, mediaFolders, overlayCategories, selected, templateCategories } from "../../../stores"
-    import { addItem } from "../../edit/scripts/addItem"
+    import { addItem } from "../../edit/scripts/itemHelpers"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"

@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { activeEdit, activePage, activeProject, activeShow, categories, notFound, outLocked, outputs, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache } from "../../stores"
+    import type { MediaStyle } from "../../../types/Main"
+    import { activeEdit, activePage, activeProject, activeShow, categories, media, notFound, outLocked, outputs, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache } from "../../stores"
     import { playAudio } from "../helpers/audio"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getFileName, removeExtension } from "../helpers/media"
+    import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { checkName } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
@@ -33,11 +34,6 @@
 
     $: newName = name === null && (type === "image" || type === "video") ? removeExtension(getFileName(id)) : name || ""
 
-    // TODO: set name when show does not exist
-
-    // export let location;
-    // export let access;
-
     export let icon: boolean = false
     let iconID: null | string = null
     let custom: boolean = false
@@ -55,14 +51,7 @@
             else iconID = type
         }
     }
-    // export let category: string
-    // const check = () => {
-    //   if (!category[1]) return category[0]
-    //   // else if (category[0].toLowerCase().includes('song') || category[0].toLowerCase().includes('music')) return 'song';
-    //   else if (category[0].toLowerCase().includes("info") || category[0].toLowerCase().includes("presentation")) return "presentation"
-    //   else return "song"
-    // }
-    // $: icon = check()
+
     $: active = index !== null ? $activeShow?.index === index : $activeShow?.id === id
 
     let editActive: boolean = false
@@ -105,14 +94,8 @@
             setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: 0 })
         } else if (type === "image" || type === "video") {
             // WIP duplicate of Show.svelte - onVideoClick
-            let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, startAt: 0, type: type }
-            if (index && $activeProject) {
-                let styling = $projects[$activeProject].shows[index]
-                if (styling.filter) out.filter = styling.filter
-                // TODO: flipped, fit, speed
-                // if (styling.flipped) out.flipped = styling.flipped
-                // if (styling.fit) out.fit = styling.fit
-            }
+            let mediaStyle: MediaStyle = getMediaStyle($media[id], { name: "" })
+            let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, startAt: 0, type: type, ...mediaStyle }
 
             // remove active slide
             if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === out.path)) setOutput("slide", null)

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MediaFit } from "../../../../types/Main"
+    import type { MediaStyle } from "../../../../types/Main"
     import type { Resolution } from "../../../../types/Settings"
 
     import { mediaCache, outputs, styles, videoExtensions } from "../../../stores"
@@ -14,10 +14,7 @@
     export let path: string
     export let loadFullImage: boolean = false
     export let cameraGroup: string = ""
-    export let filter: any = ""
-    export let flipped: boolean = false
-    export let fit: MediaFit = "contain"
-    export let speed: string = "1"
+    export let mediaStyle: MediaStyle
     export let type: null | "media" | "image" | "video" | "camera" | "screen" | "audio" = null
     export let hover: boolean = false
     export let loaded: boolean = false
@@ -25,8 +22,6 @@
     export let duration: number = 0
     export let videoElem: any = null
     export let ghost: boolean = false
-
-    // TODO: fit
 
     // TODO: update
     $: if ((!type || type === "image") && canvas) {
@@ -178,7 +173,7 @@
 
     $: customResolution = resolution || getResolution(null, { $outputs, $styles })
 
-    $: if (speed && videoElem) videoElem.playbackRate = speed
+    $: if (mediaStyle.speed && videoElem) videoElem.playbackRate = mediaStyle.speed
 
     // retry on error (don't think this is neccesary)
     let retryCount = 0
@@ -203,11 +198,11 @@
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
         {:else if type === "video"}
-            <div class="video" style="filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''};overflow: hidden;">
-                <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, fit)} bind:this={canvas} />
+            <div class="video" style="filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''};overflow: hidden;">
+                <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, mediaStyle.fit)} bind:this={canvas} />
                 {#if !loaded || hover || loadFullImage}
                     {#key retryCount}
-                        <video style="pointer-events: none;position: absolute;width: 100%;height: 100%;object-fit: {fit};" bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={ready}>
+                        <video style="pointer-events: none;position: absolute;width: 100%;height: 100%;object-fit: {mediaStyle.fit};" bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={ready}>
                             <track kind="captions" />
                         </video>
                     {/key}
@@ -215,11 +210,20 @@
             </div>
         {:else}
             {#if !loadFullImage || !loaded}
-                <canvas style="{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, fit)}filter: {filter};{flipped ? 'transform: scaleX(-1);' : ''}" bind:this={canvas} />
+                <canvas
+                    style="{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, mediaStyle.fit)}filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''}"
+                    bind:this={canvas}
+                />
             {/if}
             {#if loadFullImage}
                 {#key retryCount}
-                    <img src={path} alt={name} loading="lazy" style="pointer-events: none;position: absolute;filter: {filter};object-fit: {fit};{flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;" on:error={reload} />
+                    <img
+                        src={path}
+                        alt={name}
+                        loading="lazy"
+                        style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;"
+                        on:error={reload}
+                    />
                 {/key}
             {/if}
         {/if}

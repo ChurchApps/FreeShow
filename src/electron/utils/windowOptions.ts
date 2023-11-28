@@ -74,7 +74,8 @@ export const exportOptions: any = {
     modal: true,
     webPreferences: {
         preload: join(__dirname, "..", "preload"),
-        nodeIntegration: true,
+        webSecurity: isProd,
+        nodeIntegration: !isProd,
         // contextIsolation: true,
         // enableRemoteModule: false,
         backgroundThrottling: false,

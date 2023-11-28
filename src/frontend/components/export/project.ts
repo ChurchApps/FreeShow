@@ -4,11 +4,12 @@
 import { get } from "svelte/store"
 import { EXPORT } from "../../../types/Channels"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
-import { exportPath } from "../../stores"
+import { dataPath } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
-import { _show } from "../helpers/shows"
 import { loadShows } from "../helpers/setShow"
+import { _show } from "../helpers/shows"
+import { formatToFileName } from "../helpers/show"
 
 export async function exportProject(project: Project) {
     let shows: any = {}
@@ -27,7 +28,7 @@ export async function exportProject(project: Project) {
     await Promise.all(project.shows.map(getShow))
 
     // export to file
-    send(EXPORT, ["GENERATE"], { type: "project", path: get(exportPath), name: project.name, file: { project, shows } })
+    send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: { project, shows } })
 
     async function getShow(showRef: ProjectShowRef) {
         let type = showRef.type || "show"

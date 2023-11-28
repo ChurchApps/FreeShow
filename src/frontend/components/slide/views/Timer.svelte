@@ -70,7 +70,7 @@
 {:else if item?.timer?.viewType === "circle"}
     <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" on:dblclick={openInDrawer} />
 {:else}
-    <div class="align" style="{style}{item?.align || ''}" on:dblclick={openInDrawer}>
+    <div class="align" style="{style}{(item?.align || '').replaceAll('text-align', 'justify-content')}" on:dblclick={openInDrawer}>
         <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
             {#if overflow && negative}
                 <span>-</span>
@@ -135,8 +135,12 @@
         /* border-radius: 50%; */
 
         inset: 0;
-        background: radial-gradient(farthest-side, var(--color) 98%, #0000) top/var(--lineWidth) var(--lineWidth) no-repeat, conic-gradient(var(--color) calc(var(--percentage) * 1%), #0000 0);
-        background-size: 0 0, auto;
+        background:
+            radial-gradient(farthest-side, var(--color) 98%, #0000) top/var(--lineWidth) var(--lineWidth) no-repeat,
+            conic-gradient(var(--color) calc(var(--percentage) * 1%), #0000 0);
+        background-size:
+            0 0,
+            auto;
     }
     .circle.mask:before {
         -webkit-mask: radial-gradient(farthest-side, #0000 calc(99% - var(--lineWidth)), #000 calc(100% - var(--lineWidth)));

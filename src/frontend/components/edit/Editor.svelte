@@ -7,17 +7,17 @@
     import MediaEditor from "./MediaEditor.svelte"
     import TemplateEditor from "./TemplateEditor.svelte"
 
-    // $: if ($activeShow && $activeEdit.id) activeEdit.set({ slide: 0, items: [] })
-    // TODO: check if slide 0 exists
-    $: if ($activeShow && ($activeShow.type === undefined || $activeShow.type === "show") && ($activeEdit.slide === null || $activeEdit.slide === undefined) && !$activeEdit.id) activeEdit.set({ slide: 0, items: [] })
+    $: showIsActive = $activeShow && ($activeShow.type || "show") === "show"
+    $: noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined
+    $: if (showIsActive && noEditSlide && !$activeEdit.id) activeEdit.set({ slide: 0, items: [] })
 
-    $: if ($refreshEditSlide)
+    $: if ($refreshEditSlide) {
         setTimeout(() => {
             refreshEditSlide.set(false)
         }, 100)
+    }
 </script>
 
-<!-- TODO: activeEdit, edit overlays, templates, ... -->
 {#key $refreshEditSlide}
     {#if $activeEdit.type === "overlay"}
         <OverlayEditor />
@@ -35,6 +35,3 @@
         <Splash />
     {/if}
 {/key}
-
-<style>
-</style>

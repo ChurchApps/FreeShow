@@ -34,6 +34,7 @@ function convertToBible(content: any): Bible {
     let testaments = content.bible.testament
     if (!Array.isArray(testaments)) testaments = [testaments]
     let books: any[] = []
+    console.log(testaments)
     testaments.forEach((a) => {
         books.push(...getBooks(a.book))
     })
@@ -45,6 +46,8 @@ function convertToBible(content: any): Bible {
 function getBooks(oldBooks: any[]) {
     let books: any[] = []
 
+    // if (!Array.isArray(oldBooks)) oldBooks = [oldBooks]
+    console.log(oldBooks)
     oldBooks.forEach((book) => {
         let currentBook = {
             number: book["@number"],
@@ -62,10 +65,11 @@ function getChapters(oldChapters: any[]) {
     let chapters: any[] = []
 
     if (!Array.isArray(oldChapters)) oldChapters = [oldChapters]
+    console.log(oldChapters)
     oldChapters.forEach((chapter) => {
         let currentChapter = {
             number: chapter["@number"],
-            verses: getVerses(chapter.verse),
+            verses: getVerses(chapter.verse || []),
         }
 
         chapters.push(currentChapter)
@@ -77,6 +81,7 @@ function getChapters(oldChapters: any[]) {
 function getVerses(oldVerses: any[]) {
     let verses: any[] = []
 
+    console.log(oldVerses)
     oldVerses.forEach((verse) => {
         let currentVerse = {
             number: verse["@number"],

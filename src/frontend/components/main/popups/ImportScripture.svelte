@@ -172,7 +172,7 @@
         <Button
             style="width: 25%;flex-direction: column;min-height: 180px;"
             on:click={() => {
-                send(IMPORT, [format.id + "_bible"], format)
+                send(IMPORT, [format.id + "_bible"], { format })
 
                 // linux dialog behind window message
                 if ($os.platform === "linux") {
