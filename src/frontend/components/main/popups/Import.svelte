@@ -6,8 +6,6 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
 
-    // TODO: program icons
-
     const show_formats = [
         { name: "Clipboard", id: "clipboard" },
         { name: "Text file", extensions: ["txt"], id: "txt" },
@@ -40,8 +38,6 @@
         { name: "Lessons.church", extensions: ["json"], id: "lessons" },
     ]
 </script>
-
-<!-- TODO: drop area: -->
 
 <h3>Show</h3>
 <div>

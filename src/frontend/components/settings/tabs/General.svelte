@@ -106,52 +106,6 @@
   />
 </div> -->
 
-<!-- TODO: video / image extensions -->
-<!-- <div>
-  <p><T id="settings.video_extensions" /></p>
-  <span class="flex">
-    <span style="text-transform: uppercase;margin-right: 10px;">
-      {#each $videoExtensions as extension, i}
-        {#if i > 0},&nbsp;{/if}<span class="hoverDelete" on:click={() => videoExtensions.set($videoExtensions.filter((a) => a !== extension))}>{extension}</span>
-      {/each}
-    </span>
-    <TextInput value={value.video} on:input={(e) => changeValue(e, "video")} light />
-    <Button
-      on:click={() => {
-        if (!$videoExtensions.includes(value.video.toLowerCase())) {
-          videoExtensions.set([...$videoExtensions, value.video.toLowerCase()])
-          value.video = ""
-        }
-      }}
-    >
-      <p><T id="settings.add" /></p>
-    </Button>
-  </span>
-</div>
-<div>
-  <p><T id="settings.image_extensions" /></p>
-  <span class="flex">
-    <span style="text-transform: uppercase;margin-right: 10px;">
-      {#each $imageExtensions as extension, i}
-        {#if i > 0},&nbsp;{/if}<span class="hoverDelete" on:click={() => imageExtensions.set($imageExtensions.filter((a) => a !== extension))}>{extension}</span>
-      {/each}
-    </span>
-    <TextInput value={value.image} on:input={(e) => changeValue(e, "image")} light />
-    <Button
-      on:click={() => {
-        if (!$imageExtensions.includes(value.image.toLowerCase())) {
-          imageExtensions.set([...$imageExtensions, value.image.toLowerCase()])
-          value.image = ""
-        }
-      }}
-    >
-      <p><T id="settings.add" /></p>
-    </Button>
-  </span>
-</div> -->
-
-<!-- project store location... -->
-
 <div class="filler" />
 <div class="bottom">
     <Button style="width: 100%;" on:click={reset} center>

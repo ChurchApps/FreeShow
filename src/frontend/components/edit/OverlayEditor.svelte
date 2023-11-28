@@ -12,8 +12,6 @@
     import Editbox from "./Editbox.svelte"
     import { autoSize } from "./scripts/autoSize"
 
-    // TODO: overlay editor
-
     $: currentId = $activeEdit.id!
     $: Slide = $overlays[currentId]
     overlays.subscribe((a) => (Slide = a[currentId]))

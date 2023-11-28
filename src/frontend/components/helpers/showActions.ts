@@ -28,7 +28,7 @@ import {
 } from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
-import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
+import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, isOutCleared, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
@@ -306,14 +306,6 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
     return index
 }
 
-export function getMediaFilter(bakgroundPath: string) {
-    // let filter = ""
-    // let mediaFilter = get(media)[bakgroundPath]?.filter
-    // if (mediaFilter) Object.entries(mediaFilter).forEach(([id, a]: any) => (filter += ` ${id}(${a})`))
-    // return filter
-    return get(media)[bakgroundPath]?.filter || ""
-}
-
 export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
@@ -368,6 +360,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             // }
 
             if (bg && bgPath !== outputBg?.path) {
+                let mediaStyle = getMediaStyle(get(media)[bgPath], { name: "" })
                 let bgData: any = {
                     name,
                     type,
@@ -376,10 +369,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                     id: bg.id || bgPath, // path = cameras
                     muted: bg.muted !== false,
                     loop: bg.loop !== false,
-                    filter: getMediaFilter(bgPath),
-                    flipped: get(media)[bgPath]?.flipped || false,
-                    fit: get(media)[bgPath]?.fit || "contain",
-                    speed: get(media)[bgPath]?.speed || "1",
+                    ...mediaStyle,
                 }
 
                 // outBackground.set(bgData)

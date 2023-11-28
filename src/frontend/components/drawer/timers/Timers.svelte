@@ -114,7 +114,6 @@
 {/if}
 
 <div style="display: flex;background-color: var(--primary-darkest);">
-    <!-- TODO: enable!! -->
     <Button style="flex: 1;" on:click={() => activePopup.set("timer")} center title={$dictionary.new?.timer}>
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.timer" />{/if}

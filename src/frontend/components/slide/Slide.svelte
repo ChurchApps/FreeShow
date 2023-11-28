@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../types/Channels"
-    import type { MediaFit } from "../../../types/Main"
+    import type { MediaStyle } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
     import { activeShow, activeTimers, checkedFiles, dictionary, driveData, fullColors, groupNumbers, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, showsCache, slidesOptions, styles } from "../../stores"
     import { send } from "../../utils/request"
@@ -11,9 +11,8 @@
     import { clone } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { GetLayoutRef } from "../helpers/get"
-    import { checkMedia, getFileName, splitPath } from "../helpers/media"
+    import { checkMedia, getFileName, getMediaStyle, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
-    import { getMediaFilter } from "../helpers/showActions"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
     import Icons from "./Icons.svelte"
@@ -106,17 +105,8 @@
     // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
     // $: name = full_name.slice(0, full_name.lastIndexOf("."))
 
-    let filter: string = ""
-    let flipped: boolean = false
-    let fit: MediaFit = "contain"
-
-    $: if (bg?.path) {
-        // TODO: use show filter if existing
-        let path: string = bg?.path
-        filter = getMediaFilter(path)
-        flipped = $media[path]?.flipped || false
-        fit = currentStyle?.fit || $media[path]?.fit || "contain"
-    }
+    let mediaStyle: MediaStyle = {}
+    $: if (bg?.path) mediaStyle = getMediaStyle($media[bg.path], currentStyle)
 
     $: group = slide.group
     $: {
@@ -257,6 +247,7 @@
 
     $: slideFilter = ""
     $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
+    else slideFilter = ""
     function getSlideFilter() {
         slideFilter = ""
         if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
@@ -319,9 +310,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                                 type={bg.type !== "player" ? bg.type : null}
                                 loadFullImage={!!(bg.path || bg.id)}
                                 ghost={!background}
-                                {filter}
-                                {flipped}
-                                {fit}
+                                {mediaStyle}
                                 bind:duration
                             />
                         </div>

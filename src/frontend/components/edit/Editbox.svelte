@@ -260,36 +260,13 @@
         }, 50)
     })
 
-    // update rearrange items
-    // TODO: (minor issue) text seemingly swapping places when rearranging items
-    // let updateItem: boolean = false
-    // $: if (item) checkItemUpdate()
-    // function checkItemUpdate() {
-    //     if (updateItem) {
-    //         updateItem = false
-    //         return
-    //     }
-
-    //     // update item
-    //     getStyle()
-    // }
-
     let currentSlide: number = -1
     $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide) {
         currentSlide = $activeEdit.slide
         setTimeout(getStyle, 10)
     }
 
-    // // update text if slide added/removed (for quick edit)
-    // let slideLength = 0
-    // $: if (_show().get().slides.length > slideLength) {
-    //   slideLength = _show().get().slides.length
-    //   setTimeout(getStyle, 10)
-    // }
-
     $: {
-        // console.log("ITEM", clone(item))
-
         // style hash
         let s = ""
         item?.lines?.forEach((line) => {
@@ -806,42 +783,6 @@ bind:offsetWidth={width} -->
         </div>
     {/if}
     {#if item?.lines}
-        <!-- chords (top right button) -->
-        <!-- <div
-            class="chordsButton"
-            style="zoom: {1 / ratio};"
-            on:mousedown={() => {
-                selected.set({
-                    id: "chord",
-                    data: [{ slideId: ref.id, itemIndex: index }],
-                })
-            }}
-        >
-            {#if chordsMode}
-                <Button class="context #chord" on:click={() => addChords(item, ref, index)}>
-                    <Icon id="add" white />
-                </Button>
-            {/if}
-        </div> -->
-
-        <!-- <div
-      class="chordsText align"
-      class:plain
-      style={plain ? null : item.align || null}
-    >
-      <div
-        style={plain
-          ? null
-          : item.align
-          ? item.align.replace("align-items", "justify-content")
-          : null}
-        class:height={item.lines?.length < 2 &&
-          !item.lines?.[0]?.text[0]?.value.length}
-      >
-        {@html html}
-      </div>
-    </div> -->
-
         <!-- TODO: remove align..... -->
         <div bind:this={alignElem} class="align" class:plain style={plain ? null : item.align || null}>
             {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
@@ -851,31 +792,10 @@ bind:offsetWidth={width} -->
             {/if}
             {#if chordsMode && textElem}
                 <div class="edit chords" on:mousedown={chordClick}>
-                    <!-- {#each item.lines as line, i}
-                        {#if line.chords}
-                            {#each line.chords as chord}
-                                {#await getChordPosition(chord, { textElem, item, line: i }) then pos}
-                                    <div class="context #chord chord" style={pos} on:mousedown={() => chordDown({ chord, index: i }, { showRef: ref, itemIndex: index })}>
-                                        <Button style="padding: 0 15px;" on:click={() => changeKey({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })}>
-                                            {chord.key}
-                                        </Button>
-                                    </div>
-                                {/await}
-                            {/each}
-                        {/if}
-                    {/each} -->
-
                     {#each item.lines as line, i}
                         <div class="break chordsBreak" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
                             {@html chordLines[i]}
                         </div>
-                        <!-- <div class="break" style="{item?.specialStyle?.lineBg ? `background-color: ${item?.specialStyle?.lineBg};` : ''}{line.align || ''}">
-                            {#each line.text || [] as text}
-                                <span style="{text.style}font-size: {autoSize}px;">
-                                    {@html text.value.replaceAll("\n", "<br>") || "<br>"}
-                                </span>
-                            {/each}
-                        </div> -->
                     {/each}
                 </div>
             {/if}
@@ -894,25 +814,8 @@ bind:offsetWidth={width} -->
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />
-            <!-- on:paste did not work on mac -->
+            <!-- this did not work on mac: -->
             <!-- on:paste|preventDefault={paste} -->
-
-            <!-- auto size -->
-            <!-- <div
-                bind:this={textElem}
-                on:mousemove={(e) => {
-                    let newLines = chordMove(e, { textElem, item })
-                    if (newLines) item.lines = newLines
-                }}
-                class="edit"
-                class:autoSize={item.auto}
-                contenteditable
-                on:keydown={textElemKeydown}
-                bind:innerHTML={html}
-                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
-                class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
-                class:tallLines={chordsMode}
-            /> -->
         </div>
     {:else if item?.type === "list"}
         <ListView list={item.list} disableTransition />

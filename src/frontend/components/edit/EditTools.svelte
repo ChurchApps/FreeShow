@@ -284,7 +284,7 @@
             let indexes = [$activeEdit.slide]
             if (typeof indexes[0] !== "number") return
 
-            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, dataIsArray: true, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, indexes } })
             history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: undefined, indexes } })
             return
         }

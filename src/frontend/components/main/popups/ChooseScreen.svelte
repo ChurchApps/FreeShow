@@ -1,17 +1,20 @@
 <script>
     import { onMount } from "svelte"
-    import { activePopup, alertMessage } from "../../../stores"
+    import { activePopup, alertMessage, popupData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Screens from "../../settings/Screens.svelte"
 
     let error = false
-    $: if ($alertMessage === "error.display") error = true
+    let activateOutput = $popupData.activateOutput
 
     onMount(() => {
+        if ($alertMessage === "error.display") error = true
+
         setTimeout(() => {
             alertMessage.set("")
+            popupData.set({})
         }, 100)
     })
 </script>
@@ -29,7 +32,7 @@
 
     <br />
 
-    <Screens activateOutput={error} />
+    <Screens {activateOutput} />
 </main>
 
 <style>

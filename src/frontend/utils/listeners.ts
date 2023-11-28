@@ -12,7 +12,7 @@ import {
     events,
     folders,
     groups,
-    mediaFolders,
+    media,
     midiIn,
     openedFolders,
     outputs,
@@ -121,7 +121,8 @@ export function listenForUpdates() {
     // activeTimers.subscribe((data) => {
     //     send(OUTPUT, ["ACTIVE_TIMERS"], data)
     // })
-    mediaFolders.subscribe((data) => {
+    // WIP not used?!
+    media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
     })
 

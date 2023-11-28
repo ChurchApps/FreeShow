@@ -47,6 +47,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },
+    choose_screen: { label: "popup.choose_screen", icon: "screen" },
     toggle_output: { label: "context.toggle_output", icon: "outputs" },
     move_to_front: { label: "context.move_to_front", icon: "toFront" },
     // PROJECT
@@ -132,7 +133,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output_window: ["close"],
 
     // TOP
-    output: ["force_output"],
+    output: ["force_output", "choose_screen"],
 
     // OUTPUTS
     output_active_button: ["toggle_output", "move_to_front", "edit"],
@@ -164,7 +165,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "play", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
     // , "delete_all"
-    show_media: ["preview", "play", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"],
+    show_media: ["preview", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"],
     show_audio: ["preview", "SEPERATOR", "system_open"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"

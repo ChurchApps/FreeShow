@@ -242,6 +242,7 @@
 
     $: slideFilter = ""
     $: if (!slideData?.filterEnabled || slideData?.filterEnabled?.includes("background")) getSlideFilter()
+    else slideFilter = ""
     function getSlideFilter() {
         slideFilter = ""
         if (!slideData) return
@@ -319,9 +320,12 @@
     const animations = {
         wait: async ({ duration }) => {
             return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve("ended")
-                }, Number(duration) * 1000)
+                setTimeout(
+                    () => {
+                        resolve("ended")
+                    },
+                    Number(duration) * 1000
+                )
             })
         },
         set: ({ id, key, value, extension }) => {

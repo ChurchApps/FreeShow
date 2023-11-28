@@ -4,7 +4,6 @@ export function pasteText(elem: any) {
     if (!elem?.classList?.contains("edit")) return
 
     navigator.clipboard.readText().then((clipText: string) => {
-        // TODO: (mac) undo/redo text
         // format html escape characters
         clipText = clipText.toString()
         if (elem.nodeName === "INPUT" || elem.nodeName === "TEXTAREA") elem.value = insertValue(elem, clipText)

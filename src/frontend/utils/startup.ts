@@ -53,6 +53,7 @@ import {
     overlays,
     playerVideos,
     playingVideos,
+    popupData,
     previewBuffers,
     projects,
     saved,
@@ -102,7 +103,7 @@ export function startup() {
         setTimeout(() => {
             send(OUTPUT, ["REQUEST_DATA_MAIN"])
             setLanguage() // this is only needed for the context menu
-        }, 100)
+        }, 200)
         // TODO: video data!
     })
 }
@@ -155,6 +156,7 @@ const receiveMAIN: any = {
         alertMessage.set(a)
 
         if (a === "error.display") {
+            popupData.set({ activateOutput: true })
             activePopup.set("choose_screen")
             return
         }
@@ -373,7 +375,7 @@ const receiveOUTPUTasOUTPUT: any = {
     DRAW_TOOL: (a: any) => drawTool.set(a),
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
-    MEDIA: (a: any) => mediaFolders.set(a),
+    MEDIA: (a: any) => media.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     SPECIAL: (a: any) => clone(special.set(a)),
@@ -397,7 +399,7 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["DRAW_SETTINGS"], get(drawSettings))
 
     send(OUTPUT, ["VIZUALISER_DATA"], get(visualizerData))
-    send(OUTPUT, ["MEDIA"], get(mediaFolders))
+    send(OUTPUT, ["MEDIA"], get(media))
     send(OUTPUT, ["TIMERS"], get(timers))
     send(OUTPUT, ["VARIABLES"], get(variables))
 

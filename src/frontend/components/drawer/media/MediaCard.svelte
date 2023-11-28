@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { MediaFit } from "../../../../types/Main"
+    import type { MediaStyle } from "../../../../types/Main"
     import { activeShow, media, mediaOptions, outLocked, outputs, styles } from "../../../stores"
+    import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
-    import { getMediaFilter } from "../../helpers/showActions"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import IntersectionObserver from "./IntersectionObserver.svelte"
@@ -53,7 +53,7 @@
             return
         }
 
-        setOutput("background", { path, type, loop: true, muted: false, filter, flipped, fit, speed, startAt: 0 })
+        setOutput("background", { path, type, loop: true, muted: false, startAt: 0, ...mediaStyle })
         // TODO: get actual data
         // TODO: output/preview control does not always match
         // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
@@ -70,20 +70,11 @@
         if (e.key === "Enter") dblclick(e)
     }
 
-    let filter = ""
-    let flipped = false
-    let fit: MediaFit = "contain"
-    let speed: string = "1"
-
     $: currentOutput = $outputs[getActiveOutputs()[0]]
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
-    $: if (path) {
-        filter = getMediaFilter(path)
-        flipped = $media[path]?.flipped || false
-        fit = currentStyle?.fit || $media[path]?.fit || "contain"
-        speed = $media[path]?.speed || "1"
-    }
+    let mediaStyle: MediaStyle = {}
+    $: if (path) mediaStyle = getMediaStyle($media[path], currentStyle)
 
     // fixed resolution
     let resolution = { width: 1920, height: 1080 }
@@ -95,7 +86,7 @@
     style="width: {$mediaOptions.mode === 'grid' ? 100 : 100 / $mediaOptions.columns}%;"
     mode={$mediaOptions.mode}
     width={100}
-    changed={!!filter.length || flipped}
+    changed={!!mediaStyle.filter?.length || mediaStyle.flipped}
     preview={$activeShow?.id === path}
     outlineColor={findMatchingOut(path, $outputs)}
     active={findMatchingOut(path, $outputs) !== null}
@@ -114,8 +105,7 @@
         <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
         <IntersectionObserver class="observer" once let:intersecting>
             {#if intersecting}
-                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {filter} {flipped} {fit} {speed} />
-                <!-- <SyncMedia bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} {fit} /> -->
+                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {mediaStyle} />
             {/if}
         </IntersectionObserver>
     </SelectElem>

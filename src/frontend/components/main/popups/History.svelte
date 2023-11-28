@@ -109,7 +109,6 @@
                 <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
                     {historyIdToString[itemId] || itemId}
                 </span>
-                <!-- TODO: get clock as well: -->
                 <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
             </p>
         </Button>
