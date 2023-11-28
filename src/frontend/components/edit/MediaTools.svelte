@@ -74,7 +74,7 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["flipped", "fit", "speed", "from_time", "to_time"]
+        let deleteKeys: string[] = ["flipped", "fit", "speed", "fromTime", "toTime"]
 
         // reset
         if (active === "filters") deleteKeys = ["filter"]

@@ -33,6 +33,18 @@
         // }
     }
 
+    $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0
+    $: if (endTime) setInterval(checkIfEnded, 1000)
+    function checkIfEnded() {
+        if (!video) return
+        console.log(video.currentTime, video.currentTime >= endTime!)
+        if (video.currentTime >= endTime!) dispatch("ended")
+    }
+    // $: if (endTime && videoTime >= endTime) endVideo()
+    // function endVideo() {
+    //     dispatch("ended")
+    // }
+
     function playing() {
         if (!hasLoaded || mirror) return
         hasLoaded = false
@@ -40,7 +52,7 @@
 
         videoData.paused = true
         setTimeout(() => {
-            videoTime = startAt || 0
+            videoTime = Math.max(startAt, mediaStyle.fromTime || 0) || 0
             videoData.paused = false
             startAt = 0
         }, 50)

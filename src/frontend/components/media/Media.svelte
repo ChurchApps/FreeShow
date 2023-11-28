@@ -55,7 +55,13 @@
     else resetData()
 
     function resetVideos() {
-        if (videoData.loop) return
+        if (videoData.loop) {
+            if (mediaStyle.toTime) {
+                videoTime = Math.max(startAt, mediaStyle.fromTime || 0) || 0
+                updateVideo("time")
+            }
+            return
+        }
         let currentBackgroundId = path
 
         resetData()
@@ -217,18 +223,18 @@
         {#if noTransitions}
             {#if path}
                 <div class="video">
-                    <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={() => resetVideos()} on:error={reload} />
+                    <Video {path} bind:video bind:videoData bind:videoTime {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={resetVideos} on:error={reload} />
                 </div>
             {/if}
         {:else}
             {#if video1.active && video1.path}
                 <div class="video" class:change transition:custom={transition}>
-                    <Video path={video1.path} bind:video={video1.video} bind:videoData={video1.data} bind:videoTime={videoTime1} {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={() => resetVideos()} on:error={reload} />
+                    <Video path={video1.path} bind:video={video1.video} bind:videoData={video1.data} bind:videoTime={videoTime1} {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={resetVideos} on:error={reload} />
                 </div>
             {/if}
             {#if video2.active && video2.path}
                 <div class="video" class:change transition:custom={transition}>
-                    <Video path={video2.path} bind:video={video2.video} bind:videoData={video2.data} bind:videoTime={videoTime2} {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={() => resetVideos()} on:error={reload} />
+                    <Video path={video2.path} bind:video={video2.video} bind:videoData={video2.data} bind:videoTime={videoTime2} {startAt} {mirror} {mediaStyle} {animationStyle} on:playing on:loaded on:ended={resetVideos} on:error={reload} />
                 </div>
             {/if}
         {/if}
