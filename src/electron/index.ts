@@ -258,8 +258,8 @@ function save(data: any) {
     }
 
     // scriptures
-    if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     let scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
+    if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: any) {
         if (!value) return
         let p: string = path.join(scripturePath, value.name + ".fsb")
