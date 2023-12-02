@@ -60,6 +60,10 @@
                 "zip"
             ],
             "category": "public.app-category.utilities",
+            "hardenedRuntime": true,
+            "gatekeeperAssess": false,
+            "entitlements": "build/entitlements.mac.plist",
+            "entitlementsInherit": "build/entitlements.mac.plist",
             "extendInfo": {
                 "NSMicrophoneUsageDescription": "Please give access to your microphone if you want to use it for input.",
                 "NSCameraUsageDescription": "Please give access to your camera if you want to use it for input.",
@@ -67,6 +71,7 @@
                 "com.apple.security.device.camera": true
             }
         },
+        "afterSign": "scripts/notarize.js",
         "dmg": {
             "background": "build/public/dmg.png",
             "contents": [
@@ -110,6 +115,7 @@
         "@types/vimeo__player": "^2.16.2",
         "electron": "^21.2.2",
         "electron-builder": "^23.6.0",
+        "electron-notarize": "^1.2.2",
         "jest": "^29.0.1",
         "rollup": "^2.63.0",
         "rollup-plugin-copy": "^3.4.0",
