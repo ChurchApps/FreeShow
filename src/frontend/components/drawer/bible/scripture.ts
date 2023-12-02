@@ -108,6 +108,7 @@ export function getSlides({ bibles, sorted }) {
     let template = get(templates)[get(scriptureSettings).template]?.items || []
     let templateTextItems = template.filter((a) => a.lines)
     let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
+    console.log(templateTextItems, templateOtherItems)
 
     bibles.forEach((bible, bibleIndex) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
@@ -245,7 +246,7 @@ export function getSlides({ bibles, sorted }) {
         let lines: any[] = []
 
         if (get(scriptureSettings).combineWithText) itemIndex = 0
-        let metaTemplate = template[itemIndex] || template[0]
+        let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         let versions = bibles.map((a) => a.version).join(" + ")
         let books = [...new Set(bibles.map((a) => a.book))].join(" / ")
@@ -261,7 +262,7 @@ export function getSlides({ bibles, sorted }) {
 
         if (lines.length) {
             // add reference to the main text if just one item or it's enabled!
-            if (template.length <= 1 || get(scriptureSettings).combineWithText) {
+            if (templateTextItems.length <= 1 || get(scriptureSettings).combineWithText) {
                 if (get(scriptureSettings).referenceAtBottom) slides[slideIndex][0].lines.push(...lines)
                 else slides[slideIndex][0].lines = [...lines, ...(slides[slideIndex][0].lines || [])]
             } else {

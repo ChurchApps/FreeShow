@@ -265,6 +265,8 @@
         "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Close ad on output screen",
+        "start": "Start",
+        "end": "End",
         "change_folder": "Choose another location"
     },
     "tabs": {

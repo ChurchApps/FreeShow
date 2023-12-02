@@ -118,15 +118,16 @@ export function convertVideopsalm(data: any) {
 
         function asyncLoop() {
             let song: Song = content.Songs[i]
+            let title = (song.Text || "").replaceAll("<br>", "")
 
             let percentage: string = ((i / content.Songs.length) * 100).toFixed()
             activePopup.set("alert")
-            alertMessage.set(importingText + " " + i + "/" + content.Songs.length + " (" + percentage + "%)" + "<br>" + (song.Text || ""))
+            alertMessage.set(importingText + " " + i + "/" + content.Songs.length + " (" + percentage + "%)" + "<br>" + title)
 
             let layoutID = uid()
             let show = new ShowObj(false, "videopsalm", layoutID)
             let showId = song.Guid || uid()
-            show.name = checkName(song.Text || get(dictionary).main?.unnamed || "Unnamed", showId) || ""
+            show.name = checkName(title || get(dictionary).main?.unnamed || "Unnamed", showId) || ""
             show.meta = {
                 title: show.name,
                 artist: album || "",
@@ -192,54 +193,59 @@ function createSlides({ Verses, Sequence }: Song) {
     let sequences: any = {}
 
     Verses.forEach((verse, i) => {
-        if (verse.Text) {
-            let id: string = uid()
-            if (sequence[i]) sequences[sequence[i]] = id
-            layout.push({ id })
+        if (!verse.Text) return
 
-            let lines: any[] = []
-            verse.Text.split("<br>").forEach((text) => {
-                let line: any = { align: "", text: [] }
+        let id: string = uid()
+        let sequenceKey = sequence[i]
+        if (sequenceKey) {
+            // find next if already matching
+            if (sequences[sequenceKey]) sequenceKey = sequence.find((key) => !sequences[key]) || ""
+            if (sequenceKey) sequences[sequenceKey] = id
+        }
+        layout.push({ id })
 
-                let chords: any[] = []
-                let newText: string = ""
-                text.split("]").forEach((t) => {
-                    let chordStart = t.indexOf("[")
-                    if (chordStart < 0) chordStart = t.length
+        let lines: any[] = []
+        verse.Text.split("<br>").forEach((text) => {
+            let line: any = { align: "", text: [] }
 
-                    let text = t.slice(0, chordStart)
-                    newText += text
+            let chords: any[] = []
+            let newText: string = ""
+            text.split("]").forEach((t) => {
+                let chordStart = t.indexOf("[")
+                if (chordStart < 0) chordStart = t.length
 
-                    let chord = t.slice(chordStart + 1)
-                    if (!chord) return
-                    // only: [Gm], not: [info] [x4]
-                    if (chord.length > 5 || chord.includes("x")) newText += `[${chord}]`
-                    else {
-                        let id = uid(5)
-                        chords.push({ id, pos: newText.length, key: chord })
-                    }
-                })
+                let text = t.slice(0, chordStart)
+                newText += text
 
-                if (!newText.length) return
-
-                if (chords.length) line.chords = chords
-
-                line.text = [{ style: "", value: newText }]
-                lines.push(line)
+                let chord = t.slice(chordStart + 1)
+                if (!chord) return
+                // only: [Gm], not: [info] [x4]
+                if (chord.length > 5 || chord.includes("x")) newText += `[${chord}]`
+                else {
+                    let id = uid(5)
+                    chords.push({ id, pos: newText.length, key: chord })
+                }
             })
 
-            let items = [{ style: "left:50px;top:120px;width:1820px;height:840px;", lines }]
+            if (!newText.length) return
 
-            slides[id] = {
-                group: "",
-                color: null,
-                settings: {},
-                notes: "",
-                items,
-            }
-            let globalGroup = sequence[i] ? VPgroups[sequence[i].replace(/[0-9]/g, "")] : "verse"
-            if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
+            if (chords.length) line.chords = chords
+
+            line.text = [{ style: "", value: newText }]
+            lines.push(line)
+        })
+
+        let items = [{ style: "left:50px;top:120px;width:1820px;height:840px;", lines }]
+
+        slides[id] = {
+            group: "",
+            color: null,
+            settings: {},
+            notes: "",
+            items,
         }
+        let globalGroup = sequenceKey ? VPgroups[sequenceKey.replace(/[0-9]/g, "")] : "verse"
+        if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
     })
 
     let notes = ""

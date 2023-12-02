@@ -229,11 +229,13 @@
     // select all
     $: if ($selectAllMedia) selectAll()
     function selectAll() {
-        let data = fullFilteredFiles.map((file) => {
-            let type = getMediaType(file.extension)
-            let name = file.name.slice(0, file.name.lastIndexOf("."))
-            return { name, path: file.path, type }
-        })
+        let data = fullFilteredFiles
+            .filter((a) => a.extension)
+            .map((file) => {
+                let type = getMediaType(file.extension)
+                let name = file.name.slice(0, file.name.lastIndexOf("."))
+                return { name, path: file.path, type }
+            })
 
         selected.set({ id: "media", data })
         selectAllMedia.set(false)
