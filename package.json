@@ -46,7 +46,7 @@
     },
     "build": {
         "forceCodeSigning": true,
-        "appId": "com.github.vassbo.freeshow",
+        "appId": "app.freeshow",
         "productName": "FreeShow",
         "files": [
             "build/electron/**/*",
@@ -62,8 +62,8 @@
             "category": "public.app-category.utilities",
             "hardenedRuntime": true,
             "gatekeeperAssess": false,
-            "entitlements": "build/entitlements.mac.plist",
-            "entitlementsInherit": "build/entitlements.mac.plist",
+            "entitlements": "scripts/entitlements.mac.plist",
+            "entitlementsInherit": "scripts/entitlements.mac.plist",
             "extendInfo": {
                 "NSMicrophoneUsageDescription": "Please give access to your microphone if you want to use it for input.",
                 "NSCameraUsageDescription": "Please give access to your camera if you want to use it for input.",
