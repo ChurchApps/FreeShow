@@ -39,7 +39,6 @@
     startup()
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
-    $: console.log(isWindows, $os)
 
     // get output resolution
     let width: number = 0

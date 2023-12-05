@@ -194,6 +194,13 @@
     </Button>
 </CombinedInput>
 
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => activePopup.set("manage_colors")}>
+        <Icon id="color" style="border: 0;" right />
+        <p style="padding: 0;"><T id="popup.manage_colors" /></p>
+    </Button>
+</CombinedInput>
+
 <!-- WIP custom metadata order -->
 <!-- "Song: {title} - {author}, License: {ccli}" -->
 <!-- or just allow to enter in a template... -->

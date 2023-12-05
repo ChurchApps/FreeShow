@@ -14,7 +14,7 @@
     export let path: string
     export let loadFullImage: boolean = false
     export let cameraGroup: string = ""
-    export let mediaStyle: MediaStyle
+    export let mediaStyle: MediaStyle = {}
     export let type: null | "media" | "image" | "video" | "camera" | "screen" | "audio" = null
     export let hover: boolean = false
     export let loaded: boolean = false

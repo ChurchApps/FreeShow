@@ -40,7 +40,9 @@ export function startAutosave() {
 const ERROR_FILTER = [
     "Failed to execute 'drawImage' on 'CanvasRenderingContext2D'", // canvas media cache
     "Failed to load because no supported source was found.", // media file doesn't exists
+    "The element has no supported sources.", // audio error
     "The play() request was interrupted by a call to pause().", // video transitions
+    "The play() request was interrupted because the media was removed from the document.", // video transitions
 ]
 export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message

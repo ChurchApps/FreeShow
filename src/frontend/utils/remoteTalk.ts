@@ -271,7 +271,7 @@ export function initializeRemote(id: string) {
 // }
 
 export function convertBackgrounds(show) {
-    if (!show) return
+    if (!show) return {}
 
     show = clone(show)
     // let media = {}

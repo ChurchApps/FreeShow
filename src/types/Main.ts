@@ -105,6 +105,7 @@ export type Popups =
     | "select_show"
     | "icon"
     | "manage_icons"
+    | "manage_colors"
     | "player"
     | "rename"
     | "color"

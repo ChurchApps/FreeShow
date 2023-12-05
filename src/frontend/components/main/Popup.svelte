@@ -41,6 +41,7 @@
     import SetTime from "./popups/SetTime.svelte"
     import Variable from "./popups/Variable.svelte"
     import Trigger from "./popups/Trigger.svelte"
+    import ManageColors from "./popups/ManageColors.svelte"
 
     function mousedown(e: any) {
         if (popupCache === "initialize") return
@@ -57,6 +58,7 @@
         select_show: SelectShow,
         icon: ChangeIcon,
         manage_icons: ManageIcons,
+        manage_colors: ManageColors,
         choose_camera: ChooseCamera,
         player: CreatePlayer,
         rename: Rename,

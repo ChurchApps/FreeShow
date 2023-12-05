@@ -142,7 +142,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // lines
     let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
-    let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout[slide.index].id]).get()[0] : null
+    let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout[slide.index]?.id]).get()[0] : null
     let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
     let currentLineStart: number = slideLines ? slideLines - (amountOfLinesToShow! % slideLines) : 0
     let hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : slideLines <= amountOfLinesToShow || amountOfLinesToShow! * linesIndex >= currentLineStart
@@ -188,7 +188,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     newSlideOut.index = index
 
     // go to next show if end
-    if (index === null && get(activeShow)!.id === slide.id && get(showsCache)[get(activeShow)!.id]?.settings.activeLayout === slide.layout) {
+    if (index === null && get(activeShow)?.id === slide?.id && get(showsCache)[get(activeShow)?.id || ""]?.settings.activeLayout === slide.layout) {
         if (e?.key === " ") goToNextProjectItem()
         return
     }
