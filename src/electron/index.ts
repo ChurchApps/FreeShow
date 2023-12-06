@@ -35,8 +35,11 @@ app.on("ready", () => {
 
 function startApp() {
     createLoading()
-    createMain()
+    setTimeout(createMain, 100)
+    setTimeout(initialize, 3000)
+}
 
+function initialize() {
     // midi
     // createVirtualMidi()
 
@@ -46,10 +49,12 @@ function startApp() {
     // set app title to app name on windows
     if (process.platform === "win32") app.setAppUserModelId(app.name)
 
-    if (isProd) checkForUpdates()
+    if (!isProd) return
+
+    checkForUpdates()
 
     // catch errors
-    process.on("uncaughtException", function (err) {
+    process.on("uncaughtException", (err) => {
         let log = {
             time: new Date(),
             os: process.platform || "Unknown",

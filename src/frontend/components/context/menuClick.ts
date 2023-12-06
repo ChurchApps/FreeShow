@@ -388,21 +388,7 @@ const actions: any = {
             })
             return
         }
-        if (obj.sel.id === "group") {
-            let ref = _show().layouts("active").ref()[0]
-            let groupIds: string[] = obj.sel.data.map(({ id }) => id)
-            let disabled = !ref.find((a) => a.id === groupIds[0]).data.disabled
-            let allGroupSlidesInLayout = ref.filter((a) => groupIds.includes(a.parent?.id || a.id))
 
-            allGroupSlidesInLayout.forEach((slideRef) => {
-                if (slideRef.type === "child") {
-                    _show().layouts("active").slides([slideRef.parent.index]).children([slideRef.id]).set({ key: "disabled", value: disabled })
-                    return
-                }
-
-                _show().layouts("active").slides([slideRef.index]).set({ key: "disabled", value: disabled })
-            })
-        }
         if (obj.sel.id === "stage") {
             // history({ id: "changeStage", newData: {key: "disabled", value: }, location: { page: "stage", slide: obj.sel.data.map(({id}: any) => (id)) } })
             stageShows.update((a) => {
