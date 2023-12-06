@@ -73,4 +73,5 @@ jobs:
                   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
                   APPLEID: ${{ secrets.APPLEID }}
                   APPLEIDPASS: ${{ secrets.APPLEIDPASS }}
+                  APPLETEAMID: ${{ secrets.APPLETEAMID }}
               run: npm run release
