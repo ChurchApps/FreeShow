@@ -101,6 +101,7 @@
         }
     },
     "devDependencies": {
+        "@electron/notarize": "^2.2.0",
         "@rollup/plugin-commonjs": "^17.0.0",
         "@rollup/plugin-node-resolve": "^11.2.1",
         "@rollup/plugin-typescript": "^8.3.0",
@@ -115,7 +116,6 @@
         "@types/vimeo__player": "^2.16.2",
         "electron": "^21.2.2",
         "electron-builder": "^23.6.0",
-        "electron-notarize": "^1.2.2",
         "jest": "^29.0.1",
         "rollup": "^2.63.0",
         "rollup-plugin-copy": "^3.4.0",
@@ -135,6 +135,7 @@
     },
     "dependencies": {
         "@googleapis/drive": "^6.0.0",
+        "@mapbox/node-pre-gyp": "^1.0.11",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@vimeo/player": "^2.16.4",
         "cross-env": "^7.0.3",
