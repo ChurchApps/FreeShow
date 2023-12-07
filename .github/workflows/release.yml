@@ -61,6 +61,9 @@ jobs:
               with:
                   node-version: 18
 
+            - name: Install node-gyp
+              run: npm install -g node-gyp
+
             - name: Install dependencies
               run: npm install
 
