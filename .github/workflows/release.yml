@@ -59,6 +59,9 @@ jobs:
               uses: actions/setup-node@master
               with:
                   node-version: 18
+            
+            -name: Install node-gyp
+              run: npm install -g node-gyp
 
             - name: Install dependencies
               run: npm install
