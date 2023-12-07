@@ -59,7 +59,7 @@ jobs:
             - name: Install Node.js and NPM
               uses: actions/setup-node@master
               with:
-                  node-version: 18
+                  node-version: 20
 
             - name: Install node-gyp
               run: npm install -g node-gyp
