@@ -14,6 +14,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     onMount(() => {
         getCacheSize()
@@ -59,6 +60,10 @@
         })
 
         if (key === "previewRate") restartOutputs()
+    }
+
+    function updateTextInput(e: any, key: string) {
+        updateSpecial(e.target.value, key)
     }
 
     function toggle(e: any, key: string) {
@@ -186,6 +191,11 @@
     <p><T id="settings.custom_audio_output" /></p>
     <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
 </CombinedInput> -->
+
+<CombinedInput>
+    <p><T id="settings.capitalize_words" /></p>
+    <TextInput value={$special.capitalize_words} on:change={(e) => updateTextInput(e, "capitalize_words")} />
+</CombinedInput>
 
 <CombinedInput>
     <Button style="width: 100%;" on:click={() => activePopup.set("manage_icons")}>

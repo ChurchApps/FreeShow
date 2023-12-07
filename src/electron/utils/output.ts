@@ -5,9 +5,9 @@ import { MAIN, OUTPUT, STARTUP } from "../../types/Channels"
 import { Message } from "../../types/Socket"
 import { startCapture, stopCapture, updatePreviewResolution } from "../ndi/capture"
 import { createSenderNDI, stopSenderNDI } from "../ndi/ndi"
-import { Output } from "./../../types/Output"
-import { outputOptions } from "./windowOptions"
 import { setDataNDI } from "../ndi/talk"
+import { Output } from "./../../types/Output"
+import { outputOptions, screenIdentifyOptions } from "./windowOptions"
 
 export let outputWindows: { [key: string]: BrowserWindow } = {}
 
@@ -267,6 +267,8 @@ const outputResponses: any = {
     TO_FRONT: (data: any) => moveToFront(data),
 
     PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
+
+    IDENTIFY_SCREENS: (data: any) => identifyScreens(data),
 }
 
 export function receiveOutput(_e: any, msg: Message) {
@@ -290,4 +292,32 @@ function sendToOutputWindow(msg: any) {
 
         window.webContents.send(OUTPUT, tempMsg)
     })
+}
+
+// create numbered outputs for each screen
+let identifyActive: boolean = false
+function identifyScreens(screens: any[]) {
+    if (identifyActive) return
+    identifyActive = true
+
+    let activeWindows: any[] = []
+    screens.forEach((screen, i) => {
+        let window: BrowserWindow | null = new BrowserWindow(screenIdentifyOptions)
+        window.setBounds(screen.bounds)
+        window.loadFile("public/identify.html")
+
+        window.webContents.on("did-finish-load", () => {
+            window!.webContents.send("NUMBER", i + 1)
+        })
+
+        activeWindows.push(window)
+    })
+
+    setTimeout(() => {
+        activeWindows.forEach((window) => {
+            window.destroy()
+        })
+
+        identifyActive = false
+    }, 3000)
 }

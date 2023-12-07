@@ -268,5 +268,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
-    special: (v: any) => special.set(v),
+    special: (v: any) => {
+        if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, God"
+        special.set(v)
+    },
 }
