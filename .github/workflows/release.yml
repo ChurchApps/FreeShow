@@ -64,7 +64,7 @@ jobs:
               run: npm install -g node-gyp
 
             - name: Sleep for 10 seconds
-              run: sleep 10s
+              run: sleep 10
               shell: bash
 
             - name: Install dependencies
