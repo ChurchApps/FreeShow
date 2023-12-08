@@ -68,7 +68,7 @@ jobs:
               shell: bash
 
             - name: Install dependencies
-              run: npm install
+              run: npm install || npm install || npm install || npm install
 
             - name: Install dmg-license
               run: npm i dmg-license
@@ -81,4 +81,4 @@ jobs:
                   APPLE_ID: ${{ secrets.APPLEID }}
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
                   APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-              run: npm run release || npm run release || npm run release || npm run release
+              run: npm run release
