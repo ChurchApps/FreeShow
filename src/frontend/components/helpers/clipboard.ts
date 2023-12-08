@@ -12,6 +12,7 @@ import {
     activeShow,
     activeStage,
     audioFolders,
+    audioStreams,
     categories,
     clipboard,
     currentOutputSettings,
@@ -621,6 +622,15 @@ const deleteActions = {
     },
     trigger: (data: any) => {
         triggers.update((a) => {
+            data.forEach(({ id }) => {
+                delete a[id]
+            })
+
+            return a
+        })
+    },
+    audio_stream: (data: any) => {
+        audioStreams.update((a) => {
             data.forEach(({ id }) => {
                 delete a[id]
             })

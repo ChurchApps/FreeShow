@@ -327,6 +327,7 @@
         "timer": "Timer",
         "variable": "Variable",
         "trigger": "Trigger",
+        "audio_stream": "Audio stream",
         "transition": "Transition",
         "delete_show": "Delete show",
         "delete_show_confirmation": "Are you sure you want to delete",
@@ -401,6 +402,7 @@
         "timer": "New timer",
         "variable": "New variable",
         "trigger": "New trigger",
+        "audio_stream": "New audio stream",
         "category": "New category",
         "private": "New private show",
         "folder": "New folder",
@@ -949,7 +951,8 @@
         "screens": "Screens",
         "windows": "Windows",
         "cameras": "Cameras",
-        "microphones": "Microphones"
+        "microphones": "Microphones",
+        "audio_streams": "Audio streams"
     },
     "transition": {
         "current_slide": "for current slide",

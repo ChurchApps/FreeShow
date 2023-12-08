@@ -7,6 +7,7 @@ import {
     activePopup,
     activeShow,
     audioFolders,
+    audioStreams,
     autosave,
     calendarAddShow,
     categories,
@@ -246,6 +247,7 @@ const saveList: { [key in SaveList]: any } = {
     timers: timers,
     variables: variables,
     triggers: triggers,
+    audioStreams: audioStreams,
     theme: theme,
     themes: themes,
     transitionData: transitionData,
@@ -259,5 +261,5 @@ const saveList: { [key in SaveList]: any } = {
     driveKeys: driveKeys,
     driveData: driveData,
     calendarAddShow: calendarAddShow,
-    special: null
+    special: null,
 }

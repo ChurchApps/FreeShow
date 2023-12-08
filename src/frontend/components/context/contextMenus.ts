@@ -200,6 +200,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     variable: ["edit", "SEPERATOR", "delete"],
     // TRIGGER
     trigger: ["edit", "SEPERATOR", "delete"],
+    // AUDIO STREAM
+    audio_stream: ["edit", "SEPERATOR", "delete"],
 
     // SHOWS
     // , "copy", "paste"

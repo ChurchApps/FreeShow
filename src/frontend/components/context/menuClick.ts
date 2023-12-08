@@ -14,6 +14,7 @@ import {
     activeRename,
     activeShow,
     audioFolders,
+    audioStreams,
     currentOutputSettings,
     currentWindow,
     dictionary,
@@ -284,10 +285,13 @@ const actions: any = {
             if (i > 0) name += " + "
             let bibleName: string = Object.values(get(scriptures)).find((a) => a.id === id)?.name || ""
             // shorten
-            bibleName = bibleName.replace(/[^a-zA-Z ]+/g, "").trim()
+            bibleName = bibleName
+                .replace(/[^a-zA-Z ]+/g, "")
+                .trim()
+                .replaceAll("  ", " ")
             if (bibleName.split(" ").length < 2) bibleName = bibleName.slice(0, 3)
             else bibleName = bibleName.split(" ").reduce((current, word) => (current += word[0]), "")
-            name += bibleName
+            name += bibleName || "B"
         })
 
         scriptures.update((a) => {
@@ -424,6 +428,8 @@ const actions: any = {
             activePopup.set("variable")
         } else if (obj.sel.id === "trigger") {
             activePopup.set("trigger")
+        } else if (obj.sel.id === "audio_stream") {
+            activePopup.set("audio_stream")
         } else if (obj.sel.id === "midi") {
             popupData.set(obj.sel.data[0])
             activePopup.set("midi")
@@ -876,6 +882,23 @@ function changeSlideAction(obj: any, id: string) {
 
         selected.set({ id: "trigger", data: [{ ...data, id: actions[id] }] })
         activePopup.set("trigger")
+
+        return
+    }
+
+    if (id === "audioStream") {
+        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
+        popupData.set({ dropdown: true, index: layoutSlide })
+
+        if (!actions[id]) {
+            activePopup.set("audio_stream")
+            return
+        }
+
+        let data = get(audioStreams)[actions[id]]
+
+        selected.set({ id: "audio_stream", data: [{ ...data, id: actions[id] }] })
+        activePopup.set("audio_stream")
 
         return
     }

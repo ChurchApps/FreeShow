@@ -42,6 +42,7 @@
     import Variable from "./popups/Variable.svelte"
     import Trigger from "./popups/Trigger.svelte"
     import ManageColors from "./popups/ManageColors.svelte"
+    import AudioStream from "./popups/AudioStream.svelte"
 
     function mousedown(e: any) {
         if (popupCache === "initialize") return
@@ -68,6 +69,7 @@
         timer: Timer,
         variable: Variable,
         trigger: Trigger,
+        audio_stream: AudioStream,
         transition: Transition,
         import_scripture: ImportScripture,
         edit_event: EditEvent,

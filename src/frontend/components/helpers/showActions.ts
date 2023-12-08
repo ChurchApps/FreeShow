@@ -10,6 +10,7 @@ import {
     activeProject,
     activeShow,
     activeTimers,
+    audioStreams,
     driveData,
     lockedOverlays,
     media,
@@ -438,6 +439,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
         // startShow is at the top
         if (data.actions.trigger) activateTrigger(get(triggers)[data.actions.trigger])
+        if (data.actions.audioStream) startAudioStream(data.actions.audioStream)
         if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle, data.actions.styleOutputs)
@@ -621,4 +623,10 @@ const customTriggers = {
                 console.error("Could not send POST request:", err)
             })
     },
+}
+
+export function startAudioStream(stream) {
+    let url = stream.value || get(audioStreams)[stream.id]?.value
+
+    playAudio({ path: url, name: stream.name })
 }
