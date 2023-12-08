@@ -82,3 +82,12 @@ jobs:
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
                   APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
               run: npm run release
+    rerun-failed-mac:
+        runs-on: macos-latest
+        needs: [publish_mac]
+        if: failure()
+        steps:
+            - name: Rerun failed mac release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: gh run rerun ${{ github.run_id }} --failed

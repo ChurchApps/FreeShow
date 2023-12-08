@@ -117,6 +117,7 @@
         "@types/vimeo__player": "^2.16.2",
         "electron": "^21.2.2",
         "electron-builder": "^24.9.1",
+        "electron-notarize": "^1.2.2",
         "jest": "^29.0.1",
         "rollup": "^4.6.1",
         "rollup-plugin-copy": "^3.5.0",
