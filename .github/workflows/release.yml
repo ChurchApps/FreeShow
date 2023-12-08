@@ -36,7 +36,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   CSC_LINK: ${{ secrets.CSC_LINK }}
                   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-                  GA_SECRET: ${{ secrets.GA_SECRET }}
               run: npm run release
 
             # https://abskmj.github.io/notes/posts/github/actions/setup-snapcraft/
@@ -59,10 +58,14 @@ jobs:
             - name: Install Node.js and NPM
               uses: actions/setup-node@master
               with:
-                  node-version: 16
+                  node-version: 18
 
             - name: Install node-gyp
               run: npm install -g node-gyp
+
+            - name: Sleep for 10 seconds
+              run: sleep 10
+              shell: bash
 
             - name: Install dependencies
               run: npm install
@@ -75,4 +78,16 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   CSC_LINK: ${{ secrets.CSC_LINK }}
                   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+                  APPLE_ID: ${{ secrets.APPLEID }}
+                  APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
+                  APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
               run: npm run release
+    rerun-failed-mac:
+        runs-on: macos-latest
+        needs: [publish_mac]
+        if: failure()
+        steps:
+            - name: Rerun failed mac release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: gh run rerun ${{ github.run_id }} --failed
