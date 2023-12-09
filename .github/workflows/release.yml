@@ -72,7 +72,9 @@ jobs:
               with:
                   timeout_minutes: 10
                   max_attempts: 10
-                  command: npm install
+                  command: |
+                      npm cache clean --force
+                      npm install
 
             - name: Install dmg-license
               run: npm i dmg-license
