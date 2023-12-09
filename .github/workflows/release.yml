@@ -47,6 +47,9 @@ jobs:
               with:
                   node-version: 18
 
+            - name: Install node-gyp
+              run: npm install -g node-gyp
+
             # Mac building (grandiose - node-gyp) fails just sometimes.
             - name: Install dependencies
               uses: nick-fields/retry@v2
