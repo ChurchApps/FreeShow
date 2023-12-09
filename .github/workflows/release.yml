@@ -60,18 +60,21 @@ jobs:
               with:
                   node-version: 18
 
+            - name: Update npm
+              run: npm update -g npm
+
             - name: Install node-gyp
-              run: npm install -g node-gyp
+              run: npm install -g --force node-gyp
 
             - name: Sleep for 10 seconds
               run: sleep 10
               shell: bash
 
             - name: Install dependencies
-              run: npm install --legacy-peer-deps
+              run: npm install --force
 
             - name: Install dmg-license
-              run: npm i dmg-license
+              run: npm i dmg-license --force
 
             - name: Build app
               env:
