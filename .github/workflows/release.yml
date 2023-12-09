@@ -47,6 +47,12 @@ jobs:
               with:
                   node-version: 18
 
+            # Change Python version: https://github.com/nodejs/node-gyp/issues/2869
+            - name: Install Python 3.11
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.11"
+
             # This probably does not make any difference.
             - name: Install node-gyp
               run: npm install -g node-gyp
