@@ -46,14 +46,14 @@ export const videoEdit = [
         },
     },
     {
-        name: "timer.from",
+        name: "inputs.start",
         id: "fromTime",
         input: "number",
         value: 0,
         values: { max: 100000 },
     },
     {
-        name: "timer.to",
+        name: "inputs.end",
         id: "toTime",
         input: "number",
         value: 0,

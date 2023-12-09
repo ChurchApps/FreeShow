@@ -35,8 +35,11 @@ app.on("ready", () => {
 
 function startApp() {
     createLoading()
-    createMain()
+    setTimeout(createMain, 100)
+    setTimeout(initialize, 3000)
+}
 
+function initialize() {
     // midi
     // createVirtualMidi()
 
@@ -46,10 +49,12 @@ function startApp() {
     // set app title to app name on windows
     if (process.platform === "win32") app.setAppUserModelId(app.name)
 
-    if (isProd) checkForUpdates()
+    if (!isProd) return
+
+    checkForUpdates()
 
     // catch errors
-    process.on("uncaughtException", function (err) {
+    process.on("uncaughtException", (err) => {
         let log = {
             time: new Date(),
             os: process.platform || "Unknown",
@@ -168,21 +173,25 @@ function createMain() {
     if (!isProd) mainWindow.webContents.openDevTools()
 }
 
-export function exitApp() {
+export async function exitApp() {
     mainWindow = null
     dialogClose = false
 
-    closeAllOutputs()
+    await closeAllOutputs()
     closeServers()
 
     // midi
     // closeVirtualMidi()
     closeMidiInPorts()
 
-    app.quit()
+    try {
+        app.quit()
 
-    // shouldn't need to use exit!
-    app.exit()
+        // shouldn't need to use exit!
+        app.exit()
+    } catch (err) {
+        console.error(err)
+    }
 }
 
 export function closeMain() {
@@ -258,8 +267,8 @@ function save(data: any) {
     }
 
     // scriptures
-    if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     let scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
+    if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: any) {
         if (!value) return
         let p: string = path.join(scripturePath, value.name + ".fsb")

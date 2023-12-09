@@ -73,9 +73,14 @@
     $: if (currentSlide && currentOutput?.style && currentStyle) setTemplateStyle()
     function setTemplateStyle() {
         // TODO: duplicate of history "template":1107
-        let template = $templates[currentStyle.template || ""]
-        if (template?.items?.length) {
-            template.items.forEach((item: any, i: number) => {
+        let template = $templates[currentStyle.template || ""]?.items || []
+        let templateTextItems = template.filter((a) => a.lines)
+        let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
+
+        // TODO: replace other items with the same type if any
+
+        if (templateTextItems.length || templateOtherItems.length) {
+            templateTextItems.forEach((item: any, i: number) => {
                 if (!currentSlide.items[i]) return
 
                 currentSlide.items[i].style = item.style || ""
@@ -91,6 +96,9 @@
                 // scrolling, bindings
                 currentSlide.items[i].specialStyle = item.specialStyle || {}
             })
+
+            // add other items
+            currentSlide.items = [...templateOtherItems, ...currentSlide.items]
         } else {
             // reset style
             currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? clone(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {}) : null) : null

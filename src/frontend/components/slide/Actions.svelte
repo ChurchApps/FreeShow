@@ -25,6 +25,7 @@
         { id: "animate", title: $dictionary.popup?.animate, icon: "stars", white: true },
         { id: "startShow", name: ({ id }) => $shows[id]?.name || "", title: $dictionary.preview?._start, icon: "showIcon", white: true },
         { id: "trigger", title: $dictionary.popup?.trigger, icon: "trigger", white: true },
+        { id: "audioStream", title: $dictionary.popup?.audio_stream, icon: "audio_stream", white: true },
         { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward", white: true },
         { id: "startTimer", title: $dictionary.actions?.start_timer, icon: "timer", white: true },
         { id: "outputStyle", title: $dictionary.actions?.change_output_style, icon: "styles", white: true },

@@ -9,6 +9,7 @@ import {
     activeProject,
     alertUpdates,
     audioFolders,
+    audioStreams,
     autoOutput,
     autosave,
     calendarAddShow,
@@ -35,7 +36,6 @@ import {
     mediaOptions,
     midiIn,
     openedFolders,
-    os,
     outLocked,
     overlayCategories,
     overlays,
@@ -192,7 +192,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         // start overlays
         setOutput("overlays", v, false, null, true)
     },
-    os: (v: any) => os.set(v),
+    os: (v: any) => console.log("saved os:", v),
     // TODO: get device lang
     language: (v: any) => {
         language.set(v)
@@ -252,6 +252,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     timers: (v: any) => timers.set(v),
     variables: (v: any) => variables.set(v),
     triggers: (v: any) => triggers.set(v),
+    audioStreams: (v: any) => audioStreams.set(v),
     theme: (v: any) => theme.set(v),
     transitionData: (v: any) => transitionData.set(v),
     // themes: (v: any) => themes.set(v),
@@ -269,5 +270,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
-    special: (v: any) => special.set(v),
+    special: (v: any) => {
+        if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, God"
+        special.set(v)
+    },
 }

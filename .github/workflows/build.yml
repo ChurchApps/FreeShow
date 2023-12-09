@@ -1,23 +1,26 @@
 name: Build
 on:
-  push:
-    tags:
-      - "build*"
+    workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+    build:
+        runs-on: ${{ matrix.os }}
 
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        strategy:
+            matrix:
+                os: [windows-latest, macos-latest, ubuntu-latest]
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@master
-        with:
-          node-version: 14
-      - name: install dependencies
-        run: npm ci
-      - name: build
-        run: npm run build
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+
+            - name: Install Node.js and NPM
+              uses: actions/setup-node@master
+              with:
+                  node-version: 18
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Build app
+              run: npm run build

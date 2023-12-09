@@ -14,6 +14,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     onMount(() => {
         getCacheSize()
@@ -59,6 +60,10 @@
         })
 
         if (key === "previewRate") restartOutputs()
+    }
+
+    function updateTextInput(e: any, key: string) {
+        updateSpecial(e.target.value, key)
     }
 
     function toggle(e: any, key: string) {
@@ -188,9 +193,21 @@
 </CombinedInput> -->
 
 <CombinedInput>
+    <p><T id="settings.capitalize_words" /></p>
+    <TextInput value={$special.capitalize_words} on:change={(e) => updateTextInput(e, "capitalize_words")} />
+</CombinedInput>
+
+<CombinedInput>
     <Button style="width: 100%;" on:click={() => activePopup.set("manage_icons")}>
         <Icon id="noIcon" style="border: 0;" right />
         <p style="padding: 0;"><T id="popup.manage_icons" /></p>
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => activePopup.set("manage_colors")}>
+        <Icon id="color" style="border: 0;" right />
+        <p style="padding: 0;"><T id="popup.manage_colors" /></p>
     </Button>
 </CombinedInput>
 

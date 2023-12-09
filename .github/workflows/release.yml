@@ -27,26 +27,13 @@ jobs:
               # npm ci is better, but requires package-lock.json file
               run: npm install
 
-            # - name: Install dmg-license
-            #   if: startsWith(matrix.os, 'macos')
-            #   run: npm i dmg-license
-
-            - name: Build app
+            - name: Build and release app
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   CSC_LINK: ${{ secrets.CSC_LINK }}
                   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
               run: npm run release
 
-            # https://abskmj.github.io/notes/posts/github/actions/setup-snapcraft/
-            # - name: Install Snapcraft
-            #   uses: samuelmeuli/action-snapcraft@v1
-            #   if: startsWith(matrix.os, 'ubuntu')
-            #   with:
-            #       snapcraft_token: ${{ secrets.SNAPCRAFT_TOKEN }}
-
-    # Mac building fails for some reason when in the same matrix as the other builds or without the other builds,
-    # So that's why it is here:
     publish_mac:
         name: "Publish MacOS"
         runs-on: macos-latest
@@ -60,20 +47,20 @@ jobs:
               with:
                   node-version: 18
 
-            - name: Install node-gyp
-              run: npm install -g node-gyp
-
-            - name: Sleep for 10 seconds
-              run: sleep 10
-              shell: bash
-
+            # Mac building (grandiose - node-gyp) fails just sometimes.
             - name: Install dependencies
-              run: npm install
+              uses: nick-fields/retry@v2
+              with:
+                  timeout_minutes: 10
+                  max_attempts: 10
+                  command: |
+                      npm cache clean --force
+                      npm install
 
             - name: Install dmg-license
               run: npm i dmg-license
 
-            - name: Build app
+            - name: Build and release app
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   CSC_LINK: ${{ secrets.CSC_LINK }}
@@ -81,4 +68,4 @@ jobs:
                   APPLE_ID: ${{ secrets.APPLEID }}
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
                   APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-              run: npm run release || npm run release || npm run release || npm run release
+              run: npm run release

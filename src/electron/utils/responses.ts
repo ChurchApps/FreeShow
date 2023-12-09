@@ -81,7 +81,6 @@ const mainResponses: any = {
     IS_DEV: (): boolean => !isProd,
     GET_OS: (): any => ({ platform: os.platform(), name: os.hostname() }),
     DEVICE_ID: (): string => machineIdSync(),
-    ANALYTICS_SECRET: (): string => process.env.GA_SECRET || "",
     GET_SYSTEM_FONTS: (): void => loadFonts(),
     URL: (data: string): void => openURL(data),
     START: (data: any): void => startServers(data),

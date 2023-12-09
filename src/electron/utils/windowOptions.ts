@@ -68,6 +68,19 @@ export const outputOptions: any = {
     },
 }
 
+export const screenIdentifyOptions: any = {
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    frame: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    webPreferences: {
+        nodeIntegration: !isProd,
+        contextIsolation: false,
+    },
+}
+
 export const exportOptions: any = {
     // show: !isProd,
     show: false,

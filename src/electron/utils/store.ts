@@ -75,6 +75,19 @@ export let stores: { [key: string]: Store<any> } = {
 
 // ----- CUSTOM DATA PATH -----
 
+const portableData: any = {
+    synced_settings: { key: "SYNCED_SETTINGS", defaults: defaultSyncedSettings },
+    themes: { key: "THEMES", defaults: {} },
+    projects: { key: "PROJECTS", defaults: { projects: {}, folders: {} } },
+    shows: { key: "SHOWS", defaults: {} },
+    stageShows: { key: "STAGE_SHOWS", defaults: {} },
+    overlays: { key: "OVERLAYS", defaults: {} },
+    templates: { key: "TEMPLATES", defaults: {} },
+    events: { key: "EVENTS", defaults: {} },
+    driveKeys: { key: "DRIVE_API_KEY", defaults: {} },
+    history: { key: "HISTORY", defaults: {} },
+}
+
 export let userDataPath: string | null = null
 export function updateDataPath({ reset, dataPath }: any = {}) {
     if (reset) {
@@ -94,19 +107,6 @@ export function updateDataPath({ reset, dataPath }: any = {}) {
 
     userDataPath = path.join(userDataPath, dataFolderNames.userData)
     updateStoresPath()
-}
-
-const portableData: any = {
-    synced_settings: { key: "SYNCED_SETTINGS", defaults: defaultSyncedSettings },
-    themes: { key: "THEMES", defaults: {} },
-    projects: { key: "PROJECTS", defaults: { projects: {}, folders: {} } },
-    shows: { key: "SHOWS", defaults: {} },
-    stageShows: { key: "STAGE_SHOWS", defaults: {} },
-    overlays: { key: "OVERLAYS", defaults: {} },
-    templates: { key: "TEMPLATES", defaults: {} },
-    events: { key: "EVENTS", defaults: {} },
-    driveKeys: { key: "DRIVE_API_KEY", defaults: {} },
-    history: { key: "HISTORY", defaults: {} },
 }
 
 function updateStoresPath() {

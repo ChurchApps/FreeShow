@@ -95,8 +95,11 @@
         if (active === "text") {
             // get current text style
             let style = item?.lines?.[0].text?.[0].style || item?.style
-            let isAuto = item?.auto
-            // WIP apply other keys...
+            let extraKeys = {
+                auto: item?.auto,
+                specialStyle: item?.specialStyle,
+                scrolling: item?.scrolling,
+            }
 
             let newStyle: string = ""
             // remove all "item" style from new style
@@ -163,10 +166,12 @@
                         location: { page: "edit", show: $activeShow!, slide: slide.id, items },
                     })
 
-                    history({
-                        id: "setItems",
-                        newData: { style: { key: "auto", values: [isAuto] } },
-                        location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+                    Object.keys(extraKeys).forEach((key) => {
+                        history({
+                            id: "setItems",
+                            newData: { style: { key, values: [extraKeys[key]] } },
+                            location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+                        })
                     })
                 })
             return
@@ -329,10 +334,14 @@
                 items: $activeEdit.items,
             },
         })
-        history({
-            id: "setItems",
-            newData: { style: { key: "auto", values: [false] } },
-            location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items },
+
+        const deleteKeys = ["auto", "specialStyle", "scrolling"]
+        deleteKeys.forEach((key) => {
+            history({
+                id: "setItems",
+                newData: { style: { key, values: [undefined] } },
+                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items, id: key },
+            })
         })
     }
 </script>

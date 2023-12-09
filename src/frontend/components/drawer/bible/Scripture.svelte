@@ -89,9 +89,11 @@
     }
 
     async function loadAPIBible(bibleId: string, load: string, index: number = 0) {
+        error = null
         let data: any = null
 
         // fix chapterId beeing 0 instead of "GEN.1" for Bible.API
+        if (typeof bookId === "number") bookId = "GEN"
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
         let objectId = Object.entries($scriptures).find(([_id, a]: any) => a.id === bibleId)?.[0] || ""
@@ -213,11 +215,11 @@
     $: if (chapters[firstBibleId]?.length && chapterId !== undefined) getChapter()
 
     $: if (versesList[firstBibleId]?.length) getVerses()
-    $: if (!bibles[0]?.api && bibles[0]?.activeVerses) getVerses()
+    $: isApiVerses = !bibles[0]?.api && bibles[0]?.activeVerses
+    $: if (isApiVerses) getVerses()
 
     function getBible() {
         notLoaded = false
-        error = null
 
         createBiblesList()
         if (!bibles) return
@@ -280,7 +282,15 @@
         })
     }
 
+    // prevent loop when loading collection with API Bible
+    let preventLoop = false
     function getVerses() {
+        if (preventLoop) return
+        preventLoop = true
+        setTimeout(() => {
+            preventLoop = false
+        }, 200)
+
         bibles.forEach(async (bible, i) => {
             let id: string = getBibleId(i, bible)
             if (!verses[id]) return

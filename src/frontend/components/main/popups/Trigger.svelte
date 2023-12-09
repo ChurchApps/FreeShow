@@ -25,7 +25,7 @@
 
     let existing: boolean = $selected.id === "trigger" && $selected.data[0]?.id
     let triggerId = existing ? $selected.data[0].id : uid()
-    let currentVariable = clone($triggers[triggerId] || DEFAULT_TRIGGER)
+    let currentTrigger = clone($triggers[triggerId] || DEFAULT_TRIGGER)
 
     let globalList = Object.entries($triggers).map(([id, a]) => ({ ...a, id }))
     let sortedTriggers = globalList.sort((a, b) => a.name?.localeCompare(b.name))
@@ -34,10 +34,10 @@
         let value = e?.target?.value || e
         if (!value) return
 
-        currentVariable[key] = value
+        currentTrigger[key] = value
 
         triggers.update((a) => {
-            a[triggerId] = currentVariable
+            a[triggerId] = currentTrigger
             return a
         })
     }
@@ -64,10 +64,10 @@
 {:else}
     <CombinedInput textWidth={25}>
         <p><T id="inputs.name" /></p>
-        <TextInput value={currentVariable.name} on:change={(e) => updateValue(e, "name")} />
+        <TextInput value={currentTrigger.name} on:change={(e) => updateValue(e, "name")} />
     </CombinedInput>
     <CombinedInput textWidth={25}>
         <p><T id="variables.value" /></p>
-        <TextInput value={currentVariable.value} on:change={(e) => updateValue(e, "value")} />
+        <TextInput value={currentTrigger.value} on:change={(e) => updateValue(e, "value")} />
     </CombinedInput>
 {/if}
