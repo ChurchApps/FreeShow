@@ -77,11 +77,9 @@ jobs:
             - name: Install dmg-license
               run: npm i dmg-license
 
-            = name: Debug Notarize
-              run: export DEBUG=electron-notarize
-
             - name: Build app
               env:
+                  DEBUG: electron-notarize
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   CSC_LINK: ${{ secrets.CSC_LINK }}
                   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
