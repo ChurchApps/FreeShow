@@ -71,11 +71,14 @@ jobs:
               uses: nick-fields/retry@v2
               with:
                   timeout_minutes: 10
-                  max_attempts: 5
+                  max_attempts: 10
                   command: npm install
 
             - name: Install dmg-license
               run: npm i dmg-license
+
+            = name: Debug Notarize
+              run: export DEBUG=electron-notarize
 
             - name: Build app
               env:
