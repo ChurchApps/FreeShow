@@ -64,11 +64,19 @@
         },
         PageDown: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($presenterControllerKeys) nextSlide(e)
+
+            if ($presenterControllerKeys) {
+                e.preventDefault()
+                nextSlide(e)
+            }
         },
         PageUp: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($presenterControllerKeys) previousSlide(e)
+
+            if ($presenterControllerKeys) {
+                e.preventDefault()
+                previousSlide(e)
+            }
         },
 
         ArrowRight: (e: any) => {
@@ -93,10 +101,14 @@
         },
         Home: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+
+            e.preventDefault()
             nextSlide(e, true)
         },
         End: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+
+            e.preventDefault()
             nextSlide(e, false, true)
         },
     }

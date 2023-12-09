@@ -168,6 +168,7 @@ export function _show(id: any = "active") {
                             if (!a[id].slides[slideId]) return
                             if (!indexes.length) indexes = [...Object.keys(shows[id].slides[slideId].items)] as any
                             indexes.forEach((index, i) => {
+                                let value = values[i] || values[0]
                                 if (key) {
                                     if (!a[id].slides[slideId].items[index]) return
 
@@ -175,14 +176,15 @@ export function _show(id: any = "active") {
                                         let splitted = key.split(".")
                                         prev.values.push(a[id].slides[slideId].items[index][splitted[0]]?.[splitted[1]] ? clone(a[id].slides[slideId].items[index][splitted[0]][splitted[1]]) : null)
                                         if (!a[id].slides[slideId].items[index][splitted[0]]) a[id].slides[slideId].items[index][splitted[0]] = {}
-                                        a[id].slides[slideId].items[index][splitted[0]][splitted[1]] = values[i] || values[0]
+                                        a[id].slides[slideId].items[index][splitted[0]][splitted[1]] = value
                                     } else {
                                         prev.values.push(a[id].slides[slideId].items[index][key] ? clone(a[id].slides[slideId].items[index][key]) : null)
-                                        a[id].slides[slideId].items[index][key] = values[i] || values[0]
+                                        if (value === undefined) delete a[id].slides[slideId].items[index][key]
+                                        else a[id].slides[slideId].items[index][key] = value
                                     }
                                 } else {
                                     prev.values.push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index]) : null)
-                                    a[id].slides[slideId].items[index] = values[i] || values[0]
+                                    a[id].slides[slideId].items[index] = value
                                 }
                             })
                         })

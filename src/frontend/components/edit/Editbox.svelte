@@ -269,8 +269,10 @@
     $: {
         // style hash
         let s = ""
+        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
         item?.lines?.forEach((line) => {
-            s += line.align
+            let align = line.align.replaceAll(lineBg, "")
+            s += align + lineBg
             line.text?.forEach((a) => {
                 s += getTextStyle(a)
             })
@@ -281,9 +283,7 @@
         if (currentStyle !== s) getStyle()
     }
     function getTextStyle(lineText) {
-        let lineBg = item.specialStyle?.lineBg || ""
-
-        let style = (lineText.style || "") + lineBg
+        let style = lineText.style || ""
         return style
     }
 
@@ -298,10 +298,11 @@
 
         html = ""
         currentStyle = ""
+        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
         item?.lines?.forEach((line, i) => {
-            currentStyle += line.align
-            let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
-            let style = line.align || lineBg ? 'style="' + lineBg + line.align + '"' : ""
+            let align = line.align.replaceAll(lineBg, "")
+            currentStyle += align + lineBg
+            let style = line.align || lineBg ? 'style="' + line.align + lineBg + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line

@@ -74,7 +74,11 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     const captureRate = timeUntilAutoUpdate / frameUpdateRate
     const autoOptimizePercentageCPU = 95 / 10 // % / 10
     let captureCount = captureRate
-    if (rate !== "full") cpuInterval = setInterval(cpuCapture, frameUpdateRate * 1000)
+
+    if (rate !== "full" && !captures[id].options.ndi) {
+        cpuInterval = setInterval(cpuCapture, frameUpdateRate * 1000)
+    }
+
     async function cpuCapture() {
         if (!captures[id] || captures[id].window.isDestroyed() || captures[id].window.webContents.isBeingCaptured()) return
 

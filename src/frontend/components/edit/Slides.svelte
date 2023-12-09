@@ -48,7 +48,7 @@
         if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) {
             let index = $activeEdit.slide - 1
             setTimeout(() => {
-                if (index >= 0 && scrollElem) offset = scrollElem.querySelector(".grid").children[index]?.offsetTop || 5 - 5
+                if (index >= 0 && scrollElem) offset = scrollElem.querySelector(".grid")?.children?.[index]?.offsetTop || 5 - 5
             }, 10)
         }
     }

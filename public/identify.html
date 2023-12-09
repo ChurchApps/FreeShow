@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Identify</title>
+
+        <style>
+            html,
+            body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                position: relative;
+                overflow: hidden;
+            }
+
+            main {
+                width: calc(100% - 10px);
+                height: calc(100% - 10px);
+
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+
+                border: 10px solid white;
+
+                opacity: 0.8;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            p {
+                font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+                font-size: 220px;
+                color: white;
+                -webkit-text-stroke-width: 8px;
+                -webkit-text-stroke-color: black;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <p class="number"></p>
+        </main>
+
+        <script>
+            const { ipcRenderer } = require("electron")
+
+            ipcRenderer.on("NUMBER", (e, number) => {
+                document.querySelector(".number").innerHTML = number
+            })
+        </script>
+    </body>
+</html>

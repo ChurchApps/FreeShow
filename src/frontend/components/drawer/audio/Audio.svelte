@@ -10,6 +10,7 @@
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import AudioStreams from "../live/AudioStreams.svelte"
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
 
@@ -19,9 +20,11 @@
     let files: any[] = []
     let scrollElem: any
 
-    $: rootPath = active === "all" || active === "favourites" || active === "microphones" ? "" : active !== null ? $audioFolders[active].path! : ""
-    $: path = active === "all" || active === "favourites" || active === "microphones" ? "" : rootPath
-    $: name = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : rootPath === path ? (active !== "microphones" && active !== null ? $audioFolders[active].name : "") : splitPath(path).name
+    $: isDefault = ["all", "favourites", "microphones", "audio_streams"].includes(active || "")
+    $: rootPath = isDefault ? "" : active !== null ? $audioFolders[active].path! : ""
+    $: path = isDefault ? "" : rootPath
+    $: name =
+        active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : rootPath === path ? (active !== "microphones" && active !== "audio_streams" && active !== null ? $audioFolders[active].name : "") : splitPath(path).name
 
     // get list of files & folders
     let prevActive: null | string = null
@@ -51,7 +54,7 @@
                 window.api.send(READ_FOLDER, { path, listFilesInFolders: true })
             }
         } else {
-            // microphones
+            // microphones & audio_streams
             prevActive = active
         }
     }
@@ -170,6 +173,8 @@
     <div class="grid" style="height: 100%;">
         {#if active === "microphones"}
             <Microphones />
+        {:else if active === "audio_streams"}
+            <AudioStreams />
         {:else if fullFilteredFiles.length}
             {#key rootPath}
                 {#key path}
@@ -224,7 +229,7 @@
     </div>
 </div>
 
-{#if active !== "microphones"}
+{#if active !== "microphones" && active !== "audio_streams"}
     <div class="tabs" style="display: flex;align-items: center;">
         <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
             <Icon size={1.3} id="back" />

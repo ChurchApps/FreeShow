@@ -57,6 +57,7 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
                 { id: "animate", label: "popup.animate", icon: "stars", enabled: currentActions?.animate || false },
                 { id: "startShow", label: "preview._start", icon: "showIcon", enabled: currentActions?.startShow || false },
                 { id: "trigger", label: "popup.trigger", icon: "trigger", enabled: currentActions?.trigger || false },
+                { id: "audioStream", label: "popup.audio_stream", icon: "audio_stream", enabled: currentActions?.audioStream || false },
                 { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
                 { id: "startTimer", label: "actions.start_timer", icon: "timer", enabled: currentActions?.startTimer || false },
                 { id: "outputStyle", label: "actions.change_output_style", icon: "styles", enabled: currentActions?.outputStyle || false },

@@ -44,7 +44,7 @@
 
     $: red = id === "scripture" && $notFound.bible.find((a: any) => a.id === category.id)
 
-    const defaultFolders = ["all", "unlabeled", "favourites", "online", "screens", "cameras", "microphones"]
+    const defaultFolders = ["all", "unlabeled", "favourites", "online", "screens", "cameras", "microphones", "audio_streams"]
 </script>
 
 <Button

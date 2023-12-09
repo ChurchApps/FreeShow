@@ -64,6 +64,7 @@
                 { id: "favourites", name: "category.favourites", default: true, icon: "star" },
                 { id: "SEPERATOR", name: "" },
                 { id: "microphones", name: "live.microphones", default: true, icon: "microphone" },
+                { id: "audio_streams", name: "live.audio_streams", default: true, icon: "audio_stream" },
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($audioFolders), "name") as Button[]),
             ]

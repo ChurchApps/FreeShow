@@ -2,7 +2,7 @@
     // import {flip} from 'svelte/animate';
     // import type { Resolution } from "../../../types/Settings"
 
-    import { activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, styles } from "../../stores"
+    import { activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
     import { history } from "../helpers/history"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
@@ -92,6 +92,53 @@
     $: if (showId && currentShow?.settings?.template && $cachedShowsData[showId]?.template?.slidesUpdated === false) {
         // update show by its template
         history({ id: "TEMPLATE", save: false, newData: { id: currentShow.settings.template }, location: { page: "show" } })
+    }
+
+    $: if (showId && $special.capitalize_words) capitalizeWords()
+    function capitalizeWords() {
+        // keep letters and spaces
+        const regEx = /[^a-zA-Z\s]+/
+
+        showsCache.update((a) => {
+            let slides = a[showId]?.slides || {}
+            Object.keys(slides).forEach((slideId) => {
+                let slide = slides[slideId]
+                slide.items.forEach((item) => {
+                    if (!item.lines) return
+                    item.lines.forEach((line) => {
+                        line?.text.forEach((text) => {
+                            let newValue = capitalize(text.value)
+                            text.value = newValue
+                        })
+                    })
+                })
+            })
+
+            return a
+        })
+
+        function capitalize(value: string) {
+            $special.capitalize_words.split(",").forEach((newWord) => {
+                newWord = newWord.trim().toLowerCase()
+
+                value = value
+                    .split(" ")
+                    .map((word) => {
+                        if (word.replace(regEx, "").toLowerCase() !== newWord) return word
+
+                        let matching = word.toLowerCase().indexOf(newWord)
+                        if (matching >= 0) {
+                            let capitalized = newWord[0].toUpperCase() + newWord.slice(1)
+                            word = word.slice(0, matching) + capitalized + word.slice(capitalized.length)
+                        }
+
+                        return word
+                    })
+                    .join(" ")
+            })
+
+            return value
+        }
     }
 
     let altKeyPressed: boolean = false

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, drawerTabsData, imageExtensions, media, projects, showsCache, videoExtensions } from "../../stores"
+import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioStreams, drawerTabsData, imageExtensions, media, projects, showsCache, videoExtensions } from "../../stores"
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone } from "./array"
 import { history, historyAwait } from "./history"
@@ -384,7 +384,7 @@ const slideDrop: any = {
             delete slide.id
             slides[id] = slide
 
-            let parent = ref[newIndex - 1]
+            let parent = ref[newIndex - 1] || { index: -1 }
             if (parent.type === "child") parent = parent.parent
 
             layout = addToPos(layout, [{ id }], parent.index + 1)
@@ -449,6 +449,20 @@ const slideDrop: any = {
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
         let data: any = ref.data.actions || {}
         data.trigger = drag.data[0].id
+
+        history.newData = { key: "actions", data, indexes: [drop.index] }
+        return history
+    },
+    audio_stream: ({ drag, drop }: any, history: any) => {
+        history.id = "SHOW_LAYOUT"
+
+        let streamId = drag.data[0].id
+        let stream = get(audioStreams)[streamId]
+        if (!stream) return
+
+        let ref: any = _show().layouts("active").ref()[0][drop.index!]
+        let data: any = ref.data.actions || {}
+        data.audioStream = { id: streamId, ...stream }
 
         history.newData = { key: "actions", data, indexes: [drop.index] }
         return history

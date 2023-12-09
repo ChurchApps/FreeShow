@@ -1,3 +1,4 @@
+import { audioStreams } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, STORE } from "../../types/Channels"
 import { clone } from "../components/helpers/array"
@@ -151,6 +152,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         timers: get(timers),
         variables: get(variables),
         triggers: get(triggers),
+        audioStreams: get(audioStreams),
         midiIn: get(midiIn),
         videoMarkers: get(videoMarkers),
         customizedIcons: get(customizedIcons),

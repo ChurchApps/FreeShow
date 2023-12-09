@@ -200,12 +200,14 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     variable: ["edit", "SEPERATOR", "delete"],
     // TRIGGER
     trigger: ["edit", "SEPERATOR", "delete"],
+    // AUDIO STREAM
+    audio_stream: ["edit", "SEPERATOR", "delete"],
 
     // SHOWS
     // , "copy", "paste"
     slide: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
     slideChild: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
-    group: ["rename", "recolor", "disable", "selectAll", "SEPERATOR", "duplicate", "delete"],
+    group: ["rename", "recolor", "selectAll", "SEPERATOR", "duplicate", "delete"],
     global_group: ["edit"],
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],

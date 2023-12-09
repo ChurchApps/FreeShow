@@ -2,7 +2,9 @@
     import { MAIN, OUTPUT } from "../../../types/Channels"
     import { activePopup, alertMessage, currentOutputSettings, outputDisplay, outputs } from "../../stores"
     import { receive, send } from "../../utils/request"
+    import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
+    import Button from "../inputs/Button.svelte"
 
     export let activateOutput: boolean = false
 
@@ -126,7 +128,24 @@
             alertMessage.set("")
         }
     }
+
+    function identifyScreens() {
+        send(OUTPUT, ["IDENTIFY_SCREENS"], screens)
+    }
 </script>
+
+<p style="margin-bottom: 10px;"><T id="settings.select_display" /></p>
+<Button on:click={() => activePopup.set("change_output_values")} style="width: 100%;" dark center>
+    <Icon id="screen" right />
+    <p><T id="settings.manual_input_hint" /></p>
+</Button>
+
+<Button on:click={identifyScreens} style="width: 100%;" dark center>
+    <Icon id="search" right />
+    <p><T id="settings.identify_screens" /></p>
+</Button>
+
+<br />
 
 <div class="content">
     {#if screens.length}
@@ -162,7 +181,7 @@
         margin-top: auto; */
         position: absolute;
         left: 50%;
-        top: calc(50% + 200px);
+        top: calc(50% + 350px);
         transform: translateX(-1080px);
 
         /* width: 30%;
