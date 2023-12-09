@@ -173,21 +173,25 @@ function createMain() {
     if (!isProd) mainWindow.webContents.openDevTools()
 }
 
-export function exitApp() {
+export async function exitApp() {
     mainWindow = null
     dialogClose = false
 
-    closeAllOutputs()
+    await closeAllOutputs()
     closeServers()
 
     // midi
     // closeVirtualMidi()
     closeMidiInPorts()
 
-    app.quit()
+    try {
+        app.quit()
 
-    // shouldn't need to use exit!
-    app.exit()
+        // shouldn't need to use exit!
+        app.exit()
+    } catch (err) {
+        console.error(err)
+    }
 }
 
 export function closeMain() {

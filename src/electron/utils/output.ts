@@ -84,8 +84,8 @@ function createOutputWindow(options: any, id: string, name: string) {
     return window
 }
 
-export function closeAllOutputs() {
-    Object.keys(outputWindows).forEach(removeOutput)
+export async function closeAllOutputs() {
+    await Promise.all(Object.keys(outputWindows).map(removeOutput))
 }
 
 async function removeOutput(id: string, reopen: any = null) {

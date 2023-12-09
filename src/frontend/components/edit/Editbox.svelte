@@ -256,7 +256,10 @@
         setTimeout(() => {
             loaded = true
             autoSize = item?.autoFontSize || 0
-            if (!autoSize) getCustomAutoSize()
+            if (autoSize) return
+
+            if (isTextbox) getCustomAutoSize()
+            else autoSize = getAutoSize(item)
         }, 50)
     })
 
