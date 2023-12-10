@@ -265,6 +265,8 @@
         "url": "URL",
         "video_id": "ID/URL video",
         "close_ad": "Chiudi annuncio sulla schermata di output",
+        "start": "Inizio",
+        "end": "Fine",
         "change_folder": "Scegli un'altra posizione"
     },
     "tabs": {
@@ -325,6 +327,7 @@
         "timer": "Timer",
         "variable": "Variable",
         "trigger": "Trigger",
+        "audio_stream": "Flusso audio",
         "transition": "Transizione",
         "delete_show": "Elimina scena",
         "delete_show_confirmation": "Sei sicuro di voler eliminare",
@@ -350,6 +353,7 @@
         "shortcuts": "Scorciatoie",
         "icon": "Icone",
         "manage_icons": "Gestisci icone",
+        "manage_colors": "Gestisci i colori",
         "choose_camera": "Scegli camera",
         "initialize": "Benvenuto su FreeShow",
         "unsaved": "Non hai ancora salvato! Sei sicuro di voler uscire?",
@@ -398,6 +402,7 @@
         "timer": "Nuovo timer",
         "variable": "New variable",
         "trigger": "Nuovo trigger",
+        "audio_stream": "Nuovo flusso audio",
         "category": "Nuova categoria",
         "private": "Nuova scena privata",
         "folder": "Nuova cartella",
@@ -474,6 +479,7 @@
         "show_timer": "Tempo fino allo spettacolo",
         "hide_timer": "Tempo fino a nascondersi",
         "choose_custom": "Scelta personalizzata",
+        "add_color": "Aggiungi colore",
         "format": "Formato",
         "find_replace": "Trova e sostituisci il testo",
         "cut_in_half": "Taglia a metà",
@@ -817,6 +823,7 @@
         "select_display": "Fare clic sullo schermo in cui non si desidera visualizzare la finestra di output.",
         "manual_input_hint": "Non riesci a trovare il display? Fare clic qui per modificare manualmente la posizione.",
         "manual_drag_hint": "Puoi anche tenere premuto ctrl/cmd su una finestra di output attiva per trascinarla manualmente.",
+        "identify_screens": "Identificare gli schermi",
         "new_output": "Nuovo output",
         "enable_key_output": "Abilita l'output della chiave alfa",
         "always_on_top": "Sempre sopra",
@@ -869,6 +876,7 @@
         "reset_all": "Ripristina tutto",
         "reset_theme": "Ripristina tema",
         "reset_themes": "Ripristina temi",
+        "capitalize_words": "Metti in maiuscolo le parole",
         "backup_all": "Fai il backup di tutto",
         "restore": "Ripristina",
         "backup_started": "Backup in corso...",
@@ -943,7 +951,8 @@
         "screens": "Schermi",
         "windows": "Finestre",
         "cameras": "Camera",
-        "microphones": "Microfoni"
+        "microphones": "Microfoni",
+        "audio_streams": "Flussi audio"
     },
     "transition": {
         "current_slide": "per la diapositiva corrente",
