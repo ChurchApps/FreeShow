@@ -265,6 +265,8 @@
         "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Close ad on output screen",
+        "start": "Start",
+        "end": "End",
         "change_folder": "Choose another location"
     },
     "tabs": {
@@ -325,6 +327,7 @@
         "timer": "Timer",
         "variable": "Variable",
         "trigger": "Trigger",
+        "audio_stream": "Audio stream",
         "transition": "Transition",
         "delete_show": "Delete show",
         "delete_show_confirmation": "Are you sure you want to delete",
@@ -350,6 +353,7 @@
         "shortcuts": "Shortcuts",
         "icon": "Icons",
         "manage_icons": "Manage icons",
+        "manage_colors": "Manage colours",
         "choose_camera": "Choose camera",
         "initialize": "Welcome to FreeShow",
         "unsaved": "You have not saved yet! Are you sure you want to quit?",
@@ -398,6 +402,7 @@
         "timer": "New timer",
         "variable": "New variable",
         "trigger": "New trigger",
+        "audio_stream": "New audio stream",
         "category": "New category",
         "private": "New private show",
         "folder": "New folder",
@@ -474,6 +479,7 @@
         "show_timer": "Time until show",
         "hide_timer": "Time until hide",
         "choose_custom": "Choose custom",
+        "add_color": "Add colour",
         "format": "Format",
         "find_replace": "Find and replace text",
         "cut_in_half": "Cut in half",
@@ -817,6 +823,7 @@
         "select_display": "Click on the screen where you want to display the output window.",
         "manual_input_hint": "Can't find the display? Click here to manually change the position.",
         "manual_drag_hint": "You can also hold ctrl/cmd over an active output window to manually drag it around.",
+        "identify_screens": "Identify screens",
         "new_output": "New output",
         "enable_key_output": "Enable alpha key output",
         "always_on_top": "Always on top",
@@ -869,6 +876,7 @@
         "reset_all": "Reset everything",
         "reset_theme": "Reset theme",
         "reset_themes": "Reset themes",
+        "capitalize_words": "Capitalise words",
         "backup_all": "Backup everything",
         "restore": "Restore",
         "backup_started": "Backing up...",
@@ -943,7 +951,8 @@
         "screens": "Screens",
         "windows": "Windows",
         "cameras": "Cameras",
-        "microphones": "Microphones"
+        "microphones": "Microphones",
+        "audio_streams": "Audio streams"
     },
     "transition": {
         "current_slide": "for current slide",
