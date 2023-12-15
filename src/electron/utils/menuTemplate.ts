@@ -1,9 +1,7 @@
 import { MAIN } from "../../types/Channels"
-import { isProd, toApp } from ".."
+import { isMac, isProd, toApp } from ".."
 import { openURL } from "./responses"
 import { app } from "electron"
-
-const isMac: boolean = process.platform === "darwin"
 
 const mc = (id: string) => toApp(MAIN, { channel: "MENU", data: id })
 

@@ -314,13 +314,12 @@
     }
 
     function selectVerse(e: any, id: string) {
+        console.log(id)
         autoComplete = false
 
         if (e.ctrlKey || e.metaKey) {
-            console.log("A", activeVerses, id)
             if (activeVerses.includes(id)) activeVerses = activeVerses.filter((a) => a !== id)
             else activeVerses = [...activeVerses, id]
-            console.log(activeVerses)
         } else if (e.shiftKey && activeVerses.length) {
             let found = false
             let arr: any = verses[firstBibleId]
@@ -448,13 +447,14 @@
         let matches: any[] = []
         if (bible.api) {
             let searchResult: any = await searchBibleAPI(active, contentSearch)
-            matches = searchResult?.verses?.map((a) => ({ reference: a.reference, text: a.text }))
+            matches = searchResult?.verses?.map((a) => ({ book: a.bookId, chapter: a.chapterId, verse: a.reference.slice(a.reference.indexOf(":") + 1), reference: a.reference, text: a.text, api: true }))
         } else {
             let allBooks: any[] = books[firstBibleId]
-            allBooks.forEach((book) => {
-                book.chapters.forEach((chapter) => {
+            allBooks.forEach((book, bookIndex) => {
+                book.chapters.forEach((chapter, chapterIndex) => {
                     chapter.verses.forEach((verse) => {
-                        if (verse.value?.toLowerCase().includes(contentSearch.toLowerCase())) matches.push({ reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.value })
+                        if (verse.value?.toLowerCase().includes(contentSearch.toLowerCase()))
+                            matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.value })
                     })
                 })
             })
@@ -675,8 +675,15 @@
             {#if contentSearchMatches.length}
                 <div class="verses">
                     {#each contentSearchMatches as match}
-                        <!-- on:dblclick={() => playOrClearScripture(true, match)} -->
-                        <p title={match.text.replaceAll("/ ", " ")}>
+                        <p
+                            on:dblclick={() => {
+                                bookId = match.book
+                                chapterId = match.chapter
+                                selectVerse({}, match.verse)
+                                setTimeout(() => playOrClearScripture(true), match.api ? 500 : 10)
+                            }}
+                            title={match.text.replaceAll("/ ", " ")}
+                        >
                             <span style="width: 250px;text-align: left;color: var(--text);" class="v">{match.reference}</span>{@html match.text.replaceAll("/ ", " ")}
                         </p>
                     {/each}
@@ -757,7 +764,7 @@
     <div class="seperator" />
 
     {#if searchBibleActive}
-        <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:change={searchInBible} style="width: 300px;" />
+        <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:change={searchInBible} style="width: 300px;" autofocus />
     {:else}
         <Button disabled={activeVerses.includes("1")} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
             <Icon size={1.3} id="previous" />

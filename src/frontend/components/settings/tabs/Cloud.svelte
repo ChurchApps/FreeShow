@@ -13,7 +13,7 @@
 
     function getKeysFile() {
         activePopup.set("cloud_update")
-        window.api.send(OPEN_FILE, { channel: "GOOGLE_KEYS", title: "Select keys file", filter: { name: "JSON", extensions: ["json"] }, multiple: false, read: true })
+        window.api.send(OPEN_FILE, { channel: "GOOGLE_KEYS", id: "keys", title: "Select keys file", filter: { name: "JSON", extensions: ["json"] }, multiple: false, read: true })
     }
 
     $: validKeys = typeof $driveKeys === "object" && Object.keys($driveKeys).length

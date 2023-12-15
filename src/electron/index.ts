@@ -13,7 +13,7 @@ import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileIn
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, receiveOutput } from "./utils/output"
-import { loadScripture, loadShow, logError, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
+import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores, updateDataPath, userDataPath } from "./utils/store"
 import checkForUpdates from "./utils/updater"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
@@ -22,6 +22,10 @@ import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // check if app's in production or not
 export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
+
+// get os platform
+export const isWindows: boolean = process.platform === "win32"
+export const isMac: boolean = process.platform === "darwin"
 
 // check if store works
 config.set("loaded", true)
@@ -46,26 +50,13 @@ function initialize() {
     // express
     require("./servers")
 
-    // set app title to app name on windows
-    if (process.platform === "win32") app.setAppUserModelId(app.name)
+    // set app title to app name
+    if (isWindows) app.setAppUserModelId(app.name)
 
     if (!isProd) return
 
     checkForUpdates()
-
-    // catch errors
-    process.on("uncaughtException", (err) => {
-        let log = {
-            time: new Date(),
-            os: process.platform || "Unknown",
-            source: "See stack",
-            type: "Uncaught Exception",
-            message: err.message,
-            stack: err.stack,
-        }
-
-        logError(log, true)
-    })
+    catchErrors()
 }
 
 // get LOADED message from frontend
@@ -81,7 +72,7 @@ ipcMain.once("LOADED", () => {
 // Custom .show file
 
 //   var data = null;
-//   if (process.platform === 'win32' && process.argv.length >= 2) {
+//   if (isWindows && process.argv.length >= 2) {
 //     var openFilePath = process.argv[1];
 //     data = fs.readFileSync(openFilePath, 'utf-8');
 //   }
@@ -132,8 +123,8 @@ function createMain() {
         height: !bounds.height || bounds.height === 600 ? screenBounds.height : bounds.height,
         x: !bounds.x ? screenBounds.x : bounds.x,
         y: !bounds.y ? screenBounds.y : bounds.y,
-        frame: !isProd || process.platform !== "win32",
-        autoHideMenuBar: isProd && process.platform === "win32",
+        frame: !isProd || !isWindows,
+        autoHideMenuBar: isProd && isWindows,
     }
 
     // create window
@@ -224,7 +215,7 @@ app.on("window-all-closed", () => {
 
 // close app completely on mac
 app.on("will-quit", () => {
-    if (process.platform === "darwin") app.exit()
+    if (isMac) app.exit()
 })
 
 app.on("web-contents-created", (_e, contents) => {

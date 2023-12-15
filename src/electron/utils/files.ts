@@ -265,18 +265,18 @@ export function selectFolder(e: any, msg: { channel: string; title: string | und
 }
 
 // OPEN_FILE
-export function selectFiles(e: any, msg: { channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }) {
+export function selectFiles(e: any, msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }) {
     let files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
-    if (files) {
-        let content: any = {}
-        if (msg.read) {
-            files.forEach((path: string) => {
-                content[path] = readFile(path)
-            })
-        }
+    if (!files) return
 
-        e.reply(OPEN_FILE, { channel: msg.channel || "", data: { files, content } })
+    let content: any = {}
+    if (msg.read) {
+        files.forEach((path: string) => {
+            content[path] = readFile(path)
+        })
     }
+
+    e.reply(OPEN_FILE, { channel: msg.channel || "", data: { id: msg.id, files, content } })
 }
 
 // FILE_INFO

@@ -149,6 +149,7 @@
 <CombinedInput>
     <p><T id="edit.background_image" /></p>
     <MediaPicker
+        id="styles"
         title={currentStyle.backgroundImage}
         filter={{ name: "Image files", extensions: $imageExtensions }}
         on:picked={(e) => {

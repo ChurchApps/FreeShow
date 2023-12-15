@@ -297,6 +297,23 @@ export function logError(log: any, electron: boolean = false) {
     error_log.set({ [key]: previousLog })
 }
 
+export function catchErrors() {
+    // catch errors
+    process.on("uncaughtException", (err) => {
+        let log = {
+            time: new Date(),
+            os: process.platform || "Unknown",
+            version: app.getVersion(),
+            type: "Uncaught Exception",
+            source: "See stack",
+            message: err.message,
+            stack: err.stack,
+        }
+
+        logError(log, true)
+    })
+}
+
 // STORE MEDIA AS BASE64
 function storeMedia(files: any[]) {
     let encodedFiles: any[] = []

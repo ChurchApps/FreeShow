@@ -305,7 +305,7 @@
         item?.lines?.forEach((line, i) => {
             let align = line.align.replaceAll(lineBg, "")
             currentStyle += align + lineBg
-            let style = line.align || lineBg ? 'style="' + line.align + lineBg + '"' : ""
+            let style = align || lineBg ? 'style="' + align + lineBg + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line

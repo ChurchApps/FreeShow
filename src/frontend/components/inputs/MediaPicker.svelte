@@ -3,6 +3,7 @@
     import { OPEN_FILE } from "../../../types/Channels"
     import Button from "./Button.svelte"
 
+    export let id: string
     export let filter: any
     export let title: string = ""
     export let multiple: boolean = false
@@ -15,12 +16,15 @@
         }
 
         // filter: { name: "Text file", extensions: ["txt"], id: "txt" }
-        window.api.send(OPEN_FILE, { channel: "MEDIA", filter, multiple })
+        window.api.send(OPEN_FILE, { channel: "MEDIA", id, filter, multiple })
     }
 
     let dispatch = createEventDispatcher()
     window.api.receive(OPEN_FILE, (msg: any) => {
-        if (msg.channel === "MEDIA") dispatch("picked", multiple ? msg.data.files : msg.data.files[0])
+        if (msg.id !== id) return
+        if (msg.channel !== "MEDIA") return
+
+        dispatch("picked", multiple ? msg.data.files : msg.data.files[0])
     })
 </script>
 

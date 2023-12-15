@@ -97,6 +97,9 @@
                 currentSlide.items[i].specialStyle = item.specialStyle || {}
             })
 
+            // remove items that are not textbox (overwriting with a new template will remove the old images)
+            if (slide.id === "temp") currentSlide.items = currentSlide.items.filter((a) => a.lines)
+
             // add other items
             currentSlide.items = [...templateOtherItems, ...currentSlide.items]
         } else {

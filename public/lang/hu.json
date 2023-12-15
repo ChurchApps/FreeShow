@@ -265,6 +265,8 @@
         "url": "URL",
         "video_id": "Videóazonosító/URL",
         "close_ad": "Hirdetés bezárása a kimeneti képernyőn",
+        "start": "Kezdés",
+        "end": "Vége",
         "change_folder": "Válasszon másik helyet"
     },
     "tabs": {
@@ -325,6 +327,7 @@
         "timer": "Időzítő",
         "variable": "Változó",
         "trigger": "Kiváltó",
+        "audio_stream": "Hangfolyam",
         "transition": "Átmenet",
         "delete_show": "Műsor törlése",
         "delete_show_confirmation": "Biztos törölni szeretné",
@@ -350,6 +353,7 @@
         "shortcuts": "Gyorsbillentyűk",
         "icon": "Ikonok",
         "manage_icons": "Ikonkezelés",
+        "manage_colors": "Színkezelés",
         "choose_camera": "Kamera kiválasztása",
         "initialize": "Üdvözöljük a FreeShow-ban",
         "unsaved": "Még nem elmentve! Biztosan kilép?",
@@ -398,6 +402,7 @@
         "timer": "Új időzítő",
         "variable": "Új változó",
         "trigger": "Új kiváltó",
+        "audio_stream": "Új hangfolyam",
         "category": "Új kategória",
         "private": "Új privát műsor",
         "folder": "Új mappa",
@@ -474,6 +479,7 @@
         "show_timer": "Idő a műsorkezdésig",
         "hide_timer": "Idő a rejtésig",
         "choose_custom": "Egyéni választása",
+        "add_color": "Szín hozzáadása",
         "format": "Formázás",
         "find_replace": "Szöveg keresése és cseréje",
         "cut_in_half": "Félbevágás",
@@ -817,6 +823,7 @@
         "select_display": "Kattintson a képernyőre, ahol meg szeretné jeleníteni a kimeneti ablakot.",
         "manual_input_hint": "Nem található a kijelző? Kattintson ide a helyzete kézi módosításához.",
         "manual_drag_hint": "Az aktív kimeneti ablak fölé történő manuális húzáshoz tartsa lenyomva a Ctrl/Cmd billentyűt.",
+        "identify_screens": "Képernyők azonosítása",
         "new_output": "Új kimenet",
         "enable_key_output": "Alfakulcs kimenet engedélyezése",
         "always_on_top": "Mindig legfelül",
@@ -869,6 +876,7 @@
         "reset_all": "Minden visszaállítása",
         "reset_theme": "Téma visszaállítása",
         "reset_themes": "Témák visszaállítása",
+        "capitalize_words": "Szavak nagybetűsítése",
         "backup_all": "Teljes biztonsági mentés",
         "restore": "Visszaállítás",
         "backup_started": "Biztonsági mentés…",
@@ -943,7 +951,8 @@
         "screens": "Képernyők",
         "windows": "Ablakok",
         "cameras": "Kamerák",
-        "microphones": "Mikrofonok"
+        "microphones": "Mikrofonok",
+        "audio_streams": "Hangfolyamok"
     },
     "transition": {
         "current_slide": "az aktuális dia számára",

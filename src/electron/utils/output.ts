@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron"
 import { join } from "path"
-import { isProd, mainWindow, toApp } from ".."
+import { isMac, isProd, mainWindow, toApp } from ".."
 import { MAIN, OUTPUT, STARTUP } from "../../types/Channels"
 import { Message } from "../../types/Socket"
 import { startCapture, stopCapture, updatePreviewResolution } from "../ndi/capture"
@@ -50,7 +50,7 @@ function createOutputWindow(options: any, id: string, name: string) {
     // window.setAutoHideMenuBar(true) // hide menubar
 
     window.setSkipTaskbar(options.skipTaskbar) // hide from taskbar
-    if (process.platform === "darwin") window.minimize() // hide on mac
+    if (isMac) window.minimize() // hide on mac
 
     if (options.alwaysOnTop) window.setAlwaysOnTop(true, "pop-up-menu", 1)
     // window.setVisibleOnAllWorkspaces(true)
