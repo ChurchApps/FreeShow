@@ -90,6 +90,7 @@ export interface Item {
     fit?: string
     filter?: string
     flipped?: boolean
+    flippedY?: boolean // media item
     variable?: any
     web?: any
     bindings?: string[] // bind item to stage or an output
@@ -278,6 +279,7 @@ export interface OutBackground {
     loop?: boolean
     filter?: string
     flipped?: boolean
+    flippedY?: boolean
     // name?: string
     type?: MediaType
 }

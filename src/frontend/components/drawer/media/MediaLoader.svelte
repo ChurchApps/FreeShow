@@ -198,7 +198,7 @@
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
         {:else if type === "video"}
-            <div class="video" style="filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''};overflow: hidden;">
+            <div class="video" style="filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});overflow: hidden;">
                 <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, mediaStyle.fit)} bind:this={canvas} />
                 {#if !loaded || hover || loadFullImage}
                     {#key retryCount}
@@ -211,7 +211,9 @@
         {:else}
             {#if !loadFullImage || !loaded}
                 <canvas
-                    style="{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, mediaStyle.fit)}filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''}"
+                    style="{getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, mediaStyle.fit)}filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY
+                        ? '-1'
+                        : '1'});"
                     bind:this={canvas}
                 />
             {/if}
@@ -221,7 +223,7 @@
                         src={path}
                         alt={name}
                         loading="lazy"
-                        style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''};width: 100%;height: 100%;"
+                        style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});width: 100%;height: 100%;"
                         on:error={reload}
                     />
                 {/key}

@@ -104,6 +104,7 @@
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
     $: currentBackground = sendBackgroundToStage(stageOutputId, $outputs, true)
+    $: console.log(currentBackground)
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: layoutSlide = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!] || {} : {}
     $: slideId = layoutSlide.id
@@ -159,8 +160,10 @@
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
                         {#if currentBackground}
+                            {@const slideBackground = next ? currentBackground.next : currentBackground}
+                            <span style="font-size: 0;position: absolute;">{console.log(slideBackground, currentBackground)}</span>
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                <Image path={currentBackground[next ? "nextPath" : "path"]} />
+                                <Image path={slideBackground.path} mediaStyle={slideBackground.mediaStyle} />
                             </div>
                         {/if}
 

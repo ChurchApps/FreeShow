@@ -3,10 +3,11 @@ import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
-import { events, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { events, media, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
+import { clone } from "../components/helpers/array"
 
 // WIP this should not send to all stage, just connected ids
 export function stageListen() {
@@ -56,10 +57,11 @@ export function sendBackgroundToStage(outputId, updater = get(outputs), returnPa
     let path = updater[outputId]?.out?.background?.path || ""
     if (!path) return
 
-    let background = get(mediaCache)[path]?.data || null
-    if (!background) return
+    let background = get(mediaCache)[path] || {}
+    let base64path = background.data
+    if (!base64path) return
 
-    let bg = { path: background, nextPath: getNextBackground(outputId) }
+    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: getNextBackground(outputId) })
 
     if (returnPath) return bg
 
@@ -70,17 +72,20 @@ export function sendBackgroundToStage(outputId, updater = get(outputs), returnPa
 
 function getNextBackground(outputId: string) {
     let currentOutputSlide = get(outputs)[outputId]?.out?.slide
-    if (!currentOutputSlide?.id) return ""
+    if (!currentOutputSlide?.id) return {}
 
     let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
     let nextLayout = layout[(currentOutputSlide.index || 0) + 1]
-    if (!nextLayout) return ""
+    if (!nextLayout) return {}
 
     let bgId = nextLayout.data.background || ""
     let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
-    let background = get(mediaCache)[path]?.data || ""
 
-    return background
+    let background = get(mediaCache)[path] || {}
+    let base64path = background.data
+    if (!base64path) return {}
+
+    return { path: base64path, mediaStyle: get(media)[path] || {} }
 }
 
 export const receiveSTAGE: any = {

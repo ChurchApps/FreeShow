@@ -22,7 +22,6 @@
     let existing: boolean = $selected.id === "audio_stream" && $selected.data[0]?.id
     let streamId = existing ? $selected.data[0].id : uid()
     let currentStream = clone($audioStreams[streamId] || DEFAULT_STREAM)
-    $: console.log($selected.data[0].id, streamId, $selected)
 
     let globalList = Object.entries($audioStreams).map(([id, a]: any) => ({ ...a, id }))
     let sortedStreams = globalList.sort((a, b) => a.name?.localeCompare(b.name))

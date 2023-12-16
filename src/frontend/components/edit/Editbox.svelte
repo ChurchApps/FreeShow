@@ -827,11 +827,11 @@ bind:offsetWidth={width} -->
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}
                 <!-- video -->
-                <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={true} autoplay loop>
+                <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};transform: scale({item.flipped ? "-1" : "1"}, {item.flippedY ? "-1" : "1"});" muted={true} autoplay loop>
                     <track kind="captions" />
                 </video>
             {:else}
-                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? "-1" : "1"}, {item.flippedY ? "-1" : "1"});" />
                 <!-- <MediaLoader path={item.src} /> -->
             {/if}
         {/if}

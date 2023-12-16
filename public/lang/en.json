@@ -139,6 +139,8 @@
         "speed": "Speed",
         "show": "Show",
         "flip": "Flip",
+        "flip_horizontally": "Flip horizontally",
+        "flip_vertically": "Flip vertically",
         "all": "Folders, images & videos",
         "folder": "Only folders",
         "image": "Only images",

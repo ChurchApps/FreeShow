@@ -66,7 +66,7 @@
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     <video
         class="media"
-        style="width: 100%;height: 100%;object-fit: {mediaStyle.fit};filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''}"
+        style="width: 100%;height: 100%;object-fit: {mediaStyle.fit};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
         bind:this={video}
         on:loadedmetadata={loaded}
         on:playing={playing}

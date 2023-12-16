@@ -5,7 +5,15 @@
     export let mediaStyle: MediaStyle = {}
 </script>
 
-<img class="media" style="object-fit: {mediaStyle.fit};width: 100%;height: 100%;filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''}" src={path} alt="" draggable="false" on:error on:load />
+<img
+    class="media"
+    style="width: 100%;height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
+    src={path}
+    alt=""
+    draggable="false"
+    on:error
+    on:load
+/>
 
 <style>
     /* hide alt text */

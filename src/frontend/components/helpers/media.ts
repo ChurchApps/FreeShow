@@ -86,6 +86,7 @@ export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
     let mediaStyle: MediaStyle = {
         filter: "",
         flipped: false,
+        flippedY: false,
         fit: "contain",
         speed: "1",
         fromTime: 0,

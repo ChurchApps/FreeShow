@@ -54,6 +54,8 @@
     $: slide = slides[next ? 1 : 0]
 
     // let outputResolution: any = show && show.settings.resolution ? show.settings.resolution : { width: 1920, height: 1080 }
+
+    $: console.log(background)
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
@@ -83,10 +85,11 @@
                         <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} />
                     {/key}
                 {:else if id.includes("slide")}
+                    {@const slideBackground = next ? background.next : background}
                     <!-- TODO: show slide data (backgrounds, overlays) -->
                     <span style="pointer-events: none;">
-                        {#if next ? background?.nextPath : background?.path}
-                            <MediaOutput path={next ? background.nextPath : background.path} />
+                        {#if slideBackground.path}
+                            <MediaOutput path={slideBackground.path} mediaStyle={slideBackground.mediaStyle} />
                         {/if}
 
                         <!-- TODO: size this properly!!! -->

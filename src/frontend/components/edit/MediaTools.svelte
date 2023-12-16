@@ -23,7 +23,7 @@
 
     // update values
     $: mediaId = $activeEdit.id || $activeShow!.id
-    $: currentMedia = $media[mediaId]
+    $: currentMedia = $media[mediaId] || {}
 
     let edits: any = clone(mediaEdits.media?.edit)
     let filterEdits: any = clone(mediaFilters.media?.edit)
@@ -55,8 +55,9 @@
 
     // set values
     $: if (currentMedia) {
-        edits.default[1].value = currentMedia.flipped || false
         edits.default[0].value = currentMedia.fit || "contain"
+        edits.default[1].value = currentMedia.flipped || false
+        edits.default[2].value = currentMedia.flippedY || false
         if (edits.video) {
             edits.video[0].value = currentMedia.speed || "1"
             edits.video[1].value = currentMedia.fromTime || 0
@@ -74,7 +75,7 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["flipped", "fit", "speed", "fromTime", "toTime"]
+        let deleteKeys: string[] = ["flipped", "flippedY", "fit", "speed", "fromTime", "toTime"]
 
         // reset
         if (active === "filters") deleteKeys = ["filter"]

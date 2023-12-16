@@ -38,7 +38,11 @@
                             }}
                             title={$dictionary.media?.show}
                         >
-                            <Image style="width: 100%;height: 100%;object-fit: contain;filter: {mediaStyle.filter || ''};{mediaStyle.flipped ? 'transform: scaleX(-1);' : ''};object-fit: {mediaStyle.fit}" src={show.id} alt={show.name || ""} />
+                            <Image
+                                style="width: 100%;height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
+                                src={show.id}
+                                alt={show.name || ""}
+                            />
                         </HoverButton>
                     </div>
                 {/if}
