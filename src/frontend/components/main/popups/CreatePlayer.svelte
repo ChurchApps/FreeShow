@@ -23,6 +23,7 @@
 
         if (active === "youtube") {
             if (id.includes("?list")) id = id.slice(0, id.indexOf("?list"))
+            if (id.includes("?si")) id = id.slice(0, id.indexOf("?si"))
             id = id.slice(-11)
         } else if (active === "vimeo") {
             if (id.includes("?")) id = id.slice(0, id.indexOf("?"))

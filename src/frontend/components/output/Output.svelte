@@ -470,6 +470,7 @@
                                     linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled={!mirror}
                                     outputStyle={currentStyle}
+                                    {mirror}
                                 />
                             {/if}
                         {/each}
@@ -497,6 +498,7 @@
                                     linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled
                                     outputStyle={currentStyle}
+                                    {mirror}
                                 />
                                 <!-- </span> -->
                             {/if}

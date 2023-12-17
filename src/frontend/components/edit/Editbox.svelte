@@ -744,7 +744,11 @@ bind:offsetWidth={width} -->
     bind:this={itemElem}
     class={plain ? "editItem" : "editItem item context #edit_box"}
     class:selected={$activeEdit.items.includes(index)}
-    style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1};${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`}
+    style={plain
+        ? "width: 100%;"
+        : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? "filter: " + filter + ";" : ""}${
+              backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""
+          }`}
     data-index={index}
     on:mousedown={mousedown}
 >
@@ -827,11 +831,11 @@ bind:offsetWidth={width} -->
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}
                 <!-- video -->
-                <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};transform: scale({item.flipped ? "-1" : "1"}, {item.flippedY ? "-1" : "1"});" muted={true} autoplay loop>
+                <video src={item.src} style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" muted={true} autoplay loop>
                     <track kind="captions" />
                 </video>
             {:else}
-                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? "-1" : "1"}, {item.flippedY ? "-1" : "1"});" />
+                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
                 <!-- <MediaLoader path={item.src} /> -->
             {/if}
         {/if}

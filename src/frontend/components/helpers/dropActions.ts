@@ -111,20 +111,39 @@ export const dropActions: any = {
 
         return history
     },
-    all_slides: ({ drag, drop }: any, history: any) => {
-        history.location = { page: "show" }
+    all_slides: ({ drag, drop }: any, h: any) => {
+        h.location = { page: "show" }
+        let templateId = drag.data[0]
 
         if (drag.id === "template") {
-            history.id = "TEMPLATE"
+            h.id = "TEMPLATE"
 
             // TODO: add slide
             // if (trigger) location.layoutSlide = index
             let indexes: number[] = []
-            if (drop.center) indexes.push(drop.index)
-            history.newData = { id: drag.data[0], data: { createItems: true }, indexes }
+            if (drop.center) {
+                // indexes.push(drop.index)
+                // history({ id: "UPDATE", newData: { data: templateId, key: "settings", keys: ["template"] }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } })
+                // history({ id: "SLIDES", newData: { index: drop.index, replace: { settings: isParent } } })
+
+                let ref = _show().layouts("active").ref()[0]
+                let slideId = ref[drop.index].id
+                let slideSettings = _show().slides([slideId]).get("settings")
+                let oldData: any = { style: clone(slideSettings) }
+                let newData: any = { style: { ...clone(slideSettings), template: templateId } }
+
+                history({
+                    id: "slideStyle",
+                    oldData,
+                    newData,
+                    location: { page: "edit", show: get(activeShow)!, slide: slideId },
+                })
+                return
+            }
+            h.newData = { id: templateId, data: { createItems: true }, indexes }
         }
 
-        return history
+        return h
     },
     navigation: ({ drag, drop }: any, h: any) => {
         if (drop.data !== "all" && get(activeDrawerTab) && (drag.id === "show" || drag.id === "show_drawer")) {

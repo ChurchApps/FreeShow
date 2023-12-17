@@ -259,6 +259,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     imageExtensions: (v: any) => {
         // set this in case it's not up to date with stores
         if (!v.includes("webp")) v.push("webp")
+        if (!v.includes("avif")) v.push("avif")
         imageExtensions.set(v)
     },
     videoExtensions: (v: any) => videoExtensions.set(v),

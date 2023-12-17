@@ -57,7 +57,7 @@
         position: absolute;
         top: 0;
         left: 0;
-        z-index: 10;
+        z-index: 1000;
         background-color: var(--secondary);
     }
     .line.x {

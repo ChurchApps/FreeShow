@@ -91,7 +91,7 @@
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
 
 <div class="editArea">
-    <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
+    <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
             <Zoomed style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio hideOverflow={false} center={zoom >= 1}>
                 <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
@@ -141,6 +141,11 @@
         height: 100%;
         display: flex;
         overflow: auto;
+    }
+
+    /* disable "glitchy" scroll bars */
+    .parent.noOverflow {
+        overflow: hidden;
     }
 
     .actions {

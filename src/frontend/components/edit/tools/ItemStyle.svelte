@@ -5,7 +5,7 @@
     import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
-    import { getStyles } from "../../helpers/style"
+    import { getFilters, getStyles } from "../../helpers/style"
     import { addFilterString, addStyleString } from "../scripts/textStyle"
     import { itemEdits } from "../values/item"
     import EditValues from "./EditValues.svelte"
@@ -16,6 +16,24 @@
     let data: { [key: string]: any } = {}
 
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
+
+    $: console.log(data)
+    $: itemBackFilters = getStyles(item?.style)["backdrop-filter"]
+    $: if (itemBackFilters) getItemFilters()
+    function getItemFilters() {
+        console.log(itemBackFilters)
+        if (!item) return
+
+        // update backdrop filters
+        let backdropFilters = getFilters(itemBackFilters || "")
+        console.log(backdropFilters)
+        let defaultBackdropFilters = itemEdits.backdrop_filters || []
+        itemEdits.backdrop_filters.forEach((filter: any) => {
+            let value = backdropFilters[filter.key] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
+            let index = itemEdits.backdrop_filters.findIndex((a: any) => a.key === filter.key)
+            itemEdits.backdrop_filters[index].value = value
+        })
+    }
 
     onMount(() => {
         getBackgroundOpacity()
@@ -42,9 +60,12 @@
     function updateStyle(e: any) {
         let input = e.detail
 
-        if (input.id === "transform") {
-            input.value = addFilterString(data.transform || "", [input.key, input.value])
-            input.key = "transform"
+        console.log(input)
+
+        if (input.id === "backdrop-filter" || input.id === "transform") {
+            let oldString = input.id === "backdrop-filter" ? itemBackFilters : data[input.id]
+            input.value = addFilterString(oldString || "", [input.key, input.value])
+            input.key = input.id
         }
 
         // background opacity
@@ -111,6 +132,7 @@
             allItems = [allItems[0]]
         }
 
+        console.log(values)
         if (!Object.values(values).length) return
 
         if ($activeEdit.id) {

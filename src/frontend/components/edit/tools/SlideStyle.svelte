@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { activeEdit, activeShow, outputs, showsCache, styles } from "../../../stores"
+    import { activeEdit, activeShow, outputs, showsCache, styles, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Notes from "../../show/tools/Notes.svelte"
 
@@ -22,6 +23,7 @@
     function setValues() {
         let res = getResolution(editSlide?.settings?.resolution)
         settings = {
+            template: editSlide?.settings?.template,
             color: editSlide?.settings?.color || backgroundColor || "#000000",
             resolution: {
                 width: res.width,
@@ -53,6 +55,14 @@
 
         _show($activeShow!.id).slides([slideId]).set({ key: "notes", value: e.detail })
     }
+
+    let templateList: any[] = []
+    $: templateList = [
+        { id: null, name: "—" },
+        ...Object.entries($templates)
+            .map(([id, template]: any) => ({ id, name: template.name }))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+    ]
 </script>
 
 <div class="section">
@@ -63,6 +73,17 @@
             bind:value={settings.color}
             on:input={(e) => {
                 settings.color = e.detail
+                update()
+            }}
+        />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="show.slide_template" /></p>
+        <Dropdown
+            options={templateList}
+            value={$templates[settings.template || ""]?.name || "—"}
+            on:click={(e) => {
+                settings.template = e.detail.id
                 update()
             }}
         />
@@ -78,6 +99,7 @@
                 settings.resolution.width = Number(e.detail)
                 update()
             }}
+            buttons={false}
         />
     </CombinedInput>
     <CombinedInput>
@@ -89,6 +111,7 @@
                 settings.resolution.height = Number(e.detail)
                 update()
             }}
+            buttons={false}
         />
     </CombinedInput>
 

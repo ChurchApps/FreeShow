@@ -29,6 +29,8 @@ export function formatText(e: any) {
     let groupedNewSlides = groupSlides(slides)
     console.log(groupedOldSlides, groupedNewSlides)
 
+    // TODO: renaming existing groups!
+
     let newSlides: { [key: string]: Slide } = clone(show.slides)
     let newLayoutSlides: SlideData[] = []
 
@@ -37,7 +39,6 @@ export function formatText(e: any) {
         let matchFound: boolean = false
 
         // check matching from existing slides (both old and new)
-        console.log(groupedOldSlides, doneGroupedSlides)
         ;[...groupedOldSlides, ...doneGroupedSlides].forEach((old: any) => {
             if (matchFound) return
             let similar = similarity(old.text, text)

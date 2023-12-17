@@ -3,7 +3,6 @@
     import { activeShow, labelsDisabled, midiIn, showsCache } from "../../stores"
     import { _show } from "../helpers/shows"
     import Tabs from "../main/Tabs.svelte"
-    import Layout from "./tools/Layout.svelte"
     import Media from "./tools/Media.svelte"
     import Metadata from "./tools/Metadata.svelte"
     import Notes from "./tools/Notes.svelte"
@@ -11,8 +10,6 @@
 
     const tabs: TabsObj = {
         groups: { name: "tools.groups", icon: "groups" },
-        // WIP layout is no longer needed
-        // layout: { name: "tools.layout", icon: "layout" },
         media: { name: "tools.media", icon: "media", disabled: true },
         // audio: { name: "tools.audio", icon: "audio" },
         metadata: { name: "tools.metadata", icon: "info" },
@@ -66,8 +63,6 @@
     {#if show}
         {#if active === "groups"}
             <SlideGroups />
-        {:else if active === "layout"}
-            <Layout />
         {:else if active === "media"}
             <div class="content">
                 <Media />

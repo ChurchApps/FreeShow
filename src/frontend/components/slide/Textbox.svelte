@@ -355,7 +355,14 @@
             {#if item.src}
                 {#if getMediaType(getExtension(item.src)) === "video"}
                     <!-- video -->
-                    <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" muted={mirror} volume={Math.max(1, $volume)} autoplay loop>
+                    <video
+                        src={item.src}
+                        style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
+                        muted={mirror || item.muted}
+                        volume={Math.max(1, $volume)}
+                        autoplay
+                        loop
+                    >
                         <track kind="captions" />
                     </video>
                 {:else}
@@ -446,7 +453,14 @@
             {#if item.src}
                 {#if getMediaType(getExtension(item.src)) === "video"}
                     <!-- video -->
-                    <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" muted={mirror} volume={Math.max(1, $volume)} autoplay loop>
+                    <video
+                        src={item.src}
+                        style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
+                        muted={mirror || item.muted}
+                        volume={Math.max(1, $volume)}
+                        autoplay
+                        loop
+                    >
                         <track kind="captions" />
                     </video>
                 {:else}

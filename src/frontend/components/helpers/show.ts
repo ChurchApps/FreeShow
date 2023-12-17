@@ -24,30 +24,40 @@ export function formatToFileName(name: string = "") {
 }
 
 // convert any text to a label id format
-export function getLabelId(label: string) {
+export function getLabelId(label: string, replaceNumbers: boolean = true) {
     // TODO: disallow chars in labels: #:;!.,- ??
-    return label
+    label = label
         .toLowerCase()
-        .replace(/x[0-9]/g, "")
-        .replace(/[[\]]/g, "")
-        .replace(/[0-9'":]/g, "")
+        .replace(/x[0-9]/g, "") // x0-9
+        .replace(/[[\]]/g, "") // []
+        .replace(/['":]/g, "") // '":
         .trim()
-        .replaceAll(" ", "_")
-        .replaceAll("-", "_")
+        .replaceAll(" ", "_") // " " -> _
+        .replaceAll("-", "_") // - -> _
+
+    if (replaceNumbers) label = label.replace(/[0-9]/g, "")
+
+    return label
     // .replace(/[0-9-]/g, "")
 }
 
 // check if label exists as a global label
 export function getGlobalGroup(group: string, returnInputIfNull: boolean = false): string {
-    group = getLabelId(group)
+    let groupId = getLabelId(group)
 
-    if (get(groups)[group]) return group
+    if (get(groups)[groupId]) return groupId
 
-    let globalGroup: any = ""
-    Object.entries(get(dictionary).groups).forEach(([groupId, name]) => {
-        if (name.toLowerCase() === group) globalGroup = groupId
+    let matchingName = Object.keys(get(groups)).find((groupId) => {
+        return get(groups)[groupId].name === group
     })
-    return globalGroup || (returnInputIfNull ? group : "")
+    if (matchingName) return matchingName
+
+    // find group based on language
+    let globalGroup: any = ""
+    Object.entries(get(dictionary).groups).forEach(([id, name]) => {
+        if (name.toLowerCase() === groupId) globalGroup = id
+    })
+    return globalGroup || (returnInputIfNull ? groupId : "")
 }
 
 // mirror & events
@@ -130,10 +140,17 @@ export function updateCachedShow(id: string, show: Show) {
     }
 
     // create groups
-    let showSlides = clone(show.slides || {})
+    let showSlides = keysToID(clone(show.slides || {}))
     let addedGroups: any = {}
-    let showGroups: any[] = Object.entries(showSlides).map(createGroups)
-    function createGroups([slideId, slide]) {
+
+    // sort by order when just one layout
+    if (Object.keys(show.layouts).length < 2) {
+        let layoutSlides = Object.values(show.layouts)[0]?.slides?.map(({ id }) => id) || []
+        showSlides = showSlides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
+    }
+
+    let showGroups: any[] = showSlides.map(createGroups)
+    function createGroups(slide) {
         // update if global group
         if (slide.globalGroup && get(groups)[slide.globalGroup]) {
             let oldGroup = clone({ group: slide.group, color: slide.color })
@@ -146,14 +163,14 @@ export function updateCachedShow(id: string, show: Show) {
             // update local group
             if (JSON.stringify(oldGroup) !== JSON.stringify({ group: slide.group, color: slide.color })) {
                 showsCache.update((a) => {
-                    a[id].slides[slideId].group = slide.group
-                    a[id].slides[slideId].color = slide.color
+                    a[id].slides[slide.id].group = slide.group
+                    a[id].slides[slide.id].color = slide.color
                     return a
                 })
             }
         }
 
-        if (!slide.group || !get(groupNumbers)) return { ...slide, id: slideId }
+        if (!slide.group || !get(groupNumbers)) return { ...slide, id: slide.id }
 
         // add numbers to different slides with same name
         if (addedGroups[slide.group]) {
@@ -161,7 +178,7 @@ export function updateCachedShow(id: string, show: Show) {
             slide.group += " " + addedGroups[slide.group]
         } else addedGroups[slide.group] = 1
 
-        return { ...slide, id: slideId }
+        return { ...slide, id: slide.id }
     }
     // sort groups by name
     let sortedGroups = showGroups.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group?.localeCompare(b.group))

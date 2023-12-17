@@ -82,7 +82,7 @@
         background-color: var(--primary);
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
         padding: 5px 0;
-        z-index: 80;
+        z-index: 5000;
     }
 
     hr {

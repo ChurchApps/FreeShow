@@ -5,6 +5,8 @@ export function checkForUpdates(currentVersion: string) {
     fetch("https://api.github.com/repos/vassbo/freeshow/releases")
         .then((response) => response.json())
         .then((a) => {
+            if (get(activePopup) !== null) return
+
             let current = a.filter((a: any) => a.draft === false)[0]
             let newVersion = current.tag_name.slice(1)
 

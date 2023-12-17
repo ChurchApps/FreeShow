@@ -425,7 +425,8 @@
         "list": "List view",
         "lyrics": "Lyrics view",
         "text": "Text edit",
-        "update": "Update show"
+        "update": "Update show",
+        "slide_template": "Slide template"
     },
     "actions": {
         "rename": "Rename",

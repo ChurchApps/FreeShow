@@ -89,9 +89,10 @@
         } else endIndex = null
     }
 
-    $: if (showId && currentShow?.settings?.template && $cachedShowsData[showId]?.template?.slidesUpdated === false) {
+    // && currentShow?.settings?.template && $cachedShowsData[showId]?.template?.slidesUpdated === false
+    $: if (showId && currentShow) {
         // update show by its template
-        history({ id: "TEMPLATE", save: false, newData: { id: currentShow.settings.template }, location: { page: "show" } })
+        history({ id: "TEMPLATE", save: false, newData: { id: currentShow.settings?.template }, location: { page: "show" } })
     }
 
     $: if (showId && $special.capitalize_words) capitalizeWords()
@@ -204,16 +205,16 @@
 
     let lazyLoading: boolean = false
     function startLazyLoader() {
-        if (!layoutSlides) return
+        if (!layoutSlides || timeout) return
         if (lazyLoader >= layoutSlides.length) {
             loaded = true
             lazyLoading = false
             return
         }
-        if (timeout) clearTimeout(timeout)
 
         timeout = setTimeout(() => {
             lazyLoader++
+            timeout = null
             startLazyLoader()
         }, 10)
     }

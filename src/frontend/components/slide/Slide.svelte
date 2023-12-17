@@ -8,7 +8,7 @@
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
-    import { clone } from "../helpers/array"
+    import { clone, keysToID } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { GetLayoutRef } from "../helpers/get"
     import { checkMedia, getFileName, getMediaStyle, splitPath } from "../helpers/media"
@@ -109,44 +109,49 @@
     $: if (bg?.path) mediaStyle = getMediaStyle($media[bg.path], currentStyle)
 
     $: group = slide.group
-    $: {
-        if (slide.globalGroup && $groups[slide.globalGroup]) {
-            group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
-            color = $groups[slide.globalGroup].color
-            // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
-            // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
-        }
+    $: if (slide.globalGroup && $groups[slide.globalGroup]) {
+        group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
+        color = $groups[slide.globalGroup].color
+        // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+        // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
     }
 
     $: name = getGroupName(layoutSlide.id)
     // dynamic counter
     function getGroupName(slideID: string) {
         let name = group
-        if (name !== null && name !== undefined) {
-            if (!name.length) name = "—"
-            let added: any = {}
-            if ($groupNumbers) {
-                // different slides with same name
-                Object.entries(show.slides).forEach(([id, a]: any) => {
-                    if (!a) return
-                    if (added[a.group]) {
-                        added[a.group]++
-                        if (id === slideID) name += " " + added[a.group]
-                    } else added[a.group] = 1
-                })
+        if (name === null || name === undefined) return name
 
-                // same group count
-                added = {}
-                GetLayoutRef().forEach((a: any, i: number) => {
-                    if (a.type === "parent") {
-                        if (added[a.id]) {
-                            added[a.id]++
-                            if (i === index) name += " (" + added[a.id] + ")"
-                        } else added[a.id] = 1
-                    }
-                })
-            }
+        if (!name.length) name = "—"
+        let added: any = {}
+        if (!$groupNumbers) return name
+
+        // different slides with same name
+        let slides = keysToID(show.slides)
+        // sort by order when just one layout
+        if (Object.keys(show.layouts).length < 2) {
+            let layoutSlides = Object.values(show.layouts)[0]?.slides?.map(({ id }) => id) || []
+            slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
         }
+        slides.forEach((slide: any) => {
+            if (!slide) return
+            if (added[slide.group]) {
+                added[slide.group]++
+                if (slide.id === slideID) name += " " + added[slide.group]
+            } else added[slide.group] = 1
+        })
+
+        // same group count
+        added = {}
+        GetLayoutRef().forEach((a: any, i: number) => {
+            if (a.type === "parent") {
+                if (added[a.id]) {
+                    added[a.id]++
+                    if (i === index) name += " (" + added[a.id] + ")"
+                } else added[a.id] = 1
+            }
+        })
+
         return name
     }
 

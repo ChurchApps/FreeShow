@@ -48,7 +48,7 @@
         /* bottom: 80px;
         left: 50%;
         transform: translateX(-50%); */
-        z-index: 80;
+        z-index: 5000;
 
         background-color: var(--primary-darker);
         color: var(--text);

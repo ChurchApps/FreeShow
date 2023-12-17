@@ -59,6 +59,7 @@ export interface Slide {
     color: null | string
     globalGroup?: string
     settings: {
+        template?: string
         background?: boolean
         color?: string
         resolution?: Resolution
@@ -91,6 +92,7 @@ export interface Item {
     filter?: string
     flipped?: boolean
     flippedY?: boolean // media item
+    muted?: boolean // media item
     variable?: any
     web?: any
     bindings?: string[] // bind item to stage or an output

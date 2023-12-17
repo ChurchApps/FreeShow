@@ -240,7 +240,7 @@ export const remotePassword: Writable<string> = writable("1234") // generate 4 n
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"
 export const presenterControllerKeys: Writable<boolean> = writable(true) // true
 export const videoExtensions: Writable<string[]> = writable(["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"]) // [default]
-export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp"]) // [default]
+export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp", "avif"]) // [default]
 export const audioExtensions: Writable<string[]> = writable(["mp3", "wav", "m4a", "flac", "wma", "aac", "ogg", "weba", "aiff"])
 
 // CLOUD

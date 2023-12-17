@@ -21,7 +21,7 @@
 
     let dispatch = createEventDispatcher()
     window.api.receive(OPEN_FILE, (msg: any) => {
-        if (msg.id !== id) return
+        if (msg.data.id !== id) return
         if (msg.channel !== "MEDIA") return
 
         dispatch("picked", multiple ? msg.data.files : msg.data.files[0])

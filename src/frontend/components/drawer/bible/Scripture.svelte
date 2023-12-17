@@ -7,13 +7,13 @@
     import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
+    import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
-    import Center from "../../system/Center.svelte"
-    import { fetchBible, joinRange, loadBible, searchBibleAPI } from "./scripture"
-    import BibleApiKey from "./BibleApiKey.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import Center from "../../system/Center.svelte"
+    import BibleApiKey from "./BibleApiKey.svelte"
+    import { fetchBible, joinRange, loadBible, searchBibleAPI } from "./scripture"
 
     export let active: any
     export let bibles: Bible[]
@@ -52,7 +52,7 @@
     // select book & chapter when opening bible show reference
     $: if ($openScripture) setTimeout(openReference, 200)
     function openReference() {
-        if (!$openScripture?.book) {
+        if ($openScripture?.book === undefined) {
             openScripture.set(null)
             return
         }
@@ -65,6 +65,8 @@
                 chapterId = bookId + "." + chapterId
             } else chapterId--
             // verses
+            activeVerses = $openScripture.verses
+            bibles[0].activeVerses = activeVerses
 
             openScripture.set(null)
         }, 100)
@@ -349,6 +351,7 @@
     // search
     const updateSearchValue = (v: string) => (searchValue = v)
 
+    let mainElem: any = null
     let autoComplete: boolean = false
     // $: if (searchValue) autoComplete = true
 
@@ -386,6 +389,8 @@
             bookId = searchValues.book
             getBook()
             getChapter()
+
+            if (mainElem) scrollTo(mainElem.querySelector(".books"), bookId)
         }
 
         let bookLength = (searchValues.bookName + " ").length
@@ -398,6 +403,8 @@
         if (chapterId !== searchValues.chapter) {
             chapterId = searchValues.chapter
             getChapter()
+
+            if (mainElem) scrollTo(mainElem.querySelector(".chapters"), chapterId)
         }
 
         searchValues.verses = findVerse({ splittedEnd })
@@ -406,7 +413,16 @@
             activeVerses = [...new Set(searchValues.verses)] as any
             activeVerses = activeVerses.map((a) => a.toString())
             bibles[0].activeVerses = activeVerses
+
+            // scroll down
+            if (mainElem) scrollTo(mainElem.querySelector(".verses"), activeVerses[0])
         }
+    }
+
+    function scrollTo(parent, childId) {
+        let selectedChild = [...parent.children].find((a) => a.id === childId.toString())
+        if (!selectedChild) return
+        parent.scrollTo(0, selectedChild.offsetTop)
     }
 
     let searchBibleActive: boolean = false
@@ -660,7 +676,7 @@
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
 
 <div class="scroll" style="flex: 1;overflow-y: auto;">
-    <div class="main">
+    <div class="main" bind:this={mainElem}>
         {#if notLoaded || !bibles[0]}
             <Center faded>
                 <T id="error.bible" />
@@ -694,13 +710,15 @@
                 </Center>
             {/if}
         {:else}
-            <div class:center={!books[firstBibleId]?.length}>
+            <div class="books" class:center={!books[firstBibleId]?.length}>
                 {#if books[firstBibleId]?.length}
                     {#key books[firstBibleId]}
                         {#each books[firstBibleId] as book, i}
+                            {@const id = bibles[0].api ? book.id : i}
                             <span
+                                id={id.toString()}
                                 on:click={() => {
-                                    bibles[0].api ? (bookId = book.id) : (bookId = i)
+                                    bookId = id
                                     autoComplete = false
                                 }}
                                 class:active={bibles[0].api ? bookId === book.id : bookId === i}
@@ -713,12 +731,14 @@
                     <Loader />
                 {/if}
             </div>
-            <div style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
+            <div class="chapters" style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
                 {#if chapters[firstBibleId]?.length}
                     {#each chapters[firstBibleId] as chapter, i}
+                        {@const id = bibles[0].api ? chapter.id : i}
                         <span
+                            id={id.toString()}
                             on:click={() => {
-                                bibles[0].api ? (chapterId = chapter.id) : (chapterId = i)
+                                chapterId = id
                                 autoComplete = false
                             }}
                             class:active={bibles[0].api ? chapterId === chapter.id : chapterId === i}
@@ -734,7 +754,7 @@
                 {#if Object.keys(verses[firstBibleId] || {}).length}
                     {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
                         <!-- custom drag -->
-                        <p draggable="true" on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => playOrClearScripture(true)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
+                        <p {id} draggable="true" on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => playOrClearScripture(true)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
                             <span class="v">{id}</span>{@html content.replaceAll("/ ", " ")}
                         </p>
                     {/each}
@@ -805,6 +825,9 @@
         overflow-y: auto;
         overflow-x: hidden;
         align-content: flex-start;
+
+        position: relative;
+        scroll-behavior: smooth;
     }
     .main div:not(.verses) {
         border-right: 2px solid var(--primary-lighter);

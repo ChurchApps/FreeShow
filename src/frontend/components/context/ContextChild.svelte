@@ -121,6 +121,6 @@
         background-color: var(--primary);
         box-shadow: 2px 2px 3px rgb(0 0 0 / 0.2);
         padding: 5px 0;
-        z-index: 80;
+        z-index: 5000;
     }
 </style>
