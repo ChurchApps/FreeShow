@@ -360,7 +360,7 @@ export function loadShows({ showsPath }: any) {
     function checkShow(name: string) {
         if (!name.includes(".show")) return
 
-        let matchingShowId = Object.entries(cachedShows).find(([_id, a]: any) => a.name === name)?.[0]
+        let matchingShowId = Object.entries(cachedShows).find(([_id, a]: any) => a.name === name.slice(0, -5))?.[0]
         if (matchingShowId) {
             newCachedShows[matchingShowId] = cachedShows[matchingShowId]
             return

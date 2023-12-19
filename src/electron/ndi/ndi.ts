@@ -21,7 +21,9 @@ export async function findStreamsNDI(): Promise<any> {
         grandiose
             .find({ showLocalSources: true })
             .then((a: any) => {
-                resolve(a)
+                // embedded, destroy(), sources(), wait()
+                let sources = a.sources()
+                resolve(sources)
             })
             .catch((err: any) => reject(err))
     })
@@ -31,16 +33,20 @@ export async function findStreamsNDI(): Promise<any> {
 export async function receiveStreamNDI({ source }: any) {
     if (receivers[source.urlAddress]) return
 
+    // WIP this just crashes
     let receiver = await grandiose.receive({ source })
 
     let timeout = 5000 // Optional timeout, default is 10000ms
 
     try {
-        receivers[source.urlAddress] = setInterval(async () => {
-            let videoFrame = await receiver.video(timeout)
+        let videoFrame = await receiver.video(timeout)
+        toApp("NDI", { channel: "RECEIVE_STREAM", data: videoFrame })
 
-            toApp("NDI", { channel: "RECEIVE_STREAM", data: videoFrame })
-        }, 100)
+        // receivers[source.urlAddress] = setInterval(async () => {
+        //     let videoFrame = await receiver.video(timeout)
+
+        //     toApp("NDI", { channel: "RECEIVE_STREAM", data: videoFrame })
+        // }, 100)
 
         // for ( let x = 0 ; x < 10 ; x++) {
         //     let videoFrame = await receiver.video(timeout);

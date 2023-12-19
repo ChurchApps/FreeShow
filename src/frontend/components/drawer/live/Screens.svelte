@@ -17,7 +17,11 @@
     // TODO: NDI inputs
     // const receiveNDI: any = {
     //     RECEIVE_LIST: (msg) => {
-    //         console.log(msg) // {"embedded":{}}
+    //         console.log(msg)
+    //         send(NDI, ["RECEIVE_STREAM"], { source: msg[0] })
+    //     },
+    //     RECEIVE_STREAM: (stream) => {
+    //         console.log(stream)
     //     },
     // }
 
