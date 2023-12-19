@@ -90,7 +90,8 @@ export function swichProjectItem(pos: number, id: string) {
 
     // set project layout
     projects.update((a) => {
-        a[get(activeProject)!].shows[pos!].layout = get(showsCache)[id].settings.activeLayout
+        if (Object.keys(get(showsCache)[id].layouts).length < 2) delete a[get(activeProject)!].shows[pos!].layout
+        else a[get(activeProject)!].shows[pos!].layout = get(showsCache)[id].settings.activeLayout
         return a
     })
 }

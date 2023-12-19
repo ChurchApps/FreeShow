@@ -229,8 +229,10 @@
             let ref = _show("active").layouts("active").ref()[0]
             let slideData = ref[$activeEdit.slide!].data
             let indexes = ref.map((_, i) => i)
+            console.log(slideData)
 
             history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: slideData.filterEnabled || ["background"], dataIsArray: true, indexes } })
+            history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: slideData["backdrop-filter"], indexes } })
             history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: slideData.filter, indexes } })
             return
         }
@@ -264,6 +266,7 @@
         let indexes = ref.map((_, i) => i).filter((a) => a >= $activeEdit.slide!)
 
         history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: slideData.filterEnabled || ["background"], dataIsArray: true, indexes } })
+        history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: slideData["backdrop-filter"], indexes } })
         history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: slideData.filter, indexes } })
     }
 

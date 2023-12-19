@@ -326,7 +326,7 @@ const receiveOUTPUTasMAIN: any = {
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
-        setTimeout(() => checkNextAfterMedia(videoPath!), 100)
+        setTimeout(() => checkNextAfterMedia(videoPath!), 10)
         // if (checkNextAfterMedia(videoPath)) return
     },
 }

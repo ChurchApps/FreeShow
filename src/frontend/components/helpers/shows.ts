@@ -349,7 +349,7 @@ export function _show(id: any = "active") {
                     layoutIds.forEach((layoutId: any, i: number) => {
                         a.push([])
                         let layoutIndex: number = -1
-                        shows[id].layouts[layoutId].slides.forEach((layoutSlide: any, index: number) => {
+                        shows[id].layouts[layoutId]?.slides?.forEach((layoutSlide: any, index: number) => {
                             if (!shows[id].slides[layoutSlide.id]) {
                                 console.log("MISSING SLIDE")
                                 return

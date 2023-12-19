@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
-import { cachedShowsData, notFound, shows, showsCache, showsPath, textCache } from "../../stores"
+import { cachedShowsData, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
 import { updateCachedShow } from "./show"
 
 export function setShow(id: string, value: "delete" | Show): Show {
@@ -64,6 +64,8 @@ export function setShow(id: string, value: "delete" | Show): Show {
 }
 
 export async function loadShows(s: string[]) {
+    let savedWhenLoading: boolean = get(saved)
+
     return new Promise((resolve) => {
         let count = 0
 
@@ -85,6 +87,10 @@ export async function loadShows(s: string[]) {
         // RECEIVE
         window.api.receive(SHOW, (msg: any) => {
             count++
+
+            // prevent receiving multiple times
+            if (count >= s.length + 1) return
+
             if (msg.error) {
                 notFound.update((a) => {
                     a.show.push(msg.id)
@@ -103,13 +109,19 @@ export async function loadShows(s: string[]) {
             }
             // console.log(count, s, msg, "LOAD")
 
-            if (count >= s.length) {
-                setTimeout(() => {
-                    resolve("loaded")
-                }, 50)
-            }
+            if (count >= s.length) setTimeout(finished, 50)
         })
-        if (count >= s.length) resolve("loaded")
+        if (count >= s.length) finished()
+
+        function finished() {
+            if (savedWhenLoading) {
+                setTimeout(() => {
+                    saved.set(true)
+                }, 100)
+            }
+
+            resolve("loaded")
+        }
     })
 }
 

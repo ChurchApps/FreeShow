@@ -4,7 +4,7 @@
     import Loader from "../../main/Loader.svelte"
     // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
-    import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, scriptures, scripturesCache, selected } from "../../../stores"
+    import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -754,7 +754,15 @@
                 {#if Object.keys(verses[firstBibleId] || {}).length}
                     {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
                         <!-- custom drag -->
-                        <p {id} draggable="true" on:mousedown={(e) => selectVerse(e, id)} on:dblclick={() => playOrClearScripture(true)} class:active={activeVerses.includes(id)} title={$dictionary.tooltip?.scripture}>
+                        <p
+                            class:showAllText={$resized.rightPanelDrawer <= 5}
+                            {id}
+                            draggable="true"
+                            on:mousedown={(e) => selectVerse(e, id)}
+                            on:dblclick={() => playOrClearScripture(true)}
+                            class:active={activeVerses.includes(id)}
+                            title={$dictionary.tooltip?.scripture}
+                        >
                             <span class="v">{id}</span>{@html content.replaceAll("/ ", " ")}
                         </p>
                     {/each}
@@ -874,6 +882,9 @@
         width: 45px;
         margin-right: 10px;
         text-align: center;
+    }
+    .main p.showAllText {
+        white-space: initial;
     }
     /* .add, .wj, .w, .xt */
     /* .main :global(.add) {

@@ -172,11 +172,11 @@
         {/if}
     </div>
     <div class="content">
-        <Resizeable id={"drawerNavigation"}>
+        <Resizeable id="leftPanelDrawer">
             <Navigation id={$activeDrawerTab} />
         </Resizeable>
         <Content id={$activeDrawerTab} bind:searchValue bind:firstMatch bind:bibles />
-        <Resizeable id={"drawerInfo"} side="right">
+        <Resizeable id="rightPanelDrawer" side="right">
             <Info id={$activeDrawerTab} {bibles} />
         </Resizeable>
     </div>

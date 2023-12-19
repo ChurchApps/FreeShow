@@ -1,4 +1,7 @@
 <script lang="ts">
+    import { onMount } from "svelte"
+    import { resized } from "../../stores"
+
     export let id: string
     export let side: "left" | "right" | "top" | "bottom" = "left"
     export let width: number = 300
@@ -6,6 +9,14 @@
     let handleWidth: number = 4
     export let maxWidth: number = defaultWidth * 2 // * 3
     export let minWidth: number = handleWidth
+
+    let loaded = false
+    onMount(() => {
+        setTimeout(() => {
+            width = $resized[id] || 300
+            loaded = true
+        }, 1000)
+    })
 
     let move: boolean = false
     let mouse: null | { x: number; y: number; offset: number; target: any } = null
@@ -67,6 +78,16 @@
 
         width = storeWidth === null || storeWidth < defaultWidth / 2 ? defaultWidth : storeWidth
         storeWidth = null
+    }
+
+    $: if (width !== null) storeValue()
+    function storeValue() {
+        if (!loaded) return
+
+        resized.update((a) => {
+            a[id] = width
+            return a
+        })
     }
 
     function mouseup(e: any) {

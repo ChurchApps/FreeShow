@@ -119,7 +119,7 @@
             <div class="column">
                 <Top {isWindows} />
                 <div class="row">
-                    <Resizeable id="mainLeft">
+                    <Resizeable id="leftPanel">
                         <div class="left">
                             {#if page === "show"}
                                 <Projects />
@@ -149,7 +149,7 @@
                         {/if}
                     </div>
 
-                    <Resizeable id="mainRight" let:width side="right">
+                    <Resizeable id="rightPanel" let:width side="right">
                         <div class="right" class:row={width > 300 * 1.5}>
                             <Preview />
                             {#if page === "show"}
