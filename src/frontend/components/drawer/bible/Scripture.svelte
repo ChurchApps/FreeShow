@@ -23,16 +23,21 @@
     let chapters: { [key: string]: Chapter[] } = {}
     let versesList: { [key: string]: Verse[] } = {}
 
-    let bookId: any = $activeScripture[active]?.bookId || "GEN"
-    let chapterId: any = $activeScripture[active]?.chapterId || "GEN.1"
-    let verses: { [key: string]: any[] } = $activeScripture[active]?.verses || {}
+    $: cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
+    let bookId: any = cachedRef?.bookId ?? "GEN"
+    let chapterId: any = cachedRef?.chapterId ?? "GEN.1"
+    let verses: { [key: string]: any[] } = cachedRef?.verses || {}
 
-    let activeVerses: string[] = $activeScripture[active]?.activeVerses || ["1"]
+    $: console.trace(bookId)
+    $: console.trace(chapterId)
+    $: console.trace(verses)
+
+    let activeVerses: string[] = cachedRef?.activeVerses || ["1"]
 
     $: if (bookId || chapterId || verses || activeVerses) updateActive()
     function updateActive() {
         if (!loaded) return
-        activeScripture.set({ ...$activeScripture, [active]: { bookId, chapterId, verses, activeVerses } })
+        activeScripture.set({ ...$activeScripture, [bibles[0]?.api ? "api" : "bible"]: { bookId, chapterId, verses, activeVerses } })
     }
 
     let loaded: boolean = false
@@ -127,7 +132,10 @@
                 data.forEach((d: Book) => {
                     if (d.id === bookId) hasId = true
                 })
-                if (!hasId) bookId = data[0].id
+                if (!hasId) {
+                    bookId = cachedRef?.bookId
+                    if (!data[bookId]) bookId = data[0].id
+                }
 
                 books[bibleId] = data
                 break
@@ -135,7 +143,10 @@
                 data.forEach((d: Chapter) => {
                     if (d.id === chapterId) hasId = true
                 })
-                if (!hasId) chapterId = bookId + ".1"
+                if (!hasId) {
+                    chapterId = cachedRef?.chapterId
+                    if (!data[chapterId]) chapterId = bookId + ".1"
+                }
 
                 if (data[0].number === "intro") chapters[bibleId] = data.slice(1, data.length)
                 else chapters[bibleId] = data
@@ -209,6 +220,10 @@
             books[id] = msg.content[1].books as any
 
             if (typeof bookId === "string") bookId = 0
+
+            if (books[id][cachedRef?.bookId]) {
+                bookId = cachedRef?.bookId
+            }
         }
     })
 
@@ -236,7 +251,8 @@
             if (bibles[i].api) loadAPIBible(id, "books")
             else if ($scripturesCache[id]) {
                 books[id] = ($scripturesCache[id].books as any) || []
-                bookId = $activeScripture[active]?.bookId || 0
+                bookId = cachedRef?.bookId || 0
+                if (!books[id][bookId]) bookId = 0
             }
         })
     }
@@ -256,7 +272,9 @@
             } else if (books[id][bookId]) {
                 bibles[i].book = books[id][bookId].name || ""
                 chapters[id] = (books[id][bookId] as any).chapters
-                chapterId = $activeScripture[active]?.chapterId || 0
+
+                chapterId = cachedRef?.chapterId || 0
+                if (!chapters[id][chapterId]) chapterId = 0
             }
         })
     }
@@ -308,10 +326,17 @@
         })
     }
 
+    let previousBibleId = ""
     function selectFirstVerse(bibleId: string, index: number) {
         if (!verses[bibleId] || !bibles[index]) return
 
-        if (loaded) activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId]?.[a]) : ["1"]
+        if (previousBibleId !== active && cachedRef?.activeVerses?.length && verses[bibleId]?.[cachedRef?.activeVerses[0]]) {
+            activeVerses = cachedRef.activeVerses
+            previousBibleId = active
+        } else if (loaded) {
+            activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId]?.[a]) : ["1"]
+        }
+
         bibles[index].activeVerses = activeVerses
     }
 
@@ -340,7 +365,7 @@
             })
             activeVerses = activeVerses
             // } else if (activeVerses.length === 1 && activeVerses[0] === id) activeVerses = []
-        } else if (!activeVerses.includes(id)) activeVerses = [id]
+        } else if (e.buttons === 1 || !activeVerses.includes(id)) activeVerses = [id]
 
         bibles[0].activeVerses = activeVerses
 

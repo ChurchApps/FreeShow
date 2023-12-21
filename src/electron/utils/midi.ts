@@ -37,7 +37,8 @@ export async function sendMidi(data: any) {
         if (data.type === "noteon") {
             await port.noteOn(data.values.channel, data.values.note, data.values.velocity)
             // .wait(500).noteOff(data.values.channel, data.values.note)
-        } else if (data.type === "noteoff") {
+        } else {
+            // data.type === "noteoff"
             await port.noteOff(data.values.channel, data.values.note, data.values.velocity)
         }
     } catch (error) {

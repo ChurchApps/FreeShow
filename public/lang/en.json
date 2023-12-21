@@ -621,6 +621,7 @@
         "size": "Size",
         "chords": "Chords",
         "auto_size": "Auto size",
+        "no_wrap": "Text on one line",
         "line_spacing": "Line spacing",
         "line_height": "Line height",
         "letter_spacing": "Letter spacing",

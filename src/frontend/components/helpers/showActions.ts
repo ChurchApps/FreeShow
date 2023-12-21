@@ -617,11 +617,11 @@ export function activateTrigger(trigger) {
 
 const customTriggers = {
     http: (value: string) => {
-        fetch(value, { method: "POST" })
+        fetch(value, { method: "GET" })
             // .then((response) => response.json())
             // .then((json) => console.log(json))
             .catch((err) => {
-                console.error("Could not send POST request:", err)
+                console.error("Could not send HTTP request:", err)
             })
     },
 }

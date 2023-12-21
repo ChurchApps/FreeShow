@@ -371,8 +371,8 @@ const receiveOUTPUTasOUTPUT: any = {
     OVERLAYS: (a: any) => clone(overlays.set(a)),
     EVENTS: (a: any) => events.set(a),
 
-    DRAW: (a: any) => draw.set(a),
-    DRAW_TOOL: (a: any) => drawTool.set(a),
+    DRAW: (a: any) => draw.set(a.data),
+    DRAW_TOOL: (a: any) => drawTool.set(a.data),
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => media.set(a),
@@ -394,8 +394,8 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["OVERLAYS"], get(overlays))
     send(OUTPUT, ["EVENTS"], get(events))
 
-    send(OUTPUT, ["DRAW"], get(draw))
-    send(OUTPUT, ["DRAW_TOOL"], get(drawTool))
+    send(OUTPUT, ["DRAW"], { data: get(draw) })
+    send(OUTPUT, ["DRAW_TOOL"], { data: get(drawTool) })
     send(OUTPUT, ["DRAW_SETTINGS"], get(drawSettings))
 
     send(OUTPUT, ["VIZUALISER_DATA"], get(visualizerData))

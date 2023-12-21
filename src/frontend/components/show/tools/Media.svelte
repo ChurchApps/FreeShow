@@ -118,7 +118,7 @@
         })
         Object.entries($midiIn).forEach(([id, value]: any) => {
             if (value.shows.find((a) => a.id === $activeShow!.id)) {
-                midi.push({ id, ...value, type: "in" })
+                midi.push({ id, ...value, sendType: "in" })
             }
         })
     } else if (!Object.keys(showMidi).length) midi = []
@@ -232,8 +232,8 @@
             <h5><T id="popup.midi" /></h5>
             {#each midi as midi}
                 <SelectElem id="midi" data={midi} draggable>
-                    <Button class="context #midi" on:click={() => (midi.type === "in" ? playMidiIn(midi) : sendMidi(midi))} style="padding: 8px;width: 100%;" title={midi.name} bold={false}>
-                        <Icon id={midi.type === "in" ? "play" : "music"} size={1.2} right />
+                    <Button class="context #midi" on:click={() => (midi.sendType === "in" ? playMidiIn(midi) : sendMidi(midi))} style="padding: 8px;width: 100%;" title={midi.name} bold={false}>
+                        <Icon id={midi.sendType === "in" ? "play" : "music"} size={1.2} right />
                         <p>{midi.name}</p>
                     </Button>
                 </SelectElem>

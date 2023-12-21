@@ -450,7 +450,7 @@
         {#key slideClone || linesIndex}
             <!-- WIP svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
             <!-- svelte transition bug when changing between pages -->
-            {#if transition.type === "none"}
+            {#if transition.type === "none" || transition.duration === 0}
                 <span style="pointer-events: none;display: block;">
                     {#if slideClone?.items}
                         {#each slideClone.items as item}

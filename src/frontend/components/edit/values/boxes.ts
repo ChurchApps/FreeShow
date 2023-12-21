@@ -87,6 +87,7 @@ export const boxes: Box = {
                 { name: "size", id: "chords.size", input: "number", value: 30, hidden: true },
             ],
             special: [
+                { name: "no_wrap", id: "nowrap", input: "checkbox", value: false },
                 {
                     name: "scrolling",
                     input: "dropdown",

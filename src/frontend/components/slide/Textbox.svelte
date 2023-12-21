@@ -137,7 +137,7 @@
 
     $: textAnimation = animationStyle.text || ""
 
-    $: transition = transitionEnabled && item.actions?.transition
+    $: transition = transitionEnabled && item.actions?.transition && item.actions.transition.type !== "none" && item.actions.transition.duration > 0
     $: itemTransition = transition ? clone(item.actions.transition) : {}
     $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
 
@@ -366,6 +366,7 @@
                         <track kind="captions" />
                     </video>
                 {:else}
+                    <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                     <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
                     <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
                     <!-- <MediaLoader path={item.src} /> -->
@@ -464,6 +465,7 @@
                         <track kind="captions" />
                     </video>
                 {:else}
+                    <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                     <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
                     <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
                     <!-- <MediaLoader path={item.src} /> -->
