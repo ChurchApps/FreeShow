@@ -62,11 +62,16 @@
 <svelte:window on:mouseover={onMouseOver} />
 
 <div bind:this={elem} class="item" on:click={click} tabindex={0} on:keydown={keydown}>
-    <span style="display: flex;align-items: center;gap: 10px;">
-        {#if menu?.icon}<Icon id={menu.icon} />{/if}
-        {#key menu}
-            <T id={menu?.label || id} />
-        {/key}
+    <span style="display: flex;gap: 10px;justify-content: space-between;width: 100%;">
+        <div class="left" style="display: flex;align-items: center;gap: 10px;">
+            {#if menu?.icon}<Icon id={menu.icon} />{/if}
+            {#key menu}
+                <T id={menu?.label || id} />
+            {/key}
+        </div>
+        <div class="right" style="display: flex;align-self: center;opacity: 0.7;">
+            <Icon id="arrow_right" size={1.2} white />
+        </div>
     </span>
     {#if open}
         <div class="submenu" style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-10px'});">
@@ -100,10 +105,11 @@
     .item:hover {
         background-color: rgb(0 0 0 / 0.2);
     }
-    .item::after {
+    /* .item::after {
         content: ">";
+        font-weight: bold;
         color: var(--secondary);
-    }
+    } */
 
     hr {
         margin: 5px 10px;
