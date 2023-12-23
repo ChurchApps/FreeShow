@@ -1,6 +1,5 @@
 <script lang="ts">
     import { activeProject, activeRecording, activeShow, events, forceClock, media, overlays, redoHistory, scriptures, selected, shows, stageShows, undoHistory } from "../../stores"
-    import { GetLayout } from "../helpers/get"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -20,9 +19,8 @@
         },
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
-                enabled = GetLayout()[$selected.data[0].index].disabled! || false
-            } else if ($selected.id === "group") {
-                enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
+                let ref = _show().layouts("active").ref()[0]
+                enabled = ref[$selected.data[0].index]?.data?.disabled || false
             } else if ($selected.id === "stage") {
                 enabled = $stageShows[$selected.data[0].id]?.disabled
             }
@@ -101,19 +99,6 @@
     }
     if (conditions[id]) conditions[id]()
 
-    // if (id === "private" && $showsCache[$selected.data[0]?.id]?.private) {
-    //   enabled = $showsCache[$selected.data[0].id].private!
-    // } else if (id === "disable") {
-    //   if ($selected.id === "slide" && $activeShow && GetLayout()[$selected.data[0]?.index]?.disabled) {
-    //     enabled = GetLayout()[$selected.data[0].index].disabled!
-    //   } else if ($selected.id === "group") {
-    //     enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
-    //   }
-    // } else if (id === "remove" && $selected.id === "slide") {
-    //   if ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child") disabled = true
-    // } else if (id === "undo" && !$undoHistory.length) disabled = true
-    // else if (id === "redo" && !$redoHistory.length) disabled = true
-
     function contextItemClick() {
         if (disabled) return
 
@@ -130,8 +115,6 @@
     }
 </script>
 
-<!-- {$fullColors ? 'background-' : ''} -->
-<!-- title={menu?.shortcuts?.join(", ")} -->
 <div on:click={contextItemClick} class:enabled class:disabled style="color: {menu?.color || 'unset'}" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}

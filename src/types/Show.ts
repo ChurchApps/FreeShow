@@ -143,6 +143,7 @@ export interface Mirror {
     show?: string
     stage?: string
     enableStage?: boolean
+    nextSlide?: boolean
     useSlideIndex?: boolean
     index?: number
 }
@@ -185,12 +186,11 @@ export interface SlideData {
     parent?: ID // layout ref
     children?: any // layout slide
     color?: null | string
-    // TODO: this is next slide timer
-    nextTimer?: number
+    nextTimer?: number // next slide timer
     transition?: Transition
     filterEnabled?: ["background", "foreground"]
     filter?: string
-    end?: boolean
+    end?: boolean // go to start
     timer?: number
     background?: string // set backgorund action?
     overlays?: string[]

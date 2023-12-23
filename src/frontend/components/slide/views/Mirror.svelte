@@ -19,18 +19,26 @@
     }
 
     $: stageEnabled = item.mirror?.enableStage
+    $: nextSlide = item.mirror?.nextSlide
 
     $: slideId = ref.slideId || ""
     function getMirroredItem() {
-        if (item.mirror!.show === ref.showId) return
+        let showId = item.mirror!.show
+        if (!nextSlide && showId === ref.showId) return
 
         let slideIndex = item.mirror.useSlideIndex !== false ? index : item.mirror.index || 0
 
-        let newSlideRef: any = _show(item.mirror!.show).layouts("active").ref()[0]?.[slideIndex]
+        if (nextSlide) {
+            showId = ref.showId
+            slideIndex = index + 1
+        }
+
+        let newSlideRef: any = _show(showId).layouts("active").ref()[0]?.[slideIndex]
+        console.log(newSlideRef)
         if (!newSlideRef) return
         slideId = newSlideRef.id
 
-        let newItem: any = _show(item.mirror!.show).slides([slideId]).items([0]).get()[0]?.[0]
+        let newItem: any = _show(showId).slides([slideId]).items([0]).get()[0]?.[0]
         if (!newItem) return
         newItem.style = "width: 100%;height: 100%;"
         if (!edit) newItem.style += "pointer-events: none;"
@@ -43,7 +51,7 @@
     $: currentRatio = itemStyle.width / itemStyle.height
 </script>
 
-<Zoomed ratio={currentRatio} center style="height: 100%;" disableStyle showMirror>
+<Zoomed ratio={currentRatio} center style="height: 100%;" background="transparent" disableStyle showMirror>
     {#if stageEnabled}
         {#if item.mirror?.stage}
             {#key item.mirror?.stage}
@@ -54,7 +62,7 @@
                 {/each}
             {/key}
         {/if}
-    {:else if item.mirror?.show}
+    {:else if item.mirror?.show || nextSlide}
         {#key item.mirror?.show}
             {#await loadShows([item.mirror.show])}
                 {#if !$currentWindow}Loading...{/if}

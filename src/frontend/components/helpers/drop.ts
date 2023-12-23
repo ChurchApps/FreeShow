@@ -3,7 +3,9 @@ import { activePage, selected } from "../../stores"
 import { dropActions } from "./dropActions"
 import { history } from "./history"
 
-const areas: any = {
+export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation"
+
+const areas: { [key in DropAreas | string]: string[] } = {
     all_slides: ["template"],
     slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "show", "midi"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
@@ -14,7 +16,7 @@ const areas: any = {
     edit: ["media"],
     // media_drawer: ["file"],
 }
-const areaChildren: any = {
+const areaChildren: { [key in DropAreas | string]: string[] } = {
     projects: ["folder", "project"],
     project: ["show", "media", "audio", "show_drawer", "player"],
     slides: ["slide", "group", "global_group", "screen", "camera", "microphone", "media", "audio", "show"],
@@ -43,7 +45,7 @@ export function ondrop(e: any, id: string) {
     let index: undefined | number = data.index
     let center: boolean = false
     if (trigger?.includes("center")) center = true
-    if (index !== undefined && trigger?.includes("end") && areaChildren[id]?.includes(sel.id)) index++
+    if (index !== undefined && trigger?.includes("end") && areaChildren[id]?.includes(sel.id || "")) index++
 
     console.log("DRAG: ", sel)
     console.log("DROP: ", id, data, trigger, center, index)

@@ -1,23 +1,22 @@
 <script lang="ts">
     import type { Item } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, overlays, showsCache, templates } from "../../stores"
-    import { GetLayout } from "../helpers/get"
-    import { history } from "../helpers/history"
+    import { activeEdit, activeShow, overlays, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
-    import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
+    import { history } from "../helpers/history"
+    import { _show } from "../helpers/shows"
+    import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
     import Tabs from "../main/Tabs.svelte"
     import Center from "../system/Center.svelte"
-    import { boxes } from "./values/boxes"
     import BoxStyle from "./tools/BoxStyle.svelte"
-    import Items from "./tools/Items.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
-    import SlideStyle from "./tools/SlideStyle.svelte"
+    import Items from "./tools/Items.svelte"
     import SlideFilters from "./tools/SlideFilters.svelte"
+    import SlideStyle from "./tools/SlideStyle.svelte"
+    import { boxes } from "./values/boxes"
     import { itemEdits } from "./values/item"
-    import { getStyles } from "../helpers/style"
 
     let tabs: TabsObj = {
         text: { name: "items.text", icon: "text" },
@@ -36,19 +35,21 @@
     $: tabs.slide.remove = !isShow
     $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
 
+    $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
+    $: editSlideSelected = $activeEdit.slide !== null && $activeEdit.slide !== undefined
+    $: activeIsShow = $activeShow && ($activeShow.type || "show" === "show")
+
     let slides: any[] = []
-    $: if (allSlideItems && (($activeEdit?.id && $activeEdit.slide !== null && $activeEdit.slide !== undefined) || ($activeShow && ($activeShow.type === undefined || $activeShow.type === "show"))))
+    $: if (allSlideItems && (($activeEdit?.id && editSlideSelected) || showIsActive))
         slides = _show($activeEdit?.id || $activeShow?.id)
             .slides()
             .get()
-    // $: if (!item?.lines && item?.type !== "timer" && item?.type !== "icon" && !tabs.text.disabled) {
+
     $: if (!item && !tabs.text.disabled) {
         active = "items"
         tabs.text.disabled = true
-        // } else if ((item?.lines || item?.type === "timer" || item?.type === "icon") && tabs.text.disabled) {
     } else if (item && tabs.text.disabled) {
         // TODO: false triggers (arranging items)
-        // active = "text"
         tabs.text.disabled = false
     }
     $: if (!allSlideItems?.length && !tabs.item.disabled) {
@@ -57,20 +58,11 @@
         tabs.item.disabled = false
     }
 
-    // $: allSlideItems = $activeEdit.slide !== null ? getSlide($activeShow?.id!, $activeEdit.slide).items : []
-    $: if (
-        $activeEdit.slide !== null &&
-        $activeEdit.slide !== undefined &&
-        $activeShow &&
-        ($activeShow?.type === undefined || $activeShow?.type === "show") &&
-        GetLayout($activeShow.id).length <= $activeEdit.slide &&
-        GetLayout($activeShow.id).length > 0
-    )
-        activeEdit.set({ slide: 0, items: [] })
-    $: allSlideItems =
-        $activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeShow && ($activeShow?.type === undefined || $activeShow?.type === "show") && GetLayout($activeShow.id).length > $activeEdit.slide
-            ? $showsCache[$activeShow?.id!]?.slides[GetLayout($activeShow?.id!)[$activeEdit.slide]?.id].items
-            : []
+    $: ref = _show().layouts("active").ref()[0]
+
+    $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [] })
+
+    $: allSlideItems = editSlideSelected && activeIsShow && ref.length > $activeEdit.slide! ? _show().slides([ref[$activeEdit.slide!]?.id]).get("items")[0] : []
     $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items
     $: if ($activeEdit.type === "template") allSlideItems = $templates[$activeEdit.id!]?.items
     const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
@@ -110,71 +102,76 @@
                 })
             }
 
-            _show("active")
-                .slides()
-                .get()
-                .forEach((slide) => {
-                    let items: any[] = []
-                    let values: any[] = []
+            _show().slides().get().forEach(updateSlideStyle)
 
-                    slide.items.forEach((item: any, i: number) => {
-                        let itemType = item.type || "text"
-                        if (itemType !== type) return
+            return
 
-                        items.push(i)
+            function updateSlideStyle(slide) {
+                let items: any[] = []
+                let values: any[] = []
 
-                        if (type !== "text") {
-                            let itemStyles = getStyles(item.style)
-                            let newItemStyle = ""
+                slide.items.forEach(updateItemStyle)
 
-                            // get only current "item" style
-                            Object.entries(itemStyles).forEach(([key, value]: any) => {
-                                if (itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
-                            })
+                if (!items.length || !values.length) return
 
-                            values.push(newItemStyle + newStyle)
-                            return
-                        }
-
-                        if (type !== "text" || !item.lines) return
-                        let text = item.lines.map((a: any) => {
-                            if (!a.text) return
-
-                            return a.text.map((a: any) => {
-                                a.style = style
-                                return a
-                            })
-                        })
-                        values.push(text)
+                if (type !== "text") {
+                    history({
+                        id: "setStyle",
+                        newData: { style: { key: "style", values } },
+                        location: { page: "edit", show: $activeShow!, slide: slide.id, items },
                     })
 
-                    if (!items.length || !values.length) return
+                    return
+                }
+
+                history({
+                    id: "textStyle",
+                    newData: { style: { key: "text", values } },
+                    location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+                })
+
+                Object.keys(extraKeys).forEach((key) => {
+                    history({
+                        id: "setItems",
+                        newData: { style: { key, values: [extraKeys[key]] } },
+                        location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+                    })
+                })
+
+                function updateItemStyle(item: any, i: number) {
+                    let itemType = item.type || "text"
+                    if (itemType !== type) return
+
+                    items.push(i)
 
                     if (type !== "text") {
-                        history({
-                            id: "setStyle",
-                            newData: { style: { key: "style", values } },
-                            location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+                        let itemStyles = getStyles(item.style)
+                        let newItemStyle = ""
+
+                        // get only current "item" style
+                        Object.entries(itemStyles).forEach(([key, value]: any) => {
+                            if (itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
                         })
+
+                        values.push(newItemStyle + newStyle)
 
                         return
                     }
 
-                    history({
-                        id: "textStyle",
-                        newData: { style: { key: "text", values } },
-                        location: { page: "edit", show: $activeShow!, slide: slide.id, items },
-                    })
+                    if (type !== "text" || !item.lines) return
 
-                    Object.keys(extraKeys).forEach((key) => {
-                        history({
-                            id: "setItems",
-                            newData: { style: { key, values: [extraKeys[key]] } },
-                            location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+                    let text = item.lines.map((a: any) => {
+                        if (!a.text) return
+
+                        return a.text.map((a: any) => {
+                            a.style = style
+                            return a
                         })
                     })
-                })
-            return
+
+                    values.push(text)
+                }
+            }
         }
 
         if (active === "item") {
@@ -191,45 +188,46 @@
                 })
             }
 
-            _show("active")
-                .slides()
-                .get()
-                .forEach((slide) => {
-                    let values: string[] = []
-                    if (type === "text") values = [style!]
+            _show().slides().get().forEach(updateSlideStyle)
 
-                    let items: number[] = []
-                    slide.items.forEach((item, i) => {
-                        if ((item.type || "text") !== type) return
-
-                        items.push(i)
-
-                        // get only current style
-                        let itemStyles = getStyles(item.style)
-                        let newItemStyle = ""
-
-                        // get only current "item" style
-                        Object.entries(itemStyles).forEach(([key, value]: any) => {
-                            if (!itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
-                        })
-
-                        values.push(newStyle + newItemStyle)
-                    })
-
-                    history({
-                        id: "setStyle",
-                        newData: { style: { key: "style", values } },
-                        location: { page: "edit", show: $activeShow!, slide: slide.id, items },
-                    })
-                })
             return
+
+            function updateSlideStyle(slide) {
+                let values: string[] = []
+                if (type === "text") values = [style!]
+
+                let items: number[] = []
+                slide.items.forEach(updateItemStyle)
+
+                history({
+                    id: "setStyle",
+                    newData: { style: { key: "style", values } },
+                    location: { page: "edit", show: $activeShow!, slide: slide.id, items },
+                })
+
+                function updateItemStyle(item, i) {
+                    if ((item.type || "text") !== type) return
+
+                    items.push(i)
+
+                    // get only current style
+                    let itemStyles = getStyles(item.style)
+                    let newItemStyle = ""
+
+                    // get only current "item" style
+                    Object.entries(itemStyles).forEach(([key, value]: any) => {
+                        if (!itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
+                    })
+
+                    values.push(newStyle + newItemStyle)
+                }
+            }
         }
 
         if (active === "filters") {
-            let ref = _show("active").layouts("active").ref()[0]
+            let ref = _show().layouts("active").ref()[0]
             let slideData = ref[$activeEdit.slide!].data
             let indexes = ref.map((_, i) => i)
-            console.log(slideData)
 
             history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: slideData.filterEnabled || ["background"], dataIsArray: true, indexes } })
             history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: slideData["backdrop-filter"], indexes } })
@@ -238,30 +236,30 @@
         }
 
         if (active === "slide") {
-            let ref = _show("active").layouts("active").ref()[0]
-            let slideStyle = _show("active").slides([ref[$activeEdit.slide!].id]).get("settings")[0]
+            let ref = _show().layouts("active").ref()[0]
+            let slideStyle = _show().slides([ref[$activeEdit.slide!].id]).get("settings")[0]
 
-            _show("active")
-                .slides()
-                .get()
-                .forEach((slide) => {
-                    let oldData = { style: slide.settings }
+            _show().slides().get().forEach(updateSlideStyle)
 
-                    history({
-                        id: "slideStyle",
-                        oldData,
-                        newData: { style: slideStyle },
-                        location: { page: "edit", show: $activeShow!, slide: slide.id },
-                    })
-                })
             return
+
+            function updateSlideStyle(slide) {
+                let oldData = { style: slide.settings }
+
+                history({
+                    id: "slideStyle",
+                    oldData,
+                    newData: { style: slideStyle },
+                    location: { page: "edit", show: $activeShow!, slide: slide.id },
+                })
+            }
         }
     }
 
     function addToFollowing() {
         if (active !== "filters") return
 
-        let ref = _show("active").layouts("active").ref()[0]
+        let ref = _show().layouts("active").ref()[0]
         let slideData = ref[$activeEdit.slide!].data
         let indexes = ref.map((_, i) => i).filter((a) => a >= $activeEdit.slide!)
 
@@ -275,9 +273,8 @@
             return
         }
 
-        let ref = _show("active").layouts("active").ref()[0]
-        let slide = _show("active").slides([ref[$activeEdit.slide!].id]).get("id")[0]
-        // let slide = GetLayout()[$activeEdit.slide!].id
+        let ref = _show().layouts("active").ref()[0]
+        let slide = _show().slides([ref[$activeEdit.slide!].id]).get("id")[0]
 
         if (active === "item") {
             history({
@@ -300,7 +297,7 @@
         if (active === "slide") {
             history({
                 id: "slideStyle",
-                oldData: { style: _show("active").slides([slide]).get("settings")[0] },
+                oldData: { style: _show().slides([slide]).get("settings")[0] },
                 newData: { style: {} },
                 location: { page: "edit", show: $activeShow!, slide },
             })
@@ -349,11 +346,10 @@
     }
 </script>
 
-<!-- <Resizeable id="editTools" side="bottom" maxWidth={window.innerHeight * 0.75}> -->
 <div class="main border editTools">
-    {#if (slides?.length && $activeShow && ($activeShow.type === undefined || $activeShow.type === "show") && $activeEdit.slide !== null) || $activeEdit.id}
+    {#if (slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id}
         <Tabs {tabs} bind:active />
-        <!-- labels={false} -->
+
         {#if active === "text"}
             <div class="content">
                 {#if item}
@@ -381,7 +377,6 @@
                 <SlideStyle />
             </div>
         {/if}
-        <!-- add shapes, text edit, arrange layers, transitions... -->
 
         <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
             {#if active !== "items"}
@@ -411,7 +406,6 @@
     {/if}
 </div>
 
-<!-- </Resizeable> -->
 <style>
     .main {
         display: flex;

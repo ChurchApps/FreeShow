@@ -1,66 +1,60 @@
 <script lang="ts">
-  import type { Resolution } from "../../../../types/Settings"
+    import type { Resolution } from "../../../../types/Settings"
 
-  export let background: string = "black"
-  export let center: boolean = false
-  export let hideOverflow: boolean = true
-  export let resolution: Resolution
-  // let resolution = { width: 1600, height: 1200 }
-  let slideWidth: number = 0
-  export let ratio: number = 1
-  $: ratio = slideWidth / resolution.width
+    export let background: string = "black"
+    export let center: boolean = false
+    export let hideOverflow: boolean = true
+    export let resolution: Resolution
+
+    export let ratio: number = 1
+    $: ratio = slideWidth / resolution.width
+
+    let slideWidth: number = 0
 </script>
 
 <div class:center>
-  <div
-    bind:offsetWidth={slideWidth}
-    class="slide"
-    class:hideOverflow
-    style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};"
-  >
-    <span style="zoom: {ratio};">
-      <slot />
-    </span>
-  </div>
+    <div bind:offsetWidth={slideWidth} class="slide" class:hideOverflow style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
+        <span style="zoom: {ratio};">
+            <slot />
+        </span>
+    </div>
 </div>
 
 <style>
-  .slide {
-    position: relative;
-    /* TODO: not edit */
-    /* z-index: -1; */
-  }
+    .slide {
+        position: relative;
+    }
 
-  .slide :global(.item) {
-    position: absolute;
-    /* display: inline-flex; */
-    overflow: hidden;
+    .slide :global(.item) {
+        position: absolute;
+        /* display: inline-flex; */
+        overflow: hidden;
 
-    color: white;
-    font-size: 100px;
-    font-family: "CMGSans";
-    line-height: 1.1;
-    -webkit-text-stroke-color: #000000;
-    text-shadow: 2px 2px 10px #000000;
+        color: white;
+        font-size: 100px;
+        font-family: "CMGSans";
+        line-height: 1.1;
+        -webkit-text-stroke-color: #000000;
+        text-shadow: 2px 2px 10px #000000;
 
-    border-style: solid;
-    border-width: 0px;
-    border-color: #ffffff;
+        border-style: solid;
+        border-width: 0px;
+        border-color: #ffffff;
 
-    height: 150px;
-    width: 400px;
-  }
+        height: 150px;
+        width: 400px;
+    }
 
-  .hideOverflow {
-    overflow: hidden;
-  }
+    .hideOverflow {
+        overflow: hidden;
+    }
 
-  .center {
-    width: 100%;
-    height: 100%;
+    .center {
+        width: 100%;
+        height: 100%;
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 </style>

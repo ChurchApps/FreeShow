@@ -2,71 +2,78 @@ import type { Item, Line } from "../../../types/Show"
 
 // add new style to text by selection
 export function addStyle(selection: { start: number; end: number }[], item: Item, style: any[]): Item {
-    // let selections: null | Selection = window.getSelection()
-    // let global: null | number[] = null
-    item.lines?.forEach((line: any, i: number) => {
-        let newText: any[] = []
-        let pos: number = 0
-        if (selection[i].start !== undefined) {
-            line.text?.forEach((text: any) => {
-                // , i: number
-                // TODO: .replaceAll("<br>", "")
-                const length: number = text.value.length
-                let from = 0
-                let to = length
-                if (pos < selection[i].start && pos + length > selection[i].start) from = selection[i].start - pos
-                if (pos < selection[i].end && pos + length > selection[i].end) to = selection[i].end - pos
-
-                if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
-                    if (from > 0) newText.push({ value: text.value.slice(0, from), style: text.style })
-                    if (to - from > 0 && to - from <= length) {
-                        let newStyle: string = addStyleString(text.style, style)
-                        newText.push({ value: text.value.slice(from, to), style: newStyle })
-                    }
-                    if (to < length) newText.push({ value: text.value.slice(to, length), style: text.style })
-                } else newText.push(text)
-
-                pos += length
-            })
-        } else newText.push(...(line.text || []))
-
-        line.text = newText
-    })
+    item.lines?.forEach(lineStyle)
 
     return combine(item)
+
+    function lineStyle(line: any, i: number) {
+        let newText: any[] = []
+        let pos: number = 0
+
+        if (selection[i].start === undefined) {
+            newText.push(...(line.text || []))
+            line.text = newText
+        }
+
+        line.text?.forEach(textStyle)
+        line.text = newText
+
+        function textStyle(text: any) {
+            const length: number = text.value.length
+            let from = 0
+            let to = length
+
+            if (pos < selection[i].start && pos + length > selection[i].start) from = selection[i].start - pos
+            if (pos < selection[i].end && pos + length > selection[i].end) to = selection[i].end - pos
+
+            if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
+                if (from > 0) newText.push({ value: text.value.slice(0, from), style: text.style })
+                if (to - from > 0 && to - from <= length) {
+                    let newStyle: string = addStyleString(text.style, style)
+                    newText.push({ value: text.value.slice(from, to), style: newStyle })
+                }
+                if (to < length) newText.push({ value: text.value.slice(to, length), style: text.style })
+            } else newText.push(text)
+
+            pos += length
+        }
+    }
 }
 
 // combine duplicate styles
 function combine(item: Item): Item {
-    // TODO: removed one char....
-    // TODO: remove if value === "" ???
-    item.lines?.forEach((line: any) => {
-        let a = [...(line.text || [])]
-        for (let i = 0; i < a.length; i++) {
-            if (a[i + 1]) {
-                let d1: any[] = [],
-                    d2: any[] = []
-                let sameStyles: boolean = false
-                if (a[i].style) d1.push(a[i].style)
-                if (a[i + 1].style) d2.push(a[i + 1].style)
-                if (d1.length === d2.length) {
-                    d1.sort()
-                    d2.sort()
-                    sameStyles = d1.every((val, j) => val.replaceAll(" ", "").replace(";", "") === d2[j].replaceAll(" ", "").replace(";", ""))
-                }
+    item.lines?.forEach(setLineStyle)
 
-                if (sameStyles) {
-                    a[i].value += a[i + 1].value
-                    a.splice(i + 1, 1)
-                    i--
-                }
+    return item
+
+    function setLineStyle(line: any) {
+        let text = [...(line.text || [])]
+        text.forEach(checkText)
+
+        function checkText(_: any, i: number) {
+            if (!text[i + 1]) return
+
+            let d1: any[] = []
+            let d2: any[] = []
+            let sameStyles: boolean = false
+            if (text[i].style) d1.push(text[i].style)
+            if (text[i + 1].style) d2.push(text[i + 1].style)
+
+            if (d1.length === d2.length) {
+                d1.sort()
+                d2.sort()
+                sameStyles = d1.every((val, j) => val.replaceAll(" ", "").replace(";", "") === d2[j].replaceAll(" ", "").replace(";", ""))
+            }
+
+            if (sameStyles) {
+                text[i].value += text[i + 1].value
+                text.splice(i + 1, 1)
+                i--
             }
         }
 
-        // item.lines![i].text = a
-        line.text = a
-    })
-    return item
+        line.text = text
+    }
 }
 
 // add new style to string and remove old
@@ -117,23 +124,13 @@ export function getSelectionRange(): { start: number; end: number }[] {
     let startOffset = selection.anchorOffset
     let endOffset = selection.focusOffset
 
-    // TODO: can't select empty lines
-    // empty lines don't work at all
-    // console.log(startNode, startOffset, endOffset)
-    // console.log(parent.childNodes)
-
     if (!parent) return sel
 
     new Array(...parent.childNodes).forEach((br: any, line: number) => {
         if (!sel[line]) sel[line] = {}
         let count: number = 0
         new Array(...br.childNodes).forEach((child: any) => {
-            // console.log(child)
-            // console.log(selection)
-
             if (selection!.containsNode(child, true)) {
-                // console.log("contains === true", start, child === endNode, child === startNode, startOffset > endOffset)
-
                 // if start not set & child is start & (child is not end or end is bigger than start)
                 if (start === null && child === startNode && (child !== endNode || endOffset > startOffset)) {
                     start = count + startOffset
@@ -145,6 +142,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
                     startNode = selection!.focusNode?.parentNode!
                     endOffset = startOffset
                 }
+
                 if (start !== null) {
                     if (!sel[line].start) sel[line].start = 0
 
@@ -158,6 +156,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
                     }
                 }
             }
+
             count += child.innerText?.length || 0
         })
     })
@@ -176,6 +175,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
                 style = text.style
                 return true
             }
+
             currentPos += text.value.length
         })
     })
@@ -222,19 +222,14 @@ export function getLineText(line: any): string {
 // seperate text with breaks
 export function getItemLines(item: Item): string[] {
     if (!item) return []
-    // return (
-    //   item.lines?.map((line) => {
-    //     let text = ""
-    //     line.text?.map((content) => (text += content.value))
-    //     return text
-    //   }) || []
-    // )
+
     let lines: string[] = []
     item.lines?.forEach((line: any) => {
         let text = ""
         line.text?.forEach((content: any) => (text += content.value))
         lines.push(text)
     })
+
     return lines
 }
 
@@ -245,6 +240,7 @@ export function getCaretCharacterOffsetWithin(element: any) {
     var doc = element.ownerDocument || element.document
     var win = doc.defaultView || doc.parentWindow
     var sel
+
     if (typeof win.getSelection !== "undefined") {
         sel = win.getSelection()
         if (sel.rangeCount > 0) {
@@ -255,6 +251,7 @@ export function getCaretCharacterOffsetWithin(element: any) {
             caretOffset = preCaretRange.toString().length
         }
     }
+
     return caretOffset
 }
 

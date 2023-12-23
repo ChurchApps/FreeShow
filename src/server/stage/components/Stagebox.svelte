@@ -41,21 +41,17 @@
 
     // custom dynamic size
     let newSizes = `;
-    top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
-    left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
-    width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
-    height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
-  `
+        top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
+        left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
+        width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
+        height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
+    `
 
     $: size = getAutoSize(item, { width, height })
     $: autoSize = fontSize ? Math.max(fontSize, size) : size
 
     $: next = id.includes("next")
     $: slide = slides[next ? 1 : 0]
-
-    // let outputResolution: any = show && show.settings.resolution ? show.settings.resolution : { width: 1920, height: 1080 }
-
-    $: console.log(background)
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
@@ -69,32 +65,26 @@
 
     {#if id.includes("current_output")}
         <span style="pointer-events: none;">
-            <!-- <Output {show} {slide} style={getStyleResolution(outputResolution, width, height)} {background} /> -->
             <PreviewCanvas alpha={id.includes("_alpha")} id={show?.settings?.output} {socket} capture={stream[id.includes("_alpha") ? "alpha" : "default"]} />
         </span>
     {:else}
         <div class="align" style={item.align}>
             <div>
-                {#if id.split("#")[0] === "countdowns"}
-                    <!--  -->
-                {:else if id.includes("notes")}
+                {#if id.includes("notes")}
                     <SlideNotes notes={slide?.notes || ""} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     {#key item || slide}
-                        <!-- <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} /> -->
                         <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} />
                     {/key}
                 {:else if id.includes("slide")}
                     {@const slideBackground = next ? background.next : background}
-                    <!-- TODO: show slide data (backgrounds, overlays) -->
+                    <!-- TODO: show overlays etc. -->
                     <span style="pointer-events: none;">
                         {#if slideBackground.path}
                             <MediaOutput path={slideBackground.path} mediaStyle={slideBackground.mediaStyle} />
                         {/if}
 
-                        <!-- TODO: size this properly!!! -->
                         <SlideText {slide} stageItem={item} {show} {resolution} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} style />
-                        <!-- <SlideText {slide} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} parent={{ width, height }} style /> -->
                     </span>
                 {:else if id.includes("clock")}
                     <Clock autoSize={item.auto !== false ? autoSize : fontSize} />

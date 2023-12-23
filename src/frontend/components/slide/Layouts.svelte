@@ -121,12 +121,9 @@
     {#if reference}
         <Reference show={$showsCache[showId]} />
     {:else if layouts}
-        <!-- TODO: rename glitching -->
         <span style="display: flex;overflow-x: auto;">
-            <!-- width: 100%; -->
             {#if multipleLayouts}
                 {#each sortedLayouts as layout}
-                    <!-- <SelectElem id="layout" data={id} borders="edges" trigger="row" draggable fill> -->
                     <SelectElem id="layout" data={layout.id} fill={!edit || edit === layout.id}>
                         <Button
                             class="context #layout"
@@ -136,7 +133,6 @@
                             active={activeLayout === layout.id}
                             center
                         >
-                            <!-- style="width: 100%;" -->
                             <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit />
                         </Button>
                     </SelectElem>
@@ -153,7 +149,6 @@
         </Center>
     {/if}
     <span style="display: flex; align-items: center;position: relative;{multipleLayouts || reference || !layouts ? '' : 'width: 100%;'}">
-        <!-- TODO: right click to create empty layout... -->
         {#if layouts && !reference}
             <Button disabled={!layoutSlides.length && !multipleLayouts} on:click={addLayout} style="white-space: nowrap;{multipleLayouts ? '' : 'width: 100%;'}" center>
                 <Icon size={1.3} id="add" right={!$labelsDisabled && !multipleLayouts} />

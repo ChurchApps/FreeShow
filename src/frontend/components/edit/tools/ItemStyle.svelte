@@ -17,16 +17,13 @@
 
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
 
-    $: console.log(data)
     $: itemBackFilters = getStyles(item?.style)["backdrop-filter"]
     $: if (itemBackFilters) getItemFilters()
     function getItemFilters() {
-        console.log(itemBackFilters)
         if (!item) return
 
         // update backdrop filters
         let backdropFilters = getFilters(itemBackFilters || "")
-        console.log(backdropFilters)
         let defaultBackdropFilters = itemEdits.backdrop_filters || []
         itemEdits.backdrop_filters.forEach((filter: any) => {
             let value = backdropFilters[filter.key] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value

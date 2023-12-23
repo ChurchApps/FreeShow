@@ -412,6 +412,7 @@ export const boxes: Box = {
             // TODO: select show popup
             default: [
                 { name: "enable_stage", id: "mirror.enableStage", input: "checkbox", value: false },
+                { name: "next_slide", id: "mirror.nextSlide", input: "checkbox", value: false },
                 { name: "popup.select_show", id: "mirror.show", input: "dropdown", value: "", values: { options: [] } },
                 { name: "use_slide_index", id: "mirror.useSlideIndex", input: "checkbox", value: true },
                 { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 },

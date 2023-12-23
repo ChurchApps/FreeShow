@@ -139,6 +139,8 @@
         "speed": "Hitrost",
         "show": "Predstavitev",
         "flip": "Preobrni",
+        "flip_horizontally": "Preobrni vodoravno",
+        "flip_vertically": "Preobrni navpično",
         "all": "Mape, slike in posnetki",
         "folder": "Le mape",
         "image": "Le slike",
@@ -423,7 +425,8 @@
         "list": "Seznamski pogled",
         "lyrics": "Besedilni pogled",
         "text": "Urejanje napisov",
-        "update": "Posodobi predstavitev"
+        "update": "Posodobi predstavitev",
+        "slide_template": "Predloga prosojnice"
     },
     "actions": {
         "rename": "Preimenuj",
@@ -618,6 +621,7 @@
         "size": "Velikost",
         "chords": "Sozvoki",
         "auto_size": "Samodejna velikost",
+        "no_wrap": "Napis v eni vrsti",
         "line_spacing": "Medvrstični razmik",
         "line_height": "Višina vrstice",
         "letter_spacing": "Razmik črk",

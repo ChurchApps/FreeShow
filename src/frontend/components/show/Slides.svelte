@@ -1,7 +1,4 @@
 <script lang="ts">
-    // import {flip} from 'svelte/animate';
-    // import type { Resolution } from "../../../types/Settings"
-
     import { activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
     import { history } from "../helpers/history"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
@@ -14,38 +11,20 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import TextEditor from "./TextEditor.svelte"
-    // import { GetLayout } from "../helpers/get"
 
-    // let viewWidth: number = window.innerWidth / 3
-    // let resolution: Resolution = $showsCache[showId].settings.resolution || $screen.resolution
-    // let zoom = 0.15
-    // console.log(elem)
-
-    // = width / main padding - slide padding - extra - columns*gaps/padding / columns / resolution
-    // $: zoom = (viewWidth - 20 - 0 - 0 - ($slidesOptions.columns - 1) * (10 + 0)) / $slidesOptions.columns / resolution.width
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId]
     $: activeLayout = $showsCache[showId]?.settings?.activeLayout
-    // $: layoutSlides = GetLayout(showId, activeLayout)
-    // $: layoutSlides = [$showsCache[showId]?.layouts?.[activeLayout]?.slides, GetLayout(showId)][1]
-    // $: layoutSlides = _show(showId).layouts(activeLayout).ref()[0]
     $: layoutSlides = $cachedShowsData[showId]?.layout || []
 
     let scrollElem: any
     let offset: number = -1
-    // let behaviour: string = ""
-    // setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 50)
     $: {
-        // output.out?.slide?.id !== null &&
         let output = $outputs[activeOutputs[0]] || {}
         if (scrollElem && showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
             let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
             let index = Math.max(0, (output.out.slide.index || 0) - columns)
             offset = (scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5) - 5
-
-            // TODO: always show active slide....
-            // console.log(offset, scrollElem.scrollTop, scrollElem.scrollTop + scrollElem.offsetHeight)
-            // if (offset < scrollElem.scrollTop || offset > scrollElem.scrollTop + scrollElem.offsetHeight) offset = scrollElem.querySelector(".grid").children[s.index].offsetTop - 5
         }
     }
 
@@ -71,8 +50,6 @@
         let slideRef: any = _show("active").layouts("active").ref()[0]
         updateOut("active", index, slideRef, !e.altKey)
 
-        // if (activeOutputs[0]?.out?.slide?.id === id && activeOutputs[0]?.out?.slide?.index === index && activeOutputs[0]?.out?.slide?.layout === activeLayout) return
-        // outSlide.set({ id, layout: activeLayout, index })
         setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
 
         // force update output if index is the same as previous
@@ -89,7 +66,6 @@
         } else endIndex = null
     }
 
-    // && currentShow?.settings?.template && $cachedShowsData[showId]?.template?.slidesUpdated === false
     $: if (showId && currentShow) {
         // update show by its template
         history({ id: "TEMPLATE", save: false, newData: { id: currentShow.settings?.template }, location: { page: "show" } })
@@ -163,27 +139,25 @@
             if (!currentOutput || currentOutput.stageOutput) return
 
             let currentStyle = $styles[currentOutput?.style || ""] || {}
-
             let outSlide: any = currentOutput.out?.slide || {}
 
-            // console.log(s, slideIndex, id, activeLayout)
-            if (!activeSlides[outSlide.index] && outSlide.id === showId && outSlide.layout === activeLayout) {
-                // get progress of current line division
-                let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
-                let lineIndex: any = outSlide.line || 0
-                let maxLines: number = 0
-                if (amountOfLinesToShow > 0) {
-                    let ref = a?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
-                    let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
-                    let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-                    maxLines = slideLines && lineIndex !== null ? (amountOfLinesToShow >= slideLines ? 0 : Math.ceil(slideLines / amountOfLinesToShow)) : 0
-                }
+            if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
-                activeSlides[outSlide.index] = {
-                    color: $outputs[a].color,
-                    line: lineIndex,
-                    maxLines,
-                }
+            // get progress of current line division
+            let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
+            let lineIndex: any = outSlide.line || 0
+            let maxLines: number = 0
+            if (amountOfLinesToShow > 0) {
+                let ref = a?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+                let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index].id]).get()[0] : null
+                let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
+                maxLines = slideLines && lineIndex !== null ? (amountOfLinesToShow >= slideLines ? 0 : Math.ceil(slideLines / amountOfLinesToShow)) : 0
+            }
+
+            activeSlides[outSlide.index] = {
+                color: $outputs[a].color,
+                line: lineIndex,
+                maxLines,
             }
         })
     }
@@ -206,6 +180,7 @@
     let lazyLoading: boolean = false
     function startLazyLoader() {
         if (!layoutSlides || timeout) return
+
         if (lazyLoader >= layoutSlides.length) {
             loaded = true
             lazyLoading = false
@@ -271,10 +246,6 @@
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
 <Autoscroll class="context #shows__close" on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
-    <!-- on:drop={(e) => {
-      if (selected.length && e.dataTransfer && ($dragged === "slide" || $dragged === "slideGroup")) drop(e.dataTransfer.getData("text"))
-    }}
-    on:dragover|preventDefault -->
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
@@ -289,7 +260,6 @@
                 <TextEditor {currentShow} />
             {:else}
                 <div class="grid">
-                    <!-- {#each Object.values($showsCache[id].slides) as slide, i} -->
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
                             {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled)}
@@ -317,8 +287,6 @@
                             <!-- Add slides button -->
                         </Center>
                     {/if}
-
-                    <!-- TODO: snap to width! (Select columns instead of manual zoom size) -->
                 </div>
             {/if}
         </DropArea>
@@ -326,16 +294,9 @@
 </Autoscroll>
 
 <style>
-    /* .scroll {
-    padding-bottom: 10px;
-  } */
-
     .grid {
         display: flex;
         flex-wrap: wrap;
-        /* gap: 10px; */
         padding: 5px;
-        /* height: 100%; */
-        /* align-content: flex-start; */
     }
 </style>

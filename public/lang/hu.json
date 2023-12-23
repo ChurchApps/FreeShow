@@ -139,6 +139,8 @@
         "speed": "Sebesség",
         "show": "Megjelenítés",
         "flip": "Tükrözés",
+        "flip_horizontally": "Vízszintes tükrözés",
+        "flip_vertically": "Függőleges tükrözés",
         "all": "Mappák, képek és videók",
         "folder": "Csak mappák",
         "image": "Csak képek",
@@ -423,7 +425,8 @@
         "list": "Lista nézet",
         "lyrics": "Dalszöveg nézet",
         "text": "Szövegszerkesztés",
-        "update": "Műsor frissítése"
+        "update": "Műsor frissítése",
+        "slide_template": "Diasablon"
     },
     "actions": {
         "rename": "Átnevezés",
@@ -618,6 +621,7 @@
         "size": "Méret",
         "chords": "Akkordok",
         "auto_size": "Automatikus méret",
+        "no_wrap": "Egysoros szöveg",
         "line_spacing": "Sorköz",
         "line_height": "Sormagasság",
         "letter_spacing": "Betűkköz",

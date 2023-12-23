@@ -9,12 +9,9 @@
     export let today: Date
     export let style: string
 
-    // TODO: timer stops when leaving window...
-
     let times: string[] = []
     let timeValue: string = "00:00"
     let currentTime: number
-    // $: currentTime = getCurrentTime()
     $: numberToText(typeof currentTime === "number" ? currentTime : 0)
 
     $: {
@@ -50,19 +47,11 @@
     }
 
     function numberToText(time: number) {
-        // let allTimes: any = secondsToTimes(time)
-        // console.log(allTimes)
-
-        // let t: string[] = []
-        // if (timer?.format) timer?.format.split(":").forEach((a: string) => t.push(format(a, allTimes)))
-        // else {
         let allTimes: any = secondsToTime(time)
         timeValue = (allTimes.d === 0 ? "" : allTimes.d + ", ") + [allTimes.h === "00" ? "" : allTimes.h, allTimes.m, allTimes.s].join(":")
+
         while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
         timeValue = timeValue.replace(" :", " ")
-        // console.log(time, allTimes, timeValue)
-        // }
-        // times = t
     }
 </script>
 

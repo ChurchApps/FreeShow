@@ -76,6 +76,7 @@ import {
 } from "../stores"
 import { IMPORT } from "./../../types/Channels"
 import { redoHistory, undoHistory } from "./../stores"
+import { startTracking } from "./analytics"
 import { checkForUpdates } from "./checkForUpdates"
 import { createData } from "./createData"
 import { setLanguage } from "./language"
@@ -85,7 +86,6 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { startTracking } from "./analytics"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -259,7 +259,6 @@ const receiveNDI: any = {
 
 const receiveFOLDER: any = {
     MEDIA: (a: any, id: "media" | "audio" = "media") => {
-        // TODO: clean
         // check if folder already exists
         let path: string = a.path
         let exists = Object.values(id === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
@@ -267,6 +266,7 @@ const receiveFOLDER: any = {
             newToast("$error.folder_exists")
             return
         }
+
         history({
             id: "UPDATE",
             newData: { data: { name: getFileName(path), icon: "folder", path: path } },
@@ -321,13 +321,11 @@ const receiveOUTPUTasMAIN: any = {
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),
     MAIN_VIDEO_ENDED: async (msg) => {
-        console.log("ENDED", msg)
         let videoPath = get(outputs)[msg.id].out?.background?.path
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
         setTimeout(() => checkNextAfterMedia(videoPath!), 10)
-        // if (checkNextAfterMedia(videoPath)) return
     },
 }
 

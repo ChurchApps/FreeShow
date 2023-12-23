@@ -47,7 +47,6 @@
     // $: audioPath = cloudId && cloudId !== "default" ? audio.cloud?.[cloudId] || audio.path : audio.path
 </script>
 
-<!-- TODO: check if exists -->
 <div class="icons" style="zoom: {4 / columns};{style}">
     {#if timer.length}
         <div>

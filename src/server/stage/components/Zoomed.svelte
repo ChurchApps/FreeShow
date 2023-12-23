@@ -24,10 +24,6 @@
 <style>
     .slide {
         position: relative;
-        /* background-color: black; */
-
-        /* TODO: not edit */
-        /* z-index: -1; */
     }
 
     .slide:not(.relative) :global(.item) {
