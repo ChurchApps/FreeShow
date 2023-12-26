@@ -89,7 +89,7 @@ export function convertChordPro(data: any) {
                     if (isChorus) group = "chorus"
                     // else slides[slides.length - 1].globalGroup = "verse"
 
-                    let groupId = group || Object.keys(get(dictionary).groups).find((a) => line.toLowerCase().includes(a.replaceAll("_", "-")))
+                    let groupId = group || Object.keys(get(dictionary).groups || {}).find((a) => line.toLowerCase().includes(a.replaceAll("_", "-")))
 
                     if (groupId) {
                         slides[slides.length - 1].globalGroup = groupId

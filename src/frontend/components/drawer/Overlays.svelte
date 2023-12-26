@@ -1,5 +1,6 @@
 <script lang="ts">
     import { dictionary, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../stores"
+    import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { findMatchingOut, getResolution, setOutput } from "../helpers/output"
@@ -28,7 +29,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     let fullFilteredOverlays: any[] = []
     function filterSearch() {
-        fullFilteredOverlays = JSON.parse(JSON.stringify(filteredOverlays))
+        fullFilteredOverlays = clone(filteredOverlays)
         if (searchValue.length > 1) fullFilteredOverlays = fullFilteredOverlays.filter((a) => filter(a.name).includes(searchValue))
     }
 

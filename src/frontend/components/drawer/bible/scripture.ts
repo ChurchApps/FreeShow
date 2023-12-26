@@ -3,7 +3,7 @@ import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
 import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getAutoSize } from "../../edit/scripts/autoSize"
-import { clone } from "../../helpers/array"
+import { clone, removeDuplicates } from "../../helpers/array"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
@@ -249,7 +249,7 @@ export function getSlides({ bibles, sorted }) {
         let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         let versions = bibles.map((a) => a.version).join(" + ")
-        let books = [...new Set(bibles.map((a) => a.book))].join(" / ")
+        let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         let text = customText
         if (!showVersion && !showVerse) return

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeShow, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, styles, templateCategories, templates } from "../../stores"
+    import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getResolution } from "../helpers/output"
@@ -37,7 +38,7 @@
     $: if (searchValue !== undefined) filterSearch()
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     function filterSearch() {
-        fullFilteredTemplates = JSON.parse(JSON.stringify(filteredTemplates))
+        fullFilteredTemplates = clone(filteredTemplates)
         if (searchValue.length > 1) fullFilteredTemplates = fullFilteredTemplates.filter((a) => filter(a.name).includes(searchValue))
     }
 

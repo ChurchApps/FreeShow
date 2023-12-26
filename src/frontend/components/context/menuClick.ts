@@ -56,7 +56,7 @@ import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
-import { clone } from "../helpers/array"
+import { clone, removeDuplicates } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
@@ -946,7 +946,7 @@ export function removeGroup(data: any) {
 
         removeSlideIds.push(refSlide.id)
     })
-    removeSlideIds = [...new Set(removeSlideIds)]
+    removeSlideIds = removeDuplicates(removeSlideIds)
     if (!removeSlideIds.length) return
 
     let newParentIds: any = {}
@@ -1021,7 +1021,7 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
 
     let slides = parents
     // don't do anything with the children if it's removing parents
-    if (type === "remove") slides = [...new Set(slides)]
+    if (type === "remove") slides = removeDuplicates(slides)
     else slides.push(...childs)
 
     if (!slides.length) return

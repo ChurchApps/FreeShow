@@ -64,7 +64,7 @@ import { send } from "./request"
 import { closeApp } from "./save"
 import { client } from "./sendData"
 import { stageListen } from "./stageTalk"
-import { clone } from "../components/helpers/array"
+import { clone, removeDuplicates } from "../components/helpers/array"
 
 export function listen() {
     // FROM CLIENT (EXPRESS SERVERS)
@@ -146,7 +146,7 @@ const customSavedListener = {
 
 export function newToast(msg: string) {
     if (!msg) return
-    toastMessages.set([...new Set([...get(toastMessages), msg])])
+    toastMessages.set(removeDuplicates([...get(toastMessages), msg]))
 }
 
 const fileSelected = {

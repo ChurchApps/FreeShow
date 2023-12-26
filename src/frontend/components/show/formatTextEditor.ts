@@ -2,7 +2,7 @@ import { uid } from "uid"
 import type { Item, Line, Show, Slide, SlideData } from "../../../types/Show"
 import { similarity } from "../../converters/txt"
 import { getItemText } from "../edit/scripts/textStyle"
-import { clone, keysToID } from "../helpers/array"
+import { clone, keysToID, removeDuplicates } from "../helpers/array"
 import { history } from "../helpers/history"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
@@ -146,7 +146,7 @@ export function formatText(e: any) {
     Object.values(show.layouts).forEach(({ slides }) => {
         allUsedSlidesIds.push(...slides.map(({ id }) => id))
     })
-    allUsedSlidesIds = [...new Set(allUsedSlidesIds)]
+    allUsedSlidesIds = removeDuplicates(allUsedSlidesIds)
 
     // remove unused slides that was previously used by current layout
     allOldSlideIds.forEach((slideId) => {

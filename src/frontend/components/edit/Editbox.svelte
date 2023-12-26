@@ -690,7 +690,7 @@
         item.lines!.forEach((line, i) => {
             if (!line.text) return
 
-            let chords = JSON.parse(JSON.stringify(line.chords || []))
+            let chords = clone(line.chords || [])
 
             let html = ""
             let currentIndex = 0

@@ -1,8 +1,9 @@
 // ----- FreeShow -----
 // Respond to messages from the frontend
 
-import { app, desktopCapturer, Display, screen, shell, systemPreferences } from "electron"
+import { app, desktopCapturer, DesktopCapturerSource, Display, screen, shell, systemPreferences } from "electron"
 import { getFonts } from "font-list"
+import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
 import { closeMain, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
@@ -13,18 +14,37 @@ import { Message } from "./../../types/Socket"
 import { restoreFiles } from "./backup"
 import { downloadMedia } from "./downloadMedia"
 import { createPDFWindow, exportProject, exportTXT } from "./export"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getDocumentsFolder, getPaths, loadFile, locateMediaFile, openSystemFolder, readFile, readFolder, renameFile, selectFilesDialog, selectFolderDialog, writeFile } from "./files"
+import {
+    checkShowsFolder,
+    dataFolderNames,
+    deleteFile,
+    getDataFolder,
+    getDocumentsFolder,
+    getPaths,
+    loadFile,
+    locateMediaFile,
+    openSystemFolder,
+    parseShow,
+    readFile,
+    readFolder,
+    renameFile,
+    selectFilesDialog,
+    selectFolderDialog,
+    writeFile,
+} from "./files"
 import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
 import { error_log } from "./store"
-import { machineIdSync } from "node-machine-id"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
     let files: string[] = selectFilesDialog("", msg.data.format)
 
-    if ((os.platform() === "linux" && msg.channel === "pdf") || (msg.data.format.extensions && !files.length)) return
+    let isLinuxAndPfdImport = os.platform() === "linux" && msg.channel === "pdf"
+    let needsFileAndNoFileSelected = msg.data.format.extensions && !files.length
+    if (needsFileAndNoFileSelected || isLinuxAndPfdImport) return
+
     importShow(msg.channel, files || null, msg.data.path)
 }
 
@@ -187,13 +207,7 @@ function refreshAllShows(data: any) {
         if (!name.includes(".show")) return
 
         let p: string = path.join(data.path, name)
-        let show = null
-
-        try {
-            show = JSON.parse(readFile(p) || "{}")
-        } catch (error) {
-            console.error("Error parsing show " + name) //  + ":", error
-        }
+        let show = parseShow(readFile(p))
 
         if (!show || !show[1]) return
 
@@ -255,22 +269,25 @@ async function searchLyrics({ artist, title }: any) {
 
 // GET_SCREENS | GET_WINDOWS
 function getScreens(type: "window" | "screen" = "screen") {
-    desktopCapturer.getSources({ types: [type] }).then(async (sources) => {
-        const screens: any[] = []
-        // console.log(sources)
+    desktopCapturer.getSources({ types: [type] }).then((sources) => {
+        let screens: any[] = []
         sources.map((source) => screens.push({ name: source.name, id: source.id }))
-        // , display_id: source.display_id
-
-        // add FreeShow windows
-        if (type === "window") {
-            Object.values({ main: mainWindow, ...outputWindows }).forEach((window: any) => {
-                let mediaId = window?.getMediaSourceId()
-                if (!sources.find((a) => a.id === mediaId)) screens.push({ name: window?.getTitle(), id: mediaId })
-            })
-        }
+        if (type === "window") screens = addFreeShowWindows(screens, sources)
 
         toApp(MAIN, { channel: type === "window" ? "GET_WINDOWS" : "GET_SCREENS", data: screens })
     })
+
+    function addFreeShowWindows(screens: any[], sources: DesktopCapturerSource[]) {
+        Object.values({ main: mainWindow, ...outputWindows }).forEach((window: any) => {
+            let mediaId = window?.getMediaSourceId()
+            let windowsAlreadyExists = sources.find((a: any) => a.id === mediaId)
+            if (windowsAlreadyExists) return
+
+            screens.push({ name: window?.getTitle(), id: mediaId })
+        })
+
+        return screens
+    }
 }
 
 // RECORDER
@@ -298,20 +315,19 @@ export function logError(log: any, electron: boolean = false) {
 }
 
 export function catchErrors() {
-    // catch errors
-    process.on("uncaughtException", (err) => {
-        let log = {
-            time: new Date(),
-            os: process.platform || "Unknown",
-            version: app.getVersion(),
-            type: "Uncaught Exception",
-            source: "See stack",
-            message: err.message,
-            stack: err.stack,
-        }
+    process.on("uncaughtException", (err) => logError(createLog(err), true))
+}
 
-        logError(log, true)
-    })
+function createLog(err: Error) {
+    return {
+        time: new Date(),
+        os: process.platform || "Unknown",
+        version: app.getVersion(),
+        type: "Uncaught Exception",
+        source: "See stack",
+        message: err.message,
+        stack: err.stack,
+    }
 }
 
 // STORE MEDIA AS BASE64

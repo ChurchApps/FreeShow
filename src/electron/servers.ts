@@ -71,9 +71,10 @@ function createBridge(server: any) {
         if (Object.keys(server.connections).length >= server.max) {
             server.io.emit(server.id, { channel: "ERROR", id: "overLimit", data: server.max })
             socket.disconnect()
-        } else {
-            initialize(server.id, socket)
+            return
         }
+
+        initialize(server.id, socket)
     })
 
     // SEND DATA FROM APP TO CLIENT
@@ -91,7 +92,6 @@ export function toServer(id: string, msg: any) {
 // FUNCTIONS
 
 function initialize(id: ServerName, socket: any) {
-    // INITIALIZE
     let name: string = getOS(socket.handshake.headers["user-agent"] || "")
     toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })
     servers[id].connections[socket.id] = { name }
@@ -100,10 +100,12 @@ function initialize(id: ServerName, socket: any) {
     socket.on(id, (msg: any) => toApp(id, msg))
 
     // DISCONNECT
-    socket.on("disconnect", () => {
-        toApp(id, { channel: "DISCONNECT", id: socket.id })
-        delete servers[id].connections[socket.id]
-    })
+    socket.on("disconnect", () => disconnect(id, socket))
+}
+
+function disconnect(id: ServerName, socket: any) {
+    toApp(id, { channel: "DISCONNECT", id: socket.id })
+    delete servers[id].connections[socket.id]
 }
 
 // https://stackoverflow.com/a/59706252

@@ -54,7 +54,7 @@ export function getGlobalGroup(group: string, returnInputIfNull: boolean = false
 
     // find group based on language
     let globalGroup: any = ""
-    Object.entries(get(dictionary).groups).forEach(([id, name]) => {
+    Object.entries(get(dictionary).groups || {}).forEach(([id, name]) => {
         if (name.toLowerCase() === groupId) globalGroup = id
     })
     return globalGroup || (returnInputIfNull ? groupId : "")

@@ -139,6 +139,8 @@
         "speed": "Velocità",
         "show": "Mostra",
         "flip": "Capovolgi",
+        "flip_horizontally": "Capovolgi orizzontalmente",
+        "flip_vertically": "Capovolgi verticalmente",
         "all": "Cartelle, immagini e video",
         "folder": "Solo cartelle",
         "image": "Solo immagini",
@@ -423,7 +425,8 @@
         "list": "Vista elenco",
         "lyrics": "Vista testi brani",
         "text": "Modifica testo",
-        "update": "Aggiorna scena"
+        "update": "Aggiorna scena",
+        "slide_template": "Modello di diapositiva"
     },
     "actions": {
         "rename": "Rinomina",
@@ -618,6 +621,7 @@
         "size": "Dimensione",
         "chords": "Accordi",
         "auto_size": "Dimensione automatica",
+        "no_wrap": "Testo su una riga",
         "line_spacing": "Interlinea",
         "line_height": "Line height",
         "letter_spacing": "Spaziatura lettera",

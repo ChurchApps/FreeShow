@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Line } from "../../types/Show"
 import { getSlideText } from "../components/edit/scripts/textStyle"
-import { changeValues, clone, keysToID, sortObjectNumbers } from "../components/helpers/array"
+import { changeValues, clone, keysToID, removeDuplicates, sortObjectNumbers } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/layout"
 import { addToPos } from "../components/helpers/mover"
@@ -290,7 +290,7 @@ export function changeLayout(layout: any, slides: any, ref: any, moved: any, ind
 
     // update children order
     Object.entries(newChildrenOrder).forEach(([id, children]: any) => {
-        slides[id].children = [...new Set(children)]
+        slides[id].children = removeDuplicates(children)
 
         // find and remove old children (this is already done but wont remove all always)
         Object.keys(slides).forEach((slideId) => {

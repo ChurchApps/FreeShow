@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeEdit, activeShow, outputs, showsCache, styles, templates } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
@@ -35,7 +36,7 @@
     function update() {
         if (!editSlide) return
 
-        let newData: any = { style: JSON.parse(JSON.stringify(settings)) }
+        let newData: any = { style: clone(settings) }
         if (JSON.stringify(newData.style.resolution) === JSON.stringify(getResolution())) delete newData.style.resolution
         if (newData.style.color === backgroundColor) delete newData.style.color
 

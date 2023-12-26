@@ -408,7 +408,7 @@ export function findGroupMatch(group: string): string {
     if (get(groups)[group]) return group
 
     let groupMatch: string = ""
-    Object.entries(get(dictionary).groups).forEach(([id, value]: any) => {
+    Object.entries(get(dictionary).groups || {}).forEach(([id, value]: any) => {
         if (value.toLowerCase() === group) groupMatch = id
     })
     if (groupMatch) return groupMatch

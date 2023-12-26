@@ -14,6 +14,7 @@
     import Center from "../../system/Center.svelte"
     import BibleApiKey from "./BibleApiKey.svelte"
     import { fetchBible, joinRange, loadBible, searchBibleAPI } from "./scripture"
+    import { removeDuplicates } from "../../helpers/array"
 
     export let active: any
     export let bibles: Bible[]
@@ -435,7 +436,7 @@
         searchValues.verses = findVerse({ splittedEnd })
         if (!searchValues.verses.length) return
         if (bibles[0].activeVerses !== searchValues.verses) {
-            activeVerses = [...new Set(searchValues.verses)] as any
+            activeVerses = removeDuplicates(searchValues.verses)
             activeVerses = activeVerses.map((a) => a.toString())
             bibles[0].activeVerses = activeVerses
 

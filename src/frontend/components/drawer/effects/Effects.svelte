@@ -1,6 +1,7 @@
 <script lang="ts">
     import { mediaOptions, outLocked, outputs, styles } from "../../../stores"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
     import { findMatchingOut, getResolution, setOutput } from "../../helpers/output"
     import Effect from "../../output/effects/Effect.svelte"
     import Center from "../../system/Center.svelte"
@@ -24,7 +25,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     let fullFilteredEffects: any[] = []
     function filterSearch() {
-        fullFilteredEffects = JSON.parse(JSON.stringify(filteredEffects))
+        fullFilteredEffects = clone(filteredEffects)
         if (searchValue.length > 1) fullFilteredEffects = fullFilteredEffects.filter((a) => filter(a.name).includes(searchValue))
     }
 

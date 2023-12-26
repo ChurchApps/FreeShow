@@ -115,7 +115,7 @@ const setDate = (date: Date, options: any): Date => {
 }
 
 export function updateEventData(editEvent: any, stored: any, { type, show }: any): any {
-    let data = JSON.parse(JSON.stringify(editEvent))
+    let data = clone(editEvent)
     let oldData = JSON.parse(stored)
     let id = editEvent.id
 

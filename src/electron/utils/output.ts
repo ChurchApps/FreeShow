@@ -16,12 +16,8 @@ export let outputWindows: { [key: string]: BrowserWindow } = {}
 async function createOutput(output: Output) {
     let id: string = output.id || ""
 
-    if (outputWindows[id]) {
-        // WIP has to restart because capture don't work when window is hidden...
-        removeOutput(id, output)
-
-        return
-    }
+    // WIP has to restart because capture don't work when window is hidden...
+    if (outputWindows[id]) return removeOutput(id, output)
 
     outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
     updateBounds(output)
@@ -119,13 +115,11 @@ function displayOutput(data: any) {
     if (data.enabled === "toggle") data.enabled = !window?.isVisible()
 
     if (!data.enabled) {
-        let windows = [window]
-        if (!windows[0]) {
-            windows = Object.values(outputWindows)
-        }
+        let windows = window ? [window] : Object.values(outputWindows)
 
         windows.forEach(hideWindow)
         if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data })
+
         return
     }
 
@@ -168,8 +162,8 @@ function displayOutput(data: any) {
 
 function showWindow(window: BrowserWindow) {
     if (!window || window.isDestroyed()) return
-    window.showInactive()
 
+    window.showInactive()
     window.moveTop()
 }
 
@@ -202,12 +196,11 @@ function updateBounds(data: any) {
     if (!window || window.isDestroyed()) return
 
     disableWindowMoveListener()
-
     window.setBounds(data.bounds)
+
     // has to be set twice to work first time
     setTimeout(() => {
         if (!window || window.isDestroyed()) return
-
         window.setBounds(data.bounds)
     }, 10)
 }
@@ -279,39 +272,33 @@ export function receiveOutput(_e: any, msg: Message) {
 }
 
 function sendToOutputWindow(msg: any) {
-    Object.entries(outputWindows).forEach(([id, window]: any) => {
+    Object.entries(outputWindows).forEach(sendToWindow)
+
+    function sendToWindow([id, window]: any) {
         if ((msg.data?.id && msg.data.id !== id) || window.isDestroyed()) return
 
         let tempMsg: any = JSON.parse(JSON.stringify(msg))
-
-        // only send output with matching id
-        if (msg.channel === "OUTPUTS") {
-            if (!msg.data?.[id]) return
-            tempMsg.data = { [id]: msg.data[id] }
-        }
+        if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, id)
 
         window.webContents.send(OUTPUT, tempMsg)
-    })
+    }
+
+    function onlySendToMatchingId(tempMsg: any, id: string) {
+        if (!msg.data?.[id]) return tempMsg
+
+        tempMsg.data = { [id]: msg.data[id] }
+        return tempMsg
+    }
 }
 
 // create numbered outputs for each screen
 let identifyActive: boolean = false
+const IDENTIFY_TIMEOUT: number = 3000
 function identifyScreens(screens: any[]) {
     if (identifyActive) return
     identifyActive = true
 
-    let activeWindows: any[] = []
-    screens.forEach((screen, i) => {
-        let window: BrowserWindow | null = new BrowserWindow(screenIdentifyOptions)
-        window.setBounds(screen.bounds)
-        window.loadFile("public/identify.html")
-
-        window.webContents.on("did-finish-load", () => {
-            window!.webContents.send("NUMBER", i + 1)
-        })
-
-        activeWindows.push(window)
-    })
+    let activeWindows: any[] = screens.map(createIdentifyScreen)
 
     setTimeout(() => {
         activeWindows.forEach((window) => {
@@ -319,5 +306,18 @@ function identifyScreens(screens: any[]) {
         })
 
         identifyActive = false
-    }, 3000)
+    }, IDENTIFY_TIMEOUT)
+}
+
+function createIdentifyScreen(screen: any, i: number) {
+    let window: BrowserWindow | null = new BrowserWindow(screenIdentifyOptions)
+    window.setBounds(screen.bounds)
+    window.loadFile("public/identify.html")
+
+    window.webContents.on("did-finish-load", sendNumberToScreen)
+    function sendNumberToScreen() {
+        window!.webContents.send("NUMBER", i + 1)
+    }
+
+    return window
 }

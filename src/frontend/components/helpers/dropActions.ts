@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioStreams, drawerTabsData, imageExtensions, media, projects, showsCache, videoExtensions } from "../../stores"
 import { addItem } from "../edit/scripts/itemHelpers"
-import { clone } from "./array"
+import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
@@ -342,7 +342,7 @@ const slideDrop: any = {
                 if (parentMovedToOwnChildren) return
 
                 children.map((_id: string, childIndex: number) => selected.push(index + childIndex + 1))
-                selected = [...new Set(selected)]
+                selected = removeDuplicates(selected)
             }
 
             sortedLayout = mover(ref, selected, drop.index)
@@ -417,7 +417,7 @@ const slideDrop: any = {
         history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any[] = [...new Set([...(ref?.data?.overlays || []), ...drag.data])]
+        let data: any[] = removeDuplicates([...(ref?.data?.overlays || []), ...drag.data])
 
         history.newData = { key: "overlays", data, dataIsArray: true, indexes: [drop.index] }
         return history

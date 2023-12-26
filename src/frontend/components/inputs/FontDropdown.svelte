@@ -4,6 +4,7 @@
     import { receive, send } from "../../utils/request"
     import { MAIN } from "../../../types/Channels"
     import { systemFonts } from "../../stores"
+    import { removeDuplicates } from "../helpers/array"
 
     export let system: boolean = false
 
@@ -32,7 +33,7 @@
 
     function addFonts(newFonts: string[]) {
         // join and remove duplicates
-        fonts = [...new Set([...fonts, ...newFonts])]
+        fonts = removeDuplicates([...fonts, ...newFonts])
         // sort
         fonts = fonts.sort((a, b) => a.localeCompare(b))
         // add default app font

@@ -272,7 +272,7 @@
         item.lines!.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
-            let chords = JSON.parse(JSON.stringify(line.chords || []))
+            let chords = clone(line.chords || [])
 
             let html = ""
             let index = 0

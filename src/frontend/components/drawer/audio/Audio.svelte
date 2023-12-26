@@ -1,6 +1,7 @@
 <script lang="ts">
     import { READ_FOLDER } from "../../../../types/Channels"
     import { activeShow, audioFolders, dictionary, media, outLocked, playingAudio } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { getAudioDuration, playAudio } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
     import Icon from "../../helpers/Icon.svelte"
@@ -83,7 +84,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     let fullFilteredFiles: any[] = []
     function filterSearch() {
-        fullFilteredFiles = JSON.parse(JSON.stringify(files))
+        fullFilteredFiles = clone(files)
         if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(searchValue))
     }
 

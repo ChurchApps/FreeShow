@@ -18,6 +18,7 @@
     import Folder from "./Folder.svelte"
     import Media from "./MediaCard.svelte"
     import { loadFromPixabay } from "./pixabay"
+    import { clone } from "../../helpers/array"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -143,7 +144,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
     let fullFilteredFiles: any[] = []
     function filterSearch() {
-        fullFilteredFiles = JSON.parse(JSON.stringify(filteredFiles))
+        fullFilteredFiles = clone(filteredFiles)
         if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(searchValue))
     }
 

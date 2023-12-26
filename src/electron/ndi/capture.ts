@@ -1,4 +1,4 @@
-import type { BrowserWindow, NativeImage, Size } from "electron"
+import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import os from "os"
 import { toApp } from ".."
@@ -27,33 +27,37 @@ export const framerates: any = {
 }
 export let customFramerates: any = {}
 
+function getDefaultCapture(window: BrowserWindow): CaptureOptions {
+    let screen: Display = getWindowScreen(window)
+    let defaultFramerates = {
+        preview: framerates.preview,
+        server: framerates.server,
+        ndi: framerates.connected,
+    }
+
+    return {
+        window,
+        subscribed: false,
+        displayFrequency: screen.displayFrequency || 60,
+        options: { server: false, ndi: false },
+        framerates: defaultFramerates,
+        framesToSkip: {},
+    }
+}
+
 // START
 
 let storedFrames: any = {}
 let cpuInterval: any = null
 export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     let window = outputWindows[id]
-    if (!window || window.isDestroyed()) {
+    let windowIsRemoved = !window || window.isDestroyed()
+    if (windowIsRemoved) {
         delete captures[id]
         return
     }
 
-    if (!captures[id]) {
-        let screen = getWindowScreen(window)
-
-        captures[id] = {
-            window,
-            subscribed: false,
-            displayFrequency: screen.displayFrequency || 60,
-            options: { server: false, ndi: false },
-            framerates: {
-                preview: framerates.preview,
-                server: framerates.server,
-                ndi: framerates.connected,
-            },
-            framesToSkip: {},
-        }
-    }
+    if (!captures[id]) captures[id] = getDefaultCapture(window)
 
     Object.keys(toggle).map((key) => {
         captures[id].options[key] = toggle[key]
@@ -64,6 +68,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     if (captures[id].subscribed) return
 
     console.log("Capture - starting: " + id)
+
     captures[id].window.webContents.beginFrameSubscription(false, processFrame)
     captures[id].subscribed = true
 
@@ -84,7 +89,8 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
         let usage = process.getCPUUsage()
 
-        if (rate === "optimized" || usage.percentCPUUsage > autoOptimizePercentageCPU || captureCount < captureRate) {
+        let isOptimizedOrLagging = rate === "optimized" || usage.percentCPUUsage > autoOptimizePercentageCPU || captureCount < captureRate
+        if (isOptimizedOrLagging) {
             if (captureCount === captureRate) captureCount = 0
             // limit frames
             captures[id].window.webContents.endFrameSubscription()
@@ -109,22 +115,23 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
         let serverFrame = !checkRate("server")
         let ndiFrame = !checkRate("ndi")
 
-        if (checkRate("max")) {
-            let imageIndex = ++currentImage
-            clearTimeout(timeout)
-
-            timeout = setTimeout(() => {
-                if (imageIndex !== currentImage) return
-
-                // update if last skipped frame is not a sent frame
-                sendFrames(id, storedFrames[id], { previewFrame: true, serverFrame: true, ndiFrame: true })
-                currentImage = 0
-            }, 80)
-
-            return
-        }
+        if (checkRate("max")) return sendFrame()
 
         sendFrames(id, image, { previewFrame, serverFrame, ndiFrame })
+    }
+
+    function sendFrame() {
+        let imageIndex = ++currentImage
+        clearTimeout(timeout)
+        timeout = setTimeout(timeoutEnded, 80)
+
+        function timeoutEnded() {
+            if (imageIndex !== currentImage) return
+
+            // update if last skipped frame is not a sent frame
+            sendFrames(id, storedFrames[id], { previewFrame: true, serverFrame: true, ndiFrame: true })
+            currentImage = 0
+        }
     }
 
     function checkRate(key: string) {
@@ -140,16 +147,8 @@ function sendFrames(id: string, image: NativeImage, rates: any) {
     const size = image.getSize()
 
     if (rates.previewFrame) sendBufferToPreview(id, image, { size })
-
     if (rates.serverFrame && captures[id].options.server) sendBufferToServer(id, image)
-
-    if (rates.ndiFrame && captures[id].options.ndi) {
-        const buffer = image.getBitmap()
-        const ratio = image.getAspectRatio()
-
-        // WIP refresh on enable?
-        sendVideoBufferNDI(id, buffer, { size, ratio, framerate: captures[id].framerates.ndi })
-    }
+    if (rates.ndiFrame && captures[id].options.ndi) sendBufferToNdi(id, image, { size })
 }
 
 export function updateFramerate(id: string) {
@@ -187,6 +186,16 @@ function getWindowScreen(window: BrowserWindow) {
         width: window.getBounds().width,
         height: window.getBounds().height,
     })
+}
+
+// NDI
+
+function sendBufferToNdi(id: string, image: NativeImage, { size }: any) {
+    const buffer = image.getBitmap()
+    const ratio = image.getAspectRatio()
+
+    // WIP refresh on enable?
+    sendVideoBufferNDI(id, buffer, { size, ratio, framerate: captures[id].framerates.ndi })
 }
 
 // PREVIEW
@@ -249,22 +258,30 @@ export function stopCapture(id: string) {
     return new Promise((resolve) => {
         if (!captures[id]) return resolve(true)
 
-        if (!captures[id].window || captures[id].window.isDestroyed()) {
-            delete captures[id]
-            return resolve(true)
-        }
+        let windowIsRemoved = !captures[id].window || captures[id].window.isDestroyed()
+        if (windowIsRemoved) return deleteAndResolve()
 
         console.log("Capture - stopping: " + id)
 
-        if (captures[id].subscribed) {
-            captures[id].window.webContents.endFrameSubscription()
-            captures[id].subscribed = false
-        }
+        endSubscription()
+        removeListeners()
+        deleteAndResolve()
 
+        function deleteAndResolve() {
+            delete captures[id]
+            resolve(true)
+        }
+    })
+
+    function endSubscription() {
+        if (!captures[id].subscribed) return
+
+        captures[id].window.webContents.endFrameSubscription()
+        captures[id].subscribed = false
+    }
+
+    function removeListeners() {
         captures[id].window.removeAllListeners()
         captures[id].window.webContents.removeAllListeners()
-
-        delete captures[id]
-        resolve(true)
-    })
+    }
 }

@@ -2,6 +2,7 @@
     import { drawSettings, drawTool } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
+    import { clone } from "../helpers/array"
     import Button from "../inputs/Button.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
     import Color from "../inputs/Color.svelte"
@@ -70,7 +71,7 @@
     $: if (!Object.keys($drawSettings[$drawTool] || {}).length) reset()
     function reset() {
         drawSettings.update((ds: any) => {
-            ds[$drawTool] = JSON.parse(JSON.stringify(defaults[$drawTool] || {}))
+            ds[$drawTool] = clone(defaults[$drawTool] || {})
             return ds
         })
     }

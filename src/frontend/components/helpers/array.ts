@@ -34,6 +34,11 @@ export function removeEmpty(array: any[]): any[] {
     return array.filter((a: any): number => a.length)
 }
 
+// remove duplicates from array (only lowest level)
+export function removeDuplicates(array: any[]): any[] {
+    return [...new Set(array)]
+}
+
 // OBJETS
 
 // sort objects in array alphabeticly
@@ -79,7 +84,7 @@ export function changeValues(object: any, values: { [key: string]: any }) {
 // clone objects
 export function clone(object: any) {
     if (!object) return object
-    return JSON.parse(JSON.stringify(object))
+    return clone(object)
 }
 
 // not currently in use, but could be handy
