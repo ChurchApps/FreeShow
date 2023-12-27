@@ -1,38 +1,16 @@
 <script lang="ts">
     import { draw, drawSettings, drawTool } from "../../stores"
+    import Fill from "./Fill.svelte"
     import Paint from "./Paint.svelte"
     import Particles from "./Particles.svelte"
     import Zoom from "./Zoom.svelte"
 
     $: tool = $drawTool
     $: settings = $drawSettings[tool]
-
-    $: {
-        if (settings?.rainbow && !timeout) generate()
-    }
-    $: rainbow = settings?.rainbow ? "rgb(0, 0, 0)" : null
-
-    let r = 0,
-        g = 0,
-        b = 0
-
-    let timeout: any = null
-    function generate() {
-        if (r <= 255 && g == 0 && b == 0) r++
-        if (r == 255 && b == 0 && g <= 255) g++
-        if (r == 255 && g == 255 && b <= 255) b++
-        if (b == 255 && g == 255 && r > 0) r--
-        if (r == 0 && b == 255 && g > 0) g--
-        if (r == 0 && g == 0 && b > 0) b--
-
-        rainbow = "rgb(" + r + "," + g + "," + b + ")"
-        if (settings?.rainbow) timeout = setTimeout(generate, 10)
-        else timeout = null
-    }
 </script>
 
 {#if tool === "fill"}
-    <div class="fill" style="background-color: {rainbow || settings?.color};opacity: {settings?.opacity};" />
+    <Fill {settings} />
 {:else if tool === "paint"}
     <Paint {settings} />
 {:else if $draw !== null}
@@ -81,15 +59,5 @@
         border-radius: 50%;
         opacity: 0.8;
         box-shadow: 0 0 0 50000px black;
-    }
-
-    .fill {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: black;
-        opacity: 0.8;
     }
 </style>

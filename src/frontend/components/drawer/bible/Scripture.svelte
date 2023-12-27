@@ -1,20 +1,19 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
-    import Loader from "../../main/Loader.svelte"
-    // import type { Bible } from "../../../../types/Bible"
     import { BIBLE } from "../../../../types/Channels"
+    import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
     import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { removeDuplicates } from "../../helpers/array"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import BibleApiKey from "./BibleApiKey.svelte"
-    import { fetchBible, joinRange, loadBible, searchBibleAPI } from "./scripture"
-    import { removeDuplicates } from "../../helpers/array"
+    import { fetchBible, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
 
     export let active: any
     export let bibles: Bible[]
@@ -28,10 +27,6 @@
     let bookId: any = cachedRef?.bookId ?? "GEN"
     let chapterId: any = cachedRef?.chapterId ?? "GEN.1"
     let verses: { [key: string]: any[] } = cachedRef?.verses || {}
-
-    $: console.trace(bookId)
-    $: console.trace(chapterId)
-    $: console.trace(verses)
 
     let activeVerses: string[] = cachedRef?.activeVerses || ["1"]
 
@@ -53,7 +48,6 @@
     let error: null | string = null
 
     let firstBibleId = ""
-    // $: bibleId = $scriptures[active].collection?.versions[0] || active
 
     // select book & chapter when opening bible show reference
     $: if ($openScripture) setTimeout(openReference, 200)
@@ -67,9 +61,9 @@
 
         setTimeout(() => {
             chapterId = Number($openScripture.chapter)
-            if ($openScripture.api) {
-                chapterId = bookId + "." + chapterId
-            } else chapterId--
+            if ($openScripture.api) chapterId = bookId + "." + chapterId
+            else chapterId--
+
             // verses
             activeVerses = $openScripture.verses
             bibles[0].activeVerses = activeVerses
@@ -112,14 +106,7 @@
             try {
                 data = await fetchBible(load, bibleId, { versesList: versesList[bibleId] || [], bookId, chapterId })
 
-                // set books cache
-                if (load === "books" && data?.length) {
-                    scriptures.update((a) => {
-                        a[objectId].books = data
-                        a[objectId].cacheUpdate = new Date()
-                        return a
-                    })
-                }
+                if (load === "books" && data?.length) setBooksCache(objectId, data)
             } catch (err) {
                 error = err
             }
@@ -167,28 +154,27 @@
         let newVerses: any = {}
         let verse: string
 
-        data.content
-            .toString()
-            .split("span")
-            .forEach((content) => {
-                // let xt = /(<span class="xt"\b[^>]*>)[^<>]*(<\/span>)/i
-                let brackets = / *\[[^\]]*]/g
-                content = content.replace(brackets, "").replace(/(<([^>]+)>)/gi, "")
-                if (content.includes("data-number")) {
-                    verse = content.split('"')[1]
-                    newVerses[verse] = ""
-                } else if (content.includes("class")) {
-                    newVerses[verse] += "<span" + content + "span>"
-                } else {
-                    let noHTML = ""
-                    content.split(/<|>/).forEach((a) => {
-                        if (a.length) noHTML += a
-                    })
-                    if (newVerses[verse] !== undefined) newVerses[verse] += noHTML
-                }
+        data.content.toString().split("span").forEach(trimVerse)
+        function trimVerse(content) {
+            // let xt = /(<span class="xt"\b[^>]*>)[^<>]*(<\/span>)/i
+            let brackets = / *\[[^\]]*]/g
+            content = content.replace(brackets, "").replace(/(<([^>]+)>)/gi, "")
 
-                if (newVerses[verse]) newVerses[verse] = newVerses[verse].replaceAll("¶ ", "")
-            })
+            if (content.includes("data-number")) {
+                verse = content.split('"')[1]
+                newVerses[verse] = ""
+            } else if (content.includes("class")) {
+                newVerses[verse] += "<span" + content + "span>"
+            } else {
+                let noHTML = ""
+                content.split(/<|>/).forEach((a) => {
+                    noHTML += a || ""
+                })
+                if (newVerses[verse] !== undefined) newVerses[verse] += noHTML
+            }
+
+            if (newVerses[verse]) newVerses[verse] = newVerses[verse].replaceAll("¶ ", "")
+        }
 
         if (bibles[index]) bibles[index].copyright = data.copyright
 
@@ -203,29 +189,30 @@
                 a.bible.push({ id: msg.id })
                 return a
             })
-        } else if (msg.content) {
-            scripturesCache.update((a) => {
-                a[msg.content[0]] = msg.content[1]
-                return a
-            })
 
-            if (!bibles) return console.error("could not find bibles")
-            let currentIndex = msg.data?.index || 0
-            if (!bibles[currentIndex]) return console.error("could not find bible at index")
-
-            let id = msg.content[0] || msg.id
-
-            bibles[currentIndex].version = $scriptures[id]?.customName || msg.content[1].name || $scriptures[id]?.name || ""
-            bibles[currentIndex].copyright = msg.content[1].copyright || ""
-            bibles[currentIndex].id = msg.content[0]
-            books[id] = msg.content[1].books as any
-
-            if (typeof bookId === "string") bookId = 0
-
-            if (books[id][cachedRef?.bookId]) {
-                bookId = cachedRef?.bookId
-            }
+            return
         }
+
+        if (!msg.content) return
+
+        scripturesCache.update((a) => {
+            a[msg.content[0]] = msg.content[1]
+            return a
+        })
+
+        if (!bibles) return console.error("could not find bibles")
+        let currentIndex = msg.data?.index || 0
+        if (!bibles[currentIndex]) return console.error("could not find bible at index")
+
+        let id = msg.content[0] || msg.id
+
+        bibles[currentIndex].version = $scriptures[id]?.customName || msg.content[1].name || $scriptures[id]?.name || ""
+        bibles[currentIndex].copyright = msg.content[1].copyright || ""
+        bibles[currentIndex].id = msg.content[0]
+        books[id] = msg.content[1].books as any
+
+        if (typeof bookId === "string") bookId = 0
+        if (books[id][cachedRef?.bookId]) bookId = cachedRef?.bookId
     })
 
     $: if (active) getBible()
@@ -342,7 +329,6 @@
     }
 
     function selectVerse(e: any, id: string) {
-        console.log(id)
         autoComplete = false
 
         if (e.ctrlKey || e.metaKey) {
@@ -683,10 +669,6 @@
 
     function playOrClearScripture(forcePlay: boolean = false) {
         if (outputIsScripture && !forcePlay) {
-            // let id = Object.keys(verses[firstBibleId] || {})[0]
-            // console.log(activeVerses)
-            // console.log(id)
-            // showVerse(id)
             setOutput("slide", null)
             return
         }

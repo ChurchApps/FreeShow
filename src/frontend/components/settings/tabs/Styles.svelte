@@ -4,7 +4,7 @@
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, removeDuplicates } from "../../helpers/array"
+    import { clone, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getFileName } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
@@ -69,7 +69,7 @@
             return { ...obj, id }
         })
 
-        return list.sort((a, b) => a.name.localeCompare(b.name))
+        return sortByName(list)
     }
 
     // set id after deletion

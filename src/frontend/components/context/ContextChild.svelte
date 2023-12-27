@@ -11,6 +11,7 @@
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let translate: number = 0
     export let side: "right" | "left" = "right"
+
     $: transform = side === "right" ? "100%" : "-100%"
 
     let open: boolean = false
@@ -21,22 +22,24 @@
     function onMouseOver(e: any) {
         if (elem.contains(e.target)) {
             clearTimeout()
-            if (!open) {
-                timeout = setTimeout(() => {
-                    open = true
-                    timeout = null
-                }, duration)
-            }
+            if (open) return
+
+            timeout = setTimeout(() => {
+                open = true
+                timeout = null
+            }, duration)
+
             return
         }
 
         if (open && e.target?.closest(".contextMenu") !== null) {
-            if (timeout === null) {
-                timeout = setTimeout(() => {
-                    open = false
-                    timeout = null
-                }, duration / 2)
-            }
+            if (timeout !== null) return
+
+            timeout = setTimeout(() => {
+                open = false
+                timeout = null
+            }, duration / 2)
+
             return
         }
 
@@ -44,10 +47,10 @@
     }
 
     function clearTimeout() {
-        if (timeout !== null) {
-            window.clearTimeout(timeout)
-            timeout = null
-        }
+        if (timeout === null) return
+
+        window.clearTimeout(timeout)
+        timeout = null
     }
 
     function click(e: any) {
@@ -73,6 +76,7 @@
             <Icon id="arrow_right" size={1.2} white />
         </div>
     </span>
+
     {#if open}
         <div class="submenu" style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-10px'});">
             {#if menu.items?.length}
@@ -105,11 +109,6 @@
     .item:hover {
         background-color: rgb(0 0 0 / 0.2);
     }
-    /* .item::after {
-        content: ">";
-        font-weight: bold;
-        color: var(--secondary);
-    } */
 
     hr {
         margin: 5px 10px;

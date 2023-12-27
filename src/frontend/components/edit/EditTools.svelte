@@ -58,7 +58,7 @@
         tabs.item.disabled = false
     }
 
-    $: ref = _show().layouts("active").ref()[0]
+    $: ref = _show().layouts("active").ref()[0] || {}
 
     $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [] })
 

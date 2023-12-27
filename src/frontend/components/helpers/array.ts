@@ -39,7 +39,19 @@ export function removeDuplicates(array: any[]): any[] {
     return [...new Set(array)]
 }
 
+// sort array (or event object) by time in ascending order
+export function sortByTime(a, b) {
+    if (a.from) a = a.from
+    if (b.from) b = b.from
+    return new Date(a).getTime() - new Date(b).getTime()
+}
+
 // OBJETS
+
+// sort objects in array by name
+export function sortByName(arr: any[]) {
+    return arr.sort((a, b) => a.name.localeCompare(b.name))
+}
 
 // sort objects in array alphabeticly
 export function sortObject(object: {}[], key: string): {}[] {
@@ -84,7 +96,7 @@ export function changeValues(object: any, values: { [key: string]: any }) {
 // clone objects
 export function clone(object: any) {
     if (!object) return object
-    return clone(object)
+    return JSON.parse(JSON.stringify(object))
 }
 
 // not currently in use, but could be handy

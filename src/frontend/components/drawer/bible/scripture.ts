@@ -83,6 +83,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
 export function joinRange(array: string[]) {
     let prev: number = -1
     let range: string = ""
+
     array.forEach((a: string, i: number) => {
         if (Number(a) - 1 === prev) {
             if (i + 1 === array.length) range += "-" + a
@@ -93,8 +94,10 @@ export function joinRange(array: string[]) {
             }
             range += a
         }
+
         prev = Number(a)
     })
+
     return range
 }
 
@@ -108,7 +111,6 @@ export function getSlides({ bibles, sorted }) {
     let template = get(templates)[get(scriptureSettings).template]?.items || []
     let templateTextItems = template.filter((a) => a.lines)
     let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
-    console.log(templateTextItems, templateOtherItems)
 
     bibles.forEach((bible, bibleIndex) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
@@ -274,4 +276,14 @@ export function getSlides({ bibles, sorted }) {
             }
         }
     }
+}
+
+// HELPERS
+
+export function setBooksCache(scriptureId: string, data: any) {
+    scriptures.update((a) => {
+        a[scriptureId].books = data
+        a[scriptureId].cacheUpdate = new Date()
+        return a
+    })
 }

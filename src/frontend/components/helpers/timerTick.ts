@@ -7,7 +7,7 @@ import { send } from "../../utils/request"
 import { setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
-import { clone } from "./array"
+import { clone, sortByTime } from "./array"
 import { checkNextAfterMedia, updateOut } from "./showActions"
 
 const INTERVAL = 1000
@@ -53,7 +53,7 @@ export function startEventTimer() {
         return
     }
 
-    showEvents = showEvents.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
+    showEvents = showEvents.sort(sortByTime)
 
     showTimeout = setTimeout(() => {
         showEvents.forEach((event, i) => {

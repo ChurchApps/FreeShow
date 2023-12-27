@@ -71,10 +71,12 @@ import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
+    if (!actions[id]) return console.log("MISSING CONTEXT: ", id)
+
     let obj = { sel, actionItem, enabled, contextElem, menu }
     console.log("MENU CLICK: " + id, obj)
-    if (actions[id]) return actions[id](obj)
-    console.log("MISSING CONTEXT: ", id)
+
+    actions[id](obj)
 }
 
 const actions: any = {
@@ -1034,6 +1036,8 @@ export function format(id: string, obj: any, data: any = null) {
 
     let editing = get(activeEdit)
     let items = editing.items || []
+
+    // WIP let slide = getEditSlide()
 
     if (editing.id) {
         let currentItems: any[] = []

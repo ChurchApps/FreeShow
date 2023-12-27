@@ -10,8 +10,6 @@ export function createRepeatedEvents(event: Event, onlyMissing: boolean = false)
     // <!-- REPEAT ON: {MO,TH,WE,TH,FR,SA,SU} (if "week") -->
     // <!-- ENDING: {date, after {10} times, never} -->
 
-    console.log(event)
-
     let data = event.repeatData!
     let dates: string[][] = []
 
@@ -39,11 +37,10 @@ export function createRepeatedEvents(event: Event, onlyMissing: boolean = false)
     }
 
     // get dates array
-    // TODO: repeat on weekdays...
+    // WIP repeat on weekdays...
     if (data.ending === "date") {
         while (currentFromDate.getTime() <= endingDate.getTime()) {
             let incremented = increment[data.type]()
-            console.log(currentFromDate, endingDate, data.count, incremented)
 
             if (data.type === "day" || data.type === "week") {
                 currentFromDate.setDate(incremented[0])
@@ -126,41 +123,24 @@ export function updateEventData(editEvent: any, stored: any, { type, show }: any
     data.type = type.id
     oldData.type = type.id
 
-    console.log(data.from, editEvent.fromTime)
-
     // to has to be after from
     if (data.to.getTime() - data.from.getTime() <= 0) data.to = data.from
-    // if (data.to.getTime() - data.from.getTime() <= 0) {
-    //   activePopup.set(null)
-    //   return { data: null, oldData: null, id }
-    // }
 
-    delete data.id
-    delete data.isoFrom
-    delete data.isoTo
-    delete data.fromTime
-    delete data.toTime
-    delete oldData.id
-    delete oldData.isoFrom
-    delete oldData.isoTo
-    delete oldData.fromTime
-    delete oldData.toTime
-
-    console.log(data)
+    const keysToRemove = ["id", "isoFrom", "isoTo", "fromTime", "toTime"]
+    keysToRemove.forEach((key) => {
+        delete data[key]
+        delete oldData[key]
+    })
 
     if (data.type === "show") data = getShowEventData(data, show.id)
 
     return { data, oldData, id }
 }
 
-// export const icons: any = {
-//   event: "calendar",
-//   show: "slide"
-// }
-
 // show
 export function getShowEventData(event: any, showId: string) {
     let show: any = get(shows)[showId]
+
     event.show = showId
     event.name = show.name
     event.color = null

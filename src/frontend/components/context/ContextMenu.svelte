@@ -36,20 +36,24 @@
     }
 
     function getContextMenu(id: string) {
-        if (id?.includes("__")) {
-            let menus = id.slice(1, id.length).split("__")
-            // if (contextMenuLayouts[menus[1]]) {
-            let menu: any[] = []
-            menus.forEach((c2: string, i: number) => {
-                if (contextMenuLayouts[c2]) menu.push(...contextMenuLayouts[c2])
-                if (i < menus.length - 1) menu.push("SEPERATOR")
-            })
-            return menu
-            // }
-            // return
-        }
-        if (id && contextMenuLayouts[id.slice(1, id.length)]) return contextMenuLayouts[id.slice(1, id.length)]
+        if (id?.includes("__")) return combineMenus(id)
+
+        let menu = contextMenuLayouts[id.slice(1, id.length)]
+        if (id && menu) return menu
+
         return
+    }
+
+    function combineMenus(id: string) {
+        let menus = id.slice(1, id.length).split("__")
+        let menu: any[] = []
+
+        menus.forEach((c2: string, i: number) => {
+            if (contextMenuLayouts[c2]) menu.push(...contextMenuLayouts[c2])
+            if (i < menus.length - 1) menu.push("SEPERATOR")
+        })
+
+        return menu
     }
 
     const click = (e: MouseEvent) => {
