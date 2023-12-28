@@ -5,142 +5,143 @@ const Terser = require("terser")
 // const HTMLMinifier = require("html-minifier")
 // const CleanCSS = require("clean-css")
 
-const minifyJSOptions = {
-  mangle: {
-    toplevel: true,
-  },
-  compress: {
-    passes: 2,
-  },
-  output: {
-    beautify: false,
-    preamble: "/* uglified */",
-  },
-}
+function getAllJSFiles(dirPath, arrayOfFiles) {
+    const files = readdirSync(dirPath)
 
-const getAllJSFiles = (dirPath, arrayOfFiles) => {
-  const files = readdirSync(dirPath)
+    if (!arrayOfFiles) arrayOfFiles = []
 
-  if (arrayOfFiles == null) {
-    arrayOfFiles = []
-  }
+    files.forEach((file) => {
+        const isFolder = statSync(join(dirPath, file)).isDirectory()
 
-  files.forEach((file) => {
-    if (statSync(join(dirPath, file)).isDirectory()) {
-      arrayOfFiles = getAllJSFiles(join(dirPath, file), arrayOfFiles)
-    } else {
-      arrayOfFiles.push(join(dirPath, file))
-    }
-  })
-
-  return arrayOfFiles.filter((filePath) => /\.js$/.exec(filePath))
-}
-
-const minifyJSFiles = (filePaths) => {
-  filePaths.forEach((filePath) => {
-    const unminified = readFileSync(filePath, "utf8")
-    Terser.minify(unminified, minifyJSOptions)
-      .then((minified) => {
-        writeFileSync(filePath, minified.code)
-      })
-      .catch((err) => {
-        process.emitWarning(err)
-        process.abort()
-      })
-  })
-}
-
-const deleteFolderRecursive = (folderPath) => {
-  if (existsSync(folderPath)) {
-    readdirSync(folderPath).forEach((file) => {
-      const curPath = join(folderPath, file)
-      if (lstatSync(curPath).isDirectory()) {
-        // recurse
-        deleteFolderRecursive(curPath)
-      } else {
-        // delete file
-        unlinkSync(curPath)
-      }
+        if (isFolder) arrayOfFiles = getAllJSFiles(join(dirPath, file), arrayOfFiles)
+        else arrayOfFiles.push(join(dirPath, file))
     })
+
+    return arrayOfFiles.filter((filePath) => /\.js$/.exec(filePath))
+}
+
+function deleteFolderRecursive(folderPath) {
+    if (!existsSync(folderPath)) return
+
+    readdirSync(folderPath).forEach((file) => {
+        const path = join(folderPath, file)
+        const isFolder = lstatSync(path).isDirectory()
+        if (isFolder) return deleteFolderRecursive(path)
+
+        // delete file
+        unlinkSync(path)
+    })
+
     rmdirSync(folderPath)
-  }
 }
 
-const copyPublicFolderAndMinify = (folderPath, destinationPath) => {
-  if (existsSync(destinationPath)) deleteFolderRecursive(destinationPath)
+function copyPublicFolderAndMinify(folderPath, destinationPath) {
+    if (existsSync(destinationPath)) deleteFolderRecursive(destinationPath)
 
-  mkdirSync(destinationPath)
+    mkdirSync(destinationPath)
 
-  readdirSync(folderPath).forEach((file) => {
-    const curPath = join(folderPath, file)
-    const newPath = join(destinationPath, file)
-    if (lstatSync(curPath).isDirectory()) {
-      // recurse
-      copyPublicFolderAndMinify(curPath, newPath)
-    } else {
-      if (/\.js$/.exec(curPath)) {
-        const unminified = readFileSync(curPath, "utf8")
-        Terser.minify(unminified, minifyJSOptions)
-          .then((minified) => {
-            writeFileSync(newPath, minified.code)
-          })
-          .catch((err) => {
-            process.emitWarning(err)
-            process.abort()
-          })
-      } else if (/\.html$/.exec(curPath)) {
-        const unminified = readFileSync(curPath, "utf8")
+    readdirSync(folderPath).forEach(processFile)
+    function processFile(file) {
+        const curPath = join(folderPath, file)
+        const newPath = join(destinationPath, file)
+        const isFolder = lstatSync(curPath).isDirectory()
 
-        const unminifiedCorrected = unminified.replace(
-          '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src http://localhost:*; connect-src ws://localhost:*">',
-          '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'">'
-        )
+        if (isFolder) return copyPublicFolderAndMinify(curPath, newPath)
 
-        const minifierOptions = {
-          preserveLineBreaks: false,
-          collapseWhitespace: true,
-          collapseInlineTagWhitespace: true,
-          minifyURLs: true,
-          minifyJS: true,
-          minifyCSS: true,
-          removeComments: true,
-          removeAttributeQuotes: true,
-          removeEmptyAttributes: true,
-          removeEmptyElements: true,
-          removeRedundantAttributes: true,
-          removeScriptTypeAttributes: true,
-          removeStyleLinkTypeAttributes: true,
-          useShortDoctype: true,
-          quoteCharacter: "'",
+        if (/\.js$/.exec(curPath)) return minifyJS(curPath, newPath)
+        // if (/\.html$/.exec(curPath)) return minifyHTML(curPath, newPath)
+        // if (/\.css$/.exec(curPath)) return minifyCSS(curPath, newPath)
+
+        if (/\.png|\.ico|\.icns|\.html$/.exec(curPath)) {
+            const pngFile = readFileSync(curPath)
+            writeFileSync(newPath, pngFile)
         }
-        // const minified = HTMLMinifier.minify(unminifiedCorrected, minifierOptions)
-        // writeFileSync(newPath, minified)
-      } else if (/\.css$/.exec(curPath)) {
-        // const unminified = readFileSync(curPath, "utf8")
-        // const minified = new CleanCSS().minify(unminified)
-        // writeFileSync(newPath, minified.styles)
-      } else if (/\.png|\.ico|\.icns|\.html$/.exec(curPath)) {
-        const pngFile = readFileSync(curPath)
-        writeFileSync(newPath, pngFile)
-      }
     }
-  })
 }
 
-// const cleanTsconfig = () => {
-//   const tsconfigSvelteJSONPath = join(__dirname, "..", "tsconfig.svelte.prod.json")
-//   const tsconfigElectronJSONPath = join(__dirname, "..", "tsconfig.electron.prod.json")
-//   const tsconfigServerJSONPath = join(__dirname, "..", "tsconfig.server.prod.json")
+// remove custom configs created by preBuild.js
+// function removeTsConfigs() {
+//     const tsconfigSvelteJSONPath = join(__dirname, "..", "tsconfig.svelte.prod.json")
+//     const tsconfigElectronJSONPath = join(__dirname, "..", "tsconfig.electron.prod.json")
+//     const tsconfigServerJSONPath = join(__dirname, "..", "tsconfig.server.prod.json")
 
-//   if (existsSync(tsconfigSvelteJSONPath)) unlinkSync(tsconfigSvelteJSONPath)
-//   if (existsSync(tsconfigElectronJSONPath)) unlinkSync(tsconfigElectronJSONPath)
-//   if (existsSync(tsconfigServerJSONPath)) unlinkSync(tsconfigServerJSONPath)
+//     if (existsSync(tsconfigSvelteJSONPath)) unlinkSync(tsconfigSvelteJSONPath)
+//     if (existsSync(tsconfigElectronJSONPath)) unlinkSync(tsconfigElectronJSONPath)
+//     if (existsSync(tsconfigServerJSONPath)) unlinkSync(tsconfigServerJSONPath)
 // }
 
+// MINIFY
+
+const minifyJSOptions = {
+    mangle: {
+        toplevel: true,
+    },
+    compress: {
+        passes: 2,
+    },
+    output: {
+        beautify: false,
+        preamble: "/* uglified */",
+    },
+}
+
+function minifyJSFiles(filePaths) {
+    filePaths.forEach((filePath) => minifyJS(filePath))
+}
+
+function minifyJS(filePath, newPath = "") {
+    const unminified = readFileSync(filePath, "utf8")
+
+    Terser.minify(unminified, minifyJSOptions)
+        .then((minified) => {
+            writeFileSync(newPath || filePath, minified.code)
+        })
+        .catch((err) => {
+            process.emitWarning(err)
+            process.abort()
+        })
+}
+
+// const minifyHTMLOptions = {
+//     preserveLineBreaks: false,
+//     collapseWhitespace: true,
+//     collapseInlineTagWhitespace: true,
+//     minifyURLs: true,
+//     minifyJS: true,
+//     minifyCSS: true,
+//     removeComments: true,
+//     removeAttributeQuotes: true,
+//     removeEmptyAttributes: true,
+//     removeEmptyElements: true,
+//     removeRedundantAttributes: true,
+//     removeScriptTypeAttributes: true,
+//     removeStyleLinkTypeAttributes: true,
+//     useShortDoctype: true,
+//     quoteCharacter: "'",
+// }
+
+// function minifyHTML(curPath, newPath) {
+//     const unminified = readFileSync(curPath, "utf8")
+
+//     const unminifiedCorrected = unminified.replace(
+//         '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src http://localhost:*; connect-src ws://localhost:*">',
+//         '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'">'
+//     )
+
+//     const minified = HTMLMinifier.minify(unminifiedCorrected, minifyHTMLOptions)
+//     writeFileSync(newPath, minified)
+// }
+
+// function minifyCSS(curPath, newPath) {
+//     const unminified = readFileSync(curPath, "utf8")
+//     const minified = new CleanCSS().minify(unminified)
+
+//     writeFileSync(newPath, minified.styles)
+// }
+
+// EXECUTE
+
 const bundledElectronPath = join(__dirname, "..", "build")
-
-const jsFiles = getAllJSFiles(bundledElectronPath)
-minifyJSFiles(jsFiles)
-
+minifyJSFiles(getAllJSFiles(bundledElectronPath))
 copyPublicFolderAndMinify(join(__dirname, "..", "public"), join(bundledElectronPath, "public"))
-// cleanTsconfig()
+// removeTsConfigs()
