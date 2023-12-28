@@ -60,15 +60,16 @@ function copyPublicFolderAndMinify(folderPath, destinationPath) {
 }
 
 // remove custom configs created by preBuild.js
-// function removeTsConfigs() {
-//     const tsconfigSvelteJSONPath = join(__dirname, "..", "tsconfig.svelte.prod.json")
-//     const tsconfigElectronJSONPath = join(__dirname, "..", "tsconfig.electron.prod.json")
-//     const tsconfigServerJSONPath = join(__dirname, "..", "tsconfig.server.prod.json")
+function removeTsConfigs() {
+    const configs = ["svelte", "electron", "server"]
+    configs.forEach(deleteConfig)
 
-//     if (existsSync(tsconfigSvelteJSONPath)) unlinkSync(tsconfigSvelteJSONPath)
-//     if (existsSync(tsconfigElectronJSONPath)) unlinkSync(tsconfigElectronJSONPath)
-//     if (existsSync(tsconfigServerJSONPath)) unlinkSync(tsconfigServerJSONPath)
-// }
+    function deleteConfig(id) {
+        const prodConfidPath = join(__dirname, "..", `tsconfig.${id}.prod.json`)
+        if (!existsSync(prodConfidPath)) return
+        unlinkSync(prodConfidPath)
+    }
+}
 
 // MINIFY
 
@@ -144,4 +145,4 @@ function minifyJS(filePath, newPath = "") {
 const bundledElectronPath = join(__dirname, "..", "build")
 minifyJSFiles(getAllJSFiles(bundledElectronPath))
 copyPublicFolderAndMinify(join(__dirname, "..", "public"), join(bundledElectronPath, "public"))
-// removeTsConfigs()
+removeTsConfigs()

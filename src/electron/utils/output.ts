@@ -1,7 +1,6 @@
 import { BrowserWindow } from "electron"
-import { join } from "path"
-import { isMac, isProd, mainWindow, toApp } from ".."
-import { MAIN, OUTPUT, STARTUP } from "../../types/Channels"
+import { isMac, loadWindowContent, mainWindow, toApp } from ".."
+import { MAIN, OUTPUT } from "../../types/Channels"
 import { Message } from "../../types/Socket"
 import { startCapture, stopCapture, updatePreviewResolution } from "../ndi/capture"
 import { createSenderNDI, stopSenderNDI } from "../ndi/ndi"
@@ -51,33 +50,28 @@ function createOutputWindow(options: any, id: string, name: string) {
     if (options.alwaysOnTop) window.setAlwaysOnTop(true, "pop-up-menu", 1)
     // window.setVisibleOnAllWorkspaces(true)
 
-    const url: string = isProd ? `file://${join(__dirname, "..", "..", "..", "public", "index.html")}` : "http://localhost:3000"
-
-    window.loadURL(url).catch((err) => {
-        console.error(JSON.stringify(err))
-    })
-
-    window.on("ready-to-show", () => {
-        mainWindow?.focus()
-        window!.setMenu(null)
-        window!.setTitle(name || "Output")
-    })
-
-    window.webContents.on("did-finish-load", () => {
-        window!.webContents.send(STARTUP, { channel: "TYPE", data: "output" })
-    })
-
-    window.on("move", (e: any) => {
-        if (!moveEnabled || updatingBounds) return e.preventDefault()
-
-        let bounds = window?.getBounds()
-        toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
-    })
+    loadWindowContent(window, true)
+    setWindowListeners(window, { id, name })
 
     // open devtools
     // if (!isProd) window.webContents.openDevTools()
 
     return window
+}
+
+function setWindowListeners(window: BrowserWindow, { id, name }: { [key: string]: string }) {
+    window.on("ready-to-show", () => {
+        mainWindow?.focus()
+        window.setMenu(null)
+        window.setTitle(name || "Output")
+    })
+
+    window.on("move", (e: any) => {
+        if (!moveEnabled || updatingBounds) return e.preventDefault()
+
+        let bounds = window.getBounds()
+        toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
+    })
 }
 
 export async function closeAllOutputs() {

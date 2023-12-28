@@ -17,7 +17,7 @@
         "build:frontend:prod": "cross-env NODE_ENV=production rollup -c",
         "build:electron:dev": "tsc --p ./tsconfig.electron.json",
         "build:electron:dev:watch": "tsc -w --p ./tsconfig.electron.json",
-        "build:electron:prod": "cross-env NODE_ENV=production tsc --p ./tsconfig.electron.json",
+        "build:electron:prod": "cross-env NODE_ENV=production tsc --p ./tsconfig.electron.prod.json",
         "validate:svelte": "svelte-check",
         "start:electron:run": "electron .",
         "start:electron:nodemon": "nodemon",

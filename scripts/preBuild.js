@@ -1,4 +1,4 @@
-const { readdirSync, existsSync, lstatSync, unlinkSync, rmdirSync } = require("fs")
+const { readdirSync, existsSync, lstatSync, unlinkSync, rmdirSync, readFileSync, writeFileSync } = require("fs")
 const { join } = require("path")
 
 // app build file paths
@@ -26,39 +26,22 @@ function deleteFolderRecursive(folderPath) {
     rmdirSync(folderPath)
 }
 
-// PRODUCTION CONFIG - WITHOUT SOURCE MAP (Already disabled)
+// create production configs with no source map
+function generateProdConfigs() {
+    const configs = ["svelte", "electron", "server"]
+    configs.forEach(createProdConfig)
 
-// function generateProdTSConfig() {
-//     const tsconfigSvelteJSONPath = join(__dirname, "..", "tsconfig.svelte.json")
-//     const tsconfigElectronJSONPath = join(__dirname, "..", "tsconfig.electron.json")
-//     const tsconfigServerJSONPath = join(__dirname, "..", "tsconfig.server.json")
+    function createProdConfig(id) {
+        const baseConfigPath = join(__dirname, "..", `tsconfig.${id}.json`)
+        const rawConfig = readFileSync(baseConfigPath, "utf8")
+        const parsedConfig = JSON.parse(rawConfig || "{}")
 
-//     const tsconfigSvelteJSONRaw = readFileSync(tsconfigSvelteJSONPath, "utf8")
-//     const tsconfigElectronJSONRaw = readFileSync(tsconfigElectronJSONPath, "utf8")
-//     const tsconfigServerJSONRaw = readFileSync(tsconfigServerJSONPath, "utf8")
+        if (!parsedConfig.compilerOptions) parsedConfig.compilerOptions = {}
+        parsedConfig.compilerOptions.sourceMap = false
 
-//     const tsconfigSvelteJSON = JSON.parse(tsconfigSvelteJSONRaw)
-//     const tsconfigElectronJSON = JSON.parse(tsconfigElectronJSONRaw)
-//     const tsconfigServerJSON = JSON.parse(tsconfigServerJSONRaw)
+        const newConfigPath = baseConfigPath.replace(`tsconfig.${id}.json`, `tsconfig.${id}.prod.json`)
+        writeFileSync(newConfigPath, JSON.stringify(parsedConfig))
+    }
+}
 
-//     tsconfigSvelteJSON.compilerOptions.sourceMap = false
-//     tsconfigElectronJSON.compilerOptions.sourceMap = false
-//     tsconfigServerJSON.compilerOptions.sourceMap = false
-
-//     const newTsconfigSvelteJSONPath = tsconfigSvelteJSONPath.replace("tsconfig.svelte.json", "tsconfig.svelte.prod.json")
-//     const newTsconfigElectronJSONPath = tsconfigElectronJSONPath.replace("tsconfig.electron.json", "tsconfig.electron.prod.json")
-//     const newTsconfigServerJSONPath = tsconfigServerJSONPath.replace("tsconfig.server.json", "tsconfig.server.prod.json")
-
-//     writeFileSync(newTsconfigSvelteJSONPath, JSON.stringify(tsconfigSvelteJSON))
-//     writeFileSync(newTsconfigElectronJSONPath, JSON.stringify(tsconfigElectronJSON))
-//     writeFileSync(newTsconfigServerJSONPath, JSON.stringify(tsconfigServerJSON))
-// }
-
-// if (process.env.NODE_ENV === "production") {
-//     generateProdTSConfig()
-// } else {
-//     var execSync = require("child_process").execSync
-//     var compiler = "npm run prestart:build"
-
-//     execSync(compiler)
-// }
+if (process.env.NODE_ENV === "production") generateProdConfigs()

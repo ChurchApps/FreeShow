@@ -130,38 +130,46 @@ function createMain() {
     // create window
     mainWindow = new BrowserWindow({ ...mainOptions, ...options })
 
-    // load path
-    if (isProd) mainWindow.loadFile("public/index.html").catch(err)
-    else mainWindow.loadURL("http://localhost:3000").catch(err)
-
-    function err(err: any) {
-        console.error("Something went wrong when loading index:", JSON.stringify(err))
-        app.quit()
-    }
-
-    // listeners
-    mainWindow.on("maximize", () => config.set("maximized", true))
-    mainWindow.on("unmaximize", () => config.set("maximized", false))
-    mainWindow.on("resize", () => config.set("bounds", mainWindow!.getBounds()))
-    mainWindow.on("move", () => config.set("bounds", mainWindow!.getBounds()))
-
-    mainWindow.webContents.on("did-finish-load", () => {
-        mainWindow!.webContents.send(STARTUP, { channel: "TYPE", data: null })
-    })
-
-    mainWindow.on("close", (e) => {
-        if (dialogClose) return
-
-        e.preventDefault()
-        toApp(MAIN, { channel: "CLOSE" })
-    })
-
-    mainWindow.on("closed", exitApp)
-
+    loadWindowContent(mainWindow)
+    setMainListeners()
     setGlobalMenu()
 
     // open devtools
     if (!isProd) mainWindow.webContents.openDevTools()
+}
+
+export function loadWindowContent(window: BrowserWindow, isOutput: boolean = false) {
+    if (isProd) window.loadFile("public/index.html").catch(error)
+    else window.loadURL("http://localhost:3000").catch(error)
+
+    window.webContents.on("did-finish-load", () => {
+        window.webContents.send(STARTUP, { channel: "TYPE", data: isOutput ? "output" : null })
+    })
+
+    function error(err: any) {
+        console.error("Failed to load window:", JSON.stringify(err))
+        if (!isOutput) app.quit()
+    }
+}
+
+function setMainListeners() {
+    if (!mainWindow) return
+
+    mainWindow.on("maximize", () => config.set("maximized", true))
+    mainWindow.on("unmaximize", () => config.set("maximized", false))
+
+    mainWindow.on("resize", () => config.set("bounds", mainWindow?.getBounds()))
+    mainWindow.on("move", () => config.set("bounds", mainWindow?.getBounds()))
+
+    mainWindow.on("close", callClose)
+    mainWindow.on("closed", exitApp)
+}
+
+function callClose(e: any) {
+    if (dialogClose) return
+    e.preventDefault()
+
+    toApp(MAIN, { channel: "CLOSE" })
 }
 
 export async function exitApp() {
@@ -181,7 +189,7 @@ export async function exitApp() {
         // shouldn't need to use exit!
         app.exit()
     } catch (err) {
-        console.error(err)
+        console.error("Failed closing app:", err)
     }
 }
 
