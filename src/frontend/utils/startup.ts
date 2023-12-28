@@ -31,6 +31,7 @@ import {
     allOutputs,
     audioChannels,
     audioFolders,
+    closeAd,
     currentWindow,
     dataPath,
     deviceId,
@@ -354,6 +355,7 @@ const receiveOUTPUTasOUTPUT: any = {
         // used for stage mirror data (hacky fix)
         allOutputs.set(a)
     },
+    CLOSE_AD: () => closeAd.set(true),
     STYLES: (a: any) => styles.set(a),
     // BACKGROUND: (a: any) => outBackground.set(a),
     TRANSITION: (a: any) => transitionData.set(a),

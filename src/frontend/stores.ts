@@ -73,6 +73,7 @@ export const slideTimers: Writable<{ [key: string]: any }> = writable({})
 export const outputCache: Writable<any> = writable(null)
 export const previewBuffers: Writable<any> = writable({})
 export const ndiData: Writable<any> = writable({})
+export const closeAd: Writable<boolean> = writable(false)
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
