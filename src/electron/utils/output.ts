@@ -15,7 +15,6 @@ export let outputWindows: { [key: string]: BrowserWindow } = {}
 async function createOutput(output: Output) {
     let id: string = output.id || ""
 
-    // WIP has to restart because capture don't work when window is hidden...
     if (outputWindows[id]) return removeOutput(id, output)
 
     outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
@@ -107,15 +106,7 @@ function displayOutput(data: any) {
     let window: BrowserWindow = outputWindows[data.output?.id]
 
     if (data.enabled === "toggle") data.enabled = !window?.isVisible()
-
-    if (!data.enabled) {
-        let windows = window ? [window] : Object.values(outputWindows)
-
-        windows.forEach(hideWindow)
-        if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data })
-
-        return
-    }
+    if (data.enabled !== false) data.enabled = true
 
     if (!window || window.isDestroyed()) {
         if (!data.output) return
@@ -134,18 +125,18 @@ function displayOutput(data: any) {
     const margin = 50
     let windowNotCoveringMain: boolean = xDif > margin || yDif < -margin || (xDif < -margin && yDif > margin)
 
-    if (bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
+    if (data.enabled && bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
         showWindow(window)
 
         if (bounds) updateBounds(data.output)
     } else {
-        hideWindow(window)
+        hideWindow(window, data.output)
 
         data.enabled = false
         if (!data.auto) toApp(MAIN, { channel: "ALERT", data: "error.display" })
     }
 
-    toApp(OUTPUT, { channel: "DISPLAY", data })
+    if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data })
 }
 
 // MacOS Menu Bar
@@ -161,12 +152,14 @@ function showWindow(window: BrowserWindow) {
     window.moveTop()
 }
 
-function hideWindow(window: BrowserWindow) {
+function hideWindow(window: BrowserWindow, data: any) {
     if (!window || window.isDestroyed()) return
 
     window.setKiosk(false)
     window.hide()
 
+    // WIP has to restart because window is unresponsive when hidden again (until showed again)...
+    console.log("RESTARTING OUTPUT:", data.id)
     toApp(OUTPUT, { channel: "RESTART" })
 }
 

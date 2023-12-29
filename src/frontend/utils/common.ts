@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { getActiveOutputs } from "../components/helpers/output"
-import { activeEdit, activePage, activeShow, autosave, currentWindow, disabledServers, focusedArea, os, outputDisplay, outputs, serverData, special, version } from "../stores"
+import { activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, focusedArea, os, outputDisplay, outputs, serverData, special, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { newToast } from "./messages"
 import { send } from "./request"
@@ -11,7 +11,12 @@ import { save } from "./save"
 export function hideDisplay(ctrlKey: boolean = true) {
     if (!ctrlKey) return
     outputDisplay.set(false)
-    window.api.send(OUTPUT, { channel: "DISPLAY", data: { enabled: false } })
+
+    let outputsList: any[] = getActiveOutputs(get(allOutputs), false)
+    outputsList.forEach((id) => {
+        let output: any = { id, ...get(allOutputs)[id] }
+        send(OUTPUT, ["DISPLAY"], { enabled: false, output })
+    })
 }
 
 // select all focus
