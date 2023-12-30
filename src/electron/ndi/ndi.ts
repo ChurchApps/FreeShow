@@ -2,7 +2,7 @@
 // import type { VideoFrame } from "grandiose"
 // import pcmconvert from "pcm-converter"
 import os from "os"
-import { toApp } from ".."
+import { isLinux, toApp } from ".."
 import { updateFramerate } from "./capture"
 import util from "./vingester-util"
 
@@ -19,7 +19,7 @@ import util from "./vingester-util"
 let timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
 
 export async function findStreamsNDI(): Promise<any> {
-    if (os.platform() === "linux") return
+    if (isLinux) return
     const grandiose = require("grandiose")
 
     return new Promise((resolve, reject) => {
@@ -38,7 +38,7 @@ export async function findStreamsNDI(): Promise<any> {
 export async function receiveStreamNDI({ source }: any) {
     if (receivers[source.urlAddress]) return
 
-    if (os.platform() === "linux") return
+    if (isLinux) return
     const grandiose = require("grandiose")
 
     // WIP this just crashes
@@ -91,7 +91,7 @@ export function stopSenderNDI(id: string) {
 
 export let NDI: any = {}
 export async function createSenderNDI(id: string, title: string = "") {
-    if (os.platform() === "linux") return
+    if (isLinux) return
     const grandiose = require("grandiose")
 
     if (NDI[id]) return
@@ -139,7 +139,7 @@ export async function createSenderNDI(id: string, title: string = "") {
 export async function sendVideoBufferNDI(id: string, buffer: any, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
     if (!NDI[id]?.sender) return
 
-    if (os.platform() === "linux") return
+    if (isLinux) return
     const grandiose = require("grandiose")
 
     /*  convert from ARGB (Electron/Chromium on big endian CPU)
@@ -190,7 +190,7 @@ export async function sendVideoBufferNDI(id: string, buffer: any, { size = { wid
 export async function sendAudioBufferNDI(id: string, buffer: Buffer, { sampleRate, noChannels, bytesForFloat32 }: any) {
     if (!NDI[id].sender) return
 
-    if (os.platform() === "linux") return
+    if (isLinux) return
     const grandiose = require("grandiose")
 
     /*  convert from PCM/signed-16-bit/little-endian data

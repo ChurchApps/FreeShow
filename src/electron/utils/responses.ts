@@ -6,7 +6,7 @@ import { getFonts } from "font-list"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
-import { closeMain, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
+import { closeMain, isLinux, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
@@ -41,7 +41,7 @@ import { error_log } from "./store"
 export function startImport(_e: any, msg: Message) {
     let files: string[] = selectFilesDialog("", msg.data.format)
 
-    let isLinuxAndPfdImport = os.platform() === "linux" && msg.channel === "pdf"
+    let isLinuxAndPfdImport = isLinux && msg.channel === "pdf"
     let needsFileAndNoFileSelected = msg.data.format.extensions && !files.length
     if (needsFileAndNoFileSelected || isLinuxAndPfdImport) return
 

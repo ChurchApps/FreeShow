@@ -26,10 +26,16 @@ export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]e
 // get os platform
 export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
+export const isLinux: boolean = process.platform === "linux"
 
 // check if store works
 config.set("loaded", true)
 if (!config.get("loaded")) console.error("Could not get stored data!")
+
+// info
+console.log("Starting FreeShow...")
+if (!isProd) console.log("Building app! This may take 20-90 seconds")
+if (isLinux) console.log("libva error on Linux can be ignored")
 
 // start when ready
 app.on("ready", startApp)
@@ -138,13 +144,13 @@ function createMain() {
 }
 
 export function loadWindowContent(window: BrowserWindow, isOutput: boolean = false) {
-    console.log("Loading main content")
+    if (!isOutput) console.log("Loading main window content")
     if (isProd) window.loadFile("public/index.html").catch(error)
     else window.loadURL("http://localhost:3000").catch(error)
 
     window.webContents.on("did-finish-load", () => {
         window.webContents.send(STARTUP, { channel: "TYPE", data: isOutput ? "output" : null })
-        if (!isOutput) retry()
+        if (!isOutput) retryLoadingContent()
     })
 
     function error(err: any) {
@@ -156,7 +162,7 @@ export function loadWindowContent(window: BrowserWindow, isOutput: boolean = fal
 // retry loading until content has finshed building
 const retryInterval = 10
 let tries = 0
-function retry() {
+function retryLoadingContent() {
     if (isProd) return
 
     setTimeout(() => {
