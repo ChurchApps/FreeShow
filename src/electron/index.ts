@@ -32,10 +32,7 @@ config.set("loaded", true)
 if (!config.get("loaded")) console.error("Could not get stored data!")
 
 // start when ready
-app.on("ready", () => {
-    if (isProd) startApp()
-    else setTimeout(startApp, 32 * 1000) // Increase on low CPU.
-})
+app.on("ready", startApp)
 
 function startApp() {
     createLoading()
@@ -60,7 +57,9 @@ function initialize() {
 }
 
 // get LOADED message from frontend
+let isLoaded: boolean = false
 ipcMain.once("LOADED", () => {
+    isLoaded = true
     if (config.get("maximized")) mainWindow!.maximize()
     mainWindow?.show()
     loadingWindow?.close()
@@ -139,17 +138,36 @@ function createMain() {
 }
 
 export function loadWindowContent(window: BrowserWindow, isOutput: boolean = false) {
+    console.log("Loading main content")
     if (isProd) window.loadFile("public/index.html").catch(error)
     else window.loadURL("http://localhost:3000").catch(error)
 
     window.webContents.on("did-finish-load", () => {
         window.webContents.send(STARTUP, { channel: "TYPE", data: isOutput ? "output" : null })
+        if (!isOutput) retry()
     })
 
     function error(err: any) {
         console.error("Failed to load window:", JSON.stringify(err))
         if (!isOutput) app.quit()
     }
+}
+
+// retry loading until content has finshed building
+const retryInterval = 10
+let tries = 0
+function retry() {
+    if (isProd) return
+
+    setTimeout(() => {
+        if (isLoaded) return
+
+        if (tries < 1) console.log("Loading content again - App is probably not finished building yet")
+        else console.log("Trying to load content again")
+        tries++
+
+        mainWindow!.webContents.reload()
+    }, retryInterval * 1000)
 }
 
 function setMainListeners() {
