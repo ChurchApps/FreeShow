@@ -88,6 +88,10 @@
             ]
         },
         "linux": {
+            "asarUnpack": [
+                "node_modules/grandiose/**"
+            ],
+            "category": "AudioVideo",
             "target": [
                 "AppImage",
                 "deb"
@@ -146,7 +150,7 @@
         "follow-redirects": "^1.15.2",
         "font-list": "^1.4.5",
         "genius-lyrics": "^4.4.3",
-        "grandiose": "vassbo/grandiose#cf49a3e",
+        "grandiose": "vassbo/grandiose#a1b25c3",
         "jzz": "^1.5.9",
         "node-machine-id": "^1.1.12",
         "npm-run-all": "^4.1.5",

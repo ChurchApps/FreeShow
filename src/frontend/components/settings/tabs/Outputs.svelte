@@ -122,6 +122,8 @@
     let edit: any
 
     $: activeOutputs = Object.values($outputs).filter((a) => !a.stageOutput && a.enabled && a.active === true)
+
+    const ndiNotSupported = $os.platform === "linux" && $os.arch !== "x64" && $os.arch !== "ia32"
 </script>
 
 <div class="info">
@@ -227,12 +229,11 @@
 <CombinedInput>
     <p>
         <T id="actions.enable" /> NDI®
-        <!-- {#if $os.platform === "linux"}(Currently not supported on Linux){/if} -->
+        {#if ndiNotSupported}(Device architecture not supported){/if}
         <span class="connections">{$ndiData[currentOutput.id || ""]?.connections || ""}</span>
     </p>
     <div class="alignRight">
-        <!-- disabled={$os.platform === "linux"} -->
-        <Checkbox checked={currentOutput.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
+        <Checkbox disabled={ndiNotSupported} checked={currentOutput.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
     </div>
 </CombinedInput>
 
