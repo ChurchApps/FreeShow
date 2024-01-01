@@ -86,7 +86,7 @@
     style="width: {$mediaOptions.mode === 'grid' ? 100 : 100 / $mediaOptions.columns}%;"
     mode={$mediaOptions.mode}
     width={100}
-    changed={!!mediaStyle.filter?.length || mediaStyle.flipped}
+    changed={!!mediaStyle.filter?.length || mediaStyle.flipped || mediaStyle.flippedY}
     preview={$activeShow?.id === path}
     outlineColor={findMatchingOut(path, $outputs)}
     active={findMatchingOut(path, $outputs) !== null}

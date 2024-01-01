@@ -56,7 +56,7 @@ import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { exportProject } from "../export/project"
-import { clone } from "../helpers/array"
+import { clone, removeDuplicates } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
@@ -71,10 +71,12 @@ import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
+    if (!actions[id]) return console.log("MISSING CONTEXT: ", id)
+
     let obj = { sel, actionItem, enabled, contextElem, menu }
     console.log("MENU CLICK: " + id, obj)
-    if (actions[id]) return actions[id](obj)
-    console.log("MISSING CONTEXT: ", id)
+
+    actions[id](obj)
 }
 
 const actions: any = {
@@ -946,7 +948,7 @@ export function removeGroup(data: any) {
 
         removeSlideIds.push(refSlide.id)
     })
-    removeSlideIds = [...new Set(removeSlideIds)]
+    removeSlideIds = removeDuplicates(removeSlideIds)
     if (!removeSlideIds.length) return
 
     let newParentIds: any = {}
@@ -1021,7 +1023,7 @@ export function removeSlide(data: any, type: "delete" | "remove" = "delete") {
 
     let slides = parents
     // don't do anything with the children if it's removing parents
-    if (type === "remove") slides = [...new Set(slides)]
+    if (type === "remove") slides = removeDuplicates(slides)
     else slides.push(...childs)
 
     if (!slides.length) return
@@ -1034,6 +1036,8 @@ export function format(id: string, obj: any, data: any = null) {
 
     let editing = get(activeEdit)
     let items = editing.items || []
+
+    // WIP let slide = getEditSlide()
 
     if (editing.id) {
         let currentItems: any[] = []

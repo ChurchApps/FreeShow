@@ -16,7 +16,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { isSameDay } from "../../calendar/calendar"
+    import { getTime, isSameDay } from "../../calendar/calendar"
 
     let stored: string = ""
 
@@ -114,17 +114,11 @@
         stored = JSON.stringify(editEvent)
     }
 
-    // const copy = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
     const getISO = (date: Date) => {
         date = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes())
         date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
         console.log(date)
         return date.toISOString().substring(0, 10)
-    }
-    function getTime(date: Date) {
-        let h = ("0" + date.getHours()).slice(-2)
-        let m = ("0" + date.getMinutes()).slice(-2)
-        return h + ":" + m
     }
     const inputChange = (e: any, key: string) => ((editEvent as any)[key] = e.target.value)
     const check = (e: any, key: string) => ((editEvent as any)[key] = e.target.checked)
@@ -347,7 +341,7 @@
             <Icon id="location" size={1.2} right />
             <T id="calendar.location" />
         </p>
-        <TextInput value={editEvent.location} style="width: 50%;" on:input={(e) => inputChange(e, "location")} />
+        <TextInput value={editEvent.location || ""} style="width: 50%;" on:input={(e) => inputChange(e, "location")} />
     </CombinedInput>
 
     <CombinedInput textWidth={30}>
@@ -355,7 +349,7 @@
             <Icon id="notes" size={1.2} right />
             <T id="calendar.notes" />
         </p>
-        <TextInput value={editEvent.notes} style="width: 50%;" on:input={(e) => inputChange(e, "notes")} />
+        <TextInput value={editEvent.notes || ""} style="width: 50%;" on:input={(e) => inputChange(e, "notes")} />
     </CombinedInput>
 {:else if selectedType.id === "show"}
     <!-- <Dropdown options={showsList} value={selectedShow.name || "—"} on:click={(e) => (selectedShow = e.detail)} /> -->

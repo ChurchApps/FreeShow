@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { uid } from "uid"
     import { READ_FOLDER } from "../../../../types/Channels"
     import { activeShow, audioFolders, dictionary, media, outLocked, playingAudio } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { getAudioDuration, playAudio } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
     import Icon from "../../helpers/Icon.svelte"
@@ -13,6 +15,7 @@
     import AudioStreams from "../live/AudioStreams.svelte"
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
+    import { onDestroy } from "svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -62,8 +65,12 @@
     let filesInFolders: string[] = []
     $: console.log(filesInFolders)
 
+    let listenerId = uid()
+    onDestroy(() => window.api.removeListener(READ_FOLDER, listenerId))
+
     // receive files
-    window.api.receive(READ_FOLDER, (msg: any) => {
+    window.api.receive(READ_FOLDER, receiveContent, listenerId)
+    function receiveContent(msg: any) {
         filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
 
         if (active === "all" || msg.path === path) {
@@ -76,14 +83,14 @@
             // filterFiles()
             scrollElem?.scrollTo(0, 0)
         }
-    })
+    }
 
     // search
     $: if (searchValue !== undefined || files) filterSearch()
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     let fullFilteredFiles: any[] = []
     function filterSearch() {
-        fullFilteredFiles = JSON.parse(JSON.stringify(files))
+        fullFilteredFiles = clone(files)
         if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(searchValue))
     }
 

@@ -90,7 +90,8 @@ export function swichProjectItem(pos: number, id: string) {
 
     // set project layout
     projects.update((a) => {
-        a[get(activeProject)!].shows[pos!].layout = get(showsCache)[id].settings.activeLayout
+        if (Object.keys(get(showsCache)[id].layouts).length < 2) delete a[get(activeProject)!].shows[pos!].layout
+        else a[get(activeProject)!].shows[pos!].layout = get(showsCache)[id].settings.activeLayout
         return a
     })
 }
@@ -616,11 +617,11 @@ export function activateTrigger(trigger) {
 
 const customTriggers = {
     http: (value: string) => {
-        fetch(value, { method: "POST" })
+        fetch(value, { method: "GET" })
             // .then((response) => response.json())
             // .then((json) => console.log(json))
             .catch((err) => {
-                console.error("Could not send POST request:", err)
+                console.error("Could not send HTTP request:", err)
             })
     },
 }

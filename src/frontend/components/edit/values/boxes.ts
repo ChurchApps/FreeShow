@@ -87,6 +87,7 @@ export const boxes: Box = {
                 { name: "size", id: "chords.size", input: "number", value: 30, hidden: true },
             ],
             special: [
+                { name: "no_wrap", id: "nowrap", input: "checkbox", value: false },
                 {
                     name: "scrolling",
                     input: "dropdown",
@@ -177,7 +178,9 @@ export const boxes: Box = {
             default: [
                 { id: "src", input: "media" },
                 { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
-                { name: "media.flip", id: "flipped", input: "checkbox", value: false },
+                { name: "actions.mute", id: "muted", input: "checkbox", value: false },
+                { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
+                { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },
             ],
             filters: [
                 { name: "filter.hue-rotate", id: "filter", key: "hue-rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
@@ -409,6 +412,7 @@ export const boxes: Box = {
             // TODO: select show popup
             default: [
                 { name: "enable_stage", id: "mirror.enableStage", input: "checkbox", value: false },
+                { name: "next_slide", id: "mirror.nextSlide", input: "checkbox", value: false },
                 { name: "popup.select_show", id: "mirror.show", input: "dropdown", value: "", values: { options: [] } },
                 { name: "use_slide_index", id: "mirror.useSlideIndex", input: "checkbox", value: true },
                 { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 },

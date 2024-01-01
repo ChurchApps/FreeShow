@@ -34,7 +34,24 @@ export function removeEmpty(array: any[]): any[] {
     return array.filter((a: any): number => a.length)
 }
 
+// remove duplicates from array (only lowest level)
+export function removeDuplicates(array: any[]): any[] {
+    return [...new Set(array)]
+}
+
+// sort array (or event object) by time in ascending order
+export function sortByTime(a, b) {
+    if (a.from) a = a.from
+    if (b.from) b = b.from
+    return new Date(a).getTime() - new Date(b).getTime()
+}
+
 // OBJETS
+
+// sort objects in array by name
+export function sortByName(arr: any[]) {
+    return arr.sort((a, b) => a.name.localeCompare(b.name))
+}
 
 // sort objects in array alphabeticly
 export function sortObject(object: {}[], key: string): {}[] {

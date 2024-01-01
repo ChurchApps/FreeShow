@@ -57,15 +57,15 @@
     $: if (out.refresh || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
     $: if (out.refresh || JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
 
-    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()[0] : null
+    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()?.[0] : null
 
     // transition
     $: slideData = slideRef?.[slide.index!]?.data || null
-    $: slideTextTransition = slideData ? slideData.transition : null
-    $: slideMediaTransition = slideData ? slideData.mediaTransition : null
-    $: transition = disableTransitions ? { type: "none" } : slideTextTransition ? slideTextTransition : $transitionData.text
-    $: mediaTransition = disableTransitions ? { type: "none" } : slideMediaTransition ? slideMediaTransition : $transitionData.media
-    $: overlayTransition = disableTransitions ? { type: "none" } : $transitionData.text
+    $: slideTextTransition = slideData?.transition?.type ? slideData.transition : null
+    $: slideMediaTransition = slideData?.mediaTransition?.type ? slideData.mediaTransition : null
+    $: transition = disableTransitions ? { type: "none" } : slideTextTransition || $transitionData.text || {}
+    $: mediaTransition = disableTransitions ? { type: "none" } : slideMediaTransition || $transitionData.media || {}
+    $: overlayTransition = disableTransitions ? { type: "none" } : $transitionData.text || {}
 
     $: currentLayout = slide ? _show(slide.id).layouts([slide.layout]).ref()[0] : []
     $: currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? clone(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {}) : null) : null
@@ -96,6 +96,9 @@
                 // scrolling, bindings
                 currentSlide.items[i].specialStyle = item.specialStyle || {}
             })
+
+            // remove items that are not textbox (overwriting with a new template will remove the old images)
+            if (slide.id === "temp") currentSlide.items = currentSlide.items.filter((a) => a.lines)
 
             // add other items
             currentSlide.items = [...templateOtherItems, ...currentSlide.items]
@@ -447,7 +450,7 @@
         {#key slideClone || linesIndex}
             <!-- WIP svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild')) -->
             <!-- svelte transition bug when changing between pages -->
-            {#if transition.type === "none"}
+            {#if transition.type === "none" || transition.duration === 0}
                 <span style="pointer-events: none;display: block;">
                     {#if slideClone?.items}
                         {#each slideClone.items as item}
@@ -467,6 +470,8 @@
                                     linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled={!mirror}
                                     outputStyle={currentStyle}
+                                    {mirror}
+                                    slideIndex={slide.index}
                                 />
                             {/if}
                         {/each}
@@ -494,6 +499,8 @@
                                     linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled
                                     outputStyle={currentStyle}
+                                    {mirror}
+                                    slideIndex={slide.index}
                                 />
                                 <!-- </span> -->
                             {/if}

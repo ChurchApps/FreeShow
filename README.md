@@ -32,6 +32,15 @@ FreeShow exists because the creator found that other simular programs was either
 
 The only reason this program is free is because of the generous support from users. If you want to support us to keep this free, please head over to [Live Church Solutions](https://livecs.org/partner). Thank you so much!
 
+## Help the development
+
+You are welcome to contribute to the code!
+
+1. Clone the code in this repo
+2. Install [Node.js](https://nodejs.org/en/download/)
+3. In the terminal, run: `npm install`
+4. To start the app, run: `npm start`
+
 ## Report an issue or request a feature
 
 Create an [issue on GitHub](https://github.com/vassbo/freeshow/issues).

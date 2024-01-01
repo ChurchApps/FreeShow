@@ -51,5 +51,14 @@ export const itemEdits: { [key: string]: EditInput[] } = {
     //   { name: "blur", id: "style", key: "inset_box-shadow", valueIndex: 3, input: "number", value: 0, extension: "px" },
     //   { name: "length", id: "style", key: "inset_box-shadow", valueIndex: 4, input: "number", value: 0, values: { min: -100 }, extension: "px" },
     // ],
+    backdrop_filters: [
+        { name: "filter.hue-rotate", id: "backdrop-filter", key: "hue-rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
+        { name: "filter.invert", id: "backdrop-filter", key: "invert", input: "number", value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.blur", id: "backdrop-filter", key: "blur", input: "number", value: 0, values: { max: 100 }, extension: "px" },
+        { name: "filter.grayscale", id: "backdrop-filter", key: "grayscale", input: "number", value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.brightness", id: "backdrop-filter", key: "brightness", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.contrast", id: "backdrop-filter", key: "contrast", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+        { name: "filter.saturate", id: "backdrop-filter", key: "saturate", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+    ],
     CSS: [{ id: "item", input: "CSS" }],
 }

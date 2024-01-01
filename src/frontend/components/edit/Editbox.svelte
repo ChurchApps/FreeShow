@@ -305,7 +305,7 @@
         item?.lines?.forEach((line, i) => {
             let align = line.align.replaceAll(lineBg, "")
             currentStyle += align + lineBg
-            let style = line.align || lineBg ? 'style="' + line.align + lineBg + '"' : ""
+            let style = align || lineBg ? 'style="' + align + lineBg + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line
@@ -690,7 +690,7 @@
         item.lines!.forEach((line, i) => {
             if (!line.text) return
 
-            let chords = JSON.parse(JSON.stringify(line.chords || []))
+            let chords = clone(line.chords || [])
 
             let html = ""
             let currentIndex = 0
@@ -744,7 +744,11 @@ bind:offsetWidth={width} -->
     bind:this={itemElem}
     class={plain ? "editItem" : "editItem item context #edit_box"}
     class:selected={$activeEdit.items.includes(index)}
-    style={plain ? "width: 100%;" : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1};${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`}
+    style={plain
+        ? "width: 100%;"
+        : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? "filter: " + filter + ";" : ""}${
+              backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""
+          }`}
     data-index={index}
     on:mousedown={mousedown}
 >
@@ -827,11 +831,11 @@ bind:offsetWidth={width} -->
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}
                 <!-- video -->
-                <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={true} autoplay loop>
+                <video src={item.src} style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" muted={true} autoplay loop>
                     <track kind="captions" />
                 </video>
             {:else}
-                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
                 <!-- <MediaLoader path={item.src} /> -->
             {/if}
         {/if}
@@ -855,7 +859,7 @@ bind:offsetWidth={width} -->
         <Visualizer {item} />
     {:else if item?.type === "icon"}
         {#if item.customSvg}
-            <div class="customIcon">
+            <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>
                 {@html item.customSvg}
             </div>
         {:else}
@@ -1067,5 +1071,8 @@ bind:offsetWidth={width} -->
     .customIcon :global(svg) {
         width: 100%;
         height: 100%;
+    }
+    .customIcon.customColor :global(svg path) {
+        fill: currentColor;
     }
 </style>

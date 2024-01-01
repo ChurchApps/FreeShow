@@ -12,7 +12,7 @@ export const languages: any = {
     pl: "Polski", // Polish
     hu: "Magyar", // Hungarian
     sr: "Srpski", // Serbian
-    si: "Slovenščina", // Slovenian
+    sl: "Slovenščina", // Slovenian
     ua: "Українська", // Ukrainian
     tr: "Türkçe", // Turkish
 }
@@ -34,7 +34,7 @@ export const replace: any = {
     pl: ["pl"],
     hu: ["hu"],
     sr: ["sr"],
-    si: ["si", "sl"],
+    sl: ["si", "sl"],
     ua: ["ua", "uk"],
     tr: ["tr"],
 }

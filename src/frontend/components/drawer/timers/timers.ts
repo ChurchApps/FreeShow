@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Timer } from "../../../../types/Show"
 import { activeProject, activeTimers, events, projects, timers } from "../../../stores"
-import { clone } from "../../helpers/array"
+import { clone, removeDuplicates } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
 
@@ -39,7 +39,7 @@ export function getTimer(ref: any) {
         timer = get(timers)[ref.id]
     }
 
-    return JSON.parse(JSON.stringify(timer || {}))
+    return clone(timer || {})
 }
 
 export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
@@ -109,7 +109,7 @@ export async function loadProjectTimers(projectShows = get(projects)[get(activeP
     )
 
     // remove duplicates
-    list = [...new Set(list)]
+    list = removeDuplicates(list)
     return list
 }
 

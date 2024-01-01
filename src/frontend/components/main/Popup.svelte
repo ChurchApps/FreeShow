@@ -143,7 +143,7 @@
         width: 100%;
         height: 100%;
         padding: 20px 300px;
-        z-index: 80;
+        z-index: 5000;
 
         font-size: 1.2em;
 

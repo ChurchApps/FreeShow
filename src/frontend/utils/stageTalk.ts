@@ -3,10 +3,11 @@ import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
-import { events, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { events, media, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
+import { clone } from "../components/helpers/array"
 
 // WIP this should not send to all stage, just connected ids
 export function stageListen() {
@@ -56,31 +57,34 @@ export function sendBackgroundToStage(outputId, updater = get(outputs), returnPa
     let path = updater[outputId]?.out?.background?.path || ""
     if (!path) return
 
-    let background = get(mediaCache)[path]?.data || null
-    if (!background) return
+    let background = get(mediaCache)[path] || {}
+    let base64path = background.data
+    if (!base64path) return
 
-    let bg = { path: background, nextPath: getNextBackground(outputId) }
+    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: getNextBackground(outputId) })
 
     if (returnPath) return bg
 
-    // TODO: send next background as well....
     send(STAGE, ["BACKGROUND"], bg)
     return
 }
 
 function getNextBackground(outputId: string) {
     let currentOutputSlide = get(outputs)[outputId]?.out?.slide
-    if (!currentOutputSlide?.id) return ""
+    if (!currentOutputSlide?.id) return {}
 
     let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
     let nextLayout = layout[(currentOutputSlide.index || 0) + 1]
-    if (!nextLayout) return ""
+    if (!nextLayout) return {}
 
     let bgId = nextLayout.data.background || ""
     let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
-    let background = get(mediaCache)[path]?.data || ""
 
-    return background
+    let background = get(mediaCache)[path] || {}
+    let base64path = background.data
+    if (!base64path) return {}
+
+    return { path: base64path, mediaStyle: get(media)[path] || {} }
 }
 
 export const receiveSTAGE: any = {
@@ -119,23 +123,18 @@ export const receiveSTAGE: any = {
         return msg
     },
     SLIDES: (msg: ClientMessage) => {
-        console.log(get(connections))
-        console.log(msg)
         // TODO: rework how stage talk works!! (I should send to to each individual connected stage with it's id!)
         let stageId = msg.data?.id
         if (!stageId && Object.keys(get(connections).STAGE || {}).length === 1) stageId = (Object.values(get(connections).STAGE)[0] as any).active
         let show = get(stageShows)[stageId] || {}
-        console.log(show)
         let outputId = show.settings?.output || getActiveOutputs()[0]
         let currentOutput: any = get(outputs)[outputId]
         let out: any = currentOutput?.out?.slide || null
         msg.data = []
-        console.log(out)
 
         if (!out || out.id === "temp") return msg
         let ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
         let slides: any = _show(out.id).get()?.slides
-        console.log(slides)
 
         if (!ref?.[out.index!]) return
         msg.data = [slides[ref[out.index!].id]]
@@ -143,13 +142,11 @@ export const receiveSTAGE: any = {
         let nextIndex = out.index! + 1
         while (nextIndex < ref.length && ref[nextIndex].data.disabled === true) nextIndex++
 
-        console.log(ref[nextIndex])
         if (nextIndex < ref.length && !ref[nextIndex].data.disabled) msg.data.push(slides[ref[nextIndex].id])
         else msg.data.push(null)
 
         sendBackgroundToStage(outputId)
 
-        console.log(msg.data)
         return msg
     },
     REQUEST_STREAM: (msg: ClientMessage) => {
@@ -184,16 +181,3 @@ function turnIntoBoolean(array: any[], key: string) {
         return a
     })
 }
-
-// function getStageShows() {
-//   return Object.entries(get(stageShows))
-//     .map(([id, a]: any) => ({ id, enabled: a.enabled, name: a.name, password: a.password.length ? true : false }))
-//     .filter((a) => a.enabled)
-// }
-// export function getStageShow() {
-//   let obj = {}
-//   Object.entries(get(stageShows))
-//     .map(([id, a]: any) => ({ id, enabled: a.enabled, name: a.name, settings: a.settings, items: a.items }))
-//     .filter((a) => a.enabled)
-//   return obj
-// }

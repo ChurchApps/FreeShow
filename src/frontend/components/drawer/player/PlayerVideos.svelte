@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeShow, outLocked, outputs, playerVideos } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
@@ -19,7 +20,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     let fullFilteredVideos: any[] = []
     function filterSearch() {
-        fullFilteredVideos = JSON.parse(JSON.stringify(videos))
+        fullFilteredVideos = clone(videos)
         if (searchValue.length > 1) fullFilteredVideos = fullFilteredVideos.filter((a) => filter(a.name).includes(searchValue))
     }
 

@@ -52,7 +52,7 @@ const keys: any = {
     Delete: () => deleteAction(get(selected), "remove"),
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
-    F2: () => setTimeout(menuClick("rename", true, null, null, null, get(selected))),
+    F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
 }
 
 export function keydown(e: any) {

@@ -18,6 +18,9 @@
     import Folder from "./Folder.svelte"
     import Media from "./MediaCard.svelte"
     import { loadFromPixabay } from "./pixabay"
+    import { clone } from "../../helpers/array"
+    import { uid } from "uid"
+    import { onDestroy } from "svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -87,8 +90,12 @@
 
     let filesInFolders: string[] = []
 
+    let listenerId = uid()
+    onDestroy(() => window.api.removeListener(READ_FOLDER, listenerId))
+
     // receive files
-    window.api.receive(READ_FOLDER, (msg: any) => {
+    window.api.receive(READ_FOLDER, receiveContent)
+    function receiveContent(msg: any) {
         filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
 
         if (active !== "all" && msg.path !== path) return
@@ -97,7 +104,7 @@
         files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         filterFiles()
-    })
+    }
 
     let scrollElem: any
 
@@ -143,7 +150,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
     let fullFilteredFiles: any[] = []
     function filterSearch() {
-        fullFilteredFiles = JSON.parse(JSON.stringify(filteredFiles))
+        fullFilteredFiles = clone(filteredFiles)
         if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(searchValue))
     }
 

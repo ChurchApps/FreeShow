@@ -11,6 +11,7 @@
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let translate: number = 0
     export let side: "right" | "left" = "right"
+
     $: transform = side === "right" ? "100%" : "-100%"
 
     let open: boolean = false
@@ -21,22 +22,24 @@
     function onMouseOver(e: any) {
         if (elem.contains(e.target)) {
             clearTimeout()
-            if (!open) {
-                timeout = setTimeout(() => {
-                    open = true
-                    timeout = null
-                }, duration)
-            }
+            if (open) return
+
+            timeout = setTimeout(() => {
+                open = true
+                timeout = null
+            }, duration)
+
             return
         }
 
         if (open && e.target?.closest(".contextMenu") !== null) {
-            if (timeout === null) {
-                timeout = setTimeout(() => {
-                    open = false
-                    timeout = null
-                }, duration / 2)
-            }
+            if (timeout !== null) return
+
+            timeout = setTimeout(() => {
+                open = false
+                timeout = null
+            }, duration / 2)
+
             return
         }
 
@@ -44,10 +47,10 @@
     }
 
     function clearTimeout() {
-        if (timeout !== null) {
-            window.clearTimeout(timeout)
-            timeout = null
-        }
+        if (timeout === null) return
+
+        window.clearTimeout(timeout)
+        timeout = null
     }
 
     function click(e: any) {
@@ -62,12 +65,18 @@
 <svelte:window on:mouseover={onMouseOver} />
 
 <div bind:this={elem} class="item" on:click={click} tabindex={0} on:keydown={keydown}>
-    <span style="display: flex;align-items: center;gap: 10px;">
-        {#if menu?.icon}<Icon id={menu.icon} />{/if}
-        {#key menu}
-            <T id={menu?.label || id} />
-        {/key}
+    <span style="display: flex;gap: 10px;justify-content: space-between;width: 100%;">
+        <div class="left" style="display: flex;align-items: center;gap: 10px;">
+            {#if menu?.icon}<Icon id={menu.icon} />{/if}
+            {#key menu}
+                <T id={menu?.label || id} />
+            {/key}
+        </div>
+        <div class="right" style="display: flex;align-self: center;opacity: 0.7;">
+            <Icon id="arrow_right" size={1.2} white />
+        </div>
     </span>
+
     {#if open}
         <div class="submenu" style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-10px'});">
             {#if menu.items?.length}
@@ -100,10 +109,6 @@
     .item:hover {
         background-color: rgb(0 0 0 / 0.2);
     }
-    .item::after {
-        content: ">";
-        color: var(--secondary);
-    }
 
     hr {
         margin: 5px 10px;
@@ -121,6 +126,6 @@
         background-color: var(--primary);
         box-shadow: 2px 2px 3px rgb(0 0 0 / 0.2);
         padding: 5px 0;
-        z-index: 80;
+        z-index: 5000;
     }
 </style>

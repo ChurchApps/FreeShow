@@ -28,17 +28,6 @@
   `
     if (autoStage) itemStyle = itemStyle + newSizes
 
-    // TODO: use autoSize.ts
-    // let height: number = 0
-    // $: lineCount =
-    //   item.lines?.reduce((count, line) => {
-    //     let fullText = line.text.map((text) => text.value).join("")
-    //     let lineBreaks = Math.ceil(fullText.length / 40)
-    //     return count + lineBreaks
-    //   }, 0) || 0
-    // // $: autoSize = item.lines ? height / (item.lines.length + 3) : 0
-    // $: autoSize = item.lines ? height / (lineCount + 3) : 0
-
     $: lineGap = item?.specialStyle?.lineGap
     $: lineBg = item?.specialStyle?.lineBg
 
@@ -49,8 +38,6 @@
         loaded = true
     })
 
-    $: console.log(autoSize, fontSize, stageItem, loaded)
-
     let alignElem: any
     let loopStop = false
     const MAX_FONT_SIZE = 800
@@ -58,14 +45,11 @@
 
     $: if (autoSize && loaded) getCustomAutoSize()
     function getCustomAutoSize() {
-        console.log(loopStop, !loaded, !alignElem, !autoSize)
         if (loopStop || !loaded || !alignElem || !autoSize) return
         loopStop = true
 
         fontSize = MAX_FONT_SIZE
         addStyleToElemText(fontSize)
-
-        console.log(fontSize)
 
         // quick search (double divide)
         let lowestValue = MIN_FONT_SIZE

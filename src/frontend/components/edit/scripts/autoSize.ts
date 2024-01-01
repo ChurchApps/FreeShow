@@ -1,4 +1,3 @@
-import { GetLayout } from "../../helpers/get"
 import { get } from "svelte/store"
 import { activeEdit, activeShow } from "../../../stores"
 import { _show } from "../../helpers/shows"
@@ -36,7 +35,7 @@ export function autoSize(items: number[], fullItems: any[], check: boolean = tru
         }
     })
 
-    let layout = GetLayout()[get(activeEdit).slide!]
+    let layout = _show().layouts("active").ref()[0][get(activeEdit).slide!]
     if (!values.length || !layout?.id) return
 
     _show([get(activeShow)!.id])
@@ -59,6 +58,7 @@ export function getAutoSize(item: any, styles: any = null, oneLine: boolean = fa
     let itemWidth = styles.width
 
     let fullTextLength = getItemText(item).length
+    // TODO: this is not much in use:
     if (!oneLine && fullTextLength > 10) {
         // dont ask me how this works
 

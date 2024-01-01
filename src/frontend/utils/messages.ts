@@ -27,7 +27,6 @@ import {
     imageExtensions,
     labelsDisabled,
     language,
-    lockedOverlays,
     mediaFolders,
     mediaOptions,
     midiIn,
@@ -65,6 +64,7 @@ import { send } from "./request"
 import { closeApp } from "./save"
 import { client } from "./sendData"
 import { stageListen } from "./stageTalk"
+import { clone, removeDuplicates } from "../components/helpers/array"
 
 export function listen() {
     // FROM CLIENT (EXPRESS SERVERS)
@@ -90,19 +90,63 @@ export function listen() {
     })
 
     // SAVE
-    // TODO: better saved check!
-    let s = { ...saveList, folders: folders, overlays: overlays, projects: projects, showsCache: showsCache, stageShows: stageShows }
+    let cachedValues: any = {}
+    let s = { ...saveList, folders, overlays, projects, showsCache, stageShows }
     setTimeout(() => {
-        Object.values(s).forEach((a) => {
-            if (a) a.subscribe(() => saved.set(false))
+        Object.keys(s).forEach((id) => {
+            if (!s[id]) return
+
+            s[id].subscribe((a: any) => {
+                if (customSavedListener[id] && a) {
+                    a = customSavedListener[id](clone(a))
+                    let stringObj = JSON.stringify(a)
+                    if (cachedValues[id] === stringObj) return
+
+                    cachedValues[id] = stringObj
+                }
+
+                saved.set(false)
+            })
+
+            // set cached custom listener on load
+            let store = get(s[id])
+            if (customSavedListener[id] && store) {
+                store = customSavedListener[id](clone(store))
+                cachedValues[id] = JSON.stringify(store)
+            }
         })
+
         saved.set(true)
     }, 5000)
 }
 
+const customSavedListener = {
+    showsCache: (data: any) => {
+        Object.keys(data).forEach((id) => {
+            delete data[id].timestamps
+            delete data[id].settings
+
+            Object.values(data[id].slides).forEach((slide: any) => {
+                delete slide.id
+            })
+        })
+
+        return data
+    },
+    projects: (data: any) => {
+        Object.keys(data).forEach((id) => {
+            data[id].shows.map((show) => {
+                delete show.layout
+            })
+        })
+
+        return data
+    },
+}
+
 export function newToast(msg: string) {
     if (!msg) return
-    toastMessages.set([...new Set([...get(toastMessages), msg])])
+    toastMessages.set(removeDuplicates([...get(toastMessages), msg]))
 }
 
 const fileSelected = {
@@ -214,7 +258,7 @@ const saveList: { [key in SaveList]: any } = {
     events: events,
     showsPath: showsPath,
     dataPath: dataPath,
-    lockedOverlays: lockedOverlays,
+    lockedOverlays: null,
     drawer: null,
     drawerTabsData: null,
     drawSettings: drawSettings,

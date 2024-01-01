@@ -24,8 +24,6 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
         let xItems = [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
         let yItems = [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
 
-        // TODO: more snapping
-
         // get other items pos
         itemElem.closest(".slide").querySelectorAll(".item").forEach(getItemLines)
 
@@ -64,6 +62,18 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
             else if (match === undefined && linesInclude) lines = lines.filter((m: any) => m.join("") !== id + l)
         })
     }
+
+    // remove item margin snap when aligned to items
+    // WIP make this work and not get stuck
+    // let verticalLines = lines.filter((a) => a[0].includes("x"))
+    // let centeredLine = lines.find((a) => a[0].includes("xc"))
+    // console.log(centeredLine, verticalLines)
+    // if (!centeredLine && verticalLines.length > 1) {
+    //     styles.left = verticalLines[0][1]
+    //     styles.width = (verticalLines[2]?.[1] || verticalLines[1][1]) - verticalLines[0][1]
+    // }
+
+    // WIP remove duplicate lines (both x and same coords (or less than very simular))
 
     return [styles, lines]
 }

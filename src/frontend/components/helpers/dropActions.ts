@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioStreams, drawerTabsData, imageExtensions, media, projects, showsCache, videoExtensions } from "../../stores"
 import { addItem } from "../edit/scripts/itemHelpers"
-import { clone } from "./array"
+import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
@@ -111,20 +111,39 @@ export const dropActions: any = {
 
         return history
     },
-    all_slides: ({ drag, drop }: any, history: any) => {
-        history.location = { page: "show" }
+    all_slides: ({ drag, drop }: any, h: any) => {
+        h.location = { page: "show" }
+        let templateId = drag.data[0]
 
         if (drag.id === "template") {
-            history.id = "TEMPLATE"
+            h.id = "TEMPLATE"
 
             // TODO: add slide
             // if (trigger) location.layoutSlide = index
             let indexes: number[] = []
-            if (drop.center) indexes.push(drop.index)
-            history.newData = { id: drag.data[0], data: { createItems: true }, indexes }
+            if (drop.center) {
+                // indexes.push(drop.index)
+                // history({ id: "UPDATE", newData: { data: templateId, key: "settings", keys: ["template"] }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } })
+                // history({ id: "SLIDES", newData: { index: drop.index, replace: { settings: isParent } } })
+
+                let ref = _show().layouts("active").ref()[0]
+                let slideId = ref[drop.index].id
+                let slideSettings = _show().slides([slideId]).get("settings")
+                let oldData: any = { style: clone(slideSettings) }
+                let newData: any = { style: { ...clone(slideSettings), template: templateId } }
+
+                history({
+                    id: "slideStyle",
+                    oldData,
+                    newData,
+                    location: { page: "edit", show: get(activeShow)!, slide: slideId },
+                })
+                return
+            }
+            h.newData = { id: templateId, data: { createItems: true }, indexes }
         }
 
-        return history
+        return h
     },
     navigation: ({ drag, drop }: any, h: any) => {
         if (drop.data !== "all" && get(activeDrawerTab) && (drag.id === "show" || drag.id === "show_drawer")) {
@@ -323,7 +342,7 @@ const slideDrop: any = {
                 if (parentMovedToOwnChildren) return
 
                 children.map((_id: string, childIndex: number) => selected.push(index + childIndex + 1))
-                selected = [...new Set(selected)]
+                selected = removeDuplicates(selected)
             }
 
             sortedLayout = mover(ref, selected, drop.index)
@@ -398,7 +417,7 @@ const slideDrop: any = {
         history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any[] = [...new Set([...(ref?.data?.overlays || []), ...drag.data])]
+        let data: any[] = removeDuplicates([...(ref?.data?.overlays || []), ...drag.data])
 
         history.newData = { key: "overlays", data, dataIsArray: true, indexes: [drop.index] }
         return history

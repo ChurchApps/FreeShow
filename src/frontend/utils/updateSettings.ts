@@ -109,8 +109,6 @@ export function updateSettings(data: any) {
 
         restartOutputs()
     }
-    // if (data.outputPosition) send(OUTPUT, ["POSITION"], data.outputPosition)
-    // if (data.autoOutput) send(OUTPUT, ["DISPLAY"], { enabled: true, screen: data.outputScreen })
 
     // remote
     let disabled = data.disabledServers || {}
@@ -137,9 +135,7 @@ export function updateSettings(data: any) {
 
     loaded.set(true)
 
-    // setTimeout(() => {
     window.api.send("LOADED")
-    // }, 800)
 }
 
 export function restartOutputs() {
@@ -155,7 +151,6 @@ export function updateThemeValues(themes: any) {
 
     Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
     Object.entries(themes.font).forEach(([key, value]: any) => {
-        // || themeId === "default"
         if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
@@ -193,12 +188,10 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         setOutput("overlays", v, false, null, true)
     },
     os: (v: any) => console.log("saved os:", v),
-    // TODO: get device lang
     language: (v: any) => {
         language.set(v)
         setLanguage(v)
     },
-    // events: (v: any) => events.set(v),
     alertUpdates: (v: any) => alertUpdates.set(v === false ? false : true),
     autoOutput: (v: any) => {
         autoOutput.set(v)
@@ -248,17 +241,16 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     slidesOptions: (v: any) => slidesOptions.set(v),
     splitLines: (v: any) => splitLines.set(v),
     templateCategories: (v: any) => templateCategories.set(v),
-    // templates: (v: any) => templates.set(v),
     timers: (v: any) => timers.set(v),
     variables: (v: any) => variables.set(v),
     triggers: (v: any) => triggers.set(v),
     audioStreams: (v: any) => audioStreams.set(v),
     theme: (v: any) => theme.set(v),
     transitionData: (v: any) => transitionData.set(v),
-    // themes: (v: any) => themes.set(v),
     imageExtensions: (v: any) => {
         // set this in case it's not up to date with stores
         if (!v.includes("webp")) v.push("webp")
+        if (!v.includes("avif")) v.push("avif")
         imageExtensions.set(v)
     },
     videoExtensions: (v: any) => videoExtensions.set(v),

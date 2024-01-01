@@ -59,6 +59,7 @@ export interface Slide {
     color: null | string
     globalGroup?: string
     settings: {
+        template?: string
         background?: boolean
         color?: string
         resolution?: Resolution
@@ -90,6 +91,8 @@ export interface Item {
     fit?: string
     filter?: string
     flipped?: boolean
+    flippedY?: boolean // media item
+    muted?: boolean // media item
     variable?: any
     web?: any
     bindings?: string[] // bind item to stage or an output
@@ -140,6 +143,7 @@ export interface Mirror {
     show?: string
     stage?: string
     enableStage?: boolean
+    nextSlide?: boolean
     useSlideIndex?: boolean
     index?: number
 }
@@ -182,12 +186,11 @@ export interface SlideData {
     parent?: ID // layout ref
     children?: any // layout slide
     color?: null | string
-    // TODO: this is next slide timer
-    nextTimer?: number
+    nextTimer?: number // next slide timer
     transition?: Transition
     filterEnabled?: ["background", "foreground"]
     filter?: string
-    end?: boolean
+    end?: boolean // go to start
     timer?: number
     background?: string // set backgorund action?
     overlays?: string[]
@@ -278,6 +281,7 @@ export interface OutBackground {
     loop?: boolean
     filter?: string
     flipped?: boolean
+    flippedY?: boolean
     // name?: string
     type?: MediaType
 }

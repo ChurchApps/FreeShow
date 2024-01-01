@@ -137,6 +137,7 @@
             {#each invertedItemList as currentItem, i}
                 {@const index = invertedItemList.length - i - 1}
                 {@const type = getType(currentItem)}
+                <!-- TODO: context menu -->
                 <Button
                     style="width: 100%;justify-content: space-between;"
                     active={$activeEdit.items.includes(index)}

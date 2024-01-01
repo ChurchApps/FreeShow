@@ -35,6 +35,7 @@ import { midiInListen } from "./midi"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { eachConnection, sendData, timedout } from "./sendData"
+import { getActiveOutputs } from "../components/helpers/output"
 
 export function listenForUpdates() {
     shows.subscribe((data) => {
@@ -105,10 +106,16 @@ export function listenForUpdates() {
     })
 
     draw.subscribe((data) => {
-        send(OUTPUT, ["DRAW"], data)
+        let activeOutputs = getActiveOutputs()
+        activeOutputs.forEach((id) => {
+            send(OUTPUT, ["DRAW"], { id, data })
+        })
     })
     drawTool.subscribe((data) => {
-        send(OUTPUT, ["DRAW_TOOL"], data)
+        let activeOutputs = getActiveOutputs()
+        activeOutputs.forEach((id) => {
+            send(OUTPUT, ["DRAW_TOOL"], { id, data })
+        })
     })
     drawSettings.subscribe((data) => {
         send(OUTPUT, ["DRAW_SETTINGS"], data)

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { showsCache } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { _show } from "../../helpers/shows"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
@@ -25,7 +26,7 @@
 
     // $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize
 
-    $: reversedItems = JSON.parse(JSON.stringify(slide?.items || [])).reverse()
+    $: reversedItems = clone(slide?.items || []).reverse()
     $: items = style ? slide?.items || [] : combineSlideItems()
 
     function combineSlideItems() {

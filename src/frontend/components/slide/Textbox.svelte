@@ -137,7 +137,7 @@
 
     $: textAnimation = animationStyle.text || ""
 
-    $: transition = transitionEnabled && item.actions?.transition
+    $: transition = transitionEnabled && item.actions?.transition && item.actions.transition.type !== "none" && item.actions.transition.duration > 0
     $: itemTransition = transition ? clone(item.actions.transition) : {}
     $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
 
@@ -272,7 +272,7 @@
         item.lines!.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
-            let chords = JSON.parse(JSON.stringify(line.chords || []))
+            let chords = clone(line.chords || [])
 
             let html = ""
             let index = 0
@@ -355,11 +355,19 @@
             {#if item.src}
                 {#if getMediaType(getExtension(item.src)) === "video"}
                     <!-- video -->
-                    <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={mirror} volume={Math.max(1, $volume)} autoplay loop>
+                    <video
+                        src={item.src}
+                        style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
+                        muted={mirror || item.muted}
+                        volume={Math.max(1, $volume)}
+                        autoplay
+                        loop
+                    >
                         <track kind="captions" />
                     </video>
                 {:else}
-                    <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+                    <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
+                    <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
                     <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
                     <!-- <MediaLoader path={item.src} /> -->
                 {/if}
@@ -384,7 +392,7 @@
             <Visualizer {item} {preview} />
         {:else if item?.type === "icon"}
             {#if item.customSvg}
-                <div class="customIcon">
+                <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>
                     {@html item.customSvg}
                 </div>
             {:else}
@@ -446,11 +454,19 @@
             {#if item.src}
                 {#if getMediaType(getExtension(item.src)) === "video"}
                     <!-- video -->
-                    <video src={item.src} style="width: 100%;height: 100%;filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" muted={mirror} volume={Math.max(1, $volume)} autoplay loop>
+                    <video
+                        src={item.src}
+                        style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
+                        muted={mirror || item.muted}
+                        volume={Math.max(1, $volume)}
+                        autoplay
+                        loop
+                    >
                         <track kind="captions" />
                     </video>
                 {:else}
-                    <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
+                    <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
+                    <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
                     <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
                     <!-- <MediaLoader path={item.src} /> -->
                 {/if}
@@ -477,7 +493,7 @@
             <Visualizer {item} {preview} />
         {:else if item?.type === "icon"}
             {#if item.customSvg}
-                <div class="customIcon">
+                <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>
                     {@html item.customSvg}
                 </div>
             {:else}
@@ -662,5 +678,8 @@
     .customIcon :global(svg) {
         width: 100%;
         height: 100%;
+    }
+    .customIcon.customColor :global(svg path) {
+        fill: currentColor;
     }
 </style>

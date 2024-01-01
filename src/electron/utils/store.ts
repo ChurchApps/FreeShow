@@ -90,12 +90,7 @@ const portableData: any = {
 
 export let userDataPath: string | null = null
 export function updateDataPath({ reset, dataPath }: any = {}) {
-    if (reset) {
-        userDataPath = app.getPath("userData")
-        updateStoresPath()
-
-        return
-    }
+    if (reset) return resetStoresPath()
 
     let settingsStore = settings.store || {}
 
@@ -109,23 +104,26 @@ export function updateDataPath({ reset, dataPath }: any = {}) {
     updateStoresPath()
 }
 
+function resetStoresPath() {
+    userDataPath = app.getPath("userData")
+    updateStoresPath()
+}
+
 function updateStoresPath() {
-    if (userDataPath === null) return
+    if (!userDataPath) return
+    Object.keys(portableData).forEach(createStoreAtNewLocation)
+}
 
-    let data: any = {}
-    Object.keys(portableData).forEach((id) => {
-        let key = portableData[id].key
+function createStoreAtNewLocation(id: string) {
+    let key = portableData[id].key
+    let tempData = JSON.parse(JSON.stringify(stores[key].store))
 
-        // store data temporarily
-        data[id] = JSON.parse(JSON.stringify(stores[key].store))
+    // set new stores to export
+    stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })
 
-        // set new stores to export
-        stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })
+    if (!Object.keys(tempData).length) return
 
-        if (!Object.keys(data[id]).length) return
-
-        // rewrite data to new location
-        stores[key].clear()
-        stores[key].set(data[id])
-    })
+    // rewrite data to new location
+    stores[key].clear()
+    stores[key].set(tempData)
 }

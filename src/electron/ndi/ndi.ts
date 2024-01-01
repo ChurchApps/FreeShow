@@ -1,10 +1,12 @@
-// import grandiose from "grandiose"
-import os from "os"
-// import type { VideoFrame } from "grandiose"
-import { toApp } from ".."
-import { updateFramerate } from "./capture"
 // import pcmconvert from "pcm-converter"
+import os from "os"
+import { isLinux, toApp } from ".."
+import { updateFramerate } from "./capture"
 import util from "./vingester-util"
+
+// WIP - NDI issue on Linux: libndi.so.5: No such file or dialog
+
+const ndiDisabled = isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -17,15 +19,16 @@ import util from "./vingester-util"
 let timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
 
 export async function findStreamsNDI(): Promise<any> {
-    // not linux
-    if (os.platform() === "linux") return
+    if (ndiDisabled) return
     const grandiose = require("grandiose")
 
     return new Promise((resolve, reject) => {
         grandiose
             .find({ showLocalSources: true })
             .then((a: any) => {
-                resolve(a)
+                // embedded, destroy(), sources(), wait()
+                let sources = a.sources()
+                resolve(sources)
             })
             .catch((err: any) => reject(err))
     })
@@ -35,20 +38,23 @@ export async function findStreamsNDI(): Promise<any> {
 export async function receiveStreamNDI({ source }: any) {
     if (receivers[source.urlAddress]) return
 
-    // not linux
-    if (os.platform() === "linux") return
+    if (ndiDisabled) return
     const grandiose = require("grandiose")
 
+    // WIP this just crashes
     let receiver = await grandiose.receive({ source })
 
     let timeout = 5000 // Optional timeout, default is 10000ms
 
     try {
-        receivers[source.urlAddress] = setInterval(async () => {
-            let videoFrame = await receiver.video(timeout)
+        let videoFrame = await receiver.video(timeout)
+        toApp("NDI", { channel: "RECEIVE_STREAM", data: videoFrame })
 
-            toApp("NDI", { channel: "RECEIVE_STREAM", data: videoFrame })
-        }, 100)
+        // receivers[source.urlAddress] = setInterval(async () => {
+        //     let videoFrame = await receiver.video(timeout)
+
+        //     toApp("NDI", { channel: "RECEIVE_STREAM", data: videoFrame })
+        // }, 100)
 
         // for ( let x = 0 ; x < 10 ; x++) {
         //     let videoFrame = await receiver.video(timeout);
@@ -85,8 +91,7 @@ export function stopSenderNDI(id: string) {
 
 export let NDI: any = {}
 export async function createSenderNDI(id: string, title: string = "") {
-    // not linux
-    if (os.platform() === "linux") return
+    if (ndiDisabled) return
     const grandiose = require("grandiose")
 
     if (NDI[id]) return
@@ -134,8 +139,7 @@ export async function createSenderNDI(id: string, title: string = "") {
 export async function sendVideoBufferNDI(id: string, buffer: any, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
     if (!NDI[id]?.sender) return
 
-    // not linux
-    if (os.platform() === "linux") return
+    if (ndiDisabled) return
     const grandiose = require("grandiose")
 
     /*  convert from ARGB (Electron/Chromium on big endian CPU)
@@ -186,8 +190,7 @@ export async function sendVideoBufferNDI(id: string, buffer: any, { size = { wid
 export async function sendAudioBufferNDI(id: string, buffer: Buffer, { sampleRate, noChannels, bytesForFloat32 }: any) {
     if (!NDI[id].sender) return
 
-    // not linux
-    if (os.platform() === "linux") return
+    if (ndiDisabled) return
     const grandiose = require("grandiose")
 
     /*  convert from PCM/signed-16-bit/little-endian data

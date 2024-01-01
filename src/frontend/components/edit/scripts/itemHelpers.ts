@@ -55,19 +55,15 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
 
 export function getEditSlide() {
     let active = get(activeEdit)
-    let slide: any = {}
 
     if (active.id) {
-        if (active.type === "overlay") slide = get(overlays)[active.id]
-        else if (active.type === "template") slide = get(templates)[active.id]
-
-        return slide
+        if (active.type === "overlay") return get(overlays)[active.id]
+        if (active.type === "template") return get(templates)[active.id]
+        return {}
     }
 
     let editSlideRef: any = _show().layouts("active").ref()[0]?.[active.slide ?? ""] || {}
-    slide = _show().get("slides")?.[editSlideRef.id]
-
-    return slide
+    return _show().get("slides")?.[editSlideRef.id]
 }
 
 export function getEditItems(onlyActive: boolean = false) {

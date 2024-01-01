@@ -2,13 +2,11 @@
     import { activeDays, activePopup, dictionary, eventEdit, events } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
+    import { sortByTime } from "../helpers/array"
     import Center from "../system/Center.svelte"
+    import { copyDate, getTime, isBetween, isSameDay } from "./calendar"
 
     export let type: string = "event"
-
-    const copy = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
-    const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-    const isBetween = (from: Date, to: Date, date: Date) => date >= copy(from) && date <= copy(to)
 
     let current = new Date($activeDays[0])
     let currentEvents: any[] = []
@@ -19,21 +17,15 @@
 
     function updateEvents() {
         current = new Date($activeDays[0])
-        let temp: any[] = []
+        let tempEvents: any[] = []
 
         Object.entries($events).forEach(([id, a]) => {
-            if (isBetween(new Date(a.from), new Date(a.to), copy(current))) temp.push({ id, ...a })
+            if (isBetween(new Date(a.from), new Date(a.to), copyDate(current))) tempEvents.push({ id, ...a })
         })
 
         // sort
-        temp = temp.filter((a) => a.type === type)
-        currentEvents = temp.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
-    }
-
-    function getTime(date: Date) {
-        let h = ("0" + date.getHours()).slice(-2)
-        let m = ("0" + date.getMinutes()).slice(-2)
-        return h + ":" + m
+        tempEvents = tempEvents.filter((a) => a.type === type)
+        currentEvents = tempEvents.sort(sortByTime)
     }
 </script>
 
@@ -43,6 +35,7 @@
             {current.getDate()}. {$dictionary.month?.[current.getMonth() + 1]}
             {current.getFullYear()}
         </span>
+
         <div class="scroll">
             {#if currentEvents.length}
                 {#each currentEvents as event}
@@ -57,12 +50,12 @@
                     >
                         {#if event.time}
                             <span class="time">
-                                {#if sameDay(new Date(event.from), current)}
+                                {#if isSameDay(new Date(event.from), current)}
                                     {getTime(new Date(event.from))}
                                 {/if}
-                                {#if !sameDay(new Date(event.from), current) || new Date(event.from).getTime() - new Date(event.to).getTime() > 0}
-                                    {#if sameDay(new Date(event.to), current)}
-                                        {#if sameDay(new Date(event.from), current)}
+                                {#if !isSameDay(new Date(event.from), current) || new Date(event.from).getTime() - new Date(event.to).getTime() > 0}
+                                    {#if isSameDay(new Date(event.to), current)}
+                                        {#if isSameDay(new Date(event.from), current)}
                                             -
                                         {/if}
                                         {getTime(new Date(event.to))}
@@ -70,6 +63,7 @@
                                 {/if}
                             </span>
                         {/if}
+
                         <div style="display: flex;align-items: center;overflow: hidden;">
                             <Icon id={event.type === "event" ? "calendar" : event.type} right white />
                             <p>

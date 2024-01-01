@@ -15,14 +15,15 @@
     let id: string = ""
     $: if ($popupData.id) id = $popupData.id
 
-    let midi: any = { name: "MIDI", type: "noteon", values: { note: 0, velocity: -1, channel: 1 }, defaultValues: true }
+    let midi: any = { name: "MIDI", type: "noteon", values: { note: 0, velocity: $popupData.type === "in" ? -1 : 0, channel: 1 }, defaultValues: true }
     $: if (id) setMidi()
     function setMidi() {
         if ($popupData.type === "in") midi = $midiIn[id] || midi
         else midi = _show().get("midi")?.[id] || midi
 
-        // is specific show slide
-        if ($popupData.type !== "in" || $popupData.index !== undefined) midi.values.channel = 0
+        // if (!$midiIn[id]) return
+        // // is specific show slide
+        // if ($popupData.type !== "in" || $popupData.index !== undefined) midi.values.channel = 0
     }
 
     let types = [{ name: "noteon" }, { name: "noteoff" }]
@@ -148,7 +149,7 @@
         }
 
         // reset velocity
-        if (midi.action.includes("index_")) midi.values.velocity = -1
+        if (midi.action.includes("index_")) midi.values.velocity = $popupData.type === "in" ? -1 : 0
     }
 
     $: canHaveAction = $popupData.action || midi.action

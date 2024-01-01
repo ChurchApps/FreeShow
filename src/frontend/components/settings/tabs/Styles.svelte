@@ -4,7 +4,7 @@
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
+    import { clone, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getFileName } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
@@ -69,7 +69,7 @@
             return { ...obj, id }
         })
 
-        return list.sort((a, b) => a.name.localeCompare(b.name))
+        return sortByName(list)
     }
 
     // set id after deletion
@@ -149,6 +149,7 @@
 <CombinedInput>
     <p><T id="edit.background_image" /></p>
     <MediaPicker
+        id="styles"
         title={currentStyle.backgroundImage}
         filter={{ name: "Image files", extensions: $imageExtensions }}
         on:picked={(e) => {
@@ -245,7 +246,7 @@
         <Button
             on:click={() => {
                 if (activeLayers.includes("background")) activeLayers.splice(activeLayers.indexOf("background"), 1)
-                else activeLayers = [...new Set([...activeLayers, "background"])]
+                else activeLayers = removeDuplicates([...activeLayers, "background"])
                 updateStyle(activeLayers, "layers")
             }}
             style={activeLayers.includes("background") ? "border-bottom: 2px solid var(--secondary) !important;" : "border-bottom: 2px solid var(--primary-lighter);"}
@@ -260,7 +261,7 @@
         <Button
             on:click={() => {
                 if (activeLayers.includes("slide")) activeLayers.splice(activeLayers.indexOf("slide"), 1)
-                else activeLayers = [...new Set([...activeLayers, "slide"])]
+                else activeLayers = removeDuplicates([...activeLayers, "slide"])
                 updateStyle(activeLayers, "layers")
             }}
             style={activeLayers.includes("slide") ? "border-bottom: 2px solid var(--secondary) !important;" : "border-bottom: 2px solid var(--primary-lighter);"}
@@ -275,7 +276,7 @@
         <Button
             on:click={() => {
                 if (activeLayers.includes("overlays")) activeLayers.splice(activeLayers.indexOf("overlays"), 1)
-                else activeLayers = [...new Set([...activeLayers, "overlays"])]
+                else activeLayers = removeDuplicates([...activeLayers, "overlays"])
                 updateStyle(activeLayers, "layers")
             }}
             style={activeLayers.includes("overlays") ? "border-bottom: 2px solid var(--secondary) !important;" : "border-bottom: 2px solid var(--primary-lighter);"}

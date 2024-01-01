@@ -139,6 +139,8 @@
         "speed": "Speed",
         "show": "Show",
         "flip": "Flip",
+        "flip_horizontally": "Flip horizontally",
+        "flip_vertically": "Flip vertically",
         "all": "Folders, images & videos",
         "folder": "Only folders",
         "image": "Only images",
@@ -423,7 +425,8 @@
         "list": "List view",
         "lyrics": "Lyrics view",
         "text": "Text edit",
-        "update": "Update show"
+        "update": "Update show",
+        "slide_template": "Slide template"
     },
     "actions": {
         "rename": "Rename",
@@ -618,6 +621,7 @@
         "size": "Size",
         "chords": "Chords",
         "auto_size": "Auto size",
+        "no_wrap": "Text on one line",
         "line_spacing": "Line spacing",
         "line_height": "Line height",
         "letter_spacing": "Letter spacing",
@@ -662,6 +666,7 @@
         "recent": "Recently edited",
         "enable_stage": "Enable stage",
         "select_stage": "Select stage",
+        "next_slide": "Show next slide",
         "use_slide_index": "Use active index",
         "slide_index": "Slide index",
         "padding": "Padding",

@@ -8,7 +8,7 @@
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
-    import { clone } from "../helpers/array"
+    import { clone, keysToID } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { GetLayoutRef } from "../helpers/get"
     import { checkMedia, getFileName, getMediaStyle, splitPath } from "../helpers/media"
@@ -36,21 +36,6 @@
     export let altKeyPressed: boolean = false
 
     $: viewMode = $slidesOptions.mode || "grid"
-
-    // let longestText: string = ""
-    // $: {
-    //   longestText = ""
-    //   slide.items.forEach((item) => {
-    //     if (item.text) {
-    //       let t = ""
-    //       item.text.forEach((text) => {
-    //         t += text.value
-    //       })
-    //       if (t.length > longestText.length) longestText = t
-    //     }
-    //   })
-    // }
-
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
 
     let ghostBackground: Media | null = null
@@ -102,51 +87,54 @@
     }
 
     let duration: number = 0
-    // $: full_name = background ? background.path.substring(background.path.lastIndexOf("\\") + 1) : ""
-    // $: name = full_name.slice(0, full_name.lastIndexOf("."))
 
     let mediaStyle: MediaStyle = {}
     $: if (bg?.path) mediaStyle = getMediaStyle($media[bg.path], currentStyle)
 
     $: group = slide.group
-    $: {
-        if (slide.globalGroup && $groups[slide.globalGroup]) {
-            group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
-            color = $groups[slide.globalGroup].color
-            // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
-            // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
-        }
+    $: if (slide.globalGroup && $groups[slide.globalGroup]) {
+        group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
+        color = $groups[slide.globalGroup].color
+        // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+        // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
     }
 
     $: name = getGroupName(layoutSlide.id)
     // dynamic counter
     function getGroupName(slideID: string) {
         let name = group
-        if (name !== null && name !== undefined) {
-            if (!name.length) name = "—"
-            let added: any = {}
-            if ($groupNumbers) {
-                // different slides with same name
-                Object.entries(show.slides).forEach(([id, a]: any) => {
-                    if (!a) return
-                    if (added[a.group]) {
-                        added[a.group]++
-                        if (id === slideID) name += " " + added[a.group]
-                    } else added[a.group] = 1
-                })
+        if (name === null || name === undefined) return name
 
-                // same group count
-                added = {}
-                GetLayoutRef().forEach((a: any, i: number) => {
-                    if (a.type === "parent") {
-                        if (added[a.id]) {
-                            added[a.id]++
-                            if (i === index) name += " (" + added[a.id] + ")"
-                        } else added[a.id] = 1
-                    }
-                })
-            }
+        if (!name.length) name = "—"
+        let added: any = {}
+        if (!$groupNumbers) return name
+
+        // different slides with same name
+        let slides = keysToID(show.slides)
+        // sort by order when just one layout
+        if (Object.keys(show.layouts).length < 2) {
+            let layoutSlides = Object.values(show.layouts)[0]?.slides?.map(({ id }) => id) || []
+            slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
         }
+        slides.forEach((slide: any) => {
+            if (!slide) return
+            if (added[slide.group]) {
+                added[slide.group]++
+                if (slide.id === slideID) name += " " + added[slide.group]
+            } else added[slide.group] = 1
+        })
+
+        // same group count
+        added = {}
+        GetLayoutRef().forEach((a: any, i: number) => {
+            if (a.type === "parent") {
+                if (added[a.id]) {
+                    added[a.id]++
+                    if (i === index) name += " (" + added[a.id] + ")"
+                } else added[a.id] = 1
+            }
+        })
+
         return name
     }
 
@@ -181,28 +169,20 @@
 
     // || $showsCache[active].slides
     let textElem: any
-    $: {
-        if (textElem && html !== previousHTML) {
-            previousHTML = html
-            setTimeout(() => {
-                // console.log(html)
-                // let text = _shows([active]).slides([slide]).items([index]).get("text")
-                // let textItems = getItems(textElem.children)
-                // let values: any = {}
-                // if (textItems.length) values = text?.forEach((a, i) => (a.value = textItems[i]))
-                // _shows([active]).slides([slide]).items([index]).set({key: "text", values})
-                showsCache.update((a) => {
-                    let lines = a[$activeShow!.id].slides[layoutSlide.id].items[longest].lines
-                    let textItems = getItems(textElem.children)
-                    if (textItems.length) {
-                        lines?.forEach((line) => {
-                            line.text?.forEach((a, i) => (a.value = textItems[i]))
-                        })
-                    }
-                    return a
-                })
-            }, 10)
-        }
+    $: if (textElem && html !== previousHTML) {
+        previousHTML = html
+        setTimeout(() => {
+            showsCache.update((a) => {
+                let lines = a[$activeShow!.id].slides[layoutSlide.id].items[longest].lines
+                let textItems = getItems(textElem.children)
+                if (textItems.length) {
+                    lines?.forEach((line) => {
+                        line.text?.forEach((a, i) => (a.value = textItems[i]))
+                    })
+                }
+                return a
+            })
+        }, 10)
     }
 
     function getItems(children: any): any[] {
@@ -220,12 +200,10 @@
     }
     function checkItem(item: any) {
         if (item?.type !== "timer") return
-        console.log($activeTimers, item)
 
         $activeTimers.forEach((a, i) => {
             if (a.showId === $activeShow?.id && a.slideId === layoutSlide.id && a.id === item.timer.id) timer.push(i)
         })
-        console.log(timer)
     }
 
     $: resolution = getResolution(slide?.settings?.resolution, { $outputs, $styles })
@@ -262,11 +240,8 @@
 </script>
 
 <!-- TODO: faster loading ? lazy load images? -->
-<!-- TODO: noQuickEdit -->
 <!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->
 <!-- animate:flip -->
-<!-- class:right={overIndex === index && (!selected.length || index > selected[0])}
-class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
     <!-- group box -->
     {#if $fullColors}
@@ -284,7 +259,6 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <div style="width: 100%;height: 100%;">
             <SelectElem style={colorStyle} id="slide" data={{ index }} draggable trigger={list ? "column" : "row"}>
                 <!-- TODO: tab select on enter -->
-                <!-- resolution={{ width: resolution.width * zoom, height: resolution.height * zoom }} -->
                 {#if viewMode === "lyrics" && !noQuickEdit}
                     <!-- border-bottom: 1px dashed {color}; -->
                     <div class="label" title={name || ""} style="color: {color};margin-bottom: 5px;">
@@ -315,10 +289,8 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                             />
                         </div>
                     {/if}
-                    <!-- TODO: check if showid exists in shows -->
                     {#if slide.items}
                         {#each slide.items as item, i}
-                            <!-- TODO: lyrics zoom on text -->
                             {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
                                 <Textbox
                                     filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}

@@ -8,35 +8,40 @@ import { dataFolderNames, doesPathExist, getDataFolder } from "./files"
 export function downloadMedia(lessons: any[]) {
     let replace = lessons.map(checkLesson)
 
-    // https://content.lessons.church/files/lesson/mC7D-ZjSswf/mwuOnLtOdyn/tfs-elem-l4-big-point-slide.jpg?dt=1647786691771
-    // https://player.vimeo.com/progressive_redirect/playback/833667746/rendition/720p/file.mp4?loc=external&oauth2_token_id=1653686869&signature=2ca55a317970894a3df5801ceca48f5f613881dbcf3a2914f8d61c4d9796cfdd
-
     toApp(MAIN, { channel: "REPLACE_MEDIA_PATHS", data: replace.flat() })
 }
 
 function checkLesson(lesson: any) {
-    // check url
-
     const lessonsFolder = getDataFolder(lesson.path, dataFolderNames.lessons)
     const lessonFolder = path.join(lessonsFolder, lesson.name)
     fs.mkdirSync(lessonFolder, { recursive: true })
 
     return lesson.files
         .map((file: any) => {
-            let extension = ""
-            if (file.url.includes(".mp4")) extension = "mp4"
-            if (file.url.includes(".jpg") || file.url.includes(".jpeg")) extension = "jpg"
-            if (file.url.includes(".png")) extension = "png"
-            if (!extension) return
-
-            let fileName = file.name
-            if (!fileName.includes("." + extension)) fileName += "." + extension
-
-            let filePath = path.join(lessonFolder, fileName)
+            let filePath = getFilePath(file)
+            if (!filePath) return
 
             return downloadFile(filePath, file)
         })
         .filter((a: any) => a)
+
+    function getFilePath(file: any) {
+        let extension = getFileExtension(file.url)
+        if (!extension) return
+
+        let fileName = file.name
+        if (!fileName.includes("." + extension)) fileName += "." + extension
+
+        return path.join(lessonFolder, fileName)
+    }
+}
+
+function getFileExtension(url: string) {
+    if (url.includes(".mp4")) return "mp4"
+    if (url.includes(".jpg") || url.includes(".jpeg")) return "jpg"
+    if (url.includes(".png")) return "png"
+
+    return ""
 }
 
 function downloadFile(filePath: string, file: any) {
@@ -61,7 +66,6 @@ function downloadFile(filePath: string, file: any) {
         fileStream.on("finish", () => {
             fileStream.close()
             console.log("Media: '" + file.name + "', downloaded!")
-            //console.log("FROM:" + file.url)
         })
     })
 

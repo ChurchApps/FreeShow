@@ -15,18 +15,17 @@ export class ShowObj implements Show {
     slides: any
     layouts: any
     media: any
-    constructor(isPrivate: boolean = false, category: null | string = null, layoutID: string = uid(), created: number = new Date().getTime(), template: string | boolean = true) {
+
+    constructor(isPrivate: boolean = false, category: null | string = null, layoutId: string = uid(), created: number = new Date().getTime(), template: string | boolean = true) {
         if (template !== false) {
-            template = template.toString() === template ? template : _show("active").get("settings.template") || null
+            if (typeof template !== "string") template = _show().get("settings.template") || null
             if (!template && get(templates).default) template = "default"
         }
 
-        // private?: boolean,
         this.name = ""
         this.private = isPrivate
-        // this.private = private
         this.category = category
-        this.settings = { activeLayout: layoutID, template }
+        this.settings = { activeLayout: layoutId, template }
         this.timestamps = {
             created,
             modified: null,
@@ -34,7 +33,7 @@ export class ShowObj implements Show {
         }
         this.meta = {}
         this.slides = {}
-        this.layouts = { [layoutID]: { name: get(dictionary).example?.default || "Default", notes: "", slides: [] } }
+        this.layouts = { [layoutId]: { name: get(dictionary).example?.default || "Default", notes: "", slides: [] } }
         this.media = {}
     }
 }

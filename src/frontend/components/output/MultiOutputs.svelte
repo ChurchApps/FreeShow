@@ -98,7 +98,7 @@
         left: 50%;
         transform: translate(-50%, -50%);
         /* border: 4px solid var(--secondary); */
-        z-index: 90;
+        z-index: 5500;
     }
 
     .resolution {

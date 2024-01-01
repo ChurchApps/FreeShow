@@ -115,8 +115,6 @@ export function history(obj: History, undo: null | boolean = null) {
                 break
             case "slideStyle":
                 old = { style: _show(showID).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData.style }) }
-                if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
-                if (old.template) _show(showID).set(old.template)
                 break
             case "slide":
                 old = {

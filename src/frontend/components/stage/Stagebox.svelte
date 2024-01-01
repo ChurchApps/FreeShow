@@ -26,63 +26,57 @@
 
     export let mouse: any = null
     function mousedown(e: any) {
-        if (edit) {
-            console.log(e)
-            activeStage.update((ae) => {
-                if (e.ctrlKey || e.metaKey) {
-                    if (ae.items.includes(id)) {
-                        if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
-                    } else ae.items.push(id)
-                } else ae.items = [id]
-                return ae
-            })
+        if (!edit) return
 
-            // if (
-            //   (e.target.closest(".line") && !e.ctrlKey && !e.metaKey) ||
-            //   e.target.closest(".square") ||
-            //   ((e.ctrlKey || e.metaKey) && !e.target.closest(".line")) ||
-            //   e.altKey ||
-            //   e.buttons === 4
-            // ) {
-            let target = e.target.closest(".stage_item")
+        console.log(e)
+        activeStage.update((ae) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (ae.items.includes(id)) {
+                    if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
+                } else ae.items.push(id)
+            } else ae.items = [id]
 
-            mouse = {
-                x: e.clientX,
-                y: e.clientY,
-                width: target.offsetWidth,
-                height: target.offsetHeight,
-                top: target.offsetTop,
-                left: target.offsetLeft,
-                offset: {
-                    x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
-                    y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
-                    width: e.clientX / ratio - target.offsetWidth,
-                    height: e.clientY / ratio - target.offsetHeight,
-                },
-                item: { type: "stage", ...item },
-                e: e,
-            }
+            return ae
+        })
+
+        let target = e.target.closest(".stage_item")
+
+        mouse = {
+            x: e.clientX,
+            y: e.clientY,
+            width: target.offsetWidth,
+            height: target.offsetHeight,
+            top: target.offsetTop,
+            left: target.offsetLeft,
+            offset: {
+                x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
+                y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
+                width: e.clientX / ratio - target.offsetWidth,
+                height: e.clientY / ratio - target.offsetHeight,
+            },
+            item: { type: "stage", ...item },
+            e: e,
         }
     }
 
     function keydown(e: any) {
-        if (edit) {
-            if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
-                // TODO: history??
-                $stageShows[$activeStage.id!].items[id].enabled = false
-                activeStage.set({ id: $activeStage.id, items: [] })
-            }
+        if (!edit) return
+
+        if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
+            // TODO: history??
+            $stageShows[$activeStage.id!].items[id].enabled = false
+            activeStage.set({ id: $activeStage.id, items: [] })
         }
     }
 
     function deselect(e: any) {
-        if (!e.target.closest(".stageTools")) {
-            if ((edit && !e.ctrlKey && !e.metaKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
-                activeStage.update((ae) => {
-                    ae.items = []
-                    return ae
-                })
-            }
+        if (e.target.closest(".stageTools")) return
+
+        if ((edit && !e.ctrlKey && !e.metaKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
+            activeStage.update((ae) => {
+                ae.items = []
+                return ae
+            })
         }
     }
 
@@ -147,20 +141,19 @@
             </span>
         {/if}
     {:else}
-        <!-- TODO: auto size! -->
         <div class="align" style={item.align}>
             <div>
-                {#if id.split("#")[0] === "countdowns"}
-                    <!--  -->
-                {:else if id.includes("notes")}
+                {#if id.includes("notes")}
                     <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} />
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
                         {#if currentBackground}
+                            {@const slideBackground = next ? currentBackground.next : currentBackground}
+                            <span style="font-size: 0;position: absolute;">{console.log(slideBackground, currentBackground)}</span>
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                <Image path={currentBackground[next ? "nextPath" : "path"]} />
+                                <Image path={slideBackground.path} mediaStyle={slideBackground.mediaStyle} />
                             </div>
                         {/if}
 

@@ -3,7 +3,7 @@
         "outDir": "../../build",
         "target": "ES2015",
         "module": "commonjs",
-        "sourceMap": false,
+        "sourceMap": true,
         "stripInternal": true,
         "lib": ["es2015", "esnext", "dom"],
         "moduleResolution": "node",

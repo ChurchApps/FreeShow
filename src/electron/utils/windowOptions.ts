@@ -3,7 +3,7 @@
 // https://www.electronjs.org/docs/latest/api/browser-window
 
 import { join } from "path"
-import { isProd } from ".."
+import { isMac, isProd } from ".."
 
 export const loadingOptions: any = {
     width: 500,
@@ -23,7 +23,7 @@ export const loadingOptions: any = {
 export const mainOptions: any = {
     icon: "public/icon.png",
     backgroundColor: "#292c36",
-    titleBarStyle: process.platform === "darwin" ? "hidden" : "default",
+    titleBarStyle: isMac ? "hidden" : "default",
     trafficLightPosition: { x: 10, y: 12 }, // mac buttons
     show: false,
     webPreferences: {

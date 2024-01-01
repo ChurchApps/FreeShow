@@ -4,6 +4,7 @@
     import { activeEdit, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
     import { newToast } from "../../../utils/messages"
     import { clone } from "../../helpers/array"
+    import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
     import { getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -11,7 +12,6 @@
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
-    import { hexToRgb, splitRgb } from "../../helpers/color"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []
@@ -35,7 +35,6 @@
         let sel: any = window.getSelection()
 
         if (sel.type === "None") selection = null
-        // else if (sel.type === "caret") selection = [sel.anchorOffset, sel.focusOffset]
         else selection = getSelectionRange() // range
     }
 
@@ -49,29 +48,25 @@
         u: () => ({ id: "style", key: "text-decoration", value: "underline" }),
     }
     function keydown(e: any) {
-        if (selection && (e.ctrlKey || e.metaKey) && formatting[e.key]) {
-            e.preventDefault()
-            let value = formatting[e.key]()
-            // WIP line-through is removed
-            if (styles[value.key]?.includes(value.value)) value.value = ""
-            updateValue({ detail: value })
+        if (!selection || (!e.ctrlKey && !e.metaKey) || !formatting[e.key]) return
+        e.preventDefault()
 
-            // WIP reset selection (caret is at start, but it remembers the selection)
-            return
-        }
+        let value = formatting[e.key]()
+        // WIP line-through is removed
+        if (styles[value.key]?.includes(value.value)) value.value = ""
+
+        updateValue({ detail: value })
+
+        // WIP reset selection (caret is at start, but it remembers the selection)
     }
-
-    // TODO: clean here!!!
 
     // -----
 
     const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable", "web"]
 
+    const setBox = () => clone(boxes[id])
     let box: any = setBox()
     $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box = setBox()
-    function setBox() {
-        return clone(boxes[id])
-    }
 
     // get item values
     $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : item?.style || ""
@@ -98,7 +93,8 @@
         box.edit.lines[3].value = backgroundValue.a
     }
     $: if (id === "text" && box?.edit?.special) {
-        box.edit.special[0].value = item?.scrolling?.type || "none"
+        box.edit.special[0].value = !!styles["white-space"]?.includes("nowrap")
+        box.edit.special[1].value = item?.scrolling?.type || "none"
     }
     $: if (id === "text" && box?.edit?.chords) {
         box.edit.chords[0].value = item?.chords?.enabled || false
@@ -128,26 +124,37 @@
         if (!item?.mirror || !box) return
 
         let enableStage = item.mirror.enableStage || false
+        let nextSlide = item.mirror.nextSlide || false
         let useSlideIndex = item.mirror.useSlideIndex
         let index = item.mirror.index
 
-        if (enableStage) {
-            box!.edit.default[1].name = "select_stage"
-            box!.edit.default[1].values.options = getStageList()
-            box!.edit.default[1].id = "mirror.stage"
+        if (nextSlide) {
+            box.edit.default[0].hidden = true
             box.edit.default[2].hidden = true
             box.edit.default[3].hidden = true
+            box.edit.default[4].hidden = true
+        } else if (enableStage) {
+            box!.edit.default[2].name = "select_stage"
+            box!.edit.default[2].values.options = getStageList()
+            box!.edit.default[2].id = "mirror.stage"
+            box.edit.default[1].hidden = true
+            box.edit.default[3].hidden = true
+            box.edit.default[4].hidden = true
         } else {
-            box!.edit.default[1].name = "popup.select_show"
-            box!.edit.default[1].values.options = getListOfShows(!$activeEdit.id)
-            box!.edit.default[1].id = "mirror.show"
+            box!.edit.default[2].name = "popup.select_show"
+            box!.edit.default[2].values.options = getListOfShows(!$activeEdit.id)
+            box!.edit.default[2].id = "mirror.show"
+            box.edit.default[0].hidden = false
+            box.edit.default[1].hidden = false
             box.edit.default[2].hidden = false
             box.edit.default[3].hidden = false
+            box.edit.default[4].hidden = false
         }
 
         box.edit.default[0].value = enableStage
-        if (useSlideIndex !== undefined) box.edit.default[2].value = useSlideIndex
-        if (index !== undefined) box.edit.default[3].value = index
+        box.edit.default[1].value = nextSlide
+        if (useSlideIndex !== undefined) box.edit.default[3].value = useSlideIndex
+        if (index !== undefined) box.edit.default[4].value = index
     }
 
     // background opacity
@@ -175,21 +182,14 @@
         else if (input.key === "text-align") value = `text-align: ${value};`
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
-        // if (input.id === "auto") {
-        //     setTimeout(() => {
-        //         refreshEditSlide.set(true)
-        //     }, 100)
-        // }
-
-        // background opacity
         // WIP duplicate of ItemStyle.svelte
-        if (input.id === "specialStyle.opacity" || (input.value && input.id === "specialStyle.lineBg")) {
-            console.log(input, item?.specialStyle?.lineBg)
+        const lineStyleChanged = input.id === "specialStyle.opacity" || (input.value && input.id === "specialStyle.lineBg")
+        if (lineStyleChanged) setBackgroundOpacity()
+        function setBackgroundOpacity() {
             let backgroundColor = input.id === "specialStyle.lineBg" ? input.value || "" : item?.specialStyle?.lineBg || "rgb(0 0 0);"
             let rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
             let opacity = input.id === "specialStyle.opacity" ? input.value : getOldOpacity()
             let newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"
-            console.log(backgroundColor, rgb, opacity, newColor)
 
             input.id = "specialStyle.lineBg"
             input.value = newColor
@@ -200,64 +200,33 @@
         // set nested value
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
-
-            let item: any = {}
-            if ($activeEdit.id) {
-                if ($activeEdit.type === "overlay") {
-                    item = $overlays[$activeEdit.id].items[allItems[0]]
-                } else if ($activeEdit.type === "template") {
-                    item = $templates[$activeEdit.id].items[allItems[0]]
-                }
-            } else {
-                let slideId = _show().layouts("active").ref()[0][$activeEdit.slide!].id
-                let slide = clone(_show().slides([slideId]).get()[0])
-                item = slide.items[allItems[0]]
-            }
+            let item: any = getSelectedItem()
 
             input.id = splitted[0]
             value = item[splitted[0]] || {}
             value[splitted[1]] = input.value
         }
-        console.log(value)
+
+        function getSelectedItem() {
+            if ($activeEdit.id) {
+                if ($activeEdit.type === "overlay") {
+                    return $overlays[$activeEdit.id].items[allItems[0]]
+                } else if ($activeEdit.type === "template") {
+                    return $templates[$activeEdit.id].items[allItems[0]]
+                }
+            }
+
+            let slideId = _show().layouts("active").ref()[0][$activeEdit.slide!].id
+            let slide = clone(_show().slides([slideId]).get()[0])
+
+            return slide.items[allItems[0]]
+        }
+
+        // UPDATE
 
         if ($activeEdit.id) {
-            if ($activeEdit.type === "overlay") {
-                overlays.update((a: any) => {
-                    allItems.forEach((i: number) => {
-                        if (a[$activeEdit.id!].items[i]) {
-                            if (input.id.includes(".")) {
-                                let splitted = input.id.split(".")
-                                if (!a[$activeEdit.id!].items[i][splitted[0]]) a[$activeEdit.id!].items[i][splitted[0]] = {}
-                                a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
-                            } else {
-                                a[$activeEdit.id!].items[i][input.id] = value
-                            }
-                        }
-                    })
-                    return a
-                })
-
-                return
-            }
-
-            if ($activeEdit.type === "template") {
-                templates.update((a: any) => {
-                    allItems.forEach((i: number) => {
-                        if (a[$activeEdit.id!].items[i]) {
-                            if (input.id.includes(".")) {
-                                let splitted = input.id.split(".")
-                                if (!a[$activeEdit.id!].items[i][splitted[0]]) a[$activeEdit.id!].items[i][splitted[0]] = {}
-                                a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
-                            } else {
-                                a[$activeEdit.id!].items[i][input.id] = value
-                            }
-                        }
-                    })
-                    return a
-                })
-
-                return
-            }
+            if ($activeEdit.type === "overlay") overlays.update(updateItemValues)
+            else if ($activeEdit.type === "template") templates.update(updateItemValues)
 
             return
         }
@@ -270,14 +239,30 @@
 
         // update values
         box = box
+
+        return
+
+        function updateItemValues(a: any) {
+            allItems.forEach((i: number) => {
+                if (!a[$activeEdit.id!].items[i]) return
+
+                if (!input.id.includes(".")) {
+                    a[$activeEdit.id!].items[i][input.id] = value
+                    return
+                }
+
+                let splitted = input.id.split(".")
+                if (!a[$activeEdit.id!].items[i][splitted[0]]) a[$activeEdit.id!].items[i][splitted[0]] = {}
+                a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
+            })
+
+            return a
+        }
     }
 
     function updateValue(e: any) {
         let input = e.detail
         console.log("BOX INPUT:", input)
-
-        // console.log("original", getOriginalValue(box!.edit, input.key))
-        // console.log(input)
 
         let allItems: number[] = $activeEdit.items
         // update all items if nothing is selected
@@ -287,6 +272,8 @@
         // only same type
         let currentType = id || allSlideItems[allItems[0]].type || "text"
         allItems = allItems.filter((index) => (allSlideItems[index].type || "text") === currentType)
+
+        if (input.id === "nowrap") input = { ...input, id: "style", key: "white-space", value: input.value ? "nowrap" : undefined }
 
         if (input.id !== "style" && input.id !== "CSS") {
             setValue(input, allItems)
@@ -334,6 +321,7 @@
             values[slide] = []
             slideItems[i].forEach((i) => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
         })
+
         function getNewItemValues(currentSlideItem: any, slideId: string) {
             let selected = selection
             if (!selected?.length || !selected?.filter((a) => a.start !== a.end).length) {
@@ -360,10 +348,10 @@
                 if (input.id === "CSS") {
                     values[slideId] = [input.value.replaceAll("\n", "")]
                 } else {
+                    // TODO: don't replace full item style (position) when changing multiple (Like EditTools.svelte:152)
                     values[slideId] = [addStyleString(item?.style || "", [input.key, input.value])]
                 }
             }
-            // newData.push(addStyle(selected, allSlideItems[itemIndex], [input.key, input.value]).lines!.map((a) => a.text))
         }
 
         // align other items (VARIABLE)
@@ -375,7 +363,6 @@
         }
 
         // TODO: remove unused (if default)
-
         // TODO: template v-align
 
         if (!Object.values(values).length) return
@@ -428,6 +415,7 @@
         if (setItemStyle.includes(id)) {
             slides.forEach((slide, i) => {
                 if (!slideItems[i].length) return
+
                 history({
                     id: "setItems",
                     // oldData: { style: { key: "style", values: [oldData] } },
@@ -435,6 +423,7 @@
                     location: { page: "edit", show: $activeShow!, slide, items: slideItems[i], override: "slide_" + slide + "_items_" + slideItems[i].join(",") },
                 })
             })
+
             return
         }
 

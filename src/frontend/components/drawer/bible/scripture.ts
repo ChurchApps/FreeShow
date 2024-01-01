@@ -3,7 +3,7 @@ import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
 import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getAutoSize } from "../../edit/scripts/autoSize"
-import { clone } from "../../helpers/array"
+import { clone, removeDuplicates } from "../../helpers/array"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
@@ -83,6 +83,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
 export function joinRange(array: string[]) {
     let prev: number = -1
     let range: string = ""
+
     array.forEach((a: string, i: number) => {
         if (Number(a) - 1 === prev) {
             if (i + 1 === array.length) range += "-" + a
@@ -93,8 +94,10 @@ export function joinRange(array: string[]) {
             }
             range += a
         }
+
         prev = Number(a)
     })
+
     return range
 }
 
@@ -108,7 +111,6 @@ export function getSlides({ bibles, sorted }) {
     let template = get(templates)[get(scriptureSettings).template]?.items || []
     let templateTextItems = template.filter((a) => a.lines)
     let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
-    console.log(templateTextItems, templateOtherItems)
 
     bibles.forEach((bible, bibleIndex) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
@@ -249,7 +251,7 @@ export function getSlides({ bibles, sorted }) {
         let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         let versions = bibles.map((a) => a.version).join(" + ")
-        let books = [...new Set(bibles.map((a) => a.book))].join(" / ")
+        let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         let text = customText
         if (!showVersion && !showVerse) return
@@ -274,4 +276,14 @@ export function getSlides({ bibles, sorted }) {
             }
         }
     }
+}
+
+// HELPERS
+
+export function setBooksCache(scriptureId: string, data: any) {
+    scriptures.update((a) => {
+        a[scriptureId].books = data
+        a[scriptureId].cacheUpdate = new Date()
+        return a
+    })
 }

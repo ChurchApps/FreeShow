@@ -1,24 +1,27 @@
-import svelte from "rollup-plugin-svelte"
 import commonjs from "@rollup/plugin-commonjs"
 import resolve from "@rollup/plugin-node-resolve"
-import livereload from "rollup-plugin-livereload"
 import terser from "@rollup/plugin-terser"
-import sveltePreprocess from "svelte-preprocess"
 import typescript from "@rollup/plugin-typescript"
-import css from "rollup-plugin-css-only"
-import serve from "rollup-plugin-serve"
 import copy from "rollup-plugin-copy"
+import css from "rollup-plugin-css-only"
+import livereload from "rollup-plugin-livereload"
+import serve from "rollup-plugin-serve"
+import svelte from "rollup-plugin-svelte"
+import sveltePreprocess from "svelte-preprocess"
 
 const production = !process.env.ROLLUP_WATCH
 
-function handleWarnings(warning, handler) {
-    // disable A11y warnings
-    if (warning.code.startsWith("a11y-")) return
-    handler(warning)
-}
-
 export default [
-    {
+    mainApp(),
+    webServer("remote", { typescript: true }),
+    webServer("stage"),
+    webServer("controller"),
+    webServer("output_stream"),
+    // webServer("cam"),
+]
+
+function mainApp() {
+    return {
         input: "src/frontend/main.ts",
         output: {
             sourcemap: !production,
@@ -30,7 +33,7 @@ export default [
             svelte({
                 preprocess: sveltePreprocess({
                     typescript: {
-                        tsconfigFile: "./tsconfig.svelte.json",
+                        tsconfigFile: `./tsconfig.svelte${production ? ".prod" : ""}.json`,
                     },
                 }),
                 compilerOptions: {
@@ -57,7 +60,7 @@ export default [
             }),
             commonjs(),
             typescript({
-                tsconfig: "./tsconfig.svelte.json",
+                tsconfig: `./tsconfig.svelte${production ? ".prod" : ""}.json`,
                 sourceMap: !production,
                 inlineSources: !production,
             }),
@@ -87,13 +90,8 @@ export default [
         watch: {
             clearScreen: false,
         },
-    },
-    webServer("remote", { typescript: true }),
-    webServer("stage"),
-    webServer("controller"),
-    webServer("output_stream"),
-    // webServer("cam"),
-]
+    }
+}
 
 function webServer(id, options = {}) {
     return {
@@ -110,7 +108,7 @@ function webServer(id, options = {}) {
                 preprocess: sveltePreprocess(
                     options.typescript && {
                         typescript: {
-                            tsconfigFile: "./tsconfig.server.json",
+                            tsconfigFile: `./tsconfig.server${production ? ".prod" : ""}.json`,
                         },
                     }
                 ),
@@ -132,7 +130,7 @@ function webServer(id, options = {}) {
             commonjs(),
             // options.typescript &&
             typescript({
-                tsconfig: "./tsconfig.server.json",
+                tsconfig: `./tsconfig.server${production ? ".prod" : ""}.json`,
                 sourceMap: !production,
                 inlineSources: !production,
             }),
@@ -152,4 +150,12 @@ function webFiles(id) {
         { src: `src/server/icon.png`, dest },
         { src: `src/server/sw.js`, dest },
     ]
+}
+
+// HELPERS
+
+function handleWarnings(warning, handler) {
+    // disable A11y warnings
+    if (warning.code.startsWith("a11y-")) return
+    handler(warning)
 }

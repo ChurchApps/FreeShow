@@ -1,19 +1,6 @@
 <script lang="ts">
     export let path: string
-
-    // let filter: string = ""
-    // let flipped: boolean = false
-    // let fit: MediaFit = "contain"
-    // let speed: string = "1"
-
-    // $: if (background !== null) updateFilter()
-    // function updateFilter() {
-    //     let temp: any = { ...background }
-    //     filter = temp.filter || ""
-    //     flipped = temp.flipped || false
-    //     fit = temp.fit || "contain"
-    //     speed = temp.speed || "1"
-    // }
+    export let mediaStyle: any = {}
 
     let errorLoading = false
     $: if (path) errorLoading = false
@@ -23,8 +10,7 @@
 </script>
 
 {#key path}
-    <div style="height: 100%;">
-        <!-- {filter} {flipped} {fit} -->
+    <div style="height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});">
         {#if !errorLoading}
             <img src={path} on:error={error} />
         {/if}

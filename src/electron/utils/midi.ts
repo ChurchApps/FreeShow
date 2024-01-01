@@ -37,11 +37,12 @@ export async function sendMidi(data: any) {
         if (data.type === "noteon") {
             await port.noteOn(data.values.channel, data.values.note, data.values.velocity)
             // .wait(500).noteOff(data.values.channel, data.values.note)
-        } else if (data.type === "noteoff") {
+        } else {
+            // data.type === "noteoff"
             await port.noteOff(data.values.channel, data.values.note, data.values.velocity)
         }
-    } catch (error) {
-        console.error(error)
+    } catch (err) {
+        console.error(err)
     }
 
     if (!port) return
@@ -60,6 +61,7 @@ export function closeMidiInPorts(id: string = "") {
     Object.values(openedPorts).forEach((port: any) => {
         port.close()
     })
+
     openedPorts = {}
 }
 
@@ -82,7 +84,7 @@ export async function receiveMidi(data: any) {
             let values = { note: msg["1"], velocity: msg["2"], channel: msg["0"] }
             toApp("MAIN", { channel: "RECEIVE_MIDI", data: { id: data.id, values, type } })
         })
-    } catch (error) {
-        console.error(error)
+    } catch (err) {
+        console.error(err)
     }
 }

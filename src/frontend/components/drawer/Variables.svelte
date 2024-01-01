@@ -3,6 +3,7 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import Checkbox from "../inputs/Checkbox.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import Center from "../system/Center.svelte"
@@ -16,6 +17,7 @@
 
     function updateVariable(e: any, id: string, key: string) {
         let value = e?.target?.value ?? e
+        if (key === "enabled") value = e?.target?.checked || false
 
         variables.update((a) => {
             a[id][key] = value
@@ -38,6 +40,7 @@
                     <span style="gap: 5px;width: 70%;">
                         {#if variable.type === "text"}
                             <TextInput placeholder={$dictionary.variables?.value || ""} value={variable.text || ""} on:change={(e) => updateVariable(e, variable.id, "text")} />
+                            <Checkbox checked={variable.enabled ?? true} on:change={(e) => updateVariable(e, variable.id, "enabled")} />
                         {:else if variable.type === "number"}
                             <NumberInput
                                 title={$dictionary.variables?.step}

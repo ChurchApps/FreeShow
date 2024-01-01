@@ -2,6 +2,7 @@
     import { MAIN } from "../../../../types/Channels"
     import { outLocked, outputs } from "../../../stores"
     import { receive, send } from "../../../utils/request"
+    import { clone } from "../../helpers/array"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
@@ -31,7 +32,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
     let fullFilteredWindows: any[] = []
     function filterSearch() {
-        fullFilteredWindows = JSON.parse(JSON.stringify(windows))
+        fullFilteredWindows = clone(windows)
         if (searchValue.length > 1) fullFilteredWindows = fullFilteredWindows.filter((a) => filter(a.name).includes(searchValue))
     }
 

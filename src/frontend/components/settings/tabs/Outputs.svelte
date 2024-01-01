@@ -122,6 +122,8 @@
     let edit: any
 
     $: activeOutputs = Object.values($outputs).filter((a) => !a.stageOutput && a.enabled && a.active === true)
+
+    const ndiNotSupported = $os.platform === "linux" && $os.arch !== "x64" && $os.arch !== "ia32"
 </script>
 
 <div class="info">
@@ -211,23 +213,6 @@
     </div>
 </CombinedInput>
 
-<!-- <CombinedInput>
-    <p><T id="settings.invisible" /></p>
-    <div class="alignRight">
-        <Checkbox disabled={$outputDisplay} checked={currentOutput.invisible} on:change={(e) => updateOutput("invisible", isChecked(e))} />
-    </div>
-</CombinedInput> -->
-
-<!-- disable on linux -->
-<!-- {#if $os.platform !== "linux"}
-    <CombinedInput>
-        <p><T id="settings.show_in_taskbar" /></p>
-        <div class="alignRight">
-            <Checkbox checked={currentOutput.taskbar === true} on:change={(e) => updateOutput("taskbar", isChecked(e))} />
-        </div>
-    </CombinedInput>
-{/if} -->
-
 <!-- disable on windows -->
 {#if $os.platform !== "win32"}
     <CombinedInput>
@@ -244,11 +229,11 @@
 <CombinedInput>
     <p>
         <T id="actions.enable" /> NDI®
-        {#if $os.platform === "linux"}(Currently not supported on Linux){/if}
+        {#if ndiNotSupported}(Device architecture not supported){/if}
         <span class="connections">{$ndiData[currentOutput.id || ""]?.connections || ""}</span>
     </p>
     <div class="alignRight">
-        <Checkbox disabled={$os.platform === "linux"} checked={currentOutput.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
+        <Checkbox disabled={ndiNotSupported} checked={currentOutput.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
     </div>
 </CombinedInput>
 

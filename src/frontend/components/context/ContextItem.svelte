@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeRecording, activeShow, events, forceClock, media, overlays, redoHistory, scriptures, selected, shows, stageShows, undoHistory } from "../../stores"
-    import { GetLayout } from "../helpers/get"
+    import { activeProject, activeRecording, activeShow, events, forceClock, media, os, overlays, redoHistory, scriptures, selected, shows, stageShows, undoHistory } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -12,17 +11,18 @@
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let disabled: boolean = false
+
     let enabled: boolean = menu?.enabled ? true : false
 
     const conditions: any = {
         private: () => {
-            if ($shows[$selected.data[0]?.id]?.private) enabled = $shows[$selected.data[0].id].private!
+            if (!$shows[$selected.data[0]?.id]?.private) return
+            enabled = $shows[$selected.data[0].id].private
         },
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
-                enabled = GetLayout()[$selected.data[0].index].disabled! || false
-            } else if ($selected.id === "group") {
-                enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
+                let ref = _show().layouts("active").ref()[0]
+                enabled = ref[$selected.data[0].index]?.data?.disabled || false
             } else if ($selected.id === "stage") {
                 enabled = $stageShows[$selected.data[0].id]?.disabled
             }
@@ -34,9 +34,7 @@
 
             let ref = _show().layouts("active").ref()[0]
             let parentSlide = $selected.data.find((a) => a.index && getCurrentSlide(a.index)?.type === "parent")
-            function getCurrentSlide(index) {
-                return ref.find((a) => a.layoutIndex === index)
-            }
+            const getCurrentSlide = (index) => ref.find((a) => a.layoutIndex === index)
 
             if (parentSlide) return
 
@@ -44,7 +42,8 @@
             disabled = true
         },
         remove: () => {
-            if ($selected.id === "show" && _show($selected.data[0].id).get("private") === true) disabled = true
+            if ($selected.id !== "show" || _show($selected.data[0].id).get("private") !== true) return
+            disabled = true
         },
         undo: () => {
             if (!$undoHistory.length) disabled = true
@@ -60,13 +59,14 @@
             if (!path || !$media[path]?.filter) disabled = true
         },
         delete_all: () => {
-            if (contextElem?.classList.value.includes("#event")) {
-                let group: any = $events[contextElem.id].group
-                if (!group || !Object.entries($events).find(([id, event]: any) => id !== contextElem.id && event.group === group)) disabled = true
-            }
+            if (!contextElem?.classList.value.includes("#event")) return
+
+            let group: any = $events[contextElem.id].group
+            if (group && Object.entries($events).find(([id, event]: any) => id !== contextElem.id && event.group === group)) return
+
+            disabled = true
         },
         createCollection: () => {
-            console.log($selected.data)
             let selectedBibles = $selected.data.map((id) => $scriptures[id]).filter((a) => !a?.collection)
             if (selectedBibles.length < 2) disabled = true
         },
@@ -99,20 +99,8 @@
         //     if (item is bound) enabled = true
         // }
     }
-    if (conditions[id]) conditions[id]()
 
-    // if (id === "private" && $showsCache[$selected.data[0]?.id]?.private) {
-    //   enabled = $showsCache[$selected.data[0].id].private!
-    // } else if (id === "disable") {
-    //   if ($selected.id === "slide" && $activeShow && GetLayout()[$selected.data[0]?.index]?.disabled) {
-    //     enabled = GetLayout()[$selected.data[0].index].disabled!
-    //   } else if ($selected.id === "group") {
-    //     enabled = GetLayout().find((a) => a.id === $selected.data[0].id)?.disabled!
-    //   }
-    // } else if (id === "remove" && $selected.id === "slide") {
-    //   if ($selected.data.filter((a) => a.index === 0).length || GetLayoutRef()[$selected.data[0].index].type === "child") disabled = true
-    // } else if (id === "undo" && !$undoHistory.length) disabled = true
-    // else if (id === "redo" && !$redoHistory.length) disabled = true
+    if (conditions[id]) conditions[id]()
 
     function contextItemClick() {
         if (disabled) return
@@ -128,10 +116,17 @@
     function keydown(e: any) {
         if (e.key === "Enter") contextItemClick()
     }
+
+    let shortcut: string = ""
+    $: if (menu?.shortcuts) getShortcuts()
+    function getShortcuts() {
+        // WIP multiple
+        let s = menu.shortcuts![0]
+        if ($os.platform === "darwin") s.replaceAll("Ctrl", "Cmd")
+        shortcut = s
+    }
 </script>
 
-<!-- {$fullColors ? 'background-' : ''} -->
-<!-- title={menu?.shortcuts?.join(", ")} -->
 <div on:click={contextItemClick} class:enabled class:disabled style="color: {menu?.color || 'unset'}" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
@@ -143,10 +138,9 @@
             {/key}
         {/if}
     </span>
-    {#if menu?.shortcuts}
-        <span style="opacity: 0.5;">
-            {menu.shortcuts[0]}
-        </span>
+
+    {#if shortcut}
+        <span style="opacity: 0.5;">{shortcut}</span>
     {/if}
 </div>
 

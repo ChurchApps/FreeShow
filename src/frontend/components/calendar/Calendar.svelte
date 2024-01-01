@@ -2,8 +2,9 @@
     import { activeDays, activePopup, dictionary, eventEdit, events, popupData } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
+    import { removeDuplicates, sortByTime } from "../helpers/array"
     import Button from "../inputs/Button.svelte"
-    import { isSameDay } from "./calendar"
+    import { MILLISECONDS_IN_A_DAY, copyDate, getDaysInMonth, getWeekNumber, isBetween, isSameDay } from "./calendar"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -11,36 +12,14 @@
     // WIP search for events
     $: console.log(searchValue)
 
+    let sundayFirstDay: boolean = false
+
     let today = new Date()
     $: current = new Date(today.getFullYear(), today.getMonth())
     $: year = current.getFullYear()
     $: month = current.getMonth()
-    const MILLISECONDS_IN_A_DAY = 86400000
 
-    // const copy = (date: Date, add: number = 0) => new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate() + add))
-    const copy = (date: Date, add: number = 0) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + add)
-    const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthIndex(month), 0).getDate()
-    const getMonthIndex = (month: number) => (month + 1 > 12 ? month + 1 : 0)
-    const isBetween = (from: Date, to: Date, date: Date) => date >= copy(from) && date <= copy(to)
-
-    activeDays.set([copy(today).getTime()])
-
-    // https://stackoverflow.com/a/6117889
-    function getWeekNumber(d: Date) {
-        d = copy(d)
-        // Set to nearest Thursday: current date + 4 - current day number
-        // Make Sunday's day number 7
-        // d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
-        d.setDate(d.getDate() + 4 - (d.getDay() || 7))
-        // Get first day of year
-        // let firstDay = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-        let firstDay = new Date(d.getFullYear(), 0, 1)
-        // Calculate full weeks to nearest Thursday
-        let weekNumber = Math.ceil(((d.getTime() - firstDay.getTime()) / MILLISECONDS_IN_A_DAY + 1) / 7)
-        return weekNumber
-    }
-
-    let sundayFirstDay: boolean = false
+    activeDays.set([copyDate(today).getTime()])
 
     let days: Date[][] = []
     $: getDays(month)
@@ -54,7 +33,7 @@
         daysList = [...before, ...daysList]
         days = []
 
-        while (daysList.length < 42) daysList.push(copy(daysList[daysList.length - 1], 1))
+        while (daysList.length < 42) daysList.push(copyDate(daysList[daysList.length - 1], 1))
         while (daysList.length) days.push(daysList.splice(0, 7))
     }
 
@@ -64,6 +43,7 @@
         let before: Date[] = []
         let i = (sundayFirstDay ? firstDay : firstDay === 0 ? 6 : firstDay - 1) - 1
         for (i; i >= 0; i--) before.push(new Date(year, month, -i))
+
         return before
     }
 
@@ -81,9 +61,9 @@
         Object.entries(events).forEach(([id, event]: any) => {
             let from = new Date(event.from).getTime()
             let to = new Date(event.to)?.getTime() || 0
-            if (from > first || from < last || to > first || to < last) {
-                currentEvents.push({ id, ...event })
-            }
+
+            let startOrEndIsInMonth = from > first || from < last || to > first || to < last
+            if (startOrEndIsInMonth) currentEvents.push({ id, ...event })
         })
 
         currentEvents = currentEvents.sort((a, b) => a.from - b.from)
@@ -100,99 +80,101 @@
     let calendarElem: any
     let nextScrollTimeout: any = null
     function wheel(e: any) {
-        if (!calendarElem) return
-        if (nextScrollTimeout) return
+        if (nextScrollTimeout || !calendarElem) return
 
-        // forward
-        if (e.deltaY > 0) {
-            let bottom = calendarElem.scrollTop + 1 + calendarElem.offsetHeight >= calendarElem.scrollHeight
-            if (!bottom) return
-            current = new Date(year, month, 33)
-            return
-        }
+        let scrollDown = e.deltaY > 0
+        if (scrollDown) nextMonth(true)
+        else previousMonth(true)
 
-        // backward
-        let top = calendarElem.scrollTop === 0
-        if (!top) return
-        current = new Date(year, month, 0)
+        let isMouseAndNotTrackpad = e.deltaY > 100 || e.deltaY < -100
+        if (isMouseAndNotTrackpad) return
 
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
     }
 
+    function nextMonth(checkScroll: boolean = false) {
+        let scrolledToBottom = calendarElem.scrollTop + 1 + calendarElem.offsetHeight >= calendarElem.scrollHeight
+        if (checkScroll && !scrolledToBottom) return
+
+        current = new Date(year, month, 33)
+    }
+
+    function previousMonth(checkScroll: boolean = false) {
+        let scrolledToTop = calendarElem.scrollTop === 0
+        if (checkScroll && !scrolledToTop) return
+
+        current = new Date(year, month, 0)
+    }
+
     function getEvents(day: Date, currentEvents: any[], type: string) {
         let events: any[] = []
         currentEvents.forEach((a) => {
-            if (a.to ? isBetween(new Date(a.from), new Date(a.to), copy(day)) : isSameDay(new Date(a.from), day)) events.push(a)
+            let eventIsAtDayOrGoingThrough = a.to ? isBetween(new Date(a.from), new Date(a.to), copyDate(day)) : isSameDay(new Date(a.from), day)
+            if (eventIsAtDayOrGoingThrough) events.push(a)
         })
-        events.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime())
+        events.sort(sortByTime)
         events = events.filter((a) => a.type === type)
+
         return events
     }
 
     function dayClick(e: any, day: Date) {
-        day = copy(day)
+        day = copyDate(day)
 
-        if (e.ctrlKey || e.metaKey) {
-            activeDays.update((a) => {
-                if (a.includes(day.getTime())) {
-                    if (a.length > 1) a.splice(a.indexOf(day.getTime()), 1)
-                } else a.push(day.getTime())
-                return a
-            })
-            return
-        }
-
-        if (e.shiftKey) {
-            let first = $activeDays[0] || day.getTime()
-            let last = day.getTime()
-
-            let timeDifference = day.getTime() - first
-            if (timeDifference === 0) return
-            if (timeDifference < 0) {
-                first = last
-                last = $activeDays[$activeDays.length - 1]
-            }
-
-            let temp: number[] = []
-            let count = 0
-
-            do {
-                console.log(temp[temp.length - 1], new Date(last), isSameDay(new Date(temp[temp.length - 1]), new Date(last)))
-
-                let time = copy(new Date(first + count * MILLISECONDS_IN_A_DAY)).getTime()
-                temp.push(time)
-                count++
-            } while (!isSameDay(new Date(temp[temp.length - 1]), new Date(last)))
-
-            console.log(temp)
-            activeDays.set(temp)
-
-            setTimeout(() => {
-                console.log($activeDays)
-            })
-            return
-        }
+        if (e.ctrlKey || e.metaKey) return toggleCurrentDay(day)
+        if (e.shiftKey) return selectRange(day)
 
         activeDays.set([day.getTime()])
     }
 
+    function toggleCurrentDay(day: Date) {
+        activeDays.update((a) => {
+            let alreadySelected = a.includes(day.getTime())
+            if (!alreadySelected) return [...a, day.getTime()]
+
+            if (a.length < 2) return a
+            a.splice(a.indexOf(day.getTime()), 1)
+
+            return a
+        })
+    }
+
+    function selectRange(day: Date) {
+        let first = $activeDays[0] || day.getTime()
+        let last = day.getTime()
+        let timeDifference = day.getTime() - first
+        if (timeDifference === 0) return
+
+        // invert
+        if (timeDifference < 0) {
+            first = last
+            last = $activeDays[$activeDays.length - 1]
+        }
+
+        let newActiveDays: number[] = []
+        let count = 0
+
+        do {
+            let newDay = copyDate(new Date(first + count * MILLISECONDS_IN_A_DAY)).getTime()
+            newActiveDays.push(newDay)
+            count++
+        } while (!isSameDay(new Date(newActiveDays[newActiveDays.length - 1]), new Date(last)))
+
+        activeDays.set(newActiveDays)
+    }
+
     function move(e: any, day: Date) {
-        if (e.buttons) activeDays.set([...new Set([...$activeDays, copy(day).getTime()])])
+        if (!e.buttons) return
+        activeDays.set(removeDuplicates([...$activeDays, copyDate(day).getTime()]))
     }
 
     // listen for update
     $: if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.id) selectedShow()
     function selectedShow() {
-        console.log($popupData, $eventEdit)
-
         // let animation finish
-        setTimeout(() => {
-            activePopup.set("edit_event")
-        }, 300)
+        setTimeout(() => activePopup.set("edit_event"), 300)
     }
 </script>
 
@@ -202,7 +184,7 @@
             <Button
                 on:click={() => {
                     current = today
-                    activeDays.set([copy(today).getTime()])
+                    activeDays.set([copyDate(today).getTime()])
                 }}
                 active={!!$activeDays.length && isSameDay(new Date($activeDays[0]), today) && current.getMonth() === new Date($activeDays[0]).getMonth() && current.getFullYear() === new Date($activeDays[0]).getFullYear()}
                 title={$dictionary.calendar?.today}
@@ -212,6 +194,7 @@
                 <Icon id="calendar" />
             </Button>
         </div>
+
         {#each weekdays as weekday}
             <div class="weekday">
                 {weekday}
@@ -219,19 +202,21 @@
             </div>
         {/each}
     </div>
+
     <div class="grid" on:wheel={wheel} bind:this={calendarElem}>
         {#each days as week}
             <div class="week">
                 <span class="weeknumber">
                     {getWeekNumber(week[0])}
                 </span>
+
                 {#each week as day}
                     {@const dayEvents = getEvents(day, currentEvents, active || "event")}
                     <div
                         class="day"
                         class:today={isSameDay(day, today)}
                         class:faded={day.getMonth() !== month || day.getFullYear() !== year}
-                        class:active={$activeDays.includes(copy(day).getTime())}
+                        class:active={$activeDays.includes(copyDate(day).getTime())}
                         on:mousedown={(e) => dayClick(e, day)}
                         on:mousemove={(e) => move(e, day)}
                     >
@@ -254,6 +239,7 @@
             </div>
         {/each}
     </div>
+
     <div class="bottom">
         <span style="opacity: 0.8;min-width: 150px;text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
             {$dictionary.month?.[current.getMonth() + 1]}
@@ -276,10 +262,10 @@
 
         <div class="seperator" />
 
-        <Button style="width: 75px;" on:click={() => (current = new Date(year, month, 0))} center>
+        <Button style="width: 75px;" on:click={() => previousMonth()} center>
             <Icon id="previous" size={1.1} />
         </Button>
-        <Button style="width: 75px;" on:click={() => (current = new Date(year, month, 33))} center>
+        <Button style="width: 75px;" on:click={() => nextMonth()} center>
             <Icon id="next" size={1.1} />
         </Button>
     </div>

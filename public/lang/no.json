@@ -139,6 +139,8 @@
         "speed": "Hastighet",
         "show": "Vis",
         "flip": "Vend",
+        "flip_horizontally": "Vend horisontalt",
+        "flip_vertically": "Vend vertikalt",
         "all": "Mapper, bilder og videoer",
         "folder": "Bare mapper",
         "image": "Bare bilder",
@@ -423,7 +425,8 @@
         "list": "Listevisning",
         "lyrics": "Tekstvisning",
         "text": "Tekstredigering",
-        "update": "Oppdater show"
+        "update": "Oppdater show",
+        "slide_template": "Mal for lysbilde"
     },
     "actions": {
         "rename": "Endre navn",
@@ -618,6 +621,7 @@
         "size": "Størrelse",
         "chords": "Akkorder",
         "auto_size": "Auto-størrelse",
+        "no_wrap": "Tekst på en linje",
         "line_spacing": "Linjeavstand",
         "line_height": "Linjehøyde",
         "letter_spacing": "Bokstavasvsand",
@@ -662,6 +666,7 @@
         "recent": "Nylig redigert",
         "enable_stage": "Aktiver scene",
         "select_stage": "Velg scene",
+        "next_slide": "Vis neste lysbilde",
         "use_slide_index": "Bruk aktiv indeks",
         "slide_index": "Lysbilde-indeks",
         "padding": "Avstand",

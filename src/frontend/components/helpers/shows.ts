@@ -93,6 +93,8 @@ export function _show(id: any = "active") {
                 showsCache.update((a: any) => {
                     if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
                     slideIds.forEach((slideId) => {
+                        if (!a[id].slides[slideId]) return
+
                         prev.push(a[id].slides[slideId][key])
                         if (value === undefined) delete a[id].slides[slideId][key]
                         else a[id].slides[slideId][key] = value
@@ -347,7 +349,7 @@ export function _show(id: any = "active") {
                     layoutIds.forEach((layoutId: any, i: number) => {
                         a.push([])
                         let layoutIndex: number = -1
-                        shows[id].layouts[layoutId].slides.forEach((layoutSlide: any, index: number) => {
+                        shows[id].layouts[layoutId]?.slides?.forEach((layoutSlide: any, index: number) => {
                             if (!shows[id].slides[layoutSlide.id]) {
                                 console.log("MISSING SLIDE")
                                 return

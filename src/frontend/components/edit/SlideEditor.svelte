@@ -193,7 +193,7 @@
 <div class="editArea">
     <!-- zoom: {1 / zoom}; -->
     <!-- width: {100 / zoom}%;height: {100 / zoom}%; -->
-    <div class="parent" bind:offsetWidth={width} bind:offsetHeight={height}>
+    <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
             <DropArea id="edit">
                 <Zoomed background={Slide?.settings?.color || currentStyle.background || "black"} {resolution} style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio {hideOverflow} center={zoom >= 1}>
@@ -302,6 +302,11 @@
         /* overflow: overlay;
         z-index: 1; */
         /* scrollbar-gutter: stable both-edges; */
+    }
+
+    /* disable "glitchy" scroll bars */
+    .parent.noOverflow :global(.droparea) {
+        overflow: hidden;
     }
 
     /* .chordsButton {

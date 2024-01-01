@@ -1,16 +1,15 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, outLocked, outputDisplay, outputs, playerVideos } from "../../../stores"
+    import { activeShow, currentWindow, dictionary, outLocked, outputDisplay, outputs, playerVideos } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
+    import { clone } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
+    import { clearPlayingVideo } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
-    import { checkNextAfterMedia } from "../../helpers/showActions"
-    import { clearPlayingVideo } from "../../helpers/output"
-    import { clone } from "../../helpers/array"
 
     export let currentOutput: any
     export let outputId: string
@@ -71,10 +70,13 @@
             // WIP only activated when preview media tab is open
             console.log("ENDED!")
 
+            if ($currentWindow === "output") return
+
             if (msg.id !== outputId || type !== "video") return
             // check and execute next after media regardless of loop
             // next after function is likely skipped as it is first executed by the startup receiver
-            if (checkNextAfterMedia(path) || videoData.loop) return
+            // checkNextAfterMedia(path) ||
+            if (videoData.loop) return
 
             if (videoInterval) clearInterval(videoInterval)
 

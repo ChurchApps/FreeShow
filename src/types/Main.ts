@@ -89,6 +89,7 @@ export interface Media {
 export interface MediaStyle {
     filter?: string
     flipped?: boolean
+    flippedY?: boolean
     fit?: MediaFit
     speed?: string
     fromTime?: number

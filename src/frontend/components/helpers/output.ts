@@ -6,7 +6,7 @@ import type { Resolution } from "../../../types/Settings"
 import type { Transition } from "../../../types/Show"
 import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
-import { clone } from "./array"
+import { clone, removeDuplicates } from "./array"
 import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
@@ -36,7 +36,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (key === "overlays" && data.length) {
                 if (!Array.isArray(data)) data = [data]
                 if (toggle && outData?.includes(data[0])) outData!.splice(outData!.indexOf(data[0]), 1)
-                else if (toggle || add) outData = [...new Set([...(a[id].out?.[key] || []), ...data])]
+                else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[key] || []), ...data])
                 else outData = data
             } else outData = data
 
