@@ -15,7 +15,8 @@ declare module "*.svelte" {
 interface Window {
     api: {
         send: (channel: string, data?: any) => void
-        receive: (channel: string, func: any) => void
+        receive: (channel: string, func: any, id?: string) => void
+        removeListener: (channel: string, id: string) => void
     }
 }
 

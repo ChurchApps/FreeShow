@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { uid } from "uid"
     import { FILE_INFO } from "../../../../types/Channels"
     import { activeShow, drawerTabsData } from "../../../stores"
     import { formatBytes } from "../../helpers/bytes"
@@ -7,6 +8,7 @@
     import Date from "../../system/Date.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
+    import { onDestroy } from "svelte"
 
     $: name = $activeShow?.name || ""
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "")) {
@@ -14,11 +16,15 @@
         window.api.send(FILE_INFO, $activeShow?.id)
     }
 
+    let listenerId = uid()
+    onDestroy(() => window.api.removeListener(FILE_INFO, listenerId))
+
     let info: any = {}
-    window.api.receive(FILE_INFO, (data: any) => {
+    window.api.receive(FILE_INFO, receiveContent, listenerId)
+    function receiveContent(data: any) {
         info = { ...data.stat, extension: data.extension }
         if (!name) name = removeExtension(getFileName(data.path))
-    })
+    }
 
     // $: accessed = info.atime
 

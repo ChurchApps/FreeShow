@@ -155,7 +155,7 @@ export function loadWindowContent(window: BrowserWindow, isOutput: boolean = fal
 
     function error(err: any) {
         console.error("Failed to load window:", JSON.stringify(err))
-        if (!isOutput) app.quit()
+        if (isLoaded && !isOutput) app.quit()
     }
 }
 
@@ -168,8 +168,11 @@ function retryLoadingContent() {
     setTimeout(() => {
         if (isLoaded) return
 
-        if (tries < 1) console.log("Loading content again - App is probably not finished building yet")
-        else console.log("Trying to load content again")
+        if (tries < 1) console.log("Loading content again. App is probably not finished building yet")
+        else if (tries > 15) {
+            console.log("Could not load app content. Please check console for any errors!")
+            return app.quit()
+        } else console.log("Trying to load content again")
         tries++
 
         mainWindow!.webContents.reload()

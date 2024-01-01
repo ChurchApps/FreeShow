@@ -132,8 +132,8 @@ function displayOutput(data: any) {
     } else {
         hideWindow(window, data.output)
 
+        if (data.enabled && !data.auto) toApp(MAIN, { channel: "ALERT", data: "error.display" })
         data.enabled = false
-        if (!data.auto) toApp(MAIN, { channel: "ALERT", data: "error.display" })
     }
 
     if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data })

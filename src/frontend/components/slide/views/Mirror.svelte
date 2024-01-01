@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { currentWindow, stageShows } from "../../../stores"
+    import { currentWindow, showsCache, stageShows } from "../../../stores"
     import { loadShows } from "../../helpers/setShow"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -22,19 +22,22 @@
     $: nextSlide = item.mirror?.nextSlide
 
     $: slideId = ref.slideId || ""
-    function getMirroredItem() {
-        let showId = item.mirror!.show
+    function getMirroredItem(index: number, _updater: any = null) {
+        if (!_updater && _updater !== null) return
+
+        let showId = item.mirror.show || ref.showId
         if (!nextSlide && showId === ref.showId) return
 
         let slideIndex = item.mirror.useSlideIndex !== false ? index : item.mirror.index || 0
+        let layoutRef = _show(showId).layouts("active").ref()[0] || {}
 
         if (nextSlide) {
-            showId = ref.showId
             slideIndex = index + 1
+            // skip disabled
+            while (layoutRef[slideIndex]?.data?.disabled) slideIndex++
         }
 
-        let newSlideRef: any = _show(showId).layouts("active").ref()[0]?.[slideIndex]
-        console.log(newSlideRef)
+        let newSlideRef: any = layoutRef[slideIndex]
         if (!newSlideRef) return
         slideId = newSlideRef.id
 
@@ -63,12 +66,12 @@
             {/key}
         {/if}
     {:else if item.mirror?.show || nextSlide}
-        {#key item.mirror?.show}
-            {#await loadShows([item.mirror.show])}
+        {#key item.mirror?.show || ref.showId}
+            {#await loadShows([item.mirror?.show || ref.showId])}
                 {#if !$currentWindow}Loading...{/if}
             {:then}
-                {#if getMirroredItem()}
-                    <Textbox item={getMirroredItem()} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
+                {#if getMirroredItem(index, $showsCache[item.mirror?.show || ref.showId])}
+                    <Textbox item={getMirroredItem(index, $showsCache[item.mirror?.show || ref.showId])} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
                 {/if}
             {/await}
         {/key}

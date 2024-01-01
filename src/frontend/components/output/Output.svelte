@@ -471,6 +471,7 @@
                                     transitionEnabled={!mirror}
                                     outputStyle={currentStyle}
                                     {mirror}
+                                    slideIndex={slide.index}
                                 />
                             {/if}
                         {/each}
@@ -499,6 +500,7 @@
                                     transitionEnabled
                                     outputStyle={currentStyle}
                                     {mirror}
+                                    slideIndex={slide.index}
                                 />
                                 <!-- </span> -->
                             {/if}

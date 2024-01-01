@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
+    import { uid } from "uid"
     import { BIBLE } from "../../../../types/Channels"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
     import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
@@ -181,8 +182,12 @@
         return newVerses
     }
 
+    let listenerId = uid()
+    onDestroy(() => window.api.removeListener(BIBLE, listenerId))
+
     let notLoaded: boolean = false
-    window.api.receive(BIBLE, (msg: any) => {
+    window.api.receive(BIBLE, receiveContent, listenerId)
+    function receiveContent(msg: any) {
         if (msg.error === "not_found") {
             notLoaded = true
             notFound.update((a) => {
@@ -213,7 +218,7 @@
 
         if (typeof bookId === "string") bookId = 0
         if (books[id][cachedRef?.bookId]) bookId = cachedRef?.bookId
-    })
+    }
 
     $: if (active) getBible()
     $: if (books[firstBibleId]?.length && bookId !== undefined) getBook()

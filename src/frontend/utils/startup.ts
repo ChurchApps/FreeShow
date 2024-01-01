@@ -32,6 +32,7 @@ import {
     audioChannels,
     audioFolders,
     closeAd,
+    currentOutputSettings,
     currentWindow,
     dataPath,
     deviceId,
@@ -87,6 +88,7 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { getActiveOutputs } from "../components/helpers/output"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -157,6 +159,8 @@ const receiveMAIN: any = {
         alertMessage.set(a)
 
         if (a === "error.display") {
+            let outputIds = getActiveOutputs(get(outputs), false, true)
+            currentOutputSettings.set(outputIds[0])
             popupData.set({ activateOutput: true })
             activePopup.set("choose_screen")
             return

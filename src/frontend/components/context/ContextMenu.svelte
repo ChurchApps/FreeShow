@@ -24,7 +24,7 @@
         translate = 0
 
         contextElem = e.target!.closest(".context") || document.body
-        let id: string = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
+        let id: string | null = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
         activeMenu = getContextMenu(id) || contextMenuLayouts.default
 
         let contextHeight = Object.keys(activeMenu).length * 30 + 10
@@ -35,8 +35,9 @@
         contextActive = true
     }
 
-    function getContextMenu(id: string) {
-        if (id?.includes("__")) return combineMenus(id)
+    function getContextMenu(id: string | null) {
+        if (!id) return
+        if (id.includes("__")) return combineMenus(id)
 
         let menu = contextMenuLayouts[id.slice(1, id.length)]
         if (id && menu) return menu

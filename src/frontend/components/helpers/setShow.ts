@@ -3,6 +3,7 @@ import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
 import { cachedShowsData, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
 import { updateCachedShow } from "./show"
+import { uid } from "uid"
 
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
@@ -85,7 +86,9 @@ export async function loadShows(s: string[]) {
         })
 
         // RECEIVE
-        window.api.receive(SHOW, (msg: any) => {
+        let listenerId = uid()
+        window.api.receive(SHOW, receiveShow, listenerId)
+        function receiveShow(msg: any) {
             count++
 
             // prevent receiving multiple times
@@ -107,10 +110,9 @@ export async function loadShows(s: string[]) {
 
                 setShow(msg.id || msg.content[0], msg.content[1])
             }
-            // console.log(count, s, msg, "LOAD")
 
             if (count >= s.length) setTimeout(finished, 50)
-        })
+        }
         if (count >= s.length) finished()
 
         function finished() {
@@ -120,6 +122,7 @@ export async function loadShows(s: string[]) {
                 }, 100)
             }
 
+            window.api.removeListener(SHOW, listenerId)
             resolve("loaded")
         }
     })

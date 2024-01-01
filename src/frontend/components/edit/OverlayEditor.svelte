@@ -2,18 +2,17 @@
     import { slide } from "svelte/transition"
     import { OUTPUT } from "../../../types/Channels"
     import { activeEdit, dictionary, outputs, overlays, styles } from "../../stores"
-    import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
+    import { history } from "../helpers/history"
     import { getResolution } from "../helpers/output"
     import { getStyles } from "../helpers/style"
-    import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
-    import { getStyleResolution } from "../slide/getStyleResolution"
     import Zoomed from "../slide/Zoomed.svelte"
+    import { getStyleResolution } from "../slide/getStyleResolution"
     import Center from "../system/Center.svelte"
     import Snaplines from "../system/Snaplines.svelte"
     import Editbox from "./Editbox.svelte"
-    import { autoSize } from "./scripts/autoSize"
 
     $: currentId = $activeEdit.id!
     $: Slide = $overlays[currentId]
@@ -55,11 +54,6 @@
         let override = "overlay_items#" + $activeEdit.id + "indexes#" + active.join(",")
         history({ id: "UPDATE", newData: { key: "items", indexes: active, subkey: "style", data: values }, oldData: { id: $activeEdit.id }, location: { page: "edit", id: "overlay_items", override } })
         window.api.send(OUTPUT, { channel: "OVERLAY", data: $overlays })
-    }
-
-    $: if (Object.keys(newStyles).length && $overlays[$activeEdit.id!] && active.length) {
-        let items = Slide.items
-        if (items) autoSize(active, items)
     }
 
     // ZOOM

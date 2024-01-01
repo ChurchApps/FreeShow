@@ -859,7 +859,7 @@ bind:offsetWidth={width} -->
         <Visualizer {item} />
     {:else if item?.type === "icon"}
         {#if item.customSvg}
-            <div class="customIcon">
+            <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>
                 {@html item.customSvg}
             </div>
         {:else}
@@ -1071,5 +1071,8 @@ bind:offsetWidth={width} -->
     .customIcon :global(svg) {
         width: 100%;
         height: 100%;
+    }
+    .customIcon.customColor :global(svg path) {
+        fill: currentColor;
     }
 </style>
