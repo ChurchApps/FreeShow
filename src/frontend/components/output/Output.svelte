@@ -57,15 +57,15 @@
     $: if (out.refresh || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
     $: if (out.refresh || JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
 
-    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()[0] : null
+    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()?.[0] : null
 
     // transition
     $: slideData = slideRef?.[slide.index!]?.data || null
-    $: slideTextTransition = slideData ? slideData.transition : null
-    $: slideMediaTransition = slideData ? slideData.mediaTransition : null
-    $: transition = disableTransitions ? { type: "none" } : slideTextTransition ? slideTextTransition : $transitionData.text
-    $: mediaTransition = disableTransitions ? { type: "none" } : slideMediaTransition ? slideMediaTransition : $transitionData.media
-    $: overlayTransition = disableTransitions ? { type: "none" } : $transitionData.text
+    $: slideTextTransition = slideData?.transition?.type ? slideData.transition : null
+    $: slideMediaTransition = slideData?.mediaTransition?.type ? slideData.mediaTransition : null
+    $: transition = disableTransitions ? { type: "none" } : slideTextTransition || $transitionData.text || {}
+    $: mediaTransition = disableTransitions ? { type: "none" } : slideMediaTransition || $transitionData.media || {}
+    $: overlayTransition = disableTransitions ? { type: "none" } : $transitionData.text || {}
 
     $: currentLayout = slide ? _show(slide.id).layouts([slide.layout]).ref()[0] : []
     $: currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? clone(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {}) : null) : null

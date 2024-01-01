@@ -666,6 +666,7 @@
         "recent": "Nylig redigert",
         "enable_stage": "Aktiver scene",
         "select_stage": "Velg scene",
+        "next_slide": "Vis neste lysbilde",
         "use_slide_index": "Bruk aktiv indeks",
         "slide_index": "Lysbilde-indeks",
         "padding": "Avstand",
