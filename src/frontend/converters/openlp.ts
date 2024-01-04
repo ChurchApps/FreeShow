@@ -184,7 +184,17 @@ function XMLtoObject(xml: string) {
         title: getChild(getChild(properties, "titles"), "title").textContent || "",
         modified: xmlDoc.getAttribute("modifiedDate") || "",
         verseOrder: getChild(properties, "verseOrder").textContent || "",
-        authors: [...getChild(properties, "authors").children].map((a: any) => ({ type: a.getAttribute("type"), name: a.textContent })),
+        authors: getChild(properties, "authors").children
+        ? [...getChild(properties, "authors").children].map((a: any) => ({
+            type: a.getAttribute("type")?a.getAttribute("type"):"words",
+            name: a.textContent,
+            }))
+        : [],
+        notes: getChild(properties, "comments").children 
+            ?  [...getChild(properties,"comments").children].map((comment) => comment.textContent).join('\n')
+            : "",
+        copyright: getChild(properties, "copyright").textContent || "",
+        ccli: getChild(properties, "ccliNo").textContent || "",
         lyrics: [...lyrics.getElementsByTagName("verse")].map((verse) => ({
             name: verse.getAttribute("name")!,
             lines: getChild(verse, "lines")
