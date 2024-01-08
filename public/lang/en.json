@@ -11,6 +11,21 @@
         "finished": "Finished",
         "system_open": "Open in system"
     },
+    "titlebar": {
+        "file": "File",
+        "edit": "Edit",
+        "view": "View",
+        "help": "Help"
+    },
+    "screen": {
+        "width": "Width",
+        "height": "Height",
+        "pixels": "pixels",
+        "top": "Top",
+        "right": "Right",
+        "bottom": "Bottom",
+        "left": "Left"
+    },
     "about": {
         "check_updates": "Look for updates",
         "made": "Made in Norway by",
@@ -40,6 +55,9 @@
         "options": "More options.",
         "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses."
     },
+    "tips": {
+        "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras."
+    },
     "setup": {
         "good_luck": "I hope you find this software useful. Good luck showing! :)",
         "tips": "Find handy tips and tutorials on the website.",
@@ -62,21 +80,6 @@
         "default": "Default",
         "small": "Small",
         "bold": "Bold"
-    },
-    "titlebar": {
-        "file": "File",
-        "edit": "Edit",
-        "view": "View",
-        "help": "Help"
-    },
-    "screen": {
-        "width": "Width",
-        "height": "Height",
-        "pixels": "pixels",
-        "top": "Top",
-        "right": "Right",
-        "bottom": "Bottom",
-        "left": "Left"
     },
     "create_show": {
         "search_web": "Search for song on the web",
@@ -259,9 +262,6 @@
         "hover": "Hover",
         "focus": "Focus"
     },
-    "buttons": {
-        "changeTheme": "Change Theme"
-    },
     "inputs": {
         "name": "Name",
         "url": "URL",
@@ -286,9 +286,6 @@
         "triggers": "Triggers",
         "templates": "Templates",
         "web": "Web"
-    },
-    "tips": {
-        "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras."
     },
     "category": {
         "all": "All",
