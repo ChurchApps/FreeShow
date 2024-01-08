@@ -62,9 +62,9 @@
 
     $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [] })
 
-    $: allSlideItems = editSlideSelected && activeIsShow && ref.length > $activeEdit.slide! ? _show().slides([ref[$activeEdit.slide!]?.id]).get("items")[0] : []
-    $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items
-    $: if ($activeEdit.type === "template") allSlideItems = $templates[$activeEdit.id!]?.items
+    $: allSlideItems = editSlideSelected && activeIsShow && ref.length > $activeEdit.slide! ? _show().slides([ref[$activeEdit.slide!]?.id]).get("items")[0] || [] : []
+    $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items || []
+    $: if ($activeEdit.type === "template") allSlideItems = $templates[$activeEdit.id!]?.items || []
     const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
     // select active items or all items

@@ -10,7 +10,7 @@
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { getActiveOutputs, getResolution, mergeWithTemplate } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Textbox from "../slide/Textbox.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
@@ -73,40 +73,10 @@
 
     $: if (currentSlide && currentOutput?.style && currentStyle) setTemplateStyle()
     function setTemplateStyle() {
-        // TODO: duplicate of history "template":1107
-        let template = $templates[currentStyle.template || ""]?.items || []
-        let templateTextItems = template.filter((a) => a.lines)
-        let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
+        let slideItems = slide.id === "temp" ? slide.tempItems : currentSlide.items
+        let templateItems = $templates[currentStyle.template || ""]?.items || []
 
-        // TODO: replace other items with the same type if any
-
-        if (templateTextItems.length || templateOtherItems.length) {
-            templateTextItems.forEach((item: any, i: number) => {
-                if (!currentSlide.items[i]) return
-
-                currentSlide.items[i].style = item.style || ""
-                currentSlide.items[i].align = item.align || ""
-                currentSlide.items[i].lines?.forEach((line: any, j: number) => {
-                    let templateLine = item.lines?.[j] || item.lines?.[0]
-                    line.align = templateLine?.align || ""
-                    line.text?.forEach((text: any, k: number) => {
-                        text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
-                    })
-                })
-
-                // scrolling, bindings
-                currentSlide.items[i].specialStyle = item.specialStyle || {}
-            })
-
-            // remove items that are not textbox (overwriting with a new template will remove the old images)
-            if (slide.id === "temp") currentSlide.items = currentSlide.items.filter((a) => a.lines)
-
-            // add other items
-            currentSlide.items = [...templateOtherItems, ...currentSlide.items]
-        } else {
-            // reset style
-            currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? clone(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {}) : null) : null
-        }
+        currentSlide.items = mergeWithTemplate(slideItems, templateItems)
     }
 
     $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })

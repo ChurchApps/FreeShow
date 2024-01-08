@@ -453,6 +453,7 @@ const actions: any = {
         let data = get(selected).data[0]
 
         let item: any = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
+        if (!item) return
 
         let newLines: any = clone(item.lines)
         if (data.chord) {

@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution } from "../../../types/Settings"
-import type { Transition } from "../../../types/Show"
+import type { Item, Transition } from "../../../types/Show"
 import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
 import { clone, removeDuplicates } from "./array"
@@ -65,7 +65,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 }
 
 export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false) {
-    let sortedOutputs: any[] = Object.entries(updater)
+    let sortedOutputs: any[] = Object.entries(updater || {})
         .map(([id, a]: any) => ({ id, ...a }))
         .sort((a, b) => a.name?.localeCompare(b.name))
     let enabled: any[] = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true))
@@ -278,4 +278,86 @@ export function getCurrentMediaTransition() {
     let slideMediaTransition = slideData ? slideData.mediaTransition : null
 
     return slideMediaTransition || transition
+}
+
+// TEMPLATE
+
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false) {
+    slideItems = clone(slideItems)
+    if (!templateItems.length) return slideItems
+
+    let sortedTemplateItems = sortItemsByType(templateItems)
+
+    let newSlideItems: Item[] = []
+    slideItems.forEach((item: Item) => {
+        let type = item.type || "text"
+
+        let templateItem = sortedTemplateItems[type]?.shift()
+        if (!templateItem) return finish()
+
+        item.style = templateItem.style || ""
+        item.align = templateItem.align || ""
+
+        // scrolling, bindings
+        item.specialStyle = templateItem.specialStyle || {}
+
+        if (type !== "text") return finish()
+
+        item.lines?.forEach((line: any, j: number) => {
+            let templateLine = templateItem!.lines?.[j] || templateItem!.lines?.[0]
+
+            line.align = templateLine?.align || ""
+            line.text?.forEach((text: any, k: number) => {
+                let templateText = templateLine?.text[k] || templateLine?.text[0]
+                text.style = templateText?.style || ""
+            })
+        })
+
+        finish()
+        function finish() {
+            newSlideItems.push(item)
+        }
+    })
+
+    if (addOverflowTemplateItems) {
+        templateItems = removeTextValue(templateItems)
+    } else {
+        delete sortedTemplateItems.text
+        templateItems = templateItems.filter((a) => (a.type || "text") !== "text")
+    }
+
+    // this will ensure the correct order on the remaining items
+    let remainingCount = Object.values(sortedTemplateItems).reduce((value, items) => (value += items.length), 0)
+    let remainingTemplateItems = remainingCount ? templateItems.slice(remainingCount * -1) : []
+    newSlideItems.push(...remainingTemplateItems)
+
+    return newSlideItems
+}
+
+function removeTextValue(items: Item[]) {
+    items.forEach((item) => {
+        if (!item.lines) return
+        item.lines = item.lines.map((line) => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: getTemplateText(line.text?.[0]?.value) }] }))
+    })
+
+    return items
+}
+
+export function getTemplateText(value) {
+    // if text has {} it will not get removed (useful for preset text, and dynamic values)
+    if (value.includes("{")) return value
+    return ""
+}
+
+function sortItemsByType(items: Item[]) {
+    let sortedItems: { [key: string]: Item[] } = {}
+
+    items.forEach((item) => {
+        let type = item.type || "text"
+        if (!sortedItems[type]) sortedItems[type] = []
+
+        sortedItems[type].push(item)
+    })
+
+    return sortedItems
 }

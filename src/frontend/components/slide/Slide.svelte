@@ -159,7 +159,7 @@
     function update() {
         // html = `<div class="align" style="${item.align}">`
         html = ""
-        slide.items[longest].lines?.forEach((line) => {
+        slide.items[longest]?.lines?.forEach((line) => {
             line.text?.forEach((a) => {
                 html += a.value
             })

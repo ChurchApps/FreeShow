@@ -10,6 +10,7 @@ import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
+import { getTemplateText } from "./output"
 
 // TODO: move history switch to actions
 
@@ -713,6 +714,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 console.log("TEMPLATE", template)
                 console.log(slides)
+                // TODO: use mergeWithTemplate() in output.ts
 
                 showsCache.update((a) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
@@ -756,13 +758,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 // addedItems++
 
                                 return
-                            }
-
-                            function getTemplateText(value) {
-                                // if text has {} it will not get removed (useful for preset text, and dynamic values)
-                                if (value.includes("{")) return value
-
-                                return ""
                             }
 
                             // itemIndex += addedItems

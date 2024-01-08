@@ -98,11 +98,13 @@
         let bounds = e.detail.bounds
         let keyOutput = currentScreen.keyOutput
         outputs.update((a) => {
+            if (!a[screenId!]) return a
+
             a[screenId!].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
             a[screenId!].screen = e.detail.id.toString()
             // a[screenId!].kiosk = true
 
-            if (keyOutput) {
+            if (keyOutput && a[keyOutput]) {
                 a[keyOutput].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
                 a[keyOutput].screen = e.detail.id.toString()
             }

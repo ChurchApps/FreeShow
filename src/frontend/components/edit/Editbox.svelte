@@ -152,6 +152,7 @@
 
         // create new slide
         let newSlide = { ..._show().slides([ref.id]).get()[0] }
+        if (!newSlide.items[editItemIndex]) return
         newSlide.items[editItemIndex].lines = secondLines
         delete newSlide.id
         delete newSlide.globalGroup
@@ -365,6 +366,8 @@
         }
 
         function setNewLines(a: any) {
+            if (!a[$activeEdit.id!].items[index]) return a
+
             a[$activeEdit.id!].items[index].lines = newLines
             return a
         }
@@ -439,7 +442,7 @@
     // UPDATE STYLE FROM LINES
 
     function getNewLines() {
-        if (!textElem) return []
+        if (!textElem || !item) return []
 
         let newLines: Line[] = []
         let pos: number = -1
@@ -682,7 +685,7 @@
     }
 
     let chordLines: string[] = []
-    $: if (chordsMode && item.lines) createChordLines()
+    $: if (chordsMode && item?.lines) createChordLines()
     function createChordLines() {
         chordLines = []
         chordButtons = []
