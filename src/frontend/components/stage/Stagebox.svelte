@@ -104,6 +104,8 @@
     $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
 
     // $: resolution = getResolution(resolution, { $outputs, $styles })
+
+    $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -115,6 +117,7 @@
     class="stage_item item"
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}
+    class:isDisabledVariable
     style="{item.style};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}"
     on:mousedown={mousedown}
 >
@@ -169,7 +172,7 @@
                     {/if}
                 {:else if id.includes("variables")}
                     {#if $variables[id.split("#")[1]]}
-                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" hideText={false} />
                     {/if}
                 {:else}
                     {id}
@@ -205,5 +208,9 @@
         height: 100%;
         color: unset;
         /* overflow-wrap: break-word; */
+    }
+
+    .isDisabledVariable {
+        opacity: 0.5;
     }
 </style>

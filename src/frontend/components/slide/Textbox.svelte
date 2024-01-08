@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, overlays, showsCache, slidesOptions, templates, volume } from "../../stores"
+    import { currentWindow, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
     import { custom } from "../../utils/transitions"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
@@ -19,6 +19,7 @@
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
+    import { replaceDynamicValues } from "../helpers/showActions"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -40,6 +41,7 @@
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
         slideId?: string
+        layoutId?: string
         id: string
     }
     export let style: boolean = true
@@ -304,6 +306,8 @@
 
     $: if (chords && !stageItem && item?.auto && fontSize) fontSize *= 0.7
     $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? (fontSize || autoSize) + "px" : fontSize ? fontSize + "px" : ""
+
+    $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
 </script>
 
 <!-- svelte transition bug!!! -->
@@ -314,6 +318,7 @@
         class:white={key && !lines?.length}
         class:key
         class:addDefaultItemStyle
+        class:isDisabledVariable
         transition:custom={itemTransition}
     >
         {#if lines}
@@ -340,8 +345,9 @@
                             <!-- class:height={!line.text[0]?.value.length} -->
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
+                                    {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}">
-                                        {@html text.value.replaceAll("\n", "<br>") || "<br>"}
+                                        {@html value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
                                     </span>
                                 {/each}
                             </div>
@@ -408,6 +414,7 @@
         class:white={key && !lines?.length}
         class:key
         class:addDefaultItemStyle
+        class:isDisabledVariable
         class:hidden
     >
         {#if lines}
@@ -439,8 +446,9 @@
                             <!-- class:height={!line.text[0]?.value.length} -->
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
+                                    {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}">
-                                        {@html text.value.replaceAll("\n", "<br>") || "<br>"}
+                                        {@html value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
                                     </span>
                                 {/each}
                             </div>
@@ -595,6 +603,10 @@
 
         height: 150px;
         width: 400px;
+    }
+
+    .item.isDisabledVariable {
+        display: none;
     }
 
     /* scrolling */

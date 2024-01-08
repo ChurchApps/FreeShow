@@ -5,6 +5,7 @@ import { drawerTabs } from "../../values/tabs"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
 import { chordAdders, keys } from "../edit/values/chords"
 import { clone, keysToID, sortByName } from "../helpers/array"
+import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
 
@@ -160,6 +161,13 @@ const loadActions = {
         })
 
         return outputList
+    },
+    dynamic_values: () => {
+        let values: any = getDynamicIds().map((id) => ({ id, label: id, translate: false }))
+        let firstMetaIndex = values.findIndex((a) => a.id.includes("meta_"))
+        values = [...values.slice(0, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
+
+        return values
     },
 }
 

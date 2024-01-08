@@ -81,7 +81,7 @@ export async function receiveMidi(data: any) {
         port.connect(function (msg: any) {
             // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
             let type = msg.toString().includes("Off") ? "noteoff" : "noteon"
-            let values = { note: msg["1"], velocity: msg["2"], channel: msg["0"] }
+            let values = { note: msg["1"], velocity: msg["2"], channel: (msg["0"] & 0x0f) + 1 }
             toApp("MAIN", { channel: "RECEIVE_MIDI", data: { id: data.id, values, type } })
         })
     } catch (err) {

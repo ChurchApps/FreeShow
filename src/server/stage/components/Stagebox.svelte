@@ -52,10 +52,12 @@
 
     $: next = id.includes("next")
     $: slide = slides[next ? 1 : 0]
+
+    $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
-<div class="item" style={style + (show.settings.autoStretch === false ? "" : newSizes)} bind:offsetHeight={height} bind:offsetWidth={width}>
+<div class="item" class:isDisabledVariable style={style + (show.settings.autoStretch === false ? "" : newSizes)} bind:offsetHeight={height} bind:offsetWidth={width}>
     {#if show?.settings.labels}
         <div class="label">
             {item.label}
@@ -124,5 +126,9 @@
         height: 100%;
         color: unset;
         /* overflow-wrap: break-word; */
+    }
+
+    .isDisabledVariable {
+        display: none;
     }
 </style>

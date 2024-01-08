@@ -55,6 +55,7 @@ import { updateThemeValues } from "../../utils/updateSettings"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
+import { getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
 import { clone, removeDuplicates } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
@@ -64,7 +65,7 @@ import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension
 import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { updateShowsList } from "../helpers/show"
-import { sendMidi } from "../helpers/showActions"
+import { dynamicValueText, sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { OPEN_FOLDER } from "./../../../types/Channels"
@@ -687,6 +688,66 @@ const actions: any = {
             location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itembind_" + slideRef.id + "_items_" + items.join(",") },
         })
         // _show().slides([slideID!]).set({ key: "items", value: items })
+    },
+    dynamic_values: (obj: any) => {
+        let id = obj.menu.id
+
+        let sel = getSelectionRange()
+        let lineIndex = sel.findIndex((a) => a?.start !== undefined)
+        console.log(sel, lineIndex)
+        if (lineIndex < 0) return
+
+        let edit = get(activeEdit)
+        let caret = { line: lineIndex || 0, pos: sel[lineIndex].start || 0 }
+
+        if (edit.id) {
+            if (edit.type === "overlay") {
+                overlays.update((a) => {
+                    a[edit.id!].items = updateItemText(a[edit.id!].items)
+                    return a
+                })
+            } else if (edit.type === "template") {
+                templates.update((a) => {
+                    a[edit.id!].items = updateItemText(a[edit.id!].items)
+                    console.log(a[edit.id!].items)
+                    return a
+                })
+            }
+
+            refreshEditSlide.set(true)
+            return
+        }
+
+        let showId = get(activeShow)?.id || ""
+        let ref = _show(showId).layouts("active").ref()[0]
+        let slideId = ref[edit.slide || 0]?.id || ""
+
+        showsCache.update((a) => {
+            a[showId].slides[slideId].items = updateItemText(a[showId].slides[slideId].items)
+            return a
+        })
+
+        refreshEditSlide.set(true)
+
+        function updateItemText(items) {
+            let replaced = false
+
+            items[edit.items[0]]?.lines?.[caret.line].text.forEach((text) => {
+                if (replaced) return
+
+                let value = text.value
+                if (value.length < caret.pos) {
+                    caret.pos -= value.length
+                    return
+                }
+
+                let newValue = value.slice(0, caret.pos) + dynamicValueText(id) + value.slice(caret.pos)
+                text.value = newValue
+                replaced = true
+            })
+
+            return items
+        }
     },
 
     // formats

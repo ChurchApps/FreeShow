@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activePopup, activeShow, dictionary, os, outputs, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates } from "../../stores"
+    import { activeEdit, activePopup, activeShow, dictionary, os, outputs, overlays, redoHistory, refreshListBoxes, selected, showsCache, templates, variables } from "../../stores"
     import { menuClick } from "../context/menuClick"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
@@ -733,6 +733,8 @@
             chordLines[i] = html
         })
     }
+
+    $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -744,6 +746,7 @@ bind:offsetWidth={width} -->
     bind:this={itemElem}
     class={plain ? "editItem" : "editItem item context #edit_box"}
     class:selected={$activeEdit.items.includes(index)}
+    class:isDisabledVariable
     style={plain
         ? "width: 100%;"
         : `${item?.style}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? "filter: " + filter + ";" : ""}${
@@ -850,7 +853,7 @@ bind:offsetWidth={width} -->
     {:else if item?.type === "events"}
         <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "variable"}
-        <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} edit />
+        <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} hideText={false} edit />
     {:else if item?.type === "web"}
         <Website src={item?.web?.src || ""} />
     {:else if item?.type === "mirror"}
@@ -878,6 +881,11 @@ bind:offsetWidth={width} -->
         outline: 5px solid var(--secondary-opacity);
         overflow: visible;
     }
+
+    .item.isDisabledVariable {
+        opacity: 0.5;
+    }
+
     .align span.placeholder {
         opacity: 0.5;
         pointer-events: none;

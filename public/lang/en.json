@@ -476,6 +476,7 @@
         "add_time_marker": "Add time marker",
         "bind_to": "Bind to",
         "remove_binding": "Remove binding",
+        "dynamic_values": "Dynamic values",
         "show_timer": "Time until show",
         "hide_timer": "Time until hide",
         "choose_custom": "Choose custom",

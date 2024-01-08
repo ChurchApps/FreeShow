@@ -15,6 +15,7 @@
     import Textbox from "../slide/Textbox.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import MediaOutput from "./MediaOutput.svelte"
+    import { replaceDynamicValues } from "../helpers/showActions"
 
     export let title: string = ""
     export let mirror: boolean = false
@@ -57,7 +58,7 @@
     $: if (out.refresh || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
     $: if (out.refresh || JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
 
-    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()?.[0] : null
+    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide.id).layouts([slide.layout]).ref()?.[0] : null
 
     // transition
     $: slideData = slideRef?.[slide.index!]?.data || null
@@ -129,6 +130,22 @@
     const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
     let metadataStyle = defaultMetadataStyle
     $: metadataStyle = getTemplateStyle(metadataTemplate!, $templates) || defaultMetadataStyle
+
+    $: metadataTemplateValue = $templates[metadataTemplate || ""]?.items?.[0]?.lines?.[0]?.text?.[0]?.value || ""
+    let metadataValue = ""
+    $: if (metadataTemplateValue || metaMessage || currentStyle) getMetaValue()
+    function getMetaValue() {
+        if (metadataTemplateValue.includes("{")) {
+            metadataValue = replaceDynamicValues(metadataTemplateValue, { showId: slide.id, layoutId: slide.layout, slideIndex: slide.index })
+            return
+        }
+
+        if (!metaMessage) return
+
+        metadataValue = Object.values(metaMessage)
+            .filter((a) => a.length)
+            .join(currentStyle.metadataDivider || "; ")
+    }
 
     $: messageTemplate = overrideOutput ? $showsCache[slide?.id]?.message?.template : currentStyle.messageTemplate || "message"
     const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
@@ -465,7 +482,7 @@
                                     {preview}
                                     {item}
                                     {ratio}
-                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id, layoutId: slide.layout }}
                                     linesStart={linesStart[currentLineId]}
                                     linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled={!mirror}
@@ -494,7 +511,7 @@
                                     {preview}
                                     {item}
                                     {ratio}
-                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id, layoutId: slide.layout }}
                                     linesStart={linesStart[currentLineId]}
                                     linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled
@@ -528,15 +545,11 @@
         {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
             {#if overlayTransition.type === "none"}
                 <div class="meta" style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                    {@html Object.values(metaMessage)
-                        .filter((a) => a.length)
-                        .join(currentStyle.metadataDivider || "; ")}
+                    {@html metadataValue}
                 </div>
             {:else}
                 <div class="meta" transition:custom={overlayTransition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                    {@html Object.values(metaMessage)
-                        .filter((a) => a.length)
-                        .join(currentStyle.metadataDivider || "; ")}
+                    {@html metadataValue}
                 </div>
             {/if}
         {/if}
