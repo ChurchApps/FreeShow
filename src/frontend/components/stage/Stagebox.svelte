@@ -94,7 +94,7 @@
 
     // SLIDE
     let slide
-    let stageOutputId = show?.settings?.output || getActiveOutputs($outputs, true, true)[0]
+    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
     $: currentBackground = sendBackgroundToStage(stageOutputId, $outputs, true)
@@ -121,7 +121,7 @@
     style="{item.style};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}"
     on:mousedown={mousedown}
 >
-    {#if currentShow?.settings.labels}
+    {#if currentShow?.settings?.labels}
         <div class="label">
             {#key id}
                 <T id="stage.{id.split('#')[1]}" />

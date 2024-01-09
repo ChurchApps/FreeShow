@@ -64,11 +64,11 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
     })
 }
 
-export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false) {
+export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
     let sortedOutputs: any[] = Object.entries(updater || {})
         .map(([id, a]: any) => ({ id, ...a }))
         .sort((a, b) => a.name?.localeCompare(b.name))
-    let enabled: any[] = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true))
+    let enabled: any[] = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (removeStageOutput ? !a.stageOutput : true))
 
     if (hasToBeActive && enabled.filter((a) => a.active === true).length) enabled = enabled.filter((a) => a.active === true)
 

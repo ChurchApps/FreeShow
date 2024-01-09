@@ -36,7 +36,7 @@
 
     // out data
     const defaultLayers: string[] = ["background", "slide", "overlays"]
-    $: outputId = specificOutput || getActiveOutputs($outputs, true, mirror)[0]
+    $: outputId = specificOutput || getActiveOutputs($outputs, true, mirror, mirror)[0]
     $: currentOutput = $outputs[outputId] || {}
 
     let currentStyle: Styles = { name: "" }

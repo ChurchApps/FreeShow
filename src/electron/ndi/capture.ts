@@ -4,7 +4,7 @@ import os from "os"
 import { toApp } from ".."
 import { OUTPUT, OUTPUT_STREAM } from "../../types/Channels"
 import { toServer } from "../servers"
-import { outputWindows } from "../utils/output"
+import { outputWindows, sendToStageOutputs } from "../utils/output"
 import { NDI, sendVideoBufferNDI } from "./ndi"
 import util from "./vingester-util"
 
@@ -213,7 +213,9 @@ function sendBufferToPreview(id: string, image: NativeImage, options: any) {
     if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
     else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-    toApp(OUTPUT, { channel: "PREVIEW", data: { id, buffer, size, originalSize: options.size } })
+    let msg = { channel: "PREVIEW", data: { id, buffer, size, originalSize: options.size } }
+    toApp(OUTPUT, msg)
+    sendToStageOutputs(msg)
 }
 
 export function updatePreviewResolution(data: any) {

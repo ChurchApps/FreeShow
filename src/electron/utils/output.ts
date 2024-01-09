@@ -20,6 +20,8 @@ async function createOutput(output: Output) {
     outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
     updateBounds(output)
 
+    if (output.stageOutput) stageWindows.push(id)
+
     setTimeout(() => {
         startCapture(id, { ndi: output.ndi || false }, (output as any).rate)
     }, 1200)
@@ -276,6 +278,19 @@ function sendToOutputWindow(msg: any) {
         tempMsg.data = { [id]: msg.data[id] }
         return tempMsg
     }
+}
+
+let stageWindows: string[] = []
+export function sendToStageOutputs(msg: any) {
+    console.log(stageWindows)
+    console.log(msg)
+    ;[...new Set(stageWindows)].forEach((id) => {
+        let window = outputWindows[id]
+        if (!window || window.isDestroyed()) return
+
+        console.log("SEND", id)
+        window.webContents.send(OUTPUT, msg)
+    })
 }
 
 // create numbered outputs for each screen

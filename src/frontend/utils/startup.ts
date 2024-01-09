@@ -5,6 +5,7 @@ import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
+import { getActiveOutputs } from "../components/helpers/output"
 import { checkName } from "../components/helpers/show"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -88,7 +89,6 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { getActiveOutputs } from "../components/helpers/output"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -358,6 +358,17 @@ const receiveOUTPUTasOUTPUT: any = {
     ALL_OUTPUTS: (a: any) => {
         // used for stage mirror data (hacky fix)
         allOutputs.set(a)
+    },
+    // only received by stage screen outputs
+    PREVIEW: ({ id, buffer, size, originalSize }) => {
+        // WIP only receive the "output capture" from this outputs "stageOutput id"
+        // let outputId = Object.keys(get(outputs))[0]
+        // if (id !== outputId) return
+
+        previewBuffers.update((a) => {
+            a[id] = { buffer, size, originalSize }
+            return a
+        })
     },
     CLOSE_AD: () => closeAd.set(true),
     STYLES: (a: any) => styles.set(a),
