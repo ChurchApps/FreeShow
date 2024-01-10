@@ -200,13 +200,17 @@ export function playMidiIn(msg) {
     if (JSON.stringify(midi.values) !== JSON.stringify(msg.values)) return
 
     if (midi.action) {
-        if (midi.type !== msg.type) return
         let index = msg.values.velocity
+        // the select slide index from velocity can't select slide 0 as a NoteOn with velocity 0 is detected as NoteOff
+        // velocity of 0 currently bypasses the note on/off
+        if (midi.type !== msg.type && index !== 0) return
+
         if (is_index && index < 0) {
             newToast("$toast.midi_no_velocity")
             index = 0
         }
         midiActions[midi.action](midi.actionData, index)
+
         return
     }
 

@@ -78,7 +78,9 @@ export async function receiveMidi(data: any) {
 
         if (port.name()) openedPorts[data.id] = port
 
-        port.connect(function (msg: any) {
+        port.connect((msg: any) => {
+            if (!msg.toString().includes("Note")) return
+
             // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
             let type = msg.toString().includes("Off") ? "noteoff" : "noteon"
             let values = { note: msg["1"], velocity: msg["2"], channel: (msg["0"] & 0x0f) + 1 }
