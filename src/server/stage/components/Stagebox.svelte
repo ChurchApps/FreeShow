@@ -48,7 +48,7 @@
     `
 
     $: size = getAutoSize(item, { width, height })
-    $: autoSize = fontSize ? Math.max(fontSize, size) : size
+    $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     $: next = id.includes("next")
     $: slide = slides[next ? 1 : 0]

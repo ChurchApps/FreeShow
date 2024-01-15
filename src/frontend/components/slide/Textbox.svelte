@@ -189,6 +189,7 @@
             return
         }
         loopStop = true
+        cacheText = true
 
         fontSize = MAX_FONT_SIZE
         addStyleToElemText(fontSize)
@@ -264,6 +265,20 @@
         }
     }
 
+    // CACHE TO PREVENT SHOWING AUTO TEXT CHANGING SIZES
+
+    let cacheText: boolean = false
+    let cachedLines: string = ""
+    // $: if (cacheText) startTextCaching()
+    // TODO: function startTextCaching() {
+    //     if (!alignElem) return
+
+    //     setTimeout(() => {
+    //         cacheText = false
+    //         cachedLines = alignElem.querySelector(".lines")?.outerHTML
+    //     }, 1000)
+    // }
+
     // CHORDS
 
     let chordLines: string[] = []
@@ -333,6 +348,7 @@
             >
                 <div
                     class="lines"
+                    class:cacheText
                     style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
                 >
                     {#each lines as line, i}
@@ -354,6 +370,10 @@
                         {/if}
                     {/each}
                 </div>
+
+                {#if cacheText}
+                    {@html cachedLines}
+                {/if}
             </div>
         {:else if item?.type === "list"}
             <ListView list={item.list} disableTransition={disableListTransition} />
@@ -373,6 +393,7 @@
                     </video>
                 {:else}
                     <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
+                    <!-- TODO: use custom transition... -->
                     <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
                     <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
                     <!-- <MediaLoader path={item.src} /> -->
@@ -429,6 +450,7 @@
             >
                 <div
                     class="lines"
+                    class:cacheText
                     style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
                 >
                     {#each lines as line, i}
@@ -455,6 +477,10 @@
                         {/if}
                     {/each}
                 </div>
+
+                {#if cacheText}
+                    {@html cachedLines}
+                {/if}
             </div>
         {:else if item?.type === "list"}
             <ListView list={item.list} disableTransition={disableListTransition} />
@@ -474,7 +500,7 @@
                     </video>
                 {:else}
                     <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
-                    <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
+                    <Image transition={false} src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
                     <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
                     <!-- <MediaLoader path={item.src} /> -->
                 {/if}
@@ -519,6 +545,14 @@
 
     .hidden {
         opacity: 0;
+    }
+
+    /* .align .lines:nth-child(1) {
+        position: absolute;
+    } */
+    .cacheText {
+        opacity: 0;
+        position: absolute;
     }
 
     .align {

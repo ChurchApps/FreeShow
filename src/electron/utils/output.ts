@@ -282,13 +282,10 @@ function sendToOutputWindow(msg: any) {
 
 let stageWindows: string[] = []
 export function sendToStageOutputs(msg: any) {
-    console.log(stageWindows)
-    console.log(msg)
     ;[...new Set(stageWindows)].forEach((id) => {
         let window = outputWindows[id]
         if (!window || window.isDestroyed()) return
 
-        console.log("SEND", id)
         window.webContents.send(OUTPUT, msg)
     })
 }

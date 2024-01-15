@@ -90,11 +90,11 @@
 
     $: size = getAutoSize(item, { width, height })
     // $: size = Math.min(height, width) / 2
-    $: autoSize = fontSize ? Math.max(fontSize, size) : size
+    $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
     let slide
-    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true)[0]
+    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
     $: currentBackground = sendBackgroundToStage(stageOutputId, $outputs, true)
@@ -121,7 +121,7 @@
     style="{item.style};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}"
     on:mousedown={mousedown}
 >
-    {#if currentShow?.settings?.labels}
+    {#if currentShow?.settings?.labels && id}
         <div class="label">
             {#key id}
                 <T id="stage.{id.split('#')[1]}" />

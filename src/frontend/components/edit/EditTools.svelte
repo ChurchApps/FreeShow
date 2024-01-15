@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, overlays, templates } from "../../stores"
+    import { activeEdit, activeShow, overlays, showsCache, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { history } from "../helpers/history"
@@ -37,7 +37,7 @@
 
     $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
     $: editSlideSelected = $activeEdit.slide !== null && $activeEdit.slide !== undefined
-    $: activeIsShow = $activeShow && ($activeShow.type || "show" === "show")
+    $: activeIsShow = $activeShow && ($activeShow.type || "show") === "show"
 
     let slides: any[] = []
     $: if (allSlideItems && (($activeEdit?.id && editSlideSelected) || showIsActive))
@@ -58,7 +58,7 @@
         tabs.item.disabled = false
     }
 
-    $: ref = _show().layouts("active").ref()[0] || {}
+    $: ref = [$showsCache, _show().layouts("active").ref()[0] || {}][1]
 
     $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [] })
 
