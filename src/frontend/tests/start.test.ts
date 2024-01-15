@@ -4,8 +4,7 @@ import { expect, test } from "@playwright/test"
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test("Launch electron app", async () => {
-    let env: { [key: string]: string } = { ...process.env, NODE_ENV: "production" }
-    const electronApp = await electron.launch({ args: ["."], env: env })
+    const electronApp = await electron.launch({ args: ["."] })
 
     await electronApp.waitForEvent("window")
 
