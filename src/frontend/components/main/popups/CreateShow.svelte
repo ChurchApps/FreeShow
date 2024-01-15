@@ -179,7 +179,7 @@
     <TextArea placeholder={getQuickExample()} style="height: 250px;min-width: 500px;" value={values.text} on:input={(e) => changeValue(e)} />
 {/if}
 
-<Button on:click={textToShow} style="width: 100%;margin-top: 10px;" dark center>
+<Button on:click={textToShow} style="width: 100%;margin-top: 10px;" dark center data-testid="create.show.popup.new.show">
     {#if values.text.trim().length > 0}
         <Icon id="showIcon" right />
         <T id="new.show" />
