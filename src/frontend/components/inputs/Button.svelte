@@ -56,6 +56,7 @@
     on:mousedown={hideTooltip}
     on:mouseleave={hideTooltip}
     id={$$props.id}
+    data-testid={$$props["data-testid"]}
     style="{outlineColor ? 'outline-offset: -2px;outline: 2px solid ' + outlineColor + ' !important;' : ''}{$$props.style || ''}"
     class:active
     class:outline
@@ -93,7 +94,9 @@
         align-items: center;
         padding: 0.2em 0.8em;
 
-        transition: background-color 0.2s, border 0.2s;
+        transition:
+            background-color 0.2s,
+            border 0.2s;
     }
     button.dark {
         background-color: var(--primary-darker);
