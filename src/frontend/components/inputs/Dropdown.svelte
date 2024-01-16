@@ -8,6 +8,7 @@
 
     const dispatch = createEventDispatcher()
     export let options: Option[]
+    export let id: string = ""
     export let disabled: boolean = false
     export let center: boolean = false
     export let arrow: boolean = false
@@ -65,7 +66,7 @@
 />
 
 <div class:disabled class:center bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
-    <button {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
+    <button {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
         {#if arrow}
             <Icon id="expand" size={1.2} white />
         {:else}
