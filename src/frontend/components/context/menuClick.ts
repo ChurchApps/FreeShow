@@ -641,6 +641,18 @@ const actions: any = {
 
     selectAll: (obj: any) => selectAll(obj.sel),
 
+    bind_slide: (obj: any) => {
+        let layoutSlide: number = obj.sel.data[0]?.index || 0
+        let ref = _show().layouts("active").ref()[0]
+
+        let bindings: string[] = ref[layoutSlide]?.data?.bindings || []
+        let outputId = obj.menu.id
+        let existingIndex = bindings.indexOf(outputId)
+        if (existingIndex >= 0) bindings.splice(existingIndex, 1)
+        else bindings.push(outputId)
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "bindings", data: bindings, indexes: [layoutSlide], dataIsArray: true } })
+    },
     // bind item
     bind_item: (obj: any) => {
         let id = obj.menu?.id

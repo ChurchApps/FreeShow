@@ -24,7 +24,8 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string | null = null, add: boolean = false) {
     outputs.update((a: any) => {
-        let outs = getActiveOutputs()
+        let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
+        let outs = bindings.length ? bindings : getActiveOutputs()
         if (outputId) outs = [outputId]
 
         outs.forEach((id: string, i: number) => {

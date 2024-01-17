@@ -150,7 +150,7 @@
     {/if}
     <span style="display: flex; align-items: center;position: relative;{multipleLayouts || reference || !layouts ? '' : 'width: 100%;'}">
         {#if layouts && !reference}
-            <Button disabled={!layoutSlides.length && !multipleLayouts} on:click={addLayout} style="white-space: nowrap;{multipleLayouts ? '' : 'width: 100%;'}" center>
+            <Button disabled={!layoutSlides.length && !multipleLayouts} on:click={addLayout} style="white-space: nowrap;{multipleLayouts ? '' : 'width: 100%;'}" title={$dictionary.show?.new_layout} center>
                 <Icon size={1.3} id="add" right={!$labelsDisabled && !multipleLayouts} />
                 {#if !$labelsDisabled && !multipleLayouts}<T id="show.new_layout" />{/if}
             </Button>

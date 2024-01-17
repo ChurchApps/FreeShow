@@ -202,6 +202,7 @@ export interface SlideData {
         clearAudio?: boolean
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
+    bindings?: string[] // bind slide to an output
 }
 
 export interface Transition {

@@ -326,7 +326,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     }
 
     // get output slide
-    let outputIds = outputId ? [outputId] : getActiveOutputs()
+    let outputIds = outputId ? [outputId] : data.bindings?.length ? data.bindings : getActiveOutputs()
     // find any selected output with no lines
     let anyNotInLines = outputIds.find((id: string) => !get(outputs)[id].out?.slide?.line)
     // actions will only trigger on index 0 if multiple lines
