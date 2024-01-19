@@ -15,6 +15,7 @@ export const languages: any = {
     sl: "Slovenščina", // Slovenian
     ua: "Українська", // Ukrainian
     tr: "Türkçe", // Turkish
+    fr_FR: "Français", // French
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -37,4 +38,5 @@ export const replace: any = {
     sl: ["si", "sl"],
     ua: ["ua", "uk"],
     tr: ["tr"],
+    fr_FR: ["fr", "fr-FR"],
 }

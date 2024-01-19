@@ -16,7 +16,7 @@
 
     let dispatch = createEventDispatcher()
     function change(e, update = false) {
-        let value = e.target?.value || e
+        let value = e?.target?.value || e
         if (value === undefined) return
 
         // if (!update && mousePressed) update = true

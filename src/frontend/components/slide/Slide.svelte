@@ -159,7 +159,7 @@
     function update() {
         // html = `<div class="align" style="${item.align}">`
         html = ""
-        slide.items[longest].lines?.forEach((line) => {
+        slide.items[longest]?.lines?.forEach((line) => {
             line.text?.forEach((a) => {
                 html += a.value
             })
@@ -475,12 +475,12 @@
         left: 0;
         bottom: 0;
         transform: translate(-100%, 100%);
-        width: 10px;
+        width: 12px;
         height: 2px;
     }
     .childLink.full {
         transform: translate(-100%, 0);
-        height: 25px;
+        height: 24px;
     }
 
     .lineProgress {

@@ -82,14 +82,16 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
     actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
-    item_actions: { label: "actions.actions", icon: "actions", items: ["LOAD_item_actions"] },
+    bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_slide"] },
     remove_layers: { label: "actions.remove_layers", icon: "remove_layers", items: ["LOAD_remove_layers"] },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
     chord_list: { label: "edit.chords", icon: "chords", items: ["LOAD_chord_list"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
-    bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
+    item_actions: { label: "actions.actions", icon: "actions", items: ["LOAD_item_actions"] },
+    item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
+    dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
@@ -202,8 +204,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
-    slideChild: ["slideGroups", "actions", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
+    slide: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
+    slideChild: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
     group: ["rename", "recolor", "selectAll", "SEPERATOR", "duplicate", "delete"],
     global_group: ["edit"],
     // global_group: ["rename"],
@@ -222,7 +224,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
     // EDIT
-    edit_box: ["bind_to", "item_actions", "format", "delete", "SEPERATOR", "duplicate", "copy", "paste"],
+    edit_box: ["item_actions", "item_bind_to", "format", "dynamic_values", "delete", "SEPERATOR", "duplicate", "copy", "paste"],
 
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],

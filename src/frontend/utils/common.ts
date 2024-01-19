@@ -48,6 +48,9 @@ const ERROR_FILTER = [
     "The element has no supported sources.", // audio error
     "The play() request was interrupted by a call to pause().", // video transitions
     "The play() request was interrupted because the media was removed from the document.", // video transitions
+    "Failed to fetch", // probably offline
+    "Uncaught IndexSizeError: Failed to execute 'setStart' on 'Range'", // caret update/reset (pos larger than content)
+    "Uncaught IndexSizeError: Failed to execute 'setEnd' on 'Range'", // caret update/reset (pos larger than content)
 ]
 export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message

@@ -59,10 +59,12 @@
 
     $: stageShowId = stageId || $activeStage.id
     $: show = $stageShows[stageShowId || ""] || {}
+
+    let noOverflow = true
 </script>
 
 <Main slide={stageShowId ? show : null} let:width let:height let:resolution>
-    <div class="parent">
+    <div class="parent" class:noOverflow>
         {#if stageShowId}
             <!-- TODO: stage resolution... -->
             <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
@@ -98,6 +100,10 @@
         align-items: center;
         /* padding: 10px; */
         overflow: auto;
+    }
+
+    .parent.noOverflow {
+        overflow: hidden;
     }
 
     /* .bar {

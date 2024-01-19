@@ -74,6 +74,8 @@ function getNextBackground(outputId: string) {
     if (!currentOutputSlide?.id) return {}
 
     let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
+    if (!layout) return {}
+
     let nextLayout = layout[(currentOutputSlide.index || 0) + 1]
     if (!nextLayout) return {}
 
@@ -119,6 +121,7 @@ export const receiveSTAGE: any = {
         // initial
         window.api.send(STAGE, { id: msg.id, channel: "TIMERS", data: get(timers) })
         window.api.send(STAGE, { id: msg.id, channel: "EVENTS", data: get(events) })
+        window.api.send(STAGE, { id: msg.id, channel: "VARIABLES", data: get(variables) })
         send(STAGE, ["DATA"], { timeFormat: get(timeFormat) })
         return msg
     },
@@ -132,7 +135,14 @@ export const receiveSTAGE: any = {
         let out: any = currentOutput?.out?.slide || null
         msg.data = []
 
-        if (!out || out.id === "temp") return msg
+        if (!out) return msg
+
+        // scripture
+        if (out.id === "temp") {
+            msg.data = [{ items: out.tempItems }]
+            return msg
+        }
+
         let ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
         let slides: any = _show(out.id).get()?.slides
 

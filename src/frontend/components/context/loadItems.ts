@@ -5,6 +5,7 @@ import { drawerTabs } from "../../values/tabs"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
 import { chordAdders, keys } from "../edit/values/chords"
 import { clone, keysToID, sortByName } from "../helpers/array"
+import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
 
@@ -144,22 +145,37 @@ const loadActions = {
 
         return items
     },
-    bind_item: () => {
+    bind_slide: (_items, isItem: boolean = false) => {
         let outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput))
 
         outputList = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
-        outputList = [{ id: "stage", label: "menu.stage" }, ...outputList]
+        if (isItem) outputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
 
-        // get current item bindings
-        let editItems: any[] = getEditItems(true)
-        let currentItemBindings: any = editItems[0]?.bindings || []
+        let currentBindings: string[] = []
+        if (isItem) {
+            // get current item bindings
+            let editItems: any[] = getEditItems(true)
+            currentBindings = editItems[0]?.bindings || []
+        } else {
+            let selectedIndex = get(selected).data[0]?.index
+            let currentSlide = _show().layouts("active").ref()[0]?.[selectedIndex] || {}
+            currentBindings = currentSlide.data?.bindings || []
+        }
 
         outputList = outputList.map((a) => {
-            if (currentItemBindings.includes(a.id)) a.enabled = true
+            if (currentBindings.includes(a.id)) a.enabled = true
             return a
         })
 
         return outputList
+    },
+    bind_item: () => loadActions.bind_slide([], true),
+    dynamic_values: () => {
+        let values: any = getDynamicIds().map((id) => ({ id, label: id, translate: false }))
+        let firstMetaIndex = values.findIndex((a) => a.id.includes("meta_"))
+        values = [...values.slice(0, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
+
+        return values
     },
 }
 

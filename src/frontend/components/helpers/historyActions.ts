@@ -8,8 +8,9 @@ import { clone, keysToID } from "./array"
 import { EMPTY_SHOW_SLIDE } from "./empty"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
-import { _show } from "./shows"
 import { loadShows } from "./setShow"
+import { _show } from "./shows"
+import { getTemplateText } from "./output"
 
 // TODO: move history switch to actions
 
@@ -713,6 +714,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 console.log("TEMPLATE", template)
                 console.log(slides)
+                // TODO: use mergeWithTemplate() in output.ts
 
                 showsCache.update((a) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
@@ -750,7 +752,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 if (!createItems && (!slide.settings?.template || item.lines)) return
 
                                 // remove text from template & add to slide
-                                if (item.lines) item.lines = item.lines.map((line) => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: "" }] }))
+                                if (item.lines) item.lines = item.lines.map((line) => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: getTemplateText(line.text?.[0]?.value) }] }))
                                 slide.items.push(item)
                                 // slide.items = [item, ...slide.items]
                                 // addedItems++

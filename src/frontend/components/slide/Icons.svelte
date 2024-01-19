@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activeTimers, dictionary } from "../../stores"
+    import { activeTimers, dictionary, outputs } from "../../stores"
     import { send } from "../../utils/request"
     import { getAudioDuration } from "../helpers/audio"
     import { history } from "../helpers/history"
@@ -97,6 +97,22 @@
             </div>
         </div>
     {/if}
+
+    {#if layoutSlide.bindings?.length}
+        <div>
+            <div class="button">
+                <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove_binding} on:click={() => removeLayout("bindings")}>
+                    <Icon id="bind" size={0.9} white />
+                </Button>
+            </div>
+            {#if layoutSlide.bindings.length > 1}
+                <span><p>{layoutSlide.bindings.length}</p></span>
+            {:else}
+                <span><p>{$outputs[layoutSlide.bindings[0]]?.name || ""}</p></span>
+            {/if}
+        </div>
+    {/if}
+
     {#if background}
         <div>
             <div class="button">

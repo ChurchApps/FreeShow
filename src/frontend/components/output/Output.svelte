@@ -10,11 +10,12 @@
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { getActiveOutputs, getResolution, mergeWithTemplate } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Textbox from "../slide/Textbox.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import MediaOutput from "./MediaOutput.svelte"
+    import { replaceDynamicValues } from "../helpers/showActions"
 
     export let title: string = ""
     export let mirror: boolean = false
@@ -35,7 +36,7 @@
 
     // out data
     const defaultLayers: string[] = ["background", "slide", "overlays"]
-    $: outputId = specificOutput || getActiveOutputs($outputs, true, mirror)[0]
+    $: outputId = specificOutput || getActiveOutputs($outputs, true, mirror, mirror)[0]
     $: currentOutput = $outputs[outputId] || {}
 
     let currentStyle: Styles = { name: "" }
@@ -57,7 +58,7 @@
     $: if (out.refresh || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
     $: if (out.refresh || JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
 
-    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide?.id).layouts("active").ref()?.[0] : null
+    $: slideRef = $showsCache && slide && slide.id !== "temp" ? _show(slide.id).layouts([slide.layout]).ref()?.[0] : null
 
     // transition
     $: slideData = slideRef?.[slide.index!]?.data || null
@@ -72,40 +73,10 @@
 
     $: if (currentSlide && currentOutput?.style && currentStyle) setTemplateStyle()
     function setTemplateStyle() {
-        // TODO: duplicate of history "template":1107
-        let template = $templates[currentStyle.template || ""]?.items || []
-        let templateTextItems = template.filter((a) => a.lines)
-        let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
+        let slideItems = slide.id === "temp" ? slide.tempItems : currentSlide.items
+        let templateItems = $templates[currentStyle.template || ""]?.items || []
 
-        // TODO: replace other items with the same type if any
-
-        if (templateTextItems.length || templateOtherItems.length) {
-            templateTextItems.forEach((item: any, i: number) => {
-                if (!currentSlide.items[i]) return
-
-                currentSlide.items[i].style = item.style || ""
-                currentSlide.items[i].align = item.align || ""
-                currentSlide.items[i].lines?.forEach((line: any, j: number) => {
-                    let templateLine = item.lines?.[j] || item.lines?.[0]
-                    line.align = templateLine?.align || ""
-                    line.text?.forEach((text: any, k: number) => {
-                        text.style = templateLine?.text[k] ? templateLine.text[k].style || "" : templateLine?.text[0]?.style || ""
-                    })
-                })
-
-                // scrolling, bindings
-                currentSlide.items[i].specialStyle = item.specialStyle || {}
-            })
-
-            // remove items that are not textbox (overwriting with a new template will remove the old images)
-            if (slide.id === "temp") currentSlide.items = currentSlide.items.filter((a) => a.lines)
-
-            // add other items
-            currentSlide.items = [...templateOtherItems, ...currentSlide.items]
-        } else {
-            // reset style
-            currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? clone(_show(slide.id).slides([currentLayout[slide.index!].id]).get()[0] || {}) : null) : null
-        }
+        currentSlide.items = mergeWithTemplate(slideItems, templateItems)
     }
 
     $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
@@ -129,6 +100,22 @@
     const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
     let metadataStyle = defaultMetadataStyle
     $: metadataStyle = getTemplateStyle(metadataTemplate!, $templates) || defaultMetadataStyle
+
+    $: metadataTemplateValue = $templates[metadataTemplate || ""]?.items?.[0]?.lines?.[0]?.text?.[0]?.value || ""
+    let metadataValue = ""
+    $: if (metadataTemplateValue || metaMessage || currentStyle) getMetaValue()
+    function getMetaValue() {
+        if (metadataTemplateValue.includes("{")) {
+            metadataValue = replaceDynamicValues(metadataTemplateValue, { showId: slide.id, layoutId: slide.layout, slideIndex: slide.index })
+            return
+        }
+
+        if (!metaMessage) return
+
+        metadataValue = Object.values(metaMessage)
+            .filter((a) => a.length)
+            .join(currentStyle.metadataDivider || "; ")
+    }
 
     $: messageTemplate = overrideOutput ? $showsCache[slide?.id]?.message?.template : currentStyle.messageTemplate || "message"
     const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
@@ -465,7 +452,7 @@
                                     {preview}
                                     {item}
                                     {ratio}
-                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id, layoutId: slide.layout }}
                                     linesStart={linesStart[currentLineId]}
                                     linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled={!mirror}
@@ -494,7 +481,7 @@
                                     {preview}
                                     {item}
                                     {ratio}
-                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id }}
+                                    ref={{ showId: slide.id, slideId: slideClone.id, id: slideClone.id, layoutId: slide.layout }}
                                     linesStart={linesStart[currentLineId]}
                                     linesEnd={linesEnd[currentLineId]}
                                     transitionEnabled
@@ -528,15 +515,11 @@
         {#if Object.keys($showsCache[slide?.id]?.meta || {}).length && (metadataDisplay === "always" || (metadataDisplay?.includes("first") && slide.index === 0) || (metadataDisplay?.includes("last") && slide.index === currentLayout.length - 1))}
             {#if overlayTransition.type === "none"}
                 <div class="meta" style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                    {@html Object.values(metaMessage)
-                        .filter((a) => a.length)
-                        .join(currentStyle.metadataDivider || "; ")}
+                    {@html metadataValue}
                 </div>
             {:else}
                 <div class="meta" transition:custom={overlayTransition} style={metadataStyle} class:key={currentOutput.isKeyOutput}>
-                    {@html Object.values(metaMessage)
-                        .filter((a) => a.length)
-                        .join(currentStyle.metadataDivider || "; ")}
+                    {@html metadataValue}
                 </div>
             {/if}
         {/if}

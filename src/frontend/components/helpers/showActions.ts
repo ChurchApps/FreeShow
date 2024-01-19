@@ -33,6 +33,7 @@ import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension
 import { getActiveOutputs, isOutCleared, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
+import { initializeMetadata } from "./show"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -325,7 +326,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     }
 
     // get output slide
-    let outputIds = outputId ? [outputId] : getActiveOutputs()
+    let outputIds = outputId ? [outputId] : data.bindings?.length ? data.bindings : getActiveOutputs()
     // find any selected output with no lines
     let anyNotInLines = outputIds.find((id: string) => !get(outputs)[id].out?.slide?.line)
     // actions will only trigger on index 0 if multiple lines
@@ -630,4 +631,50 @@ export function startAudioStream(stream) {
     let url = stream.value || get(audioStreams)[stream.id]?.value
 
     playAudio({ path: url, name: stream.name })
+}
+
+// DYNAMIC VALUES
+
+export const dynamicValueText = (id: string) => `{${id}}`
+export function getDynamicIds() {
+    let mainValues = Object.keys(dynamicValues)
+    let metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
+
+    return [...mainValues, ...metaValues]
+}
+
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex }: any) {
+    let show = _show(showId).get()
+    if (!show) return text
+
+    getDynamicIds().forEach((id) => {
+        let newValue = getDynamicValue(id, show)
+        text = text.replaceAll(dynamicValueText(id), newValue)
+    })
+
+    return text
+
+    function getDynamicValue(id, show) {
+        if (id.includes("meta_")) {
+            let key = id.slice(5)
+            return show.meta[key] || ""
+        }
+
+        let activeLayout = layoutId ? [layoutId] : "active"
+        let ref = _show(showId).layouts(activeLayout).ref()[0]
+        let layout = _show(showId).layouts(activeLayout).get()[0]
+
+        return dynamicValues[id]({ show, ref, slideIndex, layout })
+    }
+}
+
+const dynamicValues = {
+    show_name: ({ show }) => show.name || "",
+
+    layout_slides: ({ ref }) => ref.length,
+    layout_notes: ({ layout }) => layout.notes || "",
+
+    slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex].id].group || "",
+    slide_number: ({ slideIndex }) => Number(slideIndex || 0) + 1,
+    slide_notes: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex].id].notes || "",
 }

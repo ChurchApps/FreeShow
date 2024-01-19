@@ -33,8 +33,8 @@
             if ($selected.id !== "slide") return
 
             let ref = _show().layouts("active").ref()[0]
-            let parentSlide = $selected.data.find((a) => a.index && getCurrentSlide(a.index)?.type === "parent")
             const getCurrentSlide = (index) => ref.find((a) => a.layoutIndex === index)
+            let parentSlide = $selected.data.find((a) => a.index && getCurrentSlide(a.index)?.type === "parent")
 
             if (parentSlide) return
 

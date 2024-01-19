@@ -90,11 +90,11 @@
 
     $: size = getAutoSize(item, { width, height })
     // $: size = Math.min(height, width) / 2
-    $: autoSize = fontSize ? Math.max(fontSize, size) : size
+    $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
     let slide
-    let stageOutputId = show?.settings?.output || getActiveOutputs($outputs, true, true)[0]
+    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
     $: currentBackground = sendBackgroundToStage(stageOutputId, $outputs, true)
@@ -104,6 +104,8 @@
     $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
 
     // $: resolution = getResolution(resolution, { $outputs, $styles })
+
+    $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -115,10 +117,11 @@
     class="stage_item item"
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}
+    class:isDisabledVariable
     style="{item.style};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}"
     on:mousedown={mousedown}
 >
-    {#if currentShow?.settings.labels}
+    {#if currentShow?.settings?.labels && id}
         <div class="label">
             {#key id}
                 <T id="stage.{id.split('#')[1]}" />
@@ -169,7 +172,7 @@
                     {/if}
                 {:else if id.includes("variables")}
                     {#if $variables[id.split("#")[1]]}
-                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" hideText={false} />
                     {/if}
                 {:else}
                     {id}
@@ -205,5 +208,9 @@
         height: 100%;
         color: unset;
         /* overflow-wrap: break-word; */
+    }
+
+    .isDisabledVariable {
+        opacity: 0.5;
     }
 </style>
