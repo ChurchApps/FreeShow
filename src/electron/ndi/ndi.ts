@@ -18,6 +18,8 @@ const ndiDisabled = isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
 
 let timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
 
+// RECEIVER
+
 export async function findStreamsNDI(): Promise<any> {
     if (ndiDisabled) return
     const grandiose = require("grandiose")
@@ -27,52 +29,86 @@ export async function findStreamsNDI(): Promise<any> {
             .find({ showLocalSources: true })
             .then((a: any) => {
                 // embedded, destroy(), sources(), wait()
-                let sources = a.sources()
-                resolve(sources)
+                // sources = [{ name: "<source_name>", urlAddress: "<IP-address>:<port>" }]
+                // this is returned as JSON string
+                resolve(a.sources())
             })
             .catch((err: any) => reject(err))
     })
 }
 
-// let source = { name: "<source_name>", urlAddress: "<IP-address>:<port>" };
-export async function receiveStreamNDI({ source }: any) {
-    if (receivers[source.urlAddress]) return
+const receiverTimeout = 5000
+export async function receiveStreamFrameNDI({ source }: any) {
+    if (ndiDisabled) return
+    const grandiose = require("grandiose")
+
+    let receiver = await grandiose.receive({ source })
+
+    try {
+        let videoFrame = await receiver.video(receiverTimeout)
+        sendBuffer(source.id, videoFrame)
+    } catch (err) {
+        console.error(err)
+    }
+}
+
+// let previewSize: Size = { width: 320, height: 180 }
+export function sendBuffer(id: string, frame: any) {
+    if (!frame) return
+
+    frame.data = Buffer.from(frame.data)
+    toApp("NDI", { channel: "RECEIVE_STREAM", data: { id, frame } })
+
+    // const image: NativeImage = nativeImage.createFromBuffer(frame.data)
+    // // image = resizeImage(image, {width: frame.xres, height: frame.yres}, previewSize)
+    // const buffer = image.getBitmap()
+
+    // /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
+    // if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
+    // else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
+
+    // frame.data = buffer
+    // toApp("NDI", { channel: "RECEIVE_STREAM", data: { id, frame } })
+}
+
+export async function captureStreamNDI({ source, frameRate }: any) {
+    if (NDI_RECEIVERS[source.id]) return
 
     if (ndiDisabled) return
     const grandiose = require("grandiose")
 
-    // WIP this just crashes
-    let receiver = await grandiose.receive({ source })
-
-    let timeout = 5000 // Optional timeout, default is 10000ms
+    NDI_RECEIVERS[source.id] = {
+        frameRate: frameRate || 0.1,
+    }
+    NDI_RECEIVERS[source.id].receiver = await grandiose.receive({ source })
 
     try {
-        let videoFrame = await receiver.video(timeout)
-        toApp("NDI", { channel: "RECEIVE_STREAM", data: videoFrame })
+        NDI_RECEIVERS[source.id].interval = setInterval(async () => {
+            let videoFrame = await NDI_RECEIVERS[source.id].receiver.video(receiverTimeout)
 
-        // receivers[source.urlAddress] = setInterval(async () => {
-        //     let videoFrame = await receiver.video(timeout)
-
-        //     toApp("NDI", { channel: "RECEIVE_STREAM", data: videoFrame })
-        // }, 100)
-
-        // for ( let x = 0 ; x < 10 ; x++) {
-        //     let videoFrame = await receiver.video(timeout);
-        //     return videoFrame
-        // }
-    } catch (e) {
-        console.error(e)
+            toApp("NDI", { channel: "RECEIVE_STREAM", data: { id: source.id, frame: videoFrame } })
+        }, NDI_RECEIVERS[source.id].frameRate * 1000)
+    } catch (err) {
+        console.error(err)
     }
 }
 
-let receivers: any = {}
-export function stopReceiversNDI() {
-    Object.values(receivers).forEach((interval: any) => {
+let NDI_RECEIVERS: any = {}
+export function stopReceiversNDI(data: any = null) {
+    if (data.id) {
+        clearInterval(NDI_RECEIVERS[data.id].interval)
+        delete NDI_RECEIVERS[data.id]
+        return
+    }
+
+    Object.values(NDI_RECEIVERS).forEach((interval: any) => {
         clearInterval(interval)
     })
 
-    receivers = {}
+    NDI_RECEIVERS = {}
 }
+
+// SENDER
 
 export function stopSenderNDI(id: string) {
     if (!NDI[id]?.timer) return

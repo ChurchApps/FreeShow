@@ -15,6 +15,7 @@
     import Center from "../../system/Center.svelte"
     import BibleApiKey from "./BibleApiKey.svelte"
     import { fetchBible, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
+    import { destroy } from "../../../utils/request"
 
     export let active: any
     export let bibles: Bible[]
@@ -183,7 +184,7 @@
     }
 
     let listenerId = uid()
-    onDestroy(() => window.api.removeListener(BIBLE, listenerId))
+    onDestroy(() => destroy(BIBLE, listenerId))
 
     let notLoaded: boolean = false
     window.api.receive(BIBLE, receiveContent, listenerId)

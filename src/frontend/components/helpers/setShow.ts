@@ -4,6 +4,7 @@ import type { Show } from "../../../types/Show"
 import { cachedShowsData, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
 import { updateCachedShow } from "./show"
 import { uid } from "uid"
+import { destroy } from "../../utils/request"
 
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
@@ -122,7 +123,7 @@ export async function loadShows(s: string[]) {
                 }, 100)
             }
 
-            window.api.removeListener(SHOW, listenerId)
+            destroy(SHOW, listenerId)
             resolve("loaded")
         }
     })

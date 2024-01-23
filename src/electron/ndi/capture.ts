@@ -224,7 +224,7 @@ export function updatePreviewResolution(data: any) {
     if (data.id) sendFrames(data.id, storedFrames[data.id], { previewFrame: true })
 }
 
-function resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
+export function resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
     if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width })
     else image = image.resize({ height: newSize.height })
 

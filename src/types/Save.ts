@@ -1,4 +1,4 @@
-export type SaveList = SaveListSettings | SaveListSyncedSettings | "themes" | "events" | "templates" | "driveKeys"
+export type SaveList = SaveListSettings | SaveListSyncedSettings | "themes" | "events" | "templates" | "overlays" | "driveKeys"
 
 export type SaveListSyncedSettings =
     | "categories"

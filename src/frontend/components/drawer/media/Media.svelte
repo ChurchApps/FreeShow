@@ -21,6 +21,7 @@
     import { clone } from "../../helpers/array"
     import { uid } from "uid"
     import { onDestroy } from "svelte"
+    import NDIStreams from "../live/NDIStreams.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -262,6 +263,8 @@
         {:else if active === "screens"}
             {#if screenTab === "screens"}
                 <Screens bind:streams />
+            {:else if screenTab === "ndi"}
+                <NDIStreams />
             {:else}
                 <Windows bind:streams {searchValue} />
             {/if}
@@ -318,12 +321,17 @@
         {#if active === "screens"}
             <Button style="flex: 1;" active={screenTab === "screens"} on:click={() => (screenTab = "screens")} center>
                 <Icon size={1.2} id="screen" right />
-                <p>Screens</p>
+                <p><T id="live.screens" /></p>
             </Button>
             <Button style="flex: 1;" active={screenTab === "windows"} on:click={() => (screenTab = "windows")} center>
                 <Icon size={1.2} id="window" right />
-                <p>Windows</p>
+                <p><T id="live.windows" /></p>
             </Button>
+            <!-- WIP ndi inputs: -->
+            <!-- <Button style="flex: 1;" active={screenTab === "ndi"} on:click={() => (screenTab = "ndi")} center>
+                <Icon size={1.2} id="ndi" right />
+                <p>NDI</p>
+            </Button> -->
         {:else if active === "online"}
             <Button style="flex: 1;" active={onlineTab === "youtube"} on:click={() => (onlineTab = "youtube")} center>
                 <Icon style="fill: {onlineTab !== 'youtube' ? 'white' : '#ff0000'};" size={1.2} id="youtube" right />

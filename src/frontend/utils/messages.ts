@@ -91,7 +91,7 @@ export function listen() {
 
     // SAVE
     let cachedValues: any = {}
-    let s = { ...saveList, folders, overlays, projects, showsCache, stageShows }
+    let s = { ...saveList, folders, projects, showsCache, stageShows }
     setTimeout(() => {
         Object.keys(s).forEach((id) => {
             if (!s[id]) return
@@ -278,6 +278,7 @@ const saveList: { [key in SaveList]: any } = {
     sorted: null,
     styles: styles,
     overlayCategories: overlayCategories,
+    overlays: overlays,
     presenterControllerKeys: presenterControllerKeys,
     playerVideos: playerVideos,
     remotePassword: remotePassword,
