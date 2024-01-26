@@ -401,7 +401,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
                     if (a) playAudio(a, false)
                 })
-            }, 100)
+            }, 200)
         }
 
         // overlays
