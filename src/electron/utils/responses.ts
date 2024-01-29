@@ -190,8 +190,8 @@ function deleteShowsNotIndexed(data: any) {
     toApp("MAIN", { channel: "DELETE_SHOWS", data: { deleted } })
 }
 
-function getAllShows(data: any) {
-    let filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show"))
+export function getAllShows(data: any) {
+    let filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show") && a.length > 5)
     return filesInFolder
 }
 

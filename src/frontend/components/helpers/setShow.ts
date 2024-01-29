@@ -14,9 +14,16 @@ export function setShow(id: string, value: "delete" | Show): Show {
         let showRef = get(shows)[id]
         if (showRef && value) {
             value.name = showRef.name
-            value.category = showRef.category
-            value.timestamps = showRef.timestamps
+            value.category = showRef.category || null
+            value.timestamps = showRef.timestamps || {}
             if (showRef.private) value.private = true
+
+            // fix "broken" shows:
+            if (!value.settings) value.settings = { activeLayout: "", template: null }
+            if (!value.meta) value.meta = {}
+            if (!value.slides) value.slides = {}
+            if (!value.layouts) value.layouts = {}
+            if (!value.media) value.media = {}
         }
     }
 

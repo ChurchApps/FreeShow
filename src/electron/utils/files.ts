@@ -9,8 +9,9 @@ import path from "path"
 import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
 import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
-import { trimShow } from "./responses"
+import { getAllShows, trimShow } from "./responses"
 import { stores } from "./store"
+import { uid } from "uid"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -164,7 +165,7 @@ export function loadFile(p: string, contentId: string = ""): any {
     let show = parseShow(content)
     if (!show) return { error: "not_found", id: contentId }
 
-    if (contentId && show[0] !== contentId) return { error: "not_found", id: contentId, file_id: show[0] }
+    if (contentId && show[0] !== contentId) show[0] = contentId
 
     return { id: contentId, content: show }
 }
@@ -240,7 +241,7 @@ export function selectFolder(e: any, msg: { channel: string; title: string | und
 
     if (msg.channel === "SHOWS") {
         loadShows({ showsPath: folder })
-        toApp(MAIN, { channel: "FULL_SHOWS_LIST", data: readFolder(folder) })
+        toApp(MAIN, { channel: "FULL_SHOWS_LIST", data: getAllShows({ path: folder }) })
     }
 
     e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
@@ -339,10 +340,15 @@ export function loadShows({ showsPath }: any) {
 
     for (const name of filesInFolder) checkShow(name)
     function checkShow(name: string) {
-        if (!name.includes(".show")) return
+        if (!name.toLowerCase().includes(".show")) return
 
-        let matchingShowId = Object.entries(cachedShows).find(([_id, a]: any) => a.name === name.slice(0, -5))?.[0]
-        if (matchingShowId) {
+        let trimmedName = name.slice(0, -5) // remove .show
+
+        // no name results in the id trying to be read leading to show not found
+        if (!trimmedName) return
+
+        let matchingShowId = Object.entries(cachedShows).find(([_id, a]: any) => a.name === trimmedName)?.[0]
+        if (matchingShowId && !newCachedShows[matchingShowId]) {
             newCachedShows[matchingShowId] = cachedShows[matchingShowId]
             return
         }
@@ -353,7 +359,11 @@ export function loadShows({ showsPath }: any) {
 
         if (!show || !show[1]) return
 
-        newCachedShows[show[0]] = trimShow({ ...show[1], name: name.replace(".show", "") })
+        let id = show[0]
+        // some old duplicated shows might have the same id
+        if (newCachedShows[id]) id = uid()
+
+        newCachedShows[id] = trimShow({ ...show[1], name: trimmedName })
     }
 
     toApp(STORE, { channel: "SHOWS", data: newCachedShows })
