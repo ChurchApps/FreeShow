@@ -1,4 +1,4 @@
-import { BrowserWindow } from "electron"
+import { BrowserWindow, Rectangle, screen } from "electron"
 import { isMac, loadWindowContent, mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { Message } from "../../types/Socket"
@@ -120,12 +120,9 @@ function displayOutput(data: any) {
 
     /////
 
-    let bounds = data.output.bounds
-    let xDif = bounds?.x - mainWindow!.getBounds().x
-    let yDif = bounds?.y - mainWindow!.getBounds().y
-
-    const margin = 50
-    let windowNotCoveringMain: boolean = xDif > margin || yDif < -margin || (xDif < -margin && yDif > margin)
+    if (data.autoPosition && !data.force) data.output.bounds = getSecondDisplay(data.output.bounds)
+    let bounds: Rectangle = data.output.bounds
+    let windowNotCoveringMain: boolean = isNotCovered(mainWindow!.getBounds(), bounds)
 
     if (data.enabled && bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
         showWindow(window)
@@ -139,6 +136,39 @@ function displayOutput(data: any) {
     }
 
     if (data.one !== true) toApp(OUTPUT, { channel: "DISPLAY", data })
+}
+
+function getSecondDisplay(bounds: Rectangle) {
+    let displays = screen.getAllDisplays()
+    if (displays.length !== 2) return bounds
+
+    let mainWindowBounds = mainWindow!.getBounds()
+    let amountCoveredByWindow = amountCovered(displays[1].bounds, mainWindowBounds)
+
+    let secondDisplay = displays[1]
+    if (amountCoveredByWindow > 0.5) secondDisplay = displays[0]
+
+    return secondDisplay.bounds
+}
+
+function isNotCovered(mainBounds: Rectangle, secondBounds: Rectangle) {
+    let xDif = secondBounds?.x - mainBounds.x
+    let yDif = secondBounds?.y - mainBounds.y
+
+    const margin = 50
+    let secondNotCoveringMain: boolean = xDif > margin || yDif < -margin || (xDif < -margin && yDif > margin)
+    return secondNotCoveringMain
+}
+
+function amountCovered(displayBounds: Rectangle, windowBounds: Rectangle) {
+    const overlapX = Math.max(0, Math.min(displayBounds.x + displayBounds.width, windowBounds.x + windowBounds.width) - Math.max(displayBounds.x, windowBounds.x))
+    const overlapY = Math.max(0, Math.min(displayBounds.y + displayBounds.height, windowBounds.y + windowBounds.height) - Math.max(displayBounds.y, windowBounds.y))
+    const overlapArea = overlapX * overlapY
+
+    const totalArea = displayBounds.width * displayBounds.height
+    const overlapAmount = overlapArea / totalArea
+
+    return overlapAmount
 }
 
 // MacOS Menu Bar

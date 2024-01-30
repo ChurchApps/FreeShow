@@ -287,3 +287,15 @@ export function setBooksCache(scriptureId: string, data: any) {
         return a
     })
 }
+
+export function getShortBibleName(name) {
+    name = name
+        .replace(/[^a-zA-Z ]+/g, "")
+        .trim()
+        .replaceAll("  ", " ")
+
+    if (name.split(" ").length < 2) name = name.slice(0, 3)
+    else name = name.split(" ").reduce((current, word) => (current += word[0]), "")
+
+    return name || "B"
+}

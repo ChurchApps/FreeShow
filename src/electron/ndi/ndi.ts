@@ -95,7 +95,7 @@ export async function captureStreamNDI({ source, frameRate }: any) {
 
 let NDI_RECEIVERS: any = {}
 export function stopReceiversNDI(data: any = null) {
-    if (data.id) {
+    if (data?.id) {
         clearInterval(NDI_RECEIVERS[data.id].interval)
         delete NDI_RECEIVERS[data.id]
         return

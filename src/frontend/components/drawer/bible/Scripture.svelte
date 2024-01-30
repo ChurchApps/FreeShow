@@ -5,6 +5,7 @@
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
     import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/messages"
+    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { removeDuplicates } from "../../helpers/array"
@@ -15,7 +16,6 @@
     import Center from "../../system/Center.svelte"
     import BibleApiKey from "./BibleApiKey.svelte"
     import { fetchBible, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
-    import { destroy } from "../../../utils/request"
 
     export let active: any
     export let bibles: Bible[]
@@ -338,8 +338,10 @@
         autoComplete = false
 
         if (e.ctrlKey || e.metaKey) {
-            if (activeVerses.includes(id)) activeVerses = activeVerses.filter((a) => a !== id)
-            else activeVerses = [...activeVerses, id]
+            if (activeVerses.includes(id)) {
+                if (activeVerses.length === 1) return
+                activeVerses = activeVerses.filter((a) => a !== id)
+            } else activeVerses = [...activeVerses, id]
         } else if (e.shiftKey && activeVerses.length) {
             let found = false
             let arr: any = verses[firstBibleId]
@@ -357,8 +359,7 @@
                 if (id === last) found = false
             })
             activeVerses = activeVerses
-            // } else if (activeVerses.length === 1 && activeVerses[0] === id) activeVerses = []
-        } else if (e.buttons === 1 || !activeVerses.includes(id)) activeVerses = [id]
+        } else activeVerses = [id]
 
         bibles[0].activeVerses = activeVerses
 
@@ -426,7 +427,7 @@
         }
 
         searchValues.verses = findVerse({ splittedEnd })
-        if (!searchValues.verses.length) return
+        if (!searchValues.verses.length) return selectAllVerses()
         if (bibles[0].activeVerses !== searchValues.verses) {
             activeVerses = removeDuplicates(searchValues.verses)
             activeVerses = activeVerses.map((a) => a.toString())
@@ -521,14 +522,19 @@
             splittedSearch.push(joinedValue)
         })
 
+        // remove just numbers not at start
+        const isNumber = (a) => /^\d+$/.test(a)
+        splittedSearch = splittedSearch.filter((a, i) => i < 1 || !isNumber(a))
+
         // find the biggest string with a returned value
         let findMatches: any[] = []
-        let matchingArray: any[] = []
         splittedSearch.forEach((value) => {
-            matchingArray = []
+            let matchingArray: any[] = []
+
             booksList.forEach((book: any) => {
                 if (book.name.toLowerCase().includes(value)) matchingArray.push(book)
             })
+
             if (matchingArray.length) findMatches = matchingArray
         })
 
@@ -639,11 +645,30 @@
             return
         }
 
+        if (e.key === "a") {
+            if ($selected?.id !== "scripture") return
+            return selectAllVerses()
+        }
+
         if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
 
         // go to next/previous verse
         let left = e.key.includes("Left")
         moveSelection(left)
+    }
+
+    function selectAllVerses() {
+        let currentVerses: string[] = []
+        Object.keys(verses[firstBibleId]).forEach((id) => {
+            currentVerses.push(id)
+        })
+
+        activeVerses = currentVerses
+        bibles[0].activeVerses = currentVerses
+
+        // add to selected (for drag/drop)
+        let sorted = activeVerses.sort((a, b) => Number(a) - Number(b)) || []
+        selected.set({ id: "scripture", data: [{ bibles, sorted }] })
     }
 
     function moveSelection(moveLeft: boolean) {
@@ -772,7 +797,7 @@
                             class:showAllText={$resized.rightPanelDrawer <= 5}
                             {id}
                             draggable="true"
-                            on:mousedown={(e) => selectVerse(e, id)}
+                            on:mouseup={(e) => selectVerse(e, id)}
                             on:dblclick={() => playOrClearScripture(true)}
                             class:active={activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}

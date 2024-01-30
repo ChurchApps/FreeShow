@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { activeEdit, activeShow, refreshEditSlide } from "../../stores"
+    import { onMount } from "svelte"
+    import { activeEdit, activeShow, drawer, refreshEditSlide } from "../../stores"
     import OverlayEditor from "../edit/OverlayEditor.svelte"
     import SlideEditor from "../edit/SlideEditor.svelte"
     import Splash from "../main/Splash.svelte"
@@ -16,6 +17,12 @@
             refreshEditSlide.set(false)
         }, 100)
     }
+
+    onMount(() => {
+        // close drawer
+        const minHeight = 40
+        if ($drawer.height > minHeight) drawer.set({ height: minHeight, stored: $drawer.height })
+    })
 </script>
 
 {#key $refreshEditSlide}

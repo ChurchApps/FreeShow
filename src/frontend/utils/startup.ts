@@ -391,6 +391,7 @@ const receiveOUTPUTasOUTPUT: any = {
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => media.set(a),
+    MEDIA_CACHE: (a: any) => mediaCache.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     SPECIAL: (a: any) => clone(special.set(a)),
@@ -415,6 +416,7 @@ export function sendInitialOutputData() {
 
     send(OUTPUT, ["VIZUALISER_DATA"], get(visualizerData))
     send(OUTPUT, ["MEDIA"], get(media))
+    send(OUTPUT, ["MEDIA_CACHE"], get(mediaCache))
     send(OUTPUT, ["TIMERS"], get(timers))
     send(OUTPUT, ["VARIABLES"], get(variables))
 

@@ -22,7 +22,7 @@
     export let match: null | number = null
     // TODO: svelte animate
     // search
-    $: style = match !== null ? `background: linear-gradient(to right, var(--secondary-opacity) ${match}%, transparent ${match}%);` : ""
+    $: style = match !== null ? `background: linear-gradient(to right, var(--primary-lighter) ${match}%, transparent ${match}%);` : ""
 
     function setNotFound(id: string) {
         notFound.update((a) => {
@@ -129,14 +129,8 @@
             {/if}
         </span>
 
-        {#if match}
-            <span style="opacity: 0.8;padding-left: 10px;">
-                {match}%
-            </span>
-        {/if}
-
         {#if data}
-            <span style="opacity: 0.5;padding-left: 10px;">{data}</span>
+            <span style="opacity: 0.5;padding-left: 10px;font-size: 0.9em;">{data}</span>
         {/if}
     </Button>
 </div>

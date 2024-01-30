@@ -13,7 +13,8 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
     enabledOutputs.forEach((id) => {
         let output: any = { id, ...get(outputs)[id] }
-        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey, auto })
+        let autoPosition = enabledOutputs.length === 1
+        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey, auto, autoPosition })
     })
 }
 
@@ -299,8 +300,13 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.style = templateItem.style || ""
         item.align = templateItem.align || ""
 
-        // scrolling, bindings
-        item.specialStyle = templateItem.specialStyle || {}
+        delete item.autoFontSize
+        item.auto = templateItem.auto || false
+
+        if (templateItem.actions) item.actions = templateItem.actions
+        if (templateItem.specialStyle) item.specialStyle = templateItem.specialStyle
+        if (templateItem.scrolling) item.scrolling = templateItem.scrolling
+        if (templateItem.bindings) item.bindings = templateItem.bindings
 
         if (type !== "text") return finish()
 

@@ -13,6 +13,7 @@ import {
     folders,
     groups,
     media,
+    mediaCache,
     midiIn,
     openedFolders,
     outputs,
@@ -128,9 +129,13 @@ export function listenForUpdates() {
     // activeTimers.subscribe((data) => {
     //     send(OUTPUT, ["ACTIVE_TIMERS"], data)
     // })
-    // WIP not used?!
+
+    // used by stage output
     media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
+    })
+    mediaCache.subscribe((data) => {
+        send(OUTPUT, ["MEDIA_CACHE"], data)
     })
 
     timers.subscribe((data) => {
