@@ -48,6 +48,8 @@ function startApp() {
 }
 
 function initialize() {
+    updateDataPath({ load: true })
+
     // midi
     // createVirtualMidi()
 

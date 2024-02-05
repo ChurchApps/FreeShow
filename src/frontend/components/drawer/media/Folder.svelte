@@ -44,7 +44,7 @@
                     <!-- {:else if items > 0}
         <Icon size={5} id="movie" /> -->
                 {:else}
-                    <Icon size={3} id="folder" />
+                    <Icon size={mode === "list" ? 2 : 3} id="folder" white={mode === "list"} />
                 {/if}
             {/key}
         </div>

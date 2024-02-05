@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
     import { activeShow, media, mediaOptions, outLocked, outputs, styles } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -12,6 +13,7 @@
     export let path: string
     export let type: any
     export let active: string | null
+    export let thumbnail: boolean = true
 
     $: name = name.slice(0, name.lastIndexOf("."))
 
@@ -78,12 +80,14 @@
 
     // fixed resolution
     let resolution = { width: 1920, height: 1080 }
+
+    $: icon = active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"
 </script>
 
 <Card
     {loaded}
     class="context #media_card"
-    style="width: {$mediaOptions.mode === 'grid' ? 100 : 100 / $mediaOptions.columns}%;"
+    style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
     mode={$mediaOptions.mode}
     width={100}
     changed={!!mediaStyle.filter?.length || mediaStyle.flipped || mediaStyle.flippedY}
@@ -92,7 +96,7 @@
     active={findMatchingOut(path, $outputs) !== null}
     label={name}
     title={path}
-    icon={active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"}
+    icon={thumbnail ? icon : null}
     white={type === "image"}
     on:click={click}
     on:dblclick={dblclick}
@@ -102,11 +106,31 @@
     on:mousemove={move}
 >
     <SelectElem id="media" data={{ name, path, type }} draggable fill>
-        <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
-        <IntersectionObserver class="observer" once let:intersecting>
-            {#if intersecting}
-                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {mediaStyle} />
-            {/if}
-        </IntersectionObserver>
+        {#if thumbnail}
+            <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
+            <IntersectionObserver class="observer" once let:intersecting>
+                {#if intersecting}
+                    <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {mediaStyle} />
+                {/if}
+            </IntersectionObserver>
+        {:else}
+            <div class="icon">
+                <Icon size={2.5} id={icon} white={type === "image"} />
+            </div>
+        {/if}
     </SelectElem>
 </Card>
+
+<style>
+    .icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        /* overflow: hidden; */
+        height: 100%;
+    }
+    .icon :global(svg) {
+        height: 100%;
+    }
+</style>

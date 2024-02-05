@@ -302,7 +302,7 @@
                             {#if file.folder}
                                 <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
                             {:else}
-                                <Media name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
+                                <Media thumbnail={$mediaOptions.mode !== "list"} name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
                             {/if}
                         </VirtualList>
                     {/if}
@@ -413,7 +413,7 @@
                     <Icon size={1.3} id={$mediaOptions.mode} white />
                 </Button>
 
-                <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+                <Button on:click={() => (zoomOpened = !zoomOpened)} disabled={$mediaOptions.mode === "list"} title={$dictionary.actions?.zoom}>
                     <Icon size={1.3} id="zoomIn" white />
                 </Button>
                 {#if zoomOpened}

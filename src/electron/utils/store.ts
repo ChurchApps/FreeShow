@@ -89,7 +89,7 @@ const portableData: any = {
 }
 
 export let userDataPath: string | null = null
-export function updateDataPath({ reset, dataPath }: any = {}) {
+export function updateDataPath({ reset, dataPath, load }: any = {}) {
     if (reset) return resetStoresPath()
 
     let settingsStore = settings.store || {}
@@ -101,7 +101,7 @@ export function updateDataPath({ reset, dataPath }: any = {}) {
     if (!userDataPath) return
 
     userDataPath = path.join(userDataPath, dataFolderNames.userData)
-    updateStoresPath()
+    updateStoresPath(load)
 }
 
 function resetStoresPath() {
@@ -109,19 +109,19 @@ function resetStoresPath() {
     updateStoresPath()
 }
 
-function updateStoresPath() {
+function updateStoresPath(load: boolean = false) {
     if (!userDataPath) return
-    Object.keys(portableData).forEach(createStoreAtNewLocation)
+    Object.keys(portableData).forEach((id) => createStoreAtNewLocation(id, load))
 }
 
-function createStoreAtNewLocation(id: string) {
+function createStoreAtNewLocation(id: string, load: boolean = false) {
     let key = portableData[id].key
-    let tempData = JSON.parse(JSON.stringify(stores[key].store))
+    let tempData = load ? {} : JSON.parse(JSON.stringify(stores[key].store))
 
     // set new stores to export
     stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })
 
-    if (!Object.keys(tempData).length) return
+    if (load || !Object.keys(tempData).length) return
 
     // rewrite data to new location
     stores[key].clear()
