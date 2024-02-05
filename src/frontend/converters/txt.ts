@@ -174,6 +174,40 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
             let textLength = items.reduce((value, item) => (value += getItemText(item).length), 0)
             if (!textLength) items = []
 
+            // extract chords (chordpro)
+            items = items.map((item) => {
+                item.lines?.forEach((line) => {
+                    let chords: any[] = []
+                    let letterIndex: number = 0
+                    let isChord: boolean = false
+
+                    line?.text?.forEach((text) => {
+                        let newValue = ""
+                        text.value?.split("").forEach((char) => {
+                            if ((char === "[" || char === "]") && !text.value.slice(0, -2).includes(":")) {
+                                isChord = char === "["
+                                if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
+                                return
+                            }
+
+                            if (isChord) {
+                                chords[chords.length - 1].key += char
+                                return
+                            }
+
+                            newValue += char
+                            letterIndex++
+                        })
+
+                        text.value = newValue.replaceAll("\r", "")
+                    })
+
+                    if (chords.length) line.chords = chords
+                })
+
+                return item
+            })
+
             if (slideIndex > 0) {
                 let childId: string = uid()
                 children.push(childId)
@@ -328,11 +362,11 @@ function findPatterns(sections: string[]) {
         // let textGroup: string = splitted[0].trim()[0] === "[" && splitted[0].includes("]") ? splitted[0].slice(splitted[0].indexOf("[") + 1, splitted[0].indexOf("]")) : ""
 
         // TODO: remove numbers....
-        if ((splitted[0].match(/\[[^\]]*]/g)?.[0] || "").length === splitted[0].length) {
+        if ((splitted[0].match(/\[[^\]]*]/g)?.[0] || "").length === splitted[0].length || splitted[0].trim()[splitted[0].length - 1] === ":") {
             return splitted[0]
-                .replace(/[\[\]']+/g, "")
-                .replace(/x[0-9]/g, "")
-                .replace(/[0-9]/g, "")
+                .replace(/[\[\]'":]+/g, "") // []'":
+                .replace(/x[0-9]/g, "") // x0-9
+                .replace(/[0-9]/g, "") // 0-9
                 .trim()
         }
 
@@ -351,6 +385,7 @@ function findPatterns(sections: string[]) {
             stored.push({ type: group, text: sections[i] })
             return group
         }
+
         return "verse"
     }
 }

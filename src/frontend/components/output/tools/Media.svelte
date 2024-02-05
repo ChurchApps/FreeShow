@@ -82,7 +82,7 @@
 
             setTimeout(async () => {
                 // return if background is set to something else
-                if ($outputs[outputId].out?.background !== path) return
+                if ($outputs[outputId].out?.background?.path !== path) return
 
                 videoData = await clearPlayingVideo(outputId)
                 videoTime = 0

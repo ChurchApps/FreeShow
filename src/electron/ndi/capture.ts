@@ -68,7 +68,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
     console.log("Capture - starting: " + id)
 
-    captures[id].window.webContents.beginFrameSubscription(false, processFrame)
+    if (rate !== "optimized") captures[id].window.webContents.beginFrameSubscription(false, processFrame)
     captures[id].subscribed = true
 
     // optimize cpu on low end devices
@@ -76,10 +76,10 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     const captureAmount = 50
     let captureCount = captureAmount
 
-    if (rate !== "full" && !captures[id].options.ndi) cpuCapture()
+    if (rate !== "full" && (rate === "optimized" || !captures[id].options.ndi)) cpuCapture()
 
     async function cpuCapture() {
-        if (!captures[id] || captures[id].window.isDestroyed() || captures[id].window.webContents.isBeingCaptured()) return
+        if (!captures[id] || captures[id].window.isDestroyed()) return
 
         let usage = process.getCPUUsage()
 
@@ -87,7 +87,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
         if (isOptimizedOrLagging) {
             if (captureCount > captureAmount) captureCount = 0
             // limit frames
-            captures[id].window.webContents.endFrameSubscription()
+            if (captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.endFrameSubscription()
             let image = await captures[id].window.webContents.capturePage()
             sendFrames(id, image, { previewFrame: true, serverFrame: true, ndiFrame: true })
 

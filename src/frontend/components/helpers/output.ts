@@ -235,7 +235,7 @@ export function deleteOutput(outputId: string) {
 
 export async function clearPlayingVideo(clearOutput: any = null) {
     // videoData.paused = true
-    if (clearOutput) setOutput("background", null)
+    if (clearOutput) setOutput("background", null) // , false, clearOutput
 
     let mediaTransition: Transition = getCurrentMediaTransition()
 
@@ -248,8 +248,12 @@ export async function clearPlayingVideo(clearOutput: any = null) {
 
             // remove from playing
             playingVideos.update((a) => {
-                let existing = a.findIndex((a) => a.location === "output")
-                if (existing > -1) a.splice(existing, 1)
+                let existing = -1
+                do {
+                    existing = a.findIndex((a) => a.location === "output")
+                    if (existing > -1) a.splice(existing, 1)
+                } while (existing > -1)
+
                 return a
             })
 
@@ -262,7 +266,7 @@ export async function clearPlayingVideo(clearOutput: any = null) {
                 loop: false,
             }
 
-            send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
+            // send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
 
             resolve(videoData)
         }, duration)
