@@ -1,15 +1,16 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import type { Resolution } from "../../../../types/Settings"
     import { GetLayout } from "../../helpers/get"
     import Center from "../Center.svelte"
     import Slide from "./ShowSlide.svelte"
+    import type { Resolution } from "../../../../types/Settings"
 
     export let outShow: null | any
     export let activeShow: null | any
     export let outSlide: null | number
+    export let styleRes: null | any
     export let dictionary: any
-    let resolution: Resolution = activeShow?.settings?.resolution ? activeShow.settings.resolution : { width: 1920, height: 1080 }
+    let resolution: Resolution = styleRes || { width: 1920, height: 1080 }
     let columns: number = 2
 
     // $: id = $activeShow!.id

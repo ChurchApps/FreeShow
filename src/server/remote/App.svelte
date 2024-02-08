@@ -1,17 +1,17 @@
 <script lang="ts">
     import { io } from "socket.io-client"
-    import Button from "./components/Button.svelte"
     import type { TabsObj } from "../../types/Tabs"
-    import Tabs from "./components/Tabs.svelte"
-    import Slide from "./components/slide/Slide.svelte"
-    import { GetLayout, getNextSlide, nextSlide } from "./helpers/get"
-    import Icon from "./components/Icon.svelte"
+    import Button from "./components/Button.svelte"
     import Center from "./components/Center.svelte"
-    import ShowButton from "./components/ShowButton.svelte"
-    import { dateToString } from "./helpers/time"
-    import Slides from "./components/slide/Slides.svelte"
-    import Clear from "./components/slide/Clear.svelte"
+    import Icon from "./components/Icon.svelte"
     import ProjectButton from "./components/ProjectButton.svelte"
+    import ShowButton from "./components/ShowButton.svelte"
+    import Tabs from "./components/Tabs.svelte"
+    import Clear from "./components/slide/Clear.svelte"
+    import Slide from "./components/slide/Slide.svelte"
+    import Slides from "./components/slide/Slides.svelte"
+    import { GetLayout, getNextSlide, nextSlide } from "./helpers/get"
+    import { dateToString } from "./helpers/time"
 
     var dictionary: any = {
         empty: {
@@ -68,6 +68,7 @@
     let activeShow: any = null
     let outShow: any = null
     let outLayout: any = null
+    let styleRes: any = null
     let outSlide: any = null
     let project: null | string = null
     let projects: any[] = []
@@ -157,6 +158,7 @@
                     if (msg.data.slide === undefined) return
                     outSlide = msg.data.slide
                     if (msg.data.layout) outLayout = msg.data.layout
+                    if (msg.data.styleRes) styleRes = msg.data.styleRes
                     if (outSlide === null) outShow = null
                     else if (msg.data.show) {
                         outShow = msg.data.show
@@ -415,6 +417,7 @@
                                 outShow = activeShow
                             }}
                             {outSlide}
+                            {styleRes}
                         />
                     </div>
                     {#if activeShow.id === outShow?.id}
@@ -437,9 +440,9 @@
                 {#if outShow}
                     <h2>{outShow.name}</h2>
                     <div on:click={click} class="outSlides">
-                        <Slide {outShow} {outSlide} {outLayout} {transition} />
+                        <Slide {outShow} {outSlide} {outLayout} {styleRes} {transition} />
                         {#if nextSlide(layout, outSlide) && getNextSlide(outShow, outSlide, outLayout)}
-                            <Slide {outShow} outSlide={nextSlide(layout, outSlide)} {outLayout} {transition} />
+                            <Slide {outShow} outSlide={nextSlide(layout, outSlide)} {outLayout} {styleRes} {transition} />
                         {:else}
                             <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;">{dictionary.remote.end}</div>
                         {/if}

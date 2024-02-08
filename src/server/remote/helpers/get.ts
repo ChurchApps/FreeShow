@@ -1,9 +1,5 @@
 import type { SlideData, Slide } from "../../../types/Show"
 
-export const getSlide = (show: any, slide: any, layout: any): Slide => {
-    return show.slides[GetLayout(show, layout)[slide]?.id]
-}
-
 export function nextSlide(layout: any, currentSlide: number, previous: boolean = false): null | number {
     console.log("NEXT")
 

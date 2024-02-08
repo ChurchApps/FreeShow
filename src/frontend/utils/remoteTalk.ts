@@ -5,7 +5,7 @@ import { loadShows } from "../components/helpers/setShow"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, mediaCache, openedFolders, outputs, projects, remotePassword, shows, showsCache } from "./../stores"
+import { activeProject, connections, dictionary, driveData, folders, mediaCache, openedFolders, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
 
 // REMOTE
@@ -99,7 +99,8 @@ export const receiveREMOTE: any = {
             }
             msg.data = null
         } else {
-            msg.data = { slide: out ? out.index : null, layout: out?.layout || null }
+            let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+            msg.data = { slide: out ? out.index : null, layout: out?.layout || null, styleRes }
             // && out.id !== oldOutSlide
             if (out && out.id !== "temp") {
                 id = out.id
@@ -135,7 +136,8 @@ export function initializeRemote(id: string) {
     window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
 
     let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-    let out: any = { slide: currentOutput?.out?.slide ? currentOutput.out.slide.index : null, layout: currentOutput.out?.slide?.layout || null }
+    let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+    let out: any = { slide: currentOutput?.out?.slide ? currentOutput.out.slide.index : null, layout: currentOutput.out?.slide?.layout || null, styleRes }
     if (out.slide !== null) {
         oldOutSlide = out.slide.id
         out.show = get(showsCache)[oldOutSlide]
