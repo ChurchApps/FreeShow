@@ -331,8 +331,8 @@ function decodeBase64(text: string) {
     while (decCode > -1) {
         let endOfCode = r.indexOf(" ?", decCode) + 2
 
-        if (endOfCode > 1 && endOfCode - decCode < 10) {
-            let decodedLetter = String.fromCharCode(Number(r.slice(decCode, endOfCode).replace(/\D/g, "")))
+        if (endOfCode > 1 && endOfCode - decCode <= 10) {
+            let decodedLetter = String.fromCharCode(Number(r.slice(decCode, endOfCode).replace(/[^\d-]/g, "")))
             if (!decodedLetter.includes("\\x")) r = r.slice(0, decCode) + decodedLetter + r.slice(endOfCode)
         }
 

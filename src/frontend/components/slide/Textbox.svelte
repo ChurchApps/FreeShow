@@ -189,7 +189,7 @@
             return
         }
         loopStop = true
-        cacheText = true
+        // cacheText = true
 
         fontSize = MAX_FONT_SIZE
         addStyleToElemText(fontSize)
@@ -243,7 +243,7 @@
             loopStop = false
         }, 100)
 
-        if (stageAutoSize || itemIndex < 0) return
+        if (stageAutoSize || itemIndex < 0 || $currentWindow) return
 
         // UPDATE item
 

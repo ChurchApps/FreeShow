@@ -121,86 +121,19 @@ export function convertEasyWorship(data: any) {
     }
 }
 
-// https://www.ascii-code.com/
+// https://asecuritysite.com/coding/asc2
 const replaceCodes: any = {
-    "u34?": '"',
-    "u39?": "'",
-    "u40?": "(",
-    "u41?": ")",
-    "u58?": ":",
-    "u59?": ";",
-    "u63?": "?",
-    "u96?": "`",
-    "u145?": "'",
-    "u146?": "'",
-    "u147?": '"',
-    "u148?": '"',
-    "u171?": "«",
-    "u187?": "»",
-    "u192?": "À",
-    "u193?": "Á",
-    "u194?": "Â",
-    "u195?": "Ã",
-    "u196?": "Ä",
-    "u197?": "Å",
-    "u198?": "Æ",
-    "u199?": "Ç",
-    "u200?": "È",
-    "u201?": "É",
-    "u202?": "Ê",
-    "u203?": "Ë",
-    "u204?": "Ì",
-    "u205?": "Í",
-    "u206?": "Î",
-    "u207?": "Ï",
-    "u208?": "Ð",
-    "u209?": "Ñ",
-    "u210?": "Ò",
-    "u211?": "Ó",
-    "u212?": "Ô",
-    "u213?": "Õ",
-    "u214?": "Ö",
-    "u216?": "Ø",
-    "u217?": "Ù",
-    "u218?": "Ú",
-    "u219?": "Û",
-    "u220?": "Ü",
-    "u221?": "Ý",
-    "u222?": "Þ",
-    "u223?": "ß",
-    "u224?": "à",
-    "u225?": "á",
-    "u226?": "â",
-    "u227?": "ã",
-    "u228?": "ä",
-    "u229?": "å",
-    "u230?": "æ",
-    "u231?": "ç",
-    "u232?": "è",
-    "u233?": "é",
-    "u234?": "ê",
-    "u235?": "ë",
-    "u236?": "ì",
-    "u237?": "í",
-    "u238?": "î",
-    "u239?": "ï",
-    "u240?": "ð",
-    "u241?": "ñ",
-    "u242?": "ò",
-    "u243?": "ó",
-    "u244?": "ô",
-    "u245?": "õ",
-    "u246?": "ö",
-    "u247?": "÷",
-    "u248?": "ø",
-    "u249?": "ù",
-    "u250?": "ú",
-    "u251?": "û",
-    "u252?": "ü",
-    "u253?": "ý",
-    "u254?": "þ",
-    "u255?": "ÿ",
     "u8211?": "–",
+}
+
+function decodeString(input) {
+    let regex = /u(\d+)\?/g
+
+    let decodedString = input.replace(regex, (_match, number) => {
+        return String.fromCharCode(Number(number))
+    })
+
+    return decodedString
 }
 
 function createSlides({ words }: Words) {
@@ -217,6 +150,10 @@ function createSlides({ words }: Words) {
     if (index < 22) index = words.indexOf("sdfsauto")
     words = words.slice(index, words.lastIndexOf("}"))
     if (words.charAt(words.length - 2) === "}") words = words.slice(0, words.length - 1)
+
+    // convert ascii decimals to chars
+    words = decodeString(words)
+    // replace special encoded chars
     Object.keys(replaceCodes).forEach((key) => {
         words = words.replaceAll(key, replaceCodes[key])
     })

@@ -163,6 +163,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     // go to beginning if live mode & ctrl | no output | last slide active
     if (get(activeShow) && (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))) {
+        if (get(activeShow)?.type === "section") return goToNextProjectItem()
+
         let id = loop ? slide?.id : get(activeShow)?.id
         if (!id) return
 
@@ -192,7 +194,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     // go to next show if end
     if (index === null && get(activeShow)?.id === slide?.id && get(showsCache)[get(activeShow)?.id || ""]?.settings.activeLayout === slide.layout) {
-        if (e?.key === " ") goToNextProjectItem()
+        if ([" ", "ArrowRight", "PageDown"].includes(e?.key)) goToNextProjectItem()
         return
     }
 
@@ -235,10 +237,18 @@ async function goToNextShowInProject(slide, customOutputId) {
 }
 
 export function goToNextProjectItem() {
-    if (!get(activeProject)) return
+    if (!get(activeProject) || typeof get(activeShow)?.index !== "number") return
 
-    let index: number = typeof get(activeShow)?.index === "number" ? get(activeShow)!.index! : -1
+    let index: number = get(activeShow)!.index ?? -1
     if (index + 1 < get(projects)[get(activeProject)!].shows.length) index++
+    if (index > -1 && index !== get(activeShow)?.index) activeShow.set({ ...get(projects)[get(activeProject)!].shows[index], index })
+}
+
+export function goToPreviousProjectItem() {
+    if (!get(activeProject) || typeof get(activeShow)?.index !== "number") return
+
+    let index: number = get(activeShow)!.index ?? get(projects)[get(activeProject)!].shows.length
+    if (index - 1 >= 0) index--
     if (index > -1 && index !== get(activeShow)?.index) activeShow.set({ ...get(projects)[get(activeProject)!].shows[index], index })
 }
 
@@ -254,7 +264,18 @@ export function previousSlide(e: any) {
         .ref()[0]
     let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
     let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout ? layout.length - 1 : null
-    if (index === null) return
+    if (index === null) {
+        if (get(activeShow)?.type === "section") goToPreviousProjectItem()
+        return
+    }
+
+    let activeShowLayout = get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout
+    if (index < 0 && activeShowLayout !== slide?.layout) {
+        slide = null
+        layout = _show("active").layouts("active").ref()[0]
+        activeLayout = activeShowLayout
+        index = (layout?.length || 0) - 1
+    }
 
     // lines
     let outputWithLines = getOutputWithLines()
@@ -264,7 +285,14 @@ export function previousSlide(e: any) {
 
     let line: number = linesIndex || 0
     if (hasLinesEnded) {
-        if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) return
+        if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
+            // go to previous show if out slide at start
+            if ((get(activeShow)?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section") {
+                if (["ArrowLeft", "PageUp"].includes(e?.key)) goToPreviousProjectItem()
+            }
+            return
+        }
+
         while (layout[index].data.disabled) index--
 
         // get slide line
@@ -401,7 +429,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
                     if (a) playAudio(a, false)
                 })
-            }, 100)
+            }, 200)
         }
 
         // overlays

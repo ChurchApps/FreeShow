@@ -3,6 +3,7 @@
     import { OPEN_FILE } from "../../../types/Channels"
     import Button from "./Button.svelte"
     import { uid } from "uid"
+    import { destroy } from "../../utils/request"
 
     export let id: string
     export let filter: any
@@ -21,7 +22,7 @@
     }
 
     let listenerId = uid()
-    onDestroy(() => window.api.removeListener(OPEN_FILE, listenerId))
+    onDestroy(() => destroy(OPEN_FILE, listenerId))
 
     let dispatch = createEventDispatcher()
     window.api.receive(OPEN_FILE, fileReceived, listenerId)

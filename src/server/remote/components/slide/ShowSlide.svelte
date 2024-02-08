@@ -12,6 +12,10 @@
     export let resolution: any
 
     let ratio = 0
+
+    $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
+    $: slideResolution = slide?.settings?.resolution
+    $: newResolution = isCustomRes ? resolution : slideResolution || { width: 1920, height: 1080 }
 </script>
 
 <!-- TODO: disabled -->
@@ -21,7 +25,7 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
     <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
-        <Zoomed {resolution} background={slide.items.length ? "black" : "transparent"} bind:ratio>
+        <Zoomed resolution={newResolution} background={slide.items.length ? "black" : "transparent"} bind:ratio>
             <!-- class:ghost={!background} -->
             <div class="background" style="zoom: {1 / ratio}">
                 {#if media[layoutSlide.background]}
@@ -34,7 +38,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
             {/each}
         </Zoomed>
         <!-- TODO: BG: white, color: black -->
-        <!-- style="width: {resolution.width * zoom}px;" -->
+        <!-- style="width: {newResolution.width * zoom}px;" -->
         <div class="label" title={slide.group || ""}>
             <!-- font-size: 0.8em; -->
             <span style="position: absolute;display: contents;">{index + 1}</span>

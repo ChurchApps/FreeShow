@@ -53,7 +53,7 @@
     $: offset = autoscroll(scrollElem, Math.max(0, ($activeShow?.index || 0) - itemsBefore))
 
     // close if not existing
-    $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null)
+    $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null) // projectView.set(true)
     // get pos if clicked in drawer
     $: if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject]?.shows[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
 
@@ -68,21 +68,6 @@
             a!.index = pos
             return a
         })
-    }
-
-    activeProject.subscribe(loadProjectShows)
-    function loadProjectShows(a: null | string) {
-        if (!a || !$projects[a]) {
-            activeProject.set(null)
-            projectView.set(true)
-            return
-        }
-
-        // load all shows in a project (this was not good when changing many projects)
-        // if ($loaded) {
-        //     loadShows($projects[a].shows.filter((a) => a.type === undefined || a.type === "show").map((a) => a.id))
-        // }
-        // TODO: CHECK VIDEOS
     }
 
     // pre v0.6.1

@@ -54,14 +54,15 @@ export function stageListen() {
 }
 
 export function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
-    let path = updater[outputId]?.out?.background?.path || ""
+    let currentOutput = updater[outputId]?.out
+    let path = currentOutput?.background?.path || ""
     if (!path) return
 
     let background = get(mediaCache)[path] || {}
     let base64path = background.data
     if (!base64path) return
 
-    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: getNextBackground(outputId) })
+    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: getNextBackground(currentOutput?.slide) })
 
     if (returnPath) return bg
 
@@ -69,8 +70,7 @@ export function sendBackgroundToStage(outputId, updater = get(outputs), returnPa
     return
 }
 
-function getNextBackground(outputId: string) {
-    let currentOutputSlide = get(outputs)[outputId]?.out?.slide
+function getNextBackground(currentOutputSlide: any) {
     if (!currentOutputSlide?.id) return {}
 
     let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]

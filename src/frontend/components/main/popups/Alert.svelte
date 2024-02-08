@@ -10,7 +10,6 @@
     $: msg = $alertMessage.toString()
 
     // UPDATER
-    $: console.log(msg)
     $: if (msg.includes("freeshow.app")) {
         msg = msg.replace("freeshow.app", '<a href="#void" class="website">freeshow.app</a>')
     }

@@ -1,7 +1,7 @@
 import { NDI } from "../../types/Channels"
 import { Message } from "../../types/Socket"
 import { customFramerates, updateFramerate } from "./capture"
-import { findStreamsNDI, receiveStreamNDI, stopReceiversNDI } from "./ndi"
+import { captureStreamNDI, findStreamsNDI, receiveStreamFrameNDI, stopReceiversNDI } from "./ndi"
 
 export async function receiveNDI(e: any, msg: Message) {
     let data: any = {}
@@ -12,8 +12,9 @@ export async function receiveNDI(e: any, msg: Message) {
 
 export const ndiResponses: any = {
     RECEIVE_LIST: async () => await findStreamsNDI(),
-    RECEIVE_STREAM: (data: any) => receiveStreamNDI(data),
-    RECEIVE_DESTROY: () => stopReceiversNDI(),
+    RECEIVE_STREAM: (data: any) => receiveStreamFrameNDI(data),
+    CAPTURE_STREAM: (data: any) => captureStreamNDI(data),
+    CAPTURE_DESTROY: (data: any) => stopReceiversNDI(data),
 
     NDI_DATA: (data: any) => setDataNDI(data),
 

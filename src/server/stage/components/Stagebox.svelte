@@ -82,7 +82,7 @@
                     {@const slideBackground = next ? background.next : background}
                     <!-- TODO: show overlays etc. -->
                     <span style="pointer-events: none;">
-                        {#if slideBackground.path}
+                        {#if slideBackground?.path}
                             <MediaOutput path={slideBackground.path} mediaStyle={slideBackground.mediaStyle} />
                         {/if}
 

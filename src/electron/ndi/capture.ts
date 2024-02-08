@@ -48,7 +48,6 @@ function getDefaultCapture(window: BrowserWindow): CaptureOptions {
 // START
 
 let storedFrames: any = {}
-let cpuInterval: any = null
 export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     let window = outputWindows[id]
     let windowIsRemoved = !window || window.isDestroyed()
@@ -69,38 +68,34 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
     console.log("Capture - starting: " + id)
 
-    captures[id].window.webContents.beginFrameSubscription(false, processFrame)
+    if (rate !== "optimized") captures[id].window.webContents.beginFrameSubscription(false, processFrame)
     captures[id].subscribed = true
 
     // optimize cpu on low end devices
-    if (cpuInterval) clearInterval(cpuInterval)
-    const timeUntilAutoUpdate = 60 // seconds
-    const frameUpdateRate = rate === "optimized" ? 5 : 2 // seconds
-    const captureRate = timeUntilAutoUpdate / frameUpdateRate
     const autoOptimizePercentageCPU = 95 / 10 // % / 10
-    let captureCount = captureRate
+    const captureAmount = 50
+    let captureCount = captureAmount
 
-    if (rate !== "full" && !captures[id].options.ndi) {
-        cpuInterval = setInterval(cpuCapture, frameUpdateRate * 1000)
-    }
+    if (rate !== "full" && (rate === "optimized" || !captures[id].options.ndi)) cpuCapture()
 
     async function cpuCapture() {
-        if (!captures[id] || captures[id].window.isDestroyed() || captures[id].window.webContents.isBeingCaptured()) return
+        if (!captures[id] || captures[id].window.isDestroyed()) return
 
         let usage = process.getCPUUsage()
 
-        let isOptimizedOrLagging = rate === "optimized" || usage.percentCPUUsage > autoOptimizePercentageCPU || captureCount < captureRate
+        let isOptimizedOrLagging = rate === "optimized" || usage.percentCPUUsage > autoOptimizePercentageCPU || captureCount < captureAmount
         if (isOptimizedOrLagging) {
-            if (captureCount === captureRate) captureCount = 0
+            if (captureCount > captureAmount) captureCount = 0
             // limit frames
-            captures[id].window.webContents.endFrameSubscription()
+            if (captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.endFrameSubscription()
             let image = await captures[id].window.webContents.capturePage()
             sendFrames(id, image, { previewFrame: true, serverFrame: true, ndiFrame: true })
 
             // capture for 60 seconds then get cpu again
             captureCount++
+            setTimeout(cpuCapture, rate === "optimized" ? 300 : 100)
         } else {
-            captureCount = captureRate
+            captureCount = captureAmount
             captures[id].window.webContents.beginFrameSubscription(false, processFrame)
         }
     }
@@ -224,7 +219,7 @@ export function updatePreviewResolution(data: any) {
     if (data.id) sendFrames(data.id, storedFrames[data.id], { previewFrame: true })
 }
 
-function resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
+export function resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
     if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width })
     else image = image.resize({ height: newSize.height })
 

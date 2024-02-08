@@ -1,28 +1,35 @@
 <script lang="ts">
-    import Textbox from "./Textbox.svelte"
     import { fade } from "svelte/transition"
-    import Zoomed from "./Zoomed.svelte"
     import type { Resolution } from "../../../../types/Settings"
     import type { Transition } from "../../../../types/Show"
+    import { GetLayout } from "../../helpers/get"
     import { getStyleResolution } from "../../helpers/getStyleResolution"
-    import { GetLayout, getSlide } from "../../helpers/get"
+    import Textbox from "./Textbox.svelte"
+    import Zoomed from "./Zoomed.svelte"
 
     export let outShow: any
     export let outSlide: any
     export let outLayout: any
+    export let styleRes: any
 
     let width: number = 0
     let height: number = 0
-    let resolution: Resolution = outShow?.settings.resolution ? outShow.settings.resolution : { width: 1920, height: 1080 }
+    let resolution: Resolution = styleRes || { width: 1920, height: 1080 }
 
-    export let transition: Transition = { type: "fade", duration: 500 } // text (not background)
+    export let transition: Transition = { type: "fade", duration: 500, easing: "linear" } // text (not background)
     export let ratio = 0
 
     $: layout = GetLayout(outShow, outLayout)[outSlide]
+
+    $: showSlide = outShow?.slides?.[layout?.id] || null
+
+    $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
+    $: slideResolution = showSlide?.settings?.resolution
+    $: newResolution = isCustomRes ? resolution : slideResolution || { width: 1920, height: 1080 }
 </script>
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <Zoomed center style={getStyleResolution(resolution, width, height)} {resolution} bind:ratio>
+    <Zoomed center style={getStyleResolution(newResolution, width, height)} resolution={newResolution} bind:ratio>
         <!-- {#if $outBackground !== null}
     <MediaOutput {...$outBackground} {transition} bind:video bind:videoData />
   {/if} -->
@@ -34,8 +41,8 @@
         {#if outShow}
             {#key outSlide}
                 <span transition:fade|local={transition} style="pointer-events: none;">
-                    {#if getSlide(outShow, outSlide, outLayout)}
-                        {#each getSlide(outShow, outSlide, outLayout)?.items as item}
+                    {#if showSlide}
+                        {#each showSlide?.items as item}
                             <Textbox {item} />
                         {/each}
                     {/if}

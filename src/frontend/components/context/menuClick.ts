@@ -70,6 +70,7 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
+import { getShortBibleName } from "../drawer/bible/scripture"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     if (!actions[id]) return console.log("MISSING CONTEXT: ", id)
@@ -278,23 +279,13 @@ const actions: any = {
         let versions: string[] = obj.sel.data
         // remove collections
         versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
-        console.log(versions)
         if (versions.length < 2) return
-
-        console.log(get(scriptures))
 
         let name = ""
         versions.forEach((id, i) => {
             if (i > 0) name += " + "
             let bibleName: string = Object.values(get(scriptures)).find((a) => a.id === id)?.name || ""
-            // shorten
-            bibleName = bibleName
-                .replace(/[^a-zA-Z ]+/g, "")
-                .trim()
-                .replaceAll("  ", " ")
-            if (bibleName.split(" ").length < 2) bibleName = bibleName.slice(0, 3)
-            else bibleName = bibleName.split(" ").reduce((current, word) => (current += word[0]), "")
-            name += bibleName || "B"
+            name += getShortBibleName(bibleName)
         })
 
         scriptures.update((a) => {

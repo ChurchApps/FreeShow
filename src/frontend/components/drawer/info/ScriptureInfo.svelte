@@ -18,7 +18,7 @@
     import Notes from "../../show/tools/Notes.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
-    import { getSlides, joinRange, textKeys } from "../bible/scripture"
+    import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -79,7 +79,9 @@
             })
         }
 
-        show.name = checkName(bibles[0].book + " " + bibles[0].chapter + "," + verseRange)
+        let bibleShowName = `${bibles[0].book} ${bibles[0].chapter},${verseRange}`
+        show.name = checkName(bibleShowName)
+        if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(bibles[0].version)}`)
         show.slides = slides2
         show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
 

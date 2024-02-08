@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeStage, allOutputs, outputs, previewBuffers, showsCache, stageShows, timers, variables } from "../../stores"
+    import { activeStage, allOutputs, currentWindow, outputs, previewBuffers, showsCache, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import T from "../helpers/T.svelte"
@@ -97,7 +97,7 @@
     $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
-    $: currentBackground = sendBackgroundToStage(stageOutputId, $outputs, true)
+    $: currentBackground = sendBackgroundToStage(stageOutputId, $currentWindow ? $allOutputs : $outputs, true)
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: layoutSlide = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!] || {} : {}
     $: slideId = layoutSlide.id
@@ -118,6 +118,7 @@
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
+    class:isOutput={!!$currentWindow}
     style="{item.style};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}"
     on:mousedown={mousedown}
 >
@@ -154,10 +155,11 @@
                     <span style="pointer-events: none;">
                         {#if currentBackground}
                             {@const slideBackground = next ? currentBackground.next : currentBackground}
-                            <span style="font-size: 0;position: absolute;">{console.log(slideBackground, currentBackground)}</span>
-                            <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                <Image path={slideBackground.path} mediaStyle={slideBackground.mediaStyle} />
-                            </div>
+                            {#if slideBackground?.path}
+                                <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
+                                    <Image path={slideBackground.path} mediaStyle={slideBackground.mediaStyle || {}} />
+                                </div>
+                            {/if}
                         {/if}
 
                         <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />
@@ -172,7 +174,7 @@
                     {/if}
                 {:else if id.includes("variables")}
                     {#if $variables[id.split("#")[1]]}
-                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" hideText={false} />
+                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" hideText={!!$currentWindow} />
                     {/if}
                 {:else}
                     {id}
@@ -212,5 +214,8 @@
 
     .isDisabledVariable {
         opacity: 0.5;
+    }
+    .isDisabledVariable.isOutput {
+        display: none;
     }
 </style>

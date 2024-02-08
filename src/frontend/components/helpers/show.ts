@@ -29,6 +29,7 @@ export function getLabelId(label: string, replaceNumbers: boolean = true) {
     label = label
         .toLowerCase()
         .replace(/x[0-9]/g, "") // x0-9
+        .replace(/[0-9]/g, "") // 0-9
         .replace(/[[\]]/g, "") // []
         .replace(/['":]/g, "") // '":
         .trim()

@@ -17,6 +17,7 @@ import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRec
 import { config, stores, updateDataPath, userDataPath } from "./utils/store"
 import checkForUpdates from "./utils/updater"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { stopReceiversNDI } from "./ndi/ndi"
 
 // ----- STARTUP -----
 
@@ -47,6 +48,8 @@ function startApp() {
 }
 
 function initialize() {
+    updateDataPath({ load: true })
+
     // midi
     // createVirtualMidi()
 
@@ -204,6 +207,7 @@ export async function exitApp() {
     dialogClose = false
 
     await closeAllOutputs()
+    stopReceiversNDI()
     closeServers()
 
     // midi

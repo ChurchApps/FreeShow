@@ -327,6 +327,7 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_LOG: (msg: any) => console.log(msg),
     MAIN_VIDEO_ENDED: async (msg) => {
         let videoPath = get(outputs)[msg.id].out?.background?.path
+        // WIP! "DUPLICATE" of Media.svelte receiver NOT SURE IF THIS DOES ANYTHING
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
@@ -391,6 +392,7 @@ const receiveOUTPUTasOUTPUT: any = {
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => media.set(a),
+    MEDIA_CACHE: (a: any) => mediaCache.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     SPECIAL: (a: any) => clone(special.set(a)),
@@ -415,6 +417,7 @@ export function sendInitialOutputData() {
 
     send(OUTPUT, ["VIZUALISER_DATA"], get(visualizerData))
     send(OUTPUT, ["MEDIA"], get(media))
+    send(OUTPUT, ["MEDIA_CACHE"], get(mediaCache))
     send(OUTPUT, ["TIMERS"], get(timers))
     send(OUTPUT, ["VARIABLES"], get(variables))
 

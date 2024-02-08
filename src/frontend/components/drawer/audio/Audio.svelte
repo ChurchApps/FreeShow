@@ -16,6 +16,7 @@
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
     import { onDestroy } from "svelte"
+    import { destroy } from "../../../utils/request"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -66,7 +67,7 @@
     $: console.log(filesInFolders)
 
     let listenerId = uid()
-    onDestroy(() => window.api.removeListener(READ_FOLDER, listenerId))
+    onDestroy(() => destroy(READ_FOLDER, listenerId))
 
     // receive files
     window.api.receive(READ_FOLDER, receiveContent, listenerId)

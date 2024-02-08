@@ -13,7 +13,8 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
     enabledOutputs.forEach((id) => {
         let output: any = { id, ...get(outputs)[id] }
-        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey, auto })
+        let autoPosition = enabledOutputs.length === 1
+        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey, auto, autoPosition })
     })
 }
 
@@ -234,7 +235,7 @@ export function deleteOutput(outputId: string) {
 
 export async function clearPlayingVideo(clearOutput: any = null) {
     // videoData.paused = true
-    if (clearOutput) setOutput("background", null)
+    if (clearOutput) setOutput("background", null) // , false, clearOutput
 
     let mediaTransition: Transition = getCurrentMediaTransition()
 
@@ -247,8 +248,12 @@ export async function clearPlayingVideo(clearOutput: any = null) {
 
             // remove from playing
             playingVideos.update((a) => {
-                let existing = a.findIndex((a) => a.location === "output")
-                if (existing > -1) a.splice(existing, 1)
+                let existing = -1
+                do {
+                    existing = a.findIndex((a) => a.location === "output")
+                    if (existing > -1) a.splice(existing, 1)
+                } while (existing > -1)
+
                 return a
             })
 
@@ -261,7 +266,7 @@ export async function clearPlayingVideo(clearOutput: any = null) {
                 loop: false,
             }
 
-            send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
+            // send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
 
             resolve(videoData)
         }, duration)
@@ -299,8 +304,13 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.style = templateItem.style || ""
         item.align = templateItem.align || ""
 
-        // scrolling, bindings
-        item.specialStyle = templateItem.specialStyle || {}
+        delete item.autoFontSize
+        item.auto = templateItem.auto || false
+
+        if (templateItem.actions) item.actions = templateItem.actions
+        if (templateItem.specialStyle) item.specialStyle = templateItem.specialStyle
+        if (templateItem.scrolling) item.scrolling = templateItem.scrolling
+        if (templateItem.bindings) item.bindings = templateItem.bindings
 
         if (type !== "text") return finish()
 
