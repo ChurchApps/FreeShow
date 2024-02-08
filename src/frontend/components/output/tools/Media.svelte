@@ -10,6 +10,7 @@
     import { clearPlayingVideo } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
+    import { checkNextAfterMedia } from "../../helpers/showActions"
 
     export let currentOutput: any
     export let outputId: string
@@ -75,8 +76,7 @@
             if (msg.id !== outputId || type !== "video") return
             // check and execute next after media regardless of loop
             // next after function is likely skipped as it is first executed by the startup receiver
-            // checkNextAfterMedia(path) ||
-            if (videoData.loop) return
+            if (checkNextAfterMedia(path) || videoData.loop) return
 
             if (videoInterval) clearInterval(videoInterval)
 
@@ -86,7 +86,7 @@
 
                 videoData = await clearPlayingVideo(outputId)
                 videoTime = 0
-            }, 250)
+            }, 600) // WAIT FOR NEXT AFTER MEDIA TO FINISH
         },
     }
 

@@ -327,6 +327,7 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_LOG: (msg: any) => console.log(msg),
     MAIN_VIDEO_ENDED: async (msg) => {
         let videoPath = get(outputs)[msg.id].out?.background?.path
+        // WIP! "DUPLICATE" of Media.svelte receiver NOT SURE IF THIS DOES ANYTHING
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
