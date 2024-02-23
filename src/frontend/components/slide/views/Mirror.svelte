@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { currentWindow, showsCache, stageShows } from "../../../stores"
+    import { OUTPUT } from "../../../../types/Channels"
+    import { currentWindow, outputs, showsCache, stageShows } from "../../../stores"
+    import { send } from "../../../utils/request"
     import { loadShows } from "../../helpers/setShow"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -52,6 +54,16 @@
     let itemStyle: any = {}
     $: itemStyle = getStyles(item.style) || {}
     $: currentRatio = itemStyle.width / itemStyle.height
+
+    // request preview capture
+    $: if ($currentWindow === "output" && stageEnabled && $stageShows[item.mirror?.stage]?.items?.["output#current_output"]?.enabled) {
+        let id = Object.keys($outputs)[0]
+        let previewId = $stageShows[item.mirror?.stage]?.settings?.output
+
+        setInterval(() => {
+            send(OUTPUT, ["REQUEST_PREVIEW"], { id, previewId })
+        }, 1000)
+    }
 </script>
 
 <Zoomed ratio={currentRatio} center style="height: 100%;" background="transparent" disableStyle showMirror>

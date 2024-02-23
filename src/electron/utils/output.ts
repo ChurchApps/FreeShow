@@ -2,7 +2,7 @@ import { BrowserWindow, Rectangle, screen } from "electron"
 import { isMac, loadWindowContent, mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { Message } from "../../types/Socket"
-import { startCapture, stopCapture, updatePreviewResolution } from "../ndi/capture"
+import { requestPreview, stageWindows, startCapture, stopCapture, updatePreviewResolution } from "../ndi/capture"
 import { createSenderNDI, stopSenderNDI } from "../ndi/ndi"
 import { setDataNDI } from "../ndi/talk"
 import { Output } from "./../../types/Output"
@@ -279,6 +279,7 @@ const outputResponses: any = {
     TO_FRONT: (data: any) => moveToFront(data),
 
     PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
+    REQUEST_PREVIEW: (data: any) => requestPreview(data),
 
     IDENTIFY_SCREENS: (data: any) => identifyScreens(data),
 }
@@ -310,14 +311,11 @@ function sendToOutputWindow(msg: any) {
     }
 }
 
-let stageWindows: string[] = []
-export function sendToStageOutputs(msg: any) {
-    ;[...new Set(stageWindows)].forEach((id) => {
-        let window = outputWindows[id]
-        if (!window || window.isDestroyed()) return
+export function sendToWindow(id: string, msg: any) {
+    let window = outputWindows[id]
+    if (!window || window.isDestroyed()) return
 
-        window.webContents.send(OUTPUT, msg)
-    })
+    window.webContents.send(OUTPUT, msg)
 }
 
 // create numbered outputs for each screen

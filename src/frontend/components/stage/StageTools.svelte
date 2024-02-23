@@ -17,7 +17,7 @@
         text: { name: "items.text", icon: "text", disabled: true },
         item: { name: "tools.item", icon: "item", disabled: true },
         items: { name: "tools.items", icon: "items" },
-        slide: { name: "tools.slide", icon: "options" },
+        slide: { name: "tools.slide", icon: "options", overflow: true },
     }
 
     let active: string = $activeStage.items.length ? "item" : "items"

@@ -22,8 +22,8 @@
         text: { name: "items.text", icon: "text" },
         item: { name: "tools.item", icon: "item" },
         items: { name: "tools.items", icon: "items" },
-        filters: { name: "edit.filters", icon: "filter" },
-        slide: { name: "tools.slide", icon: "options" }, // slide
+        slide: { name: "tools.slide", icon: "options", overflow: true },
+        filters: { name: "edit.filters", icon: "filter", overflow: true },
     }
     let active: string = Object.keys(tabs)[0]
     $: tabs.text.icon = item?.type && boxes[item.type] ? boxes[item.type]!.icon : "text"
