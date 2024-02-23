@@ -28,7 +28,7 @@
     $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group?.localeCompare(b.group))
 </script>
 
-<div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;">
+<div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;align-items: flex-start;">
     <div class="main">
         {#if $globalGroupViewEnabled}
             <h4><T id="groups.current" /></h4>

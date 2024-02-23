@@ -152,7 +152,8 @@
         "contain": "Contain",
         "fill": "Fill",
         "cover": "Cover",
-        "online": "Online"
+        "online": "Online",
+        "recommended": "Recommended"
     },
     "menu": {
         "show": "Show",

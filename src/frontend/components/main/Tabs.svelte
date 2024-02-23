@@ -40,7 +40,7 @@
             dark
             center
         >
-            <Icon id="arrow_right" size={1.2} white />
+            <Icon id="arrow_right" style="opacity: 0.8;" size={1.2} white />
         </Button>
     {/if}
 </div>
@@ -50,6 +50,7 @@
         display: flex;
         flex-wrap: wrap;
         background-color: var(--primary-darker);
+        z-index: 1;
     }
 
     .tabs :global(button) {

@@ -8,7 +8,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
-    import { getExtension, getMediaStyle, getMediaType } from "../../helpers/media"
+    import { getExtension, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import { sendMidi } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
@@ -67,6 +67,7 @@
             else backgrounds[path] = { id: a, ...show.media[a], path, type, count: 1 }
         })
         Object.values(backgrounds).forEach((a) => bgs.push(a))
+        bgs = bgs.sort((a: any, b: any) => a.name.localeCompare(b.name))
     } else bgs = []
 
     let audio: any = []
@@ -127,18 +128,8 @@
     // TODO: check if file exists!!!
 
     let simularBgs: any[] = []
-    // TODO: WIP
-    // $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
-    receive(
-        MAIN,
-        {
-            GET_SIMULAR: (data) => {
-                console.log(data)
-                simularBgs = data.slice(0, 3)
-            },
-        },
-        "media_simular"
-    )
+    $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
+    receive(MAIN, { GET_SIMULAR: (data: string[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a))).slice(0, 3)) }, "media_simular")
     onDestroy(() => destroy(MAIN, "media_simular"))
 </script>
 
@@ -193,11 +184,12 @@
             {/each}
 
             {#if simularBgs.length}
-                <h5><T id="preview.recommended" /></h5>
+                <h5><T id="media.recommended" /></h5>
 
                 {#each simularBgs as background}
                     {@const mediaStyle = getMediaStyle($media[background.path], { name: "" })}
                     {@const type = getMediaType(getExtension(background.path)) || "video"}
+
                     <SelectElem id="media" data={{ ...background, type }} draggable>
                         <div class="media_item item context #show_media" class:active={findMatchingOut(background.path, $outputs)}>
                             <HoverButton
@@ -212,11 +204,8 @@
                                 }}
                                 title={$dictionary.media?.play}
                             >
-                                <!-- <div style="flex: 2;height: 50px;"> -->
                                 <MediaLoader name={background.name} path={background.path} {type} {mediaStyle} />
-                                <!-- </div> -->
                             </HoverButton>
-                            <!-- on:click={() => activeShow.set({ id: background.path, name: background.name, type: background.type })} -->
                             <p title={background.path}>{background.name}</p>
                         </div>
                     </SelectElem>

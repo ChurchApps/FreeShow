@@ -229,28 +229,25 @@ export function getFolderContent(_e: any, data: any) {
 
 export function getSimularPaths(data: any) {
     let parentFolderPathNames = data.paths.map(getParentFolderName)
-    console.log(1, parentFolderPathNames)
-    let allFileNames = parentFolderPathNames.map(readFolder)
-    allFileNames = allFileNames.flat()
-    console.log(2, allFileNames.slice(0, 10))
+    let allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
+    allFilePaths = [...new Set(allFilePaths.flat())]
 
     let simularArray: any[] = []
-    data.paths.forEach((path: string, i: number) => {
+    data.paths.forEach((path: string) => {
         let originalFileName = parse(path).name
-        allFileNames.forEach((fileName: string) => {
-            if (data.paths.find((a: string) => a.includes(fileName))) return
 
-            let fullPathName = join(parentFolderPathNames[i], fileName)
-            if (i < 3) console.log(3, fullPathName)
+        allFilePaths.forEach((filePath: string) => {
+            let name = parse(filePath).name
+            if (data.paths.includes(filePath) || simularArray.find((a) => a[0].name.includes(name))) return
 
-            let match = similarity(originalFileName, fileName)
-            if (match < 0.7) return
-            simularArray.push([{ path: fullPathName, name: fileName }, match])
+            let match = similarity(originalFileName, name)
+            if (match < 0.5) return
+
+            simularArray.push([{ path: filePath, name }, match])
         })
     })
 
-    simularArray = simularArray.sort((a, b) => a[1] - b[1])
-    console.log(simularArray.slice(0, 10))
+    simularArray = simularArray.sort((a, b) => b[1] - a[1])
     simularArray = simularArray.slice(0, 10).map((a) => a[0])
 
     return simularArray
@@ -258,40 +255,32 @@ export function getSimularPaths(data: any) {
 function getParentFolderName(path: string) {
     return parse(path).dir
 }
-function similarity(s1: string, s2: string) {
-    let longer = s1
-    let shorter = s2
-    if (s1.length < s2.length) {
-        longer = s2
-        shorter = s1
-    }
-    let longerLength: any = longer.length
-    if (longerLength == 0) {
-        return 1.0
-    }
-    return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength)
-}
-function editDistance(s1: string, s2: string) {
-    s1 = s1.toLowerCase()
-    s2 = s2.toLowerCase()
+function similarity(str1: string, str2: string) {
+    function levenshteinDistance(s1: string, s2: string) {
+        const m = s1.length
+        const n = s2.length
+        const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0))
 
-    let costs = new Array()
-    for (let i = 0; i <= s1.length; i++) {
-        let lastValue = i
-        for (let j = 0; j <= s2.length; j++) {
-            if (i == 0) costs[j] = j
-            else {
-                if (j > 0) {
-                    let newValue = costs[j - 1]
-                    if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
-                    costs[j - 1] = lastValue
-                    lastValue = newValue
+        for (let i = 0; i <= m; i++) {
+            for (let j = 0; j <= n; j++) {
+                if (i === 0) {
+                    dp[i][j] = j
+                } else if (j === 0) {
+                    dp[i][j] = i
+                } else {
+                    dp[i][j] = s1[i - 1] === s2[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
                 }
             }
         }
-        if (i > 0) costs[s2.length] = lastValue
+
+        return dp[m][n]
     }
-    return costs[s2.length]
+
+    const distance = levenshteinDistance(str1, str2)
+    const maxLength = Math.max(str1.length, str2.length)
+    const matchPercentage = 1 - distance / maxLength
+
+    return matchPercentage
 }
 
 // OPEN_FOLDER
