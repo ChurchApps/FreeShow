@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeShow, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected } from "../../../stores"
+    import { activeShow, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected, showsCache } from "../../../stores"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import T from "../../helpers/T.svelte"
@@ -8,8 +8,16 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Button from "../../inputs/Button.svelte"
     import Icon from "../../helpers/Icon.svelte"
+    import { _show } from "../../helpers/shows"
 
     $: showGroups = $cachedShowsData[$activeShow!.id]?.groups || []
+
+    $: layoutSlides = $showsCache[$activeShow!.id]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
+    $: console.log(layoutSlides)
+    function countGroupsInLayout(slideId) {
+        let count = layoutSlides.reduce((count: number, slide: any) => (slide.id === slideId ? count + 1 : count), 0)
+        return count
+    }
 
     $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
         let name = group.name
@@ -27,6 +35,7 @@
         {/if}
         {#if showGroups.length}
             {#each showGroups as slide}
+                {@const groupCount = countGroupsInLayout(slide.id)}
                 <SelectElem id="group" data={{ id: slide.id }} draggable>
                     <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                     <div
@@ -40,7 +49,10 @@
                             }
                         }}
                     >
-                        <p>{slide.group || "—"}</p>
+                        <p>
+                            {slide.group || "—"}
+                            {#if groupCount > 1}<span class="shortcut" style="opacity: 0.5;font-style: initial;">{groupCount}</span>{/if}
+                        </p>
                     </div>
                 </SelectElem>
             {/each}
@@ -129,15 +141,19 @@
         filter: brightness(1.1);
     }
 
+    .slide p {
+        display: flex;
+        align-items: center;
+    }
     .shortcut {
         position: absolute;
         right: 5px;
         background-color: var(--primary-darker);
 
         color: rgb(255 255 255 / 0.5);
-        /* opacity: 0.6; */
+        opacity: 0.8;
         font-style: italic;
-        font-size: 0.9em;
+        font-size: 0.8em;
         padding-left: 5px;
     }
 

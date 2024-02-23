@@ -102,7 +102,7 @@
     const getBibleVersions = () =>
         keysToID($scriptures)
             .map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
-            .sort((a: any, b: any) => b.name.localeCompare(a.name))
+            .sort((a: any, b: any) => (b.customName || b.name).localeCompare(a.customName || a.name))
             .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
             .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
 

@@ -93,8 +93,8 @@
         box.edit.lines[3].value = backgroundValue.a
     }
     $: if (id === "text" && box?.edit?.special) {
-        box.edit.special[0].value = !!styles["white-space"]?.includes("nowrap")
-        box.edit.special[1].value = item?.scrolling?.type || "none"
+        box.edit.special[1].value = !!styles["white-space"]?.includes("nowrap")
+        box.edit.special[2].value = item?.scrolling?.type || "none"
     }
     $: if (id === "text" && box?.edit?.chords) {
         box.edit.chords[0].value = item?.chords?.enabled || false

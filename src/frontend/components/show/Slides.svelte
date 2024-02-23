@@ -21,7 +21,7 @@
     let offset: number = -1
     $: {
         let output = $outputs[activeOutputs[0]] || {}
-        if (scrollElem && showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
+        if (loaded && scrollElem && showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
             let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
             let index = Math.max(0, (output.out.slide.index || 0) - columns)
             offset = (scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5) - 5

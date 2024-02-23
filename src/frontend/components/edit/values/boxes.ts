@@ -87,6 +87,7 @@ export const boxes: Box = {
                 { name: "size", id: "chords.size", input: "number", value: 30, hidden: true },
             ],
             special: [
+                { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
                 { name: "no_wrap", id: "nowrap", input: "checkbox", value: false },
                 {
                     name: "scrolling",

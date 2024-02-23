@@ -21,6 +21,7 @@ import {
     getDataFolder,
     getDocumentsFolder,
     getPaths,
+    getSimularPaths,
     loadFile,
     locateMediaFile,
     openSystemFolder,
@@ -156,6 +157,7 @@ const mainResponses: any = {
     LOG_ERROR: (data: any) => logError(data),
     OPEN_LOG: () => openSystemFolder(error_log.path),
     MEDIA_BASE64: (data: any) => storeMedia(data),
+    GET_SIMULAR: (data: any) => getSimularPaths(data),
 }
 
 export function receiveMain(e: any, msg: Message) {
