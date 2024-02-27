@@ -2,27 +2,28 @@
     import { createEventDispatcher } from "svelte"
     import { activePopup, dictionary, imageExtensions, popupData, variables, videoExtensions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getFilters } from "../../helpers/style"
     import T from "../../helpers/T.svelte"
+    import { clone, keysToID } from "../../helpers/array"
+    import { getFileName } from "../../helpers/media"
+    import { getFilters } from "../../helpers/style"
+    import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import DateInput from "../../inputs/DateInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FontDropdown from "../../inputs/FontDropdown.svelte"
     import IconButton from "../../inputs/IconButton.svelte"
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
+    import TimeInput from "../../inputs/TimeInput.svelte"
     import Notes from "../../show/tools/Notes.svelte"
     import { getOriginalValue, removeExtension } from "../scripts/edit"
     import EditTimer from "./EditTimer.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import { getFileName } from "../../helpers/media"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import DateInput from "../../inputs/DateInput.svelte"
-    import TimeInput from "../../inputs/TimeInput.svelte"
-    import { keysToID } from "../../helpers/array"
-    import TextInput from "../../inputs/TextInput.svelte"
 
     export let edits: any
+    export let defaultEdits: any = {}
     export let item: any = null
     export let styles: any = {}
     export let lineAlignStyle: any = {}
@@ -43,9 +44,9 @@
     function valueChange(e: any, input: any, inputUpdate: boolean = false) {
         if (inputUpdate && input.input === "text") return
 
-        let value = e.detail || e.target?.value || null
+        let value = e.detail ?? e.target?.value ?? null
 
-        if (input.input === "checkbox") value = e.target.checked
+        if (input.input === "checkbox") value = e.target?.checked ?? value // closed update
         else if (input.input === "dropdown" || input.input === "selectVariable") value = value?.id || ""
         else if (input.input === "number") value = Number(value)
         else if (input.input === "multiselect") {
@@ -101,7 +102,7 @@
 
     function getValue(input: any, _updater: any) {
         // if (input.id === "auto" && isAuto) return true
-        if (input.id.includes(".")) input.value = getItemValue(input)
+        if (input.id?.includes(".")) input.value = getItemValue(input)
 
         if (input.valueIndex !== undefined && styles[input.key]) return removeExtension(styles[input.key].split(" ")[input.valueIndex], input.extension)
         if (input.input === "dropdown") return input.values.options.find((a: any) => a.id === getKeyValue(input))?.name || "—"
@@ -151,123 +152,296 @@
         changedInput.value = $popupData.value
         valueChange({ detail: changedInput.value }, changedInput)
     }
+
+    // CLOSE
+
+    const closed = {
+        // content
+        style: {
+            "style_letter-spacing": 1,
+            "style_word-spacing": 3,
+            "style_text-transform": "uppercase",
+            // item
+            // WIP opacity does not get applied here
+            "style_background-color": "rgb(0 0 0 / 0.3)",
+            // "(style_)background-opacity": "0.3", (this is linked to the color)
+        },
+        lines: {
+            "style_line-height": 1.2,
+            "specialStyle.lineGap": 12,
+            "specialStyle.lineBg": "#000000",
+        },
+        align: {
+            "style_text-align": "left",
+        },
+        outline: {
+            // "style_-webkit-text-stroke-color": "#000000",
+            "style_-webkit-text-stroke-width": 2,
+        },
+        shadow: {
+            // "style_text-shadow_3": "#000000",
+            "style_text-shadow_0": 2,
+            "style_text-shadow_1": 2,
+
+            // item
+            // WIP only last value updates here (both set/reset)
+            "style_box-shadow_4": "rgb(0 0 0 / 0.3)",
+            "style_box-shadow_0": 2,
+            "style_box-shadow_1": 2,
+            "style_box-shadow_2": 8,
+            // "style_box-shadow_3": 0,
+        },
+        chords: {
+            "chords.enabled": true,
+        },
+        // media
+        filters: {
+            "filter_hue-rotate": 100,
+        },
+
+        // item
+        transform: {
+            transform_scaleX: -1,
+        },
+        border: {
+            "style_border-width": 5,
+        },
+        backdrop_filters: {
+            "backdrop-filter_grayscale": 1,
+        },
+    }
+
+    function checkIsClosed(id: string) {
+        let closedVal = closed[id]
+        let defaultEdit = defaultEdits?.[id]
+        let currentEdit = clone(edits[id])
+
+        if (!closedVal || !defaultEdit || !currentEdit) return false
+        currentEdit.forEach((a, i) => {
+            let lineInputValues = clone(lineInputs[a.input])
+            if (!lineInputValues) return
+
+            // set default
+            let defaultValue = lineInputValues.find((a) => a.default)
+            defaultEdit[i] = defaultValue
+
+            // get value
+            let lineInput = lineInputValues[0]
+            let currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles
+            let keyStyle = currentStyle[lineInput.key] || defaultValue.value
+
+            let newInput = lineInputValues.find((a) => keyStyle.includes(a.value)) || { ...lineInput, value: defaultValue.value }
+            currentEdit[i] = newInput
+        })
+
+        // check if value has changed
+        let differentValue = currentEdit.find((currentInput: any, i: number) => {
+            let defaultInput = defaultEdit[i]
+            let currentValue = getValue(currentInput, {})
+            let defaultValue = defaultInput.value
+
+            if (currentInput.name === "background_opacity") return false
+
+            // convert "0" to 0, but no false or ""
+            if (Number(currentValue) == currentValue && typeof currentValue !== "boolean" && currentValue.toString().length) currentValue = Number(currentValue)
+
+            if (defaultInput.input === "dropdown") {
+                if (!currentValue.includes(defaultValue)) return true
+            } else if (defaultValue !== currentValue) return true
+
+            return false
+        })
+
+        return !differentValue
+    }
+
+    let updateClosed: boolean = false
+    function openEdit(id: string) {
+        let closedVal = clone(closed[id])
+        let currentEdit = clone(edits[id])
+
+        if (!closedVal || !currentEdit) return
+        currentEdit = currentEdit.map((a) => lineInputs[a.input] || a).flat()
+
+        currentEdit.forEach((input: any) => {
+            let newValue = Object.entries(closedVal).find(([styleId, _value]: any) => {
+                let dataId: string = styleId.split("_")[0]
+                let key: string | undefined = styleId.split("_")[1]
+                let valueIndex: string | undefined = styleId.split("_")[2]
+
+                if (valueIndex) return input.valueIndex === Number(valueIndex)
+                else if (key) return input.key === key
+                else return input.id === dataId
+            })?.[1]
+
+            if (newValue === undefined) return
+
+            valueChange({ detail: newValue }, input)
+        })
+
+        updateClosed = true
+    }
+
+    function resetAndClose(id: string) {
+        let closedVal = closed[id]
+        let defaultEdit = clone(defaultEdits?.[id])
+        let currentEdit = clone(edits[id])
+
+        if (!closedVal || !defaultEdit || !currentEdit) return
+
+        resetInput()
+        function resetInput(i: number = 0) {
+            let input = currentEdit[i]
+            if (!input) return
+            if (input.name === "background_opacity" || (input.key === "box-shadow" && input.valueIndex === 3)) return
+
+            if (lineInputs[input.input]) {
+                input = lineInputs[input.input]?.[0] || {}
+                defaultEdit[i] = { value: "center" }
+            }
+
+            // TODO: remove value instead of setting to default...
+            let newValue = defaultEdit[i]?.value
+            valueChange({ detail: newValue }, input)
+
+            setTimeout(() => resetInput(i + 1), 10)
+        }
+
+        updateClosed = true
+    }
 </script>
 
-{#each Object.keys(edits || {}) as section, i}
-    <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
-        <!-- {#if i > 0}<hr />{/if} -->
-        {#if section !== "default"}
-            {#if section[0] === section[0].toUpperCase()}
-                <h6>{section}</h6>
+{#key updateClosed}
+    {#each Object.keys(edits || {}) as section, i}
+        {@const isClosed = checkIsClosed(section)}
+        <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
+            {#if isClosed}
+                <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
+                    <!-- WIP icons -->
+                    <Icon id="theme" right />
+                    <p style="font-size: 1.2em;opacity: 1;width: initial;"><T id="edit.{section}" /></p>
+                </Button>
             {:else}
-                <h6><T id="edit.{section}" /></h6>
-            {/if}
-        {/if}
-        {#each edits[section] as input}
-            {#if input.input === "editTimer"}
-                <EditTimer {item} on:change={(e) => valueChange(e, input)} />
-            {:else if input.input === "selectVariable"}
-                <CombinedInput>
-                    <p title={$dictionary.items?.variable}><T id="items.variable" /></p>
-                    <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
-                </CombinedInput>
-            {:else if input.input === "popup"}
-                <CombinedInput>
-                    <Button
-                        style="width: 100%;"
-                        on:click={() => {
-                            activePopup.set(input.popup || input.id)
-                            let data = { id: input.id, section, value: input.value, type: "" }
-                            if (input.id === "list.items") data.type = edits[section].find((a) => a.id === "list.style")?.value
-                            popupData.set(data)
-                        }}
-                        dark
-                        center
-                    >
-                        <Icon id={input.icon || input.id} right />
-                        <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
-                    </Button>
-                </CombinedInput>
-            {:else if input.input === "media"}
-                <MediaPicker id="item" title={input.value} style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
-                    <Icon id="image" right />
-                    {#if input.value}
-                        {getFileName(input.value)}
-                    {:else}
-                        <T id="edit.choose_media" />
-                    {/if}
-                </MediaPicker>
-            {:else if input.input === "multiselect"}
-                <div class="line">
-                    {#each input.values as option}
-                        <Button
-                            on:click={() => valueChange({ detail: option.id }, input)}
-                            style={input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
-                            bold={false}
-                            center
-                            dark
-                        >
-                            {#if option.icon}
-                                <Icon id={option.icon} right />
+                {#if section !== "default"}
+                    <h6 style="display: flex;justify-content: center;align-items: center;position: relative;">
+                        {#if section[0] === section[0].toUpperCase()}
+                            {section}
+                        {:else}
+                            <T id="edit.{section}" />
+                        {/if}
+
+                        {#if closed[section]}
+                            <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.reset}><Icon id="reset" white /></Button>
+                        {/if}
+                    </h6>
+                {/if}
+                {#each edits[section] as input}
+                    {#if input.input === "editTimer"}
+                        <EditTimer {item} on:change={(e) => valueChange(e, input)} />
+                    {:else if input.input === "selectVariable"}
+                        <CombinedInput>
+                            <p title={$dictionary.items?.variable}><T id="items.variable" /></p>
+                            <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
+                        </CombinedInput>
+                    {:else if input.input === "popup"}
+                        <CombinedInput>
+                            <Button
+                                style="width: 100%;"
+                                on:click={() => {
+                                    activePopup.set(input.popup || input.id)
+                                    let data = { id: input.id, section, value: input.value, type: "" }
+                                    if (input.id === "list.items") data.type = edits[section].find((a) => a.id === "list.style")?.value
+                                    popupData.set(data)
+                                }}
+                                dark
+                                center
+                            >
+                                <Icon id={input.icon || input.id} right />
+                                <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                            </Button>
+                        </CombinedInput>
+                    {:else if input.input === "media"}
+                        <MediaPicker id="item" title={input.value} style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
+                            <Icon id="image" right />
+                            {#if input.value}
+                                {getFileName(input.value)}
+                            {:else}
+                                <T id="edit.choose_media" />
                             {/if}
-                            <T id={option.name} />
-                        </Button>
-                    {/each}
-                </div>
-            {:else if lineInputs[input.input]}
-                <!-- <div class="line" style="border-bottom: 2px solid var(--primary-lighter);"> -->
-                <CombinedInput>
-                    {#each lineInputs[input.input] as lineInput}
-                        {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
-                        <IconButton
-                            on:click={() => (lineInput.toggle ? toggle(lineInput) : dispatch("change", lineInput))}
-                            title={$dictionary.edit?.["_title_" + lineInput.title || lineInput.icon]}
-                            icon={lineInput.icon}
-                            active={currentStyle[lineInput.key] ? currentStyle[lineInput.key]?.includes(lineInput.value) : lineInput.default}
-                        />
-                    {/each}
-                </CombinedInput>
-                <!-- </div> -->
-            {:else if input.input === "CSS"}
-                <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
-                    <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: "CSS", value: e.detail })} />
-                </div>
-            {:else if input.input === "checkbox"}
-                {@const value = getValue(input, { styles, item })}
-                {#if !input.hidden}
-                    <CombinedInput>
-                        <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
-                        <div class="alignRight">
-                            <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
+                        </MediaPicker>
+                    {:else if input.input === "multiselect"}
+                        <div class="line">
+                            {#each input.values as option}
+                                <Button
+                                    on:click={() => valueChange({ detail: option.id }, input)}
+                                    style={input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                                    bold={false}
+                                    center
+                                    dark
+                                >
+                                    {#if option.icon}
+                                        <Icon id={option.icon} right />
+                                    {/if}
+                                    <T id={option.name} />
+                                </Button>
+                            {/each}
                         </div>
-                    </CombinedInput>
-                {/if}
-            {:else if !input.name}
-                Missing input name: {input.input}
-            {:else}
-                {@const value = getValue(input, { styles, item })}
-                {#if !input.hidden}
-                    <CombinedInput>
-                        <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
-                            <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
-                        </p>
-                        <svelte:component
-                            this={inputs[input.input]}
-                            {...input.values || {}}
-                            {value}
-                            disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
-                            enableNoColor={input.enableNoColor}
-                            disableHold
-                            on:click={(e) => valueChange(e, input)}
-                            on:input={(e) => valueChange(e, input, true)}
-                            on:change={(e) => valueChange(e, input)}
-                        />
-                    </CombinedInput>
-                {/if}
+                    {:else if lineInputs[input.input]}
+                        <!-- <div class="line" style="border-bottom: 2px solid var(--primary-lighter);"> -->
+                        <CombinedInput>
+                            {#each lineInputs[input.input] as lineInput}
+                                {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
+                                <IconButton
+                                    on:click={() => (lineInput.toggle ? toggle(lineInput) : dispatch("change", lineInput))}
+                                    title={$dictionary.edit?.["_title_" + lineInput.title || lineInput.icon]}
+                                    icon={lineInput.icon}
+                                    active={currentStyle[lineInput.key] ? currentStyle[lineInput.key]?.includes(lineInput.value) : lineInput.default}
+                                />
+                            {/each}
+                        </CombinedInput>
+                        <!-- </div> -->
+                    {:else if input.input === "CSS"}
+                        <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
+                            <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: "CSS", value: e.detail })} />
+                        </div>
+                    {:else if input.input === "checkbox"}
+                        {@const value = getValue(input, { styles, item })}
+                        {#if !input.hidden}
+                            <CombinedInput>
+                                <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
+                                <div class="alignRight">
+                                    <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
+                                </div>
+                            </CombinedInput>
+                        {/if}
+                    {:else if !input.name}
+                        Missing input name: {input.input}
+                    {:else}
+                        {@const value = getValue(input, { styles, item })}
+                        {#if !input.hidden}
+                            <CombinedInput>
+                                <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
+                                    <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                                </p>
+                                <svelte:component
+                                    this={inputs[input.input]}
+                                    {...input.values || {}}
+                                    {value}
+                                    disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
+                                    enableNoColor={input.enableNoColor}
+                                    disableHold
+                                    on:click={(e) => valueChange(e, input)}
+                                    on:input={(e) => valueChange(e, input, true)}
+                                    on:change={(e) => valueChange(e, input)}
+                                />
+                            </CombinedInput>
+                        {/if}
+                    {/if}
+                {/each}
             {/if}
-        {/each}
-    </div>
-{/each}
+        </div>
+    {/each}
+{/key}
 
 <style>
     .section {
