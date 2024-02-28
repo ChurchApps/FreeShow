@@ -12,7 +12,7 @@ const borderOptions: any[] = [
 ]
 
 export const itemEdits: { [key: string]: EditInput[] } = {
-    item: [
+    default: [
         { name: "x", id: "style", key: "left", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px" },
         { name: "y", id: "style", key: "top", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px" },
         { name: "width", id: "style", key: "width", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px" },

@@ -17,6 +17,8 @@
     let edits: any = {}
     $: if (item) {
         edits = clone(textEdits)
+
+        // custom input values
         if (items[0].includes("slide") && !items[0].includes("text") && !items[0].includes("notes")) edits = { chords: edits.chords }
         else if (items[0].includes("output")) edits = {}
     }
@@ -27,6 +29,7 @@
     // $: if (edits) updateAuto(item?.auto || true)
     $: if (item) updateAuto(item?.auto ?? true)
     $: if (edits.chords) {
+        edits.chords[0].value = item?.chords
         edits.chords[1].hidden = !item?.chords
         edits.chords[2].hidden = !item?.chords
 
@@ -35,9 +38,9 @@
     }
 
     function updateAuto(value) {
-        let autoIndex = edits?.font?.findIndex((a) => a.id === "auto")
+        let autoIndex = edits?.default?.findIndex((a) => a.id === "auto")
         if (!autoIndex) return
-        edits.font[autoIndex].value = value
+        edits.default[autoIndex].value = value
     }
 
     function setValue(input: any) {
@@ -92,7 +95,7 @@
 </script>
 
 {#if item}
-    <EditValues {edits} styles={data} {item} on:change={updateStyle} />
+    <EditValues {edits} defaultEdits={clone(textEdits)} styles={data} {item} on:change={updateStyle} />
 {:else}
     <Center faded>
         <T id="empty.items" />

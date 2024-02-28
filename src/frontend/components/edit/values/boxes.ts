@@ -38,19 +38,19 @@ export const boxes: Box = {
         // name: "items.text",
         icon: "text",
         edit: {
-            font: [
+            default: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
-                { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-                { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
+                { name: "text_color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
+                { name: "font_size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
                 { name: "auto_size", id: "auto", input: "checkbox", value: false },
                 { input: "font-style" },
             ],
             align: [{ input: "align-x" }, { input: "align-y" }],
-            style: [
+            text: [
                 { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
                 { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
                 {
-                    name: "transform",
+                    name: "text_transform",
                     input: "dropdown",
                     id: "style",
                     key: "text-transform",
@@ -64,6 +64,8 @@ export const boxes: Box = {
                         ],
                     },
                 },
+                { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
+                { name: "no_wrap", id: "nowrap", input: "checkbox", value: false },
             ],
             lines: [
                 { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
@@ -87,8 +89,6 @@ export const boxes: Box = {
                 { name: "size", id: "chords.size", input: "number", value: 30, hidden: true },
             ],
             special: [
-                { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
-                { name: "no_wrap", id: "nowrap", input: "checkbox", value: false },
                 {
                     name: "scrolling",
                     input: "dropdown",
@@ -153,7 +153,7 @@ export const boxes: Box = {
                 { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px" }, // , disabled: "item.autoSize"
                 { name: "auto_size", id: "auto", input: "checkbox", value: false },
             ],
-            style: [
+            text: [
                 { input: "font-style" },
                 { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
                 { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
@@ -334,13 +334,13 @@ export const boxes: Box = {
                 { name: "size", id: "style", key: "font-size", input: "number", value: 80, extension: "px" }, // , disabled: "item.autoSize"
                 // { name: "auto_size", id: "auto", input: "checkbox", value: false },
             ],
-            style: [
+            text: [
                 { input: "font-style" },
                 { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 0.9, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
                 { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
                 { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
                 {
-                    name: "transform",
+                    name: "text_transform",
                     input: "dropdown",
                     id: "style",
                     key: "text-transform",

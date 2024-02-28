@@ -28,6 +28,7 @@
     export let styles: any = {}
     export let lineAlignStyle: any = {}
     export let alignStyle: any = {}
+    export let noClosing: boolean = false
 
     const inputs: any = {
         fontDropdown: FontDropdown,
@@ -46,13 +47,16 @@
 
         let value = e.detail ?? e.target?.value ?? null
 
-        if (input.input === "checkbox") value = e.target?.checked ?? value // closed update
+        if (input.input === "checkbox") value = e.target?.checked
         else if (input.input === "dropdown" || input.input === "selectVariable") value = value?.id || ""
         else if (input.input === "number") value = Number(value)
         else if (input.input === "multiselect") {
             if (input.value.includes(value)) value = input.value.filter((a) => a !== value)
             else value = [...input.value, value]
         }
+
+        // closed update
+        if (!value && e.detail !== undefined) value = e.detail
 
         if (input.extension) value += input.extension
 
@@ -157,14 +161,10 @@
 
     const closed = {
         // content
-        style: {
+        text: {
             "style_letter-spacing": 1,
             "style_word-spacing": 3,
             "style_text-transform": "uppercase",
-            // item
-            // WIP opacity does not get applied here
-            "style_background-color": "rgb(0 0 0 / 0.3)",
-            // "(style_)background-opacity": "0.3", (this is linked to the color)
         },
         lines: {
             "style_line-height": 1.2,
@@ -193,15 +193,24 @@
         },
         chords: {
             "chords.enabled": true,
+            chords: true,
         },
         // media
         filters: {
             "filter_hue-rotate": 100,
         },
+        special: {
+            "scrolling.type": "left_right",
+        },
 
         // item
         transform: {
             transform_scaleX: -1,
+        },
+        style: {
+            // WIP opacity does not get applied here
+            "style_background-color": "rgb(0 0 0 / 0.3)",
+            // "(style_)background-opacity": "0.3", (this is linked to the color)
         },
         border: {
             "style_border-width": 5,
@@ -212,6 +221,8 @@
     }
 
     function checkIsClosed(id: string) {
+        if (noClosing) return false
+
         let closedVal = closed[id]
         let defaultEdit = defaultEdits?.[id]
         let currentEdit = clone(edits[id])
@@ -223,6 +234,7 @@
 
             // set default
             let defaultValue = lineInputValues.find((a) => a.default)
+            if (!defaultValue) return
             defaultEdit[i] = defaultValue
 
             // get value
@@ -309,6 +321,8 @@
 
         updateClosed = true
     }
+
+    let cssClosed: boolean = true
 </script>
 
 {#key updateClosed}
@@ -317,12 +331,11 @@
         <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
             {#if isClosed}
                 <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
-                    <!-- WIP icons -->
-                    <Icon id="theme" right />
+                    <Icon id={section} right />
                     <p style="font-size: 1.2em;opacity: 1;width: initial;"><T id="edit.{section}" /></p>
                 </Button>
             {:else}
-                {#if section !== "default"}
+                {#if section !== "default" && (section !== "CSS" || !cssClosed)}
                     <h6 style="display: flex;justify-content: center;align-items: center;position: relative;">
                         {#if section[0] === section[0].toUpperCase()}
                             {section}
@@ -330,7 +343,7 @@
                             <T id="edit.{section}" />
                         {/if}
 
-                        {#if closed[section]}
+                        {#if !noClosing && closed[section]}
                             <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.reset}><Icon id="reset" white /></Button>
                         {/if}
                     </h6>
@@ -401,9 +414,16 @@
                         </CombinedInput>
                         <!-- </div> -->
                     {:else if input.input === "CSS"}
-                        <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
-                            <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: "CSS", value: e.detail })} />
-                        </div>
+                        {#if cssClosed}
+                            <Button on:click={() => (cssClosed = false)} style="margin-top: 5px;" dark bold={false}>
+                                <Icon id="code" right />
+                                <p style="font-size: 1.2em;opacity: 1;width: initial;">CSS</p>
+                            </Button>
+                        {:else}
+                            <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
+                                <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: "CSS", value: e.detail })} />
+                            </div>
+                        {/if}
                     {:else if input.input === "checkbox"}
                         {@const value = getValue(input, { styles, item })}
                         {#if !input.hidden}

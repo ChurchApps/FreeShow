@@ -21,6 +21,7 @@ export interface Time {
 
 export type SelectIds =
     | "slide"
+    | "slide_icon"
     | "group"
     | "global_group"
     | "layout"

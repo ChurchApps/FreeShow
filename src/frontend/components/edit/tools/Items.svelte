@@ -107,7 +107,7 @@
 </script>
 
 <Panel>
-    <h6><T id="edit.add_items" /></h6>
+    <h6 style="margin-top: 10px;"><T id="edit.add_items" /></h6>
     <div class="grid">
         {#each items as item}
             <IconButton name title={$dictionary.items?.[item.name || item.id]} icon={item.icon || item.id} on:click={() => addItem(item.id)} />
@@ -118,19 +118,19 @@
         <Button
             id="button"
             style="width: 100%;"
-            title={$dictionary.items?.icon}
+            title={$dictionary.edit?.add_icons}
             on:click={() => {
-                selected.set({ id: "slide", data: [{ ...$activeEdit }] })
+                selected.set({ id: "slide_icon", data: [{ ...$activeEdit }] })
                 activePopup.set("icon")
             }}
             dark
             center
         >
-            <Icon id={"noIcon"} right />
-            <T id="edit.add_icons" />
+            <Icon id="star" right />
+            <T id="items.icon" />
         </Button>
     </div>
-    <hr />
+
     <h6><T id="edit.arrange_items" /></h6>
     <div class="items" style="display: flex;flex-direction: column;">
         {#if invertedItemList.length}
@@ -190,7 +190,8 @@
         /* min-width: 32%; */
         flex: 1;
         background-color: var(--primary-darker);
-        padding: 10px;
+        padding: 9px;
+        min-width: 49%;
     }
     .grid :global(#icon:hover) {
         background-color: var(--primary-lighter);

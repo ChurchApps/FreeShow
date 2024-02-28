@@ -11,10 +11,10 @@
         category_media: (icon: string) => mediaFolders.update((a) => changeIcon(a, icon)),
         category_overlays: (icon: string) => overlayCategories.update((a) => changeIcon(a, icon)),
         category_templates: (icon: string) => templateCategories.update((a) => changeIcon(a, icon)),
-        slide: (icon: string, path: string) => addItem("icon", icon, path ? { path } : { color: customIconsColors[icon] }),
+        slide_icon: (icon: string, path: string) => addItem("icon", icon, path ? { path } : { color: customIconsColors[icon] }),
     }
 
-    $: colors = $selected.id === "slide"
+    $: colors = $selected.id === "slide_icon"
 
     const changeIcon = (a: any, icon: string) => {
         $selected.data.forEach((b) => {
@@ -24,7 +24,6 @@
     }
 
     function click(icon: string, path: string = "") {
-        console.log($selected)
         if ($selected.id && names[$selected.id]) names[$selected.id](icon, path)
         else console.log("change icon " + $selected.id)
 
@@ -43,7 +42,7 @@
     {/each}
 </div>
 
-{#if $selected.id === "slide"}
+{#if $selected.id === "slide_icon"}
     <br />
 
     <div class="custom grid">

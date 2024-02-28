@@ -3,6 +3,7 @@
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
     import { itemEdits } from "../../edit/values/item"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getStyles } from "../../helpers/style"
     import T from "../../helpers/T.svelte"
@@ -15,6 +16,9 @@
 
     let data: { [key: string]: any } = {}
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
+
+    $: itemEdit = clone(itemEdits)
+    $: if (itemEdit.backdrop_filters) delete itemEdit.backdrop_filters
 
     function updateStyle(e: any) {
         let input = e.detail
@@ -42,7 +46,7 @@
 </script>
 
 {#if item}
-    <EditValues edits={itemEdits} styles={data} {item} on:change={updateStyle} />
+    <EditValues edits={clone(itemEdit)} defaultEdits={clone(itemEdits)} styles={data} {item} on:change={updateStyle} />
 {:else}
     <Center faded>
         <T id="empty.items" />

@@ -96,7 +96,7 @@
         // get all selected slides
         if ($selected.id === "slide") {
             let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
-            slides.push(...selectedSlides.map(({ index }) => ref[index].id))
+            slides.push(...selectedSlides.map(({ index }) => ref[index]?.id))
 
             slides.forEach((id, i) => {
                 if (i === 0) return
