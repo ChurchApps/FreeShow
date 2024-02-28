@@ -110,7 +110,9 @@
 
         if (input.valueIndex !== undefined && styles[input.key]) return removeExtension(styles[input.key].split(" ")[input.valueIndex], input.extension)
         if (input.input === "dropdown") return input.values.options.find((a: any) => a.id === getKeyValue(input))?.name || "—"
+        if (input.input === "checkbox") return !!input.value // closed
         if (input.id === "filter" || input.id === "backdrop-filter") return item?.filter ? getFilters(item.filter || "")[input.key] || input.value : input.value
+
         return styles[input.key] || input.value
     }
 
@@ -157,7 +159,7 @@
         valueChange({ detail: changedInput.value }, changedInput)
     }
 
-    // CLOSE
+    // CLOSED STYLES
 
     const closed = {
         // content

@@ -165,10 +165,9 @@ function XMLtoBible(xml: string): Bible {
             let number = chapter.getAttribute("n")
             let verses: any[] = []
             ;[...getChildren(chapter, "v")].forEach((verse: any) => {
-                // remove [1]
                 let value = verse.innerHTML
                     .toString()
-                    .replace(/ *\[[^\]]*]/g, "")
+                    .replace(/\[\d+\] /g, "") // remove [1], not [text]
                     .trim()
                 length += value.length
                 if (value.length) verses.push({ number: verse.getAttribute("n"), value })

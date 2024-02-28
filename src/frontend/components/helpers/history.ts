@@ -147,6 +147,13 @@ export function history(obj: History, undo: null | boolean = null) {
                         if (ref.data.background && cloudId && cloudId !== "default") {
                             bgid = ref.data.background
                             _show(showID).media().add(obj.newData, bgid!)
+                        } else {
+                            // look for existing media
+                            let existing = _show(showID)
+                                .media()
+                                .get()
+                                .find((a) => a.path === obj.newData.path)
+                            if (existing) bgid = existing.key
                         }
                         if (!bgid) bgid = _show(showID).media().add(obj.newData)
 
