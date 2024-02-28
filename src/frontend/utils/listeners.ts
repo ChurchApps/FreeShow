@@ -26,6 +26,7 @@ import {
     stageShows,
     styles,
     templates,
+    timeFormat,
     timers,
     transitionData,
     variables,
@@ -153,6 +154,10 @@ export function listenForUpdates() {
         send(OUTPUT, ["VOLUME"], data)
     })
     // WIP send gain!!
+
+    timeFormat.subscribe((a) => {
+        send(OUTPUT, ["TIME_FORMAT"], a)
+    })
 
     projects.subscribe(() => {
         sendData(REMOTE, { channel: "PROJECTS" }, true)

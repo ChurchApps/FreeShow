@@ -56,6 +56,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 let msg: any = { id, data: { muted, loop: data.loop || false } }
                 if (data.startAt !== undefined) msg.time = data.startAt || 0
 
+                console.log(data, msg)
+
                 setTimeout(() => {
                     send(OUTPUT, ["UPDATE_VIDEO"], msg)
                 }, 100)
@@ -340,7 +342,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     // this will ensure the correct order on the remaining items
     let remainingCount = Object.values(sortedTemplateItems).reduce((value, items) => (value += items.length), 0)
     let remainingTemplateItems = remainingCount ? templateItems.slice(remainingCount * -1) : []
-    newSlideItems.push(...remainingTemplateItems)
+    // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
+    newSlideItems = [...remainingTemplateItems, ...newSlideItems]
+    // newSlideItems.push(...remainingTemplateItems)
 
     return newSlideItems
 }

@@ -59,4 +59,4 @@
     }
 </script>
 
-<EditValues {edits} on:change={(e) => valueChanged(e.detail)} />
+<EditValues {edits} noClosing on:change={(e) => valueChanged(e.detail)} />

@@ -1,16 +1,17 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../../types/Channels"
+    import { onDestroy } from "svelte"
+    import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { activeShow, dictionary, driveData, media, midiIn, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
     import { playMidiIn } from "../../../utils/midi"
-    import { send } from "../../../utils/request"
+    import { destroy, receive, send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
-    import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { getExtension, getMediaStyle, getMediaType } from "../../helpers/media"
+    import T from "../../helpers/T.svelte"
+    import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
+    import { getExtension, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import { sendMidi } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
-    import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import Center from "../../system/Center.svelte"
@@ -66,6 +67,7 @@
             else backgrounds[path] = { id: a, ...show.media[a], path, type, count: 1 }
         })
         Object.values(backgrounds).forEach((a) => bgs.push(a))
+        bgs = bgs.sort((a: any, b: any) => a.name.localeCompare(b.name))
     } else bgs = []
 
     let audio: any = []
@@ -124,6 +126,11 @@
     } else if (!Object.keys(showMidi).length) midi = []
 
     // TODO: check if file exists!!!
+
+    let simularBgs: any[] = []
+    $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
+    receive(MAIN, { GET_SIMULAR: (data: string[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a))).slice(0, 3)) }, "media_simular")
+    onDestroy(() => destroy(MAIN, "media_simular"))
 </script>
 
 <!-- TODO: transition type & duration -->
@@ -175,6 +182,35 @@
                     </div>
                 </SelectElem>
             {/each}
+
+            {#if simularBgs.length}
+                <h5><T id="media.recommended" /></h5>
+
+                {#each simularBgs as background}
+                    {@const mediaStyle = getMediaStyle($media[background.path], { name: "" })}
+                    {@const type = getMediaType(getExtension(background.path)) || "video"}
+
+                    <SelectElem id="media" data={{ ...background, type }} draggable>
+                        <div class="media_item item context #show_media" class:active={findMatchingOut(background.path, $outputs)}>
+                            <HoverButton
+                                style="flex: 2;height: 50px;max-width: 100px;"
+                                icon="play"
+                                size={3}
+                                on:click={() => {
+                                    if (!$outLocked) {
+                                        setOutput("background", { path: background.path, loop: true, muted: true, ...mediaStyle })
+                                        if (type === "video") send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: true, loop: true } })
+                                    }
+                                }}
+                                title={$dictionary.media?.play}
+                            >
+                                <MediaLoader name={background.name} path={background.path} {type} {mediaStyle} />
+                            </HoverButton>
+                            <p title={background.path}>{background.name}</p>
+                        </div>
+                    </SelectElem>
+                {/each}
+            {/if}
         {/if}
 
         {#if audio.length}

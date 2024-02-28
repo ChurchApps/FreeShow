@@ -65,7 +65,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     remove: { label: "actions.remove", icon: "remove" },
     remove_group: { label: "actions.remove", icon: "remove" },
     remove_slide: { label: "actions.remove_group", icon: "remove", shortcuts: ["Del"] },
-    delete_slide: { label: "actions.delete", icon: "delete" },
+    delete_slide: { label: "actions.delete_slide", icon: "delete" },
+    delete_group: { label: "actions.delete_group", icon: "delete", shortcuts: ["Del"] },
     slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove_group", "SEPERATOR", "LOAD_slide_groups"] },
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add" },
@@ -206,7 +207,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "copy", "paste"
     slide: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
     slideChild: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
-    group: ["rename", "recolor", "selectAll", "SEPERATOR", "duplicate", "delete"],
+    group: ["rename", "recolor", "selectAll", "SEPERATOR", "duplicate", "delete_group"],
     global_group: ["edit"],
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],

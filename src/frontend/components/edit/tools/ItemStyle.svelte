@@ -9,9 +9,12 @@
     import { addFilterString, addStyleString } from "../scripts/textStyle"
     import { itemEdits } from "../values/item"
     import EditValues from "./EditValues.svelte"
+    import { clone } from "../../helpers/array"
 
     export let allSlideItems: Item[]
     export let item: Item | null
+
+    let itemEditValues = clone(itemEdits)
 
     let data: { [key: string]: any } = {}
 
@@ -24,11 +27,11 @@
 
         // update backdrop filters
         let backdropFilters = getFilters(itemBackFilters || "")
-        let defaultBackdropFilters = itemEdits.backdrop_filters || []
-        itemEdits.backdrop_filters.forEach((filter: any) => {
+        let defaultBackdropFilters = itemEditValues.backdrop_filters || []
+        itemEditValues.backdrop_filters.forEach((filter: any) => {
             let value = backdropFilters[filter.key] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
-            let index = itemEdits.backdrop_filters.findIndex((a: any) => a.key === filter.key)
-            itemEdits.backdrop_filters[index].value = value
+            let index = itemEditValues.backdrop_filters.findIndex((a: any) => a.key === filter.key)
+            itemEditValues.backdrop_filters[index].value = value
         })
     }
 
@@ -42,9 +45,9 @@
         if (!backgroundValue.includes("rgb")) return
 
         let rgb = splitRgb(backgroundValue)
-        let boIndex = itemEdits.style.findIndex((a) => a.id === "background-opacity")
+        let boIndex = itemEditValues.style.findIndex((a) => a.id === "background-opacity")
         if (boIndex < 0) return
-        itemEdits.style[boIndex].value = rgb.a
+        itemEditValues.style[boIndex].value = rgb.a
     }
     function getOldOpacity() {
         let backgroundValue = data["background-color"] || ""
@@ -93,7 +96,7 @@
         // get all selected slides
         if ($selected.id === "slide") {
             let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
-            slides.push(...selectedSlides.map(({ index }) => ref[index].id))
+            slides.push(...selectedSlides.map(({ index }) => ref[index]?.id))
 
             slides.forEach((id, i) => {
                 if (i === 0) return
@@ -154,5 +157,5 @@
 </script>
 
 {#key item}
-    <EditValues edits={itemEdits} styles={data} {item} on:change={updateStyle} />
+    <EditValues edits={itemEditValues} defaultEdits={clone(itemEdits)} styles={data} {item} on:change={updateStyle} />
 {/key}

@@ -11,8 +11,8 @@ import { receiveSTAGE } from "./stageTalk"
 const receiveCONTROLLER = {
     ACTION: ({ data }) => {
         const actions = {
-            next: nextSlide,
-            previous: previousSlide,
+            next: () => nextSlide({ key: "ArrowRight" }),
+            previous: () => previousSlide({ key: "ArrowLeft" }),
             clear: () => {
                 // TODO: combine this, remoteTalk and ClearButtons
                 setOutput("slide", null)

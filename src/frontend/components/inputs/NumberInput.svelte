@@ -59,12 +59,14 @@
 
     let nextScrollTimeout: any = null
     function wheel(e: any) {
-        if (disabled) return
-        if (nextScrollTimeout) return
-
+        if (disabled || nextScrollTimeout) return
+        if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
-        if (e.deltaY > 0) decrement(e.ctrlKey || e.metaKey ? step * 10 : step)
-        else increment(e.ctrlKey || e.metaKey ? step * 10 : step)
+
+        let stepAmount = step * (e.shiftKey ? 10 : 1)
+
+        if (e.deltaY > 0) decrement(stepAmount)
+        else increment(stepAmount)
 
         // don't start timeout if scrolling with mouse
         if (e.deltaY > 100 || e.deltaY < -100) return

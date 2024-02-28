@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
     import type { Resolution } from "../../../../types/Settings"
+    import type { MediaType, ShowType } from "../../../../types/Show"
 
     import { mediaCache, outputs, styles, videoExtensions } from "../../../stores"
     import { getExtension } from "../../helpers/media"
@@ -15,7 +16,7 @@
     export let loadFullImage: boolean = false
     export let cameraGroup: string = ""
     export let mediaStyle: MediaStyle = {}
-    export let type: null | "media" | "image" | "video" | "camera" | "screen" | "audio" = null
+    export let type: null | MediaType | ShowType = null
     export let hover: boolean = false
     export let loaded: boolean = false
     export let resolution: Resolution | null = null

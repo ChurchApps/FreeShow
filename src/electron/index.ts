@@ -43,13 +43,13 @@ app.on("ready", startApp)
 
 function startApp() {
     createLoading()
+    updateDataPath({ load: true })
+
     setTimeout(createMain, 100)
     setTimeout(initialize, 3000)
 }
 
 function initialize() {
-    updateDataPath({ load: true })
-
     // midi
     // createVirtualMidi()
 

@@ -378,6 +378,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // background
         if (background) {
             let bg = _show(showId).get("media")[background!]
+            console.log(_show(showId).get(), _show(showId).get("media"))
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
             let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
@@ -392,6 +393,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
             if (bg && bgPath !== outputBg?.path) {
                 let mediaStyle = getMediaStyle(get(media)[bgPath], { name: "" })
+                console.log(mediaStyle)
                 let bgData: any = {
                     name,
                     type,
@@ -404,6 +406,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 }
 
                 // outBackground.set(bgData)
+                console.log(bg, bgData)
                 setOutput("background", bgData, false, outputId)
             }
         }
@@ -568,7 +571,11 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
         let currentMediaId = showMedia.find((a) => a.path === endedId)?.key
 
         // don't go to next if current slide don't has outputted media
-        if (layoutSlide.data?.background !== currentMediaId) return false
+        if (type === "media") {
+            if (layoutSlide.data?.background !== currentMediaId) return false
+        } else if (type === "audio") {
+            if (!layoutSlide.data?.audio.find((id) => id === currentMediaId)) return false
+        }
     } else if (type === "timer") {
         let slide = _show(slideOut.id).get("slides")[layoutSlide.id]
         let slideTimer = slide.items.find((a) => a.type === "timer" && a.timerId === endedId)

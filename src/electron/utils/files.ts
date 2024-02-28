@@ -5,7 +5,7 @@ import { app, dialog, shell } from "electron"
 import { ExifImage } from "exif"
 import fs from "fs"
 import { Stats } from "original-fs"
-import path from "path"
+import path, { join, parse } from "path"
 import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
 import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
@@ -225,6 +225,62 @@ export function getFolderContent(_e: any, data: any) {
     }
 
     toApp(READ_FOLDER, { path: folderPath, files, filesInFolders })
+}
+
+export function getSimularPaths(data: any) {
+    let parentFolderPathNames = data.paths.map(getParentFolderName)
+    let allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
+    allFilePaths = [...new Set(allFilePaths.flat())]
+
+    let simularArray: any[] = []
+    data.paths.forEach((path: string) => {
+        let originalFileName = parse(path).name
+
+        allFilePaths.forEach((filePath: string) => {
+            let name = parse(filePath).name
+            if (data.paths.includes(filePath) || simularArray.find((a) => a[0].name.includes(name))) return
+
+            let match = similarity(originalFileName, name)
+            if (match < 0.5) return
+
+            simularArray.push([{ path: filePath, name }, match])
+        })
+    })
+
+    simularArray = simularArray.sort((a, b) => b[1] - a[1])
+    simularArray = simularArray.slice(0, 10).map((a) => a[0])
+
+    return simularArray
+}
+function getParentFolderName(path: string) {
+    return parse(path).dir
+}
+function similarity(str1: string, str2: string) {
+    function levenshteinDistance(s1: string, s2: string) {
+        const m = s1.length
+        const n = s2.length
+        const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0))
+
+        for (let i = 0; i <= m; i++) {
+            for (let j = 0; j <= n; j++) {
+                if (i === 0) {
+                    dp[i][j] = j
+                } else if (j === 0) {
+                    dp[i][j] = i
+                } else {
+                    dp[i][j] = s1[i - 1] === s2[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+                }
+            }
+        }
+
+        return dp[m][n]
+    }
+
+    const distance = levenshteinDistance(str1, str2)
+    const maxLength = Math.max(str1.length, str2.length)
+    const matchPercentage = 1 - distance / maxLength
+
+    return matchPercentage
 }
 
 // OPEN_FOLDER

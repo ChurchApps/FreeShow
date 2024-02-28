@@ -152,7 +152,7 @@
     let fullFilteredFiles: any[] = []
     function filterSearch() {
         fullFilteredFiles = clone(filteredFiles)
-        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(searchValue))
+        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(filter(searchValue)))
     }
 
     let nextScrollTimeout: any = null

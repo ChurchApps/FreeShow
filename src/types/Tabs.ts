@@ -28,6 +28,7 @@ export interface TabsObj {
         icon: string
         disabled?: boolean
         remove?: boolean
+        overflow?: boolean
     }
 }
 

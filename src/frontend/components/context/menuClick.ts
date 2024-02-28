@@ -143,6 +143,7 @@ const actions: any = {
         if (get(activePage) === "edit") refreshEditSlide.set(true)
     },
     delete_slide: (obj: any) => actions.delete(obj),
+    delete_group: (obj: any) => actions.delete(obj),
     delete: (obj: any) => {
         if (deleteAction(obj.sel)) return
 

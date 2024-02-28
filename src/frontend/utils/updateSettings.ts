@@ -107,7 +107,11 @@ export function updateSettings(data: any) {
             return a
         })
 
-        restartOutputs()
+        // wait until content is loaded
+        setTimeout(() => {
+            restartOutputs()
+            if (get(autoOutput)) setTimeout(() => displayOutputs({}, true), 500)
+        }, 1500)
     }
 
     // remote
@@ -193,15 +197,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         setLanguage(v)
     },
     alertUpdates: (v: any) => alertUpdates.set(v === false ? false : true),
-    autoOutput: (v: any) => {
-        autoOutput.set(v)
-
-        if (v) {
-            setTimeout(() => {
-                displayOutputs({}, true)
-            }, 500)
-        }
-    },
+    autoOutput: (v: any) => autoOutput.set(v),
     maxConnections: (v: any) => maxConnections.set(v),
     ports: (v: any) => ports.set(v),
     disabledServers: (v: any) => disabledServers.set(v),

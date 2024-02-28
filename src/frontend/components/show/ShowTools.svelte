@@ -11,9 +11,8 @@
     const tabs: TabsObj = {
         groups: { name: "tools.groups", icon: "groups" },
         media: { name: "tools.media", icon: "media", disabled: true },
-        // audio: { name: "tools.audio", icon: "audio" },
-        metadata: { name: "tools.metadata", icon: "info" },
-        notes: { name: "tools.notes", icon: "notes" },
+        metadata: { name: "tools.metadata", icon: "info", overflow: true },
+        notes: { name: "tools.notes", icon: "notes", overflow: true },
     }
     let active: string = Object.keys(tabs)[0]
 
@@ -100,7 +99,7 @@
         overflow-x: hidden;
     }
 
-    .main.labels :global(.tabs button) {
+    /* .main.labels :global(.tabs button) {
         min-width: 50%;
-    }
+    } */
 </style>

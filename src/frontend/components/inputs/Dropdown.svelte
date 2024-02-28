@@ -23,10 +23,10 @@
 
     let nextScrollTimeout: any = null
     function wheel(e: any) {
-        if (disabled) return
-        if (nextScrollTimeout) return
-
+        if (disabled || nextScrollTimeout) return
+        // if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
+
         let index = options.findIndex((a) => a.name === (value.name || value))
         if (e.deltaY > 0) index = Math.min(options.length - 1, index + 1)
         else index = Math.max(0, index - 1)
@@ -47,6 +47,7 @@
         if (!id) return
 
         setTimeout(() => {
+            if (!self) return
             let activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)

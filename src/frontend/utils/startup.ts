@@ -70,6 +70,7 @@ import {
     textCache,
     theme,
     themes,
+    timeFormat,
     timers,
     transitionData,
     variables,
@@ -395,6 +396,7 @@ const receiveOUTPUTasOUTPUT: any = {
     MEDIA_CACHE: (a: any) => mediaCache.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
+    TIME_FORMAT: (a: any) => timeFormat.set(a),
     SPECIAL: (a: any) => clone(special.set(a)),
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
     // POSITION: (a: any) => outputPosition.set(a),
@@ -420,6 +422,7 @@ export function sendInitialOutputData() {
     send(OUTPUT, ["MEDIA_CACHE"], get(mediaCache))
     send(OUTPUT, ["TIMERS"], get(timers))
     send(OUTPUT, ["VARIABLES"], get(variables))
+    send(OUTPUT, ["TIME_FORMAT"], get(timeFormat))
 
     send(OUTPUT, ["SPECIAL"], get(special))
 

@@ -128,9 +128,6 @@
                     })
                 })
                 break
-            case "PROJECTS":
-                if (connected) projects = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
-                break
             case "ACCESS":
                 console.log("ACCESSED")
                 if (rememberPassword && password.length) localStorage.password = password
@@ -179,8 +176,9 @@
                 break
             case "PROJECTS":
                 if (connected) {
-                    if (!projects) activeTab = "projects"
-                    projects = msg.data
+                    projects = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
+                    // newest first
+                    projects = projects.sort((a, b) => b.created - a.created)
                 }
                 break
             case "PROJECT":
@@ -213,17 +211,52 @@
     let transition: any = { type: "fade", duration: 500 }
 
     $: layout = outShow ? GetLayout(outShow, outLayout) : null
-    $: console.log(layout, outShow, outLayout)
 
     $: totalSlides = layout ? layout.length : 0
 
     // $: filteredSlides = layout?.map((a, i) => ({...a, index: i})).filter(a => a.disabled !== true)
     function next() {
-        let index = nextSlide(layout, outSlide)
+        if (!layout) {
+            if (activeTab === "show" && activeShow) {
+                // play slide
+                send("OUT", { id: activeShow.id, index: 0, layout: activeShow.settings.activeLayout })
+                outShow = activeShow
+            }
+            return
+        }
+
+        let index = nextSlide(layout, outSlide ?? -1)
         if (index !== null) send("OUT", { id: outShow.id, index, layout: outShow.settings.activeLayout })
+        else {
+            // go to next show in project
+            let currentProjectShows = projects.find((a) => a.id === project)?.shows || []
+            let currentProjectShowIndex = currentProjectShows.findIndex((showRef: any) => showRef.id === activeShow.id)
+
+            let newIndex = currentProjectShowIndex + 1
+            let newProjectShow: any = { type: "." }
+            while (newProjectShow && (newProjectShow.type || "show") !== "show") {
+                newProjectShow = currentProjectShows[newIndex]
+                newIndex++
+            }
+
+            if (!newProjectShow) return
+
+            send("SHOW", newProjectShow.id)
+            activeTab = "show"
+
+            // play slide
+            setTimeout(() => {
+                send("OUT", { id: newProjectShow.id, index: 0, layout: activeShow.settings.activeLayout })
+                outShow = activeShow
+            }, 100)
+        }
     }
     function previous() {
-        let index = nextSlide(layout, outSlide, true)
+        if (!layout) return
+
+        // WIP go to previous show & play last slide
+
+        let index = nextSlide(layout, outSlide ?? layout.length, true)
         if (index !== null) send("OUT", { id: outShow.id, index, layout: outShow.settings.activeLayout })
     }
 
@@ -315,7 +348,18 @@
     }
 
     // TODO: outLocked
+
+    // keyboard shortcuts
+    function keydown(e: any) {
+        if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
+
+        if ([" ", "ArrowRight", "PageDown"].includes(e.key)) next()
+        else if (["ArrowLeft", "PageUp"].includes(e.key)) previous()
+        else if (e.key === "Escape") send("OUT", "clear")
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 {#if errors.length}
     <div class="error">

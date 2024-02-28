@@ -159,7 +159,7 @@
         data.content.toString().split("span").forEach(trimVerse)
         function trimVerse(content) {
             // let xt = /(<span class="xt"\b[^>]*>)[^<>]*(<\/span>)/i
-            let brackets = / *\[[^\]]*]/g
+            let brackets = / *\[[^\]]*]/g // remove [1], not [text]
             content = content.replace(brackets, "").replace(/(<([^>]+)>)/gi, "")
 
             if (content.includes("data-number")) {
@@ -637,6 +637,20 @@
     }
 
     function keydown(e: any) {
+        if (e.key === "ArrowRight" && document.activeElement?.classList?.contains("search")) {
+            if (searchValue.includes(" ") && searchValue.length > 3 && /\d/.test(searchValue) && !searchValue.includes(":")) {
+                searchValue += ":"
+
+                // move caret
+                let searchInput: any = document.activeElement
+                setTimeout(() => {
+                    searchInput.selectionStart = searchInput.selectionEnd = 100
+                })
+            }
+
+            return
+        }
+
         if (!e.ctrlKey && !e.metaKey) return
 
         if (e.key === "r") {

@@ -6,7 +6,7 @@ export function nextSlide(layout: any, currentSlide: number, previous: boolean =
     console.log(currentSlide)
     let index = previous ? currentSlide - 1 : currentSlide + 1
 
-    while ((previous ? index > 0 : index < layout!.length) && (layout![index]?.disabled || (!previous && layout![index - 1]?.end))) {
+    while ((previous ? index > -1 : index < layout!.length) && (layout![index]?.disabled || (!previous && layout![index - 1]?.end))) {
         if (!previous && layout![index - 1]?.end) index = 0
         else index = previous ? index - 1 : index + 1
     }

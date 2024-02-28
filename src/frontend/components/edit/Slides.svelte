@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeEdit, activeShow, cachedShowsData, showsCache } from "../../stores"
-    import { findMatchingOut } from "../helpers/output"
     import T from "../helpers/T.svelte"
+    import { findMatchingOut } from "../helpers/output"
     import Slide from "../slide/Slide.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
@@ -45,7 +45,7 @@
     let scrollElem: any
     let offset: number = -1
     $: {
-        if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) {
+        if (loaded && $activeEdit.slide !== null && $activeEdit.slide !== undefined) {
             let index = $activeEdit.slide - 1
             setTimeout(() => {
                 if (index >= 0 && scrollElem) offset = scrollElem.querySelector(".grid")?.children?.[index]?.offsetTop || 5 - 5

@@ -53,9 +53,18 @@
     function changeTool(e: any) {
         tool = e.target.value
     }
+
+    // keyboard shortcuts
+    function keydown(e: any) {
+        if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
+
+        if ([" ", "ArrowRight", "PageDown"].includes(e.key)) sendAction("next")
+        else if (["ArrowLeft", "PageUp"].includes(e.key)) sendAction("previous")
+        else if (e.key === "Escape") sendAction("clear")
+    }
 </script>
 
-<svelte:window on:mouseup={mouseup} on:touchend={mouseup} on:mousemove={mousemove} on:touchmove={mousemove} />
+<svelte:window on:keydown={keydown} on:mouseup={mouseup} on:touchend={mouseup} on:mousemove={mousemove} on:touchmove={mousemove} />
 
 {#if draw}
     <div class="draw">
@@ -199,6 +208,12 @@
         width: 80vw;
         border-radius: 50%;
         overflow: hidden;
+    }
+    @media only screen and (min-width: 600px) {
+        .controller {
+            height: 80vh;
+            width: 80vh;
+        }
     }
 
     .quart {

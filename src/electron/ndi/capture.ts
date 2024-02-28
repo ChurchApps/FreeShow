@@ -4,7 +4,7 @@ import os from "os"
 import { toApp } from ".."
 import { OUTPUT, OUTPUT_STREAM } from "../../types/Channels"
 import { toServer } from "../servers"
-import { outputWindows, sendToStageOutputs } from "../utils/output"
+import { outputWindows, sendToWindow } from "../utils/output"
 import { NDI, sendVideoBufferNDI } from "./ndi"
 import util from "./vingester-util"
 
@@ -73,7 +73,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
     // optimize cpu on low end devices
     const autoOptimizePercentageCPU = 95 / 10 // % / 10
-    const captureAmount = 50
+    const captureAmount = 4 * 60
     let captureCount = captureAmount
 
     if (rate !== "full" && (rate === "optimized" || !captures[id].options.ndi)) cpuCapture()
@@ -93,7 +93,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
             // capture for 60 seconds then get cpu again
             captureCount++
-            setTimeout(cpuCapture, rate === "optimized" ? 300 : 100)
+            setTimeout(cpuCapture, rate === "optimized" ? 2000 : 250)
         } else {
             captureCount = captureAmount
             captures[id].window.webContents.beginFrameSubscription(false, processFrame)
@@ -211,6 +211,7 @@ function sendBufferToPreview(id: string, image: NativeImage, options: any) {
     let msg = { channel: "PREVIEW", data: { id, buffer, size, originalSize: options.size } }
     toApp(OUTPUT, msg)
     sendToStageOutputs(msg)
+    sendToRequested(msg)
 }
 
 export function updatePreviewResolution(data: any) {
@@ -224,6 +225,32 @@ export function resizeImage(image: NativeImage, initialSize: Size, newSize: Size
     else image = image.resize({ height: newSize.height })
 
     return image
+}
+
+export let stageWindows: string[] = []
+export function sendToStageOutputs(msg: any) {
+    ;[...new Set(stageWindows)].forEach((id) => sendToWindow(id, msg))
+}
+
+let requestList: any[] = []
+export function requestPreview(data: any) {
+    requestList.push(JSON.stringify(data))
+}
+function sendToRequested(msg: any) {
+    let newList: any[] = []
+
+    ;[...new Set(requestList)].forEach((data: any) => {
+        data = JSON.parse(data)
+
+        if (data.previewId !== msg.data.id) {
+            newList.push(JSON.stringify(data))
+            return
+        }
+
+        sendToWindow(data.id, msg)
+    })
+
+    requestList = newList
 }
 
 // SERVER

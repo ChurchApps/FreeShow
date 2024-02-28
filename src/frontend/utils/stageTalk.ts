@@ -161,7 +161,7 @@ export const receiveSTAGE: any = {
     },
     REQUEST_STREAM: (msg: ClientMessage) => {
         let id = msg.data.outputId
-        if (!id) id = getActiveOutputs(get(outputs), true, true)[0]
+        if (!id) id = getActiveOutputs(get(outputs), true, true, true)[0]
         if (msg.data.alpha && get(outputs)[id].keyOutput) id = get(outputs)[id].keyOutput
 
         if (!id) return
