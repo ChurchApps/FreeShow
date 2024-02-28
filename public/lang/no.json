@@ -11,6 +11,21 @@
         "finished": "Fullført",
         "system_open": "Vis i systemet"
     },
+    "titlebar": {
+        "file": "Fil",
+        "edit": "Rediger",
+        "view": "Visning",
+        "help": "Hjelp"
+    },
+    "screen": {
+        "width": "Bredde",
+        "height": "Høyde",
+        "pixels": "piksler",
+        "top": "Topp",
+        "right": "Høyre",
+        "bottom": "Bunn",
+        "left": "Venstre"
+    },
     "about": {
         "check_updates": "Se etter oppdateringer",
         "made": "Laget i Norge av",
@@ -40,6 +55,9 @@
         "options": "Flere alternativer.",
         "scripture": "Hold Ctrl/Cmd eller Shift for å velge flere vers."
     },
+    "tips": {
+        "trigger": "Utløsere brukes ofte til å sende en HTTP-forespørsel for å endre posisjonen til kameraer."
+    },
     "setup": {
         "good_luck": "Jeg håper du får god nytte av dette programmet. Lykke til med visningen! :)",
         "tips": "Finn nyttige tips og guider på nettsiden.",
@@ -62,21 +80,6 @@
         "default": "Standard",
         "small": "Liten",
         "bold": "Fet"
-    },
-    "titlebar": {
-        "file": "Fil",
-        "edit": "Rediger",
-        "view": "Visning",
-        "help": "Hjelp"
-    },
-    "screen": {
-        "width": "Bredde",
-        "height": "Høyde",
-        "pixels": "piksler",
-        "top": "Topp",
-        "right": "Høyre",
-        "bottom": "Bunn",
-        "left": "Venstre"
     },
     "create_show": {
         "search_web": "Søk etter sang på nettet",
@@ -149,7 +152,8 @@
         "contain": "Opprinnelig",
         "fill": "Fyll",
         "cover": "Dekk",
-        "online": "Online"
+        "online": "Online",
+        "recommended": "Anbefalt"
     },
     "menu": {
         "show": "Presenter",
@@ -259,9 +263,6 @@
         "hover": "Sveve",
         "focus": "Fokus"
     },
-    "buttons": {
-        "changeTheme": "Endre Tema"
-    },
     "inputs": {
         "name": "Navn",
         "url": "URL",
@@ -286,9 +287,6 @@
         "triggers": "Utløsere",
         "templates": "Maler",
         "web": "Nett"
-    },
-    "tips": {
-        "trigger": "Utløsere brukes ofte til å sende en HTTP-forespørsel for å endre posisjonen til kameraer."
     },
     "category": {
         "all": "Alt",
@@ -445,6 +443,8 @@
         "export": "Eksporter",
         "duplicate": "Dupliser",
         "delete": "Slett",
+        "delete_slide": "Slett lysbilde",
+        "delete_group": "Slett gruppe",
         "delete_all": "Slett alle",
         "close": "Lukk",
         "save": "Lagre",
@@ -477,8 +477,9 @@
         "unmute": "Slå på lyden",
         "toggle_time_marker": "Veksle tidsmarkører",
         "add_time_marker": "Legg til tidsmarkør",
-        "bind_to": "Bind til",
-        "remove_binding": "Fjern binding",
+        "bind_to": "Spesifikke utgangsskjermer",
+        "remove_binding": "Fjern spesifikke utgangsskjermer",
+        "dynamic_values": "Dynamiske verdier",
         "show_timer": "Tid til visning",
         "hide_timer": "Tid til skjuling",
         "choose_custom": "Velg egen",
@@ -512,7 +513,7 @@
         "refresh_all_shows": "Finn alle show i 'Shows'-mappen",
         "start_timer": "Start tidtaker",
         "stop_timers": "Stopp pågående tidtakere",
-        "next_after_media": "Neste etter medier",
+        "next_after_media": "Neste når medier er slutt",
         "remove_media": "Fjern media",
         "remove_layers": "Fjern lag",
         "index_select_project": "Velg prosjekt fra indeks",
@@ -604,8 +605,11 @@
         "slide": "Lysbilde"
     },
     "edit": {
+        "text": "Tekst",
         "font": "Skrift",
-        "family": "Type",
+        "family": "Skrifttype",
+        "font_size": "Tekststørrelse",
+        "text_color": "Tekstfarge",
         "style": "Stil",
         "lines": "Linjer",
         "options": "Alternativer",
@@ -627,6 +631,7 @@
         "letter_spacing": "Bokstavasvsand",
         "word_spacing": "Ordavstand",
         "transform": "Transformer",
+        "text_transform": "Transformer tekst",
         "uppercase": "Store bokstaver",
         "lowercase": "Små bokstaver",
         "capitalize": "Stor forbokstav",
@@ -638,13 +643,13 @@
         "_title_top": "Juster til toppen",
         "_title_bottom": "Juster til bunnen",
         "outline": "Strek",
-        "width": "Bredde",
         "shadow": "Skygge",
         "shadow_inset": "Innfelt skygge",
         "offsetX": "Forskyvning X",
         "offsetY": "Forskyvning Y",
         "blur": "Uklarhet",
         "item": "Element",
+        "width": "Bredde",
         "height": "Høyde",
         "rotation": "Rotasjon",
         "tilt": "Helning",
@@ -861,7 +866,7 @@
         "change_name": "Endre navn",
         "show_location": "Show-plassering",
         "data_location": "Data-plassering",
-        "user_data_location": "Lagre brukerdata i data-plassering",
+        "user_data_location": "Lagre bruker-innstillinger i 'Data-plassering'",
         "font": "Skrift",
         "font_family": "Skrifttype",
         "font_size": "Skriftstørrelse",
