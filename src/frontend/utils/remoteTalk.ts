@@ -150,7 +150,7 @@ export function convertBackgrounds(show) {
 
     show = clone(show)
     // let media = {}
-    Object.keys(show.media).map((id) => {
+    Object.keys(show.media || {}).map((id) => {
         let path = show.media[id].path
         let cloudId = get(driveData).mediaId
         if (cloudId && cloudId !== "default") path = show.media[id].cloud?.[cloudId] || path
