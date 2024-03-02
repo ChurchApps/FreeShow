@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 npm install
 patch -p1 < update-to-core22.patch

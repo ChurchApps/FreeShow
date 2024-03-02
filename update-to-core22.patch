@@ -13,7 +13,7 @@ index 08ed9604..803c644c 100644
 --- a/node_modules/app-builder-lib/templates/snap/snapcraft.yaml
 +++ b/node_modules/app-builder-lib/templates/snap/snapcraft.yaml
 @@ -1,4 +1,4 @@
--base: core18
+-base: core20
 +base: core22
  grade: stable
  confinement: strict
