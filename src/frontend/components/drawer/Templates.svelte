@@ -39,7 +39,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     function filterSearch() {
         fullFilteredTemplates = clone(filteredTemplates)
-        if (searchValue.length > 1) fullFilteredTemplates = fullFilteredTemplates.filter((a) => filter(a.name).includes(searchValue))
+        if (searchValue.length > 1) fullFilteredTemplates = fullFilteredTemplates.filter((a) => filter(a.name).includes(filter(searchValue)))
     }
 
     let nextScrollTimeout: any = null
