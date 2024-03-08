@@ -389,9 +389,9 @@
         "deleted_cache": "Deleted media thumbnail cache.",
         "no_songswords_easyworship": "Missing SongsWords.db file.",
         "delete_shows_empty": "No shows to delete.",
-        "midi_no_project": "Received MIDI to change project, but no project found at index:",
-        "midi_no_show": "Received MIDI to start slide, but no show active.",
-        "midi_no_slide": "Received MIDI to start slide, but no slide found at index:",
+        "midi_no_project": "Received trigger to change project, but no project found at index:",
+        "midi_no_show": "Received trigger to start slide, but no show active.",
+        "midi_no_slide": "Received trigger to start slide, but no slide found at index:",
         "midi_no_velocity": "Received MIDI signal, but no velocity, defaults to first index."
     },
     "new": {

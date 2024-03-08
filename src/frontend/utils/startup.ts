@@ -90,6 +90,7 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { triggerAction } from "./companion"
 
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
@@ -218,6 +219,7 @@ const receiveMAIN: any = {
             return a
         })
     },
+    COMPANION_TRIGGER: (data: any) => triggerAction(data),
 }
 
 export const receiveSTORE: any = {

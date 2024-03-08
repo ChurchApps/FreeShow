@@ -15,6 +15,7 @@ export type SaveListSyncedSettings =
     | "midiIn"
     | "videoMarkers"
     | "customizedIcons"
+    | "companion"
 
 export type SaveListSettings =
     | "initialized"

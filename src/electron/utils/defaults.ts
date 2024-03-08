@@ -123,4 +123,5 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     midiIn: {},
     videoMarkers: {},
     customizedIcons: { disabled: [], svg: [] },
+    companion: {},
 }

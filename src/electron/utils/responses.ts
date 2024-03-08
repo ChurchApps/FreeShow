@@ -37,6 +37,7 @@ import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
 import { error_log } from "./store"
+import { startCompanionListener, stopCompanionListener } from "./companion"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -158,6 +159,9 @@ const mainResponses: any = {
     OPEN_LOG: () => openSystemFolder(error_log.path),
     MEDIA_BASE64: (data: any) => storeMedia(data),
     GET_SIMULAR: (data: any) => getSimularPaths(data),
+    // COMPANION
+    COMPANION_START: (port: number | undefined) => startCompanionListener(port),
+    COMPANION_STOP: () => stopCompanionListener(),
 }
 
 export function receiveMain(e: any, msg: Message) {

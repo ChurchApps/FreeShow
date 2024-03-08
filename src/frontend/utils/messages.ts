@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
+import { clone, removeDuplicates } from "../components/helpers/array"
 import { loadShows } from "../components/helpers/setShow"
 import {
     activePopup,
@@ -9,7 +10,6 @@ import {
     audioFolders,
     audioStreams,
     autosave,
-    calendarAddShow,
     categories,
     customizedIcons,
     dataPath,
@@ -30,7 +30,6 @@ import {
     mediaFolders,
     mediaOptions,
     midiIn,
-    os,
     overlayCategories,
     overlays,
     playerVideos,
@@ -64,7 +63,6 @@ import { send } from "./request"
 import { closeApp } from "./save"
 import { client } from "./sendData"
 import { stageListen } from "./stageTalk"
-import { clone, removeDuplicates } from "../components/helpers/array"
 
 export function listen() {
     // FROM CLIENT (EXPRESS SERVERS)
@@ -272,7 +270,7 @@ const saveList: { [key in SaveList]: any } = {
     mediaFolders: mediaFolders,
     mediaOptions: mediaOptions,
     openedFolders: null,
-    os: os,
+    os: null,
     outLocked: null,
     outputs: null,
     sorted: null,
@@ -305,6 +303,7 @@ const saveList: { [key in SaveList]: any } = {
     customizedIcons: customizedIcons,
     driveKeys: driveKeys,
     driveData: driveData,
-    calendarAddShow: calendarAddShow,
+    calendarAddShow: null,
     special: null,
+    companion: null,
 }

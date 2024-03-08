@@ -1,4 +1,4 @@
-import { audioStreams } from "./../stores"
+import { audioStreams, companion } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, STORE } from "../../types/Channels"
 import { clone } from "../components/helpers/array"
@@ -156,6 +156,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         midiIn: get(midiIn),
         videoMarkers: get(videoMarkers),
         customizedIcons: get(customizedIcons),
+        companion: get(companion),
     }
 
     let allSavedData: any = {

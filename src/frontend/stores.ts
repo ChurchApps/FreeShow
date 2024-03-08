@@ -236,6 +236,7 @@ export const disabledServers: Writable<any> = writable({ remote: false, stage: f
 export const serverData: Writable<any> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
+export const companion: Writable<any> = writable({ enabled: false }) // {}
 
 // HIDDEN
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"

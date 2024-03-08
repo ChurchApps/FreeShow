@@ -14,6 +14,7 @@ import {
     autosave,
     calendarAddShow,
     categories,
+    companion,
     customizedIcons,
     dataPath,
     defaultProjectName,
@@ -258,6 +259,15 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
+    companion: (v: any) => {
+        companion.set(v)
+
+        if (v.enabled) {
+            setTimeout(() => {
+                send(MAIN, ["COMPANION_START"], get(ports).companion)
+            }, 3000)
+        }
+    },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, God"
         special.set(v)

@@ -18,6 +18,7 @@ import { config, stores, updateDataPath, userDataPath } from "./utils/store"
 import checkForUpdates from "./utils/updater"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { stopReceiversNDI } from "./ndi/ndi"
+import { stopCompanionListener } from "./utils/companion"
 
 // ----- STARTUP -----
 
@@ -208,9 +209,10 @@ export async function exitApp() {
 
     await closeAllOutputs()
     stopReceiversNDI()
-    closeServers()
 
-    // midi
+    closeServers()
+    stopCompanionListener()
+
     // closeVirtualMidi()
     closeMidiInPorts()
 
