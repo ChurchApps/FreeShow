@@ -51,6 +51,7 @@ const ERROR_FILTER = [
     "Failed to fetch", // probably offline
     "Uncaught IndexSizeError: Failed to execute 'setStart' on 'Range'", // caret update/reset (pos larger than content)
     "Uncaught IndexSizeError: Failed to execute 'setEnd' on 'Range'", // caret update/reset (pos larger than content)
+    " is not defined\n    at eval", // inputting text into number input
 ]
 export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message

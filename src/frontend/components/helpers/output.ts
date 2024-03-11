@@ -317,7 +317,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (type !== "text") return finish()
 
         item.lines?.forEach((line: any, j: number) => {
-            let templateLine = templateItem!.lines?.[j] || templateItem!.lines?.[0]
+            let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {

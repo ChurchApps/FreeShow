@@ -354,7 +354,7 @@ export const _updaters = {
             if (get(activeShow)?.id === id) activeShow.set(null)
 
             // remove from stored project
-            if (data.remember?.project) {
+            if (data.remember?.project && get(projects)[data.remember.project]) {
                 projects.update((a) => {
                     a[data.remember.project].shows = a[data.remember.project].shows.filter((a) => a.id !== id)
                     return a
@@ -376,7 +376,7 @@ export const _updaters = {
             _show(id).set({ key: "settings.activeLayout", value: subkey })
 
             // set active layout in project
-            if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!].shows[get(activeShow)!.index!]) {
+            if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!]?.shows?.[get(activeShow)!.index!]) {
                 projects.update((a) => {
                     a[get(activeProject)!].shows[get(activeShow)!.index!].layout = subkey
                     return a

@@ -173,10 +173,10 @@
         previousHTML = html
         setTimeout(() => {
             showsCache.update((a) => {
-                let lines = a[$activeShow!.id].slides[layoutSlide.id].items[longest].lines
+                let lines = a[$activeShow!.id].slides[layoutSlide.id].items[longest]?.lines || []
                 let textItems = getItems(textElem.children)
                 if (textItems.length) {
-                    lines?.forEach((line) => {
+                    lines.forEach((line) => {
                         line.text?.forEach((a, i) => (a.value = textItems[i]))
                     })
                 }

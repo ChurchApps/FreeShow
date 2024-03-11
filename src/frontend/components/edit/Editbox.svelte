@@ -151,7 +151,7 @@
         if (!slideRef) return
 
         // create new slide
-        let newSlide = { ..._show().slides([ref.id]).get()[0] }
+        let newSlide = clone(_show().slides([ref.id]).get()[0]) || {}
         if (!newSlide.items[editItemIndex]) return
         newSlide.items[editItemIndex].lines = secondLines
         delete newSlide.id

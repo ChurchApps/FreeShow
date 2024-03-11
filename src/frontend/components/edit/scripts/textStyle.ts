@@ -7,7 +7,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
     item.lines?.forEach((line, i) => {
         let newText: any[] = []
         let pos: number = 0
-        if (selection[i].start !== undefined) {
+        if (selection[i]?.start !== undefined) {
             line.text?.forEach((text: any) => {
                 // , i: number
                 // TODO: .replaceAll("<br>", "")
@@ -221,7 +221,7 @@ export function getSlideText(slide: Slide) {
 // get text of item.text...
 export function getItemText(item: Item): string {
     let text: string = ""
-    if (!item.lines) return ""
+    if (!item?.lines) return ""
 
     item.lines.forEach((line) => {
         if (!line.text) return

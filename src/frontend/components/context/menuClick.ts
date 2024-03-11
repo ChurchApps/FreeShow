@@ -207,6 +207,8 @@ const actions: any = {
             }))
 
         projects.update((a) => {
+            if (!a[get(activeProject)!]) return a
+
             a[get(activeProject)!].shows.push(...obj.sel.data)
             return a
         })

@@ -814,7 +814,8 @@ const duplicateActions = {
         history({ id: "UPDATE", newData: { data: clone(stage) }, location: { page: "stage", id: "stage" } })
     },
     layout: (data: any) => {
-        let layoutId = data?.[0] || get(showsCache)[get(activeShow)!.id].settings.activeLayout
+        let layoutId = data?.[0] || get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout
+        if (!layoutId) return
 
         let newLayout = clone(get(showsCache)[get(activeShow)!.id].layouts[layoutId])
         newLayout.name += " 2"
