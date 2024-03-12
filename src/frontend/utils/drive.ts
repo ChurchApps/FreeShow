@@ -1,10 +1,10 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import { CLOUD } from "../../types/Channels"
 import { activePopup, dataPath, driveData, driveKeys, popupData, showsPath } from "../stores"
 import { newToast } from "./messages"
 import { send } from "./request"
 import { closeApp, save } from "./save"
-import { uid } from "uid"
 
 export function validateKeys(file: string) {
     let keys = JSON.parse(file)
@@ -50,8 +50,14 @@ export function syncDrive(force: boolean = false, closeWhenFinished: boolean = f
     let method = get(driveData).initializeMethod
     if (get(driveData).disableUpload) method = "download"
     send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath), dataPath: get(dataPath), method, closeWhenFinished })
-    popupData.set({})
-    activePopup.set("cloud_update")
+
+    if (force) {
+        popupData.set({})
+        activePopup.set("cloud_update")
+        return
+    }
+
+    newToast("$cloud.syncing")
 }
 
 // import { auth, drive } from "@googleapis/drive"

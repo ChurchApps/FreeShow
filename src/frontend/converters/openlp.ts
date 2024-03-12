@@ -178,8 +178,10 @@ function XMLtoObject(xml: string) {
     let parser = new DOMParser()
 
     // remove first line (standalone attribute): <?xml version="1.0" encoding="UTF-8"?> / <?xml-stylesheet href="stylesheets.css" type="text/css"?>
-    if (xml.indexOf("<?xml") >= 0) xml = xml.split("\n").slice(1, xml.split("\n").length).join("\n")
-    if (xml.indexOf("<?xml") >= 0) xml = xml.split("\n").slice(1, xml.split("\n").length).join("\n")
+    while (xml.indexOf("<?xml") >= 0) {
+        let splitted = xml.split("\n")
+        xml = splitted.slice(1, splitted.length).join("\n")
+    }
 
     let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
 

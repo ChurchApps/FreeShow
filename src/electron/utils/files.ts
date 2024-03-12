@@ -422,6 +422,10 @@ export function loadShows({ showsPath }: any) {
         newCachedShows[id] = trimShow({ ...show[1], name: trimmedName })
     }
 
+    // save this (for cloud sync)
+    stores.SHOWS.clear()
+    stores.SHOWS.set(newCachedShows)
+
     toApp(STORE, { channel: "SHOWS", data: newCachedShows })
 }
 

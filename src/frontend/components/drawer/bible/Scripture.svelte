@@ -693,6 +693,28 @@
         }
 
         let currentIndex: number = Number(moveLeft ? activeVerses[0] : activeVerses.at(-1))
+        let changeChapter = moveLeft ? currentIndex <= 1 : currentIndex >= Object.keys(verses[firstBibleId]).length
+        if (changeChapter) {
+            // find current chapter
+            let notApi = typeof chapterId === "number"
+            let chapterIndex = notApi ? chapterId : chapters[firstBibleId].findIndex((a) => a.id === chapterId)
+
+            if (moveLeft) chapterIndex--
+            else chapterIndex++
+
+            let newChapter: any = chapters[firstBibleId][chapterIndex]
+            if (!newChapter) return
+
+            // set new chapter
+            let newChapterId = notApi ? chapterIndex : newChapter.id
+            chapterId = newChapterId
+
+            // select verses
+            if (moveLeft) currentIndex = (newChapter.verses?.length ?? 150) + 1
+            else currentIndex = 0
+
+            // WIP: auto scroll to verses
+        }
 
         let newSelection: string[] = []
         ;[...Array(activeVerses.length)].map((_, i: number) => {
@@ -847,13 +869,19 @@
     {#if searchBibleActive}
         <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:change={searchInBible} style="width: 300px;" autofocus />
     {:else}
-        <Button disabled={activeVerses.includes("1")} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
+        <Button disabled={activeVerses.includes("1") && (chapterId <= 0 || chapterId.toString() === `${bookId}.1`)} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
             <Icon size={1.3} id="previous" />
         </Button>
         <Button disabled={$outLocked} title={outputIsScripture ? $dictionary.preview?._update : $dictionary.menu?._title_display} on:click={() => playOrClearScripture(true)}>
             <Icon size={outputIsScripture ? 1.1 : 1.3} id={outputIsScripture ? "refresh" : "play"} white={!outputIsScripture} />
         </Button>
-        <Button disabled={Object.keys(verses[firstBibleId] || {}).length && activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString())} title={$dictionary.preview?._next_slide} on:click={() => moveSelection(false)}>
+        <Button
+            disabled={Object.keys(verses[firstBibleId] || {}).length &&
+                activeVerses.includes(Object.keys(verses[firstBibleId] || {}).length.toString()) &&
+                (chapterId >= chapters[firstBibleId].length - 1 || chapterId.toString() === `${bookId}.${chapters[firstBibleId].length + 1}`)}
+            title={$dictionary.preview?._next_slide}
+            on:click={() => moveSelection(false)}
+        >
             <Icon size={1.3} id="next" />
         </Button>
 

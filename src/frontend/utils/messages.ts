@@ -234,8 +234,13 @@ const cloudHelpers = {
         showsCache.set({})
         activeShow.set(null)
 
-        popupData.set(changes)
-        activePopup.set("cloud_update")
+        if (get(autosave) === "never") {
+            popupData.set(changes)
+            activePopup.set("cloud_update")
+            return
+        }
+
+        newToast("$cloud.sync_complete")
     },
 }
 
