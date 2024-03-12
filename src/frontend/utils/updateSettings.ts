@@ -270,6 +270,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, God"
+        if (v.autoUpdates !== false) send(MAIN, ["AUTO_UPDATE"])
         special.set(v)
     },
 }

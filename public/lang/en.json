@@ -851,6 +851,7 @@
         "window": "Window",
         "active_style": "Use style",
         "alert_updates": "Alert when a new update is available",
+        "auto_updates": "Auto updates",
         "disable_labels": "Disable labels",
         "group_numbers": "Group numbers",
         "full_colors": "Full slide group colors",

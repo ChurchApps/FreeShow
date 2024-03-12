@@ -439,8 +439,11 @@
     }
 
     function scrollTo(parent, childId) {
+        if (!parent) return
+
         let selectedChild = [...parent.children].find((a) => a.id === childId.toString())
         if (!selectedChild) return
+
         parent.scrollTo(0, selectedChild.offsetTop)
     }
 

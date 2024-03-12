@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, activePopup, dictionary, eventEdit, events, popupData } from "../../stores"
+    import { activeDays, activePopup, dictionary, eventEdit, events, labelsDisabled, popupData } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { removeDuplicates, sortByTime } from "../helpers/array"
@@ -256,8 +256,8 @@
             }}
             center
         >
-            <Icon id="add" right />
-            <T id="new.event" />
+            <Icon id="add" right={!$labelsDisabled} />
+            {#if !$labelsDisabled}<T id="new.event" />{/if}
         </Button>
 
         <div class="seperator" />

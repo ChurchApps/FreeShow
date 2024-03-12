@@ -6,19 +6,18 @@ import path from "path"
 import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
+import { stopReceiversNDI } from "./ndi/ndi"
 import { receiveNDI } from "./ndi/talk"
 import { closeServers } from "./servers"
 import { startBackup } from "./utils/backup"
+import { stopCompanionListener } from "./utils/companion"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, loadShows, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { closeAllOutputs, receiveOutput } from "./utils/output"
 import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { config, stores, updateDataPath, userDataPath } from "./utils/store"
-import checkForUpdates from "./utils/updater"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { stopReceiversNDI } from "./ndi/ndi"
-import { stopCompanionListener } from "./utils/companion"
 
 // ----- STARTUP -----
 
@@ -62,7 +61,6 @@ function initialize() {
 
     if (!isProd) return
 
-    checkForUpdates()
     catchErrors()
 }
 

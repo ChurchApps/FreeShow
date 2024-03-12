@@ -14,6 +14,7 @@
 
 <div class:center>
     <div bind:offsetWidth={slideWidth} class="slide" class:hideOverflow style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
+        <!-- WIP firefox does not support "zoom": https://stackoverflow.com/questions/4049342/how-can-i-zoom-an-html-element-in-firefox-and-opera (-moz-transform: scale({ratio});) -->
         <span style="zoom: {ratio};">
             <slot />
         </span>

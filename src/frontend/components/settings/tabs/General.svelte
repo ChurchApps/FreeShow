@@ -12,6 +12,7 @@
     const inputs: any = {
         timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
         updates: (e: any) => alertUpdates.set(e.target.checked),
+        autoUpdates: (e: any) => updateSpecial(e.target.checked, "autoUpdates"),
         labels: (e: any) => labelsDisabled.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
         hideCursor: (e: any) => updateSpecial(e.target.checked, "hideCursor"),
@@ -28,7 +29,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value) delete a[key]
+            if (key === "hideCursor" && !value) delete a[key]
             else a[key] = value
 
             return a
@@ -38,7 +39,7 @@
     // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
 
     function reset() {
-        setLanguage(null)
+        setLanguage()
         timeFormat.set("24")
         alertUpdates.set(true)
         autoOutput.set(false)
@@ -46,6 +47,7 @@
 
         special.update((a) => {
             delete a.hideCursor
+            delete a.autoUpdates
             return a
         })
     }
@@ -72,6 +74,12 @@
     <p><T id="settings.alert_updates" /></p>
     <div class="alignRight">
         <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.auto_updates" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.autoUpdates !== false} on:change={inputs.autoUpdates} />
     </div>
 </CombinedInput>
 <CombinedInput>

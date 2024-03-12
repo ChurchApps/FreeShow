@@ -38,6 +38,7 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { outputWindows } from "./output"
 import { error_log } from "./store"
 import { startCompanionListener, stopCompanionListener } from "./companion"
+import checkForUpdates from "./updater"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -103,6 +104,7 @@ const mainResponses: any = {
     IS_DEV: (): boolean => !isProd,
     GET_OS: (): any => ({ platform: os.platform(), name: os.hostname(), arch: os.arch() }),
     DEVICE_ID: (): string => machineIdSync(),
+    AUTO_UPDATE: (): void => checkForUpdates(),
     GET_SYSTEM_FONTS: (): void => loadFonts(),
     URL: (data: string): void => openURL(data),
     START: (data: any): void => startServers(data),
