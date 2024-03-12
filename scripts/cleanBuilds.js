@@ -3,13 +3,11 @@ const { join } = require("path")
 
 // app build file paths
 const buildSveltePath = join(__dirname, "..", "public", "build")
-const buildElectronPath = join(__dirname, "..", "build")
-const buildServerPath = join(__dirname, "..", "build")
+const buildElectronPath = join(__dirname, "..", "build") // this includes server files
 
 // delete folders and all of it's content
 deleteFolderRecursive(buildSveltePath)
 deleteFolderRecursive(buildElectronPath)
-deleteFolderRecursive(buildServerPath)
 
 function deleteFolderRecursive(folderPath) {
     if (!existsSync(folderPath)) return
