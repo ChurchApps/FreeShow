@@ -67,6 +67,7 @@ const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outr
 function createSlides({ lyrics }: Song) {
     let slides: any = {}
     let layout: any[] = []
+    if (!lyrics) return {slides, layout};
     lyrics.forEach((slide) => {
         let lines = slide.split("\n")
         let group = lines.splice(0, 1)[0]
