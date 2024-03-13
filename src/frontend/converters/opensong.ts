@@ -70,8 +70,8 @@ function createSlides({ lyrics }: Song) {
     lyrics.forEach((slide) => {
         let lines = slide.split("\n")
         let group = lines.splice(0, 1)[0]
-        let chords = lines.filter((_v: string, i: number) => !(i % 2))
-        let text = lines.filter((_v: string, i: number) => i % 2)
+        let chords = lines.filter((_v: string) => _v.startsWith("."))
+        let text = lines.filter((_v: string) => !_v.startsWith("."))
         if (text) {
             let id: string = uid()
             layout.push({ id })
