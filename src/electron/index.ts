@@ -10,7 +10,7 @@ import { stopReceiversNDI } from "./ndi/ndi"
 import { receiveNDI } from "./ndi/talk"
 import { closeServers } from "./servers"
 import { startBackup } from "./utils/backup"
-import { stopCompanionListener } from "./utils/companion"
+import { stopApiListener } from "./utils/api"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, loadShows, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
@@ -209,7 +209,7 @@ export async function exitApp() {
     stopReceiversNDI()
 
     closeServers()
-    stopCompanionListener()
+    stopApiListener()
 
     // closeVirtualMidi()
     closeMidiInPorts()

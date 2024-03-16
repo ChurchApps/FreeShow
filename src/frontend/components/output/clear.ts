@@ -1,15 +1,15 @@
 import { get } from "svelte/store"
 import { outLocked, slideTimers } from "../../stores"
 import { getActiveOutputs, setOutput } from "../helpers/output"
-import { clearOverlays } from "../helpers/showActions"
+import { clearBackground, clearOverlays, clearSlide } from "../helpers/showActions"
 import { clearAudio } from "../helpers/audio"
 
 export const clearAll = () => {
     if (get(outLocked)) return
 
     // clear video in "preview"
-    setOutput("background", null)
-    setOutput("slide", null)
+    clearBackground()
+    clearSlide()
     clearOverlays()
     clearAudio()
     clearTimers()

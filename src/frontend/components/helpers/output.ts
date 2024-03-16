@@ -8,6 +8,7 @@ import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays
 import { send } from "../../utils/request"
 import { clone, removeDuplicates } from "./array"
 import { _show } from "./shows"
+import { clearBackground } from "./showActions"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
@@ -237,7 +238,7 @@ export function deleteOutput(outputId: string) {
 
 export async function clearPlayingVideo(clearOutput: any = null) {
     // videoData.paused = true
-    if (clearOutput) setOutput("background", null) // , false, clearOutput
+    if (clearOutput) clearBackground() // , false, clearOutput
 
     let mediaTransition: Transition = getCurrentMediaTransition()
 

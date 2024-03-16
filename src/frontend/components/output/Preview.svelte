@@ -5,7 +5,7 @@
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "../helpers/output"
-    import { clearAll, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
+    import { clearAll, clearBackground, clearSlide, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { newSlideTimer } from "../helpers/tick"
@@ -44,12 +44,12 @@
             if ($presenterControllerKeys) clearAll()
         },
         F1: () => {
-            if (!$outLocked) setOutput("background", null)
+            if (!$outLocked) clearBackground()
         },
         F2: () => {
             if ($outLocked || $selected.id) return false
 
-            setOutput("slide", null)
+            clearSlide()
             return true
         },
         F3: () => {

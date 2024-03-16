@@ -1,14 +1,14 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
 import { clearAudio } from "../components/helpers/audio"
-import { getActiveOutputs, setOutput } from "../components/helpers/output"
-import { changeOutputStyle, clearAll, clearOverlays, nextSlide, playNextGroup, previousSlide, selectProjectShow, updateOut } from "../components/helpers/showActions"
+import { setOutput } from "../components/helpers/output"
+import { changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, previousSlide, selectProjectShow, updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearTimers } from "../components/output/clear"
-import { activeProject, activeShow, dictionary, groups, midiIn, outLocked, outputs, projects, shows } from "../stores"
-import { send } from "./request"
-import { keysToID } from "../components/helpers/array"
+import { midiIn, shows } from "../stores"
+import { gotoGroup, selectProjectByIndex, selectSlideByIndex } from "./apiHelper"
 import { newToast } from "./messages"
+import { send } from "./request"
 
 export function midiInListen() {
     console.log("MIDI IN LISTEN")
@@ -45,102 +45,26 @@ export function midiInListen() {
     })
 }
 
+// WIP duplicate og api.ts
 export const midiActions = {
-    next_slide: () => {
-        nextSlide({ key: " " })
-    },
-    previous_slide: () => {
-        previousSlide({ key: " " })
-    },
-    next_project_show: () => {
-        selectProjectShow("next")
-    },
-    previous_project_show: () => {
-        selectProjectShow("previous")
-    },
-    goto_group: (data: any) => {
-        // WIP duplicate of Preview.svelte checkGroupShortcuts()
+    next_slide: () => nextSlide({ key: "ArrowRight" }),
+    previous_slide: () => previousSlide({ key: "ArrowLeft" }),
+    next_project_show: () => selectProjectShow("next"),
+    previous_project_show: () => selectProjectShow("previous"),
+    goto_group: (data: any) => gotoGroup(data.group),
 
-        let outputId = getActiveOutputs(get(outputs))[0]
-        let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
-        let outSlide = currentOutput.out?.slide
-        let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
-        if (!currentShowId) return
-
-        let showRef = _show(currentShowId).layouts("active").ref()[0] || []
-        let groupIds = showRef.map((a) => a.id)
-        let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
-        if (!showGroups.length) return
-
-        let globalGroupIds: string[] = []
-        Object.keys(get(groups)).forEach((groupId: string) => {
-            if (groupId !== data.group) return
-            showGroups.forEach((slide) => {
-                if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
-            })
-        })
-
-        playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId })
-    },
-
-    clear_all: () => {
-        clearAll()
-    },
-    clear_background: () => {
-        // callVideoClear = true
-        setOutput("background", null)
-    },
-    clear_slide: () => {
-        setOutput("slide", null)
-    },
-    clear_overlays: () => {
-        clearOverlays()
-    },
-    clear_audio: () => {
-        clearAudio()
-    },
-    clear_next_timer: () => {
-        clearTimers()
-    },
+    clear_all: () => clearAll(),
+    clear_background: () => clearBackground(),
+    clear_slide: () => clearSlide(),
+    clear_overlays: () => clearOverlays(),
+    clear_audio: () => clearAudio(),
+    clear_next_timer: () => clearTimers(),
 
     change_output_style: (data: any) => changeOutputStyle(data.style),
 
-    index_select_project: (_, index: number) => {
-        if (index < 0) return
-        // select project
-        let selectedProject = keysToID(get(projects)).sort((a, b) => a.name.localeCompare(b.name))[index]
-        if (!selectedProject) {
-            newToast(get(dictionary).toast?.midi_no_project + " " + index)
-            return
-        }
-
-        activeProject.set(selectedProject.id)
-    },
-    index_select_project_show: (_, index: number) => {
-        if (index < 0) return
-        selectProjectShow(index)
-    },
-    index_select_slide: (_, index: number) => {
-        let showRef = _show().layouts("active").ref()[0]
-        if (!showRef) {
-            newToast("$toast.midi_no_show")
-            return
-        }
-
-        let slideRef = showRef[index]
-        if (!slideRef) {
-            newToast(get(dictionary).toast?.midi_no_slide + " " + index)
-            return
-        }
-
-        // WIP duplicate of Slides.svelte:57 (slideClick)
-        if (get(outLocked)) return
-
-        updateOut("active", index, showRef)
-        let showId = get(activeShow)!.id
-        let activeLayout = _show().get("settings.activeLayout")
-        setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
-    },
+    index_select_project: (_, index: number) => selectProjectByIndex(index),
+    index_select_project_show: (_, index: number) => selectProjectShow(index),
+    index_select_slide: (_, index: number) => selectSlideByIndex(index),
 }
 export const midiNames = {
     next_slide: "preview._next_slide",

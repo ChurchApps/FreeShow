@@ -18,6 +18,7 @@ export const OUTPUT_STREAM: OutputStream = "OUTPUT_STREAM"
 export const CLOUD: Cloud = "CLOUD"
 export const RECORDER: Recorder = "RECORDER"
 export const NDI: Ndi = "NDI"
+export const API_DATA: ApiData = "API_DATA"
 
 export type Startup = "STARTUP"
 export type Main = "MAIN"
@@ -39,8 +40,9 @@ export type OutputStream = "OUTPUT_STREAM"
 export type Cloud = "CLOUD"
 export type Recorder = "RECORDER"
 export type Ndi = "NDI"
+export type ApiData = "API_DATA"
 
-export type ValidChannels = Startup | Main | Store | Show | Bible | OutputData | Import | Export | OpenFile | OpenFolder | ReadFolder | Remote | Stage | Controller | OutputStream | Cloud | Ndi
+export type ValidChannels = Startup | Main | Store | Show | Bible | OutputData | Import | Export | OpenFile | OpenFolder | ReadFolder | Remote | Stage | Controller | OutputStream | Cloud | Ndi | ApiData
 
 export type Data = string | DataObject
 export interface DataObject {

@@ -4,6 +4,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
+    import { clearBackground } from "../../helpers/showActions"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import IntersectionObserver from "./IntersectionObserver.svelte"
@@ -48,8 +49,7 @@
         }, 800)
 
         if (findMatchingOut(path, $outputs)) {
-            setOutput("background", null)
-            // clearPlayingVideo()
+            clearBackground()
             // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
 
             return

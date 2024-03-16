@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { clone } from "../components/helpers/array"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
-import { updateOut } from "../components/helpers/showActions"
+import { clearAll, updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { REMOTE } from "./../../types/Channels"
 import { activeProject, connections, dictionary, driveData, folders, mediaCache, openedFolders, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
@@ -74,11 +74,7 @@ export const receiveREMOTE: any = {
         let id: string = ""
 
         if (msg.data === "clear") {
-            setOutput("slide", null)
-            setOutput("background", null)
-            setOutput("overlays", [])
-            // setOutput("audio", [])
-            // setOutput("transition", null)
+            clearAll()
         } else if (msg.data?.id) {
             id = msg.data.id
             await loadShows([id])

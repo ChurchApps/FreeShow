@@ -5,7 +5,7 @@
     import { custom } from "../../utils/transitions"
     import { clone } from "../helpers/array"
     import { getExtension, getMediaStyle, getMediaType } from "../helpers/media"
-    import { setOutput } from "../helpers/output"
+    import { clearBackground } from "../helpers/showActions"
     import Image from "./Image.svelte"
     import MediaControls from "./MediaControls.svelte"
     import Video from "./Video.svelte"
@@ -79,7 +79,7 @@
             if (path) return
 
             // preview tools Media.svelte
-            setOutput("background", null)
+            clearBackground()
             // videoTime = 0
             // send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: 0 })
             // if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, time: 0 })

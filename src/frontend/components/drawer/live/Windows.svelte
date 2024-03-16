@@ -8,6 +8,7 @@
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import Capture from "./Capture.svelte"
+    import { clearBackground } from "../../helpers/showActions"
 
     export let streams: any[]
     export let searchValue: string = ""
@@ -37,7 +38,7 @@
                 screen={window}
                 on:click={(e) => {
                     if ($outLocked || e.ctrlKey || e.metaKey) return
-                    if (currentOutput.out?.background?.id === window.id) setOutput("background", null)
+                    if (currentOutput.out?.background?.id === window.id) clearBackground()
                     else setOutput("background", { id: window.id, type: "screen" })
                 }}
             />

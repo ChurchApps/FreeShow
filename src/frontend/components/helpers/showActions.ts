@@ -64,7 +64,7 @@ export function checkInput(e: any) {
 }
 
 export function selectProjectShow(select: number | "next" | "previous") {
-    let shows = get(projects)[get(activeProject)!].shows
+    let shows = get(projects)[get(activeProject) || ""]?.shows
     let index: null | number = get(activeShow)?.index !== undefined ? get(activeShow)!.index! : null
     let newIndex: number | null = typeof select === "number" ? select : getProjectIndex[select](index, shows)
 
@@ -614,6 +614,16 @@ export function sendMidi(data: any) {
     send(MAIN, ["SEND_MIDI"], data)
 }
 
+export function clearBackground() {
+    // clearVideo()
+    setOutput("background", null)
+    // clearPlayingVideo()
+}
+
+export function clearSlide() {
+    setOutput("slide", null)
+}
+
 export function clearOverlays(outputId: string = "") {
     outputId = outputId || getActiveOutputs()[0]
     let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
@@ -623,6 +633,7 @@ export function clearOverlays(outputId: string = "") {
 }
 
 // TODO: output/clearButtons
+// WIP duplicate of clear.ts
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
     if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
@@ -633,9 +644,8 @@ export function clearAll(button: boolean = false) {
     // TODO: audio
     if (!get(outputCache)) outputCache.set(clone(get(outputs)))
 
-    // clearVideo()
-    setOutput("background", null)
-    setOutput("slide", null)
+    clearBackground()
+    clearSlide()
     clearOverlays()
     clearAudio()
     // clearTimers()

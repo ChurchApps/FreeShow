@@ -73,8 +73,8 @@
             return a
         })
 
-        if (value) send(MAIN, ["COMPANION_START"], $ports.companion)
-        else send(MAIN, ["COMPANION_STOP"])
+        if (value) send(MAIN, ["WEBSOCKET_START"], $ports.companion)
+        else send(MAIN, ["WEBSOCKET_STOP"])
     }
 
     // output
@@ -112,7 +112,8 @@
         { id: "stage", name: "StageShow", defaultPort: 5511, icon: "stage", enabledByDefault: true },
         { id: "controller", name: "ControlShow", defaultPort: 5512, icon: "connection", enabledByDefault: false },
         { id: "output_stream", name: "OutputShow", defaultPort: 5513, icon: "stage", enabledByDefault: false },
-        { id: "companion", name: "Bitfocus Companion", defaultPort: 5505, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
+        { id: "companion", name: "Bitfocus Companion (WebSocket/REST)", defaultPort: 5505, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
+        // { id: "rest", name: "REST Listener", defaultPort: 5506, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
     ]
     // Camera
     // Answer / Guess / Poll

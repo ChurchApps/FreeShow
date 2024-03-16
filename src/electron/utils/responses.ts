@@ -37,7 +37,7 @@ import { importShow } from "./import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { outputWindows } from "./output"
 import { error_log } from "./store"
-import { startCompanionListener, stopCompanionListener } from "./companion"
+import { startRestListener, startWebSocket, stopApiListener } from "./api"
 import checkForUpdates from "./updater"
 
 // IMPORT
@@ -161,9 +161,18 @@ const mainResponses: any = {
     OPEN_LOG: () => openSystemFolder(error_log.path),
     MEDIA_BASE64: (data: any) => storeMedia(data),
     GET_SIMULAR: (data: any) => getSimularPaths(data),
-    // COMPANION
-    COMPANION_START: (port: number | undefined) => startCompanionListener(port),
-    COMPANION_STOP: () => stopCompanionListener(),
+    // WebSocket / REST (Combined)
+    WEBSOCKET_START: (port: number | undefined) => {
+        startRestListener(port ? port + 1 : 0)
+        startWebSocket(port)
+    },
+    WEBSOCKET_STOP: () => stopApiListener(),
+    // // WebSocket (Companion)
+    // WEBSOCKET_START: (port: number | undefined) => startWebSocket(port),
+    // WEBSOCKET_STOP: () => stopApiListener("WebSocket"),
+    // // REST
+    // REST_START: (port: number | undefined) => startRestListener(port),
+    // REST_STOP: () => stopApiListener("REST"),
 }
 
 export function receiveMain(e: any, msg: Message) {
