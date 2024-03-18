@@ -3,7 +3,7 @@
     import { clearAudio } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { clearPlayingVideo, isOutCleared, setOutput } from "../helpers/output"
-    import { clearAll, clearOverlays } from "../helpers/showActions"
+    import { clearAll, clearOverlays, restoreOutput } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import { clearTimers } from "./clear"
@@ -14,11 +14,6 @@
 
     $: allCleared = isOutCleared(null, $outputs) && !Object.keys($playingAudio).length
     $: if (allCleared) autoChange = true
-
-    function restoreOutput() {
-        outputs.set($outputCache)
-        outputCache.set(null)
-    }
 
     let enableRestore: boolean = false
     $: if ($outputCache) setTimeout(() => (enableRestore = true), 1000)

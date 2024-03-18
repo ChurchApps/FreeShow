@@ -652,6 +652,14 @@ export function clearAll(button: boolean = false) {
     setOutput("transition", null)
 }
 
+// WIP restore only selected outputs
+export function restoreOutput() {
+    if (get(outLocked)) return
+    
+    outputs.set(get(outputCache))
+    outputCache.set(null)
+}
+
 export function activateTrigger(trigger) {
     if (!customTriggers[trigger?.type]) {
         console.log("Missing trigger:", trigger.type)

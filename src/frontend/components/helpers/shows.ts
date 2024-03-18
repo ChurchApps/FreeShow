@@ -79,12 +79,13 @@ export function _show(id: any = "active") {
                 if (!shows[id]) return []
                 if (!slideIds.length && shows[id].slides) slideIds = Object.keys(shows[id].slides)
                 slideIds.forEach((slideId) => {
-                    if (!shows[id].slides[slideId]) return
+                    let slide = clone(shows[id].slides[slideId])
+                    if (!slide) return
 
-                    if (key) a.push(shows[id].slides[slideId][key])
+                    if (key) a.push(slide[key])
                     else {
-                        a.push(shows[id].slides[slideId])
-                        if (addId && a[a.length - 1]) a[a.length - 1].id = slideId
+                        if (addId) slide.id = slideId
+                        a.push(slide)
                     }
                 })
                 return a

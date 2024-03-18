@@ -29,6 +29,8 @@ export function startWebSocket(PORT: number | undefined) {
 
 function connected(socket: any) {
     log("Client connected.")
+    toApp(MAIN, { channel: "API", data: "connected" }) // TODO: respond with API_DATA
+
     socket.on("disconnect", () => log("Client disconnected."))
 
     socket.on("data", (data: any) => receivedData(JSON.parse(data || "{}"), log))
