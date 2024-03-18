@@ -7,7 +7,7 @@
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import Image from "../media/Image.svelte"
-    import PreviewCanvas from "../output/PreviewCanvas.svelte"
+    import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Variable from "../slide/views/Variable.svelte"
     import Clock from "../system/Clock.svelte"

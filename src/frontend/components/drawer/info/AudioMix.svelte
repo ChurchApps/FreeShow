@@ -3,7 +3,7 @@
     import T from "../../helpers/T.svelte"
     import { updateVolume } from "../../helpers/audio"
     import Slider from "../../inputs/Slider.svelte"
-    import AudioMeter from "../../output/AudioMeter.svelte"
+    import AudioMeter from "../../output/preview/AudioMeter.svelte"
 
     // TODO: video player volume
 

@@ -10,7 +10,7 @@ import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../ty
 import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
-import { stores } from "./store"
+import { stores } from "../data/store"
 import { uid } from "uid"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {

@@ -55,7 +55,6 @@ import {
     variables,
     videoExtensions,
     videoMarkers,
-    webFavorites,
 } from "../stores"
 import { alertUpdates, autoOutput, maxConnections, ports, scriptureSettings, scriptures, splitLines, transitionData } from "./../stores"
 import { syncDrive, validateKeys } from "./drive"
@@ -300,7 +299,6 @@ const saveList: { [key in SaveList]: any } = {
     themes: themes,
     transitionData: transitionData,
     videoExtensions: videoExtensions,
-    webFavorites: webFavorites,
     volume: null,
     gain: null,
     midiIn: midiIn,

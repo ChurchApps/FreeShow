@@ -1,7 +1,7 @@
 <script lang="ts">
     import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
-    import { activePopup, audioFolders, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates, webFavorites } from "../../stores"
+    import { activePopup, audioFolders, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -14,7 +14,7 @@
     import SelectElem from "../system/SelectElem.svelte"
     import NavigationButton from "./NavigationButton.svelte"
 
-    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "templates" | "timers" | "web"
+    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "templates" | "timers"
 
     interface Button extends Category {
         id: string
@@ -78,8 +78,6 @@
                 { id: "show", name: "calendar.show", default: true, icon: "showIcon" },
                 { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
             ]
-        } else if (id === "web") {
-            buttons = [...(sortObject(keysToID($webFavorites), "name") as Button[])]
         } else {
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },

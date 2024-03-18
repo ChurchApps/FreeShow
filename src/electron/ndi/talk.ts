@@ -1,6 +1,6 @@
 import { NDI } from "../../types/Channels"
 import { Message } from "../../types/Socket"
-import { customFramerates, updateFramerate } from "./capture"
+import { customFramerates, updateFramerate } from "../output/capture"
 import { captureStreamNDI, findStreamsNDI, receiveStreamFrameNDI, stopReceiversNDI } from "./ndi"
 
 export async function receiveNDI(e: any, msg: Message) {

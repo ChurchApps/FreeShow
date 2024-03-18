@@ -163,13 +163,6 @@ export const gain: Writable<number> = writable(1) // 1
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}
 
-// WEB (WIP)
-export const webFavorites: Writable<Categories> = writable({
-    youtube: { name: "YouTube", icon: "web", url: "https://youtube.com/" },
-    google: { name: "Google", icon: "web", url: "https://google.com/" },
-    example: { name: "Example", icon: "web", url: "https://example.com/" },
-})
-
 // TEMPLATES
 export const templateCategories: Writable<Categories> = writable({}) // {default}
 export const templates: Writable<Templates> = writable({}) // {default}
@@ -312,7 +305,6 @@ export const $ = {
     audioFolders,
     volume,
     playerVideos,
-    webFavorites,
     templateCategories,
     templates,
     events,

@@ -1,4 +1,3 @@
-import { audioStreams, companion } from "./../stores"
 import { get } from "svelte/store"
 import { MAIN, STORE } from "../../types/Channels"
 import { clone } from "../components/helpers/array"
@@ -79,9 +78,9 @@ import {
     videoExtensions,
     videoMarkers,
     volume,
-    webFavorites,
 } from "../stores"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
+import { audioStreams, companion } from "./../stores"
 import { syncDrive } from "./drive"
 import { newToast } from "./messages"
 
@@ -132,7 +131,6 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         transitionData: get(transitionData),
         // themes: get(themes),
         videoExtensions: get(videoExtensions),
-        webFavorites: get(webFavorites),
         volume: get(volume),
         gain: get(gain),
         driveData: get(driveData),

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activePopup, selected } from "../../stores"
-    import { customIcons } from "../main/customIcons"
-    import icons from "./icons"
+    import { customIcons } from "../../values/customIcons"
+    import icons from "../../values/icons"
 
     export let id: string
     export let size: number = 1

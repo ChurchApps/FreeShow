@@ -3,7 +3,7 @@ import path from "path"
 import { toApp } from ".."
 import { STORE } from "../../types/Channels"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileStats, readFile, writeFile } from "../utils/files"
-import { stores } from "../utils/store"
+import { stores } from "../data/store"
 import { trimShow } from "../utils/responses"
 
 let driveClient: any = null

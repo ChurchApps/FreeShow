@@ -61,7 +61,6 @@ import {
     variables,
     videoExtensions,
     videoMarkers,
-    webFavorites,
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
@@ -251,7 +250,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         imageExtensions.set(v)
     },
     videoExtensions: (v: any) => videoExtensions.set(v),
-    webFavorites: (v: any) => webFavorites.set(v),
     volume: (v: any) => volume.set(v),
     gain: (v: any) => gain.set(v),
     midiIn: (v: any) => midiIn.set(v),

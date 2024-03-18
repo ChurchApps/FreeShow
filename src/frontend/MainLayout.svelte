@@ -9,7 +9,7 @@
     import MediaTools from "./components/edit/MediaTools.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
     import Top from "./components/main/Top.svelte"
-    import Preview from "./components/output/Preview.svelte"
+    import Preview from "./components/output/preview/Preview.svelte"
     import Settings from "./components/settings/Settings.svelte"
     import SettingsTabs from "./components/settings/SettingsTabs.svelte"
     import Projects from "./components/show/Projects.svelte"

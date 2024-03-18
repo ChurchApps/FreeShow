@@ -58,7 +58,6 @@ export type SaveListSettings =
     | "theme"
     | "transitionData"
     | "videoExtensions"
-    | "webFavorites"
     | "volume"
     | "gain"
     | "driveData"

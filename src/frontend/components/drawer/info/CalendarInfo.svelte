@@ -1,8 +1,8 @@
 <script lang="ts">
     import { activeDays, activeTimers, dictionary, drawerTabsData, events, nextShowEventPaused, nextShowEventStart } from "../../../stores"
-    import CreateCalendarShow from "../../calendar/CreateCalendarShow.svelte"
-    import Day from "../../calendar/Day.svelte"
-    import { getSelectedEvents } from "../../calendar/calendar"
+    import CreateCalendarShow from "../calendar/CreateCalendarShow.svelte"
+    import Day from "../calendar/Day.svelte"
+    import { getSelectedEvents } from "../calendar/calendar"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { joinTimeBig } from "../../helpers/time"
