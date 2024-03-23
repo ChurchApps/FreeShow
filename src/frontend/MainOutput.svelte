@@ -8,6 +8,8 @@
     import { currentWindow, outputs, special, styles } from "./stores"
     import { hideDisplay } from "./utils/common"
 
+    $: outputId = Object.keys($outputs)[0]
+
     // get output resolution
     let width: number = 0
     let height: number = 0
@@ -37,10 +39,10 @@
             <p>Drag window</p>
         </div>
     {/if}
-    {#if Object.values($outputs)[0].stageOutput}
-        <StageShow stageId={Object.values($outputs)[0].stageOutput} edit={false} />
+    {#if $outputs[outputId].stageOutput}
+        <StageShow stageId={$outputs[outputId].stageOutput} edit={false} />
     {:else}
-        <Output style={getStyleResolution(resolution, width, height, "fit")} center />
+        <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
     {/if}
 </div>
 

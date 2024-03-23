@@ -67,8 +67,6 @@ export function startRestListener(PORT: number | undefined) {
 // DATA
 
 function receivedData(data: any = {}, log: any) {
-    console.log(data)
-
     if (!data?.action) return log("Received message from client, but missing 'action' key.", true)
 
     log(`Received action ${data.action}`)

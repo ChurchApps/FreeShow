@@ -136,7 +136,6 @@
     {#if id.includes("current_output")}
         {#if slide}
             <span style="pointer-events: none;">
-                <!-- <Output specificOutput={stageOutputId} bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror /> -->
                 {#if id.includes("_alpha") && currentOutput.keyOutput}
                     <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
                 {:else}

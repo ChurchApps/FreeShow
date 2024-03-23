@@ -26,6 +26,7 @@ import {
     locateMediaFile,
     openSystemFolder,
     parseShow,
+    readExifData,
     readFile,
     readFolder,
     renameFile,
@@ -141,6 +142,7 @@ const mainResponses: any = {
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),
     FULL_SHOWS_LIST: (data: any) => getAllShows(data),
+    READ_EXIF: (data: any, e: any) => readExifData(data, e),
     ACCESS_CAMERA_PERMISSION: () => {
         if (process.platform !== "darwin") return
         systemPreferences.askForMediaAccess("camera")

@@ -67,18 +67,6 @@
     {/each}
 </div>
 
-<!-- <Output
-    specificOutput={fullscreen && i === 0 ? fullscreen : outputId}
-    outline={outputList.length > 1 && !fullscreen && updatedList.length > 1}
-    disabled={outputList.length > 1 && !fullscreen && !$outputs[outputId]?.active}
-    {disableTransitions}
-    center={fullscreen}
-    style={fullscreen ? getStyleResolution(resolution, window.innerWidth, window.innerHeight, "fit") : ""}
-    {mirror}
-    {preview}
-    bind:title
-/> -->
-
 <style>
     .multipleOutputs {
         display: flex;
