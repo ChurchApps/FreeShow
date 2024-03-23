@@ -721,7 +721,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if ((slideId && slideId !== id) || !slide) return
 
                         let slideTemplate = template
-                        if (slide.settings?.template) slideTemplate = clone(get(templates)[slide.settings.template]) || template
                         if (!slideTemplate?.items?.length) return
 
                         // roll items around
