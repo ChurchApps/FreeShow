@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Show, Slide } from "../../types/Show"
+import type { Item, Show, Slide } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { checkName } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary } from "../stores"
@@ -77,8 +77,11 @@ function createSlides(slides: string[][]) {
         let id: string = uid()
         layouts.push({ id })
 
-        let items = [{ style: "left:50px;top:120px;width:1820px;height:840px;", lines: slide.map((a: any) => ({ align: "text-align: left;", text: [{ style: "", value: a }] })) }]
-
+        let items : Item[] = []
+        slide.forEach(line => {
+            items.push({style: "left:50px;top:120px;width:1820px;height:840px;", lines: [{align: "text-align: left;", text: [{ style: "", value: line }]}]})
+        });
+        
         slidesObj[id] = {
             group: (i + 1).toString(),
             color: null,
