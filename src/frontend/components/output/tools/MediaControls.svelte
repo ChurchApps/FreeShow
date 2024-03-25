@@ -1,100 +1,37 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, currentWindow, dictionary, outLocked, outputDisplay, outputs, playerVideos } from "../../../stores"
-    import { receive, send } from "../../../utils/request"
+    import { activeShow, dictionary, outLocked, playerVideos, videosData, videosTime } from "../../../stores"
+    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
-    import { clone } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
-    import { clearPlayingVideo } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
-    import { checkNextAfterMedia } from "../../helpers/showActions"
 
     export let currentOutput: any
     export let outputId: string
-    export let title: any
+
+    $: videoData = $videosData[outputId] || {}
 
     let videoTime: number = 0
-    let videoData: any = { duration: 0, paused: true, muted: false, loop: false }
-
-    let videoInterval: any = null
-    $: if (outputId && type === "video") send(OUTPUT, ["REQUEST_VIDEO_DATA"], { id: outputId })
-    else resetVideo()
-
-    // restore output video data when recreating window
-    $: if (!$outputDisplay) sendDataToOutput()
-    function sendDataToOutput() {
-        if (!currentOutput || !videoTime || !videoInterval) return
-        let data = clone(videoData)
-
-        setTimeout(() => {
-            send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime, data })
-        }, 2200)
+    $: updateVideoTime($videosTime[outputId])
+    let timeJustUpdated: any = null
+    function updateVideoTime(time: number = 0) {
+        timeJustUpdated = setTimeout(() => (timeJustUpdated = null), 900)
+        videoTime = time
     }
 
-    function resetVideo() {
-        clearInterval(videoInterval)
-
-        videoTime = 0
-        videoData = { duration: 0, paused: true, muted: false, loop: false }
-    }
-    function startVideoTimer() {
-        if (videoInterval) clearInterval(videoInterval)
-
-        videoInterval = setInterval(() => {
-            if (videoData.paused) return
-
-            videoTime++
-
-            if (videoTime >= videoData.duration) {
-                clearInterval(videoInterval)
-                send(OUTPUT, ["REQUEST_VIDEO_DATA"], { id: outputId })
-            }
-        }, 1000)
-    }
-
-    const receiveOutput = {
-        MAIN_VIDEO: (msg) => {
-            if (msg.id !== outputId) return
-            console.log(msg)
-
-            if (msg.data) videoData = msg.data
-
-            if (msg.time !== undefined) {
-                videoTime = msg.time || 0
-                startVideoTimer()
-            }
-        },
-        MAIN_VIDEO_ENDED: (msg) => {
-            // WIP only activated when preview media tab is open
-            console.log("ENDED!")
-
-            if ($currentWindow === "output") return
-
-            if (msg.id !== outputId || type !== "video") return
-            // check and execute next after media regardless of loop
-            // next after function is likely skipped as it is first executed by the startup receiver
-            if (checkNextAfterMedia(path) || videoData.loop) return
-
-            if (videoInterval) clearInterval(videoInterval)
-
-            setTimeout(async () => {
-                // return if background is set to something else
-                if ($outputs[outputId].out?.background?.path !== path) return
-
-                videoData = await clearPlayingVideo(outputId)
-                videoTime = 0
-            }, 600) // WAIT FOR NEXT AFTER MEDIA TO FINISH
-        },
-    }
-
+    // custom time update (for player videos)
     onMount(() => {
-        receive(OUTPUT, receiveOutput)
+        setInterval(() => {
+            if (videoData.paused || timeJustUpdated) return
+            videoTime++
+        }, 1000)
     })
 
-    /////
+    // reset
+    $: if (path) videoTime = 0
 
     $: background = currentOutput?.out?.background
     $: path = background?.path || background?.id
@@ -106,8 +43,8 @@
     $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
     const sendToOutput = () => {
-        send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
-        if (currentOutput.keyOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: currentOutput.keyOutput, data: videoData })
+        send(OUTPUT, ["DATA"], { [outputId]: videoData })
+        if (currentOutput.keyOutput) send(OUTPUT, ["DATA"], { [currentOutput.keyOutput]: videoData })
     }
 
     function openPreview() {
@@ -141,22 +78,22 @@
 <svelte:window on:keydown={keydown} />
 
 {#if background}
-    {#if background?.type === "player"}
-        <span class="name" on:click={openPreview}>
-            <p>{title?.length ? title : $playerVideos[background?.id || ""]?.name}</p>
-        </span>
-    {:else}
-        <span class="name" on:click={openPreview}>
+    <span class="name" on:click={openPreview}>
+        {#if background?.type === "player"}
+            <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
+        {:else}
             <p>{mediaName}</p>
-        </span>
-    {/if}
+        {/if}
+    </span>
 
     {#if type === "video" || background?.type === "player"}
         <span class="group">
             <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
             </Button>
+
             <VideoSlider disabled={$outLocked} {outputId} bind:videoData bind:videoTime bind:changeValue toOutput />
+
             <Button
                 center
                 title={$dictionary.media?.back10}

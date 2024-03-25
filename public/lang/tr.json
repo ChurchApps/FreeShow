@@ -11,16 +11,32 @@
         "finished": "Bitti",
         "system_open": "Sistemde aç"
     },
+    "titlebar": {
+        "file": "Dosya",
+        "edit": "Düzen",
+        "view": "Görünüm",
+        "help": "Yardım"
+    },
+    "screen": {
+        "width": "Genişlik",
+        "height": "Yükseklik",
+        "pixels": "Piksel",
+        "top": "Üst",
+        "right": "Sağ",
+        "bottom": "Alt",
+        "left": "Sol"
+    },
     "about": {
         "check_updates": "Güncellemeleri ara",
         "made": "tarafından Norveç'te yapılmıştır.",
         "report": "Bir sorunu bildirmek ister misiniz? GitHub'da bir sorun oluşturun.",
         "help": "Çeviriye yardım etmek veya bir özellik istemek mi istiyorsunuz? mail gönder",
+        "support": "Projeyi destekliyor musunuz?",
         "assets": "Kullanılan varlıklar",
         "libraries": "Kullanılan kütüphaneler",
         "thanks": "Teşekkür ederim",
         "new_update": "Yeni güncelleme mevcut",
-        "download": "İndirmek için freeshow.app'e gidin",
+        "download": "Güncellemek için uygulamayı yeniden başlatın veya manuel olarak indirmek için freeshow.app adresine gidin",
         "changes": "Neler yeni"
     },
     "tooltip": {
@@ -38,6 +54,9 @@
         "filters": "Seçilen öğenin görünümünü değiştirin.",
         "options": "Daha fazla seçenek.",
         "scripture": "Birden çok mısra seçmek için Ctrl/Cmd veya Shift tuşunu basılı tutun."
+    },
+    "tips": {
+        "trigger": "Tetikleyiciler genellikle kameraların ön ayarını değiştirmek amacıyla bir HTTP isteği göndermek için kullanılır."
     },
     "setup": {
         "good_luck": "Umarım bu yazılımı yararlı bulursunuz. İyi şanslar! :)",
@@ -61,21 +80,6 @@
         "default": "Varsayılan",
         "small": "Küçük",
         "bold": "Bold"
-    },
-    "titlebar": {
-        "file": "Dosya",
-        "edit": "Düzen",
-        "view": "Görünüm",
-        "help": "Yardım"
-    },
-    "screen": {
-        "width": "Genişlik",
-        "height": "Yükseklik",
-        "pixels": "Piksel",
-        "top": "Üst",
-        "right": "Sağ",
-        "bottom": "Alt",
-        "left": "Sol"
     },
     "create_show": {
         "search_web": "Web'de şarkı arayın",
@@ -138,6 +142,8 @@
         "speed": "Hız",
         "show": "Göster",
         "flip": "Çevir",
+        "flip_horizontally": "Yatay olarak çevir",
+        "flip_vertically": "Dikey olarak çevir",
         "all": "Klasörler, resimler & videolar",
         "folder": "Yalnızca klasörler",
         "image": "Sadece resimler",
@@ -146,7 +152,8 @@
         "contain": "İçerir",
         "fill": "Doldur",
         "cover": "Kapak",
-        "online": "Çevrimiçi"
+        "online": "Çevrimiçi",
+        "recommended": "Tavsiye edilen"
     },
     "menu": {
         "show": "Gösteri",
@@ -256,14 +263,13 @@
         "hover": "Fareyle üzerine gelin",
         "focus": "Odak"
     },
-    "buttons": {
-        "changeTheme": "Temayı değiştir"
-    },
     "inputs": {
         "name": "İsim",
         "url": "URL",
         "video_id": "Video ID/URL",
         "close_ad": "Çıktı ekranında reklamı kapat",
+        "start": "Başlat",
+        "end": "Son",
         "change_folder": "Başka bir yer seçin"
     },
     "tabs": {
@@ -281,9 +287,6 @@
         "triggers": "Tetikleyiciler",
         "templates": "Şablonlar",
         "web": "Web"
-    },
-    "tips": {
-        "trigger": "Tetikleyiciler genellikle kameraların ön ayarını değiştirmek amacıyla bir HTTP isteği göndermek için kullanılır."
     },
     "category": {
         "all": "Tümü",
@@ -324,6 +327,7 @@
         "timer": "Zamanlayıcı",
         "variable": "Değişken",
         "trigger": "Tetikleyici",
+        "audio_stream": "Ses akışı",
         "transition": "Geçiş",
         "delete_show": "Gösteriyi sil",
         "delete_show_confirmation": "Silmek istediğine emin misin",
@@ -349,6 +353,7 @@
         "shortcuts": "Kısayollar",
         "icon": "Simgeler",
         "manage_icons": "Simgeleri yönet",
+        "manage_colors": "Renkleri yönet",
         "choose_camera": "Kamera seç",
         "initialize": "FreeShow'a Hoşgeldiniz",
         "unsaved": "Henüz kaydetmediniz! Çıkmak istediğinden emin misin?",
@@ -397,6 +402,7 @@
         "timer": "Yeni zamanlayıcı",
         "variable": "Yeni değişken",
         "trigger": "Yeni tetikleyici",
+        "audio_stream": "Yeni ses akışı",
         "category": "Yeni kategori",
         "private": "Yeni özel gösteri",
         "folder": "Yeni dosya",
@@ -417,7 +423,8 @@
         "list": "Liste görünümü",
         "lyrics": "Şarkı sözü görünümü",
         "text": "Metin düzenleme",
-        "update": "Gösteriyi güncelle"
+        "update": "Gösteriyi güncelle",
+        "slide_template": "Slayt şablonu"
     },
     "actions": {
         "rename": "Yeniden adlandır",
@@ -436,6 +443,8 @@
         "export": "Dışa aktar",
         "duplicate": "Çoğalt",
         "delete": "Sil",
+        "delete_slide": "Slaydı sil",
+        "delete_group": "Grubu sil",
         "delete_all": "Hepsini sil",
         "close": "Kapat",
         "save": "Kaydet",
@@ -468,11 +477,13 @@
         "unmute": "Unmute",
         "toggle_time_marker": "Zaman işaretlerini değiştir",
         "add_time_marker": "Zaman işaretçisi ekle",
-        "bind_to": "Bağlanan",
-        "remove_binding": "Bağlamayı kaldır",
+        "bind_to": "Özel çıktılar",
+        "remove_binding": "Belirli çıkışları kaldır",
+        "dynamic_values": "Dinamik değerler",
         "show_timer": "Gösteriye kalan süre",
         "hide_timer": "Gizlene kadar geçen süre",
         "choose_custom": "Özel seç",
+        "add_color": "Renk ekle",
         "format": "Biçim",
         "find_replace": "Metni bul ve değiştir",
         "cut_in_half": "Yarıdan kes",
@@ -502,7 +513,7 @@
         "refresh_all_shows": "Tüm şovları 'Şovlar' klasörüne alın",
         "start_timer": "Zamanlayıcıyı başlat",
         "stop_timers": "Aktif zamanlayıcıları durdur",
-        "next_after_media": "Medyadan sonraki sonraki",
+        "next_after_media": "Sonraki medya bitti",
         "remove_media": "Medyayı kaldır",
         "remove_layers": "Katmanları kaldır",
         "index_select_project": "Dizine göre proje seç",
@@ -594,9 +605,13 @@
         "slide": "Slayt"
     },
     "edit": {
+        "text": "Metin",
         "font": "Yazı tipi",
-        "family": "Aile",
+        "family": "Font ailesi",
+        "font_size": "Yazı boyutu",
+        "text_color": "Metin rengi",
         "style": "Stil",
+        "lines": "Çizgi",
         "options": "Seçenekler",
         "_title_bold": "Bold",
         "_title_italic": "Italic",
@@ -610,11 +625,13 @@
         "size": "Boyut",
         "chords": "Akorlar",
         "auto_size": "Otomatik boyut",
+        "no_wrap": "Tek satırdaki metin",
         "line_spacing": "Satır aralığı",
         "line_height": "Satır yüksekliği",
         "letter_spacing": "Harf boşluğu",
         "word_spacing": "Kelime aralığı",
         "transform": "Dönüştür",
+        "text_transform": "Metin dönüşümü",
         "uppercase": "Büyük harf",
         "lowercase": "Küçük harf",
         "capitalize": "Capitalize",
@@ -626,13 +643,13 @@
         "_title_top": "Üste hizala",
         "_title_bottom": "Alta hizala",
         "outline": "Anahat",
-        "width": "Genişlik",
         "shadow": "Gölge",
         "shadow_inset": "Gölge eki",
         "offsetX": "Offset X",
         "offsetY": "Offset Y",
         "blur": "Blur",
         "item": "Öğe",
+        "width": "Genişlik",
         "height": "Yükseklik",
         "rotation": "Döndürme",
         "tilt": "Tilt",
@@ -654,6 +671,7 @@
         "recent": "Yakında düzenlendi",
         "enable_stage": "Aşamayı etkinleştir",
         "select_stage": "Aşama seçin",
+        "next_slide": "Sonraki slaydı göster",
         "use_slide_index": "Aktif dizini kullan",
         "slide_index": "Slayt dizini",
         "padding": "Padding",
@@ -815,6 +833,7 @@
         "select_display": "Çıktı penceresini görüntülemek istemediğiniz ekrana tıklayın.",
         "manual_input_hint": "Ekranı bulamıyor musunuz? Konumu manuel olarak değiştirmek için buraya tıklayın.",
         "manual_drag_hint": "Etkin bir çıktı penceresi üzerinde elle sürüklemek için ctrl/cmd'yi de basılı tutabilirsiniz.",
+        "identify_screens": "Ekranları tanımlayın",
         "new_output": "Yeni çıkış",
         "enable_key_output": "Alfa anahtarı çıkışını etkinleştir",
         "always_on_top": "Her zaman üstte",
@@ -834,6 +853,7 @@
         "group_numbers": "Grup numaraları",
         "full_colors": "Tam slayt grubu renkleri",
         "auto_output": "Başlangıçta çıktı ekranını etkinleştir",
+        "hide_cursor_in_output": "İmleci çıktıda gizle",
         "default_project_name": "Varsayılan proje adı",
         "resolution": "Çözünürlük",
         "cropping": "Kırpma",
@@ -845,9 +865,8 @@
         "remove": "Kaldır",
         "change_name": "İsmini değiştir",
         "show_location": "Konumu göster",
-        "export_location": "Dışa aktarma yeri",
-        "scripture_location": "Kutsal yer",
-        "recording_location": "Kayıt yeri",
+        "data_location": "Veri konumu",
+        "user_data_location": "Kullanıcı ayarlarını 'Veri konumu'na kaydedin",
         "font": "Yazı tipi",
         "font_family": "Font ailesi",
         "font_size": "Yazı Boyutu",
@@ -867,6 +886,7 @@
         "reset_all": "Her şeyi sıfırla",
         "reset_theme": "Temayı sıfırla",
         "reset_themes": "Temaları sıfırla",
+        "capitalize_words": "Kelimeleri büyük harfle yaz",
         "backup_all": "Her şeyi yedekle",
         "restore": "Eski haline getir",
         "backup_started": "Yedekleniyor...",
@@ -921,7 +941,10 @@
         "verse_numbers": "Verse numbers",
         "version": "Show version",
         "reference": "Show reference",
-        "red_jesus": "Jesus words in red"
+        "combine_with_text": "Metinle birleştir",
+        "reference_at_bottom": "En alta taşı",
+        "red_jesus": "Jesus words in red",
+        "search": "Kutsal Kitap'ta Ara"
     },
     "filter": {
         "blur": "Blur",
@@ -938,7 +961,8 @@
         "screens": "Ekranlar",
         "windows": "Windows",
         "cameras": "Kameralar",
-        "microphones": "Mikrofonlar"
+        "microphones": "Mikrofonlar",
+        "audio_streams": "Ses akışları"
     },
     "transition": {
         "current_slide": "geçerli slayt için",

@@ -19,9 +19,8 @@
 
         setTimeout(() => {
             sendToOutput()
-            // if (movePause) pauseAtMove(false)
             changeValue = 0
-        }, 50)
+        })
     }
 
     let sliderValue = 0
@@ -57,26 +56,24 @@
         if (changeVideoTimeout || (!movePause && !videoData.paused) || !latestValue) return
 
         videoTime = Number(latestValue)
-        if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime })
+        if (toOutput) send(OUTPUT, ["TIME"], { [outputId]: videoTime })
 
         changeVideoTimeout = setTimeout(() => {
             changeVideoTimeout = null
             if (!movePause || !videoData.paused) return
             videoTime = Number(latestValue)
-            if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime })
+            if (toOutput) send(OUTPUT, ["TIME"], { [outputId]: videoTime })
         }, 80)
     }
 
     const sendToOutput = (e: any = null) => {
         if (!movePause || !videoData.paused) return
-        console.log("CHANGE", e)
 
         let value = e?.target?.value
-        console.log(Number(value))
 
         if (value !== undefined) {
             videoTime = Number(value)
-            if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, time: videoTime })
+            if (toOutput) send(OUTPUT, ["TIME"], { [outputId]: videoTime })
         }
 
         if (movePause) pauseAtMove(false)
@@ -87,7 +84,7 @@
     let movePause: boolean = false
     function pauseAtMove(boolean: boolean = true) {
         movePause = videoData.paused = boolean
-        if (toOutput) send(OUTPUT, ["UPDATE_VIDEO"], { id: outputId, data: videoData })
+        if (toOutput) send(OUTPUT, ["DATA"], { [outputId]: videoData })
     }
 </script>
 

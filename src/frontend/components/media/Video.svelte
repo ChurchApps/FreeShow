@@ -4,16 +4,14 @@
     import { volume } from "../../stores"
 
     export let path: any
-    export let video: any
+    export let video: any = null
     export let videoData: any
     export let videoTime: any
-
     export let startAt: number = 0
-    export let mirror: boolean = false
 
     export let mediaStyle: MediaStyle = {}
-
     export let animationStyle: string = ""
+    export let mirror: boolean = false
 
     let dispatch: any = createEventDispatcher()
 
@@ -22,8 +20,7 @@
         hasLoaded = true
         dispatch("loaded", true)
 
-        // if (!video) return
-
+        // audio context
         // this don't work because video audio goes through audio context
         // if (!$special.audioOutput) return
         // try {
@@ -33,23 +30,19 @@
         // }
     }
 
+    // custom end time
     $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0
-    $: if (endTime) setInterval(checkIfEnded, 1000)
+    $: if (endTime) setInterval(checkIfEnded, 1000 * playbackRate)
     function checkIfEnded() {
-        if (!video) return
-        console.log(video.currentTime, video.currentTime >= endTime!)
-        if (video.currentTime >= endTime!) dispatch("ended")
+        if (!videoTime) return
+        if (videoTime >= endTime!) dispatch("ended")
     }
-    // $: if (endTime && videoTime >= endTime) endVideo()
-    // function endVideo() {
-    //     dispatch("ended")
-    // }
 
     function playing() {
         if (!hasLoaded || mirror) return
         hasLoaded = false
-        dispatch("playing", true)
 
+        // go to custom start time
         videoData.paused = true
         setTimeout(() => {
             videoTime = Math.max(startAt, mediaStyle.fromTime || 0) || 0
@@ -58,8 +51,7 @@
         }, 50)
     }
 
-    $: if (mediaStyle.speed && video) video.playbackRate = Number(mediaStyle.speed)
-
+    $: playbackRate = Number(mediaStyle.speed) || 1
     $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
 </script>
 
@@ -72,6 +64,7 @@
         on:playing={playing}
         on:ended
         on:error
+        bind:playbackRate
         bind:currentTime={videoTime}
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}

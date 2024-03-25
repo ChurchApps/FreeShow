@@ -2,6 +2,8 @@
     import Player from "@vimeo/player"
     import { currentWindow, theme, themes } from "../../../stores"
     import { OUTPUT } from "../../../../types/Channels"
+    import { createEventDispatcher } from "svelte"
+    import { send } from "../../../utils/request"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
@@ -23,6 +25,7 @@
         // byline: false,
     }
 
+    let dispatch = createEventDispatcher()
     let iframe = null
     let player = null
     let loaded = false
@@ -47,6 +50,7 @@
 
         videoData.paused = false
         seekTo(videoTime)
+        dispatch("loaded", true)
 
         player.on("play", () => (paused = false))
         player.on("pause", () => (paused = true))
@@ -89,7 +93,7 @@
                 if (isPlaying) videoData.paused = false
                 seeking = false
 
-                if (outputId) window.api.send(OUTPUT, { channel: "MAIN_VIDEO", data: { id: outputId, time: videoTime } })
+                if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: videoTime })
             }, 800)
         }, 100)
     }

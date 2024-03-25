@@ -107,7 +107,7 @@
     function playVideo(startAt: number = 0) {
         if ($outLocked) return
 
-        let bg: any = { type: show!.type, startAt, loop: false, ...mediaStyle }
+        let bg: any = { type: show!.type, startAt, muted: false, loop: false, ...mediaStyle }
 
         if (show!.type === "player") bg.id = show!.id
         else {
@@ -141,7 +141,8 @@
             // sort by time
             a[show.id] = a[show.id].sort((a, b) => a.time - b.time)
 
-            activeRename.set("marker_" + (a[show.id].length - 1))
+            let markerIndex = a[show.id].findIndex((a) => a.time === newMarker.time)
+            activeRename.set("marker_" + markerIndex)
 
             return a
         })

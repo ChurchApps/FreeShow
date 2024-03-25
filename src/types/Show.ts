@@ -277,14 +277,17 @@ export interface OutBackground {
     id?: ID
     path?: string
     name?: string
+    type?: MediaType
+    // video / player
     startAt?: number
     muted?: boolean
     loop?: boolean
+    // media
     filter?: string
     flipped?: boolean
     flippedY?: boolean
-    // name?: string
-    type?: MediaType
+    title?: string // player
+    cameraGroup?: string // camera
 }
 
 export interface OutSlide {

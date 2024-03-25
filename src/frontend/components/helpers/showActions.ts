@@ -549,11 +549,15 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 
 // go to next slide if current output slide has nextAfterMedia action
 let nextActive = false
-export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media") {
+export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media", outputId: string = "") {
     if (nextActive) return
-    nextActive = true
 
-    let outputId = getActiveOutputs(get(outputs), true, true)[0]
+    nextActive = true
+    setTimeout(() => {
+        nextActive = false
+    }, 700)
+
+    if (!outputId) outputId = getActiveOutputs(get(outputs), true, true, true)[0]
     if (!outputId) return false
 
     let currentOutput: any = get(outputs)[outputId]
@@ -587,10 +591,6 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
 
     setTimeout(() => {
         nextSlide(null, false, false, false, true, outputId, true)
-
-        setTimeout(() => {
-            nextActive = false
-        }, 200)
     }, 500) // has to be higher on low end devices
 
     return true
@@ -655,7 +655,7 @@ export function clearAll(button: boolean = false) {
 // WIP restore only selected outputs
 export function restoreOutput() {
     if (get(outLocked)) return
-    
+
     outputs.set(get(outputCache))
     outputCache.set(null)
 }

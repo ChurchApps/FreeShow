@@ -62,7 +62,7 @@
                     return
                 }
 
-                setOutput("background", { id: video.rid, type: "player", startAt: 0 })
+                setOutput("background", { id: video.rid, type: "player", muted: false, loop: false, startAt: 0 })
             }}
             on:dblclick={() => {
                 activeShow.set({ id: video.rid, type: "player" })

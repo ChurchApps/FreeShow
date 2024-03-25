@@ -74,6 +74,8 @@ export const outputCache: Writable<any> = writable(null)
 export const previewBuffers: Writable<any> = writable({})
 export const ndiData: Writable<any> = writable({})
 export const closeAd: Writable<boolean> = writable(false)
+export const videosData: Writable<any> = writable({})
+export const videosTime: Writable<any> = writable({})
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })

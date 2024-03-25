@@ -54,13 +54,11 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 let muted = data.muted || false
                 if (outs.length > 1 && i !== 0) muted = true
 
-                let msg: any = { id, data: { muted, loop: data.loop || false } }
-                if (data.startAt !== undefined) msg.time = data.startAt || 0
-
-                console.log(data, msg)
+                let videoData: any = { muted, loop: data.loop || false }
 
                 setTimeout(() => {
-                    send(OUTPUT, ["UPDATE_VIDEO"], msg)
+                    send(OUTPUT, ["DATA"], { [id]: videoData })
+                    if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
                 }, 100)
             }
         })

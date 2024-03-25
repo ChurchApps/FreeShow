@@ -16,7 +16,7 @@
     import PreviewOutputs from "./PreviewOutputs.svelte"
     import ShowActions from "../ShowActions.svelte"
     import Audio from "../tools/Audio.svelte"
-    import Media from "../tools/Media.svelte"
+    import MediaControls from "../tools/MediaControls.svelte"
     import NextTimer from "../tools/NextTimer.svelte"
     import Overlay from "../tools/Overlay.svelte"
     import Show from "../tools/Show.svelte"
@@ -153,8 +153,6 @@
         return playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
     }
 
-    let title: string = ""
-
     // active menu
     let activeClear: any = null
     let autoChange: boolean = true
@@ -236,7 +234,7 @@
         <ClearButtons {outputId} bind:autoChange bind:activeClear />
 
         {#if activeClear === "background"}
-            <Media {currentOutput} {outputId} bind:title />
+            <MediaControls {currentOutput} {outputId} />
         {:else if activeClear === "slide"}
             <Show {currentOutput} {ref} {linesIndex} {maxLines} />
         {:else if activeClear === "overlays"}

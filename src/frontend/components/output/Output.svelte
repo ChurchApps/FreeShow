@@ -12,83 +12,93 @@
     import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, joinMetadata, setTemplateStyle } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Zoomed from "../slide/Zoomed.svelte"
-    import MediaOutput from "./MediaOutput.svelte"
     import { updateAnimation, wait } from "./animation"
+    import Background from "./layers/Background.svelte"
     import Metadata from "./layers/Metadata.svelte"
     import Overlays from "./layers/Overlays.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
+    import type { Styles } from "../../../types/Settings"
 
     export let outputId: string = ""
     export let style = ""
     export let ratio: number = 0
     export let mirror: boolean = false
 
-    // output & styling
     $: currentOutput = $outputs[outputId] || {}
-    $: currentStyle = getCurrentStyle($styles, currentOutput.style)
 
-    // resolution
-    $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
+    // output styling
+    $: currentStyling = getCurrentStyle($styles, currentOutput.style)
+    let currentStyle: Styles = { name: "" }
+    // don't refresh content unless it changes
+    $: if (JSON.stringify(currentStyling) !== JSON.stringify(currentStyle)) currentStyle = currentStyling
 
     // layers
     let layers: string[] = []
     let out: any = {}
     let slide: any = null
     let background: any = null
-    // let allOverlays: any = null
+    let clonedOverlays: any = {}
 
+    // don't update when layer content changes, only when refreshing or adding/removing layer
     $: if (JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) layers = clone(currentStyle.layers || defaultLayers)
     $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = clone(currentOutput?.out || {})
-    $: if (out.refresh || JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
-    $: if (out.refresh || JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
-    // $: if (out.refresh || JSON.stringify(allOverlays) !== JSON.stringify(out.overlays || null)) updateOutData("overlays")
 
-    $: if (outputId) updateOutData()
+    $: if (JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
+    $: if (JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
+
+    $: refreshOutput = out.refresh
+    $: if (outputId || refreshOutput) updateOutData()
     function updateOutData(type: string = "") {
         if (!type || type === "slide") slide = clone(out.slide || null)
         if (!type || type === "background") background = clone(out.background || null)
-        // if (!type || type === "overlays") allOverlays = clone(out.overlays || null)
+        if (!type || type === "overlays") clonedOverlays = clone($overlays)
     }
 
-    // OVERLAYS
-    // $: outOverlays = allOverlays?.filter((a) => !a?.placeUnderSlide)
-    // $: outUnderlays = allOverlays?.filter((a) => a?.placeUnderSlide)
-    // prevent updated when editing or when output changes
-    let clonedOverlays = {}
-    let outOverlays: any[] = []
-    let outUnderlays: any[] = []
-    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => !a?.placeUnderSlide)) !== JSON.stringify(outOverlays)) updateOverlays()
-    $: if (out.refresh || JSON.stringify(out.overlays?.filter((a) => a?.placeUnderSlide)) !== JSON.stringify(outUnderlays)) updateOverlays()
-    function updateOverlays() {
-        clonedOverlays = clone($overlays)
-        if (!out.overlays) return
-
-        outUnderlays = []
-        outOverlays = []
-        out.overlays.forEach((id) => {
-            if (clonedOverlays[id]?.placeUnderSlide) outUnderlays.push(id)
-            else outOverlays.push(id)
-        })
-    }
+    // overlays
+    $: overlayIds = out.overlays
+    $: if (overlayIds) updateOutData("overlays")
+    $: outOverlays = out.overlays?.filter((id) => !clonedOverlays[id]?.placeUnderSlide)
+    $: outUnderlays = out.overlays?.filter((id) => clonedOverlays[id]?.placeUnderSlide)
 
     // layout & slide data
-    $: currentLayout = $showsCache && slide && slide.id !== "temp" ? clone(_show(slide.id).layouts([slide.layout]).ref()?.[0] || []) : []
-    $: slideId = currentLayout[slide?.index]?.id || ""
-    $: slideData = currentLayout[slide?.index]?.data || null
-    $: currentSlide = slide && outputId ? (slide.id === "temp" ? { items: slide.tempItems } : currentLayout ? cloneCurrentSlide() : null) : null
-    // TODO: weird svele bug not updating slideId when it's used in "$: currentSlide" (affecting draw slide index)
-    function cloneCurrentSlide() {
-        return clone(_show(slide.id).slides([slideId]).get()[0] || {})
+    let currentLayout: any[] = []
+    let slideData: any = null
+    let currentSlide: any = null
+
+    $: updateSlideData(slide, outputId)
+    function updateSlideData(slide, _outputChanged) {
+        if (!slide) {
+            currentLayout = []
+            slideData = null
+            currentSlide = null
+            return
+        }
+
+        currentLayout = clone(_show(slide.id).layouts([slide.layout]).ref()?.[0] || [])
+        slideData = currentLayout[slide?.index]?.data || null
+
+        // don't refresh content unless it changes
+        let newCurrentSlide = getCurrentSlide()
+        if (JSON.stringify(newCurrentSlide) !== JSON.stringify(currentSlide)) currentSlide = newCurrentSlide
+
+        function getCurrentSlide() {
+            if (!slide && !outputId) return null
+            if (slide.id === "temp") return { items: slide.tempItems }
+            if (!currentLayout) return null
+
+            let slideId: string = currentLayout[slide?.index]?.id || ""
+            return clone(_show(slide.id).slides([slideId]).get()[0] || {})
+        }
     }
 
-    // filters
+    // slide styling
+    $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
+    $: transitions = getOutputTransitions(slideData, $transitionData, mirror)
     $: slideFilter = getSlideFilter(slideData)
 
-    // transitions
-    $: transitions = getOutputTransitions(slideData, $transitionData, mirror)
-
-    // template items
-    $: if (currentSlide && currentOutput?.style && currentStyle) setTemplateItems()
+    // custom template
+    $: outputStyle = currentOutput?.style
+    $: if (currentSlide && outputStyle && currentStyle) setTemplateItems()
     const setTemplateItems = () => (currentSlide.items = setTemplateStyle(slide, currentStyle.template, currentSlide.items))
 
     // lines
@@ -100,16 +110,16 @@
     let metadata: OutputMetadata = {}
     $: metadata = getMetadata(metadata, $showsCache[slide?.id], currentStyle, $templates, slide)
 
-    // media metadata
+    // media exif metadata
     $: getExifData = metadata.media
-    $: if (getExifData && background.path) getExif()
+    $: if (getExifData && background?.path) getExif()
     function getExif() {
         metadata.value = ""
         send(MAIN, ["READ_EXIF"], { id: background.path })
     }
     const receiveExif: any = {
         READ_EXIF: (data: any) => {
-            if (!metadata.media || data.id !== background.path) return
+            if (!metadata.media || data.id !== background?.path) return
             let message = decodeExif(data)
             metadata.value = joinMetadata(message, currentStyle.metadataDivider)
         },
@@ -119,65 +129,6 @@
     onDestroy(() => destroy(MAIN, listener))
 
     ////////////// WIP ///////////////
-
-    // give time for video to clear
-    let tempVideoBG: any = null
-    // let getTimeout: any = null
-    $: if (background || currentStyle?.backgroundImage) getTempBG()
-    else resetTempBG()
-
-    // svelte bug: dont allow path to change while video is transitioning
-    let mediaPath: string = ""
-    let oldPath: string = ""
-    let pathTimeout: any = null
-    $: if (background?.path || currentStyle?.backgroundImage) getPath()
-    function getPath() {
-        clearTimeout(pathTimeout)
-
-        if (oldPath === (background?.path || currentStyle?.backgroundImage)) {
-            pathTimeout = setTimeout(() => {
-                if (!background?.path && !currentStyle?.backgroundImage) return
-                mediaPath = background?.path || currentStyle?.backgroundImage
-            }, transitions.media.duration + 100)
-            return
-        }
-
-        mediaPath = background?.path || currentStyle?.backgroundImage
-        oldPath = mediaPath
-
-        pathTimeout = setTimeout(() => {
-            oldPath = ""
-        }, transitions.media.duration + 100)
-    }
-
-    function getTempBG() {
-        if (clearing) return
-
-        if (!background || !layers.includes("background")) {
-            if (!currentStyle?.backgroundImage) {
-                tempVideoBG = null
-                return
-            }
-
-            tempVideoBG = { path: currentStyle?.backgroundImage }
-            return
-        }
-
-        tempVideoBG = background
-    }
-
-    let clearing: boolean = false
-    function resetTempBG() {
-        if (tempVideoBG === null) return
-
-        clearing = true
-        tempVideoBG = null
-
-        setTimeout(() => {
-            clearing = false
-            if (background || currentStyle?.backgroundImage) getTempBG()
-        }, transitions.media.duration + 100)
-    }
 
     // prevent too fast slide text updates (svelte transition bug)
     // WIP svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild'))
@@ -240,25 +191,22 @@
     }
 
     // values
-    $: backgroundColor = currentOutput.isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"
     $: isKeyOutput = currentOutput.isKeyOutput
+    $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id]?.message?.text || ""
-    $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide.index === 0) || (metadata.display?.includes("last") && slide.index === currentLayout.length - 1))
+    $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
+    $: backgroundData = background || { path: currentStyle?.backgroundImage || "" }
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.duration || 800} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
     <!-- background -->
-    {#if tempVideoBG && (layers.includes("background") || currentStyle?.backgroundImage)}
-        <div class="media" style="height: 100%;zoom: {1 / ratio};transition: filter {transitions.media.duration || 800}ms, backdrop-filter {transitions.media.duration || 800}ms;{slideFilter}" class:key={currentOutput.isKeyOutput}>
-            <MediaOutput {...tempVideoBG} background={tempVideoBG} path={mediaPath} {outputId} {currentStyle} animationStyle={animationData.style?.background || ""} transition={transitions.media} mirror={currentOutput.isKeyOutput || mirror} />
-        </div>
+    {#if layers.includes("background") || currentStyle?.backgroundImage}
+        <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror={isKeyOutput || mirror} />
     {/if}
 
     <!-- "underlays" -->
-    {#if outUnderlays?.length}
-        {#key out.refresh}
-            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
-        {/key}
+    {#if layers.includes("overlays") && outUnderlays?.length}
+        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
     {/if}
 
     <!-- slide -->
@@ -291,9 +239,7 @@
 
         <!-- overlays -->
         {#if outOverlays?.length}
-            {#key out.refresh}
-                <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
-            {/key}
+            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
         {/if}
     {/if}
 
@@ -302,11 +248,3 @@
         <Draw />
     {/if}
 </Zoomed>
-
-<style>
-    .key {
-        /* filter: brightness(50); */
-        filter: grayscale(1) brightness(1000) contrast(100);
-        /* filter: invert(1) grayscale(1) brightness(1000); */
-    }
-</style>

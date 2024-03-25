@@ -61,6 +61,8 @@ import {
     variables,
     videoExtensions,
     videoMarkers,
+    videosData,
+    videosTime,
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
@@ -143,11 +145,28 @@ export function updateSettings(data: any) {
 }
 
 export function restartOutputs() {
-    keysToID(get(outputs))
+    let data = clone(videosData)
+    let time = clone(videosTime)
+
+    let allOutputs = keysToID(get(outputs))
+    allOutputs
         .filter((a) => a.enabled)
-        .forEach((output: any) => {
+        .forEach((output: Output) => {
+            // key output styling
+            if (output.isKeyOutput) {
+                let parentOutput = allOutputs.find((a) => a.keyOutput === output.id)
+                if (parentOutput) output = { ...parentOutput, ...output }
+            }
+
             send(OUTPUT, ["CREATE"], { ...output, rate: get(special).previewRate || "auto" })
         })
+
+    // restore output video data when recreating window
+    // WIP values are empty when sent
+    setTimeout(() => {
+        send(OUTPUT, ["DATA"], data)
+        send(OUTPUT, ["TIME"], time)
+    }, 2200)
 }
 
 export function updateThemeValues(themes: any) {

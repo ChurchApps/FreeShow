@@ -3,6 +3,7 @@
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { currentWindow, playerVideos } from "../../../stores"
     import { send } from "../../../utils/request"
+    import { createEventDispatcher } from "svelte"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
@@ -30,6 +31,7 @@
         },
     }
 
+    let dispatch = createEventDispatcher()
     let player = null
     let loaded = false
     function onReady(e) {
@@ -68,6 +70,7 @@
 
         videoData.paused = false
         seekTo(videoTime)
+        dispatch("loaded", true)
     }
 
     $: if (loaded) updateTime()
@@ -99,7 +102,7 @@
             if (!videoData.paused) player.playVideo()
             seeking = false
 
-            if (outputId) window.api.send(OUTPUT, { channel: "MAIN_VIDEO", data: { id: outputId, time: videoTime } })
+            if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: videoTime })
         }, 500)
     }
 

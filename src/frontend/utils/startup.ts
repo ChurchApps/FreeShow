@@ -5,7 +5,7 @@ import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
-import { getActiveOutputs } from "../components/helpers/output"
+import { clearPlayingVideo, getActiveOutputs } from "../components/helpers/output"
 import { checkName } from "../components/helpers/show"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -75,6 +75,8 @@ import {
     transitionData,
     variables,
     version,
+    videosData,
+    videosTime,
     visualizerData,
     volume,
 } from "../stores"
@@ -328,15 +330,25 @@ const receiveOUTPUTasMAIN: any = {
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),
+    MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
+    MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
     MAIN_VIDEO_ENDED: async (msg) => {
-        let videoPath = get(outputs)[msg.id].out?.background?.path
-        // WIP! "DUPLICATE" of Media.svelte receiver NOT SURE IF THIS DOES ANYTHING
+        if (clearing) return
+        clearing = true
+        setTimeout(() => (clearing = false), msg.duration || 1000)
+
+        let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || ""
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
-        setTimeout(() => checkNextAfterMedia(videoPath!), 10)
+        if (checkNextAfterMedia(videoPath, "media", msg.id) || msg.loop) return
+
+        setTimeout(async () => {
+            await clearPlayingVideo(msg.id)
+        }, 600) // WAIT FOR NEXT AFTER MEDIA TO FINISH
     },
 }
+let clearing: boolean = false
 
 let previousOutputs: string = ""
 const receiveOUTPUTasOUTPUT: any = {
