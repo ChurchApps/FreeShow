@@ -3,7 +3,7 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground, Transition } from "../../../../types/Show"
-    import { allOutputs, audioChannels, outputs, playingVideos } from "../../../stores"
+    import { allOutputs, audioChannels, outputs, playingVideos, videosData, videosTime } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import { analyseAudio, getAnalyser } from "../../helpers/audio"
     import { getMediaStyle } from "../../helpers/media"
@@ -44,6 +44,9 @@
         videoData.muted = data.muted ?? true
         videoData.loop = data.loop ?? false
     }
+    // draw
+    $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
+    $: if (mirror && $videosTime[outputId]) videoTime = $videosTime[outputId]
 
     $: if (!mirror) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
     $: if (!mirror) sendVideoTime(videoTime)

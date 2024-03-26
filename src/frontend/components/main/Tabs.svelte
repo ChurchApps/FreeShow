@@ -10,7 +10,7 @@
     export let labels: boolean = $labelsDisabled ? false : true
 
     let firstOverflowIndex: number = Object.values(tabs).findIndex((a) => a.overflow)
-    let overflowHidden: boolean = true
+    export let overflowHidden: boolean = true
 </script>
 
 <div class="tabs">

@@ -58,7 +58,7 @@
         bgs = []
         layoutBackgrounds.forEach((a: any) => {
             if (!show.media[a]) return
-            let path = show.media[a].path || show.media[a].id!
+            let path: string = show.media[a].path || show.media[a].id || ""
             let cloudId = $driveData.mediaId
             if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
@@ -131,7 +131,7 @@
 
     let simularBgs: any[] = []
     $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
-    receive(MAIN, { GET_SIMULAR: (data: string[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a))).slice(0, 3)) }, "media_simular")
+    receive(MAIN, { GET_SIMULAR: (data: any[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)) }, "media_simular")
     onDestroy(() => destroy(MAIN, "media_simular"))
 </script>
 
@@ -200,7 +200,7 @@
                                 size={3}
                                 on:click={() => {
                                     if (!$outLocked) {
-                                        setOutput("background", { path: background.path, type: background.type, loop: true, muted: true, ...mediaStyle })
+                                        setOutput("background", { path: background.path, type, loop: true, muted: true, ...mediaStyle })
                                         if (type === "video") send(OUTPUT, ["DATA"], { [outputId]: { duration: 0, paused: false, muted: true, loop: true } })
                                     }
                                 }}

@@ -290,7 +290,7 @@ export function getCurrentMediaTransition() {
 
 // TEMPLATE
 
-export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false) {
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true) {
     slideItems = clone(slideItems)
     if (!templateItems.length) return slideItems
 
@@ -306,9 +306,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.style = templateItem.style || ""
         item.align = templateItem.align || ""
 
-        delete item.autoFontSize
+        if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
 
+        if (templateItem.chords) item.chords = templateItem.chords
         if (templateItem.actions) item.actions = templateItem.actions
         if (templateItem.specialStyle) item.specialStyle = templateItem.specialStyle
         if (templateItem.scrolling) item.scrolling = templateItem.scrolling
@@ -323,6 +324,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             line.text?.forEach((text: any, k: number) => {
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
                 text.style = templateText?.style || ""
+
+                // add dynamic values
+                if (!text.value?.length && templateText?.value?.[0] === "{") {
+                    text.value = templateText.value
+                }
             })
         })
 

@@ -151,6 +151,7 @@ export function loadWindowContent(window: BrowserWindow, isOutput: boolean = fal
     else window.loadURL("http://localhost:3000").catch(error)
 
     window.webContents.on("did-finish-load", () => {
+        if (window === mainWindow) isOutput = false // make sure window is not output
         window.webContents.send(STARTUP, { channel: "TYPE", data: isOutput ? "output" : null })
         if (!isOutput) retryLoadingContent()
     })

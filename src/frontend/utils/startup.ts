@@ -94,24 +94,19 @@ import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { triggerAction } from "./api"
 
+let initialized: boolean = false
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
-        if (msg.channel !== "TYPE") return
+        if (initialized || msg.channel !== "TYPE") return
+        initialized = true // only call this once per window
 
         let type = msg.data
         currentWindow.set(type)
 
-        if (!type) return startupMain()
         if (type === "pdf") return
+        if (type === "output") return startupOutput()
 
-        // type === "output"
-        receive(OUTPUT, receiveOUTPUTasOUTPUT)
-        // wait a bit on slow computers
-        setTimeout(() => {
-            send(OUTPUT, ["REQUEST_DATA_MAIN"])
-            setLanguage() // this is only needed for the context menu
-        }, 200)
-        // TODO: video data!
+        startupMain()
     })
 }
 
@@ -139,6 +134,16 @@ function startupMain() {
         listen()
         startTracking()
     }, 5000)
+}
+
+function startupOutput() {
+    receive(OUTPUT, receiveOUTPUTasOUTPUT)
+
+    // wait a bit on slow computers
+    setTimeout(() => {
+        send(OUTPUT, ["REQUEST_DATA_MAIN"])
+        setLanguage() // this is only needed for the context menu
+    }, 200)
 }
 
 // RECEIVERS

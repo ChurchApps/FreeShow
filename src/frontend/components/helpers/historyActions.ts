@@ -1,16 +1,17 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { ItemType, Slide } from "../../../types/Show"
+import type { Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
 import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, notFound, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
-import { clone, keysToID } from "./array"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
+import { getItemText } from "../edit/scripts/textStyle"
+import { clone, keysToID } from "./array"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
+import { mergeWithTemplate } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
-import { getTemplateText } from "./output"
 
 // TODO: move history switch to actions
 
@@ -710,12 +711,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
             else obj.newData = clone(data)
 
             function updateSlidesWithTemplate(template: any) {
-                // if (!template?.items?.length) return
-
-                console.log("TEMPLATE", template)
-                console.log(slides)
-                // TODO: use mergeWithTemplate() in output.ts
-
                 showsCache.update((a) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
                         if ((slideId && slideId !== id) || !slide) return
@@ -725,78 +720,23 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if (!slideTemplate?.items?.length) return
 
                         // roll items around
-                        if (createItems) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
-                        // let addedItems = 0
+                        if (createItems && !slide.settings?.template) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
-                        // TODO: don't remove extra items
+                        let newItems = mergeWithTemplate(slide.items, slideTemplate.items, slide.settings?.template ?? createItems, obj.save !== false)
 
-                        let itemTypeIndex: any = {}
-                        slideTemplate.items.forEach((item: any) => {
-                            // find the same type at same index
-                            let type: ItemType = item.type || "text"
-                            if (itemTypeIndex[type] === undefined) itemTypeIndex[type] = -1
-                            itemTypeIndex[type]++
+                        // remove items if textbox is empty and not in template
+                        let templateTextboxes = slideTemplate.items.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
+                        let slideTextboxes = newItems.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
+                        newItems = newItems.filter((a) => {
+                            if (templateTextboxes - slideTextboxes > 0) return true
+                            if (getItemText(a).length) return true
 
-                            let tempCount = -1
-                            let itemIndex = slide.items.findIndex((a) => {
-                                if (!a) return false
-
-                                let itemType = a.type || "text"
-                                if (itemType === type) tempCount++
-                                if (tempCount === itemTypeIndex[type]) return true
-                                return false
-                            })
-
-                            // add item
-                            if (itemIndex < 0) {
-                                if (!createItems && (!slide.settings?.template || item.lines)) return
-
-                                // remove text from template & add to slide
-                                if (item.lines) item.lines = item.lines.map((line) => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: getTemplateText(line.text?.[0]?.value) }] }))
-                                slide.items.push(item)
-                                // slide.items = [item, ...slide.items]
-                                // addedItems++
-
-                                return
-                            }
-
-                            // itemIndex += addedItems
-
-                            if (type !== "text") {
-                                slide.items[itemIndex] = item
-                                return
-                            }
-
-                            // recalculate auto size when a new template is applied
-                            if (obj.save !== false) delete slide.items[itemIndex].autoFontSize
-                            slide.items[itemIndex].auto = item.auto || false
-                            slide.items[itemIndex].actions = item.actions || {}
-                            slide.items[itemIndex].chords = item.chords || {}
-                            slide.items[itemIndex].specialStyle = item.specialStyle || {}
-                            slide.items[itemIndex].scrolling = item.scrolling || {}
-                            slide.items[itemIndex].bindings = item.bindings || []
-                            slide.items[itemIndex].style = item.style || ""
-                            slide.items[itemIndex].align = item.align || ""
-                            slide.items[itemIndex].lines?.forEach((line: any, j: number) => {
-                                let templateLine = item.lines?.[j] || item.lines?.[0]
-                                line.align = templateLine?.align || ""
-                                line.text?.forEach((text: any, k: number) => {
-                                    let textStyle: string = templateLine?.text?.[k]?.style || templateLine?.text?.[0]?.style || ""
-                                    text.style = textStyle
-                                })
-                            })
+                            // remove item
+                            slideTextboxes--
+                            return false
                         })
 
-                        slide.items.forEach((item: any, i: number) => {
-                            // remove item if textbox, and template don't have it, and it's empty
-                            if (!item.lines || i < slideTemplate.items.length) return
-                            let text: number = item.lines?.reduce((value, line) => (value += line.text?.reduce((value, text) => (value += text.value.length), 0)), 0)
-                            if (text) return
-
-                            slide.items.splice(i, 1)
-                        })
-
-                        a[data.remember.showId].slides[id] = clone(slide)
+                        a[data.remember.showId].slides[id].items = clone(newItems)
                     })
 
                     return a

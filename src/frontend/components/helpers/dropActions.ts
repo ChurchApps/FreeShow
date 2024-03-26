@@ -431,9 +431,10 @@ const slideDrop: any = {
         if (!drag.data[0]?.bibles) return
 
         let newSlides: any[] = getSlides(drag.data[0])
+        let slideTemplate = get(scriptureSettings).template
         newSlides = newSlides.map((items: any) => {
             let firstTextItem = items.find((a) => a.lines)
-            return { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
+            return { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: { template: slideTemplate }, notes: "", items }
         })
 
         // set to correct order
@@ -449,6 +450,7 @@ const slideDrop: any = {
         let slides: any = clone(get(showsCache)[get(activeShow)!.id].slides)
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
+        // WIP incorrect index
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
 

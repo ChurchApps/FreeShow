@@ -76,7 +76,7 @@
                         <SelectElem id="template" data={template.id} fill draggable>
                             <Zoomed {resolution} background={template.items.length ? "black" : "transparent"}>
                                 {#each template.items as item}
-                                    <Textbox {item} ref={{ type: "template", id: template.id }} />
+                                    <Textbox {item} ref={{ type: "template", id: template.id }} dynamicValues={false} />
                                 {/each}
                             </Zoomed>
                         </SelectElem>

@@ -348,7 +348,7 @@
 
 <div class="main border editTools">
     {#if (slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id}
-        <Tabs {tabs} bind:active />
+        <Tabs {tabs} bind:active overflowHidden={isShow} />
 
         {#if active === "text"}
             <div class="content">

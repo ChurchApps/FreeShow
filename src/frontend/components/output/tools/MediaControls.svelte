@@ -18,6 +18,7 @@
     $: updateVideoTime($videosTime[outputId])
     let timeJustUpdated: any = null
     function updateVideoTime(time: number = 0) {
+        if (timeJustUpdated) clearTimeout(timeJustUpdated)
         timeJustUpdated = setTimeout(() => (timeJustUpdated = null), 900)
         videoTime = time
     }

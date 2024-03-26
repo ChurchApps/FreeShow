@@ -13,8 +13,8 @@
 
     // TODO: templates / overlays
 
-    $: slideId = _show("active").layouts("active").ref()[0]?.[$activeEdit.slide || 0]?.id
-    $: editSlide = $activeEdit.slide !== null && slideId ? _show("active").slides([slideId]).get()[0] : null
+    $: slideId = _show().layouts("active").ref()[0]?.[$activeEdit.slide || 0]?.id
+    $: editSlide = $showsCache && $activeEdit.slide !== null && slideId ? _show().slides([slideId]).get()[0] : null
     $: backgroundColor = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background
 
     let settings: any = {}

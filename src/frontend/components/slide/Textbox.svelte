@@ -35,6 +35,7 @@
     export let addDefaultItemStyle: boolean = false
     export let transitionEnabled: boolean = false
     export let animationStyle: any = {}
+    export let dynamicValues: boolean = true
     export let customFontSize: number | null = null
     export let outputStyle: any = {}
     export let ref: {
@@ -363,7 +364,7 @@
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}">
-                                        {@html value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
+                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
                                     </span>
                                 {/each}
                             </div>
@@ -470,7 +471,7 @@
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}">
-                                        {@html value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
+                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
                                     </span>
                                 {/each}
                             </div>
