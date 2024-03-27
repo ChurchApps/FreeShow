@@ -1,13 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, outLocked, playerVideos, videosData, videosTime } from "../../../stores"
+    import { activeShow, dictionary, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
+    import { getActiveOutputs } from "../../helpers/output"
 
     export let currentOutput: any
     export let outputId: string
@@ -43,9 +44,17 @@
     $: outName = path && !path.includes("base64") ? splitPath(path).name : ""
     $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
+    $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
     const sendToOutput = () => {
-        send(OUTPUT, ["DATA"], { [outputId]: videoData })
-        if (currentOutput.keyOutput) send(OUTPUT, ["DATA"], { [currentOutput.keyOutput]: videoData })
+        let dataValues: any = {}
+        activeOutputIds.forEach((id, i: number) => {
+            dataValues[id] = { ...videoData, muted: i > 0 ? true : videoData.muted }
+
+            let keyOutput = $outputs[id].keyOutput
+            if (keyOutput) dataValues[keyOutput] = videoData
+        })
+
+        send(OUTPUT, ["DATA"], dataValues)
     }
 
     function openPreview() {
@@ -93,7 +102,7 @@
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
             </Button>
 
-            <VideoSlider disabled={$outLocked} {outputId} bind:videoData bind:videoTime bind:changeValue toOutput />
+            <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue toOutput />
 
             <Button
                 center

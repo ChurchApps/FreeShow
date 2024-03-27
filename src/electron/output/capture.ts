@@ -20,8 +20,8 @@ type CaptureOptions = {
 export let captures: { [key: string]: CaptureOptions } = {}
 
 export const framerates: any = {
-    preview: 20,
-    server: 20,
+    preview: 30,
+    server: 30,
     unconnected: 1,
     connected: 30,
 }
@@ -68,6 +68,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
     console.log("Capture - starting: " + id)
 
+    framerates.preview = rate === "full" ? 60 : 30
     if (rate !== "optimized") captures[id].window.webContents.beginFrameSubscription(false, processFrame)
     captures[id].subscribed = true
 
@@ -96,7 +97,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
             setTimeout(cpuCapture, rate === "optimized" ? 2000 : 250)
         } else {
             captureCount = captureAmount
-            captures[id].window.webContents.beginFrameSubscription(false, processFrame)
+            if (!captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.beginFrameSubscription(false, processFrame)
         }
     }
 

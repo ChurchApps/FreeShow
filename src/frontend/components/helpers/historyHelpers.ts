@@ -206,6 +206,8 @@ export const _updaters = {
         ...getDefaultCategoryUpdater("shows"),
         select: (id: string, _data, initializing: boolean) => {
             if (!initializing) return
+
+            setDrawerTabData("shows", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
         },
     },
@@ -214,6 +216,8 @@ export const _updaters = {
         ...getDefaultCategoryUpdater("overlays"),
         select: (id: string, _data, initializing: boolean) => {
             if (!initializing) return
+
+            setDrawerTabData("overlays", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
         },
     },
@@ -222,6 +226,8 @@ export const _updaters = {
         ...getDefaultCategoryUpdater("templates"),
         select: (id: string, _data, initializing: boolean) => {
             if (!initializing) return
+
+            setDrawerTabData("templates", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
         },
     },
@@ -258,7 +264,7 @@ export const _updaters = {
         empty: EMPTY_SLIDE,
         initialize: (data) => {
             // get selected category
-            if (get(drawerTabsData).templates?.activeSubTab && get(categories)[get(drawerTabsData).templates.activeSubTab!]) {
+            if (get(drawerTabsData).templates?.activeSubTab && get(templateCategories)[get(drawerTabsData).templates.activeSubTab!]) {
                 data.category = get(drawerTabsData).templates.activeSubTab
             }
 

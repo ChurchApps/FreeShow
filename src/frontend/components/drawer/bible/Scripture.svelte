@@ -465,6 +465,13 @@
         resetContentSearch()
     }
 
+    // auto search when char length is 5 or longer
+    function searchValueChanged(e: any) {
+        contentSearch = e.target?.value || ""
+        if (contentSearch.length < 5) return
+
+        searchInBible(e)
+    }
     async function searchInBible(e: any) {
         contentSearch = e.target?.value || ""
         contentSearchActive = false
@@ -870,7 +877,7 @@
     <div class="seperator" />
 
     {#if searchBibleActive}
-        <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:change={searchInBible} style="width: 300px;" autofocus />
+        <TextInput placeholder={$dictionary.scripture?.search} value={contentSearch} on:input={searchValueChanged} on:change={searchInBible} style="width: 300px;" autofocus />
     {:else}
         <Button disabled={activeVerses.includes("1") && (chapterId <= 0 || chapterId.toString() === `${bookId}.1`)} title={$dictionary.preview?._previous_slide} on:click={() => moveSelection(true)}>
             <Icon size={1.3} id="previous" />

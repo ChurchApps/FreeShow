@@ -29,9 +29,9 @@ export type API_variable = {
     name?: string
     index?: number
     // no values will toggle on/off:
-    key?: string // default: "enabled"
+    key?: "text" | "number" | "enabled" | "step" | "name" | "type" // default: "enabled"
     value?: string | number
-    action?: "increment" | "decrement"
+    variableAction?: "increment" | "decrement"
 }
 
 /// ACTIONS ///

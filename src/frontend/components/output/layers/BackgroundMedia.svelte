@@ -89,7 +89,7 @@
     })
 
     // call end just before (to make room for transition) - this also triggers video ended on loop
-    $: if (videoData.duration && duration && videoTime >= videoData.duration - duration / 1000 - 0.5) videoEnded()
+    $: if (videoData.duration && duration && videoTime >= videoData.duration - duration / 1000 - 0.9) videoEnded()
 
     let endedCalled: boolean = false
     function videoEnded() {

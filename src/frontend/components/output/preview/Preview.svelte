@@ -21,7 +21,7 @@
     import Overlay from "../tools/Overlay.svelte"
     import Show from "../tools/Show.svelte"
 
-    $: allActiveOutputs = getActiveOutputs($outputs, true, true)
+    $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
     $: outputId = allActiveOutputs[0]
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}

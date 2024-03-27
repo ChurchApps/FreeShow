@@ -5,7 +5,7 @@ import { loadShows } from "../components/helpers/setShow"
 import { clearAll, updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, mediaCache, openedFolders, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
+import { activeProject, connections, dictionary, driveData, folders, mediaCache, openedFolders, outLocked, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
 
 // REMOTE
@@ -69,6 +69,8 @@ export const receiveREMOTE: any = {
         return msg
     },
     OUT: async (msg: any) => {
+        if (get(outLocked)) return
+
         let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
         let out: any = currentOutput?.out?.slide || null
         let id: string = ""

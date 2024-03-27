@@ -728,7 +728,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         let templateTextboxes = slideTemplate.items.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
                         let slideTextboxes = newItems.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
                         newItems = newItems.filter((a) => {
-                            if (templateTextboxes - slideTextboxes > 0) return true
+                            if (templateTextboxes - slideTextboxes >= 0) return true
                             if (getItemText(a).length) return true
 
                             // remove item

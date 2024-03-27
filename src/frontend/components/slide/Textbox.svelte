@@ -26,6 +26,7 @@
     export let slideIndex: number = 0
     export let preview: boolean = false
     export let mirror: boolean = true
+    export let isMirrorItem: boolean = false
     export let ratio: number = 1
     export let filter: string = ""
     export let backdropFilter: string = ""
@@ -415,7 +416,10 @@
         {:else if item?.type === "variable"}
             <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} />
         {:else if item?.type === "mirror"}
-            <Mirror {item} {ref} {ratio} index={slideIndex} />
+            <!-- no mirrors in mirrors! -->
+            {#if !isMirrorItem}
+                <Mirror {item} {ref} {ratio} index={slideIndex} />
+            {/if}
         {:else if item?.type === "visualizer"}
             <Visualizer {item} {preview} />
         {:else if item?.type === "icon"}
@@ -523,7 +527,10 @@
         {:else if item?.type === "web"}
             <Website src={item?.web?.src || ""} clickable={$currentWindow === "output"} />
         {:else if item?.type === "mirror"}
-            <Mirror {item} {ref} {ratio} index={slideIndex} />
+            <!-- no mirrors in mirrors! -->
+            {#if !isMirrorItem}
+                <Mirror {item} {ref} {ratio} index={slideIndex} />
+            {/if}
         {:else if item?.type === "visualizer"}
             <Visualizer {item} {preview} />
         {:else if item?.type === "icon"}

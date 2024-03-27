@@ -6,7 +6,7 @@
 
     export let videoData: any
     export let videoTime: any
-    export let outputId: string = ""
+    export let activeOutputIds: string[] = []
     export let toOutput: boolean = false
     export let disabled: boolean = false
     export let changeValue: number = 0
@@ -49,21 +49,21 @@
         // if (e.buttons && toOutput) sendToOutput(e)
     }
 
-    let changeVideoTimeout: any = null
     let latestValue: string = "0"
     function sliderInput(e: any) {
         latestValue = e?.target?.value || e
-        if (changeVideoTimeout || (!movePause && !videoData.paused) || !latestValue) return
+        if ((!movePause && !videoData.paused) || !latestValue) return
 
         videoTime = Number(latestValue)
-        if (toOutput) send(OUTPUT, ["TIME"], { [outputId]: videoTime })
 
-        changeVideoTimeout = setTimeout(() => {
-            changeVideoTimeout = null
-            if (!movePause || !videoData.paused) return
-            videoTime = Number(latestValue)
-            if (toOutput) send(OUTPUT, ["TIME"], { [outputId]: videoTime })
-        }, 80)
+        if (!toOutput) return
+
+        let timeValues: any = {}
+        activeOutputIds.forEach((id) => {
+            timeValues[id] = videoTime
+        })
+
+        send(OUTPUT, ["TIME"], timeValues)
     }
 
     const sendToOutput = (e: any = null) => {
@@ -73,7 +73,14 @@
 
         if (value !== undefined) {
             videoTime = Number(value)
-            if (toOutput) send(OUTPUT, ["TIME"], { [outputId]: videoTime })
+            if (toOutput) {
+                let timeValues: any = {}
+                activeOutputIds.forEach((id) => {
+                    timeValues[id] = videoTime
+                })
+
+                send(OUTPUT, ["TIME"], timeValues)
+            }
         }
 
         if (movePause) pauseAtMove(false)
@@ -84,7 +91,15 @@
     let movePause: boolean = false
     function pauseAtMove(boolean: boolean = true) {
         movePause = videoData.paused = boolean
-        if (toOutput) send(OUTPUT, ["DATA"], { [outputId]: videoData })
+
+        if (!toOutput) return
+
+        let dataValues: any = {}
+        activeOutputIds.forEach((id, i: number) => {
+            dataValues[id] = { ...videoData, muted: i > 0 ? true : videoData.muted }
+        })
+
+        send(OUTPUT, ["DATA"], dataValues)
     }
 </script>
 

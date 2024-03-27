@@ -8,6 +8,7 @@ import { activeEdit, activePage, activeProject, activeShow, dictionary, groups, 
 import type { API_variable } from "./api"
 import { newToast } from "./messages"
 import { send } from "./request"
+import { getLabelId } from "../components/helpers/show"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -72,14 +73,17 @@ export function selectSlideByIndex(index: number) {
 }
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
-    let sortedSlides = sortByClosestMatch(slides, name)
+    let sortedSlides = sortByClosestMatch(slides, getLabelId(name), "group")
+    console.log(slides, sortedSlides, name, getLabelId(name))
     if (!sortedSlides[0]) return
 
     let showRef = _show().layouts("active").ref()[0]
+    console.log(showRef)
     if (!showRef) return newToast("$toast.midi_no_show")
 
     let index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
     let slideRef = showRef[index]
+    console.log(index, slideRef)
     if (!slideRef) return
 
     outputSlide(showRef, index)
@@ -129,21 +133,24 @@ export function moveStageConnection(id: string) {
 export function changeVariable(data: API_variable) {
     let variable: any
     if (data.name) variable = sortByClosestMatch(getVariables(), data.name)[0]
-    else if (data.index !== undefined) variable = sortByName(getVariables())[data.index]
+    else if (data.index !== undefined) variable = sortByName(getVariables())[data.index - 1]
     if (!variable) return
 
     let value
-    if (data.action) {
-        if (data.action === "increment") value = variable.number + variable.step
-        else if (data.action === "decrement") value = variable.number - variable.step
+    let key = data.key || "enabled"
+    if (data.variableAction) {
+        if (data.variableAction === "increment") value = Number(variable.number || 0) + Number(variable.step || 1)
+        else if (data.variableAction === "decrement") value = Number(variable.number || 0) - Number(variable.step || 1)
+        key = "number"
     } else if (data.value !== undefined) {
         value = data.value
-    } else if (!data.key || data.key === "enabled") {
+        key = variable.type === "number" ? "number" : "text"
+    } else if (key === "enabled") {
         value = !variable.enabled
     }
     if (value === undefined) return
 
-    updateVariable(value, variable.id, data.key || "enabled")
+    updateVariable(value, variable.id, key)
 }
 function getVariables() {
     return keysToID(get(variables))
@@ -159,7 +166,7 @@ function updateVariable(value: any, id: string, key: string) {
 
 function sortByClosestMatch(array: any[], value: string, key: string = "name") {
     // the object key must contain the input string
-    array = array.filter((a) => a[key].toLowerCase().includes(value.toLowerCase()))
+    array = array.filter((a) => a[key] && a[key].toLowerCase().includes(value.toLowerCase()))
 
     function similaritySort(a, b) {
         const similarityA = 1 / (1 + levenshteinDistance(a[key].toLowerCase(), value.toLowerCase()))

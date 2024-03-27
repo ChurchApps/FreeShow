@@ -36,6 +36,20 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
 
+            if (key === "background" && data) {
+                // mute videos in the other output windows if more than one
+                data.muted = data.muted || false
+                if (outs.length > 1 && i > 0) data.muted = true
+
+                let videoData: any = { muted: data.muted, loop: data.loop || false }
+
+                setTimeout(() => {
+                    // WIP data is sent directly in output, so this is probably not needed
+                    send(OUTPUT, ["DATA"], { [id]: videoData })
+                    if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+                }, 100)
+            }
+
             let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
                 if (!Array.isArray(data)) data = [data]
@@ -44,24 +58,10 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 else outData = data
             } else outData = data
 
-            a[id].out![key] = outData
+            a[id].out![key] = clone(outData)
 
             // save locked overlays
             if (key === "overlays") lockedOverlays.set(outData)
-
-            // WIP preview don't get set to 0, just output window
-            if (key === "background" && data) {
-                // mute videos in the other output windows if more than one
-                let muted = data.muted || false
-                if (outs.length > 1 && i !== 0) muted = true
-
-                let videoData: any = { muted, loop: data.loop || false }
-
-                setTimeout(() => {
-                    send(OUTPUT, ["DATA"], { [id]: videoData })
-                    if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-                }, 100)
-            }
         })
 
         return a
@@ -128,7 +128,7 @@ export function refreshOut(refresh: boolean = true) {
 export function isOutCleared(key: string | null = null, updater: any = get(outputs), checkLocked: boolean = false) {
     let cleared: boolean = true
 
-    getActiveOutputs().forEach((id: string) => {
+    getActiveOutputs(updater, true, true, true).forEach((id: string) => {
         let output: any = updater[id]
         let keys: string[] = key ? [key] : Object.keys(output.out || {})
         keys.forEach((key: string) => {
@@ -149,6 +149,8 @@ export function outputSlideHasContent(output) {
     if (!output) return false
 
     let outSlide: OutSlide = output.out?.slide
+    if (!outSlide) return false
+
     let showRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
     if (!showRef.length) return false
 

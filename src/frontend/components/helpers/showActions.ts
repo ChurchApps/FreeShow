@@ -32,7 +32,7 @@ import {
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { getActiveOutputs, isOutCleared, setOutput } from "./output"
+import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { initializeMetadata } from "./show"
@@ -513,6 +513,8 @@ export function changeOutputStyle(styleId: string, styleOutputs: any = {}) {
             return a
         })
     }
+
+    refreshOut()
 }
 
 export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra: boolean = true) {
@@ -621,7 +623,7 @@ export function sendMidi(data: any) {
 
 export function clearBackground(outputId: string = "") {
     // clearVideo()
-    setOutput("background", null)
+    setOutput("background", null, false, outputId)
     // clearPlayingVideo()
 
     if (!outputId) return
@@ -671,7 +673,7 @@ export function clearAll(button: boolean = false) {
 
 // WIP restore only selected outputs
 export function restoreOutput() {
-    if (get(outLocked)) return
+    if (get(outLocked) || !get(outputCache)) return
 
     outputs.set(get(outputCache))
     outputCache.set(null)
