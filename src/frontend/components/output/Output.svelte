@@ -4,9 +4,9 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN } from "../../../types/Channels"
+    import type { Styles } from "../../../types/Settings"
     import { outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { destroy, receive, send } from "../../utils/request"
-    import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
     import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, joinMetadata, setTemplateStyle } from "../helpers/output"
@@ -17,7 +17,6 @@
     import Metadata from "./layers/Metadata.svelte"
     import Overlays from "./layers/Overlays.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
-    import type { Styles } from "../../../types/Settings"
 
     export let outputId: string = ""
     export let style = ""
@@ -51,12 +50,16 @@
     function updateOutData(type: string = "") {
         if (!type || type === "slide") slide = clone(out.slide || null)
         if (!type || type === "background") background = clone(out.background || null)
-        if (!type || type === "overlays") clonedOverlays = clone($overlays)
+        if (!type || type === "overlays") {
+            storedOverlayIds = JSON.stringify(out.overlays)
+            clonedOverlays = clone($overlays)
+        }
     }
 
     // overlays
     $: overlayIds = out.overlays
-    $: if (overlayIds) updateOutData("overlays")
+    let storedOverlayIds: string = ""
+    $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
     $: outOverlays = out.overlays?.filter((id) => !clonedOverlays[id]?.placeUnderSlide)
     $: outUnderlays = out.overlays?.filter((id) => clonedOverlays[id]?.placeUnderSlide)
 
@@ -128,27 +131,6 @@
     receive(MAIN, receiveExif, listener)
     onDestroy(() => destroy(MAIN, listener))
 
-    ////////////// WIP ///////////////
-
-    // prevent too fast slide text updates (svelte transition bug)
-    // WIP svelte transition bug makes output unresponsive (Uncaught TypeError: Cannot read properties of null (reading 'removeChild'))
-    let slideClone: any = {}
-    let previousIndex: number = -1
-    let slideTimeout: any = null
-
-    $: startSlideTimer(currentSlide)
-    function startSlideTimer(_updater) {
-        if (slideTimeout !== null || (JSON.stringify(slideClone) === JSON.stringify(_updater) && previousIndex === slide?.index)) return
-
-        slideTimeout = setTimeout(() => {
-            slideClone = clone(currentSlide)
-            previousIndex = slide?.index ?? -1
-            slideTimeout = null
-        }, 50)
-    }
-
-    ////////////// WIP ///////////////
-
     // ANIMATE
     let animationData: any = {}
     $: currentAnimationId = ""
@@ -211,19 +193,22 @@
 
     <!-- slide -->
     {#if slide && layers.includes("slide")}
-        {#key slideClone || lines[currentLineId]?.index}
-            <!-- svelte transition bug when changing between pages -->
-            {#if transitions.text.type === "none" || transitions.text.duration === 0}
-                <span style="pointer-events: none;display: block;">
-                    <SlideContent {outputId} outSlide={slide} {slideData} {slideClone} {currentStyle} {animationData} {currentLineId} {lines} {ratio} {mirror} transitionEnabled={!mirror} {isKeyOutput} />
-                </span>
-            {:else}
-                <!-- WIP crossfade: in:cReceive={{ key: "slide" }} out:cSend={{ key: "slide" }} -->
-                <span transition:custom={transitions.text} style="pointer-events: none;display: block;">
-                    <SlideContent {outputId} outSlide={slide} {slideData} {slideClone} {currentStyle} {animationData} {currentLineId} {lines} {ratio} {mirror} transitionEnabled {isKeyOutput} />
-                </span>
-            {/if}
-        {/key}
+        <SlideContent
+            {outputId}
+            outSlide={slide}
+            {slideData}
+            {currentSlide}
+            {currentStyle}
+            {animationData}
+            {currentLineId}
+            {lines}
+            {ratio}
+            {mirror}
+            customTemplate={currentStyle.template}
+            transition={transitions.text}
+            transitionEnabled={!mirror && transitions.text?.type !== "none" && transitions.text?.duration}
+            {isKeyOutput}
+        />
     {/if}
 
     {#if layers.includes("overlays")}

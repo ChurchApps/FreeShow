@@ -2,17 +2,18 @@
     import type { Transition } from "../../../../types/Show"
     import { custom } from "../../../utils/transitions"
 
-    export let transition: Transition
+    export let transition: Transition | undefined
 
-    $: disableTransition = transition.type === "none" || !transition.duration
+    $: disableTransition = transition?.type === "none" || !transition?.duration
 </script>
 
+<!-- svelte transition bug!!! -->
 {#if disableTransition}
-    <div>
+    <div class="transitioner">
         <slot />
     </div>
 {:else}
-    <div transition:custom={transition}>
+    <div class="transitioner" transition:custom={transition}>
         <slot />
     </div>
 {/if}

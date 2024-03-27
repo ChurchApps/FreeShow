@@ -10,10 +10,8 @@
     export let transitionEnabled: boolean = false
 </script>
 
-<div>
-    {#each overlays[id].items || [] as item}
-        {#if !item.bindings?.length || item.bindings.includes(outputId)}
-            <Textbox {item} ref={{ type: "overlay", id }} {mirror} {transitionEnabled} />
-        {/if}
-    {/each}
-</div>
+{#each overlays[id].items || [] as item}
+    {#if !item.bindings?.length || item.bindings.includes(outputId)}
+        <Textbox {item} ref={{ type: "overlay", id }} {mirror} {transitionEnabled} />
+    {/if}
+{/each}
