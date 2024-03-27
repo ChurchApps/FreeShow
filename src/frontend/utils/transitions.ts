@@ -2,6 +2,8 @@ import { blur, fade, crossfade, fly, scale, slide } from "svelte/transition"
 import type { TransitionType } from "./../../types/Show"
 // import { quintInOut } from "svelte/easing"
 import { backInOut, bounceInOut, circInOut, cubicInOut, elasticInOut, linear, sineInOut } from "svelte/easing"
+import type { API_transition } from "./api"
+import { transitionData } from "../stores"
 
 // https://stackoverflow.com/questions/70531875/svelte-crossfade-transition-between-pages
 // export const crossfade = cfade({})
@@ -44,4 +46,16 @@ export function custom(node: any, { type = "fade", duration = 500, easing = "sin
     let customTransition = { ...transitions[type as TransitionType](node), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.id === easing).data || linear }
     // if (type === "crossfade") customTransition.key = "a"
     return customTransition
+}
+
+export function updateTransition(data: API_transition) {
+    transitionData.update((a) => {
+        a[data.id || "text"] = {
+            type: data.type || "fade",
+            duration: data.duration ?? 500,
+            easing: data.easing || "sine",
+        }
+
+        return a
+    })
 }

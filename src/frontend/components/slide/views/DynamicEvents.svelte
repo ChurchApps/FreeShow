@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { activeDrawerTab, drawer, drawerTabsData, events } from "../../../stores"
-    import { getTime } from "../../calendar/calendar"
+    import { getTime } from "../../drawer/calendar/calendar"
     import { keysToID, sortByTime } from "../../helpers/array"
     import { combineDateAndTime } from "../../helpers/time"
 

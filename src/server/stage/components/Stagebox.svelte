@@ -15,6 +15,7 @@
     export let id: string
     export let item: any
     export let slides: any
+    export let socketId: string = ""
     export let socket: any
     export let stream: any
     export let background: any
@@ -54,6 +55,23 @@
     $: slide = slides[next ? 1 : 0]
 
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
+
+    // request video time
+    let videoTime: number = 0
+    $: if (id.includes("video")) requestVideoData()
+    let interval: any = null
+    function requestVideoData() {
+        if (interval) return
+        interval = setInterval(() => socket.emit("STAGE", { id: socketId, channel: "REQUEST_VIDEO_DATA" }), 1000)
+
+        socket.on("STAGE", (msg: any) => {
+            if (msg.channel !== "REQUEST_VIDEO_DATA" || !msg.data) return
+
+            videoTime = msg.data.time || 0
+            let reverse = id.includes("countdown")
+            if (reverse) videoTime = (msg.data.data?.duration || 0) - videoTime
+        })
+    }
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
@@ -91,7 +109,7 @@
                 {:else if id.includes("clock")}
                     <Clock autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("video")}
-                    <VideoTime autoSize={item.auto !== false ? autoSize : fontSize} />
+                    <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
                         <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />

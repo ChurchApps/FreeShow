@@ -2,6 +2,7 @@
     import { OUTPUT } from "../../../../types/Channels"
     import { currentWindow, outputs, showsCache, stageShows } from "../../../stores"
     import { send } from "../../../utils/request"
+    import { clone } from "../../helpers/array"
     import { loadShows } from "../../helpers/setShow"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -23,6 +24,8 @@
     $: stageEnabled = item.mirror?.enableStage
     $: nextSlide = item.mirror?.nextSlide
 
+    // WIP mirror item on last slide with "nextSlide" make all useless
+
     $: slideId = ref.slideId || ""
     function getMirroredItem(index: number, _updater: any = null) {
         if (!_updater && _updater !== null) return
@@ -41,10 +44,15 @@
 
         let newSlideRef: any = layoutRef[slideIndex]
         if (!newSlideRef) return
-        slideId = newSlideRef.id
 
-        let newItem: any = _show(showId).slides([slideId]).items([0]).get()[0]?.[0]
+        slideId = newSlideRef.id
+        let slideItems = _show(showId).slides([slideId]).items().get()[0] || []
+
+        // has to be textbox item!
+        let newItem = slideItems.find((a) => (a.type || "text") === "text")
         if (!newItem) return
+
+        newItem = clone(newItem)
         newItem.style = "width: 100%;height: 100%;"
         if (!edit) newItem.style += "pointer-events: none;"
 
@@ -83,7 +91,7 @@
                 {#if !$currentWindow}Loading...{/if}
             {:then}
                 {#if getMirroredItem(index, $showsCache[item.mirror?.show || ref.showId])}
-                    <Textbox item={getMirroredItem(index, $showsCache[item.mirror?.show || ref.showId])} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
+                    <Textbox isMirrorItem item={getMirroredItem(index, $showsCache[item.mirror?.show || ref.showId])} ref={{ showId: item.mirror.show, slideId, id: ref.id }} />
                 {/if}
             {/await}
         {/key}

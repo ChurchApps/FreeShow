@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { activeStage, allOutputs, currentWindow, outputs, previewBuffers, showsCache, stageShows, timers, variables } from "../../stores"
+    import { activeStage, allOutputs, currentWindow, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import T from "../helpers/T.svelte"
     import { getActiveOutputs } from "../helpers/output"
-    import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import Image from "../media/Image.svelte"
-    import PreviewCanvas from "../output/PreviewCanvas.svelte"
+    import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Variable from "../slide/views/Variable.svelte"
     import Clock from "../system/Clock.svelte"
@@ -93,15 +92,10 @@
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
-    let slide
     $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
     $: currentBackground = sendBackgroundToStage(stageOutputId, $currentWindow ? $allOutputs : $outputs, true)
-    $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
-    $: layoutSlide = index !== null && currentSlide ? _show(currentSlide.id).layouts("active").ref()[0][index!] || {} : {}
-    $: slideId = layoutSlide.id
-    $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
 
     // $: resolution = getResolution(resolution, { $outputs, $styles })
 
@@ -134,16 +128,13 @@
     {/if}
 
     {#if id.includes("current_output")}
-        {#if slide}
-            <span style="pointer-events: none;">
-                <!-- <Output specificOutput={stageOutputId} bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror /> -->
-                {#if id.includes("_alpha") && currentOutput.keyOutput}
-                    <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
-                {:else}
-                    <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
-                {/if}
-            </span>
-        {/if}
+        <span style="pointer-events: none;">
+            {#if id.includes("_alpha") && currentOutput.keyOutput}
+                <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
+            {:else}
+                <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+            {/if}
+        </span>
     {:else}
         <div class="align" style={item.align}>
             <div>
@@ -167,7 +158,7 @@
                 {:else if id.includes("clock")}
                     <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("video")}
-                    <VideoTime autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
+                    <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
                         <Timer id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />

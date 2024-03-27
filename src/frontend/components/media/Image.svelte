@@ -1,8 +1,14 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
 
     export let path: string
     export let mediaStyle: MediaStyle = {}
+
+    let dispatch = createEventDispatcher()
+    function loaded() {
+        dispatch("loaded", true)
+    }
 </script>
 
 <img
@@ -12,7 +18,7 @@
     alt=""
     draggable="false"
     on:error
-    on:load
+    on:load={loaded}
 />
 
 <style>

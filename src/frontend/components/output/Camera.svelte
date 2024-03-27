@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { getResolution } from "../helpers/output"
 
     export let id: string
@@ -15,23 +15,28 @@
         },
     }
 
-    // $: console.log("CAMERA", constraints)
-
     onMount(() => {
         navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-            console.log(stream)
             if (!videoElem) return
 
             videoElem.srcObject = stream
-            videoElem.play()
+            videoElem.onloadedmetadata = loaded
         })
     })
 
     onDestroy(stopStream)
     function stopStream() {
         if (!videoElem) return
+
+        console.log(videoElem.srcObject, videoElem.srcObject?.getTracks()) // WIP
         videoElem.srcObject?.getTracks()?.forEach((track: any) => track.stop())
         videoElem.srcObject = null
+    }
+
+    let dispatch = createEventDispatcher()
+    function loaded() {
+        videoElem.play()
+        dispatch("loaded", true)
     }
 </script>
 

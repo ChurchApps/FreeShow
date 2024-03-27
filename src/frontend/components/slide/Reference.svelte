@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
     import { activeDrawerTab, activeShow, drawer, drawerTabsData, labelsDisabled, openScripture, scriptures, shows } from "../../stores"
-    import { createSlides, getDateString, getSelectedEvents, sortDays } from "../calendar/calendar"
+    import { createSlides, getDateString, getSelectedEvents, sortDays } from "../drawer/calendar/calendar"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"

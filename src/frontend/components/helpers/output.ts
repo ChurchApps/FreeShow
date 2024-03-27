@@ -2,11 +2,13 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
-import type { Resolution } from "../../../types/Settings"
-import type { Item, Transition } from "../../../types/Show"
-import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, theme, themes, transitionData } from "../../stores"
+import type { Resolution, Styles } from "../../../types/Settings"
+import type { Item, OutSlide, Show, Transition } from "../../../types/Show"
+import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
+import { getSlideText } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
+import { clearBackground, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
@@ -34,6 +36,20 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
 
+            if (key === "background" && data) {
+                // mute videos in the other output windows if more than one
+                data.muted = data.muted || false
+                if (outs.length > 1 && i > 0) data.muted = true
+
+                let videoData: any = { muted: data.muted, loop: data.loop || false }
+
+                setTimeout(() => {
+                    // WIP data is sent directly in output, so this is probably not needed
+                    send(OUTPUT, ["DATA"], { [id]: videoData })
+                    if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+                }, 100)
+            }
+
             let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
                 if (!Array.isArray(data)) data = [data]
@@ -42,26 +58,10 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 else outData = data
             } else outData = data
 
-            a[id].out![key] = outData
+            a[id].out![key] = clone(outData)
 
             // save locked overlays
             if (key === "overlays") lockedOverlays.set(outData)
-
-            // WIP preview don't get set to 0, just output window
-            if (key === "background" && data) {
-                // mute videos in the other output windows if more than one
-                let muted = data.muted || false
-                if (outs.length > 1 && i !== 0) muted = true
-
-                let msg: any = { id, data: { muted, loop: data.loop || false } }
-                if (data.startAt !== undefined) msg.time = data.startAt || 0
-
-                console.log(data, msg)
-
-                setTimeout(() => {
-                    send(OUTPUT, ["UPDATE_VIDEO"], msg)
-                }, 100)
-            }
         })
 
         return a
@@ -128,7 +128,7 @@ export function refreshOut(refresh: boolean = true) {
 export function isOutCleared(key: string | null = null, updater: any = get(outputs), checkLocked: boolean = false) {
     let cleared: boolean = true
 
-    getActiveOutputs().forEach((id: string) => {
+    getActiveOutputs(updater, true, true, true).forEach((id: string) => {
         let output: any = updater[id]
         let keys: string[] = key ? [key] : Object.keys(output.out || {})
         keys.forEach((key: string) => {
@@ -143,6 +143,21 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
     })
 
     return cleared
+}
+
+export function outputSlideHasContent(output) {
+    if (!output) return false
+
+    let outSlide: OutSlide = output.out?.slide
+    if (!outSlide) return false
+
+    let showRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
+    if (!showRef.length) return false
+
+    let currentSlide = _show(outSlide.id).slides([showRef[outSlide.index!]?.id]).get()[0]
+    if (!currentSlide) return false
+
+    return !!getSlideText(currentSlide)?.length
 }
 
 // WIP style should override any slide resolution & color ? (it does not)
@@ -235,9 +250,10 @@ export function deleteOutput(outputId: string) {
     })
 }
 
-export async function clearPlayingVideo(clearOutput: any = null) {
+// WIP improve this
+export async function clearPlayingVideo(clearOutput: string = "") {
     // videoData.paused = true
-    if (clearOutput) setOutput("background", null) // , false, clearOutput
+    if (clearOutput) clearBackground(clearOutput) // , false, clearOutput
 
     let mediaTransition: Transition = getCurrentMediaTransition()
 
@@ -290,7 +306,7 @@ export function getCurrentMediaTransition() {
 
 // TEMPLATE
 
-export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false) {
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true) {
     slideItems = clone(slideItems)
     if (!templateItems.length) return slideItems
 
@@ -306,9 +322,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.style = templateItem.style || ""
         item.align = templateItem.align || ""
 
-        delete item.autoFontSize
+        if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
 
+        if (templateItem.chords) item.chords = templateItem.chords
         if (templateItem.actions) item.actions = templateItem.actions
         if (templateItem.specialStyle) item.specialStyle = templateItem.specialStyle
         if (templateItem.scrolling) item.scrolling = templateItem.scrolling
@@ -317,12 +334,17 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (type !== "text") return finish()
 
         item.lines?.forEach((line: any, j: number) => {
-            let templateLine = templateItem!.lines?.[j] || templateItem!.lines?.[0]
+            let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
                 text.style = templateText?.style || ""
+
+                // add dynamic values
+                if (!text.value?.length && templateText?.value?.[0] === "{") {
+                    text.value = templateText.value
+                }
             })
         })
 
@@ -375,4 +397,163 @@ function sortItemsByType(items: Item[]) {
     })
 
     return sortedItems
+}
+
+// OUTPUT COMPONENT
+
+export const defaultLayers: string[] = ["background", "slide", "overlays"]
+
+export function getCurrentStyle(styles: { [key: string]: Styles }, styleId: string | undefined): Styles {
+    let defaultStyle = { name: "" }
+
+    if (!styleId) return defaultStyle
+    return styles[styleId] || defaultStyle
+}
+
+export function getOutputTransitions(slideData: any, transitionData: any, disableTransitions: boolean) {
+    let transitions: { [key: string]: Transition } = {}
+
+    if (disableTransitions) {
+        const disabled: Transition = { type: "none", duration: 0, easing: "" }
+        transitions = { text: disabled, media: disabled, overlay: disabled }
+        return clone(transitions)
+    }
+
+    let slideTransitions = {
+        text: slideData?.transition?.type ? slideData.transition : null,
+        media: slideData?.mediaTransition?.type ? slideData.mediaTransition : null,
+    }
+
+    transitions.text = slideTransitions.text || transitionData.text || {}
+    transitions.media = slideTransitions.media || transitionData.media || {}
+    transitions.overlay = transitionData.text || {}
+
+    return clone(transitions)
+}
+
+export function setTemplateStyle(outSlide: any, templateId: string | undefined, items: Item[]) {
+    let slideItems = outSlide?.id === "temp" ? outSlide.tempItems : items
+    let templateItems = get(templates)[templateId || ""]?.items || []
+
+    return mergeWithTemplate(slideItems, templateItems)
+}
+
+export function getOutputLines(outSlide: any, styleLines: any = 0) {
+    let maxLines: number = styleLines ? Number(styleLines) : 0
+    let linesIndex: number | null = maxLines && outSlide && outSlide.id !== "temp" ? outSlide.line || 0 : null
+
+    let start = linesIndex !== null && outSlide?.id ? maxLines * linesIndex : null
+    let end = start !== null ? start + maxLines : null
+
+    return { start, end, index: linesIndex, max: maxLines }
+}
+
+export interface OutputMetadata {
+    message?: { [key: string]: string }
+    display?: string
+    style?: string
+    value?: string
+    media?: boolean
+
+    messageStyle?: string
+}
+const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
+const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
+export function getMetadata(oldMetadata: any, show: Show | undefined, currentStyle: any, templatesUpdater = get(templates), outSlide: any) {
+    let metadata: OutputMetadata = {}
+
+    if (!show) return metadata
+    let settings: any = show.metadata || {}
+    let overrideOutput = settings.override
+    let templateId: string = overrideOutput ? settings.template : currentStyle.metadataTemplate || "metadata"
+
+    metadata.media = settings.autoMedia
+    metadata.message = metadata.media ? {} : show.meta
+    metadata.display = overrideOutput ? settings.display : currentStyle.displayMetadata
+    metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
+
+    let metadataTemplateValue = templatesUpdater[templateId]?.items?.[0]?.lines?.[0]?.text?.[0]?.value || ""
+    // if (metadataTemplateValue || metadata.message || currentStyle)
+    getMetaValue()
+    function getMetaValue() {
+        if (metadata.media) {
+            metadata.value = oldMetadata.value || ""
+            return
+        }
+
+        if (metadataTemplateValue.includes("{")) {
+            let ref = { showId: outSlide.id, layoutId: outSlide.layout, slideIndex: outSlide.index }
+            metadata.value = replaceDynamicValues(metadataTemplateValue, ref)
+            return
+        }
+
+        if (!metadata.message) return
+
+        metadata.value = joinMetadata(metadata.message, currentStyle.metadataDivider)
+    }
+
+    let messageTemplate = overrideOutput ? show.message?.template : currentStyle.messageTemplate || "message"
+    metadata.messageStyle = getTemplateStyle(messageTemplate!, templatesUpdater) || defaultMessageStyle
+
+    return clone(metadata)
+}
+export function joinMetadata(message: { [key: string]: string }, divider = "; ") {
+    return Object.values(message)
+        .filter((a: string) => a.length)
+        .join(divider)
+}
+
+function getTemplateStyle(templateId: string, templates: any) {
+    if (!templateId) return
+    let template = templates[templateId]
+    if (!template) return
+
+    let style = template.items[0]?.style || ""
+    let textStyle = template.items[0]?.lines?.[0]?.text?.[0]?.style || ""
+
+    return style + textStyle
+}
+
+export function decodeExif(data: any) {
+    let message: any = {}
+
+    let exif = data.exif
+    if (!exif) return message
+
+    if (exif.exif.DateTimeOriginal) message.taken = "Date: " + exif.exif.DateTimeOriginal
+    if (exif.exif.ApertureValue) message.aperture = "Aperture: " + exif.exif.ApertureValue
+    if (exif.exif.BrightnessValue) message.brightness = "Brightness: " + exif.exif.BrightnessValue
+    if (exif.exif.ExposureTime) message.exposure_time = "Exposure Time: " + exif.exif.ExposureTime.toFixed(4)
+    if (exif.exif.FNumber) message.fnumber = "F Number: " + exif.exif.FNumber
+    if (exif.exif.Flash) message.flash = "Flash: " + exif.exif.Flash
+    if (exif.exif.FocalLength) message.focallength = "Focal Length: " + exif.exif.FocalLength
+    if (exif.exif.ISO) message.iso = "ISO: " + exif.exif.ISO
+    if (exif.exif.InteropOffset) message.interopoffset = "Interop Offset: " + exif.exif.InteropOffset
+    if (exif.exif.LightSource) message.lightsource = "Light Source: " + exif.exif.LightSource
+    if (exif.exif.ShutterSpeedValue) message.shutterspeed = "Shutter Speed: " + exif.exif.ShutterSpeedValue
+
+    if (exif.exif.LensMake) message.lens = "Lens: " + exif.exif.LensMake
+    if (exif.exif.LensModel) message.lensmodel = "Lens Model: " + exif.exif.LensModel
+
+    if (exif.gps.GPSLatitude) message.gps = "Position: " + exif.gps.GPSLatitudeRef + exif.gps.GPSLatitude[0]
+    if (exif.gps.GPSLongitude) message.gps += " " + exif.gps.GPSLongitudeRef + exif.gps.GPSLongitude[0]
+    if (exif.gps.GPSAltitude) message.gps += " " + exif.gps.GPSAltitude
+
+    if (exif.image.Make) message.device = "Device: " + exif.image.Make
+    if (exif.image.Model) message.device += " " + exif.image.Model
+    if (exif.image.Software) message.software = "Software: " + exif.image.Software
+
+    return message
+}
+
+export function getSlideFilter(slideData: any) {
+    let slideFilter: string = ""
+
+    if (!slideData) return slideFilter
+    if (slideData.filterEnabled && !slideData.filterEnabled?.includes("background")) return slideFilter
+
+    if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
+    if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
+
+    return slideFilter
 }

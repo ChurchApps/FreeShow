@@ -16,6 +16,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import { defaultLayers } from "../../helpers/output"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -101,7 +102,7 @@
     let activeLayers: any[] = []
     $: {
         if (currentStyle.layers) activeLayers = currentStyle.layers
-        else activeLayers = ["background", "slide", "overlays"]
+        else activeLayers = clone(defaultLayers)
     }
 
     // overlays

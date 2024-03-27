@@ -26,7 +26,7 @@
     let fullFilteredEffects: any[] = []
     function filterSearch() {
         fullFilteredEffects = clone(filteredEffects)
-        if (searchValue.length > 1) fullFilteredEffects = fullFilteredEffects.filter((a) => filter(a.name).includes(searchValue))
+        if (searchValue.length > 1) fullFilteredEffects = fullFilteredEffects.filter((a) => filter(a.name).includes(filter(searchValue)))
     }
 
     let nextScrollTimeout: any = null

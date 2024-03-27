@@ -1,22 +1,27 @@
 <script lang="ts">
-  import { OUTPUT } from "../../../../types/Channels"
-  import { receive } from "../../../utils/request"
-  import { joinTime, secondsToTime } from "../../helpers/time"
+    import { videosData, videosTime } from "../../../stores"
+    import { joinTime, secondsToTime } from "../../helpers/time"
 
-  export let autoSize: number = 0
-  export let reverse: boolean = false
+    export let outputId: string = ""
+    export let autoSize: number = 0
+    export let reverse: boolean = false
 
-  // TODO: get this to work
-  let videoTime: number = 0
-  receive(OUTPUT, {
-    MAIN_VIDEO: (a) => {
-      console.log(a)
-      videoTime = a.time
-      if (reverse) videoTime = a.data.duration - videoTime
-    },
-  })
+    $: data = $videosData[outputId] || {}
+    $: time = $videosTime[outputId] || 0
 
-  $: timeString = joinTime(secondsToTime(videoTime))
+    $: videoTime = reverse ? (data.duration || 0) - time : time
+    $: timeString = joinTime(secondsToTime(videoTime))
 </script>
 
 <div style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;` : ""}>{timeString}</div>
+
+<style>
+    div {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>

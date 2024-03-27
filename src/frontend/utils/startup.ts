@@ -5,7 +5,7 @@ import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { getFileName } from "../components/helpers/media"
-import { getActiveOutputs } from "../components/helpers/output"
+import { clearPlayingVideo, getActiveOutputs } from "../components/helpers/output"
 import { checkName } from "../components/helpers/show"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -75,6 +75,8 @@ import {
     transitionData,
     variables,
     version,
+    videosData,
+    videosTime,
     visualizerData,
     volume,
 } from "../stores"
@@ -90,25 +92,21 @@ import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { triggerAction } from "./api"
 
+let initialized: boolean = false
 export function startup() {
     window.api.receive(STARTUP, (msg) => {
-        if (msg.channel !== "TYPE") return
+        if (initialized || msg.channel !== "TYPE") return
+        initialized = true // only call this once per window
 
         let type = msg.data
         currentWindow.set(type)
 
-        if (!type) return startupMain()
         if (type === "pdf") return
+        if (type === "output") return startupOutput()
 
-        // type === "output"
-        receive(OUTPUT, receiveOUTPUTasOUTPUT)
-        // wait a bit on slow computers
-        setTimeout(() => {
-            send(OUTPUT, ["REQUEST_DATA_MAIN"])
-            setLanguage() // this is only needed for the context menu
-        }, 200)
-        // TODO: video data!
+        startupMain()
     })
 }
 
@@ -136,6 +134,16 @@ function startupMain() {
         listen()
         startTracking()
     }, 5000)
+}
+
+function startupOutput() {
+    receive(OUTPUT, receiveOUTPUTasOUTPUT)
+
+    // wait a bit on slow computers
+    setTimeout(() => {
+        send(OUTPUT, ["REQUEST_DATA_MAIN"])
+        setLanguage() // this is only needed for the context menu
+    }, 200)
 }
 
 // RECEIVERS
@@ -218,6 +226,7 @@ const receiveMAIN: any = {
             return a
         })
     },
+    API_TRIGGER: (data: any) => triggerAction(data),
 }
 
 export const receiveSTORE: any = {
@@ -326,15 +335,30 @@ const receiveOUTPUTasMAIN: any = {
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),
+    MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
+    MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
     MAIN_VIDEO_ENDED: async (msg) => {
-        let videoPath = get(outputs)[msg.id].out?.background?.path
-        // WIP! "DUPLICATE" of Media.svelte receiver NOT SURE IF THIS DOES ANYTHING
+        if (clearing) return
+        clearing = true
+        setTimeout(() => (clearing = false), msg.duration || 1000)
+
+        let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || ""
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
-        setTimeout(() => checkNextAfterMedia(videoPath!), 10)
+        if (checkNextAfterMedia(videoPath, "media", msg.id) || msg.loop) return
+
+        setTimeout(async () => {
+            await clearPlayingVideo(msg.id)
+        }, 600) // WAIT FOR NEXT AFTER MEDIA TO FINISH
+    },
+    // stage
+    MAIN_REQUEST_VIDEO_DATA: (data: any) => {
+        if (!data.id) return
+        send(OUTPUT, ["VIDEO_DATA"], { id: data.id, data: get(videosData), time: get(videosTime) })
     },
 }
+let clearing: boolean = false
 
 let previousOutputs: string = ""
 const receiveOUTPUTasOUTPUT: any = {

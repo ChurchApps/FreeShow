@@ -3,21 +3,21 @@
 
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
-import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_EXIF, READ_FOLDER, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
+import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_FOLDER, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
+import { startBackup } from "./data/backup"
+import { config, stores, updateDataPath, userDataPath } from "./data/store"
+import { stopReceiversNDI } from "./ndi/ndi"
 import { receiveNDI } from "./ndi/talk"
+import { closeAllOutputs, receiveOutput } from "./output/output"
 import { closeServers } from "./servers"
-import { startBackup } from "./utils/backup"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, loadShows, readExifData, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { stopApiListener } from "./utils/api"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, loadShows, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
-import { closeAllOutputs, receiveOutput } from "./utils/output"
 import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
-import { config, stores, updateDataPath, userDataPath } from "./utils/store"
-import checkForUpdates from "./utils/updater"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { stopReceiversNDI } from "./ndi/ndi"
 
 // ----- STARTUP -----
 
@@ -61,7 +61,6 @@ function initialize() {
 
     if (!isProd) return
 
-    checkForUpdates()
     catchErrors()
 }
 
@@ -152,6 +151,7 @@ export function loadWindowContent(window: BrowserWindow, isOutput: boolean = fal
     else window.loadURL("http://localhost:3000").catch(error)
 
     window.webContents.on("did-finish-load", () => {
+        if (window === mainWindow) isOutput = false // make sure window is not output
         window.webContents.send(STARTUP, { channel: "TYPE", data: isOutput ? "output" : null })
         if (!isOutput) retryLoadingContent()
     })
@@ -208,9 +208,10 @@ export async function exitApp() {
 
     await closeAllOutputs()
     stopReceiversNDI()
-    closeServers()
 
-    // midi
+    closeServers()
+    stopApiListener()
+
     // closeVirtualMidi()
     closeMidiInPorts()
 
@@ -354,7 +355,6 @@ ipcMain.on(READ_FOLDER, getFolderContent)
 ipcMain.on(OPEN_FOLDER, selectFolder)
 ipcMain.on(OPEN_FILE, selectFiles)
 ipcMain.on(FILE_INFO, getFileInfo)
-ipcMain.on(READ_EXIF, readExifData)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(RECORDER, saveRecording)
 ipcMain.on(NDI, receiveNDI)

@@ -11,9 +11,9 @@ import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
-import { restoreFiles } from "./backup"
-import { downloadMedia } from "./downloadMedia"
-import { createPDFWindow, exportProject, exportTXT } from "./export"
+import { restoreFiles } from "../data/backup"
+import { downloadMedia } from "../data/downloadMedia"
+import { createPDFWindow, exportProject, exportTXT } from "../data/export"
 import {
     checkShowsFolder,
     dataFolderNames,
@@ -26,6 +26,7 @@ import {
     locateMediaFile,
     openSystemFolder,
     parseShow,
+    readExifData,
     readFile,
     readFolder,
     renameFile,
@@ -33,10 +34,12 @@ import {
     selectFolderDialog,
     writeFile,
 } from "./files"
-import { importShow } from "./import"
+import { importShow } from "../data/import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
-import { outputWindows } from "./output"
-import { error_log } from "./store"
+import { outputWindows } from "../output/output"
+import { error_log } from "../data/store"
+import { startRestListener, startWebSocket, stopApiListener } from "./api"
+import checkForUpdates from "./updater"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -102,6 +105,7 @@ const mainResponses: any = {
     IS_DEV: (): boolean => !isProd,
     GET_OS: (): any => ({ platform: os.platform(), name: os.hostname(), arch: os.arch() }),
     DEVICE_ID: (): string => machineIdSync(),
+    AUTO_UPDATE: (): void => checkForUpdates(),
     GET_SYSTEM_FONTS: (): void => loadFonts(),
     URL: (data: string): void => openURL(data),
     START: (data: any): void => startServers(data),
@@ -138,6 +142,7 @@ const mainResponses: any = {
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),
     FULL_SHOWS_LIST: (data: any) => getAllShows(data),
+    READ_EXIF: (data: any, e: any) => readExifData(data, e),
     ACCESS_CAMERA_PERMISSION: () => {
         if (process.platform !== "darwin") return
         systemPreferences.askForMediaAccess("camera")
@@ -158,6 +163,18 @@ const mainResponses: any = {
     OPEN_LOG: () => openSystemFolder(error_log.path),
     MEDIA_BASE64: (data: any) => storeMedia(data),
     GET_SIMULAR: (data: any) => getSimularPaths(data),
+    // WebSocket / REST (Combined)
+    WEBSOCKET_START: (port: number | undefined) => {
+        startRestListener(port ? port + 1 : 0)
+        startWebSocket(port)
+    },
+    WEBSOCKET_STOP: () => stopApiListener(),
+    // // WebSocket (Companion)
+    // WEBSOCKET_START: (port: number | undefined) => startWebSocket(port),
+    // WEBSOCKET_STOP: () => stopApiListener("WebSocket"),
+    // // REST
+    // REST_START: (port: number | undefined) => startRestListener(port),
+    // REST_STOP: () => stopApiListener("REST"),
 }
 
 export function receiveMain(e: any, msg: Message) {

@@ -3,7 +3,7 @@ import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
-import { events, media, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { events, media, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
@@ -167,6 +167,19 @@ export const receiveSTAGE: any = {
         if (!id) return
 
         msg.data.stream = get(previewBuffers)[id]
+
+        return msg
+    },
+    REQUEST_VIDEO_DATA: (msg: ClientMessage) => {
+        if (!msg.data) msg.data = {}
+
+        // WIP don't know the outputId
+        // let id = msg.data.outputId
+        let outputId = getActiveOutputs(get(outputs), true, true, true)[0]
+        if (!outputId) return
+
+        msg.data.data = get(videosData)[outputId]
+        msg.data.time = get(videosTime)[outputId]
 
         return msg
     },

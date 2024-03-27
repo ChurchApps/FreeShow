@@ -1,5 +1,5 @@
 import { CLOUD } from "../../types/Channels"
-import { stores } from "../utils/store"
+import { stores } from "../data/store"
 import { listFiles } from "./drive"
 import { authenticate, listFolders, syncDataDrive } from "./drive"
 

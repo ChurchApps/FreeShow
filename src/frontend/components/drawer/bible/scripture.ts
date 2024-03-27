@@ -215,7 +215,8 @@ export function getSlides({ bibles, sorted }) {
         // auto size
         slides.forEach((slide, i) => {
             slide.forEach((item, j) => {
-                if (!template[j]?.auto) return
+                if (!templateTextItems[j]?.auto) return
+
                 let autoSize: number = getAutoSize(item)
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true

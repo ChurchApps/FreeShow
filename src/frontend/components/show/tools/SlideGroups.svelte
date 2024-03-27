@@ -10,7 +10,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
 
-    $: showGroups = $cachedShowsData[$activeShow!.id]?.groups || []
+    $: showGroups = $cachedShowsData[$activeShow!.id]?.groups.sort(orderGroups) || []
 
     $: layoutSlides = $showsCache[$activeShow!.id]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     $: console.log(layoutSlides)
@@ -19,6 +19,19 @@
         return count
     }
 
+    function orderGroups(a: any, b: any) {
+        const aGroupType = a.group.split(' ')[0];
+        const bGroupType = b.group.split(' ')[0];
+
+        if (aGroupType !== bGroupType) {
+            return aGroupType.localeCompare(bGroupType);
+        }
+
+        const groupA = parseInt(a.group.split(' ')[1]) || 0;
+        const groupB = parseInt(b.group.split(' ')[1]) || 0;
+        return groupA - groupB;
+    }
+    
     $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
         let name = group.name
         if (group.default) name = $dictionary.groups?.[group.name]

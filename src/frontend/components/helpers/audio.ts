@@ -50,6 +50,32 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     analyseAudio()
 }
 
+let unmutedValue = 1
+export function updateVolume(value: number | undefined, changeGain: boolean = false) {
+    // api mute(unmute)
+    if (value === undefined) {
+        value = get(volume) ? 0 : unmutedValue
+        if (!value) unmutedValue = get(volume)
+    }
+
+    if (changeGain) gain.set(Number(Number(value).toFixed(2)))
+    else volume.set(Number(Number(value).toFixed(2)))
+
+    // update volume on playing audio
+    playingAudio.update((a) => {
+        Object.keys(a).forEach((id) => {
+            if (a[id].analyser.gainNode) {
+                let gainedValue = get(volume) * (get(gain) || 1)
+                a[id].analyser.gainNode.gain.value = gainedValue
+            } else a[id].audio.volume = get(volume)
+        })
+
+        return a
+    })
+
+    if (get(volume)) analyseAudio()
+}
+
 let audioStreams: any = {}
 export function startMicrophone(mic) {
     navigator.mediaDevices

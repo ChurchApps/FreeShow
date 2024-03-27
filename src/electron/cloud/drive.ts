@@ -2,8 +2,9 @@ import { auth, drive } from "@googleapis/drive"
 import path from "path"
 import { toApp } from ".."
 import { STORE } from "../../types/Channels"
-import { checkShowsFolder, dataFolderNames, getDataFolder, getFileStats, readFile, writeFile } from "../utils/files"
-import { stores } from "../utils/store"
+import { stores } from "../data/store"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileStats, readFile, writeFile } from "../utils/files"
+import { trimShow } from "../utils/responses"
 
 let driveClient: any = null
 
@@ -165,7 +166,7 @@ export async function downloadFile(fileId: string) {
 
 const ONE_MINUTE_MS = 60 * 1000
 const SHOWS_CONTENT = "SHOWS_CONTENT"
-const storesToSave = ["SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
+const storesToSave = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: settings.json, config.json, cache.json, history.json
 
 export async function syncDataDrive(data: any) {
@@ -177,8 +178,9 @@ export async function syncDataDrive(data: any) {
     // let mainFolder = files.find((a: any) => a.id === data.mainFolderId)
     let mainFolder = await getFile(data.mainFolderId)
     if (!mainFolder) return { error: "Error: Could not find main folder! Have you shared it with the service account?" }
+    console.log("Syncing to Drive")
 
-    let shows: any = null
+    // let shows: any = null
     let bibles: any = null
 
     // CONFIGS
@@ -218,8 +220,8 @@ export async function syncDataDrive(data: any) {
                 return
             }
 
-            if (id === "SHOWS") shows = driveContent
-            else if (id === "SYNCED_SETTINGS") bibles = driveContent?.scriptures
+            // if (id === "SHOWS") shows = driveContent
+            if (id === "SYNCED_SETTINGS") bibles = driveContent?.scriptures
 
             toApp(STORE, { channel: id, data: driveContent })
 
@@ -230,8 +232,8 @@ export async function syncDataDrive(data: any) {
 
         // upload (newest === "local")
         if (data.method === "download") return
-        if (id === "SHOWS") shows = store.store
-        else if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
+        // if (id === "SHOWS") shows = store.store
+        if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
 
         let file = createFile(data.mainFolderId, { type: "json", name }, storeContent)
         let response = await uploadFile(file, driveFileId)
@@ -315,8 +317,11 @@ export async function syncDataDrive(data: any) {
     }
 
     async function syncAllShows() {
-        if (shows === null) shows = stores.SHOWS.store || null
-        if (shows === null) return
+        // if (shows === null) shows = stores.SHOWS.store || null
+        // if (shows === null) return
+
+        let showsPath: string = checkShowsFolder(data.path)
+        if (!showsPath) return
 
         let name: string = SHOWS_CONTENT + ".json"
         let driveFileId = files.find((a: any) => a.name === name)?.id
@@ -324,8 +329,12 @@ export async function syncDataDrive(data: any) {
         // download shows
         let driveContent: any = driveFile ? await downloadFile(driveFileId) : null
 
-        let showsPath: string = checkShowsFolder(data.path)
-        if (!showsPath) return
+        let localShows = stores.SHOWS.store
+        if (data.method === "download") localShows = {}
+        // some might have the same id
+        let shows = { ...localShows, ...(driveContent || {}) }
+        console.log("Local shows count:", Object.keys(localShows || {}).length)
+        console.log("Cloud shows count:", Object.keys(driveContent || {}).length)
 
         let downloadCount: number = 0
         let uploadCount: number = 0
@@ -333,23 +342,43 @@ export async function syncDataDrive(data: any) {
 
         await Promise.all(Object.entries(shows).map(checkShow))
         async function checkShow([id, show]: any) {
-            let name = (show.name || id) + ".show"
+            let name = (localShows[id]?.name || show.name || id) + ".show"
             let localShowPath = path.join(showsPath, name)
 
-            // check existing content
+            let newest = await getNewest({ driveFile, localPath: localShowPath })
+            if (newest === "same") return
+
+            // get existing content
             let cloudContent = driveContent ? JSON.stringify([id, driveContent[id]]) : null
             let localContent = readFile(localShowPath)
-            if (localContent) allShows[id] = JSON.parse(localContent)[1]
+
+            if (newest === "cloud" && driveContent?.[id]) allShows[id] = driveContent[id]
+            else if (localContent) {
+                try {
+                    allShows[id] = JSON.parse(localContent)[1]
+                } catch (err) {
+                    console.log(`Could not parse show ${name}.`, err)
+                    return
+                }
+            }
+
             if (cloudContent && localContent === cloudContent) return
 
-            let newest = await getNewest({ driveFile, localPath: localShowPath })
-
-            if (newest === "same") return
+            // TODO: deleted files are not deleted in cloud
+            // popup: found some show files not in the cloud: sync(upload) or delete
 
             // "download" show
             if (cloudContent && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
-                writeFile(localShowPath, cloudContent, id)
+                let newName = (show.name || id) + ".show"
+                if (newName !== name) deleteFile(localShowPath) // renamed
+                let newPath = path.join(showsPath, newName)
+
+                writeFile(newPath, cloudContent, id)
                 downloadCount++
+
+                if (data.method !== "download") {
+                    localShows[id] = trimShow({ ...driveContent[id], name: show.name || id })
+                }
 
                 return
             }
@@ -358,8 +387,13 @@ export async function syncDataDrive(data: any) {
             uploadCount++
         }
 
-        if (downloadCount) changes.push({ type: "show", action: "download", name, count: downloadCount })
+        if (downloadCount) {
+            console.log("Downloading shows:", downloadCount)
+            changes.push({ type: "show", action: "download", name, count: downloadCount })
+            if (Object.keys(localShows).length) toApp(STORE, { channel: "SHOWS", data: localShows })
+        }
         if (!uploadCount) return
+        console.log("Uploading shows:", uploadCount)
 
         // upload shows
         if (data.method === "download") return

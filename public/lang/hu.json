@@ -11,6 +11,21 @@
         "finished": "Befejezett",
         "system_open": "Megnyitás a rendszerben"
     },
+    "titlebar": {
+        "file": "Fájl",
+        "edit": "Szerkesztés",
+        "view": "Nézet",
+        "help": "Súgó"
+    },
+    "screen": {
+        "width": "Szélesség",
+        "height": "Magasság",
+        "pixels": "képpont",
+        "top": "Felső",
+        "right": "Jobb",
+        "bottom": "Alsó",
+        "left": "Bal"
+    },
     "about": {
         "check_updates": "Frissítések ellenőrzése",
         "made": "Készült Norvégiában",
@@ -40,6 +55,9 @@
         "options": "További beállítások.",
         "scripture": "Tartsa lenyomva a Ctrl/Cmd vagy a Shift billentyűt több vers kiválasztásához."
     },
+    "tips": {
+        "trigger": "A kiváltókat általában arra használják, hogy HTTP-kérést küldjenek a kamerák előbeállításainak módosítására."
+    },
     "setup": {
         "good_luck": "Remélem, hogy hasznosnak találja ezt a szoftvert. Sikeres műsort! :)",
         "tips": "Hasznos tippek és útmutatók a weboldalon.",
@@ -62,21 +80,6 @@
         "default": "Alapértelmezett",
         "small": "Kicsi",
         "bold": "Félkövér"
-    },
-    "titlebar": {
-        "file": "Fájl",
-        "edit": "Szerkesztés",
-        "view": "Nézet",
-        "help": "Súgó"
-    },
-    "screen": {
-        "width": "Szélesség",
-        "height": "Magasság",
-        "pixels": "képpont",
-        "top": "Felső",
-        "right": "Jobb",
-        "bottom": "Alsó",
-        "left": "Bal"
     },
     "create_show": {
         "search_web": "Dal keresése a weben",
@@ -149,7 +152,8 @@
         "contain": "Tartalmazza",
         "fill": "Kitöltés",
         "cover": "Borító",
-        "online": "Online"
+        "online": "Online",
+        "recommended": "Ajánlott"
     },
     "menu": {
         "show": "Műsor",
@@ -233,7 +237,7 @@
         "message_template": "Üzenet sablon"
     },
     "show_at": {
-        "never": "Nincsenek diák",
+        "never": "Egyetlen dián sem",
         "always": "Minden dia",
         "first": "Első dia",
         "last": "Utolsó dia",
@@ -259,9 +263,6 @@
         "hover": "Rámutatás",
         "focus": "Fókusz"
     },
-    "buttons": {
-        "changeTheme": "Téma módosítása"
-    },
     "inputs": {
         "name": "Név",
         "url": "URL",
@@ -286,9 +287,6 @@
         "triggers": "Kiváltók",
         "templates": "Sablonok",
         "web": "Web"
-    },
-    "tips": {
-        "trigger": "A kiváltókat általában arra használják, hogy HTTP-kérést küldjenek a kamerák előbeállításainak módosítására."
     },
     "category": {
         "all": "Minden",
@@ -445,6 +443,8 @@
         "export": "Exportálás",
         "duplicate": "Duplikálás",
         "delete": "Törlés",
+        "delete_slide": "Dia törlése",
+        "delete_group": "Csoport törlése",
         "delete_all": "Összes törlése",
         "close": "Bezárás",
         "save": "Mentés",
@@ -477,8 +477,9 @@
         "unmute": "Visszahangosítás",
         "toggle_time_marker": "Időjelölők átváltása",
         "add_time_marker": "Időjelölő hozzáadása",
-        "bind_to": "Hozzárendelés",
-        "remove_binding": "Hozzárendelés eltávolítása",
+        "bind_to": "Speciális kimenetek",
+        "remove_binding": "Speciális kimenetek törlése",
+        "dynamic_values": "Dinamikus értékek",
         "show_timer": "Idő a műsorkezdésig",
         "hide_timer": "Idő a rejtésig",
         "choose_custom": "Egyéni választása",
@@ -512,7 +513,7 @@
         "refresh_all_shows": "A „Shows” mappa frissítése",
         "start_timer": "Időzítő indítása",
         "stop_timers": "Aktív időzítők leállítása",
-        "next_after_media": "Következő média után",
+        "next_after_media": "Kész a következő média",
         "remove_media": "Média eltávolítása",
         "remove_layers": "Rétegek eltávolítása",
         "index_select_project": "Projekt kijelölése index alapján",
@@ -604,8 +605,11 @@
         "slide": "Dia"
     },
     "edit": {
+        "text": "Szöveg",
         "font": "Betűkészlet",
-        "family": "Család",
+        "family": "Betűkészlet család",
+        "font_size": "Betűméret",
+        "text_color": "Szöveg színe",
         "style": "Stílus",
         "lines": "Sor",
         "options": "Beállítások",
@@ -627,6 +631,7 @@
         "letter_spacing": "Betűkköz",
         "word_spacing": "Szavak közti térköz",
         "transform": "Átalakítás",
+        "text_transform": "Szövegtranszformáció",
         "uppercase": "Nagybetűs",
         "lowercase": "Kisbetűs",
         "capitalize": "Kezdőbetű nagybetűs",
@@ -638,13 +643,13 @@
         "_title_top": "Felülre igazítás",
         "_title_bottom": "Alulra igazítás",
         "outline": "Körvonal",
-        "width": "Szélesség",
         "shadow": "Árnyék",
         "shadow_inset": "Zsugorított árnyék",
         "offsetX": "X eltolás",
         "offsetY": "Y eltolás",
         "blur": "Elmosás",
         "item": "Elem",
+        "width": "Szélesség",
         "height": "Magasság",
         "rotation": "Forgatás",
         "tilt": "Dőlés",
@@ -848,7 +853,7 @@
         "group_numbers": "Csoportszámok",
         "full_colors": "Teljes diacsoport színek",
         "auto_output": "Kimeneti képernyő aktiválása indításkor",
-        "hide_cursor_in_output": "Kurzus elrejtése a kimeneten",
+        "hide_cursor_in_output": "Kurzor elrejtése a kimeneten",
         "default_project_name": "Alapértelmezett projektnév",
         "resolution": "Felbontás",
         "cropping": "Vágás",
@@ -859,9 +864,9 @@
         "add": "Hozzáadás",
         "remove": "Eltávolítás",
         "change_name": "Név módosítása",
-        "show_location": "Helyzet megjelenítése",
+        "show_location": "Műsorok helye",
         "data_location": "Adatok helye",
-        "user_data_location": "Felhasználói adatok mentése az adatok helyére",
+        "user_data_location": "Felhasználói beállítások mentése az „Adatok helyére\"",
         "font": "Betűkészlet",
         "font_family": "Betűkészlet család",
         "font_size": "Betűméret",

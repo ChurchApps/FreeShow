@@ -5,6 +5,7 @@
     import { destroy, receive, send } from "../../../utils/request"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Capture from "./Capture.svelte"
+    import { clearBackground } from "../../helpers/showActions"
 
     let screens: any[] = []
     export let streams: any[]
@@ -23,7 +24,7 @@
         {screen}
         on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey) return
-            if (currentOutput.out?.background?.id === screen.id) setOutput("background", null)
+            if (currentOutput.out?.background?.id === screen.id) clearBackground()
             else setOutput("background", { id: screen.id, type: "screen" })
         }}
     />

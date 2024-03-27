@@ -9,7 +9,7 @@ import { IpcRendererEvent, contextBridge, ipcRenderer } from "electron"
 // let lastChannel: string = ""
 
 const debug: boolean = true
-const filteredChannels: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "PREVIEW", "REQUEST_STREAM"]
+const filteredChannels: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "PREVIEW", "REQUEST_STREAM", "MAIN_TIME"]
 
 let storedReceivers: any = {}
 

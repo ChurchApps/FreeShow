@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, connections, disabledServers, maxConnections, outputs, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { activePopup, companion, connections, disabledServers, maxConnections, outputs, popupData, ports, remotePassword, serverData } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -57,11 +57,24 @@
     }
 
     function toggleServer(e: any, id: string) {
-        disabledServers.update((a) => {
-            a[id] = !e.target.checked
+        let value = !e.target.checked
 
+        disabledServers.update((a) => {
+            a[id] = value
             return a
         })
+    }
+
+    function toggleCompanion(e: any) {
+        let value = e.target.checked
+
+        companion.update((a) => {
+            a.enabled = value
+            return a
+        })
+
+        if (value) send(MAIN, ["WEBSOCKET_START"], $ports.companion)
+        else send(MAIN, ["WEBSOCKET_STOP"])
     }
 
     // output
@@ -99,6 +112,8 @@
         { id: "stage", name: "StageShow", defaultPort: 5511, icon: "stage", enabledByDefault: true },
         { id: "controller", name: "ControlShow", defaultPort: 5512, icon: "connection", enabledByDefault: false },
         { id: "output_stream", name: "OutputShow", defaultPort: 5513, icon: "stage", enabledByDefault: false },
+        { id: "companion", name: "Bitfocus Companion (WebSocket/REST)", defaultPort: 5505, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
+        // { id: "rest", name: "REST Listener", defaultPort: 5506, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
     ]
     // Camera
     // Answer / Guess / Poll
@@ -117,21 +132,28 @@
 </div> -->
 
 {#each servers as server}
+    {@const disabled = server.id === "companion" ? $companion.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
     <CombinedInput>
         <span style="flex: 1;">
             <Button
                 style="width: 100%;"
                 on:click={() => {
+                    if (server.url) {
+                        send(MAIN, ["URL"], server.url)
+                        return
+                    }
+
                     popupData.set({ ip, id: server.id })
                     activePopup.set("connect")
                 }}
-                disabled={server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
+                {disabled}
             >
                 <div style="margin: 0;">
                     <Icon id={server.icon} size={1.1} right />
                     <p>
                         {server.name}
                         <span class="connections">{Object.keys($connections[server.id.toUpperCase()] || {})?.length || ""}</span>
+                        {#if server.url}<Icon id="launch" white />{/if}
                     </p>
                 </div>
             </Button>
@@ -139,7 +161,11 @@
         <span style="display: flex;">
             <span style="flex: 1;">
                 <span style="display: flex;align-items: center;padding: 0 10px;">
-                    <Checkbox checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
+                    {#if server.id === "companion"}
+                        <Checkbox checked={$companion.enabled === true} on:change={toggleCompanion} />
+                    {:else}
+                        <Checkbox checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
+                    {/if}
                 </span>
             </span>
             <span style="display: flex;flex: 1;">

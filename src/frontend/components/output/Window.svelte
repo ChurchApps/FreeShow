@@ -1,32 +1,57 @@
 <script lang="ts">
-  export let id: string
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
 
-  let videoElem: any
+    export let id: string
 
-  let constraints: any = {
-    video: {
-      mandatory: {
-        chromeMediaSource: "desktop",
-        chromeMediaSourceId: id,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        // maxAspectRatio: 16/9,
-        maxFrameRate: 60,
-      },
-    },
-  }
+    let videoElem: any
 
-  navigator.mediaDevices
-    .getUserMedia(constraints)
-    .then((stream) => {
-      videoElem.srcObject = stream
-      videoElem.onloadedmetadata = () => videoElem?.play()
+    let constraints: any = {
+        video: {
+            mandatory: {
+                chromeMediaSource: "desktop",
+                chromeMediaSourceId: id,
+                maxWidth: 1920,
+                maxHeight: 1080,
+                // maxAspectRatio: 16/9,
+                maxFrameRate: 60,
+            },
+        },
+    }
+
+    onMount(() => {
+        navigator.mediaDevices
+            .getUserMedia(constraints)
+            .then((stream) => {
+                console.log("stream")
+                if (!videoElem) return
+
+                videoElem.srcObject = stream
+                videoElem.onloadedmetadata = loaded
+            })
+            .catch((err) => {
+                console.log(err.name + ": " + err.message)
+            })
     })
-    .catch((err) => {
-      console.log(err.name + ": " + err.message)
-    })
+
+    onDestroy(stopStream)
+    function stopStream() {
+        if (!videoElem) return
+
+        videoElem.srcObject?.getTracks()?.forEach((track: any) => track.stop())
+        videoElem.srcObject = null
+    }
+
+    let dispatch = createEventDispatcher()
+    function loaded() {
+        // WIP not working!!!
+        console.log("window loaded")
+        if (!videoElem) return
+
+        videoElem.play()
+        dispatch("loaded", true)
+    }
 </script>
 
 <video bind:this={videoElem} class={$$props.class} style={$$props.style}>
-  <track kind="captions" />
+    <track kind="captions" />
 </video>

@@ -70,7 +70,7 @@
 
         let layoutID = uid()
         // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
-        let show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), $scriptureSettings.template || false)
+        let show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), $scriptureSettings.verseNumbers ? false : $scriptureSettings.template || false)
         // add scripture category
         if (!$categories.scripture) {
             categories.update((a) => {

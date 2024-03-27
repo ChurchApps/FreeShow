@@ -6,7 +6,8 @@
     import { getStyleResolution } from "../slide/getStyleResolution"
 
     $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: outputId = getActiveOutputs($outputs, true, true, true)[0]
+    $: currentOutput = $outputs[outputId] || {}
     $: Slide = currentOutput.out?.slide && ref ? _show("active").slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
 
     let width: number = 0
@@ -67,7 +68,7 @@
 <div class="parent" bind:this={parent} bind:offsetWidth={width} bind:offsetHeight={height}>
     <div style="width: 100%;height: 100%;display: flex;flex-direction: column;justify-content: center;" on:mousedown={onMouseMove} on:wheel={wheel}>
         <!-- TODO: draw get video time! -->
-        <Output bind:ratio center style={getStyleResolution(resolution, width, height, "fit")} disableTransitions mirror />
+        <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio mirror />
     </div>
 </div>
 

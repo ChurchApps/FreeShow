@@ -1,7 +1,7 @@
 // import pcmconvert from "pcm-converter"
 import os from "os"
 import { isLinux, toApp } from ".."
-import { updateFramerate } from "./capture"
+import { updateFramerate } from "../output/capture"
 import util from "./vingester-util"
 
 // WIP - NDI issue on Linux: libndi.so.5: No such file or dialog

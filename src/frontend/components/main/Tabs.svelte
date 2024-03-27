@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TabsObj } from "../../../types/Tabs"
-    import { dictionary, labelsDisabled } from "../../stores"
+    import { dictionary, labelsDisabled, openToolsTab } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -9,8 +9,17 @@
     export let active: string
     export let labels: boolean = $labelsDisabled ? false : true
 
+    $: if ($openToolsTab) openTab()
+    function openTab() {
+        let tabId = $openToolsTab
+        openToolsTab.set("")
+
+        if (!tabs[tabId]) return
+        active = tabId
+    }
+
     let firstOverflowIndex: number = Object.values(tabs).findIndex((a) => a.overflow)
-    let overflowHidden: boolean = true
+    export let overflowHidden: boolean = true
 </script>
 
 <div class="tabs">

@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN, OUTPUT, STAGE } from "../../../types/Channels"
+import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
 import type { Slide } from "../../../types/Show"
 import { changeSlideGroups, splitItemInTwo } from "../../show/slides"
@@ -47,11 +47,13 @@ import {
     themes,
     triggers,
 } from "../../stores"
+import { moveStageConnection } from "../../utils/apiHelper"
 import { hideDisplay } from "../../utils/common"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
+import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
@@ -70,7 +72,6 @@ import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
-import { getShortBibleName } from "../drawer/bible/scripture"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     if (!actions[id]) return console.log("MISSING CONTEXT: ", id)
@@ -207,6 +208,8 @@ const actions: any = {
             }))
 
         projects.update((a) => {
+            if (!a[get(activeProject)!]) return a
+
             a[get(activeProject)!].shows.push(...obj.sel.data)
             return a
         })
@@ -622,10 +625,8 @@ const actions: any = {
 
     // stage
     move_connections: (obj: any) => {
-        console.log(obj)
-        let stageId = obj.sel.data[0].id
-        console.log(stageId)
-        window.api.send(STAGE, { channel: "SWITCH", data: { id: stageId } })
+        let stageId = obj.sel.data[0]?.id
+        moveStageConnection(stageId)
     },
 
     // drawer navigation

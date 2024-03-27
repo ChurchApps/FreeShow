@@ -11,6 +11,21 @@
         "finished": "Zakończono",
         "system_open": "Otwórz w systemie"
     },
+    "titlebar": {
+        "file": "Plik",
+        "edit": "Edytuj",
+        "view": "Widok",
+        "help": "Pomoc"
+    },
+    "screen": {
+        "width": "Szerokość",
+        "height": "Wysokość",
+        "pixels": "pikseli",
+        "top": "Góra",
+        "right": "Prawo",
+        "bottom": "Dół",
+        "left": "Lewo"
+    },
     "about": {
         "check_updates": "Sprawdź aktualizacje",
         "made": "Stworzone w Norwegii przez",
@@ -40,6 +55,9 @@
         "options": "Więcej opcji.",
         "scripture": "Przytrzymaj CTRL/CMD lub SHIFT aby zaznaczyć jednocześnie więcej wersetów."
     },
+    "tips": {
+        "trigger": "Wyzwalacze są często używane do przesyłu zapytań HTTP aby zmienić presety kamer"
+    },
     "setup": {
         "good_luck": "Mam nadzieję, że ta aplikacja będzie dla Ciebie pomocna. Powodzenia podczas prezentowania! :)",
         "tips": "Odkryj pomocne wskazówki oraz samouczki na stronie internetowej.",
@@ -62,21 +80,6 @@
         "default": "Domyślne",
         "small": "Małe",
         "bold": "Pogrubione"
-    },
-    "titlebar": {
-        "file": "Plik",
-        "edit": "Edytuj",
-        "view": "Widok",
-        "help": "Pomoc"
-    },
-    "screen": {
-        "width": "Szerokość",
-        "height": "Wysokość",
-        "pixels": "pikseli",
-        "top": "Góra",
-        "right": "Prawo",
-        "bottom": "Dół",
-        "left": "Lewo"
     },
     "create_show": {
         "search_web": "Poszukaj pieśni w Internecie",
@@ -149,7 +152,8 @@
         "contain": "Proporcje",
         "fill": "Wypełnienie",
         "cover": "Kadrowanie",
-        "online": "Online"
+        "online": "Online",
+        "recommended": "Rekomendowane"
     },
     "menu": {
         "show": "Pokaz",
@@ -259,9 +263,6 @@
         "hover": "Najechanie",
         "focus": "Skupienie"
     },
-    "buttons": {
-        "changeTheme": "Zmień temat"
-    },
     "inputs": {
         "name": "Nazwa",
         "url": "URL",
@@ -286,9 +287,6 @@
         "triggers": "Wyzwalacze",
         "templates": "Szablony",
         "web": "Internet"
-    },
-    "tips": {
-        "trigger": "Wyzwalacze są często używane do przesyłu zapytań HTTP aby zmienić presety kamer"
     },
     "category": {
         "all": "Wszystkie",
@@ -445,6 +443,8 @@
         "export": "Eksportuj",
         "duplicate": "Duplikuj",
         "delete": "Usuń",
+        "delete_slide": "Usuń slajd",
+        "delete_group": "Usuń grupę",
         "delete_all": "Usuń wszystko",
         "close": "Zamknij",
         "save": "Zapisz",
@@ -477,8 +477,9 @@
         "unmute": "Przywróć dźwięk",
         "toggle_time_marker": "Zaznacz czas",
         "add_time_marker": "Dodaj znacznik czasu",
-        "bind_to": "Powiąż z",
-        "remove_binding": "Usuń powiązanie",
+        "bind_to": "Wybrane wyjścia",
+        "remove_binding": "Usuń wybrane wyjścia",
+        "dynamic_values": "Dynamiczne wartości",
         "show_timer": "Czas do pokazu",
         "hide_timer": "Czas do ukrycia",
         "choose_custom": "Wybierz własny",
@@ -512,7 +513,7 @@
         "refresh_all_shows": "Załaduj ponownie pliki \".show\"",
         "start_timer": "Rozpocznij odliczanie",
         "stop_timers": "Zatrzymaj aktywny timer",
-        "next_after_media": "Następny po media",
+        "next_after_media": "Następne po odtworzeniu",
         "remove_media": "Usuń media",
         "remove_layers": "Usuń warstwy",
         "index_select_project": "Zaznacz projekt po indeksie",
@@ -604,8 +605,11 @@
         "slide": "Slajd"
     },
     "edit": {
+        "text": "Tekst",
         "font": "Font",
-        "family": "Rodzina",
+        "family": "Rodzina fontów",
+        "font_size": "Rozmiar fontu",
+        "text_color": "Kolor tekstu",
         "style": "Styl",
         "lines": "Wiersze",
         "options": "Opcje",
@@ -627,6 +631,7 @@
         "letter_spacing": "Odstępy liter",
         "word_spacing": "Odstępy wyrazów",
         "transform": "Przekształć",
+        "text_transform": "Przekształć tekst",
         "uppercase": "Wielkie litery",
         "lowercase": "Małe litery",
         "capitalize": "Wielkie na początku",
@@ -638,13 +643,13 @@
         "_title_top": "Wyrównaj do góry",
         "_title_bottom": "Wyrównaj do dołu",
         "outline": "Obrys",
-        "width": "Szerokość",
         "shadow": "Cień",
         "shadow_inset": "Cień wewnętrzny",
         "offsetX": "Przesunięcie X",
         "offsetY": "Przesunięcie Y",
         "blur": "Rozmycie",
         "item": "Element",
+        "width": "Szerokość",
         "height": "Wysokość",
         "rotation": "Obróć pionowo",
         "tilt": "Nachylenie",

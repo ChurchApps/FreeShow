@@ -66,6 +66,7 @@ export function convertOpenLP(data: any) {
             modified: new Date(song.modified).getTime(),
             used: null,
         }
+        if (!show.timestamps.modified) show.timestamps.modified = show.timestamps.created
 
         let { slides, layout }: any = createSlides(song)
 
@@ -175,6 +176,13 @@ function getSong(song: any, content: any) {
 
 function XMLtoObject(xml: string) {
     let parser = new DOMParser()
+
+    // remove first line (standalone attribute): <?xml version="1.0" encoding="UTF-8"?> / <?xml-stylesheet href="stylesheets.css" type="text/css"?>
+    while (xml.indexOf("<?xml") >= 0) {
+        let splitted = xml.split("\n")
+        xml = splitted.slice(1, splitted.length).join("\n")
+    }
+
     let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
 
     let properties = getChild(xmlDoc, "properties")
@@ -185,14 +193,12 @@ function XMLtoObject(xml: string) {
         modified: xmlDoc.getAttribute("modifiedDate") || "",
         verseOrder: getChild(properties, "verseOrder").textContent || "",
         authors: getChild(properties, "authors").children
-        ? [...getChild(properties, "authors").children].map((a: any) => ({
-            type: a.getAttribute("type")?a.getAttribute("type"):"words",
-            name: a.textContent,
-            }))
-        : [],
-        notes: getChild(properties, "comments").children 
-            ?  [...getChild(properties,"comments").children].map((comment) => comment.textContent).join('\n')
-            : "",
+            ? [...getChild(properties, "authors").children].map((a: any) => ({
+                  type: a.getAttribute("type") ? a.getAttribute("type") : "words",
+                  name: a.textContent,
+              }))
+            : [],
+        notes: getChild(properties, "comments").children ? [...getChild(properties, "comments").children].map((comment) => comment.textContent).join("\n") : "",
         copyright: getChild(properties, "copyright").textContent || "",
         ccli: getChild(properties, "ccliNo").textContent || "",
         lyrics: [...lyrics.getElementsByTagName("verse")].map((verse) => ({

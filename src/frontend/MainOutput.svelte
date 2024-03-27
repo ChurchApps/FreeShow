@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
     import { getResolution } from "./components/helpers/output"
@@ -7,6 +8,8 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import { currentWindow, outputs, special, styles } from "./stores"
     import { hideDisplay } from "./utils/common"
+
+    $: outputId = Object.keys($outputs)[0]
 
     // get output resolution
     let width: number = 0
@@ -21,6 +24,14 @@
         else enableOutputMove = false
     }
     $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
+
+    // make sure it's loaded to prevent output not changing to stage output because of Svelte transition bug
+    let loaded: boolean = false
+    onMount(() => {
+        setTimeout(() => {
+            loaded = true
+        }, 2000)
+    })
 </script>
 
 <div
@@ -37,10 +48,11 @@
             <p>Drag window</p>
         </div>
     {/if}
-    {#if Object.values($outputs)[0].stageOutput}
-        <StageShow stageId={Object.values($outputs)[0].stageOutput} edit={false} />
-    {:else}
-        <Output style={getStyleResolution(resolution, width, height, "fit")} center />
+
+    {#if $outputs[outputId].stageOutput}
+        <StageShow {outputId} stageId={$outputs[outputId].stageOutput} edit={false} />
+    {:else if loaded}
+        <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
     {/if}
 </div>
 

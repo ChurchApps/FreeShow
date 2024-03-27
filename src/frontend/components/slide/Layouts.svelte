@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { uid } from "uid"
-    import { activePopup, activeProject, activeShow, dictionary, labelsDisabled, notFound, projects, showsCache, slidesOptions } from "../../stores"
+    import { activePopup, activeProject, activeShow, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { duplicate } from "../helpers/clipboard"
@@ -89,6 +89,8 @@
 
     $: reference = currentShow.reference
     $: multipleLayouts = sortedLayouts.length > 1
+
+    const openTab = (id: string) => openToolsTab.set(id)
 </script>
 
 <svelte:window on:mousedown={mousedown} />
@@ -96,17 +98,17 @@
 {#if $slidesOptions.mode === "grid"}
     <!-- one at a time, in prioritized order -->
     {#if layouts?.[activeLayout]?.notes}
-        <div class="notes" title={$dictionary.tools?.notes}>
+        <div class="notes" title={$dictionary.tools?.notes} on:click={() => openTab("notes")}>
             <Icon id="notes" right white />
             <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
         </div>
     {:else if currentShow.message?.text}
-        <div class="notes" title={$dictionary.meta?.message}>
+        <div class="notes" title={$dictionary.meta?.message} on:click={() => openTab("metadata")}>
             <Icon id="message" right white />
             <p>{@html currentShow.message?.text.replaceAll("\n", "&nbsp;")}</p>
         </div>
     {:else if !currentShow.metadata?.autoMedia && Object.values(currentShow.meta || {}).reduce((v, a) => (v += a), "").length}
-        <div class="notes" title={$dictionary.tools?.metadata}>
+        <div class="notes" title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")}>
             <Icon id="info" right white />
             <p>
                 {@html Object.values(currentShow.meta)

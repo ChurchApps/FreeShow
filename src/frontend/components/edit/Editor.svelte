@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { activeEdit, activeShow, drawer, refreshEditSlide } from "../../stores"
-    import OverlayEditor from "../edit/OverlayEditor.svelte"
-    import SlideEditor from "../edit/SlideEditor.svelte"
+    import OverlayEditor from "./editors/OverlayEditor.svelte"
+    import SlideEditor from "./editors/SlideEditor.svelte"
     import Splash from "../main/Splash.svelte"
-    import EffectEditor from "./EffectEditor.svelte"
-    import MediaEditor from "./MediaEditor.svelte"
-    import TemplateEditor from "./TemplateEditor.svelte"
+    import EffectEditor from "./editors/EffectEditor.svelte"
+    import MediaEditor from "./editors/MediaEditor.svelte"
+    import TemplateEditor from "./editors/TemplateEditor.svelte"
 
     $: showIsActive = $activeShow && ($activeShow.type || "show") === "show"
     $: noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined

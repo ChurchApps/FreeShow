@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, OPEN_FILE, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { SaveList } from "../../types/Save"
 import type { ClientMessage } from "../../types/Socket"
+import { clone, removeDuplicates } from "../components/helpers/array"
 import { loadShows } from "../components/helpers/setShow"
 import {
     activePopup,
@@ -9,7 +10,6 @@ import {
     audioFolders,
     audioStreams,
     autosave,
-    calendarAddShow,
     categories,
     customizedIcons,
     dataPath,
@@ -30,7 +30,6 @@ import {
     mediaFolders,
     mediaOptions,
     midiIn,
-    os,
     overlayCategories,
     overlays,
     playerVideos,
@@ -56,7 +55,6 @@ import {
     variables,
     videoExtensions,
     videoMarkers,
-    webFavorites,
 } from "../stores"
 import { alertUpdates, autoOutput, maxConnections, ports, scriptureSettings, scriptures, splitLines, transitionData } from "./../stores"
 import { syncDrive, validateKeys } from "./drive"
@@ -64,7 +62,6 @@ import { send } from "./request"
 import { closeApp } from "./save"
 import { client } from "./sendData"
 import { stageListen } from "./stageTalk"
-import { clone, removeDuplicates } from "../components/helpers/array"
 
 export function listen() {
     // FROM CLIENT (EXPRESS SERVERS)
@@ -236,8 +233,13 @@ const cloudHelpers = {
         showsCache.set({})
         activeShow.set(null)
 
-        popupData.set(changes)
-        activePopup.set("cloud_update")
+        if (get(autosave) === "never") {
+            popupData.set(changes)
+            activePopup.set("cloud_update")
+            return
+        }
+
+        newToast("$cloud.sync_complete")
     },
 }
 
@@ -272,7 +274,7 @@ const saveList: { [key in SaveList]: any } = {
     mediaFolders: mediaFolders,
     mediaOptions: mediaOptions,
     openedFolders: null,
-    os: os,
+    os: null,
     outLocked: null,
     outputs: null,
     sorted: null,
@@ -297,7 +299,6 @@ const saveList: { [key in SaveList]: any } = {
     themes: themes,
     transitionData: transitionData,
     videoExtensions: videoExtensions,
-    webFavorites: webFavorites,
     volume: null,
     gain: null,
     midiIn: midiIn,
@@ -305,6 +306,7 @@ const saveList: { [key in SaveList]: any } = {
     customizedIcons: customizedIcons,
     driveKeys: driveKeys,
     driveData: driveData,
-    calendarAddShow: calendarAddShow,
+    calendarAddShow: null,
     special: null,
+    companion: null,
 }

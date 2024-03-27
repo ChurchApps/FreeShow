@@ -74,6 +74,9 @@ export const outputCache: Writable<any> = writable(null)
 export const previewBuffers: Writable<any> = writable({})
 export const ndiData: Writable<any> = writable({})
 export const closeAd: Writable<boolean> = writable(false)
+export const videosData: Writable<any> = writable({})
+export const videosTime: Writable<any> = writable({})
+export const textLoaded: Writable<boolean> = writable(false)
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
@@ -104,6 +107,7 @@ export const openScripture: Writable<any> = writable(null)
 export const deletedShows: Writable<any[]> = writable([])
 export const renamedShows: Writable<any[]> = writable([])
 export const selectAllMedia: Writable<boolean> = writable(false)
+export const openToolsTab: Writable<string> = writable("")
 
 // ----- SAVED VARIABLES -----
 
@@ -162,13 +166,6 @@ export const gain: Writable<number> = writable(1) // 1
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}
-
-// WEB (WIP)
-export const webFavorites: Writable<Categories> = writable({
-    youtube: { name: "YouTube", icon: "web", url: "https://youtube.com/" },
-    google: { name: "Google", icon: "web", url: "https://google.com/" },
-    example: { name: "Example", icon: "web", url: "https://example.com/" },
-})
 
 // TEMPLATES
 export const templateCategories: Writable<Categories> = writable({}) // {default}
@@ -236,6 +233,7 @@ export const disabledServers: Writable<any> = writable({ remote: false, stage: f
 export const serverData: Writable<any> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
+export const companion: Writable<any> = writable({ enabled: false }) // {}
 
 // HIDDEN
 export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"
@@ -311,7 +309,6 @@ export const $ = {
     audioFolders,
     volume,
     playerVideos,
-    webFavorites,
     templateCategories,
     templates,
     events,

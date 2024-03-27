@@ -32,7 +32,9 @@
 {#if messages[0]}
     <div class="toast" transition:slide>
         {#if messages[0][0] === "$"}
-            <T id={messages[0].slice(1)} />
+            {#key messages[0]}
+                <T id={messages[0].slice(1)} />
+            {/key}
         {:else}
             {messages[0]}
         {/if}

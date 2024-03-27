@@ -15,6 +15,7 @@ export type SaveListSyncedSettings =
     | "midiIn"
     | "videoMarkers"
     | "customizedIcons"
+    | "companion"
 
 export type SaveListSettings =
     | "initialized"
@@ -57,7 +58,6 @@ export type SaveListSettings =
     | "theme"
     | "transitionData"
     | "videoExtensions"
-    | "webFavorites"
     | "volume"
     | "gain"
     | "driveData"

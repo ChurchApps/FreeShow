@@ -2,7 +2,7 @@
     import { EXPORT } from "../../../types/Channels"
     import { currentWindow } from "../../stores"
     import { send } from "../../utils/request"
-    import Media from "../media/Media.svelte"
+    import Media from "../output/layers/Media.svelte"
     import Textbox from "../slide/Textbox.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
 
@@ -57,9 +57,12 @@
 
     let index: number = 0
     function exportPDF() {
-        setTimeout(() => {
-            send(EXPORT, ["EXPORT"], { type: "pdf", path, name: shows[index].name })
-        }, 20 * (pages + 1) + 400)
+        setTimeout(
+            () => {
+                send(EXPORT, ["EXPORT"], { type: "pdf", path, name: shows[index].name })
+            },
+            20 * (pages + 1) + 400
+        )
     }
 
     $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id].length / options.grid[1] / (options.text && options.slides ? 1 : options.slides ? options.grid[0] : 1.5)) : 0

@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import type { Event } from "../../../../types/Calendar"
     import { activeDays, activePopup, dictionary, drawerTabsData, eventEdit, events, popupData, shows } from "../../../stores"
-    import { createRepeatedEvents, updateEventData } from "../../calendar/event"
+    import { createRepeatedEvents, updateEventData } from "../../drawer/calendar/event"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getListOfShows } from "../../helpers/show"
@@ -16,7 +16,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { getTime, isSameDay } from "../../calendar/calendar"
+    import { getTime, isSameDay } from "../../drawer/calendar/calendar"
 
     let stored: string = ""
 

@@ -22,6 +22,7 @@
     import { uid } from "uid"
     import { onDestroy } from "svelte"
     import NDIStreams from "../live/NDIStreams.svelte"
+    import { clearBackground } from "../../helpers/showActions"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -275,7 +276,7 @@
                     let cam = detail.cam
 
                     if ($outLocked || e.ctrlKey || e.metaKey) return
-                    if (currentOutput.out?.background?.id === cam.id) setOutput("background", null)
+                    if (currentOutput.out?.background?.id === cam.id) clearBackground()
                     else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
                 }}
             />

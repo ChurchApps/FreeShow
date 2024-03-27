@@ -30,7 +30,7 @@ import {
 import { updateThemeValues } from "../../utils/updateSettings"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
 import { clone } from "./array"
-import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "./empty"
+import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "../../values/empty"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
@@ -206,6 +206,8 @@ export const _updaters = {
         ...getDefaultCategoryUpdater("shows"),
         select: (id: string, _data, initializing: boolean) => {
             if (!initializing) return
+
+            setDrawerTabData("shows", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
         },
     },
@@ -214,6 +216,8 @@ export const _updaters = {
         ...getDefaultCategoryUpdater("overlays"),
         select: (id: string, _data, initializing: boolean) => {
             if (!initializing) return
+
+            setDrawerTabData("overlays", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
         },
     },
@@ -222,6 +226,8 @@ export const _updaters = {
         ...getDefaultCategoryUpdater("templates"),
         select: (id: string, _data, initializing: boolean) => {
             if (!initializing) return
+
+            setDrawerTabData("templates", id)
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
         },
     },
@@ -258,7 +264,7 @@ export const _updaters = {
         empty: EMPTY_SLIDE,
         initialize: (data) => {
             // get selected category
-            if (get(drawerTabsData).templates?.activeSubTab && get(categories)[get(drawerTabsData).templates.activeSubTab!]) {
+            if (get(drawerTabsData).templates?.activeSubTab && get(templateCategories)[get(drawerTabsData).templates.activeSubTab!]) {
                 data.category = get(drawerTabsData).templates.activeSubTab
             }
 
@@ -354,7 +360,7 @@ export const _updaters = {
             if (get(activeShow)?.id === id) activeShow.set(null)
 
             // remove from stored project
-            if (data.remember?.project) {
+            if (data.remember?.project && get(projects)[data.remember.project]) {
                 projects.update((a) => {
                     a[data.remember.project].shows = a[data.remember.project].shows.filter((a) => a.id !== id)
                     return a
@@ -376,7 +382,7 @@ export const _updaters = {
             _show(id).set({ key: "settings.activeLayout", value: subkey })
 
             // set active layout in project
-            if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!].shows[get(activeShow)!.index!]) {
+            if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!]?.shows?.[get(activeShow)!.index!]) {
                 projects.update((a) => {
                     a[get(activeProject)!].shows[get(activeShow)!.index!].layout = subkey
                     return a

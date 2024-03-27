@@ -4,7 +4,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import { customIcons, customIconsColors } from "../customIcons"
+    import { customIcons, customIconsColors } from "../../../values/customIcons"
 
     const names: any = {
         category_shows: (icon: string) => categories.update((a) => changeIcon(a, icon)),

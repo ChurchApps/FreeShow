@@ -248,7 +248,7 @@
     {show.name}
     home
   </div> -->
-    <Slide {show} {slides} {socket} {stream} {background} />
+    <Slide {show} {slides} socketId={id} {socket} {stream} {background} />
     {#if clicked}
         <div class="clicked">
             <h5 style="text-align: center;">{show.name}</h5>

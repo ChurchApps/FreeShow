@@ -1,10 +1,10 @@
-import { draw, drawSettings, drawTool } from "./../stores"
 import { get } from "svelte/store"
 import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage, Clients } from "../../types/Socket"
-import { getResolution, setOutput } from "../components/helpers/output"
-import { nextSlide, previousSlide } from "../components/helpers/showActions"
+import { getResolution } from "../components/helpers/output"
+import { clearAll, nextSlide, previousSlide } from "../components/helpers/showActions"
 import { connections } from "../stores"
+import { draw, drawSettings, drawTool } from "./../stores"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
 
@@ -13,12 +13,7 @@ const receiveCONTROLLER = {
         const actions = {
             next: () => nextSlide({ key: "ArrowRight" }),
             previous: () => previousSlide({ key: "ArrowLeft" }),
-            clear: () => {
-                // TODO: combine this, remoteTalk and ClearButtons
-                setOutput("slide", null)
-                setOutput("background", null)
-                setOutput("overlays", [])
-            },
+            clear: () => clearAll(),
         }
         if (actions[data.id]) actions[data.id]()
     },

@@ -16,7 +16,7 @@
 </script>
 
 {#if video?.type === "youtube"}
-    <YouTube {outputId} playerId={id} id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} />
+    <YouTube {outputId} playerId={id} id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} on:loaded />
 {:else if video?.type === "vimeo"}
-    <Vimeo {outputId} id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} />
+    <Vimeo {outputId} id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} on:loaded />
 {/if}

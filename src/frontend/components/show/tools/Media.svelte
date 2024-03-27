@@ -9,7 +9,7 @@
     import T from "../../helpers/T.svelte"
     import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import { getExtension, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
-    import { findMatchingOut, setOutput } from "../../helpers/output"
+    import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import { sendMidi } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
@@ -18,6 +18,8 @@
     import SelectElem from "../../system/SelectElem.svelte"
 
     $: show = $showsCache[$activeShow!.id]
+
+    $: outputId = getActiveOutputs($outputs, true, true, true)[0]
 
     let layoutBackgrounds: any[] = []
     let layoutAudio: any[] = []
@@ -56,7 +58,7 @@
         bgs = []
         layoutBackgrounds.forEach((a: any) => {
             if (!show.media[a]) return
-            let path = show.media[a].path || show.media[a].id!
+            let path: string = show.media[a].path || show.media[a].id || ""
             let cloudId = $driveData.mediaId
             if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
@@ -129,7 +131,7 @@
 
     let simularBgs: any[] = []
     $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
-    receive(MAIN, { GET_SIMULAR: (data: string[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a))).slice(0, 3)) }, "media_simular")
+    receive(MAIN, { GET_SIMULAR: (data: any[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)) }, "media_simular")
     onDestroy(() => destroy(MAIN, "media_simular"))
 </script>
 
@@ -150,8 +152,8 @@
                             size={3}
                             on:click={() => {
                                 if (!$outLocked) {
-                                    setOutput("background", { path: background.path, loop: background.loop !== false, muted: background.muted !== false, ...mediaStyle })
-                                    if (background.type === "video") send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
+                                    setOutput("background", { path: background.path, type: background.type, loop: background.loop !== false, muted: background.muted !== false, ...mediaStyle })
+                                    if (background.type === "video") send(OUTPUT, ["DATA"], { [outputId]: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
                                 }
                             }}
                             title={$dictionary.media?.play}
@@ -198,8 +200,8 @@
                                 size={3}
                                 on:click={() => {
                                     if (!$outLocked) {
-                                        setOutput("background", { path: background.path, loop: true, muted: true, ...mediaStyle })
-                                        if (type === "video") send(OUTPUT, ["UPDATE_VIDEO"], { data: { duration: 0, paused: false, muted: true, loop: true } })
+                                        setOutput("background", { path: background.path, type, loop: true, muted: true, ...mediaStyle })
+                                        if (type === "video") send(OUTPUT, ["DATA"], { [outputId]: { duration: 0, paused: false, muted: true, loop: true } })
                                     }
                                 }}
                                 title={$dictionary.media?.play}

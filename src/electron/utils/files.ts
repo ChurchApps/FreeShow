@@ -6,12 +6,12 @@ import { ExifImage } from "exif"
 import fs from "fs"
 import { Stats } from "original-fs"
 import path, { join, parse } from "path"
+import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
-import { OPEN_FILE, READ_EXIF } from "./../../types/Channels"
+import { stores } from "../data/store"
+import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
-import { stores } from "./store"
-import { uid } from "uid"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -324,11 +324,11 @@ export function getFileInfo(e: any, filePath: string) {
 }
 
 // READ EXIF
-export function readExifData(e: any, data: any) {
+export function readExifData({ id }: any, e: any) {
     try {
-        new ExifImage({ image: data.id }, (err, exifData) => {
+        new ExifImage({ image: id }, (err, exifData) => {
             actionComplete(err, "Error getting EXIF data")
-            if (!err) e.reply(READ_EXIF, { ...data, exif: exifData })
+            if (!err) e.reply(MAIN, { channel: "READ_EXIF", data: { id, exif: exifData } })
         })
     } catch (err) {
         actionComplete(err, "Error loading EXIF image")
@@ -421,6 +421,10 @@ export function loadShows({ showsPath }: any) {
 
         newCachedShows[id] = trimShow({ ...show[1], name: trimmedName })
     }
+
+    // save this (for cloud sync)
+    stores.SHOWS.clear()
+    stores.SHOWS.set(newCachedShows)
 
     toApp(STORE, { channel: "SHOWS", data: newCachedShows })
 }

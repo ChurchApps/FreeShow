@@ -165,13 +165,10 @@
         // content
         text: {
             "style_letter-spacing": 1,
-            "style_word-spacing": 3,
-            "style_text-transform": "uppercase",
         },
         lines: {
-            "style_line-height": 1.2,
-            "specialStyle.lineGap": 12,
-            "specialStyle.lineBg": "#000000",
+            // "style_line-height": 1.2,
+            "specialStyle.lineGap": 1,
         },
         align: {
             "style_text-align": "left",
@@ -207,12 +204,14 @@
 
         // item
         transform: {
-            transform_scaleX: -1,
+            // transform_scaleX: -1,
+            transform_perspective: 1,
         },
         style: {
             // WIP opacity does not get applied here
-            "style_background-color": "rgb(0 0 0 / 0.3)",
+            // "style_background-color": "rgb(0 0 0 / 0.3)",
             // "(style_)background-opacity": "0.3", (this is linked to the color)
+            style_padding: 10,
         },
         border: {
             "style_border-width": 5,
@@ -307,7 +306,7 @@
         function resetInput(i: number = 0) {
             let input = currentEdit[i]
             if (!input) return
-            if (input.name === "background_opacity" || (input.key === "box-shadow" && input.valueIndex === 3)) return
+            if (input.name === "background_opacity" || (input.key === "box-shadow" && input.valueIndex === 3)) return resetInput(i + 1)
 
             if (lineInputs[input.input]) {
                 input = lineInputs[input.input]?.[0] || {}

@@ -92,7 +92,7 @@
     let fullFilteredFiles: any[] = []
     function filterSearch() {
         fullFilteredFiles = clone(files)
-        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(searchValue))
+        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(filter(searchValue)))
     }
 
     function keydown(e: any) {

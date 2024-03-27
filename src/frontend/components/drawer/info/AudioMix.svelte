@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { drawer, gain, playingAudio, volume } from "../../../stores"
-    import { analyseAudio } from "../../helpers/audio"
+    import { drawer, gain, volume } from "../../../stores"
     import T from "../../helpers/T.svelte"
+    import { updateVolume } from "../../helpers/audio"
     import Slider from "../../inputs/Slider.svelte"
-    import AudioMeter from "../../output/AudioMeter.svelte"
+    import AudioMeter from "../../output/preview/AudioMeter.svelte"
 
     // TODO: video player volume
 
@@ -11,22 +11,8 @@
 
     // let volume: number = 100
 
-    function updateVolume(e: any, changeGain: boolean = false) {
-        if (changeGain) gain.set(Number(Number(e.target.value).toFixed(2)))
-        else volume.set(Number(Number(e.target.value).toFixed(2)))
-
-        // update volume
-        playingAudio.update((a) => {
-            Object.keys(a).forEach((id) => {
-                if (a[id].analyser.gainNode) {
-                    let gainedValue = $volume * ($gain || 1)
-                    a[id].analyser.gainNode.gain.value = gainedValue
-                } else a[id].audio.volume = $volume
-            })
-            return a
-        })
-
-        if ($volume) analyseAudio()
+    function setVolume(e: any, changeGain: boolean = false) {
+        updateVolume(e.target.value, changeGain)
     }
 
     $: drawerHeight = $drawer.height - 40 - 100
@@ -41,14 +27,14 @@
     <div class="volume">
         <p style="font-size: 0.9em;"><T id="media.volume" /></p>
         <div class="slider">
-            <Slider value={$volume} step={0.01} max={1} on:input={updateVolume} />
+            <Slider value={$volume} step={0.01} max={1} on:input={setVolume} />
         </div>
         <p style="font-size: 1em;margin: 10px;{$volume === 1 || $volume === 0 ? 'color: var(--secondary);' : ''}">{($volume * 100).toFixed()}</p>
     </div>
     <div class="volume" style="left: 75%">
         <p style="font-size: 0.9em;"><T id="media.gain" /></p>
         <div class="slider">
-            <Slider value={$gain} step={0.01} min={1} max={3} on:input={(e) => updateVolume(e, true)} />
+            <Slider value={$gain} step={0.01} min={1} max={3} on:input={(e) => setVolume(e, true)} />
         </div>
         <p style="font-size: 1em;margin: 10px;{$gain === 1 ? 'color: var(--secondary);' : ''}">{(($gain - 1) * 100).toFixed()}</p>
     </div>
@@ -90,7 +76,9 @@
         width: var(--height);
         height: 8px;
 
-        box-shadow: inset 1px 1px 3px rgb(0 0 0 / 0.5), 0 1px 1px rgb(255 255 255 / 0.1);
+        box-shadow:
+            inset 1px 1px 3px rgb(0 0 0 / 0.5),
+            0 1px 1px rgb(255 255 255 / 0.1);
         border-radius: 8px;
 
         transform: rotate(270deg) translateX(-50%);
