@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { activeStage, stageShows } from "../../stores"
+    import { OUTPUT } from "../../../types/Channels"
+    import { activeStage, currentWindow, stageShows, videosData, videosTime } from "../../stores"
+    import { receive, send } from "../../utils/request"
     import { history } from "../helpers/history"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
@@ -11,8 +13,9 @@
     import { updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
 
-    export let edit: boolean = true
+    export let outputId: string = ""
     export let stageId: string = ""
+    export let edit: boolean = true
 
     let lines: [string, number][] = []
     let mouse: any = null
@@ -61,6 +64,21 @@
     $: show = $stageShows[stageShowId || ""] || {}
 
     let noOverflow = true
+
+    // get video time
+    $: if ($currentWindow === "output" && Object.keys(show.items || {}).find((id) => id.includes("video"))) requestVideoData()
+    let interval: any = null
+    function requestVideoData() {
+        if (interval) return
+        interval = setInterval(() => send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId }), 1000) // , stageId
+
+        receive(OUTPUT, {
+            VIDEO_DATA: (data) => {
+                videosData.set(data.data)
+                videosTime.set(data.time)
+            },
+        })
+    }
 </script>
 
 <Main slide={stageShowId ? show : null} let:width let:height let:resolution>
@@ -73,7 +91,7 @@
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                 {/if}
                 <!-- {#key Slide} -->
-                {#each Object.entries(show.items) as [id, item]}
+                {#each Object.entries(show.items || {}) as [id, item]}
                     {#if item.enabled}
                         <Stagebox {edit} show={edit ? null : show} {id} {item} {ratio} bind:mouse />
                     {/if}

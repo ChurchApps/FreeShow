@@ -14,10 +14,15 @@
         // slide_background ++
         slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
         output: ["current_output"],
-        time: ["system_clock"], // , "video_time", "video_countdown"
+        time: ["system_clock", "video_time", "video_countdown"],
         global_timers: ["{timers}"],
         variables: ["{variables}"],
         // other: ["chords", "message"],
+    }
+    const customIcons = {
+        current_output: "screen",
+        video_time: "clock",
+        video_countdown: "clock",
     }
 
     $: stageShow = $stageShows[$activeStage.id || ""] || {}
@@ -94,7 +99,7 @@
 
                 {#each items as item}
                     <Button on:click={() => click(title + "#" + item)} active={enabledItems[title + "#" + item]?.enabled} style="width: 100%;" bold={false}>
-                        <Icon id={item === "current_output" ? "screen" : item.split("_")[item.split("_").length - 1]} right />
+                        <Icon id={customIcons[item] || item.split("_")[item.split("_").length - 1]} right />
                         <span class="overflow"><T id="stage.{item}" /></span>
                     </Button>
 

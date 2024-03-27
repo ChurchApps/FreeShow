@@ -2,8 +2,8 @@ import { auth, drive } from "@googleapis/drive"
 import path from "path"
 import { toApp } from ".."
 import { STORE } from "../../types/Channels"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileStats, readFile, writeFile } from "../utils/files"
 import { stores } from "../data/store"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileStats, readFile, writeFile } from "../utils/files"
 import { trimShow } from "../utils/responses"
 
 let driveClient: any = null
@@ -178,6 +178,7 @@ export async function syncDataDrive(data: any) {
     // let mainFolder = files.find((a: any) => a.id === data.mainFolderId)
     let mainFolder = await getFile(data.mainFolderId)
     if (!mainFolder) return { error: "Error: Could not find main folder! Have you shared it with the service account?" }
+    console.log("Syncing to Drive")
 
     // let shows: any = null
     let bibles: any = null
@@ -332,6 +333,8 @@ export async function syncDataDrive(data: any) {
         if (data.method === "download") localShows = {}
         // some might have the same id
         let shows = { ...localShows, ...(driveContent || {}) }
+        console.log("Local shows count:", Object.keys(localShows || {}).length)
+        console.log("Cloud shows count:", Object.keys(driveContent || {}).length)
 
         let downloadCount: number = 0
         let uploadCount: number = 0
@@ -350,7 +353,14 @@ export async function syncDataDrive(data: any) {
             let localContent = readFile(localShowPath)
 
             if (newest === "cloud" && driveContent?.[id]) allShows[id] = driveContent[id]
-            else if (localContent) allShows[id] = JSON.parse(localContent)[1]
+            else if (localContent) {
+                try {
+                    allShows[id] = JSON.parse(localContent)[1]
+                } catch (err) {
+                    console.log(`Could not parse show ${name}.`, err)
+                    return
+                }
+            }
 
             if (cloudContent && localContent === cloudContent) return
 
@@ -378,10 +388,12 @@ export async function syncDataDrive(data: any) {
         }
 
         if (downloadCount) {
+            console.log("Downloading shows:", downloadCount)
             changes.push({ type: "show", action: "download", name, count: downloadCount })
             if (Object.keys(localShows).length) toApp(STORE, { channel: "SHOWS", data: localShows })
         }
         if (!uploadCount) return
+        console.log("Uploading shows:", uploadCount)
 
         // upload shows
         if (data.method === "download") return

@@ -4,7 +4,7 @@
     import { send } from "../../../utils/request"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "../../helpers/output"
+    import { getActiveOutputs, isOutCleared, outputSlideHasContent, refreshOut, setOutput } from "../../helpers/output"
     import { clearAll, clearBackground, clearSlide, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
@@ -158,7 +158,7 @@
     let autoChange: boolean = true
     $: if (outputId) autoChange = true
     $: if (autoChange && $outputs) {
-        let active = getActiveClear(!isOutCleared("transition"), $playingAudio, !isOutCleared("overlays"), !isOutCleared("slide"), !isOutCleared("background"))
+        let active = getActiveClear(!isOutCleared("transition"), $playingAudio, !isOutCleared("overlays"), !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")), !isOutCleared("background"))
         if (active !== activeClear) activeClear = active
     }
 

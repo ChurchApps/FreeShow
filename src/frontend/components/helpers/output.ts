@@ -3,9 +3,10 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, Show, Transition } from "../../../types/Show"
+import type { Item, OutSlide, Show, Transition } from "../../../types/Show"
 import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
+import { getSlideText } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
 import { clearBackground, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
@@ -144,6 +145,19 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
     return cleared
 }
 
+export function outputSlideHasContent(output) {
+    if (!output) return false
+
+    let outSlide: OutSlide = output.out?.slide
+    let showRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
+    if (!showRef.length) return false
+
+    let currentSlide = _show(outSlide.id).slides([showRef[outSlide.index!]?.id]).get()[0]
+    if (!currentSlide) return false
+
+    return !!getSlideText(currentSlide)?.length
+}
+
 // WIP style should override any slide resolution & color ? (it does not)
 
 export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, getSlideRes: boolean = false): Resolution {
@@ -235,9 +249,9 @@ export function deleteOutput(outputId: string) {
 }
 
 // WIP improve this
-export async function clearPlayingVideo(clearOutput: any = null) {
+export async function clearPlayingVideo(clearOutput: string = "") {
     // videoData.paused = true
-    if (clearOutput) clearBackground() // , false, clearOutput
+    if (clearOutput) clearBackground(clearOutput) // , false, clearOutput
 
     let mediaTransition: Transition = getCurrentMediaTransition()
 

@@ -431,7 +431,7 @@ const slideDrop: any = {
         if (!drag.data[0]?.bibles) return
 
         let newSlides: any[] = getSlides(drag.data[0])
-        let slideTemplate = get(scriptureSettings).template
+        let slideTemplate: string = get(scriptureSettings).verseNumbers ? "" : get(scriptureSettings).template || ""
         newSlides = newSlides.map((items: any) => {
             let firstTextItem = items.find((a) => a.lines)
             return { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: { template: slideTemplate }, notes: "", items }

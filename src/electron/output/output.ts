@@ -120,7 +120,8 @@ function displayOutput(data: any) {
 
     /////
 
-    if (data.autoPosition && !data.force) data.output.bounds = getSecondDisplay(data.output.bounds)
+    // don't auto position on mac (because of virtual)
+    if (data.autoPosition && !data.force && process.platform !== "darwin") data.output.bounds = getSecondDisplay(data.output.bounds)
     let bounds: Rectangle = data.output.bounds
     let windowNotCoveringMain: boolean = isNotCovered(mainWindow!.getBounds(), bounds)
 

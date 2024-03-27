@@ -26,6 +26,8 @@ import {
     styles,
     timers,
     triggers,
+    videosData,
+    videosTime,
 } from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
@@ -476,7 +478,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle, data.actions.styleOutputs)
-        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id })
+        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id, overlayIds: data.overlays })
     }
 }
 
@@ -596,17 +598,20 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     return true
 }
 
-function playSlideTimers({ showId, slideId }) {
+function playSlideTimers({ showId, slideId, overlayIds = [] }) {
     if (showId === "active") showId = get(activeShow)?.id
-    let showSlides: any[] = _show(showId).slides().get()
 
-    // find all timers in current slide
-    showSlides.forEach((slide) => {
-        if (slide.id !== slideId) return
-        let items = slide.items
-        items.forEach((item) => {
-            if (item.type === "timer" && item.timerId) playPauseGlobal(item.timerId, get(timers)[item.timerId], true)
-        })
+    let showSlides: any = _show(showId).get("slides") || {}
+    let slide = showSlides[slideId]
+    if (!slide) return
+
+    // find all timers in current slide & any overlay placed on the slide
+    let slideItems = slide.items || []
+    let allOverlayItems = overlayIds.map((id: string) => get(overlays)[id]?.items).flat()
+    let items = [...slideItems, ...allOverlayItems]
+
+    items.forEach((item) => {
+        if (item.type === "timer" && item.timerId) playPauseGlobal(item.timerId, get(timers)[item.timerId], true)
     })
 }
 
@@ -614,10 +619,22 @@ export function sendMidi(data: any) {
     send(MAIN, ["SEND_MIDI"], data)
 }
 
-export function clearBackground() {
+export function clearBackground(outputId: string = "") {
     // clearVideo()
     setOutput("background", null)
     // clearPlayingVideo()
+
+    if (!outputId) return
+
+    // WIP this does not clear time properly
+    videosData.update((a) => {
+        delete a[outputId]
+        return a
+    })
+    videosTime.update((a) => {
+        delete a[outputId]
+        return a
+    })
 }
 
 export function clearSlide() {

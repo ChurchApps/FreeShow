@@ -106,6 +106,7 @@ export const openScripture: Writable<any> = writable(null)
 export const deletedShows: Writable<any[]> = writable([])
 export const renamedShows: Writable<any[]> = writable([])
 export const selectAllMedia: Writable<boolean> = writable(false)
+export const openToolsTab: Writable<string> = writable("")
 
 // ----- SAVED VARIABLES -----
 

@@ -352,6 +352,11 @@ const receiveOUTPUTasMAIN: any = {
             await clearPlayingVideo(msg.id)
         }, 600) // WAIT FOR NEXT AFTER MEDIA TO FINISH
     },
+    // stage
+    MAIN_REQUEST_VIDEO_DATA: (data: any) => {
+        if (!data.id) return
+        send(OUTPUT, ["VIDEO_DATA"], { id: data.id, data: get(videosData), time: get(videosTime) })
+    },
 }
 let clearing: boolean = false
 

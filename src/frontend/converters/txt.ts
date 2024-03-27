@@ -62,14 +62,28 @@ export function convertText({ name = "", category = null, text, noFormatting = f
 
     if (ccli) {
         let meta: string[] = ccli.split("\n")
-        show.meta = {
-            title: show.name,
-            CCLI: meta[0].substring(meta[0].indexOf("#") + 2),
-            artist: meta[1],
-            author: meta[2],
-            composer: meta[3],
-            publisher: meta[1],
-            copyright: meta[4],
+        // songselect order
+        if (meta[4]?.includes("CCLI")) {
+            show.meta = {
+                title: show.name,
+                CCLI: meta[4].substring(meta[4].indexOf("#") + 1), // CCLI License
+                // CCLI Song = meta[1]
+                // artist: meta[0],
+                author: meta[0],
+                // composer: meta[0],
+                // publisher: meta[0],
+                copyright: meta[2],
+            }
+        } else {
+            show.meta = {
+                title: show.name,
+                CCLI: meta[0].substring(meta[0].indexOf("#") + 2),
+                artist: meta[1],
+                author: meta[2],
+                composer: meta[3],
+                publisher: meta[1],
+                copyright: meta[4],
+            }
         }
     }
 
