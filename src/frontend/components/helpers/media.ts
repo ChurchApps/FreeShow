@@ -4,7 +4,7 @@ import type { ShowType } from "../../../types/Show"
 // This is for media/file functions
 
 import type { Styles } from "../../../types/Settings"
-import { audioExtensions, imageExtensions, videoExtensions } from "../../stores"
+import { audioExtensions, imageExtensions, mediaCache, videoExtensions } from "../../stores"
 import type { MediaStyle } from "../../../types/Main"
 
 export function getExtension(path: string): string {
@@ -64,18 +64,30 @@ export async function toDataURL(url: string) {
 export function checkMedia(src: string) {
     let extension = getExtension(src)
     let isVideo = get(videoExtensions).includes(extension)
+    let isAudio = !isVideo && get(audioExtensions).includes(extension)
 
     return new Promise((resolve) => {
         let elem
         if (isVideo) {
             elem = document.createElement("video")
             elem.onloadeddata = () => resolve("true")
+        } else if (isAudio) {
+            elem = document.createElement("audio")
+            elem.onloadeddata = () => resolve("true")
         } else {
             elem = new Image()
             elem.onload = () => resolve("true")
         }
 
-        elem.onerror = () => resolve("false")
+        elem.onerror = () => {
+            // remove cached thumbnail
+            mediaCache.update((a) => {
+                delete a[src]
+                return a
+            })
+
+            resolve("false")
+        }
         elem.src = src
     })
 }

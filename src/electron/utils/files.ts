@@ -340,8 +340,8 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
     let matches: string[] = []
 
     findMatches(true)
-    if (matches.length !== 1) findMatches()
-    if (matches.length !== 1) return
+    if (matches.length < 1) findMatches()
+    if (matches.length < 1) return
 
     toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
 

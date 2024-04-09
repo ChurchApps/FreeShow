@@ -216,7 +216,7 @@ const receiveMAIN: any = {
         newToast("$toast.media_replaced")
         showsCache.update((a) => {
             let media = a[ref.showId].media[ref.mediaId]
-            if (ref.cloud) {
+            if (ref.cloudId) {
                 if (!media.cloud) a[ref.showId].media[ref.mediaId].cloud = {}
                 a[ref.showId].media[ref.mediaId].cloud![ref.cloudId] = path
             } else {
