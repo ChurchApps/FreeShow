@@ -11,6 +11,21 @@
         "finished": "Končano",
         "system_open": "Opri v sistemu"
     },
+    "titlebar": {
+        "file": "Datoteka",
+        "edit": "Uredi",
+        "view": "Pogled",
+        "help": "Pomoč"
+    },
+    "screen": {
+        "width": "Širina",
+        "height": "Višina",
+        "pixels": "slikovnih pik",
+        "top": "Zgoraj",
+        "right": "Desno",
+        "bottom": "Spodaj",
+        "left": "Levo"
+    },
     "about": {
         "check_updates": "Preveri za posodobitve",
         "made": "Na Norveškem naredil",
@@ -40,6 +55,9 @@
         "options": "Več možnosti.",
         "scripture": "Če želite izbrati več vrstic, držite Ctrl/Cmd ali Premik."
     },
+    "tips": {
+        "trigger": "Prožilci navadno pošljejo HTTP zahtevo za spremembo prednastavitev kamer."
+    },
     "setup": {
         "good_luck": "Upam, da vam bo ta program dobro služil. Uspešno predstavitev želim! :)",
         "tips": "Na spletni strani lahko najdete priročne namige in vadnice.",
@@ -62,21 +80,6 @@
         "default": "Privzeto",
         "small": "Majhno",
         "bold": "Krepko"
-    },
-    "titlebar": {
-        "file": "Datoteka",
-        "edit": "Uredi",
-        "view": "Pogled",
-        "help": "Pomoč"
-    },
-    "screen": {
-        "width": "Širina",
-        "height": "Višina",
-        "pixels": "slikovnih pik",
-        "top": "Zgoraj",
-        "right": "Desno",
-        "bottom": "Spodaj",
-        "left": "Levo"
     },
     "create_show": {
         "search_web": "Iskanje pesmi na spletu",
@@ -149,7 +152,8 @@
         "contain": "Vstavi",
         "fill": "Zapolni",
         "cover": "Prekrij",
-        "online": "Povezano"
+        "online": "Povezano",
+        "recommended": "Priporočeno"
     },
     "menu": {
         "show": "Predstavitev",
@@ -259,9 +263,6 @@
         "hover": "Preiti",
         "focus": "Izpostavljenost"
     },
-    "buttons": {
-        "changeTheme": "Spremeni temo"
-    },
     "inputs": {
         "name": "Ime",
         "url": "Spletni naslov",
@@ -286,9 +287,6 @@
         "triggers": "Prožilci",
         "templates": "Predloge",
         "web": "Splet"
-    },
-    "tips": {
-        "trigger": "Prožilci navadno pošljejo HTTP zahtevo za spremembo prednastavitev kamer."
     },
     "category": {
         "all": "All",
@@ -445,6 +443,8 @@
         "export": "Izvozi",
         "duplicate": "Podvoji",
         "delete": "Izbriši",
+        "delete_slide": "Izbriši prosojnico",
+        "delete_group": "Izbriši skupino",
         "delete_all": "Izbriši vse",
         "close": "Zapri",
         "save": "Shrani",
@@ -477,8 +477,9 @@
         "unmute": "Odtišaj",
         "toggle_time_marker": "Preklopi med časovnimi oznakami",
         "add_time_marker": "Dodaj časovno oznako",
-        "bind_to": "Veži na",
-        "remove_binding": "Odstrani vezavo",
+        "bind_to": "Posebni izhodi",
+        "remove_binding": "Odstrani posebne izhode",
+        "dynamic_values": "Spremenljive vrednosti",
         "show_timer": "Čas do prikaza",
         "hide_timer": "Čas do skritja",
         "choose_custom": "Izberi po meri",
@@ -512,7 +513,7 @@
         "refresh_all_shows": "Vsi predstavitve v mapi 'Predstavitve'",
         "start_timer": "Začetni časovnik",
         "stop_timers": "Zaustavi dejavne časovnike",
-        "next_after_media": "Naslednji po predstavnosti",
+        "next_after_media": "Naprej po koncu predstavnosti",
         "remove_media": "Odstrani predstavnost",
         "remove_layers": "Odstrani plasti",
         "index_select_project": "Izberi projekt po kazalu",
@@ -604,8 +605,11 @@
         "slide": "Prosojnica"
     },
     "edit": {
+        "text": "Napis",
         "font": "Pisava",
-        "family": "Družina",
+        "family": "Družina pisav",
+        "font_size": "Velikost pisave",
+        "text_color": "Barva napisa",
         "style": "Slog",
         "lines": "Vrstice",
         "options": "Možnosti",
@@ -627,6 +631,7 @@
         "letter_spacing": "Razmik črk",
         "word_spacing": "Razmik besed",
         "transform": "Preoblikuj",
+        "text_transform": "Preoblikovanje napisa",
         "uppercase": "Velike črke",
         "lowercase": "Male črke",
         "capitalize": "Velika začetnica",
@@ -638,13 +643,13 @@
         "_title_top": "Zgornja poravnava",
         "_title_bottom": "Spodnja poravnava",
         "outline": "Obris",
-        "width": "Debelina",
         "shadow": "Senca",
         "shadow_inset": "Notranja senca",
         "offsetX": "Zamik po X-u",
         "offsetY": "Zamik po Y-u",
         "blur": "Zamegli",
         "item": "Predmet",
+        "width": "Debelina",
         "height": "Višina",
         "rotation": "Zasuk",
         "tilt": "Nagib",
@@ -861,7 +866,7 @@
         "change_name": "Spremeni ime",
         "show_location": "Prikaži mesto",
         "data_location": "Mesto podatkov",
-        "user_data_location": "Shrani uporabniške podatke v mesto podatkov",
+        "user_data_location": "Shrani uporabniške podatke v \"Data location\"",
         "font": "Pisava",
         "font_family": "Družina pisav",
         "font_size": "Velikost pisave",

@@ -11,6 +11,21 @@
         "finished": "Finito",
         "system_open": "Apri nel sistema"
     },
+    "titlebar": {
+        "file": "File",
+        "edit": "Modifica",
+        "view": "Vista",
+        "help": "Aiuto"
+    },
+    "screen": {
+        "width": "Larghezza",
+        "height": "Altezza",
+        "pixels": "Pixel",
+        "top": "Sopra",
+        "right": "Destra",
+        "bottom": "Sotto",
+        "left": "Sinistra"
+    },
     "about": {
         "check_updates": "Cerca aggiornamenti",
         "made": "Creato in Norvegia da",
@@ -40,6 +55,9 @@
         "options": "Altre opzioni",
         "scripture": "Tieni premuto Ctrl/Cmd o Maiusc per selezionare più versi."
     },
+    "tips": {
+        "trigger": "I trigger vengono comunemente utilizzati per inviare una richiesta HTTP per modificare la preimpostazione delle telecamere."
+    },
     "setup": {
         "good_luck": "Spero che troverai utile questo software. Buona fortuna! :)",
         "tips": "Trova utili suggerimenti e tutorial sul sito web.",
@@ -62,21 +80,6 @@
         "default": "Predefinito",
         "small": "Piccolo",
         "bold": "Grassetto"
-    },
-    "titlebar": {
-        "file": "File",
-        "edit": "Modifica",
-        "view": "Vista",
-        "help": "Aiuto"
-    },
-    "screen": {
-        "width": "Larghezza",
-        "height": "Altezza",
-        "pixels": "Pixel",
-        "top": "Sopra",
-        "right": "Destra",
-        "bottom": "Sotto",
-        "left": "Sinistra"
     },
     "create_show": {
         "search_web": "Cerca canzone sul web",
@@ -149,7 +152,8 @@
         "contain": "Contiene/contain",
         "fill": "Riempi/fill",
         "cover": "Copertina/cover",
-        "online": "Online"
+        "online": "Online",
+        "recommended": "Raccomandato"
     },
     "menu": {
         "show": "Mostra",
@@ -259,9 +263,6 @@
         "hover": "Hover",
         "focus": "Focus"
     },
-    "buttons": {
-        "changeTheme": "Cambia Tema"
-    },
     "inputs": {
         "name": "Nome",
         "url": "URL",
@@ -286,9 +287,6 @@
         "triggers": "Trigger",
         "templates": "Modelli",
         "web": "Web"
-    },
-    "tips": {
-        "trigger": "I trigger vengono comunemente utilizzati per inviare una richiesta HTTP per modificare la preimpostazione delle telecamere."
     },
     "category": {
         "all": "Tutto",
@@ -445,6 +443,8 @@
         "export": "Esporta",
         "duplicate": "Duplica",
         "delete": "Elimina",
+        "delete_slide": "Elimina diapositiva",
+        "delete_group": "Elimina gruppo",
         "delete_all": "Elimina tutto",
         "close": "Chiudi",
         "save": "Salva",
@@ -477,8 +477,9 @@
         "unmute": "Smuta",
         "toggle_time_marker": "Attiva/disattiva gli indicatori di tempo",
         "add_time_marker": "Aggiungere indicatore di tempo",
-        "bind_to": "Collega a",
-        "remove_binding": "Rimuovi il collegamento",
+        "bind_to": "Specifica output",
+        "remove_binding": "Elimina specifico output",
+        "dynamic_values": "Valori dinamici",
         "show_timer": "Tempo fino allo spettacolo",
         "hide_timer": "Tempo fino a nascondersi",
         "choose_custom": "Scelta personalizzata",
@@ -512,7 +513,7 @@
         "refresh_all_shows": "Ottieni tutte le scene nella cartella 'Shows'.",
         "start_timer": "Avviare il timer",
         "stop_timers": "Arresta i timer attivi",
-        "next_after_media": "Avanti dopo i media",
+        "next_after_media": "Avanti sui media finito",
         "remove_media": "Rimuovi media",
         "remove_layers": "Rimuovi livelli",
         "index_select_project": "Seleziona progetto per indice",
@@ -604,8 +605,11 @@
         "slide": "Diapositiva"
     },
     "edit": {
+        "text": "Testo",
         "font": "Font",
-        "family": "Famiglia",
+        "family": "Famiglia di font",
+        "font_size": "Dimensione del font",
+        "text_color": "Colore del testo",
         "style": "Stile",
         "lines": "Linee",
         "options": "Opzioni",
@@ -627,6 +631,7 @@
         "letter_spacing": "Spaziatura lettera",
         "word_spacing": "Spaziatura delle parole",
         "transform": "Trasforma",
+        "text_transform": "Trasformazione del testo",
         "uppercase": "Maiuscolo",
         "lowercase": "Minuscolo",
         "capitalize": "Capitalize",
@@ -638,13 +643,13 @@
         "_title_top": "Allinea in alto",
         "_title_bottom": "Allinea in basso",
         "outline": "Contorno",
-        "width": "Larghezza",
         "shadow": "Ombra",
         "shadow_inset": "Inserisci ombra",
         "offsetX": "Offset X",
         "offsetY": "Offset Y",
         "blur": "Sfocatura",
         "item": "Elemento",
+        "width": "Larghezza",
         "height": "Altezza",
         "rotation": "Rotazione",
         "tilt": "Tilt",
@@ -861,7 +866,7 @@
         "change_name": "Cambia nome",
         "show_location": "Mostra posizione",
         "data_location": "Posizione dei dati",
-        "user_data_location": "Salva i dati utente nella posizione dei dati",
+        "user_data_location": "Salva le impostazioni utente in \"Posizione dati\"",
         "font": "Font",
         "font_family": "Famiglia font",
         "font_size": "Dimensione font",

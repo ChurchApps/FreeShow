@@ -196,7 +196,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
     window.api.send(STORE, { channel: "SAVE", data: allSavedData })
 }
 
-export function saveComplete({ closeWhenFinished, backup }) {
+export function saveComplete({ closeWhenFinished, backup }: any) {
     saved.set(true)
     newToast("$toast.saved")
 

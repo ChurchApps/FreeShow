@@ -116,7 +116,14 @@ function updateStoresPath(load: boolean = false) {
 
 function createStoreAtNewLocation(id: string, load: boolean = false) {
     let key = portableData[id].key
-    let tempData = load ? {} : JSON.parse(JSON.stringify(stores[key].store))
+    let tempData: any = {}
+    if (!load) {
+        try {
+            tempData = JSON.parse(JSON.stringify(stores[key].store))
+        } catch (err) {
+            console.log("Could not parse store:", key)
+        }
+    }
 
     // set new stores to export
     stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })

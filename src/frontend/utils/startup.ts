@@ -178,7 +178,7 @@ const receiveMAIN: any = {
         activePopup.set("alert")
     },
     CLOSE: () => {
-        if (get(saved)) window.api.send(MAIN, { channel: "CLOSE" })
+        if (get(saved)) saveComplete({ closeWhenFinished: true })
         else activePopup.set("unsaved")
     },
     RECEIVE_MIDI: (msg) => playMidiIn(msg),

@@ -1,12 +1,12 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
 import { isMac, loadWindowContent, mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
+import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
-import { requestPreview, stageWindows, startCapture, stopCapture, updatePreviewResolution } from "./capture"
 import { createSenderNDI, stopSenderNDI } from "../ndi/ndi"
 import { setDataNDI } from "../ndi/talk"
-import { Output } from "../../types/Output"
 import { outputOptions, screenIdentifyOptions } from "../utils/windowOptions"
+import { requestPreview, stageWindows, startCapture, stopCapture, updatePreviewResolution } from "./capture"
 
 export let outputWindows: { [key: string]: BrowserWindow } = {}
 
@@ -123,7 +123,7 @@ function displayOutput(data: any) {
     // don't auto position on mac (because of virtual)
     if (data.autoPosition && !data.force && process.platform !== "darwin") data.output.bounds = getSecondDisplay(data.output.bounds)
     let bounds: Rectangle = data.output.bounds
-    let windowNotCoveringMain: boolean = isNotCovered(mainWindow!.getBounds(), bounds)
+    let windowNotCoveringMain: boolean = amountCovered(bounds, mainWindow!.getBounds()) < 0.5
 
     if (data.enabled && bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
         showWindow(window)
@@ -150,15 +150,6 @@ function getSecondDisplay(bounds: Rectangle) {
     if (amountCoveredByWindow > 0.5) secondDisplay = displays[0]
 
     return secondDisplay.bounds
-}
-
-function isNotCovered(mainBounds: Rectangle, secondBounds: Rectangle) {
-    let xDif = secondBounds?.x - mainBounds.x
-    let yDif = secondBounds?.y - mainBounds.y
-
-    const margin = 50
-    let secondNotCoveringMain: boolean = xDif > margin || yDif < -margin || (xDif < -margin && yDif > margin)
-    return secondNotCoveringMain
 }
 
 function amountCovered(displayBounds: Rectangle, windowBounds: Rectangle) {

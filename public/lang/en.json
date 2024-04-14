@@ -538,7 +538,7 @@
         "tip_api": "You have to provide your own free Google API key so the program can automatically upload files to your Google Drive.",
         "tip_how": "Don't know how to get one?",
         "tip_guide": "Click here for a guide.",
-        "enable": "Automatic sync on startup and save",
+        "enable": "Automatic sync on startup and close",
         "disable_upload": "Disable uploading data",
         "media_id": "Media path ID",
         "google_drive_api": "Google API service account key",
