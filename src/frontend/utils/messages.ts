@@ -192,6 +192,7 @@ const cloudHelpers = {
         if (get(driveData).disableUpload) method = "download"
         if (!method) {
             if (existingData) {
+                // WIP this will show over "initialize" popup
                 activePopup.set("cloud_method")
                 return
             }

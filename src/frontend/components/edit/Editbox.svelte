@@ -703,7 +703,7 @@
                     return
                 }
 
-                let value = text.value.trim().replaceAll("\n", "") || ""
+                let value = text.value.trim().replaceAll("\n", "").replaceAll("&nbsp;", " ") || ""
 
                 let letters = value.split("")
                 letters.forEach((letter) => {
@@ -820,6 +820,7 @@ bind:offsetWidth={width} -->
                     if (newLines) item.lines = newLines
                 }}
                 class="edit"
+                class:hidden={chordsMode}
                 class:autoSize={item.auto && autoSize}
                 contenteditable
                 on:keydown={textElemKeydown}
@@ -1006,6 +1007,9 @@ bind:offsetWidth={width} -->
         justify-content: center;
         /* align-items: center; */
     }
+    .edit.hidden {
+        visibility: hidden;
+    }
 
     /* .edit.tallLines {
     line-height: 200px;
@@ -1074,6 +1078,10 @@ bind:offsetWidth={width} -->
     .chordsBreak {
         position: relative;
         line-height: 0;
+
+        /* fix letter spacing */
+        /* letter-spacing: 0.3px; */ /* can't be lower */
+        /* font-kerning: none; */
     }
 
     /* custom svg icon */
