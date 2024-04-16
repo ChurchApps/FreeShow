@@ -20,6 +20,7 @@ import {
     overlays,
     playerVideos,
     projects,
+    refreshSlideThumbnails,
     shows,
     showsCache,
     special,
@@ -191,4 +192,10 @@ export function listenForUpdates() {
     })
 
     driveKeys.subscribe(driveConnect)
+
+    refreshSlideThumbnails.subscribe((_) => {
+        setTimeout(() => {
+            refreshSlideThumbnails.set(false)
+        })
+    })
 }

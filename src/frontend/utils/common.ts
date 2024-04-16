@@ -55,7 +55,7 @@ const ERROR_FILTER = [
 ]
 export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
-    if (ERROR_FILTER.find((a) => msg.includes(a))) return
+    if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
     let log = {
         time: new Date(),

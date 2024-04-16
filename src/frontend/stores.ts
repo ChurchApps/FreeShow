@@ -108,6 +108,7 @@ export const deletedShows: Writable<any[]> = writable([])
 export const renamedShows: Writable<any[]> = writable([])
 export const selectAllMedia: Writable<boolean> = writable(false)
 export const openToolsTab: Writable<string> = writable("")
+export const refreshSlideThumbnails: Writable<boolean> = writable(false)
 
 // ----- SAVED VARIABLES -----
 

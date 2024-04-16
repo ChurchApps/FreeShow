@@ -287,7 +287,7 @@ function sendToOutputWindow(msg: any) {
     Object.entries(outputWindows).forEach(sendToWindow)
 
     function sendToWindow([id, window]: any) {
-        if ((msg.data?.id && msg.data.id !== id) || window.isDestroyed()) return
+        if ((msg.data?.id && msg.data.id !== id) || !window || window.isDestroyed()) return
 
         let tempMsg: any = JSON.parse(JSON.stringify(msg))
         if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, id)

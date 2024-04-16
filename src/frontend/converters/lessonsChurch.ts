@@ -1,189 +1,160 @@
-import { dataPath } from "./../stores"
+import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN } from "../../types/Channels"
 import { ShowObj } from "../classes/Show"
+import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { activePopup, alertMessage, videoExtensions } from "../stores"
+import { activeProject, dataPath, projects, refreshSlideThumbnails, videoExtensions } from "../stores"
+import { newToast } from "../utils/messages"
 import { receive, send } from "../utils/request"
 import { createCategory, setTempShows } from "./importHelpers"
-import { get } from "svelte/store"
 
+type File = {
+    name: string
+    url: string
+    seconds?: number
+    loopVideo?: boolean
+}
+
+// Open Lesson Playlist (just media)
 type OlpLesson = {
     messages: {
-        files: {
-            name: string
-            url: string
-            seconds: number
-            loopVideo: boolean
-        }[]
+        files: File[]
         name: string
     }[]
     lessonDescription: string
     lessonImage: string
     lessonName: string
     lessonTitle: string
+    venueName?: string
 }
 
+// Open Lesson Format (full data)
 type OlfLesson = {
-  sections: {
-      actions: {
-        files: {
-            name: string
-            url: string
-            seconds: number
-            loopVideo: boolean
-        }[],
-        actionType: string,
-        content: string,
-      }[]
-      name: string
-  }[]
-  lessonDescription: string
-  lessonImage: string
-  lessonName: string
+    sections: {
+        actions: {
+            files: File[]
+            actionType: string
+            content: string
+        }[]
+        name: string
+    }[]
+    lessonDescription: string
+    lessonImage: string
+    lessonName: string
 }
-
 
 export async function convertLessonsPresentation(data: any) {
-  let replacer: any = {}
+    if (!data?.length) return
 
-  alertMessage.set("popup.importing")
-  activePopup.set("alert")
-  createCategory("Lessons", "book")
+    let lesson: any = null
+    let replacer: any = {}
 
-  //console.log("*******************DATA", data)
-  if (data?.length>0)
-  {
-    let lesson:any = null
     try {
-      lesson = JSON.parse(data[0].content)
+        // WIP this only converts one file at a time
+        lesson = JSON.parse(data[0].content)
     } catch (err) {
-      console.error(err)
+        console.error("Error importing Lessons.church lesson:", err)
     }
-    if (lesson) {
-      let {lessons, tempProjects, tempShows} = (lesson.sections) 
-      ? await convertOpenLessonFormat(lesson)
-      : await convertOpenLessonPlaylist(lesson);
-      
-      // download videos/images
-      send(MAIN, ["DOWNLOAD_MEDIA"], lessons)
 
-      let replace: any = await receiveMessage()
-      replace.forEach((r) => {
-          if (r.type === "project") {
-              let projectIndex = tempProjects.findIndex((a) => a.shows[0].id === r.from)
-              if (projectIndex >= 0) tempProjects[projectIndex].shows[0].id = r.to
-          } else {
-              replacer[r.from] = r.to
-          }
-      })
+    if (!lesson) return
 
-      // change from remote urls to local paths
-      tempShows = tempShows.map((a) => {
-          Object.keys(a.show.media).forEach((id) => {
-              a.show.media[id].path = replacer[a.show.media[id].path]
-          })
+    newToast("$popup.importing")
+    createCategory("Lessons", "book")
+    createProject()
 
-          return a
-      })
+    if (lesson.sections) lesson = convertOlfLessonToOlpType(lesson)
+    let { mediaToDownload, lessonShow } = convertOpenLessonPlaylist(lesson)
 
-      setTempShows(tempShows)
+    // download videos/images
+    send(MAIN, ["DOWNLOAD_MEDIA"], [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload }])
 
-      tempProjects.forEach((project) => {
-          history({ id: "UPDATE", newData: { data: project }, location: { id: "project", page: "show" } })
-      })
-
-    }
-  }
-
-}
-
-export async function convertOpenLessonFormat(lesson: OlfLesson) {
-  
-  let lessons: any[] = []
-  let tempShows: any[] = []
-  let tempProjects: any[] = []
-
-  let projectShows: any = [
-      { id: lesson.lessonImage, type: "image", name: "Lesson Image" },
-      { id: uid(5), type: "section", name: lesson.lessonName, notes: lesson.lessonDescription },
-  ]
-
-  let currentLessonFiles: any[] = [{ name: "Lesson Image", type: "project", url: lesson.lessonImage }]
-
-  lesson.sections.forEach((section) => {
-      section.actions.forEach((action) => {
-          if (action.actionType==="play")
-          {
-              let layoutID = uid()
-              let show = new ShowObj(false, "lessons", layoutID)
-              let showId = uid()
-              show.name = checkName(`${lesson!.lessonName} - ${action.content}`, showId)
-    
-              currentLessonFiles.push(...action.files)
-    
-              let { slides, layout, media }: any = convertToSlides(action.files)
-    
-              show.slides = slides
-              show.layouts[layoutID].slides = layout
-              show.media = media
-    
-              tempShows.push({ id: showId, show })
-              projectShows.push({ id: showId, type: "show" })
-          }
-      })
-  })
-
-  // create project
-  tempProjects.push({ parent: "/", created: Date.now(), name: lesson.lessonName, shows: projectShows })
-
-  // WIP change lesson image in project to local
-  // currentLessonFiles.push({url: lesson.lessonImage, name: lesson.lessonTitle})
-  lessons.push({ path: get(dataPath), name: lesson.lessonName, files: currentLessonFiles })
-  
-  return { lessons, tempProjects, tempShows }
-}
-
-export async function convertOpenLessonPlaylist(lesson: OlpLesson) {
-
-    let lessons: any[] = []
-    let tempShows: any[] = []
-    let tempProjects: any[] = []
-
-    let projectShows: any = [
-        { id: lesson.lessonImage, type: "image", name: "Lesson Image" },
-        { id: uid(5), type: "section", name: lesson.lessonTitle, notes: lesson.lessonDescription },
-    ]
-
-    let currentLessonFiles: any[] = [{ name: "Lesson Image", type: "project", url: lesson.lessonImage }]
-
-    lesson.messages.forEach((message) => {
-        let layoutID = uid()
-        let show = new ShowObj(false, "lessons", layoutID)
-        let showId = uid()
-        show.name = checkName(`${lesson!.lessonTitle} - ${message.name}`, showId)
-
-        currentLessonFiles.push(...message.files)
-
-        let { slides, layout, media }: any = convertToSlides(message.files)
-
-        show.slides = slides
-        show.layouts[layoutID].slides = layout
-        show.media = media
-
-        tempShows.push({ id: showId, show })
-        projectShows.push({ id: showId, type: "show" })
+    let replace: any = await receiveMessage()
+    replace.forEach((r) => {
+        replacer[r.from] = r.to
     })
 
-    // create project
-    tempProjects.push({ parent: "/", created: Date.now(), name: lesson.lessonName, shows: projectShows })
+    // change from remote urls to local paths
+    Object.keys(lessonShow.show.media).forEach((id) => {
+        lessonShow.show.media[id].path = replacer[lessonShow.show.media[id].path]
+    })
 
-    // WIP change lesson image in project to local
-    // currentLessonFiles.push({url: lesson.lessonImage, name: lesson.lessonTitle})
-    lessons.push({ path: get(dataPath), name: lesson.lessonName, files: currentLessonFiles })
-    
-    return { lessons, tempProjects, tempShows }
+    // WIP wait to open until files actually downloaded
+
+    // will automatically get added to the "lessons" project if just 1 show sent to tempShows
+    setTempShows([lessonShow])
+
+    // refresh thumbnails
+    setTimeout(() => {
+        refreshSlideThumbnails.set(true)
+    }, 8000)
+}
+
+function createProject() {
+    if (get(projects).lessons) {
+        activeProject.set("lessons")
+        return
+    }
+
+    let project = { parent: "/", created: Date.now(), name: "Lessons.church", shows: [] }
+    history({ id: "UPDATE", newData: { data: project }, oldData: { id: "lessons" }, location: { id: "project", page: "show" } })
+}
+
+function convertOpenLessonPlaylist(lesson: OlpLesson) {
+    let slideGroups = [{ files: [{ name: "Lesson Image", url: lesson.lessonImage }], name: "Lesson Image" }, ...lesson.messages]
+
+    let { slides, layout, media }: any = convertToSlides(slideGroups)
+    let lessonShow = createShow()
+
+    let mediaToDownload: any[] = slideGroups.map((a) => a.files).flat()
+
+    return { mediaToDownload, lessonShow }
+
+    function createShow() {
+        let layoutId = uid()
+        let show = new ShowObj(false, "lessons", layoutId)
+        let showId = uid()
+
+        let name = lesson.lessonTitle
+        if (lesson.lessonName !== name) name = `${name} - ${lesson.lessonName}`
+        show.name = checkName(name, showId)
+
+        show.slides = slides
+        show.media = media
+
+        show.layouts[layoutId].slides = layout
+        show.layouts[layoutId].notes = lesson.lessonDescription
+
+        show.meta = {
+            title: lesson.lessonTitle,
+            name: lesson.lessonName,
+            venue: lesson.venueName,
+        }
+
+        return { id: showId, show }
+    }
+}
+
+function convertOlfLessonToOlpType(lesson: OlfLesson) {
+    let newLesson: OlpLesson = clone(lesson)
+
+    newLesson.lessonTitle = lesson.lessonName
+    newLesson.messages = getMessages(lesson.sections)
+
+    return newLesson
+
+    function getMessages(sections: any[]) {
+        let messages: any[] = []
+
+        sections.forEach((section) => {
+            let actions = section.actions?.filter((a) => a.actionType === "play")
+            actions = actions.map(({ files, content }) => ({ files, name: content }))
+            messages.push(...actions)
+        })
+
+        return messages
+    }
 }
 
 async function receiveMessage() {
@@ -201,32 +172,51 @@ async function receiveMessage() {
     })
 }
 
-function convertToSlides(files) {
-
+function convertToSlides(groups) {
     let slides: any = {}
     let layout: any[] = []
     let media: any = {}
 
-    files.forEach((file) => {
-        if (file.url) {
+    groups.forEach((group) => {
+        if (!group.files?.length) return
+
+        let children: string[] = []
+        let layoutData: any = {}
+        let parentId: string = ""
+
+        group.files.forEach((file) => {
+            if (!file.url) return
+
             let mediaId = uid()
             media[mediaId] = { name: file.name, path: file.url, muted: false, loop: !!file.loopVideo }
             let nextAfterMedia = !media[mediaId].loop && get(videoExtensions).find((ext) => file.url.includes(ext))
 
             let slideId = uid()
             slides[slideId] = {
-                group: file.name,
+                group: parentId ? null : file.name,
                 color: "",
                 settings: {},
                 notes: "",
                 items: [],
             }
 
-            let currentLayout: any = { id: slideId, background: mediaId }
-            if (nextAfterMedia) currentLayout.actions = { nextAfterMedia: true }
+            let currentLayoutData: any = { background: mediaId }
+            if (nextAfterMedia) currentLayoutData.actions = { nextAfterMedia: true }
+            layoutData[slideId] = currentLayoutData
 
-            layout.push(currentLayout)
-        }
+            if (parentId) children.push(slideId)
+            else parentId = slideId
+        })
+
+        if (!parentId) return
+
+        slides[parentId].children = children
+
+        let parentData = clone(layoutData[parentId])
+        delete layoutData[parentId]
+        let currentLayout: any = { id: parentId, ...parentData, children: layoutData }
+
+        layout.push(currentLayout)
     })
 
     return { slides, layout, media }

@@ -3,7 +3,26 @@
     import { MAIN } from "../../../types/Channels"
     import type { MediaStyle } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-    import { activeShow, activeTimers, audioFolders, checkedFiles, dictionary, driveData, fullColors, groupNumbers, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, showsCache, slidesOptions, styles } from "../../stores"
+    import {
+        activeShow,
+        activeTimers,
+        audioFolders,
+        checkedFiles,
+        dictionary,
+        driveData,
+        fullColors,
+        groupNumbers,
+        groups,
+        media,
+        mediaFolders,
+        outputs,
+        overlays,
+        refreshListBoxes,
+        refreshSlideThumbnails,
+        showsCache,
+        slidesOptions,
+        styles,
+    } from "../../stores"
     import { send } from "../../utils/request"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/Editbox.svelte"
@@ -302,18 +321,20 @@
                     relative={viewMode === "lyrics" && !noQuickEdit}
                 >
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
-                        <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                            <MediaLoader
-                                name={$dictionary.error?.load}
-                                path={bg.path || bg.id || ""}
-                                cameraGroup={bg.cameraGroup || ""}
-                                type={bg.type !== "player" ? bg.type : null}
-                                loadFullImage={!!(bg.path || bg.id)}
-                                ghost={!background}
-                                {mediaStyle}
-                                bind:duration
-                            />
-                        </div>
+                        {#key $refreshSlideThumbnails}
+                            <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
+                                <MediaLoader
+                                    name={$dictionary.error?.load}
+                                    path={bg.path || bg.id || ""}
+                                    cameraGroup={bg.cameraGroup || ""}
+                                    type={bg.type !== "player" ? bg.type : null}
+                                    loadFullImage={!!(bg.path || bg.id)}
+                                    ghost={!background}
+                                    {mediaStyle}
+                                    bind:duration
+                                />
+                            </div>
+                        {/key}
                     {/if}
                     {#if slide.items}
                         {#each slide.items as item, i}
