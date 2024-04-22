@@ -350,7 +350,7 @@ const receiveOUTPUTasMAIN: any = {
 
         setTimeout(async () => {
             await clearPlayingVideo(msg.id)
-        }, 600) // WAIT FOR NEXT AFTER MEDIA TO FINISH
+        }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
     },
     // stage
     MAIN_REQUEST_VIDEO_DATA: (data: any) => {

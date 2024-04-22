@@ -554,12 +554,12 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 // go to next slide if current output slide has nextAfterMedia action
 let nextActive = false
 export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media", outputId: string = "") {
-    if (nextActive) return
+    if (nextActive) return false
 
     nextActive = true
     setTimeout(() => {
         nextActive = false
-    }, 700)
+    }, 600) // MAKE SURE NEXT SLIDE HAS TRANSITIONED
 
     if (!outputId) outputId = getActiveOutputs(get(outputs), true, true, true)[0]
     if (!outputId) return false
@@ -593,9 +593,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
     if (!nextAfterMedia) return false
 
-    setTimeout(() => {
-        nextSlide(null, false, false, false, true, outputId, true)
-    }, 500) // has to be higher on low end devices
+    nextSlide(null, false, false, false, true, outputId, true)
 
     return true
 }

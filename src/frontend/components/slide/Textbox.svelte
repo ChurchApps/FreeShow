@@ -228,6 +228,7 @@
             addStyleToElemText(fontSize)
             biggerThanSize = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
         }
+        if (chords && lines?.length) lowestValue -= lines.length * 10
         fontSize = lowestValue // prefer lowest value
 
         function addStyleToElemText(fontSize: number) {
