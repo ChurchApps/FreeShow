@@ -15,6 +15,7 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
 
     onMount(() => {
         getCacheSize()
@@ -137,6 +138,16 @@
         activePopup.set("alert")
         send(MAIN, ["RESTORE"], { showsPath: $showsPath })
     }
+
+    let projectReplacerTitle = getReplacerTitle()
+    function getReplacerTitle() {
+        let titles: string[] = []
+        projectReplacers.forEach((a) => {
+            titles.push(`${a.title}: {${a.id}}`)
+        })
+
+        return titles.join(", ")
+    }
 </script>
 
 <CombinedInput textWidth={30}>
@@ -195,6 +206,11 @@
 <CombinedInput>
     <p><T id="settings.capitalize_words" /></p>
     <TextInput value={$special.capitalize_words} on:change={(e) => updateTextInput(e, "capitalize_words")} />
+</CombinedInput>
+
+<CombinedInput title={projectReplacerTitle}>
+    <p><T id="settings.default_project_name" /></p>
+    <TextInput value={$special.default_project_name ?? DEFAULT_PROJECT_NAME} on:change={(e) => updateTextInput(e, "default_project_name")} />
 </CombinedInput>
 
 <CombinedInput>

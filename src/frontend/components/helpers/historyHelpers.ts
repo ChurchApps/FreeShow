@@ -8,7 +8,6 @@ import {
     activeShow,
     activeStage,
     currentOutputSettings,
-    defaultProjectName,
     dictionary,
     drawerTabsData,
     events,
@@ -22,20 +21,22 @@ import {
     projectView,
     shows,
     showsCache,
+    special,
     stageShows,
     styles,
     theme,
     themes,
 } from "../../stores"
 import { updateThemeValues } from "../../utils/updateSettings"
+import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "../../values/empty"
+import { getWeekNumber } from "../drawer/calendar/calendar"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
 import { clone } from "./array"
-import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "../../values/empty"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
-import { dateToString } from "./time"
+import { addZero, getMonthName, getWeekday } from "./time"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -505,10 +506,25 @@ function replaceEmptyValues(object: any, replacer: any) {
     return object
 }
 
+export const projectReplacers = [
+    { id: "DD", title: get(dictionary).calendar?.day || "Day", value: (date) => addZero(date.getDate()) },
+    { id: "MM", title: get(dictionary).calendar?.month || "Month", value: (date) => addZero(date.getMonth() + 1) },
+    { id: "YY", title: get(dictionary).calendar?.year || "Year", value: (date) => date.getFullYear().toString().slice(-2) },
+    { id: "YYYY", title: "Full year", value: (date) => date.getFullYear() },
+    { id: "hh", title: "Hours", value: (date) => date.getHours() },
+    { id: "mm", title: "Minutes", value: (date) => date.getMinutes() },
+    { id: "weeknum", title: "Week number", value: (date) => getWeekNumber(date) },
+    { id: "weekday", title: "Weekday", value: (date) => getWeekday(date.getDay(), get(dictionary), true) },
+    { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) },
+]
+export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
 function getProjectName() {
-    let name = ""
-    if (get(defaultProjectName) === "date") name = dateToString(Date.now())
-    console.log(name)
+    let name = get(special).default_project_name ?? DEFAULT_PROJECT_NAME
+
+    let date = new Date()
+    projectReplacers.forEach((a) => {
+        name = name.replaceAll(`{${a.id}}`, a.value(date))
+    })
 
     return name
 }

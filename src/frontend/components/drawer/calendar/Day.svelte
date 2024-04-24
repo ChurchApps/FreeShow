@@ -101,7 +101,7 @@
         font-size: 1.6em;
         display: flex;
         justify-content: center;
-        font-weight: bold;
+        font-weight: 600;
         white-space: nowrap;
         margin-bottom: 10px;
     }

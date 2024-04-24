@@ -45,4 +45,8 @@
         flex: 1;
         overflow-y: auto;
     }
+
+    div :global(h2) {
+        color: var(--text);
+    }
 </style>

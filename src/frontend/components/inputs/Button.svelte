@@ -109,7 +109,7 @@
         text-align: center;
     }
     button.bold {
-        font-weight: bold;
+        font-weight: 600;
         letter-spacing: 0.5px;
         padding: 0.3em 0.8em;
         /* text-transform: uppercase; */

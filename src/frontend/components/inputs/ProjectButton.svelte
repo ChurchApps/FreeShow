@@ -17,34 +17,18 @@
     function open(e: any) {
         if (e.ctrlKey || e.metaKey || e.target.closest(".edit") || e.target.querySelector(".edit") || editActive) return
 
-        // set new project
+        projectView.set(false)
+
+        let alreadyActive = $activeProject === id
+        if (alreadyActive) return
+
         activeProject.set(id)
 
-        projectView.set(false)
-        if ($projects[id].shows.length) activeShow.set({ ...$projects[id].shows[0], index: 0 })
+        // WIP it still selects first (not opening) when shift clicking
+        if (e.shiftKey || !$projects[id].shows.length) return
+
+        activeShow.set({ ...$projects[id].shows[0], index: 0 })
     }
-
-    // WIP select with context menu
-    // function select(e: any) {
-    //     if (e.target.closest(".edit")) return
-
-    //     // set new project
-    //     activeProject.set(id)
-
-    //     // if ($activeProject) loadShows($projects[$activeProject].shows.map((a) => ({ id: a.id })))
-
-    //     // get active show pos
-    //     if ($activeShow !== null) {
-    //         let pos: number = -1
-    //         if ($activeProject) pos = $projects[$activeProject].shows.findIndex((p) => p.id === $activeShow!.id && (!p.layout || $showsCache[$activeShow!.id].settings.activeLayout === p.layout))
-    //         console.log(pos)
-
-    //         activeShow.update((as: any) => {
-    //             as.index = pos >= 0 ? pos : null
-    //             return as
-    //         })
-    //     }
-    // }
 
     function edit(e: any) {
         if (!editActive) history({ id: "UPDATE", newData: { key: "name", data: e.detail.value }, oldData: { id }, location: { page: "show", id: "project_key" } })

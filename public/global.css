@@ -67,8 +67,8 @@ body {
 
 /* scroll bar */
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track,
@@ -101,6 +101,11 @@ h6 {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    font-weight: 600;
+}
+
+h1 {
+    font-weight: bold;
 }
 
 p {

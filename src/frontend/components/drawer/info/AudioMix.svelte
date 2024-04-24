@@ -52,7 +52,7 @@
 
     p {
         text-align: center;
-        font-weight: bold;
+        font-weight: 600;
         font-size: 1.2em;
         padding: 10px;
     }

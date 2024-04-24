@@ -5,7 +5,7 @@ import { Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
-import type { ActiveEdit, DefaultProjectNames, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
+import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
@@ -237,7 +237,6 @@ export const remotePassword: Writable<string> = writable("1234") // generate 4 n
 export const companion: Writable<any> = writable({ enabled: false }) // {}
 
 // HIDDEN
-export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"
 export const presenterControllerKeys: Writable<boolean> = writable(true) // true
 export const videoExtensions: Writable<string[]> = writable(["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"]) // [default]
 export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp", "avif"]) // [default]
@@ -340,7 +339,6 @@ export const $ = {
     ports,
     maxConnections,
     remotePassword,
-    defaultProjectName,
     presenterControllerKeys,
     videoExtensions,
     imageExtensions,

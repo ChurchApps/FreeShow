@@ -87,32 +87,31 @@
         let index: number = activeShowIndex ?? $projects[$activeProject || ""]?.shows?.length ?? 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: $activeProject }, location: { page: "show", id: "section" } })
     }
+
+    $: projectActive = !$projectView && $activeProject !== null
 </script>
 
 <svelte:window on:keydown={checkInput} />
 
 <div class="main">
     <span class="tabs">
-        <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
-            <Icon id="folder" size={1.2} right />
-        </Button>
-        <Button
-            style="flex: 5;"
-            on:click={() => projectView.set(false)}
-            class="context #projectTab _close"
-            active={!$projectView}
-            bold={false}
-            dark
-            center
-            disabled={$activeProject === null}
-            title={$activeProject ? $dictionary.remote?.project + ": " + $projects[$activeProject]?.name : ""}
-        >
-            <Icon id="project" right />
-            <p style="color: white; overflow: hidden;">{$activeProject ? $projects[$activeProject]?.name : ""}</p>
-        </Button>
+        {#if projectActive}
+            <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
+                <Icon id="back" size={1.2} right />
+            </Button>
+            <div style="flex: 7;" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
+                <!-- <Icon id="project" white right /> -->
+                <p style="color: white; overflow: hidden;">{$projects[$activeProject || ""]?.name || ""}</p>
+            </div>
+        {:else}
+            <div class="header">
+                <!-- <Icon id="folder" white right /> -->
+                <p><T id="remote.projects" /></p>
+            </div>
+        {/if}
     </span>
 
-    {#if $projectView}
+    {#if !projectActive}
         <div class="list projects context #projects" style="overflow: auto;">
             <DropArea id="projects">
                 <ProjectList {tree} />
@@ -129,12 +128,12 @@
                 {#if !$labelsDisabled}<T id="new.project" />{/if}
             </Button>
         </div>
-    {:else if $activeProject !== null}
+    {:else}
         <div class="list context #project">
             <Autoscroll {offset} bind:scrollElem timeout={150}>
                 <DropArea id="project" selectChildren let:fileOver file>
-                    {#if $projects[$activeProject]?.shows.length}
-                        {#each $projects[$activeProject]?.shows as show, index}
+                    {#if $projects[$activeProject || ""]?.shows.length}
+                        {#each $projects[$activeProject || ""]?.shows as show, index}
                             <SelectElem id="show" data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <Button active={$activeShow?.id === show.id} class="section context #project_section__project" on:click={() => activeShow.set({ ...show, index })} dark center bold={false}>
@@ -157,10 +156,6 @@
                 </DropArea>
             </Autoscroll>
         </div>
-    {:else}
-        <Center faded>
-            <T id="empty.project_select" />
-        </Center>
     {/if}
 </div>
 
@@ -192,6 +187,16 @@
     }
     .tabs :global(button) {
         width: 50%;
+    }
+
+    .tabs .header {
+        width: 100%;
+        padding: 0.2em 0.8em;
+        font-weight: 600;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .list {

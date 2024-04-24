@@ -127,7 +127,7 @@
     }
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? 'bold' : 'normal'};" tabindex={0} on:keydown={keydown}>
+<div on:click={contextItemClick} class:enabled class:disabled style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
         {#if menu?.translate === false}

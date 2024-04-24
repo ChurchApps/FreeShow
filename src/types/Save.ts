@@ -25,7 +25,6 @@ export type SaveListSettings =
     | "autoOutput"
     | "autosave"
     | "timeFormat"
-    | "defaultProjectName"
     | "showsPath"
     | "dataPath"
     | "lockedOverlays"

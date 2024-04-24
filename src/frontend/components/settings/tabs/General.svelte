@@ -36,8 +36,6 @@
         })
     }
 
-    // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
-
     function reset() {
         setLanguage()
         timeFormat.set("24")
@@ -100,19 +98,6 @@
         <Checkbox checked={$special.hideCursor} on:change={inputs.hideCursor} />
     </div>
 </CombinedInput>
-
-<!-- <hr /> -->
-<!-- <div>
-  <p><T id="settings.default_project_name" /></p>
-  <Dropdown
-    options={projectNames}
-    value={$defaultProjectName}
-    on:click={(e) => {
-      // history?
-      defaultProjectName.set(e.detail.id)
-    }}
-  />
-</div> -->
 
 <div class="filler" />
 <div class="bottom">
