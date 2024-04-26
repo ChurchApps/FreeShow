@@ -146,6 +146,7 @@
         "@mapbox/node-pre-gyp": "^1.0.11",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@vimeo/player": "^2.16.4",
+        "chord-transposer": "^3.0.9",
         "cross-env": "^7.0.3",
         "electron-store": "^8.0.1",
         "electron-updater": "^4.6.1",

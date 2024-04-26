@@ -11,6 +11,9 @@
         empty: {
             shows: "No shows",
         },
+        // edit: {
+        //     transpose: "Transpose",
+        // },
         error: {
             wrongPass: "Wrong password!",
             missingID: "Something went wrong, try again!",
@@ -149,8 +152,16 @@
 
     let clicked: boolean = false
     const click = (e: any) => {
-        if (!e.target.closest(".clicked")) clicked = !clicked
+        if (e.target.closest(".clicked")) return
+
+        // wait for actions to maybe open
+        setTimeout(() => {
+            if (document.querySelector(".actions")?.children?.length) return
+
+            clicked = !clicked
+        })
     }
+
     let timeout: any = null
     $: {
         if (clicked) {
@@ -177,7 +188,7 @@
     }
 </script>
 
-<svelte:window on:mousedown={click} />
+<svelte:window on:click={click} />
 
 {#if errors.length}
     <div class="error">
