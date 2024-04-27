@@ -28,8 +28,11 @@ export function focusArea(e: any) {
 // auto save
 let autosaveTimeout: any = null
 export function startAutosave() {
+    if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
-    if (!convertAutosave[get(autosave)]) {
+
+    let saveInterval = convertAutosave[get(autosave)]
+    if (!saveInterval) {
         autosaveTimeout = null
         return
     }
@@ -38,7 +41,7 @@ export function startAutosave() {
         newToast("$toast.saving")
         save()
         startAutosave()
-    }, convertAutosave[get(autosave)])
+    }, saveInterval)
 }
 
 // error logger

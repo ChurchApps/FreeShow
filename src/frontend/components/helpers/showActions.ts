@@ -593,7 +593,9 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
     if (!nextAfterMedia) return false
 
-    nextSlide(null, false, false, false, true, outputId, true)
+    // WIP PAUSE PLAYING VIDEO WHEN ENDED, so it does not loop to start
+    let loop = layoutSlide?.data?.end
+    nextSlide(null, false, false, loop, true, outputId, !loop)
 
     return true
 }
