@@ -53,6 +53,9 @@
 
     $: playbackRate = Number(mediaStyle.speed) || 1
     $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
+
+    // path starting at "/" auto completes to app root, but should be file://
+    $: if (path[0] === "/") path = `file://${path}`
 </script>
 
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">

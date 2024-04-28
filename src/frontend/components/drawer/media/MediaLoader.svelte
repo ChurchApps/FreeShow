@@ -187,6 +187,9 @@
             retryCount++
         }, 100)
     }
+
+    // path starting at "/" auto completes to app root, but should be file://
+    $: if (path[0] === "/") path = `file://${path}`
 </script>
 
 <div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
