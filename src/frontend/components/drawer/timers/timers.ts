@@ -115,18 +115,20 @@ export async function loadProjectTimers(projectShows = get(projects)[get(activeP
 
 export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
     let currentTime: number = 0
+
     if (timer.type === "counter") {
         currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
         if (typeof currentTime !== "number") currentTime = timer.start!
     } else if (timer.type === "clock") {
         let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
-        currentTime = todayTime.getTime() > today.getTime() ? (todayTime.getTime() - today.getTime()) / 1000 : 0
+        currentTime = (todayTime.getTime() - today.getTime()) / 1000
     } else if (timer.type === "event") {
         let eventTime = new Date(get(events)[timer.event!]?.from)?.getTime() || 0
-        currentTime = eventTime > today.getTime() ? (eventTime - today.getTime()) / 1000 : 0
+        currentTime = (eventTime - today.getTime()) / 1000
     }
 
-    // console.log(currentTime)
+    if (currentTime < 0 && !timer.overflow) currentTime = 0
+
     return currentTime
 }
 

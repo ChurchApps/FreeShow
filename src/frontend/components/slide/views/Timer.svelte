@@ -35,10 +35,13 @@
     $: itemColor = getStyles(item?.style)?.color || "white"
 
     $: overflow = getTimerOverflow(currentTime)
-    $: negative = timer?.start! > timer?.end!
+    $: negative = timer?.start! > timer?.end! || currentTime < 0
     function getTimerOverflow(time) {
-        if (!timer.overflow || timer.type !== "counter") return false
         if (!timer.overflow) return false
+
+        if (currentTime < 0) return true
+        if (timer.type !== "counter") return false
+
         let start: number = timer.start!
         let end: number = timer.end!
 
@@ -75,6 +78,7 @@
             {#if overflow && negative}
                 <span>-</span>
             {/if}
+
             {#if times.length}
                 {#each times as ti, i}
                     <div style="position: relative;display: flex;">

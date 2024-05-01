@@ -57,7 +57,7 @@
         <p>
             <span class="title"><T id={"info.created"} /></span>
             {#if info.birthtime}
-                <Date d={info.birthtime} />
+                <span><Date d={info.birthtime} /></span>
             {:else}
                 <span>-</span>
             {/if}
@@ -65,7 +65,7 @@
         <p>
             <span class="title"><T id={"info.modified"} /></span>
             {#if info.mtime}
-                <Date d={info.mtime} />
+                <span><Date d={info.mtime} /></span>
             {:else}
                 <span>-</span>
             {/if}
@@ -74,7 +74,7 @@
             <span class="title"><T id={"info.changed"} /></span>
             {#if info.ctime}
                 <!-- format="d,m,y" -->
-                <Date d={info.ctime} />
+                <span><Date d={info.ctime} /></span>
             {:else}
                 <span>-</span>
             {/if}
@@ -85,15 +85,21 @@
 <style>
     main {
         overflow-y: auto;
-        padding: 10px;
     }
 
-    p {
+    main p {
         display: flex;
         justify-content: space-between;
+        padding: 2px 10px;
+    }
+    main p:nth-child(odd) {
+        background-color: var(--primary-darker);
     }
 
     .title {
+        font-weight: 600;
+    }
+    main p span:not(.title) {
         opacity: 0.8;
     }
 </style>

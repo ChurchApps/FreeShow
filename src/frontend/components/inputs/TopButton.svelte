@@ -33,4 +33,8 @@
         min-width: 60px;
         height: 100%;
     }
+
+    span {
+        font-weight: bold;
+    }
 </style>

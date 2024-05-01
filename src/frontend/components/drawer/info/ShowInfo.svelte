@@ -41,7 +41,7 @@
         <p>
             <span class="title"><T id={"info.created"} /></span>
             {#if created}
-                <Date d={created} />
+                <span><Date d={created} /></span>
             {:else}
                 <span>—</span>
             {/if}
@@ -49,7 +49,7 @@
         <p>
             <span class="title"><T id={"info.modified"} /></span>
             {#if modified}
-                <Date d={modified} />
+                <span><Date d={modified} /></span>
             {:else}
                 <span>—</span>
             {/if}
@@ -57,7 +57,7 @@
         <p>
             <span class="title"><T id={"info.used"} /></span>
             {#if used}
-                <Date d={used} />
+                <span><Date d={used} /></span>
             {:else}
                 <span>—</span>
             {/if}
