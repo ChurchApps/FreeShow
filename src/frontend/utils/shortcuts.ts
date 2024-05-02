@@ -31,21 +31,24 @@ const ctrlKeys: any = {
     "?": () => activePopup.set("shortcuts"),
 }
 
+export const disablePopupClose = ["initialize", "cloud_method"]
 const keys: any = {
     Escape: () => {
+        let popupId = get(activePopup)
+
         // blur focused elements
         if (document.activeElement !== document.body) {
             ;(document.activeElement as HTMLElement).blur()
 
-            if (!get(activePopup) && get(selected).id) setTimeout(() => selected.set({ id: null, data: [] }))
+            if (!popupId && get(selected).id) setTimeout(() => selected.set({ id: null, data: [] }))
             return
         }
 
-        if (get(activePopup) === "initialize") return
+        if (disablePopupClose.includes(popupId || "")) return
 
         // give time so output don't clear also
         setTimeout(() => {
-            if (get(activePopup)) activePopup.set(null)
+            if (popupId) activePopup.set(null)
             else if (get(selected).id) selected.set({ id: null, data: [] })
         })
     },

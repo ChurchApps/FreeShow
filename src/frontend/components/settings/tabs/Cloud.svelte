@@ -104,7 +104,8 @@
             on:click={() => {
                 save()
                 // syncDrive is called by save, but only if it's enabled
-                if ($driveData.disabled) setTimeout(() => syncDrive(true), 2000)
+                if ($driveData.disabled) return
+                setTimeout(() => syncDrive(true), 2000)
             }}
             disabled={!validKeys}
             style="width: 100%;"

@@ -120,8 +120,8 @@
         font-family: system-ui;
         font-size: 1.5em;
 
-        height: 100svh;
-        width: 100svw;
+        height: 100%;
+        width: 100%;
 
         overflow: hidden;
     }

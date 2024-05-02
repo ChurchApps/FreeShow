@@ -92,7 +92,7 @@
         justify-content: space-between;
         padding: 2px 10px;
     }
-    main p:nth-child(odd) {
+    main p:nth-child(even) {
         background-color: var(--primary-darker);
     }
 
