@@ -570,7 +570,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     let slideOut = currentOutput.out?.slide
     if (!slideOut) return false
 
-    let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
+    let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0]?.[slideOut.index]
     if (!layoutSlide) return false
 
     // check that current slide has the ended media!
@@ -582,11 +582,11 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
         if (type === "media") {
             if (layoutSlide.data?.background !== currentMediaId) return false
         } else if (type === "audio") {
-            if (!layoutSlide.data?.audio.find((id) => id === currentMediaId)) return false
+            if (!layoutSlide.data?.audio?.find((id) => id === currentMediaId)) return false
         }
     } else if (type === "timer") {
         let slide = _show(slideOut.id).get("slides")[layoutSlide.id]
-        let slideTimer = slide.items.find((a) => a.type === "timer" && a.timerId === endedId)
+        let slideTimer = slide?.items?.find((a) => a.type === "timer" && a.timerId === endedId)
         if (!slideTimer) return false
     }
 

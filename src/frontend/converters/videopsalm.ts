@@ -52,6 +52,7 @@ const keys = [
     "Text",
     "Verses",
     "Style",
+    // "Version",
     // "Body",
     // "Background",
     // "Footer",
@@ -110,6 +111,11 @@ export function convertVideopsalm(data: any) {
             }
         }
 
+        if (!Object.keys(content).length) {
+            activePopup.set(null)
+            return
+        }
+
         let i: number = 0
         let importingText = get(dictionary)?.popup.importing || "Importing"
 
@@ -153,20 +159,22 @@ export function convertVideopsalm(data: any) {
     })
 }
 
+const removeKeys = ["Body", "Background", "Footer", "Header", "Version"]
 function removeStyle(s) {
-    if (s.includes("{Body:") || s.includes("{Background:") || s.includes("{Footer:") || s.includes("{Header:")) {
-        let openCount = 0
-        let closeCount = 0
-        let index: number = -1
-        do {
-            index++
-            if (s[index] === "{") openCount++
-            else if (s[index] === "}") closeCount++
-            if (index === s.length - 1) closeCount = openCount
-        } while (openCount !== closeCount)
+    if (!removeKeys.find((key) => s.includes(`{${key}:`))) return s
 
-        s = "{" + s.substring(index)
-    }
+    let openCount = 0
+    let closeCount = 0
+    let index: number = -1
+    do {
+        index++
+        if (s[index] === "{") openCount++
+        else if (s[index] === "}") closeCount++
+        if (index === s.length - 1) closeCount = openCount
+    } while (index < 1 || openCount !== closeCount)
+
+    s = "{" + s.substring(index)
+
     return s
 }
 

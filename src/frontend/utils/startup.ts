@@ -338,7 +338,7 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
     MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
     MAIN_VIDEO_ENDED: async (msg) => {
-        if (clearing) return
+        if (!msg || clearing) return
         clearing = true
         setTimeout(() => (clearing = false), msg.duration || 1000)
 

@@ -429,6 +429,8 @@
             })
         } else if (ref.showId) {
             showsCache.update((a) => {
+                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[index]) return a
+
                 a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
                 return a
             })
