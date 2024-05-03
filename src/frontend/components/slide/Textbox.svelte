@@ -331,6 +331,7 @@
                 }
             })
         }
+        setTimeout(getCustomAutoSize, 150)
         return result
     }
 
