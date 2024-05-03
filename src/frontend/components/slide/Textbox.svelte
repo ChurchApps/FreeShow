@@ -320,16 +320,35 @@
         })
     }
 
+    function getPaddingCorrection(stageItem: any) {
+        let result = ""
+        if (stageItem.style?.indexOf("padding") > -1) {
+            let styles = stageItem.style.split(";")
+            styles.forEach((s: string) => {
+                if (s.indexOf("padding") === 0) {
+                    let padding = parseInt(s.split(":")[1].replace("px", "").trim(), 0) * 2
+                    if (padding > 0) result = "width: calc(100% - " + padding + "px); height: calc(100% - " + padding + "px);"
+                }
+            })
+        }
+        return result
+    }
+
     $: if (chords && !stageItem && item?.auto && fontSize) fontSize *= 0.7
     $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? (fontSize || autoSize) + "px" : fontSize ? fontSize + "px" : ""
 
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
+
+    let paddingCorrection = {}
+    $: paddingCorrection = getPaddingCorrection(stageItem)
 </script>
 
 <OutputTransition transition={hidden ? {} : itemTransition}>
     <div
         class="item"
-        style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
+        style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
+            ? 'backdrop-filter: ' + backdropFilter + ';'
+            : ''}{animationStyle.item || ''}"
         class:white={key && !lines?.length}
         class:key
         class:addDefaultItemStyle
