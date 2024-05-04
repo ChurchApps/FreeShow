@@ -2,8 +2,10 @@ import type { Item, Line } from "../../../types/Show"
 
 export class EditboxHelper {
 
+  
+  //Compare text of all the new lines to determine if it's truly a modification or just an index change.
+  //Set the cursor to the start of the last line that was modified.
   static determineCaretLine(item:Item, newLines: Line[]) {
-    console.log("*******DETERMINE CARET LINE*********")
     const oldTexts:string[] = [];
     const newTexts:string[] = [];
     
