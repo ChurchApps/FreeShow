@@ -608,18 +608,18 @@
     // timer
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
-
+    /*
     function textElemKeydown(e: any) {
-        /*
+        
         if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
             navigator.clipboard.readText().then((clipText: string) => {
                 paste(e, clipText)
             })
         }
-        */
+        
     }
-
+*/
     // paste
     /*
     function paste(e: any, clipboardText: string = "") {
@@ -838,7 +838,6 @@ bind:offsetWidth={width} -->
                 class:hidden={chordsMode}
                 class:autoSize={item.auto && autoSize}
                 contenteditable
-                on:keydown={textElemKeydown}
                 bind:innerHTML={html}
                 style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
