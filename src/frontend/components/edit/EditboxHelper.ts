@@ -1,16 +1,15 @@
-import type { Item, Line } from "../../../types/Show"
+import type { Line } from "../../../types/Show"
 
 export class EditboxHelper {
 
   
   //Compare text of all the new lines to determine if it's truly a modification or just an index change.
   //Set the cursor to the start of the last line that was modified.
-  static determineCaretLine(item:Item, newLines: Line[]) {
+  static determineCaretLine(oldLines:Line[], newLines: Line[]) {
     const oldTexts:string[] = [];
     const newTexts:string[] = [];
     
-
-    item.lines?.forEach((line) => {
+    oldLines?.forEach((line) => {
       oldTexts.push(line.text[0].value);
     });
 

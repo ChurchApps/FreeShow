@@ -366,7 +366,7 @@
                 if (historyText === linesText) return
             }
 
-            let lastChangedLine = EditboxHelper.determineCaretLine(item, newLines)
+            let lastChangedLine = EditboxHelper.determineCaretLine(item?.lines || [], newLines)
             if (lastChangedLine > -1) setCaretDelayed(lastChangedLine, 0)
 
             history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: ref.showId + ref.id + index } })
