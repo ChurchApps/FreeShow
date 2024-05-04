@@ -28,6 +28,7 @@
     import { getAutoSize, getMaxBoxTextSize } from "./scripts/autoSize"
     import { addChords, chordMove } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
+    import { EditboxHelper } from "./EditboxHelper"
 
     export let item: Item
     export let filter: string = ""
@@ -341,6 +342,12 @@
         setTimeout(updateLines, 10)
     }
 
+    function setCaretDelayed(line: number, pos: number) {
+        setTimeout(() => {
+            setCaret(textElem, { line, pos })
+        }, 10)
+    }
+
     function updateLines(newLines: Line[]) {
         // updateItem = true
         if (!newLines) newLines = getNewLines()
@@ -348,6 +355,7 @@
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
         else if (ref.id) {
+            console.log("REF ID")
             // dont override history when undoing
             let lastRedo = $redoHistory[$redoHistory.length - 1]
             if (lastRedo?.id === "SHOW_ITEMS") {
@@ -359,6 +367,10 @@
                 if (historyText === linesText) return
             }
 
+            console.log("*******LOGGING", newLines, lastRedo)
+            let lastChangedLine = EditboxHelper.determineCaretLine(item, newLines)
+            if (lastChangedLine > -1) setCaretDelayed(lastChangedLine, 0)
+
             history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: ref.showId + ref.id + index } })
 
             // refresh list view boxes
@@ -367,6 +379,8 @@
 
         function setNewLines(a: any) {
             if (!a[$activeEdit.id!].items[index]) return a
+
+            console.log("SETTINGS NEW LINES", newLines.length, a[$activeEdit.id!].items[index].lines.length)
 
             a[$activeEdit.id!].items[index].lines = newLines
             return a
