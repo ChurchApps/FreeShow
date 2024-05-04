@@ -3,8 +3,10 @@ import type { Item, Line } from "../../../types/Show"
 export class EditboxHelper {
 
   static determineCaretLine(item:Item, newLines: Line[]) {
+    console.log("*******DETERMINE CARET LINE*********")
     const oldTexts:string[] = [];
     const newTexts:string[] = [];
+    
 
     item.lines?.forEach((line) => {
       oldTexts.push(line.text[0].value);
@@ -15,6 +17,7 @@ export class EditboxHelper {
     });
 
     let lastLineChanged = -1;
+    if (oldTexts.length === newTexts.length) return lastLineChanged;
     for (let i=0; i<newTexts.length; i++) {
       const nt = newTexts[i];
       const index = oldTexts.indexOf(nt);

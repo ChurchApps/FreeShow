@@ -355,7 +355,6 @@
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
         else if (ref.id) {
-            console.log("REF ID")
             // dont override history when undoing
             let lastRedo = $redoHistory[$redoHistory.length - 1]
             if (lastRedo?.id === "SHOW_ITEMS") {
@@ -367,7 +366,6 @@
                 if (historyText === linesText) return
             }
 
-            console.log("*******LOGGING", newLines, lastRedo)
             let lastChangedLine = EditboxHelper.determineCaretLine(item, newLines)
             if (lastChangedLine > -1) setCaretDelayed(lastChangedLine, 0)
 
@@ -379,9 +377,6 @@
 
         function setNewLines(a: any) {
             if (!a[$activeEdit.id!].items[index]) return a
-
-            console.log("SETTINGS NEW LINES", newLines.length, a[$activeEdit.id!].items[index].lines.length)
-
             a[$activeEdit.id!].items[index].lines = newLines
             return a
         }
@@ -615,15 +610,18 @@
     setInterval(() => (today = new Date()), 1000)
 
     function textElemKeydown(e: any) {
+        /*
         if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
             navigator.clipboard.readText().then((clipText: string) => {
                 paste(e, clipText)
             })
         }
+        */
     }
 
     // paste
+    /*
     function paste(e: any, clipboardText: string = "") {
         let clipboard: string = clipboardText || e.clipboardData.getData("text/plain") || ""
         if (!clipboard) return
@@ -661,6 +659,7 @@
             setCaret(textElem, caret)
         }, 10)
     }
+    */
 
     // let height: number = 0
     // let width: number = 0
