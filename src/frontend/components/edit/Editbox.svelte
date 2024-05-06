@@ -377,6 +377,7 @@
 
         function setNewLines(a: any) {
             if (!a[$activeEdit.id!].items[index]) return a
+
             a[$activeEdit.id!].items[index].lines = newLines
             return a
         }
@@ -608,20 +609,17 @@
     // timer
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
-    /*
+
     function textElemKeydown(e: any) {
-        
         if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
             navigator.clipboard.readText().then((clipText: string) => {
                 paste(e, clipText)
             })
         }
-        
     }
-*/
+
     // paste
-    /*
     function paste(e: any, clipboardText: string = "") {
         let clipboard: string = clipboardText || e.clipboardData.getData("text/plain") || ""
         if (!clipboard) return
@@ -653,13 +651,14 @@
         })
 
         updateLines(lines)
-        getStyle()
-        // set caret position back
         setTimeout(() => {
-            setCaret(textElem, caret)
+            getStyle()
+            // set caret position back
+            setTimeout(() => {
+                setCaret(textElem, caret)
+            }, 10)
         }, 10)
     }
-    */
 
     // let height: number = 0
     // let width: number = 0
@@ -838,6 +837,7 @@ bind:offsetWidth={width} -->
                 class:hidden={chordsMode}
                 class:autoSize={item.auto && autoSize}
                 contenteditable
+                on:keydown={textElemKeydown}
                 bind:innerHTML={html}
                 style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
@@ -980,14 +980,14 @@ bind:offsetWidth={width} -->
         /* background-color: var(--secondary-opacity); */
     }
     /* .chordsText {
-    position: absolute;
-    width: 100%;
-    color: transparent !important;
-    user-select: none;
-  }
-  .chordsText:first-child {
-    width: 100%;
-  } */
+  position: absolute;
+  width: 100%;
+  color: transparent !important;
+  user-select: none;
+}
+.chordsText:first-child {
+  width: 100%;
+} */
 
     .align {
         height: 100%;
@@ -1026,8 +1026,8 @@ bind:offsetWidth={width} -->
     }
 
     /* .edit.tallLines {
-    line-height: 200px;
-  } */
+  line-height: 200px;
+} */
 
     .plain .edit {
         font-size: 1.5em;
@@ -1055,8 +1055,8 @@ bind:offsetWidth={width} -->
     .edit:not(.plain .edit) :global(span) {
         font-size: 100px;
         /* min-height: 100px;
-    min-width: 100px;
-    display: inline-table; */
+  min-width: 100px;
+  display: inline-table; */
     }
 
     /* chords */
@@ -1072,7 +1072,7 @@ bind:offsetWidth={width} -->
     }
     .edit.chords :global(.chord) {
         /* color: var(--chord-color);
-        font-size: var(--chord-size) !important; */
+      font-size: var(--chord-size) !important; */
         bottom: 0;
         transform: translate(-50%, -60%);
         z-index: 2;
