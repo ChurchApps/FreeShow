@@ -862,6 +862,7 @@
         "full_colors": "Full slide group colors",
         "auto_output": "Activate output screen on startup",
         "hide_cursor_in_output": "Hide cursor in output",
+        "disable_presenter_controller_keys": "Disable presenter controller keys",
         "default_project_name": "Default project name",
         "resolution": "Resolution",
         "cropping": "Cropping",

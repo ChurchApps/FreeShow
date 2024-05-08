@@ -1,25 +1,25 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, presenterControllerKeys, selected, showsCache, slideTimers, styles } from "../../../stores"
+    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, selected, showsCache, slideTimers, special, styles } from "../../../stores"
     import { send } from "../../../utils/request"
-    import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
+    import { clearAudio } from "../../helpers/audio"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, refreshOut, setOutput } from "../../helpers/output"
     import { clearAll, clearBackground, clearSlide, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
-    import T from "../../helpers/T.svelte"
     import { newSlideTimer } from "../../helpers/tick"
     import Button from "../../inputs/Button.svelte"
-    import AudioMeter from "./AudioMeter.svelte"
-    import ClearButtons from "./ClearButtons.svelte"
-    import MultiOutputs from "./MultiOutputs.svelte"
-    import PreviewOutputs from "./PreviewOutputs.svelte"
     import ShowActions from "../ShowActions.svelte"
     import Audio from "../tools/Audio.svelte"
     import MediaControls from "../tools/MediaControls.svelte"
     import NextTimer from "../tools/NextTimer.svelte"
     import Overlay from "../tools/Overlay.svelte"
     import Show from "../tools/Show.svelte"
+    import AudioMeter from "./AudioMeter.svelte"
+    import ClearButtons from "./ClearButtons.svelte"
+    import MultiOutputs from "./MultiOutputs.svelte"
+    import PreviewOutputs from "./PreviewOutputs.svelte"
 
     $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
     $: outputId = allActiveOutputs[0]
@@ -41,7 +41,7 @@
             setTimeout(clearAll)
         },
         ".": () => {
-            if ($presenterControllerKeys) clearAll()
+            if (!$special.disablePresenterControllerKeys) clearAll()
         },
         F1: () => {
             if (!$outLocked) clearBackground()
@@ -59,13 +59,13 @@
             if (!$outLocked) clearAudio()
         },
         F5: () => {
-            if ($presenterControllerKeys) nextSlide(null)
+            if (!$special.disablePresenterControllerKeys) nextSlide(null)
             else setOutput("transition", null)
         },
         PageDown: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
 
-            if ($presenterControllerKeys) {
+            if (!$special.disablePresenterControllerKeys) {
                 e.preventDefault()
                 nextSlide(e)
             }
@@ -73,7 +73,7 @@
         PageUp: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
 
-            if ($presenterControllerKeys) {
+            if (!$special.disablePresenterControllerKeys) {
                 e.preventDefault()
                 previousSlide(e)
             }

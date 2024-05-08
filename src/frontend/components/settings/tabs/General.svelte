@@ -16,6 +16,7 @@
         labels: (e: any) => labelsDisabled.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
         hideCursor: (e: any) => updateSpecial(e.target.checked, "hideCursor"),
+        disablePresenterControllerKeys: (e: any) => updateSpecial(e.target.checked, "disablePresenterControllerKeys"),
     }
 
     const autosaveList: any = [
@@ -96,6 +97,12 @@
     <p><T id="settings.hide_cursor_in_output" /></p>
     <div class="alignRight">
         <Checkbox checked={$special.hideCursor} on:change={inputs.hideCursor} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.disable_presenter_controller_keys" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.disablePresenterControllerKeys} on:change={inputs.disablePresenterControllerKeys} />
     </div>
 </CombinedInput>
 

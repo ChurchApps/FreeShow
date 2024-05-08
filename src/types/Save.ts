@@ -45,7 +45,6 @@ export type SaveListSettings =
     | "sorted"
     | "styles"
     | "outLocked"
-    | "presenterControllerKeys"
     | "playerVideos"
     | "ports"
     | "disabledServers"
